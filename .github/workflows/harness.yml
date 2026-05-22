@@ -1,0 +1,36 @@
+name: Harness Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      gate:
+        description: "Make target to run"
+        required: true
+        default: "validate-harness"
+        type: choice
+        options:
+          - validate-harness
+          - validate-doc-overviews
+          - validate-checkpoint
+          - validate-current
+          - validate-pm
+          - validate-design
+          - validate-dev
+          - validate-review
+          - validate-test
+          - validate-release
+          - validate-rfc
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run harness gate
+        run: make "${HARNESS_GATE}"
+        env:
+          HARNESS_GATE: ${{ github.event.inputs.gate || 'validate-harness' }}

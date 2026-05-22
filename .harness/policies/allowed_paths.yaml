@@ -1,0 +1,61 @@
+global:
+  never_edit_without_confirmation:
+    - ".git/**"
+    - ".env"
+    - ".env.*"
+    - "secrets/**"
+    - "production/**"
+  archive_roots:
+    - ".harness/archive/tasks/"
+    - ".harness/archive/rfc/"
+    - ".harness/archive/releases/"
+
+phases:
+  REQUIREMENT_GATHERING:
+    write:
+      - ".docs/00_raw/**"
+      - ".docs/01_product/**"
+      - ".docs/INDEX.md"
+
+  ARCHITECTING:
+    write:
+      - ".docs/02_architecture/**"
+      - ".docs/03_tech_plan/**"
+      - ".docs/05_decisions/**"
+      - ".harness/state/tasks.draft.yaml"
+      - ".docs/INDEX.md"
+
+  SPRINTING:
+    write_from_task_allowed_paths: true
+    always_allow:
+      - ".docs/04_implementation/**"
+      - ".docs/INDEX.md"
+      - ".harness/state/tasks.yaml"
+      - ".harness/state/gate_results.log"
+      - ".harness/state/checkpoints/**"
+
+  REVIEWING:
+    read_only_source: true
+    write:
+      - ".docs/06_review/**"
+      - ".docs/INDEX.md"
+
+  TESTING:
+    write:
+      - ".docs/07_test/**"
+      - "tests/**"
+      - ".docs/INDEX.md"
+
+  RELEASING:
+    write:
+      - ".docs/08_release/**"
+      - ".harness/archive/releases/**"
+      - ".docs/INDEX.md"
+
+  RFC_RECALIBRATION:
+    write:
+      - ".docs/rfc/**"
+      - ".docs/01_product/**"
+      - ".docs/03_tech_plan/**"
+      - ".harness/state/tasks.yaml"
+      - ".docs/INDEX.md"

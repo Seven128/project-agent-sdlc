@@ -1,0 +1,16 @@
+project_name: "ProjectTemplate"
+version: "v0.1"
+current_phase: "REQUIREMENT_GATHERING"
+active_role: "pm"
+active_skill: "pm_prd"
+current_milestone: "MVP"
+blocked_reason: ""
+suspended_phase: ""
+allowed_next_phases:
+  - "ARCHITECTING"
+history:
+  - phase: "IDLE"
+    role: "manager"
+    exit_status: "SUCCESS"
+    timestamp: "2026-05-22T00:00:00Z"
+    note: "Harness scaffold initialized."

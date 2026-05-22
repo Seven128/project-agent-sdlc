@@ -1,0 +1,3 @@
+# Gate results are appended by the agent or CI after each phase check.
+# Format suggestion:
+# 2026-05-22T00:00:00Z phase=REQUIREMENT_GATHERING gate="make validate-pm" result=PASS note="..."

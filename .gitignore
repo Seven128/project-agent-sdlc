@@ -1,0 +1,35 @@
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Python/tooling caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript/tooling caches
+node_modules/
+.next/
+.nuxt/
+dist/
+build/
+coverage/
+
+# Logs and temporary files
+*.log
+!.harness/state/gate_results.log
+tmp/
+temp/
+
+# Local artifacts
+artifacts/
+reports/
