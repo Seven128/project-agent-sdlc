@@ -587,6 +587,67 @@ skills / policies / templates / sync / upgrade / migrations
 
 不导出的是当前项目的具体运行数据，例如当前 `current_phase`、当前 `plan.yaml` 内容、open task 执行备注、memory 条目和 `.docs/**` 产物。
 
+### 17.4 Harness Authoring Overlay
+本仓库还有一类特殊配置：开发 Harness 自身时才需要的 authoring overlay。它不是通用工作流的一部分，而是本仓库作为 Harness authoring workspace 时使用的本地增强层。
+
+这类配置用于回答：
+- 迭代 Harness npm 包时必须遵守哪些额外原则？
+- 哪些规则只约束工作流源码仓库，而不应分发给普通业务项目？
+- 当新增 package sync、migration、validator、Skill、模板或策略时，Agent 应额外读取哪些约束？
+- 某条自举规则什么时候应该晋升为通用 Harness 能力？
+
+推荐预留目录：
+
+```txt
+.agent/authoring/
+├── principles/
+│   ├── package_workspace_decoupling.md
+│   ├── migration_safety.md
+│   └── source_sync_boundary.md
+├── skills/
+│   ├── harness_package_design/SKILL.md
+│   └── harness_migration_review/SKILL.md
+└── policies/
+    └── package_authoring.yaml
+```
+
+语义边界如下：
+
+| 层级 | 示例路径 | 是否默认进入 npm 包 | 责任 |
+|---|---|---|---|
+| 通用 Harness 配置 | `.agent/skills/**`, `.agent/managed/**` | 是 | 面向所有接入项目的阶段 Skill、模板、策略和默认规则 |
+| 项目实例数据 | `.agent/state/**`, `.docs/**` | 否 | 当前项目的状态、需求、方案、实现、测试和发布事实 |
+| Harness authoring overlay | `.agent/authoring/**` | 否 | 只约束本仓库迭代 Harness 自身的原则、专用 Skill 和包化安全规则 |
+
+Authoring overlay 的默认规则：
+- `AGENTS.md` 可以声明本仓库作为 authoring workspace 时需要额外读取 `.agent/authoring/**`。
+- `package sync-source` 默认不复制 `.agent/authoring/**` 到 `packages/sdlc-harness/assets/**`。
+- `sdlc-harness sync` 和 `upgrade` 默认不把 authoring overlay materialize 到用户项目。
+- 如果某条 authoring rule 对所有用户项目都有价值，必须通过 PRD / tech plan / RFC 明确晋升为通用 Skill、policy、template 或 README 规则，再进入包内 canonical assets。
+- 如果某条 authoring Skill 只服务于 Harness 包源码维护，例如 package source drift、migration safety、managed block compatibility，就应留在 authoring overlay，不污染通用阶段 Skill。
+
+这个分层解决的是自举开发中的边界问题：本仓库需要比普通用户项目更多的工作流开发约束，但这些约束不能因为本仓库是 package source 就自动成为所有用户项目的默认配置。
+
+### 17.5 Authoring Overlay 的影响面
+引入 authoring overlay 会影响以下位置的设计判断，但不要求一次性实现所有机制：
+
+| 影响面 | 需要遵守的原则 |
+|---|---|
+| README / AGENTS | README 说明分层模型；AGENTS 可声明本仓库额外读取 `.agent/authoring/**`。 |
+| source mappings | `packages/sdlc-harness/source-mappings.yaml` 默认只同步通用 Harness 配置，不同步 authoring overlay。 |
+| package assets | `packages/sdlc-harness/assets/**` 只保存应分发给用户项目的 canonical source。 |
+| validators | 通用 validators 校验用户项目；authoring-specific validators 应单独声明，避免成为用户项目 gate。 |
+| Skill 设计 | 通用阶段 Skill 放 `.agent/skills/**`；维护 Harness 包自身的专用 Skill 放 `.agent/authoring/skills/**`。 |
+| RFC / 晋升流程 | authoring rule 晋升为通用能力时，必须记录影响范围、兼容性、sync/upgrade 行为和用户项目迁移方式。 |
+
+判断一条规则放在哪里，可以使用这个准则：
+
+```txt
+所有业务项目都应该遵守 -> 通用 Harness 配置
+只有当前项目的事实或状态 -> 项目实例数据
+只有开发 Harness 包自身时需要 -> Harness authoring overlay
+```
+
 ## 十八、npm 包化与项目接入
 当前仓库可以作为参考实现和模板仓库，但长期产品形态不应依赖每个业务项目直接 fork 整套配置。更稳的方式是把通用 Harness 能力拆成可版本化的 npm 包，并把业务项目中的工作流文件视为由包同步出来的 agent-readable artifact。
 
