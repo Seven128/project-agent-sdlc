@@ -53,6 +53,8 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - 实现文档增量化：技术方案是计划，implementation doc 是开发后的事实。
 - 派生视图自动化：`overview.html` 由脚本生成，只用于浏览，不作为事实源。
 - Plan 短期化：open task 在 `plan.yaml` 中保存当前执行合同，done task 立即压缩为简短摘要，避免历史现场长期占用上下文。
+- 包与项目解耦：Harness npm 包只提供默认工作流能力、schema、模板、策略、迁移和同步规则；项目状态、业务内容和本地定制属于用户仓库，`sync` / `upgrade` 必须增量合并，不得全量覆盖。
+- 自举配置分层：开发 Harness 自身时可以有只服务于本仓库的 authoring overlay，用于记录工作流演进原则、包化约束和专用 Skill；这些内容默认不进入通用 npm 包，也不默认分发给用户项目。
 
 ### 3.3 事实源与派生产物
 真正的事实源是：
@@ -690,7 +692,20 @@ npx sdlc-harness upgrade
 5. 自动执行 sync，把最新 Skill、模板、策略和状态模板 materialize 到工作区。
 6. 运行 `sdlc-harness doctor` 或对应 `make validate-harness`，输出升级报告。
 
-### 18.7 本地覆盖规则
+### 18.7 包与项目解耦原则
+Harness npm 包的设计必须像普通 npm 依赖一样，与用户仓库内容保持边界清晰。包可以提供默认规则和升级能力，但不能假设用户仓库仍是初始化时的模板状态；用户可能已经改过 `AGENTS.md`、`Makefile`、local policies、Skill overrides、模板覆盖、状态数据或业务文档。
+
+因此 `sync` 和 `upgrade` 的核心原则是：
+- 包内 canonical source 只是默认输入，不是用户仓库的最终事实源。
+- `AGENTS.md`、`Makefile` 等高冲突入口只能通过 managed block、include block 或 create-if-missing 方式接入，不能整文件覆盖。
+- `<harnessRoot>/state/**`、`.docs/**`、`src/**`、`tests/**` 和用户业务配置属于项目实例，包升级不得覆盖其具体内容。
+- 用户自定义配置必须通过 local overrides、`.local.yaml`、受控 merge 或显式 migration 合并；不能要求用户直接修改包内文件，也不能在升级时丢弃本地差异。
+- migration 只能做可解释、可回滚、可诊断的结构变更。遇到 marker 缺失、checksum 漂移、override 冲突或无法判定的本地改动时，应停止并报告 blocker，而不是继续覆盖。
+- doctor / validate 应能报告 managed files 缺失、漂移、local override 合并结果和升级风险，让用户知道包更新具体改了什么、保留了什么、阻塞在哪里。
+
+一句话：npm 包负责“提供和升级工作流能力”，用户仓库负责“保存项目事实和本地取舍”；两者通过明确的同步契约连接，而不是通过模板全量重写连接。
+
+### 18.8 本地覆盖规则
 项目本地定制不应直接改 managed files。推荐使用：
 
 ```txt
