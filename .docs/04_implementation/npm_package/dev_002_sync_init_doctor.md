@@ -6,7 +6,7 @@
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
-- Linked commit: pending
+- Linked commit: `559d169`
 
 ## 2. 本次实现范围
 

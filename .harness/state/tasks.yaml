@@ -1,5 +1,5 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-002"
+current_task_id: "DEV-003"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -48,7 +48,7 @@ tasks:
     checkpoint_required: false
     checkpoint: ".harness/state/checkpoints/DEV-002.md"
     gate_result: "PASS"
-    commit: ""
+    commit: "559d169"
 
   - id: "DEV-003"
     title: "实现 upgrade、migration 和自动 sync"
