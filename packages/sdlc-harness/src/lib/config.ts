@@ -13,6 +13,7 @@ export function defaultConfig(root: string): HarnessConfig {
     },
     managed_files: [
       { path: "AGENTS.md", strategy: "merge-block" },
+      { path: "Makefile", strategy: "merge-block" },
       { path: harnessPath(root, "skills"), strategy: "managed" },
       { path: harnessPath(root, "managed", "templates"), strategy: "managed" },
       { path: harnessPath(root, "managed", "policies"), strategy: "merge-with-local" },

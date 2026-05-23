@@ -8,7 +8,12 @@ import {
   readText,
   writeTextIfChanged
 } from "./fs.js";
-import { MANAGED_BLOCK_END, MANAGED_BLOCK_START } from "./managed-file.js";
+import {
+  MAKEFILE_BLOCK_END,
+  MAKEFILE_BLOCK_START,
+  MANAGED_BLOCK_END,
+  MANAGED_BLOCK_START
+} from "./managed-file.js";
 import { packageAssetPath } from "./paths.js";
 import type { ManagedFile } from "./types.js";
 
@@ -42,6 +47,10 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
   const destination = path.join(projectRoot, managedFile.path);
   if (managedFile.path === "AGENTS.md") {
     await syncAgentsBlock(destination, root, report);
+    return;
+  }
+  if (managedFile.path === "Makefile") {
+    await syncMakefileInclude(destination, root, report);
     return;
   }
   if (managedFile.path === path.join(root, "skills") || managedFile.path === ".harness/agents/skills") {
@@ -87,15 +96,17 @@ async function syncAgentsBlock(destination: string, root: string, report: SyncRe
   const core = renderAgentsCore(await readText(corePath), root);
   const block = `${MANAGED_BLOCK_START}\n${core.trim()}\n${MANAGED_BLOCK_END}`;
   const existing = (await pathExists(destination)) ? await readText(destination) : "";
-  let next: string;
-  if (existing.includes(MANAGED_BLOCK_START) && existing.includes(MANAGED_BLOCK_END)) {
-    const before = existing.slice(0, existing.indexOf(MANAGED_BLOCK_START));
-    const after = existing.slice(existing.indexOf(MANAGED_BLOCK_END) + MANAGED_BLOCK_END.length);
-    next = `${before}${block}${after}`;
-  } else if (existing.trim()) {
-    next = `${existing.trimEnd()}\n\n${block}\n`;
-  } else {
-    next = `${block}\n`;
+  const next = mergeManagedBlock({
+    existing,
+    block,
+    start: MANAGED_BLOCK_START,
+    end: MANAGED_BLOCK_END,
+    pathLabel: "AGENTS.md",
+    insert: "append",
+    report
+  });
+  if (!next) {
+    return;
   }
   if (await writeTextIfChanged(destination, next)) {
     report.changed.push("AGENTS.md");
@@ -106,6 +117,96 @@ async function syncAgentsBlock(destination: string, root: string, report: SyncRe
 
 function renderAgentsCore(content: string, root: string): string {
   return content.replaceAll(".agent", root);
+}
+
+async function syncMakefileInclude(destination: string, root: string, report: SyncReport): Promise<void> {
+  const existing = (await pathExists(destination)) ? await readText(destination) : "";
+  const resetDefaultGoal = shouldResetMakeDefaultGoal(existing);
+  const includePath = `${root.replace(/\\/g, "/")}/managed/make/sdlc-harness.mk`;
+  const blockLines = [
+    MAKEFILE_BLOCK_START,
+    "# Included before project targets so project recipes win on name conflicts.",
+    `-include ${includePath}`,
+    MAKEFILE_BLOCK_END
+  ];
+  if (resetDefaultGoal) {
+    blockLines.splice(3, 0, ".DEFAULT_GOAL :=");
+  }
+  const block = blockLines.join("\n");
+  const next = mergeManagedBlock({
+    existing,
+    block,
+    start: MAKEFILE_BLOCK_START,
+    end: MAKEFILE_BLOCK_END,
+    pathLabel: "Makefile",
+    insert: "prepend",
+    report
+  });
+  if (!next) {
+    return;
+  }
+  if (await writeTextIfChanged(destination, next)) {
+    report.changed.push("Makefile");
+  } else {
+    report.skipped.push("Makefile");
+  }
+}
+
+function shouldResetMakeDefaultGoal(existing: string): boolean {
+  if (!existing.trim()) {
+    return false;
+  }
+  const startIndex = existing.indexOf(MAKEFILE_BLOCK_START);
+  const endIndex = existing.indexOf(MAKEFILE_BLOCK_END);
+  if (startIndex < 0 && endIndex < 0) {
+    return true;
+  }
+  if (startIndex < 0 || endIndex < startIndex) {
+    return false;
+  }
+  const before = existing.slice(0, startIndex);
+  const after = existing.slice(endIndex + MAKEFILE_BLOCK_END.length);
+  return !before.trim() && Boolean(after.trim());
+}
+
+function mergeManagedBlock(options: {
+  existing: string;
+  block: string;
+  start: string;
+  end: string;
+  pathLabel: string;
+  insert: "append" | "prepend";
+  report: SyncReport;
+}): string | undefined {
+  const { existing, block, start, end, pathLabel, insert, report } = options;
+  const startIndex = existing.indexOf(start);
+  const endIndex = existing.indexOf(end);
+  const hasStart = startIndex >= 0;
+  const hasEnd = endIndex >= 0;
+
+  if (hasStart !== hasEnd || (hasStart && endIndex < startIndex)) {
+    report.blocked.push(`${pathLabel}: incomplete managed block markers`);
+    return undefined;
+  }
+  if (
+    hasStart &&
+    (existing.indexOf(start, startIndex + start.length) >= 0 || existing.indexOf(end, endIndex + end.length) >= 0)
+  ) {
+    report.blocked.push(`${pathLabel}: duplicate managed block markers`);
+    return undefined;
+  }
+  if (hasStart) {
+    const before = existing.slice(0, startIndex);
+    const after = existing.slice(endIndex + end.length);
+    return `${before}${block}${after}`;
+  }
+  if (!existing.trim()) {
+    return `${block}\n`;
+  }
+  if (insert === "prepend") {
+    return `${block}\n\n${existing}`;
+  }
+  return `${existing.trimEnd()}\n\n${block}\n`;
 }
 
 async function syncTree(source: string, destination: string, report: SyncReport): Promise<void> {

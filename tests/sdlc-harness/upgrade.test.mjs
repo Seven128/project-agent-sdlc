@@ -57,10 +57,15 @@ never_overwrite:
 
   const config = await readFile(path.join(root, ".harness/config.yaml"), "utf8");
   assert.match(config, /\.harness\/skills/);
+  assert.match(config, /path: "?Makefile"?/);
   assert.doesNotMatch(config, /\.harness\/agents\/skills/);
   assert.doesNotMatch(config, /\.agents\/skills/);
   assert.match(config, /\.harness\/managed\/templates/);
   assert.match(config, /\.harness\/managed\/policies/);
+
+  const makefile = await readFile(path.join(root, "Makefile"), "utf8");
+  assert.match(makefile, /sdlc-harness:make:begin/);
+  assert.match(makefile, /-include \.harness\/managed\/make\/sdlc-harness\.mk/);
 } finally {
   await rm(root, { recursive: true, force: true });
 }

@@ -83,6 +83,16 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
     push(item);
   }
 
+  if (!seen.has("Makefile")) {
+    const agentsIndex = migrated.findIndex((item) => item.path === "AGENTS.md");
+    const makefileEntry: ManagedFile = { path: "Makefile", strategy: "merge-block" };
+    if (agentsIndex >= 0) {
+      migrated.splice(agentsIndex + 1, 0, makefileEntry);
+    } else {
+      migrated.unshift(makefileEntry);
+    }
+  }
+
   return migrated;
 }
 

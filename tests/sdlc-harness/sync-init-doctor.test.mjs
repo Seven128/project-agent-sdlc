@@ -13,6 +13,8 @@ const configuredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-configure
 const cliDefaultRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-default-"));
 const cliConfiguredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-configured-"));
 const cliExistingConfigRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-existing-"));
+const makefileMergeRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-makefile-merge-"));
+const brokenMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-broken-marker-"));
 const cliPath = fileURLToPath(new URL("../../packages/sdlc-harness/dist/cli.js", import.meta.url));
 
 try {
@@ -24,6 +26,9 @@ try {
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");
   assert.match(defaultAgents, /sdlc-harness:begin/);
+  const defaultMakefile = await readFile(path.join(defaultRoot, "Makefile"), "utf8");
+  assert.match(defaultMakefile, /sdlc-harness:make:begin/);
+  assert.match(defaultMakefile, /-include \.agent\/managed\/make\/sdlc-harness\.mk/);
 
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
@@ -46,6 +51,8 @@ try {
 
   const configuredSyncReport = await runSync(configuredRoot);
   assert.equal(configuredSyncReport.blocked.length, 0);
+  const configuredMakefile = await readFile(path.join(configuredRoot, "Makefile"), "utf8");
+  assert.match(configuredMakefile, /-include \.harness\/managed\/make\/sdlc-harness\.mk/);
   await stat(path.join(configuredRoot, ".harness/skills/manager/SKILL.md"));
   await stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml"));
@@ -85,10 +92,34 @@ try {
   const cliExistingPackage = JSON.parse(await readFile(path.join(cliExistingConfigRoot, "package.json"), "utf8"));
   assert.equal(cliExistingPackage.sdlcHarness.harnessFolderName, ".harness");
   await stat(path.join(cliExistingConfigRoot, ".harness/config.yaml"));
+
+  await writeFile(
+    path.join(makefileMergeRoot, "Makefile"),
+    "PROJECT_VAR := 1\n\nlint:\n\t@echo project lint\n",
+    "utf8"
+  );
+  const makefileMergeReport = await runSync(makefileMergeRoot);
+  assert.equal(makefileMergeReport.blocked.length, 0);
+  const mergedMakefile = await readFile(path.join(makefileMergeRoot, "Makefile"), "utf8");
+  assert.ok(mergedMakefile.indexOf("# sdlc-harness:make:begin") < mergedMakefile.indexOf("PROJECT_VAR := 1"));
+  assert.match(mergedMakefile, /-include \.agent\/managed\/make\/sdlc-harness\.mk/);
+  assert.match(mergedMakefile, /PROJECT_VAR := 1/);
+  assert.match(mergedMakefile, /lint:\n\t@echo project lint/);
+  const projectLint = spawnSync("make", ["lint"], { cwd: makefileMergeRoot, encoding: "utf8" });
+  assert.equal(projectLint.status, 0, projectLint.stderr);
+  assert.match(projectLint.stdout, /project lint/);
+
+  await writeFile(path.join(brokenMarkerRoot, "AGENTS.md"), "before\n<!-- sdlc-harness:begin -->\n", "utf8");
+  await writeFile(path.join(brokenMarkerRoot, "Makefile"), "# sdlc-harness:make:end\n", "utf8");
+  const brokenMarkerReport = await runSync(brokenMarkerRoot);
+  assert.ok(brokenMarkerReport.blocked.some((line) => line.includes("AGENTS.md")));
+  assert.ok(brokenMarkerReport.blocked.some((line) => line.includes("Makefile")));
 } finally {
   await rm(defaultRoot, { recursive: true, force: true });
   await rm(configuredRoot, { recursive: true, force: true });
   await rm(cliDefaultRoot, { recursive: true, force: true });
   await rm(cliConfiguredRoot, { recursive: true, force: true });
   await rm(cliExistingConfigRoot, { recursive: true, force: true });
+  await rm(makefileMergeRoot, { recursive: true, force: true });
+  await rm(brokenMarkerRoot, { recursive: true, force: true });
 }
