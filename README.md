@@ -45,7 +45,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 ### 3.2 核心设计原则
 - 阶段契约化：每个阶段都有输入、输出、Skill、gate 和下一阶段入口。
-- 产物仓库化：关键产物进入 `.docs/`、`.harness/` 或同一工作区，成为可寻址、可版本化事实源。
+- 产物仓库化：关键产物进入 `.docs/`、`.agent/` 或同一工作区，成为可寻址、可版本化事实源。
 - 语义切片化：阶段文档按业务能力、技术主题、任务、风险或变更事件切片，避免长文档被固定 chunk 检索时丢失边界信息。
 - Skill 阶段化：每个 Skill 只沉淀一个阶段或动作的 SOP，不写成巨型 prompt。
 - Gate 声明化：lint、typecheck、test、build、review checklist、release smoke test 等硬约束必须作为阶段完成条件。
@@ -56,8 +56,8 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 ### 3.3 事实源与派生产物
 真正的事实源是：
-- `.harness/state/*.yaml`
-- `.harness/managed/policies/*.yaml`
+- `.agent/state/*.yaml`
+- `.agent/managed/policies/*.yaml`
 - `<harnessRoot>/skills/*/SKILL.md`
 - `.docs/**/*.md`
 - `.docs/INDEX.md`
@@ -95,7 +95,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 │   ├── 08_release/
 │   └── rfc/
 │
-├── .harness/
+├── .agent/
 │   ├── state/
 │   │   ├── lifecycle.yaml
 │   │   ├── tasks.yaml
@@ -122,16 +122,16 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 ### 关键目录说明：
 - `AGENTS.md`：Agent 全局协议，包含事实源、工作规则、提示词语言契约、checkpoint 和 overview 规则。
 - `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.html`。
-- `.harness/state/`：当前项目的状态数据，包括生命周期、任务、gate 结果、checkpoint 和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
-- `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agents`；当前仓库在 `package.json` 中配置为 `.harness`。
-- `.harness/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
-- `.harness/managed/templates/`：PRD、技术方案、任务、实现文档、Review、测试、RFC、Release、Checkpoint 等模板；默认内容来自 Harness 包。
+- `.agent/state/`：当前项目的状态数据，包括生命周期、任务、gate 结果、checkpoint 和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
+- `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agent`；当前仓库遵循默认值，因此使用 `.agent/skills/**`。
+- `.agent/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
+- `.agent/managed/templates/`：PRD、技术方案、任务、实现文档、Review、测试、RFC、Release、Checkpoint 等模板；默认内容来自 Harness 包。
 - `tools/`：确定性脚本和校验工具。
 - `Makefile`：统一命令入口。
 
 ## 五、生命周期与阶段契约
 ### 5.1 生命周期状态
-`.harness/state/lifecycle.yaml` 只记录当前项目处于哪个阶段，不记录所有任务细节。核心字段：
+`.agent/state/lifecycle.yaml` 只记录当前项目处于哪个阶段，不记录所有任务细节。核心字段：
 
 ```yaml
 project_name: "ProjectTemplate"
@@ -164,7 +164,7 @@ python3 tools/transition.py --to <PHASE>
 ```
 
 ### 5.2 阶段契约
-阶段契约的 canonical source 写在 `.harness/managed/policies/phase_contracts.yaml`。核心关系如下：
+阶段契约的 canonical source 写在 `.agent/managed/policies/phase_contracts.yaml`。核心关系如下：
 
 | 阶段 | Skill | 主要输入 | 主要输出 | 出口 Gate | 下一阶段 |
 |---|---|---|---|---|---|
@@ -219,7 +219,7 @@ make validate-doc-overviews
 
 ## 七、任务状态与开发循环
 ### 7.1 tasks.yaml
-`.harness/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，描述当前正在执行和即将执行的任务。它也可以被理解为 sprint-level plan：文件名采用 `tasks.yaml` 是因为内部执行单元是带有 `id`、`status`、`allowed_paths`、`required_gates` 和 `implementation_doc` 的可验证任务，而不是松散计划。典型任务字段：
+`.agent/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，描述当前正在执行和即将执行的任务。它也可以被理解为 sprint-level plan：文件名采用 `tasks.yaml` 是因为内部执行单元是带有 `id`、`status`、`allowed_paths`、`required_gates` 和 `implementation_doc` 的可验证任务，而不是松散计划。典型任务字段：
 
 ```yaml
 current_phase: "SPRINTING"
@@ -243,7 +243,7 @@ tasks:
       - "make test-current-domain"
     implementation_doc: ".docs/04_implementation/auth/login_rate_limit_impl.md"
     checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-003.md"
+    checkpoint: ".agent/state/checkpoints/DEV-003.md"
     gate_result: ""
     commit: ""
 ```
@@ -302,9 +302,9 @@ PRD
 
 触发后：
 1. 在当前 task 中设置 `checkpoint_required: true`。
-2. 设置 `checkpoint: ".harness/state/checkpoints/<Task ID>.md"`。
-3. 按 `.harness/managed/templates/CHECKPOINT_TEMPLATE.md` 写 checkpoint。
-4. 同步更新 `.harness/state/checkpoints/latest.md`。
+2. 设置 `checkpoint: ".agent/state/checkpoints/<Task ID>.md"`。
+3. 按 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md` 写 checkpoint。
+4. 同步更新 `.agent/state/checkpoints/latest.md`。
 5. 运行 `make validate-checkpoint`。
 
 任务完成并写入 implementation doc 后，可以把 `checkpoint_required` 改回 `false`；历史 checkpoint 可保留用于恢复。
@@ -418,7 +418,7 @@ RFC 必须包含：
 | `/rfc <file>` | 挂起当前流程，进入 RFC 变更处理 |
 | `/syncdocs` | 归档/切分长文档，更新 `.docs/INDEX.md` |
 | `/overview` | 运行 `make docs-overview` |
-| `/checkpoint` | 写入或更新 `.harness/state/checkpoints/latest.md` |
+| `/checkpoint` | 写入或更新 `.agent/state/checkpoints/latest.md` |
 | `/review` | 进入只读 Review |
 | `/test` | 进入测试计划和验证流程 |
 
@@ -432,9 +432,9 @@ Codex 不需要真实“模式切换”：
 新对话或上下文压缩后的恢复入口：
 1. 读取 `AGENTS.md`。
 2. 运行 `make status`。
-3. 读取 `.harness/state/lifecycle.yaml`。
-4. 读取 `.harness/state/tasks.yaml`。
-5. 如果存在 `.harness/state/checkpoints/latest.md`，先读取 checkpoint。
+3. 读取 `.agent/state/lifecycle.yaml`。
+4. 读取 `.agent/state/tasks.yaml`。
+5. 如果存在 `.agent/state/checkpoints/latest.md`，先读取 checkpoint。
 6. 根据 `active_skill` 进入当前阶段。
 
 ## 十三、最小可落地版本
@@ -450,11 +450,11 @@ Codex 不需要真实“模式切换”：
 │   ├── 03_tech_plan/
 │   ├── 04_implementation/
 │   └── rfc/
-├── .harness/state/
+├── .agent/state/
 │   ├── lifecycle.yaml
 │   ├── tasks.yaml
 │   └── checkpoints/
-├── .harness/skills/
+├── .agent/skills/
 │   ├── manager/
 │   ├── dev_sprint/
 │   ├── implementation_doc/
@@ -544,8 +544,8 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 这里的“工作流配置”不只是一组 prompt 或 Skill，而是定义 Harness 如何运行的一整套协议：
 
 - Agent 入口和角色规则：`AGENTS.md`、`<harnessRoot>/skills/**/SKILL.md`。
-- 阶段与 gate 策略：`.harness/managed/policies/**`。
-- 阶段产物模板：`.harness/managed/templates/**`。
+- 阶段与 gate 策略：`.agent/managed/policies/**`。
+- 阶段产物模板：`.agent/managed/templates/**`。
 - state protocol：`lifecycle.yaml`、`tasks.yaml`、checkpoint、memory 的字段结构、状态枚举、迁移规则和校验逻辑。
 - task/plan protocol：`current_task_id`、`tasks[]`、`allowed_paths`、`required_gates`、`implementation_doc`、`checkpoint_required` 等字段如何组成短期执行记忆。
 - checkpoint protocol：checkpoint 应该有哪些章节、何时触发、如何更新 `latest.md`。
@@ -574,7 +574,7 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 1. 迭代 AI SDLC Harness 工作流配置本身：
    - 调整阶段规则、Skill、policy、template、state protocol、checkpoint protocol、memory protocol 和 validators。
    - 通过 `.docs/**` 记录需求、架构、技术方案和真实实现。
-   - 通过 `.harness/state/**` 记录当前自举项目的运行状态。
+   - 通过 `.agent/state/**` 记录当前自举项目的运行状态。
 
 2. 开发并迭代 npm 包分发能力：
    - 将工作流配置和产物模板打包为 `@ai-sdlc/sdlc-harness`。
@@ -629,7 +629,7 @@ sdlc-harness <command>
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
 
 ### 18.3 Harness 根目录配置
-`sdlc-harness` 通过项目内 JSON 配置确定 `<harnessRoot>`。推荐写在 `package.json`：
+`sdlc-harness init` 会询问 Harness folder name。提示中会说明默认值是 `.agent`，直接回车就使用默认；也可以输入自定义目录名，例如 `.harness`。CLI 会把最终选择写入 `package.json`：
 
 ```json
 {
@@ -639,7 +639,7 @@ sdlc-harness <command>
 }
 ```
 
-也可以使用独立配置文件 `sdlc-harness.config.json`：
+如果不通过 init，也可以手写 `package.json` 或使用独立配置文件 `sdlc-harness.config.json`：
 
 ```json
 {
@@ -647,12 +647,12 @@ sdlc-harness <command>
 }
 ```
 
-未配置时，默认 `<harnessRoot>` 是 `.agents`，因此 `init` 会生成 `.agents/config.yaml`、`.agents/state/**`、`.agents/skills/**` 和 `.agents/managed/**`。当前仓库在 `package.json` 显式配置为 `.harness`，因此所有 Harness 配置都位于 `.harness/**`，Skill 直接位于 `.harness/skills/**`，不再经过 `.harness/agents/skills/**` 这一层。
+未配置时，默认 `<harnessRoot>` 是 `.agent`，因此 `init` 会生成 `.agent/config.yaml`、`.agent/state/**`、`.agent/skills/**` 和 `.agent/managed/**`。当前仓库遵循默认值，因此所有 Harness 配置都位于 `.agent/**`，Skill 直接位于 `.agent/skills/**`，不再经过额外中间目录。
 
 `harnessFloderName` 作为历史兼容别名会被读取，但新配置应使用 `harnessFolderName`。
 
 ### 18.4 为什么仍要同步到工作区
-多数 Agent 在启动或路由 Skill 时，只读取工作区内固定目录，例如 `AGENTS.md`、`.agents/skills/**/SKILL.md` 或类似约定。它们通常不会直接扫描 `node_modules` 中的包内容。
+多数 Agent 在启动或路由 Skill 时，只读取工作区内固定目录，例如 `AGENTS.md`、`.agent/skills/**/SKILL.md` 或类似约定。它们通常不会直接扫描 `node_modules` 中的包内容。
 
 因此 npm 包不能只把 Skill 藏在包里。正确流程是：
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="c413c3471cd30c16">
+  <meta name="source-hash" content="44cee3b2e4482346">
   <title>.docs/02_architecture overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/02_architecture overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>c413c3471cd30c16</code></p>
+      <p class="meta">Source hash: <code>44cee3b2e4482346</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -133,7 +133,7 @@
 <h2 id="1-关联产品需求">1. 关联产品需求</h2>
 <ul>
 <li>PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
-<li>Requirement IDs: <code>PRD-NPM-001</code> 至 <code>PRD-NPM-015</code></li>
+<li>Requirement IDs: <code>PRD-NPM-001</code> 至 <code>PRD-NPM-016</code></li>
 </ul>
 <h2 id="2-领域边界">2. 领域边界</h2>
 <p>AI SDLC Harness npm 包化后有三个明确边界：</p>
@@ -146,7 +146,7 @@
 <tbody>
 <tr>
 <td>Source Authoring Workspace</td>
-<td>当前 <code>ProjectTemplate</code> 仓库中维护工作流事实源、参考实现和包源同步输入；<code>.harness/**</code> 是工作流配置 canonical root</td>
+<td>当前 <code>ProjectTemplate</code> 仓库中维护工作流事实源、参考实现和包源同步输入；<code>.agent/**</code> 是工作流配置 canonical root</td>
 <td>不保存业务项目状态</td>
 </tr>
 <tr>
@@ -161,7 +161,7 @@
 </tr>
 </tbody>
 </table>
-<p>核心原则：包是分发源，项目通过 JSON 配置选择 Harness 根目录。默认根目录是 <code>.agents</code>，可以显式配置为 <code>.harness</code>。<code>&lt;harnessRoot&gt;/skills/**</code> 是 Skill fact source，<code>&lt;harnessRoot&gt;/state/**</code> 是项目状态事实源，<code>.docs/**</code> 是项目文档事实源。</p>
+<p>核心原则：包是分发源，项目通过 CLI init 或 JSON 配置选择 Harness 根目录。默认根目录是 <code>.agent</code>，可以显式配置为 <code>.harness</code>。<code>&lt;harnessRoot&gt;/skills/**</code> 是 Skill fact source，<code>&lt;harnessRoot&gt;/state/**</code> 是项目状态事实源，<code>.docs/**</code> 是项目文档事实源。</p>
 <h2 id="3-主要组件">3. 主要组件</h2>
 <table>
 <thead><tr>
@@ -229,7 +229,7 @@
 -&gt; npx sdlc-harness package check-source
 -&gt; CI 阻止 source workspace 与 package canonical source 漂移</code></pre>
 <h2 id="5-agent-可读性约束">5. Agent 可读性约束</h2>
-<p>多数 Agent 的 Skill 和规则路由依赖工作区固定路径。因此默认 <code>&lt;harnessRoot&gt;</code> 采用 <code>.agents</code>，让 Skill 位于 <code>.agents/skills/**/SKILL.md</code>。如果项目显式配置 <code>&lt;harnessRoot&gt;</code> 为 <code>.harness</code>，则 Skill 位于 <code>.harness/skills/**/SKILL.md</code>，这时需要由项目入口说明或 Agent 适配层负责读取该路径。npm 包中的 assets 只是分发源，不能替代工作区 materialized files。</p>
+<p>多数 Agent 的 Skill 和规则路由依赖工作区固定路径。因此默认 <code>&lt;harnessRoot&gt;</code> 采用 <code>.agent</code>，让 Skill 位于 <code>.agent/skills/**/SKILL.md</code>。如果项目显式配置 <code>&lt;harnessRoot&gt;</code> 为 <code>.harness</code>，则 Skill 位于 <code>.harness/skills/**/SKILL.md</code>，这时需要由项目入口说明或 Agent 适配层负责读取该路径。npm 包中的 assets 只是分发源，不能替代工作区 materialized files。</p>
 <h2 id="6-覆盖与冲突策略">6. 覆盖与冲突策略</h2>
 <table>
 <thead><tr>
@@ -306,7 +306,7 @@
 <tr>
 <td>Agent 无法读取包内 Skill</td>
 <td>P0</td>
-<td>默认根目录为 <code>.agents</code>，让 Skill 直接 materialize 到 <code>.agents/skills/**/SKILL.md</code>；显式 <code>.harness</code> 项目需在入口规则中声明 <code>.harness/skills/**</code></td>
+<td>默认根目录为 <code>.agent</code>，让 Skill 直接 materialize 到 <code>.agent/skills/**/SKILL.md</code>；显式 <code>.harness</code> 项目需在入口规则中声明 <code>.harness/skills/**</code></td>
 </tr>
 <tr>
 <td>validators 运行环境不一致</td>

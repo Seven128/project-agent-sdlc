@@ -7,16 +7,16 @@ def main() -> None:
         "AGENTS.md",
         "Makefile",
         ".docs/INDEX.md",
-        ".harness/state/lifecycle.yaml",
-        ".harness/state/tasks.yaml",
-        ".harness/state/tasks.draft.yaml",
-        ".harness/state/gate_results.log",
-        ".harness/state/memory.md",
-        ".harness/managed/templates/CHECKPOINT_TEMPLATE.md",
-        ".harness/policies/phase_contracts.yaml",
-        ".harness/policies/gates.yaml",
-        ".harness/policies/allowed_paths.yaml",
-        ".harness/policies/risk_matrix.yaml",
+        ".agent/state/lifecycle.yaml",
+        ".agent/state/tasks.yaml",
+        ".agent/state/tasks.draft.yaml",
+        ".agent/state/gate_results.log",
+        ".agent/state/memory.md",
+        ".agent/managed/templates/CHECKPOINT_TEMPLATE.md",
+        ".agent/policies/phase_contracts.yaml",
+        ".agent/policies/gates.yaml",
+        ".agent/policies/allowed_paths.yaml",
+        ".agent/policies/risk_matrix.yaml",
         "tools/build_doc_overviews.py",
         "tools/validate_checkpoint.py",
     ]
@@ -31,17 +31,17 @@ def main() -> None:
         ".docs/07_test",
         ".docs/08_release",
         ".docs/rfc",
-        ".harness/state/checkpoints",
-        ".harness/skills",
+        ".agent/state/checkpoints",
+        ".agent/skills",
         "tools",
     ]
     require_paths(required_files + required_dirs)
 
     lifecycle = load_lifecycle()
     phases = load_phase_contracts()
-    load_yaml(".harness/policies/gates.yaml")
-    load_yaml(".harness/policies/allowed_paths.yaml")
-    load_yaml(".harness/policies/risk_matrix.yaml")
+    load_yaml(".agent/policies/gates.yaml")
+    load_yaml(".agent/policies/allowed_paths.yaml")
+    load_yaml(".agent/policies/risk_matrix.yaml")
 
     current_phase = lifecycle.get("current_phase")
     require(current_phase in phases, f"Lifecycle current_phase is not declared: {current_phase}")
@@ -49,7 +49,7 @@ def main() -> None:
     for phase_name, contract in phases.items():
         skill = contract.get("skill")
         require(skill, f"{phase_name} missing skill")
-        skill_file = repo_path(f".harness/skills/{skill}/SKILL.md")
+        skill_file = repo_path(f".agent/skills/{skill}/SKILL.md")
         require(skill_file.exists(), f"Missing skill file for {phase_name}: {skill_file.relative_to(repo_path('.'))}")
         require("inputs" in contract, f"{phase_name} missing inputs")
         require("outputs" in contract, f"{phase_name} missing outputs")

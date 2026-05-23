@@ -39,8 +39,8 @@ def validate_checkpoint_file(task: dict, is_current: bool) -> None:
         require(section in content, f"{checkpoint} missing section: {section}")
 
     if is_current:
-        latest = repo_path(".harness/state/checkpoints/latest.md")
-        require(latest.exists(), "Current required checkpoint must also update .harness/state/checkpoints/latest.md")
+        latest = repo_path(".agent/state/checkpoints/latest.md")
+        require(latest.exists(), "Current required checkpoint must also update .agent/state/checkpoints/latest.md")
         latest_content = latest.read_text(encoding="utf-8")
         require(task_id in latest_content, f"latest.md must reference current task id: {task_id}")
 

@@ -8,7 +8,7 @@ const root = await mkdtemp(path.join(tmpdir(), "sdlc-harness-root-"));
 
 try {
   assert.deepEqual(await readHarnessRootConfig(root), {
-    harnessFolderName: ".agents",
+    harnessFolderName: ".agent",
     source: "default"
   });
 

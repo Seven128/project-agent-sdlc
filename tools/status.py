@@ -25,7 +25,7 @@ def main() -> None:
     if lifecycle.get("blocked_reason"):
         print(f"Blocked reason: {lifecycle.get('blocked_reason')}")
 
-    gate_log = repo_path(".harness/state/gate_results.log")
+    gate_log = repo_path(".agent/state/gate_results.log")
     if gate_log.exists():
         recent = [line for line in gate_log.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")]
         if recent:

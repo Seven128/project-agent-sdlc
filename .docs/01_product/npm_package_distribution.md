@@ -10,7 +10,7 @@
 
 - 提供一个 npm 包 `@ai-sdlc/sdlc-harness`，作为 Harness 通用能力的 canonical source。
 - 提供 CLI 命令 `sdlc-harness`，支持新项目初始化、已有项目接入、同步、升级和诊断。
-- 通过 `sdlc-harness sync` 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 `<harnessRoot>`。未配置时默认 `<harnessRoot>` 为 `.agents`；当前仓库显式配置为 `.harness`。
+- 通过 `sdlc-harness sync` 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 `<harnessRoot>`。未配置时默认 `<harnessRoot>` 为 `.agent`；用户也可通过 init 交互输入或 `package.json` 显式配置其它目录。
 - 通过 `sdlc-harness upgrade` 自动执行 schema migration 和 `sync`，降低已接入项目升级成本。
 - 明确 managed files、local overrides 和 never overwrite 边界，保护项目自己的 `.docs/**`、`<harnessRoot>/state/**` 和业务代码。
 
@@ -42,7 +42,8 @@
 | PRD-NPM-012 | 提供 migration 机制处理 schema version 变化 | P1 | 迁移 `<harnessRoot>/config.yaml` 和受管理文件布局 |
 | PRD-NPM-013 | 当本仓库中的 Harness 工作流内容变化时，自动更新 npm 包 canonical source 并校验包内产物一致性 | P0 | 包括 `AGENTS.md` managed block、Skill、templates、policies、Makefile 接入片段、workflow 和 validator 入口 |
 | PRD-NPM-014 | 以可配置 `<harnessRoot>` 作为 Harness 工作流配置 canonical root | P0 | Skill、policy、template、state protocol、validator 和 migration 都属于 Harness 配置；具体 state data 和 `.docs/**` 属于项目实例 |
-| PRD-NPM-015 | 支持通过 JSON 配置 `harnessFolderName` 指定 Harness 根目录，默认值为 `.agents` | P0 | 优先读取 `package.json` 的 `sdlcHarness.harnessFolderName`，也支持 `sdlc-harness.config.json`；兼容别名 `harnessFloderName` |
+| PRD-NPM-015 | 支持通过 JSON 配置 `harnessFolderName` 指定 Harness 根目录，默认值为 `.agent` | P0 | 优先读取 `package.json` 的 `sdlcHarness.harnessFolderName`，也支持 `sdlc-harness.config.json`；兼容别名 `harnessFloderName` |
+| PRD-NPM-016 | `sdlc-harness init` 交互式询问 Harness folder name，并写入 `package.json` | P0 | 提示默认值 `.agent`；直接回车采用默认；非交互环境不阻塞并使用默认 |
 
 ## 5. Acceptance Criteria
 
@@ -56,8 +57,9 @@
 - [ ] `sdlc-harness doctor` 能报告 managed files 缺失、checksum 漂移、schema version 不匹配和 local override 合并结果。
 - [ ] 本仓库的 Harness 源文件发生变化时，可以通过 `sdlc-harness package sync-source` 或等价自动化流程更新 npm 包 canonical source。
 - [ ] CI 能验证工作区 Harness 源文件与 npm 包 canonical source 一致，避免修改了工作流但漏更新包内容。
-- [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agents` 作为 Harness 根目录，Skill 位于 `.agents/skills/**`，其它配置位于 `.agents/state/**`、`.agents/managed/**` 和 `.agents/config.yaml`。
+- [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agent` 作为 Harness 根目录，Skill 位于 `.agent/skills/**`，其它配置位于 `.agent/state/**`、`.agent/managed/**` 和 `.agent/config.yaml`。
 - [ ] 配置 `harnessFolderName: ".harness"` 的项目使用 `.harness` 作为 Harness 根目录，Skill 位于 `.harness/skills/**`，不再额外套 `.harness/agents/skills/**`。
+- [ ] 执行 `npx sdlc-harness init` 时，CLI 提示输入 Harness folder name；直接回车写入默认 `.agent`，输入自定义值则写入自定义值。
 
 ## 6. Out Of Scope
 
@@ -74,12 +76,12 @@
 | 首个 npm 包是否直接发布到 npm registry，还是先以 workspace/local package 验证？ | 用户 | open |
 | CLI 使用 TypeScript/Node 实现，还是保留 Python validators 并由 Node CLI 调用？ | 技术方案阶段 | resolved：使用 TypeScript/Node runtime |
 | managed Skill 与 local override 的合并格式是简单追加，还是支持结构化 patch？ | 技术方案阶段 | open |
-| `AGENTS.md` managed block 是否引用 `.harness/instructions/AGENTS_CORE.md`，还是直接内联核心规则？ | 技术方案阶段 | open |
+| `AGENTS.md` managed block 是否引用 `.agent/instructions/AGENTS_CORE.md`，还是直接内联核心规则？ | 技术方案阶段 | open |
 | 是否需要兼容 Cursor、Cline、Claude Code 等工具的专有规则目录同步？ | 用户 | open |
 
 ## 8. 依赖与风险
 
-- 依赖 Agent 对工作区固定文件的读取约定，例如 `AGENTS.md` 和 `.agents/skills/**/SKILL.md`；因此默认 `<harnessRoot>` 采用 `.agents`，显式 `.harness` 项目需要通过入口规则或 Agent 适配层声明 `.harness/skills/**`。
+- 依赖 Agent 对工作区固定文件的读取约定，例如 `AGENTS.md` 和本地 `skills/**/SKILL.md` 目录；因此默认 `<harnessRoot>` 采用 `.agent`，显式 `.harness` 项目需要通过入口规则或 Agent 适配层声明 `.harness/skills/**`。
 - npm 包升级与工作区文件同步需要 checksum、managed marker 和冲突策略，否则容易覆盖项目本地修改。
 - `Makefile` 和 `AGENTS.md` 是高冲突文件，必须使用 managed block 或 include 方式，不应整体覆盖。
 - validators 运行时已经收敛到 TypeScript/Node；仓库内 Python 工具仅作为当前 Harness 本地 gate 和辅助脚本存在。

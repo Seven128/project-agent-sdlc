@@ -6,23 +6,23 @@ core:
 managed_files:
   - path: "AGENTS.md"
     strategy: "merge-block"
-  - path: ".harness/skills"
+  - path: ".agent/skills"
     strategy: "managed"
-  - path: ".harness/managed/templates"
+  - path: ".agent/managed/templates"
     strategy: "managed"
-  - path: ".harness/managed/policies"
+  - path: ".agent/managed/policies"
     strategy: "merge-with-local"
-  - path: ".harness/managed/make/sdlc-harness.mk"
+  - path: ".agent/managed/make/sdlc-harness.mk"
     strategy: "managed"
   - path: ".github/workflows/harness.yml"
     strategy: "create-if-missing"
 
 local_overrides:
-  - ".harness/overrides/**"
-  - ".harness/managed/policies/*.local.yaml"
+  - ".agent/overrides/**"
+  - ".agent/managed/policies/*.local.yaml"
 
 never_overwrite:
   - ".docs/**"
-  - ".harness/state/**"
+  - ".agent/state/**"
   - "src/**"
   - "tests/**"

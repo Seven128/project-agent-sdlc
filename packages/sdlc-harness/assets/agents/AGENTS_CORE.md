@@ -1,15 +1,15 @@
 # AI SDLC Harness Protocol
 
-本仓库使用 AI SDLC Harness 工作流。开始任何工作前，把 `.harness/` 和 `.docs/`
+本仓库使用 AI SDLC Harness 工作流。开始任何工作前，把 `.agent/` 和 `.docs/`
 视为项目事实源。
 
 ## 事实源
 
-- 生命周期状态：`.harness/state/lifecycle.yaml`
-- 任务状态：`.harness/state/tasks.yaml`
-- 任务草案：`.harness/state/tasks.draft.yaml`
-- Checkpoint：`.harness/state/checkpoints/`
-- 项目长期记忆：`.harness/state/memory.md`
+- 生命周期状态：`.agent/state/lifecycle.yaml`
+- 任务状态：`.agent/state/tasks.yaml`
+- 任务草案：`.agent/state/tasks.draft.yaml`
+- Checkpoint：`.agent/state/checkpoints/`
+- 项目长期记忆：`.agent/state/memory.md`
 - 产品文档：`.docs/01_product/`
 - 架构文档：`.docs/02_architecture/`
 - 技术方案：`.docs/03_tech_plan/`
@@ -32,8 +32,8 @@
 
 - `checkpoint` 是 task 内部的执行现场快照，不是正式需求、技术方案或 implementation doc。
 - 满足触发条件时，在当前 task 中设置 `checkpoint_required: true`，并写入 `checkpoint` 路径。
-- 当前 task 需要 checkpoint 时，同时更新 `.harness/state/checkpoints/latest.md`。
-- Checkpoint 使用 `.harness/managed/templates/CHECKPOINT_TEMPLATE.md`。
+- 当前 task 需要 checkpoint 时，同时更新 `.agent/state/checkpoints/latest.md`。
+- Checkpoint 使用 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md`。
 - 使用 `make validate-checkpoint` 校验必需 checkpoint 是否完整。
 - 任务完成并写入 implementation doc 后，可以把 `checkpoint_required` 改回 `false`；历史 checkpoint 可保留用于恢复。
 
@@ -50,12 +50,12 @@
 
 - 面向人阅读的说明、规则、SOP、检查清单使用中文。
 - 机器契约保持英文，包括字段名、路径、命令、阶段枚举、状态枚举、脚本参数。
-- 不翻译 `.harness/state/*.yaml`、`.harness/managed/policies/*.yaml` 中的 key。
+- 不翻译 `.agent/state/*.yaml`、`.agent/managed/policies/*.yaml` 中的 key。
 - 不翻译 `current_phase`、`active_skill`、`allowed_paths`、`required_gates`、`implementation_doc` 等字段名。
 - 不翻译 `REQUIREMENT_GATHERING`、`ARCHITECTING`、`SPRINTING`、`REVIEWING`、`TESTING`、`RELEASING`、`RFC_RECALIBRATION`、`BLOCKED` 等阶段枚举。
 - 不翻译 `pending`、`in_progress`、`done`、`blocked`、`pending_revision`、`cancelled`、`archived` 等任务状态。
-- 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.harness/state/tasks.yaml` 等命令和路径。
-- 后续更新 `.harness/skills/*/SKILL.md` 或 `.harness/managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agents`。
+- 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.agent/state/tasks.yaml` 等命令和路径。
+- 后续更新 `.agent/skills/*/SKILL.md` 或 `.agent/managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agent`。
 
 ## 通用执行原则
 
@@ -69,7 +69,7 @@
 
 ## 工作规则
 
-1. 选择任何角色或 Skill 前，先读取 `.harness/state/lifecycle.yaml`。
+1. 选择任何角色或 Skill 前，先读取 `.agent/state/lifecycle.yaml`。
 2. 除非用户明确要求其它工作流动作，否则使用 `active_skill` 指定的 Skill。
 3. 产品文档和技术方案未形成前，不写业务代码。
 4. 在 `SPRINTING` 阶段，一次只执行一个任务。
@@ -78,7 +78,7 @@
 7. 代码 gate 通过后，更新任务实现文档和 `.docs/INDEX.md`。
 8. `reviewer` 角色只读，不直接修改源码。
 9. 需求变更必须进入 RFC 工作流。
-10. 不直接删除过时工作流产物；需要归档时移动到 `.harness/archive/`。
+10. 不直接删除过时工作流产物；需要归档时移动到 `.agent/archive/`。
 11. 文档 slice 发生变化后，运行 `make docs-overview` 刷新对应 `overview.html`。
 12. 满足 checkpoint 触发条件时，先写 checkpoint，再继续推进或交接。
 13. 如果信息缺失，或 gate 因基础设施原因失败，停止推进并报告 blocker。
@@ -91,17 +91,17 @@
 - `/rfc <file>`：挂起当前流程并进入 RFC recalibration。
 - `/syncdocs`：同步 `.docs/INDEX.md` 与当前文档事实源。
 - `/overview`：运行 `make docs-overview`，刷新 `.docs/<stage>/overview.html` 派生视图。
-- `/checkpoint`：按当前 task 写入或更新 `.harness/state/checkpoints/latest.md`。
+- `/checkpoint`：按当前 task 写入或更新 `.agent/state/checkpoints/latest.md`。
 - `/review`：运行只读 Review 工作流。
 - `/test`：运行测试计划和验证工作流。
 
 ## 阶段流转
 
-正常阶段流转不要手动编辑 `.harness/state/lifecycle.yaml`。使用：
+正常阶段流转不要手动编辑 `.agent/state/lifecycle.yaml`。使用：
 
 ```sh
 python3 tools/transition.py --to <PHASE>
 ```
 
 流转前先运行阶段 gate，通常使用 `make validate-current`，或使用
-`.harness/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。
+`.agent/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。

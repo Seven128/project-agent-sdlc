@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="dec459a332682ada">
+  <meta name="source-hash" content="eaa0fd4ce0f8b1e5">
   <title>.docs/04_implementation overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/04_implementation overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>dec459a332682ada</code></p>
+      <p class="meta">Source hash: <code>eaa0fd4ce0f8b1e5</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -128,6 +128,7 @@
 <li><a href="#npm-package-dev-006-unified-harness-root-md">npm_package/dev_006_unified_harness_root.md</a></li>
 <li><a href="#npm-package-dev-007-remove-tracked-agents-skills-md">npm_package/dev_007_remove_tracked_agents_skills.md</a></li>
 <li><a href="#npm-package-dev-008-configurable-harness-root-md">npm_package/dev_008_configurable_harness_root.md</a></li>
+<li><a href="#npm-package-dev-009-init-prompt-default-agent-root-md">npm_package/dev_009_init_prompt_default_agent_root.md</a></li>
 </ol>
       </div>
     </section>
@@ -1265,6 +1266,164 @@
 <li>新项目未配置时会默认写入 <code>.agents/**</code>，这是 Agent Skill discovery 的低摩擦路径。</li>
 <li>使用 <code>.harness</code> 的项目需要在项目入口规则中明确 <code>.harness/skills/**</code> 是 Skill source；当前仓库已通过 <code>AGENTS.md</code> 和 <code>package.json</code> 声明。</li>
 <li>当 Harness source workspace 中的 Skill、模板、策略、Makefile、workflow 或 <code>AGENTS.md</code> 变化时，继续运行 <code>sdlc-harness package sync-source</code> 和 <code>package check-source</code>，防止包内 assets 漂移。</li>
+</ul>
+</article>
+<article class="doc-slice" id="npm-package-dev-009-init-prompt-default-agent-root-md">
+<header>
+<h2>npm_package/dev_009_init_prompt_default_agent_root.md</h2>
+<a class="source-link" href="npm_package/dev_009_init_prompt_default_agent_root.md">Source Markdown</a>
+</header>
+<h1 id="dev-009-init-prompt-and-default-agent-root-implementation-doc">DEV-009 Init Prompt And Default Agent Root Implementation Doc</h1>
+<h2 id="1-关联信息">1. 关联信息</h2>
+<ul>
+<li>Task ID: <code>DEV-009</code></li>
+<li>Linked PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
+<li>Linked technical design: <code>.docs/03_tech_plan/harness_package_distribution.md</code></li>
+<li>Linked RFC: <code>.docs/rfc/RFC_003_init_prompt_and_default_agent_root.md</code></li>
+<li>Linked commit: <code>pending</code></li>
+</ul>
+<h2 id="2-本次实现范围">2. 本次实现范围</h2>
+<ul>
+<li>新增（Added）:</li>
+<li><code>sdlc-harness init</code> 的 Harness folder name 交互式询问。</li>
+<li><code>--harness-folder &lt;path&gt;</code> / <code>--harness-folder=&lt;path&gt;</code> CLI 参数，用于脚本和测试指定 root。</li>
+<li><code>packages/sdlc-harness/src/lib/package-json-config.ts</code>，负责读写 <code>package.json#sdlcHarness.harnessFolderName</code>。</li>
+<li><code>RFC_003</code> 和 DEV-009 checkpoint。</li>
+<li>修改（Changed）:</li>
+<li>默认 Harness root 从 <code>.agents</code> 改为 <code>.agent</code>。</li>
+<li>当前仓库工作流事实源从 <code>.harness/**</code> 迁移到 <code>.agent/**</code>。</li>
+<li>当前仓库移除 <code>package.json#sdlcHarness.harnessFolderName</code>，遵循默认 <code>.agent</code>。</li>
+<li>本地 Python tools、<code>AGENTS.md</code>、README、PRD、架构、技术方案和 source mappings 全部指向 <code>.agent</code> 当前 root。</li>
+<li><code>sync</code> 渲染 <code>AGENTS.md</code> managed block 时以 <code>.agent</code> 作为模板 root 替换源。</li>
+<li>包测试覆盖默认 <code>.agent</code>、自定义 <code>.harness</code>、CLI 默认写入和已有 package 配置沿用。</li>
+<li>未覆盖（Not covered）:</li>
+<li>没有引入复杂多选 UI；首版使用一行文本输入，直接回车采用默认。</li>
+</ul>
+<h2 id="3-真实代码结构">3. 真实代码结构</h2>
+<table>
+<thead><tr>
+<th>文件（File）</th>
+<th>作用（Purpose）</th>
+<th>关键函数/对象（Key Functions/Objects）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>packages/sdlc-harness/src/commands/init.ts</code></td>
+<td>CLI init 入口和交互逻辑</td>
+<td><code>resolveInitHarnessRoot</code>, <code>promptHarnessRoot</code>, <code>valueForArg</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/package-json-config.ts</code></td>
+<td>写入 package root 配置</td>
+<td><code>packageHarnessRoot</code>, <code>writePackageHarnessRoot</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/paths.ts</code></td>
+<td>包默认 root 常量</td>
+<td><code>DEFAULT_HARNESS_ROOT = &quot;.agent&quot;</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/harness-root.ts</code></td>
+<td>root 配置读取和校验</td>
+<td><code>normalizeHarnessFolderName</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/init.ts</code></td>
+<td>初始化前的非空判断</td>
+<td><code>projectHasExistingFiles</code></td>
+</tr>
+<tr>
+<td><code>.agent/**</code></td>
+<td>当前仓库 Harness 工作流事实源</td>
+<td>state, skills, managed templates, policies</td>
+</tr>
+<tr>
+<td><code>tools/*.py</code></td>
+<td>当前仓库本地 gate 和状态工具</td>
+<td><code>.agent</code> 路径</td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/sync-init-doctor.test.mjs</code></td>
+<td>init/sync/doctor 和 CLI 回归</td>
+<td>CLI default/custom/existing package config</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-核心数据流">4. 核心数据流</h2>
+<pre><code class="language-txt">sdlc-harness init
+-&gt; if package/sdlc config exists, keep it
+-&gt; else ask Harness folder name in TTY
+-&gt; non-TTY uses .agent
+-&gt; write package.json#sdlcHarness.harnessFolderName
+-&gt; runInit resolves root
+-&gt; create &lt;harnessRoot&gt;/config.yaml + state + managed assets</code></pre>
+<h2 id="5-关键实现逻辑">5. 关键实现逻辑</h2>
+<ul>
+<li>输入校验（Input validation）:</li>
+<li>复用 <code>normalizeHarnessFolderName</code>，拒绝空值、<code>.</code>、<code>..</code>、绝对路径和包含 <code>..</code> 的路径。</li>
+<li>直接回车时使用 <code>.agent</code>。</li>
+<li>核心分支（Core branches）:</li>
+<li><code>--harness-folder</code> 显式参数优先。</li>
+<li>已存在 <code>package.json#sdlcHarness.harnessFolderName</code> 或 <code>sdlc-harness.config.json</code> 时，沿用现有配置。</li>
+<li>非交互环境不阻塞，直接写入默认 <code>.agent</code>。</li>
+<li>异常处理（Error handling）:</li>
+<li>非对象 <code>package.json</code> 会报错，避免写入不可预期结构。</li>
+<li>写入 package 配置后再运行 <code>runInit</code>，保证 config/state/managed files 落在同一个 root。</li>
+<li>边界兜底（Boundary fallback）:</li>
+<li>旧 <code>.harness</code> 和 <code>.agents</code> 路径仍保留在 migration/sync 的 legacy branches 中，便于老项目升级。</li>
+<li>性能或并发注意事项（Performance or concurrency notes）:</li>
+<li>仅本地 JSON 和文件写入，没有新增网络依赖。</li>
+</ul>
+<h2 id="6-与技术方案的偏移">6. 与技术方案的偏移</h2>
+<ul>
+<li>RFC_003 要求 CLI 询问目录名。本实现额外提供 <code>--harness-folder</code>，用于非交互脚本和自动测试。</li>
+<li>当前仓库遵循默认 <code>.agent</code>，所以根 <code>package.json</code> 不再保留 <code>sdlcHarness.harnessFolderName</code>。</li>
+</ul>
+<h2 id="7-测试覆盖-test-coverage">7. 测试覆盖（Test Coverage）</h2>
+<table>
+<thead><tr>
+<th>测试（Test）</th>
+<th>覆盖范围（Coverage）</th>
+<th>结果（Result）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>npm test</code></td>
+<td>TypeScript build and package behavior tests</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/harness-root.test.mjs</code></td>
+<td>默认 <code>.agent</code> root 和自定义 root 配置读取</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/sync-init-doctor.test.mjs</code></td>
+<td>默认 <code>.agent</code>、自定义 <code>.harness</code>、CLI init 默认写入、CLI 自定义写入、已有 package 配置沿用</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>node packages/sdlc-harness/dist/cli.js package check-source</code></td>
+<td>当前 <code>.agent</code> source workspace 到包 assets 无漂移</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>node packages/sdlc-harness/dist/cli.js validate-harness</code></td>
+<td>当前仓库 resolved root <code>.agent</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make validate-harness</code></td>
+<td>本地 Harness scaffold、prompt language、checkpoint、overview gates</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-后续维护注意事项">8. 后续维护注意事项</h2>
+<ul>
+<li>当前仓库的 Harness fact source 是 <code>.agent/**</code>；不要再新增 <code>.harness/**</code> 作为当前 root。</li>
+<li>自定义业务项目仍可在 init 时输入 <code>.harness</code>，CLI 会写入 <code>package.json#sdlcHarness.harnessFolderName</code>。</li>
+<li>后续改动 <code>AGENTS.md</code>、Skill、templates、policies、Makefile 或 workflow 后，继续运行 <code>sdlc-harness package sync-source</code> 和 <code>package check-source</code>。</li>
 </ul>
 </article>
   </main>

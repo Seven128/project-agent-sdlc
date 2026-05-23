@@ -1,5 +1,5 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-008"
+current_task_id: "DEV-009"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -226,3 +226,35 @@ tasks:
     checkpoint: ".harness/state/checkpoints/DEV-008.md"
     gate_result: "PASS"
     commit: "0c8423e"
+
+  - id: "DEV-009"
+    title: "init 询问 Harness root 并迁移当前仓库到 .agent 默认根"
+    status: "in_progress"
+    priority: "P0"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_003_init_prompt_and_default_agent_root.md"
+    allowed_paths:
+      - "package.json"
+      - "AGENTS.md"
+      - "README.md"
+      - ".gitignore"
+      - ".agent/**"
+      - ".harness/**"
+      - "tools/**"
+      - "packages/sdlc-harness/**"
+      - "tests/sdlc-harness/**"
+      - ".docs/04_implementation/npm_package/**"
+    required_gates:
+      - "npm test"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "node packages/sdlc-harness/dist/cli.js validate-harness"
+      - "make validate-harness"
+    implementation_doc: ".docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md"
+    checkpoint_required: true
+    checkpoint: ".agent/state/checkpoints/DEV-009.md"
+    gate_result: ""

@@ -44,7 +44,7 @@ export async function writeConfigIfMissing(projectRoot: string): Promise<boolean
   return true;
 }
 
-export function normalizeConfig(value: Partial<HarnessConfig>, root = ".agents"): HarnessConfig {
+export function normalizeConfig(value: Partial<HarnessConfig>, root = ".agent"): HarnessConfig {
   const fallback = defaultConfig(root);
   return {
     core: {

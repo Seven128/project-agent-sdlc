@@ -3,7 +3,7 @@
 ## 1. 关联产品需求
 
 - PRD: `.docs/01_product/npm_package_distribution.md`
-- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-015`
+- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-016`
 
 ## 2. 现有上下文
 
@@ -140,13 +140,13 @@ source_mappings:
   - source: "AGENTS.md"
     target: "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
     mode: "extract-managed-block"
-  - source: ".harness/skills"
+  - source: ".agent/skills"
     target: "packages/sdlc-harness/assets/skills"
     mode: "copy-tree"
-  - source: ".harness/managed/templates"
+  - source: ".agent/managed/templates"
     target: "packages/sdlc-harness/assets/templates"
     mode: "copy-tree"
-  - source: ".harness/managed/policies"
+  - source: ".agent/managed/policies"
     target: "packages/sdlc-harness/assets/policies"
     mode: "copy-tree"
   - source: "Makefile"
@@ -168,6 +168,7 @@ source_mappings:
 | DEV-005 | 将 validators 入口接入 `sdlc-harness validate-*` | `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_005_validate_commands.md` |
 | DEV-006 | 统一 `.harness` 工作流根目录并生成 `.agents` 兼容出口 | `README.md`, `.harness/config.yaml`, `.harness/agents/**`, `.harness/managed/**`, `.agents/skills/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/02_architecture/harness_package_distribution.md`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_006_unified_harness_root.md` |
 | DEV-008 | 支持 `harnessFolderName` 配置 Harness 根目录 | `package.json`, `AGENTS.md`, `README.md`, `.harness/config.yaml`, `.harness/skills/**`, `.harness/managed/**`, `tools/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_008_configurable_harness_root.md` |
+| DEV-009 | init 询问 Harness root 并迁移当前仓库到 `.agent` 默认根 | `package.json`, `AGENTS.md`, `README.md`, `.gitignore`, `.agent/**`, `.harness/**`, `tools/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md` |
 
 ## 7. 风险与缓解
 
@@ -176,10 +177,10 @@ source_mappings:
 | 包源码与当前工作流内容漂移 | P0 | `package sync-source` 更新，`package check-source` 和 CI 强制检查 |
 | 根 `Makefile` 与业务项目冲突 | P0 | 只插入 include，不整体覆盖 |
 | `AGENTS.md` 与项目自定义规则冲突 | P0 | 使用 managed block，marker 外内容不改 |
-| 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agents`；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
+| 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agent`；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
 | npm 包 validators 运行环境不稳定 | P1 | validators 运行时使用 TypeScript/Node，不依赖 Python 运行时 |
 
 ## 8. 需要关注的方案偏移
 
 - 如果当前仓库继续作为包源码仓库，`packages/sdlc-harness/assets/**` 不应手写，应由 `package sync-source` 从工作流源文件生成。
-- RFC_002 调整后，Harness root 由 JSON 配置决定；默认 `.agents`，当前仓库显式配置 `.harness`。
+- RFC_003 调整后，`sdlc-harness init` 会询问 Harness root；默认 `.agent`，当前仓库也使用默认 `.agent`。

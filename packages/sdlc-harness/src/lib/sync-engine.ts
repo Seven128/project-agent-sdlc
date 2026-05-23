@@ -105,7 +105,7 @@ async function syncAgentsBlock(destination: string, root: string, report: SyncRe
 }
 
 function renderAgentsCore(content: string, root: string): string {
-  return content.replaceAll(".harness", root);
+  return content.replaceAll(".agent", root);
 }
 
 async function syncTree(source: string, destination: string, report: SyncReport): Promise<void> {

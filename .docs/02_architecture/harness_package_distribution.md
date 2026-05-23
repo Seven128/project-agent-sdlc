@@ -3,7 +3,7 @@
 ## 1. 关联产品需求
 
 - PRD: `.docs/01_product/npm_package_distribution.md`
-- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-015`
+- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-016`
 
 ## 2. 领域边界
 
@@ -11,11 +11,11 @@ AI SDLC Harness npm 包化后有三个明确边界：
 
 | 边界 | 责任 | 不负责 |
 |---|---|---|
-| Source Authoring Workspace | 当前 `ProjectTemplate` 仓库中维护工作流事实源、参考实现和包源同步输入；`.harness/**` 是工作流配置 canonical root | 不保存业务项目状态 |
+| Source Authoring Workspace | 当前 `ProjectTemplate` 仓库中维护工作流事实源、参考实现和包源同步输入；`.agent/**` 是工作流配置 canonical root | 不保存业务项目状态 |
 | npm Package Canonical Source | 发布 `@ai-sdlc/sdlc-harness`，提供 CLI、默认 Skill、模板、策略、validators、migrations | 不直接作为 Agent 启动时唯一读取源 |
 | Project Instance Workspace | 保存某个业务项目的 `.docs/**`、`<harnessRoot>/state/**`、local overrides 和业务代码 | 不直接 fork 通用 Harness 逻辑 |
 
-核心原则：包是分发源，项目通过 JSON 配置选择 Harness 根目录。默认根目录是 `.agents`，可以显式配置为 `.harness`。`<harnessRoot>/skills/**` 是 Skill fact source，`<harnessRoot>/state/**` 是项目状态事实源，`.docs/**` 是项目文档事实源。
+核心原则：包是分发源，项目通过 CLI init 或 JSON 配置选择 Harness 根目录。默认根目录是 `.agent`，可以显式配置为 `.harness`。`<harnessRoot>/skills/**` 是 Skill fact source，`<harnessRoot>/state/**` 是项目状态事实源，`.docs/**` 是项目文档事实源。
 
 ## 3. 主要组件
 
@@ -65,7 +65,7 @@ npm update @ai-sdlc/sdlc-harness
 
 ## 5. Agent 可读性约束
 
-多数 Agent 的 Skill 和规则路由依赖工作区固定路径。因此默认 `<harnessRoot>` 采用 `.agents`，让 Skill 位于 `.agents/skills/**/SKILL.md`。如果项目显式配置 `<harnessRoot>` 为 `.harness`，则 Skill 位于 `.harness/skills/**/SKILL.md`，这时需要由项目入口说明或 Agent 适配层负责读取该路径。npm 包中的 assets 只是分发源，不能替代工作区 materialized files。
+多数 Agent 的 Skill 和规则路由依赖工作区固定路径。因此默认 `<harnessRoot>` 采用 `.agent`，让 Skill 位于 `.agent/skills/**/SKILL.md`。如果项目显式配置 `<harnessRoot>` 为 `.harness`，则 Skill 位于 `.harness/skills/**/SKILL.md`，这时需要由项目入口说明或 Agent 适配层负责读取该路径。npm 包中的 assets 只是分发源，不能替代工作区 materialized files。
 
 ## 6. 覆盖与冲突策略
 
@@ -87,6 +87,6 @@ npm update @ai-sdlc/sdlc-harness
 |---|---|---|
 | `AGENTS.md` 或 `Makefile` 被整体覆盖 | P0 | 只使用 managed block / include，并在 sync 前做 checksum 和 diff 检查 |
 | 包内 canonical assets 与当前仓库参考实现漂移 | P0 | 提供 `package sync-source` 和 `package check-source`，CI 强制检查 |
-| Agent 无法读取包内 Skill | P0 | 默认根目录为 `.agents`，让 Skill 直接 materialize 到 `.agents/skills/**/SKILL.md`；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
+| Agent 无法读取包内 Skill | P0 | 默认根目录为 `.agent`，让 Skill 直接 materialize 到 `.agent/skills/**/SKILL.md`；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
 | validators 运行环境不一致 | P1 | validators 运行时使用 TypeScript/Node，避免 npm 包依赖 Python 运行时 |
 | 已有项目接入误改业务文件 | P0 | `init --adopt` 默认只创建 Harness 入口，业务文件需用户显式确认才修改 |

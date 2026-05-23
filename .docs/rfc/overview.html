@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="767b6ed4e7e1a844">
+  <meta name="source-hash" content="d7825e2272855a66">
   <title>.docs/rfc overview</title>
   <style>
     :root {
@@ -116,12 +116,13 @@
     <section class="hero">
       <h1>.docs/rfc overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>767b6ed4e7e1a844</code></p>
+      <p class="meta">Source hash: <code>d7825e2272855a66</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
 <li><a href="#rfc-001-unify-harness-directory-model-md">RFC_001_unify_harness_directory_model.md</a></li>
 <li><a href="#rfc-002-configurable-harness-root-md">RFC_002_configurable_harness_root.md</a></li>
+<li><a href="#rfc-003-init-prompt-and-default-agent-root-md">RFC_003_init_prompt_and_default_agent_root.md</a></li>
 </ol>
       </div>
     </section>
@@ -374,6 +375,139 @@
 <li><input type="checkbox" disabled> 覆盖默认 <code>.agents</code> root 的 init/sync/validate 测试。</li>
 <li><input type="checkbox" disabled> 覆盖 <code>package.json</code> <code>.harness</code> root 的 init/sync/validate 测试。</li>
 <li><input type="checkbox" disabled> 覆盖 <code>sdlc-harness.config.json</code> 和 <code>harnessFloderName</code> 别名读取。</li>
+<li><input type="checkbox" disabled> 覆盖当前仓库 source mappings 无漂移。</li>
+<li><input type="checkbox" disabled> 运行 <code>make validate-current</code> 确认开发阶段闭环。</li>
+</ul>
+<h2 id="7-status">7. Status</h2>
+<ul>
+<li>Status: APPLIED</li>
+</ul>
+</article>
+<article class="doc-slice" id="rfc-003-init-prompt-and-default-agent-root-md">
+<header>
+<h2>RFC_003_init_prompt_and_default_agent_root.md</h2>
+<a class="source-link" href="RFC_003_init_prompt_and_default_agent_root.md">Source Markdown</a>
+</header>
+<h1 id="rfc-003-init-询问-harness-根目录并默认使用-agent">RFC_003: init 询问 Harness 根目录并默认使用 .agent</h1>
+<h2 id="1-背景">1. 背景</h2>
+<p>RFC_002 已支持通过 <code>harnessFolderName</code> 配置 Harness root，但新项目接入时仍然需要用户预先知道要在 <code>package.json</code> 中写什么。这个体验不够自然：用户运行 <code>sdlc-harness init</code> 时，CLI 应该主动询问 Harness 配置目录名，并说明默认值。</p>
+<p>用户进一步明确：默认 Harness 配置目录应为 <code>.agent</code>，直接回车使用默认值；用户也可以输入自定义目录名。CLI 最终仍把选择写入 <code>package.json</code> 的 <code>sdlcHarness.harnessFolderName</code>。当前 <code>ProjectTemplate</code> 仓库也应遵循默认目录，从 <code>.harness</code> 迁移为 <code>.agent</code>。</p>
+<h2 id="2-变更内容-change-content">2. 变更内容（Change Content）</h2>
+<ul>
+<li>Added:</li>
+<li><code>sdlc-harness init</code> 在 CLI 层询问 Harness folder name。</li>
+<li>提示文案说明默认值为 <code>.agent</code>，直接回车采用默认。</li>
+<li>CLI 将最终选择写入 <code>package.json</code> 的 <code>sdlcHarness.harnessFolderName</code>。</li>
+<li>新增 DEV-009 实现任务。</li>
+<li>Changed:</li>
+<li>npm 包默认 Harness root 从 <code>.agents</code> 改为 <code>.agent</code>。</li>
+<li>当前仓库从 <code>.harness/**</code> 迁移为 <code>.agent/**</code>，不再通过 package.json 显式配置 <code>.harness</code>。</li>
+<li><code>AGENTS.md</code>、README、PRD、架构、技术方案、Python tools、source mappings 和测试改用 <code>.agent</code> 当前根目录。</li>
+<li><code>sdlc-harness init</code> 在非交互环境中不阻塞，采用默认 <code>.agent</code>。</li>
+<li>Removed:</li>
+<li>当前仓库对 <code>.harness</code> 作为自身 Harness root 的显式配置。</li>
+<li>当前仓库 <code>.harness/**</code> 工作流事实源目录。</li>
+<li>Unchanged:</li>
+<li>自定义项目仍可在 <code>package.json</code> 中配置其它 <code>harnessFolderName</code>，例如 <code>.harness</code>。</li>
+<li><code>sdlc-harness.config.json</code> 和 <code>harnessFloderName</code> 兼容别名仍可被读取。</li>
+<li><code>AGENTS.md</code> 仍位于项目根，作为 Agent 全局入口。</li>
+<li><code>.docs/**</code> 仍是项目文档事实源，不随 Harness root 移动。</li>
+</ul>
+<h2 id="3-product-impact-产品影响">3. Product Impact（产品影响）</h2>
+<table>
+<thead><tr>
+<th>受影响 PRD（Affected PRD）</th>
+<th>影响（Impact）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>.docs/01_product/npm_package_distribution.md</code></td>
+<td>需要新增 init 交互式选择 root 的需求，并把默认 root 从 <code>.agents</code> 改为 <code>.agent</code>。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-technical-impact-candidates-技术影响候选">4. Technical Impact Candidates（技术影响候选）</h2>
+<table>
+<thead><tr>
+<th>模块（Module）</th>
+<th>影响（Impact）</th>
+<th>置信度（Confidence）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>packages/sdlc-harness/src/commands/init.ts</code></td>
+<td>需要询问 Harness folder name，并在 init 前写入 <code>package.json#sdlcHarness.harnessFolderName</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/paths.ts</code></td>
+<td>默认 Harness root 改为 <code>.agent</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/harness-root.ts</code></td>
+<td>需要保持 <code>.agent</code> 默认和配置读取语义一致。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/source-mappings.yaml</code></td>
+<td>当前仓库 source mappings 改为 <code>.agent/skills</code>、<code>.agent/managed/**</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.harness/**</code> -&gt; <code>.agent/**</code></td>
+<td>当前仓库工作流事实源迁移到默认目录。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tools/*.py</code></td>
+<td>本地 Python gate、transition、status 和 validation 需要按当前 root <code>.agent</code> 读写。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>AGENTS.md</code></td>
+<td>需要改为 <code>.agent/**</code> 路由，并说明默认 root。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>需要更新默认目录、交互式 init、当前仓库自迭代描述和接入说明。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.docs/02_architecture/harness_package_distribution.md</code></td>
+<td>需要更新默认 root 和 Agent 可读性说明。</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>.docs/03_tech_plan/harness_package_distribution.md</code></td>
+<td>需要新增 DEV-009，并更新默认 root、source mappings、风险说明。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/**</code></td>
+<td>需要覆盖 CLI init prompt/default 和 <code>.agent</code> 默认 root。</td>
+<td>high</td>
+</tr>
+</tbody>
+</table>
+<p>Impact analysis:</p>
+<pre><code class="language-sh">python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_003_init_prompt_and_default_agent_root.md --top 40</code></pre>
+<h2 id="5-acceptance-criteria">5. Acceptance Criteria</h2>
+<ul>
+<li><input type="checkbox" disabled> <code>sdlc-harness init</code> 在交互式 CLI 中提示输入 Harness folder name，并说明默认 <code>.agent</code>。</li>
+<li><input type="checkbox" disabled> 用户直接回车时，CLI 写入 <code>package.json#sdlcHarness.harnessFolderName = &quot;.agent&quot;</code> 并初始化 <code>.agent/**</code>。</li>
+<li><input type="checkbox" disabled> 用户输入 <code>.harness</code> 时，CLI 写入 <code>package.json#sdlcHarness.harnessFolderName = &quot;.harness&quot;</code> 并初始化 <code>.harness/**</code>。</li>
+<li><input type="checkbox" disabled> 非交互环境运行 <code>sdlc-harness init</code> 不阻塞，使用默认 <code>.agent</code>。</li>
+<li><input type="checkbox" disabled> 当前仓库工作流事实源迁移为 <code>.agent/**</code>，<code>AGENTS.md</code> 和 README 不再把 <code>.harness</code> 描述为当前 root。</li>
+<li><input type="checkbox" disabled> <code>npm test</code>、<code>package check-source</code>、<code>validate-harness</code>、<code>make validate-harness</code> 通过。</li>
+</ul>
+<h2 id="6-regression-requirements-回归要求">6. Regression Requirements（回归要求）</h2>
+<ul>
+<li><input type="checkbox" disabled> 覆盖默认 <code>.agent</code> root 的 init/sync/doctor/validate 测试。</li>
+<li><input type="checkbox" disabled> 覆盖 CLI init 写入 package.json 默认 <code>.agent</code>。</li>
+<li><input type="checkbox" disabled> 覆盖 CLI init 输入自定义 <code>.harness</code> 时写入 package.json 并生成 <code>.harness/**</code>。</li>
+<li><input type="checkbox" disabled> 覆盖 <code>package.json</code> 中已存在 <code>sdlcHarness.harnessFolderName</code> 时不重复询问并沿用配置。</li>
 <li><input type="checkbox" disabled> 覆盖当前仓库 source mappings 无漂移。</li>
 <li><input type="checkbox" disabled> 运行 <code>make validate-current</code> 确认开发阶段闭环。</li>
 </ul>

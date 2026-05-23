@@ -47,7 +47,7 @@ export async function runInit(projectRoot: string, options: InitOptions): Promis
 }
 
 async function projectHasExistingFiles(projectRoot: string): Promise<boolean> {
-  const markers = ["README.md", "src", "package.json", "pyproject.toml", "go.mod"];
+  const markers = ["README.md", "src", "pyproject.toml", "go.mod"];
   for (const marker of markers) {
     if (await pathExists(path.join(projectRoot, marker))) {
       return true;

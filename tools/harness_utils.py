@@ -292,18 +292,18 @@ def contains_any(text: str, terms: list[str]) -> bool:
 
 
 def load_lifecycle() -> dict[str, Any]:
-    data = load_yaml(".harness/state/lifecycle.yaml")
+    data = load_yaml(".agent/state/lifecycle.yaml")
     require(isinstance(data, dict), "lifecycle.yaml must be a mapping")
     return data
 
 
 def load_phase_contracts() -> dict[str, Any]:
-    data = load_yaml(".harness/policies/phase_contracts.yaml")
+    data = load_yaml(".agent/policies/phase_contracts.yaml")
     require(isinstance(data, dict) and isinstance(data.get("phases"), dict), "phase_contracts.yaml must contain phases")
     return data["phases"]
 
 
-def load_tasks(path: str = ".harness/state/tasks.yaml") -> dict[str, Any]:
+def load_tasks(path: str = ".agent/state/tasks.yaml") -> dict[str, Any]:
     data = load_yaml(path)
     require(isinstance(data, dict), f"{path} must be a mapping")
     tasks = data.get("tasks", [])
@@ -359,7 +359,7 @@ def append_gate_result(phase: str, gate: str, result: str, note: str = "") -> No
     line = f"{now_utc()} phase={phase} gate={json.dumps(gate)} result={result}"
     if note:
         line += f" note={json.dumps(note, ensure_ascii=False)}"
-    with repo_path(".harness/state/gate_results.log").open("a", encoding="utf-8") as handle:
+    with repo_path(".agent/state/gate_results.log").open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
 
 

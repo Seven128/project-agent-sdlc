@@ -1,19 +1,25 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { runDoctor } from "../../packages/sdlc-harness/dist/lib/doctor.js";
 import { runInit } from "../../packages/sdlc-harness/dist/lib/init.js";
 import { runSync } from "../../packages/sdlc-harness/dist/lib/sync-engine.js";
 
 const defaultRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-default-"));
 const configuredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-configured-"));
+const cliDefaultRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-default-"));
+const cliConfiguredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-configured-"));
+const cliExistingConfigRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-existing-"));
+const cliPath = fileURLToPath(new URL("../../packages/sdlc-harness/dist/cli.js", import.meta.url));
 
 try {
   const initReport = await runInit(defaultRoot, { adopt: true, force: false });
-  assert.ok(initReport.some((line) => line.includes("created .agents/config.yaml")));
+  assert.ok(initReport.some((line) => line.includes("created .agent/config.yaml")));
 
-  const defaultConfig = await readFile(path.join(defaultRoot, ".agents/config.yaml"), "utf8");
+  const defaultConfig = await readFile(path.join(defaultRoot, ".agent/config.yaml"), "utf8");
   assert.match(defaultConfig, /@ai-sdlc\/sdlc-harness/);
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");
@@ -21,13 +27,13 @@ try {
 
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
-  await stat(path.join(defaultRoot, ".agents/skills/manager/SKILL.md"));
-  await stat(path.join(defaultRoot, ".agents/managed/templates/CHECKPOINT_TEMPLATE.md"));
-  await stat(path.join(defaultRoot, ".agents/managed/policies/phase_contracts.yaml"));
+  await stat(path.join(defaultRoot, ".agent/skills/manager/SKILL.md"));
+  await stat(path.join(defaultRoot, ".agent/managed/templates/CHECKPOINT_TEMPLATE.md"));
+  await stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml"));
 
   const defaultDoctor = await runDoctor(defaultRoot);
   assert.deepEqual(defaultDoctor.errors, []);
-  assert.ok(defaultDoctor.info.some((line) => line.includes("harness root: .agents")));
+  assert.ok(defaultDoctor.info.some((line) => line.includes("harness root: .agent")));
   assert.ok(defaultDoctor.info.some((line) => line.includes("doctor complete")));
 
   await writeFile(
@@ -47,7 +53,42 @@ try {
   const configuredDoctor = await runDoctor(configuredRoot);
   assert.deepEqual(configuredDoctor.errors, []);
   assert.ok(configuredDoctor.info.some((line) => line.includes("harness root: .harness")));
+
+  const cliDefault = spawnSync(process.execPath, [cliPath, "init", "--adopt"], {
+    cwd: cliDefaultRoot,
+    encoding: "utf8"
+  });
+  assert.equal(cliDefault.status, 0, cliDefault.stderr);
+  const cliDefaultPackage = JSON.parse(await readFile(path.join(cliDefaultRoot, "package.json"), "utf8"));
+  assert.equal(cliDefaultPackage.sdlcHarness.harnessFolderName, ".agent");
+  await stat(path.join(cliDefaultRoot, ".agent/config.yaml"));
+
+  const cliConfigured = spawnSync(process.execPath, [cliPath, "init", "--adopt", "--harness-folder", ".harness"], {
+    cwd: cliConfiguredRoot,
+    encoding: "utf8"
+  });
+  assert.equal(cliConfigured.status, 0, cliConfigured.stderr);
+  const cliConfiguredPackage = JSON.parse(await readFile(path.join(cliConfiguredRoot, "package.json"), "utf8"));
+  assert.equal(cliConfiguredPackage.sdlcHarness.harnessFolderName, ".harness");
+  await stat(path.join(cliConfiguredRoot, ".harness/config.yaml"));
+
+  await writeFile(
+    path.join(cliExistingConfigRoot, "package.json"),
+    JSON.stringify({ name: "existing", sdlcHarness: { harnessFolderName: ".harness" } }, null, 2),
+    "utf8"
+  );
+  const cliExisting = spawnSync(process.execPath, [cliPath, "init", "--adopt"], {
+    cwd: cliExistingConfigRoot,
+    encoding: "utf8"
+  });
+  assert.equal(cliExisting.status, 0, cliExisting.stderr);
+  const cliExistingPackage = JSON.parse(await readFile(path.join(cliExistingConfigRoot, "package.json"), "utf8"));
+  assert.equal(cliExistingPackage.sdlcHarness.harnessFolderName, ".harness");
+  await stat(path.join(cliExistingConfigRoot, ".harness/config.yaml"));
 } finally {
   await rm(defaultRoot, { recursive: true, force: true });
   await rm(configuredRoot, { recursive: true, force: true });
+  await rm(cliDefaultRoot, { recursive: true, force: true });
+  await rm(cliConfiguredRoot, { recursive: true, force: true });
+  await rm(cliExistingConfigRoot, { recursive: true, force: true });
 }

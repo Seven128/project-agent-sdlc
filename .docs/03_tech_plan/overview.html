@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="ed0a732567db8e70">
+  <meta name="source-hash" content="509f6bb50b55eedd">
   <title>.docs/03_tech_plan overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/03_tech_plan overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>ed0a732567db8e70</code></p>
+      <p class="meta">Source hash: <code>509f6bb50b55eedd</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -133,7 +133,7 @@
 <h2 id="1-关联产品需求">1. 关联产品需求</h2>
 <ul>
 <li>PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
-<li>Requirement IDs: <code>PRD-NPM-001</code> 至 <code>PRD-NPM-015</code></li>
+<li>Requirement IDs: <code>PRD-NPM-001</code> 至 <code>PRD-NPM-016</code></li>
 </ul>
 <h2 id="2-现有上下文">2. 现有上下文</h2>
 <ul>
@@ -305,13 +305,13 @@ checksum: sha256:...
   - source: &quot;AGENTS.md&quot;
     target: &quot;packages/sdlc-harness/assets/agents/AGENTS_CORE.md&quot;
     mode: &quot;extract-managed-block&quot;
-  - source: &quot;.harness/skills&quot;
+  - source: &quot;.agent/skills&quot;
     target: &quot;packages/sdlc-harness/assets/skills&quot;
     mode: &quot;copy-tree&quot;
-  - source: &quot;.harness/managed/templates&quot;
+  - source: &quot;.agent/managed/templates&quot;
     target: &quot;packages/sdlc-harness/assets/templates&quot;
     mode: &quot;copy-tree&quot;
-  - source: &quot;.harness/managed/policies&quot;
+  - source: &quot;.agent/managed/policies&quot;
     target: &quot;packages/sdlc-harness/assets/policies&quot;
     mode: &quot;copy-tree&quot;
   - source: &quot;Makefile&quot;
@@ -379,6 +379,13 @@ checksum: sha256:...
 <td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code></td>
 <td><code>.docs/04_implementation/npm_package/dev_008_configurable_harness_root.md</code></td>
 </tr>
+<tr>
+<td>DEV-009</td>
+<td>init 询问 Harness root 并迁移当前仓库到 <code>.agent</code> 默认根</td>
+<td><code>package.json</code>, <code>AGENTS.md</code>, <code>README.md</code>, <code>.gitignore</code>, <code>.agent/**</code>, <code>.harness/**</code>, <code>tools/**</code>, <code>packages/sdlc-harness/**</code>, <code>tests/sdlc-harness/**</code>, <code>.docs/04_implementation/npm_package/**</code></td>
+<td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code></td>
+<td><code>.docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md</code></td>
+</tr>
 </tbody>
 </table>
 <h2 id="7-风险与缓解">7. 风险与缓解</h2>
@@ -407,7 +414,7 @@ checksum: sha256:...
 <tr>
 <td>生成的 Skill 不被 Agent 识别</td>
 <td>P0</td>
-<td>默认 <code>&lt;harnessRoot&gt;</code> 为 <code>.agents</code>；显式 <code>.harness</code> 项目需在入口规则中声明 <code>.harness/skills/**</code></td>
+<td>默认 <code>&lt;harnessRoot&gt;</code> 为 <code>.agent</code>；显式 <code>.harness</code> 项目需在入口规则中声明 <code>.harness/skills/**</code></td>
 </tr>
 <tr>
 <td>npm 包 validators 运行环境不稳定</td>
@@ -419,7 +426,7 @@ checksum: sha256:...
 <h2 id="8-需要关注的方案偏移">8. 需要关注的方案偏移</h2>
 <ul>
 <li>如果当前仓库继续作为包源码仓库，<code>packages/sdlc-harness/assets/**</code> 不应手写，应由 <code>package sync-source</code> 从工作流源文件生成。</li>
-<li>RFC_002 调整后，Harness root 由 JSON 配置决定；默认 <code>.agents</code>，当前仓库显式配置 <code>.harness</code>。</li>
+<li>RFC_003 调整后，<code>sdlc-harness init</code> 会询问 Harness root；默认 <code>.agent</code>，当前仓库也使用默认 <code>.agent</code>。</li>
 </ul>
 </article>
   </main>

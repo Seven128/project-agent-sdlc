@@ -52,7 +52,7 @@ async function readJsonConfig(filePath: string): Promise<unknown> {
   return JSON.parse(await readText(filePath)) as unknown;
 }
 
-function normalizeHarnessFolderName(value: string): string {
+export function normalizeHarnessFolderName(value: string): string {
   const normalized = value.trim().replace(/\\/g, "/").replace(/\/+$/, "");
   if (!normalized || normalized === "." || normalized === "..") {
     throw new Error("harnessFolderName must be a non-empty relative directory");

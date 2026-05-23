@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="13988f28a82d10c5">
+  <meta name="source-hash" content="395ca70f80e0eca5">
   <title>.docs/01_product overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/01_product overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>13988f28a82d10c5</code></p>
+      <p class="meta">Source hash: <code>395ca70f80e0eca5</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -140,7 +140,7 @@
 <ul>
 <li>提供一个 npm 包 <code>@ai-sdlc/sdlc-harness</code>，作为 Harness 通用能力的 canonical source。</li>
 <li>提供 CLI 命令 <code>sdlc-harness</code>，支持新项目初始化、已有项目接入、同步、升级和诊断。</li>
-<li>通过 <code>sdlc-harness sync</code> 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 <code>&lt;harnessRoot&gt;</code>。未配置时默认 <code>&lt;harnessRoot&gt;</code> 为 <code>.agents</code>；当前仓库显式配置为 <code>.harness</code>。</li>
+<li>通过 <code>sdlc-harness sync</code> 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 <code>&lt;harnessRoot&gt;</code>。未配置时默认 <code>&lt;harnessRoot&gt;</code> 为 <code>.agent</code>；用户也可通过 init 交互输入或 <code>package.json</code> 显式配置其它目录。</li>
 <li>通过 <code>sdlc-harness upgrade</code> 自动执行 schema migration 和 <code>sync</code>，降低已接入项目升级成本。</li>
 <li>明确 managed files、local overrides 和 never overwrite 边界，保护项目自己的 <code>.docs/**</code>、<code>&lt;harnessRoot&gt;/state/**</code> 和业务代码。</li>
 </ul>
@@ -280,9 +280,15 @@
 </tr>
 <tr>
 <td>PRD-NPM-015</td>
-<td>支持通过 JSON 配置 <code>harnessFolderName</code> 指定 Harness 根目录，默认值为 <code>.agents</code></td>
+<td>支持通过 JSON 配置 <code>harnessFolderName</code> 指定 Harness 根目录，默认值为 <code>.agent</code></td>
 <td>P0</td>
 <td>优先读取 <code>package.json</code> 的 <code>sdlcHarness.harnessFolderName</code>，也支持 <code>sdlc-harness.config.json</code>；兼容别名 <code>harnessFloderName</code></td>
+</tr>
+<tr>
+<td>PRD-NPM-016</td>
+<td><code>sdlc-harness init</code> 交互式询问 Harness folder name，并写入 <code>package.json</code></td>
+<td>P0</td>
+<td>提示默认值 <code>.agent</code>；直接回车采用默认；非交互环境不阻塞并使用默认</td>
 </tr>
 </tbody>
 </table>
@@ -298,8 +304,9 @@
 <li><input type="checkbox" disabled> <code>sdlc-harness doctor</code> 能报告 managed files 缺失、checksum 漂移、schema version 不匹配和 local override 合并结果。</li>
 <li><input type="checkbox" disabled> 本仓库的 Harness 源文件发生变化时，可以通过 <code>sdlc-harness package sync-source</code> 或等价自动化流程更新 npm 包 canonical source。</li>
 <li><input type="checkbox" disabled> CI 能验证工作区 Harness 源文件与 npm 包 canonical source 一致，避免修改了工作流但漏更新包内容。</li>
-<li><input type="checkbox" disabled> 未配置 <code>harnessFolderName</code> 的项目默认使用 <code>.agents</code> 作为 Harness 根目录，Skill 位于 <code>.agents/skills/**</code>，其它配置位于 <code>.agents/state/**</code>、<code>.agents/managed/**</code> 和 <code>.agents/config.yaml</code>。</li>
+<li><input type="checkbox" disabled> 未配置 <code>harnessFolderName</code> 的项目默认使用 <code>.agent</code> 作为 Harness 根目录，Skill 位于 <code>.agent/skills/**</code>，其它配置位于 <code>.agent/state/**</code>、<code>.agent/managed/**</code> 和 <code>.agent/config.yaml</code>。</li>
 <li><input type="checkbox" disabled> 配置 <code>harnessFolderName: &quot;.harness&quot;</code> 的项目使用 <code>.harness</code> 作为 Harness 根目录，Skill 位于 <code>.harness/skills/**</code>，不再额外套 <code>.harness/agents/skills/**</code>。</li>
+<li><input type="checkbox" disabled> 执行 <code>npx sdlc-harness init</code> 时，CLI 提示输入 Harness folder name；直接回车写入默认 <code>.agent</code>，输入自定义值则写入自定义值。</li>
 </ul>
 <h2 id="6-out-of-scope">6. Out Of Scope</h2>
 <ul>
@@ -333,7 +340,7 @@
 <td>open</td>
 </tr>
 <tr>
-<td><code>AGENTS.md</code> managed block 是否引用 <code>.harness/instructions/AGENTS_CORE.md</code>，还是直接内联核心规则？</td>
+<td><code>AGENTS.md</code> managed block 是否引用 <code>.agent/instructions/AGENTS_CORE.md</code>，还是直接内联核心规则？</td>
 <td>技术方案阶段</td>
 <td>open</td>
 </tr>
@@ -346,7 +353,7 @@
 </table>
 <h2 id="8-依赖与风险">8. 依赖与风险</h2>
 <ul>
-<li>依赖 Agent 对工作区固定文件的读取约定，例如 <code>AGENTS.md</code> 和 <code>.agents/skills/**/SKILL.md</code>；因此默认 <code>&lt;harnessRoot&gt;</code> 采用 <code>.agents</code>，显式 <code>.harness</code> 项目需要通过入口规则或 Agent 适配层声明 <code>.harness/skills/**</code>。</li>
+<li>依赖 Agent 对工作区固定文件的读取约定，例如 <code>AGENTS.md</code> 和本地 <code>skills/**/SKILL.md</code> 目录；因此默认 <code>&lt;harnessRoot&gt;</code> 采用 <code>.agent</code>，显式 <code>.harness</code> 项目需要通过入口规则或 Agent 适配层声明 <code>.harness/skills/**</code>。</li>
 <li>npm 包升级与工作区文件同步需要 checksum、managed marker 和冲突策略，否则容易覆盖项目本地修改。</li>
 <li><code>Makefile</code> 和 <code>AGENTS.md</code> 是高冲突文件，必须使用 managed block 或 include 方式，不应整体覆盖。</li>
 <li>validators 运行时已经收敛到 TypeScript/Node；仓库内 Python 工具仅作为当前 Harness 本地 gate 和辅助脚本存在。</li>

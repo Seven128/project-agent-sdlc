@@ -26,7 +26,7 @@ coverage/
 
 # Logs and temporary files
 *.log
-!.harness/state/gate_results.log
+!.agent/state/gate_results.log
 tmp/
 temp/
 
