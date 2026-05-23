@@ -48,13 +48,80 @@
 
 ## 通用执行原则
 
-以下原则参考 `multica-ai/andrej-karpathy-skills` 的通用编码约束，并与本仓库的阶段化 Harness 协议合并执行。
+以下原则完整迁移自 `multica-ai/andrej-karpathy-skills` 的 MIT guideline，并按本仓库的 Prompt Language Contract 转为“中文说明 + 英文关键词”形式，与阶段化 Harness 协议合并执行。
 
-1. 编码前思考：不要静默假设。遇到歧义时先说明假设、列出可能解释和关键取舍；如果信息不足会影响结果，先停下来询问或报告 blocker。
-2. 简洁优先：只实现用户当前请求和阶段目标需要的最小方案。不要添加未要求的功能、抽象、配置项或“未来可能需要”的灵活性；如果实现明显可以更短更直接，先简化。
-3. 精准修改：只改与请求、当前 task 或当前阶段产物直接相关的内容。匹配既有风格，不顺手重构、重排格式或删除无关旧代码；如果发现无关问题，只报告，不擅自处理。
-4. 目标驱动执行：把任务转换成可验证的完成标准。修 bug 时优先定义可复现检查；加能力时明确 acceptance criteria；重构前后都要有 gate 或测试证明行为保持。
-5. 验证闭环：多步骤工作先给出简短计划，并为关键步骤绑定验证方式。除非被阻塞，否则持续迭代到对应 `required_gates`、阶段 gate 或明确的人工验收标准满足。
+### Karpathy Guidelines（MIT 完整本地化）
+
+这些 behavioral guidelines 用来减少常见的 LLM coding mistakes，并可与项目级 instructions 合并使用。
+
+**Tradeoff:** 这些 guidelines 更偏向 caution over speed。对于 trivial tasks，可以使用 judgment。
+
+## 1. Think Before Coding
+
+**不要 assume，不要 hide confusion，要 surface tradeoffs。**
+
+Before implementing:
+- 显式说明你的 assumptions。如果 uncertain，先 ask。
+- 如果存在多种 interpretations，要把它们列出来，不要 silently pick。
+- 如果存在 simpler approach，要说出来。必要时要 push back。
+- 如果某件事 unclear，先 stop，说明 confusing 的点，再 ask。
+
+## 2. Simplicity First
+
+**用 minimum code 解决问题，不做 speculative work。**
+
+- 不添加超出用户请求的 features。
+- 不为 single-use code 添加 abstractions。
+- 不添加未被请求的 `flexibility` 或 `configurability`。
+- 不为 impossible scenarios 添加 error handling。
+- 如果你写了 200 行，而它本可以是 50 行，就 rewrite it。
+
+Ask yourself: “Would a senior engineer say this is overcomplicated?” 如果答案是 yes，就 simplify。
+
+## 3. Surgical Changes
+
+**只 touch 必须修改的内容，只 clean up your own mess。**
+
+When editing existing code:
+- 不要“顺手 improve”相邻代码、comments 或 formatting。
+- 不要 refactor 没有 broken 的东西。
+- Match existing style，即使你个人会用不同写法。
+- 如果发现 unrelated dead code，只 mention it，不要 delete it。
+
+When your changes create orphans:
+- 移除由 YOUR changes 造成 unused 的 imports、variables、functions。
+- 除非用户明确要求，不要移除 pre-existing dead code。
+
+The test: 每一行 changed line 都应该能直接 trace 到用户请求。
+
+## 4. Goal-Driven Execution
+
+**定义 success criteria，并 loop until verified。**
+
+把任务转换为 verifiable goals:
+- `Add validation` → 为 invalid inputs 写 tests，然后 make them pass。
+- `Fix the bug` → 写一个能 reproduce 它的 test，然后 make it pass。
+- `Refactor X` → 确保 tests 在 before and after 都 pass。
+
+对于 multi-step tasks，先给出 brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria 可以让你 independent loop。Weak criteria，例如 “make it work”，会导致 constant clarification。
+
+---
+
+**这些 guidelines 生效的信号：** diffs 中 unnecessary changes 更少，因为 overcomplication 导致的 rewrites 更少，并且 clarifying questions 出现在 implementation 之前，而不是 mistakes 之后。
+
+### Harness 补充原则
+
+1. 阶段约束优先：除非用户明确要求其它工作流动作，否则使用 `active_skill` 指定的 Skill，并服从当前阶段的 allowed paths、required gates 和交付物边界。
+2. 文档先于实现：产品文档和技术方案未形成前，不写业务代码；需求变更必须进入 RFC 工作流。
+3. 验证闭环：多步骤工作先给出简短计划，并为关键步骤绑定验证方式。除非被阻塞，否则持续迭代到对应 `required_gates`、阶段 gate 或明确的人工验收标准满足。
+4. 派生物可再生成：`overview.md`、包内 assets 等 generated artifact 必须由对应命令刷新，不手写局部补丁。
 
 ## 工作规则
 
