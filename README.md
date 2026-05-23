@@ -271,15 +271,23 @@ tasks:
 开发阶段不是反复重写整个 Sprint 计划，而是：
 
 ```txt
-读取 current_task
+检查 git status，确认没有未归属到当前 task 的脏变更
+-> 如存在历史 task 残留变更，先完成对应 task commit/push 或报告 blocker
+-> 读取 current_task
 -> 读取当前 open task 的 allowed_paths / required_gates / acceptance_criteria
 -> 执行代码和测试
 -> 运行 current_task.required_gates
 -> 写 implementation doc
+-> 刷新 overview.md
 -> 将 plan.yaml 中当前 task 压缩为 done 摘要
--> 刷新 overview.html
+-> 创建只包含当前 task 变更的 task-level git commit
+-> git push 到当前 upstream branch
 -> 选择下一个 pending task
 ```
+
+开发阶段默认一个 task 对应一个 git commit。commit message 应包含 task id，例如 `DEV-003: implement login rate limit`。这个 commit 应包含该 task 的代码、测试、implementation doc、`.docs/INDEX.md`、`overview.md` 和必要 gate 记录；不要把多个 task 混进同一个 commit，也不要把未归属变更顺手带入。
+
+`git push` 成功前，不认为该 task 完成，也不要进入下一个 pending task。如果仓库没有 remote/upstream、没有权限、凭证失效或 push 被拒绝，当前 task 应停在需要人工处理的状态并报告 blocker；不能为了继续执行而静默跳过 push。
 
 只有这些情况才回到 RFC 或架构阶段重新规划：
 - 技术方案被实现证明不可行。
@@ -302,6 +310,8 @@ PRD
 
 每个 open task 都必须在 `plan.yaml` 中包含 `docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。执行中只把必要现场写成短 `working_notes`；任务完成并写入 implementation doc 后，删除这些活跃字段，只留下摘要、implementation doc 和 gate result。历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
 
+`done` task 的历史边界以 task-level commit 为准。`plan.yaml` 不长期保存 commit hash；需要追溯时从 git history、PR 或外部 release 系统查看。这样可以保持 plan 短期化，同时确保每个 task 都有可审计、可回滚、已 push 的版本边界。
+
 ## 八、阶段 Skill
 每个 Skill 只负责一个阶段或动作。
 
@@ -312,7 +322,7 @@ PRD
 | `manager` | 读取 lifecycle/plan/index，路由 `/status`、`/next`、`/advance`、`/rfc`，执行阶段切换 |
 | `pm_prd` | 原始需求归档、PRD 切片、验收标准、Out of Scope、Open Questions |
 | `architect_design` | 架构设计、技术方案、接口契约、任务草案、ADR |
-| `dev_sprint` | 按 `current_task_id` 执行开发、控制 `allowed_paths`、运行 `required_gates` |
+| `dev_sprint` | 按 `current_task_id` 执行开发、控制 `allowed_paths`、运行 `required_gates`，并在每个 task 完成后 commit/push |
 | `implementation_doc` | 记录真实实现结构、数据流、测试覆盖和方案偏移 |
 | `reviewer` | 只读 Review，输出 findings、风险、重构建议和测试入口结论 |
 | `tester` | 生成 test matrix、补测试、记录回归和覆盖缺口 |
@@ -472,6 +482,8 @@ Codex 不需要真实“模式切换”：
 5. `overview.md` 已刷新。
 6. open task 的 plan 合同已完整。
 7. `plan.yaml` 已把 done task 压缩为简短摘要。
+8. 已创建只包含当前 task 变更的 task-level git commit。
+9. 已 `git push` 到当前 upstream branch；如果 push 失败，任务不能视为完成。
 
 ## 十四、完整工作流示例
 场景：新增“登录失败 5 次后锁定账号 10 分钟”功能。
