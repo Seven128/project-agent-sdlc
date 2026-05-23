@@ -112,7 +112,6 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 │   │   │   └── risk_matrix.yaml
 │   │   ├── templates/
 │   │   └── make/
-│   └── archive/
 │
 ├── tools/
 ├── .github/workflows/
@@ -219,7 +218,7 @@ make validate-doc-overviews
 
 ## 七、任务状态与开发循环
 ### 7.1 tasks.yaml
-`.agent/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，描述当前正在执行和即将执行的任务。它也可以被理解为 sprint-level plan：文件名采用 `tasks.yaml` 是因为内部执行单元是带有 `id`、`status`、`allowed_paths`、`required_gates` 和 `implementation_doc` 的可验证任务，而不是松散计划。典型任务字段：
+`.agent/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，只保存当前工作队列的轻量索引。复杂执行合同不放在 task 里，而是放在 open task 的 checkpoint `Task Contract` 中。典型任务字段：
 
 ```yaml
 current_phase: "SPRINTING"
@@ -228,24 +227,10 @@ tasks:
   - id: "DEV-003"
     title: "实现登录失败次数限制"
     status: "pending"
-    priority: "P1"
-    docs:
-      product:
-        - ".docs/01_product/auth/security.md"
-      tech_plan:
-        - ".docs/03_tech_plan/auth/rate_limit.md"
-      rfc: []
-    allowed_paths:
-      - "src/auth/**"
-      - "tests/auth/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
-    implementation_doc: ".docs/04_implementation/auth/login_rate_limit_impl.md"
-    checkpoint_required: false
+    summary: "实现登录失败次数限制并补充对应测试。"
     checkpoint: ".agent/state/checkpoints/DEV-003.md"
+    implementation_doc: ".docs/04_implementation/auth/login_rate_limit_impl.md"
     gate_result: ""
-    commit: ""
 ```
 
 ### 任务状态：
@@ -255,18 +240,17 @@ tasks:
 - `blocked`
 - `pending_revision`
 - `cancelled`
-- `archived`
 
 ### 7.2 开发阶段循环
 开发阶段不是反复重写整个 Sprint 计划，而是：
 
 ```txt
 读取 current_task
--> 基于技术方案和任务上下文生成当前任务局部 plan
+-> 读取当前 task checkpoint 的 Task Contract
 -> 执行代码和测试
--> 运行 required_gates
+-> 运行 checkpoint.required_gates
 -> 写 implementation doc
--> 更新 tasks.yaml
+-> 更新 tasks.yaml 并删除 checkpoint
 -> 刷新 overview.html
 -> 选择下一个 pending task
 ```
@@ -275,11 +259,11 @@ tasks:
 - 技术方案被实现证明不可行。
 - 当前任务暴露新的架构风险或跨模块边界变化。
 - 需求发生变化。
-- `allowed_paths` 无法覆盖必要修改。
+- checkpoint 的 `allowed_paths` 无法覆盖必要修改。
 - gate 失败不是普通代码问题，而是设计、基建或环境阻塞。
 
 ### 7.3 Checkpoint Protocol
-Checkpoint 是 task 内部执行快照，用来降低上下文压缩、中断、新开对话或多人交接时的信息损失。它不是 PRD、不是技术方案、不是正式任务拆分，也不是完成后的 implementation doc。
+Checkpoint 是 open task 的执行合同和现场快照，用来约束当前修改范围、记录必要 gate，并降低上下文压缩、中断、新开对话或多人交接时的信息损失。它不是 PRD、不是技术方案、不是正式任务拆分，也不是完成后的 implementation doc。
 
 层级关系：
 
@@ -287,27 +271,18 @@ Checkpoint 是 task 内部执行快照，用来降低上下文压缩、中断、
 PRD
 -> tech plan
 -> tasks.yaml 中的 task
--> 当前 task 的局部 plan
--> checkpoint
+-> 当前 task checkpoint 的 Task Contract
+-> 代码、测试和 implementation doc
 ```
 
-触发条件满足任一项时写 checkpoint：
-- 当前 task 预计无法在一个连续工作回合内完成。
-- 修改文件数超过 5 个。
-- 出现 gate failure。
-- 出现 `BLOCKED` 候选原因。
-- 发现技术方案和真实实现明显偏移。
-- 用户要求暂停、切换对话或继续前保存现场。
-- Agent 判断上下文可能接近压缩。
-
-触发后：
-1. 在当前 task 中设置 `checkpoint_required: true`。
-2. 设置 `checkpoint: ".agent/state/checkpoints/<Task ID>.md"`。
-3. 按 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md` 写 checkpoint。
-4. 同步更新 `.agent/state/checkpoints/latest.md`。
+每个 open task 都必须有 checkpoint：
+1. 在当前 task 中设置 `checkpoint: ".agent/state/checkpoints/<Task ID>.md"`。
+2. 按 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md` 写 checkpoint。
+3. 在 checkpoint 的 `Task Contract` YAML 区块中声明 `allowed_paths`、`required_gates` 和验收标准。
+4. 执行中需要恢复或交接时，同步更新 `.agent/state/checkpoints/latest.md`。
 5. 运行 `make validate-checkpoint`。
 
-任务完成并写入 implementation doc 后，可以把 `checkpoint_required` 改回 `false`；历史 checkpoint 可保留用于恢复。
+任务完成并写入 implementation doc 后，删除对应 checkpoint。历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
 
 ## 八、阶段 Skill
 每个 Skill 只负责一个阶段或动作。
@@ -352,7 +327,7 @@ make validate-rfc
 ### 9.2 阶段 gate
 - `validate-pm`：检查 PRD、验收标准、Out of Scope、Open Questions。
 - `validate-design`：检查架构、技术方案和 `tasks.draft.yaml`。
-- `validate-dev`：检查任务状态、路径约束、checkpoint、lint、测试和 implementation docs。
+- `validate-dev`：检查任务状态、活跃 checkpoint 合同、lint、测试和 implementation docs。
 - `validate-review`：检查 Review report。
 - `validate-test`：检查 test plan、test matrix、回归和覆盖缺口。
 - `validate-release`：检查 release note、smoke result 和 rollback plan。
@@ -393,12 +368,12 @@ RFC 必须包含：
 
 处理流程：
 ```txt
-归档旧 tasks.yaml
+用 git tag 或 release commit 固化当前版本
 -> 新建增量 tasks
 -> 局部修改文档
 -> 执行增量任务
 -> 全局回归测试
--> 新版本归档
+-> 新版本 release doc 或外部发布记录
 ```
 
 ### 10.4 影响分析边界
@@ -481,8 +456,8 @@ Codex 不需要真实“模式切换”：
 3. implementation doc 已生成。
 4. `.docs/INDEX.md` 已更新。
 5. `overview.html` 已刷新。
-6. 如触发 checkpoint，checkpoint 已生成并通过校验。
-7. `tasks.yaml` 已记录状态。
+6. open task checkpoint 已生成并通过校验。
+7. `tasks.yaml` 已记录状态；done task checkpoint 已删除。
 
 ## 十四、完整工作流示例
 场景：新增“登录失败 5 次后锁定账号 10 分钟”功能。
@@ -501,14 +476,15 @@ Codex 不需要真实“模式切换”：
 3. 进入开发阶段：
    - 确认任务后进入 `SPRINTING`。
    - `dev_sprint` 读取当前 task、PRD 和技术方案。
-   - 在 `allowed_paths` 内修改代码和测试。
-   - 运行 `required_gates`。
-   - 如果任务过长或 gate 失败，写 checkpoint。
+   - 读取当前 checkpoint 的 `allowed_paths`，并在范围内修改代码和测试。
+   - 运行当前 checkpoint 的 `required_gates`。
+   - 如果任务过长或 gate 失败，更新 checkpoint。
 
 4. 任务完成：
    - gate 通过后调用 `implementation_doc`。
    - 写 `.docs/04_implementation/auth/account_lock_impl.md`。
    - 更新 `.docs/INDEX.md`、`overview.html` 和 `tasks.yaml`。
+   - 删除对应 checkpoint。
 
 5. Review、测试、发布：
    - `reviewer` 输出 Review report。
@@ -547,8 +523,8 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 - 阶段与 gate 策略：`.agent/managed/policies/**`。
 - 阶段产物模板：`.agent/managed/templates/**`。
 - state protocol：`lifecycle.yaml`、`tasks.yaml`、checkpoint、memory 的字段结构、状态枚举、迁移规则和校验逻辑。
-- task/plan protocol：`current_task_id`、`tasks[]`、`allowed_paths`、`required_gates`、`implementation_doc`、`checkpoint_required` 等字段如何组成短期执行记忆。
-- checkpoint protocol：checkpoint 应该有哪些章节、何时触发、如何更新 `latest.md`。
+- task/plan protocol：`current_task_id`、`tasks[]`、`summary`、`implementation_doc`、`gate_result` 和 active `checkpoint` 如何组成短期执行记忆。
+- checkpoint protocol：checkpoint 的 `Task Contract` 如何承载 `allowed_paths`、`required_gates`、验收标准和执行现场，done 后如何删除。
 - memory protocol：memory 如何记录、校验、提升、失效，以及如何链接到 `.docs/**` 正式出处。
 - validators、lifecycle transition、sync、upgrade、migration 等确定性工具逻辑。
 
@@ -598,7 +574,7 @@ task-plan protocol / checkpoint protocol / memory protocol
 skills / policies / templates / sync / upgrade / migrations
 ```
 
-不导出的是当前项目的具体运行数据，例如当前 `current_phase`、当前 `tasks.yaml` 内容、checkpoint 内容、memory 条目和 `.docs/**` 产物。
+不导出的是当前项目的具体运行数据，例如当前 `current_phase`、当前 `tasks.yaml` 内容、活跃 checkpoint 内容、memory 条目和 `.docs/**` 产物。
 
 ## 十八、npm 包化与项目接入
 当前仓库可以作为参考实现和模板仓库，但长期产品形态不应依赖每个业务项目直接 fork 整套配置。更稳的方式是把通用 Harness 能力拆成可版本化的 npm 包，并把业务项目中的工作流文件视为由包同步出来的 agent-readable artifact。
@@ -624,7 +600,7 @@ sdlc-harness <command>
 业务项目内保留 agent 实际读取和项目事实源：
 - `AGENTS.md`。
 - `<harnessRoot>/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区，作为 Skill canonical source。
-- `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、checkpoint、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
+- `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、活跃 checkpoint、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
 - `<harnessRoot>/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
 

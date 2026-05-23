@@ -30,21 +30,14 @@
 
 ## Checkpoint Protocol
 
-- `checkpoint` 是 task 内部的执行现场快照，不是正式需求、技术方案或 implementation doc。
-- 满足触发条件时，在当前 task 中设置 `checkpoint_required: true`，并写入 `checkpoint` 路径。
-- 当前 task 需要 checkpoint 时，同时更新 `.agent/state/checkpoints/latest.md`。
+- `checkpoint` 是 open task 的执行合同和现场快照，不是正式需求、技术方案或 implementation doc。
+- 每个 `pending`、`in_progress`、`blocked`、`pending_revision` task 都必须在 `checkpoint` 字段写入 `.agent/state/checkpoints/<Task ID>.md`。
+- checkpoint 必须包含 `Task Contract` YAML 区块，声明 `allowed_paths`、`required_gates` 和验收标准。
+- 当前 task 需要恢复或交接时，同时更新 `.agent/state/checkpoints/latest.md`。
 - Checkpoint 使用 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md`。
-- 使用 `make validate-checkpoint` 校验必需 checkpoint 是否完整。
-- 任务完成并写入 implementation doc 后，可以把 `checkpoint_required` 改回 `false`；历史 checkpoint 可保留用于恢复。
-
-触发条件满足任一项即可：
-- 当前 task 预计无法在一个连续工作回合内完成。
-- 修改文件数超过 5 个。
-- 出现 gate failure。
-- 出现 `BLOCKED` 候选原因。
-- 发现技术方案和真实实现明显偏移。
-- 用户要求暂停、切换对话或继续前保存现场。
-- Agent 判断上下文可能接近压缩。
+- 使用 `make validate-checkpoint` 校验 open task checkpoint 是否完整。
+- task 完成并写入 implementation doc 后，删除对应 checkpoint；历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
+- `.agent/state/tasks.yaml` 只保留轻量 task 索引，不保存完整执行合同。
 
 ## Prompt Language Contract
 
@@ -53,7 +46,7 @@
 - 不翻译 `.agent/state/*.yaml`、`.agent/managed/policies/*.yaml` 中的 key。
 - 不翻译 `current_phase`、`active_skill`、`allowed_paths`、`required_gates`、`implementation_doc` 等字段名。
 - 不翻译 `REQUIREMENT_GATHERING`、`ARCHITECTING`、`SPRINTING`、`REVIEWING`、`TESTING`、`RELEASING`、`RFC_RECALIBRATION`、`BLOCKED` 等阶段枚举。
-- 不翻译 `pending`、`in_progress`、`done`、`blocked`、`pending_revision`、`cancelled`、`archived` 等任务状态。
+- 不翻译 `pending`、`in_progress`、`done`、`blocked`、`pending_revision`、`cancelled` 等任务状态。
 - 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.agent/state/tasks.yaml` 等命令和路径。
 - 后续更新 `.agent/skills/*/SKILL.md` 或 `.agent/managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agent`。
 
@@ -73,14 +66,14 @@
 2. 除非用户明确要求其它工作流动作，否则使用 `active_skill` 指定的 Skill。
 3. 产品文档和技术方案未形成前，不写业务代码。
 4. 在 `SPRINTING` 阶段，一次只执行一个任务。
-5. 在 `SPRINTING` 阶段，只编辑当前任务 `allowed_paths` 允许的文件。
-6. 不要在 `required_gates` 通过前把任务标记为 `done`。
+5. 在 `SPRINTING` 阶段，只编辑当前 task checkpoint 的 `allowed_paths` 允许的文件。
+6. 不要在当前 task checkpoint 的 `required_gates` 通过前把任务标记为 `done`。
 7. 代码 gate 通过后，更新任务实现文档和 `.docs/INDEX.md`。
 8. `reviewer` 角色只读，不直接修改源码。
 9. 需求变更必须进入 RFC 工作流。
-10. 不直接删除过时工作流产物；需要归档时移动到 `.agent/archive/`。
+10. task/release 历史动作记录使用 git commit、tag 或外部 release 系统，不维护 `.agent/archive/` 常规归档。
 11. 文档 slice 发生变化后，运行 `make docs-overview` 刷新对应 `overview.html`。
-12. 满足 checkpoint 触发条件时，先写 checkpoint，再继续推进或交接。
+12. open task 必须先有 checkpoint，再继续推进或交接。
 13. 如果信息缺失，或 gate 因基础设施原因失败，停止推进并报告 blocker。
 
 ## 宏指令

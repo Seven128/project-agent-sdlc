@@ -4,9 +4,9 @@ phases:
     role: "manager"
     skill: "manager"
     inputs:
-      - ".harness/state/lifecycle.yaml"
+      - "<harnessRoot>/state/lifecycle.yaml"
     outputs:
-      - ".harness/state/lifecycle.yaml"
+      - "<harnessRoot>/state/lifecycle.yaml"
     gates: []
     next: "REQUIREMENT_GATHERING"
 
@@ -33,7 +33,7 @@ phases:
     outputs:
       - ".docs/02_architecture/"
       - ".docs/03_tech_plan/"
-      - ".harness/state/tasks.draft.yaml"
+      - "<harnessRoot>/state/tasks.draft.yaml"
     gates:
       - "make validate-design"
     next: "SPRINTING"
@@ -43,14 +43,15 @@ phases:
     role: "developer"
     skill: "dev_sprint"
     inputs:
-      - ".harness/state/tasks.yaml"
+      - "<harnessRoot>/state/tasks.yaml"
+      - "current task checkpoint"
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
     outputs:
       - "src/"
       - "tests/"
       - ".docs/04_implementation/"
-      - ".harness/state/gate_results.log"
+      - "<harnessRoot>/state/gate_results.log"
     gates:
       - "make validate-dev"
     next: "REVIEWING"
@@ -95,19 +96,18 @@ phases:
       - "build artifacts"
     outputs:
       - ".docs/08_release/"
-      - ".harness/archive/releases/"
     gates:
       - "make validate-release"
     next: "COMPLETED"
 
   COMPLETED:
-    goal: "当前里程碑已归档"
+    goal: "当前里程碑已完成"
     role: "manager"
     skill: "manager"
     inputs:
-      - ".harness/archive/"
+      - ".docs/08_release/"
     outputs:
-      - ".harness/state/lifecycle.yaml"
+      - "<harnessRoot>/state/lifecycle.yaml"
     gates: []
     next: "IDLE"
 
@@ -119,10 +119,10 @@ phases:
       - ".docs/rfc/"
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
-      - ".harness/state/tasks.yaml"
+      - "<harnessRoot>/state/tasks.yaml"
     outputs:
       - ".docs/rfc/"
-      - ".harness/state/tasks.yaml"
+      - "<harnessRoot>/state/tasks.yaml"
       - ".docs/INDEX.md"
     gates:
       - "make validate-rfc"
@@ -133,8 +133,8 @@ phases:
     role: "manager"
     skill: "manager"
     inputs:
-      - ".harness/state/lifecycle.yaml"
+      - "<harnessRoot>/state/lifecycle.yaml"
     outputs:
-      - ".harness/state/lifecycle.yaml"
+      - "<harnessRoot>/state/lifecycle.yaml"
     gates: []
     next: "REQUIREMENT_GATHERING"

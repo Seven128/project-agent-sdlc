@@ -1,261 +1,72 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-009"
+current_task_id: "DEV-010"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "package.json"
-      - "packages/sdlc-harness/**"
-      - ".harness/config.yaml"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
+    summary: "创建 npm package scaffold、source sync manifest 和初始实现文档。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_001_package_scaffold.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-001.md"
     gate_result: "PASS"
-    commit: "a4b145c"
-    revision_notes:
-      - "RFC_001 changes the managed layout assumptions originally scaffolded here; DEV-006 will apply the incremental revision."
 
   - id: "DEV-002"
     title: "实现 sync、init、init --adopt 和 doctor 最小闭环"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "README.md"
-      - "package-lock.json"
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
+    summary: "实现 CLI sync/init/doctor 最小闭环和对应测试。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_002_sync_init_doctor.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-002.md"
     gate_result: "PASS"
-    commit: "559d169"
-    revision_notes:
-      - "RFC_001 changes sync/init/doctor materialization targets; DEV-006 will apply the incremental revision."
 
   - id: "DEV-003"
     title: "实现 upgrade、migration 和自动 sync"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
+    summary: "实现 upgrade migration、自动 sync 和状态结构迁移。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_003_upgrade_migrations.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-003.md"
     gate_result: "PASS"
-    commit: "2f2fc93"
-    revision_notes:
-      - "RFC_001 changes upgrade migration targets; DEV-006 will apply the incremental revision."
 
   - id: "DEV-004"
     title: "实现 package sync-source / package check-source 与 CI 漂移检查"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "packages/sdlc-harness/**"
-      - ".github/workflows/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
+    summary: "实现包源码同步、漂移检查和 CI gate。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_004_source_sync_ci.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-004.md"
     gate_result: "PASS"
-    commit: "ee54878"
-    revision_notes:
-      - "RFC_001 changes package source mappings; DEV-006 will apply the incremental revision."
 
   - id: "DEV-005"
     title: "将 validators 入口接入 sdlc-harness validate-*"
     status: "done"
-    priority: "P1"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
+    summary: "接入 Node validator runtime 和 validate-* CLI 入口。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_005_validate_commands.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-005.md"
     gate_result: "PASS"
-    commit: "140e078"
-    revision_notes:
-      - "RFC_001 changes validate-harness directory checks; DEV-006 will apply the incremental revision."
 
   - id: "DEV-006"
     title: "统一 .harness 工作流根目录并生成 .agents 兼容出口"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc:
-        - ".docs/rfc/RFC_001_unify_harness_directory_model.md"
-    allowed_paths:
-      - "README.md"
-      - ".harness/config.yaml"
-      - ".harness/agents/**"
-      - ".harness/managed/**"
-      - ".agents/skills/**"
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/02_architecture/harness_package_distribution.md"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "node packages/sdlc-harness/dist/cli.js validate-harness"
-      - "make validate-harness"
+    summary: "统一早期 .harness canonical layout 并生成兼容视图。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_006_unified_harness_root.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-006.md"
     gate_result: "PASS"
-    commit: "eb778fd"
 
   - id: "DEV-007"
     title: "删除 tracked .agents skills 兼容生成物"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc:
-        - ".docs/rfc/RFC_001_unify_harness_directory_model.md"
-    allowed_paths:
-      - ".gitignore"
-      - "AGENTS.md"
-      - "README.md"
-      - ".agents/skills/**"
-      - "tools/**"
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "node packages/sdlc-harness/dist/cli.js validate-harness"
-      - "make validate-harness"
+    summary: "移除 tracked .agents skills 兼容生成物并更新忽略规则。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_007_remove_tracked_agents_skills.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-007.md"
     gate_result: "PASS"
-    commit: "dd209fe"
 
   - id: "DEV-008"
     title: "支持 harnessFolderName 配置 Harness 根目录"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc:
-        - ".docs/rfc/RFC_002_configurable_harness_root.md"
-    allowed_paths:
-      - "package.json"
-      - "AGENTS.md"
-      - "README.md"
-      - ".harness/config.yaml"
-      - ".harness/skills/**"
-      - ".harness/agents/**"
-      - ".harness/managed/**"
-      - "tools/**"
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "node packages/sdlc-harness/dist/cli.js validate-harness"
-      - "make validate-harness"
+    summary: "支持可配置 Harness root、迁移和多 root 测试。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_008_configurable_harness_root.md"
-    checkpoint_required: false
-    checkpoint: ".harness/state/checkpoints/DEV-008.md"
     gate_result: "PASS"
-    commit: "0c8423e"
 
   - id: "DEV-009"
     title: "init 询问 Harness root 并迁移当前仓库到 .agent 默认根"
     status: "done"
-    priority: "P0"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc:
-        - ".docs/rfc/RFC_003_init_prompt_and_default_agent_root.md"
-    allowed_paths:
-      - "package.json"
-      - "AGENTS.md"
-      - "README.md"
-      - ".gitignore"
-      - ".agent/**"
-      - ".harness/**"
-      - "tools/**"
-      - "packages/sdlc-harness/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/npm_package/**"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "node packages/sdlc-harness/dist/cli.js validate-harness"
-      - "make validate-harness"
+    summary: "init 交互询问 Harness root，默认 .agent，并迁移当前仓库。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md"
-    checkpoint_required: false
-    checkpoint: ".agent/state/checkpoints/DEV-009.md"
     gate_result: "PASS"
-    commit: "5c0e501"
+
+  - id: "DEV-010"
+    title: "简化 task、checkpoint 和 archive 状态模型"
+    status: "done"
+    summary: "删除 archive 常规机制，将复杂 task 合同移入活跃 checkpoint，done 后删除 checkpoint。"
+    implementation_doc: ".docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md"
+    gate_result: "PASS"

@@ -1,5 +1,18 @@
 # Checkpoint: [Task ID]
 
+## Task Contract
+
+```yaml
+allowed_paths:
+  - "src/**"
+  - "tests/**"
+required_gates:
+  - "make lint"
+  - "make test-current-domain"
+acceptance_criteria:
+  - ""
+```
+
 ## 1. 当前状态
 
 - Phase:

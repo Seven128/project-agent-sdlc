@@ -11,8 +11,8 @@ description: Use when ...
 
 ## 输入
 
-- `.harness/state/lifecycle.yaml`
-- `.harness/state/tasks.yaml`
+- `<harnessRoot>/state/lifecycle.yaml`
+- `<harnessRoot>/state/tasks.yaml`
 - 其它阶段需要读取的事实源
 
 ## 输出
@@ -34,13 +34,13 @@ description: Use when ...
 1. 中文解释规则，英文标识符保持原样，例如 `current_phase`、`active_skill`、`required_gates`。
 2. 命令保持原样，例如 `make validate-current`。
 3. 阶段和状态枚举保持原样，例如 `SPRINTING`、`done`、`pending_revision`。
-4. 如果该 Skill 可能执行长任务，说明何时需要写 checkpoint，并调用 `make validate-checkpoint`。
+4. 如果该 Skill 执行 open task，说明 checkpoint 的 `Task Contract` 如何约束 `allowed_paths` 和 `required_gates`，并调用 `make validate-checkpoint`。
 
 ## 完成检查
 
 - [ ] 产物已写入约定路径。
 - [ ] 已判断语义切片边界。
-- [ ] 如触发 checkpoint，已写入 `.harness/state/checkpoints/latest.md`。
+- [ ] 如当前 task 是 open task，已写入 `<harnessRoot>/state/checkpoints/<Task ID>.md`。
 - [ ] 如有 `.docs/` slice 变化，已运行 `make docs-overview`。
 - [ ] 相关英文机器契约未被翻译。
 - [ ] 对应 gate 准备通过。

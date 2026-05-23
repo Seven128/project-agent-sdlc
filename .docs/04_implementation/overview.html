@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="5290c20e1267bab4">
+  <meta name="source-hash" content="63e05dfbb362d4b2">
   <title>.docs/04_implementation overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/04_implementation overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>5290c20e1267bab4</code></p>
+      <p class="meta">Source hash: <code>63e05dfbb362d4b2</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -129,6 +129,7 @@
 <li><a href="#npm-package-dev-007-remove-tracked-agents-skills-md">npm_package/dev_007_remove_tracked_agents_skills.md</a></li>
 <li><a href="#npm-package-dev-008-configurable-harness-root-md">npm_package/dev_008_configurable_harness_root.md</a></li>
 <li><a href="#npm-package-dev-009-init-prompt-default-agent-root-md">npm_package/dev_009_init_prompt_default_agent_root.md</a></li>
+<li><a href="#npm-package-dev-010-task-checkpoint-model-md">npm_package/dev_010_task_checkpoint_model.md</a></li>
 </ol>
       </div>
     </section>
@@ -1424,6 +1425,150 @@
 <li>当前仓库的 Harness fact source 是 <code>.agent/**</code>；不要再新增 <code>.harness/**</code> 作为当前 root。</li>
 <li>自定义业务项目仍可在 init 时输入 <code>.harness</code>，CLI 会写入 <code>package.json#sdlcHarness.harnessFolderName</code>。</li>
 <li>后续改动 <code>AGENTS.md</code>、Skill、templates、policies、Makefile 或 workflow 后，继续运行 <code>sdlc-harness package sync-source</code> 和 <code>package check-source</code>。</li>
+</ul>
+</article>
+<article class="doc-slice" id="npm-package-dev-010-task-checkpoint-model-md">
+<header>
+<h2>npm_package/dev_010_task_checkpoint_model.md</h2>
+<a class="source-link" href="npm_package/dev_010_task_checkpoint_model.md">Source Markdown</a>
+</header>
+<h1 id="dev-010-task-checkpoint-model-implementation-doc">DEV-010 Task Checkpoint Model Implementation Doc</h1>
+<h2 id="1-关联信息">1. 关联信息</h2>
+<ul>
+<li>Task ID: DEV-010</li>
+<li>Linked PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
+<li>Linked technical design: <code>.docs/03_tech_plan/harness_package_distribution.md</code></li>
+<li>Linked RFC: <code>.docs/rfc/RFC_004_simplify_task_checkpoint_archive_model.md</code></li>
+<li>Linked commit: DEV-010 git commit</li>
+</ul>
+<h2 id="2-本次实现范围">2. 本次实现范围</h2>
+<ul>
+<li>新增（Added）:</li>
+<li><code>Task Contract</code> checkpoint 模板区块，用于声明 <code>allowed_paths</code>、<code>required_gates</code> 和验收标准。</li>
+<li>RFC_004、PRD-NPM-017 和 DEV-010 技术方案记录。</li>
+<li>Node validator 覆盖 open task checkpoint contract。</li>
+<li>修改（Changed）:</li>
+<li><code>tasks.yaml</code> 和 <code>tasks.draft.yaml</code> 改为轻量 task 索引，不再保存完整路径和 gate 合同。</li>
+<li>Python validators 从活跃 checkpoint 读取路径合同，并要求 open task 有 checkpoint、done task 不保留 checkpoint。</li>
+<li>阶段 Skill、模板、policy、README 和 AGENTS 协议改用活跃 checkpoint 语义。</li>
+<li><code>.docs/INDEX.md</code> 修正 <code>.agent</code> state 路由和 implementation doc 相对链接。</li>
+<li>未覆盖（Not covered）:</li>
+<li>未新增自动 git commit/tag 创建逻辑；task 历史动作记录由用户或外部 SCM 流程执行。</li>
+</ul>
+<h2 id="3-真实代码结构">3. 真实代码结构</h2>
+<table>
+<thead><tr>
+<th>文件（File）</th>
+<th>作用（Purpose）</th>
+<th>关键函数/对象（Key Functions/Objects）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>tools/harness_utils.py</code></td>
+<td>提供轻量 task schema 和 checkpoint contract 解析工具</td>
+<td><code>validate_task_shape</code>, <code>extract_task_contract</code>, <code>expand_harness_root</code></td>
+</tr>
+<tr>
+<td><code>tools/validate_checkpoint.py</code></td>
+<td>校验 open task checkpoint 和 done task checkpoint 清理</td>
+<td><code>validate_checkpoint_file</code>, <code>main</code></td>
+</tr>
+<tr>
+<td><code>tools/validate_allowed_paths.py</code></td>
+<td>从当前 checkpoint 读取 <code>allowed_paths</code> 校验工作树改动</td>
+<td><code>main</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/validators.ts</code></td>
+<td>对齐 npm 包 Node validators 的 checkpoint 语义</td>
+<td><code>validateCheckpoint</code>, <code>taskContract</code>, <code>validateDev</code></td>
+</tr>
+<tr>
+<td><code>.agent/managed/templates/CHECKPOINT_TEMPLATE.md</code></td>
+<td>生成 active checkpoint 的合同模板</td>
+<td><code>Task Contract</code></td>
+</tr>
+<tr>
+<td><code>.agent/state/tasks.yaml</code></td>
+<td>当前 sprint 的轻量 task 索引</td>
+<td><code>tasks[]</code>, <code>current_task_id</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-核心数据流">4. 核心数据流</h2>
+<pre><code class="language-txt">current_task_id
+-&gt; tasks.yaml 找到 open task checkpoint
+-&gt; checkpoint Task Contract 解析 allowed_paths / required_gates
+-&gt; validate_allowed_paths 检查 git changed files
+-&gt; task gates 通过
+-&gt; implementation doc 写入
+-&gt; task 标记 done 并删除 checkpoint</code></pre>
+<h2 id="5-关键实现逻辑">5. 关键实现逻辑</h2>
+<ul>
+<li>输入校验（Input validation）:</li>
+<li><code>validate_task_shape</code> 只要求 <code>id</code>、<code>title</code>、<code>status</code>、<code>summary</code>、<code>implementation_doc</code>。</li>
+<li>open task 必须有 <code>checkpoint</code>；closed task 不允许保留 <code>checkpoint</code>。</li>
+<li>核心分支（Core branches）:</li>
+<li>有 open task 时，<code>validate_allowed_paths.py</code> 读取当前 checkpoint <code>Task Contract</code>。</li>
+<li>无 open task 时，路径合同校验跳过，因为没有活跃执行合同。</li>
+<li><code>validate_checkpoint.py</code> 校验 open task checkpoint 文件存在、包含必需章节和 contract 字段。</li>
+<li>异常处理（Error handling）:</li>
+<li>checkpoint 缺失、contract 缺失、<code>allowed_paths</code> 或 <code>required_gates</code> 为空都会 gate failure。</li>
+<li>done task 仍保留 checkpoint 字段会 gate failure。</li>
+<li>边界兜底（Boundary fallback）:</li>
+<li><code>latest.md</code> 不再强制存在；如果存在，则必须引用当前 task，防止旧恢复入口误导 Agent。</li>
+<li>性能或并发注意事项（Performance or concurrency notes）:</li>
+<li>validator 只解析当前 checkpoint，避免每次读取历史 task 的大段执行信息。</li>
+</ul>
+<h2 id="6-与技术方案的偏移">6. 与技术方案的偏移</h2>
+<ul>
+<li>task state 不保存 <code>commit</code> 字段，避免重复 git 历史和在同一提交中记录自身 hash 的循环。</li>
+<li><code>.agent/templates/**</code> 作为旧本地模板副本同步更新，但 package source 仍以 <code>.agent/managed/**</code> 为准。</li>
+</ul>
+<h2 id="7-测试覆盖-test-coverage">7. 测试覆盖（Test Coverage）</h2>
+<table>
+<thead><tr>
+<th>测试（Test）</th>
+<th>覆盖范围（Coverage）</th>
+<th>结果（Result）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>npm test</code></td>
+<td>TypeScript build、init/sync/upgrade/package source/validators tests</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>node packages/sdlc-harness/dist/cli.js package check-source</code></td>
+<td>本地 Harness source 与 package assets 无漂移</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>node packages/sdlc-harness/dist/cli.js validate-harness</code></td>
+<td>Node harness validator</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>python3 tools/validate_checkpoint.py</code></td>
+<td>open task checkpoint contract</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>python3 tools/validate_allowed_paths.py</code></td>
+<td>active checkpoint allowed paths</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make validate-harness</code></td>
+<td>本地 harness、prompt language、checkpoint、overview gates</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-后续维护注意事项">8. 后续维护注意事项</h2>
+<ul>
+<li>新 task 创建时先写轻量 <code>tasks.yaml</code> 记录和对应 checkpoint；done 后删除 checkpoint。</li>
+<li>如后续要自动强制 task commit，可在 SCM 层实现，不应把 commit 历史重复写入 archive。</li>
 </ul>
 </article>
   </main>

@@ -16,7 +16,7 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 - `.docs/04_implementation/`
 - `.docs/06_review/REVIEW_REPORT.md`
 - 现有测试
-- `.harness/templates/TEST_PLAN_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/TEST_PLAN_TEMPLATE.md`
 
 ## 输出
 

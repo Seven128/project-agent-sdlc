@@ -12,6 +12,8 @@ def main() -> None:
         validate_task_shape(task, index)
         if task.get("status") == "done":
             require(task.get("gate_result") == "PASS", f"Done task {task.get('id')} must have gate_result PASS")
+        if task.get("status") == "cancelled":
+            require(not task.get("gate_result"), f"Cancelled task {task.get('id')} should not have gate_result")
 
     current_task_id = data.get("current_task_id") or ""
     if current_task_id:

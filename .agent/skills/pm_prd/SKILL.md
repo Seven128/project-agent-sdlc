@@ -15,7 +15,7 @@ description: Use during REQUIREMENT_GATHERING to turn raw input into PRD slices 
 - `.docs/00_raw/`
 - 现有 `.docs/01_product/`
 - 现有 `.docs/rfc/`
-- `.harness/templates/PRD_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/PRD_TEMPLATE.md`
 
 ## 输出
 

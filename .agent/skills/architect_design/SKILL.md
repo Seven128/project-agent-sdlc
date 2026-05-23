@@ -15,15 +15,15 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 - 相关 `.docs/01_product/` PRD
 - 现有 `.docs/02_architecture/`
 - 当前代码结构概览
-- `.harness/templates/TECH_DESIGN_TEMPLATE.md`
-- `.harness/templates/TASKS_TEMPLATE.yaml`
+- `<harnessRoot>/managed/templates/TECH_DESIGN_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/TASKS_TEMPLATE.yaml`
 
 ## 输出
 
 - `.docs/02_architecture/` 下的架构文档
 - `.docs/03_tech_plan/` 下的技术方案
 - 需要长期保留的 ADR 写入 `.docs/05_decisions/`
-- `.harness/state/tasks.draft.yaml`
+- `<harnessRoot>/state/tasks.draft.yaml`
 - 更新后的 `.docs/INDEX.md`
 
 ## 语义切片
@@ -38,9 +38,9 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 ## 规则
 
 1. 技术方案必须引用 PRD 路径和 requirement IDs。
-2. 每个任务必须包含 `id`、`title`、`status`、`priority`、`docs`、`allowed_paths`、`required_gates` 和 `implementation_doc`。
+2. 每个任务必须包含 `id`、`title`、`status`、`summary` 和 `implementation_doc`；复杂执行合同写入对应 checkpoint。
 3. `tasks.draft.yaml` 不得自动覆盖 `tasks.yaml`。
-4. 风险或不清晰的问题按 `.harness/policies/risk_matrix.yaml` 标记。
+4. 风险或不清晰的问题按 `<harnessRoot>/managed/policies/risk_matrix.yaml` 标记。
 5. 任务边界应足够小，能在一次开发执行和一份 implementation doc 内闭环。
 
 ## 完成检查

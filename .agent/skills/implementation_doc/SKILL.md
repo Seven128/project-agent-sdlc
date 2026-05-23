@@ -11,12 +11,12 @@ description: Use after a development task passes code gates to document the real
 
 ## 输入
 
-- `.harness/state/tasks.yaml` 中的当前 task ID
+- `<harnessRoot>/state/tasks.yaml` 中的当前 task ID
 - 当前 `git diff`
 - 关联 PRD
 - 关联技术方案
 - 变更后的源码和测试文件
-- `.harness/templates/IMPLEMENTATION_DOC_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md`
 
 ## 输出
 

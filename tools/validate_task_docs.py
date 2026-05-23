@@ -11,7 +11,8 @@ def main() -> None:
         doc = task.get("implementation_doc")
         require(doc, f"Done task {task.get('id')} missing implementation_doc")
         require(repo_path(doc).exists(), f"Implementation doc missing for {task.get('id')}: {doc}")
-        require(doc in index, f".docs/INDEX.md does not link implementation doc for {task.get('id')}: {doc}")
+        index_path = doc.removeprefix(".docs/")
+        require(doc in index or index_path in index, f".docs/INDEX.md does not link implementation doc for {task.get('id')}: {doc}")
     print(f"Implementation docs OK: {len(done_tasks)} done task(s)")
 
 

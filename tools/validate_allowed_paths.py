@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-from harness_utils import OPEN_TASK_STATUSES, changed_files, load_tasks, load_yaml, matches_any, require, run_main, task_by_id
+from harness_utils import (
+    OPEN_TASK_STATUSES,
+    changed_files,
+    expand_harness_root,
+    extract_task_contract,
+    load_tasks,
+    load_yaml,
+    matches_any,
+    require,
+    run_main,
+    task_by_id,
+)
 
 
 def main() -> None:
@@ -9,18 +20,20 @@ def main() -> None:
 
     policies = load_yaml(".agent/policies/allowed_paths.yaml")
     sprint_policy = ((policies.get("phases") or {}).get("SPRINTING") or {})
-    always_allow = sprint_policy.get("always_allow") or []
+    always_allow = expand_harness_root(sprint_policy.get("always_allow") or [])
 
     if open_tasks:
         current_task_id = data.get("current_task_id") or ""
         task = task_by_id(data, current_task_id) if current_task_id else None
         require(task, "current_task_id must point to the task being validated")
-        allowed = list(task.get("allowed_paths") or []) + list(always_allow)
+        require(task.get("status") in OPEN_TASK_STATUSES, "current_task_id must point to an open task for path validation")
+        checkpoint = task.get("checkpoint")
+        require(checkpoint, f"{current_task_id} open task must define checkpoint")
+        contract = extract_task_contract(checkpoint)
+        allowed = list(contract.get("allowed_paths") or []) + list(always_allow)
     else:
-        allowed = list(always_allow)
-        for task in tasks:
-            if task.get("status") not in {"cancelled", "archived"}:
-                allowed.extend(task.get("allowed_paths") or [])
+        print("Allowed paths skipped: no open task")
+        return
 
     changed = [path for path in changed_files() if not path.startswith(".git/")]
     blocked = [path for path in changed if not matches_any(path, allowed)]

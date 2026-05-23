@@ -14,7 +14,7 @@ description: Use during RELEASING to prepare release notes, smoke evidence, depl
 - `.docs/07_test/`
 - build artifacts
 - changelog 或 task list
-- `.harness/templates/RELEASE_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/RELEASE_TEMPLATE.md`
 
 ## 输出
 
@@ -22,7 +22,7 @@ description: Use during RELEASING to prepare release notes, smoke evidence, depl
 - smoke test result
 - deployment checklist
 - rollback plan
-- 完成后写入 `.harness/archive/releases/` 的归档记录
+- 发布完成后由 git tag、release commit 或外部发布系统记录动作历史
 
 ## 语义切片
 
@@ -30,7 +30,7 @@ description: Use during RELEASING to prepare release notes, smoke evidence, depl
 - 默认一个 release slice 包含 release note、build artifacts、smoke test result、deployment checklist 和 rollback plan。
 - 如果同一批次包含多个独立发布单元，应拆分 release slices，并在索引中标明依赖关系。
 - 如果只是补充同一版本的 smoke evidence 或 rollback step，应更新原 release slice。
-- 完成归档后更新 `.docs/INDEX.md` 和 `.harness/archive/releases/`。
+- 发布 slice 完成后更新 `.docs/INDEX.md`；不再维护 Harness archive。
 
 ## 规则
 

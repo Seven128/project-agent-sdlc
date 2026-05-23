@@ -16,7 +16,7 @@ description: Use during REVIEWING for read-only review of requirement fit, imple
 - `.docs/04_implementation/`
 - `git diff`
 - gate/test 结果
-- `.harness/templates/REVIEW_TEMPLATE.md`
+- `<harnessRoot>/managed/templates/REVIEW_TEMPLATE.md`
 
 ## 输出
 

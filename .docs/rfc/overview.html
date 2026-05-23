@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="d7825e2272855a66">
+  <meta name="source-hash" content="cd4569ca44590a8e">
   <title>.docs/rfc overview</title>
   <style>
     :root {
@@ -116,13 +116,14 @@
     <section class="hero">
       <h1>.docs/rfc overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>d7825e2272855a66</code></p>
+      <p class="meta">Source hash: <code>cd4569ca44590a8e</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
 <li><a href="#rfc-001-unify-harness-directory-model-md">RFC_001_unify_harness_directory_model.md</a></li>
 <li><a href="#rfc-002-configurable-harness-root-md">RFC_002_configurable_harness_root.md</a></li>
 <li><a href="#rfc-003-init-prompt-and-default-agent-root-md">RFC_003_init_prompt_and_default_agent_root.md</a></li>
+<li><a href="#rfc-004-simplify-task-checkpoint-archive-model-md">RFC_004_simplify_task_checkpoint_archive_model.md</a></li>
 </ol>
       </div>
     </section>
@@ -510,6 +511,142 @@
 <li><input type="checkbox" disabled> 覆盖 <code>package.json</code> 中已存在 <code>sdlcHarness.harnessFolderName</code> 时不重复询问并沿用配置。</li>
 <li><input type="checkbox" disabled> 覆盖当前仓库 source mappings 无漂移。</li>
 <li><input type="checkbox" disabled> 运行 <code>make validate-current</code> 确认开发阶段闭环。</li>
+</ul>
+<h2 id="7-status">7. Status</h2>
+<ul>
+<li>Status: APPLIED</li>
+</ul>
+</article>
+<article class="doc-slice" id="rfc-004-simplify-task-checkpoint-archive-model-md">
+<header>
+<h2>RFC_004_simplify_task_checkpoint_archive_model.md</h2>
+<a class="source-link" href="RFC_004_simplify_task_checkpoint_archive_model.md">Source Markdown</a>
+</header>
+<h1 id="rfc-004-简化-task-checkpoint-和-archive-状态模型">RFC_004: 简化 task、checkpoint 和 archive 状态模型</h1>
+<h2 id="1-背景">1. 背景</h2>
+<p>当前 Harness 同时保存 <code>tasks.yaml</code>、checkpoint、<code>.agent/archive/</code>、implementation doc 和 git commit 信息。对于 task 和 release 这类动作记录，<code>.agent/archive/</code> 与 git 历史重复；对于已完成 task，checkpoint 与 implementation doc 和 commit 也重复。长期保留这些热路径状态会让 Agent 每次查进度时读入过多无效上下文，并增加事实源漂移风险。</p>
+<p>用户明确要求：删除 archive 机制；每个活跃 task 都有 checkpoint；task 完成后删除对应 checkpoint；复杂执行合同如 <code>allowed_paths</code> 和 <code>required_gates</code> 放入 checkpoint；<code>tasks.yaml</code> 只保留轻量摘要、状态、实现文档和当前活跃 checkpoint 路径。</p>
+<h2 id="2-变更内容-change-content">2. 变更内容（Change Content）</h2>
+<ul>
+<li>Added:</li>
+<li>新增 DEV-010 实现任务，负责简化 task/checkpoint/archive 协议。</li>
+<li>checkpoint 模板新增 <code>Task Contract</code> YAML 区块，承载 <code>allowed_paths</code>、<code>required_gates</code> 和验收标准。</li>
+<li>validators 从当前活跃 task 的 checkpoint 读取路径约束。</li>
+<li>Changed:</li>
+<li><code>tasks.yaml</code> 从详细任务合同改为轻量任务索引。</li>
+<li><code>checkpoint</code> 从条件恢复快照改为活跃 task 的执行合同和现场记录。</li>
+<li>task 完成后删除 checkpoint 文件，最终事实由 git commit 和 implementation doc 承载。</li>
+<li><code>.agent</code> 路由声明修正为当前默认 Harness root。</li>
+<li>Removed:</li>
+<li><code>.agent/archive/**</code> 常规归档机制。</li>
+<li><code>checkpoint_required</code> 条件门槛。</li>
+<li>已完成 task 的历史 checkpoint 文件。</li>
+<li>task 级 <code>archived</code> 状态。</li>
+<li>Unchanged:</li>
+<li><code>.docs/**</code> 仍是正式阶段产物事实源。</li>
+<li>implementation doc 仍在 task 完成后记录真实实现。</li>
+<li><code>make validate-*</code> 和 <code>sdlc-harness validate-*</code> 仍作为 gate 入口。</li>
+</ul>
+<h2 id="3-product-impact-产品影响">3. Product Impact（产品影响）</h2>
+<table>
+<thead><tr>
+<th>受影响 PRD（Affected PRD）</th>
+<th>影响（Impact）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>.docs/01_product/npm_package_distribution.md</code></td>
+<td>需要补充轻量 task state、活跃 checkpoint 和删除 archive 的工作流需求。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-technical-impact-candidates-技术影响候选">4. Technical Impact Candidates（技术影响候选）</h2>
+<table>
+<thead><tr>
+<th>模块（Module）</th>
+<th>影响（Impact）</th>
+<th>置信度（Confidence）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>AGENTS.md</code></td>
+<td>更新 checkpoint 和 archive 协议，去除条件 checkpoint 和 archive 路由。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/skills/**</code></td>
+<td>更新各阶段 Skill 的输入、输出和完成检查，改用 <code>.agent</code>/<code>&lt;harnessRoot&gt;</code> 路由和活跃 checkpoint 语义。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/managed/templates/**</code></td>
+<td>更新 <code>TASKS_TEMPLATE.yaml</code>、<code>CHECKPOINT_TEMPLATE.md</code> 和 <code>SKILL_TEMPLATE.md</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/policies/**</code></td>
+<td>移除 archive 路由，修正 <code>.agent</code> 或 <code>&lt;harnessRoot&gt;</code> 路由声明。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tools/validate_tasks.py</code></td>
+<td>校验轻量 task schema，不再要求 <code>allowed_paths</code> 和 <code>required_gates</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tools/validate_allowed_paths.py</code></td>
+<td>从活跃 checkpoint 的 <code>Task Contract</code> 读取 <code>allowed_paths</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tools/validate_checkpoint.py</code></td>
+<td>校验 open task 必须有 checkpoint，done task 不应保留 checkpoint。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/validators.ts</code></td>
+<td>Node validators 对齐轻量 task 和活跃 checkpoint 语义。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/state/tasks.yaml</code></td>
+<td>瘦身为当前工作队列索引，移除已完成 task 的 checkpoint 和复杂合同字段。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/state/checkpoints/**</code></td>
+<td>删除已完成 task checkpoint。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/archive/**</code></td>
+<td>删除常规归档目录。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.docs/INDEX.md</code></td>
+<td>修正 <code>.agent</code> 路由和 implementation doc 链接，不再声明 archive 路由。</td>
+<td>high</td>
+</tr>
+</tbody>
+</table>
+<p>Impact analysis:</p>
+<pre><code class="language-sh">python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_004_simplify_task_checkpoint_archive_model.md --top 40</code></pre>
+<h2 id="5-acceptance-criteria">5. Acceptance Criteria</h2>
+<ul>
+<li><input type="checkbox" disabled> <code>.agent/archive/**</code> 被删除，协议和 policy 不再把 archive 作为常规路由。</li>
+<li><input type="checkbox" disabled> <code>tasks.yaml</code> 中 task 只保留轻量摘要、状态、implementation doc、gate result 和活跃 task 的 checkpoint 路径。</li>
+<li><input type="checkbox" disabled> <code>checkpoint_required</code> 从协议、模板、validators 和当前 state 中移除。</li>
+<li><input type="checkbox" disabled> open task 必须有 checkpoint；done/cancelled task 不保留 checkpoint 文件。</li>
+<li><input type="checkbox" disabled> <code>allowed_paths</code> 和 <code>required_gates</code> 从活跃 checkpoint 的 <code>Task Contract</code> 读取。</li>
+<li><input type="checkbox" disabled> <code>make validate-harness</code>、<code>make validate-current</code>、<code>npm test</code> 和 package source drift check 通过。</li>
+</ul>
+<h2 id="6-regression-requirements-回归要求">6. Regression Requirements（回归要求）</h2>
+<ul>
+<li><input type="checkbox" disabled> 覆盖 done task 无 checkpoint 时 <code>validate-checkpoint</code> 通过。</li>
+<li><input type="checkbox" disabled> 覆盖 open task 缺 checkpoint 时 <code>validate-checkpoint</code> 失败。</li>
+<li><input type="checkbox" disabled> 覆盖 active checkpoint 缺 <code>allowed_paths</code> 时 <code>validate_allowed_paths</code> 或对应 validator 失败。</li>
+<li><input type="checkbox" disabled> 覆盖 package assets 与本地 Harness 源文件无漂移。</li>
 </ul>
 <h2 id="7-status">7. Status</h2>
 <ul>

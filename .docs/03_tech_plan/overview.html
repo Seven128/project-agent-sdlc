@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="509f6bb50b55eedd">
+  <meta name="source-hash" content="76901c53a3886fc1">
   <title>.docs/03_tech_plan overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/03_tech_plan overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>509f6bb50b55eedd</code></p>
+      <p class="meta">Source hash: <code>76901c53a3886fc1</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -320,6 +320,26 @@ checksum: sha256:...
   - source: &quot;.github/workflows/harness.yml&quot;
     target: &quot;packages/sdlc-harness/assets/github/harness.yml&quot;
     mode: &quot;copy-file&quot;</code></pre>
+<h3 id="5-4-task-state-与-checkpoint-contract">5.4 Task state 与 checkpoint contract</h3>
+<p><code>&lt;harnessRoot&gt;/state/tasks.yaml</code> 只作为当前工作队列的轻量索引，不保存完整执行合同。典型结构：</p>
+<pre><code class="language-yaml">current_phase: &quot;SPRINTING&quot;
+current_task_id: &quot;DEV-010&quot;
+tasks:
+  - id: &quot;DEV-010&quot;
+    title: &quot;简化 task、checkpoint 和 archive 状态模型&quot;
+    status: &quot;in_progress&quot;
+    summary: &quot;一句话描述当前任务目标。&quot;
+    checkpoint: &quot;&lt;harnessRoot&gt;/state/checkpoints/DEV-010.md&quot;
+    implementation_doc: &quot;.docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md&quot;
+    gate_result: &quot;&quot;</code></pre>
+<p>活跃 task 必须有 checkpoint；done/cancelled task 不保留 checkpoint 文件。复杂执行合同放在 checkpoint 的 <code>Task Contract</code> YAML 区块：</p>
+<pre><code class="language-yaml">allowed_paths:
+  - &quot;packages/sdlc-harness/**&quot;
+required_gates:
+  - &quot;npm test&quot;
+acceptance_criteria:
+  - &quot;路径约束从活跃 checkpoint 读取&quot;</code></pre>
+<p>task 完成后，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 <code>.agent/archive/**</code> 作为常规归档事实源。</p>
 <h2 id="6-任务拆分-task-breakdown">6. 任务拆分（Task Breakdown）</h2>
 <table>
 <thead><tr>
@@ -386,6 +406,13 @@ checksum: sha256:...
 <td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code></td>
 <td><code>.docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md</code></td>
 </tr>
+<tr>
+<td>DEV-010</td>
+<td>简化 task、checkpoint 和 archive 状态模型</td>
+<td>由 <code>.agent/state/checkpoints/DEV-010.md#Task Contract</code> 声明</td>
+<td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code>, <code>make validate-current</code></td>
+<td><code>.docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md</code></td>
+</tr>
 </tbody>
 </table>
 <h2 id="7-风险与缓解">7. 风险与缓解</h2>
@@ -421,12 +448,23 @@ checksum: sha256:...
 <td>P1</td>
 <td>validators 运行时使用 TypeScript/Node，不依赖 Python 运行时</td>
 </tr>
+<tr>
+<td><code>tasks.yaml</code> 过大导致 Agent 上下文膨胀</td>
+<td>P0</td>
+<td>task state 只保留轻量索引，执行合同和现场放入活跃 checkpoint，done 后删除 checkpoint</td>
+</tr>
+<tr>
+<td>task/release 归档与 git 历史重复</td>
+<td>P1</td>
+<td>删除 <code>.agent/archive/**</code> 常规机制，动作记录以 git commit/tag 为准</td>
+</tr>
 </tbody>
 </table>
 <h2 id="8-需要关注的方案偏移">8. 需要关注的方案偏移</h2>
 <ul>
 <li>如果当前仓库继续作为包源码仓库，<code>packages/sdlc-harness/assets/**</code> 不应手写，应由 <code>package sync-source</code> 从工作流源文件生成。</li>
 <li>RFC_003 调整后，<code>sdlc-harness init</code> 会询问 Harness root；默认 <code>.agent</code>，当前仓库也使用默认 <code>.agent</code>。</li>
+<li>RFC_004 调整后，<code>tasks.yaml</code> 只保留轻量索引；<code>allowed_paths</code> 和 <code>required_gates</code> 从活跃 checkpoint 读取；done task checkpoint 会删除。</li>
 </ul>
 </article>
   </main>

@@ -18,8 +18,8 @@ def main() -> None:
     print(f"Tasks: {done_count}/{len(tasks)} done")
     if current_task:
         print(f"Current task: {current_task.get('id')} {current_task.get('title')} [{current_task.get('status')}]")
-        if current_task.get("checkpoint_required"):
-            print(f"Checkpoint required: {current_task.get('checkpoint') or 'missing path'}")
+        if current_task.get("checkpoint"):
+            print(f"Checkpoint: {current_task.get('checkpoint')}")
     else:
         print("Current task: none")
     if lifecycle.get("blocked_reason"):

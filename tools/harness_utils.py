@@ -21,7 +21,6 @@ TASK_STATUSES = {
     "blocked",
     "pending_revision",
     "cancelled",
-    "archived",
 }
 
 OPEN_TASK_STATUSES = {"pending", "in_progress", "blocked", "pending_revision"}
@@ -47,6 +46,22 @@ def load_yaml(relative: str | Path) -> Any:
     if not path.exists():
         raise HarnessError(f"Missing required YAML file: {relative}")
     text = path.read_text(encoding="utf-8")
+    if not text.strip():
+        return {}
+    try:
+        import yaml  # type: ignore
+
+        data = yaml.safe_load(text)
+        return {} if data is None else data
+    except Exception:
+        pass
+    try:
+        return json.loads(text)
+    except Exception:
+        return parse_simple_yaml(text)
+
+
+def parse_yaml_text(text: str) -> Any:
     if not text.strip():
         return {}
     try:
@@ -313,12 +328,27 @@ def load_tasks(path: str = ".agent/state/tasks.yaml") -> dict[str, Any]:
 
 def validate_task_shape(task: dict[str, Any], index: int) -> None:
     prefix = f"Task #{index + 1}"
-    for field in ["id", "title", "status", "priority", "docs", "allowed_paths", "required_gates", "implementation_doc"]:
+    for field in ["id", "title", "status", "summary", "implementation_doc"]:
         require(field in task, f"{prefix} missing field: {field}")
     require(task["status"] in TASK_STATUSES, f"{task.get('id', prefix)} has invalid status: {task.get('status')}")
-    require(isinstance(task["allowed_paths"], list) and task["allowed_paths"], f"{task['id']} must define allowed_paths")
-    require(isinstance(task["required_gates"], list) and task["required_gates"], f"{task['id']} must define required_gates")
-    require(isinstance(task["docs"], dict), f"{task['id']} docs must be a mapping")
+    require(isinstance(task["summary"], str) and task["summary"].strip(), f"{task['id']} must define summary")
+    if task["status"] in OPEN_TASK_STATUSES:
+        require(task.get("checkpoint"), f"{task['id']} open task must define checkpoint")
+    else:
+        require(not task.get("checkpoint"), f"{task['id']} closed task must not retain checkpoint")
+
+
+def expand_harness_root(patterns: list[str], root: str = ".agent") -> list[str]:
+    return [str(pattern).replace("<harnessRoot>", root) for pattern in patterns]
+
+
+def extract_task_contract(checkpoint_path: str) -> dict[str, Any]:
+    content = read_text(checkpoint_path)
+    match = re.search(r"## Task Contract\s*```ya?ml\s*(.*?)```", content, re.DOTALL)
+    require(match, f"{checkpoint_path} missing Task Contract YAML block")
+    contract = parse_yaml_text(match.group(1))
+    require(isinstance(contract, dict), f"{checkpoint_path} Task Contract must be a mapping")
+    return contract
 
 
 def task_by_id(tasks_data: dict[str, Any], task_id: str) -> dict[str, Any] | None:
