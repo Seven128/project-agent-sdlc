@@ -1,0 +1,21 @@
+import type { HarnessConfig } from "./types.js";
+
+export function defaultConfig(): HarnessConfig {
+  return {
+    core: {
+      package: "@ai-sdlc/sdlc-harness",
+      version: "0.1.0",
+      schema_version: "1"
+    },
+    managed_files: [
+      { path: "AGENTS.md", strategy: "merge-block" },
+      { path: ".agents/skills", strategy: "generated" },
+      { path: ".harness/templates", strategy: "managed" },
+      { path: ".harness/policies", strategy: "merge-with-local" },
+      { path: ".harness/make/sdlc-harness.mk", strategy: "managed" },
+      { path: ".github/workflows/harness.yml", strategy: "create-if-missing" }
+    ],
+    local_overrides: [".harness/overrides/**", ".harness/policies/*.local.yaml"],
+    never_overwrite: [".docs/**", ".harness/state/**", "src/**", "tests/**"]
+  };
+}

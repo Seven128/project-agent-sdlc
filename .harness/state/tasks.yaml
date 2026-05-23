@@ -3,7 +3,7 @@ current_task_id: "DEV-001"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
-    status: "pending"
+    status: "done"
     priority: "P0"
     docs:
       product:
@@ -22,7 +22,7 @@ tasks:
     implementation_doc: ".docs/04_implementation/npm_package/dev_001_package_scaffold.md"
     checkpoint_required: false
     checkpoint: ".harness/state/checkpoints/DEV-001.md"
-    gate_result: ""
+    gate_result: "PASS"
     commit: ""
 
   - id: "DEV-002"

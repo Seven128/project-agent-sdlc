@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="e3b0c44298fc1c14">
+  <meta name="source-hash" content="382c396d12d14d50">
   <title>.docs/04_implementation overview</title>
   <style>
     :root {
@@ -116,13 +116,157 @@
     <section class="hero">
       <h1>.docs/04_implementation overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>e3b0c44298fc1c14</code></p>
+      <p class="meta">Source hash: <code>382c396d12d14d50</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
-        <p class="empty">当前阶段还没有 Markdown slice。</p>
+        <ol>
+<li><a href="#npm-package-dev-001-package-scaffold-md">npm_package/dev_001_package_scaffold.md</a></li>
+</ol>
       </div>
     </section>
-    <article class="doc-slice"><p class="empty">当前阶段还没有 Markdown slice。</p></article>
+    <article class="doc-slice" id="npm-package-dev-001-package-scaffold-md">
+<header>
+<h2>npm_package/dev_001_package_scaffold.md</h2>
+<a class="source-link" href="npm_package/dev_001_package_scaffold.md">Source Markdown</a>
+</header>
+<h1 id="dev-001-npm-包骨架-implementation-doc">DEV-001 npm 包骨架 Implementation Doc</h1>
+<h2 id="1-关联信息">1. 关联信息</h2>
+<ul>
+<li>Task ID: <code>DEV-001</code></li>
+<li>Linked PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
+<li>Linked technical design: <code>.docs/03_tech_plan/harness_package_distribution.md</code></li>
+<li>Linked RFC: none</li>
+<li>Linked commit: pending</li>
+</ul>
+<h2 id="2-本次实现范围">2. 本次实现范围</h2>
+<ul>
+<li>新增（Added）:</li>
+<li>根 <code>package.json</code>，声明 workspace。</li>
+<li><code>packages/sdlc-harness/</code> npm 包骨架，包含 <code>package.json</code>、<code>tsconfig.json</code>、CLI placeholder、command placeholder、lib type definitions、assets 和 migrations 目录。</li>
+<li><code>.harness/config.yaml</code>，声明 package version、schema version、managed files、local overrides 和 never overwrite。</li>
+<li><code>packages/sdlc-harness/source-mappings.yaml</code>，声明当前工作流源文件到包内 canonical source 的同步映射。</li>
+<li>修改（Changed）:</li>
+<li><code>.harness/state/tasks.yaml</code>，记录 checkpoint 和任务状态。</li>
+<li><code>.docs/INDEX.md</code>，链接 implementation doc。</li>
+<li>未覆盖（Not covered）:</li>
+<li>未实现真实 <code>sync</code>、<code>init</code>、<code>upgrade</code>、<code>doctor</code>、<code>package sync-source</code> 逻辑。</li>
+<li>未复制当前工作流内容到 <code>assets/**</code>；后续由 <code>package sync-source</code> 实现自动更新。</li>
+</ul>
+<h2 id="3-真实代码结构">3. 真实代码结构</h2>
+<table>
+<thead><tr>
+<th>文件（File）</th>
+<th>作用（Purpose）</th>
+<th>关键函数/对象（Key Functions/Objects）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>package.json</code></td>
+<td>根 workspace 声明</td>
+<td><code>workspaces</code>、<code>scripts.sdlc-harness</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/package.json</code></td>
+<td>npm 包元数据和 binary 声明</td>
+<td><code>bin.sdlc-harness</code>、<code>files</code>、<code>scripts.build</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/cli.ts</code></td>
+<td>CLI 入口</td>
+<td><code>main()</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/commands/index.ts</code></td>
+<td>命令路由</td>
+<td><code>commands</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/commands/*.ts</code></td>
+<td>命令 placeholder</td>
+<td><code>init</code>、<code>sync</code>、<code>upgrade</code>、<code>doctor</code>、<code>validate</code>、<code>packageSource</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/types.ts</code></td>
+<td>共享数据类型</td>
+<td><code>HarnessConfig</code>、<code>ManagedFile</code>、<code>SourceMapping</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/config.ts</code></td>
+<td>默认配置模型</td>
+<td><code>defaultConfig()</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/source-mappings.yaml</code></td>
+<td>source authoring workspace 到 package assets 的映射</td>
+<td><code>source_mappings</code></td>
+</tr>
+<tr>
+<td><code>.harness/config.yaml</code></td>
+<td>项目接入配置</td>
+<td><code>core</code>、<code>managed_files</code>、<code>local_overrides</code>、<code>never_overwrite</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-核心数据流">4. 核心数据流</h2>
+<pre><code class="language-txt">Workflow source files in this repository
+-&gt; packages/sdlc-harness/source-mappings.yaml
+-&gt; future package sync-source command
+-&gt; package canonical assets
+-&gt; future sync command
+-&gt; project workspace agent-readable files</code></pre>
+<h2 id="5-关键实现逻辑">5. 关键实现逻辑</h2>
+<ul>
+<li>输入校验（Input validation）: DEV-001 只建立类型和配置边界，未实现运行时输入校验。</li>
+<li>核心分支（Core branches）: CLI placeholder 按命令名分发到 <code>init</code>、<code>sync</code>、<code>upgrade</code>、<code>doctor</code>、<code>validate</code> 和 <code>package</code>。</li>
+<li>异常处理（Error handling）: <code>cli.ts</code> 捕获顶层异常并设置 <code>process.exitCode = 1</code>。</li>
+<li>边界兜底（Boundary fallback）: <code>.harness/config.yaml</code> 明确 <code>.docs/**</code>、<code>.harness/state/**</code>、<code>src/**</code>、<code>tests/**</code> 为 <code>never_overwrite</code>。</li>
+<li>性能或并发注意事项（Performance or concurrency notes）: 当前无并发逻辑。</li>
+</ul>
+<h2 id="6-与技术方案的偏移">6. 与技术方案的偏移</h2>
+<ul>
+<li>暂无功能性偏移。DEV-001 只完成包骨架和 manifest，完整命令逻辑按任务拆分留给 DEV-002 至 DEV-005。</li>
+</ul>
+<h2 id="7-测试覆盖-test-coverage">7. 测试覆盖（Test Coverage）</h2>
+<table>
+<thead><tr>
+<th>测试（Test）</th>
+<th>覆盖范围（Coverage）</th>
+<th>结果（Result）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>python3</code> JSON parse check</td>
+<td>根 package、npm package metadata 和 <code>tsconfig.json</code></td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>node -e</code> JSON parse check</td>
+<td>Node runtime availability</td>
+<td>BLOCKED，本机未安装 <code>node</code></td>
+</tr>
+<tr>
+<td><code>make validate-checkpoint</code></td>
+<td>DEV-001 checkpoint 完整性</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make lint</code></td>
+<td>当前项目 lint gate placeholder</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make test-current-domain</code></td>
+<td>当前任务 focused test gate placeholder</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-后续维护注意事项">8. 后续维护注意事项</h2>
+<ul>
+<li>DEV-002 应实现真实 <code>sync</code>、<code>init</code>、<code>init --adopt</code> 和 <code>doctor</code>，不要继续扩展 placeholder。</li>
+<li>DEV-004 必须实现 <code>package sync-source</code> / <code>package check-source</code>，使本仓库工作流源文件变化时自动更新包内 canonical source，并用 CI 防止漂移。</li>
+</ul>
+</article>
   </main>
 </body>
 </html>

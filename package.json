@@ -1,0 +1,12 @@
+{
+  "name": "projecttemplate",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Reference workspace for the AI SDLC Harness.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "sdlc-harness": "node packages/sdlc-harness/dist/cli.js"
+  }
+}

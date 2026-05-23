@@ -1,0 +1,25 @@
+{
+  "name": "@ai-sdlc/sdlc-harness",
+  "version": "0.1.0",
+  "description": "CLI and canonical assets for the AI SDLC Harness workflow.",
+  "type": "module",
+  "bin": {
+    "sdlc-harness": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "assets",
+    "migrations",
+    "source-mappings.yaml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
