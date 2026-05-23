@@ -229,7 +229,7 @@ tasks:
 
   - id: "DEV-009"
     title: "init 询问 Harness root 并迁移当前仓库到 .agent 默认根"
-    status: "in_progress"
+    status: "done"
     priority: "P0"
     docs:
       product:
@@ -255,6 +255,7 @@ tasks:
       - "node packages/sdlc-harness/dist/cli.js validate-harness"
       - "make validate-harness"
     implementation_doc: ".docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md"
-    checkpoint_required: true
+    checkpoint_required: false
     checkpoint: ".agent/state/checkpoints/DEV-009.md"
-    gate_result: ""
+    gate_result: "PASS"
+    commit: "5c0e501"

@@ -6,7 +6,7 @@
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `.docs/rfc/RFC_003_init_prompt_and_default_agent_root.md`
-- Linked commit: `pending`
+- Linked commit: `5c0e501`
 
 ## 2. 本次实现范围
 
