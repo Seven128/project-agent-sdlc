@@ -279,15 +279,19 @@ tasks:
 -> 运行 current_task.required_gates
 -> 写 implementation doc
 -> 刷新 overview.md
+-> 保持 plan.yaml 中当前 task 的完整 open task 合同
+-> 创建 task implementation commit
 -> 将 plan.yaml 中当前 task 压缩为 done 摘要
--> 创建只包含当前 task 变更的 task-level git commit
--> git push 到当前 upstream branch
+-> 创建 task completion ledger commit
+-> git push 两个 commit 到当前 upstream branch
 -> 选择下一个 pending task
 ```
 
-开发阶段默认一个 task 对应一个 git commit。commit message 应包含 task id，例如 `DEV-003: implement login rate limit`。这个 commit 应包含该 task 的代码、测试、implementation doc、`.docs/INDEX.md`、`overview.md` 和必要 gate 记录；不要把多个 task 混进同一个 commit，也不要把未归属变更顺手带入。
+开发阶段默认一个 task 对应一个主要实现提交和一个轻量完成记录提交。task implementation commit 的 commit message 应包含 task id，例如 `DEV-003: implement login rate limit`。这个 commit 应包含该 task 的代码、测试、implementation doc、`.docs/INDEX.md`、`overview.md`、必要 gate 记录，以及尚未压缩的 open task 合同；不要把多个 task 混进同一个 commit，也不要把未归属变更顺手带入。
 
-`git push` 成功前，不认为该 task 完成，也不要进入下一个 pending task。如果仓库没有 remote/upstream、没有权限、凭证失效或 push 被拒绝，当前 task 应停在需要人工处理的状态并报告 blocker；不能为了继续执行而静默跳过 push。
+task completion ledger commit 发生在 implementation commit 之后，只负责把 `plan.yaml` 中当前 task 压缩为 `summary`、`implementation_doc`、`gate_result` 等 done 摘要，并记录必要 gate log。不要把这个压缩动作 amend 回 implementation commit，否则 git history 会丢失当时的 `allowed_paths`、`required_gates` 和 `acceptance_criteria`。
+
+两个 commit 都 `git push` 成功前，不认为该 task 完成，也不要进入下一个 pending task。如果仓库没有 remote/upstream、没有权限、凭证失效或 push 被拒绝，当前 task 应停在需要人工处理的状态并报告 blocker；不能为了继续执行而静默跳过 push。
 
 只有这些情况才回到 RFC 或架构阶段重新规划：
 - 技术方案被实现证明不可行。
@@ -310,7 +314,7 @@ PRD
 
 每个 open task 都必须在 `plan.yaml` 中包含 `docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。执行中只把必要现场写成短 `working_notes`；任务完成并写入 implementation doc 后，删除这些活跃字段，只留下摘要、implementation doc 和 gate result。历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
 
-`done` task 的历史边界以 task-level commit 为准。`plan.yaml` 不长期保存 commit hash；需要追溯时从 git history、PR 或外部 release 系统查看。这样可以保持 plan 短期化，同时确保每个 task 都有可审计、可回滚、已 push 的版本边界。
+`done` task 的历史边界以 task implementation commit 为准，因为它保留了 task 被压缩前的完整执行合同。`plan.yaml` 不长期保存 commit hash；需要追溯时从 git history、PR 或外部 release 系统查看。completion ledger commit 只负责把当前 plan 恢复为短期、低噪声状态。
 
 ## 八、阶段 Skill
 每个 Skill 只负责一个阶段或动作。
@@ -482,8 +486,9 @@ Codex 不需要真实“模式切换”：
 5. `overview.md` 已刷新。
 6. open task 的 plan 合同已完整。
 7. `plan.yaml` 已把 done task 压缩为简短摘要。
-8. 已创建只包含当前 task 变更的 task-level git commit。
-9. 已 `git push` 到当前 upstream branch；如果 push 失败，任务不能视为完成。
+8. 已在 `plan.yaml` 保留完整 open task 合同时创建 task implementation commit。
+9. 已在 implementation commit 之后压缩 `plan.yaml`，并创建 task completion ledger commit。
+10. 已 `git push` 两个 commit 到当前 upstream branch；如果 push 失败，任务不能视为完成。
 
 ## 十四、完整工作流示例
 场景：新增“登录失败 5 次后锁定账号 10 分钟”功能。

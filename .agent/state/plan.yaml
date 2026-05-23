@@ -1,5 +1,5 @@
 current_phase: "SPRINTING"
-current_task_id: ""
+current_task_id: "DEV-019"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -126,3 +126,41 @@ tasks:
     summary: "在开发阶段闭环中加入每个 task 完成后必须 task-level commit 并 push 的规则。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_018_task_commit_push_rule.md"
     gate_result: "PASS"
+
+  - id: "DEV-019"
+    title: "调整 task commit 与 plan 压缩顺序"
+    status: "in_progress"
+    summary: "将开发阶段提交顺序调整为先提交完整 open task 合同，再压缩 plan task。"
+    implementation_doc: ".docs/04_implementation/npm_package/dev_019_commit_before_task_compression.md"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      implementation:
+        - ".docs/04_implementation/npm_package/dev_019_commit_before_task_compression.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - ".agent/skills/dev_sprint/SKILL.md"
+      - "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
+      - "packages/sdlc-harness/assets/skills/dev_sprint/SKILL.md"
+      - ".docs/04_implementation/npm_package/dev_019_commit_before_task_compression.md"
+      - ".docs/INDEX.md"
+      - ".docs/04_implementation/overview.md"
+      - ".agent/state/plan.yaml"
+      - ".agent/state/gate_results.log"
+    required_gates:
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make docs-overview"
+      - "make validate-harness"
+      - "git diff --check"
+      - "make validate-current after compression"
+    acceptance_criteria:
+      - "开发阶段规则明确 task implementation commit 发生在 plan task 压缩之前，commit 中保留完整 open task 合同。"
+      - "规则明确压缩 `plan.yaml` 为 done 摘要是后续 completion ledger commit，不覆盖 implementation commit 的完整任务上下文。"
+      - "README、AGENTS、dev_sprint Skill 和包内 assets 语义一致。"
+    working_notes:
+      - "用户澄清：每个 task 完成后的提交应保留 task 被简化前的完整信息，然后再简化 task。"
+    gate_result: ""
