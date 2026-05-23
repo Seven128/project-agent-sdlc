@@ -195,7 +195,7 @@ tasks:
 
   - id: "DEV-008"
     title: "支持 harnessFolderName 配置 Harness 根目录"
-    status: "in_progress"
+    status: "done"
     priority: "P0"
     docs:
       product:
@@ -222,6 +222,7 @@ tasks:
       - "node packages/sdlc-harness/dist/cli.js validate-harness"
       - "make validate-harness"
     implementation_doc: ".docs/04_implementation/npm_package/dev_008_configurable_harness_root.md"
-    checkpoint_required: true
+    checkpoint_required: false
     checkpoint: ".harness/state/checkpoints/DEV-008.md"
-    gate_result: ""
+    gate_result: "PASS"
+    commit: "0c8423e"
