@@ -318,7 +318,7 @@ def load_phase_contracts() -> dict[str, Any]:
     return data["phases"]
 
 
-def load_tasks(path: str = ".agent/state/tasks.yaml") -> dict[str, Any]:
+def load_plan(path: str = ".agent/state/plan.yaml") -> dict[str, Any]:
     data = load_yaml(path)
     require(isinstance(data, dict), f"{path} must be a mapping")
     tasks = data.get("tasks", [])
@@ -333,26 +333,23 @@ def validate_task_shape(task: dict[str, Any], index: int) -> None:
     require(task["status"] in TASK_STATUSES, f"{task.get('id', prefix)} has invalid status: {task.get('status')}")
     require(isinstance(task["summary"], str) and task["summary"].strip(), f"{task['id']} must define summary")
     if task["status"] in OPEN_TASK_STATUSES:
-        require(task.get("checkpoint"), f"{task['id']} open task must define checkpoint")
+        for field in ["docs", "allowed_paths", "required_gates", "acceptance_criteria"]:
+            require(field in task, f"{task['id']} open task missing field: {field}")
+        require(isinstance(task["docs"], dict), f"{task['id']} docs must be a mapping")
+        require(isinstance(task["allowed_paths"], list) and task["allowed_paths"], f"{task['id']} must define allowed_paths")
+        require(isinstance(task["required_gates"], list) and task["required_gates"], f"{task['id']} must define required_gates")
+        require(isinstance(task["acceptance_criteria"], list) and task["acceptance_criteria"], f"{task['id']} must define acceptance_criteria")
     else:
-        require(not task.get("checkpoint"), f"{task['id']} closed task must not retain checkpoint")
+        for field in ["docs", "allowed_paths", "required_gates", "acceptance_criteria", "working_notes"]:
+            require(field not in task, f"{task['id']} closed task must not retain {field}")
 
 
 def expand_harness_root(patterns: list[str], root: str = ".agent") -> list[str]:
     return [str(pattern).replace("<harnessRoot>", root) for pattern in patterns]
 
 
-def extract_task_contract(checkpoint_path: str) -> dict[str, Any]:
-    content = read_text(checkpoint_path)
-    match = re.search(r"## Task Contract\s*```ya?ml\s*(.*?)```", content, re.DOTALL)
-    require(match, f"{checkpoint_path} missing Task Contract YAML block")
-    contract = parse_yaml_text(match.group(1))
-    require(isinstance(contract, dict), f"{checkpoint_path} Task Contract must be a mapping")
-    return contract
-
-
-def task_by_id(tasks_data: dict[str, Any], task_id: str) -> dict[str, Any] | None:
-    for task in tasks_data.get("tasks", []):
+def task_by_id(plan_data: dict[str, Any], task_id: str) -> dict[str, Any] | None:
+    for task in plan_data.get("tasks", []):
         if isinstance(task, dict) and task.get("id") == task_id:
             return task
     return None

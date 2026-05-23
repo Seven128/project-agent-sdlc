@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from harness_utils import load_tasks, read_text, repo_path, require, run_main
+from harness_utils import load_plan, read_text, repo_path, require, run_main
 
 
 def main() -> None:
-    data = load_tasks()
+    data = load_plan()
     index = read_text(".docs/INDEX.md")
     done_tasks = [task for task in data.get("tasks", []) if task.get("status") == "done"]
     require(done_tasks, "No done tasks found; implementation docs are required before leaving SPRINTING")

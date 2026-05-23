@@ -1,4 +1,5 @@
 import path from "node:path";
+import { rm } from "node:fs/promises";
 import { readConfig } from "./config.js";
 import { pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
@@ -24,7 +25,9 @@ export async function runMigrations(projectRoot: string): Promise<MigrationRepor
   const report: MigrationReport = { changed: [], skipped: [] };
   const root = await harnessRoot(projectRoot);
   await migrateConfig(projectRoot, root, report);
-  await migrateTasks(projectRoot, root, report);
+  await migratePlan(projectRoot, root, report, "plan.yaml", "tasks.yaml");
+  await migratePlan(projectRoot, root, report, "plan.draft.yaml", "tasks.draft.yaml");
+  await removeLegacyCheckpoints(projectRoot, root, report);
   await ensureMemory(projectRoot, root, report);
   return report;
 }
@@ -83,14 +86,22 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
   return migrated;
 }
 
-async function migrateTasks(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
-  const relativeTasksPath = harnessPath(root, "state", "tasks.yaml");
-  const tasksPath = path.join(projectRoot, relativeTasksPath);
-  if (!(await pathExists(tasksPath))) {
-    report.skipped.push(relativeTasksPath);
+async function migratePlan(
+  projectRoot: string,
+  root: string,
+  report: MigrationReport,
+  planFileName: string,
+  legacyFileName: string
+): Promise<void> {
+  const relativePlanPath = harnessPath(root, "state", planFileName);
+  const planPath = path.join(projectRoot, relativePlanPath);
+  const legacyTasksPath = path.join(projectRoot, harnessPath(root, "state", legacyFileName));
+  const sourcePath = (await pathExists(planPath)) ? planPath : legacyTasksPath;
+  if (!(await pathExists(sourcePath))) {
+    report.skipped.push(relativePlanPath);
     return;
   }
-  const data = (parseYaml(await readText(tasksPath)) ?? {}) as Record<string, unknown>;
+  const data = (parseYaml(await readText(sourcePath)) ?? {}) as Record<string, unknown>;
   let changed = false;
   if (!("current_phase" in data)) {
     data.current_phase = "SPRINTING";
@@ -104,11 +115,74 @@ async function migrateTasks(projectRoot: string, root: string, report: Migration
     data.tasks = [];
     changed = true;
   }
-  if (changed && (await writeTextIfChanged(tasksPath, stringifyYaml(data)))) {
-    report.changed.push(relativeTasksPath);
-  } else {
-    report.skipped.push(relativeTasksPath);
+  if (Array.isArray(data.tasks)) {
+    for (const task of data.tasks) {
+      if (!isRecord(task)) continue;
+      if ("checkpoint" in task) {
+        const checkpoint = String(task.checkpoint ?? "");
+        if (isOpenTask(task) && checkpoint) {
+          const contract = await readLegacyCheckpointContract(projectRoot, root, checkpoint);
+          for (const field of ["allowed_paths", "required_gates", "acceptance_criteria"]) {
+            if (!(field in task) && Array.isArray(contract[field])) {
+              task[field] = contract[field];
+            }
+          }
+        }
+        delete task.checkpoint;
+        changed = true;
+      }
+    }
   }
+  if (changed || sourcePath !== planPath) {
+    if (await writeTextIfChanged(planPath, stringifyYaml(data))) {
+      report.changed.push(relativePlanPath);
+    } else {
+      report.skipped.push(relativePlanPath);
+    }
+    if (sourcePath !== planPath) {
+      await rm(sourcePath, { force: true });
+      report.changed.push(path.relative(projectRoot, sourcePath));
+    }
+  } else {
+    report.skipped.push(relativePlanPath);
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isOpenTask(task: Record<string, unknown>): boolean {
+  return ["pending", "in_progress", "blocked", "pending_revision"].includes(String(task.status));
+}
+
+async function readLegacyCheckpointContract(
+  projectRoot: string,
+  root: string,
+  checkpoint: string
+): Promise<Record<string, unknown>> {
+  const relative = checkpoint.replace("<harnessRoot>", root);
+  const checkpointPath = path.join(projectRoot, relative);
+  if (!(await pathExists(checkpointPath))) {
+    return {};
+  }
+  const text = await readText(checkpointPath);
+  const match = text.match(/## Task Contract[\s\S]*?```ya?ml\s*([\s\S]*?)```/i);
+  if (!match) {
+    return {};
+  }
+  return (parseYaml(match[1]) ?? {}) as Record<string, unknown>;
+}
+
+async function removeLegacyCheckpoints(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
+  const relativeCheckpointPath = harnessPath(root, "state", "checkpoints");
+  const checkpointPath = path.join(projectRoot, relativeCheckpointPath);
+  if (!(await pathExists(checkpointPath))) {
+    report.skipped.push(relativeCheckpointPath);
+    return;
+  }
+  await rm(checkpointPath, { recursive: true, force: true });
+  report.changed.push(relativeCheckpointPath);
 }
 
 async function ensureMemory(projectRoot: string, root: string, report: MigrationReport): Promise<void> {

@@ -42,14 +42,18 @@ never_overwrite:
     "utf8"
   );
   await writeFile(path.join(root, ".harness/state/tasks.yaml"), "tasks: []\n", "utf8");
+  await writeFile(path.join(root, ".harness/state/tasks.draft.yaml"), "tasks: []\n", "utf8");
 
   const report = await runUpgrade(root);
   assert.ok(report.some((line) => line.startsWith("migrations changed=")));
   assert.ok(report.some((line) => line.startsWith("sync changed=")));
 
-  const tasks = await readFile(path.join(root, ".harness/state/tasks.yaml"), "utf8");
-  assert.match(tasks, /current_phase/);
-  assert.match(tasks, /current_task_id/);
+  const plan = await readFile(path.join(root, ".harness/state/plan.yaml"), "utf8");
+  assert.match(plan, /current_phase/);
+  assert.match(plan, /current_task_id/);
+  const draft = await readFile(path.join(root, ".harness/state/plan.draft.yaml"), "utf8");
+  assert.match(draft, /current_phase/);
+  assert.match(draft, /current_task_id/);
 
   const config = await readFile(path.join(root, ".harness/config.yaml"), "utf8");
   assert.match(config, /\.harness\/skills/);

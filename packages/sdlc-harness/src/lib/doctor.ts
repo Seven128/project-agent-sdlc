@@ -24,7 +24,7 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
   report.info.push(`core package: ${config.core.package}@${config.core.version}`);
   report.info.push(`schema version: ${config.core.schema_version}`);
 
-  for (const required of [harnessPath(root, "state", "lifecycle.yaml"), harnessPath(root, "state", "tasks.yaml"), ".docs/INDEX.md"]) {
+  for (const required of [harnessPath(root, "state", "lifecycle.yaml"), harnessPath(root, "state", "plan.yaml"), ".docs/INDEX.md"]) {
     if (!(await pathExists(path.join(projectRoot, required)))) {
       report.errors.push(`missing ${required}`);
     }

@@ -19,8 +19,7 @@ const validators: Record<string, Validator> = {
   "validate-current": validateCurrent,
   "validate-pm": validatePm,
   "validate-design": validateDesign,
-  "validate-dev": validateDev,
-  "validate-checkpoint": validateCheckpoint
+  "validate-dev": validateDev
 };
 
 export async function runValidator(projectRoot: string, gate: string): Promise<ValidatorReport> {
@@ -44,7 +43,7 @@ async function validateHarness(projectRoot: string): Promise<ValidatorReport> {
     ".docs/INDEX.md",
     harnessPath(root, "config.yaml"),
     harnessPath(root, "state", "lifecycle.yaml"),
-    harnessPath(root, "state", "tasks.yaml"),
+    harnessPath(root, "state", "plan.yaml"),
     harnessPath(root, "skills"),
     harnessPath(root, "managed", "templates"),
     harnessPath(root, "managed", "policies")
@@ -95,63 +94,39 @@ async function validateDesign(projectRoot: string): Promise<ValidatorReport> {
 async function validateDev(projectRoot: string): Promise<ValidatorReport> {
   const errors: string[] = [];
   const root = await harnessRoot(projectRoot);
-  const tasksData = await readYamlObject(path.join(projectRoot, root, "state", "tasks.yaml"));
+  const tasksData = await readYamlObject(path.join(projectRoot, root, "state", "plan.yaml"));
   const tasks = Array.isArray(tasksData.tasks) ? (tasksData.tasks as Array<Record<string, unknown>>) : [];
-  if (tasks.length === 0) errors.push("tasks.yaml must contain at least one task");
+  if (tasks.length === 0) errors.push("plan.yaml must contain at least one task");
   const open = tasks.filter((task) => ["pending", "in_progress", "blocked", "pending_revision"].includes(String(task.status)));
   if (open.length > 0) errors.push(`Open tasks remain: ${open.map((task) => task.id).join(", ")}`);
   for (const task of tasks) {
     for (const field of ["id", "title", "status", "summary", "implementation_doc"]) {
       if (!task[field]) errors.push(`Task missing ${field}: ${String(task.id ?? "unknown")}`);
     }
+    if (["pending", "in_progress", "blocked", "pending_revision"].includes(String(task.status))) {
+      for (const field of ["docs", "allowed_paths", "required_gates", "acceptance_criteria"]) {
+        if (!task[field]) errors.push(`Open task ${task.id} missing ${field}`);
+      }
+      if (!Array.isArray(task.allowed_paths) || task.allowed_paths.length === 0) {
+        errors.push(`Open task ${task.id} must define allowed_paths`);
+      }
+      if (!Array.isArray(task.required_gates) || task.required_gates.length === 0) {
+        errors.push(`Open task ${task.id} must define required_gates`);
+      }
+    } else {
+      for (const field of ["docs", "allowed_paths", "required_gates", "acceptance_criteria", "working_notes"]) {
+        if (task[field]) errors.push(`Closed task ${task.id} must not retain ${field}`);
+      }
+    }
   }
   for (const task of tasks.filter((task) => task.status === "done")) {
     if (task.gate_result !== "PASS") errors.push(`Done task ${task.id} must have gate_result PASS`);
-    if (task.checkpoint) errors.push(`Done task ${task.id} must not retain checkpoint`);
     const implementationDoc = String(task.implementation_doc ?? "");
     if (implementationDoc && !(await pathExists(path.join(projectRoot, implementationDoc)))) {
       errors.push(`Implementation doc missing for ${task.id}: ${implementationDoc}`);
     }
   }
   return { info: [`validate-dev checked ${tasks.length} task(s)`], errors };
-}
-
-async function validateCheckpoint(projectRoot: string): Promise<ValidatorReport> {
-  const root = await harnessRoot(projectRoot);
-  const tasksData = await readYamlObject(path.join(projectRoot, root, "state", "tasks.yaml"));
-  const tasks = Array.isArray(tasksData.tasks) ? (tasksData.tasks as Array<Record<string, unknown>>) : [];
-  const openStatuses = new Set(["pending", "in_progress", "blocked", "pending_revision"]);
-  const required = tasks.filter((task) => openStatuses.has(String(task.status)));
-  const errors: string[] = [];
-  for (const task of tasks.filter((task) => !openStatuses.has(String(task.status)))) {
-    if (task.checkpoint) errors.push(`Closed task ${task.id} must not retain checkpoint`);
-  }
-  for (const task of required) {
-    const checkpoint = String(task.checkpoint ?? "");
-    if (!checkpoint || !(await pathExists(path.join(projectRoot, checkpoint)))) {
-      errors.push(`${task.id} checkpoint file does not exist: ${checkpoint}`);
-      continue;
-    }
-    const contract = taskContract(await readText(path.join(projectRoot, checkpoint)));
-    if (!contract) {
-      errors.push(`${task.id} checkpoint missing Task Contract YAML block`);
-      continue;
-    }
-    if (!Array.isArray(contract.allowed_paths) || contract.allowed_paths.length === 0) {
-      errors.push(`${task.id} checkpoint Task Contract missing allowed_paths`);
-    }
-    if (!Array.isArray(contract.required_gates) || contract.required_gates.length === 0) {
-      errors.push(`${task.id} checkpoint Task Contract missing required_gates`);
-    }
-  }
-  return { info: required.length ? [`validate-checkpoint checked ${required.length} open task checkpoint(s)`] : ["No open task checkpoints required"], errors };
-}
-
-function taskContract(content: string): Record<string, unknown> | null {
-  const match = content.match(/## Task Contract\s*```ya?ml\s*([\s\S]*?)```/);
-  if (!match) return null;
-  const parsed = parseYaml(match[1]);
-  return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
 }
 
 async function readYamlObject(filePath: string): Promise<Record<string, unknown>> {

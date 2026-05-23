@@ -44,7 +44,7 @@
 | PRD-NPM-014 | 以可配置 `<harnessRoot>` 作为 Harness 工作流配置 canonical root | P0 | Skill、policy、template、state protocol、validator 和 migration 都属于 Harness 配置；具体 state data 和 `.docs/**` 属于项目实例 |
 | PRD-NPM-015 | 支持通过 JSON 配置 `harnessFolderName` 指定 Harness 根目录，默认值为 `.agent` | P0 | 优先读取 `package.json` 的 `sdlcHarness.harnessFolderName`，也支持 `sdlc-harness.config.json`；兼容别名 `harnessFloderName` |
 | PRD-NPM-016 | `sdlc-harness init` 交互式询问 Harness folder name，并写入 `package.json` | P0 | 提示默认值 `.agent`；直接回车采用默认；非交互环境不阻塞并使用默认 |
-| PRD-NPM-017 | 简化 task/checkpoint/archive 状态模型 | P0 | `tasks.yaml` 只保留轻量任务索引；活跃 task 必须有 checkpoint；复杂执行合同进入 checkpoint；task 完成后删除 checkpoint；不再维护 `.agent/archive/**` 常规归档 |
+| PRD-NPM-017 | 删除 archive 并采用 `plan.yaml` 单文件执行计划模型 | P0 | `plan.yaml` 取代 `tasks.yaml`；open task 直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注；done task 压缩为简短摘要；不再维护 checkpoint 文件或 `.agent/archive/**` 常规归档 |
 
 ## 5. Acceptance Criteria
 
@@ -61,9 +61,10 @@
 - [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agent` 作为 Harness 根目录，Skill 位于 `.agent/skills/**`，其它配置位于 `.agent/state/**`、`.agent/managed/**` 和 `.agent/config.yaml`。
 - [ ] 配置 `harnessFolderName: ".harness"` 的项目使用 `.harness` 作为 Harness 根目录，Skill 位于 `.harness/skills/**`，不再额外套 `.harness/agents/skills/**`。
 - [ ] 执行 `npx sdlc-harness init` 时，CLI 提示输入 Harness folder name；直接回车写入默认 `.agent`，输入自定义值则写入自定义值。
-- [ ] `tasks.yaml` 保持轻量，只保存 task id、title、status、summary、implementation doc、gate result 和活跃 checkpoint 路径。
-- [ ] 活跃 task 的 checkpoint 包含 `Task Contract`，其中声明 `allowed_paths`、`required_gates` 和验收标准。
-- [ ] task 完成后删除 checkpoint，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。
+- [ ] `plan.yaml` 和 `plan.draft.yaml` 取代 `tasks.yaml` 和 `tasks.draft.yaml`。
+- [ ] open task 直接在 `plan.yaml` 中声明 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注。
+- [ ] task 完成后压缩为简短摘要、implementation doc 和 gate result，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。
+- [ ] Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 `validate-checkpoint` gate。
 - [ ] Harness 不再生成或要求 `.agent/archive/**` 作为 task/release 常规归档。
 
 ## 6. Out Of Scope
@@ -74,6 +75,7 @@
 - 不在首个版本解决所有语言生态的项目脚本自动识别；`lint`、`test`、`build` 可先由项目保留或人工配置。
 - 不覆盖或重写业务项目已有代码、产品文档、实现文档和历史状态。
 - 不把 task/release 历史动作重复归档到 `.agent/archive/**`；这类历史以 git commit、tag 或外部 release 系统为准。
+- 不保留独立 checkpoint 文件；活跃任务现场只存在于 `plan.yaml` 的 open task 条目中。
 
 ## 7. Open Questions
 

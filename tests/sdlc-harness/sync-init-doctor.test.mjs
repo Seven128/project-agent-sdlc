@@ -28,7 +28,7 @@ try {
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
   await stat(path.join(defaultRoot, ".agent/skills/manager/SKILL.md"));
-  await stat(path.join(defaultRoot, ".agent/managed/templates/CHECKPOINT_TEMPLATE.md"));
+  await stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml"));
 
   const defaultDoctor = await runDoctor(defaultRoot);
@@ -47,7 +47,7 @@ try {
   const configuredSyncReport = await runSync(configuredRoot);
   assert.equal(configuredSyncReport.blocked.length, 0);
   await stat(path.join(configuredRoot, ".harness/skills/manager/SKILL.md"));
-  await stat(path.join(configuredRoot, ".harness/managed/templates/CHECKPOINT_TEMPLATE.md"));
+  await stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml"));
 
   const configuredDoctor = await runDoctor(configuredRoot);

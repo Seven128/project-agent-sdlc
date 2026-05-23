@@ -14,7 +14,7 @@ description: Use during RFC_RECALIBRATION to process requirement changes with im
 - `.docs/rfc/RFC_*.md`
 - 当前 PRD 和技术方案
 - `.docs/04_implementation/`
-- `<harnessRoot>/state/tasks.yaml`
+- `<harnessRoot>/state/plan.yaml`
 - `tools/impact_analyzer.py`
 
 ## 输出

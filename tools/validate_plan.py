@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-from harness_utils import OPEN_TASK_STATUSES, load_tasks, require, run_main, task_by_id, validate_task_shape
+from harness_utils import OPEN_TASK_STATUSES, load_plan, require, run_main, task_by_id, validate_task_shape
 
 
 def main() -> None:
-    data = load_tasks()
+    data = load_plan()
     tasks = data.get("tasks", [])
-    require(tasks, "tasks.yaml must contain at least one task before leaving SPRINTING")
+    require(tasks, "plan.yaml must contain at least one task before leaving SPRINTING")
 
     for index, task in enumerate(tasks):
         require(isinstance(task, dict), f"Task #{index + 1} must be a mapping")

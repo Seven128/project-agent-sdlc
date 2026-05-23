@@ -6,9 +6,8 @@
 ## 事实源
 
 - 生命周期状态：`.agent/state/lifecycle.yaml`
-- 任务状态：`.agent/state/tasks.yaml`
-- 任务草案：`.agent/state/tasks.draft.yaml`
-- Checkpoint：`.agent/state/checkpoints/`
+- 执行计划：`.agent/state/plan.yaml`
+- 计划草案：`.agent/state/plan.draft.yaml`
 - 项目长期记忆：`.agent/state/memory.md`
 - 产品文档：`.docs/01_product/`
 - 架构文档：`.docs/02_architecture/`
@@ -28,16 +27,13 @@
 - 任意 `.docs/<stage>/**/*.md` 发生新增、修改、拆分、合并或废弃后，运行 `make docs-overview`。
 - 提交或阶段交付前，运行 `make validate-doc-overviews` 或 `make validate-harness` 确认 HTML 总览未过期。
 
-## Checkpoint Protocol
+## Plan Protocol
 
-- `checkpoint` 是 open task 的执行合同和现场快照，不是正式需求、技术方案或 implementation doc。
-- 每个 `pending`、`in_progress`、`blocked`、`pending_revision` task 都必须在 `checkpoint` 字段写入 `.agent/state/checkpoints/<Task ID>.md`。
-- checkpoint 必须包含 `Task Contract` YAML 区块，声明 `allowed_paths`、`required_gates` 和验收标准。
-- 当前 task 需要恢复或交接时，同时更新 `.agent/state/checkpoints/latest.md`。
-- Checkpoint 使用 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md`。
-- 使用 `make validate-checkpoint` 校验 open task checkpoint 是否完整。
-- task 完成并写入 implementation doc 后，删除对应 checkpoint；历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
-- `.agent/state/tasks.yaml` 只保留轻量 task 索引，不保存完整执行合同。
+- `plan.yaml` 是当前执行计划事实源。open task 直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要的 `working_notes`。
+- task 完成并写入 implementation doc 后，删除 open task 的详细执行字段，只保留简短 `summary`、`implementation_doc` 和 `gate_result`。
+- `plan.draft.yaml` 是架构阶段生成的计划草案，不自动覆盖 `plan.yaml`。
+- 不维护 checkpoint 文件；任务现场只存在于 open task 的 plan 条目里。
+- 历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
 
 ## Prompt Language Contract
 
@@ -47,7 +43,7 @@
 - 不翻译 `current_phase`、`active_skill`、`allowed_paths`、`required_gates`、`implementation_doc` 等字段名。
 - 不翻译 `REQUIREMENT_GATHERING`、`ARCHITECTING`、`SPRINTING`、`REVIEWING`、`TESTING`、`RELEASING`、`RFC_RECALIBRATION`、`BLOCKED` 等阶段枚举。
 - 不翻译 `pending`、`in_progress`、`done`、`blocked`、`pending_revision`、`cancelled` 等任务状态。
-- 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.agent/state/tasks.yaml` 等命令和路径。
+- 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.agent/state/plan.yaml` 等命令和路径。
 - 后续更新 `.agent/skills/*/SKILL.md` 或 `.agent/managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agent`。
 
 ## 通用执行原则
@@ -66,14 +62,14 @@
 2. 除非用户明确要求其它工作流动作，否则使用 `active_skill` 指定的 Skill。
 3. 产品文档和技术方案未形成前，不写业务代码。
 4. 在 `SPRINTING` 阶段，一次只执行一个任务。
-5. 在 `SPRINTING` 阶段，只编辑当前 task checkpoint 的 `allowed_paths` 允许的文件。
-6. 不要在当前 task checkpoint 的 `required_gates` 通过前把任务标记为 `done`。
+5. 在 `SPRINTING` 阶段，只编辑当前 open task 的 `allowed_paths` 允许的文件。
+6. 不要在当前 open task 的 `required_gates` 通过前把任务标记为 `done`。
 7. 代码 gate 通过后，更新任务实现文档和 `.docs/INDEX.md`。
 8. `reviewer` 角色只读，不直接修改源码。
 9. 需求变更必须进入 RFC 工作流。
 10. task/release 历史动作记录使用 git commit、tag 或外部 release 系统，不维护 `.agent/archive/` 常规归档。
 11. 文档 slice 发生变化后，运行 `make docs-overview` 刷新对应 `overview.html`。
-12. open task 必须先有 checkpoint，再继续推进或交接。
+12. open task 必须在 `plan.yaml` 中包含完整执行合同，再继续推进或交接。
 13. 如果信息缺失，或 gate 因基础设施原因失败，停止推进并报告 blocker。
 
 ## 宏指令
@@ -84,7 +80,6 @@
 - `/rfc <file>`：挂起当前流程并进入 RFC recalibration。
 - `/syncdocs`：同步 `.docs/INDEX.md` 与当前文档事实源。
 - `/overview`：运行 `make docs-overview`，刷新 `.docs/<stage>/overview.html` 派生视图。
-- `/checkpoint`：按当前 task 写入或更新 `.agent/state/checkpoints/latest.md`。
 - `/review`：运行只读 Review 工作流。
 - `/test`：运行测试计划和验证工作流。
 

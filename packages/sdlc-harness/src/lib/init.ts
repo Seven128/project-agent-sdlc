@@ -58,16 +58,16 @@ async function projectHasExistingFiles(projectRoot: string): Promise<boolean> {
 
 async function createProjectState(projectRoot: string, root: string, report: string[]): Promise<void> {
   const stateRoot = path.join(projectRoot, root, "state");
-  await ensureDir(path.join(stateRoot, "checkpoints"));
+  await ensureDir(stateRoot);
   const files: Array<[string, string]> = [
     [
       harnessPath(root, "state", "lifecycle.yaml"),
       `project_name: "Project"\nversion: "v0.1"\ncurrent_phase: "REQUIREMENT_GATHERING"\nactive_role: "pm"\nactive_skill: "pm_prd"\ncurrent_milestone: "MVP"\nblocked_reason: ""\nsuspended_phase: ""\nallowed_next_phases:\n  - "ARCHITECTING"\nhistory: []\n`
     ],
-    [harnessPath(root, "state", "tasks.yaml"), `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
-    [harnessPath(root, "state", "tasks.draft.yaml"), `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
+    [harnessPath(root, "state", "plan.yaml"), `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
+    [harnessPath(root, "state", "plan.draft.yaml"), `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
     [harnessPath(root, "state", "gate_results.log"), "# Gate results are appended by sdlc-harness.\n"],
-    [harnessPath(root, "state", "memory.md"), "# Project Memory\n\n短期状态写入 plan/tasks；长期稳定知识简短记录在这里，并链接到 `.docs/` 正式出处。\n"]
+    [harnessPath(root, "state", "memory.md"), "# Project Memory\n\n短期执行计划写入 plan.yaml；长期稳定知识简短记录在这里，并链接到 `.docs/` 正式出处。\n"]
   ];
   for (const [relative, content] of files) {
     if (await writeTextIfChanged(path.join(projectRoot, relative), content)) {

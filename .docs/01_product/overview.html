@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="1e2017a1bb51e37f">
+  <meta name="source-hash" content="efb838793626a55f">
   <title>.docs/01_product overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/01_product overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>1e2017a1bb51e37f</code></p>
+      <p class="meta">Source hash: <code>efb838793626a55f</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -292,9 +292,9 @@
 </tr>
 <tr>
 <td>PRD-NPM-017</td>
-<td>简化 task/checkpoint/archive 状态模型</td>
+<td>删除 archive 并采用 <code>plan.yaml</code> 单文件执行计划模型</td>
 <td>P0</td>
-<td><code>tasks.yaml</code> 只保留轻量任务索引；活跃 task 必须有 checkpoint；复杂执行合同进入 checkpoint；task 完成后删除 checkpoint；不再维护 <code>.agent/archive/**</code> 常规归档</td>
+<td><code>plan.yaml</code> 取代 <code>tasks.yaml</code>；open task 直接包含 <code>allowed_paths</code>、<code>required_gates</code>、<code>acceptance_criteria</code> 和必要执行备注；done task 压缩为简短摘要；不再维护 checkpoint 文件或 <code>.agent/archive/**</code> 常规归档</td>
 </tr>
 </tbody>
 </table>
@@ -313,9 +313,10 @@
 <li><input type="checkbox" disabled> 未配置 <code>harnessFolderName</code> 的项目默认使用 <code>.agent</code> 作为 Harness 根目录，Skill 位于 <code>.agent/skills/**</code>，其它配置位于 <code>.agent/state/**</code>、<code>.agent/managed/**</code> 和 <code>.agent/config.yaml</code>。</li>
 <li><input type="checkbox" disabled> 配置 <code>harnessFolderName: &quot;.harness&quot;</code> 的项目使用 <code>.harness</code> 作为 Harness 根目录，Skill 位于 <code>.harness/skills/**</code>，不再额外套 <code>.harness/agents/skills/**</code>。</li>
 <li><input type="checkbox" disabled> 执行 <code>npx sdlc-harness init</code> 时，CLI 提示输入 Harness folder name；直接回车写入默认 <code>.agent</code>，输入自定义值则写入自定义值。</li>
-<li><input type="checkbox" disabled> <code>tasks.yaml</code> 保持轻量，只保存 task id、title、status、summary、implementation doc、gate result 和活跃 checkpoint 路径。</li>
-<li><input type="checkbox" disabled> 活跃 task 的 checkpoint 包含 <code>Task Contract</code>，其中声明 <code>allowed_paths</code>、<code>required_gates</code> 和验收标准。</li>
-<li><input type="checkbox" disabled> task 完成后删除 checkpoint，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。</li>
+<li><input type="checkbox" disabled> <code>plan.yaml</code> 和 <code>plan.draft.yaml</code> 取代 <code>tasks.yaml</code> 和 <code>tasks.draft.yaml</code>。</li>
+<li><input type="checkbox" disabled> open task 直接在 <code>plan.yaml</code> 中声明 <code>allowed_paths</code>、<code>required_gates</code>、<code>acceptance_criteria</code> 和必要执行备注。</li>
+<li><input type="checkbox" disabled> task 完成后压缩为简短摘要、implementation doc 和 gate result，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。</li>
+<li><input type="checkbox" disabled> Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 <code>validate-checkpoint</code> gate。</li>
 <li><input type="checkbox" disabled> Harness 不再生成或要求 <code>.agent/archive/**</code> 作为 task/release 常规归档。</li>
 </ul>
 <h2 id="6-out-of-scope">6. Out Of Scope</h2>
@@ -326,6 +327,7 @@
 <li>不在首个版本解决所有语言生态的项目脚本自动识别；<code>lint</code>、<code>test</code>、<code>build</code> 可先由项目保留或人工配置。</li>
 <li>不覆盖或重写业务项目已有代码、产品文档、实现文档和历史状态。</li>
 <li>不把 task/release 历史动作重复归档到 <code>.agent/archive/**</code>；这类历史以 git commit、tag 或外部 release 系统为准。</li>
+<li>不保留独立 checkpoint 文件；活跃任务现场只存在于 <code>plan.yaml</code> 的 open task 条目中。</li>
 </ul>
 <h2 id="7-open-questions">7. Open Questions</h2>
 <table>

@@ -17,7 +17,6 @@ try {
   await mkdir(path.join(root, ".docs/03_tech_plan"), { recursive: true });
   await mkdir(path.join(root, ".docs/04_implementation/example"), { recursive: true });
   await mkdir(path.join(root, ".harness/state"), { recursive: true });
-  await mkdir(path.join(root, ".harness/state/checkpoints"), { recursive: true });
   await mkdir(path.join(root, ".harness/skills"), { recursive: true });
   await mkdir(path.join(root, ".harness/managed/templates"), { recursive: true });
   await mkdir(path.join(root, ".harness/managed/policies"), { recursive: true });
@@ -46,7 +45,7 @@ try {
     "utf8"
   );
   await writeFile(
-    path.join(root, ".harness/state/tasks.yaml"),
+    path.join(root, ".harness/state/plan.yaml"),
     `tasks:
   - id: DEV-001
     title: Done task
@@ -58,43 +57,48 @@ try {
     "utf8"
   );
 
-  for (const gate of ["validate-harness", "validate-pm", "validate-design", "validate-dev", "validate-checkpoint"]) {
+  for (const gate of ["validate-harness", "validate-pm", "validate-design", "validate-dev"]) {
     const report = await runValidator(root, gate);
     assert.deepEqual(report.errors, [], gate);
   }
 
   await writeFile(
-    path.join(root, ".harness/state/tasks.yaml"),
+    path.join(root, ".harness/state/plan.yaml"),
     `tasks:
   - id: DEV-002
     title: Open task
     status: in_progress
     summary: Active task
-    checkpoint: .harness/state/checkpoints/DEV-002.md
     implementation_doc: .docs/04_implementation/example/dev.md
 `,
     "utf8"
   );
-  let checkpointReport = await runValidator(root, "validate-checkpoint");
-  assert.match(checkpointReport.errors.join("\n"), /checkpoint file does not exist/);
+  let devReport = await runValidator(root, "validate-dev");
+  assert.match(devReport.errors.join("\n"), /Open task DEV-002 missing allowed_paths/);
 
   await writeFile(
-    path.join(root, ".harness/state/checkpoints/DEV-002.md"),
-    `# Checkpoint: DEV-002
-
-## Task Contract
-
-\`\`\`yaml
-allowed_paths:
-  - "src/**"
-required_gates:
-  - "npm test"
-\`\`\`
+    path.join(root, ".harness/state/plan.yaml"),
+    `tasks:
+  - id: DEV-002
+    title: Open task
+    status: in_progress
+    summary: Active task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "plan contract is present"
+    implementation_doc: .docs/04_implementation/example/dev.md
 `,
     "utf8"
   );
-  checkpointReport = await runValidator(root, "validate-checkpoint");
-  assert.deepEqual(checkpointReport.errors, []);
+  devReport = await runValidator(root, "validate-dev");
+  assert.match(devReport.errors.join("\n"), /Open tasks remain: DEV-002/);
+  assert.doesNotMatch(devReport.errors.join("\n"), /missing allowed_paths/);
 } finally {
   await rm(root, { recursive: true, force: true });
 }

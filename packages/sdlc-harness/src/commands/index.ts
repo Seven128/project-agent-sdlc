@@ -19,7 +19,6 @@ export const commands: Record<string, CommandHandler> = {
   "validate-pm": (args) => validate(["validate-pm", ...args]),
   "validate-design": (args) => validate(["validate-design", ...args]),
   "validate-dev": (args) => validate(["validate-dev", ...args]),
-  "validate-checkpoint": (args) => validate(["validate-checkpoint", ...args]),
   package: packageSource
 };
 

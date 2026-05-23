@@ -1,13 +1,12 @@
 PYTHON ?= python3
 
-.PHONY: help status docs-overview validate-doc-overviews validate-checkpoint validate-harness validate-current validate-pm validate-design validate-dev validate-review validate-test validate-release validate-rfc lint test-current-domain test-all build
+.PHONY: help status docs-overview validate-doc-overviews validate-harness validate-current validate-pm validate-design validate-dev validate-review validate-test validate-release validate-rfc lint test-current-domain test-all build
 
 help:
 	@echo "AI SDLC Harness commands"
 	@echo "  make status              查看 lifecycle 和 task 状态"
 	@echo "  make docs-overview       生成 .docs 各阶段 overview.html 派生视图"
 	@echo "  make validate-doc-overviews 校验 .docs 各阶段 overview.html 是否最新"
-	@echo "  make validate-checkpoint 校验 open task checkpoint 是否完整"
 	@echo "  make validate-harness    校验 Harness 骨架、配置和提示词语言契约"
 	@echo "  make validate-current    运行当前 lifecycle phase 的 gate"
 	@echo "  make validate-pm         校验产品需求产物"
@@ -27,13 +26,9 @@ docs-overview:
 validate-doc-overviews:
 	$(PYTHON) tools/build_doc_overviews.py --all --check
 
-validate-checkpoint:
-	$(PYTHON) tools/validate_checkpoint.py
-
 validate-harness:
 	$(PYTHON) tools/validate_harness.py
 	$(PYTHON) tools/validate_prompt_language.py
-	$(PYTHON) tools/validate_checkpoint.py
 	$(PYTHON) tools/build_doc_overviews.py --all --check
 
 validate-current:
@@ -45,12 +40,11 @@ validate-pm:
 
 validate-design:
 	$(PYTHON) tools/validate_design.py
-	$(PYTHON) tools/validate_task_draft.py
+	$(PYTHON) tools/validate_plan_draft.py
 
 validate-dev:
-	$(PYTHON) tools/validate_tasks.py
+	$(PYTHON) tools/validate_plan.py
 	$(PYTHON) tools/validate_allowed_paths.py
-	$(PYTHON) tools/validate_checkpoint.py
 	$(MAKE) lint
 	$(MAKE) test-current-domain
 	$(PYTHON) tools/validate_task_docs.py

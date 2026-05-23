@@ -15,7 +15,6 @@ on:
         options:
           - validate-harness
           - validate-doc-overviews
-          - validate-checkpoint
           - validate-current
           - validate-pm
           - validate-design

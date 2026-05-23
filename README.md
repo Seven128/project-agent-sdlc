@@ -52,7 +52,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - 变更补丁化：需求变化先进入 RFC，再做影响分析、局部补丁、任务回退或增量任务。
 - 实现文档增量化：技术方案是计划，implementation doc 是开发后的事实。
 - 派生视图自动化：`overview.html` 由脚本生成，只用于浏览，不作为事实源。
-- Checkpoint 条件触发：长任务、中断、gate failure、BLOCKED 或上下文压缩风险出现时，写任务内执行快照。
+- Plan 短期化：open task 在 `plan.yaml` 中保存当前执行合同，done task 立即压缩为简短摘要，避免历史现场长期占用上下文。
 
 ### 3.3 事实源与派生产物
 真正的事实源是：
@@ -70,8 +70,8 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 `overview.html` 由 `tools/build_doc_overviews.py` 生成。它把某阶段 Markdown slices 合成 HTML 总览，方便人类浏览和阶段交接，但需求引用、Review、测试和变更影响分析仍应引用原始 Markdown slice。
 
 这里需要区分状态协议和状态数据：
-- `lifecycle.yaml`、`tasks.yaml`、checkpoint、memory 的字段结构、状态枚举、迁移规则和校验逻辑属于 Harness 工作流能力，应由包提供 schema、模板、validator 和 migration。
-- 某个项目当前处于哪个阶段、当前任务是什么、checkpoint 写了什么、memory 记录了哪些具体事实，属于项目实例数据，不应被包升级覆盖。
+- `lifecycle.yaml`、`plan.yaml`、`plan.draft.yaml`、memory 的字段结构、状态枚举、迁移规则和校验逻辑属于 Harness 工作流能力，应由包提供 schema、模板、validator 和 migration。
+- 某个项目当前处于哪个阶段、当前任务是什么、open task 的执行备注是什么、memory 记录了哪些具体事实，属于项目实例数据，不应被包升级覆盖。
 
 ## 四、仓库结构
 推荐模板结构如下：
@@ -98,10 +98,9 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 ├── .agent/
 │   ├── state/
 │   │   ├── lifecycle.yaml
-│   │   ├── tasks.yaml
-│   │   ├── tasks.draft.yaml
+│   │   ├── plan.yaml
+│   │   ├── plan.draft.yaml
 │   │   ├── gate_results.log
-│   │   ├── checkpoints/
 │   │   └── memory.md
 │   ├── skills/
 │   ├── managed/
@@ -119,12 +118,12 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 ```
 
 ### 关键目录说明：
-- `AGENTS.md`：Agent 全局协议，包含事实源、工作规则、提示词语言契约、checkpoint 和 overview 规则。
+- `AGENTS.md`：Agent 全局协议，包含事实源、工作规则、提示词语言契约、plan 和 overview 规则。
 - `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.html`。
-- `.agent/state/`：当前项目的状态数据，包括生命周期、任务、gate 结果、checkpoint 和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
+- `.agent/state/`：当前项目的状态数据，包括生命周期、执行计划、gate 结果和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
 - `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agent`；当前仓库遵循默认值，因此使用 `.agent/skills/**`。
 - `.agent/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
-- `.agent/managed/templates/`：PRD、技术方案、任务、实现文档、Review、测试、RFC、Release、Checkpoint 等模板；默认内容来自 Harness 包。
+- `.agent/managed/templates/`：PRD、技术方案、计划、实现文档、Review、测试、RFC、Release 等模板；默认内容来自 Harness 包。
 - `tools/`：确定性脚本和校验工具。
 - `Makefile`：统一命令入口。
 
@@ -168,8 +167,8 @@ python3 tools/transition.py --to <PHASE>
 | 阶段 | Skill | 主要输入 | 主要输出 | 出口 Gate | 下一阶段 |
 |---|---|---|---|---|---|
 | `REQUIREMENT_GATHERING` | `pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
-| `ARCHITECTING` | `architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`tasks.draft.yaml` | `make validate-design` | `SPRINTING` |
-| `SPRINTING` | `dev_sprint` | `tasks.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
+| `ARCHITECTING` | `architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING` |
+| `SPRINTING` | `dev_sprint` | `plan.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
 | `REVIEWING` | `reviewer` | PRD、技术方案、实现文档、`git diff` | Review report | `make validate-review` | `TESTING` |
 | `TESTING` | `tester` | PRD、技术方案、实现文档、Review | Test plan、测试矩阵、回归记录 | `make validate-test` | `RELEASING` |
 | `RELEASING` | `release_manager` | 测试结果、build artifacts | Release note、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
@@ -217,8 +216,8 @@ make validate-doc-overviews
 - `make validate-harness` 会检查 overview 是否最新。
 
 ## 七、任务状态与开发循环
-### 7.1 tasks.yaml
-`.agent/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，只保存当前工作队列的轻量索引。复杂执行合同不放在 task 里，而是放在 open task 的 checkpoint `Task Contract` 中。典型任务字段：
+### 7.1 plan.yaml
+`.agent/state/plan.yaml` 是开发阶段的机器可读短期执行记忆。open task 直接保存当前任务需要的执行合同；任务完成后压缩为简短摘要，避免过往任务变成无效上下文。典型 open task 字段：
 
 ```yaml
 current_phase: "SPRINTING"
@@ -226,11 +225,36 @@ current_task_id: "DEV-003"
 tasks:
   - id: "DEV-003"
     title: "实现登录失败次数限制"
-    status: "pending"
+    status: "in_progress"
     summary: "实现登录失败次数限制并补充对应测试。"
-    checkpoint: ".agent/state/checkpoints/DEV-003.md"
+    docs:
+      product:
+        - ".docs/01_product/auth/account_lock.md"
+      tech_plan:
+        - ".docs/03_tech_plan/auth/account_lock_plan.md"
+    allowed_paths:
+      - "src/auth/**"
+      - "tests/auth/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "连续失败 5 次后锁定账号 10 分钟"
+    working_notes:
+      - "只记录恢复现场所需的短备注。"
     implementation_doc: ".docs/04_implementation/auth/login_rate_limit_impl.md"
     gate_result: ""
+```
+
+典型 done task 字段：
+
+```yaml
+tasks:
+  - id: "DEV-003"
+    title: "实现登录失败次数限制"
+    status: "done"
+    summary: "实现登录失败次数限制，并补充对应测试。"
+    implementation_doc: ".docs/04_implementation/auth/login_rate_limit_impl.md"
+    gate_result: "PASS"
 ```
 
 ### 任务状态：
@@ -246,11 +270,11 @@ tasks:
 
 ```txt
 读取 current_task
--> 读取当前 task checkpoint 的 Task Contract
+-> 读取当前 open task 的 allowed_paths / required_gates / acceptance_criteria
 -> 执行代码和测试
--> 运行 checkpoint.required_gates
+-> 运行 current_task.required_gates
 -> 写 implementation doc
--> 更新 tasks.yaml 并删除 checkpoint
+-> 将 plan.yaml 中当前 task 压缩为 done 摘要
 -> 刷新 overview.html
 -> 选择下一个 pending task
 ```
@@ -259,37 +283,29 @@ tasks:
 - 技术方案被实现证明不可行。
 - 当前任务暴露新的架构风险或跨模块边界变化。
 - 需求发生变化。
-- checkpoint 的 `allowed_paths` 无法覆盖必要修改。
+- 当前 task 的 `allowed_paths` 无法覆盖必要修改。
 - gate 失败不是普通代码问题，而是设计、基建或环境阻塞。
 
-### 7.3 Checkpoint Protocol
-Checkpoint 是 open task 的执行合同和现场快照，用来约束当前修改范围、记录必要 gate，并降低上下文压缩、中断、新开对话或多人交接时的信息损失。它不是 PRD、不是技术方案、不是正式任务拆分，也不是完成后的 implementation doc。
+### 7.3 Plan Protocol
+`plan.yaml` 是 open task 的执行合同和现场快照，用来约束当前修改范围、记录必要 gate，并降低上下文压缩、中断、新开对话或多人交接时的信息损失。它不是 PRD、不是技术方案，也不是完成后的 implementation doc。
 
 层级关系：
 
 ```txt
 PRD
 -> tech plan
--> tasks.yaml 中的 task
--> 当前 task checkpoint 的 Task Contract
+-> plan.yaml 中的 task
 -> 代码、测试和 implementation doc
 ```
 
-每个 open task 都必须有 checkpoint：
-1. 在当前 task 中设置 `checkpoint: ".agent/state/checkpoints/<Task ID>.md"`。
-2. 按 `.agent/managed/templates/CHECKPOINT_TEMPLATE.md` 写 checkpoint。
-3. 在 checkpoint 的 `Task Contract` YAML 区块中声明 `allowed_paths`、`required_gates` 和验收标准。
-4. 执行中需要恢复或交接时，同步更新 `.agent/state/checkpoints/latest.md`。
-5. 运行 `make validate-checkpoint`。
-
-任务完成并写入 implementation doc 后，删除对应 checkpoint。历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
+每个 open task 都必须在 `plan.yaml` 中包含 `docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。执行中只把必要现场写成短 `working_notes`；任务完成并写入 implementation doc 后，删除这些活跃字段，只留下摘要、implementation doc 和 gate result。历史动作记录以 git commit 为准，产物结果以 implementation doc 为准。
 
 ## 八、阶段 Skill
 每个 Skill 只负责一个阶段或动作。
 
 | Skill | 负责内容 |
 |---|---|
-| `manager` | 读取 lifecycle/tasks/index，路由 `/status`、`/next`、`/advance`、`/rfc`、`/checkpoint`，执行阶段切换 |
+| `manager` | 读取 lifecycle/plan/index，路由 `/status`、`/next`、`/advance`、`/rfc`，执行阶段切换 |
 | `pm_prd` | 原始需求归档、PRD 切片、验收标准、Out of Scope、Open Questions |
 | `architect_design` | 架构设计、技术方案、接口契约、任务草案、ADR |
 | `dev_sprint` | 按 `current_task_id` 执行开发、控制 `allowed_paths`、运行 `required_gates` |
@@ -312,7 +328,6 @@ PRD
 make status
 make docs-overview
 make validate-doc-overviews
-make validate-checkpoint
 make validate-harness
 make validate-current
 make validate-pm
@@ -326,8 +341,8 @@ make validate-rfc
 
 ### 9.2 阶段 gate
 - `validate-pm`：检查 PRD、验收标准、Out of Scope、Open Questions。
-- `validate-design`：检查架构、技术方案和 `tasks.draft.yaml`。
-- `validate-dev`：检查任务状态、活跃 checkpoint 合同、lint、测试和 implementation docs。
+- `validate-design`：检查架构、技术方案和 `plan.draft.yaml`。
+- `validate-dev`：检查任务状态、open task plan 合同、lint、测试和 implementation docs。
 - `validate-review`：检查 Review report。
 - `validate-test`：检查 test plan、test matrix、回归和覆盖缺口。
 - `validate-release`：检查 release note、smoke result 和 rollback plan。
@@ -350,7 +365,7 @@ RFC 必须包含：
 - Status: `DRAFT` / `APPLIED` / `VERIFIED` / `ARCHIVED`
 
 ### 10.2 开发中途变更
-触发条件：`tasks.yaml` 中仍有 `pending` 或 `in_progress` 任务。
+触发条件：`plan.yaml` 中仍有 `pending` 或 `in_progress` 任务。
 
 处理流程：
 ```txt
@@ -393,7 +408,6 @@ RFC 必须包含：
 | `/rfc <file>` | 挂起当前流程，进入 RFC 变更处理 |
 | `/syncdocs` | 归档/切分长文档，更新 `.docs/INDEX.md` |
 | `/overview` | 运行 `make docs-overview` |
-| `/checkpoint` | 写入或更新 `.agent/state/checkpoints/latest.md` |
 | `/review` | 进入只读 Review |
 | `/test` | 进入测试计划和验证流程 |
 
@@ -408,9 +422,8 @@ Codex 不需要真实“模式切换”：
 1. 读取 `AGENTS.md`。
 2. 运行 `make status`。
 3. 读取 `.agent/state/lifecycle.yaml`。
-4. 读取 `.agent/state/tasks.yaml`。
-5. 如果存在 `.agent/state/checkpoints/latest.md`，先读取 checkpoint。
-6. 根据 `active_skill` 进入当前阶段。
+4. 读取 `.agent/state/plan.yaml`。
+5. 根据 `active_skill` 进入当前阶段。
 
 ## 十三、最小可落地版本
 最小闭环可以先保留：
@@ -427,8 +440,7 @@ Codex 不需要真实“模式切换”：
 │   └── rfc/
 ├── .agent/state/
 │   ├── lifecycle.yaml
-│   ├── tasks.yaml
-│   └── checkpoints/
+│   └── plan.yaml
 ├── .agent/skills/
 │   ├── manager/
 │   ├── dev_sprint/
@@ -437,8 +449,7 @@ Codex 不需要真实“模式切换”：
 └── tools/
     ├── build_doc_overviews.py
     ├── transition.py
-    ├── validate_checkpoint.py
-    ├── validate_tasks.py
+    ├── validate_plan.py
     └── validate_task_docs.py
 ```
 
@@ -448,7 +459,6 @@ Codex 不需要真实“模式切换”：
 - `/advance`
 - `/rfc`
 - `/overview`
-- `/checkpoint`
 
 最小任务完成标准：
 1. 代码已修改。
@@ -456,8 +466,8 @@ Codex 不需要真实“模式切换”：
 3. implementation doc 已生成。
 4. `.docs/INDEX.md` 已更新。
 5. `overview.html` 已刷新。
-6. open task checkpoint 已生成并通过校验。
-7. `tasks.yaml` 已记录状态；done task checkpoint 已删除。
+6. open task 的 plan 合同已完整。
+7. `plan.yaml` 已把 done task 压缩为简短摘要。
 
 ## 十四、完整工作流示例
 场景：新增“登录失败 5 次后锁定账号 10 分钟”功能。
@@ -471,20 +481,20 @@ Codex 不需要真实“模式切换”：
 2. 进入架构阶段：
    - 运行 `make validate-pm`。
    - `transition.py --to ARCHITECTING`。
-   - 生成架构文档、技术方案和 `tasks.draft.yaml`。
+   - 生成架构文档、技术方案和 `plan.draft.yaml`。
 
 3. 进入开发阶段：
    - 确认任务后进入 `SPRINTING`。
    - `dev_sprint` 读取当前 task、PRD 和技术方案。
-   - 读取当前 checkpoint 的 `allowed_paths`，并在范围内修改代码和测试。
-   - 运行当前 checkpoint 的 `required_gates`。
-   - 如果任务过长或 gate 失败，更新 checkpoint。
+   - 读取当前 task 的 `allowed_paths`，并在范围内修改代码和测试。
+   - 运行当前 task 的 `required_gates`。
+   - 如果任务过长或 gate 失败，更新当前 task 的短 `working_notes`。
 
 4. 任务完成：
    - gate 通过后调用 `implementation_doc`。
    - 写 `.docs/04_implementation/auth/account_lock_impl.md`。
-   - 更新 `.docs/INDEX.md`、`overview.html` 和 `tasks.yaml`。
-   - 删除对应 checkpoint。
+   - 更新 `.docs/INDEX.md`、`overview.html` 和 `plan.yaml`。
+   - 将当前 task 压缩为简短 done 摘要。
 
 5. Review、测试、发布：
    - `reviewer` 输出 Review report。
@@ -504,12 +514,12 @@ Codex 不需要真实“模式切换”：
 - 风险：项目越长，越依赖人类手动同步上下文；需求变更时容易漏改或误改。
 
 ### 15.2 AI SDLC Harness
-- 新增机制：阶段契约、统一事实源、阶段 Skill、任务状态、交付 gate、实现文档、RFC、overview、checkpoint。
+- 新增机制：阶段契约、统一事实源、阶段 Skill、执行计划、交付 gate、实现文档、RFC、overview。
 - 改变层级：不是提升 Agent 单次生成能力，而是提升 Agent 参与复杂软件工程时的阶段衔接和交付可验证性。
 - 收益来源：降低阶段执行成本、阶段衔接成本和阶段交付成本。
 
 ## 十六、总结
-AI SDLC Harness 是面向 AI Agent 的需求全链路工作流骨架。它把阶段目标、阶段产物、阶段 Skill、任务状态、交付 gate、实现文档、语义切片、派生总览、checkpoint 和 RFC 变更协议固定进仓库。
+AI SDLC Harness 是面向 AI Agent 的需求全链路工作流骨架。它把阶段目标、阶段产物、阶段 Skill、执行计划、交付 gate、实现文档、语义切片、派生总览和 RFC 变更协议固定进仓库。
 
 Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目保持阶段连续、事实可寻址、交付可验证、变更可回溯。
 
@@ -522,9 +532,8 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 - Agent 入口和角色规则：`AGENTS.md`、`<harnessRoot>/skills/**/SKILL.md`。
 - 阶段与 gate 策略：`.agent/managed/policies/**`。
 - 阶段产物模板：`.agent/managed/templates/**`。
-- state protocol：`lifecycle.yaml`、`tasks.yaml`、checkpoint、memory 的字段结构、状态枚举、迁移规则和校验逻辑。
-- task/plan protocol：`current_task_id`、`tasks[]`、`summary`、`implementation_doc`、`gate_result` 和 active `checkpoint` 如何组成短期执行记忆。
-- checkpoint protocol：checkpoint 的 `Task Contract` 如何承载 `allowed_paths`、`required_gates`、验收标准和执行现场，done 后如何删除。
+- state protocol：`lifecycle.yaml`、`plan.yaml`、`plan.draft.yaml`、memory 的字段结构、状态枚举、迁移规则和校验逻辑。
+- task/plan protocol：`current_task_id`、`tasks[]`、`summary`、`implementation_doc`、`gate_result` 和 open task 的 `allowed_paths` / `required_gates` 如何组成短期执行记忆。
 - memory protocol：memory 如何记录、校验、提升、失效，以及如何链接到 `.docs/**` 正式出处。
 - validators、lifecycle transition、sync、upgrade、migration 等确定性工具逻辑。
 
@@ -535,7 +544,7 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 状态实例 / 当前值 / 历史进度 = 当前项目运行数据
 ```
 
-因此，`lifecycle.yaml` 应该有哪些字段、`tasks.yaml` 应该如何拆分、phase/status 枚举是什么、checkpoint 和 memory 如何校验，这些都属于 Harness 工作流配置，应进入 npm 包；但当前项目处于哪个 phase、当前 task 是什么、history 里有哪些时间戳、checkpoint 写了什么、memory 记录了哪些具体事实，则属于当前项目实例数据，不应被包升级覆盖。
+因此，`lifecycle.yaml` 应该有哪些字段、`plan.yaml` 应该如何拆分、phase/status 枚举是什么、plan 和 memory 如何校验，这些都属于 Harness 工作流配置，应进入 npm 包；但当前项目处于哪个 phase、当前 task 是什么、history 里有哪些时间戳、open task 里有哪些执行备注、memory 记录了哪些具体事实，则属于当前项目实例数据，不应被包升级覆盖。
 
 ### 17.2 为什么可以自迭代
 这个仓库可以使用自己的 Harness 迭代自己，原因是它本身也可以被视为一个使用 AI SDLC Harness 的项目实例。
@@ -548,7 +557,7 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 当前这个仓库中实际开发的项目有两个紧密相关的目标：
 
 1. 迭代 AI SDLC Harness 工作流配置本身：
-   - 调整阶段规则、Skill、policy、template、state protocol、checkpoint protocol、memory protocol 和 validators。
+   - 调整阶段规则、Skill、policy、template、state protocol、plan protocol、memory protocol 和 validators。
    - 通过 `.docs/**` 记录需求、架构、技术方案和真实实现。
    - 通过 `.agent/state/**` 记录当前自举项目的运行状态。
 
@@ -570,11 +579,11 @@ Harness 工作流能力源码
 
 ```txt
 state schemas / initial state templates / validators / lifecycle transition logic
-task-plan protocol / checkpoint protocol / memory protocol
+task-plan protocol / memory protocol
 skills / policies / templates / sync / upgrade / migrations
 ```
 
-不导出的是当前项目的具体运行数据，例如当前 `current_phase`、当前 `tasks.yaml` 内容、活跃 checkpoint 内容、memory 条目和 `.docs/**` 产物。
+不导出的是当前项目的具体运行数据，例如当前 `current_phase`、当前 `plan.yaml` 内容、open task 执行备注、memory 条目和 `.docs/**` 产物。
 
 ## 十八、npm 包化与项目接入
 当前仓库可以作为参考实现和模板仓库，但长期产品形态不应依赖每个业务项目直接 fork 整套配置。更稳的方式是把通用 Harness 能力拆成可版本化的 npm 包，并把业务项目中的工作流文件视为由包同步出来的 agent-readable artifact。
@@ -594,13 +603,13 @@ sdlc-harness <command>
 - 默认 `<harnessRoot>/skills/*/SKILL.md`。
 - 默认 `<harnessRoot>/managed/templates/*`。
 - 默认 `<harnessRoot>/managed/policies/*`。
-- `<harnessRoot>/state/**` 的 schema、初始状态模板、checkpoint protocol、memory protocol 和 migrations。
+- `<harnessRoot>/state/**` 的 schema、初始状态模板、plan protocol、memory protocol 和 migrations。
 - 校验脚本、迁移脚本和 overview 生成脚本。
 
 业务项目内保留 agent 实际读取和项目事实源：
 - `AGENTS.md`。
 - `<harnessRoot>/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区，作为 Skill canonical source。
-- `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、活跃 checkpoint、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
+- `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、open task 执行备注、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
 - `<harnessRoot>/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
 

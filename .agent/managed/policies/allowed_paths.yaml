@@ -18,7 +18,7 @@ phases:
       - ".docs/02_architecture/**"
       - ".docs/03_tech_plan/**"
       - ".docs/05_decisions/**"
-      - "<harnessRoot>/state/tasks.draft.yaml"
+      - "<harnessRoot>/state/plan.draft.yaml"
       - ".docs/INDEX.md"
 
   SPRINTING:
@@ -26,9 +26,8 @@ phases:
     always_allow:
       - ".docs/04_implementation/**"
       - ".docs/INDEX.md"
-      - "<harnessRoot>/state/tasks.yaml"
+      - "<harnessRoot>/state/plan.yaml"
       - "<harnessRoot>/state/gate_results.log"
-      - "<harnessRoot>/state/checkpoints/**"
 
   REVIEWING:
     read_only_source: true
@@ -52,5 +51,5 @@ phases:
       - ".docs/rfc/**"
       - ".docs/01_product/**"
       - ".docs/03_tech_plan/**"
-      - "<harnessRoot>/state/tasks.yaml"
+      - "<harnessRoot>/state/plan.yaml"
       - ".docs/INDEX.md"

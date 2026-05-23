@@ -1,0 +1,25 @@
+current_phase: "SPRINTING"
+current_task_id: "DEV-001"
+tasks:
+  - id: "DEV-001"
+    title: "实现示例任务"
+    status: "pending"
+    summary: "一句话描述任务目标和交付边界；done 后保留这类简短摘要。"
+    docs:
+      product:
+        - ".docs/01_product/example.md"
+      tech_plan:
+        - ".docs/03_tech_plan/example.md"
+      rfc: []
+    allowed_paths:
+      - "src/**"
+      - "tests/**"
+    required_gates:
+      - "make lint"
+      - "make test-current-domain"
+    acceptance_criteria:
+      - "验收标准写在 open task 内，完成后可压缩删除。"
+    working_notes:
+      - "执行现场备注只在 open task 保留。"
+    implementation_doc: ".docs/04_implementation/example/dev_001.md"
+    gate_result: ""

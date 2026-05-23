@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="76901c53a3886fc1">
+  <meta name="source-hash" content="5165a19fcae61131">
   <title>.docs/03_tech_plan overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/03_tech_plan overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>76901c53a3886fc1</code></p>
+      <p class="meta">Source hash: <code>5165a19fcae61131</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -320,26 +320,29 @@ checksum: sha256:...
   - source: &quot;.github/workflows/harness.yml&quot;
     target: &quot;packages/sdlc-harness/assets/github/harness.yml&quot;
     mode: &quot;copy-file&quot;</code></pre>
-<h3 id="5-4-task-state-与-checkpoint-contract">5.4 Task state 与 checkpoint contract</h3>
-<p><code>&lt;harnessRoot&gt;/state/tasks.yaml</code> 只作为当前工作队列的轻量索引，不保存完整执行合同。典型结构：</p>
+<h3 id="5-4-plan-state-与-open-task-contract">5.4 Plan state 与 open task contract</h3>
+<p><code>&lt;harnessRoot&gt;/state/plan.yaml</code> 是当前 sprint/阶段的执行计划事实源。open task 直接保存执行合同；done/cancelled task 在完成后压缩为简短摘要，避免历史现场长期挤占 Agent 上下文。典型 open task 结构：</p>
 <pre><code class="language-yaml">current_phase: &quot;SPRINTING&quot;
-current_task_id: &quot;DEV-010&quot;
+current_task_id: &quot;DEV-011&quot;
 tasks:
-  - id: &quot;DEV-010&quot;
-    title: &quot;简化 task、checkpoint 和 archive 状态模型&quot;
+  - id: &quot;DEV-011&quot;
+    title: &quot;合并 checkpoint 到 plan.yaml 并重命名 tasks 状态&quot;
     status: &quot;in_progress&quot;
     summary: &quot;一句话描述当前任务目标。&quot;
-    checkpoint: &quot;&lt;harnessRoot&gt;/state/checkpoints/DEV-010.md&quot;
-    implementation_doc: &quot;.docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md&quot;
+    docs:
+      product:
+        - &quot;.docs/01_product/npm_package_distribution.md&quot;
+    allowed_paths:
+      - &quot;packages/sdlc-harness/**&quot;
+    required_gates:
+      - &quot;npm test&quot;
+    acceptance_criteria:
+      - &quot;open task contract lives in plan.yaml&quot;
+    working_notes:
+      - &quot;只记录恢复现场所需的短备注。&quot;
+    implementation_doc: &quot;.docs/04_implementation/npm_package/dev_011_plan_yaml_no_checkpoint.md&quot;
     gate_result: &quot;&quot;</code></pre>
-<p>活跃 task 必须有 checkpoint；done/cancelled task 不保留 checkpoint 文件。复杂执行合同放在 checkpoint 的 <code>Task Contract</code> YAML 区块：</p>
-<pre><code class="language-yaml">allowed_paths:
-  - &quot;packages/sdlc-harness/**&quot;
-required_gates:
-  - &quot;npm test&quot;
-acceptance_criteria:
-  - &quot;路径约束从活跃 checkpoint 读取&quot;</code></pre>
-<p>task 完成后，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 <code>.agent/archive/**</code> 作为常规归档事实源。</p>
+<p>task 完成后，移除 <code>docs</code>、<code>allowed_paths</code>、<code>required_gates</code>、<code>acceptance_criteria</code> 和 <code>working_notes</code>，只保留 <code>id</code>、<code>title</code>、<code>status</code>、<code>summary</code>、<code>implementation_doc</code> 和 <code>gate_result</code>。历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 checkpoint 文件或 <code>.agent/archive/**</code> 作为常规归档事实源。</p>
 <h2 id="6-任务拆分-task-breakdown">6. 任务拆分（Task Breakdown）</h2>
 <table>
 <thead><tr>
@@ -409,9 +412,16 @@ acceptance_criteria:
 <tr>
 <td>DEV-010</td>
 <td>简化 task、checkpoint 和 archive 状态模型</td>
-<td>由 <code>.agent/state/checkpoints/DEV-010.md#Task Contract</code> 声明</td>
+<td>历史任务；详见 implementation doc</td>
 <td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code>, <code>make validate-current</code></td>
 <td><code>.docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md</code></td>
+</tr>
+<tr>
+<td>DEV-011</td>
+<td>合并 checkpoint 到 <code>plan.yaml</code> 并重命名 tasks 状态</td>
+<td><code>AGENTS.md</code>, <code>README.md</code>, <code>Makefile</code>, <code>.agent/**</code>, <code>.docs/**</code>, <code>.github/workflows/**</code>, <code>tools/**</code>, <code>packages/sdlc-harness/**</code>, <code>tests/sdlc-harness/**</code></td>
+<td><code>npm test</code>, <code>node packages/sdlc-harness/dist/cli.js package check-source</code>, <code>node packages/sdlc-harness/dist/cli.js validate-harness</code>, <code>make validate-harness</code>, <code>make validate-current</code></td>
+<td><code>.docs/04_implementation/npm_package/dev_011_plan_yaml_no_checkpoint.md</code></td>
 </tr>
 </tbody>
 </table>
@@ -449,9 +459,9 @@ acceptance_criteria:
 <td>validators 运行时使用 TypeScript/Node，不依赖 Python 运行时</td>
 </tr>
 <tr>
-<td><code>tasks.yaml</code> 过大导致 Agent 上下文膨胀</td>
+<td><code>plan.yaml</code> 过大导致 Agent 上下文膨胀</td>
 <td>P0</td>
-<td>task state 只保留轻量索引，执行合同和现场放入活跃 checkpoint，done 后删除 checkpoint</td>
+<td>open task 只保存当前执行合同和必要短备注，done task 立即压缩为简短摘要</td>
 </tr>
 <tr>
 <td>task/release 归档与 git 历史重复</td>
@@ -464,7 +474,8 @@ acceptance_criteria:
 <ul>
 <li>如果当前仓库继续作为包源码仓库，<code>packages/sdlc-harness/assets/**</code> 不应手写，应由 <code>package sync-source</code> 从工作流源文件生成。</li>
 <li>RFC_003 调整后，<code>sdlc-harness init</code> 会询问 Harness root；默认 <code>.agent</code>，当前仓库也使用默认 <code>.agent</code>。</li>
-<li>RFC_004 调整后，<code>tasks.yaml</code> 只保留轻量索引；<code>allowed_paths</code> 和 <code>required_gates</code> 从活跃 checkpoint 读取；done task checkpoint 会删除。</li>
+<li>RFC_004 调整后，删除 <code>.agent/archive/**</code> 常规归档，并把历史动作记录交给 git。</li>
+<li>RFC_005 调整后，checkpoint 文件被删除；<code>allowed_paths</code>、<code>required_gates</code> 和验收标准直接保存在 open task 的 <code>plan.yaml</code> 条目中，done task 压缩为简短摘要。</li>
 </ul>
 </article>
   </main>

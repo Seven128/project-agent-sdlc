@@ -33,7 +33,7 @@ phases:
     outputs:
       - ".docs/02_architecture/"
       - ".docs/03_tech_plan/"
-      - "<harnessRoot>/state/tasks.draft.yaml"
+      - "<harnessRoot>/state/plan.draft.yaml"
     gates:
       - "make validate-design"
     next: "SPRINTING"
@@ -43,8 +43,8 @@ phases:
     role: "developer"
     skill: "dev_sprint"
     inputs:
-      - "<harnessRoot>/state/tasks.yaml"
-      - "current task checkpoint"
+      - "<harnessRoot>/state/plan.yaml"
+      - "current open task plan contract"
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
     outputs:
@@ -119,10 +119,10 @@ phases:
       - ".docs/rfc/"
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
-      - "<harnessRoot>/state/tasks.yaml"
+      - "<harnessRoot>/state/plan.yaml"
     outputs:
       - ".docs/rfc/"
-      - "<harnessRoot>/state/tasks.yaml"
+      - "<harnessRoot>/state/plan.yaml"
       - ".docs/INDEX.md"
     gates:
       - "make validate-rfc"

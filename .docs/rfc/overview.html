@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="cd4569ca44590a8e">
+  <meta name="source-hash" content="825f94350fbfbc3e">
   <title>.docs/rfc overview</title>
   <style>
     :root {
@@ -116,7 +116,7 @@
     <section class="hero">
       <h1>.docs/rfc overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>cd4569ca44590a8e</code></p>
+      <p class="meta">Source hash: <code>825f94350fbfbc3e</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
@@ -124,6 +124,7 @@
 <li><a href="#rfc-002-configurable-harness-root-md">RFC_002_configurable_harness_root.md</a></li>
 <li><a href="#rfc-003-init-prompt-and-default-agent-root-md">RFC_003_init_prompt_and_default_agent_root.md</a></li>
 <li><a href="#rfc-004-simplify-task-checkpoint-archive-model-md">RFC_004_simplify_task_checkpoint_archive_model.md</a></li>
+<li><a href="#rfc-005-merge-checkpoint-into-plan-md">RFC_005_merge_checkpoint_into_plan.md</a></li>
 </ol>
       </div>
     </section>
@@ -651,6 +652,142 @@
 <h2 id="7-status">7. Status</h2>
 <ul>
 <li>Status: APPLIED</li>
+</ul>
+</article>
+<article class="doc-slice" id="rfc-005-merge-checkpoint-into-plan-md">
+<header>
+<h2>RFC_005_merge_checkpoint_into_plan.md</h2>
+<a class="source-link" href="RFC_005_merge_checkpoint_into_plan.md">Source Markdown</a>
+</header>
+<h1 id="rfc-005-合并-checkpoint-到-plan-yaml-并移除-checkpoint-机制">RFC_005: 合并 checkpoint 到 plan.yaml 并移除 checkpoint 机制</h1>
+<h2 id="1-背景">1. 背景</h2>
+<p>RFC_004 已把 checkpoint 限定为活跃 task 的执行合同，并在 task 完成后删除。但用户进一步明确：checkpoint 文件本身也不需要。活跃 task 需要的执行现场、<code>allowed_paths</code>、<code>required_gates</code>、验收标准和备注，可以直接放进计划文件；task 完成后再把该条 task 压缩成简短摘要。</p>
+<p>同时，<code>tasks.yaml</code> 的文件名仍然暗示它只是一组任务记录。实际它承担的是当前 sprint/阶段的执行计划和进度索引，因此应改名为 <code>plan.yaml</code>；草案文件同步从 <code>tasks.draft.yaml</code> 改为 <code>plan.draft.yaml</code>。</p>
+<h2 id="2-变更内容-change-content">2. 变更内容（Change Content）</h2>
+<ul>
+<li>Added:</li>
+<li><code>plan.yaml</code> 作为当前执行计划事实源。</li>
+<li>open task 在 <code>plan.yaml</code> 内直接包含 <code>allowed_paths</code>、<code>required_gates</code>、<code>acceptance_criteria</code> 和 <code>working_notes</code>。</li>
+<li>DEV-011 实现任务。</li>
+<li>Changed:</li>
+<li><code>tasks.yaml</code> 改名为 <code>plan.yaml</code>。</li>
+<li><code>tasks.draft.yaml</code> 改名为 <code>plan.draft.yaml</code>。</li>
+<li>task 完成时，open task 的详细执行字段压缩为 <code>summary</code>、<code>implementation_doc</code> 和 <code>gate_result</code>。</li>
+<li><code>validate_allowed_paths</code> 改为从当前 open task 读取 <code>allowed_paths</code>。</li>
+<li>Removed:</li>
+<li>checkpoint protocol、checkpoint 目录、checkpoint 模板。</li>
+<li><code>validate-checkpoint</code> gate 和 CLI alias。</li>
+<li><code>tools/validate_checkpoint.py</code>。</li>
+<li>Unchanged:</li>
+<li>task 仍是开发执行单元。</li>
+<li>implementation doc 仍记录真实实现结果。</li>
+<li>git commit 仍作为动作历史事实源。</li>
+</ul>
+<h2 id="3-product-impact-产品影响">3. Product Impact（产品影响）</h2>
+<table>
+<thead><tr>
+<th>受影响 PRD（Affected PRD）</th>
+<th>影响（Impact）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>.docs/01_product/npm_package_distribution.md</code></td>
+<td>需要把轻量 task/checkpoint 模型更新为 <code>plan.yaml</code> 单文件计划模型，并移除 checkpoint 要求。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-technical-impact-candidates-技术影响候选">4. Technical Impact Candidates（技术影响候选）</h2>
+<table>
+<thead><tr>
+<th>模块（Module）</th>
+<th>影响（Impact）</th>
+<th>置信度（Confidence）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>AGENTS.md</code></td>
+<td>更新事实源、工作规则、宏指令和 prompt language contract。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>更新工作流说明、目录结构、gate 和恢复入口。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/state/tasks.yaml</code></td>
+<td>改名为 <code>.agent/state/plan.yaml</code>，并新增 DEV-011 open plan 字段。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/state/tasks.draft.yaml</code></td>
+<td>改名为 <code>.agent/state/plan.draft.yaml</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/state/checkpoints/</code></td>
+<td>删除目录和相关事实源声明。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/skills/**</code></td>
+<td>所有阶段 Skill 改用 <code>plan.yaml</code>，不再提 checkpoint。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/managed/templates/**</code></td>
+<td>删除 <code>CHECKPOINT_TEMPLATE.md</code>，新增/更新 <code>PLAN_TEMPLATE.yaml</code>。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.agent/policies/**</code></td>
+<td>inputs/outputs/write paths 改为 <code>plan.yaml</code>/<code>plan.draft.yaml</code>，移除 checkpoint 路由。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tools/*.py</code></td>
+<td><code>load_plan</code>/<code>validate_plan</code>/<code>validate_plan_draft</code> 改为 plan 语义，删除 checkpoint validator。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/*.ts</code></td>
+<td>init/doctor/migrations/validators 改为 <code>plan.yaml</code>，移除 checkpoint validator。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/**</code></td>
+<td>更新 init/upgrade/validators 测试。</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>.docs/INDEX.md</code></td>
+<td>路由从 task state 改为 plan state，并链接 RFC_005/DEV-011。</td>
+<td>high</td>
+</tr>
+</tbody>
+</table>
+<p>Impact analysis:</p>
+<pre><code class="language-sh">python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_005_merge_checkpoint_into_plan.md --top 40</code></pre>
+<h2 id="5-acceptance-criteria">5. Acceptance Criteria</h2>
+<ul>
+<li><input type="checkbox" disabled checked> <code>.agent/state/tasks.yaml</code> 和 <code>.agent/state/tasks.draft.yaml</code> 不再存在。</li>
+<li><input type="checkbox" disabled checked> <code>.agent/state/plan.yaml</code> 和 <code>.agent/state/plan.draft.yaml</code> 成为计划事实源。</li>
+<li><input type="checkbox" disabled checked> <code>.agent/state/checkpoints/</code> 不再存在。</li>
+<li><input type="checkbox" disabled checked> open task 的 <code>allowed_paths</code>、<code>required_gates</code>、<code>acceptance_criteria</code> 和执行备注直接保存在 <code>plan.yaml</code> 当前 task 中。</li>
+<li><input type="checkbox" disabled checked> done task 只保留简短摘要、implementation doc 和 gate result。</li>
+<li><input type="checkbox" disabled checked> <code>validate-checkpoint</code> 从 Makefile、Python tools、Node CLI 和 package assets 中移除。</li>
+<li><input type="checkbox" disabled checked> 本地 gates、Node validators、package source drift check 和 npm tests 通过。</li>
+</ul>
+<h2 id="6-regression-requirements-回归要求">6. Regression Requirements（回归要求）</h2>
+<ul>
+<li><input type="checkbox" disabled checked> 覆盖 <code>validate-dev</code> 对 open task <code>allowed_paths</code> 和 <code>required_gates</code> 的校验。</li>
+<li><input type="checkbox" disabled checked> 覆盖 done task 不需要详细执行字段。</li>
+<li><input type="checkbox" disabled checked> 覆盖 init/upgrade 生成或迁移 <code>plan.yaml</code>/<code>plan.draft.yaml</code>。</li>
+<li><input type="checkbox" disabled checked> 覆盖 package assets 与本地 Harness 源文件无漂移。</li>
+</ul>
+<h2 id="7-status">7. Status</h2>
+<ul>
+<li>Status: VERIFIED</li>
 </ul>
 </article>
   </main>

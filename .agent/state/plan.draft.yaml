@@ -5,6 +5,14 @@ tasks:
     title: "创建 npm 包骨架与 source sync manifest"
     status: "pending"
     summary: "创建 npm package scaffold、source sync manifest 和初始实现文档。"
-    checkpoint: ".agent/state/checkpoints/DEV-001.md"
+    allowed_paths:
+      - "package.json"
+      - "packages/sdlc-harness/**"
+      - ".docs/04_implementation/npm_package/**"
+    required_gates:
+      - "make lint"
+      - "make test-current-domain"
+    acceptance_criteria:
+      - "npm package scaffold exists"
     implementation_doc: ".docs/04_implementation/npm_package/dev_001_package_scaffold.md"
     gate_result: ""

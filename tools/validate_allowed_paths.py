@@ -3,8 +3,7 @@ from harness_utils import (
     OPEN_TASK_STATUSES,
     changed_files,
     expand_harness_root,
-    extract_task_contract,
-    load_tasks,
+    load_plan,
     load_yaml,
     matches_any,
     require,
@@ -14,7 +13,7 @@ from harness_utils import (
 
 
 def main() -> None:
-    data = load_tasks()
+    data = load_plan()
     tasks = [task for task in data.get("tasks", []) if isinstance(task, dict)]
     open_tasks = [task for task in tasks if task.get("status") in OPEN_TASK_STATUSES]
 
@@ -27,10 +26,7 @@ def main() -> None:
         task = task_by_id(data, current_task_id) if current_task_id else None
         require(task, "current_task_id must point to the task being validated")
         require(task.get("status") in OPEN_TASK_STATUSES, "current_task_id must point to an open task for path validation")
-        checkpoint = task.get("checkpoint")
-        require(checkpoint, f"{current_task_id} open task must define checkpoint")
-        contract = extract_task_contract(checkpoint)
-        allowed = list(contract.get("allowed_paths") or []) + list(always_allow)
+        allowed = list(task.get("allowed_paths") or []) + list(always_allow)
     else:
         print("Allowed paths skipped: no open task")
         return

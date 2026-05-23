@@ -49,6 +49,7 @@ REQUIRED_AGENTS_TERMS = [
     "Prompt Language Contract",
     "中文解释 + 英文精确标识符",
     ".agent/state/lifecycle.yaml",
+    ".agent/state/plan.yaml",
     "make validate-current",
 ]
 
@@ -63,7 +64,7 @@ YAML_KEYWORDS = {
         "allowed_next_phases",
         "history",
     ],
-    "tasks": [
+    "plan": [
         "current_phase",
         "current_task_id",
         "tasks",
@@ -112,13 +113,13 @@ def validate_skill_template() -> None:
 
 def validate_yaml_keys() -> None:
     lifecycle = load_yaml(".agent/state/lifecycle.yaml")
-    tasks = load_yaml(".agent/state/tasks.yaml")
+    tasks = load_yaml(".agent/state/plan.yaml")
     phase_contracts = load_yaml(".agent/policies/phase_contracts.yaml")
 
     for key in YAML_KEYWORDS["lifecycle"]:
         require(key in lifecycle, f"lifecycle.yaml key was removed or translated: {key}")
-    for key in YAML_KEYWORDS["tasks"]:
-        require(key in tasks, f"tasks.yaml key was removed or translated: {key}")
+    for key in YAML_KEYWORDS["plan"]:
+        require(key in tasks, f"plan.yaml key was removed or translated: {key}")
     for key in YAML_KEYWORDS["phase_contracts"]:
         require(key in phase_contracts, f"phase_contracts.yaml key was removed or translated: {key}")
 
