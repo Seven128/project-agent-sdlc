@@ -1,5 +1,10 @@
-export function init(args: string[]): void {
+import { runInit } from "../lib/init.js";
+
+export async function init(args: string[]): Promise<void> {
   const adopt = args.includes("--adopt");
-  const mode = adopt ? "adopt existing project" : "initialize new project";
-  console.log(`sdlc-harness init scaffold placeholder: ${mode}`);
+  const force = args.includes("--force");
+  const report = await runInit(process.cwd(), { adopt, force });
+  for (const line of report) {
+    console.log(line);
+  }
 }

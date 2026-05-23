@@ -69,6 +69,10 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 `overview.html` 由 `tools/build_doc_overviews.py` 生成。它把某阶段 Markdown slices 合成 HTML 总览，方便人类浏览和阶段交接，但需求引用、Review、测试和变更影响分析仍应引用原始 Markdown slice。
 
+这里需要区分状态协议和状态数据：
+- `lifecycle.yaml`、`tasks.yaml`、checkpoint、memory 的字段结构、状态枚举、迁移规则和校验逻辑属于 Harness 工作流能力，应由包提供 schema、模板、validator 和 migration。
+- 某个项目当前处于哪个阶段、当前任务是什么、checkpoint 写了什么、memory 记录了哪些具体事实，属于项目实例数据，不应被包升级覆盖。
+
 ## 四、仓库结构
 推荐模板结构如下：
 
@@ -116,9 +120,9 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 ### 关键目录说明：
 - `AGENTS.md`：Agent 全局协议，包含事实源、工作规则、提示词语言契约、checkpoint 和 overview 规则。
 - `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.html`。
-- `.harness/state/`：当前状态源，包括生命周期、任务、gate 结果、checkpoint 和项目记忆。
-- `.harness/policies/`：阶段契约、gate、路径约束和风险矩阵。
-- `.harness/templates/`：PRD、技术方案、任务、实现文档、Review、测试、RFC、Release、Checkpoint 等模板。
+- `.harness/state/`：当前项目的状态数据，包括生命周期、任务、gate 结果、checkpoint 和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
+- `.harness/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
+- `.harness/templates/`：PRD、技术方案、任务、实现文档、Review、测试、RFC、Release、Checkpoint 等模板；默认内容来自 Harness 包。
 - `.agents/skills/`：阶段角色 Skill。
 - `tools/`：确定性脚本和校验工具。
 - `Makefile`：统一命令入口。
@@ -213,7 +217,7 @@ make validate-doc-overviews
 
 ## 七、任务状态与开发循环
 ### 7.1 tasks.yaml
-`.harness/state/tasks.yaml` 是开发阶段的机器可读任务事实源。典型任务字段：
+`.harness/state/tasks.yaml` 是开发阶段的机器可读短期执行记忆，描述当前正在执行和即将执行的任务。它也可以被理解为 sprint-level plan：文件名采用 `tasks.yaml` 是因为内部执行单元是带有 `id`、`status`、`allowed_paths`、`required_gates` 和 `implementation_doc` 的可验证任务，而不是松散计划。典型任务字段：
 
 ```yaml
 current_phase: "SPRINTING"
@@ -549,12 +553,13 @@ sdlc-harness <command>
 - 默认 `.agents/skills/*/SKILL.md`。
 - 默认 `.harness/templates/*`。
 - 默认 `.harness/policies/*`。
+- `.harness/state/**` 的 schema、初始状态模板、checkpoint protocol、memory protocol 和 migrations。
 - 校验脚本、迁移脚本和 overview 生成脚本。
 
 业务项目内保留 agent 实际读取和项目事实源：
 - `AGENTS.md`。
 - `.agents/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区。
-- `.harness/state/**`，只属于当前项目，不由包覆盖。
+- `.harness/state/**` 的具体数据，例如当前 phase、当前 task、checkpoint、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
 - `.harness/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
 
@@ -567,7 +572,8 @@ sdlc-harness <command>
 npm package = canonical source / version source / migration source
 sdlc-harness sync = materialize 到工作区固定目录
 workspace files = Agent 实际读取入口
-.harness/state + .docs = 项目事实源，升级不覆盖
+state protocol = 包提供 schema / template / validator / migration
+.harness/state concrete data + .docs = 项目事实源，升级不覆盖
 ```
 
 ### 17.4 新项目和已有项目接入
@@ -606,9 +612,10 @@ npx sdlc-harness upgrade
 `sdlc-harness upgrade` 必须自动执行 `sdlc-harness sync`，用户不需要在升级后手动再跑一次同步。推荐执行顺序：
 1. 读取 `.harness/config.yaml` 中记录的当前版本和 schema version。
 2. 运行必要 migrations。
-3. 更新 managed files。
-4. 自动执行 sync，把最新 Skill、模板和策略 materialize 到工作区。
-5. 运行 `sdlc-harness doctor` 或对应 `make validate-harness`，输出升级报告。
+3. 按 state schema migration 升级 `.harness/state/**` 的结构，但保留项目自己的状态值。
+4. 更新 managed files。
+5. 自动执行 sync，把最新 Skill、模板、策略和状态模板 materialize 到工作区。
+6. 运行 `sdlc-harness doctor` 或对应 `make validate-harness`，输出升级报告。
 
 ### 17.6 本地覆盖规则
 项目本地定制不应直接改 managed files。推荐使用：

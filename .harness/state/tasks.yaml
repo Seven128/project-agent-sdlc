@@ -27,7 +27,7 @@ tasks:
 
   - id: "DEV-002"
     title: "实现 sync、init、init --adopt 和 doctor 最小闭环"
-    status: "pending"
+    status: "done"
     priority: "P0"
     docs:
       product:
@@ -36,6 +36,8 @@ tasks:
         - ".docs/03_tech_plan/harness_package_distribution.md"
       rfc: []
     allowed_paths:
+      - "README.md"
+      - "package-lock.json"
       - "packages/sdlc-harness/**"
       - "tests/sdlc-harness/**"
       - ".docs/04_implementation/npm_package/**"
@@ -45,7 +47,7 @@ tasks:
     implementation_doc: ".docs/04_implementation/npm_package/dev_002_sync_init_doctor.md"
     checkpoint_required: false
     checkpoint: ".harness/state/checkpoints/DEV-002.md"
-    gate_result: ""
+    gate_result: "PASS"
     commit: ""
 
   - id: "DEV-003"

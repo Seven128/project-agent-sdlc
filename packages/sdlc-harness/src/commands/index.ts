@@ -17,7 +17,7 @@ export const commands: Record<string, CommandHandler> = {
   package: packageSource
 };
 
-function help(): void {
+export function help(): void {
   console.log(`sdlc-harness commands:
   init [--adopt]       Initialize a new project or adopt an existing one
   sync                 Materialize canonical assets into the workspace

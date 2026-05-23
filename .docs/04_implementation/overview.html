@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="generator" content="AI SDLC Harness build_doc_overviews.py">
-  <meta name="source-hash" content="0efb89958f09c503">
+  <meta name="source-hash" content="8e4056c5a5c63ece">
   <title>.docs/04_implementation overview</title>
   <style>
     :root {
@@ -116,11 +116,12 @@
     <section class="hero">
       <h1>.docs/04_implementation overview</h1>
       <p class="meta">Generated artifact. Markdown slices remain the source of truth.</p>
-      <p class="meta">Source hash: <code>0efb89958f09c503</code></p>
+      <p class="meta">Source hash: <code>8e4056c5a5c63ece</code></p>
       <div class="source-list">
         <h2>Source Slices</h2>
         <ol>
 <li><a href="#npm-package-dev-001-package-scaffold-md">npm_package/dev_001_package_scaffold.md</a></li>
+<li><a href="#npm-package-dev-002-sync-init-doctor-md">npm_package/dev_002_sync_init_doctor.md</a></li>
 </ol>
       </div>
     </section>
@@ -265,6 +266,151 @@
 <ul>
 <li>DEV-002 应实现真实 <code>sync</code>、<code>init</code>、<code>init --adopt</code> 和 <code>doctor</code>，不要继续扩展 placeholder。</li>
 <li>DEV-004 必须实现 <code>package sync-source</code> / <code>package check-source</code>，使本仓库工作流源文件变化时自动更新包内 canonical source，并用 CI 防止漂移。</li>
+</ul>
+</article>
+<article class="doc-slice" id="npm-package-dev-002-sync-init-doctor-md">
+<header>
+<h2>npm_package/dev_002_sync_init_doctor.md</h2>
+<a class="source-link" href="npm_package/dev_002_sync_init_doctor.md">Source Markdown</a>
+</header>
+<h1 id="dev-002-sync-init-doctor-implementation-doc">DEV-002 sync/init/doctor Implementation Doc</h1>
+<h2 id="1-关联信息">1. 关联信息</h2>
+<ul>
+<li>Task ID: <code>DEV-002</code></li>
+<li>Linked PRD: <code>.docs/01_product/npm_package_distribution.md</code></li>
+<li>Linked technical design: <code>.docs/03_tech_plan/harness_package_distribution.md</code></li>
+<li>Linked RFC: none</li>
+<li>Linked commit: pending</li>
+</ul>
+<h2 id="2-本次实现范围">2. 本次实现范围</h2>
+<ul>
+<li>新增（Added）:</li>
+<li>Node-only runtime helpers for filesystem, YAML, config, init, sync, and doctor.</li>
+<li><code>sdlc-harness init</code> / <code>init --adopt</code> minimal non-destructive project setup.</li>
+<li><code>sdlc-harness sync</code> materialization for <code>AGENTS.md</code> managed block, skills, templates, policies, Makefile fragment, and optional workflow.</li>
+<li><code>sdlc-harness doctor</code> diagnostics for config, required state/docs files, and managed paths.</li>
+<li>Package assets for <code>AGENTS_CORE.md</code> and <code>.harness/make/sdlc-harness.mk</code>.</li>
+<li>Node test coverage for init, sync, and doctor.</li>
+<li>修改（Changed）:</li>
+<li>Package metadata now includes <code>yaml</code>, <code>@types/node</code>, build/test/prepack scripts, and lockfile.</li>
+<li>README clarifies state protocol vs state data.</li>
+<li><code>tasks.yaml</code> includes <code>README.md</code> and <code>package-lock.json</code> in DEV-002 allowed paths.</li>
+<li>未覆盖（Not covered）:</li>
+<li><code>upgrade</code> migration behavior remains DEV-003.</li>
+<li><code>package sync-source</code> / <code>package check-source</code> remains DEV-004.</li>
+<li>Full validator migration remains DEV-005.</li>
+</ul>
+<h2 id="3-真实代码结构">3. 真实代码结构</h2>
+<table>
+<thead><tr>
+<th>文件（File）</th>
+<th>作用（Purpose）</th>
+<th>关键函数/对象（Key Functions/Objects）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/fs.ts</code></td>
+<td>Node filesystem helpers</td>
+<td><code>pathExists</code>、<code>writeTextIfChanged</code>、<code>copyTree</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/yaml.ts</code></td>
+<td>YAML parse/stringify wrapper</td>
+<td><code>parseYaml</code>、<code>stringifyYaml</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/config.ts</code></td>
+<td>Harness config defaults and read/write</td>
+<td><code>defaultConfig</code>、<code>readConfig</code>、<code>writeConfigIfMissing</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/init.ts</code></td>
+<td>Project initialization</td>
+<td><code>runInit</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/sync-engine.ts</code></td>
+<td>Managed file materialization</td>
+<td><code>runSync</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/lib/doctor.ts</code></td>
+<td>Project diagnostics</td>
+<td><code>runDoctor</code></td>
+</tr>
+<tr>
+<td><code>packages/sdlc-harness/src/commands/*.ts</code></td>
+<td>CLI command adapters</td>
+<td><code>init</code>、<code>sync</code>、<code>doctor</code></td>
+</tr>
+<tr>
+<td><code>tests/sdlc-harness/sync-init-doctor.test.mjs</code></td>
+<td>Focused Node tests</td>
+<td><code>runInit</code>、<code>runSync</code>、<code>runDoctor</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-核心数据流">4. 核心数据流</h2>
+<pre><code class="language-txt">sdlc-harness init
+-&gt; create missing .harness/config.yaml, .harness/state/**, .docs/**
+-&gt; runSync
+-&gt; materialize package assets into workspace
+-&gt; sdlc-harness doctor validates required state/docs/config paths</code></pre>
+<h2 id="5-关键实现逻辑">5. 关键实现逻辑</h2>
+<ul>
+<li>输入校验（Input validation）: <code>doctor</code> checks config and required state/docs files; <code>init</code> is non-destructive and uses <code>writeTextIfChanged</code>.</li>
+<li>核心分支（Core branches）:</li>
+<li><code>init --adopt</code> and normal <code>init</code> share safe creation logic.</li>
+<li><code>sync</code> dispatches by managed path and strategy.</li>
+<li><code>AGENTS.md</code> uses marker replacement with <code>sdlc-harness:begin/end</code>.</li>
+<li>异常处理（Error handling）: CLI top-level catches errors; <code>doctor</code> returns warnings/errors and sets exit code through command adapter.</li>
+<li>边界兜底（Boundary fallback）: <code>.docs/**</code> and <code>.harness/state/**</code> are created if missing but not overwritten when content already exists.</li>
+<li>性能或并发注意事项（Performance or concurrency notes）: sync is sequential and deterministic.</li>
+</ul>
+<h2 id="6-与技术方案的偏移">6. 与技术方案的偏移</h2>
+<ul>
+<li>Validator runtime is now expected to be Node/TypeScript only; Python scripts remain reference implementation until DEV-005 migrates validation entrypoints.</li>
+</ul>
+<h2 id="7-测试覆盖-test-coverage">7. 测试覆盖（Test Coverage）</h2>
+<table>
+<thead><tr>
+<th>测试（Test）</th>
+<th>覆盖范围（Coverage）</th>
+<th>结果（Result）</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>npm test</code></td>
+<td>TypeScript build plus init/sync/doctor Node tests</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>python3 tools/validate_allowed_paths.py</code></td>
+<td>DEV-002 changed file boundaries</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make validate-checkpoint</code></td>
+<td>DEV-002 checkpoint completeness</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make lint</code></td>
+<td>Current project lint gate placeholder</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><code>make test-current-domain</code></td>
+<td>Current task focused gate placeholder</td>
+<td>PASS</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-后续维护注意事项">8. 后续维护注意事项</h2>
+<ul>
+<li>DEV-003 should make <code>upgrade</code> call migration and then <code>sync</code>.</li>
+<li>DEV-004 should populate package assets from source mappings and enforce drift checks.</li>
+<li>DEV-005 should replace Python validator dependency with Node/TypeScript validation commands.</li>
 </ul>
 </article>
   </main>

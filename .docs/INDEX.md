@@ -17,7 +17,7 @@
 | 产品方案 | `.docs/01_product/` | PRD slices、用户故事、acceptance criteria、Out of Scope | [npm 包化分发与同步 PRD](01_product/npm_package_distribution.md) |
 | 架构设计 | `.docs/02_architecture/` | 架构边界、领域模型、高层设计 | [Harness npm 包化分发架构](02_architecture/harness_package_distribution.md) |
 | 技术方案 | `.docs/03_tech_plan/` | API contracts、数据结构、实现计划 | [Harness npm 包化分发技术方案](03_tech_plan/harness_package_distribution.md) |
-| 实现文档 | `.docs/04_implementation/` | 任务完成后记录真实实现事实 | [DEV-001 npm 包骨架](.docs/04_implementation/npm_package/dev_001_package_scaffold.md) |
+| 实现文档 | `.docs/04_implementation/` | 任务完成后记录真实实现事实 | [DEV-001 npm 包骨架](.docs/04_implementation/npm_package/dev_001_package_scaffold.md), [DEV-002 sync/init/doctor](.docs/04_implementation/npm_package/dev_002_sync_init_doctor.md) |
 | 架构决策 | `.docs/05_decisions/` | ADR 和长期技术决策 | 暂无 |
 | Review | `.docs/06_review/` | Review reports、风险、重构建议 | 暂无 |
 | 测试 | `.docs/07_test/` | Test plan、test matrix、回归记录 | 暂无 |

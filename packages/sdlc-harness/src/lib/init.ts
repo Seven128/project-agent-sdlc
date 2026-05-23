@@ -1,0 +1,90 @@
+import path from "node:path";
+import { writeConfigIfMissing } from "./config.js";
+import { ensureDir, pathExists, writeTextIfChanged } from "./fs.js";
+import { runSync } from "./sync-engine.js";
+
+export interface InitOptions {
+  adopt: boolean;
+  force: boolean;
+}
+
+const DOC_DIRS = [
+  ".docs/00_raw",
+  ".docs/01_product",
+  ".docs/02_architecture",
+  ".docs/03_tech_plan",
+  ".docs/04_implementation",
+  ".docs/05_decisions",
+  ".docs/06_review",
+  ".docs/07_test",
+  ".docs/08_release",
+  ".docs/rfc"
+];
+
+export async function runInit(projectRoot: string, options: InitOptions): Promise<string[]> {
+  const report: string[] = [];
+  const existingEntries = await projectHasExistingFiles(projectRoot);
+  if (existingEntries && !options.adopt && !options.force) {
+    report.push("Project is not empty; continuing with non-destructive init. Use --adopt to mark this as an existing project adoption.");
+  }
+
+  if (await writeConfigIfMissing(projectRoot)) {
+    report.push("created .harness/config.yaml");
+  } else {
+    report.push("kept existing .harness/config.yaml");
+  }
+
+  await createProjectState(projectRoot, report);
+  await createDocs(projectRoot, report);
+
+  const syncReport = await runSync(projectRoot);
+  report.push(`sync changed=${syncReport.changed.length} skipped=${syncReport.skipped.length} blocked=${syncReport.blocked.length}`);
+  report.push(options.adopt ? "adopt mode complete" : "init complete");
+  return report;
+}
+
+async function projectHasExistingFiles(projectRoot: string): Promise<boolean> {
+  const markers = ["README.md", "src", "package.json", "pyproject.toml", "go.mod"];
+  for (const marker of markers) {
+    if (await pathExists(path.join(projectRoot, marker))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function createProjectState(projectRoot: string, report: string[]): Promise<void> {
+  const stateRoot = path.join(projectRoot, ".harness/state");
+  await ensureDir(path.join(stateRoot, "checkpoints"));
+  const files: Array<[string, string]> = [
+    [
+      ".harness/state/lifecycle.yaml",
+      `project_name: "Project"\nversion: "v0.1"\ncurrent_phase: "REQUIREMENT_GATHERING"\nactive_role: "pm"\nactive_skill: "pm_prd"\ncurrent_milestone: "MVP"\nblocked_reason: ""\nsuspended_phase: ""\nallowed_next_phases:\n  - "ARCHITECTING"\nhistory: []\n`
+    ],
+    [".harness/state/tasks.yaml", `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
+    [".harness/state/tasks.draft.yaml", `current_phase: "SPRINTING"\ncurrent_task_id: ""\ntasks: []\n`],
+    [".harness/state/gate_results.log", "# Gate results are appended by sdlc-harness.\n"],
+    [".harness/state/memory.md", "# Project Memory\n\n短期状态写入 plan/tasks；长期稳定知识简短记录在这里，并链接到 `.docs/` 正式出处。\n"]
+  ];
+  for (const [relative, content] of files) {
+    if (await writeTextIfChanged(path.join(projectRoot, relative), content)) {
+      report.push(`created ${relative}`);
+    }
+  }
+}
+
+async function createDocs(projectRoot: string, report: string[]): Promise<void> {
+  for (const dir of DOC_DIRS) {
+    await ensureDir(path.join(projectRoot, dir));
+    await writeTextIfChanged(path.join(projectRoot, dir, ".gitkeep"), "");
+  }
+  const index = ".docs/INDEX.md";
+  if (
+    await writeTextIfChanged(
+      path.join(projectRoot, index),
+      "# Documentation Index\n\n本文件是 AI SDLC Harness 的文档路由表。\n"
+    )
+  ) {
+    report.push(`created ${index}`);
+  }
+}
