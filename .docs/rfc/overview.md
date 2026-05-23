@@ -1,0 +1,439 @@
+# .docs/rfc overview
+
+<!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
+<!-- source-hash: 825f94350fbfbc3e -->
+
+Generated artifact. Markdown slices remain the source of truth.
+
+Source hash: `825f94350fbfbc3e`
+
+## Source Slices
+
+1. [RFC_001_unify_harness_directory_model.md](RFC_001_unify_harness_directory_model.md)
+2. [RFC_002_configurable_harness_root.md](RFC_002_configurable_harness_root.md)
+3. [RFC_003_init_prompt_and_default_agent_root.md](RFC_003_init_prompt_and_default_agent_root.md)
+4. [RFC_004_simplify_task_checkpoint_archive_model.md](RFC_004_simplify_task_checkpoint_archive_model.md)
+5. [RFC_005_merge_checkpoint_into_plan.md](RFC_005_merge_checkpoint_into_plan.md)
+
+---
+
+## RFC_001_unify_harness_directory_model.md
+
+Source: [RFC_001_unify_harness_directory_model.md](RFC_001_unify_harness_directory_model.md)
+
+# RFC_001: 统一 .harness 工作流根目录与 .agents 兼容出口
+
+## 1. 背景
+
+当前 Harness 配置被拆在两个顶层目录中：
+
+- `.harness/**` 保存生命周期状态、任务状态、模板、策略、配置和运行协议。
+- `.agents/skills/**` 保存阶段 Skill，作为 Agent 启动和路由时容易识别的本地目录。
+
+这个拆分解决了 Agent 可读性，但概念上不够一致：Skill 本身也是 Harness 工作流配置的一部分，和 policies、templates、state protocol、validators 一样，都是定义“这套工作流如何运行”的内容。用户提出 `.harness` 与 `.agents` 应该合并为一个工作流根目录，避免把同一类配置拆成两个事实源。
+
+本 RFC 聚焦一个变更：以 `.harness` 作为 Harness 工作流配置的 canonical root，保留 `.agents/skills/**` 作为可选的兼容生成出口，而不是事实源。
+
+## 2. 变更内容（Change Content）
+
+- Added:
+  - 新增 `.harness/agents/skills/**` 作为阶段 Skill 的 canonical source。
+  - 新增 `.harness/managed/**` 作为包管理内容的统一落点，包括 `templates`、`policies`、`make`、`workflows` 等。
+  - 保留 `.agents/skills/**` 作为 `sdlc-harness sync` 生成的 compatibility view，用于兼容当前 Agent 固定目录读取习惯。
+- Changed:
+  - `.agents/skills/**` 不再作为工作流配置事实源；它由 `.harness/agents/skills/**` 生成或同步。
+  - `.harness/templates/**` 和 `.harness/policies/**` 迁移到 `.harness/managed/templates/**` 与 `.harness/managed/policies/**`，避免 state protocol 与 package-managed assets 混在同一层。
+  - `sdlc-harness sync`、`upgrade`、`package sync-source`、`package check-source`、`validate-*` 需要识别新的 canonical layout。
+  - README、PRD、技术方案和 task plan 需要同步目录语义。
+- Removed:
+  - 移除 `.agents/skills/**` 作为 canonical source 的语义。
+  - 移除“`.harness` 只保存状态/策略，`.agents` 保存 Agent 配置”的旧划分。
+- Unchanged:
+  - `AGENTS.md` 仍然是 Agent 顶层入口，继续使用 managed block 合并。
+  - `.harness/state/**` 的具体值仍属于项目实例运行数据，不由 npm 包覆盖。
+  - `.docs/**` 仍属于项目产物，不由 `sync` 或 `upgrade` 覆盖。
+  - npm 包仍负责导出 workflow protocol、schemas、initial templates、skills、policies、templates、validators 和 migrations。
+
+## 3. Product Impact（产品影响）
+
+| 受影响 PRD（Affected PRD） | 影响（Impact） |
+|---|---|
+| `.docs/01_product/npm_package_distribution.md` | 需要把 `sync` 的目标从“同步到 `.agents/skills`、`.harness/templates`、`.harness/policies`”修正为“以 `.harness` 为 canonical root，并生成 `.agents/skills` 兼容出口”。 |
+
+## 4. Technical Impact Candidates（技术影响候选）
+
+| 模块（Module） | 影响（Impact） | 置信度（Confidence） |
+|---|---|---|
+| `README.md` | 目录结构、npm 包说明、自迭代说明和 Agent 可读性说明需要统一为 `.harness` canonical root。 | high |
+| `.docs/03_tech_plan/harness_package_distribution.md` | 工作区生成目录、`.harness/config.yaml`、source sync manifest、风险缓解和任务拆分需要调整。 | high |
+| `.harness/config.yaml` | `managed_files` 与 local override 路径需要改为 `.harness/agents` 和 `.harness/managed` 结构。 | high |
+| `packages/sdlc-harness/source-mappings.yaml` | 源文件映射需要从 `.harness/agents/skills`、`.harness/managed/templates`、`.harness/managed/policies` 读取。 | high |
+| `packages/sdlc-harness/src/lib/config.ts` | 默认配置需要对齐新的 managed files。 | high |
+| `packages/sdlc-harness/src/lib/sync-engine.ts` | 需要同时 materialize canonical `.harness/**` 与 compatibility `.agents/skills/**`。 | high |
+| `packages/sdlc-harness/src/lib/validators.ts` | `validate-harness` 需要校验 canonical source，并检查兼容出口是否存在或可生成。 | high |
+| `packages/sdlc-harness/assets/**` | 包内 assets 布局需要由新的 canonical source 重新生成。 | high |
+| `.agents/skills/**` | 需要保留为生成物或兼容出口，不再手写维护。 | high |
+
+Impact analysis 已运行：
+
+```sh
+python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_001_unify_harness_directory_model.md --top 40
+```
+
+主要命中 `.docs/01_product/npm_package_distribution.md`、`.docs/02_architecture/harness_package_distribution.md`、`.docs/03_tech_plan/harness_package_distribution.md`、`.docs/INDEX.md`、`tests/sdlc-harness/*` 和 npm 包实现文件。RFC 阶段已更新产品、架构、技术方案和任务状态；代码迁移进入 `DEV-006`。
+
+## 5. Acceptance Criteria
+
+- [ ] README 明确说明 `.harness` 是 Harness 工作流配置 canonical root，`.agents/skills/**` 是 compatibility view。
+- [ ] PRD 和技术方案明确 `state protocol` 属于包、`state data` 属于项目实例，并把 Skill、policy、template 归入 `.harness` canonical root。
+- [ ] `sdlc-harness sync` 能从包内 assets 生成 `.harness/agents/skills/**`、`.harness/managed/**` 和 `.agents/skills/**` 兼容出口。
+- [ ] `sdlc-harness upgrade` 在 migration 后自动执行新布局的 `sync`。
+- [ ] `sdlc-harness package sync-source` 与 `package check-source` 使用新的 source mappings，并能防止工作流源内容与包内容漂移。
+- [ ] `sdlc-harness validate-harness`、`npm test`、`sdlc-harness package check-source` 通过。
+
+## 6. Regression Requirements（回归要求）
+
+- [ ] 运行 `npm test` 验证 CLI、sync、upgrade、package source 和 validators 行为。
+- [ ] 运行 `node packages/sdlc-harness/dist/cli.js package check-source` 验证包内 canonical source 无漂移。
+- [ ] 运行 `node packages/sdlc-harness/dist/cli.js validate-harness` 验证新布局的 Harness 骨架。
+- [ ] 运行 `make validate-rfc` 验证 RFC 产物和全量回归入口。
+- [ ] 确认 `.docs/**`、`.harness/state/**`、`src/**`、`tests/**` 未被 sync/upgrade 覆盖。
+
+## 7. Status
+
+- Status: APPLIED
+
+---
+
+## RFC_002_configurable_harness_root.md
+
+Source: [RFC_002_configurable_harness_root.md](RFC_002_configurable_harness_root.md)
+
+# RFC_002: 可配置 Harness 根目录
+
+## 1. 背景
+
+RFC_001 将 Harness 配置事实源统一到 `.harness/**`，并把 `.agents/skills/**` 降级为兼容生成物。但这仍然让 Codex/Agent 的 Skill discovery 约定和 Harness 配置根目录之间存在适配层。
+
+用户提出新的产品方向：通过项目级 JSON 配置声明 Harness 根目录。如果配置为 `.harness`，则所有 Harness 配置都放在 `.harness` 下，且 Skill 直接放在 `.harness/skills`；如果没有配置，则默认使用 `.agents` 作为 Harness 根目录，所有 Harness 配置都放在 `.agents` 下，Skill 直接位于 `.agents/skills`，从而天然匹配多数 Agent 的 Skill discovery 约定。
+
+## 2. 变更内容（Change Content）
+
+- Added:
+  - 支持从 `package.json` 的 `sdlcHarness.harnessFolderName` 读取 Harness 根目录。
+  - 支持从 `sdlc-harness.config.json` 读取 `harnessFolderName`。
+  - 支持 `harnessFloderName` 作为兼容别名，避免用户拼写错误导致配置失效。
+  - 默认 Harness 根目录为 `.agents`。
+- Changed:
+  - 当前仓库通过 `package.json` 显式声明 `sdlcHarness.harnessFolderName: ".harness"`。
+  - 配置为 `.harness` 时，Skill canonical path 从 `.harness/agents/skills/**` 改为 `.harness/skills/**`。
+  - `sdlc-harness init`、`sync`、`upgrade`、`doctor`、`validate-*` 按配置根目录读写 `config.yaml`、`state/**`、`skills/**`、`managed/**`。
+  - `AGENTS.md` managed block 在同步时按目标根目录渲染路径。
+- Removed:
+  - 移除 `.harness/agents/skills/**` 这一层中间目录语义。
+- Unchanged:
+  - `.docs/**` 仍是项目文档事实源，不受根目录配置影响。
+  - `AGENTS.md` 仍位于项目根，作为 Agent 全局入口。
+  - npm 包仍通过 `sync` materialize 工作区可读文件。
+
+## 3. Product Impact（产品影响）
+
+| 受影响 PRD（Affected PRD） | 影响（Impact） |
+|---|---|
+| `.docs/01_product/npm_package_distribution.md` | 需要新增 configurable harness root 需求，并说明默认 `.agents`、显式 `.harness` 和 Skill 路径规则。 |
+
+## 4. Technical Impact Candidates（技术影响候选）
+
+| 模块（Module） | 影响（Impact） | 置信度（Confidence） |
+|---|---|---|
+| `package.json` | 当前仓库需要声明 `sdlcHarness.harnessFolderName: ".harness"`。 | high |
+| `.harness/skills/**` | 需要替代 `.harness/agents/skills/**` 作为当前仓库 Skill canonical source。 | high |
+| `packages/sdlc-harness/src/lib/config.ts` | 需要读取 JSON root config，并按 root 生成默认 config path 和 managed paths。 | high |
+| `packages/sdlc-harness/src/lib/init.ts` | 需要按 root 生成 state/config/managed 文件。 | high |
+| `packages/sdlc-harness/src/lib/sync-engine.ts` | 需要按 root 同步 skills、templates、policies、make，并按 root 渲染 AGENTS block。 | high |
+| `packages/sdlc-harness/src/lib/migrations.ts` | 需要按 root 迁移 config 和 state。 | high |
+| `packages/sdlc-harness/src/lib/doctor.ts` | 需要按 root 检查 config、state 和 managed files。 | high |
+| `packages/sdlc-harness/src/lib/validators.ts` | 需要按 root 校验 harness scaffold。 | high |
+| `packages/sdlc-harness/source-mappings.yaml` | 当前仓库 source mapping 需要从 `.harness/skills` 读取。 | high |
+| `tools/*.py` | 当前仓库本地 Python gate 需要从 `.harness/skills` 读取 Skill。 | medium |
+| `README.md`、`AGENTS.md` | 需要说明 configurable root 和当前仓库配置。 | high |
+
+Impact analysis:
+
+```sh
+python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_002_configurable_harness_root.md --top 40
+```
+
+## 5. Acceptance Criteria
+
+- [ ] 无配置时，`sdlc-harness init` 生成 `.agents/config.yaml`、`.agents/state/**`、`.agents/skills/**`、`.agents/managed/**`。
+- [ ] `package.json` 配置 `sdlcHarness.harnessFolderName: ".harness"` 时，`sdlc-harness init/sync/validate-harness` 使用 `.harness/config.yaml`、`.harness/state/**`、`.harness/skills/**`、`.harness/managed/**`。
+- [ ] `sdlc-harness.config.json` 配置 `harnessFolderName` 时也生效。
+- [ ] `harnessFloderName` 作为兼容别名可被读取。
+- [ ] 当前仓库 Skill source 移到 `.harness/skills/**`，不再使用 `.harness/agents/skills/**`。
+- [ ] `npm test`、`package check-source`、`validate-harness`、`make validate-harness` 通过。
+
+## 6. Regression Requirements（回归要求）
+
+- [ ] 覆盖默认 `.agents` root 的 init/sync/validate 测试。
+- [ ] 覆盖 `package.json` `.harness` root 的 init/sync/validate 测试。
+- [ ] 覆盖 `sdlc-harness.config.json` 和 `harnessFloderName` 别名读取。
+- [ ] 覆盖当前仓库 source mappings 无漂移。
+- [ ] 运行 `make validate-current` 确认开发阶段闭环。
+
+## 7. Status
+
+- Status: APPLIED
+
+---
+
+## RFC_003_init_prompt_and_default_agent_root.md
+
+Source: [RFC_003_init_prompt_and_default_agent_root.md](RFC_003_init_prompt_and_default_agent_root.md)
+
+# RFC_003: init 询问 Harness 根目录并默认使用 .agent
+
+## 1. 背景
+
+RFC_002 已支持通过 `harnessFolderName` 配置 Harness root，但新项目接入时仍然需要用户预先知道要在 `package.json` 中写什么。这个体验不够自然：用户运行 `sdlc-harness init` 时，CLI 应该主动询问 Harness 配置目录名，并说明默认值。
+
+用户进一步明确：默认 Harness 配置目录应为 `.agent`，直接回车使用默认值；用户也可以输入自定义目录名。CLI 最终仍把选择写入 `package.json` 的 `sdlcHarness.harnessFolderName`。当前 `ProjectTemplate` 仓库也应遵循默认目录，从 `.harness` 迁移为 `.agent`。
+
+## 2. 变更内容（Change Content）
+
+- Added:
+  - `sdlc-harness init` 在 CLI 层询问 Harness folder name。
+  - 提示文案说明默认值为 `.agent`，直接回车采用默认。
+  - CLI 将最终选择写入 `package.json` 的 `sdlcHarness.harnessFolderName`。
+  - 新增 DEV-009 实现任务。
+- Changed:
+  - npm 包默认 Harness root 从 `.agents` 改为 `.agent`。
+  - 当前仓库从 `.harness/**` 迁移为 `.agent/**`，不再通过 package.json 显式配置 `.harness`。
+  - `AGENTS.md`、README、PRD、架构、技术方案、Python tools、source mappings 和测试改用 `.agent` 当前根目录。
+  - `sdlc-harness init` 在非交互环境中不阻塞，采用默认 `.agent`。
+- Removed:
+  - 当前仓库对 `.harness` 作为自身 Harness root 的显式配置。
+  - 当前仓库 `.harness/**` 工作流事实源目录。
+- Unchanged:
+  - 自定义项目仍可在 `package.json` 中配置其它 `harnessFolderName`，例如 `.harness`。
+  - `sdlc-harness.config.json` 和 `harnessFloderName` 兼容别名仍可被读取。
+  - `AGENTS.md` 仍位于项目根，作为 Agent 全局入口。
+  - `.docs/**` 仍是项目文档事实源，不随 Harness root 移动。
+
+## 3. Product Impact（产品影响）
+
+| 受影响 PRD（Affected PRD） | 影响（Impact） |
+|---|---|
+| `.docs/01_product/npm_package_distribution.md` | 需要新增 init 交互式选择 root 的需求，并把默认 root 从 `.agents` 改为 `.agent`。 |
+
+## 4. Technical Impact Candidates（技术影响候选）
+
+| 模块（Module） | 影响（Impact） | 置信度（Confidence） |
+|---|---|---|
+| `packages/sdlc-harness/src/commands/init.ts` | 需要询问 Harness folder name，并在 init 前写入 `package.json#sdlcHarness.harnessFolderName`。 | high |
+| `packages/sdlc-harness/src/lib/paths.ts` | 默认 Harness root 改为 `.agent`。 | high |
+| `packages/sdlc-harness/src/lib/harness-root.ts` | 需要保持 `.agent` 默认和配置读取语义一致。 | high |
+| `packages/sdlc-harness/source-mappings.yaml` | 当前仓库 source mappings 改为 `.agent/skills`、`.agent/managed/**`。 | high |
+| `.harness/**` -> `.agent/**` | 当前仓库工作流事实源迁移到默认目录。 | high |
+| `tools/*.py` | 本地 Python gate、transition、status 和 validation 需要按当前 root `.agent` 读写。 | high |
+| `AGENTS.md` | 需要改为 `.agent/**` 路由，并说明默认 root。 | high |
+| `README.md` | 需要更新默认目录、交互式 init、当前仓库自迭代描述和接入说明。 | high |
+| `.docs/02_architecture/harness_package_distribution.md` | 需要更新默认 root 和 Agent 可读性说明。 | medium |
+| `.docs/03_tech_plan/harness_package_distribution.md` | 需要新增 DEV-009，并更新默认 root、source mappings、风险说明。 | high |
+| `tests/sdlc-harness/**` | 需要覆盖 CLI init prompt/default 和 `.agent` 默认 root。 | high |
+
+Impact analysis:
+
+```sh
+python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_003_init_prompt_and_default_agent_root.md --top 40
+```
+
+## 5. Acceptance Criteria
+
+- [ ] `sdlc-harness init` 在交互式 CLI 中提示输入 Harness folder name，并说明默认 `.agent`。
+- [ ] 用户直接回车时，CLI 写入 `package.json#sdlcHarness.harnessFolderName = ".agent"` 并初始化 `.agent/**`。
+- [ ] 用户输入 `.harness` 时，CLI 写入 `package.json#sdlcHarness.harnessFolderName = ".harness"` 并初始化 `.harness/**`。
+- [ ] 非交互环境运行 `sdlc-harness init` 不阻塞，使用默认 `.agent`。
+- [ ] 当前仓库工作流事实源迁移为 `.agent/**`，`AGENTS.md` 和 README 不再把 `.harness` 描述为当前 root。
+- [ ] `npm test`、`package check-source`、`validate-harness`、`make validate-harness` 通过。
+
+## 6. Regression Requirements（回归要求）
+
+- [ ] 覆盖默认 `.agent` root 的 init/sync/doctor/validate 测试。
+- [ ] 覆盖 CLI init 写入 package.json 默认 `.agent`。
+- [ ] 覆盖 CLI init 输入自定义 `.harness` 时写入 package.json 并生成 `.harness/**`。
+- [ ] 覆盖 `package.json` 中已存在 `sdlcHarness.harnessFolderName` 时不重复询问并沿用配置。
+- [ ] 覆盖当前仓库 source mappings 无漂移。
+- [ ] 运行 `make validate-current` 确认开发阶段闭环。
+
+## 7. Status
+
+- Status: APPLIED
+
+---
+
+## RFC_004_simplify_task_checkpoint_archive_model.md
+
+Source: [RFC_004_simplify_task_checkpoint_archive_model.md](RFC_004_simplify_task_checkpoint_archive_model.md)
+
+# RFC_004: 简化 task、checkpoint 和 archive 状态模型
+
+## 1. 背景
+
+当前 Harness 同时保存 `tasks.yaml`、checkpoint、`.agent/archive/`、implementation doc 和 git commit 信息。对于 task 和 release 这类动作记录，`.agent/archive/` 与 git 历史重复；对于已完成 task，checkpoint 与 implementation doc 和 commit 也重复。长期保留这些热路径状态会让 Agent 每次查进度时读入过多无效上下文，并增加事实源漂移风险。
+
+用户明确要求：删除 archive 机制；每个活跃 task 都有 checkpoint；task 完成后删除对应 checkpoint；复杂执行合同如 `allowed_paths` 和 `required_gates` 放入 checkpoint；`tasks.yaml` 只保留轻量摘要、状态、实现文档和当前活跃 checkpoint 路径。
+
+## 2. 变更内容（Change Content）
+
+- Added:
+  - 新增 DEV-010 实现任务，负责简化 task/checkpoint/archive 协议。
+  - checkpoint 模板新增 `Task Contract` YAML 区块，承载 `allowed_paths`、`required_gates` 和验收标准。
+  - validators 从当前活跃 task 的 checkpoint 读取路径约束。
+- Changed:
+  - `tasks.yaml` 从详细任务合同改为轻量任务索引。
+  - `checkpoint` 从条件恢复快照改为活跃 task 的执行合同和现场记录。
+  - task 完成后删除 checkpoint 文件，最终事实由 git commit 和 implementation doc 承载。
+  - `.agent` 路由声明修正为当前默认 Harness root。
+- Removed:
+  - `.agent/archive/**` 常规归档机制。
+  - `checkpoint_required` 条件门槛。
+  - 已完成 task 的历史 checkpoint 文件。
+  - task 级 `archived` 状态。
+- Unchanged:
+  - `.docs/**` 仍是正式阶段产物事实源。
+  - implementation doc 仍在 task 完成后记录真实实现。
+  - `make validate-*` 和 `sdlc-harness validate-*` 仍作为 gate 入口。
+
+## 3. Product Impact（产品影响）
+
+| 受影响 PRD（Affected PRD） | 影响（Impact） |
+|---|---|
+| `.docs/01_product/npm_package_distribution.md` | 需要补充轻量 task state、活跃 checkpoint 和删除 archive 的工作流需求。 |
+
+## 4. Technical Impact Candidates（技术影响候选）
+
+| 模块（Module） | 影响（Impact） | 置信度（Confidence） |
+|---|---|---|
+| `AGENTS.md` | 更新 checkpoint 和 archive 协议，去除条件 checkpoint 和 archive 路由。 | high |
+| `.agent/skills/**` | 更新各阶段 Skill 的输入、输出和完成检查，改用 `.agent`/`<harnessRoot>` 路由和活跃 checkpoint 语义。 | high |
+| `.agent/managed/templates/**` | 更新 `TASKS_TEMPLATE.yaml`、`CHECKPOINT_TEMPLATE.md` 和 `SKILL_TEMPLATE.md`。 | high |
+| `.agent/policies/**` | 移除 archive 路由，修正 `.agent` 或 `<harnessRoot>` 路由声明。 | high |
+| `tools/validate_tasks.py` | 校验轻量 task schema，不再要求 `allowed_paths` 和 `required_gates`。 | high |
+| `tools/validate_allowed_paths.py` | 从活跃 checkpoint 的 `Task Contract` 读取 `allowed_paths`。 | high |
+| `tools/validate_checkpoint.py` | 校验 open task 必须有 checkpoint，done task 不应保留 checkpoint。 | high |
+| `packages/sdlc-harness/src/lib/validators.ts` | Node validators 对齐轻量 task 和活跃 checkpoint 语义。 | high |
+| `.agent/state/tasks.yaml` | 瘦身为当前工作队列索引，移除已完成 task 的 checkpoint 和复杂合同字段。 | high |
+| `.agent/state/checkpoints/**` | 删除已完成 task checkpoint。 | high |
+| `.agent/archive/**` | 删除常规归档目录。 | high |
+| `.docs/INDEX.md` | 修正 `.agent` 路由和 implementation doc 链接，不再声明 archive 路由。 | high |
+
+Impact analysis:
+
+```sh
+python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_004_simplify_task_checkpoint_archive_model.md --top 40
+```
+
+## 5. Acceptance Criteria
+
+- [ ] `.agent/archive/**` 被删除，协议和 policy 不再把 archive 作为常规路由。
+- [ ] `tasks.yaml` 中 task 只保留轻量摘要、状态、implementation doc、gate result 和活跃 task 的 checkpoint 路径。
+- [ ] `checkpoint_required` 从协议、模板、validators 和当前 state 中移除。
+- [ ] open task 必须有 checkpoint；done/cancelled task 不保留 checkpoint 文件。
+- [ ] `allowed_paths` 和 `required_gates` 从活跃 checkpoint 的 `Task Contract` 读取。
+- [ ] `make validate-harness`、`make validate-current`、`npm test` 和 package source drift check 通过。
+
+## 6. Regression Requirements（回归要求）
+
+- [ ] 覆盖 done task 无 checkpoint 时 `validate-checkpoint` 通过。
+- [ ] 覆盖 open task 缺 checkpoint 时 `validate-checkpoint` 失败。
+- [ ] 覆盖 active checkpoint 缺 `allowed_paths` 时 `validate_allowed_paths` 或对应 validator 失败。
+- [ ] 覆盖 package assets 与本地 Harness 源文件无漂移。
+
+## 7. Status
+
+- Status: APPLIED
+
+---
+
+## RFC_005_merge_checkpoint_into_plan.md
+
+Source: [RFC_005_merge_checkpoint_into_plan.md](RFC_005_merge_checkpoint_into_plan.md)
+
+# RFC_005: 合并 checkpoint 到 plan.yaml 并移除 checkpoint 机制
+
+## 1. 背景
+
+RFC_004 已把 checkpoint 限定为活跃 task 的执行合同，并在 task 完成后删除。但用户进一步明确：checkpoint 文件本身也不需要。活跃 task 需要的执行现场、`allowed_paths`、`required_gates`、验收标准和备注，可以直接放进计划文件；task 完成后再把该条 task 压缩成简短摘要。
+
+同时，`tasks.yaml` 的文件名仍然暗示它只是一组任务记录。实际它承担的是当前 sprint/阶段的执行计划和进度索引，因此应改名为 `plan.yaml`；草案文件同步从 `tasks.draft.yaml` 改为 `plan.draft.yaml`。
+
+## 2. 变更内容（Change Content）
+
+- Added:
+  - `plan.yaml` 作为当前执行计划事实源。
+  - open task 在 `plan.yaml` 内直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和 `working_notes`。
+  - DEV-011 实现任务。
+- Changed:
+  - `tasks.yaml` 改名为 `plan.yaml`。
+  - `tasks.draft.yaml` 改名为 `plan.draft.yaml`。
+  - task 完成时，open task 的详细执行字段压缩为 `summary`、`implementation_doc` 和 `gate_result`。
+  - `validate_allowed_paths` 改为从当前 open task 读取 `allowed_paths`。
+- Removed:
+  - checkpoint protocol、checkpoint 目录、checkpoint 模板。
+  - `validate-checkpoint` gate 和 CLI alias。
+  - `tools/validate_checkpoint.py`。
+- Unchanged:
+  - task 仍是开发执行单元。
+  - implementation doc 仍记录真实实现结果。
+  - git commit 仍作为动作历史事实源。
+
+## 3. Product Impact（产品影响）
+
+| 受影响 PRD（Affected PRD） | 影响（Impact） |
+|---|---|
+| `.docs/01_product/npm_package_distribution.md` | 需要把轻量 task/checkpoint 模型更新为 `plan.yaml` 单文件计划模型，并移除 checkpoint 要求。 |
+
+## 4. Technical Impact Candidates（技术影响候选）
+
+| 模块（Module） | 影响（Impact） | 置信度（Confidence） |
+|---|---|---|
+| `AGENTS.md` | 更新事实源、工作规则、宏指令和 prompt language contract。 | high |
+| `README.md` | 更新工作流说明、目录结构、gate 和恢复入口。 | high |
+| `.agent/state/tasks.yaml` | 改名为 `.agent/state/plan.yaml`，并新增 DEV-011 open plan 字段。 | high |
+| `.agent/state/tasks.draft.yaml` | 改名为 `.agent/state/plan.draft.yaml`。 | high |
+| `.agent/state/checkpoints/` | 删除目录和相关事实源声明。 | high |
+| `.agent/skills/**` | 所有阶段 Skill 改用 `plan.yaml`，不再提 checkpoint。 | high |
+| `.agent/managed/templates/**` | 删除 `CHECKPOINT_TEMPLATE.md`，新增/更新 `PLAN_TEMPLATE.yaml`。 | high |
+| `.agent/policies/**` | inputs/outputs/write paths 改为 `plan.yaml`/`plan.draft.yaml`，移除 checkpoint 路由。 | high |
+| `tools/*.py` | `load_plan`/`validate_plan`/`validate_plan_draft` 改为 plan 语义，删除 checkpoint validator。 | high |
+| `packages/sdlc-harness/src/lib/*.ts` | init/doctor/migrations/validators 改为 `plan.yaml`，移除 checkpoint validator。 | high |
+| `tests/sdlc-harness/**` | 更新 init/upgrade/validators 测试。 | high |
+| `.docs/INDEX.md` | 路由从 task state 改为 plan state，并链接 RFC_005/DEV-011。 | high |
+
+Impact analysis:
+
+```sh
+python3 tools/impact_analyzer.py --rfc .docs/rfc/RFC_005_merge_checkpoint_into_plan.md --top 40
+```
+
+## 5. Acceptance Criteria
+
+- [x] `.agent/state/tasks.yaml` 和 `.agent/state/tasks.draft.yaml` 不再存在。
+- [x] `.agent/state/plan.yaml` 和 `.agent/state/plan.draft.yaml` 成为计划事实源。
+- [x] `.agent/state/checkpoints/` 不再存在。
+- [x] open task 的 `allowed_paths`、`required_gates`、`acceptance_criteria` 和执行备注直接保存在 `plan.yaml` 当前 task 中。
+- [x] done task 只保留简短摘要、implementation doc 和 gate result。
+- [x] `validate-checkpoint` 从 Makefile、Python tools、Node CLI 和 package assets 中移除。
+- [x] 本地 gates、Node validators、package source drift check 和 npm tests 通过。
+
+## 6. Regression Requirements（回归要求）
+
+- [x] 覆盖 `validate-dev` 对 open task `allowed_paths` 和 `required_gates` 的校验。
+- [x] 覆盖 done task 不需要详细执行字段。
+- [x] 覆盖 init/upgrade 生成或迁移 `plan.yaml`/`plan.draft.yaml`。
+- [x] 覆盖 package assets 与本地 Harness 源文件无漂移。
+
+## 7. Status
+
+- Status: VERIFIED

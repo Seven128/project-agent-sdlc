@@ -5,8 +5,8 @@ PYTHON ?= python3
 help:
 	@echo "AI SDLC Harness commands"
 	@echo "  make status              查看 lifecycle 和 task 状态"
-	@echo "  make docs-overview       生成 .docs 各阶段 overview.html 派生视图"
-	@echo "  make validate-doc-overviews 校验 .docs 各阶段 overview.html 是否最新"
+	@echo "  make docs-overview       生成 .docs 各阶段 overview.md 派生视图"
+	@echo "  make validate-doc-overviews 校验 .docs 各阶段 overview.md 是否最新"
 	@echo "  make validate-harness    校验 Harness 骨架、配置和提示词语言契约"
 	@echo "  make validate-current    运行当前 lifecycle phase 的 gate"
 	@echo "  make validate-pm         校验产品需求产物"

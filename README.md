@@ -51,7 +51,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - Gate 声明化：lint、typecheck、test、build、review checklist、release smoke test 等硬约束必须作为阶段完成条件。
 - 变更补丁化：需求变化先进入 RFC，再做影响分析、局部补丁、任务回退或增量任务。
 - 实现文档增量化：技术方案是计划，implementation doc 是开发后的事实。
-- 派生视图自动化：`overview.html` 由脚本生成，只用于浏览，不作为事实源。
+- 派生视图自动化：`overview.md` 由脚本生成，只用于浏览，不作为事实源。
 - Plan 短期化：open task 在 `plan.yaml` 中保存当前执行合同，done task 立即压缩为简短摘要，避免历史现场长期占用上下文。
 - 包与项目解耦：Harness npm 包只提供默认工作流能力、schema、模板、策略、迁移和同步规则；项目状态、业务内容和本地定制属于用户仓库，`sync` / `upgrade` 必须增量合并，不得全量覆盖。
 - 自举配置分层：开发 Harness 自身时可以有只服务于本仓库的 authoring overlay，用于记录工作流演进原则、包化约束和专用 Skill；这些内容默认不进入通用 npm 包，也不默认分发给用户项目。
@@ -67,9 +67,9 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - `tools/*.py`
 
 派生产物是：
-- `.docs/<stage>/overview.html`
+- `.docs/<stage>/overview.md`
 
-`overview.html` 由 `tools/build_doc_overviews.py` 生成。它把某阶段 Markdown slices 合成 HTML 总览，方便人类浏览和阶段交接，但需求引用、Review、测试和变更影响分析仍应引用原始 Markdown slice。
+`overview.md` 由 `tools/build_doc_overviews.py` 生成。它把某阶段 Markdown slices 合成 Markdown 总览，方便人类浏览和阶段交接，但需求引用、Review、测试和变更影响分析仍应引用原始 Markdown slice。
 
 这里需要区分状态协议和状态数据：
 - `lifecycle.yaml`、`plan.yaml`、`plan.draft.yaml`、memory 的字段结构、状态枚举、迁移规则和校验逻辑属于 Harness 工作流能力，应由包提供 schema、模板、validator 和 migration。
@@ -121,7 +121,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 ### 关键目录说明：
 - `AGENTS.md`：Agent 全局协议，包含事实源、工作规则、提示词语言契约、plan 和 overview 规则。
-- `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.html`。
+- `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.md`。
 - `.agent/state/`：当前项目的状态数据，包括生命周期、执行计划、gate 结果和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
 - `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agent`；当前仓库遵循默认值，因此使用 `.agent/skills/**`。
 - `.agent/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
@@ -203,8 +203,8 @@ RAG 能减少一次性塞进上下文的内容，但固定 chunk 和余弦召回
 
 如果文档变化没有改变语义边界，更新原 slice；如果新增独立场景、拆分模块、合并流程或 RFC 改变影响范围，应新增、拆分、合并或废弃 slice，并更新 `.docs/INDEX.md`。
 
-### 6.3 overview.html
-每个 `.docs/<stage>/` 目录生成一个 `overview.html`：
+### 6.3 overview.md
+每个 `.docs/<stage>/` 目录生成一个 `overview.md`：
 
 ```sh
 make docs-overview
@@ -212,7 +212,7 @@ make validate-doc-overviews
 ```
 
 规则：
-- `overview.html` 不手写。
+- `overview.md` 不手写。
 - Markdown slices 和 `.docs/INDEX.md` 才是事实源。
 - 任意 `.docs/<stage>/**/*.md` 变化后，运行 `make docs-overview`。
 - `make validate-harness` 会检查 overview 是否最新。
@@ -467,7 +467,7 @@ Codex 不需要真实“模式切换”：
 2. 相关检查已通过。
 3. implementation doc 已生成。
 4. `.docs/INDEX.md` 已更新。
-5. `overview.html` 已刷新。
+5. `overview.md` 已刷新。
 6. open task 的 plan 合同已完整。
 7. `plan.yaml` 已把 done task 压缩为简短摘要。
 
@@ -478,7 +478,7 @@ Codex 不需要真实“模式切换”：
    - 保存原始需求到 `.docs/00_raw/`。
    - 生成 `.docs/01_product/auth/account_lock.md`。
    - 记录 Open Questions，例如管理员解锁是否需要审计日志。
-   - 更新 `.docs/INDEX.md` 和 `overview.html`。
+   - 更新 `.docs/INDEX.md` 和 `overview.md`。
 
 2. 进入架构阶段：
    - 运行 `make validate-pm`。
@@ -495,7 +495,7 @@ Codex 不需要真实“模式切换”：
 4. 任务完成：
    - gate 通过后调用 `implementation_doc`。
    - 写 `.docs/04_implementation/auth/account_lock_impl.md`。
-   - 更新 `.docs/INDEX.md`、`overview.html` 和 `plan.yaml`。
+   - 更新 `.docs/INDEX.md`、`overview.md` 和 `plan.yaml`。
    - 将当前 task 压缩为简短 done 摘要。
 
 5. Review、测试、发布：

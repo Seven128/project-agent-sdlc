@@ -21,11 +21,11 @@
 
 ## 派生视图
 
-- 每个 `.docs/<stage>/overview.html` 是对应阶段 Markdown slices 的 generated artifact。
-- Markdown slices 和 `.docs/INDEX.md` 才是事实源，`overview.html` 只用于人类浏览和阶段交接。
-- 不要手写或局部编辑 `overview.html`。
+- 每个 `.docs/<stage>/overview.md` 是对应阶段 Markdown slices 的 generated artifact。
+- Markdown slices 和 `.docs/INDEX.md` 才是事实源，`overview.md` 只用于人类浏览和阶段交接。
+- 不要手写或局部编辑 `overview.md`。
 - 任意 `.docs/<stage>/**/*.md` 发生新增、修改、拆分、合并或废弃后，运行 `make docs-overview`。
-- 提交或阶段交付前，运行 `make validate-doc-overviews` 或 `make validate-harness` 确认 HTML 总览未过期。
+- 提交或阶段交付前，运行 `make validate-doc-overviews` 或 `make validate-harness` 确认 Markdown 总览未过期。
 
 ## Plan Protocol
 
@@ -79,7 +79,7 @@
 - `/advance`：校验当前阶段出口 gate，通过后才尝试流转。
 - `/rfc <file>`：挂起当前流程并进入 RFC recalibration。
 - `/syncdocs`：同步 `.docs/INDEX.md` 与当前文档事实源。
-- `/overview`：运行 `make docs-overview`，刷新 `.docs/<stage>/overview.html` 派生视图。
+- `/overview`：运行 `make docs-overview`，刷新 `.docs/<stage>/overview.md` 派生视图。
 - `/review`：运行只读 Review 工作流。
 - `/test`：运行测试计划和验证工作流。
 
