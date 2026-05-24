@@ -59,7 +59,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 ### 3.3 事实源与派生产物
 真正的事实源是：
 - `.agent/state/*.yaml`
-- `.agent/managed/policies/*.yaml`
+- `.agent/pjsdlc_managed/policies/*.yaml`
 - `<harnessRoot>/skills/*/SKILL.md`
 - `.docs/**/*.md`
 - `.docs/INDEX.md`
@@ -105,7 +105,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 │   │   ├── gate_results.log
 │   │   └── memory.md
 │   ├── skills/
-│   ├── managed/
+│   ├── pjsdlc_managed/
 │   │   ├── policies/
 │   │   │   ├── phase_contracts.yaml
 │   │   │   ├── gates.yaml
@@ -125,13 +125,13 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - `.docs/`：阶段产物事实源。每个阶段目录可包含多个 Markdown slice 和一个 generated `overview.md`。
 - `.agent/state/`：当前项目的状态数据，包括生命周期、执行计划、gate 结果和项目记忆；其 schema、初始模板、迁移和校验规则属于 Harness 工作流能力。
 - `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agent`；当前仓库遵循默认值，因此使用 `.agent/skills/**`。
-- `.agent/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
-- `.agent/managed/templates/`：PRD、技术方案、计划、实现文档、Review、测试、RFC、Release 等模板；默认内容来自 Harness 包。
-- `.agent/managed/make/sdlc-harness.mk`：Harness 默认命令目标；根 `Makefile` 只保留 include block，避免与用户项目目标耦合。
+- `.agent/pjsdlc_managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
+- `.agent/pjsdlc_managed/templates/`：PRD、技术方案、计划、实现文档、Review、测试、RFC、Release 等模板；默认内容来自 Harness 包。
+- `.agent/pjsdlc_managed/make/sdlc-harness.mk`：Harness 默认命令目标；根 `Makefile` 只保留 include block，避免与用户项目目标耦合。
 - `tools/`：确定性脚本和校验工具。
-- `Makefile`：统一命令入口，作为用户仓库入口文件存在，只通过 include block 引入 `.agent/managed/make/sdlc-harness.mk`。
+- `Makefile`：统一命令入口，作为用户仓库入口文件存在，只通过 include block 引入 `.agent/pjsdlc_managed/make/sdlc-harness.mk`。
 
-除 `.agent/skills/**` 需要保持 Agent hard index 之外，工作流相关默认配置统一放在 `.agent/managed/**`。不要再维护 `.agent/policies/**` 或 `.agent/templates/**` 这类 legacy mirror，避免同一份配置出现多个事实源。
+除 `.agent/skills/**` 需要保持 Agent hard index 之外，工作流相关默认配置统一放在 `.agent/pjsdlc_managed/**`。不要再维护 `.agent/policies/**` 或 `.agent/templates/**` 这类 legacy mirror，避免同一份配置出现多个事实源。
 
 `AGENTS.md` 和根 `Makefile` 这类桥接文件使用 `pjsdlc:sdlc-harness:*` marker 隔离包管理内容和用户内容：
 
@@ -143,7 +143,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 ```make
 # pjsdlc:sdlc-harness:make:begin
--include .agent/managed/make/sdlc-harness.mk
+-include .agent/pjsdlc_managed/make/sdlc-harness.mk
 # pjsdlc:sdlc-harness:make:end
 ```
 
@@ -158,7 +158,7 @@ project_name: "ProjectTemplate"
 version: "v0.1"
 current_phase: "REQUIREMENT_GATHERING"
 active_role: "pm"
-active_skill: "pm_prd"
+active_skill: "pjsdlc_pm_prd"
 current_milestone: "MVP"
 allowed_next_phases:
   - "ARCHITECTING"
@@ -184,17 +184,17 @@ python3 tools/transition.py --to <PHASE>
 ```
 
 ### 5.2 阶段契约
-阶段契约的 canonical source 写在 `.agent/managed/policies/phase_contracts.yaml`。核心关系如下：
+阶段契约的 canonical source 写在 `.agent/pjsdlc_managed/policies/phase_contracts.yaml`。核心关系如下：
 
 | 阶段 | Skill | 主要输入 | 主要输出 | 出口 Gate | 下一阶段 |
 |---|---|---|---|---|---|
-| `REQUIREMENT_GATHERING` | `pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
-| `ARCHITECTING` | `architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING` |
-| `SPRINTING` | `dev_sprint` | `plan.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
-| `REVIEWING` | `reviewer` | PRD、技术方案、实现文档、`git diff` | Review report | `make validate-review` | `TESTING` |
-| `TESTING` | `tester` | PRD、技术方案、实现文档、Review | Test plan、测试矩阵、回归记录 | `make validate-test` | `RELEASING` |
-| `RELEASING` | `release_manager` | 测试结果、build artifacts | Release note、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
-| `RFC_RECALIBRATION` | `rfc_recalibrate` | RFC、PRD、技术方案、任务状态 | 局部补丁、任务回退或增量任务 | `make validate-rfc` | 原阶段或 `SPRINTING` |
+| `REQUIREMENT_GATHERING` | `pjsdlc_pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
+| `ARCHITECTING` | `pjsdlc_architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING` |
+| `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
+| `REVIEWING` | `pjsdlc_reviewer` | PRD、技术方案、实现文档、`git diff` | Review report | `make validate-review` | `TESTING` |
+| `TESTING` | `pjsdlc_tester` | PRD、技术方案、实现文档、Review | Test plan、测试矩阵、回归记录 | `make validate-test` | `RELEASING` |
+| `RELEASING` | `pjsdlc_release_manager` | 测试结果、build artifacts | Release note、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
+| `RFC_RECALIBRATION` | `pjsdlc_rfc_recalibrate` | RFC、PRD、技术方案、任务状态 | 局部补丁、任务回退或增量任务 | `make validate-rfc` | 原阶段或 `SPRINTING` |
 
 ## 六、文档切片与阶段产物
 ### 6.1 为什么要语义切片
@@ -343,15 +343,15 @@ PRD
 
 | Skill | 负责内容 |
 |---|---|
-| `manager` | 读取 lifecycle/plan/index，路由 `/status`、`/next`、`/advance`、`/rfc`，执行阶段切换 |
-| `pm_prd` | 原始需求归档、PRD 切片、验收标准、Out of Scope、Open Questions |
-| `architect_design` | 架构设计、技术方案、接口契约、任务草案、ADR |
-| `dev_sprint` | 按 `current_task_id` 执行开发、控制 `allowed_paths`、运行 `required_gates`，并在每个 task 完成后 commit/push |
-| `implementation_doc` | 记录真实实现结构、数据流、测试覆盖和方案偏移 |
-| `reviewer` | 只读 Review，输出 findings、风险、重构建议和测试入口结论 |
-| `tester` | 生成 test matrix、补测试、记录回归和覆盖缺口 |
-| `release_manager` | Release note、build artifacts、smoke test、deployment checklist、rollback plan |
-| `rfc_recalibrate` | RFC 影响分析、局部补丁、任务回退或增量任务 |
+| `pjsdlc_manager` | 读取 lifecycle/plan/index，路由 `/status`、`/next`、`/advance`、`/rfc`，执行阶段切换 |
+| `pjsdlc_pm_prd` | 原始需求归档、PRD 切片、验收标准、Out of Scope、Open Questions |
+| `pjsdlc_architect_design` | 架构设计、技术方案、接口契约、任务草案、ADR |
+| `pjsdlc_dev_sprint` | 按 `current_task_id` 执行开发、控制 `allowed_paths`、运行 `required_gates`，并在每个 task 完成后 commit/push |
+| `pjsdlc_implementation_doc` | 记录真实实现结构、数据流、测试覆盖和方案偏移 |
+| `pjsdlc_reviewer` | 只读 Review，输出 findings、风险、重构建议和测试入口结论 |
+| `pjsdlc_tester` | 生成 test matrix、补测试、记录回归和覆盖缺口 |
+| `pjsdlc_release_manager` | Release note、build artifacts、smoke test、deployment checklist、rollback plan |
+| `pjsdlc_rfc_recalibrate` | RFC 影响分析、局部补丁、任务回退或增量任务 |
 
 ### 提示词语言契约：
 - 面向人阅读的说明、规则、SOP、检查清单使用中文。
@@ -480,10 +480,10 @@ Codex 不需要真实“模式切换”：
 │   ├── lifecycle.yaml
 │   └── plan.yaml
 ├── .agent/skills/
-│   ├── manager/
-│   ├── dev_sprint/
-│   ├── implementation_doc/
-│   └── rfc_recalibrate/
+│   ├── pjsdlc_manager/
+│   ├── pjsdlc_dev_sprint/
+│   ├── pjsdlc_implementation_doc/
+│   └── pjsdlc_rfc_recalibrate/
 └── tools/
     ├── build_doc_overviews.py
     ├── transition.py
@@ -571,8 +571,8 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
 这里的“工作流配置”不只是一组 prompt 或 Skill，而是定义 Harness 如何运行的一整套协议：
 
 - Agent 入口和角色规则：`AGENTS.md`、`<harnessRoot>/skills/**/SKILL.md`。
-- 阶段与 gate 策略：`.agent/managed/policies/**`。
-- 阶段产物模板：`.agent/managed/templates/**`。
+- 阶段与 gate 策略：`.agent/pjsdlc_managed/policies/**`。
+- 阶段产物模板：`.agent/pjsdlc_managed/templates/**`。
 - state protocol：`lifecycle.yaml`、`plan.yaml`、`plan.draft.yaml`、memory 的字段结构、状态枚举、迁移规则和校验逻辑。
 - task/plan protocol：`current_task_id`、`tasks[]`、`summary`、`implementation_doc`、`gate_result` 和 open task 的 `allowed_paths` / `required_gates` 如何组成短期执行记忆。
 - memory protocol：memory 如何记录、校验、提升、失效，以及如何链接到 `.docs/**` 正式出处。
@@ -654,7 +654,7 @@ skills / policies / templates / sync / upgrade / migrations
 
 | 层级 | 示例路径 | 是否默认进入 npm 包 | 责任 |
 |---|---|---|---|
-| 通用 Harness 配置 | `.agent/skills/**`, `.agent/managed/**` | 是 | 面向所有接入项目的阶段 Skill、模板、策略和默认规则 |
+| 通用 Harness 配置 | `.agent/skills/**`, `.agent/pjsdlc_managed/**` | 是 | 面向所有接入项目的阶段 Skill、模板、策略和默认规则 |
 | 项目实例数据 | `.agent/state/**`, `.docs/**` | 否 | 当前项目的状态、需求、方案、实现、测试和发布事实 |
 | Harness authoring overlay | `.agent/authoring/**` | 否 | 只约束本仓库迭代 Harness 自身的原则、专用 Skill 和包化安全规则 |
 
@@ -703,16 +703,16 @@ sdlc-harness <command>
 包内维护 canonical source：
 - CLI，例如 `sdlc-harness init`、`sdlc-harness sync`、`sdlc-harness upgrade`、`sdlc-harness doctor`。
 - 默认 `<harnessRoot>/skills/*/SKILL.md`。
-- 默认 `<harnessRoot>/managed/templates/*`。
-- 默认 `<harnessRoot>/managed/policies/*`。
-- 默认 `<harnessRoot>/managed/make/sdlc-harness.mk`。
+- 默认 `<harnessRoot>/pjsdlc_managed/templates/*`。
+- 默认 `<harnessRoot>/pjsdlc_managed/policies/*`。
+- 默认 `<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk`。
 - `<harnessRoot>/state/**` 的 schema、初始状态模板、plan protocol、memory protocol 和 migrations。
 - 校验脚本、迁移脚本和 overview 生成脚本。
 
 业务项目内保留 agent 实际读取和项目事实源：
 - `AGENTS.md`。
 - `<harnessRoot>/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区，作为 Skill canonical source。
-- `<harnessRoot>/managed/**`，承载模板、策略和默认 Makefile targets 等可版本化工作流配置。
+- `<harnessRoot>/pjsdlc_managed/**`，承载模板、策略和默认 Makefile targets 等可版本化工作流配置。
 - `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、open task 执行备注、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
 - `<harnessRoot>/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
@@ -736,7 +736,7 @@ sdlc-harness <command>
 }
 ```
 
-未配置时，默认 `<harnessRoot>` 是 `.agent`，因此 `init` 会生成 `.agent/config.yaml`、`.agent/state/**`、`.agent/skills/**` 和 `.agent/managed/**`。当前仓库遵循默认值，因此所有 Harness 配置都位于 `.agent/**`，Skill 直接位于 `.agent/skills/**`，不再经过额外中间目录。
+未配置时，默认 `<harnessRoot>` 是 `.agent`，因此 `init` 会生成 `.agent/config.yaml`、`.agent/state/**`、`.agent/skills/**` 和 `.agent/pjsdlc_managed/**`。当前仓库遵循默认值，因此所有 Harness 配置都位于 `.agent/**`，Skill 直接位于 `.agent/skills/**`，不再经过额外中间目录。
 
 `harnessFloderName` 作为历史兼容别名会被读取，但新配置应使用 `harnessFolderName`。
 
@@ -801,7 +801,7 @@ Harness npm 包的设计必须像普通 npm 依赖一样，与用户仓库内容
 - 包内 canonical source 只是默认输入，不是用户仓库的最终事实源。
 - `AGENTS.md`、`Makefile` 等高冲突入口只能通过 managed block、include block 或 create-if-missing 方式接入，不能整文件覆盖。
 - 托管文本块 marker 使用 `pjsdlc:sdlc-harness:*` namespace；旧 `sdlc-harness:*` marker 仅用于兼容迁移，避免已接入项目升级时重复插入 block。
-- 除 `<harnessRoot>/skills/**` 作为 Agent hard index 保留在固定位置外，模板、策略、默认 Makefile targets 等工作流配置都必须收敛到 `<harnessRoot>/managed/**`，不再生成 `<harnessRoot>/templates/**`、`<harnessRoot>/policies/**` 等 legacy mirror。
+- 除 `<harnessRoot>/skills/**` 作为 Agent hard index 保留在固定位置外，模板、策略、默认 Makefile targets 等工作流配置都必须收敛到 `<harnessRoot>/pjsdlc_managed/**`，不再生成 `<harnessRoot>/templates/**`、`<harnessRoot>/policies/**` 等 legacy mirror。
 - `<harnessRoot>/state/**`、`.docs/**`、`src/**`、`tests/**` 和用户业务配置属于项目实例，包升级不得覆盖其具体内容。
 - 用户自定义配置必须通过 local overrides、`.local.yaml`、受控 merge 或显式 migration 合并；不能要求用户直接修改包内文件，也不能在升级时丢弃本地差异。
 - migration 只能做可解释、可回滚、可诊断的结构变更。遇到 marker 缺失、checksum 漂移、override 冲突或无法判定的本地改动时，应停止并报告 blocker，而不是继续覆盖。
@@ -815,7 +815,7 @@ Harness npm 包的设计必须像普通 npm 依赖一样，与用户仓库内容
 ```txt
 <harnessRoot>/overrides/skills/<skill-name>.md
 <harnessRoot>/overrides/templates/<template-name>.md
-<harnessRoot>/managed/policies/*.local.yaml
+<harnessRoot>/pjsdlc_managed/policies/*.local.yaml
 ```
 
 `sdlc-harness sync` 负责合并 canonical source 和 local overrides，生成最终工作区文件。这样既保证 Agent 能读到完整规则，也能让包升级时保留项目差异。

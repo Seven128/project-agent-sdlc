@@ -18,8 +18,8 @@ try {
   await mkdir(path.join(root, ".docs/04_implementation/example"), { recursive: true });
   await mkdir(path.join(root, ".harness/state"), { recursive: true });
   await mkdir(path.join(root, ".harness/skills"), { recursive: true });
-  await mkdir(path.join(root, ".harness/managed/templates"), { recursive: true });
-  await mkdir(path.join(root, ".harness/managed/policies"), { recursive: true });
+  await mkdir(path.join(root, ".harness/pjsdlc_managed/templates"), { recursive: true });
+  await mkdir(path.join(root, ".harness/pjsdlc_managed/policies"), { recursive: true });
   await writeFile(path.join(root, "AGENTS.md"), "# Agents\n", "utf8");
   await writeFile(path.join(root, ".docs/INDEX.md"), "# Index\n.docs/04_implementation/example/dev.md\n", "utf8");
   await writeFile(path.join(root, ".harness/config.yaml"), "core:\n  package: x\n", "utf8");

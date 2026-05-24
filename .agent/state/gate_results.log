@@ -102,3 +102,10 @@
 2026-05-24T15:42:49Z phase=SPRINTING gate="git diff --check HEAD" result=PASS note="DEV-022 whitespace check"
 2026-05-24T15:44:14Z phase=SPRINTING gate="make validate-dev" result=PASS
 2026-05-24T15:44:23Z phase=SPRINTING gate="git diff --check HEAD" result=PASS note="DEV-022 completion ledger whitespace check"
+2026-05-24T18:18:27Z phase=SPRINTING gate="npm test" result=PASS note="DEV-023 pjsdlc layout and skill prefix regression"
+2026-05-24T18:18:27Z phase=SPRINTING gate="node packages/sdlc-harness/dist/cli.js package sync-source" result=PASS note="DEV-023 sync package assets"
+2026-05-24T18:18:27Z phase=SPRINTING gate="node packages/sdlc-harness/dist/cli.js package check-source" result=PASS note="DEV-023 package source drift check"
+2026-05-24T18:18:27Z phase=SPRINTING gate="python3 tools/validate_allowed_paths.py" result=PASS note="DEV-023 allowed paths"
+2026-05-24T18:18:27Z phase=SPRINTING gate="make docs-overview" result=PASS note="DEV-023 refresh documentation overviews"
+2026-05-24T18:18:27Z phase=SPRINTING gate="make validate-harness" result=PASS note="DEV-023 harness validation"
+2026-05-24T18:18:27Z phase=SPRINTING gate="git diff --check" result=PASS note="DEV-023 whitespace check"

@@ -6,20 +6,22 @@ core:
 managed_files:
   - path: "AGENTS.md"
     strategy: "merge-block"
+  - path: "Makefile"
+    strategy: "merge-block"
   - path: ".agent/skills"
     strategy: "managed"
-  - path: ".agent/managed/templates"
+  - path: ".agent/pjsdlc_managed/templates"
     strategy: "managed"
-  - path: ".agent/managed/policies"
+  - path: ".agent/pjsdlc_managed/policies"
     strategy: "merge-with-local"
-  - path: ".agent/managed/make/sdlc-harness.mk"
+  - path: ".agent/pjsdlc_managed/make/sdlc-harness.mk"
     strategy: "managed"
   - path: ".github/workflows/harness.yml"
     strategy: "create-if-missing"
 
 local_overrides:
   - ".agent/overrides/**"
-  - ".agent/managed/policies/*.local.yaml"
+  - ".agent/pjsdlc_managed/policies/*.local.yaml"
 
 never_overwrite:
   - ".docs/**"

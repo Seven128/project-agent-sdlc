@@ -130,7 +130,7 @@ never_overwrite:
 source: agent-project-sdlc
 version: 0.1.0
 kind: skill
-name: pm_prd
+name: pjsdlc_pm_prd
 checksum: sha256:...
 -->
 ```
@@ -151,9 +151,9 @@ source_mappings:
   - source: ".agent/pjsdlc_managed/policies"
     target: "packages/sdlc-harness/assets/policies"
     mode: "copy-tree"
-  - source: "Makefile"
+  - source: ".agent/pjsdlc_managed/make/sdlc-harness.mk"
     target: "packages/sdlc-harness/assets/make/sdlc-harness.mk"
-    mode: "extract-harness-targets"
+    mode: "copy-file"
   - source: ".github/workflows/harness.yml"
     target: "packages/sdlc-harness/assets/github/harness.yml"
     mode: "copy-file"

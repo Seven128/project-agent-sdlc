@@ -1,7 +1,7 @@
 import path from "node:path";
-import { rm } from "node:fs/promises";
+import { rename, rm } from "node:fs/promises";
 import { readConfig } from "./config.js";
-import { pathExists, readText, writeTextIfChanged } from "./fs.js";
+import { ensureDir, pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import type { ManagedFile } from "./types.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
@@ -21,10 +21,24 @@ export interface MigrationReport {
   skipped: string[];
 }
 
+const SKILL_RENAMES: Record<string, string> = {
+  manager: "pjsdlc_manager",
+  pm_prd: "pjsdlc_pm_prd",
+  architect_design: "pjsdlc_architect_design",
+  dev_sprint: "pjsdlc_dev_sprint",
+  implementation_doc: "pjsdlc_implementation_doc",
+  reviewer: "pjsdlc_reviewer",
+  tester: "pjsdlc_tester",
+  release_manager: "pjsdlc_release_manager",
+  rfc_recalibrate: "pjsdlc_rfc_recalibrate"
+};
+
 export async function runMigrations(projectRoot: string): Promise<MigrationReport> {
   const report: MigrationReport = { changed: [], skipped: [] };
   const root = await harnessRoot(projectRoot);
   await migrateConfig(projectRoot, root, report);
+  await migrateLegacyManagedPaths(projectRoot, root, report);
+  await migrateLifecycle(projectRoot, root, report);
   await migratePlan(projectRoot, root, report, "plan.yaml", "tasks.yaml");
   await migratePlan(projectRoot, root, report, "plan.draft.yaml", "tasks.draft.yaml");
   await removeLegacyCheckpoints(projectRoot, root, report);
@@ -42,14 +56,65 @@ async function migrateConfig(projectRoot: string, root: string, report: Migratio
   const config = await readConfig(projectRoot);
   config.core.schema_version = CURRENT_SCHEMA_VERSION;
   config.managed_files = migrateManagedFiles(config.managed_files, root);
-  config.local_overrides = config.local_overrides.map((item) =>
-    item === ".harness/policies/*.local.yaml" ? harnessPath(root, "managed", "policies", "*.local.yaml") : item
-  );
+  config.local_overrides = config.local_overrides.map((item) => migrateLocalOverride(item, root));
   if (await writeTextIfChanged(configPath, stringifyYaml(config))) {
     report.changed.push(relativeConfigPath);
   } else {
     report.skipped.push(relativeConfigPath);
   }
+}
+
+async function migrateLegacyManagedPaths(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
+  await moveIfDestinationMissing(projectRoot, harnessPath(root, "managed"), harnessPath(root, "pjsdlc_managed"), report);
+  await moveIfDestinationMissing(
+    projectRoot,
+    harnessPath(root, "templates"),
+    harnessPath(root, "pjsdlc_managed", "templates"),
+    report
+  );
+  await moveIfDestinationMissing(
+    projectRoot,
+    harnessPath(root, "policies"),
+    harnessPath(root, "pjsdlc_managed", "policies"),
+    report
+  );
+  await moveIfDestinationMissing(
+    projectRoot,
+    harnessPath(root, "make"),
+    harnessPath(root, "pjsdlc_managed", "make"),
+    report
+  );
+}
+
+async function moveIfDestinationMissing(
+  projectRoot: string,
+  legacyRelativePath: string,
+  nextRelativePath: string,
+  report: MigrationReport
+): Promise<void> {
+  const legacyPath = path.join(projectRoot, legacyRelativePath);
+  if (!(await pathExists(legacyPath))) {
+    report.skipped.push(legacyRelativePath);
+    return;
+  }
+  const nextPath = path.join(projectRoot, nextRelativePath);
+  if (await pathExists(nextPath)) {
+    report.skipped.push(`${legacyRelativePath} -> ${nextRelativePath}`);
+    return;
+  }
+  await ensureDir(path.dirname(nextPath));
+  await rename(legacyPath, nextPath);
+  report.changed.push(`${legacyRelativePath} -> ${nextRelativePath}`);
+}
+
+function migrateLocalOverride(item: string, root: string): string {
+  if (
+    item === ".harness/policies/*.local.yaml" ||
+    item === harnessPath(root, "managed", "policies", "*.local.yaml")
+  ) {
+    return harnessPath(root, "pjsdlc_managed", "policies", "*.local.yaml");
+  }
+  return item;
 }
 
 function migrateManagedFiles(managedFiles: ManagedFile[], root: string): ManagedFile[] {
@@ -68,16 +133,16 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
       push({ path: harnessPath(root, "skills"), strategy: "managed" });
       continue;
     }
-    if (item.path === ".harness/templates") {
-      push({ path: harnessPath(root, "managed", "templates"), strategy: "managed" });
+    if (item.path === ".harness/templates" || item.path === harnessPath(root, "managed", "templates")) {
+      push({ path: harnessPath(root, "pjsdlc_managed", "templates"), strategy: "managed" });
       continue;
     }
-    if (item.path === ".harness/policies") {
-      push({ path: harnessPath(root, "managed", "policies"), strategy: "merge-with-local" });
+    if (item.path === ".harness/policies" || item.path === harnessPath(root, "managed", "policies")) {
+      push({ path: harnessPath(root, "pjsdlc_managed", "policies"), strategy: "merge-with-local" });
       continue;
     }
-    if (item.path === ".harness/make/sdlc-harness.mk") {
-      push({ path: harnessPath(root, "managed", "make", "sdlc-harness.mk"), strategy: "managed" });
+    if (item.path === ".harness/make/sdlc-harness.mk" || item.path === harnessPath(root, "managed", "make", "sdlc-harness.mk")) {
+      push({ path: harnessPath(root, "pjsdlc_managed", "make", "sdlc-harness.mk"), strategy: "managed" });
       continue;
     }
     push(item);
@@ -94,6 +159,27 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
   }
 
   return migrated;
+}
+
+async function migrateLifecycle(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
+  const relativeLifecyclePath = harnessPath(root, "state", "lifecycle.yaml");
+  const lifecyclePath = path.join(projectRoot, relativeLifecyclePath);
+  if (!(await pathExists(lifecyclePath))) {
+    report.skipped.push(relativeLifecyclePath);
+    return;
+  }
+  const data = (parseYaml(await readText(lifecyclePath)) ?? {}) as Record<string, unknown>;
+  const activeSkill = String(data.active_skill ?? "");
+  if (!SKILL_RENAMES[activeSkill]) {
+    report.skipped.push(relativeLifecyclePath);
+    return;
+  }
+  data.active_skill = SKILL_RENAMES[activeSkill];
+  if (await writeTextIfChanged(lifecyclePath, stringifyYaml(data))) {
+    report.changed.push(relativeLifecyclePath);
+  } else {
+    report.skipped.push(relativeLifecyclePath);
+  }
 }
 
 async function migratePlan(

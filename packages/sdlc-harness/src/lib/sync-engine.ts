@@ -64,15 +64,15 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     await syncTree(packageAssetPath("skills"), destination, report);
     return;
   }
-  if (managedFile.path === path.join(root, "managed", "templates")) {
+  if (managedFile.path === path.join(root, "pjsdlc_managed", "templates")) {
     await syncTree(packageAssetPath("templates"), destination, report);
     return;
   }
-  if (managedFile.path === path.join(root, "managed", "policies")) {
+  if (managedFile.path === path.join(root, "pjsdlc_managed", "policies")) {
     await syncTree(packageAssetPath("policies"), destination, report);
     return;
   }
-  if (managedFile.path === path.join(root, "managed", "make", "sdlc-harness.mk")) {
+  if (managedFile.path === path.join(root, "pjsdlc_managed", "make", "sdlc-harness.mk")) {
     await syncFile(packageAssetPath("make", "sdlc-harness.mk"), destination, report, "skip-if-missing");
     return;
   }
@@ -121,7 +121,7 @@ function renderAgentsCore(content: string, root: string): string {
 async function syncMakefileInclude(destination: string, root: string, report: SyncReport): Promise<void> {
   const existing = (await pathExists(destination)) ? await readText(destination) : "";
   const resetDefaultGoal = shouldResetMakeDefaultGoal(existing);
-  const includePath = `${root.replace(/\\/g, "/")}/managed/make/sdlc-harness.mk`;
+  const includePath = `${root.replace(/\\/g, "/")}/pjsdlc_managed/make/sdlc-harness.mk`;
   const blockLines = [
     MAKEFILE_BLOCK_START,
     "# Included before project targets so project recipes win on name conflicts.",

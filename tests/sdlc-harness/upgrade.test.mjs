@@ -43,6 +43,14 @@ never_overwrite:
   );
   await writeFile(path.join(root, ".harness/state/tasks.yaml"), "tasks: []\n", "utf8");
   await writeFile(path.join(root, ".harness/state/tasks.draft.yaml"), "tasks: []\n", "utf8");
+  await writeFile(
+    path.join(root, ".harness/state/lifecycle.yaml"),
+    'current_phase: "REQUIREMENT_GATHERING"\nactive_skill: "pm_prd"\n',
+    "utf8"
+  );
+  await rm(path.join(root, ".harness/pjsdlc_managed"), { recursive: true, force: true });
+  await mkdir(path.join(root, ".harness/managed/policies"), { recursive: true });
+  await writeFile(path.join(root, ".harness/managed/policies/custom.local.yaml"), "custom: true\n", "utf8");
 
   const report = await runUpgrade(root);
   assert.ok(report.some((line) => line.startsWith("migrations changed=")));
@@ -60,12 +68,21 @@ never_overwrite:
   assert.match(config, /path: "?Makefile"?/);
   assert.doesNotMatch(config, /\.harness\/agents\/skills/);
   assert.doesNotMatch(config, /\.agents\/skills/);
-  assert.match(config, /\.harness\/managed\/templates/);
-  assert.match(config, /\.harness\/managed\/policies/);
+  assert.match(config, /\.harness\/pjsdlc_managed\/templates/);
+  assert.match(config, /\.harness\/pjsdlc_managed\/policies/);
+  assert.doesNotMatch(config, /\.harness\/managed\/templates/);
+  assert.doesNotMatch(config, /\.harness\/managed\/policies/);
+  const localOverride = await readFile(path.join(root, ".harness/pjsdlc_managed/policies/custom.local.yaml"), "utf8");
+  assert.match(localOverride, /custom: true/);
+  await assert.rejects(readFile(path.join(root, ".harness/managed/policies/custom.local.yaml"), "utf8"));
 
   const makefile = await readFile(path.join(root, "Makefile"), "utf8");
   assert.match(makefile, /pjsdlc:sdlc-harness:make:begin/);
-  assert.match(makefile, /-include \.harness\/managed\/make\/sdlc-harness\.mk/);
+  assert.match(makefile, /-include \.harness\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
+
+  const lifecycle = await readFile(path.join(root, ".harness/state/lifecycle.yaml"), "utf8");
+  assert.match(lifecycle, /active_skill: "?pjsdlc_pm_prd"?/);
+  assert.doesNotMatch(lifecycle, /active_skill: "pm_prd"/);
 } finally {
   await rm(root, { recursive: true, force: true });
 }

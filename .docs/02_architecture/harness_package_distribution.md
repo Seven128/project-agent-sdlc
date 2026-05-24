@@ -56,7 +56,7 @@ npm update agent-project-sdlc
 ### 4.3 当前仓库工作流变更同步到包
 
 ```txt
-修改 AGENTS.md / <harnessRoot>/skills / <harnessRoot>/managed/templates / <harnessRoot>/managed/policies / Makefile / workflow / validators
+修改 AGENTS.md / <harnessRoot>/skills / <harnessRoot>/pjsdlc_managed/templates / <harnessRoot>/pjsdlc_managed/policies / Makefile / workflow / validators
 -> npx sdlc-harness package sync-source
 -> 更新 packages/sdlc-harness/assets 或包内 validator 入口
 -> npx sdlc-harness package check-source
@@ -74,8 +74,8 @@ npm update agent-project-sdlc
 | `AGENTS.md` | `merge-block` | 保留项目自定义规则，只更新 `sdlc-harness` marker 内文本 |
 | `Makefile` | `include` | 根 `Makefile` 常包含业务命令，不整体覆盖 |
 | `<harnessRoot>/skills/**/SKILL.md` | `managed` | Skill 属于 Harness 配置 canonical root |
-| `<harnessRoot>/managed/templates/**` | `managed` | 模板来自包内 canonical source |
-| `<harnessRoot>/managed/policies/*.yaml` | `merge-with-local` | 默认策略可升级，项目差异放 `.local.yaml` |
+| `<harnessRoot>/pjsdlc_managed/templates/**` | `managed` | 模板来自包内 canonical source |
+| `<harnessRoot>/pjsdlc_managed/policies/*.yaml` | `merge-with-local` | 默认策略可升级，项目差异放 `.local.yaml` |
 | `<harnessRoot>/config.yaml` | `project-owned-with-managed-version` | 项目拥有，但 CLI 更新版本和 schema 字段 |
 | `.docs/**` | `never-overwrite` | 项目事实源 |
 | `<harnessRoot>/state/**` | `never-overwrite` | 项目状态事实源 |

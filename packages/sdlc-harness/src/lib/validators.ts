@@ -45,8 +45,8 @@ async function validateHarness(projectRoot: string): Promise<ValidatorReport> {
     harnessPath(root, "state", "lifecycle.yaml"),
     harnessPath(root, "state", "plan.yaml"),
     harnessPath(root, "skills"),
-    harnessPath(root, "managed", "templates"),
-    harnessPath(root, "managed", "policies")
+    harnessPath(root, "pjsdlc_managed", "templates"),
+    harnessPath(root, "pjsdlc_managed", "policies")
   ]) {
     if (!(await pathExists(path.join(projectRoot, required)))) {
       errors.push(`missing ${required}`);

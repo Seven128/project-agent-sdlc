@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: b2da71e7e73e15cc -->
+<!-- source-hash: a9b8d4049612535f -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `b2da71e7e73e15cc`
+Source hash: `a9b8d4049612535f`
 
 ## Source Slices
 
@@ -149,7 +149,7 @@ never_overwrite:
 source: agent-project-sdlc
 version: 0.1.0
 kind: skill
-name: pm_prd
+name: pjsdlc_pm_prd
 checksum: sha256:...
 -->
 ```
@@ -170,9 +170,9 @@ source_mappings:
   - source: ".agent/pjsdlc_managed/policies"
     target: "packages/sdlc-harness/assets/policies"
     mode: "copy-tree"
-  - source: "Makefile"
+  - source: ".agent/pjsdlc_managed/make/sdlc-harness.mk"
     target: "packages/sdlc-harness/assets/make/sdlc-harness.mk"
-    mode: "extract-harness-targets"
+    mode: "copy-file"
   - source: ".github/workflows/harness.yml"
     target: "packages/sdlc-harness/assets/github/harness.yml"
     mode: "copy-file"

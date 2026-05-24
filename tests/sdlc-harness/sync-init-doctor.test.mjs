@@ -28,13 +28,15 @@ try {
   assert.match(defaultAgents, /pjsdlc:sdlc-harness:begin/);
   const defaultMakefile = await readFile(path.join(defaultRoot, "Makefile"), "utf8");
   assert.match(defaultMakefile, /pjsdlc:sdlc-harness:make:begin/);
-  assert.match(defaultMakefile, /-include \.agent\/managed\/make\/sdlc-harness\.mk/);
+  assert.match(defaultMakefile, /-include \.agent\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
 
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
-  await stat(path.join(defaultRoot, ".agent/skills/manager/SKILL.md"));
-  await stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml"));
-  await stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml"));
+  await stat(path.join(defaultRoot, ".agent/skills/pjsdlc_manager/SKILL.md"));
+  await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
+  await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/policies/phase_contracts.yaml"));
+  await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml")));
+  await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/policies/phase_contracts.yaml")));
 
@@ -54,10 +56,12 @@ try {
   const configuredSyncReport = await runSync(configuredRoot);
   assert.equal(configuredSyncReport.blocked.length, 0);
   const configuredMakefile = await readFile(path.join(configuredRoot, "Makefile"), "utf8");
-  assert.match(configuredMakefile, /-include \.harness\/managed\/make\/sdlc-harness\.mk/);
-  await stat(path.join(configuredRoot, ".harness/skills/manager/SKILL.md"));
-  await stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml"));
-  await stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml"));
+  assert.match(configuredMakefile, /-include \.harness\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
+  await stat(path.join(configuredRoot, ".harness/skills/pjsdlc_manager/SKILL.md"));
+  await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
+  await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/policies/phase_contracts.yaml"));
+  await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml")));
+  await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/policies/phase_contracts.yaml")));
 
@@ -106,7 +110,7 @@ try {
   assert.equal(makefileMergeReport.blocked.length, 0);
   const mergedMakefile = await readFile(path.join(makefileMergeRoot, "Makefile"), "utf8");
   assert.ok(mergedMakefile.indexOf("# pjsdlc:sdlc-harness:make:begin") < mergedMakefile.indexOf("PROJECT_VAR := 1"));
-  assert.match(mergedMakefile, /-include \.agent\/managed\/make\/sdlc-harness\.mk/);
+  assert.match(mergedMakefile, /-include \.agent\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
   assert.match(mergedMakefile, /PROJECT_VAR := 1/);
   assert.match(mergedMakefile, /lint:\n\t@echo project lint/);
   const projectLint = spawnSync("make", ["lint"], { cwd: makefileMergeRoot, encoding: "utf8" });

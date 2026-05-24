@@ -40,12 +40,12 @@
 
 - 面向人阅读的说明、规则、SOP、检查清单使用中文。
 - 机器契约保持英文，包括字段名、路径、命令、阶段枚举、状态枚举、脚本参数。
-- 不翻译 `.agent/state/*.yaml`、`.agent/managed/policies/*.yaml` 中的 key。
+- 不翻译 `.agent/state/*.yaml`、`.agent/pjsdlc_managed/policies/*.yaml` 中的 key。
 - 不翻译 `current_phase`、`active_skill`、`allowed_paths`、`required_gates`、`implementation_doc` 等字段名。
 - 不翻译 `REQUIREMENT_GATHERING`、`ARCHITECTING`、`SPRINTING`、`REVIEWING`、`TESTING`、`RELEASING`、`RFC_RECALIBRATION`、`BLOCKED` 等阶段枚举。
 - 不翻译 `pending`、`in_progress`、`done`、`blocked`、`pending_revision`、`cancelled` 等任务状态。
 - 不翻译 `make validate-*`、`python3 tools/transition.py --to <PHASE>`、`.docs/01_product/`、`.agent/state/plan.yaml` 等命令和路径。
-- 后续更新 `.agent/skills/*/SKILL.md` 或 `.agent/managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agent`。
+- 后续更新 `.agent/skills/*/SKILL.md` 或 `.agent/pjsdlc_managed/templates/*.md` 时，遵循“中文解释 + 英文精确标识符”。Harness 根目录由 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 决定；未配置的项目默认使用 `.agent`。
 
 ## 通用执行原则
 
@@ -161,4 +161,4 @@ python3 tools/transition.py --to <PHASE>
 ```
 
 流转前先运行阶段 gate，通常使用 `make validate-current`，或使用
-`.agent/managed/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。
+`.agent/pjsdlc_managed/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。

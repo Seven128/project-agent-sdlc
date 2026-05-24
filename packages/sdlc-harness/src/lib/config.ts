@@ -15,12 +15,12 @@ export function defaultConfig(root: string): HarnessConfig {
       { path: "AGENTS.md", strategy: "merge-block" },
       { path: "Makefile", strategy: "merge-block" },
       { path: harnessPath(root, "skills"), strategy: "managed" },
-      { path: harnessPath(root, "managed", "templates"), strategy: "managed" },
-      { path: harnessPath(root, "managed", "policies"), strategy: "merge-with-local" },
-      { path: harnessPath(root, "managed", "make", "sdlc-harness.mk"), strategy: "managed" },
+      { path: harnessPath(root, "pjsdlc_managed", "templates"), strategy: "managed" },
+      { path: harnessPath(root, "pjsdlc_managed", "policies"), strategy: "merge-with-local" },
+      { path: harnessPath(root, "pjsdlc_managed", "make", "sdlc-harness.mk"), strategy: "managed" },
       { path: ".github/workflows/harness.yml", strategy: "create-if-missing" }
     ],
-    local_overrides: [harnessPath(root, "overrides/**"), harnessPath(root, "managed", "policies", "*.local.yaml")],
+    local_overrides: [harnessPath(root, "overrides/**"), harnessPath(root, "pjsdlc_managed", "policies", "*.local.yaml")],
     never_overwrite: [".docs/**", harnessPath(root, "state/**"), "src/**", "tests/**"]
   };
 }

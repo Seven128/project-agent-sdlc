@@ -8,14 +8,14 @@ from harness_utils import ROOT, HarnessError, load_yaml, require, run_main
 
 SKILL_REQUIRED_SECTIONS = ["## 目的", "## 角色提示词", "## 输入", "## 规则", "## 完成检查"]
 ARTIFACT_SKILLS_REQUIRE_SEMANTIC_SLICING = {
-    "pm_prd",
-    "architect_design",
-    "dev_sprint",
-    "implementation_doc",
-    "reviewer",
-    "tester",
-    "release_manager",
-    "rfc_recalibrate",
+    "pjsdlc_pm_prd",
+    "pjsdlc_architect_design",
+    "pjsdlc_dev_sprint",
+    "pjsdlc_implementation_doc",
+    "pjsdlc_reviewer",
+    "pjsdlc_tester",
+    "pjsdlc_release_manager",
+    "pjsdlc_rfc_recalibrate",
 }
 SKILL_FORBIDDEN_HEADINGS = [
     "## Purpose",
@@ -102,8 +102,8 @@ def validate_skills() -> None:
 
 
 def validate_skill_template() -> None:
-    path = ROOT / ".agent/managed/templates/SKILL_TEMPLATE.md"
-    require(path.exists(), "Missing .agent/managed/templates/SKILL_TEMPLATE.md")
+    path = ROOT / ".agent/pjsdlc_managed/templates/SKILL_TEMPLATE.md"
+    require(path.exists(), "Missing .agent/pjsdlc_managed/templates/SKILL_TEMPLATE.md")
     content = text(path)
     for section in SKILL_REQUIRED_SECTIONS:
         require(section in content, f"SKILL_TEMPLATE.md missing Chinese section: {section}")
@@ -114,7 +114,7 @@ def validate_skill_template() -> None:
 def validate_yaml_keys() -> None:
     lifecycle = load_yaml(".agent/state/lifecycle.yaml")
     tasks = load_yaml(".agent/state/plan.yaml")
-    phase_contracts = load_yaml(".agent/managed/policies/phase_contracts.yaml")
+    phase_contracts = load_yaml(".agent/pjsdlc_managed/policies/phase_contracts.yaml")
 
     for key in YAML_KEYWORDS["lifecycle"]:
         require(key in lifecycle, f"lifecycle.yaml key was removed or translated: {key}")

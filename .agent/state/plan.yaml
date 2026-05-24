@@ -164,6 +164,8 @@ tasks:
         - ".docs/01_product/npm_package_distribution.md"
       tech_plan:
         - ".docs/03_tech_plan/harness_package_distribution.md"
+      architecture:
+        - ".docs/02_architecture/harness_package_distribution.md"
       rfc:
         - ".docs/rfc/RFC_009_namespace_managed_layout_and_skills.md"
     allowed_paths:
@@ -182,10 +184,12 @@ tasks:
       - "packages/sdlc-harness/**"
       - "tests/sdlc-harness/**"
       - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/02_architecture/harness_package_distribution.md"
       - ".docs/03_tech_plan/harness_package_distribution.md"
       - ".docs/INDEX.md"
       - ".docs/rfc/RFC_009_namespace_managed_layout_and_skills.md"
       - ".docs/01_product/overview.md"
+      - ".docs/02_architecture/overview.md"
       - ".docs/03_tech_plan/overview.md"
       - ".docs/rfc/overview.md"
       - ".docs/04_implementation/npm_package/**"
