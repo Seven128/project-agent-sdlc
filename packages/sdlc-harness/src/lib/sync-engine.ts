@@ -9,10 +9,13 @@ import {
   writeTextIfChanged
 } from "./fs.js";
 import {
+  AGENTS_BLOCK_MARKERS,
   MAKEFILE_BLOCK_END,
+  MAKEFILE_BLOCK_MARKERS,
   MAKEFILE_BLOCK_START,
   MANAGED_BLOCK_END,
-  MANAGED_BLOCK_START
+  MANAGED_BLOCK_START,
+  type ManagedBlockMarkers
 } from "./managed-file.js";
 import { packageAssetPath } from "./paths.js";
 import type { ManagedFile } from "./types.js";
@@ -96,8 +99,7 @@ async function syncAgentsBlock(destination: string, root: string, report: SyncRe
   const next = mergeManagedBlock({
     existing,
     block,
-    start: MANAGED_BLOCK_START,
-    end: MANAGED_BLOCK_END,
+    markers: AGENTS_BLOCK_MARKERS,
     pathLabel: "AGENTS.md",
     insert: "append",
     report
@@ -133,8 +135,7 @@ async function syncMakefileInclude(destination: string, root: string, report: Sy
   const next = mergeManagedBlock({
     existing,
     block,
-    start: MAKEFILE_BLOCK_START,
-    end: MAKEFILE_BLOCK_END,
+    markers: MAKEFILE_BLOCK_MARKERS,
     pathLabel: "Makefile",
     insert: "prepend",
     report
@@ -153,48 +154,36 @@ function shouldResetMakeDefaultGoal(existing: string): boolean {
   if (!existing.trim()) {
     return false;
   }
-  const startIndex = existing.indexOf(MAKEFILE_BLOCK_START);
-  const endIndex = existing.indexOf(MAKEFILE_BLOCK_END);
-  if (startIndex < 0 && endIndex < 0) {
+  const block = findManagedBlock(existing, MAKEFILE_BLOCK_MARKERS);
+  if (block.status === "missing") {
     return true;
   }
-  if (startIndex < 0 || endIndex < startIndex) {
+  if (block.status === "invalid") {
     return false;
   }
-  const before = existing.slice(0, startIndex);
-  const after = existing.slice(endIndex + MAKEFILE_BLOCK_END.length);
+  const before = existing.slice(0, block.startIndex);
+  const after = existing.slice(block.endIndex + block.markers.end.length);
   return !before.trim() && Boolean(after.trim());
 }
 
 function mergeManagedBlock(options: {
   existing: string;
   block: string;
-  start: string;
-  end: string;
+  markers: ManagedBlockMarkers[];
   pathLabel: string;
   insert: "append" | "prepend";
   report: SyncReport;
 }): string | undefined {
-  const { existing, block, start, end, pathLabel, insert, report } = options;
-  const startIndex = existing.indexOf(start);
-  const endIndex = existing.indexOf(end);
-  const hasStart = startIndex >= 0;
-  const hasEnd = endIndex >= 0;
+  const { existing, block, markers, pathLabel, insert, report } = options;
+  const found = findManagedBlock(existing, markers);
 
-  if (hasStart !== hasEnd || (hasStart && endIndex < startIndex)) {
-    report.blocked.push(`${pathLabel}: incomplete managed block markers`);
+  if (found.status === "invalid") {
+    report.blocked.push(`${pathLabel}: ${found.reason}`);
     return undefined;
   }
-  if (
-    hasStart &&
-    (existing.indexOf(start, startIndex + start.length) >= 0 || existing.indexOf(end, endIndex + end.length) >= 0)
-  ) {
-    report.blocked.push(`${pathLabel}: duplicate managed block markers`);
-    return undefined;
-  }
-  if (hasStart) {
-    const before = existing.slice(0, startIndex);
-    const after = existing.slice(endIndex + end.length);
+  if (found.status === "found") {
+    const before = existing.slice(0, found.startIndex);
+    const after = existing.slice(found.endIndex + found.markers.end.length);
     return `${before}${block}${after}`;
   }
   if (!existing.trim()) {
@@ -204,6 +193,41 @@ function mergeManagedBlock(options: {
     return `${block}\n\n${existing}`;
   }
   return `${existing.trimEnd()}\n\n${block}\n`;
+}
+
+type ManagedBlockSearchResult =
+  | { status: "found"; markers: ManagedBlockMarkers; startIndex: number; endIndex: number }
+  | { status: "missing" }
+  | { status: "invalid"; reason: string };
+
+function findManagedBlock(existing: string, markersList: ManagedBlockMarkers[]): ManagedBlockSearchResult {
+  const matches: Array<{ markers: ManagedBlockMarkers; startIndex: number; endIndex: number }> = [];
+
+  for (const markers of markersList) {
+    const startIndex = existing.indexOf(markers.start);
+    const endIndex = existing.indexOf(markers.end);
+    const hasStart = startIndex >= 0;
+    const hasEnd = endIndex >= 0;
+
+    if (!hasStart && !hasEnd) {
+      continue;
+    }
+    if (hasStart !== hasEnd || endIndex < startIndex) {
+      return { status: "invalid", reason: "incomplete managed block markers" };
+    }
+    if (
+      existing.indexOf(markers.start, startIndex + markers.start.length) >= 0 ||
+      existing.indexOf(markers.end, endIndex + markers.end.length) >= 0
+    ) {
+      return { status: "invalid", reason: "duplicate managed block markers" };
+    }
+    matches.push({ markers, startIndex, endIndex });
+  }
+
+  if (matches.length > 1) {
+    return { status: "invalid", reason: "conflicting managed block marker namespaces" };
+  }
+  return matches[0] ? { status: "found", ...matches[0] } : { status: "missing" };
 }
 
 async function syncTree(source: string, destination: string, report: SyncReport): Promise<void> {

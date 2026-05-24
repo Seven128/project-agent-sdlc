@@ -14,7 +14,11 @@ try {
   await mkdir(path.join(fixture, ".github/workflows"), { recursive: true });
   await mkdir(path.join(fixture, "tools"), { recursive: true });
   await mkdir(path.join(fixture, "packages/sdlc-harness"), { recursive: true });
-  await writeFile(path.join(fixture, "AGENTS.md"), "# AI SDLC Harness\n", "utf8");
+  await writeFile(
+    path.join(fixture, "AGENTS.md"),
+    "before\n<!-- pjsdlc:sdlc-harness:begin -->\n# AI SDLC Harness\n<!-- pjsdlc:sdlc-harness:end -->\nafter\n",
+    "utf8"
+  );
   await writeFile(path.join(fixture, ".agent/skills/example/SKILL.md"), "# Skill\n", "utf8");
   await writeFile(path.join(fixture, ".agent/managed/templates/EXAMPLE.md"), "# Template\n", "utf8");
   await writeFile(path.join(fixture, ".agent/managed/policies/example.yaml"), "ok: true\n", "utf8");
@@ -55,6 +59,7 @@ try {
 
   const agentsCore = await readFile(path.join(fixture, "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"), "utf8");
   assert.match(agentsCore, /AI SDLC Harness/);
+  assert.doesNotMatch(agentsCore, /before|after/);
 } finally {
   await rm(fixture, { recursive: true, force: true });
 }

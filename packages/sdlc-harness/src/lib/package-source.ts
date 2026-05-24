@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { copyTree, ensureDir, listFiles, pathExists, readText, writeTextIfChanged } from "./fs.js";
-import { MANAGED_BLOCK_END, MANAGED_BLOCK_START } from "./managed-file.js";
+import { AGENTS_BLOCK_MARKERS } from "./managed-file.js";
 import { SOURCE_MAPPINGS_PATH } from "./paths.js";
 import type { SourceMapping, SourceMappingsFile } from "./types.js";
 import { parseYaml } from "./yaml.js";
@@ -104,10 +104,12 @@ async function renderMapping(
   }
   if (mapping.mode === "extract-managed-block") {
     const content = await readText(source);
-    const start = content.indexOf(MANAGED_BLOCK_START);
-    const end = content.indexOf(MANAGED_BLOCK_END);
-    if (start >= 0 && end > start) {
-      return `${content.slice(start + MANAGED_BLOCK_START.length, end).trim()}\n`;
+    for (const markers of AGENTS_BLOCK_MARKERS) {
+      const start = content.indexOf(markers.start);
+      const end = content.indexOf(markers.end);
+      if (start >= 0 && end > start) {
+        return `${content.slice(start + markers.start.length, end).trim()}\n`;
+      }
     }
     return content;
   }

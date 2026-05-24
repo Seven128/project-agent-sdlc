@@ -133,6 +133,22 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 
 除 `.agent/skills/**` 需要保持 Agent hard index 之外，工作流相关默认配置统一放在 `.agent/managed/**`。不要再维护 `.agent/policies/**` 或 `.agent/templates/**` 这类 legacy mirror，避免同一份配置出现多个事实源。
 
+`AGENTS.md` 和根 `Makefile` 这类桥接文件使用 `pjsdlc:sdlc-harness:*` marker 隔离包管理内容和用户内容：
+
+```txt
+<!-- pjsdlc:sdlc-harness:begin -->
+...
+<!-- pjsdlc:sdlc-harness:end -->
+```
+
+```make
+# pjsdlc:sdlc-harness:make:begin
+-include .agent/managed/make/sdlc-harness.mk
+# pjsdlc:sdlc-harness:make:end
+```
+
+旧的 `sdlc-harness:*` marker 只作为 legacy marker 识别；`sync` 会把完整旧 block 原位替换为新的 `pjsdlc:sdlc-harness:*` block。`config.yaml` 不使用文本块隔离，它通过 YAML schema、known fields、migration 和 local override 规则管理。
+
 ## 五、生命周期与阶段契约
 ### 5.1 生命周期状态
 `.agent/state/lifecycle.yaml` 只记录当前项目处于哪个阶段，不记录所有任务细节。核心字段：
@@ -784,6 +800,7 @@ Harness npm 包的设计必须像普通 npm 依赖一样，与用户仓库内容
 因此 `sync` 和 `upgrade` 的核心原则是：
 - 包内 canonical source 只是默认输入，不是用户仓库的最终事实源。
 - `AGENTS.md`、`Makefile` 等高冲突入口只能通过 managed block、include block 或 create-if-missing 方式接入，不能整文件覆盖。
+- 托管文本块 marker 使用 `pjsdlc:sdlc-harness:*` namespace；旧 `sdlc-harness:*` marker 仅用于兼容迁移，避免已接入项目升级时重复插入 block。
 - 除 `<harnessRoot>/skills/**` 作为 Agent hard index 保留在固定位置外，模板、策略、默认 Makefile targets 等工作流配置都必须收敛到 `<harnessRoot>/managed/**`，不再生成 `<harnessRoot>/templates/**`、`<harnessRoot>/policies/**` 等 legacy mirror。
 - `<harnessRoot>/state/**`、`.docs/**`、`src/**`、`tests/**` 和用户业务配置属于项目实例，包升级不得覆盖其具体内容。
 - 用户自定义配置必须通过 local overrides、`.local.yaml`、受控 merge 或显式 migration 合并；不能要求用户直接修改包内文件，也不能在升级时丢弃本地差异。
