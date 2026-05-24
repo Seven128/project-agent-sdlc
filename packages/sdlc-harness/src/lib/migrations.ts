@@ -41,6 +41,7 @@ export async function runMigrations(projectRoot: string): Promise<MigrationRepor
   await migrateLifecycle(projectRoot, root, report);
   await migratePlan(projectRoot, root, report, "plan.yaml", "tasks.yaml");
   await migratePlan(projectRoot, root, report, "plan.draft.yaml", "tasks.draft.yaml");
+  await removeLegacyGateResults(projectRoot, root, report);
   await removeLegacyCheckpoints(projectRoot, root, report);
   await ensureMemory(projectRoot, root, report);
   return report;
@@ -325,6 +326,17 @@ async function removeLegacyCheckpoints(projectRoot: string, root: string, report
   }
   await rm(checkpointPath, { recursive: true, force: true });
   report.changed.push(relativeCheckpointPath);
+}
+
+async function removeLegacyGateResults(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
+  const relativeGateResultsPath = harnessPath(root, "state", "gate_results.log");
+  const gateResultsPath = path.join(projectRoot, relativeGateResultsPath);
+  if (!(await pathExists(gateResultsPath))) {
+    report.skipped.push(relativeGateResultsPath);
+    return;
+  }
+  await rm(gateResultsPath, { force: true });
+  report.changed.push(relativeGateResultsPath);
 }
 
 async function ensureMemory(projectRoot: string, root: string, report: MigrationReport): Promise<void> {

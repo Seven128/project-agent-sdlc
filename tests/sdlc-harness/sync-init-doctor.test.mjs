@@ -25,6 +25,7 @@ try {
   assert.match(defaultConfig, /agent-project-sdlc/);
   const defaultLifecycle = await readFile(path.join(defaultRoot, ".agent/state/lifecycle.yaml"), "utf8");
   assert.doesNotMatch(defaultLifecycle, /history:/);
+  await assert.rejects(stat(path.join(defaultRoot, ".agent/state/gate_results.log")));
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");
   assert.match(defaultAgents, /pjsdlc:sdlc-harness:begin/);
@@ -62,6 +63,7 @@ try {
   await stat(path.join(configuredRoot, ".harness/skills/pjsdlc_manager/SKILL.md"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/policies/phase_contracts.yaml"));
+  await assert.rejects(stat(path.join(configuredRoot, ".harness/state/gate_results.log")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/templates/PLAN_TEMPLATE.yaml")));

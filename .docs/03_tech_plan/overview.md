@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: da0c546f9ad7d564 -->
+<!-- source-hash: 3fbb13ccf1c13c2a -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `da0c546f9ad7d564`
+Source hash: `3fbb13ccf1c13c2a`
 
 ## Source Slices
 
@@ -207,9 +207,9 @@ tasks:
     implementation_doc: ".docs/04_implementation/npm_package/dev_011_plan_yaml_no_checkpoint.md"
 ```
 
-task 完成后，先创建 task implementation commit，保留完整 open task 合同；再将该 task 从 `plan.yaml` 的 `tasks` 列表移除，并创建 task completion ledger commit。历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `.agent/archive/**` 作为常规归档事实源。
+task 完成后，先在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；再将该 task 从 `plan.yaml` 的 `tasks` 列表移除，并创建 task completion ledger commit。历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `.agent/archive/**` 作为常规归档事实源。
 
-默认不追溯 done task 的执行流水。task implementation commit 在 task 移除前保留完整 open task contract，只作为 cold archive；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。普通 bugfix 和后续开发应直接使用当前代码、测试、PRD、技术方案和 implementation doc。
+默认不追溯 done task 的执行流水。历史 task 查询主要面向“做了什么、为什么做、产物在哪里、验证了什么”，默认读取 implementation doc、RFC、PRD、tech plan 和代码。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。
 
 ### 5.5 Gate evidence
 
@@ -217,7 +217,7 @@ RFC_014 后，Harness 不再维护 `<harnessRoot>/state/gate_results.log`。gate
 
 `tools/run_current_gate.py` 只负责运行当前 phase gate 并输出结果，不写 state。completion ledger commit 只移除当前 task，不再清理 gate log。
 
-历史 task 查询同样不依赖完整 open task execution contract。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；需要理解过去产物时，读取 implementation doc、RFC、PRD、tech plan 和代码。
+历史 task 查询同样不依赖 open task execution contract。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；需要理解过去产物时，读取 implementation doc、RFC、PRD、tech plan 和代码。
 
 ### 5.6 Active state 不保存执行历史
 
@@ -263,6 +263,6 @@ RFC_014 后，Harness 不再维护 `<harnessRoot>/state/gate_results.log`。gate
 - RFC_003 调整后，`sdlc-harness init` 会询问 Harness root；默认 `.agent`，当前仓库也使用默认 `.agent`。
 - RFC_004 调整后，删除 `.agent/archive/**` 常规归档，并把历史动作记录交给 git。
 - RFC_005 调整后，checkpoint 文件被删除；`allowed_paths`、`required_gates` 和验收标准直接保存在 open task 的 `plan.yaml` 条目中。
-- RFC_011 调整后，done/cancelled task 不再长期留在 `plan.yaml`，`gate_results.log` 也不再无限累积历史记录。
+- RFC_011 调整后，done/cancelled task 不再长期留在 `plan.yaml`。
 - RFC_012 调整后，`lifecycle.yaml.history` 被移除，阶段流转历史不再写入 active state。
 - RFC_014 调整后，`gate_results.log` 被删除，gate evidence 写入 task notes、implementation doc 或外部 CI/release 记录。

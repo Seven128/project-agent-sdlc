@@ -51,7 +51,6 @@ phases:
       - "src/"
       - "tests/"
       - ".docs/04_implementation/"
-      - "<harnessRoot>/state/gate_results.log"
     gates:
       - "make validate-dev"
     next: "REVIEWING"

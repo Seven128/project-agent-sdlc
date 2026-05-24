@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import argparse
-import datetime as _dt
 import fnmatch
-import json
 import re
 import subprocess
 import sys
@@ -377,18 +375,6 @@ def matches_any(path: str, patterns: list[str]) -> bool:
         if fnmatch.fnmatch(normalized, clean) or fnmatch.fnmatch(normalized, clean.rstrip("/") + "/**"):
             return True
     return False
-
-
-def now_utc() -> str:
-    return _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def append_gate_result(phase: str, gate: str, result: str, note: str = "") -> None:
-    line = f"{now_utc()} phase={phase} gate={json.dumps(gate)} result={result}"
-    if note:
-        line += f" note={json.dumps(note, ensure_ascii=False)}"
-    with repo_path(".agent/state/gate_results.log").open("a", encoding="utf-8") as handle:
-        handle.write(line + "\n")
 
 
 def run_main(main) -> None:

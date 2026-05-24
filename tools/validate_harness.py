@@ -10,7 +10,6 @@ def main() -> None:
         ".agent/state/lifecycle.yaml",
         ".agent/state/plan.yaml",
         ".agent/state/plan.draft.yaml",
-        ".agent/state/gate_results.log",
         ".agent/state/memory.md",
         ".agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml",
         ".agent/pjsdlc_managed/policies/phase_contracts.yaml",

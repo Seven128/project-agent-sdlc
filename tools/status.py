@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from harness_utils import load_lifecycle, load_plan, repo_path, run_main
+from harness_utils import load_lifecycle, load_plan, run_main
 
 
 def main() -> None:
@@ -23,13 +23,6 @@ def main() -> None:
         print("Current task: none")
     if lifecycle.get("blocked_reason"):
         print(f"Blocked reason: {lifecycle.get('blocked_reason')}")
-
-    gate_log = repo_path(".agent/state/gate_results.log")
-    if gate_log.exists():
-        recent = [line for line in gate_log.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")]
-        if recent:
-            print("Recent gate result:")
-            print(recent[-1])
 
 
 if __name__ == "__main__":

@@ -42,11 +42,11 @@ Skill、执行出口 gate，并记录 blocker。
 
 每个 open task 都必须在 `plan.yaml` 中包含 `docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`；done/cancelled task 不长期留在当前 `plan.yaml`。完成后的产物事实以 implementation doc 为准，动作历史以 git/PR/CI/release 系统作为 cold archive，`next_task_sequence` 负责继续分配后续 task id。
 
-`lifecycle.yaml`、`plan.yaml` 和 `gate_results.log` 只用于当前可执行状态。默认不要读取过去 phase/task/gate 执行流水；只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
+`lifecycle.yaml` 和 `plan.yaml` 只用于当前可执行状态。默认不要读取过去 phase/task/gate 执行流水；只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
 
 ## 完成检查
 
 - [ ] 已确认 `current_phase`、`active_role`、`active_skill` 和下一阶段。
-- [ ] 当前 task/phase 的短期 gate 结果已记录到 `<harnessRoot>/state/gate_results.log`，长期 gate 事实已进入 implementation doc、git、CI 或 release 记录。
+- [ ] 当前 task/phase 的 gate 结果已进入 task notes、implementation doc、CI 或 release 记录。
 - [ ] 如当前 task 是 open task，`plan.yaml` 中的执行合同完整。
 - [ ] 生命周期只通过 `tools/transition.py` 发生变化。

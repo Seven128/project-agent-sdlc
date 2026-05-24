@@ -60,6 +60,7 @@ tasks:
     "utf8"
   );
   await writeFile(path.join(root, ".harness/state/tasks.draft.yaml"), "tasks: []\n", "utf8");
+  await writeFile(path.join(root, ".harness/state/gate_results.log"), "legacy gate evidence\n", "utf8");
   await writeFile(
     path.join(root, ".harness/state/lifecycle.yaml"),
     `current_phase: "REQUIREMENT_GATHERING"
@@ -85,6 +86,7 @@ history:
   assert.match(plan, /next_task_sequence: 3/);
   assert.doesNotMatch(plan, /DEV-001/);
   assert.doesNotMatch(plan, /gate_result/);
+  await assert.rejects(readFile(path.join(root, ".harness/state/gate_results.log"), "utf8"));
   const draft = await readFile(path.join(root, ".harness/state/plan.draft.yaml"), "utf8");
   assert.match(draft, /current_phase/);
   assert.match(draft, /current_task_id/);

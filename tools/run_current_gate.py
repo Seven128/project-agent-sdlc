@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 
-from harness_utils import append_gate_result, load_lifecycle, load_phase_contracts, require, run_main, ROOT
+from harness_utils import load_lifecycle, load_phase_contracts, require, run_main, ROOT
 
 
 def main() -> None:
@@ -18,7 +18,7 @@ def main() -> None:
         print(f"Running {gate}")
         proc = subprocess.run(gate, cwd=ROOT, shell=True)
         result = "PASS" if proc.returncode == 0 else "FAIL"
-        append_gate_result(phase_name, gate, result)
+        print(f"{gate}: {result}")
         require(proc.returncode == 0, f"Gate failed for {phase_name}: {gate}")
 
 

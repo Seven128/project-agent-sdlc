@@ -56,5 +56,5 @@ tasks:
       - "RFC Skill requires explicit impact analysis before patching."
       - "Package assets stay in sync."
     working_notes:
-      - "Implementation commit must keep this DEV-028 open task contract before final removal."
+      - "Implementation commit must happen before removing this DEV-028 task from plan."
     implementation_doc: ".docs/04_implementation/npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md"

@@ -45,9 +45,9 @@
 | PRD-NPM-015 | 支持通过 JSON 配置 `harnessFolderName` 指定 Harness 根目录，默认值为 `.agent` | P0 | 优先读取 `package.json` 的 `sdlcHarness.harnessFolderName`，也支持 `sdlc-harness.config.json`；兼容别名 `harnessFloderName` |
 | PRD-NPM-016 | `sdlc-harness init` 交互式询问 Harness folder name，并写入 `package.json` | P0 | 提示默认值 `.agent`；直接回车采用默认；非交互环境不阻塞并使用默认 |
 | PRD-NPM-017 | 删除 archive 并采用 `plan.yaml` 单文件短期执行计划模型 | P0 | `plan.yaml` 取代 `tasks.yaml`；open task 直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注；task 完成并写入长期历史后从 `plan.yaml` 移除；不再维护 checkpoint 文件或 `.agent/archive/**` 常规归档 |
-| PRD-NPM-018 | 已完成 task 的执行合同只作为显式 forensic fallback | P2 | task implementation commit 在 task 移除前保留完整 open task contract，但 Agent 默认不读取过去 task 执行流水；只有用户明确要求 forensic/audit/regression 追溯时，才临时使用 git、PR、CI 或 release 记录 |
-| PRD-NPM-019 | `gate_results.log` 只作为当前 task / 当前阶段短期 gate scratchpad | P1 | task 或阶段完成后应把最终 gate 事实沉淀到 implementation doc、git commit、CI logs 或 release 记录中；`gate_results.log` 不无限累积历史 |
-| PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml`、`plan.yaml`、`gate_results.log` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
+| PRD-NPM-018 | 已完成 task 的历史查询面向产物结果和变更意图 | P2 | Agent 默认不读取过去 task 执行流水；历史 task 查询以 implementation doc、RFC、PRD、tech plan 和代码为主，`allowed_paths`、`required_gates` 和临时 `working_notes` 不作为历史查询 API |
+| PRD-NPM-019 | Gate evidence 写入 task notes 或 implementation doc | P1 | 不维护独立 gate scratchpad；当前 task 的临时 gate 证据可写入 `working_notes`，完成后的最终 gate 事实写入 implementation doc `Verification`、CI logs 或 release 记录 |
+| PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml` 和 `plan.yaml` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
 | PRD-NPM-021 | 移除独立 gate results state | P0 | 不再维护 `<harnessRoot>/state/gate_results.log`；当前 task gate 证据写入 task notes 或 implementation doc `Verification`，长期记录由 implementation doc、CI logs 或 release 系统承担 |
 | PRD-NPM-022 | RFC 阶段必须显式考虑影响面 | P0 | RFC 进入补丁或 DEV task 前必须列出 docs、state、skills、policies、templates、tools、package assets、tests、sync/upgrade/migration 和 generated artifacts 影响 |
 
@@ -70,8 +70,8 @@
 - [ ] `plan.yaml` 和 `plan.draft.yaml` 取代 `tasks.yaml` 和 `tasks.draft.yaml`。
 - [ ] open task 直接在 `plan.yaml` 中声明 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注。
 - [ ] task 完成后从 `plan.yaml` 移除，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。
-- [ ] Agent 默认不读取 done task 的历史执行合同；显式 forensic/audit/regression 场景可临时通过 git、PR、CI 或 release 记录追溯。
-- [ ] `gate_results.log` 不长期保存全部历史 gate；完成后的长期 gate 事实以 implementation doc、git commit、CI logs 或 release 记录为准。
+- [ ] Agent 默认不读取 done task 的历史执行流水；显式 forensic/audit/regression 场景可临时通过 git、PR、CI 或 release 记录追溯。
+- [ ] Harness 不维护独立 gate results state；完成后的长期 gate 事实以 implementation doc、CI logs 或 release 记录为准。
 - [ ] `lifecycle.yaml` 不保存 phase transition history；Agent 默认不读取过去执行流水。
 - [ ] 新项目不生成 `gate_results.log`，gate 证据进入 task notes 或 implementation doc。
 - [ ] RFC 产物包含明确影响面清单，并据此创建后续 task。
