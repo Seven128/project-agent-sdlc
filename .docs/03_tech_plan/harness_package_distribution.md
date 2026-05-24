@@ -92,7 +92,7 @@ package.json or sdlc-harness.config.json
 
 ```yaml
 core:
-  package: "@ai-sdlc/sdlc-harness"
+  package: "agent-project-sdlc"
   version: "0.1.0"
   schema_version: "1"
 
@@ -125,7 +125,7 @@ never_overwrite:
 
 ```txt
 <!-- sdlc-harness-managed
-source: @ai-sdlc/sdlc-harness
+source: agent-project-sdlc
 version: 0.1.0
 kind: skill
 name: pm_prd

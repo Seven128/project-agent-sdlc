@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: efb838793626a55f -->
+<!-- source-hash: 98a41ab2889f2443 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `efb838793626a55f`
+Source hash: `98a41ab2889f2443`
 
 ## Source Slices
 
@@ -27,7 +27,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 
 ## 2. 目标
 
-- 提供一个 npm 包 `@ai-sdlc/sdlc-harness`，作为 Harness 通用能力的 canonical source。
+- 提供一个 npm 包 `agent-project-sdlc`，作为 Harness 通用能力的 canonical source。
 - 提供 CLI 命令 `sdlc-harness`，支持新项目初始化、已有项目接入、同步、升级和诊断。
 - 通过 `sdlc-harness sync` 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 `<harnessRoot>`。未配置时默认 `<harnessRoot>` 为 `.agent`；用户也可通过 init 交互输入或 `package.json` 显式配置其它目录。
 - 通过 `sdlc-harness upgrade` 自动执行 schema migration 和 `sync`，降低已接入项目升级成本。
@@ -47,7 +47,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 
 | ID | 需求（Requirement） | 优先级（Priority） | 备注（Notes） |
 |---|---|---|---|
-| PRD-NPM-001 | npm 包名使用 `@ai-sdlc/sdlc-harness`，CLI binary 使用 `sdlc-harness` | P0 | 避免使用过泛的 `harness` 命令名 |
+| PRD-NPM-001 | npm 包名使用 `agent-project-sdlc`，CLI binary 使用 `sdlc-harness` | P0 | 避免使用过泛的 `harness` 命令名；包名发布前改为 unscoped package |
 | PRD-NPM-002 | 提供 `init` 命令生成新项目最小 Harness 骨架 | P0 | 包括 agent-readable files 和项目状态初始文件 |
 | PRD-NPM-003 | 提供 `init --adopt` 命令支持已有项目中途接入 | P0 | 不覆盖业务代码，优先诊断和最小接入 |
 | PRD-NPM-004 | 提供 `sync` 命令，将包内 canonical source 同步到工作区固定路径 | P0 | 重点覆盖 `AGENTS.md` 管理区块、`<harnessRoot>/skills/**`、`<harnessRoot>/managed/templates/**`、`<harnessRoot>/managed/policies/**`、`<harnessRoot>/managed/make/sdlc-harness.mk` |
@@ -67,7 +67,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 
 ## 5. Acceptance Criteria
 
-- [ ] 新仓库执行 `npm install -D @ai-sdlc/sdlc-harness && npx sdlc-harness init` 后，可以得到可运行的最小 Harness 骨架。
+- [ ] 新仓库执行 `npm install -D agent-project-sdlc && npx sdlc-harness init` 后，可以得到可运行的最小 Harness 骨架。
 - [ ] 已有仓库执行 `npx sdlc-harness init --adopt` 后，不修改 `src/**`、`tests/**`、已有业务文档和已有项目配置，除非用户显式确认。
 - [ ] 执行 `npx sdlc-harness sync` 后，`<harnessRoot>/skills/**/SKILL.md` 作为 canonical source 存在于工作区，Agent 可按本地固定目录读取。
 - [ ] 执行 `npx sdlc-harness upgrade` 后，自动完成 `sync`，不要求用户再手动运行 `npx sdlc-harness sync`。

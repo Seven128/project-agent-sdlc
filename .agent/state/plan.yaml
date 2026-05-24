@@ -1,5 +1,5 @@
 current_phase: "SPRINTING"
-current_task_id: ""
+current_task_id: "DEV-020"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -133,3 +133,42 @@ tasks:
     summary: "将开发阶段提交顺序调整为先提交完整 open task 合同，再压缩 plan task。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_019_commit_before_task_compression.md"
     gate_result: "PASS"
+
+  - id: "DEV-020"
+    title: "发布前重命名 npm package"
+    status: "in_progress"
+    summary: "将 npm package name 从 `@ai-sdlc/sdlc-harness` 改为 `agent-project-sdlc`，CLI binary 保持 `sdlc-harness`。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_006_rename_npm_package.md"
+    allowed_paths:
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/harness.yml"
+      - "README.md"
+      - "packages/sdlc-harness/**"
+      - "tests/sdlc-harness/**"
+      - ".docs/04_implementation/npm_package/**"
+      - ".docs/06_review/**"
+      - ".docs/07_test/**"
+      - ".docs/08_release/**"
+    required_gates:
+      - "npm test"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+      - "npm pack --dry-run --workspace agent-project-sdlc"
+      - "make validate-current"
+    acceptance_criteria:
+      - "`packages/sdlc-harness/package.json#name` is `agent-project-sdlc`."
+      - "Root scripts, CI and lockfile use the new workspace package name."
+      - "Generated Harness config uses `core.package: agent-project-sdlc`."
+      - "README, test plan and release docs describe the new install and publish commands."
+      - "CLI binary remains `sdlc-harness`."
+    working_notes:
+      - "Package name change is release-blocking before npm auth/publish."
+    implementation_doc: ".docs/04_implementation/npm_package/dev_020_rename_npm_package.md"
+    gate_result: ""
