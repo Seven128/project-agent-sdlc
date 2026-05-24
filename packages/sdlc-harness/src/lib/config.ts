@@ -7,7 +7,7 @@ import { parseYaml, stringifyYaml } from "./yaml.js";
 export function defaultConfig(root: string): HarnessConfig {
   return {
     core: {
-      package: "@ai-sdlc/sdlc-harness",
+      package: "agent-project-sdlc",
       version: "0.1.0",
       schema_version: "1"
     },

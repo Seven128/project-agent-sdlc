@@ -2,7 +2,7 @@
 
 ## 1. 测试范围
 
-- Release candidate: `@ai-sdlc/sdlc-harness@0.1.0`
+- Release candidate: `agent-project-sdlc@0.1.0`
 - Commit range: `8f7f8c8..c7fcd72`
 - Review input: `.docs/06_review/REVIEW_REPORT.md`
 - 覆盖目标：npm package scaffold、sync/init/doctor、upgrade/migration、source sync、validate-* CLI、managed file merge、Markdown overview、角色提示词、task commit workflow。
@@ -14,7 +14,7 @@
 | npm package runtime 可构建并通过单元/集成测试 | Full package regression | `npm test` | PASS：5 个 test files 全部通过。 |
 | package assets 与仓库事实源无漂移 | Source drift check | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS：`package source OK`。 |
 | Harness 结构、prompt language 和 overview 派生视图一致 | Harness validation | `make validate-harness` | PASS：scaffold、prompt language、overview check 全部通过。 |
-| npm tarball 内容可发布 | Pack dry run | `npm pack --dry-run --workspace @ai-sdlc/sdlc-harness` | PASS：81 files，package size 34.7 kB，unpacked size 111.4 kB。 |
+| npm tarball 内容可发布 | Pack dry run | `npm pack --dry-run --workspace agent-project-sdlc` | PASS：81 files，package size 34.7 kB，unpacked size 111.4 kB。 |
 | 阶段 gate 可执行 | TESTING gate placeholder | `make test-all` | PASS：当前 Makefile 仍为占位输出，需要后续替换为项目级 regression suite。 |
 
 ## 3. Regression（回归记录）

@@ -22,7 +22,7 @@ try {
   assert.ok(initReport.some((line) => line.includes("created .agent/config.yaml")));
 
   const defaultConfig = await readFile(path.join(defaultRoot, ".agent/config.yaml"), "utf8");
-  assert.match(defaultConfig, /@ai-sdlc\/sdlc-harness/);
+  assert.match(defaultConfig, /agent-project-sdlc/);
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");
   assert.match(defaultAgents, /sdlc-harness:begin/);

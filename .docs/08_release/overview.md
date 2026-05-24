@@ -1,11 +1,11 @@
 # .docs/08_release overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 08abf4d1774beb20 -->
+<!-- source-hash: 713c2fc55eb3f180 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `08abf4d1774beb20`
+Source hash: `713c2fc55eb3f180`
 
 ## Source Slices
 
@@ -21,7 +21,7 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 
 ## 1. Release Summary（发布摘要）
 
-- Version: `@ai-sdlc/sdlc-harness@0.1.0`
+- Version: `agent-project-sdlc@0.1.0`
 - Milestone: `MVP`
 - Date: `2026-05-24`
 - Owner: `release_manager`
@@ -42,9 +42,9 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 
 | 产物（Artifact） | 位置（Location） | Checksum/Version |
 |---|---|---|
-| npm package | `@ai-sdlc/sdlc-harness` | `0.1.0` |
-| dry-run tarball | `npm pack --dry-run --workspace @ai-sdlc/sdlc-harness` | `shasum da54a3abfd5e91e26010c95f3edfc9e491aeab82` |
-| dry-run tarball | same | `integrity sha512-hT/CxzKenHG/T[...]YTqN4jZr9fe6A==` |
+| npm package | `agent-project-sdlc` | `0.1.0` |
+| dry-run tarball | `npm pack --dry-run --workspace agent-project-sdlc` | `shasum 906e745f5dd9a6fdc14890ea64199694e7095a77` |
+| dry-run tarball | same | `integrity sha512-38XCPG1qWFSP0[...]D7Jdf2vhrDdWQ==` |
 | package content | dry-run output | 81 files, 34.7 kB package size, 111.4 kB unpacked size |
 
 ## 4. Smoke Test Result（冒烟测试结果）
@@ -54,13 +54,13 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
   - `npm test`: PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。
   - `node packages/sdlc-harness/dist/cli.js package check-source`: PASS，`package source OK`。
   - `make validate-harness`: PASS。
-  - `npm pack --dry-run --workspace @ai-sdlc/sdlc-harness`: PASS。
+  - `npm pack --dry-run --workspace agent-project-sdlc`: PASS。
   - Local tarball installed into a temporary consumer project: PASS。
   - `npx sdlc-harness help`: PASS，输出 CLI command list。
   - `npx sdlc-harness init --harness-folder .agent`: PASS，生成 `.agent`、`.docs/INDEX.md` 并完成 sync。
-  - `npx sdlc-harness doctor`: PASS，输出 `doctor complete`。
+  - `npx sdlc-harness doctor`: PASS，输出 `core package: agent-project-sdlc@0.1.0` 和 `doctor complete`。
   - `npm whoami`: BLOCKED，返回 `ENEEDAUTH`。
-  - `npm view @ai-sdlc/sdlc-harness version --json`: 当前 registry 返回 `E404`，说明包名尚未公开存在，或当前未认证用户无访问权限。
+  - `npm view agent-project-sdlc version --json`: 当前 registry 返回 `E404`，说明包名尚未公开存在，或当前未认证用户无访问权限。
   - `npm login --auth-type=web`: BLOCKED，web login 未完成。
 
 ## 5. Deployment Checklist（部署检查清单）
@@ -71,9 +71,9 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 - [x] Package source drift check passed.
 - [x] Pack dry run and local installed-consumer smoke passed.
 - [ ] npm auth available on this machine via `npm whoami`（当前 `ENEEDAUTH`）。
-- [ ] Scope `@ai-sdlc` publish permission confirmed.
-- [ ] Publish scoped public package with `npm publish --workspace @ai-sdlc/sdlc-harness --access public`.
-- [ ] Verify registry page or `npm view @ai-sdlc/sdlc-harness version --json`.
+- [ ] npm package name `agent-project-sdlc` availability and publish permission confirmed.
+- [ ] Publish package with `npm publish --workspace agent-project-sdlc`.
+- [ ] Verify registry page or `npm view agent-project-sdlc version --json`.
 - [ ] Create git tag after publish success.
 
 ## 6. Rollback Plan（回滚方案）

@@ -18,7 +18,7 @@ try {
   await writeFile(
     path.join(root, ".harness/config.yaml"),
     `core:
-  package: "@ai-sdlc/sdlc-harness"
+  package: "agent-project-sdlc"
   version: "0.1.0"
   schema_version: "1"
 managed_files:

@@ -1,11 +1,11 @@
 # .docs/06_review overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 9ded6d5334bdeb59 -->
+<!-- source-hash: a380f9096804f651 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `9ded6d5334bdeb59`
+Source hash: `a380f9096804f651`
 
 ## Source Slices
 
@@ -48,7 +48,7 @@ Source: [REVIEW_REPORT.md](REVIEW_REPORT.md)
 
 ## 5. Test Gaps（测试缺口）
 
-- 需要在 TESTING 阶段重新运行 `npm test`、`package check-source`、`make validate-harness` 和 `npm pack --dry-run --workspace @ai-sdlc/sdlc-harness`。
+- 需要在 TESTING 阶段重新运行 `npm test`、`package check-source`、`make validate-harness` 和 `npm pack --dry-run --workspace agent-project-sdlc`。
 - 需要在 RELEASING 阶段完成 installed-consumer smoke：从 pack tarball 或 published package 安装后执行 `sdlc-harness --help`、`init`、`doctor` 或等价 CLI smoke。
 - npm registry 权限、scope ownership、2FA/token policy 只能通过实际 publish 前的 npm auth 检查确认。
 

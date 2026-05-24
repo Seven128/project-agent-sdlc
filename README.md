@@ -583,7 +583,7 @@ Agent 仍然以 vibe 方式完成单阶段任务；Harness 负责让整个项目
    - 通过 `.agent/state/**` 记录当前自举项目的运行状态。
 
 2. 开发并迭代 npm 包分发能力：
-   - 将工作流配置和产物模板打包为 `@ai-sdlc/sdlc-harness`。
+   - 将工作流配置和产物模板打包为 `agent-project-sdlc`。
    - 让其它项目可以通过 `sdlc-harness init`、`sync`、`upgrade` 低成本接入和持续升级。
    - 通过 `sdlc-harness package sync-source` 和 `sdlc-harness package check-source` 保证本仓库工作流源内容变化后，包内 canonical source 同步更新，不发生漂移。
 
@@ -671,7 +671,7 @@ Authoring overlay 的默认规则：
 当前仓库可以作为参考实现和模板仓库，但长期产品形态不应依赖每个业务项目直接 fork 整套配置。更稳的方式是把通用 Harness 能力拆成可版本化的 npm 包，并把业务项目中的工作流文件视为由包同步出来的 agent-readable artifact。
 
 ### 18.1 包与命令名称
-npm 包建议命名为 `@ai-sdlc/sdlc-harness`，命令入口统一使用：
+npm 包建议命名为 `agent-project-sdlc`，命令入口统一使用：
 
 ```sh
 sdlc-harness <command>
@@ -735,14 +735,14 @@ state protocol = 包提供 schema / template / validator / migration
 新项目接入：
 
 ```sh
-npm install -D @ai-sdlc/sdlc-harness
+npm install -D agent-project-sdlc
 npx sdlc-harness init
 ```
 
 已有项目中途接入：
 
 ```sh
-npm install -D @ai-sdlc/sdlc-harness
+npm install -D agent-project-sdlc
 npx sdlc-harness init --adopt
 ```
 
@@ -760,7 +760,7 @@ npx sdlc-harness sync
 升级命令：
 
 ```sh
-npm update @ai-sdlc/sdlc-harness
+npm update agent-project-sdlc
 npx sdlc-harness upgrade
 ```
 

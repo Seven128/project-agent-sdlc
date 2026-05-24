@@ -36,9 +36,9 @@ jobs:
       - name: Install package dependencies
         run: npm install
       - name: Test sdlc-harness package
-        run: npm test --workspace @ai-sdlc/sdlc-harness
+        run: npm test --workspace agent-project-sdlc
       - name: Check package canonical source drift
-        run: npm --workspace @ai-sdlc/sdlc-harness exec -- sdlc-harness package check-source
+        run: npm --workspace agent-project-sdlc exec -- sdlc-harness package check-source
       - name: Run harness gate
         run: make "${HARNESS_GATE}"
         env:

@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "npm test --workspace @ai-sdlc/sdlc-harness",
+    "test": "npm test --workspace agent-project-sdlc",
     "sdlc-harness": "node packages/sdlc-harness/dist/cli.js"
   }
 }

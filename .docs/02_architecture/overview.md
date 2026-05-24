@@ -1,11 +1,11 @@
 # .docs/02_architecture overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 44cee3b2e4482346 -->
+<!-- source-hash: 121b2fe08c2c73f7 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `44cee3b2e4482346`
+Source hash: `121b2fe08c2c73f7`
 
 ## Source Slices
 
@@ -31,7 +31,7 @@ AI SDLC Harness npm 包化后有三个明确边界：
 | 边界 | 责任 | 不负责 |
 |---|---|---|
 | Source Authoring Workspace | 当前 `ProjectTemplate` 仓库中维护工作流事实源、参考实现和包源同步输入；`.agent/**` 是工作流配置 canonical root | 不保存业务项目状态 |
-| npm Package Canonical Source | 发布 `@ai-sdlc/sdlc-harness`，提供 CLI、默认 Skill、模板、策略、validators、migrations | 不直接作为 Agent 启动时唯一读取源 |
+| npm Package Canonical Source | 发布 `agent-project-sdlc`，提供 CLI、默认 Skill、模板、策略、validators、migrations | 不直接作为 Agent 启动时唯一读取源 |
 | Project Instance Workspace | 保存某个业务项目的 `.docs/**`、`<harnessRoot>/state/**`、local overrides 和业务代码 | 不直接 fork 通用 Harness 逻辑 |
 
 核心原则：包是分发源，项目通过 CLI init 或 JSON 配置选择 Harness 根目录。默认根目录是 `.agent`，可以显式配置为 `.harness`。`<harnessRoot>/skills/**` 是 Skill fact source，`<harnessRoot>/state/**` 是项目状态事实源，`.docs/**` 是项目文档事实源。
@@ -53,7 +53,7 @@ AI SDLC Harness npm 包化后有三个明确边界：
 ### 4.1 项目接入
 
 ```txt
-npm install -D @ai-sdlc/sdlc-harness
+npm install -D agent-project-sdlc
 -> npx sdlc-harness init 或 init --adopt
 -> 写入 <harnessRoot>/config.yaml
 -> sync materialize agent-readable files
@@ -63,7 +63,7 @@ npm install -D @ai-sdlc/sdlc-harness
 ### 4.2 已接入项目升级
 
 ```txt
-npm update @ai-sdlc/sdlc-harness
+npm update agent-project-sdlc
 -> npx sdlc-harness upgrade
 -> 读取 <harnessRoot>/config.yaml
 -> 执行 migrations

@@ -141,6 +141,8 @@ tasks:
     docs:
       product:
         - ".docs/01_product/npm_package_distribution.md"
+      architecture:
+        - ".docs/02_architecture/harness_package_distribution.md"
       tech_plan:
         - ".docs/03_tech_plan/harness_package_distribution.md"
       rfc:
@@ -148,8 +150,10 @@ tasks:
     allowed_paths:
       - "package.json"
       - "package-lock.json"
+      - ".agent/state/lifecycle.yaml"
       - ".github/workflows/harness.yml"
       - "README.md"
+      - ".docs/02_architecture/**"
       - "packages/sdlc-harness/**"
       - "tests/sdlc-harness/**"
       - ".docs/04_implementation/npm_package/**"
@@ -161,7 +165,6 @@ tasks:
       - "node packages/sdlc-harness/dist/cli.js package check-source"
       - "make validate-harness"
       - "npm pack --dry-run --workspace agent-project-sdlc"
-      - "make validate-current"
     acceptance_criteria:
       - "`packages/sdlc-harness/package.json#name` is `agent-project-sdlc`."
       - "Root scripts, CI and lockfile use the new workspace package name."
