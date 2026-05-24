@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 6fb1c028c4662180 -->
+<!-- source-hash: b2da71e7e73e15cc -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `6fb1c028c4662180`
+Source hash: `b2da71e7e73e15cc`
 
 ## Source Slices
 
@@ -29,9 +29,9 @@ Source: [harness_package_distribution.md](harness_package_distribution.md)
 - 当前模块（Current modules）:
   - `AGENTS.md`：Agent 全局协议。
   - `Makefile`：当前验证命令入口。
-  - `<harnessRoot>/skills/**/SKILL.md`：阶段 Skill 的 canonical source。
-  - `<harnessRoot>/managed/templates/**`：阶段产物模板。
-  - `<harnessRoot>/managed/policies/**`：阶段契约、路径策略、gate 和风险矩阵。
+  - `<harnessRoot>/skills/pjsdlc_*/SKILL.md`：阶段 Skill 的 canonical source。
+  - `<harnessRoot>/pjsdlc_managed/templates/**`：阶段产物模板。
+  - `<harnessRoot>/pjsdlc_managed/policies/**`：阶段契约、路径策略、gate 和风险矩阵。
   - `tools/*.py`：当前 validators、transition、overview 生成和状态工具。
   - `.github/workflows/harness.yml`：当前 CI gate 入口。
 - 相关 APIs（Related APIs）:
@@ -83,16 +83,16 @@ packages/sdlc-harness/
 AGENTS.md
 package.json or sdlc-harness.config.json
 <harnessRoot>/config.yaml
-<harnessRoot>/skills/**/SKILL.md
+<harnessRoot>/skills/pjsdlc_*/SKILL.md
 <harnessRoot>/state/**
-<harnessRoot>/managed/templates/**
-<harnessRoot>/managed/policies/**
-<harnessRoot>/managed/make/sdlc-harness.mk
+<harnessRoot>/pjsdlc_managed/templates/**
+<harnessRoot>/pjsdlc_managed/policies/**
+<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk
 <harnessRoot>/overrides/**
 .docs/**
 ```
 
-`<harnessRoot>/skills/**` 是 Agent 与 `active_skill` 的硬索引入口，保持一层 `skills/<skill_name>/SKILL.md`。除 skills 外的 package-managed workflow config 统一放在 `<harnessRoot>/managed/**`，不再维护 `<harnessRoot>/policies/**` 或 `<harnessRoot>/templates/**` mirror。
+`<harnessRoot>/skills/pjsdlc_*/SKILL.md` 是 Agent 与 `active_skill` 的硬索引入口，保持一层 `skills/<skill_name>/SKILL.md`，并通过 `pjsdlc_` 前缀标识包内 workflow Skill。除 skills 外的 package-managed workflow config 统一放在 `<harnessRoot>/pjsdlc_managed/**`，不再维护 `<harnessRoot>/managed/**`、`<harnessRoot>/policies/**` 或 `<harnessRoot>/templates/**` mirror。
 
 ## 4. 接口契约（Interface Contract）
 
@@ -122,18 +122,18 @@ managed_files:
     strategy: "merge-block"
   - path: "<harnessRoot>/skills"
     strategy: "managed"
-  - path: "<harnessRoot>/managed/templates"
+  - path: "<harnessRoot>/pjsdlc_managed/templates"
     strategy: "managed"
-  - path: "<harnessRoot>/managed/policies"
+  - path: "<harnessRoot>/pjsdlc_managed/policies"
     strategy: "merge-with-local"
-  - path: "<harnessRoot>/managed/make/sdlc-harness.mk"
+  - path: "<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk"
     strategy: "managed"
   - path: ".github/workflows/harness.yml"
     strategy: "create-if-missing"
 
 local_overrides:
   - "<harnessRoot>/overrides/**"
-  - "<harnessRoot>/managed/policies/*.local.yaml"
+  - "<harnessRoot>/pjsdlc_managed/policies/*.local.yaml"
 
 never_overwrite:
   - ".docs/**"
@@ -164,10 +164,10 @@ source_mappings:
   - source: ".agent/skills"
     target: "packages/sdlc-harness/assets/skills"
     mode: "copy-tree"
-  - source: ".agent/managed/templates"
+  - source: ".agent/pjsdlc_managed/templates"
     target: "packages/sdlc-harness/assets/templates"
     mode: "copy-tree"
-  - source: ".agent/managed/policies"
+  - source: ".agent/pjsdlc_managed/policies"
     target: "packages/sdlc-harness/assets/policies"
     mode: "copy-tree"
   - source: "Makefile"
@@ -229,8 +229,8 @@ task 完成后，移除 `docs`、`allowed_paths`、`required_gates`、`acceptanc
 | 包源码与当前工作流内容漂移 | P0 | `package sync-source` 更新，`package check-source` 和 CI 强制检查 |
 | 根 `Makefile` 与业务项目冲突 | P0 | 只插入 include，不整体覆盖 |
 | `AGENTS.md` 与项目自定义规则冲突 | P0 | 使用 `pjsdlc:sdlc-harness:*` managed block，marker 外内容不改；旧 `sdlc-harness:*` marker 仅作为 migration 输入 |
-| 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agent`；Skill 保持 `<harnessRoot>/skills/<skill_name>/SKILL.md` 硬索引；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
-| policy/template 事实源重复 | P1 | 工具只读取 `<harnessRoot>/managed/policies/**` 和 `<harnessRoot>/managed/templates/**`，删除 legacy mirror |
+| 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agent`；Skill 保持 `<harnessRoot>/skills/pjsdlc_<skill_name>/SKILL.md` 硬索引；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
+| policy/template 事实源重复 | P1 | 工具只读取 `<harnessRoot>/pjsdlc_managed/policies/**` 和 `<harnessRoot>/pjsdlc_managed/templates/**`，删除 legacy mirror |
 | npm 包 validators 运行环境不稳定 | P1 | validators 运行时使用 TypeScript/Node，不依赖 Python 运行时 |
 | `plan.yaml` 过大导致 Agent 上下文膨胀 | P0 | open task 只保存当前执行合同和必要短备注，done task 立即压缩为简短摘要 |
 | task/release 归档与 git 历史重复 | P1 | 删除 `.agent/archive/**` 常规机制，动作记录以 git commit/tag 为准 |

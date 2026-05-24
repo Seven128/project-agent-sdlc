@@ -1,5 +1,5 @@
 current_phase: "SPRINTING"
-current_task_id: ""
+current_task_id: "DEV-023"
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -154,3 +154,54 @@ tasks:
     summary: "将 AGENTS.md、Makefile 和 managed metadata 的 preferred marker 迁移到 `pjsdlc:sdlc-harness:*`，并让 sync 兼容迁移旧 marker。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_022_pjsdlc_marker_prefix.md"
     gate_result: "PASS"
+
+  - id: "DEV-023"
+    title: "为 managed layout 和 workflow skills 增加 pjsdlc 前缀"
+    status: "in_progress"
+    summary: "将 `.agent/managed/**` 改为 `.agent/pjsdlc_managed/**`，将 workflow Skill 目录和名称改为 `pjsdlc_*`，并保留根 Makefile 桥接入口。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_009_namespace_managed_layout_and_skills.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "Makefile"
+      - ".agent/config.yaml"
+      - ".agent/state/lifecycle.yaml"
+      - ".agent/state/plan.yaml"
+      - ".agent/state/gate_results.log"
+      - ".agent/managed/**"
+      - ".agent/pjsdlc_managed/**"
+      - ".agent/skills/**"
+      - ".github/workflows/harness.yml"
+      - "tools/**"
+      - "packages/sdlc-harness/**"
+      - "tests/sdlc-harness/**"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/INDEX.md"
+      - ".docs/rfc/RFC_009_namespace_managed_layout_and_skills.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/rfc/overview.md"
+      - ".docs/04_implementation/npm_package/**"
+      - ".docs/04_implementation/overview.md"
+    required_gates:
+      - "python3 tools/validate_allowed_paths.py"
+      - "npm test"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "`.agent/pjsdlc_managed/**` replaces tracked `.agent/managed/**`."
+      - "Workflow Skill folders and frontmatter names use `pjsdlc_*`."
+      - "Lifecycle, phase contracts, init state, validators, sync and migrations use the new names."
+      - "Root Makefile remains include-only and points to `.agent/pjsdlc_managed/make/sdlc-harness.mk`."
+      - "Docs explain why root Makefile is a bridge and not removed in this task."
+    working_notes:
+      - "Do not remove root Makefile until all make gate contracts have CLI equivalents and docs no longer require `make validate-*`."
+    implementation_doc: ".docs/04_implementation/npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md"
+    gate_result: ""
