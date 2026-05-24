@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: c9095c3e807a9f68 -->
+<!-- source-hash: 02fc8b39af044564 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `c9095c3e807a9f68`
+Source hash: `02fc8b39af044564`
 
 ## Source Slices
 
@@ -66,6 +66,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 | PRD-NPM-017 | 删除 archive 并采用 `plan.yaml` 单文件短期执行计划模型 | P0 | `plan.yaml` 取代 `tasks.yaml`；open task 直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注；task 完成并写入长期历史后从 `plan.yaml` 移除；不再维护 checkpoint 文件或 `.agent/archive/**` 常规归档 |
 | PRD-NPM-018 | Agent 必须能从 git history 恢复已完成 task 的完整执行合同 | P0 | task implementation commit 在 task 移除前保留完整 open task contract；当需要追溯 done task 的 `allowed_paths`、`required_gates`、`acceptance_criteria` 或 `working_notes` 时，Agent 使用 git history 和 implementation doc，而不是要求当前 `plan.yaml` 长期保留详情 |
 | PRD-NPM-019 | `gate_results.log` 只作为当前 task / 当前阶段短期 gate scratchpad | P1 | task 或阶段完成后应把最终 gate 事实沉淀到 implementation doc、git commit、CI logs 或 release 记录中；`gate_results.log` 不无限累积历史 |
+| PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml`、`plan.yaml`、`gate_results.log` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
 
 ## 5. Acceptance Criteria
 
@@ -88,6 +89,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - [ ] task 完成后从 `plan.yaml` 移除，历史动作记录由 git commit 承载，产物结果由 implementation doc 承载。
 - [ ] Agent 能根据 task id 从 git history 找到 task implementation commit，并查看该 commit 中尚未移除 task 的 `plan.yaml` 版本。
 - [ ] `gate_results.log` 不长期保存全部历史 gate；完成后的长期 gate 事实以 implementation doc、git commit、CI logs 或 release 记录为准。
+- [ ] `lifecycle.yaml` 不保存 phase transition history；Agent 默认不读取过去执行流水。
 - [ ] Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 `validate-checkpoint` gate。
 - [ ] Harness 不再生成或要求 `.agent/archive/**` 作为 task/release 常规归档。
 
@@ -101,6 +103,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - 不把 task/release 历史动作重复归档到 `.agent/archive/**`；这类历史以 git commit、tag 或外部 release 系统为准。
 - 不保留独立 checkpoint 文件；活跃任务现场只存在于 `plan.yaml` 的 open task 条目中。
 - 不把全部历史 gate 结果长期堆在 `.agent/state/gate_results.log` 中。
+- 不把过去 phase/task 执行流水写入 active state，也不要求 Agent 默认读取这些流水。
 
 ## 7. Open Questions
 

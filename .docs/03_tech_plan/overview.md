@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 5ebfd7fd253f1d42 -->
+<!-- source-hash: 62cde432ba52d8dd -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `5ebfd7fd253f1d42`
+Source hash: `62cde432ba52d8dd`
 
 ## Source Slices
 
@@ -230,6 +230,12 @@ completion ledger commit 可以把 `gate_results.log` 重置为短 header：
 
 这样当前工作区保持低噪声，长期历史仍可通过 git、implementation doc、CI logs 或 release notes 查询。
 
+### 5.6 Active state 不保存执行历史
+
+`<harnessRoot>/state/lifecycle.yaml` 只保存当前路由状态，不保存 `history`。阶段流转历史、task 执行历史和 gate 历史都不属于 active state；它们是 cold archive，只在显式追溯、audit 或 regression forensic 场景下通过 git、PR、CI、release 系统和阶段产物读取。
+
+`transition.py` 只更新 `current_phase`、`active_role`、`active_skill`、`suspended_phase` 和 `allowed_next_phases`。`--reason` 保留为命令兼容参数，但不写入 state。package migration 会删除既有 lifecycle `history`，避免老项目升级后继续携带阶段流水。
+
 ## 6. 任务拆分（Task Breakdown）
 
 | Task ID | 标题（Title） | Allowed Paths | Required Gates | Implementation Doc |
@@ -259,6 +265,7 @@ completion ledger commit 可以把 `gate_results.log` 重置为短 header：
 | task/release 归档与 git 历史重复 | P1 | 删除 `.agent/archive/**` 常规机制，动作记录以 git commit/tag 为准 |
 | Agent 误以为 done task 详情丢失 | P1 | 在 AGENTS、Skill 和 README 中声明用 git history 找回 task implementation commit 中的完整 open task 合同 |
 | `gate_results.log` 无限增长 | P1 | gate log 只作为短期 scratchpad，completion 后重置，长期 gate 事实进入 implementation doc、git 或 CI logs |
+| Agent 默认读取过去执行流水导致上下文噪声 | P0 | active state 不保存 `history`，历史执行信息仅在显式 forensic/audit 场景临时查询 |
 
 ## 8. 需要关注的方案偏移
 
@@ -267,3 +274,4 @@ completion ledger commit 可以把 `gate_results.log` 重置为短 header：
 - RFC_004 调整后，删除 `.agent/archive/**` 常规归档，并把历史动作记录交给 git。
 - RFC_005 调整后，checkpoint 文件被删除；`allowed_paths`、`required_gates` 和验收标准直接保存在 open task 的 `plan.yaml` 条目中。
 - RFC_011 调整后，done/cancelled task 不再长期留在 `plan.yaml`，`gate_results.log` 也不再无限累积历史记录。
+- RFC_012 调整后，`lifecycle.yaml.history` 被移除，阶段流转历史不再写入 active state。

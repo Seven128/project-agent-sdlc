@@ -1,4 +1,54 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 26
-tasks: []
+current_task_id: "DEV-026"
+next_task_sequence: 27
+tasks:
+  - id: "DEV-026"
+    title: "移除 active state 中的过去执行历史"
+    status: "in_progress"
+    summary: "移除 `lifecycle.yaml.history`，并将历史 task/phase/gate 信息降级为显式 forensic fallback，默认不读过去执行流水。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_012_remove_execution_history_from_active_state.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - ".agent/state/lifecycle.yaml"
+      - ".agent/state/plan.yaml"
+      - ".agent/state/gate_results.log"
+      - ".agent/skills/pjsdlc_dev_sprint/SKILL.md"
+      - ".agent/skills/pjsdlc_manager/SKILL.md"
+      - ".agent/skills/pjsdlc_rfc_recalibrate/SKILL.md"
+      - "tools/transition.py"
+      - "tools/validate_prompt_language.py"
+      - "packages/sdlc-harness/src/lib/init.ts"
+      - "packages/sdlc-harness/src/lib/migrations.ts"
+      - "packages/sdlc-harness/assets/**"
+      - "tests/sdlc-harness/**"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/INDEX.md"
+      - ".docs/rfc/RFC_012_remove_execution_history_from_active_state.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/rfc/overview.md"
+      - ".docs/04_implementation/npm_package/**"
+      - ".docs/04_implementation/overview.md"
+    required_gates:
+      - "python3 tools/validate_allowed_paths.py"
+      - "npm test"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "`lifecycle.yaml` no longer contains `history`."
+      - "`transition.py` does not append phase history."
+      - "Package init and migration remove/avoid lifecycle `history`."
+      - "Prompt/docs state that past execution information is not default context."
+      - "Historical task contract lookup is downgraded to explicit forensic fallback."
+      - "Package assets stay in sync."
+    working_notes:
+      - "Implementation commit must keep this DEV-026 open task contract before final removal."
+    implementation_doc: ".docs/04_implementation/npm_package/dev_026_remove_execution_history_from_active_state.md"
