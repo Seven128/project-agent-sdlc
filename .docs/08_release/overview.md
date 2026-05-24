@@ -1,11 +1,11 @@
 # .docs/08_release overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 713c2fc55eb3f180 -->
+<!-- source-hash: 8009f6e0f1be3d94 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `713c2fc55eb3f180`
+Source hash: `8009f6e0f1be3d94`
 
 ## Source Slices
 
@@ -26,7 +26,7 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 - Date: `2026-05-24`
 - Owner: `release_manager`
 - Registry: `https://registry.npmjs.org/`
-- Status: `BLOCKED_NPM_AUTH`
+- Status: `RELEASED`
 
 ## 2. Included Changes（包含变更）
 
@@ -45,11 +45,12 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 | npm package | `agent-project-sdlc` | `0.1.0` |
 | dry-run tarball | `npm pack --dry-run --workspace agent-project-sdlc` | `shasum 906e745f5dd9a6fdc14890ea64199694e7095a77` |
 | dry-run tarball | same | `integrity sha512-38XCPG1qWFSP0[...]D7Jdf2vhrDdWQ==` |
+| registry package | `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | `version 0.1.0`, `latest 0.1.0`, `integrity sha512-38XCPG1qWFSP0CwF9QyAFZveXPfgIDmvRqc3wCe6Qd4MoUBkQRZ/vB5fracu2wnxnyb6N439/D7Jdf2vhrDdWQ==` |
 | package content | dry-run output | 81 files, 34.7 kB package size, 111.4 kB unpacked size |
 
 ## 4. Smoke Test Result（冒烟测试结果）
 
-- Decision: `PASS` for local tarball smoke; npm registry publish smoke blocked by npm auth.
+- Decision: `PASS`
 - Evidence:
   - `npm test`: PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。
   - `node packages/sdlc-harness/dist/cli.js package check-source`: PASS，`package source OK`。
@@ -59,9 +60,10 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
   - `npx sdlc-harness help`: PASS，输出 CLI command list。
   - `npx sdlc-harness init --harness-folder .agent`: PASS，生成 `.agent`、`.docs/INDEX.md` 并完成 sync。
   - `npx sdlc-harness doctor`: PASS，输出 `core package: agent-project-sdlc@0.1.0` 和 `doctor complete`。
-  - `npm whoami`: BLOCKED，返回 `ENEEDAUTH`。
-  - `npm view agent-project-sdlc version --json`: 当前 registry 返回 `E404`，说明包名尚未公开存在，或当前未认证用户无访问权限。
-  - `npm login --auth-type=web`: BLOCKED，web login 未完成。
+  - `npm whoami`: PASS，发布账号 `steve1998`。
+  - `npm publish --workspace agent-project-sdlc`: PASS，registry 返回 `+ agent-project-sdlc@0.1.0`。
+  - `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`: PASS，`version` 和 `latest` 均为 `0.1.0`。
+  - Registry installed-consumer smoke: PASS，从 npm registry 安装 `agent-project-sdlc@0.1.0` 后，`npx sdlc-harness help`、`init --harness-folder .agent`、`doctor` 均通过。
 
 ## 5. Deployment Checklist（部署检查清单）
 
@@ -70,11 +72,11 @@ Source: [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 - [x] Test plan created and validated.
 - [x] Package source drift check passed.
 - [x] Pack dry run and local installed-consumer smoke passed.
-- [ ] npm auth available on this machine via `npm whoami`（当前 `ENEEDAUTH`）。
-- [ ] npm package name `agent-project-sdlc` availability and publish permission confirmed.
-- [ ] Publish package with `npm publish --workspace agent-project-sdlc`.
-- [ ] Verify registry page or `npm view agent-project-sdlc version --json`.
-- [ ] Create git tag after publish success.
+- [x] npm auth available on this machine via `npm whoami`.
+- [x] npm package name `agent-project-sdlc` availability and publish permission confirmed.
+- [x] Publish package with `npm publish --workspace agent-project-sdlc`.
+- [x] Verify registry package with `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`.
+- [x] Create git tag after publish success.
 
 ## 6. Rollback Plan（回滚方案）
 
