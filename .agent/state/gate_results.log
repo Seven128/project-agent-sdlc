@@ -1,8 +1,1 @@
 # Gate results are short-lived scratchpad entries for the current task or phase.
-2026-05-24T19:16:18Z phase=SPRINTING gate="npm test" result=PASS note="DEV-026 package regression"
-2026-05-24T19:16:18Z phase=SPRINTING gate="node packages/sdlc-harness/dist/cli.js package sync-source" result=PASS note="DEV-026 sync package assets"
-2026-05-24T19:16:18Z phase=SPRINTING gate="node packages/sdlc-harness/dist/cli.js package check-source" result=PASS note="DEV-026 package source drift check"
-2026-05-24T19:16:18Z phase=SPRINTING gate="make docs-overview" result=PASS note="DEV-026 refresh documentation overviews"
-2026-05-24T19:16:18Z phase=SPRINTING gate="python3 tools/validate_allowed_paths.py" result=PASS note="DEV-026 allowed paths, 22 changed files"
-2026-05-24T19:16:18Z phase=SPRINTING gate="make validate-harness" result=PASS note="DEV-026 harness validation"
-2026-05-24T19:16:18Z phase=SPRINTING gate="git diff --check" result=PASS note="DEV-026 whitespace check"
