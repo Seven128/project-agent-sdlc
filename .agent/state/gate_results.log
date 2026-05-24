@@ -1,5 +1,1 @@
 # Gate results are short-lived scratchpad entries for the current task or phase.
-2026-05-24T19:23:14Z phase=SPRINTING gate="make docs-overview" result=PASS note="DEV-027 refresh documentation overviews"
-2026-05-24T19:23:14Z phase=SPRINTING gate="python3 tools/validate_allowed_paths.py" result=PASS note="DEV-027 allowed paths, 6 changed files"
-2026-05-24T19:23:14Z phase=SPRINTING gate="make validate-harness" result=PASS note="DEV-027 harness validation"
-2026-05-24T19:23:14Z phase=SPRINTING gate="git diff --check" result=PASS note="DEV-027 whitespace check"

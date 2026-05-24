@@ -1,33 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-027"
+current_task_id: ""
 next_task_sequence: 28
-tasks:
-  - id: "DEV-027"
-    title: "补充项目级 singleton workflow 协作边界说明"
-    status: "in_progress"
-    summary: "在 README 中补充 AI SDLC Harness 是项目级 singleton workflow，不适合多人并行推进全链路状态；多人协作应限制在单阶段产物内。"
-    docs:
-      rfc:
-        - ".docs/rfc/RFC_013_workflow_singleton_collaboration_boundary.md"
-    allowed_paths:
-      - "README.md"
-      - ".agent/state/lifecycle.yaml"
-      - ".agent/state/plan.yaml"
-      - ".agent/state/gate_results.log"
-      - ".docs/INDEX.md"
-      - ".docs/rfc/RFC_013_workflow_singleton_collaboration_boundary.md"
-      - ".docs/rfc/overview.md"
-      - ".docs/04_implementation/npm_package/**"
-      - ".docs/04_implementation/overview.md"
-    required_gates:
-      - "python3 tools/validate_allowed_paths.py"
-      - "make docs-overview"
-      - "make validate-harness"
-    acceptance_criteria:
-      - "README states AI SDLC Harness is a project-level singleton workflow."
-      - "README explains cross-stage multi-person parallel work has high merge cost by design."
-      - "README recommends multi-person collaboration be constrained to a single phase artifact boundary."
-      - "Docs overview and implementation doc are updated."
-    working_notes:
-      - "Implementation commit must keep this DEV-027 open task contract before final removal."
-    implementation_doc: ".docs/04_implementation/npm_package/dev_027_workflow_singleton_collaboration_boundary.md"
+tasks: []
