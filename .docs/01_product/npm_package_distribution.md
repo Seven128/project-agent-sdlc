@@ -31,13 +31,13 @@
 | PRD-NPM-001 | npm 包名使用 `agent-project-sdlc`，CLI binary 使用 `sdlc-harness` | P0 | 避免使用过泛的 `harness` 命令名；包名发布前改为 unscoped package |
 | PRD-NPM-002 | 提供 `init` 命令生成新项目最小 Harness 骨架 | P0 | 包括 agent-readable files 和项目状态初始文件 |
 | PRD-NPM-003 | 提供 `init --adopt` 命令支持已有项目中途接入 | P0 | 不覆盖业务代码，优先诊断和最小接入 |
-| PRD-NPM-004 | 提供 `sync` 命令，将包内 canonical source 同步到工作区固定路径 | P0 | 重点覆盖 `AGENTS.md` 管理区块、`<harnessRoot>/skills/**`、`<harnessRoot>/managed/templates/**`、`<harnessRoot>/managed/policies/**`、`<harnessRoot>/managed/make/sdlc-harness.mk` |
+| PRD-NPM-004 | 提供 `sync` 命令，将包内 canonical source 同步到工作区固定路径 | P0 | 重点覆盖 `AGENTS.md` 管理区块、`<harnessRoot>/skills/**`、`<harnessRoot>/managed/templates/**`、`<harnessRoot>/managed/policies/**`、`<harnessRoot>/managed/make/sdlc-harness.mk`；除 skills 硬索引外，工作流配置不再维护 legacy mirror |
 | PRD-NPM-005 | 提供 `upgrade` 命令，且 `upgrade` 必须自动执行 `sync` | P0 | 用户不需要在升级后再手动运行一次 `sync` |
 | PRD-NPM-006 | 提供 `<harnessRoot>/config.yaml` 记录 package version、schema version、managed files、local overrides 和 never overwrite | P0 | 作为 sync/upgrade 的机器契约 |
 | PRD-NPM-007 | `AGENTS.md` 使用 managed block 合并，不整体覆盖项目自有 Agent 规则 | P0 | 使用 `sdlc-harness:begin/end` marker |
 | PRD-NPM-008 | `Makefile` 不整体覆盖，优先插入 include 并生成 `<harnessRoot>/managed/make/sdlc-harness.mk` | P0 | 保护项目自己的 `lint`、`test`、`build` 命令 |
 | PRD-NPM-009 | `.docs/**`、`<harnessRoot>/state/**`、`src/**`、`tests/**` 永远不被 sync/upgrade 覆盖 | P0 | 这些是项目事实源或业务代码 |
-| PRD-NPM-010 | 支持 local overrides 合成最终 Skill、模板或策略 | P1 | 推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/managed/policies/*.local.yaml` |
+| PRD-NPM-010 | 支持 local overrides 合成最终 Skill、模板或策略 | P1 | 推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/managed/policies/*.local.yaml`；不要直接修改 package-managed 文件 |
 | PRD-NPM-011 | 提供 `doctor` 命令检查配置完整性、文件漂移和升级风险 | P1 | 可以作为 `upgrade` 后的自动检查 |
 | PRD-NPM-012 | 提供 migration 机制处理 schema version 变化 | P1 | 迁移 `<harnessRoot>/config.yaml` 和受管理文件布局 |
 | PRD-NPM-013 | 当本仓库中的 Harness 工作流内容变化时，自动更新 npm 包 canonical source 并校验包内产物一致性 | P0 | 包括 `AGENTS.md` managed block、Skill、templates、policies、Makefile 接入片段、workflow 和 validator 入口 |
@@ -59,6 +59,7 @@
 - [ ] 本仓库的 Harness 源文件发生变化时，可以通过 `sdlc-harness package sync-source` 或等价自动化流程更新 npm 包 canonical source。
 - [ ] CI 能验证工作区 Harness 源文件与 npm 包 canonical source 一致，避免修改了工作流但漏更新包内容。
 - [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agent` 作为 Harness 根目录，Skill 位于 `.agent/skills/**`，其它配置位于 `.agent/state/**`、`.agent/managed/**` 和 `.agent/config.yaml`。
+- [ ] 除 `.agent/skills/**` 的 skill hard index 外，policy、template、Makefile fragment 等工作流配置统一位于 `.agent/managed/**`，不再维护 `.agent/policies/**` 或 `.agent/templates/**` mirror。
 - [ ] 配置 `harnessFolderName: ".harness"` 的项目使用 `.harness` 作为 Harness 根目录，Skill 位于 `.harness/skills/**`，不再额外套 `.harness/agents/skills/**`。
 - [ ] 执行 `npx sdlc-harness init` 时，CLI 提示输入 Harness folder name；直接回车写入默认 `.agent`，输入自定义值则写入自定义值。
 - [ ] `plan.yaml` 和 `plan.draft.yaml` 取代 `tasks.yaml` 和 `tasks.draft.yaml`。
