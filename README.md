@@ -113,6 +113,7 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 │   │   │   └── risk_matrix.yaml
 │   │   ├── templates/
 │   │   └── make/
+│   │       └── sdlc-harness.mk
 │
 ├── tools/
 ├── .github/workflows/
@@ -126,8 +127,11 @@ Agent 在单阶段内部仍然以 vibe 方式执行；Harness 负责规定当前
 - `<harnessRoot>/skills/`：阶段角色 Skill 的 canonical source。默认 `<harnessRoot>` 是 `.agent`；当前仓库遵循默认值，因此使用 `.agent/skills/**`。
 - `.agent/managed/policies/`：阶段契约、gate、路径约束和风险矩阵；默认内容来自 Harness 包，项目可通过 local override 调整。
 - `.agent/managed/templates/`：PRD、技术方案、计划、实现文档、Review、测试、RFC、Release 等模板；默认内容来自 Harness 包。
+- `.agent/managed/make/sdlc-harness.mk`：Harness 默认命令目标；根 `Makefile` 只保留 include block，避免与用户项目目标耦合。
 - `tools/`：确定性脚本和校验工具。
-- `Makefile`：统一命令入口。
+- `Makefile`：统一命令入口，作为用户仓库入口文件存在，只通过 include block 引入 `.agent/managed/make/sdlc-harness.mk`。
+
+除 `.agent/skills/**` 需要保持 Agent hard index 之外，工作流相关默认配置统一放在 `.agent/managed/**`。不要再维护 `.agent/policies/**` 或 `.agent/templates/**` 这类 legacy mirror，避免同一份配置出现多个事实源。
 
 ## 五、生命周期与阶段契约
 ### 5.1 生命周期状态
@@ -671,7 +675,7 @@ Authoring overlay 的默认规则：
 当前仓库可以作为参考实现和模板仓库，但长期产品形态不应依赖每个业务项目直接 fork 整套配置。更稳的方式是把通用 Harness 能力拆成可版本化的 npm 包，并把业务项目中的工作流文件视为由包同步出来的 agent-readable artifact。
 
 ### 18.1 包与命令名称
-npm 包建议命名为 `agent-project-sdlc`，命令入口统一使用：
+npm 包当前命名为 `agent-project-sdlc`，命令入口统一使用：
 
 ```sh
 sdlc-harness <command>
@@ -685,12 +689,14 @@ sdlc-harness <command>
 - 默认 `<harnessRoot>/skills/*/SKILL.md`。
 - 默认 `<harnessRoot>/managed/templates/*`。
 - 默认 `<harnessRoot>/managed/policies/*`。
+- 默认 `<harnessRoot>/managed/make/sdlc-harness.mk`。
 - `<harnessRoot>/state/**` 的 schema、初始状态模板、plan protocol、memory protocol 和 migrations。
 - 校验脚本、迁移脚本和 overview 生成脚本。
 
 业务项目内保留 agent 实际读取和项目事实源：
 - `AGENTS.md`。
 - `<harnessRoot>/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区，作为 Skill canonical source。
+- `<harnessRoot>/managed/**`，承载模板、策略和默认 Makefile targets 等可版本化工作流配置。
 - `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、open task 执行备注、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。
 - `<harnessRoot>/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。
@@ -755,7 +761,7 @@ npx sdlc-harness init --adopt
 npx sdlc-harness sync
 ```
 
-`sync` 负责把包内默认 Skill、模板、策略文件 materialize 到工作区固定位置，并为 managed files 写入版本和 checksum metadata。
+`sync` 负责把包内默认 Skill、模板、策略文件和默认 Makefile targets materialize 到工作区固定位置，并为 managed files 写入版本和 checksum metadata。
 
 升级命令：
 
@@ -769,7 +775,7 @@ npx sdlc-harness upgrade
 2. 运行必要 migrations。
 3. 按 state schema migration 升级 `<harnessRoot>/state/**` 的结构，但保留项目自己的状态值。
 4. 更新 managed files。
-5. 自动执行 sync，把最新 Skill、模板、策略和状态模板 materialize 到工作区。
+5. 自动执行 sync，把最新 Skill、模板、策略、默认 Makefile targets 和状态模板 materialize 到工作区。
 6. 运行 `sdlc-harness doctor` 或对应 `make validate-harness`，输出升级报告。
 
 ### 18.7 包与项目解耦原则
@@ -778,6 +784,7 @@ Harness npm 包的设计必须像普通 npm 依赖一样，与用户仓库内容
 因此 `sync` 和 `upgrade` 的核心原则是：
 - 包内 canonical source 只是默认输入，不是用户仓库的最终事实源。
 - `AGENTS.md`、`Makefile` 等高冲突入口只能通过 managed block、include block 或 create-if-missing 方式接入，不能整文件覆盖。
+- 除 `<harnessRoot>/skills/**` 作为 Agent hard index 保留在固定位置外，模板、策略、默认 Makefile targets 等工作流配置都必须收敛到 `<harnessRoot>/managed/**`，不再生成 `<harnessRoot>/templates/**`、`<harnessRoot>/policies/**` 等 legacy mirror。
 - `<harnessRoot>/state/**`、`.docs/**`、`src/**`、`tests/**` 和用户业务配置属于项目实例，包升级不得覆盖其具体内容。
 - 用户自定义配置必须通过 local overrides、`.local.yaml`、受控 merge 或显式 migration 合并；不能要求用户直接修改包内文件，也不能在升级时丢弃本地差异。
 - migration 只能做可解释、可回滚、可诊断的结构变更。遇到 marker 缺失、checksum 漂移、override 冲突或无法判定的本地改动时，应停止并报告 blocker，而不是继续覆盖。

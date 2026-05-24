@@ -114,7 +114,7 @@ def validate_skill_template() -> None:
 def validate_yaml_keys() -> None:
     lifecycle = load_yaml(".agent/state/lifecycle.yaml")
     tasks = load_yaml(".agent/state/plan.yaml")
-    phase_contracts = load_yaml(".agent/policies/phase_contracts.yaml")
+    phase_contracts = load_yaml(".agent/managed/policies/phase_contracts.yaml")
 
     for key in YAML_KEYWORDS["lifecycle"]:
         require(key in lifecycle, f"lifecycle.yaml key was removed or translated: {key}")

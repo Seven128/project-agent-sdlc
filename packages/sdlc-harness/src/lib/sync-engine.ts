@@ -61,18 +61,15 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     await syncTree(packageAssetPath("skills"), destination, report);
     return;
   }
-  if (managedFile.path === path.join(root, "managed", "templates") || managedFile.path === ".harness/templates") {
+  if (managedFile.path === path.join(root, "managed", "templates")) {
     await syncTree(packageAssetPath("templates"), destination, report);
     return;
   }
-  if (managedFile.path === path.join(root, "managed", "policies") || managedFile.path === ".harness/policies") {
+  if (managedFile.path === path.join(root, "managed", "policies")) {
     await syncTree(packageAssetPath("policies"), destination, report);
     return;
   }
-  if (
-    managedFile.path === path.join(root, "managed", "make", "sdlc-harness.mk") ||
-    managedFile.path === ".harness/make/sdlc-harness.mk"
-  ) {
+  if (managedFile.path === path.join(root, "managed", "make", "sdlc-harness.mk")) {
     await syncFile(packageAssetPath("make", "sdlc-harness.mk"), destination, report, "skip-if-missing");
     return;
   }

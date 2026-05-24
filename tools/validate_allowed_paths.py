@@ -17,7 +17,7 @@ def main() -> None:
     tasks = [task for task in data.get("tasks", []) if isinstance(task, dict)]
     open_tasks = [task for task in tasks if task.get("status") in OPEN_TASK_STATUSES]
 
-    policies = load_yaml(".agent/policies/allowed_paths.yaml")
+    policies = load_yaml(".agent/managed/policies/allowed_paths.yaml")
     sprint_policy = ((policies.get("phases") or {}).get("SPRINTING") or {})
     always_allow = expand_harness_root(sprint_policy.get("always_allow") or [])
 

@@ -10,6 +10,7 @@ try {
   await mkdir(path.join(fixture, ".agent/skills/example"), { recursive: true });
   await mkdir(path.join(fixture, ".agent/managed/templates"), { recursive: true });
   await mkdir(path.join(fixture, ".agent/managed/policies"), { recursive: true });
+  await mkdir(path.join(fixture, ".agent/managed/make"), { recursive: true });
   await mkdir(path.join(fixture, ".github/workflows"), { recursive: true });
   await mkdir(path.join(fixture, "tools"), { recursive: true });
   await mkdir(path.join(fixture, "packages/sdlc-harness"), { recursive: true });
@@ -17,6 +18,7 @@ try {
   await writeFile(path.join(fixture, ".agent/skills/example/SKILL.md"), "# Skill\n", "utf8");
   await writeFile(path.join(fixture, ".agent/managed/templates/EXAMPLE.md"), "# Template\n", "utf8");
   await writeFile(path.join(fixture, ".agent/managed/policies/example.yaml"), "ok: true\n", "utf8");
+  await writeFile(path.join(fixture, ".agent/managed/make/sdlc-harness.mk"), "help:\n\t@echo ok\n", "utf8");
   await writeFile(path.join(fixture, ".github/workflows/harness.yml"), "name: Harness\n", "utf8");
   await writeFile(path.join(fixture, "Makefile"), "help:\n\t@echo ok\n", "utf8");
   await writeFile(path.join(fixture, "tools/example.py"), "print('ok')\n", "utf8");
@@ -35,9 +37,9 @@ try {
   - source: ".agent/managed/policies"
     target: "packages/sdlc-harness/assets/policies"
     mode: "copy-tree"
-  - source: "Makefile"
+  - source: ".agent/managed/make/sdlc-harness.mk"
     target: "packages/sdlc-harness/assets/make/sdlc-harness.mk"
-    mode: "extract-harness-targets"
+    mode: "copy-file"
   - source: ".github/workflows/harness.yml"
     target: "packages/sdlc-harness/assets/github/harness.yml"
     mode: "copy-file"

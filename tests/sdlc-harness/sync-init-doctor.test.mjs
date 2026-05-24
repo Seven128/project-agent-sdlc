@@ -35,6 +35,8 @@ try {
   await stat(path.join(defaultRoot, ".agent/skills/manager/SKILL.md"));
   await stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml"));
+  await assert.rejects(stat(path.join(defaultRoot, ".agent/templates/PLAN_TEMPLATE.yaml")));
+  await assert.rejects(stat(path.join(defaultRoot, ".agent/policies/phase_contracts.yaml")));
 
   const defaultDoctor = await runDoctor(defaultRoot);
   assert.deepEqual(defaultDoctor.errors, []);
@@ -56,6 +58,8 @@ try {
   await stat(path.join(configuredRoot, ".harness/skills/manager/SKILL.md"));
   await stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml"));
+  await assert.rejects(stat(path.join(configuredRoot, ".harness/templates/PLAN_TEMPLATE.yaml")));
+  await assert.rejects(stat(path.join(configuredRoot, ".harness/policies/phase_contracts.yaml")));
 
   const configuredDoctor = await runDoctor(configuredRoot);
   assert.deepEqual(configuredDoctor.errors, []);

@@ -161,4 +161,4 @@ python3 tools/transition.py --to <PHASE>
 ```
 
 流转前先运行阶段 gate，通常使用 `make validate-current`，或使用
-`.agent/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。
+`.agent/managed/policies/phase_contracts.yaml` 中列出的具体 `make validate-*` 目标。

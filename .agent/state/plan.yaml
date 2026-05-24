@@ -167,12 +167,14 @@ tasks:
       - "tools/**"
       - "packages/sdlc-harness/**"
       - "tests/sdlc-harness/**"
+      - ".docs/INDEX.md"
       - ".docs/04_implementation/npm_package/**"
+      - ".docs/04_implementation/overview.md"
     required_gates:
+      - "python3 tools/validate_allowed_paths.py"
       - "npm test"
       - "node packages/sdlc-harness/dist/cli.js package check-source"
       - "make validate-harness"
-      - "make validate-current"
     acceptance_criteria:
       - "`.agent/skills/<skill_name>/SKILL.md` remains the skill hard index."
       - "Tools read policies from `.agent/managed/policies/**`."

@@ -13,10 +13,10 @@ def main() -> None:
         ".agent/state/gate_results.log",
         ".agent/state/memory.md",
         ".agent/managed/templates/PLAN_TEMPLATE.yaml",
-        ".agent/policies/phase_contracts.yaml",
-        ".agent/policies/gates.yaml",
-        ".agent/policies/allowed_paths.yaml",
-        ".agent/policies/risk_matrix.yaml",
+        ".agent/managed/policies/phase_contracts.yaml",
+        ".agent/managed/policies/gates.yaml",
+        ".agent/managed/policies/allowed_paths.yaml",
+        ".agent/managed/policies/risk_matrix.yaml",
         "tools/build_doc_overviews.py",
         "tools/validate_plan.py",
     ]
@@ -38,9 +38,9 @@ def main() -> None:
 
     lifecycle = load_lifecycle()
     phases = load_phase_contracts()
-    load_yaml(".agent/policies/gates.yaml")
-    load_yaml(".agent/policies/allowed_paths.yaml")
-    load_yaml(".agent/policies/risk_matrix.yaml")
+    load_yaml(".agent/managed/policies/gates.yaml")
+    load_yaml(".agent/managed/policies/allowed_paths.yaml")
+    load_yaml(".agent/managed/policies/risk_matrix.yaml")
 
     current_phase = lifecycle.get("current_phase")
     require(current_phase in phases, f"Lifecycle current_phase is not declared: {current_phase}")

@@ -313,7 +313,7 @@ def load_lifecycle() -> dict[str, Any]:
 
 
 def load_phase_contracts() -> dict[str, Any]:
-    data = load_yaml(".agent/policies/phase_contracts.yaml")
+    data = load_yaml(".agent/managed/policies/phase_contracts.yaml")
     require(isinstance(data, dict) and isinstance(data.get("phases"), dict), "phase_contracts.yaml must contain phases")
     return data["phases"]
 
