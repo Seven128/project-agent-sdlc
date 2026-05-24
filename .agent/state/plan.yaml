@@ -1,5 +1,6 @@
 current_phase: "SPRINTING"
-current_task_id: ""
+current_task_id: "DEV-025"
+next_task_sequence: 26
 tasks:
   - id: "DEV-001"
     title: "创建 npm 包骨架与 source sync manifest"
@@ -168,3 +169,57 @@ tasks:
     summary: "补充 done task 压缩后的 git history 恢复提示，明确通过 task implementation commit 查看完整 open task 合同，并保留 `pjsdlc:sdlc-harness:*` marker namespace。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_024_done_task_git_history_lookup.md"
     gate_result: "PASS"
+
+  - id: "DEV-025"
+    title: "将 plan 和 gate log 改为短期执行状态"
+    status: "in_progress"
+    summary: "让 `plan.yaml` 只保留当前和未来任务，完成任务后移出 plan；让 `gate_results.log` 只作为当前 task/phase 短期 scratchpad。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_011_short_lived_plan_and_gate_log.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - ".agent/state/lifecycle.yaml"
+      - ".agent/state/plan.yaml"
+      - ".agent/state/gate_results.log"
+      - ".agent/skills/pjsdlc_dev_sprint/SKILL.md"
+      - ".agent/skills/pjsdlc_manager/SKILL.md"
+      - ".agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"
+      - "tools/validate_plan.py"
+      - "tools/validate_task_docs.py"
+      - "tools/harness_utils.py"
+      - "packages/sdlc-harness/src/lib/init.ts"
+      - "packages/sdlc-harness/src/lib/migrations.ts"
+      - "packages/sdlc-harness/src/lib/validators.ts"
+      - "packages/sdlc-harness/assets/**"
+      - "tests/sdlc-harness/**"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/INDEX.md"
+      - ".docs/rfc/RFC_011_short_lived_plan_and_gate_log.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/rfc/overview.md"
+      - ".docs/04_implementation/npm_package/**"
+      - ".docs/04_implementation/overview.md"
+    required_gates:
+      - "python3 tools/validate_allowed_paths.py"
+      - "npm test"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "`plan.yaml` only retains current/future task state and `next_task_sequence`."
+      - "Completed DEV-001 through DEV-024 are removed from current `plan.yaml` during implementation."
+      - "Completion flow removes completed tasks from plan instead of retaining done summaries."
+      - "`gate_results.log` is documented and reset as a short-lived scratchpad."
+      - "Python and Node validators allow empty `tasks: []` and reject done/cancelled tasks retained in plan."
+      - "Package assets stay in sync."
+    working_notes:
+      - "Implementation commit should still include DEV-025 open task contract before final removal."
+    implementation_doc: ".docs/04_implementation/npm_package/dev_025_short_lived_plan_and_gate_log.md"
+    gate_result: ""

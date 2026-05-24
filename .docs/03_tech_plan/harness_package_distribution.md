@@ -161,11 +161,14 @@ source_mappings:
 
 ### 5.4 Plan state 与 open task contract
 
-`<harnessRoot>/state/plan.yaml` 是当前 sprint/阶段的执行计划事实源。open task 直接保存执行合同；done/cancelled task 在完成后压缩为简短摘要，避免历史现场长期挤占 Agent 上下文。典型 open task 结构：
+`<harnessRoot>/state/plan.yaml` 是当前 sprint/阶段的短期执行计划事实源。它只保留当前和未来相关任务：`pending`、`in_progress`、`blocked`、`pending_revision`。done/cancelled task 不长期留在 `plan.yaml`，避免历史现场挤占 Agent 对当前任务的注意力。
+
+`next_task_sequence` 负责在删除历史 task 后继续分配后续 `DEV-*` id。典型 open task 结构：
 
 ```yaml
 current_phase: "SPRINTING"
 current_task_id: "DEV-011"
+next_task_sequence: 12
 tasks:
   - id: "DEV-011"
     title: "合并 checkpoint 到 plan.yaml 并重命名 tasks 状态"
@@ -183,10 +186,9 @@ tasks:
     working_notes:
       - "只记录恢复现场所需的短备注。"
     implementation_doc: ".docs/04_implementation/npm_package/dev_011_plan_yaml_no_checkpoint.md"
-    gate_result: ""
 ```
 
-task 完成后，移除 `docs`、`allowed_paths`、`required_gates`、`acceptance_criteria` 和 `working_notes`，只保留 `id`、`title`、`status`、`summary`、`implementation_doc` 和 `gate_result`。历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `.agent/archive/**` 作为常规归档事实源。
+task 完成后，先创建 task implementation commit，保留完整 open task 合同；再将该 task 从 `plan.yaml` 的 `tasks` 列表移除，并创建 task completion ledger commit。历史动作记录由 git commit 承载，产物结果由 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `.agent/archive/**` 作为常规归档事实源。
 
 如果后续 Agent 需要追溯 done task 的完整执行合同，应先读取对应 implementation doc，再从 git history 找到 task implementation commit。该 commit 必须早于 task completion ledger commit，并保留压缩前的 `plan.yaml`。推荐查询方式：
 
@@ -196,6 +198,18 @@ git show <implementation_commit>:.agent/state/plan.yaml
 ```
 
 如果使用了自定义 `<harnessRoot>`，第二条命令中的 `.agent` 替换为实际 root。Agent 不应因为当前 `plan.yaml` 已压缩就重建或猜测历史合同；只有新的 RFC 或 revision task 才能把新执行合同写回当前 `plan.yaml`。
+
+### 5.5 Gate results scratchpad
+
+`<harnessRoot>/state/gate_results.log` 是当前 task / 当前阶段的短期 gate scratchpad，用于中断恢复和本轮执行说明。它不承担长期审计职责。task completion 后，最终 gate 事实应写入 implementation doc，并随 task implementation commit 进入 git history；CI 系统或 release 系统也可承载长期 gate 记录。
+
+completion ledger commit 可以把 `gate_results.log` 重置为短 header：
+
+```txt
+# Gate results are short-lived scratchpad entries for the current task or phase.
+```
+
+这样当前工作区保持低噪声，长期历史仍可通过 git、implementation doc、CI logs 或 release notes 查询。
 
 ## 6. 任务拆分（Task Breakdown）
 
@@ -222,13 +236,15 @@ git show <implementation_commit>:.agent/state/plan.yaml
 | 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agent`；Skill 保持 `<harnessRoot>/skills/pjsdlc_<skill_name>/SKILL.md` 硬索引；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
 | policy/template 事实源重复 | P1 | 工具只读取 `<harnessRoot>/pjsdlc_managed/policies/**` 和 `<harnessRoot>/pjsdlc_managed/templates/**`，删除 legacy mirror |
 | npm 包 validators 运行环境不稳定 | P1 | validators 运行时使用 TypeScript/Node，不依赖 Python 运行时 |
-| `plan.yaml` 过大导致 Agent 上下文膨胀 | P0 | open task 只保存当前执行合同和必要短备注，done task 立即压缩为简短摘要 |
+| `plan.yaml` 过大导致 Agent 上下文膨胀 | P0 | plan 只保留当前和未来任务，done/cancelled task 完成后移出 plan |
 | task/release 归档与 git 历史重复 | P1 | 删除 `.agent/archive/**` 常规机制，动作记录以 git commit/tag 为准 |
 | Agent 误以为 done task 详情丢失 | P1 | 在 AGENTS、Skill 和 README 中声明用 git history 找回 task implementation commit 中的完整 open task 合同 |
+| `gate_results.log` 无限增长 | P1 | gate log 只作为短期 scratchpad，completion 后重置，长期 gate 事实进入 implementation doc、git 或 CI logs |
 
 ## 8. 需要关注的方案偏移
 
 - 如果当前仓库继续作为包源码仓库，`packages/sdlc-harness/assets/**` 不应手写，应由 `package sync-source` 从工作流源文件生成。
 - RFC_003 调整后，`sdlc-harness init` 会询问 Harness root；默认 `.agent`，当前仓库也使用默认 `.agent`。
 - RFC_004 调整后，删除 `.agent/archive/**` 常规归档，并把历史动作记录交给 git。
-- RFC_005 调整后，checkpoint 文件被删除；`allowed_paths`、`required_gates` 和验收标准直接保存在 open task 的 `plan.yaml` 条目中，done task 压缩为简短摘要。
+- RFC_005 调整后，checkpoint 文件被删除；`allowed_paths`、`required_gates` 和验收标准直接保存在 open task 的 `plan.yaml` 条目中。
+- RFC_011 调整后，done/cancelled task 不再长期留在 `plan.yaml`，`gate_results.log` 也不再无限累积历史记录。
