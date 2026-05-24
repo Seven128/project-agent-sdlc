@@ -79,3 +79,5 @@
 2026-05-24T06:52:22Z phase=SPRINTING gate="local tarball consumer smoke" result=PASS note="DEV-020 npx sdlc-harness help/init/doctor"
 2026-05-24T06:52:22Z phase=SPRINTING gate="python3 tools/validate_allowed_paths.py" result=PASS note="DEV-020 allowed paths"
 2026-05-24T06:52:22Z phase=SPRINTING gate="git diff --check" result=PASS note="DEV-020 whitespace check"
+2026-05-24T06:53:25Z phase=SPRINTING gate="make validate-dev" result=PASS
+2026-05-24T06:53:33Z phase=SPRINTING gate="git diff --check" result=PASS note="DEV-020 completion ledger whitespace check"
