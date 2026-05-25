@@ -5,6 +5,22 @@ import { normalizeHarnessFolderName, readHarnessRootConfig } from "../lib/harnes
 import { writePackageHarnessRoot } from "../lib/package-json-config.js";
 import { DEFAULT_HARNESS_ROOT } from "../lib/paths.js";
 
+interface AgentHarnessOption {
+  key: string;
+  label: string;
+  harnessFolderName?: string;
+}
+
+const AGENT_HARNESS_OPTIONS: AgentHarnessOption[] = [
+  { key: "codex", label: "Codex", harnessFolderName: ".codex" },
+  { key: "claude", label: "Claude Code", harnessFolderName: ".claude" },
+  { key: "cursor", label: "Cursor", harnessFolderName: ".cursor" },
+  { key: "cline", label: "Cline", harnessFolderName: ".cline" },
+  { key: "roo", label: "Roo Code", harnessFolderName: ".roo" },
+  { key: "gemini", label: "Gemini CLI", harnessFolderName: ".gemini" },
+  { key: "other", label: "Other" }
+];
+
 export async function init(args: string[]): Promise<void> {
   const adopt = args.includes("--adopt");
   const force = args.includes("--force");
@@ -31,20 +47,67 @@ export async function resolveInitHarnessRoot(projectRoot: string, args: string[]
     return undefined;
   }
 
-  return promptHarnessRoot(DEFAULT_HARNESS_ROOT);
+  return promptAgentHarnessRoot();
 }
 
-async function promptHarnessRoot(defaultRoot: string): Promise<string> {
+async function promptAgentHarnessRoot(): Promise<string> {
   if (!input.isTTY || !output.isTTY) {
-    return defaultRoot;
+    return resolveAgentHarnessFolderName("");
   }
   const rl = readline.createInterface({ input, output });
   try {
-    const answer = await rl.question(`Harness folder name (default ${defaultRoot}; press Enter to use default): `);
-    return normalizeHarnessFolderName(answer.trim() || defaultRoot);
+    const agent = await questionUntilValid(rl, `${formatAgentChoices()}\nTarget agent (default 1 Codex): `);
+    const option = agentOptionForAnswer(agent);
+    if (option?.harnessFolderName) {
+      return normalizeHarnessFolderName(option.harnessFolderName);
+    }
+    const folder = await rl.question(`Harness folder name (default ${DEFAULT_HARNESS_ROOT}; press Enter to use default): `);
+    return normalizeHarnessFolderName(folder.trim() || DEFAULT_HARNESS_ROOT);
   } finally {
     rl.close();
   }
+}
+
+async function questionUntilValid(rl: readline.Interface, query: string): Promise<string> {
+  while (true) {
+    const answer = await rl.question(query);
+    if (agentOptionForAnswer(answer)) {
+      return answer;
+    }
+    console.log("Unknown agent choice. Enter a number, agent name, or Other.");
+  }
+}
+
+function formatAgentChoices(): string {
+  const lines = ["Choose target agent:"];
+  AGENT_HARNESS_OPTIONS.forEach((option, index) => {
+    const folder = option.harnessFolderName ? ` -> ${option.harnessFolderName}` : "";
+    lines.push(`${index + 1}) ${option.label}${folder}`);
+  });
+  return lines.join("\n");
+}
+
+export function resolveAgentHarnessFolderName(agentAnswer: string, customFolderAnswer = ""): string {
+  const option = agentOptionForAnswer(agentAnswer);
+  if (!option) {
+    throw new Error("Unknown agent choice");
+  }
+  return normalizeHarnessFolderName(option.harnessFolderName ?? (customFolderAnswer.trim() || DEFAULT_HARNESS_ROOT));
+}
+
+function agentOptionForAnswer(answer: string): AgentHarnessOption | undefined {
+  const normalized = answer.trim().toLowerCase();
+  if (!normalized) {
+    return AGENT_HARNESS_OPTIONS[0];
+  }
+  const index = Number.parseInt(normalized, 10);
+  if (Number.isInteger(index) && String(index) === normalized) {
+    return AGENT_HARNESS_OPTIONS[index - 1];
+  }
+  return AGENT_HARNESS_OPTIONS.find((option) => {
+    const label = option.label.toLowerCase();
+    return option.key === normalized || label === normalized || label.replace(/\s+/g, "-") === normalized;
+  });
 }
 
 function valueForArg(args: string[], name: string): string | undefined {

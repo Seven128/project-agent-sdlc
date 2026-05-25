@@ -24,6 +24,14 @@ npm install -D agent-project-sdlc
 npx sdlc-harness init
 ```
 
+`init` 会先询问目标 Agent。直接回车选择默认 `Codex`，并把 Harness 配置写到 `.codex`。其它内置选项会写入对应目录，例如 `Claude Code -> .claude`、`Cursor -> .cursor`、`Cline -> .cline`、`Roo Code -> .roo`、`Gemini CLI -> .gemini`。选择 `Other` 时才会继续询问自定义文件夹名，此时直接回车默认 `.agent`。
+
+如果已经确定目录，可以跳过交互：
+
+```sh
+npx sdlc-harness init --harness-folder .agent
+```
+
 已有项目中途接入：
 
 ```sh
@@ -33,10 +41,10 @@ npx sdlc-harness init --adopt
 默认会生成或同步：
 
 - `AGENTS.md`
-- `.agent/state/lifecycle.yaml`
-- `.agent/state/plan.yaml`
-- `.agent/skills/**`
-- `.agent/pjsdlc_managed/**`
+- `<harnessRoot>/state/lifecycle.yaml`
+- `<harnessRoot>/state/plan.yaml`
+- `<harnessRoot>/skills/**`
+- `<harnessRoot>/pjsdlc_managed/**`
 - `.docs/**`
 - `Makefile` harness include block
 
@@ -61,16 +69,16 @@ npx sdlc-harness init --adopt
 准备 review。
 ```
 
-Agent 会读取 `.agent/state/lifecycle.yaml` 和 `.agent/state/plan.yaml`，再按当前阶段选择对应 workflow skill、产物和 gate。
+Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/plan.yaml`，再按当前阶段选择对应 workflow skill、产物和 gate。
 
 ### Workflow skill 如何生效
 
-`.agent/skills/<name>/SKILL.md` 是 Harness 的 workflow skill 事实源。它有两种使用方式：
+`<harnessRoot>/skills/<name>/SKILL.md` 是 Harness 的 workflow skill 事实源，也是稳定的 hard file index。它有两种使用方式：
 
 - Harness soft index：`AGENTS.md` 要求 Agent 先读 lifecycle/plan，再按 `active_skill` 和 `phase_contracts.yaml` 读取对应 skill。
 - Native skill adapter：如果某个 Agent 支持 native skill registry，可以把这些 workflow skills 同步或安装到该 Agent 的原生 skill root，让“产品方案”“技术方案”“开发循环”等自然语言在首轮就有机会命中。
 
-只在 `AGENTS.md` 里声明 `.agent/skills` 不等于 native skill 注册；它保证的是 Harness 软索引。Native skill 是否首轮水合，取决于具体 Agent 客户端是否扫描这个目录，或是否使用了额外 adapter。
+只在 `AGENTS.md` 里声明 `<harnessRoot>/skills` 不等于 native skill 注册；它保证的是 Harness soft index。Native skill 是否首轮水合，取决于具体 Agent 客户端是否扫描这个目录，或是否使用了额外 adapter。
 
 常用快捷入口：
 
@@ -129,8 +137,8 @@ make docs-overview
 
 | 路径 | 用途 |
 |---|---|
-| `.agent/state/lifecycle.yaml` | 当前生命周期阶段和 active skill |
-| `.agent/state/plan.yaml` | 当前和未来 task 的短期执行计划 |
+| `<harnessRoot>/state/lifecycle.yaml` | 当前生命周期阶段和 active skill |
+| `<harnessRoot>/state/plan.yaml` | 当前和未来 task 的短期执行计划 |
 | `.docs/01_product/` | PRD、用户场景、验收标准 |
 | `.docs/02_architecture/` | 架构边界和高层设计 |
 | `.docs/03_tech_plan/` | 技术方案、接口契约、任务拆分 |

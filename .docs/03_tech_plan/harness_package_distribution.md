@@ -73,7 +73,21 @@ package.json or sdlc-harness.config.json
 .docs/**
 ```
 
-`<harnessRoot>/skills/pjsdlc_*/SKILL.md` 是 Agent 与 `active_skill` 的硬索引入口，保持一层 `skills/<skill_name>/SKILL.md`，并通过 `pjsdlc_` 前缀标识包内 workflow Skill。除 skills 外的 package-managed workflow config 统一放在 `<harnessRoot>/pjsdlc_managed/**`，不再维护 `<harnessRoot>/managed/**`、`<harnessRoot>/policies/**` 或 `<harnessRoot>/templates/**` mirror。
+`<harnessRoot>/skills/pjsdlc_*/SKILL.md` 是 Harness hard file index，保持一层 `skills/<skill_name>/SKILL.md`，并通过 `pjsdlc_` 前缀标识包内 workflow Skill。这个固定路径用于 `active_skill` / `phase_contracts.yaml` 的软路由；它不保证具体 Agent 客户端会把该目录当作 native skill hard index 首轮水合。除 skills 外的 package-managed workflow config 统一放在 `<harnessRoot>/pjsdlc_managed/**`，不再维护 `<harnessRoot>/managed/**`、`<harnessRoot>/policies/**` 或 `<harnessRoot>/templates/**` mirror。
+
+`sdlc-harness init` 的交互顺序是先选择目标 Agent，再确定 `<harnessRoot>`：
+
+| 选择 | 写入的 `harnessFolderName` |
+|---|---|
+| 直接回车 / `Codex` | `.codex` |
+| `Claude Code` | `.claude` |
+| `Cursor` | `.cursor` |
+| `Cline` | `.cline` |
+| `Roo Code` | `.roo` |
+| `Gemini CLI` | `.gemini` |
+| `Other` | 继续询问自定义 folder；直接回车默认 `.agent` |
+
+显式 `--harness-folder` / `--harnessFolderName` 或已有 JSON 配置优先级更高，会跳过 Agent 选择。非交互环境使用 Codex 默认 `.codex`，避免阻塞初始化。
 
 ### 3.3 Natural Language Control
 
@@ -112,8 +126,8 @@ Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启
 
 | 接口（Interface） | 方法/事件（Method/Event） | 请求（Request） | 响应（Response） | 错误（Errors） |
 |---|---|---|---|---|
-| `sdlc-harness init` | CLI command | `--force?`、cwd | 创建新项目 Harness 骨架并执行 `sync` | 非空冲突、权限不足 |
-| `sdlc-harness init --adopt` | CLI command | cwd | 最小接入已有项目，执行安全诊断 | 发现高风险覆盖时停止 |
+| `sdlc-harness init` | CLI command | `--force?`、`--harness-folder?`、cwd；无显式目录时交互选择 Agent | 创建新项目 Harness 骨架并执行 `sync` | 非空冲突、权限不足、未知 Agent 选择 |
+| `sdlc-harness init --adopt` | CLI command | `--harness-folder?`、cwd；无显式目录时交互选择 Agent | 最小接入已有项目，执行安全诊断 | 发现高风险覆盖时停止 |
 | `sdlc-harness sync` | CLI command | `<harnessRoot>/config.yaml`、包内 assets | materialized files、sync report | managed marker 缺失、local override 冲突、never overwrite 命中 |
 | `sdlc-harness upgrade` | CLI command | 当前 package version、schema version | migration report、自动 `sync`、doctor report | migration 失败、checksum 冲突 |
 | `sdlc-harness doctor` | CLI command | cwd | 配置完整性、漂移、override、gate 建议 | 配置不可读 |
@@ -301,7 +315,7 @@ git commit、tag 和 push 仍由 SPRINTING task protocol 负责，避免 release
 | 包源码与当前工作流内容漂移 | P0 | `package sync-source` 更新，`package check-source` 和 CI 强制检查 |
 | 根 `Makefile` 与业务项目冲突 | P0 | 只插入 include，不整体覆盖 |
 | `AGENTS.md` 与项目自定义规则冲突 | P0 | 使用 `pjsdlc:sdlc-harness:*` managed block，marker 外内容不改；旧 `sdlc-harness:*` marker 仅作为 migration 输入 |
-| 生成的 Skill 不被 Agent 识别 | P0 | 默认 `<harnessRoot>` 为 `.agent`；Skill 保持 `<harnessRoot>/skills/pjsdlc_<skill_name>/SKILL.md` 硬索引；显式 `.harness` 项目需在入口规则中声明 `.harness/skills/**` |
+| 生成的 Skill 不被 Agent 识别 | P0 | init 默认按目标 Agent 写入 `<harnessRoot>`，Skill 保持 `<harnessRoot>/skills/pjsdlc_<skill_name>/SKILL.md` hard file index；`AGENTS.md` 提供 Harness soft index，native skill 首轮水合由具体 Agent adapter 负责 |
 | policy/template 事实源重复 | P1 | 工具只读取 `<harnessRoot>/pjsdlc_managed/policies/**` 和 `<harnessRoot>/pjsdlc_managed/templates/**`，删除 legacy mirror |
 | npm 包 validators 运行环境不稳定 | P1 | validators 运行时使用 TypeScript/Node，不依赖 Python 运行时 |
 | `plan.yaml` 过大导致 Agent 上下文膨胀 | P0 | plan 只保留当前和未来任务，done/cancelled task 完成后移出 plan |
@@ -314,7 +328,7 @@ git commit、tag 和 push 仍由 SPRINTING task protocol 负责，避免 release
 ## 8. 需要关注的方案偏移
 
 - 如果当前仓库继续作为包源码仓库，`packages/sdlc-harness/assets/**` 不应手写，应由 `package sync-source` 从工作流源文件生成。
-- RFC_003 调整后，`sdlc-harness init` 会询问 Harness root；默认 `.agent`，当前仓库也使用默认 `.agent`。
+- RFC_003 调整后，`sdlc-harness init` 已从直接询问 Harness root 演进为先选择目标 Agent；默认 `Codex -> .codex`，`Other` 的空输入和配置兜底仍为 `.agent`。当前仓库作为 authoring workspace 继续使用 `.agent`。
 - RFC_004 调整后，删除 `.agent/archive/**` 常规归档，并把历史动作记录交给 git。
 - RFC_005 调整后，checkpoint 文件被删除；`allowed_paths`、`required_gates` 和验收标准直接保存在 open task 的 `plan.yaml` 条目中。
 - RFC_011 调整后，done/cancelled task 不再长期留在 `plan.yaml`。

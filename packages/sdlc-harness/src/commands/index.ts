@@ -25,7 +25,7 @@ export const commands: Record<string, CommandHandler> = {
 export function help(): void {
   console.log(`sdlc-harness commands:
   init [--adopt] [--harness-folder <path>]
-                       Initialize a new project or adopt an existing one
+                       Initialize/adopt a project; without --harness-folder, choose target agent first
   sync                 Materialize canonical assets into the workspace
   upgrade              Run migrations and then sync
   doctor               Diagnose project configuration and drift

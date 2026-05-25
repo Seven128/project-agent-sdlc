@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveAgentHarnessFolderName } from "../../packages/sdlc-harness/dist/commands/init.js";
 import { runDoctor } from "../../packages/sdlc-harness/dist/lib/doctor.js";
 import { runInit } from "../../packages/sdlc-harness/dist/lib/init.js";
 import { runSync } from "../../packages/sdlc-harness/dist/lib/sync-engine.js";
@@ -12,6 +13,7 @@ const defaultRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-default-"));
 const configuredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-configured-"));
 const cliDefaultRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-default-"));
 const cliConfiguredRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-configured-"));
+const cliConfiguredCamelRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-configured-camel-"));
 const cliExistingConfigRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-existing-"));
 const makefileMergeRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-makefile-merge-"));
 const brokenMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-broken-marker-"));
@@ -20,6 +22,11 @@ const cliPath = fileURLToPath(new URL("../../packages/sdlc-harness/dist/cli.js",
 try {
   const initReport = await runInit(defaultRoot, { adopt: true, force: false });
   assert.ok(initReport.some((line) => line.includes("created .agent/config.yaml")));
+  assert.equal(resolveAgentHarnessFolderName(""), ".codex");
+  assert.equal(resolveAgentHarnessFolderName("2"), ".claude");
+  assert.equal(resolveAgentHarnessFolderName("cursor"), ".cursor");
+  assert.equal(resolveAgentHarnessFolderName("other"), ".agent");
+  assert.equal(resolveAgentHarnessFolderName("other", ".workflow"), ".workflow");
 
   const defaultConfig = await readFile(path.join(defaultRoot, ".agent/config.yaml"), "utf8");
   assert.match(defaultConfig, /agent-project-sdlc/);
@@ -81,8 +88,8 @@ try {
   });
   assert.equal(cliDefault.status, 0, cliDefault.stderr);
   const cliDefaultPackage = JSON.parse(await readFile(path.join(cliDefaultRoot, "package.json"), "utf8"));
-  assert.equal(cliDefaultPackage.sdlcHarness.harnessFolderName, ".agent");
-  await stat(path.join(cliDefaultRoot, ".agent/config.yaml"));
+  assert.equal(cliDefaultPackage.sdlcHarness.harnessFolderName, ".codex");
+  await stat(path.join(cliDefaultRoot, ".codex/config.yaml"));
 
   const cliConfigured = spawnSync(process.execPath, [cliPath, "init", "--adopt", "--harness-folder", ".harness"], {
     cwd: cliConfiguredRoot,
@@ -92,6 +99,15 @@ try {
   const cliConfiguredPackage = JSON.parse(await readFile(path.join(cliConfiguredRoot, "package.json"), "utf8"));
   assert.equal(cliConfiguredPackage.sdlcHarness.harnessFolderName, ".harness");
   await stat(path.join(cliConfiguredRoot, ".harness/config.yaml"));
+
+  const cliConfiguredCamel = spawnSync(process.execPath, [cliPath, "init", "--adopt", "--harnessFolderName", ".workflow"], {
+    cwd: cliConfiguredCamelRoot,
+    encoding: "utf8"
+  });
+  assert.equal(cliConfiguredCamel.status, 0, cliConfiguredCamel.stderr);
+  const cliConfiguredCamelPackage = JSON.parse(await readFile(path.join(cliConfiguredCamelRoot, "package.json"), "utf8"));
+  assert.equal(cliConfiguredCamelPackage.sdlcHarness.harnessFolderName, ".workflow");
+  await stat(path.join(cliConfiguredCamelRoot, ".workflow/config.yaml"));
 
   await writeFile(
     path.join(cliExistingConfigRoot, "package.json"),
@@ -160,6 +176,7 @@ try {
   await rm(configuredRoot, { recursive: true, force: true });
   await rm(cliDefaultRoot, { recursive: true, force: true });
   await rm(cliConfiguredRoot, { recursive: true, force: true });
+  await rm(cliConfiguredCamelRoot, { recursive: true, force: true });
   await rm(cliExistingConfigRoot, { recursive: true, force: true });
   await rm(makefileMergeRoot, { recursive: true, force: true });
   await rm(brokenMarkerRoot, { recursive: true, force: true });
