@@ -92,8 +92,8 @@ history:
   assert.match(draft, /current_task_id/);
 
   const config = await readFile(path.join(root, ".harness/config.yaml"), "utf8");
-  assert.match(config, /\.harness\/prompts/);
-  assert.doesNotMatch(config, /\.harness\/skills/);
+  assert.match(config, /\.harness\/skills/);
+  assert.doesNotMatch(config, /\.harness\/prompts/);
   assert.match(config, /path: "?Makefile"?/);
   assert.doesNotMatch(config, /\.harness\/agents\/skills/);
   assert.doesNotMatch(config, /\.agents\/skills/);
@@ -110,9 +110,9 @@ history:
   assert.match(makefile, /-include \.harness\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
 
   const lifecycle = await readFile(path.join(root, ".harness/state/lifecycle.yaml"), "utf8");
-  assert.match(lifecycle, /active_prompt: "?pjsdlc_pm_prd"?/);
-  assert.doesNotMatch(lifecycle, /active_skill/);
-  assert.doesNotMatch(lifecycle, /active_prompt: "pm_prd"/);
+  assert.match(lifecycle, /active_skill: "?pjsdlc_pm_prd"?/);
+  assert.doesNotMatch(lifecycle, /active_prompt/);
+  assert.doesNotMatch(lifecycle, /active_skill: "pm_prd"/);
   assert.doesNotMatch(lifecycle, /history:/);
   assert.doesNotMatch(lifecycle, /legacy phase history/);
 } finally {

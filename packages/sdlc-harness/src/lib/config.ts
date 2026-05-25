@@ -18,7 +18,7 @@ export function defaultConfig(root: string): HarnessConfig {
     managed_files: [
       { path: "AGENTS.md", strategy: "merge-block" },
       { path: "Makefile", strategy: "merge-block" },
-      { path: harnessPath(root, "prompts"), strategy: "managed" },
+      { path: harnessPath(root, "skills"), strategy: "managed" },
       { path: harnessPath(root, "pjsdlc_managed", "templates"), strategy: "managed" },
       { path: harnessPath(root, "pjsdlc_managed", "policies"), strategy: "merge-with-local" },
       { path: harnessPath(root, "pjsdlc_managed", "make", "sdlc-harness.mk"), strategy: "managed" },

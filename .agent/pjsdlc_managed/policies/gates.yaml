@@ -1,7 +1,7 @@
 gates:
   validate-harness:
     command: "make validate-harness"
-    purpose: "验证 Harness 模板、状态源、策略和 Prompt 文件是否完整"
+    purpose: "验证 Harness 模板、状态源、策略和 Skill 文件是否完整"
     required_for:
       - "all"
 

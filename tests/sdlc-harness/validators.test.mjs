@@ -17,7 +17,7 @@ try {
   await mkdir(path.join(root, ".docs/03_tech_plan"), { recursive: true });
   await mkdir(path.join(root, ".docs/04_implementation/example"), { recursive: true });
   await mkdir(path.join(root, ".harness/state"), { recursive: true });
-  await mkdir(path.join(root, ".harness/prompts/workflow"), { recursive: true });
+  await mkdir(path.join(root, ".harness/skills"), { recursive: true });
   await mkdir(path.join(root, ".harness/pjsdlc_managed/templates"), { recursive: true });
   await mkdir(path.join(root, ".harness/pjsdlc_managed/policies"), { recursive: true });
   await writeFile(path.join(root, "AGENTS.md"), "# Agents\n", "utf8");

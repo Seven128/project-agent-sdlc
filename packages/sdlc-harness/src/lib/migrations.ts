@@ -1,5 +1,5 @@
 import path from "node:path";
-import { rename, rm } from "node:fs/promises";
+import { readdir, rename, rm } from "node:fs/promises";
 import { readConfig } from "./config.js";
 import { ensureDir, listFiles, pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
@@ -21,7 +21,7 @@ export interface MigrationReport {
   skipped: string[];
 }
 
-const PROMPT_RENAMES: Record<string, string> = {
+const SKILL_RENAMES: Record<string, string> = {
   manager: "pjsdlc_manager",
   pm_prd: "pjsdlc_pm_prd",
   architect_design: "pjsdlc_architect_design",
@@ -66,9 +66,9 @@ async function migrateConfig(projectRoot: string, root: string, report: Migratio
 }
 
 async function migrateLegacyManagedPaths(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
-  await movePromptTreeIfDestinationMissing(projectRoot, harnessPath(root, "skills"), harnessPath(root, "prompts", "workflow"), report);
-  await movePromptTreeIfDestinationMissing(projectRoot, ".agents/skills", harnessPath(root, "prompts", "workflow"), report);
-  await movePromptTreeIfDestinationMissing(projectRoot, ".harness/agents/skills", harnessPath(root, "prompts", "workflow"), report);
+  await movePromptTreeToSkillsIfDestinationMissing(projectRoot, harnessPath(root, "prompts"), harnessPath(root, "skills"), report);
+  await moveIfDestinationMissing(projectRoot, ".agents/skills", harnessPath(root, "skills"), report);
+  await moveIfDestinationMissing(projectRoot, ".harness/agents/skills", harnessPath(root, "skills"), report);
   await moveIfDestinationMissing(projectRoot, harnessPath(root, "managed"), harnessPath(root, "pjsdlc_managed"), report);
   await moveIfDestinationMissing(
     projectRoot,
@@ -90,7 +90,7 @@ async function migrateLegacyManagedPaths(projectRoot: string, root: string, repo
   );
 }
 
-async function movePromptTreeIfDestinationMissing(
+async function movePromptTreeToSkillsIfDestinationMissing(
   projectRoot: string,
   legacyRelativePath: string,
   nextRelativePath: string,
@@ -108,9 +108,16 @@ async function movePromptTreeIfDestinationMissing(
   }
   await ensureDir(path.dirname(nextPath));
   await rename(legacyPath, nextPath);
+  const workflowPath = path.join(nextPath, "workflow");
+  if (await pathExists(workflowPath)) {
+    for (const entry of await readdir(workflowPath)) {
+      await rename(path.join(workflowPath, entry), path.join(nextPath, entry));
+    }
+    await rm(workflowPath, { recursive: true, force: true });
+  }
   for (const file of await listFiles(nextPath)) {
-    if (path.basename(file) === "SKILL.md") {
-      await rename(file, path.join(path.dirname(file), "PROMPT.md"));
+    if (path.basename(file) === "PROMPT.md") {
+      await rename(file, path.join(path.dirname(file), "SKILL.md"));
     }
   }
   report.changed.push(`${legacyRelativePath} -> ${nextRelativePath}`);
@@ -123,11 +130,15 @@ async function moveIfDestinationMissing(
   report: MigrationReport
 ): Promise<void> {
   const legacyPath = path.join(projectRoot, legacyRelativePath);
+  const nextPath = path.join(projectRoot, nextRelativePath);
+  if (legacyPath === nextPath) {
+    report.skipped.push(legacyRelativePath);
+    return;
+  }
   if (!(await pathExists(legacyPath))) {
     report.skipped.push(legacyRelativePath);
     return;
   }
-  const nextPath = path.join(projectRoot, nextRelativePath);
   if (await pathExists(nextPath)) {
     report.skipped.push(`${legacyRelativePath} -> ${nextRelativePath}`);
     return;
@@ -162,9 +173,10 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
     if (
       item.path === ".agents/skills" ||
       item.path === ".harness/agents/skills" ||
-      item.path === harnessPath(root, "skills")
+      item.path === harnessPath(root, "skills") ||
+      item.path === harnessPath(root, "prompts")
     ) {
-      push({ path: harnessPath(root, "prompts"), strategy: "managed" });
+      push({ path: harnessPath(root, "skills"), strategy: "managed" });
       continue;
     }
     if (item.path === ".harness/templates" || item.path === harnessPath(root, "managed", "templates")) {
@@ -204,16 +216,16 @@ async function migrateLifecycle(projectRoot: string, root: string, report: Migra
   }
   const data = (parseYaml(await readText(lifecyclePath)) ?? {}) as Record<string, unknown>;
   let changed = false;
-  const activePrompt = String(data.active_prompt ?? data.active_skill ?? "");
-  if (PROMPT_RENAMES[activePrompt]) {
-    data.active_prompt = PROMPT_RENAMES[activePrompt];
+  const activeSkill = String(data.active_skill ?? data.active_prompt ?? "");
+  if (SKILL_RENAMES[activeSkill]) {
+    data.active_skill = SKILL_RENAMES[activeSkill];
     changed = true;
-  } else if (activePrompt && !data.active_prompt) {
-    data.active_prompt = activePrompt;
+  } else if (activeSkill && !data.active_skill) {
+    data.active_skill = activeSkill;
     changed = true;
   }
-  if ("active_skill" in data) {
-    delete data.active_skill;
+  if ("active_prompt" in data) {
+    delete data.active_prompt;
     changed = true;
   }
   if ("history" in data) {

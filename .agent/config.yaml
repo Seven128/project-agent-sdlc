@@ -8,7 +8,7 @@ managed_files:
     strategy: "merge-block"
   - path: "Makefile"
     strategy: "merge-block"
-  - path: ".agent/prompts"
+  - path: ".agent/skills"
     strategy: "managed"
   - path: ".agent/pjsdlc_managed/templates"
     strategy: "managed"

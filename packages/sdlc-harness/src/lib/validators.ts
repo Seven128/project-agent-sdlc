@@ -44,7 +44,7 @@ async function validateHarness(projectRoot: string): Promise<ValidatorReport> {
     harnessPath(root, "config.yaml"),
     harnessPath(root, "state", "lifecycle.yaml"),
     harnessPath(root, "state", "plan.yaml"),
-    harnessPath(root, "prompts"),
+    harnessPath(root, "skills"),
     harnessPath(root, "pjsdlc_managed", "templates"),
     harnessPath(root, "pjsdlc_managed", "policies")
   ]) {

@@ -30,7 +30,7 @@ def main() -> None:
         ".docs/07_test",
         ".docs/08_release",
         ".docs/rfc",
-        ".agent/prompts/workflow",
+        ".agent/skills",
         "tools",
     ]
     require_paths(required_files + required_dirs)
@@ -45,10 +45,10 @@ def main() -> None:
     require(current_phase in phases, f"Lifecycle current_phase is not declared: {current_phase}")
 
     for phase_name, contract in phases.items():
-        prompt = contract.get("prompt")
-        require(prompt, f"{phase_name} missing prompt")
-        prompt_file = repo_path(f".agent/prompts/workflow/{prompt}/PROMPT.md")
-        require(prompt_file.exists(), f"Missing prompt file for {phase_name}: {prompt_file.relative_to(repo_path('.'))}")
+        skill = contract.get("skill")
+        require(skill, f"{phase_name} missing skill")
+        skill_file = repo_path(f".agent/skills/{skill}/SKILL.md")
+        require(skill_file.exists(), f"Missing skill file for {phase_name}: {skill_file.relative_to(repo_path('.'))}")
         require("inputs" in contract, f"{phase_name} missing inputs")
         require("outputs" in contract, f"{phase_name} missing outputs")
         require("gates" in contract, f"{phase_name} missing gates")

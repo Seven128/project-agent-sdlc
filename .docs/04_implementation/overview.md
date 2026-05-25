@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 8c24e587208d76c4 -->
+<!-- source-hash: 34bcf6136fc55299 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `8c24e587208d76c4`
+Source hash: `34bcf6136fc55299`
 
 ## Source Slices
 
@@ -43,7 +43,7 @@ Source hash: `8c24e587208d76c4`
 32. [npm_package/dev_029_natural_language_control.md](npm_package/dev_029_natural_language_control.md)
 33. [npm_package/dev_030_readme_user_guide.md](npm_package/dev_030_readme_user_guide.md)
 34. [npm_package/package_release_flow.md](npm_package/package_release_flow.md)
-35. [npm_package/prompt_layout.md](npm_package/prompt_layout.md)
+35. [npm_package/skill_layout.md](npm_package/skill_layout.md)
 
 ---
 
@@ -87,8 +87,8 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 | `AGENTS.md` | Agent 入口协议 | 自然语言与宏指令、`/prd`、`/design`、`/dev`、`/devloop` |
 | `README.md` | 用户视角日常使用说明 | 常用快捷入口表 |
 | `PROJECT_SPEC.md` | 完整工作流规格 | 宏指令协议、Codex 适配方式 |
-| `.agent/prompts/workflow/pjsdlc_manager/PROMPT.md` | 意图路由 Prompt | 自然语言到 workflow action 的映射规则 |
-| `.agent/prompts/workflow/pjsdlc_dev_sprint/PROMPT.md` | 开发阶段执行 Prompt | `/dev` 与 `/devloop` 的执行边界 |
+| `.agent/skills/pjsdlc_manager/SKILL.md` | 意图路由 Skill | 自然语言到 workflow action 的映射规则 |
+| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | 开发阶段执行 Skill | `/dev` 与 `/devloop` 的执行边界 |
 | `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 同步 |
 | `.docs/01_product/npm_package_distribution.md` | 产品需求 | `PRD-NPM-026` |
 | `.docs/03_tech_plan/harness_package_distribution.md` | 技术方案 | Natural Language Control |
@@ -98,8 +98,8 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 ```txt
 User input
 -> Manager reads lifecycle.yaml and plan.yaml
--> Natural language or /xxx detailed prompt alias maps to workflow action
--> Stage Prompt executes the action
+-> Natural language or /xxx detailed skill alias maps to workflow action
+-> Stage Skill executes the action
 -> Gates and docs update
 -> Commit/push protocol records durable history
 ```
@@ -122,7 +122,7 @@ User input
 | 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets 与 source workspace 一致 | PASS |
-| `make validate-harness` | Harness scaffold、prompt language、doc overview、implementation doc index | PASS |
+| `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
 | `python3 tools/validate_allowed_paths.py` | DEV-036 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 
@@ -175,10 +175,10 @@ Source: [harness_workflow/implementation_doc_model.md](harness_workflow/implemen
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
 | `AGENTS.md` | 项目级 workflow 入口规则 | Plan Protocol、工作规则 |
-| `.agent/prompts/workflow/pjsdlc_implementation_doc/PROMPT.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
-| `.agent/prompts/workflow/pjsdlc_dev_sprint/PROMPT.md` | Sprint 执行规则 | task 执行边界、completion protocol |
-| `.agent/prompts/workflow/pjsdlc_architect_design/PROMPT.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
-| `.agent/prompts/workflow/pjsdlc_manager/PROMPT.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
+| `.agent/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
+| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
+| `.agent/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
+| `.agent/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
 | `.agent/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
 | `.agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
 | `.agent/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
@@ -216,7 +216,7 @@ Architecting
 | 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets 与 source workspace 一致 | PASS |
-| `make validate-harness` | Harness scaffold、prompt language、doc overview、implementation doc index | PASS |
+| `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
 | `python3 tools/validate_allowed_paths.py` | DEV-032 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 
@@ -252,54 +252,54 @@ Source: [npm_package/authoring_overlay.md](npm_package/authoring_overlay.md)
 ## 2. 当前实现范围
 
 - 新增（Added）:
-  - `.agent/prompts/authoring/harness_package_design/PROMPT.md`，作为本仓库维护 AI SDLC Harness 自身时的专用 authoring prompt。
-  - `AGENTS.md` 将 `.agent/prompts/authoring/` 声明为可选事实源，仅在维护 Harness/workflow/npm package 源码或本仓库自举规则时读取。
-  - authoring prompt 增加 scriptability heuristic：发现重复、耗时、易漏步骤、易漂移、需要固定证据或涉及发布/回滚安全阀的动作时，提示用户可以抽成脚本。
+  - `.agent/skills/authoring/harness_package_design/SKILL.md`，作为本仓库维护 AI SDLC Harness 自身时的专用 authoring skill。
+  - `AGENTS.md` 将 `.agent/skills/authoring/` 声明为可选事实源，仅在维护 Harness/workflow/npm package 源码或本仓库自举规则时读取。
+  - authoring skill 增加 scriptability heuristic：发现重复、耗时、易漏步骤、易漂移、需要固定证据或涉及发布/回滚安全阀的动作时，提示用户可以抽成脚本。
 - 修改（Changed）:
-  - authoring overlay 从仅存在于设计文档的推荐目录，落地为可被后续 Agent 读取的本地专用 Prompt。
+  - authoring overlay 从仅存在于设计文档的推荐目录，落地为可被后续 Agent 读取的本地专用 Skill。
 - 未覆盖（Not covered）:
-  - 不把 `.agent/prompts/authoring/**` 加入 `packages/sdlc-harness/source-mappings.yaml`。
-  - 不把 authoring Prompt materialize 到用户项目。
+  - 不把 `.agent/skills/authoring/**` 加入 `packages/sdlc-harness/source-mappings.yaml`。
+  - 不把 authoring Skill materialize 到用户项目。
   - 不新增 automatic script generator；当前只要求 Agent 识别并提示可脚本化机会。
 
 ## 3. 真实代码结构
 
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
-| `.agent/prompts/authoring/harness_package_design/PROMPT.md` | 本仓库专用 authoring prompt | 分层判断、scriptability heuristic、package source sync 边界 |
-| `AGENTS.md` | Agent 入口协议 | 可选读取 `.agent/prompts/authoring/` |
+| `.agent/skills/authoring/harness_package_design/SKILL.md` | 本仓库专用 authoring skill | 分层判断、scriptability heuristic、package source sync 边界 |
+| `AGENTS.md` | Agent 入口协议 | 可选读取 `.agent/skills/authoring/` |
 | `packages/sdlc-harness/assets/agents/AGENTS_CORE.md` | package canonical AGENTS managed block | 由 `package sync-source` 同步 `AGENTS.md` |
-| `packages/sdlc-harness/source-mappings.yaml` | source to package assets 映射 | 未包含 `.agent/prompts/authoring/**` |
+| `packages/sdlc-harness/source-mappings.yaml` | source to package assets 映射 | 未包含 `.agent/skills/authoring/**` |
 
 ## 4. 核心数据流
 
 ```txt
 User asks to change Harness/workflow/package source
 -> Agent reads AGENTS.md, lifecycle.yaml, plan.yaml
--> If relevant, Agent reads .agent/prompts/authoring/** local overlay
+-> If relevant, Agent reads .agent/skills/authoring/** local overlay
 -> Agent classifies change as common Harness config, project instance data, or authoring overlay
 -> Agent suggests scripting when an action is repetitive, slow, error-prone, drift-prone, evidence-heavy, or release-sensitive
 -> Common Harness source changes still run package sync-source/check-source
--> .agent/prompts/authoring/** remains local-only
+-> .agent/skills/authoring/** remains local-only
 ```
 
 ## 5. 关键实现逻辑
 
-- 输入校验（Input validation）: authoring Prompt 要求先读取 lifecycle 和 plan，并区分通用配置、项目实例数据和 authoring overlay。
-- 核心分支（Core branches）: 通用配置进入 `.agent/prompts/workflow/**`、`.agent/pjsdlc_managed/**` 或 package assets；项目实例数据留在 `.agent/state/**` 和 `.docs/**`；authoring overlay 留在 `.agent/prompts/authoring/**`。
+- 输入校验（Input validation）: authoring Skill 要求先读取 lifecycle 和 plan，并区分通用配置、项目实例数据和 authoring overlay。
+- 核心分支（Core branches）: 通用配置进入 `.agent/skills/**`、`.agent/pjsdlc_managed/**` 或 package assets；项目实例数据留在 `.agent/state/**` 和 `.docs/**`；authoring overlay 留在 `.agent/skills/authoring/**`。
 - 脚本化提示（Scriptability heuristic）: 重复、耗时、易漏步骤、易漂移、需要固定证据、涉及发布/回滚安全阀或未来很可能复用的动作，应提示用户可以抽成脚本，并说明脚本边界、输入、默认安全行为和验证命令。
-- 边界兜底（Boundary fallback）: `.agent/prompts/authoring/**` 不进入 `source-mappings.yaml`，所以 `package sync-source` 不会复制到 package assets。
+- 边界兜底（Boundary fallback）: `.agent/skills/authoring/**` 不进入 `source-mappings.yaml`，所以 `package sync-source` 不会复制到 package assets。
 
 ## 6. 与技术方案的偏移
 
-- DEV-014 只设计 authoring overlay，不创建目录。本次将推荐目录中的专用 Prompt 最小落地，并保持“不默认进入 npm 包”的边界。
+- DEV-014 只设计 authoring overlay，不创建目录。本次将推荐目录中的专用 Skill 最小落地，并保持“不默认进入 npm 包”的边界。
 
 ## 7. 测试覆盖（Test Coverage）
 
 | 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | AGENTS package asset 与 source workspace 一致，且 authoring overlay 不在 source mappings 中 | PASS |
-| `make validate-harness` | Harness scaffold、prompt language、doc overview、implementation doc index | PASS |
+| `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
 | `python3 tools/validate_allowed_paths.py` | DEV-038 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 
@@ -307,13 +307,13 @@ User asks to change Harness/workflow/package source
 
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
-| 2026-05-25 | `DEV-014` | `DEV-014` implementation commit | 设计 Harness authoring overlay 分层，但未创建 `.agent/prompts/authoring/**`。 |
-| 2026-05-25 | `DEV-037` | `DEV-037` implementation commit | 落地本仓库专用 authoring prompt，并加入可脚本化动作提示规则。 |
-| 2026-05-25 | `DEV-038` | `DEV-038` implementation commit | 将 authoring prompt 迁入统一 `.agent/prompts/authoring/**` 树，并由 npm source sync 排除。 |
+| 2026-05-25 | `DEV-014` | `DEV-014` implementation commit | 设计 Harness authoring overlay 分层，但未创建 `.agent/skills/authoring/**`。 |
+| 2026-05-25 | `DEV-037` | `DEV-037` implementation commit | 落地本仓库专用 authoring skill，并加入可脚本化动作提示规则。 |
+| 2026-05-25 | `DEV-038` | `DEV-038` implementation commit | 将 authoring skill 迁入统一 `.agent/skills/authoring/**` 树，并由 npm source sync 排除。 |
 
 ## 9. 后续维护注意事项
 
-- `.agent/prompts/authoring/**` 只服务本仓库维护 Harness 自身；不要加入 `packages/sdlc-harness/source-mappings.yaml`。
+- `.agent/skills/authoring/**` 只服务本仓库维护 Harness 自身；不要加入 `packages/sdlc-harness/source-mappings.yaml`。
 - 可脚本化提示应保持轻量：先指出机会和收益，再根据用户确认或任务要求实现脚本。
 - 如果 scriptability heuristic 未来对所有用户项目都有价值，应通过 PRD / tech plan / RFC 晋升为通用 Harness 能力。
 
@@ -2259,58 +2259,58 @@ Resolve target version
 
 ---
 
-## npm_package/prompt_layout.md
+## npm_package/skill_layout.md
 
-Source: [npm_package/prompt_layout.md](npm_package/prompt_layout.md)
+Source: [npm_package/skill_layout.md](npm_package/skill_layout.md)
 
-# Harness Prompt Layout Implementation Doc
+# Harness Skill Layout Implementation Doc
 
 ## Summary
 
-`DEV-038` 将 Harness 阶段角色文件从 `.agent/skills/**/SKILL.md` 迁移为 `.agent/prompts/workflow/**/PROMPT.md`，并把本仓库维护 Harness 自身的 authoring prompt 放到同一棵 `.agent/prompts/**` 树下的 `.agent/prompts/authoring/**`。
+`DEV-039` 将 Harness 阶段角色文件重新定义为 `.agent/skills/<name>/SKILL.md` workflow skill，并把本仓库维护 Harness 自身的 authoring skill 放到同一棵 `.agent/skills/**` 树下的 `.agent/skills/authoring/**`。
 
-这个改动明确区分两类 Prompt：
+这个改动明确区分两类 Skill：
 
 | 类型 | 路径 | 是否随 npm 包分发 | 用途 |
 |---|---|---|---|
-| Workflow prompt | `.agent/prompts/workflow/<name>/PROMPT.md` | 是 | 普通用户项目的阶段角色提示词，由 lifecycle 和 phase contract 软索引。 |
-| Authoring prompt | `.agent/prompts/authoring/<name>/PROMPT.md` | 否 | 只服务本仓库迭代 AI SDLC Harness 自身，不进入用户项目。 |
+| Workflow skill | `.agent/skills/<name>/SKILL.md` | 是 | 普通用户项目的阶段角色提示词，由 lifecycle 和 phase contract 软索引。 |
+| Authoring skill | `.agent/skills/authoring/<name>/SKILL.md` | 否 | 只服务本仓库迭代 AI SDLC Harness 自身，不进入用户项目。 |
 
 ## Changed Files
 
 | 文件 | 变更 |
 |---|---|
-| `.agent/prompts/workflow/**/PROMPT.md` | 承接原通用阶段角色文件，并统一使用 Prompt 术语。 |
-| `.agent/prompts/authoring/harness_package_design/PROMPT.md` | 承接本仓库专用 authoring prompt。 |
-| `.agent/state/lifecycle.yaml` | `active_skill` 改为 `active_prompt`。 |
-| `.agent/pjsdlc_managed/policies/phase_contracts.yaml` | phase contract 字段从 `skill` 改为 `prompt`。 |
-| `.agent/config.yaml` | managed path 从 `.agent/skills` 改为 `.agent/prompts`。 |
-| `packages/sdlc-harness/source-mappings.yaml` | package source sync 改为同步 `.agent/prompts` 到 `assets/prompts`，并排除 `authoring/**`。 |
+| `.agent/skills/**/SKILL.md` | 承接原通用阶段角色文件，并统一使用 Skill 术语。 |
+| `.agent/skills/authoring/harness_package_design/SKILL.md` | 承接本仓库专用 authoring skill。 |
+| `.agent/state/lifecycle.yaml` | lifecycle 使用 `active_skill` 指向当前 workflow skill。 |
+| `.agent/pjsdlc_managed/policies/phase_contracts.yaml` | phase contract 使用 `skill` 字段声明每个阶段的 workflow skill。 |
+| `.agent/config.yaml` | managed path 使用 `.agent/skills`。 |
+| `packages/sdlc-harness/source-mappings.yaml` | package source sync 改为同步 `.agent/skills` 到 `assets/skills`，并排除 `authoring/**`。 |
 | `packages/sdlc-harness/src/lib/package-source.ts` | `copy-tree` source mapping 支持 `exclude` pattern。 |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | 用户项目同步 package `prompts` assets 到 `<harnessRoot>/prompts`。 |
-| `packages/sdlc-harness/src/lib/migrations.ts` | 旧 `skills` managed path、`SKILL.md` 和 `active_skill` 迁移到新 Prompt 布局。 |
-| `tools/validate_harness.py` / `tools/validate_prompt_language.py` | 本仓库 gate 改为校验 `.agent/prompts/workflow/**/PROMPT.md` 和 `PROMPT_TEMPLATE.md`。 |
-| `tests/sdlc-harness/*.test.mjs` | 覆盖 prompt sync、authoring 排除、validator 和 upgrade 兼容。 |
+| `packages/sdlc-harness/src/lib/sync-engine.ts` | 用户项目同步 package `skills` assets 到 `<harnessRoot>/skills`。 |
+| `packages/sdlc-harness/src/lib/migrations.ts` | 旧 `skills` managed path、`SKILL.md` 和 `active_skill` 迁移到新 Skill 布局。 |
+| `tools/validate_harness.py` / `tools/validate_prompt_language.py` | 本仓库 gate 改为校验 `.agent/skills/**/SKILL.md` 和 `SKILL_TEMPLATE.md`。 |
+| `tests/sdlc-harness/*.test.mjs` | 覆盖 skill sync、authoring 排除、validator 和 upgrade 兼容。 |
 
 ## Behavior
 
-- 新安装或同步的用户项目获得 `<harnessRoot>/prompts/workflow/**/PROMPT.md`，不获得 authoring prompt。
-- `package sync-source` 从 `.agent/prompts/**` 复制通用 workflow prompt 到 `packages/sdlc-harness/assets/prompts/**`，但跳过 `.agent/prompts/authoring/**`。
-- `sync` / `init` / `upgrade` 使用 package `assets/prompts` 作为通用 Prompt source，并写入用户项目的 `<harnessRoot>/prompts/**`。
-- 旧项目如果配置了 `.agents/skills`、`.harness/agents/skills` 或 `<harnessRoot>/skills`，upgrade 会改写到 `<harnessRoot>/prompts`。
-- 旧项目 lifecycle 中的 `active_skill` 会迁移为 `active_prompt`；旧 `SKILL.md` 文件会在迁移旧 skills 树时重命名为 `PROMPT.md`。
+- 新安装或同步的用户项目获得 `<harnessRoot>/skills/**/SKILL.md`，不获得 authoring skill。
+- `package sync-source` 从 `.agent/skills/**` 复制通用 workflow skill 到 `packages/sdlc-harness/assets/skills/**`，但跳过 `.agent/skills/authoring/**`。
+- `sync` / `init` / `upgrade` 使用 package `assets/skills` 作为通用 Skill source，并写入用户项目的 `<harnessRoot>/skills/**`。
+- 旧项目如果配置了 `.agents/skills`、`.harness/agents/skills` 或 `<harnessRoot>/prompts`，upgrade 会改写到 `<harnessRoot>/skills`。
+- 旧项目 lifecycle 中的 `active_prompt` 会迁移为 `active_skill`；旧 `PROMPT.md` 文件会在迁移 prompts 树时重命名为 `SKILL.md`。
 
 ## Important Boundary
 
-这些 Prompt 不是 Codex 原生注册 skill。Harness 使用的是“阶段状态 + prompt 文件”的软索引：
+这些 workflow skills 可以被 native skill adapter 注册，也可以被 Harness soft index 读取。默认项目内生效路径是“阶段状态 + skill 文件”的软索引：
 
 ```txt
-.agent/state/lifecycle.yaml active_prompt
--> .agent/pjsdlc_managed/policies/phase_contracts.yaml prompt
--> .agent/prompts/workflow/<prompt>/PROMPT.md
+.agent/state/lifecycle.yaml active_skill
+-> .agent/pjsdlc_managed/policies/phase_contracts.yaml skill
+-> .agent/skills/<skill>/SKILL.md
 ```
 
-Codex 原生 skill 的注册、水合和语义枚举仍由客户端自己的 skill 目录机制控制；Harness workflow prompt 不依赖那个机制，也不会被假装成注册 skill。
+Codex 原生 skill 的注册、水合和语义枚举仍由客户端自己的 skill 目录机制控制。`.agent/skills/**` 是 Harness source of truth；要获得 native skill 首轮命中，需要由 Codex adapter 或安装命令同步/链接到 Codex 支持的 skill root。
 
 ## Verification
 
@@ -2318,6 +2318,6 @@ Codex 原生 skill 的注册、水合和语义枚举仍由客户端自己的 ski
 |---|---|
 | `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package assets 与 source mapping 一致。 |
-| `make validate-harness` | PASS，Harness scaffold、Prompt language 和 doc overview 均通过。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，83 个 changed files 均在 DEV-038 allowed_paths 内。 |
+| `make validate-harness` | PASS，Harness scaffold、Skill language 和 doc overview 均通过。 |
+| `python3 tools/validate_allowed_paths.py` | PASS，60 个 changed files 均在 DEV-039 allowed_paths 内。 |
 | `git diff --check` | PASS。 |

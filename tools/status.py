@@ -12,7 +12,7 @@ def main() -> None:
 
     print(f"Current phase: {lifecycle.get('current_phase')}")
     print(f"Active role: {lifecycle.get('active_role')}")
-    print(f"Active prompt: {lifecycle.get('active_prompt')}")
+    print(f"Active skill: {lifecycle.get('active_skill')}")
     print(f"Milestone: {lifecycle.get('current_milestone')}")
     print(f"Allowed next phases: {', '.join(lifecycle.get('allowed_next_phases') or []) or 'none'}")
     print(f"Plan tasks: {active_count} active/future")

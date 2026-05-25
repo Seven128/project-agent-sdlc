@@ -6,8 +6,8 @@ from pathlib import Path
 from harness_utils import ROOT, HarnessError, load_yaml, require, run_main
 
 
-PROMPT_REQUIRED_SECTIONS = ["## 目的", "## 角色提示词", "## 输入", "## 规则", "## 完成检查"]
-ARTIFACT_PROMPTS_REQUIRE_SEMANTIC_SLICING = {
+SKILL_REQUIRED_SECTIONS = ["## 目的", "## 角色提示词", "## 输入", "## 规则", "## 完成检查"]
+ARTIFACT_SKILLS_REQUIRE_SEMANTIC_SLICING = {
     "pjsdlc_pm_prd",
     "pjsdlc_architect_design",
     "pjsdlc_dev_sprint",
@@ -17,7 +17,7 @@ ARTIFACT_PROMPTS_REQUIRE_SEMANTIC_SLICING = {
     "pjsdlc_release_manager",
     "pjsdlc_rfc_recalibrate",
 }
-PROMPT_FORBIDDEN_HEADINGS = [
+SKILL_FORBIDDEN_HEADINGS = [
     "## Purpose",
     "## Required Inputs",
     "## Outputs",
@@ -27,7 +27,7 @@ PROMPT_FORBIDDEN_HEADINGS = [
 
 MACHINE_IDENTIFIERS = [
     "current_phase",
-    "active_prompt",
+    "active_skill",
     "allowed_paths",
     "required_gates",
     "implementation_doc",
@@ -46,7 +46,7 @@ MACHINE_IDENTIFIERS = [
 ]
 
 REQUIRED_AGENTS_TERMS = [
-    "Prompt Language Contract",
+    "Skill Language Contract",
     "中文解释 + 英文精确标识符",
     ".agent/state/lifecycle.yaml",
     ".agent/state/plan.yaml",
@@ -59,7 +59,7 @@ YAML_KEYWORDS = {
         "version",
         "current_phase",
         "active_role",
-        "active_prompt",
+        "active_skill",
         "current_milestone",
         "allowed_next_phases",
     ],
@@ -79,35 +79,35 @@ def text(path: Path) -> str:
 def validate_agents() -> None:
     content = text(ROOT / "AGENTS.md")
     for term in REQUIRED_AGENTS_TERMS:
-        require(term in content, f"AGENTS.md missing prompt language contract term: {term}")
+        require(term in content, f"AGENTS.md missing skill language contract term: {term}")
     for identifier in MACHINE_IDENTIFIERS:
         require(identifier in content, f"AGENTS.md should preserve machine identifier: {identifier}")
 
 
-def validate_prompts() -> None:
-    prompt_files = sorted((ROOT / ".agent/prompts/workflow").glob("*/PROMPT.md"))
-    require(prompt_files, "No workflow prompt files found under .agent/prompts/workflow/")
+def validate_skills() -> None:
+    skill_files = sorted((ROOT / ".agent/skills").glob("*/SKILL.md"))
+    require(skill_files, "No workflow skill files found under .agent/skills/")
 
-    for path in prompt_files:
+    for path in skill_files:
         content = text(path)
-        for section in PROMPT_REQUIRED_SECTIONS:
+        for section in SKILL_REQUIRED_SECTIONS:
             require(section in content, f"{path.relative_to(ROOT)} missing Chinese section: {section}")
-        for heading in PROMPT_FORBIDDEN_HEADINGS:
-            require(heading not in content, f"{path.relative_to(ROOT)} still uses English prompt heading: {heading}")
+        for heading in SKILL_FORBIDDEN_HEADINGS:
+            require(heading not in content, f"{path.relative_to(ROOT)} still uses English skill heading: {heading}")
         require("name:" in content and "description:" in content, f"{path.relative_to(ROOT)} must keep frontmatter name/description")
-        prompt_name = path.parent.name
-        if prompt_name in ARTIFACT_PROMPTS_REQUIRE_SEMANTIC_SLICING:
+        skill_name = path.parent.name
+        if skill_name in ARTIFACT_SKILLS_REQUIRE_SEMANTIC_SLICING:
             require("## 语义切片" in content, f"{path.relative_to(ROOT)} missing semantic slicing section: ## 语义切片")
 
 
-def validate_prompt_template() -> None:
-    path = ROOT / ".agent/pjsdlc_managed/templates/PROMPT_TEMPLATE.md"
-    require(path.exists(), "Missing .agent/pjsdlc_managed/templates/PROMPT_TEMPLATE.md")
+def validate_skill_template() -> None:
+    path = ROOT / ".agent/pjsdlc_managed/templates/SKILL_TEMPLATE.md"
+    require(path.exists(), "Missing .agent/pjsdlc_managed/templates/SKILL_TEMPLATE.md")
     content = text(path)
-    for section in PROMPT_REQUIRED_SECTIONS:
-        require(section in content, f"PROMPT_TEMPLATE.md missing Chinese section: {section}")
-    require("## 语义切片" in content, "PROMPT_TEMPLATE.md missing semantic slicing section: ## 语义切片")
-    require("current_phase" in content and "make validate-current" in content, "PROMPT_TEMPLATE.md must demonstrate English machine identifiers")
+    for section in SKILL_REQUIRED_SECTIONS:
+        require(section in content, f"SKILL_TEMPLATE.md missing Chinese section: {section}")
+    require("## 语义切片" in content, "SKILL_TEMPLATE.md missing semantic slicing section: ## 语义切片")
+    require("current_phase" in content and "make validate-current" in content, "SKILL_TEMPLATE.md must demonstrate English machine identifiers")
 
 
 def validate_yaml_keys() -> None:
@@ -126,12 +126,12 @@ def validate_yaml_keys() -> None:
 def main() -> None:
     try:
         validate_agents()
-        validate_prompts()
-        validate_prompt_template()
+        validate_skills()
+        validate_skill_template()
         validate_yaml_keys()
     except HarnessError:
         raise
-    print("Prompt language contract OK")
+    print("Skill language contract OK")
 
 
 if __name__ == "__main__":

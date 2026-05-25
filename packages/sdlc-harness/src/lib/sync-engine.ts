@@ -56,8 +56,8 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     await syncMakefileInclude(destination, root, report);
     return;
   }
-  if (managedFile.path === path.join(root, "prompts")) {
-    await syncTree(packageAssetPath("prompts"), destination, report);
+  if (managedFile.path === path.join(root, "skills")) {
+    await syncTree(packageAssetPath("skills"), destination, report);
     return;
   }
   if (
@@ -65,7 +65,7 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     managedFile.path === ".harness/agents/skills" ||
     (managedFile.path === ".agents/skills" && root !== ".agents")
   ) {
-    await syncTree(packageAssetPath("prompts"), path.join(projectRoot, root, "prompts"), report);
+    await syncTree(packageAssetPath("skills"), path.join(projectRoot, root, "skills"), report);
     return;
   }
   if (managedFile.path === path.join(root, "pjsdlc_managed", "templates")) {

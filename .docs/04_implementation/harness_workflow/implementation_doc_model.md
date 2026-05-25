@@ -29,10 +29,10 @@
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
 | `AGENTS.md` | 项目级 workflow 入口规则 | Plan Protocol、工作规则 |
-| `.agent/prompts/workflow/pjsdlc_implementation_doc/PROMPT.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
-| `.agent/prompts/workflow/pjsdlc_dev_sprint/PROMPT.md` | Sprint 执行规则 | task 执行边界、completion protocol |
-| `.agent/prompts/workflow/pjsdlc_architect_design/PROMPT.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
-| `.agent/prompts/workflow/pjsdlc_manager/PROMPT.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
+| `.agent/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
+| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
+| `.agent/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
+| `.agent/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
 | `.agent/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
 | `.agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
 | `.agent/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
@@ -70,7 +70,7 @@ Architecting
 | 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets 与 source workspace 一致 | PASS |
-| `make validate-harness` | Harness scaffold、prompt language、doc overview、implementation doc index | PASS |
+| `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
 | `python3 tools/validate_allowed_paths.py` | DEV-032 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 

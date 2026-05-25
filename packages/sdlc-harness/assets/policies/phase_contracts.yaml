@@ -2,7 +2,7 @@ phases:
   IDLE:
     goal: "等待项目启动"
     role: "manager"
-    prompt: "pjsdlc_manager"
+    skill: "pjsdlc_manager"
     inputs:
       - "<harnessRoot>/state/lifecycle.yaml"
     outputs:
@@ -13,7 +13,7 @@ phases:
   REQUIREMENT_GATHERING:
     goal: "收集需求并形成产品方案"
     role: "pm"
-    prompt: "pjsdlc_pm_prd"
+    skill: "pjsdlc_pm_prd"
     inputs:
       - ".docs/00_raw/"
     outputs:
@@ -26,7 +26,7 @@ phases:
   ARCHITECTING:
     goal: "根据产品方案生成架构设计、技术方案和任务草案"
     role: "architect"
-    prompt: "pjsdlc_architect_design"
+    skill: "pjsdlc_architect_design"
     inputs:
       - ".docs/01_product/"
       - ".docs/02_architecture/"
@@ -41,7 +41,7 @@ phases:
   SPRINTING:
     goal: "按任务状态执行开发、测试和实现文档沉淀"
     role: "developer"
-    prompt: "pjsdlc_dev_sprint"
+    skill: "pjsdlc_dev_sprint"
     inputs:
       - "<harnessRoot>/state/plan.yaml"
       - "current open task plan contract"
@@ -58,7 +58,7 @@ phases:
   REVIEWING:
     goal: "只读审查实现质量、需求一致性和架构风险"
     role: "reviewer"
-    prompt: "pjsdlc_reviewer"
+    skill: "pjsdlc_reviewer"
     inputs:
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
@@ -73,7 +73,7 @@ phases:
   TESTING:
     goal: "形成测试矩阵并完成回归验证"
     role: "tester"
-    prompt: "pjsdlc_tester"
+    skill: "pjsdlc_tester"
     inputs:
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
@@ -89,7 +89,7 @@ phases:
   RELEASING:
     goal: "发布准备、发布检查和回滚方案"
     role: "release_manager"
-    prompt: "pjsdlc_release_manager"
+    skill: "pjsdlc_release_manager"
     inputs:
       - ".docs/07_test/"
       - "build artifacts"
@@ -102,7 +102,7 @@ phases:
   COMPLETED:
     goal: "当前里程碑已完成"
     role: "manager"
-    prompt: "pjsdlc_manager"
+    skill: "pjsdlc_manager"
     inputs:
       - ".docs/08_release/"
     outputs:
@@ -113,7 +113,7 @@ phases:
   RFC_RECALIBRATION:
     goal: "处理需求变更、影响分析、局部补丁和任务回退"
     role: "rfc_owner"
-    prompt: "pjsdlc_rfc_recalibrate"
+    skill: "pjsdlc_rfc_recalibrate"
     inputs:
       - ".docs/rfc/"
       - ".docs/01_product/"
@@ -130,7 +130,7 @@ phases:
   BLOCKED:
     goal: "等待人工补充信息、授权或基础设施处理"
     role: "manager"
-    prompt: "pjsdlc_manager"
+    skill: "pjsdlc_manager"
     inputs:
       - "<harnessRoot>/state/lifecycle.yaml"
     outputs:

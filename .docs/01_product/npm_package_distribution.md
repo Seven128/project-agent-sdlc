@@ -10,7 +10,7 @@
 
 - 提供一个 npm 包 `agent-project-sdlc`，作为 Harness 通用能力的 canonical source。
 - 提供 CLI 命令 `sdlc-harness`，支持新项目初始化、已有项目接入、同步、升级和诊断。
-- 通过 `sdlc-harness sync` 将 Agent 必须读取的规则、Prompt、模板和策略 materialize 到项目配置的 `<harnessRoot>`。未配置时默认 `<harnessRoot>` 为 `.agent`；用户也可通过 init 交互输入或 `package.json` 显式配置其它目录。
+- 通过 `sdlc-harness sync` 将 Agent 必须读取的规则、Skill、模板和策略 materialize 到项目配置的 `<harnessRoot>`。未配置时默认 `<harnessRoot>` 为 `.agent`；用户也可通过 init 交互输入或 `package.json` 显式配置其它目录。
 - 通过 `sdlc-harness upgrade` 自动执行 schema migration 和 `sync`，降低已接入项目升级成本。
 - 明确 managed files、local overrides 和 never overwrite 边界，保护项目自己的 `.docs/**`、`<harnessRoot>/state/**` 和业务代码。
 
@@ -18,9 +18,9 @@
 
 | 场景（Scenario） | 用户（User） | 触发条件（Trigger） | 预期结果（Expected Result） |
 |---|---|---|---|
-| 新项目接入 Harness | 项目负责人 | 在空项目或新业务项目中运行 `npx sdlc-harness init` | 生成最小 `AGENTS.md`、`<harnessRoot>/config.yaml`、`<harnessRoot>/state/**`、`.docs/**` 和可被 Agent 读取的 Prompt |
+| 新项目接入 Harness | 项目负责人 | 在空项目或新业务项目中运行 `npx sdlc-harness init` | 生成最小 `AGENTS.md`、`<harnessRoot>/config.yaml`、`<harnessRoot>/state/**`、`.docs/**` 和可被 Agent 读取的 Skill |
 | 已有项目中途接入 | 项目负责人 | 在已有 README、src、tests 的仓库中运行 `npx sdlc-harness init --adopt` | 不覆盖业务代码，生成最小 Harness 入口，并通过 `doctor` 报告推荐阶段和缺失产物 |
-| 同步 Agent 可读文件 | Harness 用户 | 运行 `npx sdlc-harness sync` | 将包内 canonical Prompt、模板、策略、Makefile 接入片段 materialize 到 `<harnessRoot>/**`，同时保留 local overrides |
+| 同步 Agent 可读文件 | Harness 用户 | 运行 `npx sdlc-harness sync` | 将包内 canonical Skill、模板、策略、Makefile 接入片段 materialize 到 `<harnessRoot>/**`，同时保留 local overrides |
 | 升级已接入项目 | Harness 用户 | 更新 npm 包后运行 `npx sdlc-harness upgrade` | 自动执行 migration 和 sync，不要求用户额外运行 `sync`，并输出升级报告 |
 | 检查接入状态 | Harness 用户 | 运行 `npx sdlc-harness doctor` | 报告配置缺失、managed files 漂移、state/docs 风险和下一步修复建议 |
 
@@ -31,17 +31,17 @@
 | PRD-NPM-001 | npm 包名使用 `agent-project-sdlc`，CLI binary 使用 `sdlc-harness` | P0 | 避免使用过泛的 `harness` 命令名；包名发布前改为 unscoped package |
 | PRD-NPM-002 | 提供 `init` 命令生成新项目最小 Harness 骨架 | P0 | 包括 agent-readable files 和项目状态初始文件 |
 | PRD-NPM-003 | 提供 `init --adopt` 命令支持已有项目中途接入 | P0 | 不覆盖业务代码，优先诊断和最小接入 |
-| PRD-NPM-004 | 提供 `sync` 命令，将包内 canonical source 同步到工作区固定路径 | P0 | 重点覆盖 `AGENTS.md` 管理区块、`<harnessRoot>/prompts/workflow/pjsdlc_*/PROMPT.md`、`<harnessRoot>/pjsdlc_managed/templates/**`、`<harnessRoot>/pjsdlc_managed/policies/**`、`<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk`；除 prompts 硬索引外，工作流配置不再维护 legacy mirror |
+| PRD-NPM-004 | 提供 `sync` 命令，将包内 canonical source 同步到工作区固定路径 | P0 | 重点覆盖 `AGENTS.md` 管理区块、`<harnessRoot>/skills/pjsdlc_*/SKILL.md`、`<harnessRoot>/pjsdlc_managed/templates/**`、`<harnessRoot>/pjsdlc_managed/policies/**`、`<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk`；除 skills 硬索引外，工作流配置不再维护 legacy mirror |
 | PRD-NPM-005 | 提供 `upgrade` 命令，且 `upgrade` 必须自动执行 `sync` | P0 | 用户不需要在升级后再手动运行一次 `sync` |
 | PRD-NPM-006 | 提供 `<harnessRoot>/config.yaml` 记录 package version、schema version、managed files、local overrides 和 never overwrite | P0 | 作为 sync/upgrade 的机器契约 |
 | PRD-NPM-007 | `AGENTS.md` 使用 managed block 合并，不整体覆盖项目自有 Agent 规则 | P0 | preferred marker 使用 `pjsdlc:sdlc-harness:begin/end`；旧 `sdlc-harness:begin/end` 仅作为 legacy marker 兼容迁移 |
 | PRD-NPM-008 | `Makefile` 不整体覆盖，优先插入 include 并生成 `<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk` | P0 | 保护项目自己的 `lint`、`test`、`build` 命令 |
 | PRD-NPM-009 | `.docs/**`、`<harnessRoot>/state/**`、`src/**`、`tests/**` 永远不被 sync/upgrade 覆盖 | P0 | 这些是项目事实源或业务代码 |
-| PRD-NPM-010 | 支持 local overrides 合成最终 Prompt、模板或策略 | P1 | 推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml`；不要直接修改 package-managed 文件 |
+| PRD-NPM-010 | 支持 local overrides 合成最终 Skill、模板或策略 | P1 | 推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml`；不要直接修改 package-managed 文件 |
 | PRD-NPM-011 | 提供 `doctor` 命令检查配置完整性、文件漂移和升级风险 | P1 | 可以作为 `upgrade` 后的自动检查 |
 | PRD-NPM-012 | 提供 migration 机制处理 schema version 变化 | P1 | 迁移 `<harnessRoot>/config.yaml` 和受管理文件布局 |
-| PRD-NPM-013 | 当本仓库中的 Harness 工作流内容变化时，自动更新 npm 包 canonical source 并校验包内产物一致性 | P0 | 包括 `AGENTS.md` managed block、Prompt、templates、policies、Makefile 接入片段、workflow 和 validator 入口 |
-| PRD-NPM-014 | 以可配置 `<harnessRoot>` 作为 Harness 工作流配置 canonical root | P0 | Prompt、policy、template、state protocol、validator 和 migration 都属于 Harness 配置；具体 state data 和 `.docs/**` 属于项目实例 |
+| PRD-NPM-013 | 当本仓库中的 Harness 工作流内容变化时，自动更新 npm 包 canonical source 并校验包内产物一致性 | P0 | 包括 `AGENTS.md` managed block、Skill、templates、policies、Makefile 接入片段、workflow 和 validator 入口 |
+| PRD-NPM-014 | 以可配置 `<harnessRoot>` 作为 Harness 工作流配置 canonical root | P0 | Skill、policy、template、state protocol、validator 和 migration 都属于 Harness 配置；具体 state data 和 `.docs/**` 属于项目实例 |
 | PRD-NPM-015 | 支持通过 JSON 配置 `harnessFolderName` 指定 Harness 根目录，默认值为 `.agent` | P0 | 优先读取 `package.json` 的 `sdlcHarness.harnessFolderName`，也支持 `sdlc-harness.config.json`；兼容别名 `harnessFloderName` |
 | PRD-NPM-016 | `sdlc-harness init` 交互式询问 Harness folder name，并写入 `package.json` | P0 | 提示默认值 `.agent`；直接回车采用默认；非交互环境不阻塞并使用默认 |
 | PRD-NPM-017 | 删除 archive 并采用 `plan.yaml` 单文件短期执行计划模型 | P0 | `plan.yaml` 取代 `tasks.yaml`；open task 直接包含 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注；task 完成并写入长期历史后从 `plan.yaml` 移除；不再维护 checkpoint 文件或 `.agent/archive/**` 常规归档 |
@@ -49,7 +49,7 @@
 | PRD-NPM-019 | Gate evidence 写入 task notes 或 implementation doc | P1 | 不维护独立 gate scratchpad；当前 task 的临时 gate 证据可写入 `working_notes`，完成后的最终 gate 事实写入 implementation doc `Verification`、CI logs 或 release 记录 |
 | PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml` 和 `plan.yaml` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
 | PRD-NPM-021 | 移除独立 gate results state | P0 | 不再维护 `<harnessRoot>/state/gate_results.log`；当前 task gate 证据写入 task notes 或 implementation doc `Verification`，长期记录由 implementation doc、CI logs 或 release 系统承担 |
-| PRD-NPM-022 | RFC 阶段必须显式考虑影响面 | P0 | RFC 进入补丁或 DEV task 前必须列出 docs、state、prompts、policies、templates、tools、package assets、tests、sync/upgrade/migration 和 generated artifacts 影响 |
+| PRD-NPM-022 | RFC 阶段必须显式考虑影响面 | P0 | RFC 进入补丁或 DEV task 前必须列出 docs、state、skills、policies、templates、tools、package assets、tests、sync/upgrade/migration 和 generated artifacts 影响 |
 | PRD-NPM-023 | 用户可通过自然语言控制 workflow | P0 | `/status`、`/next`、`/advance`、`/rfc` 等宏指令保留为快捷入口；Agent 应将“继续”“完善产品方案”“设计技术方案”“开始开发”“跑测试”“进入下一阶段”等自然语言映射到 lifecycle/plan 对应动作 |
 | PRD-NPM-024 | 根 README 面向用户接入和日常使用 | P1 | 长篇产品说明和设计取舍迁移到 `PROJECT_SPEC.md`；根 `README.md` 只保留用户视角的包介绍、安装、初始化、同步、升级、诊断和验证命令 |
 | PRD-NPM-025 | implementation doc 默认按模块级事实切片 | P0 | `.docs/04_implementation/` 描述最终实现产物，默认按模块、子系统或核心数据流维护，并与 architecture / tech plan 边界对应；task id 和 commit 仅作为 provenance，不作为默认文档粒度 |
@@ -60,7 +60,7 @@
 
 - [ ] 新仓库执行 `npm install -D agent-project-sdlc && npx sdlc-harness init` 后，可以得到可运行的最小 Harness 骨架。
 - [ ] 已有仓库执行 `npx sdlc-harness init --adopt` 后，不修改 `src/**`、`tests/**`、已有业务文档和已有项目配置，除非用户显式确认。
-- [ ] 执行 `npx sdlc-harness sync` 后，`<harnessRoot>/prompts/workflow/**/PROMPT.md` 作为 canonical source 存在于工作区，Agent 可按本地固定目录读取。
+- [ ] 执行 `npx sdlc-harness sync` 后，`<harnessRoot>/skills/**/SKILL.md` 作为 canonical source 存在于工作区，Agent 可按本地固定目录读取。
 - [ ] 执行 `npx sdlc-harness upgrade` 后，自动完成 `sync`，不要求用户再手动运行 `npx sdlc-harness sync`。
 - [ ] `AGENTS.md` 中项目自定义内容在 sync/upgrade 后保持不变，仅 `pjsdlc:sdlc-harness` managed block 被更新；旧 `sdlc-harness` block 可被迁移为新 marker。
 - [ ] 项目根 `Makefile` 中业务自定义 `lint`、`test-all`、`build` 等目标在 sync/upgrade 后保持不变。
@@ -68,9 +68,9 @@
 - [ ] `sdlc-harness doctor` 能报告 managed files 缺失、checksum 漂移、schema version 不匹配和 local override 合并结果。
 - [ ] 本仓库的 Harness 源文件发生变化时，可以通过 `sdlc-harness package sync-source` 或等价自动化流程更新 npm 包 canonical source。
 - [ ] CI 能验证工作区 Harness 源文件与 npm 包 canonical source 一致，避免修改了工作流但漏更新包内容。
-- [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agent` 作为 Harness 根目录，Prompt 位于 `.agent/prompts/workflow/**`，其它配置位于 `.agent/state/**`、`.agent/pjsdlc_managed/**` 和 `.agent/config.yaml`。
-- [ ] workflow Prompt 使用 `.agent/prompts/workflow/pjsdlc_<prompt_name>/PROMPT.md` hard index；policy、template、Makefile fragment 等工作流配置统一位于 `.agent/pjsdlc_managed/**`，不再维护 `.agent/pjsdlc_managed/**`、`.agent/policies/**` 或 `.agent/templates/**` mirror。
-- [ ] 配置 `harnessFolderName: ".harness"` 的项目使用 `.harness` 作为 Harness 根目录，Prompt 位于 `.harness/prompts/workflow/**`，不再额外套 `.harness/agents/prompts/**`。
+- [ ] 未配置 `harnessFolderName` 的项目默认使用 `.agent` 作为 Harness 根目录，Skill 位于 `.agent/skills/**`，其它配置位于 `.agent/state/**`、`.agent/pjsdlc_managed/**` 和 `.agent/config.yaml`。
+- [ ] workflow Skill 使用 `.agent/skills/pjsdlc_<skill_name>/SKILL.md` hard index；policy、template、Makefile fragment 等工作流配置统一位于 `.agent/pjsdlc_managed/**`，不再维护 `.agent/pjsdlc_managed/**`、`.agent/policies/**` 或 `.agent/templates/**` mirror。
+- [ ] 配置 `harnessFolderName: ".harness"` 的项目使用 `.harness` 作为 Harness 根目录，Skill 位于 `.harness/skills/**`，不再额外套 `.harness/agents/skills/**`。
 - [ ] 执行 `npx sdlc-harness init` 时，CLI 提示输入 Harness folder name；直接回车写入默认 `.agent`，输入自定义值则写入自定义值。
 - [ ] `plan.yaml` 和 `plan.draft.yaml` 取代 `tasks.yaml` 和 `tasks.draft.yaml`。
 - [ ] open task 直接在 `plan.yaml` 中声明 `allowed_paths`、`required_gates`、`acceptance_criteria` 和必要执行备注。
@@ -107,13 +107,13 @@
 |---|---|---|
 | 首个 npm 包是否直接发布到 npm registry，还是先以 workspace/local package 验证？ | 用户 | open |
 | CLI 使用 TypeScript/Node 实现，还是保留 Python validators 并由 Node CLI 调用？ | 技术方案阶段 | resolved：使用 TypeScript/Node runtime |
-| managed Prompt 与 local override 的合并格式是简单追加，还是支持结构化 patch？ | 技术方案阶段 | open |
+| managed Skill 与 local override 的合并格式是简单追加，还是支持结构化 patch？ | 技术方案阶段 | open |
 | `AGENTS.md` managed block 是否引用 `.agent/instructions/AGENTS_CORE.md`，还是直接内联核心规则？ | 技术方案阶段 | open |
 | 是否需要兼容 Cursor、Cline、Claude Code 等工具的专有规则目录同步？ | 用户 | open |
 
 ## 8. 依赖与风险
 
-- 依赖 Agent 对工作区固定文件的读取约定，例如 `AGENTS.md` 和本地 `prompts/**/PROMPT.md` 目录；因此默认 `<harnessRoot>` 采用 `.agent`，显式 `.harness` 项目需要通过入口规则或 Agent 适配层声明 `.harness/prompts/workflow/**`。
+- 依赖 Agent 对工作区固定文件的读取约定，例如 `AGENTS.md` 和本地 `skills/**/SKILL.md` 目录；因此默认 `<harnessRoot>` 采用 `.agent`，显式 `.harness` 项目需要通过入口规则或 Agent 适配层声明 `.harness/skills/**`。
 - npm 包升级与工作区文件同步需要 checksum、managed marker 和冲突策略，否则容易覆盖项目本地修改。
 - `Makefile` 和 `AGENTS.md` 是高冲突文件，必须使用 managed block 或 include 方式，不应整体覆盖。
 - validators 运行时已经收敛到 TypeScript/Node；仓库内 Python 工具仅作为当前 Harness 本地 gate 和辅助脚本存在。

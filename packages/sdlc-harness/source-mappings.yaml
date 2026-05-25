@@ -2,8 +2,8 @@ source_mappings:
   - source: "AGENTS.md"
     target: "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
     mode: "extract-managed-block"
-  - source: ".agent/prompts"
-    target: "packages/sdlc-harness/assets/prompts"
+  - source: ".agent/skills"
+    target: "packages/sdlc-harness/assets/skills"
     mode: "copy-tree"
     exclude:
       - "authoring/**"

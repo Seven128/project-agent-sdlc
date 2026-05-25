@@ -37,7 +37,7 @@ try {
 
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
-  await stat(path.join(defaultRoot, ".agent/prompts/workflow/pjsdlc_manager/PROMPT.md"));
+  await stat(path.join(defaultRoot, ".agent/skills/pjsdlc_manager/SKILL.md"));
   await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/policies/phase_contracts.yaml"));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml")));
@@ -62,7 +62,7 @@ try {
   assert.equal(configuredSyncReport.blocked.length, 0);
   const configuredMakefile = await readFile(path.join(configuredRoot, "Makefile"), "utf8");
   assert.match(configuredMakefile, /-include \.harness\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
-  await stat(path.join(configuredRoot, ".harness/prompts/workflow/pjsdlc_manager/PROMPT.md"));
+  await stat(path.join(configuredRoot, ".harness/skills/pjsdlc_manager/SKILL.md"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/policies/phase_contracts.yaml"));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/state/gate_results.log")));

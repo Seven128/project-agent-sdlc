@@ -24,4 +24,4 @@ risk_levels:
       - "文档补充"
       - "单任务范围内的测试补充"
       - "非破坏性重构"
-    action: "按当前阶段 Prompt 继续推进"
+    action: "按当前阶段 Skill 继续推进"

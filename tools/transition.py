@@ -36,7 +36,7 @@ def main() -> None:
     phase = phases[target]
     lifecycle["current_phase"] = target
     lifecycle["active_role"] = phase.get("role", "")
-    lifecycle["active_prompt"] = phase.get("prompt", "")
+    lifecycle["active_skill"] = phase.get("skill", "")
 
     next_phase = phase.get("next")
     lifecycle["allowed_next_phases"] = [next_phase] if next_phase else []
