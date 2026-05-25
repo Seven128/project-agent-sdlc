@@ -1,45 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-040"
+current_task_id: ""
 next_task_sequence: 41
-tasks:
-  - id: "DEV-040"
-    title: "init 增加 Agent 选择并说明 skill 索引模型"
-    status: "in_progress"
-    summary: "将 `sdlc-harness init` 的交互改为先选择目标 Agent，默认 Codex 写入 `.codex`；只有选择 Other 时才询问自定义 Harness folder，默认 `.agent`。同时在 PROJECT_SPEC/README 中讲清 native skill hard index 与 Harness soft index 的关系。"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - "README.md"
-      - "PROJECT_SPEC.md"
-      - ".agent/state/plan.yaml"
-      - "packages/sdlc-harness/src/**"
-      - "tests/**"
-      - ".docs/01_product/npm_package_distribution.md"
-      - ".docs/01_product/overview.md"
-      - ".docs/02_architecture/harness_package_distribution.md"
-      - ".docs/02_architecture/overview.md"
-      - ".docs/03_tech_plan/harness_package_distribution.md"
-      - ".docs/03_tech_plan/overview.md"
-      - ".docs/04_implementation/npm_package/**"
-      - ".docs/04_implementation/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "make validate-harness"
-      - "python3 tools/validate_allowed_paths.py"
-      - "git diff --check"
-    acceptance_criteria:
-      - "交互式 init 先询问目标 Agent，直接回车默认选择 Codex 并写入 `.codex`。"
-      - "选择 Other 时才显示自定义 Harness folder 问句，直接回车默认 `.agent`。"
-      - "显式 `--harness-folder` / `--harnessFolderName` 仍跳过交互并优先使用命令行值。"
-      - "README 和 PROJECT_SPEC 清楚区分 native skill hard index 与 Harness soft index。"
-      - "测试覆盖默认 Codex、Other 自定义和命令行覆盖路径。"
-    working_notes:
-      - "用户要求把已有的 folder name 问句改为只有选择 Other 时才显示；主流程默认 Codex -> `.codex`。"
-      - "已实现 init Agent 选择、README/PROJECT_SPEC hard/soft index 说明，并通过 npm test、package check-source、make validate-harness、validate_allowed_paths、git diff --check。"
-    implementation_doc: ".docs/04_implementation/npm_package/init_agent_selection.md"
+tasks: []
