@@ -1,11 +1,11 @@
 # .docs/06_review overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 4c01c3a97e9a9f81 -->
+<!-- source-hash: 4836436e2ed792c9 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `4c01c3a97e9a9f81`
+Source hash: `4836436e2ed792c9`
 
 ## Source Slices
 
@@ -23,7 +23,7 @@ Source: [REVIEW_REPORT.md](REVIEW_REPORT.md)
 
 - PRD: `.docs/01_product/npm_package_distribution.md`
 - 技术方案（Technical design）: `.docs/03_tech_plan/harness_package_distribution.md`
-- 实现文档（Implementation docs）: `.docs/04_implementation/npm_package/dev_001_package_scaffold.md` 到 `.docs/04_implementation/npm_package/dev_019_commit_before_task_compression.md`
+- 实现文档（Implementation docs）: DEV-043 后改为模块级 slices，主要包括 `.docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md`、`.docs/04_implementation/harness_package/source_sync_and_assets.md`、`.docs/04_implementation/harness_workflow/state_and_task_protocol.md`、`.docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md`
 - Diff/commit: `8f7f8c8..2d0d034`
 - Follow-up diff/commit: `0741e92..ec51a21` for RFC_006 / DEV-020 package rename.
 - Gate evidence: `make validate-current` 已通过；`DEV-019` completion 前记录了 `make validate-current` 和 `git diff --check` 通过。
@@ -38,7 +38,7 @@ Source: [REVIEW_REPORT.md](REVIEW_REPORT.md)
 
 ## 3. 需求一致性
 
-- package scaffold、sync/init/doctor、upgrade/migration、source sync、validate-* CLI、configurable harness root、`.agent` 默认 root、plan/checkpoint 简化、Makefile managed block、workspace decoupling、authoring overlay、Markdown overview、角色提示词和 task commit 规则均有对应 implementation docs。
+- package scaffold、sync/init/doctor、upgrade/migration、source sync、validate-* CLI、configurable harness root、`.codex` authoring root、plan/checkpoint 简化、Makefile managed block、workspace decoupling、authoring overlay、Markdown overview、角色提示词和 task commit 规则均有对应模块级 implementation docs。
 - 最新工作流原则要求 package 与用户仓库内容解耦，sync/upgrade 只做 additive 或 managed block merge；实现文档和 README 已体现 AGENTS.md 与 Makefile 的非覆盖式策略。
 - `overview.md` 已替代 `overview.html` 作为 generated artifact，并同步到了 root harness 与 package assets。
 - RFC_006 将 npm package name 更新为 `agent-project-sdlc`，且未改变 CLI binary 名称，满足发布前改名诉求。

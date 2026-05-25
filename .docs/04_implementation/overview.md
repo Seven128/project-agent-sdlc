@@ -1,51 +1,313 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 118a6cc1f2afd945 -->
+<!-- source-hash: a7453495217e1fa9 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `118a6cc1f2afd945`
+Source hash: `a7453495217e1fa9`
 
 ## Source Slices
 
-1. [harness_workflow/command_intent_model.md](harness_workflow/command_intent_model.md)
-2. [harness_workflow/implementation_doc_model.md](harness_workflow/implementation_doc_model.md)
-3. [npm_package/authoring_overlay.md](npm_package/authoring_overlay.md)
-4. [npm_package/current_workspace_codex_root.md](npm_package/current_workspace_codex_root.md)
-5. [npm_package/dev_001_package_scaffold.md](npm_package/dev_001_package_scaffold.md)
-6. [npm_package/dev_002_sync_init_doctor.md](npm_package/dev_002_sync_init_doctor.md)
-7. [npm_package/dev_003_upgrade_migrations.md](npm_package/dev_003_upgrade_migrations.md)
-8. [npm_package/dev_004_source_sync_ci.md](npm_package/dev_004_source_sync_ci.md)
-9. [npm_package/dev_005_validate_commands.md](npm_package/dev_005_validate_commands.md)
-10. [npm_package/dev_006_unified_harness_root.md](npm_package/dev_006_unified_harness_root.md)
-11. [npm_package/dev_007_remove_tracked_agents_skills.md](npm_package/dev_007_remove_tracked_agents_skills.md)
-12. [npm_package/dev_008_configurable_harness_root.md](npm_package/dev_008_configurable_harness_root.md)
-13. [npm_package/dev_009_init_prompt_default_agent_root.md](npm_package/dev_009_init_prompt_default_agent_root.md)
-14. [npm_package/dev_010_task_checkpoint_model.md](npm_package/dev_010_task_checkpoint_model.md)
-15. [npm_package/dev_011_plan_yaml_no_checkpoint.md](npm_package/dev_011_plan_yaml_no_checkpoint.md)
-16. [npm_package/dev_012_makefile_include_block.md](npm_package/dev_012_makefile_include_block.md)
-17. [npm_package/dev_013_package_workspace_decoupling_principle.md](npm_package/dev_013_package_workspace_decoupling_principle.md)
-18. [npm_package/dev_014_authoring_overlay_design.md](npm_package/dev_014_authoring_overlay_design.md)
-19. [npm_package/dev_015_markdown_doc_overviews.md](npm_package/dev_015_markdown_doc_overviews.md)
-20. [npm_package/dev_016_role_prompts_and_karpathy_guidelines.md](npm_package/dev_016_role_prompts_and_karpathy_guidelines.md)
-21. [npm_package/dev_017_chinese_karpathy_guidelines.md](npm_package/dev_017_chinese_karpathy_guidelines.md)
-22. [npm_package/dev_018_task_commit_push_rule.md](npm_package/dev_018_task_commit_push_rule.md)
-23. [npm_package/dev_019_commit_before_task_compression.md](npm_package/dev_019_commit_before_task_compression.md)
-24. [npm_package/dev_020_rename_npm_package.md](npm_package/dev_020_rename_npm_package.md)
-25. [npm_package/dev_021_consolidate_managed_config.md](npm_package/dev_021_consolidate_managed_config.md)
-26. [npm_package/dev_022_pjsdlc_marker_prefix.md](npm_package/dev_022_pjsdlc_marker_prefix.md)
-27. [npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md](npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md)
-28. [npm_package/dev_024_done_task_git_history_lookup.md](npm_package/dev_024_done_task_git_history_lookup.md)
-29. [npm_package/dev_025_short_lived_plan_and_gate_log.md](npm_package/dev_025_short_lived_plan_and_gate_log.md)
-30. [npm_package/dev_026_remove_execution_history_from_active_state.md](npm_package/dev_026_remove_execution_history_from_active_state.md)
-31. [npm_package/dev_027_workflow_singleton_collaboration_boundary.md](npm_package/dev_027_workflow_singleton_collaboration_boundary.md)
-32. [npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md](npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md)
-33. [npm_package/dev_029_natural_language_control.md](npm_package/dev_029_natural_language_control.md)
-34. [npm_package/dev_030_readme_user_guide.md](npm_package/dev_030_readme_user_guide.md)
-35. [npm_package/init_agent_selection.md](npm_package/init_agent_selection.md)
-36. [npm_package/package_release_flow.md](npm_package/package_release_flow.md)
-37. [npm_package/skill_layout.md](npm_package/skill_layout.md)
+1. [harness_package/cli_distribution_and_lifecycle.md](harness_package/cli_distribution_and_lifecycle.md)
+2. [harness_package/release_automation.md](harness_package/release_automation.md)
+3. [harness_package/source_sync_and_assets.md](harness_package/source_sync_and_assets.md)
+4. [harness_workflow/command_intent_model.md](harness_workflow/command_intent_model.md)
+5. [harness_workflow/docs_overview_and_validation.md](harness_workflow/docs_overview_and_validation.md)
+6. [harness_workflow/implementation_doc_model.md](harness_workflow/implementation_doc_model.md)
+7. [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skills_prompt_and_authoring.md)
+8. [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and_task_protocol.md)
+
+---
+
+## harness_package/cli_distribution_and_lifecycle.md
+
+Source: [harness_package/cli_distribution_and_lifecycle.md](harness_package/cli_distribution_and_lifecycle.md)
+
+# CLI Distribution and Lifecycle Implementation
+
+## 1. 关联信息
+
+- Domain: `harness_package`
+- Module / subsystem / core flow: CLI package distribution, init/sync/upgrade/doctor lifecycle
+- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md`
+- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
+- Linked RFC: `RFC_001`, `RFC_002`, `RFC_003`, `RFC_006`, `RFC_007`, `RFC_008`, `RFC_009`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
+
+## 2. 当前实现范围
+
+- `agent-project-sdlc` npm package exposes the `sdlc-harness` CLI binary.
+- `init` / `init --adopt` create or adopt a project Harness without overwriting user-owned project code.
+- `sync` materializes managed Harness assets from package canonical assets into the selected `<harnessRoot>`.
+- `upgrade` runs schema migrations and then syncs managed assets.
+- `doctor` reports Harness config, managed file drift, override state and suggested gates.
+- `validate-*` commands expose package-side validation entry points for Harness state and phase artifacts.
+- 当前 authoring workspace 使用 `.codex` as `harnessFolderName`; `Other` agent selection still falls back to `.agent`.
+
+## 3. 真实代码结构
+
+| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
+|---|---|---|
+| `package.json` | Root workspace and package-level scripts | `workspaces`, `scripts.sdlc-harness`, `scripts.release:npm`, `sdlcHarness.harnessFolderName` |
+| `packages/sdlc-harness/package.json` | npm package manifest | `name`, `version`, `bin.sdlc-harness`, `files`, `prepack` |
+| `packages/sdlc-harness/src/cli.ts` | CLI process entrypoint | `main()` |
+| `packages/sdlc-harness/src/commands/index.ts` | CLI command router | `commands` |
+| `packages/sdlc-harness/src/commands/init.ts` | `init` adapter | `init` command parser |
+| `packages/sdlc-harness/src/commands/sync.ts` | `sync` adapter | `sync` command parser |
+| `packages/sdlc-harness/src/commands/upgrade.ts` | `upgrade` adapter | `upgrade` command parser |
+| `packages/sdlc-harness/src/commands/doctor.ts` | `doctor` adapter | `doctor` command parser |
+| `packages/sdlc-harness/src/commands/validate.ts` | Validation command adapter | `validate-*` command parser |
+| `packages/sdlc-harness/src/lib/init.ts` | Project initialization and adoption | agent selection, `harnessFolderName`, scaffold writer |
+| `packages/sdlc-harness/src/lib/harness-root.ts` | Harness root resolution | package/config/env/default precedence |
+| `packages/sdlc-harness/src/lib/config.ts` | Default package config | `defaultConfig()` |
+| `packages/sdlc-harness/src/lib/upgrade.ts` | Upgrade orchestration | migration runner, sync handoff |
+| `packages/sdlc-harness/src/lib/migrations.ts` | Schema and compatibility migrations | `runMigrations`, legacy root/layout migration |
+| `packages/sdlc-harness/src/lib/doctor.ts` | Diagnostic model | config and managed-file checks |
+| `packages/sdlc-harness/src/lib/validators.ts` | Node-side Harness validators | plan, lifecycle, docs and phase validators |
+| `tests/sdlc-harness/*.test.mjs` | Package regression coverage | init/sync/doctor, upgrade, root resolution, validators |
+
+## 4. 核心数据流
+
+```txt
+User runs sdlc-harness init/init --adopt
+-> choose target Agent unless explicit harness folder/config exists
+-> resolve <harnessRoot>
+-> write config/state/docs scaffold
+-> sync package canonical assets
+-> doctor reports readiness
+```
+
+```txt
+Existing project runs sdlc-harness upgrade
+-> read current package/config/schema
+-> run migrations for root names, managed layout, markers, plan/lifecycle shape
+-> sync canonical assets
+-> doctor reports remaining drift or blockers
+```
+
+## 5. 关键实现逻辑
+
+- Agent selection happens before folder selection. `Codex` is the default and writes `.codex`; `Other` asks for a custom folder and defaults to `.agent`.
+- Explicit CLI flags and existing JSON config have higher priority than interactive defaults.
+- Managed files use package metadata blocks and merge strategies instead of blind overwrites.
+- Package name and CLI name are intentionally separate: npm installs `agent-project-sdlc`, users run `sdlc-harness`.
+- Migrations preserve compatibility with earlier `.harness`, `.agents` and `.agent` layouts while converging new installs on the configured `<harnessRoot>`.
+- Validation commands mirror the Python Harness gates closely enough for package consumers to run health checks without depending on this authoring workspace.
+
+## 6. 与技术方案的偏移
+
+- Earlier plans used `.harness`, `.agents` and then `.agent` as defaults; current behavior is target-agent first, with Codex mapping to `.codex`.
+- Historical task docs were written under `.docs/04_implementation/npm_package/dev_*.md`; DEV-043 migrated those facts into this module-level doc and sibling module docs.
+
+## 7. 测试覆盖（Test Coverage）
+
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
+|---|---|---|
+| `npm test` | TypeScript build and package CLI regression tests | PASS in release and development tasks through `DEV-042` |
+| `tests/sdlc-harness/sync-init-doctor.test.mjs` | init, adopt, sync and doctor behavior | PASS in package regression suite |
+| `tests/sdlc-harness/upgrade.test.mjs` | migrations and automatic sync | PASS in package regression suite |
+| `tests/sdlc-harness/harness-root.test.mjs` | root resolution and config precedence | PASS in package regression suite |
+| `tests/sdlc-harness/validators.test.mjs` | package validators | PASS in package regression suite |
+| `make validate-harness` | authoring workspace Harness scaffold and docs | PASS for DEV-043 |
+
+## 8. 变更记录（Change Log）
+
+| 日期（Date） | Task ID | Commit | 摘要（Summary） |
+|---|---|---|---|
+| 2026-05-25 | `DEV-001` - `DEV-023` | Historical implementation commits | Built the npm package, CLI lifecycle, root migration and managed layout. |
+| 2026-05-25 | `DEV-040` | `40552f0` | Added target-agent selection during init. |
+| 2026-05-25 | `DEV-041` | `c34ad14` | Migrated the authoring workspace Harness root to `.codex`. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Migrated legacy task-grain implementation docs into module-level facts. |
+
+## 9. 后续维护注意事项
+
+- Future package lifecycle changes should update this document instead of creating task-grain `dev_*.md` implementation docs.
+- When CLI behavior changes, keep README user guidance, PRD acceptance criteria and package tests in sync.
+
+---
+
+## harness_package/release_automation.md
+
+Source: [harness_package/release_automation.md](harness_package/release_automation.md)
+
+# Release Automation Implementation
+
+## 1. 关联信息
+
+- Domain: `harness_package`
+- Module / subsystem / core flow: npm release automation and registry smoke
+- Updated by task: `DEV-033`, `DEV-035`, `DEV-042`, `DEV-043`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md`
+- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
+- Linked RFC: none
+- Linked commits: `DEV-033`, `DEV-035`, `DEV-042` implementation commits; `DEV-043` migration commit
+
+## 2. 当前实现范围
+
+- `tools/release_npm.mjs` automates npm package version bump, gates, publish, registry verification, installed-consumer smoke and release-doc generation.
+- `npm run release:npm` is the root script entrypoint.
+- The script defaults to prepare/check mode; real publishing requires `--publish --yes`.
+- Release evidence is written under `.docs/08_release/vX.Y.Z_npm_release.md`.
+- Git commit, tag and push remain outside the release script and are handled by the SPRINTING task protocol.
+
+## 3. 真实代码结构
+
+| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
+|---|---|---|
+| `tools/release_npm.mjs` | Release automation entrypoint | version resolution, gate runner, publish, smoke, release doc writer |
+| `package.json` | Root script adapter | `scripts.release:npm` |
+| `packages/sdlc-harness/package.json` | Package version and publish metadata | `version`, `files`, `bin`, `prepack` |
+| `package-lock.json` | Workspace lock version record | `packages/sdlc-harness.version` |
+| `.docs/08_release/*.md` | Release evidence and rollback plan | versioned release docs |
+
+## 4. 核心数据流
+
+```txt
+npm run release:npm -- --version patch --publish --yes
+-> resolve next version from local package and npm registry
+-> npm version --workspace agent-project-sdlc --no-git-tag-version
+-> npm test
+-> package check-source
+-> npm pack --dry-run --json
+-> npm publish
+-> npm view latest verification
+-> temporary consumer install smoke
+-> write release doc
+-> make docs-overview
+-> make validate-harness
+-> git diff --check
+```
+
+## 5. 关键实现逻辑
+
+- The script refuses accidental publish unless both `--publish` and `--yes` are present.
+- Version selection can be explicit or semantic (`patch`, `minor`, `major`) and is checked against the npm registry.
+- Registry smoke validates the published package by installing it into a temporary consumer and running package commands.
+- Release docs are generated as durable evidence; they are not the implementation-doc source of truth for package mechanics.
+- Commit and tag creation remain manual/task-driven so release automation cannot bypass Harness task ledger rules.
+
+## 6. 与技术方案的偏移
+
+- The original package plan expected publish evidence to be created manually in the release stage. DEV-035 added a script because repeated package publishing became deterministic enough to automate.
+- DEV-042 used the script flow to publish `agent-project-sdlc@0.1.5`.
+
+## 7. 测试覆盖（Test Coverage）
+
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
+|---|---|---|
+| `node --check tools/release_npm.mjs` | Script syntax | PASS |
+| `npm test` | Package build and tests before publish | PASS during release tasks |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | Asset drift before publish | PASS during release tasks |
+| `npm pack --dry-run --json --workspace agent-project-sdlc` | Tarball content and metadata | PASS during release tasks |
+| `npm publish --workspace agent-project-sdlc` | Registry publish | PASS for `v0.1.3` through `v0.1.5` |
+| `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | Registry verification | PASS for `v0.1.5` |
+| Temporary installed-consumer smoke | Published package install and CLI smoke | PASS during release tasks |
+
+## 8. 变更记录（Change Log）
+
+| 日期（Date） | Task ID | Commit | 摘要（Summary） |
+|---|---|---|---|
+| 2026-05-25 | `DEV-033` | Historical implementation commit | Published `agent-project-sdlc@0.1.3` with release evidence. |
+| 2026-05-25 | `DEV-035` | Historical implementation commit | Added `tools/release_npm.mjs` release automation. |
+| 2026-05-26 | `DEV-042` | `873966d` | Released `agent-project-sdlc@0.1.5`. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Moved release-flow facts out of the old `npm_package` implementation-doc directory. |
+
+## 9. 后续维护注意事项
+
+- Keep the release script conservative; publishing must remain explicit.
+- If release evidence format changes, update both `tools/release_npm.mjs` and `.docs/08_release/` expectations.
+
+---
+
+## harness_package/source_sync_and_assets.md
+
+Source: [harness_package/source_sync_and_assets.md](harness_package/source_sync_and_assets.md)
+
+# Source Sync and Package Assets Implementation
+
+## 1. 关联信息
+
+- Domain: `harness_package`
+- Module / subsystem / core flow: package canonical assets, source sync, managed file materialization
+- Updated by task: `DEV-001`, `DEV-004`, `DEV-006`, `DEV-012`, `DEV-013`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-027`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-043`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md`
+- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
+- Linked RFC: `RFC_001`, `RFC_007`, `RFC_008`, `RFC_009`, `RFC_013`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
+
+## 2. 当前实现范围
+
+- The authoring workspace is the source of truth for `AGENTS.md`, workflow Skills, templates, policies, Makefile include assets and GitHub workflow assets.
+- `package sync-source` copies or extracts those source files into `packages/sdlc-harness/assets/**`.
+- `package check-source` verifies that package assets have not drifted from authoring sources.
+- User-project `sync` materializes package assets into the configured `<harnessRoot>` and project root using managed strategies.
+- Authoring-only Skills under `<harnessRoot>/skills/authoring/**` are excluded from package assets.
+
+## 3. 真实代码结构
+
+| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
+|---|---|---|
+| `packages/sdlc-harness/source-mappings.yaml` | Source-to-asset manifest | `source_mappings`, `mode`, `exclude` |
+| `packages/sdlc-harness/src/commands/package-source.ts` | Package source command adapter | `package sync-source`, `package check-source` |
+| `packages/sdlc-harness/src/lib/package-source.ts` | Source sync/check implementation | copy/extract/check modes, exclude handling |
+| `packages/sdlc-harness/src/lib/sync-engine.ts` | User-project materialization engine | managed strategies, marker handling |
+| `packages/sdlc-harness/src/lib/managed-file.ts` | Managed metadata blocks | `pjsdlc:sdlc-harness:*` markers |
+| `packages/sdlc-harness/assets/**` | Package canonical assets | generated from authoring source by `package sync-source` |
+| `.codex/skills/**` | Authoring source for workflow Skills | `pjsdlc_*`, `authoring/**` exclusion boundary |
+| `.codex/pjsdlc_managed/**` | Authoring source for templates, policies and Makefile include | `templates`, `policies`, `make` |
+| `.github/workflows/harness.yml` | Authoring source for package CI asset | workflow asset mapping |
+| `tests/sdlc-harness/package-source.test.mjs` | Regression tests for source sync and drift checks | source mapping, excludes, check-source |
+
+## 4. 核心数据流
+
+```txt
+Author edits Harness source files
+-> sdlc-harness package sync-source
+-> package assets are regenerated
+-> sdlc-harness package check-source verifies no drift
+-> npm package ships assets
+-> user project runs sdlc-harness sync/upgrade
+-> managed assets materialize into <harnessRoot> and root files
+```
+
+## 5. 关键实现逻辑
+
+- `AGENTS.md` is synced as an extracted managed block, so project-specific text outside the block remains user-owned.
+- Skills are distributed under `<harnessRoot>/skills`, while policies/templates live under `<harnessRoot>/pjsdlc_managed`.
+- The package keeps a hard source mapping manifest, not a runtime scan of arbitrary repository paths.
+- `copy-tree` supports exclude patterns so authoring-only material stays local to this repository.
+- Makefile integration is an include block, allowing project-specific targets to win on name conflicts.
+- The current package does not guarantee native skill hydration for every Agent. It distributes files in the chosen root and exposes Harness soft routing through `AGENTS.md`.
+
+## 6. 与技术方案的偏移
+
+- Legacy package layouts referenced `.harness/managed`, `.agents/skills` and `.agent/managed`; current generated assets use `<harnessRoot>/skills` and `<harnessRoot>/pjsdlc_managed`.
+- DEV-043 removed the legacy implementation-doc directory as an active asset/documentation target; source sync does not treat `.docs/04_implementation/npm_package/**` as a maintained path.
+
+## 7. 测试覆盖（Test Coverage）
+
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
+|---|---|---|
+| `node packages/sdlc-harness/dist/cli.js package sync-source` | Regenerate package canonical assets from authoring source | PASS in source-sync and release tasks |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | Asset drift detection | PASS in source-sync, release and DEV-043 gates |
+| `tests/sdlc-harness/package-source.test.mjs` | Mapping modes, excludes and drift errors | PASS in `npm test` |
+| `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
+
+## 8. 变更记录（Change Log）
+
+| 日期（Date） | Task ID | Commit | 摘要（Summary） |
+|---|---|---|---|
+| 2026-05-25 | `DEV-001`, `DEV-004` | Historical implementation commits | Introduced source mappings and package source sync/check commands. |
+| 2026-05-25 | `DEV-006` - `DEV-023` | Historical implementation commits | Migrated roots, markers and managed layout to the current package asset shape. |
+| 2026-05-25 | `DEV-037` - `DEV-039` | Historical implementation commits | Added authoring Skill boundary and excluded authoring assets from package sync. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated source-sync implementation facts from legacy task docs. |
+
+## 9. 后续维护注意事项
+
+- Any change to `.codex/skills/**`, `.codex/pjsdlc_managed/**`, `AGENTS.md`, Makefile include or CI asset source should be followed by `package sync-source` and `package check-source`.
+- If an operation becomes repetitive and deterministic, prefer extracting it into a script and documenting the script here instead of keeping it as manual release/development lore.
 
 ---
 
@@ -59,7 +321,7 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
@@ -89,8 +351,8 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 | `AGENTS.md` | Agent 入口协议 | 自然语言与宏指令、`/prd`、`/design`、`/dev`、`/devloop` |
 | `README.md` | 用户视角日常使用说明 | 常用快捷入口表 |
 | `PROJECT_SPEC.md` | 完整工作流规格 | 宏指令协议、Codex 适配方式 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 意图路由 Skill | 自然语言到 workflow action 的映射规则 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | 开发阶段执行 Skill | `/dev` 与 `/devloop` 的执行边界 |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | 意图路由 Skill | 自然语言到 workflow action 的映射规则 |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | 开发阶段执行 Skill | `/dev` 与 `/devloop` 的执行边界 |
 | `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 同步 |
 | `.docs/01_product/npm_package_distribution.md` | 产品需求 | `PRD-NPM-026` |
 | `.docs/03_tech_plan/harness_package_distribution.md` | 技术方案 | Natural Language Control |
@@ -133,12 +395,105 @@ User input
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
 | 2026-05-25 | `DEV-034` | `DEV-034` implementation commit | 增加自然语言/指令别名双入口和 `/dev`、`/devloop` 开发入口。 |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 
 ## 9. 后续维护注意事项
 
 - 后续新增阶段快捷入口时，应同时补自然语言表达和 `/xxx` 详细提示词别名，保持双入口映射到同一 workflow action。
 - 如果未来实现真实 CLI command，需明确区分 Agent 对话宏指令和 `sdlc-harness` binary 子命令。
+
+---
+
+## harness_workflow/docs_overview_and_validation.md
+
+Source: [harness_workflow/docs_overview_and_validation.md](harness_workflow/docs_overview_and_validation.md)
+
+# Documentation Overview and Validation Implementation
+
+## 1. 关联信息
+
+- Domain: `harness_workflow`
+- Module / subsystem / core flow: docs overview generation, documentation indexing and validation
+- Updated by task: `DEV-005`, `DEV-015`, `DEV-025`, `DEV-030`, `DEV-032`, `DEV-043`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md`
+- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
+- Linked RFC: none
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
+
+## 2. 当前实现范围
+
+- `.docs/INDEX.md` is the durable documentation routing table.
+- `.docs/<stage>/overview.md` files are generated artifacts and are not hand edited.
+- `make docs-overview` regenerates all stage overviews from Markdown slices.
+- `make validate-doc-overviews` and `make validate-harness` check that generated overviews are current.
+- `tools/validate_task_docs.py` requires every implementation doc slice to be linked from `.docs/INDEX.md`.
+- Root README is a user guide; `PROJECT_SPEC.md` carries the heavier product/specification narrative.
+
+## 3. 真实代码结构
+
+| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
+|---|---|---|
+| `.docs/INDEX.md` | Global documentation router | stage map, active artifacts |
+| `tools/build_doc_overviews.py` | Generated overview builder/checker | source hash, stage scan, Markdown rendering |
+| `tools/validate_task_docs.py` | Implementation-doc index validator | implementation doc link check |
+| `tools/validate_harness.py` | Harness scaffold validator | structure checks |
+| `Makefile` | Validation command entrypoint | `docs-overview`, `validate-doc-overviews`, `validate-harness` |
+| `README.md` | User-facing package guide | install/init/sync/upgrade/commands |
+| `PROJECT_SPEC.md` | Maintainer-facing product/specification doc | architecture, workflow and package background |
+
+## 4. 核心数据流
+
+```txt
+Markdown slice changes
+-> update .docs/INDEX.md if routing changed
+-> make docs-overview
+-> generated overview.md files include source hash and slice content
+-> make validate-doc-overviews / make validate-harness confirms freshness
+```
+
+```txt
+Implementation doc slice exists
+-> tools/validate_task_docs.py scans .docs/04_implementation/**/*.md
+-> each slice must be linked from .docs/INDEX.md
+-> missing links fail validate-dev / relevant gates
+```
+
+## 5. 关键实现逻辑
+
+- Overview files are deterministic and include every non-overview Markdown slice under their stage directory.
+- Generated overviews are for browsing and handoff; Markdown slices and `.docs/INDEX.md` remain the source of truth.
+- Implementation docs are validated as module/subsystem/core-flow slices, not task ledgers.
+- DEV-043 removes the legacy `npm_package/dev_*.md` docs from the active docs graph and replaces them with module-level slices.
+
+## 6. 与技术方案的偏移
+
+- Early documentation used task-grain implementation docs. The current model uses module-level implementation docs and treats git history as the task action record.
+- `README.md` was split from the full product specification so npm package users see a lightweight guide first.
+
+## 7. 测试覆盖（Test Coverage）
+
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
+|---|---|---|
+| `make docs-overview` | Regenerate all `.docs/<stage>/overview.md` files | PASS for DEV-043 |
+| `make validate-doc-overviews` | Check generated overview freshness | PASS for DEV-043 |
+| `make validate-harness` | Harness scaffold, prompt language and overview checks | PASS for DEV-043 |
+| `python3 tools/validate_task_docs.py` | Implementation docs are linked from `.docs/INDEX.md` | Covered by validate-dev and manual checks |
+
+## 8. 变更记录（Change Log）
+
+| 日期（Date） | Task ID | Commit | 摘要（Summary） |
+|---|---|---|---|
+| 2026-05-25 | `DEV-015` | Historical implementation commit | Added deterministic Markdown overview generation. |
+| 2026-05-25 | `DEV-025` | Historical implementation commit | Tightened implementation doc indexing in validation. |
+| 2026-05-25 | `DEV-030` | Historical implementation commit | Split lightweight README from full product/specification content. |
+| 2026-05-25 | `DEV-032` | Historical implementation commit | Defined implementation docs as module/subsystem/core-flow facts. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Removed task-grain implementation docs from the active implementation-doc graph. |
+
+## 9. 后续维护注意事项
+
+- Never edit `overview.md` directly; regenerate it.
+- When a doc slice is moved or renamed, update `.docs/INDEX.md` in the same task.
 
 ---
 
@@ -152,7 +507,7 @@ Source: [harness_workflow/implementation_doc_model.md](harness_workflow/implemen
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: implementation documentation model
-- Updated by task: `DEV-032`
+- Updated by task: `DEV-032`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-025`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
@@ -169,22 +524,23 @@ Source: [harness_workflow/implementation_doc_model.md](harness_workflow/implemen
   - `pjsdlc_dev_sprint` 将 task 定义为执行和提交边界，将 implementation doc 定义为长期事实边界。
   - `pjsdlc_architect_design` 和 plan/tech templates 引导 future task 指向模块级 implementation doc。
   - AGENTS、PROJECT_SPEC、PRD 和 tech plan 使用同一套语义。
-- 未覆盖（Not covered）:
-  - 未批量迁移历史 `.docs/04_implementation/npm_package/dev_*.md` 文件；它们作为 legacy task log 保留，后续可单独合并。
+  - DEV-043 将历史 `.docs/04_implementation/npm_package/dev_*.md` task log 合并为模块、子系统和核心数据流级 implementation docs，并从活跃实现文档图中移除 legacy 目录。
 
 ## 3. 真实代码结构
 
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
 | `AGENTS.md` | 项目级 workflow 入口规则 | Plan Protocol、工作规则 |
-| `.agent/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
-| `.agent/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
-| `.agent/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
-| `.agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
-| `.agent/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
-| `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 从 `.agent/**` 和 `AGENTS.md` 同步 |
+| `.codex/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
+| `.codex/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
+| `.codex/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
+| `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
+| `.codex/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
+| `.docs/04_implementation/harness_package/*.md` | package-facing module implementation docs | CLI lifecycle、source sync、release automation |
+| `.docs/04_implementation/harness_workflow/*.md` | workflow-facing module implementation docs | command routing、implementation model、state/task protocol、skills/prompt、docs validation |
+| `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 从 `.codex/**` 和 `AGENTS.md` 同步 |
 | `.docs/01_product/npm_package_distribution.md` | 产品约束 | `PRD-NPM-025` |
 | `.docs/03_tech_plan/harness_package_distribution.md` | 技术方案约束 | implementation doc model |
 
@@ -211,7 +567,7 @@ Architecting
 ## 6. 与技术方案的偏移
 
 - 早期技术方案和历史 task breakdown 中的 implementation doc 路径以 `dev_*.md` 为主；DEV-032 将其定义为 legacy task log，不再作为未来默认。
-- 未进行历史合并迁移，避免把协议修正扩大成大规模文档重组。
+- DEV-043 完成历史合并迁移，删除活跃 `.docs/04_implementation/npm_package/` task-log 目录，并将事实合并到模块级 implementation docs。
 
 ## 7. 测试覆盖（Test Coverage）
 
@@ -227,2208 +583,213 @@ Architecting
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
 | 2026-05-25 | `DEV-032` | `DEV-032` implementation commit | 将 implementation doc 默认粒度从 task 调整为模块、子系统或核心数据流。 |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将 legacy `npm_package/dev_*.md` task log 合并进模块级 implementation docs，并更新索引和引用。 |
 
 ## 9. 后续维护注意事项
 
 - 后续新 task 应优先更新相关模块级 implementation doc；不要默认新增 `dev_*.md`。
-- 如果历史 `dev_*.md` 影响检索质量，可以单独创建迁移任务，按 npm package 子系统逐步合并。
+- 不要在 `.docs/04_implementation/` 下重新建立 task-grain ledger；task 历史动作记录以 git commit/tag/release evidence 为准。
 
 ---
 
-## npm_package/authoring_overlay.md
+## harness_workflow/skills_prompt_and_authoring.md
 
-Source: [npm_package/authoring_overlay.md](npm_package/authoring_overlay.md)
+Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skills_prompt_and_authoring.md)
 
-# Harness Authoring Overlay Implementation Doc
+# Skills, Prompt Routing and Authoring Implementation
 
 ## 1. 关联信息
 
-- Domain: `npm_package`
-- Module / subsystem / core flow: Harness authoring overlay
-- Updated by task: `DEV-014`, `DEV-037`, `DEV-038`
+- Domain: `harness_workflow`
+- Module / subsystem / core flow: workflow Skills, prompt routing, hard/soft indexing and authoring overlay
+- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `PROJECT_SPEC.md` section 17
-- Linked RFC: none
-- Linked commit: `DEV-037` implementation commit, `DEV-038` implementation commit
+- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`, `PROJECT_SPEC.md`
+- Linked RFC: `RFC_007`, `RFC_009`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
 
 ## 2. 当前实现范围
 
-- 新增（Added）:
-  - `.agent/skills/authoring/harness_package_design/SKILL.md`，作为本仓库维护 AI SDLC Harness 自身时的专用 authoring skill。
-  - `AGENTS.md` 将 `.agent/skills/authoring/` 声明为可选事实源，仅在维护 Harness/workflow/npm package 源码或本仓库自举规则时读取。
-  - authoring skill 增加 scriptability heuristic：发现重复、耗时、易漏步骤、易漂移、需要固定证据或涉及发布/回滚安全阀的动作时，提示用户可以抽成脚本。
-- 修改（Changed）:
-  - authoring overlay 从仅存在于设计文档的推荐目录，落地为可被后续 Agent 读取的本地专用 Skill。
-- 未覆盖（Not covered）:
-  - 不把 `.agent/skills/authoring/**` 加入 `packages/sdlc-harness/source-mappings.yaml`。
-  - 不把 authoring Skill materialize 到用户项目。
-  - 不新增 automatic script generator；当前只要求 Agent 识别并提示可脚本化机会。
+- Workflow roles are represented as local Skills under `<harnessRoot>/skills/pjsdlc_*/SKILL.md`.
+- `AGENTS.md` provides the deterministic soft index from lifecycle state to `active_skill`.
+- Native Agent skill hydration, when supported by the client, is a separate hard-index mechanism based on the client-specific skill root.
+- Natural language intent and `/xxx` macro aliases map to the same workflow actions.
+- This authoring repository keeps a private authoring Skill under `.codex/skills/authoring/**`; package source sync excludes it from user projects.
 
 ## 3. 真实代码结构
 
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
-| `.agent/skills/authoring/harness_package_design/SKILL.md` | 本仓库专用 authoring skill | 分层判断、scriptability heuristic、package source sync 边界 |
-| `AGENTS.md` | Agent 入口协议 | 可选读取 `.agent/skills/authoring/` |
-| `packages/sdlc-harness/assets/agents/AGENTS_CORE.md` | package canonical AGENTS managed block | 由 `package sync-source` 同步 `AGENTS.md` |
-| `packages/sdlc-harness/source-mappings.yaml` | source to package assets 映射 | 未包含 `.agent/skills/authoring/**` |
+| `AGENTS.md` | Deterministic workflow router | lifecycle-first rule, natural-language and macro mapping |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | Manager prompt | status/next/advance/dev/test/review routing |
+| `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product prompt | PRD slicing and requirement gathering |
+| `.codex/skills/pjsdlc_architect_design/SKILL.md` | Architecture prompt | architecture/tech plan and `plan.draft.yaml` |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Development prompt | `/dev`, `/devloop`, one-task execution protocol |
+| `.codex/skills/pjsdlc_implementation_doc/SKILL.md` | Implementation fact prompt | module-level implementation docs |
+| `.codex/skills/pjsdlc_reviewer/SKILL.md` | Review prompt | read-only review workflow |
+| `.codex/skills/pjsdlc_tester/SKILL.md` | Testing prompt | regression/test plan workflow |
+| `.codex/skills/pjsdlc_release_manager/SKILL.md` | Release prompt | release notes, smoke and rollback plan |
+| `.codex/skills/pjsdlc_rfc_recalibrate/SKILL.md` | RFC prompt | change impact analysis |
+| `.codex/skills/authoring/harness_package_design/SKILL.md` | Authoring-only prompt | package iteration, scriptability heuristic |
+| `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase-to-skill contract | `skill` per phase |
+| `tools/validate_prompt_language.py` | Prompt contract validator | Chinese explanation + English identifiers |
 
 ## 4. 核心数据流
 
 ```txt
-User asks to change Harness/workflow/package source
--> Agent reads AGENTS.md, lifecycle.yaml, plan.yaml
--> If relevant, Agent reads .agent/skills/authoring/** local overlay
--> Agent classifies change as common Harness config, project instance data, or authoring overlay
--> Agent suggests scripting when an action is repetitive, slow, error-prone, drift-prone, evidence-heavy, or release-sensitive
--> Common Harness source changes still run package sync-source/check-source
--> .agent/skills/authoring/** remains local-only
+Agent starts work
+-> read .codex/state/lifecycle.yaml
+-> read active_skill unless user requested another workflow action
+-> use corresponding local Skill prompt through AGENTS.md soft index
+-> map natural language or /xxx alias to workflow action
+-> execute phase/task protocol
 ```
+
+Native Agent skill hydration, when available:
+
+```txt
+Client scans its configured skill root
+-> semantic matcher selects a SKILL.md before the turn
+-> selected Skill instructions hydrate the prompt
+```
+
+Harness supports this second path by placing workflow Skills under the configured `<harnessRoot>/skills` tree, but the deterministic lifecycle route does not depend on first-turn native hydration.
 
 ## 5. 关键实现逻辑
 
-- 输入校验（Input validation）: authoring Skill 要求先读取 lifecycle 和 plan，并区分通用配置、项目实例数据和 authoring overlay。
-- 核心分支（Core branches）: 通用配置进入 `.agent/skills/**`、`.agent/pjsdlc_managed/**` 或 package assets；项目实例数据留在 `.agent/state/**` 和 `.docs/**`；authoring overlay 留在 `.agent/skills/authoring/**`。
-- 脚本化提示（Scriptability heuristic）: 重复、耗时、易漏步骤、易漂移、需要固定证据、涉及发布/回滚安全阀或未来很可能复用的动作，应提示用户可以抽成脚本，并说明脚本边界、输入、默认安全行为和验证命令。
-- 边界兜底（Boundary fallback）: `.agent/skills/authoring/**` 不进入 `source-mappings.yaml`，所以 `package sync-source` 不会复制到 package assets。
+- Hard index means the Agent client itself knows a fixed skill root and can enumerate `SKILL.md` files before the model turn.
+- Soft index means project instructions tell the model where to look after reading state, such as `active_skill` in `lifecycle.yaml`.
+- Workflow reliability comes from the soft index because it is deterministic and tied to lifecycle state.
+- User convenience comes from natural-language routing and macro aliases; users do not need to memorize every `/xxx`.
+- `/plan` and `/goal` are client modes and are not automatically controlled by Harness.
+- Authoring-only prompts help this repository improve the Harness itself and should not be shipped into user projects by default.
 
 ## 6. 与技术方案的偏移
 
-- DEV-014 只设计 authoring overlay，不创建目录。本次将推荐目录中的专用 Skill 最小落地，并保持“不默认进入 npm 包”的边界。
+- Earlier wording treated all workflow role files as native Skills. The current model distinguishes native hard-index hydration from Harness soft-index routing.
+- The default authoring root moved from `.agent` to `.codex` after target-agent selection was added.
+- DEV-043 consolidated legacy task records for role prompts, skill layout and natural-language control into this module-level doc.
 
 ## 7. 测试覆盖（Test Coverage）
 
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
 |---|---|---|
-| `node packages/sdlc-harness/dist/cli.js package check-source` | AGENTS package asset 与 source workspace 一致，且 authoring overlay 不在 source mappings 中 | PASS |
-| `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
-| `python3 tools/validate_allowed_paths.py` | DEV-038 修改范围符合 allowed_paths | PASS |
-| `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
+| `python3 tools/validate_prompt_language.py` | Prompt language contract and managed prompts | PASS in Harness gates |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | Skills and managed prompt assets match authoring source | PASS in source-sync/release tasks |
+| `tests/sdlc-harness/package-source.test.mjs` | Authoring Skill exclusion from package assets | PASS in package tests |
+| `make validate-harness` | Prompt language and overview consistency | PASS for DEV-043 |
 
 ## 8. 变更记录（Change Log）
 
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
-| 2026-05-25 | `DEV-014` | `DEV-014` implementation commit | 设计 Harness authoring overlay 分层，但未创建 `.agent/skills/authoring/**`。 |
-| 2026-05-25 | `DEV-037` | `DEV-037` implementation commit | 落地本仓库专用 authoring skill，并加入可脚本化动作提示规则。 |
-| 2026-05-25 | `DEV-038` | `DEV-038` implementation commit | 将 authoring skill 迁入统一 `.agent/skills/authoring/**` 树，并由 npm source sync 排除。 |
+| 2026-05-25 | `DEV-014`, `DEV-016`, `DEV-017` | Historical implementation commits | Added authoring overlay concept and prompt language guidelines. |
+| 2026-05-25 | `DEV-021`, `DEV-023` | Historical implementation commits | Consolidated managed config and added `pjsdlc_*` Skill names. |
+| 2026-05-25 | `DEV-029` | Historical implementation commit | Added natural-language workflow control and macro aliases. |
+| 2026-05-25 | `DEV-036` - `DEV-039` | Historical implementation commits | Clarified hard/soft indexes and authoring Skill packaging boundary. |
+| 2026-05-25 | `DEV-040` | `40552f0` | Added target-agent selection and `.codex` default for Codex. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Migrated legacy prompt/skill implementation docs into module-level facts. |
 
 ## 9. 后续维护注意事项
 
-- `.agent/skills/authoring/**` 只服务本仓库维护 Harness 自身；不要加入 `packages/sdlc-harness/source-mappings.yaml`。
-- 可脚本化提示应保持轻量：先指出机会和收益，再根据用户确认或任务要求实现脚本。
-- 如果 scriptability heuristic 未来对所有用户项目都有价值，应通过 PRD / tech plan / RFC 晋升为通用 Harness 能力。
+- When adding a workflow role, update both the Skill file and the soft-index contract in lifecycle/phase policies.
+- If a client-specific native skill root is supported, document it as hard-index behavior without assuming every Agent hydrates it identically.
 
 ---
 
-## npm_package/current_workspace_codex_root.md
+## harness_workflow/state_and_task_protocol.md
 
-Source: [npm_package/current_workspace_codex_root.md](npm_package/current_workspace_codex_root.md)
+Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and_task_protocol.md)
 
-# Current Workspace Codex Root Implementation Doc
-
-## Summary
-
-`DEV-041` 将当前 `ProjectTemplate` source authoring workspace 的 Harness root 从 `.agent/**` 迁移到 `.codex/**`，与 `sdlc-harness init` 的默认 `Codex -> .codex` 体验对齐。
-
-迁移后，本仓库自己的 lifecycle、plan、memory、workflow skills、templates、policies 和 Makefile fragment 都位于 `.codex/**`。普通用户项目仍可以通过 `harnessFolderName` 使用其它 root；配置层没有显式配置时的兜底默认值仍由 npm 包保持为 `.agent`。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.codex/**` | 承接原 `.agent/**` 的 state、skills、templates、policies、config 和 Makefile fragment。 |
-| `package.json` | 增加 `sdlcHarness.harnessFolderName: ".codex"`，让本仓库工具读取当前 root。 |
-| `AGENTS.md` | 当前事实源、工作规则、自然语言路由和阶段流转路径改为 `.codex/**`。 |
-| `Makefile` | managed include 改为 `.codex/pjsdlc_managed/make/sdlc-harness.mk`。 |
-| `tools/*.py` / `tools/release_npm.mjs` | 本地 validators、transition、allowed paths 和 release 证据读取改为 `.codex/**`。 |
-| `packages/sdlc-harness/source-mappings.yaml` | source sync 从 `.codex/skills` 和 `.codex/pjsdlc_managed/**` 读取当前仓库事实源。 |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | `AGENTS_CORE.md` 渲染同时支持把 `.agent` 或 `.codex` 源路径替换成目标项目的 `<harnessRoot>`。 |
-| `packages/sdlc-harness/assets/agents/AGENTS_CORE.md` | 通过 `package sync-source` 同步新的 AGENTS managed block。 |
-| `README.md` / `PROJECT_SPEC.md` / `.docs/**` | 说明当前 authoring workspace 使用 `.codex/**`，并保留产品层 `Other -> .agent` 与配置兜底语义。 |
-
-## Behavior
-
-- 本仓库运行 `make validate-harness` 时读取 `.codex/state/**`、`.codex/skills/**` 和 `.codex/pjsdlc_managed/**`。
-- `package sync-source` 以 `.codex/**` 作为 source authoring workspace 输入，并继续排除 `.codex/skills/authoring/**`。
-- 包内 `sync` 对用户项目仍按目标 `<harnessRoot>` 渲染 AGENTS 和 Makefile；`.codex` 只是当前源码仓库的本地 root。
-- `.agent/**` 不再作为当前工作区事实源保留。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package assets 与 `.codex/**` source mappings 一致。 |
-| `make validate-harness` | PASS，Harness scaffold、Skill language contract 和 doc overview check 均通过。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，55 个 changed files 均在 DEV-041 allowed_paths 内。 |
-| `git diff --check` | PASS。 |
-
----
-
-## npm_package/dev_001_package_scaffold.md
-
-Source: [npm_package/dev_001_package_scaffold.md](npm_package/dev_001_package_scaffold.md)
-
-# DEV-001 npm 包骨架 Implementation Doc
+# State and Task Protocol Implementation
 
 ## 1. 关联信息
 
-- Task ID: `DEV-001`
+- Domain: `harness_workflow`
+- Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `a4b145c`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - 根 `package.json`，声明 workspace。
-  - `packages/sdlc-harness/` npm 包骨架，包含 `package.json`、`tsconfig.json`、CLI placeholder、command placeholder、lib type definitions、assets 和 migrations 目录。
-  - `.harness/config.yaml`，声明 package version、schema version、managed files、local overrides 和 never overwrite。
-  - `packages/sdlc-harness/source-mappings.yaml`，声明当前工作流源文件到包内 canonical source 的同步映射。
-- 修改（Changed）:
-  - `.harness/state/tasks.yaml`，记录 checkpoint 和任务状态。
-  - `.docs/INDEX.md`，链接 implementation doc。
-- 未覆盖（Not covered）:
-  - 未实现真实 `sync`、`init`、`upgrade`、`doctor`、`package sync-source` 逻辑。
-  - 未复制当前工作流内容到 `assets/**`；后续由 `package sync-source` 实现自动更新。
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `package.json` | 根 workspace 声明 | `workspaces`、`scripts.sdlc-harness` |
-| `packages/sdlc-harness/package.json` | npm 包元数据和 binary 声明 | `bin.sdlc-harness`、`files`、`scripts.build` |
-| `packages/sdlc-harness/src/cli.ts` | CLI 入口 | `main()` |
-| `packages/sdlc-harness/src/commands/index.ts` | 命令路由 | `commands` |
-| `packages/sdlc-harness/src/commands/*.ts` | 命令 placeholder | `init`、`sync`、`upgrade`、`doctor`、`validate`、`packageSource` |
-| `packages/sdlc-harness/src/lib/types.ts` | 共享数据类型 | `HarnessConfig`、`ManagedFile`、`SourceMapping` |
-| `packages/sdlc-harness/src/lib/config.ts` | 默认配置模型 | `defaultConfig()` |
-| `packages/sdlc-harness/source-mappings.yaml` | source authoring workspace 到 package assets 的映射 | `source_mappings` |
-| `.harness/config.yaml` | 项目接入配置 | `core`、`managed_files`、`local_overrides`、`never_overwrite` |
-
-## 4. 核心数据流
-
-```txt
-Workflow source files in this repository
--> packages/sdlc-harness/source-mappings.yaml
--> future package sync-source command
--> package canonical assets
--> future sync command
--> project workspace agent-readable files
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）: DEV-001 只建立类型和配置边界，未实现运行时输入校验。
-- 核心分支（Core branches）: CLI placeholder 按命令名分发到 `init`、`sync`、`upgrade`、`doctor`、`validate` 和 `package`。
-- 异常处理（Error handling）: `cli.ts` 捕获顶层异常并设置 `process.exitCode = 1`。
-- 边界兜底（Boundary fallback）: `.harness/config.yaml` 明确 `.docs/**`、`.harness/state/**`、`src/**`、`tests/**` 为 `never_overwrite`。
-- 性能或并发注意事项（Performance or concurrency notes）: 当前无并发逻辑。
-
-## 6. 与技术方案的偏移
-
-- 暂无功能性偏移。DEV-001 只完成包骨架和 manifest，完整命令逻辑按任务拆分留给 DEV-002 至 DEV-005。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `python3` JSON parse check | 根 package、npm package metadata 和 `tsconfig.json` | PASS |
-| `node -e` JSON parse check | Node runtime availability | BLOCKED，本机未安装 `node` |
-| `make validate-checkpoint` | DEV-001 checkpoint 完整性 | PASS |
-| `make lint` | 当前项目 lint gate placeholder | PASS |
-| `make test-current-domain` | 当前任务 focused test gate placeholder | PASS |
-
-## 8. 后续维护注意事项
-
-- DEV-002 应实现真实 `sync`、`init`、`init --adopt` 和 `doctor`，不要继续扩展 placeholder。
-- DEV-004 必须实现 `package sync-source` / `package check-source`，使本仓库工作流源文件变化时自动更新包内 canonical source，并用 CI 防止漂移。
-
----
-
-## npm_package/dev_002_sync_init_doctor.md
-
-Source: [npm_package/dev_002_sync_init_doctor.md](npm_package/dev_002_sync_init_doctor.md)
-
-# DEV-002 sync/init/doctor Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-002`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `559d169`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - Node-only runtime helpers for filesystem, YAML, config, init, sync, and doctor.
-  - `sdlc-harness init` / `init --adopt` minimal non-destructive project setup.
-  - `sdlc-harness sync` materialization for `AGENTS.md` managed block, skills, templates, policies, Makefile fragment, and optional workflow.
-  - `sdlc-harness doctor` diagnostics for config, required state/docs files, and managed paths.
-  - Package assets for `AGENTS_CORE.md` and `.harness/make/sdlc-harness.mk`.
-  - Node test coverage for init, sync, and doctor.
-- 修改（Changed）:
-  - Package metadata now includes `yaml`, `@types/node`, build/test/prepack scripts, and lockfile.
-  - README clarifies state protocol vs state data.
-  - `tasks.yaml` includes `README.md` and `package-lock.json` in DEV-002 allowed paths.
-- 未覆盖（Not covered）:
-  - `upgrade` migration behavior remains DEV-003.
-  - `package sync-source` / `package check-source` remains DEV-004.
-  - Full validator migration remains DEV-005.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `packages/sdlc-harness/src/lib/fs.ts` | Node filesystem helpers | `pathExists`、`writeTextIfChanged`、`copyTree` |
-| `packages/sdlc-harness/src/lib/yaml.ts` | YAML parse/stringify wrapper | `parseYaml`、`stringifyYaml` |
-| `packages/sdlc-harness/src/lib/config.ts` | Harness config defaults and read/write | `defaultConfig`、`readConfig`、`writeConfigIfMissing` |
-| `packages/sdlc-harness/src/lib/init.ts` | Project initialization | `runInit` |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | Managed file materialization | `runSync` |
-| `packages/sdlc-harness/src/lib/doctor.ts` | Project diagnostics | `runDoctor` |
-| `packages/sdlc-harness/src/commands/*.ts` | CLI command adapters | `init`、`sync`、`doctor` |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | Focused Node tests | `runInit`、`runSync`、`runDoctor` |
-
-## 4. 核心数据流
-
-```txt
-sdlc-harness init
--> create missing .harness/config.yaml, .harness/state/**, .docs/**
--> runSync
--> materialize package assets into workspace
--> sdlc-harness doctor validates required state/docs/config paths
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）: `doctor` checks config and required state/docs files; `init` is non-destructive and uses `writeTextIfChanged`.
-- 核心分支（Core branches）:
-  - `init --adopt` and normal `init` share safe creation logic.
-  - `sync` dispatches by managed path and strategy.
-  - `AGENTS.md` uses marker replacement with `sdlc-harness:begin/end`.
-- 异常处理（Error handling）: CLI top-level catches errors; `doctor` returns warnings/errors and sets exit code through command adapter.
-- 边界兜底（Boundary fallback）: `.docs/**` and `.harness/state/**` are created if missing but not overwritten when content already exists.
-- 性能或并发注意事项（Performance or concurrency notes）: sync is sequential and deterministic.
-
-## 6. 与技术方案的偏移
-
-- Validator runtime is now expected to be Node/TypeScript only; Python scripts remain reference implementation until DEV-005 migrates validation entrypoints.
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build plus init/sync/doctor Node tests | PASS |
-| `python3 tools/validate_allowed_paths.py` | DEV-002 changed file boundaries | PASS |
-| `make validate-checkpoint` | DEV-002 checkpoint completeness | PASS |
-| `make lint` | Current project lint gate placeholder | PASS |
-| `make test-current-domain` | Current task focused gate placeholder | PASS |
-
-## 8. 后续维护注意事项
-
-- DEV-003 should make `upgrade` call migration and then `sync`.
-- DEV-004 should populate package assets from source mappings and enforce drift checks.
-- DEV-005 should replace Python validator dependency with Node/TypeScript validation commands.
-
----
-
-## npm_package/dev_003_upgrade_migrations.md
-
-Source: [npm_package/dev_003_upgrade_migrations.md](npm_package/dev_003_upgrade_migrations.md)
-
-# DEV-003 upgrade/migrations Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-003`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `2f2fc93`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `runMigrations` for config normalization, state task shape migration, and memory file creation.
-  - `runUpgrade`, which runs migrations, then `sync`, then `doctor`.
-  - Node test coverage for upgrade preserving and migrating project state structure.
-- 修改（Changed）:
-  - `sdlc-harness upgrade` command now calls real upgrade logic.
-- 未覆盖（Not covered）:
-  - No versioned multi-step migration chain yet; current schema version is `1`.
-  - No package source drift check yet; DEV-004 covers that.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `packages/sdlc-harness/src/lib/migrations.ts` | State/config migration engine | `runMigrations`、`CURRENT_SCHEMA_VERSION` |
-| `packages/sdlc-harness/src/lib/upgrade.ts` | Upgrade orchestration | `runUpgrade` |
-| `packages/sdlc-harness/src/commands/upgrade.ts` | CLI adapter | `upgrade` |
-| `tests/sdlc-harness/upgrade.test.mjs` | Focused upgrade test | `runUpgrade` |
-
-## 4. 核心数据流
-
-```txt
-sdlc-harness upgrade
--> runMigrations
--> runSync
--> runDoctor
--> report blockers or success
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）: Upgrade uses existing config/state readers and doctor after migration.
-- 核心分支（Core branches）:
-  - Missing config is skipped by migration and reported later by doctor.
-  - `tasks.yaml` gets missing `current_phase`, `current_task_id`, and `tasks` structure without replacing task values.
-  - Missing `memory.md` is created with a short protocol note.
-- 异常处理（Error handling）: Upgrade throws if sync reports blockers or doctor reports errors.
-- 边界兜底（Boundary fallback）: State migrations add missing structure but preserve concrete project state values.
-- 性能或并发注意事项（Performance or concurrency notes）: Migration and sync run sequentially.
-
-## 6. 与技术方案的偏移
-
-- 暂无。实现保持 `upgrade` 自动执行 `sync` 的 P0 约束。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build plus init/sync/doctor/upgrade tests | PASS |
-| `python3 tools/validate_allowed_paths.py` | DEV-003 changed file boundaries | PASS |
-| `make validate-checkpoint` | DEV-003 checkpoint completeness | PASS |
-| `make lint` | Current project lint gate placeholder | PASS |
-| `make test-current-domain` | Current task focused gate placeholder | PASS |
-
-## 8. 后续维护注意事项
-
-- DEV-004 should ensure package canonical assets do not drift from this self-hosting source workspace.
-- Future schema versions should add explicit migration records to `migrations`.
-
----
-
-## npm_package/dev_004_source_sync_ci.md
-
-Source: [npm_package/dev_004_source_sync_ci.md](npm_package/dev_004_source_sync_ci.md)
-
-# DEV-004 package source sync Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-004`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `ee54878`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `sdlc-harness package sync-source` to update package canonical assets from this self-hosting workspace.
-  - `sdlc-harness package check-source` to detect drift between source workspace files and package assets.
-  - Package source mapping implementation for copy-file, copy-tree, managed block extraction, and Makefile target extraction mode.
-  - CI steps to install Node dependencies, run package tests, and run package source drift check.
-  - Package assets generated from current `AGENTS.md`, `.agents/skills/**`, `.harness/templates/**`, `.harness/policies/**`, `Makefile`, `.github/workflows/harness.yml`, and `tools/**`.
-- 修改（Changed）:
-  - `package` CLI subcommand now dispatches to real source sync/check behavior.
-- 未覆盖（Not covered）:
-  - DEV-005 still needs Node/TypeScript validator command implementation instead of Python validator execution.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `packages/sdlc-harness/src/lib/package-source.ts` | Source workspace to package asset sync/check | `syncSource`、`checkSource` |
-| `packages/sdlc-harness/src/commands/package-source.ts` | CLI adapter | `packageSource` |
-| `packages/sdlc-harness/assets/**` | Package canonical assets | synced skills/templates/policies/validators |
-| `.github/workflows/harness.yml` | CI drift check | Node setup, npm test, package check-source |
-| `tests/sdlc-harness/package-source.test.mjs` | Focused source sync test | `syncSource`、`checkSource` |
-
-## 4. 核心数据流
-
-```txt
-sdlc-harness package sync-source
--> read packages/sdlc-harness/source-mappings.yaml
--> render each source mapping
--> write packages/sdlc-harness/assets/**
--> sdlc-harness package check-source verifies no drift
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）: source mappings are read from the committed package mapping file.
-- 核心分支（Core branches）:
-  - `copy-tree` copies directories while skipping `.gitkeep`.
-  - `extract-managed-block` uses marker content when present, otherwise copies the whole source file.
-  - `check-source` hashes normalized expected and existing content.
-- 异常处理（Error handling）: CLI sets non-zero exit code when drift is detected.
-- 边界兜底（Boundary fallback）: source mappings exclude `.docs/**` and `.harness/state/**`, so project instance state does not enter package assets.
-- 性能或并发注意事项（Performance or concurrency notes）: source sync removes and rewrites target asset trees deterministically.
-
-## 6. 与技术方案的偏移
-
-- 暂无。实现满足“工作流源变化必须自动更新包 canonical source 并可检查漂移”的约束。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build plus init/sync/doctor/upgrade/source-sync tests | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | 当前仓库 source-to-package drift check | PASS |
-| `python3 tools/validate_allowed_paths.py` | DEV-004 changed file boundaries | PASS |
-| `make validate-checkpoint` | DEV-004 checkpoint completeness | PASS |
-| `make lint` | Current project lint gate placeholder | PASS |
-| `make test-current-domain` | Current task focused gate placeholder | PASS |
-
-## 8. 后续维护注意事项
-
-- 每次修改 `AGENTS.md`、Skill、templates、policies、Makefile、workflow 或 validators 后，都要运行 `sdlc-harness package sync-source` 并确认 `check-source` 通过。
-- DEV-005 should replace Python validators as runtime dependencies with Node/TypeScript validation commands.
-
----
-
-## npm_package/dev_005_validate_commands.md
-
-Source: [npm_package/dev_005_validate_commands.md](npm_package/dev_005_validate_commands.md)
-
-# DEV-005 TypeScript validators Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-005`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `140e078`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - TypeScript validator runtime for `validate-harness`, `validate-current`, `validate-pm`, `validate-design`, `validate-dev`, and `validate-checkpoint`.
-  - CLI aliases such as `sdlc-harness validate-harness` in addition to `sdlc-harness validate validate-harness`.
-  - Node test coverage for validator success cases.
-- 修改（Changed）:
-  - `packages/sdlc-harness/source-mappings.yaml` no longer copies Python `tools/**` into package assets.
-  - Removed `packages/sdlc-harness/assets/validators/**` Python assets from the package canonical asset set.
-- 未覆盖（Not covered）:
-  - TypeScript validators are intentionally structural first-pass validators; future iterations can expand parity with every Python edge case.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `packages/sdlc-harness/src/lib/validators.ts` | Node-only validator runtime | `runValidator` |
-| `packages/sdlc-harness/src/commands/validate.ts` | CLI adapter | `validate` |
-| `packages/sdlc-harness/src/commands/index.ts` | Direct validate command aliases | `validate-harness`、`validate-current`、`validate-pm` |
-| `packages/sdlc-harness/source-mappings.yaml` | Package source mappings | removed `tools -> assets/validators` mapping |
-| `tests/sdlc-harness/validators.test.mjs` | Focused validator tests | `runValidator` |
-
-## 4. 核心数据流
-
-```txt
-sdlc-harness validate-harness
--> runValidator(projectRoot, gate)
--> read project files with Node fs/yaml
--> return info/errors
--> CLI sets exitCode on errors
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）: validators check required files, PRD sections, design sections, task status/gate result, and checkpoint presence.
-- 核心分支（Core branches）:
-  - `validate-current` dispatches by `current_phase`.
-  - `validate-dev` fails while open tasks remain and verifies done task implementation docs.
-  - `validate-checkpoint` only requires checkpoint files when task state requires them.
-- 异常处理（Error handling）: unknown validators return an error report; CLI exits non-zero when errors exist.
-- 边界兜底（Boundary fallback）: missing YAML files are treated as empty objects and surfaced as validation errors.
-- 性能或并发注意事项（Performance or concurrency notes）: validators run synchronously from the CLI perspective and avoid Python subprocess dependencies.
-
-## 6. 与技术方案的偏移
-
-- This completes the Node-only runtime direction for published npm package validation. Python validators remain in the reference workspace for now, but are no longer copied into package canonical assets.
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build plus package command tests | PASS |
-| `sdlc-harness validate-*` | Node validator runtime for harness, PM, design, checkpoint | PASS |
-| `sdlc-harness package check-source` | Package canonical source drift | PASS |
-| `python3 tools/validate_allowed_paths.py` | DEV-005 changed file boundaries | PASS |
-| `make validate-checkpoint` | DEV-005 checkpoint completeness | PASS |
-| `make lint` | Current project lint gate placeholder | PASS |
-| `make test-current-domain` | Current task focused gate placeholder | PASS |
-
-## 8. 后续维护注意事项
-
-- Future iterations can deepen TypeScript validator parity and eventually remove duplicated Python validators from the reference workspace.
-- Any future source mapping change must be followed by `sdlc-harness package sync-source` and `sdlc-harness package check-source`.
-
----
-
-## npm_package/dev_006_unified_harness_root.md
-
-Source: [npm_package/dev_006_unified_harness_root.md](npm_package/dev_006_unified_harness_root.md)
-
-# DEV-006 Unified Harness Root Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-006`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `.docs/rfc/RFC_001_unify_harness_directory_model.md`
-- Linked commit: `eb778fd`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `.harness/agents/skills/**` as the workspace canonical Skill source.
-  - `.harness/managed/templates/**`、`.harness/managed/policies/**` and `.harness/managed/make/sdlc-harness.mk` as package-managed workspace assets.
-  - Migration coverage for old `.agents/skills`、`.harness/templates`、`.harness/policies` and `.harness/make` config paths.
-- 修改（Changed）:
-  - Package default config, sync engine, source mappings, and Node validators now target the `.harness` canonical layout.
-  - `sdlc-harness sync` materializes both `.harness/agents/skills/**` and `.agents/skills/**`.
-  - README explains `.harness` as canonical root and `.agents` as compatibility view.
-  - Package tests cover new sync output, source sync mappings, validator requirements, and config migration.
-- 未覆盖（Not covered）:
-  - Current Python local gate scripts still read legacy `.harness/policies/**` and `.harness/templates/**`; these legacy mirrors remain in this workspace for transition compatibility.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `.harness/config.yaml` | Current workspace package sync config | `managed_files`, `local_overrides` |
-| `.harness/agents/skills/**/SKILL.md` | Canonical workspace Skill source | phase Skill files |
-| `.harness/managed/templates/**` | Canonical package-managed templates | PRD/RFC/checkpoint/implementation templates |
-| `.harness/managed/policies/**` | Canonical package-managed policies | `phase_contracts`, `gates`, `allowed_paths`, `risk_matrix` |
-| `packages/sdlc-harness/src/lib/config.ts` | Default package config | `defaultConfig` |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | Materializes package assets into projects | `runSync`, `syncManagedFile` |
-| `packages/sdlc-harness/src/lib/migrations.ts` | Upgrades old project config layouts | `migrateConfig`, `migrateManagedFiles` |
-| `packages/sdlc-harness/src/lib/validators.ts` | Node validation runtime | `validateHarness` |
-| `packages/sdlc-harness/source-mappings.yaml` | Source workspace to package asset mapping | `.harness/agents`, `.harness/managed` sources |
-| `tests/sdlc-harness/*.test.mjs` | Regression coverage for package behavior | sync/init/doctor, upgrade, validators, package source |
-
-## 4. 核心数据流
-
-```txt
-harness source workspace
--> .harness/agents/skills + .harness/managed/*
--> sdlc-harness package sync-source
--> packages/sdlc-harness/assets/*
--> sdlc-harness sync
--> project .harness canonical files + .agents compatibility view
--> validate-harness / doctor
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）:
-  - Node `validate-harness` requires `.harness/agents/skills`、`.harness/managed/templates` and `.harness/managed/policies`; DEV-007 removes `.agents/skills` from required tracked workspace state.
-  - `package check-source` reads package mappings from `.harness/agents/skills` and `.harness/managed/**`.
-- 核心分支（Core branches）:
-  - `syncManagedFile` writes canonical Skill assets to `.harness/agents/skills`.
-  - The same Skill assets are also written to `.agents/skills` for compatibility with Agent startup conventions.
-  - Legacy config paths are still recognized by `syncManagedFile` so older config files do not immediately break.
-  - `migrateManagedFiles` rewrites old config paths to the new canonical layout during `upgrade`.
-- 异常处理（Error handling）:
-  - Missing package asset directories are reported as skipped sync entries, preserving existing behavior.
-  - Config migration deduplicates managed paths so old `.agents/skills` does not create duplicate entries.
-- 边界兜底（Boundary fallback）:
-  - Legacy `.harness/templates/**` and `.harness/policies/**` remain in the source workspace for current Python gates.
-  - New npm package behavior does not rely on Python validators.
-- 性能或并发注意事项（Performance or concurrency notes）:
-  - Sync remains file-copy based and deterministic; no concurrent writes were introduced.
-
-## 6. 与技术方案的偏移
-
-- RFC_001 planned `.harness/managed/**` as canonical package-managed layout. The implementation applies that to npm package source mappings, sync, migrations, and Node validators.
-- Full removal of legacy `.harness/templates/**` and `.harness/policies/**` is intentionally deferred because current local Python gates still depend on those paths.
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build and all package tests | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | Source workspace to package assets drift check | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | Node validator for new canonical layout | PASS |
-| `make validate-harness` | Local Harness scaffold, prompt language, checkpoint, and doc overview gates | PASS |
-| `make validate-checkpoint` | DEV-006 checkpoint completeness after >5 file change trigger | PASS |
-
-## 8. 后续维护注意事项
-
-- Future work can migrate local Python gate scripts to `.harness/managed/**` and then archive legacy `.harness/templates/**` / `.harness/policies/**`.
-- When Skill, template, policy, Makefile, workflow, or AGENTS source changes, run `sdlc-harness package sync-source` and `package check-source`.
-- Keep `.agents/skills/**` generated from `.harness/agents/skills/**`; do not treat `.agents` as the source of truth.
-
----
-
-## npm_package/dev_007_remove_tracked_agents_skills.md
-
-Source: [npm_package/dev_007_remove_tracked_agents_skills.md](npm_package/dev_007_remove_tracked_agents_skills.md)
-
-# DEV-007 Remove Tracked Agents Skills Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-007`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `.docs/rfc/RFC_001_unify_harness_directory_model.md`
-- Linked commit: `dd209fe`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `.gitignore` rule for `.agents/skills/` as a generated compatibility view.
-  - DEV-007 checkpoint for the gate failure and >5 file change trigger.
-- 修改（Changed）:
-  - Removed tracked `.agents/skills/**/SKILL.md` files from the repository.
-  - Python local gates now validate Skill files under `.harness/agents/skills/**`.
-  - Node `validate-harness` no longer requires `.agents/skills/**`.
-  - README and AGENTS now describe `.agents/skills/**` as generated and not a source authoring path.
-  - Package `AGENTS_CORE.md` was regenerated from the updated `AGENTS.md`.
-- 未覆盖（Not covered）:
-  - `sdlc-harness sync` still supports generating `.agents/skills/**` for Agent clients that require that compatibility path.
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `.gitignore` | Ignores generated compatibility Skill view | `.agents/skills/` |
-| `.harness/agents/skills/**/SKILL.md` | Canonical tracked Skill source | phase Skill files |
-| `tools/validate_harness.py` | Local Python Harness scaffold validator | canonical Skill path checks |
-| `tools/validate_prompt_language.py` | Local prompt language validator | canonical Skill and template checks |
-| `packages/sdlc-harness/src/lib/validators.ts` | Node package validator runtime | `validateHarness` |
-| `tests/sdlc-harness/validators.test.mjs` | Regression for Node validator without `.agents/skills` | `runValidator` |
-
-## 4. 核心数据流
-
-```txt
-tracked source
--> .harness/agents/skills/** + .harness/managed/**
--> validators read canonical .harness paths
--> optional sdlc-harness sync
--> local ignored .agents/skills/** compatibility view
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）:
-  - Local Python validators no longer use `.agents/skills/**` as a required path.
-  - Node `validate-harness` passes in a fixture without `.agents/skills/**`.
-- 核心分支（Core branches）:
-  - Source authoring and validation use `.harness/agents/skills/**`.
-  - Compatibility output remains supported by `sdlc-harness sync`.
-- 异常处理（Error handling）:
-  - If an Agent client needs `.agents/skills/**`, running `sdlc-harness sync` regenerates it from package assets.
-- 边界兜底（Boundary fallback）:
-  - The deleted `.agents/skills/**` files still exist canonically under `.harness/agents/skills/**`.
-- 性能或并发注意事项（Performance or concurrency notes）:
-  - No runtime concurrency changes.
-
-## 6. 与技术方案的偏移
-
-- This tightens RFC_001 semantics: `.agents/skills/**` remains a generated compatibility view but is no longer tracked in the source workspace.
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build and package tests | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | Package source drift after AGENTS update | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | Node validator without tracked `.agents/skills` | PASS |
-| `make validate-harness` | Local Python Harness checks using canonical Skill path | PASS |
-| `make validate-current` | Sprint exit gate with all tasks closed | PASS |
-
-## 8. 后续维护注意事项
-
-- Do not edit or commit `.agents/skills/**`; edit `.harness/agents/skills/**` instead.
-- If an Agent environment requires `.agents/skills/**`, regenerate it with `sdlc-harness sync`.
-
----
-
-## npm_package/dev_008_configurable_harness_root.md
-
-Source: [npm_package/dev_008_configurable_harness_root.md](npm_package/dev_008_configurable_harness_root.md)
-
-# DEV-008 Configurable Harness Root Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-008`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `.docs/rfc/RFC_002_configurable_harness_root.md`
-- Linked commit: `0c8423e`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `packages/sdlc-harness/src/lib/harness-root.ts`，统一读取 `harnessFolderName`。
-  - `tests/sdlc-harness/harness-root.test.mjs`，覆盖默认 `.agents`、`package.json` 配置、`sdlc-harness.config.json` 和 `harnessFloderName` 兼容别名。
-  - DEV-008 checkpoint，用于记录多文件变更现场。
-- 修改（Changed）:
-  - 当前仓库在 `package.json` 中声明 `sdlcHarness.harnessFolderName: ".harness"`。
-  - Skill canonical source 从 `.harness/agents/skills/**` 移动到 `.harness/skills/**`。
-  - `init`、`sync`、`doctor`、`migrations`、`validators` 改为使用动态 `<harnessRoot>`。
-  - `.harness/config.yaml` 和 `packages/sdlc-harness/source-mappings.yaml` 改为 `.harness/skills`。
-  - README、PRD、架构和技术方案补充默认 `.agents` 与显式 `.harness` 的根目录模型。
-  - 包内 `AGENTS_CORE.md` 和 Skill assets 已通过 `package sync-source` 更新。
-- 未覆盖（Not covered）:
-  - 当前仓库本地 Python gate 仍按本仓库配置读取 `.harness/**`；npm 包运行时 validators 已支持动态 `<harnessRoot>`。
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `package.json` | 当前仓库选择 `.harness` 作为 Harness root | `sdlcHarness.harnessFolderName` |
-| `packages/sdlc-harness/src/lib/harness-root.ts` | 读取并校验 Harness root 配置 | `readHarnessRootConfig`, `harnessRoot`, `harnessConfigPath`, `harnessPath` |
-| `packages/sdlc-harness/src/lib/config.ts` | 生成动态默认配置 | `defaultConfig`, `readConfig`, `writeConfigIfMissing` |
-| `packages/sdlc-harness/src/lib/init.ts` | 初始化项目状态与 docs | `runInit`, `createProjectState` |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | 按动态 root materialize assets | `runSync`, `syncManagedFile`, `renderAgentsCore` |
-| `packages/sdlc-harness/src/lib/migrations.ts` | 迁移旧 managed paths | `runMigrations`, `migrateManagedFiles` |
-| `packages/sdlc-harness/src/lib/validators.ts` | Node gate runtime | `validateHarness`, `validateCurrent`, `validateDev`, `validateCheckpoint` |
-| `.harness/skills/**/SKILL.md` | 当前仓库 Skill canonical source | phase Skill files |
-| `tests/sdlc-harness/*.test.mjs` | 行为回归测试 | default root, configured root, source sync, upgrade, validators |
-
-## 4. 核心数据流
-
-```txt
-project root
--> read sdlc-harness.config.json#harnessFolderName
--> fallback read package.json#sdlcHarness.harnessFolderName
--> fallback default .agents
--> build <harnessRoot>/config.yaml + <harnessRoot>/state/** + <harnessRoot>/skills/** + <harnessRoot>/managed/**
--> validate / doctor / upgrade use the same resolved root
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）:
-  - `harnessFolderName` 必须是非空相对路径。
-  - 绝对路径、`.`、`..` 和包含 `..` 的路径会被拒绝。
-  - `harnessFloderName` 作为拼写兼容别名读取，但新文档推荐 `harnessFolderName`。
-- 核心分支（Core branches）:
-  - `sdlc-harness.config.json` 优先于 `package.json#sdlcHarness`。
-  - 未配置时默认 root 为 `.agents`，让 Skill 自然落到 `.agents/skills/**`。
-  - 当前仓库通过 `package.json` 配置 root 为 `.harness`，因此 Skill 位于 `.harness/skills/**`。
-- 异常处理（Error handling）:
-  - JSON 配置解析失败会直接抛错，避免静默使用错误 root。
-  - `doctor` 报告实际 resolved root，便于排查项目配置。
-- 边界兜底（Boundary fallback）:
-  - `sync` 和 `migrations` 仍识别旧 `.harness/agents/skills`、`.agents/skills`、`.harness/templates`、`.harness/policies` 和 `.harness/make` 路径，便于旧项目升级。
-- 性能或并发注意事项（Performance or concurrency notes）:
-  - Root 解析是本地 JSON 读取，没有引入网络或并发写入。
-
-## 6. 与技术方案的偏移
-
-- RFC_002 要求支持 `package.json` 或其它合理 JSON 配置。本实现额外支持 `sdlc-harness.config.json`，并规定其优先级高于 `package.json`。
-- 默认项目不再生成 `.agents/skills` 之外的 compatibility view；`.agents` 本身就是默认 `<harnessRoot>`。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build and package behavior tests | PASS |
-| `tests/sdlc-harness/harness-root.test.mjs` | root config resolution and alias support | PASS |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | default `.agents` init/sync/doctor and configured `.harness` init/sync/doctor | PASS |
-| `tests/sdlc-harness/upgrade.test.mjs` | old paths migrating to configured `.harness/skills` layout | PASS |
-| `tests/sdlc-harness/validators.test.mjs` | Node validators using configured `.harness` root | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | source workspace to package assets drift check | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | current workspace resolved root `.harness` | PASS |
-| `make validate-harness` | local Harness scaffold, prompt language, checkpoint, and doc overview gates | PASS |
-
-## 8. 后续维护注意事项
-
-- 新项目未配置时会默认写入 `.agents/**`，这是 Agent Skill discovery 的低摩擦路径。
-- 使用 `.harness` 的项目需要在项目入口规则中明确 `.harness/skills/**` 是 Skill source；当前仓库已通过 `AGENTS.md` 和 `package.json` 声明。
-- 当 Harness source workspace 中的 Skill、模板、策略、Makefile、workflow 或 `AGENTS.md` 变化时，继续运行 `sdlc-harness package sync-source` 和 `package check-source`，防止包内 assets 漂移。
-
----
-
-## npm_package/dev_009_init_prompt_default_agent_root.md
-
-Source: [npm_package/dev_009_init_prompt_default_agent_root.md](npm_package/dev_009_init_prompt_default_agent_root.md)
-
-# DEV-009 Init Prompt And Default Agent Root Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: `DEV-009`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `.docs/rfc/RFC_003_init_prompt_and_default_agent_root.md`
-- Linked commit: `5c0e501`
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `sdlc-harness init` 的 Harness folder name 交互式询问。
-  - `--harness-folder <path>` / `--harness-folder=<path>` CLI 参数，用于脚本和测试指定 root。
-  - `packages/sdlc-harness/src/lib/package-json-config.ts`，负责读写 `package.json#sdlcHarness.harnessFolderName`。
-  - `RFC_003` 和 DEV-009 checkpoint。
-- 修改（Changed）:
-  - 默认 Harness root 从 `.agents` 改为 `.agent`。
-  - 当前仓库工作流事实源从 `.harness/**` 迁移到 `.agent/**`。
-  - 当前仓库移除 `package.json#sdlcHarness.harnessFolderName`，遵循默认 `.agent`。
-  - 本地 Python tools、`AGENTS.md`、README、PRD、架构、技术方案和 source mappings 全部指向 `.agent` 当前 root。
-  - `sync` 渲染 `AGENTS.md` managed block 时以 `.agent` 作为模板 root 替换源。
-  - 包测试覆盖默认 `.agent`、自定义 `.harness`、CLI 默认写入和已有 package 配置沿用。
-- 未覆盖（Not covered）:
-  - 没有引入复杂多选 UI；首版使用一行文本输入，直接回车采用默认。
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `packages/sdlc-harness/src/commands/init.ts` | CLI init 入口和交互逻辑 | `resolveInitHarnessRoot`, `promptHarnessRoot`, `valueForArg` |
-| `packages/sdlc-harness/src/lib/package-json-config.ts` | 写入 package root 配置 | `packageHarnessRoot`, `writePackageHarnessRoot` |
-| `packages/sdlc-harness/src/lib/paths.ts` | 包默认 root 常量 | `DEFAULT_HARNESS_ROOT = ".agent"` |
-| `packages/sdlc-harness/src/lib/harness-root.ts` | root 配置读取和校验 | `normalizeHarnessFolderName` |
-| `packages/sdlc-harness/src/lib/init.ts` | 初始化前的非空判断 | `projectHasExistingFiles` |
-| `.agent/**` | 当前仓库 Harness 工作流事实源 | state, skills, managed templates, policies |
-| `tools/*.py` | 当前仓库本地 gate 和状态工具 | `.agent` 路径 |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | init/sync/doctor 和 CLI 回归 | CLI default/custom/existing package config |
-
-## 4. 核心数据流
-
-```txt
-sdlc-harness init
--> if package/sdlc config exists, keep it
--> else ask Harness folder name in TTY
--> non-TTY uses .agent
--> write package.json#sdlcHarness.harnessFolderName
--> runInit resolves root
--> create <harnessRoot>/config.yaml + state + managed assets
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）:
-  - 复用 `normalizeHarnessFolderName`，拒绝空值、`.`、`..`、绝对路径和包含 `..` 的路径。
-  - 直接回车时使用 `.agent`。
-- 核心分支（Core branches）:
-  - `--harness-folder` 显式参数优先。
-  - 已存在 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json` 时，沿用现有配置。
-  - 非交互环境不阻塞，直接写入默认 `.agent`。
-- 异常处理（Error handling）:
-  - 非对象 `package.json` 会报错，避免写入不可预期结构。
-  - 写入 package 配置后再运行 `runInit`，保证 config/state/managed files 落在同一个 root。
-- 边界兜底（Boundary fallback）:
-  - 旧 `.harness` 和 `.agents` 路径仍保留在 migration/sync 的 legacy branches 中，便于老项目升级。
-- 性能或并发注意事项（Performance or concurrency notes）:
-  - 仅本地 JSON 和文件写入，没有新增网络依赖。
-
-## 6. 与技术方案的偏移
-
-- RFC_003 要求 CLI 询问目录名。本实现额外提供 `--harness-folder`，用于非交互脚本和自动测试。
-- 当前仓库遵循默认 `.agent`，所以根 `package.json` 不再保留 `sdlcHarness.harnessFolderName`。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build and package behavior tests | PASS |
-| `tests/sdlc-harness/harness-root.test.mjs` | 默认 `.agent` root 和自定义 root 配置读取 | PASS |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | 默认 `.agent`、自定义 `.harness`、CLI init 默认写入、CLI 自定义写入、已有 package 配置沿用 | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | 当前 `.agent` source workspace 到包 assets 无漂移 | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | 当前仓库 resolved root `.agent` | PASS |
-| `make validate-harness` | 本地 Harness scaffold、prompt language、checkpoint、overview gates | PASS |
-
-## 8. 后续维护注意事项
-
-- 当前仓库的 Harness fact source 是 `.agent/**`；不要再新增 `.harness/**` 作为当前 root。
-- 自定义业务项目仍可在 init 时输入 `.harness`，CLI 会写入 `package.json#sdlcHarness.harnessFolderName`。
-- 后续改动 `AGENTS.md`、Skill、templates、policies、Makefile 或 workflow 后，继续运行 `sdlc-harness package sync-source` 和 `package check-source`。
-
----
-
-## npm_package/dev_010_task_checkpoint_model.md
-
-Source: [npm_package/dev_010_task_checkpoint_model.md](npm_package/dev_010_task_checkpoint_model.md)
-
-# DEV-010 Task Checkpoint Model Implementation Doc
-
-## 1. 关联信息
-
-- Task ID: DEV-010
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `.docs/rfc/RFC_004_simplify_task_checkpoint_archive_model.md`
-- Linked commit: DEV-010 git commit
-
-## 2. 本次实现范围
-
-- 新增（Added）:
-  - `Task Contract` checkpoint 模板区块，用于声明 `allowed_paths`、`required_gates` 和验收标准。
-  - RFC_004、PRD-NPM-017 和 DEV-010 技术方案记录。
-  - Node validator 覆盖 open task checkpoint contract。
-- 修改（Changed）:
-  - `tasks.yaml` 和 `tasks.draft.yaml` 改为轻量 task 索引，不再保存完整路径和 gate 合同。
-  - Python validators 从活跃 checkpoint 读取路径合同，并要求 open task 有 checkpoint、done task 不保留 checkpoint。
-  - 阶段 Skill、模板、policy、README 和 AGENTS 协议改用活跃 checkpoint 语义。
-  - `.docs/INDEX.md` 修正 `.agent` state 路由和 implementation doc 相对链接。
-- 未覆盖（Not covered）:
-  - 未新增自动 git commit/tag 创建逻辑；task 历史动作记录由用户或外部 SCM 流程执行。
-
-## 3. 真实代码结构
-
-| 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
-|---|---|---|
-| `tools/harness_utils.py` | 提供轻量 task schema 和 checkpoint contract 解析工具 | `validate_task_shape`, `extract_task_contract`, `expand_harness_root` |
-| `tools/validate_checkpoint.py` | 校验 open task checkpoint 和 done task checkpoint 清理 | `validate_checkpoint_file`, `main` |
-| `tools/validate_allowed_paths.py` | 从当前 checkpoint 读取 `allowed_paths` 校验工作树改动 | `main` |
-| `packages/sdlc-harness/src/lib/validators.ts` | 对齐 npm 包 Node validators 的 checkpoint 语义 | `validateCheckpoint`, `taskContract`, `validateDev` |
-| `.agent/managed/templates/CHECKPOINT_TEMPLATE.md` | 生成 active checkpoint 的合同模板 | `Task Contract` |
-| `.agent/state/tasks.yaml` | 当前 sprint 的轻量 task 索引 | `tasks[]`, `current_task_id` |
-
-## 4. 核心数据流
-
-```txt
-current_task_id
--> tasks.yaml 找到 open task checkpoint
--> checkpoint Task Contract 解析 allowed_paths / required_gates
--> validate_allowed_paths 检查 git changed files
--> task gates 通过
--> implementation doc 写入
--> task 标记 done 并删除 checkpoint
-```
-
-## 5. 关键实现逻辑
-
-- 输入校验（Input validation）:
-  - `validate_task_shape` 只要求 `id`、`title`、`status`、`summary`、`implementation_doc`。
-  - open task 必须有 `checkpoint`；closed task 不允许保留 `checkpoint`。
-- 核心分支（Core branches）:
-  - 有 open task 时，`validate_allowed_paths.py` 读取当前 checkpoint `Task Contract`。
-  - 无 open task 时，路径合同校验跳过，因为没有活跃执行合同。
-  - `validate_checkpoint.py` 校验 open task checkpoint 文件存在、包含必需章节和 contract 字段。
-- 异常处理（Error handling）:
-  - checkpoint 缺失、contract 缺失、`allowed_paths` 或 `required_gates` 为空都会 gate failure。
-  - done task 仍保留 checkpoint 字段会 gate failure。
-- 边界兜底（Boundary fallback）:
-  - `latest.md` 不再强制存在；如果存在，则必须引用当前 task，防止旧恢复入口误导 Agent。
-- 性能或并发注意事项（Performance or concurrency notes）:
-  - validator 只解析当前 checkpoint，避免每次读取历史 task 的大段执行信息。
-
-## 6. 与技术方案的偏移
-
-- task state 不保存 `commit` 字段，避免重复 git 历史和在同一提交中记录自身 hash 的循环。
-- `.agent/templates/**` 作为旧本地模板副本同步更新，但 package source 仍以 `.agent/managed/**` 为准。
-
-## 7. 测试覆盖（Test Coverage）
-
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
-|---|---|---|
-| `npm test` | TypeScript build、init/sync/upgrade/package source/validators tests | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | 本地 Harness source 与 package assets 无漂移 | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | Node harness validator | PASS |
-| `python3 tools/validate_checkpoint.py` | open task checkpoint contract | PASS |
-| `python3 tools/validate_allowed_paths.py` | active checkpoint allowed paths | PASS |
-| `make validate-harness` | 本地 harness、prompt language、checkpoint、overview gates | PASS |
-
-## 8. 后续维护注意事项
-
-- 新 task 创建时先写轻量 `tasks.yaml` 记录和对应 checkpoint；done 后删除 checkpoint。
-- 如后续要自动强制 task commit，可在 SCM 层实现，不应把 commit 历史重复写入 archive。
-
----
-
-## npm_package/dev_011_plan_yaml_no_checkpoint.md
-
-Source: [npm_package/dev_011_plan_yaml_no_checkpoint.md](npm_package/dev_011_plan_yaml_no_checkpoint.md)
-
-# DEV-011 Implementation: plan.yaml no checkpoint
-
-## Task
-
-- Task ID: `DEV-011`
-- Title: 合并 checkpoint 到 `plan.yaml` 并重命名 tasks 状态
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-- RFC: `.docs/rfc/RFC_005_merge_checkpoint_into_plan.md`
-
-## Implementation Summary
-
-`tasks.yaml` / `tasks.draft.yaml` 被替换为 `plan.yaml` / `plan.draft.yaml`。open task 的 `allowed_paths`、`required_gates`、`acceptance_criteria`、`working_notes` 直接保存在 `plan.yaml` 当前 task 条目中；done/cancelled task 不再保留这些活跃执行字段。
-
-checkpoint 机制被移除：不再创建 `<harnessRoot>/state/checkpoints/`，不再分发 `CHECKPOINT_TEMPLATE.md`，Makefile、Python validators、Node CLI validators 和 GitHub workflow 都不再暴露 `validate-checkpoint`。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `.agent/state/plan.yaml` | 当前执行计划事实源，包含 DEV-011 open task 合同，完成后会压缩为摘要。 |
-| `.agent/state/plan.draft.yaml` | 架构阶段计划草案事实源，替代旧 `tasks.draft.yaml`。 |
-| `tools/validate_plan.py` / `tools/validate_plan_draft.py` | 替代旧 task validator，并校验 open/done task 字段边界。 |
-| `tools/validate_allowed_paths.py` | 从当前 open task 读取 `allowed_paths`。 |
-| `packages/sdlc-harness/src/lib/{init,doctor,migrations,validators}.ts` | 初始化、诊断、迁移和 Node validator 全部切换到 plan 模型。 |
-| `.agent/skills/**` / `.agent/managed/templates/**` / `.agent/policies/**` | 阶段规则和模板改为 plan protocol。 |
-| `tests/sdlc-harness/**` | 覆盖 init、upgrade 和 validator 的 plan 行为。 |
-
-## Plan Deviations
-
-RFC_005 原计划删除 checkpoint 并重命名 task state；实现中同时增强了 upgrade migration：旧 `tasks.yaml` / `tasks.draft.yaml` 会迁移为 `plan.yaml` / `plan.draft.yaml`，并在可解析时把旧 checkpoint `Task Contract` 合并回 open task。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | PASS |
-| `make validate-harness` | PASS |
-| `make validate-rfc` | PASS |
-| `python3 tools/validate_allowed_paths.py` | PASS |
-| `make validate-current` | PASS |
-
----
-
-## npm_package/dev_012_makefile_include_block.md
-
-Source: [npm_package/dev_012_makefile_include_block.md](npm_package/dev_012_makefile_include_block.md)
-
-# DEV-012 Implementation: Makefile include managed block
-
-## Task
-
-- Task ID: `DEV-012`
-- Title: 为 `sync` 增加 `Makefile` include 托管块
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-`sdlc-harness sync` 现在会用 managed block 管理根 `Makefile` 的 Harness 接入片段。新项目会得到一个只包含 include block 的 `Makefile`；已有项目会在文件开头插入 include block，并保留项目原有内容。
-
-`AGENTS.md` 和 `Makefile` 的 block 合并逻辑统一为完整 marker 替换：只有同时存在且唯一的 begin/end marker 时才替换 block 内容；marker 缺失一边、顺序错误或重复时，`sync` 返回 `blocked`，避免猜测式覆盖。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | 增加 `Makefile` include block 同步，并抽出通用 managed block 合并保护。 |
-| `packages/sdlc-harness/src/lib/managed-file.ts` | 增加 `Makefile` marker 常量。 |
-| `packages/sdlc-harness/src/lib/config.ts` | 默认 managed files 增加根 `Makefile` 的 `merge-block` 项。 |
-| `packages/sdlc-harness/src/lib/migrations.ts` | 旧 config 在 `upgrade` 时补入根 `Makefile` 管理项。 |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | 覆盖默认/custom root 的 Makefile include、已有 Makefile 内容保留、坏 marker blocker。 |
-| `tests/sdlc-harness/upgrade.test.mjs` | 覆盖旧 config 升级后补入 Makefile 管理项并生成 include block。 |
-
-## Behavior Notes
-
-`Makefile` block 形如：
-
-```make
-# sdlc-harness:make:begin
-# Included before project targets so project recipes win on name conflicts.
--include .agent/managed/make/sdlc-harness.mk
-.DEFAULT_GOAL :=
-# sdlc-harness:make:end
-```
-
-当已有项目存在自己的 targets 时，block 插在文件开头并清空 include 产生的默认 goal，让项目自己的第一个 target 继续作为默认入口。项目后续定义的同名 target 会覆盖 Harness fragment 中的默认占位 target。
-
-## Plan Deviations
-
-技术方案已要求 `Makefile` 不整体覆盖，并生成 `<harnessRoot>/managed/make/sdlc-harness.mk`；实现中额外把根 `Makefile` 作为 `merge-block` managed file 写入 default config 和 migration，确保 `init`、`sync` 和 `upgrade` 都能接上线。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS |
-| `python3 tools/validate_allowed_paths.py` | PASS |
-| `node packages/sdlc-harness/dist/cli.js validate-harness` | PASS |
-| `make validate-harness` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-
----
-
-## npm_package/dev_013_package_workspace_decoupling_principle.md
-
-Source: [npm_package/dev_013_package_workspace_decoupling_principle.md](npm_package/dev_013_package_workspace_decoupling_principle.md)
-
-# DEV-013 Implementation: package and workspace decoupling principle
-
-## Task
-
-- Task ID: `DEV-013`
-- Title: 补充包与项目解耦设计原则
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-README 新增包与项目解耦原则：Harness npm 包只负责提供和升级工作流能力，用户仓库负责保存项目事实、状态数据、业务内容和本地取舍。
-
-`sync` / `upgrade` 的说明补充为增量合并模型，明确 `AGENTS.md`、`Makefile` 等高冲突入口只能通过 managed block、include block 或 create-if-missing 接入；遇到 marker、checksum、override 或本地差异冲突时应报告 blocker，不做全量覆盖。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `README.md` | 在核心设计原则和 npm 包化章节补充包与用户仓库解耦原则。 |
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `make validate-harness` | PASS |
-
----
-
-## npm_package/dev_014_authoring_overlay_design.md
-
-Source: [npm_package/dev_014_authoring_overlay_design.md](npm_package/dev_014_authoring_overlay_design.md)
-
-# DEV-014 Implementation: Harness authoring overlay design
-
-## Task
-
-- Task ID: `DEV-014`
-- Title: 补充 Harness Authoring Overlay 设计
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-README 新增 Harness Authoring Overlay 设计，用于区分三类内容：
-
-- 通用 Harness 配置：默认进入 npm package canonical assets，面向所有接入项目。
-- 项目实例数据：当前项目的 `.agent/state/**` 和 `.docs/**`，不由包覆盖。
-- Harness authoring overlay：只在本仓库开发 Harness 自身时使用的原则、专用 Skill 和包化安全规则，默认不进入 npm 包，也不分发到用户项目。
-
-README 同时记录了 authoring overlay 的推荐目录、默认分发规则、影响面和晋升准则。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `README.md` | 在核心设计原则和第十七章自举开发说明中补充 authoring overlay 分层。 |
-
-## Impact Notes
-
-本次只更新设计文档，不创建 `.agent/authoring/**` 目录，也不改变 `package sync-source`、`sync`、`upgrade` 或 validator 行为。后续真正落地 authoring overlay 时，需要同步评估 `AGENTS.md` 读取规则、`source-mappings.yaml`、package assets、validators 和 Skill 晋升流程。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `make validate-harness` | PASS |
-
----
-
-## npm_package/dev_015_markdown_doc_overviews.md
-
-Source: [npm_package/dev_015_markdown_doc_overviews.md](npm_package/dev_015_markdown_doc_overviews.md)
-
-# DEV-015 Implementation: Markdown doc overviews
-
-## Task
-
-- Task ID: `DEV-015`
-- Title: 将 docs overview 派生视图从 HTML 改为 Markdown
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-`.docs/<stage>/overview.html` 被替换为 `.docs/<stage>/overview.md`。生成器现在直接拼接阶段 Markdown slices，保留 source hash、source slice 列表和每个 slice 的原始 Markdown 内容。
-
-`make docs-overview` 会写入 `overview.md` 并删除同目录旧 `overview.html`；`make validate-doc-overviews` 会检查 `overview.md` 是否最新，并把遗留 `overview.html` 视为过期生成物。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `tools/build_doc_overviews.py` | 输出 deterministic Markdown overview，并删除/拦截旧 HTML 生成物。 |
-| `AGENTS.md` / `README.md` | 将派生视图规则从 `overview.html` 更新为 `overview.md`。 |
-| `Makefile` / `.agent/managed/make/sdlc-harness.mk` | 命令帮助文案改为 Markdown overview。 |
-| `.agent/skills/**` / `.agent/templates/**` / `.agent/managed/templates/**` | 阶段完成检查和 Skill 模板改为 `overview.md`。 |
-| `packages/sdlc-harness/assets/**` | 包内 canonical assets 同步为 `overview.md` 语义。 |
-| `.docs/**/overview.md` | 新的 Markdown 派生视图。 |
-
-## Impact Notes
-
-HTML 的优势主要在交互和图文排版，但当前 Harness 没有自动生成图文内容的能力。Markdown overview 更贴近现阶段事实源形态，也更适合 Agent 直接读取、diff 和校验。
-
-历史 `overview.html` 不再保留，避免同一阶段目录中同时存在两种派生视图导致人和 Agent 混淆。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `make docs-overview` | PASS |
-| `make validate-doc-overviews` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `make validate-harness` | PASS |
-| `make validate-current` | PASS |
-| `npm test` | PASS |
-
----
-
-## npm_package/dev_016_role_prompts_and_karpathy_guidelines.md
-
-Source: [npm_package/dev_016_role_prompts_and_karpathy_guidelines.md](npm_package/dev_016_role_prompts_and_karpathy_guidelines.md)
-
-# DEV-016 Implementation: role prompts and Karpathy guidelines
-
-## Task
-
-- Task ID: `DEV-016`
-- Title: 补全通用角色提示词和 Karpathy 基础原则
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-通用阶段 Skill 新增 `## 角色提示词`，让每个角色不仅能执行文档切片和状态更新，也能以专业角色姿态与用户对话式澄清、权衡并生成阶段产物。
-
-`AGENTS.md` 中的 Karpathy-inspired 通用原则已补全为 `multica-ai/andrej-karpathy-skills` 的 MIT `CLAUDE.md` guideline 内容，并保留 Harness 额外约束：阶段约束优先、文档先于实现、验证闭环和派生物可再生成。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `AGENTS.md` | 补全 Karpathy guideline 原文内容，并保留 Harness 补充原则。 |
-| `.agent/skills/**/SKILL.md` | 为 manager、pm、architect、developer、implementation_doc、reviewer、tester、release_manager、rfc_recalibrate 增加通用角色提示词。 |
-| `.agent/managed/templates/SKILL_TEMPLATE.md` / `.agent/templates/SKILL_TEMPLATE.md` | 为未来 Skill 模板增加 `## 角色提示词` 槽位。 |
-| `tools/validate_prompt_language.py` | 将 `## 角色提示词` 纳入 Skill 必需章节。 |
-| `README.md` | 说明通用阶段 Skill 必须包含对话式角色提示词。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步包内 canonical assets。 |
-
-## Source Notes
-
-- `multica-ai/andrej-karpathy-skills` README 标注 License 为 MIT。
-- 本次纳入的是该仓库 `CLAUDE.md` 中的四条通用行为原则：Think Before Coding、Simplicity First、Surgical Changes、Goal-Driven Execution。
-
-## Impact Notes
-
-这些角色提示词属于通用 Harness 能力，应该随 npm 包分发给所有用户项目；它们不属于 authoring overlay。提示词保持通用，不绑定具体业务项目，也不要求用户直接修改 managed Skill。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `make docs-overview` | PASS |
-| `make validate-doc-overviews` | PASS |
-| `make validate-harness` | PASS |
-| `make validate-current` | PASS |
-| `npm test` | PASS |
-| `git diff --check` | PASS |
-
----
-
-## npm_package/dev_017_chinese_karpathy_guidelines.md
-
-Source: [npm_package/dev_017_chinese_karpathy_guidelines.md](npm_package/dev_017_chinese_karpathy_guidelines.md)
-
-# DEV-017 Implementation: Chinese Karpathy guidelines
-
-## Task
-
-- Task ID: `DEV-017`
-- Title: 将 Karpathy guidelines 转为中文契约表达
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-`AGENTS.md` 中的 `multica-ai/andrej-karpathy-skills` guideline 内容从英文原文块调整为“中文说明 + 英文关键词”的本地化契约表达。
-
-本次没有删减上游 `CLAUDE.md` 的语义结构：保留说明、`Tradeoff`、四个 guideline 标题、每条 guideline 的检查点、multi-step plan 模板，以及最终 working signal。英文标题和关键术语保留为 `Think Before Coding`、`Simplicity First`、`Surgical Changes`、`Goal-Driven Execution`、`assumptions`、`tradeoffs`、`success criteria` 等，符合 Prompt Language Contract。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `AGENTS.md` | 将 Karpathy guideline 原文块转为中文契约表达，并保留关键英文术语。 |
-| `packages/sdlc-harness/assets/agents/AGENTS_CORE.md` | 同步 npm 包分发用的 canonical agents core 文案。 |
-
-## Source Notes
-
-- 上游来源：`https://github.com/multica-ai/andrej-karpathy-skills`
-- 对齐文件：`CLAUDE.md`
-- 本次转换覆盖四个 guideline：`Think Before Coding`、`Simplicity First`、`Surgical Changes`、`Goal-Driven Execution`。
-
-## Impact Notes
-
-该调整只影响通用 Harness 协议文案和包内分发资产，不改变 CLI、sync、Skill 校验或阶段流转行为。
-
-中文化后的原则更符合本仓库面向人阅读内容使用中文的约定，同时保留关键英文概念，便于跨项目复用和与上游来源对照。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `make validate-harness` | PASS |
-| `make validate-current` | PASS |
-
----
-
-## npm_package/dev_018_task_commit_push_rule.md
-
-Source: [npm_package/dev_018_task_commit_push_rule.md](npm_package/dev_018_task_commit_push_rule.md)
-
-# DEV-018 Implementation: task commit and push rule
-
-## Task
-
-- Task ID: `DEV-018`
-- Title: 补充每个开发任务完成后 commit 并 push 的规则
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-开发阶段规则已明确：每个 `SPRINTING` task 完成后必须形成单独的 task-level `git commit`，并 `git push` 到当前 upstream branch。push 成功前，不进入下一个 pending task，也不能把该 task 视为完整闭环。
-
-规则同时增加了 task 开始前的工作区检查：先看 `git status`，确认没有未归属到当前 task 的脏变更。如果存在历史 task 残留变更，应先完成对应 task 的 commit/push，或报告 blocker，避免多个 task 被混入同一个 commit。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `AGENTS.md` | 在全局 Plan Protocol 和工作规则中补充 task-level commit/push 要求。 |
-| `README.md` | 更新开发阶段循环、Plan Protocol 说明、Skill 表和最小任务完成标准。 |
-| `.agent/skills/dev_sprint/SKILL.md` | 将 `git status`、task-level `git commit` 和 `git push` 纳入开发 Skill 的输出、规则和完成检查。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步包内 canonical assets。 |
-
-## Impact Notes
-
-该规则是工作流约束，不改变 CLI 行为。它依赖 agent 执行 `git status`、`git commit` 和 `git push`，并在 remote/upstream、权限或凭证失败时停止推进并报告 blocker。
-
-本次没有在 `plan.yaml` 的 done task 中新增 commit hash 字段，保持此前的短期化设计。task 历史边界由 git history、PR 或外部 release 系统追溯。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `make docs-overview` | PASS |
-| `make validate-harness` | PASS |
-| `make validate-current` | PASS |
-| `git diff --check` | PASS |
-
-## Follow-up Note
-
-当前仓库已有多个尚未提交的 DEV 任务改动。按本任务新增规则，后续整理 git history 时应按 task 边界拆分 commit，不应把所有历史改动合并为一个大 commit。
-
----
-
-## npm_package/dev_019_commit_before_task_compression.md
-
-Source: [npm_package/dev_019_commit_before_task_compression.md](npm_package/dev_019_commit_before_task_compression.md)
-
-# DEV-019 Implementation: commit before task compression
-
-## Task
-
-- Task ID: `DEV-019`
-- Title: 调整 task commit 与 plan 压缩顺序
-- PRD: `.docs/01_product/npm_package_distribution.md`
-- Tech Plan: `.docs/03_tech_plan/harness_package_distribution.md`
-
-## Implementation Summary
-
-开发阶段提交顺序已从“先压缩 task 再提交”调整为“两段式提交”：
-
-1. task implementation commit：在 `plan.yaml` 中当前 task 仍保留完整 open task 合同时提交。这个提交包含代码、测试、implementation doc、`.docs/INDEX.md`、`overview.md`、gate 记录，以及 `allowed_paths`、`required_gates`、`acceptance_criteria` 等任务边界。
-2. task completion ledger commit：implementation commit 完成后，再将 `plan.yaml` 中当前 task 压缩为 `summary`、`implementation_doc`、`gate_result` 等 done 摘要，并提交这个轻量记账变化。
-
-这样 git history 可以追溯每个 task 的真实执行范围和验收标准，而当前 `plan.yaml` 仍能保持短期化、低噪声状态。
-
-## Changed Files
-
-| Path | Purpose |
-|---|---|
-| `AGENTS.md` | 将全局工作规则改为先提交完整 open task 合同，再提交压缩后的 completion ledger。 |
-| `README.md` | 更新开发阶段循环、Plan Protocol 和最小任务完成标准，明确两段式提交顺序。 |
-| `.agent/skills/dev_sprint/SKILL.md` | 更新开发 Skill 的角色提示词、输出、Plan Protocol、规则和完成检查。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步包内 canonical assets。 |
-
-## Impact Notes
-
-`plan.yaml` 仍不长期保存 commit hash。完整任务合同由 task implementation commit 保留，当前 plan 由后续 completion ledger commit 压缩。
-
-如果 push 失败，两个 commit 都不能被视为完整交付；Agent 不应进入下一个 pending task。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `make docs-overview` | PASS |
-| `make validate-harness` | PASS |
-| `git diff --check` | PASS |
-| `make validate-current after compression` | PASS |
-
----
-
-## npm_package/dev_020_rename_npm_package.md
-
-Source: [npm_package/dev_020_rename_npm_package.md](npm_package/dev_020_rename_npm_package.md)
-
-# DEV-020 Rename NPM Package
-
-## Summary
-
-将 npm package name 从 `@ai-sdlc/sdlc-harness` 改为 `agent-project-sdlc`，保留 CLI binary `sdlc-harness` 不变。该变更用于发布前去掉 npm organization/scope 依赖，降低首次发布的权限门槛。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `packages/sdlc-harness/package.json` | `name` 改为 `agent-project-sdlc`，`bin.sdlc-harness` 保持不变。 |
-| `package.json` / `package-lock.json` | workspace selector 和 lockfile link 改为 `agent-project-sdlc`。 |
-| `packages/sdlc-harness/src/lib/config.ts` | 默认 generated config 的 `core.package` 改为 `agent-project-sdlc`。 |
-| `.github/workflows/harness.yml` / package asset workflow | CI workspace 命令改为 `--workspace agent-project-sdlc`。 |
-| `tests/sdlc-harness/**` | 更新 package name 断言和 migration fixture。 |
-| `README.md` | 安装、升级和包名说明改为 `agent-project-sdlc`。 |
-| `.docs/02_architecture/`、`.docs/06_review/`、`.docs/07_test/`、`.docs/08_release/` | 同步当前包名、pack 命令和 release evidence。 |
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，`package source OK`。 |
-| `make validate-harness` | PASS。 |
-| `npm pack --dry-run --workspace agent-project-sdlc` | PASS，tarball `agent-project-sdlc-0.1.0.tgz`，81 files，shasum `906e745f5dd9a6fdc14890ea64199694e7095a77`。 |
-| Local installed-consumer smoke | PASS，tarball 安装后 `npx sdlc-harness help`、`init --harness-folder .agent`、`doctor` 均通过。 |
-| `npm view agent-project-sdlc version --json` | 当前返回 `E404`，说明该包名尚未公开存在，或未认证用户无访问权限。 |
-
-## Notes
-
-- `npm publish` 对 unscoped package 不需要 `--access public`；后续发布命令应使用 `npm publish --workspace agent-project-sdlc`。
-- 发布仍被 npm auth 阻塞，`npm whoami` 当前返回 `ENEEDAUTH`。
-
----
-
-## npm_package/dev_021_consolidate_managed_config.md
-
-Source: [npm_package/dev_021_consolidate_managed_config.md](npm_package/dev_021_consolidate_managed_config.md)
-
-# DEV-021 Consolidate Managed Workflow Config
-
-## Summary
-
-将除 `.agent/skills/**` hard index 之外的工作流默认配置收敛到 `.agent/managed/**`。旧的 `.agent/policies/**` 和 `.agent/templates/**` tracked mirror 已删除，工具、包资产和测试改为使用 managed canonical layout。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.agent/managed/**` | 保留 policies、templates 和默认 Makefile targets 作为工作流配置事实源。 |
-| `.agent/policies/**` / `.agent/templates/**` | 删除旧镜像目录，避免同一份配置出现多个工作区事实源。 |
-| `Makefile` | 缩减为 include block，只引入 `.agent/managed/make/sdlc-harness.mk`。 |
-| `tools/harness_utils.py`、`tools/validate_*.py` | 校验和阶段契约读取路径改为 `.agent/managed/policies/**`。 |
-| `packages/sdlc-harness/source-mappings.yaml` | package asset 的 Makefile source 改为 `.agent/managed/make/sdlc-harness.mk`。 |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | `sync` 不再直接 materialize legacy `.harness/templates`、`.harness/policies` 或 `.harness/make/**`。 |
-| `tests/sdlc-harness/*.test.mjs` | 更新 package source fixture，并增加 init/sync 不生成 legacy mirror 的断言。 |
-| `AGENTS.md` / `README.md` | 同步 managed canonical layout、Makefile include 入口和 legacy mirror 禁止规则。 |
-| `.agent/config.yaml` | `core.package` 修正为已发布包名 `agent-project-sdlc`。 |
-
-## Behavior
-
-```txt
-agent-project-sdlc assets
--> sdlc-harness sync
--> <harnessRoot>/skills/**                  # Agent hard index
--> <harnessRoot>/managed/templates/**       # workflow templates
--> <harnessRoot>/managed/policies/**        # workflow policies
--> <harnessRoot>/managed/make/sdlc-harness.mk
--> Makefile include block
-```
-
-`<harnessRoot>/state/**` 和 `.docs/**` 仍然是项目实例事实源，不由包升级全量覆盖。已有旧配置仍通过 migration 映射到 managed path；新同步路径不再生成旧镜像目录。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，`package source OK`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，32 个 changed files 均在 DEV-021 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check HEAD` | PASS。 |
-
-## Notes
-
-- `.agent/skills/<skill_name>/SKILL.md` 继续保持一级 hard index，避免 Agent skill discovery 受到过深目录结构影响。
-- 根 `Makefile` 仍然是用户项目入口；用户自己的 Makefile target 可留在 include block 之外，包升级只维护 block 内内容。
-
----
-
-## npm_package/dev_022_pjsdlc_marker_prefix.md
-
-Source: [npm_package/dev_022_pjsdlc_marker_prefix.md](npm_package/dev_022_pjsdlc_marker_prefix.md)
-
-# DEV-022 pjsdlc Marker Prefix
-
-## Summary
-
-将 Harness 托管文本块的 preferred marker 迁移到 `pjsdlc:sdlc-harness:*` namespace，并保留旧 `sdlc-harness:*` marker 作为 legacy migration 输入。这样 `AGENTS.md`、根 `Makefile` 等桥接文件能更清楚地区分 Project SDLC Harness 管理内容和用户项目内容。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `packages/sdlc-harness/src/lib/managed-file.ts` | 新增 `pjsdlc:sdlc-harness:*` preferred marker，保留 legacy marker 常量。 |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | `mergeManagedBlock` 支持 preferred/legacy marker 检测，完整旧 block 会原位替换为新 block；不完整、重复或新旧 marker 冲突仍 blocker。 |
-| `packages/sdlc-harness/src/lib/package-source.ts` | `extract-managed-block` 支持 preferred marker 和 legacy marker。 |
-| `tests/sdlc-harness/*.test.mjs` | 更新 init/upgrade 断言，覆盖旧 marker 自动迁移和 broken marker blocker。 |
-| `Makefile` | 根 include block marker 改为 `# pjsdlc:sdlc-harness:make:begin/end`。 |
-| `README.md`、PRD、技术方案、RFC | 记录 marker namespace、legacy 兼容和 `config.yaml` schema-governed 边界。 |
-
-## Behavior
-
-```txt
-new AGENTS.md block:
-<!-- pjsdlc:sdlc-harness:begin -->
-...
-<!-- pjsdlc:sdlc-harness:end -->
-
-new Makefile block:
-# pjsdlc:sdlc-harness:make:begin
-...
-# pjsdlc:sdlc-harness:make:end
-```
-
-旧项目中完整的 `sdlc-harness:*` block 会在下一次 `sync` 时被识别并替换为新 marker。若同一文件同时存在新旧 block，或 marker 缺失一端，`sync` 会报告 blocker，避免覆盖用户内容。
-
-`config.yaml` 不使用文本块 marker；它继续通过 YAML schema、known fields、migration 和 local overrides 管理。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，`package source OK`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，9 个 changed files 均在 DEV-022 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-
-## Notes
-
-- CLI binary 仍保持 `sdlc-harness`，本次只改变托管文本块 namespace。
-- `.agent/skills/**` 和 `.agent/managed/**` 是包拥有目录，不需要逐文件加文本块 marker；marker 只用于与用户文本混合的桥接文件和 metadata comment。
-
----
-
-## npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md
-
-Source: [npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md](npm_package/dev_023_pjsdlc_layout_and_skill_prefix.md)
-
-# DEV-023 pjsdlc Layout and Skill Prefix
-
-## Summary
-
-将 package-managed workflow layout 从 `.agent/managed/**` 迁移到 `.agent/pjsdlc_managed/**`，并把所有通用 workflow Skill 的目录名和 frontmatter `name` 迁移为 `pjsdlc_*`。根 `Makefile` 保留为用户仓库的薄桥接入口，只 include `.agent/pjsdlc_managed/make/sdlc-harness.mk`，避免破坏现有 `make validate-*` gate 约定。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.agent/pjsdlc_managed/**` | 接收原 `.agent/managed/**` 下的 policies、templates 和默认 Makefile targets。 |
-| `.agent/skills/pjsdlc_*/SKILL.md` | workflow Skill 目录名和 `name:` 改为 `pjsdlc_*`，保持 `skills/<skill_name>/SKILL.md` hard index。 |
-| `.agent/state/lifecycle.yaml` / `.agent/pjsdlc_managed/policies/phase_contracts.yaml` | 当前 `active_skill` 和 phase contract `skill` 全部指向 `pjsdlc_*`。 |
-| `packages/sdlc-harness/src/lib/*.ts` | 默认 config、init 状态、sync include path、validators 和 migrations 改为 `pjsdlc_managed` / `pjsdlc_*`。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步新 skill asset 目录和 policies。 |
-| `tests/sdlc-harness/*.test.mjs` | 覆盖 init/sync/upgrade 后的新目录、旧 `.managed` 路径消失、旧 `active_skill` 迁移和 package source 映射。 |
-| `AGENTS.md`、`README.md`、PRD、架构和技术方案 | 记录 `pjsdlc_managed`、`pjsdlc_*` Skill 命名，以及根 `Makefile` 不删除的桥接原因。 |
-
-## Behavior
-
-```txt
-package assets
--> sync / init / upgrade
--> <harnessRoot>/skills/pjsdlc_*/SKILL.md
--> <harnessRoot>/pjsdlc_managed/templates/**
--> <harnessRoot>/pjsdlc_managed/policies/**
--> <harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk
--> root Makefile include block
-```
-
-`upgrade` 会把旧 config 中的 `.harness/templates`、`.harness/policies`、`.harness/make` 和 `<harnessRoot>/managed/**` 映射到 `<harnessRoot>/pjsdlc_managed/**`。如果旧 `<harnessRoot>/managed/**` 目录存在且新目录尚不存在，migration 会整体移动旧目录，保留 `.local.yaml` 等本地覆盖文件，再由 `sync` 刷新 canonical package assets。
-
-根 `Makefile` 仍然是用户仓库命令入口，不作为 package-owned target 文件删除。包拥有的 target 文件位于 `<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk`，根文件只保存 `pjsdlc:sdlc-harness:make:*` include block。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，`package source OK`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，75 个 changed files 均在 DEV-023 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-
-## Notes
-
-- `.agent/skills/**` 维持一层 hard index，不引入 `skills/managed/**` 嵌套，降低 Agent Skill discovery 风险。
-- 旧 `.agent/managed/**` 不再作为 tracked workflow config fact source；历史 implementation docs 中的旧路径保留其当时语义。
-
----
-
-## npm_package/dev_024_done_task_git_history_lookup.md
-
-Source: [npm_package/dev_024_done_task_git_history_lookup.md](npm_package/dev_024_done_task_git_history_lookup.md)
-
-# DEV-024 Done Task Git History Lookup
-
-## Summary
-
-补充 done task 详细执行合同的恢复提示：当前 `plan.yaml` 只保留 done 摘要时，Agent 应通过 implementation doc 和 git history 找到 task implementation commit，再查看该 commit 中未压缩的 `plan.yaml`。`pjsdlc:sdlc-harness:*` marker namespace 保持不变。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `AGENTS.md` | 在 Plan Protocol 和工作规则中增加 done task git history lookup 规则。 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | 增加追溯 done task 合同的命令示例，并强调不要重建旧字段。 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 增加管理/交接时的历史合同查询方式。 |
-| `README.md` | 补充 `git log --grep <TASK_ID>` 和 `git show <commit>:<harnessRoot>/state/plan.yaml` 示例。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步 AGENTS core 和 Skill assets。 |
-| `.docs/01_product/`、`.docs/03_tech_plan/`、`.docs/rfc/` | 补充产品要求、技术方案和 RFC_010。 |
-
-## Behavior
-
-```sh
-git log --oneline --grep "<TASK_ID>"
-git show <implementation_commit>:.agent/state/plan.yaml
-```
-
-使用自定义 `<harnessRoot>` 的项目把 `.agent/state/plan.yaml` 替换为实际 root。当前 `plan.yaml` 的 done task 摘要不负责保存旧 `allowed_paths`、`required_gates`、`acceptance_criteria` 或 `working_notes`；需要新执行范围时，通过 RFC 或 revision task 创建新的 open task 合同。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，`package source OK`。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，13 个 changed files 均在 DEV-024 allowed_paths 内。 |
-| `git diff --check` | PASS。 |
-
-## Notes
-
-- 本任务不修改 managed block marker；`pjsdlc:sdlc-harness:*` 继续作为 preferred marker namespace。
-- done task 仍不在 `plan.yaml` 中长期保留完整合同，避免短期执行计划膨胀。
-
----
-
-## npm_package/dev_025_short_lived_plan_and_gate_log.md
-
-Source: [npm_package/dev_025_short_lived_plan_and_gate_log.md](npm_package/dev_025_short_lived_plan_and_gate_log.md)
-
-# DEV-025 Short-Lived Plan And Gate Log
-
-## Summary
-
-将 `plan.yaml` 从“累计完成任务摘要”的长期列表改为当前和未来任务的短期执行状态。完成 task 后，当前 `tasks` 列表移除该 task，历史执行合同通过 task implementation commit 和 implementation doc 追溯。`gate_results.log` 改为当前 task/phase 的短期 scratchpad，长期 gate 事实写入 implementation doc、git history、CI logs 或 release 记录。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `AGENTS.md`、`README.md` | 更新 Plan Protocol：`next_task_sequence` 负责 task id 延续，done/cancelled task 不再留在当前 `plan.yaml`，`gate_results.log` 完成后重置。 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md`、`.agent/skills/pjsdlc_manager/SKILL.md` | 更新开发和调度提示词，要求 implementation commit 保留 open task 合同，completion ledger commit 再移除 task 并重置 gate log。 |
-| `.agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | 移除 `gate_result` 字段示例，新增 `next_task_sequence`。 |
-| `tools/validate_plan.py`、`tools/harness_utils.py`、`tools/status.py`、`tools/validate_task_docs.py` | Python validators 支持 `tasks: []`，拒绝 done/cancelled task 留在当前 plan，禁止 open task 携带 `gate_result`，并让 implementation doc 校验改从 `.docs/04_implementation/**` 和 `.docs/INDEX.md` 读取事实。 |
-| `packages/sdlc-harness/src/lib/init.ts`、`migrations.ts`、`validators.ts` | 包初始化和迁移写入 `next_task_sequence`，迁移时移除 done/cancelled task，清理 open task 的 `gate_result`，Node validator 与 Python 规则对齐。 |
-| `tests/sdlc-harness/*.test.mjs` | 增加 validator 和 upgrade 覆盖：空 task 列表可通过，保留 done task 会失败，迁移会移除 completed task 并递增 `next_task_sequence`。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步 AGENTS core、Skill 和 template assets。 |
-| `.docs/01_product/`、`.docs/03_tech_plan/`、`.docs/rfc/` | 补充短期 plan/gate log 的产品要求、技术方案和 RFC_011。 |
-
-## Behavior
-
-- 当前 `plan.yaml` 只保存 current/future task state；完成任务后从 `tasks` 中移除。
-- `next_task_sequence` 是后续 `DEV-*` id 的机器状态，避免删除历史 task 后复用 id。
-- open task 不允许写 `gate_result`，gate 结果先写短期 `gate_results.log` 和 implementation doc。
-- done/cancelled task 若仍留在当前 `plan.yaml`，Python 和 Node validators 都会失败。
-- 旧项目升级时，migration 会移除 done/cancelled task、清除 open task 的 `gate_result`，并补齐 `next_task_sequence`。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 Node test files 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS，同步 AGENTS core、Skill 和 template assets。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package source OK。 |
-| `make docs-overview` | PASS，刷新全部 `.docs/<stage>/overview.md`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，28 个 changed files 均在 DEV-025 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
-## Notes
-
-- 本任务保留两段提交协议：implementation commit 仍包含 DEV-025 的完整 open task 合同；completion ledger commit 再将 DEV-025 从当前 `plan.yaml` 移除。
-- 历史 task 详情不回填到当前 `plan.yaml`。需要追溯时，先读对应 implementation doc，再用 `git log --grep "<TASK_ID>"` 和 `git show <commit>:.agent/state/plan.yaml` 查看当时的 open task 合同。
-
----
-
-## npm_package/dev_026_remove_execution_history_from_active_state.md
-
-Source: [npm_package/dev_026_remove_execution_history_from_active_state.md](npm_package/dev_026_remove_execution_history_from_active_state.md)
-
-# DEV-026 Remove Execution History From Active State
-
-## Summary
-
-移除 active state 中的过去执行流水。`lifecycle.yaml` 不再包含 `history`，`transition.py` 不再写入 phase history；`plan.yaml` 和 `gate_results.log` 继续保持短期化。过去 phase/task/gate 执行信息不再是 Agent 默认上下文，只在用户明确要求 forensic/audit/regression 追溯时临时查询 git、PR、CI 或 release 记录。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.agent/state/lifecycle.yaml` | 删除既有 `history`，只保留当前 phase routing state。 |
-| `tools/transition.py` | 保留 `--reason` 兼容参数，但不再 append lifecycle history。 |
-| `packages/sdlc-harness/src/lib/init.ts` | 新项目初始化的 `lifecycle.yaml` 不再生成 `history: []`。 |
-| `packages/sdlc-harness/src/lib/migrations.ts` | upgrade migration 删除既有 lifecycle `history`，并继续兼容旧 Skill 名称迁移。 |
-| `tools/validate_prompt_language.py` | Prompt language validator 不再要求 lifecycle `history` key。 |
-| `AGENTS.md`、`README.md`、`.agent/skills/**` | 声明过去执行流水不是默认上下文，done task 合同查询降级为显式 forensic fallback。 |
-| `tests/sdlc-harness/**` | 增加 init 不生成 `history`、upgrade 删除 legacy `history` 的覆盖。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步 AGENTS core 和 Skill assets。 |
-| `.docs/01_product/`、`.docs/03_tech_plan/`、`.docs/rfc/` | 补充 RFC_012、产品要求和技术方案。 |
-
-## Behavior
-
-- `lifecycle.yaml` 只保存当前路由状态：`current_phase`、`active_role`、`active_skill`、`blocked_reason`、`suspended_phase` 和 `allowed_next_phases` 等。
-- `transition.py --reason` 仅输出 note，不写入 active state。
-- 旧项目执行 `upgrade` 后，lifecycle `history` 会被 migration 删除。
-- Agent 默认不读取过去 task/phase/gate 执行流水；普通 bugfix 直接基于当前代码、测试、PRD、技术方案和 implementation doc。
-- 明确的 forensic/audit/regression 任务仍可临时查询 git、PR、CI 或 release 记录。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 Node test files 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS，同步 AGENTS core 和 Skill assets。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package source OK。 |
-| `make docs-overview` | PASS，刷新全部 `.docs/<stage>/overview.md`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，22 个 changed files 均在 DEV-026 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
-## Notes
-
-- 本任务不把 lifecycle history 合并到 `plan.yaml` 或其它 state 文件，因为这仍然会把过去执行流水带回默认上下文。
-- `memory.md` 保留为长期稳定知识入口，但不应记录 phase timeline 或 task execution timeline。
-
----
-
-## npm_package/dev_027_workflow_singleton_collaboration_boundary.md
-
-Source: [npm_package/dev_027_workflow_singleton_collaboration_boundary.md](npm_package/dev_027_workflow_singleton_collaboration_boundary.md)
-
-# DEV-027 Workflow Singleton Collaboration Boundary
-
-## Summary
-
-在 README 中补充 AI SDLC Harness 的协作边界：它集成软件工程全链路，因此在一个项目中应被视为 project-level singleton workflow。多人协作不应并行推进同一项目的全链路 Harness 状态，而应限制在单一阶段产物内，待阶段产物确认后再串联进项目主线。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `README.md` | 在核心设计原则中增加“项目级单例”，并新增 `3.4 协作边界：项目级 singleton workflow` 小节。 |
-| `.docs/rfc/RFC_013_workflow_singleton_collaboration_boundary.md` | 记录协作边界原则和设计取舍。 |
-| `.docs/INDEX.md`、`overview.md` | 链接 RFC 与 implementation doc，并刷新派生视图。 |
-
-## Behavior
-
-- README 明确 Harness 是一个项目的软件工程 singleton workflow。
-- README 说明多人跨全链路并行分支会导致需求、方案、任务、实现、测试和发布事实链冲突，合并成本来自设计本身。
-- README 推荐多人协作收敛在单一阶段产物内，例如 PRD、技术方案、开发任务或测试矩阵。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `make docs-overview` | PASS，刷新全部 `.docs/<stage>/overview.md`。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，6 个 changed files 均在 DEV-027 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
-## Notes
-
-- 本任务只补充设计说明，不新增多人锁、分布式状态合并或协作协议。
-
----
-
-## npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md
-
-Source: [npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md](npm_package/dev_028_remove_gate_results_state_and_rfc_impact.md)
-
-# DEV-028 Remove Gate Results State And Strengthen RFC Impact
-
-## Summary
-
-删除独立 gate results state。Harness 不再创建、要求或写入 `<harnessRoot>/state/gate_results.log`；当前 task 的临时 gate 证据写入 `working_notes`，完成后的最终验证事实写入 implementation doc `Verification`、CI logs 或 release 记录。
-
-同时收敛历史 task 查询方式：过去 task 查询默认面向产物结果和变更意图，读取 implementation doc、RFC、PRD、tech plan 和代码。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API。
-
-RFC 阶段提示词也补强了 impact analysis 要求，要求补丁前显式检查 docs、state、skills、policies、templates、tools、package assets、tests、migrations 和 generated artifacts 影响面。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.agent/state/gate_results.log` | 删除当前仓库的独立 gate results state。 |
-| `tools/run_current_gate.py`、`tools/harness_utils.py`、`tools/status.py`、`tools/validate_harness.py` | 移除 gate log 写入、状态展示和必需文件校验。 |
-| `packages/sdlc-harness/src/lib/init.ts` | 新项目初始化不再生成 `gate_results.log`。 |
-| `packages/sdlc-harness/src/lib/migrations.ts` | `upgrade` 删除 legacy `gate_results.log`。 |
-| `tests/sdlc-harness/**` | 覆盖 init 不生成 gate log、upgrade 删除 legacy gate log。 |
-| `AGENTS.md`、`README.md`、`.agent/skills/pjsdlc_dev_sprint/SKILL.md`、`.agent/skills/pjsdlc_manager/SKILL.md` | 更新 Plan Protocol、task commit 语义和 gate evidence 记录位置。 |
-| `.agent/skills/pjsdlc_rfc_recalibrate/SKILL.md` | 增加补丁前 impact analysis 要求和检查清单。 |
-| `.agent/pjsdlc_managed/policies/**` | SPRINTING 阶段不再把 gate log 作为 always allow 或 phase output。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步 AGENTS core、Skill 和 policy assets。 |
-| `.docs/01_product/`、`.docs/03_tech_plan/`、`.docs/rfc/` | 补充产品要求、技术方案和 RFC_014。 |
-
-## Behavior
-
-- `make validate-current` 和 `tools/run_current_gate.py` 只输出 gate 结果，不写 state。
-- 新项目 `sdlc-harness init` 不生成 `<harnessRoot>/state/gate_results.log`。
-- 老项目 `sdlc-harness upgrade` 会删除 legacy gate log。
-- open task 仍保留 `allowed_paths`、`required_gates` 和 `acceptance_criteria` 作为当前执行约束。
-- 历史查询默认不读取过去 task 的执行期字段；只有显式 forensic/audit/regression 场景才临时查询 git、PR、CI 或 release 记录。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS，同步 package canonical assets。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，31 个 changed files 均在 DEV-028 allowed_paths 内。 |
-| `npm test` | PASS，5 个 Node test files 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package source OK。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
-## Notes
-
-- `gate_result` 字段仍在 migration 和 validator 中作为 legacy cleanup 目标出现：旧 open task 携带该字段会被迁移清理，新 open task 仍被 validator 拒绝。
-- 本任务不删除当前 open task 的 `allowed_paths`、`required_gates` 或 `acceptance_criteria`。它们仍是执行期必要约束，只是不作为历史查询 API。
-
----
-
-## npm_package/dev_029_natural_language_control.md
-
-Source: [npm_package/dev_029_natural_language_control.md](npm_package/dev_029_natural_language_control.md)
-
-# DEV-029 Natural Language Control
-
-## Summary
-
-补充自然语言控制契约。Harness 仍保留 `/status`、`/next`、`/advance`、`/rfc`、`/overview`、`/review` 和 `/test` 作为快捷入口，但用户不需要记忆这些命令。Agent 应先读取 lifecycle 和 plan，再把“状态如何”“继续”“开始开发”“跑测试”“进入下一阶段”“需求变了”等自然语言映射到对应 workflow action。
-
-这个改动不新增 state 字段，也不依赖 Codex、Claude Code 或其它客户端的专有模式切换能力。自然语言控制属于 Agent 行为契约，现有 lifecycle、plan、Skill 和 gate 仍是事实源。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `AGENTS.md` | 在宏指令协议前补充自然语言控制规则和常见意图映射。 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 要求 manager 将自然语言意图路由到 status、next、advance、RFC、开发、测试、Review 和 overview 动作。 |
-| `README.md` | 将宏指令定位为快捷入口，补充自然语言到 workflow action 的映射表。 |
-| `.docs/01_product/npm_package_distribution.md` | 新增 `PRD-NPM-023` 和验收标准。 |
-| `.docs/03_tech_plan/harness_package_distribution.md` | 新增 Natural Language Control 技术契约。 |
-| `packages/sdlc-harness/assets/**` | 通过 `package sync-source` 同步 AGENTS core 和 manager Skill assets。 |
-
-## Behavior
-
-- 用户可以说“继续”“下一步”“开始开发”“跑测试”“准备 review”等自然语言，不需要先记住或输入宏指令。
-- Agent 在执行前仍读取 `.agent/state/lifecycle.yaml` 和必要的 `.agent/state/plan.yaml`。
-- 会改变阶段、创建或删除 task、提交、push 或发布的动作，Agent 先说明即将执行的动作和验证方式。
-- `/xxx` 宏指令继续可用，作为 power-user shortcut、调试入口和自动化入口。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | PASS，同步 package canonical assets。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，13 个 changed files 均在 DEV-029 allowed_paths 内。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package source OK。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
----
-
-## npm_package/dev_030_readme_user_guide.md
-
-Source: [npm_package/dev_030_readme_user_guide.md](npm_package/dev_030_readme_user_guide.md)
-
-# DEV-030 README User Guide Split
-
-## Summary
-
-将原根 `README.md` 的长篇产品说明和设计取舍迁移为 `PROJECT_SPEC.md`，并新建轻量根 `README.md`。新的 README 面向 npm 包用户，说明 AI SDLC Harness 是什么、适用场景、安装方式、`init` / `init --adopt` / `sync` / `upgrade` / `doctor` 等命令，以及自然语言日常使用方式。
-
-这个改动只调整文档入口，不改变 package runtime、sync/upgrade 行为、state schema 或 package assets。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `README.md` | 改写为用户视角的安装、接入、日常使用和命令指南。 |
-| `PROJECT_SPEC.md` | 保存原 README 的完整项目规格说明，并更新标题、仓库结构和文档分层描述。 |
-| `.docs/01_product/npm_package_distribution.md` | 新增 `PRD-NPM-024`，要求根 README 轻量化并把重型说明放入 `PROJECT_SPEC.md`。 |
-| `.docs/03_tech_plan/harness_package_distribution.md` | 增加根文档分层技术说明。 |
-| `.docs/INDEX.md` | 链接本 implementation doc。 |
-
-## Behavior
-
-- 访问仓库首页时，用户先看到 npm 包和 workflow 的使用指南。
-- 维护者仍可通过 `PROJECT_SPEC.md` 查看完整设计背景、阶段契约、包化策略和历史取舍。
-- `init --adopt` 仍可通过 `README.md` 判断已有项目，不需要代码变更。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `python3 tools/validate_allowed_paths.py` | PASS，10 个 changed files 均在 DEV-030 allowed_paths 内。 |
-| `make validate-harness` | PASS，Harness scaffold、prompt language 和 overview check 全部通过。 |
-| `git diff --check` | PASS。 |
-
----
-
-## npm_package/init_agent_selection.md
-
-Source: [npm_package/init_agent_selection.md](npm_package/init_agent_selection.md)
-
-# Init Agent Selection Implementation Doc
-
-## Summary
-
-`DEV-040` 将 `sdlc-harness init` 的默认交互从直接询问 `Harness folder name` 调整为先选择目标 Agent。直接回车默认选择 `Codex`，并写入 `.codex`；只有选择 `Other` 时才继续询问自定义 folder，且自定义 folder 的空输入默认 `.agent`。
-
-本次也把 workflow skill 的索引模型补充进 README、PRD、architecture、tech plan 和 PROJECT_SPEC：`<harnessRoot>/skills/**` 是 Harness hard file index，`AGENTS.md + lifecycle + phase_contracts` 是 Harness soft index；native skill 首轮水合仍由具体 Agent 客户端或 adapter 决定。
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `packages/sdlc-harness/src/commands/init.ts` | 新增 Agent 选项映射和 `resolveAgentHarnessFolderName`；`init` 在无显式配置时先选择目标 Agent。 |
-| `packages/sdlc-harness/src/commands/index.ts` | 更新 `init` help，说明无 `--harness-folder` 时会先选择目标 Agent。 |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | 覆盖默认 Codex、Other 默认、自定义 folder、内置 Agent 映射和 CLI `--harness-folder` / `--harnessFolderName` 覆盖。 |
-| `README.md` | 从用户视角说明 init 选择 Agent、Other 自定义目录和 workflow skill 生效方式。 |
-| `PROJECT_SPEC.md` | 明确 native skill hard index、Harness hard file index 和 Harness soft index 的差异。 |
-| `.docs/01_product/npm_package_distribution.md` | 更新 PRD-NPM-015 / PRD-NPM-016 和 acceptance criteria。 |
-| `.docs/02_architecture/harness_package_distribution.md` | 更新项目接入架构和 Agent 可读性约束。 |
-| `.docs/03_tech_plan/harness_package_distribution.md` | 更新 init 接口契约、Agent 映射和风险缓解。 |
-
-## Behavior
-
-- `npx sdlc-harness init` 在交互环境中先显示目标 Agent 列表。
-- 直接回车、输入 `1` 或输入 `Codex` 都解析为 `.codex`。
-- 选择 `Other` 后才显示 `Harness folder name` 问句；此时直接回车解析为 `.agent`。
-- 非交互环境不会阻塞，使用 Codex 默认 `.codex`。
-- 显式 `--harness-folder` / `--harnessFolderName` 继续拥有最高优先级，并跳过 Agent 选择。
-- 已有 `package.json#sdlcHarness.harnessFolderName` 或 `sdlc-harness.config.json#harnessFolderName` 的项目不会被重复询问。
-- 配置读取层的兜底默认值仍是 `.agent`，用于没有经过交互式 init 且没有显式配置的兼容路径。
-
-## Skill Index Boundary
-
-本模块不把 `<harnessRoot>/skills/**` 声明为所有 Agent 的 native skill root。实际边界是：
-
-```txt
-Native skill hard index:
-  Agent 客户端预扫描自己的 skill root / registry，并在首轮水合命中的 SKILL.md。
-
-Harness hard file index:
-  <harnessRoot>/skills/<skill_name>/SKILL.md，是 Harness 文件路径契约。
-
-Harness soft index:
-  AGENTS.md -> lifecycle.yaml active_skill -> phase_contracts.yaml skill -> <harnessRoot>/skills/<skill>/SKILL.md。
-```
-
-因此，在 `AGENTS.md` 里写 `<harnessRoot>/skills` 可以保证 Harness soft index，但不能保证 native skill 首轮水合。native 注册需要具体 Agent adapter 或客户端配置。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package assets 与 source mappings 一致。 |
-| `make validate-harness` | PASS，Harness scaffold、Skill language contract 和 doc overview check 均通过。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，15 个 changed files 均在 DEV-040 allowed_paths 内。 |
-| `git diff --check` | PASS。 |
-
----
-
-## npm_package/package_release_flow.md
-
-Source: [npm_package/package_release_flow.md](npm_package/package_release_flow.md)
-
-# Package Release Flow Implementation Doc
-
-## 1. 关联信息
-
-- Domain: `npm_package`
-- Module / subsystem / core flow: package release and registry smoke
-- Updated by task: `DEV-033`, `DEV-035`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md`
-- Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `DEV-033` implementation commit
+- Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
 
 ## 2. 当前实现范围
 
-- 新增（Added）:
-  - `agent-project-sdlc@0.1.3` release record.
-  - Package release flow implementation fact slice.
-  - `tools/release_npm.mjs` release automation script.
-  - `agent-project-sdlc@0.1.4` release record generated by the script.
-- 修改（Changed）:
-  - `packages/sdlc-harness/package.json` version bumped from `0.1.2` to `0.1.3`.
-  - `package-lock.json` workspace package version updated to `0.1.3`.
-  - `packages/sdlc-harness/package.json` and `package-lock.json` version bumped from `0.1.3` to `0.1.4`.
-  - Root `package.json` now exposes `npm run release:npm`.
-- 未覆盖（Not covered）:
-  - Release script does not create git commits, tags, or pushes; SPRINTING task protocol still owns implementation commit and completion ledger commit.
+- `.codex/state/lifecycle.yaml` stores only the current routing state.
+- `.codex/state/plan.yaml` stores the current and future short-lived task contract.
+- `next_task_sequence` preserves future `DEV-*` id allocation after done tasks are removed.
+- Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
+- A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
+- Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 
 ## 3. 真实代码结构
 
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
-| `packages/sdlc-harness/package.json` | npm package manifest and publish version | `version`, `files`, `bin`, `scripts.prepack` |
-| `package-lock.json` | workspace dependency lock | `packages/sdlc-harness.version` |
-| `package.json` | root workspace scripts | `scripts.release:npm` |
-| `tools/release_npm.mjs` | release automation entrypoint | version resolution, gate runner, npm publish, registry smoke, release doc writer |
-| `.docs/08_release/v0.1.3_npm_release.md` | release evidence and rollback plan | Build Artifacts, Smoke Test Result, Deployment Checklist |
-| `.docs/08_release/v0.1.4_npm_release.md` | script-generated release evidence and rollback plan | Build Artifacts, Smoke Test Result, Deployment Checklist |
+| `AGENTS.md` | Project-level protocol | Plan Protocol, work rules, natural-language routing |
+| `.codex/state/lifecycle.yaml` | Current phase routing | `current_phase`, `active_skill`, `allowed_next_phases` |
+| `.codex/state/plan.yaml` | Active short-term task contract | `current_task_id`, `next_task_sequence`, `tasks[]` |
+| `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields and module-level `implementation_doc` |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Development execution prompt | one-task protocol, two-commit ledger, push requirement |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | Workflow routing prompt | `/next`, `/dev`, `/devloop`, status routing |
+| `.codex/skills/pjsdlc_rfc_recalibrate/SKILL.md` | Change recalibration prompt | RFC impact checklist |
+| `tools/harness_utils.py` | Shared state helpers | `load_plan`, `validate_task_shape`, path expansion |
+| `tools/validate_plan.py` | Active plan validator | current/future task checks |
+| `tools/validate_allowed_paths.py` | Worktree scope validator | allowed path enforcement |
+| `tools/run_current_gate.py` | Phase gate runner | phase-to-gate dispatch |
+| `tools/status.py` | Human status report | lifecycle and task summary |
+| `tools/transition.py` | Phase transition helper | lifecycle state mutation without history append |
+| `packages/sdlc-harness/src/lib/validators.ts` | Package-side state validators | plan/lifecycle compatibility |
+| `packages/sdlc-harness/src/lib/migrations.ts` | State migrations | remove checkpoints, history and gate logs |
 
 ## 4. 核心数据流
 
 ```txt
-Resolve target version
--> Version bump
--> npm test
--> package source drift check
--> tests and harness validation
--> npm pack dry run with JSON evidence
--> npm publish when --publish --yes is explicit
--> npm view latest verification
--> install published package in temp consumer
--> init + doctor smoke
--> write release doc
--> refresh docs overview
--> final harness / allowed_paths / diff gates
--> git tag and push
+SPRINTING task starts
+-> plan.yaml contains full open task contract
+-> agent edits only allowed_paths
+-> required_gates pass
+-> related module implementation doc records facts and verification
+-> implementation commit is created while task remains in plan.yaml
+-> task is removed from plan.yaml
+-> completion ledger commit is created
+-> both commits are pushed before the next task starts
 ```
 
 ## 5. 关键实现逻辑
 
-- 输入校验（Input validation）: 脚本从本地 package version 和 npm registry latest 解析目标版本；真正 publish 必须显式传入 `--publish --yes`。
-- 核心分支（Core branches）: 默认 dry-run 只准备 release；publish 模式执行 `npm publish --workspace agent-project-sdlc`，触发 workspace package 的 `prepack`，由 TypeScript build 生成 tarball 内的 `dist/**`。
-- 异常处理（Error handling）: 如果 publish 前 gate 失败，不发布；如果 publish 后 smoke 失败，不能复用版本号，只能修复后发布下一个 patch。
-- 边界兜底（Boundary fallback）: release doc 保留 rollback plan，消费者可临时固定上一稳定版本。
-- 性能或并发注意事项（Performance or concurrency notes）: npm version 不可复用，发布动作必须串行执行。
+- `plan.yaml` is intentionally short lived. It is not a historical task database.
+- `allowed_paths`, `required_gates` and `working_notes` are execution-time constraints, not a long-term query API.
+- Gate evidence belongs in the current task while executing, and in implementation docs, CI logs or release docs after completion.
+- `lifecycle.yaml` does not store phase history. Phase history is reconstructed from git, PRs, CI or release evidence only when explicitly needed.
+- `/dev` runs one task and stops. `/devloop` repeats `/dev` until no clear task remains or a blocker appears.
+- The workflow assumes a singleton project-level Harness collaboration boundary; concurrent agents must coordinate through git and active state rather than independent archive files.
 
 ## 6. 与技术方案的偏移
 
-- 无 runtime 方案偏移；本次只执行 patch publish。
+- Early designs used checkpoint files, `.agent/archive/**`, `gate_results.log` and lifecycle `history`; those have been removed from the active state model.
+- DEV-043 migrated state/task facts from task-grain implementation docs into this module-level protocol document.
 
 ## 7. 测试覆盖（Test Coverage）
 
-| 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
+| 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
 |---|---|---|
-| `npm test` | build + Node test suite | PASS |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | source workspace 与 package canonical assets 一致 | PASS |
-| `make validate-harness` | Harness scaffold、prompt language、doc overviews | PASS |
-| `npm pack --dry-run --json --workspace agent-project-sdlc` | tarball contents and package metadata | PASS |
-| `npm publish --workspace agent-project-sdlc` | publish to npm registry | PASS |
-| `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | registry latest and integrity verification | PASS |
-| Registry installed-consumer smoke | install published package, run init and doctor | PASS |
-| `node --check tools/release_npm.mjs` | release automation script syntax | PASS |
-| `python3 tools/validate_allowed_paths.py` | changed files within active DEV task allowed_paths | PASS |
-| `git diff --check` | whitespace and patch hygiene | PASS |
+| `python3 tools/validate_plan.py` | Current plan shape and task statuses | PASS in Harness gates |
+| `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
+| `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
+| `npm test` | Package migration and validator parity | PASS through release tasks |
+| `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
 
 ## 8. 变更记录（Change Log）
 
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
-| 2026-05-25 | `DEV-033` | `DEV-033` implementation commit | 发布 `agent-project-sdlc@0.1.3`，包含模块级 implementation doc 协议更新。 |
-| 2026-05-25 | `DEV-035` | `DEV-035` implementation commit | 新增 release automation script，并用脚本发布 `agent-project-sdlc@0.1.4`。 |
+| 2026-05-25 | `DEV-010`, `DEV-011` | Historical implementation commits | Replaced checkpoint/task archive model with `plan.yaml`. |
+| 2026-05-25 | `DEV-018`, `DEV-019` | Historical implementation commits | Added two-commit task completion and pre-compression implementation commit rule. |
+| 2026-05-25 | `DEV-024` - `DEV-028` | Historical implementation commits | Shortened plan/gate/lifecycle state and strengthened RFC impact handling. |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated legacy state/task implementation docs into module facts. |
 
 ## 9. 后续维护注意事项
 
-- 每次 npm publish 后必须从 registry 安装真实发布版本做 consumer smoke，不能只依赖本地 workspace。
-- 如果 smoke 发现问题，下一次修复必须 bump 到新的 patch version。
-- 未来发布优先使用 `npm run release:npm -- --version patch --publish --yes`；git commit、tag 和 push 仍按 SPRINTING 协议执行。
-
----
-
-## npm_package/skill_layout.md
-
-Source: [npm_package/skill_layout.md](npm_package/skill_layout.md)
-
-# Harness Skill Layout Implementation Doc
-
-## Summary
-
-`DEV-039` 将 Harness 阶段角色文件重新定义为 `.agent/skills/<name>/SKILL.md` workflow skill，并把本仓库维护 Harness 自身的 authoring skill 放到同一棵 `.agent/skills/**` 树下的 `.agent/skills/authoring/**`。
-
-这个改动明确区分两类 Skill：
-
-| 类型 | 路径 | 是否随 npm 包分发 | 用途 |
-|---|---|---|---|
-| Workflow skill | `.agent/skills/<name>/SKILL.md` | 是 | 普通用户项目的阶段角色提示词，由 lifecycle 和 phase contract 软索引。 |
-| Authoring skill | `.agent/skills/authoring/<name>/SKILL.md` | 否 | 只服务本仓库迭代 AI SDLC Harness 自身，不进入用户项目。 |
-
-## Changed Files
-
-| 文件 | 变更 |
-|---|---|
-| `.agent/skills/**/SKILL.md` | 承接原通用阶段角色文件，并统一使用 Skill 术语。 |
-| `.agent/skills/authoring/harness_package_design/SKILL.md` | 承接本仓库专用 authoring skill。 |
-| `.agent/state/lifecycle.yaml` | lifecycle 使用 `active_skill` 指向当前 workflow skill。 |
-| `.agent/pjsdlc_managed/policies/phase_contracts.yaml` | phase contract 使用 `skill` 字段声明每个阶段的 workflow skill。 |
-| `.agent/config.yaml` | managed path 使用 `.agent/skills`。 |
-| `packages/sdlc-harness/source-mappings.yaml` | package source sync 改为同步 `.agent/skills` 到 `assets/skills`，并排除 `authoring/**`。 |
-| `packages/sdlc-harness/src/lib/package-source.ts` | `copy-tree` source mapping 支持 `exclude` pattern。 |
-| `packages/sdlc-harness/src/lib/sync-engine.ts` | 用户项目同步 package `skills` assets 到 `<harnessRoot>/skills`。 |
-| `packages/sdlc-harness/src/lib/migrations.ts` | 旧 `skills` managed path、`SKILL.md` 和 `active_skill` 迁移到新 Skill 布局。 |
-| `tools/validate_harness.py` / `tools/validate_prompt_language.py` | 本仓库 gate 改为校验 `.agent/skills/**/SKILL.md` 和 `SKILL_TEMPLATE.md`。 |
-| `tests/sdlc-harness/*.test.mjs` | 覆盖 skill sync、authoring 排除、validator 和 upgrade 兼容。 |
-
-## Behavior
-
-- 新安装或同步的用户项目获得 `<harnessRoot>/skills/**/SKILL.md`，不获得 authoring skill。
-- `package sync-source` 从 `.agent/skills/**` 复制通用 workflow skill 到 `packages/sdlc-harness/assets/skills/**`，但跳过 `.agent/skills/authoring/**`。
-- `sync` / `init` / `upgrade` 使用 package `assets/skills` 作为通用 Skill source，并写入用户项目的 `<harnessRoot>/skills/**`。
-- 旧项目如果配置了 `.agents/skills`、`.harness/agents/skills` 或 `<harnessRoot>/prompts`，upgrade 会改写到 `<harnessRoot>/skills`。
-- 旧项目 lifecycle 中的 `active_prompt` 会迁移为 `active_skill`；旧 `PROMPT.md` 文件会在迁移 prompts 树时重命名为 `SKILL.md`。
-
-## Important Boundary
-
-这些 workflow skills 可以被 native skill adapter 注册，也可以被 Harness soft index 读取。默认项目内生效路径是“阶段状态 + skill 文件”的软索引：
-
-```txt
-.agent/state/lifecycle.yaml active_skill
--> .agent/pjsdlc_managed/policies/phase_contracts.yaml skill
--> .agent/skills/<skill>/SKILL.md
-```
-
-Codex 原生 skill 的注册、水合和语义枚举仍由客户端自己的 skill 目录机制控制。`.agent/skills/**` 是 Harness source of truth；要获得 native skill 首轮命中，需要由 Codex adapter 或安装命令同步/链接到 Codex 支持的 skill root。
-
-## Verification
-
-| Gate | Result |
-|---|---|
-| `npm test` | PASS，5 个 `tests/sdlc-harness/*.test.mjs` 全部通过。 |
-| `node packages/sdlc-harness/dist/cli.js package check-source` | PASS，package assets 与 source mapping 一致。 |
-| `make validate-harness` | PASS，Harness scaffold、Skill language 和 doc overview 均通过。 |
-| `python3 tools/validate_allowed_paths.py` | PASS，60 个 changed files 均在 DEV-039 allowed_paths 内。 |
-| `git diff --check` | PASS。 |
+- Do not reintroduce active historical ledgers unless a new RFC explicitly changes the state model.
+- If a new workflow action needs durable history, prefer git/tag/release evidence or module implementation docs before adding state files.

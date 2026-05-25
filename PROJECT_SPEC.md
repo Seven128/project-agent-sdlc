@@ -235,7 +235,7 @@ RAG 能减少一次性塞进上下文的内容，但固定 chunk 和余弦召回
 
 如果文档变化没有改变语义边界，更新原 slice；如果新增独立场景、拆分模块、合并流程或 RFC 改变影响范围，应新增、拆分、合并或废弃 slice，并更新 `.docs/INDEX.md`。
 
-implementation doc 是最终实现产物的事实层，默认与技术架构和技术方案中的模块、子系统或核心数据流对应。task 是执行和提交边界，task id、commit 和 RFC 只作为 implementation doc 的 provenance；多个 task 可以更新同一份 implementation doc。
+implementation doc 是最终实现产物的事实层，默认与技术架构和技术方案中的模块、子系统或核心数据流对应。task 是执行和提交边界，task id、commit 和 RFC 只作为 implementation doc 的 provenance；多个 task 可以更新同一份 implementation doc。不要在 `.docs/04_implementation/` 下维护按 task 编号铺开的 `dev_*.md` ledger；历史动作记录由 git commit、tag、release evidence 和模块级 implementation doc 共同承担。
 
 ### 6.3 overview.md
 每个 `.docs/<stage>/` 目录生成一个 `overview.md`：

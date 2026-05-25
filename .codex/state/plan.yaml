@@ -1,4 +1,41 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 43
-tasks: []
+current_task_id: "DEV-043"
+next_task_sequence: 44
+tasks:
+  - id: "DEV-043"
+    title: "Migrate implementation docs to module-level slices"
+    status: "in_progress"
+    summary: "Merge legacy task-grain implementation docs into module/subsystem/core-flow slices and remove the old npm_package implementation-doc directory."
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      implementation:
+        - ".docs/04_implementation/harness_workflow/implementation_doc_model.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - ".codex/state/plan.draft.yaml"
+      - ".docs/01_product/**"
+      - ".docs/03_tech_plan/**"
+      - ".docs/04_implementation/**"
+      - ".docs/06_review/**"
+      - ".docs/INDEX.md"
+      - "PROJECT_SPEC.md"
+      - "README.md"
+    required_gates:
+      - "make docs-overview"
+      - "make validate-doc-overviews"
+      - "make validate-harness"
+      - "git diff --check"
+    acceptance_criteria:
+      - "Legacy .docs/04_implementation/npm_package task-log docs are merged into stable module/subsystem/core-flow implementation docs."
+      - "Active indexes and references no longer route implementation-doc readers to .docs/04_implementation/npm_package/dev_*.md."
+      - "Implementation doc model records that the legacy task-log migration is complete."
+      - "Derived overview docs are regenerated and validation gates pass."
+    implementation_doc: ".docs/04_implementation/harness_workflow/implementation_doc_model.md"
+    working_notes:
+      - "Task created to migrate legacy npm_package implementation docs into module-level slices after user confirmed the old task-grain directory should not remain."
+      - "Created module-level implementation docs for CLI lifecycle, source sync/assets, release automation, state/task protocol, skills/prompt/authoring, and docs overview/validation."
+      - "Removed legacy .docs/04_implementation/npm_package task-log docs from the active implementation-doc graph."
+      - "Verification passed: python3 tools/validate_task_docs.py; python3 tools/validate_allowed_paths.py; make docs-overview; make validate-doc-overviews; make validate-harness; git diff --check."

@@ -142,7 +142,7 @@ make docs-overview
 | `.docs/01_product/` | PRD、用户场景、验收标准 |
 | `.docs/02_architecture/` | 架构边界和高层设计 |
 | `.docs/03_tech_plan/` | 技术方案、接口契约、任务拆分 |
-| `.docs/04_implementation/` | 已完成 task 的真实实现记录 |
+| `.docs/04_implementation/` | 模块、子系统和核心数据流的真实实现事实 |
 | `.docs/06_review/` | Review 报告 |
 | `.docs/07_test/` | 测试计划和回归记录 |
 | `.docs/08_release/` | 发布记录和回滚方案 |

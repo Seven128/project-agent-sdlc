@@ -4,7 +4,7 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: implementation documentation model
-- Updated by task: `DEV-032`
+- Updated by task: `DEV-032`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-025`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
@@ -21,22 +21,23 @@
   - `pjsdlc_dev_sprint` 将 task 定义为执行和提交边界，将 implementation doc 定义为长期事实边界。
   - `pjsdlc_architect_design` 和 plan/tech templates 引导 future task 指向模块级 implementation doc。
   - AGENTS、PROJECT_SPEC、PRD 和 tech plan 使用同一套语义。
-- 未覆盖（Not covered）:
-  - 未批量迁移历史 `.docs/04_implementation/npm_package/dev_*.md` 文件；它们作为 legacy task log 保留，后续可单独合并。
+  - DEV-043 将历史 `.docs/04_implementation/npm_package/dev_*.md` task log 合并为模块、子系统和核心数据流级 implementation docs，并从活跃实现文档图中移除 legacy 目录。
 
 ## 3. 真实代码结构
 
 | 文件（File） | 作用（Purpose） | 关键函数/对象（Key Functions/Objects） |
 |---|---|---|
 | `AGENTS.md` | 项目级 workflow 入口规则 | Plan Protocol、工作规则 |
-| `.agent/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
-| `.agent/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
-| `.agent/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
-| `.agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
-| `.agent/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
-| `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 从 `.agent/**` 和 `AGENTS.md` 同步 |
+| `.codex/skills/pjsdlc_implementation_doc/SKILL.md` | implementation doc 生成/更新规则 | 语义切片、输出路径、完成检查 |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Sprint 执行规则 | task 执行边界、completion protocol |
+| `.codex/skills/pjsdlc_architect_design/SKILL.md` | 架构阶段任务规划规则 | task `implementation_doc` 指向长期实现事实文档 |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | 自然语言 workflow 路由规则 | 完成后的产物事实说明 |
+| `.codex/pjsdlc_managed/templates/IMPLEMENTATION_DOC_TEMPLATE.md` | 新 implementation doc 模板 | module/subsystem/core flow、provenance、Change Log |
+| `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | open task 模板 | `implementation_doc` 示例路径 |
+| `.codex/pjsdlc_managed/templates/TECH_DESIGN_TEMPLATE.md` | 技术方案模板 | task breakdown 中 implementation doc 的模块级说明 |
+| `.docs/04_implementation/harness_package/*.md` | package-facing module implementation docs | CLI lifecycle、source sync、release automation |
+| `.docs/04_implementation/harness_workflow/*.md` | workflow-facing module implementation docs | command routing、implementation model、state/task protocol、skills/prompt、docs validation |
+| `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 从 `.codex/**` 和 `AGENTS.md` 同步 |
 | `.docs/01_product/npm_package_distribution.md` | 产品约束 | `PRD-NPM-025` |
 | `.docs/03_tech_plan/harness_package_distribution.md` | 技术方案约束 | implementation doc model |
 
@@ -63,7 +64,7 @@ Architecting
 ## 6. 与技术方案的偏移
 
 - 早期技术方案和历史 task breakdown 中的 implementation doc 路径以 `dev_*.md` 为主；DEV-032 将其定义为 legacy task log，不再作为未来默认。
-- 未进行历史合并迁移，避免把协议修正扩大成大规模文档重组。
+- DEV-043 完成历史合并迁移，删除活跃 `.docs/04_implementation/npm_package/` task-log 目录，并将事实合并到模块级 implementation docs。
 
 ## 7. 测试覆盖（Test Coverage）
 
@@ -79,8 +80,9 @@ Architecting
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
 | 2026-05-25 | `DEV-032` | `DEV-032` implementation commit | 将 implementation doc 默认粒度从 task 调整为模块、子系统或核心数据流。 |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将 legacy `npm_package/dev_*.md` task log 合并进模块级 implementation docs，并更新索引和引用。 |
 
 ## 9. 后续维护注意事项
 
 - 后续新 task 应优先更新相关模块级 implementation doc；不要默认新增 `dev_*.md`。
-- 如果历史 `dev_*.md` 影响检索质量，可以单独创建迁移任务，按 npm package 子系统逐步合并。
+- 不要在 `.docs/04_implementation/` 下重新建立 task-grain ledger；task 历史动作记录以 git commit/tag/release evidence 为准。

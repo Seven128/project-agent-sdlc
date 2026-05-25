@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 64e2e2892a587fce -->
+<!-- source-hash: d187beb6139f67ad -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `64e2e2892a587fce`
+Source hash: `d187beb6139f67ad`
 
 ## Source Slices
 
@@ -121,7 +121,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - 不保留独立 checkpoint 文件；活跃任务现场只存在于 `plan.yaml` 的 open task 条目中。
 - 不维护独立 gate results state。
 - 不把过去 phase/task 执行流水写入 active state，也不要求 Agent 默认读取这些流水。
-- 不要求把历史 `dev_*.md` 文件在本需求内一次性迁移为模块级文档；历史文件可作为 legacy task log 保留，后续按需要合并。
+- 历史 `dev_*.md` task log 已在 DEV-043 合并为模块级 implementation docs；后续不再把 task 粒度文档作为 `.docs/04_implementation/` 的活跃事实源。
 
 ## 7. Open Questions
 

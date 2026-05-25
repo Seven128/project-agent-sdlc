@@ -4,7 +4,7 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
@@ -34,8 +34,8 @@
 | `AGENTS.md` | Agent 入口协议 | 自然语言与宏指令、`/prd`、`/design`、`/dev`、`/devloop` |
 | `README.md` | 用户视角日常使用说明 | 常用快捷入口表 |
 | `PROJECT_SPEC.md` | 完整工作流规格 | 宏指令协议、Codex 适配方式 |
-| `.agent/skills/pjsdlc_manager/SKILL.md` | 意图路由 Skill | 自然语言到 workflow action 的映射规则 |
-| `.agent/skills/pjsdlc_dev_sprint/SKILL.md` | 开发阶段执行 Skill | `/dev` 与 `/devloop` 的执行边界 |
+| `.codex/skills/pjsdlc_manager/SKILL.md` | 意图路由 Skill | 自然语言到 workflow action 的映射规则 |
+| `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | 开发阶段执行 Skill | `/dev` 与 `/devloop` 的执行边界 |
 | `packages/sdlc-harness/assets/**` | npm 包 canonical assets | 由 `package sync-source` 同步 |
 | `.docs/01_product/npm_package_distribution.md` | 产品需求 | `PRD-NPM-026` |
 | `.docs/03_tech_plan/harness_package_distribution.md` | 技术方案 | Natural Language Control |
@@ -78,6 +78,7 @@ User input
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
 | 2026-05-25 | `DEV-034` | `DEV-034` implementation commit | 增加自然语言/指令别名双入口和 `/dev`、`/devloop` 开发入口。 |
+| 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 
 ## 9. 后续维护注意事项

@@ -234,7 +234,7 @@ tasks:
       - "open task contract lives in plan.yaml"
     working_notes:
       - "只记录恢复现场所需的短备注。"
-    implementation_doc: ".docs/04_implementation/npm_package/plan_state_model.md"
+    implementation_doc: ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
 ```
 
 task 完成后，先在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；再将该 task 从 `plan.yaml` 的 `tasks` 列表移除，并创建 task completion ledger commit。历史动作记录由 git commit 承载，产物结果由模块级 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `<harnessRoot>/archive/**` 作为常规归档事实源。
@@ -245,7 +245,7 @@ task 完成后，先在当前 task 仍位于 `plan.yaml` 时创建 task implemen
 
 `.docs/04_implementation/` 是最终实现产物的事实层，默认与 architecture / tech plan 中的模块、子系统或核心数据流边界对应。`plan.yaml.tasks[].implementation_doc` 指向本 task 会更新或新增的长期实现事实文档；多个 task 可以指向同一份 implementation doc。
 
-task id、commit、RFC 和 gate 结果记录在 implementation doc 的 provenance / Change Log / Verification 中。task 不再默认生成独立 `dev_*.md` 文档；已有 `dev_*.md` 文件作为 legacy task log 保留，后续可以按模块逐步合并。
+task id、commit、RFC 和 gate 结果记录在 implementation doc 的 provenance / Change Log / Verification 中。task 不再默认生成独立 `dev_*.md` 文档；历史 `dev_*.md` task log 已在 DEV-043 合并进模块级 implementation docs，并从活跃实现文档图中移除。
 
 ### 5.6 Gate evidence
 
@@ -293,20 +293,18 @@ git commit、tag 和 push 仍由 SPRINTING task protocol 负责，避免 release
 
 ## 6. 任务拆分（Task Breakdown）
 
-下表保留历史任务拆分和 legacy implementation doc 路径，便于理解已完成工作；未来 task 的 `Implementation Doc` 应优先指向模块、子系统或核心数据流级文档。
+历史 task 拆分仍可通过 git commit、RFC 和 release docs 追溯；本节只保留模块级 implementation doc 路由，作为后续 task 的写入目标。
 
-| Task ID | 标题（Title） | Allowed Paths | Required Gates | Implementation Doc |
-|---|---|---|---|---|
-| DEV-001 | 创建 npm 包骨架与 source sync manifest | `package.json`, `packages/sdlc-harness/**`, `.harness/config.yaml`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_001_package_scaffold.md` |
-| DEV-002 | 实现 `sync`、`init`、`init --adopt` 和 `doctor` 最小闭环 | `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_002_sync_init_doctor.md` |
-| DEV-003 | 实现 `upgrade`、migration 和自动 sync | `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_003_upgrade_migrations.md` |
-| DEV-004 | 实现 `package sync-source` / `package check-source` 与 CI 漂移检查 | `packages/sdlc-harness/**`, `.github/workflows/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_004_source_sync_ci.md` |
-| DEV-005 | 将 validators 入口接入 `sdlc-harness validate-*` | `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `make lint`, `make test-current-domain` | `.docs/04_implementation/npm_package/dev_005_validate_commands.md` |
-| DEV-006 | 统一 `.harness` 工作流根目录并生成 `.agents` 兼容出口 | `README.md`, `.harness/config.yaml`, `.harness/agents/**`, `.harness/managed/**`, `.agents/skills/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/02_architecture/harness_package_distribution.md`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_006_unified_harness_root.md` |
-| DEV-008 | 支持 `harnessFolderName` 配置 Harness 根目录 | `package.json`, `AGENTS.md`, `README.md`, `.harness/config.yaml`, `.harness/skills/**`, `.harness/managed/**`, `tools/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_008_configurable_harness_root.md` |
-| DEV-009 | init 询问 Harness root 并迁移当前仓库到 `.agent` 默认根 | `package.json`, `AGENTS.md`, `README.md`, `.gitignore`, `.agent/**`, `.harness/**`, `tools/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**`, `.docs/04_implementation/npm_package/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness` | `.docs/04_implementation/npm_package/dev_009_init_prompt_default_agent_root.md` |
-| DEV-010 | 简化 task、checkpoint 和 archive 状态模型 | 历史任务；详见 implementation doc | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness`, `make validate-current` | `.docs/04_implementation/npm_package/dev_010_task_checkpoint_model.md` |
-| DEV-011 | 合并 checkpoint 到 `plan.yaml` 并重命名 tasks 状态 | `AGENTS.md`, `README.md`, `Makefile`, `.agent/**`, `.docs/**`, `.github/workflows/**`, `tools/**`, `packages/sdlc-harness/**`, `tests/sdlc-harness/**` | `npm test`, `node packages/sdlc-harness/dist/cli.js package check-source`, `node packages/sdlc-harness/dist/cli.js validate-harness`, `make validate-harness`, `make validate-current` | `.docs/04_implementation/npm_package/dev_011_plan_yaml_no_checkpoint.md` |
+| 实现边界（Module / Flow） | 覆盖任务（Task provenance） | Implementation Doc |
+|---|---|---|
+| CLI distribution and lifecycle | `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041` | `.docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md` |
+| Source sync and package assets | `DEV-001`, `DEV-004`, `DEV-006`, `DEV-012`, `DEV-013`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-027`, `DEV-037`, `DEV-038`, `DEV-039` | `.docs/04_implementation/harness_package/source_sync_and_assets.md` |
+| Release automation | `DEV-033`, `DEV-035`, `DEV-042` | `.docs/04_implementation/harness_package/release_automation.md` |
+| State and task protocol | `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028` | `.docs/04_implementation/harness_workflow/state_and_task_protocol.md` |
+| Skills, prompt routing and authoring | `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040` | `.docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md` |
+| Docs overview and validation | `DEV-005`, `DEV-015`, `DEV-025`, `DEV-030`, `DEV-032` | `.docs/04_implementation/harness_workflow/docs_overview_and_validation.md` |
+| Command intent model | `DEV-029` and follow-up workflow routing tasks | `.docs/04_implementation/harness_workflow/command_intent_model.md` |
+| Implementation doc model | `DEV-032`, `DEV-043` | `.docs/04_implementation/harness_workflow/implementation_doc_model.md` |
 
 ## 7. 风险与缓解
 
