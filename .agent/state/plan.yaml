@@ -1,40 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-031"
+current_task_id: ""
 next_task_sequence: 32
-tasks:
-  - id: "DEV-031"
-    title: "发布 agent-project-sdlc 0.1.2"
-    status: "in_progress"
-    summary: "当前 0.1.0 已在 npm registry 发布；0.1.1 发布后发现默认 config 版本仍显示 0.1.0，因此发布 0.1.2 修复版本来源并完成 release smoke、registry 验证和 tag。"
-    docs:
-      release:
-        - ".docs/08_release/v0.1.1_npm_release.md"
-        - ".docs/08_release/v0.1.2_npm_release.md"
-    allowed_paths:
-      - "package-lock.json"
-      - "packages/sdlc-harness/package.json"
-      - "packages/sdlc-harness/src/lib/config.ts"
-      - "tests/sdlc-harness/sync-init-doctor.test.mjs"
-      - ".agent/state/plan.yaml"
-      - ".docs/08_release/v0.1.1_npm_release.md"
-      - ".docs/08_release/v0.1.2_npm_release.md"
-      - ".docs/08_release/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "python3 tools/validate_allowed_paths.py"
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "make validate-harness"
-      - "npm pack --dry-run --workspace agent-project-sdlc"
-      - "git diff --check"
-    acceptance_criteria:
-      - "Package version is bumped to 0.1.2 because 0.1.0 already exists and 0.1.1 smoke found stale config version output."
-      - "Default generated config reports the package version from package metadata."
-      - "Release doc records smoke evidence, publish command, registry verification, and rollback plan."
-      - "Package is published to npm as agent-project-sdlc@0.1.2."
-      - "Registry latest points to 0.1.2 after publish."
-      - "Git release tag v0.1.2 is created and pushed."
-    working_notes:
-      - "npm whoami returned steve1998."
-      - "npm view agent-project-sdlc version returned 0.1.0 before this task; 0.1.1 publish succeeded but was superseded before tagging."
-    implementation_doc: ".docs/08_release/v0.1.2_npm_release.md"
+tasks: []
