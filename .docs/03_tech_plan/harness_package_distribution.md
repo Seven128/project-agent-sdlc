@@ -3,7 +3,7 @@
 ## 1. 关联产品需求
 
 - PRD: `.docs/01_product/npm_package_distribution.md`
-- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-024`
+- Requirement IDs: `PRD-NPM-001` 至 `PRD-NPM-026`
 
 ## 2. 现有上下文
 
@@ -77,7 +77,7 @@ package.json or sdlc-harness.config.json
 
 ### 3.3 Natural Language Control
 
-用户交互默认采用自然语言。`/status`、`/next`、`/advance`、`/rfc`、`/syncdocs`、`/overview`、`/review` 和 `/test` 是快捷入口、调试入口或自动化入口，不是用户必须记忆的主控制面。
+用户交互默认采用自然语言。`/status`、`/next`、`/advance`、`/rfc`、`/dev`、`/devloop`、`/syncdocs`、`/overview`、`/review` 和 `/test` 是快捷入口、调试入口或自动化入口，不是用户必须记忆的主控制面。自然语言意图和 `/xxx` 别名必须映射到同一组 workflow action。
 
 `pjsdlc_manager` 负责将自然语言意图映射到 workflow action：
 
@@ -87,12 +87,15 @@ package.json or sdlc-harness.config.json
 | 继续、下一步、推进 | 按 `active_skill` 执行当前阶段，等价 `/next` |
 | 检查或进入下一阶段 | 运行当前阶段出口 gate，通过后用 `transition.py` 流转，等价 `/advance` |
 | 需求或设计变化 | 进入 `RFC_RECALIBRATION` workflow |
-| 开始开发或做当前任务 | 在 `SPRINTING` 执行当前 open task |
+| 开始开发、做当前任务、做下一个任务 | `/dev`：在 `SPRINTING` 创建或选择下一个最小 DEV task，并完成一个 task 闭环 |
+| 开始循环：写任务，执行任务；把开发循环跑完 | `/devloop`：连续运行 `/dev`，直到没有明确任务或遇到 blocker |
 | 测试或验证 | 运行当前 task 或阶段对应 gate |
 | Review | 进入只读 Review workflow |
 | 刷新 overview | 运行 `make docs-overview` |
 
 如果自然语言意图会改变阶段、创建或删除 task、提交、push 或发布，Agent 先说明即将执行的动作和验证方式，再继续。这个契约只约束 Agent 行为，不增加新的 state 字段，也不要求 Codex、Claude Code 或其它客户端提供专有模式切换能力。
+
+Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启或配置。用户可以手动组合 `/plan` 或 `/goal` 与自然语言/宏指令，例如 `/plan 完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。Harness 只负责在收到对应用户意图后执行 workflow action。
 
 ### 3.4 根文档分层
 

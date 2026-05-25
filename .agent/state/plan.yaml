@@ -1,4 +1,46 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 34
-tasks: []
+current_task_id: "DEV-034"
+next_task_sequence: 35
+tasks:
+  - id: "DEV-034"
+    title: "补充双入口 workflow 指令和开发命令"
+    status: "in_progress"
+    summary: "将自然语言意图与约定指令别名作为双入口控制面，并新增 /dev 与 /devloop 的开发阶段语义。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc: []
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".agent/state/plan.yaml"
+      - ".agent/skills/pjsdlc_manager/SKILL.md"
+      - ".agent/skills/pjsdlc_dev_sprint/SKILL.md"
+      - "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
+      - "packages/sdlc-harness/assets/skills/pjsdlc_manager/SKILL.md"
+      - "packages/sdlc-harness/assets/skills/pjsdlc_dev_sprint/SKILL.md"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/04_implementation/harness_workflow/**"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+    required_gates:
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+      - "python3 tools/validate_allowed_paths.py"
+      - "git diff --check"
+    acceptance_criteria:
+      - "协议明确自然语言意图和 /xxx 指令别名是等价双入口。"
+      - "开发阶段新增 /dev 和 /devloop：/dev 一次闭环一个 task，/devloop 连续执行到无明确任务或 blocker。"
+      - "自然语言如“开始循环：写任务，执行任务”“继续开发下一个任务”能映射到对应开发动作。"
+      - "Codex /plan 与 /goal 的配合边界被说明为客户端模式，不由 Harness 强制打开。"
+      - "package canonical assets 已同步并通过 drift check。"
+    working_notes:
+      - "用户希望每个阶段支持自然语言和约定指令别名两种方式，开发阶段拆成 /dev 与 /devloop。"
+      - "Gates passed: package check-source, make validate-harness, validate_allowed_paths, git diff --check."
+    implementation_doc: ".docs/04_implementation/harness_workflow/command_intent_model.md"

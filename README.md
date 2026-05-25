@@ -42,13 +42,15 @@ npx sdlc-harness init --adopt
 
 ## 日常使用
 
-用户不需要记宏指令。直接用自然语言让 agent 推进即可：
+用户不需要记宏指令。直接用自然语言让 agent 推进即可；熟悉后也可以使用等价的 `/xxx` 快捷入口。
 
 ```text
 现在到哪一步了？
 继续推进。
 根据技术方案拆 task。
 开始开发当前 task。
+继续开发下一个任务。
+开始循环：写任务，执行任务。
 跑一下当前验证。
 这个需求变了。
 检查能不能进入下一阶段。
@@ -56,6 +58,19 @@ npx sdlc-harness init --adopt
 ```
 
 Agent 会读取 `.agent/state/lifecycle.yaml` 和 `.agent/state/plan.yaml`，再按当前阶段选择对应 Skill、产物和 gate。
+
+常用快捷入口：
+
+| 指令 | 等价自然语言 |
+|---|---|
+| `/status` | 现在到哪一步了 |
+| `/next` | 继续推进 |
+| `/dev` | 创建或选择下一个最小开发任务，完成一个 task 后停止 |
+| `/devloop` | 连续写任务、执行任务，直到没有明确任务或遇到 blocker |
+| `/test` | 跑一下当前验证 |
+| `/review` | 准备 review |
+
+`/plan` 和 `/goal` 是 Codex 客户端模式。可以手动组合使用，例如 `/plan 我想完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。
 
 ## 常用命令
 

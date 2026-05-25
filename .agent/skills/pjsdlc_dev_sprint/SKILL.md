@@ -15,6 +15,8 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 开始编码前，先确认当前 open task 是否完整，修改范围是否覆盖必要文件，验收标准是否能被测试或 gate 验证。如果发现任务边界、产品行为或技术方案不清晰，要停下来说明 blocker、给出可能解释和推荐下一步，而不是扩大范围继续写。
 
+`/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 DEV task，并只完成一个 task 闭环后停止。`/devloop` 连续运行 `/dev`，直到技术方案中没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
+
 实现时遵循小步闭环：先检查 `git status`，确认工作区没有未归属到当前 task 的脏变更；再定位相关代码和测试，做必要修改，运行 gate，修复失败，写入或更新相关 implementation doc 并刷新文档派生视图。此时先不要从 `plan.yaml` 移除当前 task，要在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；随后再移除 task，创建 task completion ledger commit，并 push 两个 commit。不要顺手重构、重排格式或处理无关问题；如果发现无关风险，只记录或报告。
 
 ## 输入
@@ -47,6 +49,8 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - 本 Skill 不直接重切 PRD 或 tech plan；如果发现上游语义边界错误，进入 `BLOCKED`、创建 RFC，或请求回到 `ARCHITECTING`。
 - gate 通过后调用 `implementation_doc`，由该 Skill 按真实实现更新或新增 `.docs/04_implementation/` 模块级 slice。
 - 如果一个任务实际变成多个独立实现边界，应停止扩大范围，拆分后续任务或回到任务规划。
+- `/dev` 是单任务执行入口：没有 open task 时，先根据 PRD、architecture、tech plan 和 `plan.draft.yaml` 创建一个最小 open task；已有 open task 时，直接执行该 task；完成后停止。
+- `/devloop` 是连续执行入口：每完成一个 task 并 push 两段提交后，重新读取 lifecycle、plan、PRD、architecture 和 tech plan，再决定是否创建/执行下一个最小 task；没有明确任务或出现 blocker 时停止并报告。
 
 ## Plan Protocol
 
@@ -76,6 +80,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 11. implementation commit 完成后，从当前 `plan.yaml` 移除该 task，并创建 task completion ledger commit。
 12. 默认不追溯已完成 task 的执行流水；只有显式 forensic/audit/regression 任务才临时查询 git、PR 或 CI 记录。
 13. 两个 commit 后必须 `git push` 到当前 upstream branch；如果没有 remote/upstream、权限或凭证导致无法 push，停止推进并报告 blocker。
+14. `/devloop` 每轮都必须重新读取当前状态，不得在一次上下文中假设 plan、代码或远端状态未变化。
 
 ## 完成检查
 
