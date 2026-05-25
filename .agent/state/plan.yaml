@@ -1,46 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-035"
+current_task_id: ""
 next_task_sequence: 36
-tasks:
-  - id: "DEV-035"
-    title: "脚本化 npm 发布并发布 0.1.4"
-    status: "in_progress"
-    summary: "新增 npm release automation 脚本，将版本、gate、pack、publish、registry smoke 和 release 证据收敛到一个命令，并用它发布 agent-project-sdlc@0.1.4。"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - ".agent/state/plan.yaml"
-      - "package.json"
-      - "package-lock.json"
-      - "packages/sdlc-harness/package.json"
-      - "tools/release_npm.mjs"
-      - ".docs/01_product/npm_package_distribution.md"
-      - ".docs/01_product/overview.md"
-      - ".docs/03_tech_plan/harness_package_distribution.md"
-      - ".docs/03_tech_plan/overview.md"
-      - ".docs/04_implementation/npm_package/**"
-      - ".docs/04_implementation/overview.md"
-      - ".docs/08_release/v0.1.4_npm_release.md"
-      - ".docs/08_release/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "node tools/release_npm.mjs --version 0.1.4 --publish --yes"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "make validate-harness"
-      - "python3 tools/validate_allowed_paths.py"
-      - "git diff --check"
-    acceptance_criteria:
-      - "提供可复用 release script，支持 patch/explicit version、dry run 和 publish 模式。"
-      - "脚本自动执行 npm test、package check-source、validate-harness、pack dry-run、publish、registry latest 验证和 installed-consumer smoke。"
-      - "脚本生成 v0.1.4 release doc，并输出可追溯 release evidence。"
-      - "agent-project-sdlc@0.1.4 发布到 npm，registry latest 指向 0.1.4。"
-      - "package release flow implementation doc 更新脚本化发布事实。"
-    working_notes:
-      - "用户希望把发包流程脚本化，并顺便执行一次发包。"
-      - "首次执行 patch publish 在 pack JSON parsing 处停止且未 publish；修复 parser 后以显式 0.1.4 重新执行成功。"
-      - "Gates passed: release_npm 0.1.4 publish, node --check, package check-source, make validate-harness, validate_allowed_paths, git diff --check."
-    implementation_doc: ".docs/04_implementation/npm_package/package_release_flow.md"
+tasks: []
