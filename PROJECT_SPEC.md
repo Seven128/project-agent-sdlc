@@ -452,7 +452,7 @@ RFC 必须包含：
 - 回归测试：验证未变更模块没有被破坏。
 
 ## 十一、宏指令协议
-用户不需要记忆宏指令。自然语言意图和约定宏指令是两层入口：自然语言是主要控制方式，宏指令由 `manager` 根据生命周期路由，只作为快捷入口、调试入口或自动化入口保留。两层入口必须映射到同一组 workflow action，避免“自然语言一套、命令一套”。
+用户不需要记忆宏指令。自然语言意图和约定宏指令是两层入口：自然语言是主要控制方式，宏指令由 `manager` 根据生命周期路由，作为更完整、更细节的提示词别名、调试入口或自动化入口保留。两层入口必须映射到同一组 workflow action，避免“自然语言一套、命令一套”。区别在于宏指令携带更稳定的细节约束；简单自然语言入口成本更低，但更依赖 Agent 根据当前上下文补足细节。
 
 常见自然语言映射：
 
@@ -462,6 +462,8 @@ RFC 必须包含：
 | “继续 / 下一步 / 推进” | 等价 `/next` |
 | “能进入下一阶段吗 / 进入下一步” | 等价 `/advance` |
 | “需求变了 / 这个设计要改” | 进入 RFC workflow |
+| “完善产品方案 / 写 PRD / 我提供信息，你帮我完善产品方案” | 等价 `/prd`，在 `REQUIREMENT_GATHERING` 更新 PRD、验收标准和 open questions |
+| “设计技术方案 / 做架构方案 / 根据 PRD 做技术方案” | 等价 `/design`，在 `ARCHITECTING` 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | “开始开发 / 做当前任务 / 做下一个任务” | 等价 `/dev`，在 `SPRINTING` 创建或选择下一个最小 DEV task，并完成一个 task 闭环 |
 | “开始循环：写任务，执行任务 / 把开发循环跑完” | 等价 `/devloop`，连续运行开发循环直到没有明确任务或遇到 blocker |
 | “跑测试 / 验证一下” | 运行当前 task 或阶段对应 gate |
@@ -478,6 +480,8 @@ RFC 必须包含：
 | `/next` | 根据当前阶段调用对应 Skill |
 | `/advance` | 运行当前阶段出口 gate，通过后流转 |
 | `/rfc <file>` | 挂起当前流程，进入 RFC 变更处理 |
+| `/prd` | 在需求阶段澄清用户目标，更新 PRD、验收标准、open questions、`.docs/INDEX.md` 和 overview |
+| `/design` | 在架构阶段基于 PRD 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | `/dev` | 创建或选择下一个最小 DEV task，执行一个 task，完成 gate、implementation doc、两段 commit/push 后停止 |
 | `/devloop` | 连续运行 `/dev`，直到没有明确可创建/执行的 task 或遇到需求、架构、allowed_paths、gate、commit/push blocker |
 | `/syncdocs` | 归档/切分长文档，更新 `.docs/INDEX.md` |
@@ -491,7 +495,7 @@ Codex 不需要真实“模式切换”：
 - 角色由 `active_skill` 决定。
 - 阶段切换由 `transition.py` 完成。
 - 切换裁决由 Makefile / Hook / CI 完成。
-- `/plan` 和 `/goal` 是 Codex 客户端模式，不由 Harness 自动开启；用户可以手动组合 `/plan 完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。
+- `/plan` 和 `/goal` 是 Codex 客户端模式，不由 Harness 自动开启；用户可以手动组合 `/plan /prd`、`/plan 完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。
 
 新对话或上下文压缩后的恢复入口：
 1. 读取 `AGENTS.md`。
@@ -533,6 +537,8 @@ Codex 不需要真实“模式切换”：
 - `/next`
 - `/advance`
 - `/rfc`
+- `/prd`
+- `/design`
 - `/overview`
 
 最小任务完成标准：

@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 1192c3befc2a13dc -->
+<!-- source-hash: 6b16c1149c328905 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `1192c3befc2a13dc`
+Source hash: `6b16c1149c328905`
 
 ## Source Slices
 
@@ -69,10 +69,10 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 | PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml` 和 `plan.yaml` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
 | PRD-NPM-021 | 移除独立 gate results state | P0 | 不再维护 `<harnessRoot>/state/gate_results.log`；当前 task gate 证据写入 task notes 或 implementation doc `Verification`，长期记录由 implementation doc、CI logs 或 release 系统承担 |
 | PRD-NPM-022 | RFC 阶段必须显式考虑影响面 | P0 | RFC 进入补丁或 DEV task 前必须列出 docs、state、skills、policies、templates、tools、package assets、tests、sync/upgrade/migration 和 generated artifacts 影响 |
-| PRD-NPM-023 | 用户可通过自然语言控制 workflow | P0 | `/status`、`/next`、`/advance`、`/rfc` 等宏指令保留为快捷入口；Agent 应将“继续”“开始开发”“跑测试”“进入下一阶段”等自然语言映射到 lifecycle/plan 对应动作 |
+| PRD-NPM-023 | 用户可通过自然语言控制 workflow | P0 | `/status`、`/next`、`/advance`、`/rfc` 等宏指令保留为快捷入口；Agent 应将“继续”“完善产品方案”“设计技术方案”“开始开发”“跑测试”“进入下一阶段”等自然语言映射到 lifecycle/plan 对应动作 |
 | PRD-NPM-024 | 根 README 面向用户接入和日常使用 | P1 | 长篇产品说明和设计取舍迁移到 `PROJECT_SPEC.md`；根 `README.md` 只保留用户视角的包介绍、安装、初始化、同步、升级、诊断和验证命令 |
 | PRD-NPM-025 | implementation doc 默认按模块级事实切片 | P0 | `.docs/04_implementation/` 描述最终实现产物，默认按模块、子系统或核心数据流维护，并与 architecture / tech plan 边界对应；task id 和 commit 仅作为 provenance，不作为默认文档粒度 |
-| PRD-NPM-026 | 支持自然语言意图和约定指令别名双入口 | P0 | 每个阶段都应支持自然语言和 `/xxx` 快捷入口；开发阶段提供 `/dev` 单任务闭环和 `/devloop` 连续开发循环，且自然语言“做下一个任务”“开始循环：写任务，执行任务”能映射到对应动作 |
+| PRD-NPM-026 | 支持自然语言意图和约定指令别名双入口 | P0 | 每个阶段都应支持自然语言和 `/xxx` 快捷入口；`/xxx` 是更完整、更细节的提示词别名，自然语言是低成本入口；产品、架构、开发阶段分别提供 `/prd`、`/design`、`/dev`、`/devloop` |
 | PRD-NPM-027 | npm 发布流程可脚本化执行 | P1 | 提供仓库内 release script，自动执行 version bump、test、source drift check、pack dry-run、publish、registry latest verification、installed-consumer smoke 和 release doc evidence；默认不发布，显式确认后才 publish |
 
 ## 5. Acceptance Criteria
@@ -99,10 +99,10 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - [ ] `lifecycle.yaml` 不保存 phase transition history；Agent 默认不读取过去执行流水。
 - [ ] 新项目不生成 `gate_results.log`，gate 证据进入 task notes 或 implementation doc。
 - [ ] RFC 产物包含明确影响面清单，并据此创建后续 task。
-- [ ] 用户不需要记忆宏指令，也可以通过自然语言让 Agent 报告状态、继续当前阶段、检查阶段推进、进入 RFC、执行开发任务、运行开发循环、运行测试、进入 Review 或刷新 overview。
+- [ ] 用户不需要记忆宏指令，也可以通过自然语言让 Agent 报告状态、继续当前阶段、完善产品方案、设计技术方案、检查阶段推进、进入 RFC、执行开发任务、运行开发循环、运行测试、进入 Review 或刷新 overview。
 - [ ] 根 `README.md` 是轻量用户指南，`PROJECT_SPEC.md` 保存完整项目规格说明。
 - [ ] implementation doc 默认按模块、子系统或核心数据流维护；open task 的 `implementation_doc` 指向相关长期实现事实文档，多个 task 可以更新同一份文档。
-- [ ] `/dev` 一次只完成一个 DEV task 闭环；`/devloop` 连续创建/执行 DEV task，直到没有明确任务或遇到 blocker。
+- [ ] README 和协议按阶段顺序说明 `/prd`、`/design`、`/dev`、`/devloop`；`/dev` 一次只完成一个 DEV task 闭环，`/devloop` 连续创建/执行 DEV task，直到没有明确任务或遇到 blocker。
 - [ ] npm package patch release 可以通过 `npm run release:npm -- --version patch --publish --yes` 执行，并生成 release evidence。
 - [ ] Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 `validate-checkpoint` gate。
 - [ ] Harness 不再生成或要求 `.agent/archive/**` 作为 task/release 常规归档。

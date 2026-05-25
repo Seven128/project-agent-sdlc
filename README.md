@@ -42,11 +42,15 @@ npx sdlc-harness init --adopt
 
 ## 日常使用
 
-用户不需要记宏指令。直接用自然语言让 agent 推进即可；熟悉后也可以使用等价的 `/xxx` 快捷入口。
+用户不需要记宏指令。直接用自然语言让 agent 推进即可；熟悉后也可以使用 `/xxx` 快捷入口。
+
+`/xxx` 快捷入口代表一段更完整、更细节的工作流提示词；自然语言是低成本入口，也会映射到同类 workflow action，只是细节约束会更依赖 agent 根据上下文判断。
 
 ```text
 现在到哪一步了？
 继续推进。
+我提供这些信息，帮我完善产品方案。
+根据 PRD 做技术方案。
 根据技术方案拆 task。
 开始开发当前 task。
 继续开发下一个任务。
@@ -61,16 +65,18 @@ Agent 会读取 `.agent/state/lifecycle.yaml` 和 `.agent/state/plan.yaml`，再
 
 常用快捷入口：
 
-| 指令 | 等价自然语言 |
-|---|---|
-| `/status` | 现在到哪一步了 |
-| `/next` | 继续推进 |
-| `/dev` | 创建或选择下一个最小开发任务，完成一个 task 后停止 |
-| `/devloop` | 连续写任务、执行任务，直到没有明确任务或遇到 blocker |
-| `/test` | 跑一下当前验证 |
-| `/review` | 准备 review |
+| 指令 | 简单自然语言 | 更完整的意图 |
+|---|---|---|
+| `/status` | 现在到哪一步了 | 读取 lifecycle/plan，报告当前阶段、任务、阻塞项和下一步 |
+| `/next` | 继续推进 | 按当前阶段的 `active_skill` 执行下一步 |
+| `/prd` | 完善产品方案 | 在需求阶段澄清用户目标、补齐 PRD、验收标准和 open questions |
+| `/design` | 设计技术方案 | 在架构阶段基于 PRD 生成或更新架构、技术方案和 `plan.draft.yaml` |
+| `/dev` | 做下一个任务 | 创建或选择下一个最小 DEV task，完成一个 task 闭环后停止 |
+| `/devloop` | 开始循环：写任务，执行任务 | 连续运行 `/dev`，直到没有明确任务或遇到 blocker |
+| `/test` | 跑一下当前验证 | 运行当前 task 或阶段对应 gate |
+| `/review` | 准备 review | 进入只读 Review workflow |
 
-`/plan` 和 `/goal` 是 Codex 客户端模式。可以手动组合使用，例如 `/plan 我想完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。
+`/plan` 和 `/goal` 是 Codex 客户端模式。可以手动组合使用，例如 `/plan /prd`、`/plan 我想完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。
 
 ## 常用命令
 

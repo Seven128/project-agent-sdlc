@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 932b9cb288053433 -->
+<!-- source-hash: c2587dad301d60b8 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `932b9cb288053433`
+Source hash: `c2587dad301d60b8`
 
 ## Source Slices
 
@@ -96,7 +96,7 @@ package.json or sdlc-harness.config.json
 
 ### 3.3 Natural Language Control
 
-用户交互默认采用自然语言。`/status`、`/next`、`/advance`、`/rfc`、`/dev`、`/devloop`、`/syncdocs`、`/overview`、`/review` 和 `/test` 是快捷入口、调试入口或自动化入口，不是用户必须记忆的主控制面。自然语言意图和 `/xxx` 别名必须映射到同一组 workflow action。
+用户交互默认采用自然语言。`/status`、`/next`、`/advance`、`/rfc`、`/prd`、`/design`、`/dev`、`/devloop`、`/syncdocs`、`/overview`、`/review` 和 `/test` 是更完整、更细节的提示词别名，也可作为调试入口或自动化入口，不是用户必须记忆的主控制面。自然语言意图和 `/xxx` 别名必须映射到同一组 workflow action；自然语言入口成本更低，但细节约束更依赖 Agent 根据上下文判断。
 
 `pjsdlc_manager` 负责将自然语言意图映射到 workflow action：
 
@@ -106,6 +106,8 @@ package.json or sdlc-harness.config.json
 | 继续、下一步、推进 | 按 `active_skill` 执行当前阶段，等价 `/next` |
 | 检查或进入下一阶段 | 运行当前阶段出口 gate，通过后用 `transition.py` 流转，等价 `/advance` |
 | 需求或设计变化 | 进入 `RFC_RECALIBRATION` workflow |
+| 完善产品方案、写 PRD | `/prd`：在 `REQUIREMENT_GATHERING` 澄清需求并更新 PRD、验收标准和 open questions |
+| 设计技术方案、做架构方案、根据 PRD 做技术方案 | `/design`：在 `ARCHITECTING` 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | 开始开发、做当前任务、做下一个任务 | `/dev`：在 `SPRINTING` 创建或选择下一个最小 DEV task，并完成一个 task 闭环 |
 | 开始循环：写任务，执行任务；把开发循环跑完 | `/devloop`：连续运行 `/dev`，直到没有明确任务或遇到 blocker |
 | 测试或验证 | 运行当前 task 或阶段对应 gate |
@@ -114,7 +116,7 @@ package.json or sdlc-harness.config.json
 
 如果自然语言意图会改变阶段、创建或删除 task、提交、push 或发布，Agent 先说明即将执行的动作和验证方式，再继续。这个契约只约束 Agent 行为，不增加新的 state 字段，也不要求 Codex、Claude Code 或其它客户端提供专有模式切换能力。
 
-Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启或配置。用户可以手动组合 `/plan` 或 `/goal` 与自然语言/宏指令，例如 `/plan 完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。Harness 只负责在收到对应用户意图后执行 workflow action。
+Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启或配置。用户可以手动组合 `/plan` 或 `/goal` 与自然语言/宏指令，例如 `/plan /prd`、`/plan 完善产品方案`、`/goal /devloop` 或 `/goal 开始循环：写任务，执行任务`。Harness 只负责在收到对应用户意图后执行 workflow action。
 
 ### 3.4 根文档分层
 

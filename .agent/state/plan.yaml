@@ -1,4 +1,45 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 36
-tasks: []
+current_task_id: "DEV-036"
+next_task_sequence: 37
+tasks:
+  - id: "DEV-036"
+    title: "澄清快捷入口为详细提示词别名"
+    status: "in_progress"
+    summary: "调整 README 和 workflow 协议，说明 /xxx 是更细的提示词别名，自然语言是低成本入口，并补齐 /prd、/design 在 /dev 前的阶段顺序。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc: []
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".agent/state/plan.yaml"
+      - ".agent/skills/pjsdlc_manager/SKILL.md"
+      - "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
+      - "packages/sdlc-harness/assets/skills/pjsdlc_manager/SKILL.md"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/04_implementation/harness_workflow/**"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+    required_gates:
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+      - "python3 tools/validate_allowed_paths.py"
+      - "git diff --check"
+    acceptance_criteria:
+      - "README 常用快捷入口按阶段顺序列出 /prd、/design、/dev、/devloop。"
+      - "协议明确 /xxx 是更详细的提示词别名，自然语言是低成本入口但细节约束较弱。"
+      - "manager Skill 能识别 /prd、/design 及对应自然语言意图。"
+      - "package canonical assets 已同步并通过 drift check。"
+    working_notes:
+      - "用户指出 dev 前应有产品方案和技术方案指令，并希望说明指令代表更细节更长的提示词。"
+      - "已更新 README、AGENTS、PROJECT_SPEC、pjsdlc_manager、PRD、tech plan 和 command intent implementation doc。"
+      - "已运行 package sync-source，同步 AGENTS_CORE 和 pjsdlc_manager package assets。"
+      - "Gate PASS: node packages/sdlc-harness/dist/cli.js package check-source; make validate-harness; python3 tools/validate_allowed_paths.py; git diff --check。"
+    implementation_doc: ".docs/04_implementation/harness_workflow/command_intent_model.md"
