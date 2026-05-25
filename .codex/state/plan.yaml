@@ -1,38 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-042"
+current_task_id: ""
 next_task_sequence: 43
-tasks:
-  - id: "DEV-042"
-    title: "发布 agent-project-sdlc patch 包"
-    status: "in_progress"
-    summary: "使用 `tools/release_npm.mjs` 发布下一个 patch 版本到 npm registry，生成 release evidence，刷新 overview，并创建 git tag。"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      rfc: []
-    allowed_paths:
-      - ".codex/state/plan.yaml"
-      - "package-lock.json"
-      - "packages/sdlc-harness/package.json"
-      - ".docs/08_release/**"
-      - ".docs/04_implementation/npm_package/package_release_flow.md"
-      - ".docs/04_implementation/overview.md"
-      - ".docs/08_release/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "npm run release:npm -- --version patch --publish --yes"
-      - "make validate-harness"
-      - "python3 tools/validate_allowed_paths.py"
-      - "git diff --check"
-    acceptance_criteria:
-      - "npm registry latest 指向新 patch 版本。"
-      - "release script 完成 npm test、package check-source、pack dry-run、publish、registry latest verification 和 installed-consumer smoke。"
-      - "`.docs/08_release/v<version>_npm_release.md` 记录发布证据和回滚方案。"
-      - "创建并推送对应 `v<version>` git tag。"
-      - "发布后的 package version、release doc、overview 和 plan 状态已提交并推送。"
-    working_notes:
-      - "用户要求发包；npm registry latest 当前为 0.1.4，目标按 patch 发布 0.1.5。"
-      - "release script 已发布 agent-project-sdlc@0.1.5，并通过 npm test、package check-source、pack dry-run、npm publish、registry latest verification、installed-consumer smoke、make validate-harness、validate_allowed_paths、git diff --check。"
-    implementation_doc: ".docs/04_implementation/npm_package/package_release_flow.md"
+tasks: []
