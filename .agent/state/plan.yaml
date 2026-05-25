@@ -1,38 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-037"
+current_task_id: ""
 next_task_sequence: 38
-tasks:
-  - id: "DEV-037"
-    title: "落地 Harness authoring 专用提示词"
-    status: "in_progress"
-    summary: "创建本仓库专用 authoring Skill，记录迭代 Harness 自身时的额外原则，并加入可脚本化动作应提示抽成脚本的规则。"
-    docs:
-      product: []
-      tech_plan:
-        - "PROJECT_SPEC.md"
-      rfc: []
-    allowed_paths:
-      - "AGENTS.md"
-      - ".agent/state/plan.yaml"
-      - ".agent/authoring/**"
-      - "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
-      - ".docs/04_implementation/npm_package/authoring_overlay.md"
-      - ".docs/04_implementation/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "make validate-harness"
-      - "python3 tools/validate_allowed_paths.py"
-      - "git diff --check"
-    acceptance_criteria:
-      - "本仓库专用 authoring prompt 已落地到 .agent/authoring/**，不进入 package assets。"
-      - "authoring prompt 明确要求发现可脚本化的重复、长耗时或高风险动作时，提示用户可以抽成脚本。"
-      - "AGENTS.md 能让后续 Agent 在维护 Harness/workflow 源码时读取 authoring overlay。"
-      - "package source drift、Harness validation 和 allowed paths gate 通过。"
-    working_notes:
-      - "用户询问专门用于本项目迭代工作流的提示词位置，并要求加入可脚本化动作的提示规则。"
-      - "已确认此前仅在 PROJECT_SPEC 第 17 章和 DEV-014 implementation doc 设计 authoring overlay，尚未创建 .agent/authoring/**。"
-      - "已新增 .agent/authoring/skills/harness_package_design/SKILL.md，并在 AGENTS.md 声明维护 Harness/workflow/npm package 源码时读取 authoring overlay。"
-      - "已运行 package sync-source，同步 AGENTS_CORE；.agent/authoring/** 未进入 package assets。"
-      - "Gate PASS: node packages/sdlc-harness/dist/cli.js package check-source; make validate-harness; python3 tools/validate_allowed_paths.py; git diff --check。"
-    implementation_doc: ".docs/04_implementation/npm_package/authoring_overlay.md"
+tasks: []
