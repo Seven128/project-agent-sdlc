@@ -23,6 +23,8 @@ try {
 
   const defaultConfig = await readFile(path.join(defaultRoot, ".agent/config.yaml"), "utf8");
   assert.match(defaultConfig, /agent-project-sdlc/);
+  const packageMetadata = JSON.parse(await readFile(path.join(path.dirname(cliPath), "..", "package.json"), "utf8"));
+  assert.match(defaultConfig, new RegExp(`version: "?${packageMetadata.version}"?`));
   const defaultLifecycle = await readFile(path.join(defaultRoot, ".agent/state/lifecycle.yaml"), "utf8");
   assert.doesNotMatch(defaultLifecycle, /history:/);
   await assert.rejects(stat(path.join(defaultRoot, ".agent/state/gate_results.log")));
