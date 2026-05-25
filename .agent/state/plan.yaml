@@ -1,4 +1,40 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 29
-tasks: []
+current_task_id: "DEV-029"
+next_task_sequence: 30
+tasks:
+  - id: "DEV-029"
+    title: "补充自然语言控制契约"
+    status: "in_progress"
+    summary: "明确用户不需要记忆宏指令；Agent 应将自然语言意图映射到当前 lifecycle/plan 对应的 workflow action。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - ".agent/state/plan.yaml"
+      - ".agent/skills/pjsdlc_manager/SKILL.md"
+      - "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
+      - "packages/sdlc-harness/assets/skills/pjsdlc_manager/SKILL.md"
+      - ".docs/01_product/npm_package_distribution.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/INDEX.md"
+      - ".docs/01_product/overview.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/04_implementation/npm_package/dev_029_natural_language_control.md"
+      - ".docs/04_implementation/overview.md"
+    required_gates:
+      - "python3 tools/validate_allowed_paths.py"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "AGENTS.md declares natural language as the primary user control surface and macro commands as optional shortcuts."
+      - "Manager Skill maps common natural-language intents to status, next, advance, RFC, review, test, overview, and current-task actions."
+      - "README, PRD, and technical plan describe the natural language control contract."
+      - "Package canonical assets stay in sync with source workflow files."
+      - "Implementation doc records changed behavior and verification."
+    working_notes:
+      - "Run package sync-source after source prompt edits to refresh package assets."
+    implementation_doc: ".docs/04_implementation/npm_package/dev_029_natural_language_control.md"

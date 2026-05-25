@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 2c784fe63f4a6289 -->
+<!-- source-hash: c7eb1bb6fd9bb413 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `2c784fe63f4a6289`
+Source hash: `c7eb1bb6fd9bb413`
 
 ## Source Slices
 
@@ -69,6 +69,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 | PRD-NPM-020 | Harness active state 不读取、不保存过去执行流水 | P0 | `lifecycle.yaml` 和 `plan.yaml` 只保存当前可执行状态；过去阶段/task/gate 执行信息默认不进入 Agent 上下文，仅在显式 forensic / audit / regression 场景中通过 git、PR、CI、release 系统和阶段产物查询 |
 | PRD-NPM-021 | 移除独立 gate results state | P0 | 不再维护 `<harnessRoot>/state/gate_results.log`；当前 task gate 证据写入 task notes 或 implementation doc `Verification`，长期记录由 implementation doc、CI logs 或 release 系统承担 |
 | PRD-NPM-022 | RFC 阶段必须显式考虑影响面 | P0 | RFC 进入补丁或 DEV task 前必须列出 docs、state、skills、policies、templates、tools、package assets、tests、sync/upgrade/migration 和 generated artifacts 影响 |
+| PRD-NPM-023 | 用户可通过自然语言控制 workflow | P0 | `/status`、`/next`、`/advance`、`/rfc` 等宏指令保留为快捷入口；Agent 应将“继续”“开始开发”“跑测试”“进入下一阶段”等自然语言映射到 lifecycle/plan 对应动作 |
 
 ## 5. Acceptance Criteria
 
@@ -94,6 +95,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - [ ] `lifecycle.yaml` 不保存 phase transition history；Agent 默认不读取过去执行流水。
 - [ ] 新项目不生成 `gate_results.log`，gate 证据进入 task notes 或 implementation doc。
 - [ ] RFC 产物包含明确影响面清单，并据此创建后续 task。
+- [ ] 用户不需要记忆宏指令，也可以通过自然语言让 Agent 报告状态、继续当前阶段、检查阶段推进、进入 RFC、执行当前开发任务、运行测试、进入 Review 或刷新 overview。
 - [ ] Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 `validate-checkpoint` gate。
 - [ ] Harness 不再生成或要求 `.agent/archive/**` 作为 task/release 常规归档。
 

@@ -16,7 +16,7 @@ Skill、执行出口 gate，并记录 blocker。
 
 与用户对话时，先读取 lifecycle 和 plan，再说明当前阶段、active_skill、当前任务、阻塞项和下一步。不要基于猜测切换阶段；如果用户要求的动作与当前阶段冲突，说明冲突、可选路径和推荐处理方式。
 
-执行 `/status`、`/next`、`/advance`、`/rfc` 等宏指令时，输出要短而明确：当前事实是什么、将调用哪个 gate 或 Skill、成功后会进入哪里、失败时如何保持状态安全。
+自然语言是默认控制方式。用户说“状态如何”“继续”“下一步”“开始开发”“跑测试”“准备 review”“需求变了”等，不应要求用户记忆 `/xxx`；你应先读取 lifecycle 和 plan，再把意图映射到对应 workflow action。执行 `/status`、`/next`、`/advance`、`/rfc` 等宏指令时，输出要短而明确：当前事实是什么、将调用哪个 gate 或 Skill、成功后会进入哪里、失败时如何保持状态安全。
 
 ## 输入
 
@@ -37,6 +37,15 @@ Skill、执行出口 gate，并记录 blocker。
 8. 用户输入 `/advance` 时，运行 `make validate-current`，通过后流转到配置的 `next` 阶段。
 9. 用户输入 `/rfc <file>` 时，流转到 `RFC_RECALIBRATION` 并调用 `rfc_recalibrate`。
 10. 如果当前 task 处于 `blocked` 或缺少 open task 必需的 plan 字段，不要推进阶段，先要求 `plan.yaml` 完整。
+11. 用户自然语言询问状态时，等价执行 `/status`。
+12. 用户自然语言要求继续、推进或下一步时，等价执行 `/next`。
+13. 用户自然语言要求进入下一阶段或检查是否可进入下一阶段时，等价执行 `/advance`。
+14. 用户自然语言表达需求或设计变化时，进入 RFC workflow。
+15. 用户自然语言要求开始开发或做当前任务时，如果 `current_phase` 是 `SPRINTING`，执行当前 open task；否则说明当前阶段冲突和推荐路径。
+16. 用户自然语言要求跑测试或验证时，运行当前 task 或当前阶段的对应 gate。
+17. 用户自然语言要求 review 时，进入只读 Review workflow，不直接改源码。
+18. 用户自然语言要求刷新文档总览时，运行 `make docs-overview`。
+19. 如果动作会改变阶段、创建或删除 task、提交、push 或发布，先用一句话说明即将执行的动作和验证方式，再继续。
 
 ## Plan Protocol
 
