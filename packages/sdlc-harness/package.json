@@ -1,6 +1,6 @@
 {
   "name": "agent-project-sdlc",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "CLI and canonical assets for the AI SDLC Harness workflow.",
   "type": "module",
   "bin": {
