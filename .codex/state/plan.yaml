@@ -1,4 +1,26 @@
 current_phase: "SPRINTING"
-current_task_id: ""
+current_task_id: "DEV-045"
 next_task_sequence: 45
-tasks: []
+tasks:
+  - id: "DEV-045"
+    title: "Document skill override usage in project spec"
+    status: "in_progress"
+    summary: "Align PROJECT_SPEC.md with the implemented sync-time append model for project-local workflow Skill prompt overrides."
+    docs:
+      - "PROJECT_SPEC.md"
+      - "README.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - "PROJECT_SPEC.md"
+    required_gates:
+      - "make validate-harness"
+      - "git diff --check"
+    acceptance_criteria:
+      - "PROJECT_SPEC.md states that users should customize stage role prompts through <harnessRoot>/overrides/skills/<skill_name>.md."
+      - "PROJECT_SPEC.md states that sync appends local overrides to managed Skill output and direct edits to <harnessRoot>/skills/**/SKILL.md are unsupported."
+      - "README.md already contains the end-user usage flow and requires no extra change."
+    implementation_doc: ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
+    working_notes:
+      - "Follow-up after DEV-044: README was updated, PROJECT_SPEC.md still needs explicit v1 behavior."
+      - "Verification: make validate-harness PASS."
+      - "Verification: git diff --check PASS."
