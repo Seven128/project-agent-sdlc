@@ -1,42 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-052"
+current_task_id: ""
 next_task_sequence: 53
-tasks:
-  - id: "DEV-052"
-    title: "Persist full consumer lab workflow and authoring test SOP"
-    status: "in_progress"
-    summary: "Script the full installed-consumer lab validation, document the authoring-only workflow boundary, and require test scripts in Harness change impact analysis."
-    docs:
-      implementation:
-        - ".docs/04_implementation/harness_package/consumer_lab_validation.md"
-      test:
-        - ".docs/07_test/harness_consumer_lab.md"
-      spec:
-        - "PROJECT_SPEC.md"
-    allowed_paths:
-      - ".codex/state/plan.yaml"
-      - ".codex/skills/authoring/**"
-      - "PROJECT_SPEC.md"
-      - "tools/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/**"
-      - ".docs/07_test/**"
-      - ".docs/**/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "node tools/consumer_lab_full_test.mjs --report-only --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab"
-      - "make validate-harness"
-    acceptance_criteria:
-      - "A reusable authoring-only consumer lab script covers the package README capability surface and records PASS/BLOCKED/FAIL evidence."
-      - "Authoring skill documents when and how to run full consumer lab validation, and requires test scripts in Harness change impact analysis."
-      - "PROJECT_SPEC.md explicitly states that Harness self-bootstrapping stage/test prompts belong in authoring overlay, not generic pjsdlc workflow skills."
-      - "Test and implementation docs describe the script interface, default safety behavior, known gaps, and RFC follow-up requirement."
-    implementation_doc: ".docs/04_implementation/harness_package/consumer_lab_validation.md"
-    working_notes:
-      - "User requested full README capability testing, durable script coverage, authoring skill SOP, and spec clarification for self-bootstrapping authoring-only prompts."
-      - "Source gates passed: npm test; node packages/sdlc-harness/dist/cli.js package check-source; make validate-harness."
-      - "Full lab script passed as a command with report-only mode: 25 PASS, 11 BLOCKED, 0 FAIL; BLOCKED items are known package workflow gaps and are recorded as defect candidates."
-      - "Scoped checks passed: python3 tools/validate_allowed_paths.py; python3 tools/validate_task_docs.py; git diff --check."
-      - "No package assets were changed; README/package README did not need updates because this task adds authoring-only workflow and scripts."
+tasks: []
