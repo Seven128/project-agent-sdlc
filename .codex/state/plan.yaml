@@ -1,4 +1,35 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 47
-tasks: []
+current_task_id: "DEV-047"
+next_task_sequence: 48
+tasks:
+  - id: "DEV-047"
+    title: "Publish npm package patch release"
+    status: "in_progress"
+    summary: "Publish the next patch version of agent-project-sdlc with release automation and record release evidence."
+    docs:
+      release:
+        - ".docs/08_release/"
+      implementation:
+        - ".docs/04_implementation/harness_package/release_automation.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - ".docs/08_release/v0.1.6_npm_release.md"
+      - ".docs/08_release/overview.md"
+      - "package-lock.json"
+      - "packages/sdlc-harness/package.json"
+    required_gates:
+      - "npm run release:npm -- --version patch --publish --yes"
+      - "make validate-current"
+      - "git diff --check"
+    acceptance_criteria:
+      - "agent-project-sdlc is published to npm at the next patch version."
+      - "Registry latest points at the published version."
+      - "Installed-consumer smoke passes for the published version."
+      - "Release evidence is written under .docs/08_release/."
+      - "Release commit, completion ledger commit and git tag are pushed."
+    implementation_doc: ".docs/04_implementation/harness_package/release_automation.md"
+    working_notes:
+      - "User requested npm package publishing."
+      - "Verification: npm run release:npm -- --version patch --publish --yes PASS; published agent-project-sdlc@0.1.6."
+      - "Verification: npm view agent-project-sdlc version dist-tags.latest dist.integrity --json returned latest 0.1.6."
+      - "Verification: installed-consumer smoke PASS via release script."
