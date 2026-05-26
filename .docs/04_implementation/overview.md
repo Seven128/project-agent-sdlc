@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 1622269c4b58b977 -->
+<!-- source-hash: 0a3845f3352694df -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `1622269c4b58b977`
+Source hash: `0a3845f3352694df`
 
 ## Source Slices
 
@@ -326,11 +326,11 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`)
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`, `PRD-NPM-028`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `DEV-034` implementation commit, `DEV-036` implementation commit
+- Linked RFC: `RFC_015`
+- Linked commit: `DEV-034` implementation commit, `DEV-036` implementation commit, `DEV-050` implementation commit
 
 ## 2. 当前实现范围
 
@@ -340,6 +340,7 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
   - `/prd` 产品方案入口和 `/design` 架构/技术方案入口。
   - `/dev` 单任务开发闭环和 `/devloop` 连续开发循环语义。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
+  - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
 - 修改（Changed）:
   - `AGENTS.md`、`README.md`、`PROJECT_SPEC.md` 的日常控制说明。
   - `pjsdlc_manager` 的路由规则。
@@ -381,6 +382,7 @@ User input
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
+- 并行语义（Parallel semantics）: 并行不是默认入口；只有用户显式提出并行时，Manager 才能创建 `parallel_execution.trigger: "user_requested"`，并根据 runtime 能力选择 `runtime_managed` 或 `user_orchestrated`。
 
 ## 6. 与技术方案的偏移
 
@@ -402,6 +404,7 @@ User input
 | 2026-05-25 | `DEV-034` | `DEV-034` implementation commit | 增加自然语言/指令别名双入口和 `/dev`、`/devloop` 开发入口。 |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
+| 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
 
 ## 9. 后续维护注意事项
 
@@ -607,11 +610,11 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: workflow Skills, prompt routing, hard/soft indexing and authoring overlay
-- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`
+- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`, `PROJECT_SPEC.md`
-- Linked RFC: `RFC_007`, `RFC_009`
-- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit; `DEV-049` implementation commit
+- Linked RFC: `RFC_007`, `RFC_009`, `RFC_015`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit; `DEV-049` implementation commit; `DEV-050` implementation commit
 
 ## 2. 当前实现范围
 
@@ -622,6 +625,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - Project-local role prompt additions live under `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` and are appended to managed Skill output by `sdlc-harness sync`.
 - This authoring repository keeps a private authoring Skill under `.codex/skills/authoring/**`; package source sync excludes it from user projects.
 - The authoring Skill requires README/package README coverage to stay aligned with all public package capabilities.
+- PM, Manager, Dev and Tester prompts now describe optional parallel execution semantics and keep final fact-source integration with the main agent.
 
 ## 3. 真实代码结构
 
@@ -716,6 +720,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-26 | `DEV-044` | DEV-044 implementation commit | Added sync-time append overrides for project-local workflow Skill prompt additions. |
 | 2026-05-26 | `DEV-046` | DEV-046 implementation commit | Moved project-local Skill overrides under `pjsdlc_managed/override_skills` and updated authoring impact rules. |
 | 2026-05-26 | `DEV-049` | DEV-049 implementation commit | Added authoring rule that README/package README must cover all public package capabilities. |
+| 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in parallel execution prompt rules for PM, Manager, Dev and Tester workflows. |
 
 ## 9. 后续维护注意事项
 
@@ -735,11 +740,11 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
-- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`
-- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
+- Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`, `RFC_015`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit; `DEV-050` implementation commit
 
 ## 2. 当前实现范围
 
@@ -749,6 +754,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
+- `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial.
 
 ## 3. 真实代码结构
 
@@ -762,7 +768,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `.codex/skills/pjsdlc_manager/SKILL.md` | Workflow routing prompt | `/next`, `/dev`, `/devloop`, status routing |
 | `.codex/skills/pjsdlc_rfc_recalibrate/SKILL.md` | Change recalibration prompt | RFC impact checklist |
 | `tools/harness_utils.py` | Shared state helpers | `load_plan`, `validate_task_shape`, path expansion |
-| `tools/validate_plan.py` | Active plan validator | current/future task checks |
+| `tools/validate_plan.py` | Active plan validator | current/future task checks and optional parallel contract checks |
 | `tools/validate_allowed_paths.py` | Worktree scope validator | allowed path enforcement |
 | `tools/run_current_gate.py` | Phase gate runner | phase-to-gate dispatch |
 | `tools/status.py` | Human status report | lifecycle and task summary |
@@ -784,6 +790,17 @@ SPRINTING task starts
 -> both commits are pushed before the next task starts
 ```
 
+Optional parallel execution:
+
+```txt
+User explicitly asks for parallel / multi-agent / multi-worktree
+-> main agent creates parallel_execution.trigger = user_requested
+-> runtime_managed: main agent spawns subagents when runtime supports it
+-> user_orchestrated: main agent outputs worker prompts for manual Codex conversations/worktrees
+-> workers operate inside owned_paths and run focused gates
+-> main agent reviews, merges/cherry-picks, runs total gates and updates final fact sources
+```
+
 ## 5. 关键实现逻辑
 
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
@@ -792,6 +809,8 @@ SPRINTING task starts
 - `lifecycle.yaml` does not store phase history. Phase history is reconstructed from git, PRs, CI or release evidence only when explicitly needed.
 - `/dev` runs one task and stops. `/devloop` repeats `/dev` until no clear task remains or a blocker appears.
 - The workflow assumes a singleton project-level Harness collaboration boundary; concurrent agents must coordinate through git and active state rather than independent archive files.
+- Parallel execution is opt-in only. `trigger` must be `user_requested`, `mode` must be `runtime_managed` or `user_orchestrated`, and `SPRINTING` contracts must bind `linked_task_id` to `current_task_id`.
+- Workers do not own final fact sources. PRD, plan state, implementation docs, test results, generated overviews and total gate evidence are integrated by the main agent.
 
 ## 6. 与技术方案的偏移
 
@@ -804,6 +823,7 @@ SPRINTING task starts
 |---|---|---|
 | `python3 tools/validate_plan.py` | Current plan shape and task statuses | PASS in Harness gates |
 | `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
+| `tests/sdlc-harness/validators.test.mjs` | Package validator optional parallel contract acceptance/failure cases | PASS for DEV-050 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
 | `npm test` | Package migration and validator parity | PASS through release tasks |
 | `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
@@ -816,6 +836,7 @@ SPRINTING task starts
 | 2026-05-25 | `DEV-018`, `DEV-019` | Historical implementation commits | Added two-commit task completion and pre-compression implementation commit rule. |
 | 2026-05-25 | `DEV-024` - `DEV-028` | Historical implementation commits | Shortened plan/gate/lifecycle state and strengthened RFC impact handling. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated legacy state/task implementation docs into module facts. |
+| 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in `parallel_execution` contract for multi-agent/worktree coordination. |
 
 ## 9. 后续维护注意事项
 

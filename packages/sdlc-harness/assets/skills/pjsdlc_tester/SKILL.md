@@ -17,6 +17,8 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 
 执行回归时，优先选择能证明阶段出口的 gate。测试无法运行、环境缺失或数据不可得时，不要宣布通过，应记录 blocker、已完成检查和恢复条件。
 
+如果用户明确要求并行、多 agent 或多 worktree，测试阶段可以启用 `parallel_execution`，让 worker 分别执行互不依赖的回归片区、smoke、兼容性或风险验证。worker 只提交证据和必要的 scoped test changes；最终 `.docs/07_test/**`、coverage gaps、PASS/BLOCKED 决策和阶段 gate 由主 Agent 汇总。没有用户显式要求时，测试 workflow 保持串行。
+
 ## 输入
 
 - `.docs/01_product/`
@@ -46,7 +48,8 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 1. 测试用例必须追溯到 PRD acceptance criteria 或 Review findings。
 2. 根据风险补充边界、负向、回归和集成测试。
 3. 如果有意延后覆盖，必须记录风险和 follow-up。
-4. 宣布阶段完成前运行 `make test-all`。
+4. 并行测试必须使用 `parallel_execution.trigger: "user_requested"`；`runtime_managed` 只在当前 runtime 支持 subagent 时使用，否则输出 `user_orchestrated` worker prompt。
+5. 宣布阶段完成前运行 `make test-all`。
 
 ## 完成检查
 
@@ -54,6 +57,7 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 - [ ] Regression checklist 已完成。
 - [ ] 已判断 test plan / test matrix 的语义切片边界。
 - [ ] Coverage gaps 已明确。
+- [ ] 如果启用了并行测试，worker evidence 已由主 Agent 汇总到测试产物。
 - [ ] 已运行 `make docs-overview` 刷新 `.docs/<stage>/overview.md`。
 - [ ] Final decision 是 `PASS` 或 `BLOCKED`。
 - [ ] `make validate-test` 准备通过。

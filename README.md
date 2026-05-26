@@ -63,6 +63,7 @@ npx sdlc-harness init --adopt
 | 阶段 gate | `npx sdlc-harness validate-*`、`make validate-current`、`make validate-harness` | 校验需求、设计、开发计划、Harness 骨架、提示词语言契约和 overview freshness |
 | 生命周期工作流 | `lifecycle.yaml`、`plan.yaml`、`.docs/**` | 固定 REQUIREMENT_GATHERING、ARCHITECTING、SPRINTING、REVIEWING、TESTING、RELEASING、RFC_RECALIBRATION 等阶段事实链 |
 | 自然语言控制 | `AGENTS.md` + workflow skills | 用户可说“继续”“开始开发”“跑测试”“需求变了”等，由 Agent 映射到 `/next`、`/dev`、`/test`、RFC 等动作 |
+| 可选并行执行合同 | `plan.yaml#parallel_execution` | 用户明确要求多 agent/并行/多 worktree 时启用；支持 runtime-managed subagents 或 user-orchestrated worker prompts |
 | Workflow skills | `<harnessRoot>/skills/pjsdlc_*/SKILL.md` | 提供 PM、架构、开发、实现文档、Review、测试、发布、RFC 等阶段角色提示词 |
 | 阶段角色提示词本地追加 | `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` + `sync` | 用户不改 managed Skill，通过本地 override 追加项目规则，下一次 sync/upgrade 会重新合成 |
 | 本地策略覆盖 | `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml` | 保留项目自己的策略补充，不和包内默认策略混写 |
@@ -124,6 +125,15 @@ npx sdlc-harness sync
 ```
 
 `sync` 会把通用 Skill 和本地 override 合成到最终 `SKILL.md`。v1 只支持追加覆盖；`<skill_name>` 必须匹配已有 workflow Skill，例如 `pjsdlc_pm_prd`、`pjsdlc_architect_design` 或 `pjsdlc_dev_sprint`。
+
+### 可选并行执行
+
+默认 workflow 是串行的。只有用户明确说“并行”“多 agent”或“多 worktree”时，Agent 才能在 `plan.yaml` 创建 `parallel_execution` 合同。
+
+- `runtime_managed`：当前 Agent runtime 支持创建 subagent 时，由主 Agent 分配 worker、等待结果、review、merge/cherry-pick 并跑总 gate。
+- `user_orchestrated`：runtime 不能自动创建 subagent 时，主 Agent 生成每个 worker 的可复制 prompt；用户手动打开多个对话或 worktree 后粘贴执行。
+
+Harness CLI v1 不承诺自动启动 Codex agent，也不要求 worker 之间通信。worker 只处理自己的 `owned_paths` 和 gate，最终 PRD、plan、implementation doc、test result、overview 等事实源由主 Agent 集成。
 
 常用快捷入口：
 

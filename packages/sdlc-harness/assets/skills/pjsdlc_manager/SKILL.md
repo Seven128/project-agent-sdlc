@@ -20,6 +20,8 @@ Skill、执行出口 gate，并记录 blocker。
 
 自然语言和宏指令必须进入同一组 workflow action；区别在于 `/xxx` 入口携带更稳定的细节约束，简单自然语言入口更低成本，但需要你根据当前阶段、plan 和文档上下文补足细节。
 
+Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多 agent”“多 worktree”或等价意图时，才允许创建或使用 `parallel_execution`。不要因为任务看起来可拆就默认启用。当前 runtime 有 subagent 能力时，主 Agent 可使用 `runtime_managed` 编排；没有该能力时，使用 `user_orchestrated`，输出 worker prompts 让用户手动多开对话或 worktree。无论哪种模式，主 Agent 都是 coordinator 和 integration owner。
+
 ## 输入
 
 - `<harnessRoot>/state/lifecycle.yaml`
@@ -48,14 +50,18 @@ Skill、执行出口 gate，并记录 blocker。
 17. 用户输入 `/dev`，或自然语言要求“开始开发”“做当前任务”“做下一个任务”“继续开发下一个任务”时，如果 `current_phase` 是 `SPRINTING`，创建或选择一个最小 DEV task 并执行一个 task 闭环；否则说明当前阶段冲突和推荐路径。
 18. 用户输入 `/devloop`，或自然语言要求“开始循环：写任务，执行任务”“把开发循环跑完”“连续开发”时，如果 `current_phase` 是 `SPRINTING`，连续运行 `/dev` 循环，直到没有明确可做任务或遇到 blocker；否则说明当前阶段冲突和推荐路径。
 19. 用户自然语言要求跑测试或验证时，运行当前 task 或当前阶段的对应 gate。
-20. 用户自然语言要求 review 时，进入只读 Review workflow，不直接改源码。
-21. 用户自然语言要求刷新文档总览时，运行 `make docs-overview`。
-22. `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启；如果用户手动组合 `/plan` 或 `/goal` 与自然语言或宏指令，应按对应 workflow action 继续执行。
-23. 如果动作会改变阶段、创建或删除 task、提交、push 或发布，先用一句话说明即将执行的动作和验证方式，再继续。
+20. 用户明确要求并行、多 agent 或多 worktree 时，先判断当前阶段是否是 `REQUIREMENT_GATHERING`、`SPRINTING` 或 `TESTING`；如果是，生成或使用 `parallel_execution.trigger: "user_requested"` 合同；否则说明当前阶段不支持并行合同。
+21. `runtime_managed` 模式只在当前 Agent runtime 真实具备 subagent 能力时使用；否则使用 `user_orchestrated` 并输出每个 worker 的可复制 prompt。
+22. 用户自然语言要求 review 时，进入只读 Review workflow，不直接改源码。
+23. 用户自然语言要求刷新文档总览时，运行 `make docs-overview`。
+24. `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启；如果用户手动组合 `/plan` 或 `/goal` 与自然语言或宏指令，应按对应 workflow action 继续执行。
+25. 如果动作会改变阶段、创建或删除 task、提交、push 或发布，先用一句话说明即将执行的动作和验证方式，再继续。
 
 ## Plan Protocol
 
 每个 open task 都必须在 `plan.yaml` 中包含 `docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`；done/cancelled task 不长期留在当前 `plan.yaml`。完成后的产物事实以模块、子系统或核心数据流级 implementation doc 为准，动作历史以 git/PR/CI/release 系统作为 cold archive，`next_task_sequence` 负责继续分配后续 task id。
+
+`parallel_execution` 是可选顶层合同，缺省表示串行。启用后必须声明 `enabled`、`trigger`、`mode`、`phase`、`coordinator`、`workers` 和 `integration`；`SPRINTING` 并行还必须通过 `linked_task_id` 绑定当前 `current_task_id`。
 
 `lifecycle.yaml` 和 `plan.yaml` 只用于当前可执行状态。默认不要读取过去 phase/task/gate 执行流水；只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
 

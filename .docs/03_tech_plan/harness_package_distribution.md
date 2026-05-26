@@ -262,6 +262,59 @@ task 完成后，先在当前 task 仍位于 `plan.yaml` 时创建 task implemen
 
 默认不追溯 done task 的执行流水。历史 task 查询主要面向“做了什么、为什么做、影响哪个模块、验证了什么”，默认读取模块级 implementation doc、RFC、PRD、tech plan 和代码。task id 和 commit 只作为 provenance；`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。
 
+#### Optional parallel_execution contract
+
+`parallel_execution` 是 `plan.yaml` 的可选顶层合同。缺省不存在表示串行 workflow；只有用户明确提出并行、多 agent 或多 worktree 时，Agent 才能创建该合同。
+
+```yaml
+parallel_execution:
+  enabled: true
+  trigger: "user_requested"
+  mode: "user_orchestrated" # or "runtime_managed"
+  phase: "SPRINTING"
+  coordinator: "main_agent"
+  linked_task_id: "DEV-011"
+  workers:
+    - id: "worker-feature"
+      writes_repo: true
+      branch: "agent/feature"
+      worktree: "../project-feature"
+      owned_paths:
+        - "src/feature/**"
+      forbidden_paths:
+        - "<harnessRoot>/state/**"
+        - ".docs/INDEX.md"
+      expected_output:
+        - "implementation branch and focused gate evidence"
+      required_gates:
+        - "npm test -- tests/feature"
+  integration:
+    owner: "main_agent"
+    merge_strategy: "main agent reviews worker output, merges or cherry-picks, then runs total gates"
+    required_gates:
+      - "make validate-current"
+    fact_source_updates:
+      - ".docs/04_implementation/"
+```
+
+模式语义：
+
+- `runtime_managed`：当前 Agent runtime 真实具备 subagent 能力时使用。主 Agent 生成合同、分配 worker、等待结果并集成。
+- `user_orchestrated`：runtime 不能自动创建 subagent 时使用。主 Agent 生成每个 worker 的可复制 prompt，用户手动打开对话或 worktree 后粘贴执行。
+
+阶段规则：
+
+- `REQUIREMENT_GATHERING`：worker 只能做调研、草稿、场景拆解、风险和 open questions；最终 PRD 由主 Agent 合成。
+- `SPRINTING`：worker 可写各自 `owned_paths`，但不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc；并行合同必须通过 `linked_task_id` 绑定当前 `current_task_id`。
+- `TESTING`：worker 可并行执行验证片区和提交证据；最终 test plan、coverage gaps 和 PASS/BLOCKED 由主 Agent 汇总。
+
+Validator 行为：
+
+- 无 `parallel_execution` 时保持兼容。
+- 启用时校验 `enabled`、`trigger`、`mode`、`phase`、`coordinator`、`workers` 和 `integration`。
+- `writes_repo: true` 的 worker 必须声明 `branch`、`worktree` 和非空 `owned_paths`。
+- `SPRINTING` 的 `linked_task_id` 必须等于 `current_task_id`。
+
 ### 5.6 Implementation doc model
 
 `.docs/04_implementation/` 是最终实现产物的事实层，默认与 architecture / tech plan 中的模块、子系统或核心数据流边界对应。`plan.yaml.tasks[].implementation_doc` 指向本 task 会更新或新增的长期实现事实文档；多个 task 可以指向同一份 implementation doc。

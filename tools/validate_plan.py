@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
-from harness_utils import OPEN_TASK_STATUSES, load_plan, require, run_main, task_by_id, validate_task_shape
+from harness_utils import (
+    OPEN_TASK_STATUSES,
+    load_plan,
+    require,
+    run_main,
+    task_by_id,
+    validate_parallel_execution_contract,
+    validate_task_shape,
+)
 
 
 def main() -> None:
     data = load_plan()
+    validate_parallel_execution_contract(data)
     tasks = data.get("tasks", [])
     next_task_sequence = data.get("next_task_sequence")
     require(isinstance(next_task_sequence, int) and next_task_sequence > 0, "plan.yaml must define positive integer next_task_sequence")

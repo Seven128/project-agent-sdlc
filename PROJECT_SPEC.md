@@ -290,6 +290,41 @@ next_task_sequence: 4
 tasks: []
 ```
 
+`parallel_execution` 是可选顶层合同，缺省不存在表示串行。只有用户明确提出“并行”“多 agent”或“多 worktree”时，才允许加入该合同。`runtime_managed` 用于当前 Agent runtime 真实具备 subagent 能力的情况；`user_orchestrated` 用于用户手动打开多个对话或 worktree 并粘贴 worker prompt 的情况。Harness v1 不承诺 CLI 自动启动 Codex agent。
+
+```yaml
+parallel_execution:
+  enabled: true
+  trigger: "user_requested"
+  mode: "user_orchestrated"
+  phase: "SPRINTING"
+  coordinator: "main_agent"
+  linked_task_id: "DEV-003"
+  workers:
+    - id: "worker-auth"
+      writes_repo: true
+      branch: "agent/auth"
+      worktree: "../project-auth"
+      owned_paths:
+        - "src/auth/**"
+      forbidden_paths:
+        - "<harnessRoot>/state/**"
+        - ".docs/INDEX.md"
+      expected_output:
+        - "implementation branch and focused gate evidence"
+      required_gates:
+        - "npm test -- tests/auth"
+  integration:
+    owner: "main_agent"
+    merge_strategy: "main agent reviews worker output, merges or cherry-picks, then runs total gates"
+    required_gates:
+      - "make validate-current"
+    fact_source_updates:
+      - ".docs/04_implementation/"
+```
+
+需求阶段并行只用于调研、草稿、风险和 open questions，最终 PRD 由主 Agent 合成。开发阶段 worker 只能改自己的 `owned_paths`，不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc。测试阶段 worker 可以并行产出验证证据，最终 test plan 和 PASS/BLOCKED 决策由主 Agent 汇总。
+
 ### 任务状态：
 - `pending`
 - `in_progress`

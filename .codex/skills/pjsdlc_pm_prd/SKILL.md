@@ -17,6 +17,8 @@ description: Use during REQUIREMENT_GATHERING to turn raw input into PRD slices 
 
 产出 PRD 时，优先让后续架构和测试能直接使用：每条需求应有清晰 requirement ID、验收条件、Out of Scope、风险或依赖。对话中出现新范围时，要判断是更新当前 slice、拆出新 slice，还是进入 RFC。
 
+如果用户在需求阶段明确要求并行、多 agent 或多 worktree，Parallel Execution 只能用于调研、草稿、场景拆解、风险列表或 open questions 收集。worker 不直接写最终 PRD；主 Agent 必须合成最终 `.docs/01_product/**`，并把假设、分歧和未决项写入 PRD。没有用户显式要求时，不要启用 `parallel_execution`。
+
 ## 输入
 
 - 用户需求或原始记录
@@ -45,7 +47,8 @@ description: Use during REQUIREMENT_GATHERING to turn raw input into PRD slices 
 2. 每个 PRD 必须包含目标、用户场景、功能需求、验收标准、Out of Scope 和 Open Questions。
 3. 不确定内容必须写入 `Open Questions`，不要静默假设。
 4. 如果需求与既有架构或已接受决策冲突，先写冲突说明，不要直接编写技术方案。
-5. 本 Skill 不直接进入开发；PRD 完成后请求 `manager` 运行阶段出口 gate。
+5. 需求阶段并行必须使用 `parallel_execution.trigger: "user_requested"`；`runtime_managed` 只在当前 runtime 支持 subagent 时使用，否则输出 `user_orchestrated` worker prompt。
+6. 本 Skill 不直接进入开发；PRD 完成后请求 `manager` 运行阶段出口 gate。
 
 ## 完成检查
 
@@ -54,6 +57,7 @@ description: Use during REQUIREMENT_GATHERING to turn raw input into PRD slices 
 - [ ] Out of Scope 明确。
 - [ ] Open Questions 有 owner/status。
 - [ ] 已判断是否需要新增、拆分、合并或废弃 PRD slice。
+- [ ] 如果用户要求并行，worker output 已由主 Agent 合成，最终 PRD 不由 worker 直接写入。
 - [ ] `.docs/INDEX.md` 已链接新增产物。
 - [ ] 已运行 `make docs-overview` 刷新 `.docs/<stage>/overview.md`。
 - [ ] `make validate-pm` 准备通过。

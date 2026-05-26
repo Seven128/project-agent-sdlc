@@ -1,6 +1,37 @@
 current_phase: "SPRINTING"
 current_task_id: "DEV-001"
 next_task_sequence: 2
+# Optional. Omit this block for normal serial workflow. Only add it when the
+# user explicitly asks for parallel / multi-agent / multi-worktree execution.
+# parallel_execution:
+#   enabled: true
+#   trigger: "user_requested"
+#   mode: "user_orchestrated" # or "runtime_managed" when the current agent runtime can spawn subagents
+#   phase: "SPRINTING"
+#   coordinator: "main_agent"
+#   linked_task_id: "DEV-001"
+#   workers:
+#     - id: "worker-feature"
+#       writes_repo: true
+#       branch: "agent/feature"
+#       worktree: "../project-feature"
+#       owned_paths:
+#         - "src/feature/**"
+#         - "tests/feature/**"
+#       forbidden_paths:
+#         - "<harnessRoot>/state/**"
+#         - ".docs/INDEX.md"
+#       expected_output:
+#         - "implementation branch and focused gate evidence"
+#       required_gates:
+#         - "npm test -- tests/feature"
+#   integration:
+#     owner: "main_agent"
+#     merge_strategy: "main agent reviews worker output, merges or cherry-picks, then runs total gates"
+#     required_gates:
+#       - "make validate-current"
+#     fact_source_updates:
+#       - ".docs/04_implementation/"
 tasks:
   - id: "DEV-001"
     title: "实现示例任务"

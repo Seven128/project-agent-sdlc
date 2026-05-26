@@ -13,6 +13,8 @@ export interface ValidatorReport {
 }
 
 type Validator = (projectRoot: string) => Promise<ValidatorReport>;
+const PARALLEL_MODES = new Set(["runtime_managed", "user_orchestrated"]);
+const PARALLEL_PHASES = new Set(["REQUIREMENT_GATHERING", "SPRINTING", "TESTING"]);
 
 const validators: Record<string, Validator> = {
   "validate-harness": validateHarness,
@@ -95,6 +97,7 @@ async function validateDev(projectRoot: string): Promise<ValidatorReport> {
   const errors: string[] = [];
   const root = await harnessRoot(projectRoot);
   const tasksData = await readYamlObject(path.join(projectRoot, root, "state", "plan.yaml"));
+  validateParallelExecutionContract(tasksData, errors);
   const tasks = Array.isArray(tasksData.tasks) ? (tasksData.tasks as Array<Record<string, unknown>>) : [];
   const nextTaskSequence = tasksData.next_task_sequence;
   if (!Number.isInteger(nextTaskSequence) || Number(nextTaskSequence) <= 0) {
@@ -136,6 +139,94 @@ async function validateDev(projectRoot: string): Promise<ValidatorReport> {
     errors.push("next_task_sequence must be greater than task ids currently in plan.yaml");
   }
   return { info: [`validate-dev checked ${tasks.length} task(s)`], errors };
+}
+
+function validateParallelExecutionContract(plan: Record<string, unknown>, errors: string[]): void {
+  const contract = plan.parallel_execution;
+  if (contract === undefined || contract === null) return;
+  if (!isRecord(contract)) {
+    errors.push("parallel_execution must be a mapping");
+    return;
+  }
+
+  if (contract.enabled !== true) errors.push("parallel_execution.enabled must be true when present");
+  if (contract.trigger !== "user_requested") errors.push('parallel_execution.trigger must be "user_requested"');
+  if (!PARALLEL_MODES.has(String(contract.mode ?? ""))) {
+    errors.push("parallel_execution.mode must be runtime_managed or user_orchestrated");
+  }
+  if (!PARALLEL_PHASES.has(String(contract.phase ?? ""))) {
+    errors.push("parallel_execution.phase must be REQUIREMENT_GATHERING, SPRINTING, or TESTING");
+  }
+  if (contract.coordinator !== "main_agent") errors.push('parallel_execution.coordinator must be "main_agent"');
+
+  if (contract.phase === "SPRINTING") {
+    if (!contract.linked_task_id) errors.push("SPRINTING parallel_execution must define linked_task_id");
+    if (contract.linked_task_id !== plan.current_task_id) {
+      errors.push("SPRINTING parallel_execution.linked_task_id must match current_task_id");
+    }
+  }
+
+  const workers = contract.workers;
+  if (!Array.isArray(workers) || workers.length === 0) {
+    errors.push("parallel_execution.workers must be a non-empty list");
+  } else {
+    const seen = new Set<string>();
+    workers.forEach((worker, index) => {
+      const prefix = `parallel_execution.workers[${index}]`;
+      if (!isRecord(worker)) {
+        errors.push(`${prefix} must be a mapping`);
+        return;
+      }
+      const workerId = String(worker.id ?? "");
+      if (!workerId.trim()) {
+        errors.push(`${prefix}.id must be a non-empty string`);
+      } else if (seen.has(workerId)) {
+        errors.push(`parallel_execution worker id must be unique: ${workerId}`);
+      }
+      seen.add(workerId);
+      if (typeof worker.writes_repo !== "boolean") errors.push(`${prefix}.writes_repo must be a boolean`);
+      for (const field of ["owned_paths", "forbidden_paths", "expected_output", "required_gates"]) {
+        if (!Array.isArray(worker[field])) errors.push(`${prefix}.${field} must be a list`);
+      }
+      if (Array.isArray(worker.expected_output) && worker.expected_output.length === 0) {
+        errors.push(`${prefix}.expected_output must not be empty`);
+      }
+      if (Array.isArray(worker.required_gates) && worker.required_gates.length === 0) {
+        errors.push(`${prefix}.required_gates must not be empty`);
+      }
+      if (worker.writes_repo === true) {
+        if (typeof worker.branch !== "string" || !worker.branch.trim()) {
+          errors.push(`${prefix}.branch is required when writes_repo is true`);
+        }
+        if (typeof worker.worktree !== "string" || !worker.worktree.trim()) {
+          errors.push(`${prefix}.worktree is required when writes_repo is true`);
+        }
+        if (!Array.isArray(worker.owned_paths) || worker.owned_paths.length === 0) {
+          errors.push(`${prefix}.owned_paths must not be empty when writes_repo is true`);
+        }
+      }
+    });
+  }
+
+  const integration = contract.integration;
+  if (!isRecord(integration)) {
+    errors.push("parallel_execution.integration must be a mapping");
+    return;
+  }
+  if (integration.owner !== "main_agent") errors.push('parallel_execution.integration.owner must be "main_agent"');
+  if (typeof integration.merge_strategy !== "string" || !integration.merge_strategy.trim()) {
+    errors.push("parallel_execution.integration.merge_strategy must be a non-empty string");
+  }
+  if (!Array.isArray(integration.required_gates) || integration.required_gates.length === 0) {
+    errors.push("parallel_execution.integration.required_gates must be a non-empty list");
+  }
+  if (!Array.isArray(integration.fact_source_updates) || integration.fact_source_updates.length === 0) {
+    errors.push("parallel_execution.integration.fact_source_updates must be a non-empty list");
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function readYamlObject(filePath: string): Promise<Record<string, unknown>> {

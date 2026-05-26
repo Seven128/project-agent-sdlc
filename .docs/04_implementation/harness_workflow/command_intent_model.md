@@ -4,11 +4,11 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`
-- Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`)
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`
+- Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`, `PRD-NPM-028`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: none
-- Linked commit: `DEV-034` implementation commit, `DEV-036` implementation commit
+- Linked RFC: `RFC_015`
+- Linked commit: `DEV-034` implementation commit, `DEV-036` implementation commit, `DEV-050` implementation commit
 
 ## 2. 当前实现范围
 
@@ -18,6 +18,7 @@
   - `/prd` 产品方案入口和 `/design` 架构/技术方案入口。
   - `/dev` 单任务开发闭环和 `/devloop` 连续开发循环语义。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
+  - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
 - 修改（Changed）:
   - `AGENTS.md`、`README.md`、`PROJECT_SPEC.md` 的日常控制说明。
   - `pjsdlc_manager` 的路由规则。
@@ -59,6 +60,7 @@ User input
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
+- 并行语义（Parallel semantics）: 并行不是默认入口；只有用户显式提出并行时，Manager 才能创建 `parallel_execution.trigger: "user_requested"`，并根据 runtime 能力选择 `runtime_managed` 或 `user_orchestrated`。
 
 ## 6. 与技术方案的偏移
 
@@ -80,6 +82,7 @@ User input
 | 2026-05-25 | `DEV-034` | `DEV-034` implementation commit | 增加自然语言/指令别名双入口和 `/dev`、`/devloop` 开发入口。 |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
+| 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
 
 ## 9. 后续维护注意事项
 

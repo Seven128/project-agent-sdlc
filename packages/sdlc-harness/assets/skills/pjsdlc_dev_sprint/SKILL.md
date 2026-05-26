@@ -19,6 +19,8 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 实现时遵循小步闭环：先检查 `git status`，确认工作区没有未归属到当前 task 的脏变更；再定位相关代码和测试，做必要修改，运行 gate，修复失败，写入或更新相关 implementation doc 并刷新文档派生视图。此时先不要从 `plan.yaml` 移除当前 task，要在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；随后再移除 task，创建 task completion ledger commit，并 push 两个 commit。不要顺手重构、重排格式或处理无关问题；如果发现无关风险，只记录或报告。
 
+如果用户明确要求并行、多 agent 或多 worktree，开发阶段可以启用可选 `parallel_execution`。主 Agent 先创建合同，声明每个 worker 的 `branch`、`worktree`、`owned_paths`、`forbidden_paths`、`expected_output` 和 `required_gates`。worker 可以在各自 owned paths 内实现，但不得直接修改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc。主 Agent 负责 review、merge/cherry-pick、运行总 gate、更新事实源和完成两段提交。没有用户显式要求时，继续使用串行 `/dev` 或 `/devloop`。
+
 ## 输入
 
 - `<harnessRoot>/state/lifecycle.yaml`
@@ -51,6 +53,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - 如果一个任务实际变成多个独立实现边界，应停止扩大范围，拆分后续任务或回到任务规划。
 - `/dev` 是单任务执行入口：没有 open task 时，先根据 PRD、architecture、tech plan 和 `plan.draft.yaml` 创建一个最小 open task；已有 open task 时，直接执行该 task；完成后停止。
 - `/devloop` 是连续执行入口：每完成一个 task 并 push 两段提交后，重新读取 lifecycle、plan、PRD、architecture 和 tech plan，再决定是否创建/执行下一个最小 task；没有明确任务或出现 blocker 时停止并报告。
+- Parallel Execution 是当前 task 的可选协作方式，不替代 task completion protocol；`SPRINTING` 并行必须用 `parallel_execution.linked_task_id` 绑定当前 `current_task_id`。
 
 ## Plan Protocol
 
@@ -81,6 +84,9 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 12. 默认不追溯已完成 task 的执行流水；只有显式 forensic/audit/regression 任务才临时查询 git、PR 或 CI 记录。
 13. 两个 commit 后必须 `git push` 到当前 upstream branch；如果没有 remote/upstream、权限或凭证导致无法 push，停止推进并报告 blocker。
 14. `/devloop` 每轮都必须重新读取当前状态，不得在一次上下文中假设 plan、代码或远端状态未变化。
+15. 只有用户明确要求并行、多 agent 或多 worktree 时，才允许创建 `parallel_execution`；否则不得默认并行。
+16. `runtime_managed` 只在当前 runtime 支持 subagent 时使用；没有该能力时，输出 `user_orchestrated` worker prompt，由用户手动打开对话或 worktree 后粘贴。
+17. worker 不更新主事实源；主 Agent 才能更新 `plan.yaml`、`.docs/INDEX.md`、overview、implementation doc 和最终 gate 证据。
 
 ## 完成检查
 
@@ -89,6 +95,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 - [ ] open task 在 `plan.yaml` 中包含完整执行合同。
 - [ ] 当前任务仍然是单一清晰的执行单元。
 - [ ] implementation doc 已生成或更新，并反映相关模块的真实代码。
+- [ ] 如果启用了 `parallel_execution`，worker owned paths、forbidden paths、required gates 和主 Agent 集成结果已记录。
 - [ ] gate 结果已写入 implementation doc `Verification`，必要时当前 task `working_notes` 也记录了恢复现场所需的 gate evidence。
 - [ ] task implementation commit 已在 task 移除前创建。
 - [ ] done task 已在 implementation commit 之后从当前 `plan.yaml` 移除。

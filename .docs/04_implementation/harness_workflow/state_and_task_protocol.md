@@ -4,11 +4,11 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
-- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
-- Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`
-- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit
+- Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`, `RFC_015`
+- Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit; `DEV-050` implementation commit
 
 ## 2. 当前实现范围
 
@@ -18,6 +18,7 @@
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
+- `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial.
 
 ## 3. 真实代码结构
 
@@ -31,7 +32,7 @@
 | `.codex/skills/pjsdlc_manager/SKILL.md` | Workflow routing prompt | `/next`, `/dev`, `/devloop`, status routing |
 | `.codex/skills/pjsdlc_rfc_recalibrate/SKILL.md` | Change recalibration prompt | RFC impact checklist |
 | `tools/harness_utils.py` | Shared state helpers | `load_plan`, `validate_task_shape`, path expansion |
-| `tools/validate_plan.py` | Active plan validator | current/future task checks |
+| `tools/validate_plan.py` | Active plan validator | current/future task checks and optional parallel contract checks |
 | `tools/validate_allowed_paths.py` | Worktree scope validator | allowed path enforcement |
 | `tools/run_current_gate.py` | Phase gate runner | phase-to-gate dispatch |
 | `tools/status.py` | Human status report | lifecycle and task summary |
@@ -53,6 +54,17 @@ SPRINTING task starts
 -> both commits are pushed before the next task starts
 ```
 
+Optional parallel execution:
+
+```txt
+User explicitly asks for parallel / multi-agent / multi-worktree
+-> main agent creates parallel_execution.trigger = user_requested
+-> runtime_managed: main agent spawns subagents when runtime supports it
+-> user_orchestrated: main agent outputs worker prompts for manual Codex conversations/worktrees
+-> workers operate inside owned_paths and run focused gates
+-> main agent reviews, merges/cherry-picks, runs total gates and updates final fact sources
+```
+
 ## 5. 关键实现逻辑
 
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
@@ -61,6 +73,8 @@ SPRINTING task starts
 - `lifecycle.yaml` does not store phase history. Phase history is reconstructed from git, PRs, CI or release evidence only when explicitly needed.
 - `/dev` runs one task and stops. `/devloop` repeats `/dev` until no clear task remains or a blocker appears.
 - The workflow assumes a singleton project-level Harness collaboration boundary; concurrent agents must coordinate through git and active state rather than independent archive files.
+- Parallel execution is opt-in only. `trigger` must be `user_requested`, `mode` must be `runtime_managed` or `user_orchestrated`, and `SPRINTING` contracts must bind `linked_task_id` to `current_task_id`.
+- Workers do not own final fact sources. PRD, plan state, implementation docs, test results, generated overviews and total gate evidence are integrated by the main agent.
 
 ## 6. 与技术方案的偏移
 
@@ -73,6 +87,7 @@ SPRINTING task starts
 |---|---|---|
 | `python3 tools/validate_plan.py` | Current plan shape and task statuses | PASS in Harness gates |
 | `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
+| `tests/sdlc-harness/validators.test.mjs` | Package validator optional parallel contract acceptance/failure cases | PASS for DEV-050 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
 | `npm test` | Package migration and validator parity | PASS through release tasks |
 | `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
@@ -85,6 +100,7 @@ SPRINTING task starts
 | 2026-05-25 | `DEV-018`, `DEV-019` | Historical implementation commits | Added two-commit task completion and pre-compression implementation commit rule. |
 | 2026-05-25 | `DEV-024` - `DEV-028` | Historical implementation commits | Shortened plan/gate/lifecycle state and strengthened RFC impact handling. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated legacy state/task implementation docs into module facts. |
+| 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in `parallel_execution` contract for multi-agent/worktree coordination. |
 
 ## 9. 后续维护注意事项
 

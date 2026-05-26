@@ -28,6 +28,7 @@ npx sdlc-harness init --adopt
 | Validators | `npx sdlc-harness validate-*`, `make validate-current`, `make validate-harness` | Checks phase deliverables, active plan shape, prompt language contract and generated overview freshness. |
 | Lifecycle workflow | `<harnessRoot>/state/lifecycle.yaml`, `<harnessRoot>/state/plan.yaml`, `.docs/**` | Tracks REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING and RFC_RECALIBRATION facts. |
 | Natural-language control | `AGENTS.md` plus workflow skills | Lets users say things like "continue", "start development", "run tests" or "requirements changed"; agents map these to workflow actions. |
+| Optional parallel execution contract | `plan.yaml#parallel_execution` | Enabled only when users explicitly request multi-agent, parallel or multi-worktree execution; supports runtime-managed subagents or user-orchestrated worker prompts. |
 | Workflow skills | `<harnessRoot>/skills/pjsdlc_*/SKILL.md` | Provides role prompts for product, architecture, development, implementation docs, review, testing, release and RFC recalibration. |
 | Project-local skill overrides | `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` + `npx sdlc-harness sync` | Appends project-specific role instructions to generated Skill output without editing managed Skill files. |
 | Local policy overrides | `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml` | Preserves project-specific policy additions separately from package defaults. |
@@ -57,6 +58,15 @@ npx sdlc-harness sync
 ```
 
 The sync output is the package base Skill plus one appended `Local Override` block. Unknown skill names block sync so misspellings do not silently fail.
+
+## Optional Parallel Execution
+
+The default workflow is serial. Agents should only create `parallel_execution` in `plan.yaml` when the user explicitly asks for multi-agent, parallel or multi-worktree execution.
+
+- `runtime_managed`: use only when the current agent runtime can spawn subagents. The main agent assigns workers, waits for results, reviews, merges or cherry-picks, and runs the total gate.
+- `user_orchestrated`: use when the runtime cannot spawn subagents. The main agent generates copyable worker prompts, and the user manually opens Codex conversations or worktrees and pastes them.
+
+The CLI does not promise to automatically launch Codex agents. Workers do not need to communicate with each other; the main agent owns final fact-source updates such as PRD, plan, implementation docs, test results and generated overviews.
 
 ## Common Commands
 

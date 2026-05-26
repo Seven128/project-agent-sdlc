@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import json
 import re
 import subprocess
 import sys
@@ -22,6 +23,8 @@ TASK_STATUSES = {
 }
 
 OPEN_TASK_STATUSES = {"pending", "in_progress", "blocked", "pending_revision"}
+PARALLEL_MODES = {"runtime_managed", "user_orchestrated"}
+PARALLEL_PHASES = {"REQUIREMENT_GATHERING", "SPRINTING", "TESTING"}
 
 
 class HarnessError(RuntimeError):
@@ -341,6 +344,53 @@ def validate_task_shape(task: dict[str, Any], index: int) -> None:
     else:
         for field in ["docs", "allowed_paths", "required_gates", "acceptance_criteria", "working_notes", "gate_result"]:
             require(field not in task, f"{task['id']} closed task must not retain {field}")
+
+
+def validate_parallel_execution_contract(data: dict[str, Any]) -> None:
+    contract = data.get("parallel_execution")
+    if contract is None:
+        return
+
+    require(isinstance(contract, dict), "parallel_execution must be a mapping")
+    require(contract.get("enabled") is True, "parallel_execution.enabled must be true when present")
+    require(contract.get("trigger") == "user_requested", 'parallel_execution.trigger must be "user_requested"')
+    require(contract.get("mode") in PARALLEL_MODES, "parallel_execution.mode must be runtime_managed or user_orchestrated")
+    require(contract.get("phase") in PARALLEL_PHASES, "parallel_execution.phase must be REQUIREMENT_GATHERING, SPRINTING, or TESTING")
+    require(contract.get("coordinator") == "main_agent", 'parallel_execution.coordinator must be "main_agent"')
+
+    if contract.get("phase") == "SPRINTING":
+        require(contract.get("linked_task_id"), "SPRINTING parallel_execution must define linked_task_id")
+        require(
+            contract.get("linked_task_id") == data.get("current_task_id"),
+            "SPRINTING parallel_execution.linked_task_id must match current_task_id",
+        )
+
+    workers = contract.get("workers")
+    require(isinstance(workers, list) and workers, "parallel_execution.workers must be a non-empty list")
+    seen_ids: set[str] = set()
+    for index, worker in enumerate(workers):
+        prefix = f"parallel_execution.workers[{index}]"
+        require(isinstance(worker, dict), f"{prefix} must be a mapping")
+        worker_id = worker.get("id")
+        require(isinstance(worker_id, str) and worker_id.strip(), f"{prefix}.id must be a non-empty string")
+        require(worker_id not in seen_ids, f"parallel_execution worker id must be unique: {worker_id}")
+        seen_ids.add(worker_id)
+        require(isinstance(worker.get("writes_repo"), bool), f"{prefix}.writes_repo must be a boolean")
+        for field in ["owned_paths", "forbidden_paths", "expected_output", "required_gates"]:
+            require(isinstance(worker.get(field), list), f"{prefix}.{field} must be a list")
+        require(worker.get("expected_output"), f"{prefix}.expected_output must not be empty")
+        require(worker.get("required_gates"), f"{prefix}.required_gates must not be empty")
+        if worker.get("writes_repo") is True:
+            require(isinstance(worker.get("branch"), str) and worker["branch"].strip(), f"{prefix}.branch is required when writes_repo is true")
+            require(isinstance(worker.get("worktree"), str) and worker["worktree"].strip(), f"{prefix}.worktree is required when writes_repo is true")
+            require(worker.get("owned_paths"), f"{prefix}.owned_paths must not be empty when writes_repo is true")
+
+    integration = contract.get("integration")
+    require(isinstance(integration, dict), "parallel_execution.integration must be a mapping")
+    require(integration.get("owner") == "main_agent", 'parallel_execution.integration.owner must be "main_agent"')
+    require(isinstance(integration.get("merge_strategy"), str) and integration["merge_strategy"].strip(), "parallel_execution.integration.merge_strategy must be a non-empty string")
+    require(isinstance(integration.get("required_gates"), list) and integration["required_gates"], "parallel_execution.integration.required_gates must be a non-empty list")
+    require(isinstance(integration.get("fact_source_updates"), list) and integration["fact_source_updates"], "parallel_execution.integration.fact_source_updates must be a non-empty list")
 
 
 def expand_harness_root(patterns: list[str], root: str = ".codex") -> list[str]:
