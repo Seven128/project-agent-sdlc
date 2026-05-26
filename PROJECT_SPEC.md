@@ -759,6 +759,8 @@ Authoring overlay 的默认规则：
 - `sdlc-harness sync` 和 `upgrade` 默认不把 authoring overlay materialize 到用户项目。
 - 如果某条 authoring rule 对所有用户项目都有价值，必须通过 PRD / tech plan / RFC 明确晋升为通用 Skill、policy、template、PROJECT_SPEC 或 README 规则，再进入包内 canonical assets。
 - 如果某条 authoring Skill 只服务于 Harness 包源码维护，例如 package source drift、migration safety、managed block compatibility，就应留在 authoring overlay，不污染通用阶段 Skill。
+- 自举维护 Harness 自身时的阶段化测试流程、全量 consumer lab 验收提示词、测试脚本使用提示词和缺陷归因 SOP 属于 authoring overlay。它们只能沉淀在 `.codex/skills/authoring/**` 或 authoring-only 文档中，不写入通用 `.codex/skills/pjsdlc_*` workflow Skill；通用阶段 Skill 面向所有用户项目，不能携带本仓库维护 npm 包自身时才需要的全量验收流程。
+- 每次全量新开 consumer 仓库测试结束后，都要产出问题总结。若发现 npm 包能力、README 声明、Makefile gate、validator、sync/upgrade 或 workflow 文档与 installed-consumer 行为不一致，应先形成 RFC 或 RFC 候选，再拆分 DEV task 修复，而不是把问题停留在临时日志里。
 
 这个分层解决的是自举开发中的边界问题：本仓库需要比普通用户项目更多的工作流开发约束，但这些约束不能因为本仓库是 package source 就自动成为所有用户项目的默认配置。
 
@@ -772,6 +774,7 @@ Authoring overlay 的默认规则：
 | package assets | `packages/sdlc-harness/assets/**` 只保存应分发给用户项目的 canonical source。 |
 | validators | 通用 validators 校验用户项目；authoring-specific validators 应单独声明，避免成为用户项目 gate。 |
 | Skill 设计 | 通用阶段 Skill 放 `.codex/skills/**`；维护 Harness 包自身的专用 Skill 放 `.codex/skills/authoring/**`。 |
+| test scripts | 维护 Harness 包自身的全量 consumer lab、release smoke、source package regression 等脚本属于 authoring 影响面；修改 CLI、sync、upgrade、validator、managed assets、Makefile、README 或 workflow behavior 时必须检查这些脚本和 `tests/sdlc-harness/**` 是否需要同步更新。 |
 | RFC / 晋升流程 | authoring rule 晋升为通用能力时，必须记录影响范围、兼容性、sync/upgrade 行为和用户项目迁移方式。 |
 
 判断一条规则放在哪里，可以使用这个准则：

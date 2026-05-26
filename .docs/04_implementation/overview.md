@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 98d414471fa5e972 -->
+<!-- source-hash: 87209d75f9b999f5 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `98d414471fa5e972`
+Source hash: `87209d75f9b999f5`
 
 ## Source Slices
 
@@ -139,16 +139,18 @@ Source: [harness_package/consumer_lab_validation.md](harness_package/consumer_la
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: installed-consumer workflow validation
-- Updated by task: `DEV-051`
+- Updated by task: `DEV-051`, `DEV-052`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked test evidence: `.docs/07_test/harness_consumer_lab.md`
 - External lab repository: `/Users/momoooo/Documents/sdlc-harness-consumer-lab`
-- Lab evidence commit: `684dd4c`
-- Lab evidence tag: `consumer-lab-0.1.7-evidence`
+- Latest scripted lab evidence commit: `9e004d1`
+- Latest scripted lab evidence tag: `consumer-lab-full-0.1.7-20260526T204200Z`
 
 ## 2. What Was Built
 
 `DEV-051` created a long-lived local consumer lab repository and installed the current source tarball `agent-project-sdlc@0.1.7` through npm. The lab keeps its own git history and a tiny toy JavaScript module so Harness behavior can be exercised against a real consumer workspace instead of only in source-repo unit fixtures.
+
+`DEV-052` persisted that manual flow as `tools/consumer_lab_full_test.mjs`, an authoring-only full-lab runner. The script packages the current source workspace, installs the tarball into a consumer repository, exercises the documented package capability surface, writes JSON/Markdown reports, and classifies outcomes as `PASS`, `BLOCKED`, or `FAIL`.
 
 The lab repository contains:
 
@@ -157,16 +159,31 @@ The lab repository contains:
 - Product, architecture, technical plan, implementation, review, test, release, and RFC documents for a toy text summary helper.
 - `src/stringStats.js` and `tests/stringStats.test.mjs`.
 
+The script interface is:
+
+```sh
+node tools/consumer_lab_full_test.mjs --report-only --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab
+node tools/consumer_lab_full_test.mjs --report-only --commit-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab
+```
+
+Key options:
+
+- `--lab-dir <path>` selects the long-lived consumer lab.
+- `--reset-lab` explicitly deletes and recreates the lab.
+- `--report-only` writes reports and exits 0 even when the result is `BLOCKED`.
+- `--commit-lab` explicitly creates a local lab evidence commit and tag.
+- `--json-report <path>` and `--markdown-report <path>` override report destinations.
+
 ## 3. Verified Behavior
 
-- Source workspace package regression passed with `npm test`.
-- Package source drift check passed with `node packages/sdlc-harness/dist/cli.js package check-source`.
-- Lab installation from local tarball passed.
-- `init`, `doctor`, `sync`, and `upgrade` succeeded in the installed lab.
-- Managed assets were present in the expected `.codex/**`, `.docs/**`, `AGENTS.md`, `Makefile`, and `.github/workflows/harness.yml` paths.
-- Skill override append and unknown override blocking behaved as designed.
-- `npx sdlc-harness validate-pm`, `validate-design`, `validate-dev`, `validate-current`, and `validate-harness` succeeded where applicable.
-- `validate-dev` rejected retained done tasks, retained open tasks, and non-`user_requested` parallel triggers.
+- Package smoke: `npm pack` and tarball install into the lab.
+- Init/adopt/root selection: `init --harness-folder .codex`, `init --adopt`, and `package.json#sdlcHarness.harnessFolderName`.
+- Lifecycle commands: `doctor`, `sync`, `upgrade`, and supported CLI validators.
+- Managed assets: `AGENTS.md`, `Makefile`, `.codex/state/**`, `.codex/skills/**`, `.codex/pjsdlc_managed/**`, and `.github/workflows/harness.yml`.
+- Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
+- Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
+- Protocol checks: retained done task rejection, retained open task rejection, valid explicit `parallel_execution`, and invalid automatic parallel trigger rejection.
+- Static checks: natural-language routing text, GitHub workflow asset, and release automation script presence.
 
 ## 4. Implementation Findings
 
@@ -179,27 +196,28 @@ This means the package currently has two validation surfaces:
 
 Later-stage gates and overview generation remain blocked from package-only consumer workflows until either the tools are distributed or CLI coverage replaces those Makefile dependencies.
 
+The scripted report also produces defect candidates and a recommended RFC title whenever `BLOCKED` items remain. This makes the expected follow-up explicit: every full-lab run that finds package behavior gaps should feed RFC recalibration before bug-fix DEV tasks.
+
 ## 5. Verification
 
 | Command | Result |
 |---|---|
 | `npm test` | PASS |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| Lab `npx sdlc-harness init --harness-folder .codex` | PASS |
-| Lab `npx sdlc-harness doctor` | PASS |
-| Lab `npx sdlc-harness sync` | PASS |
-| Lab `npx sdlc-harness upgrade` | PASS |
-| Lab `npm test` | PASS |
-| Lab `npx sdlc-harness validate-*` supported subset | PASS |
-| Lab `make validate-*`, `make status`, `make docs-overview` | BLOCKED by missing `tools/**` |
+| `node tools/consumer_lab_full_test.mjs --report-only --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab --markdown-report .docs/07_test/harness_consumer_lab.md` | PASS for script execution; report decision BLOCKED due known package gaps |
+| `node tools/consumer_lab_full_test.mjs --report-only --commit-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab --markdown-report .docs/07_test/harness_consumer_lab.md` | PASS; lab commit/tag recorded |
+| Lab supported package capability subset | PASS: 25 checks |
+| Lab full documented workflow | BLOCKED: 11 known package gaps, 0 unexpected failures |
 
 ## 6. Follow-up
 
-Create a follow-up DEV task for the package boundary fix. The implementation should choose one coherent consumer contract:
+Create an RFC for the package boundary fix before DEV implementation. The implementation should choose one coherent consumer contract:
 
 - distribute the required `tools/**` into consumer repositories,
 - rewrite generated Make targets to call the packaged CLI,
 - or expand CLI commands and make the Makefile a thin `npx sdlc-harness` wrapper.
+
+Any change to package public behavior, README capabilities, validators, Makefile assets, workflow Skills, sync/upgrade, migrations, release automation, or docs overview generation must also check whether `tools/consumer_lab_full_test.mjs` and `tests/sdlc-harness/**` need updates.
 
 ---
 
