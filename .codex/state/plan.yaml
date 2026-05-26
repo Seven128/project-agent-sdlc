@@ -1,31 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-049"
+current_task_id: ""
 next_task_sequence: 50
-tasks:
-  - id: "DEV-049"
-    title: "Record README capability coverage authoring rule"
-    status: "in_progress"
-    summary: "Add an authoring-only rule that package README coverage must stay aligned with all public package capabilities."
-    docs:
-      implementation:
-        - ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
-    allowed_paths:
-      - ".codex/state/plan.yaml"
-      - ".codex/skills/authoring/harness_package_design/SKILL.md"
-      - ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
-      - ".docs/04_implementation/overview.md"
-    required_gates:
-      - "make validate-harness"
-      - "make validate-current"
-      - "git diff --check"
-    acceptance_criteria:
-      - "Authoring Skill requires README/package README coverage for all public package capabilities."
-      - "Implementation doc records the authoring rule."
-      - "Harness validation and current Sprint gate pass."
-    implementation_doc: ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
-    working_notes:
-      - "Change is authoring-only; it must not enter package assets."
-      - "README.md already contains the public capability list from DEV-048; PROJECT_SPEC.md does not need a product-level update for this execution rule."
-      - "python3 tools/validate_allowed_paths.py: PASS."
-      - "make validate-harness: PASS."
-      - "git diff --check: PASS."
+tasks: []
