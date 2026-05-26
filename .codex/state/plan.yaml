@@ -1,35 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-051"
+current_task_id: ""
 next_task_sequence: 52
-tasks:
-  - id: "DEV-051"
-    title: "Run local consumer lab validation for AI SDLC Harness"
-    status: "in_progress"
-    summary: "Create a long-lived local consumer repository, install the current source package, exercise the documented Harness workflow, and record validation evidence."
-    docs:
-      technical_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-      test_plan:
-        - ".docs/07_test/TEST_PLAN.md"
-    allowed_paths:
-      - ".codex/state/plan.yaml"
-      - ".docs/07_test/**"
-      - ".docs/04_implementation/**"
-      - ".docs/**/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "npm test"
-      - "node packages/sdlc-harness/dist/cli.js package check-source"
-      - "make validate-harness"
-    acceptance_criteria:
-      - "A local long-lived consumer lab exists at /Users/momoooo/Documents/sdlc-harness-consumer-lab."
-      - "The lab installs the current source package tarball and runs init, doctor, sync, and upgrade from the packaged CLI."
-      - "The lab records package smoke, managed asset, lifecycle rehearsal, and protocol check results without manually copying source-repo tools into the lab."
-      - "Consumer lab evidence is recorded in .docs/07_test/harness_consumer_lab.md with PASS/BLOCKED results and defect candidates."
-    implementation_doc: ".docs/04_implementation/harness_package/consumer_lab_validation.md"
-    working_notes:
-      - "User selected local long-lived repo, current source package, and full lifecycle coverage."
-      - "Source gates passed: npm test; node packages/sdlc-harness/dist/cli.js package check-source; make validate-harness."
-      - "Scoped checks passed: python3 tools/validate_allowed_paths.py; python3 tools/validate_task_docs.py."
-      - "Consumer lab evidence commit: /Users/momoooo/Documents/sdlc-harness-consumer-lab@684dd4c, tag consumer-lab-0.1.7-evidence."
-      - "Consumer lab blocked full documented workflow because packaged Make targets and transition/docs-overview commands depend on missing tools/**."
+tasks: []
