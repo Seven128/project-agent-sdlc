@@ -80,6 +80,30 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 
 只在 `AGENTS.md` 里声明 `<harnessRoot>/skills` 不等于 native skill 注册；它保证的是 Harness soft index。Native skill 是否首轮水合，取决于具体 Agent 客户端是否扫描这个目录，或是否使用了额外 adapter。
 
+### 自定义阶段角色提示词
+
+不要直接修改 `<harnessRoot>/skills/**/SKILL.md`，这些文件由 package 管理，`sync` 或 `upgrade` 会重新生成。
+
+如果某个项目需要补充阶段角色要求，把追加提示词写到：
+
+```txt
+<harnessRoot>/overrides/skills/<skill_name>.md
+```
+
+例如：
+
+```txt
+.codex/overrides/skills/pjsdlc_dev_sprint.md
+```
+
+然后运行：
+
+```sh
+npx sdlc-harness sync
+```
+
+`sync` 会把通用 Skill 和本地 override 合成到最终 `SKILL.md`。v1 只支持追加覆盖；`<skill_name>` 必须匹配已有 workflow Skill，例如 `pjsdlc_pm_prd`、`pjsdlc_architect_design` 或 `pjsdlc_dev_sprint`。
+
 常用快捷入口：
 
 | 指令 | 简单自然语言 | 更完整的意图 |

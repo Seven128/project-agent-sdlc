@@ -56,16 +56,8 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     await syncMakefileInclude(destination, root, report);
     return;
   }
-  if (managedFile.path === path.join(root, "skills")) {
-    await syncTree(packageAssetPath("skills"), destination, report);
-    return;
-  }
-  if (
-    managedFile.path === path.join(root, "skills") ||
-    managedFile.path === ".harness/agents/skills" ||
-    (managedFile.path === ".agents/skills" && root !== ".agents")
-  ) {
-    await syncTree(packageAssetPath("skills"), path.join(projectRoot, root, "skills"), report);
+  if (isSkillsManagedPath(managedFile.path, root)) {
+    await syncSkillsTree(packageAssetPath("skills"), path.join(projectRoot, root, "skills"), projectRoot, root, report);
     return;
   }
   if (managedFile.path === path.join(root, "pjsdlc_managed", "templates")) {
@@ -89,6 +81,14 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     return;
   }
   report.skipped.push(managedFile.path);
+}
+
+function isSkillsManagedPath(managedPath: string, root: string): boolean {
+  return (
+    managedPath === path.join(root, "skills") ||
+    managedPath === ".harness/agents/skills" ||
+    (managedPath === ".agents/skills" && root !== ".agents")
+  );
 }
 
 async function syncAgentsBlock(destination: string, root: string, report: SyncReport): Promise<void> {
@@ -247,6 +247,111 @@ async function syncTree(source: string, destination: string, report: SyncReport)
   }
   const changed = await copyTree(source, destination, { skipGitkeep: true });
   report.changed.push(...changed);
+}
+
+async function syncSkillsTree(
+  source: string,
+  destination: string,
+  projectRoot: string,
+  root: string,
+  report: SyncReport
+): Promise<void> {
+  if (!(await pathExists(source))) {
+    report.skipped.push(path.basename(destination));
+    return;
+  }
+  const files = await listFiles(source);
+  const realFiles = files.filter((file) => !file.endsWith(".gitkeep"));
+  if (realFiles.length === 0) {
+    report.skipped.push(path.basename(destination));
+    return;
+  }
+
+  const knownSkills = new Set<string>();
+  for (const file of realFiles) {
+    const skillName = skillNameForSourceFile(source, file);
+    if (skillName) {
+      knownSkills.add(skillName);
+    }
+  }
+
+  const blockedBefore = report.blocked.length;
+  const overrides = await readSkillOverrides(projectRoot, root, knownSkills, report);
+  if (report.blocked.length > blockedBefore) {
+    return;
+  }
+
+  for (const file of realFiles) {
+    const relative = path.relative(source, file);
+    const destinationFile = path.join(destination, relative);
+    const skillName = skillNameForSourceFile(source, file);
+    const baseContent = await readText(file);
+    const content = skillName ? renderSkillWithOverride(baseContent, overrides.get(skillName)) : baseContent;
+    if (await writeTextIfChanged(destinationFile, content)) {
+      report.changed.push(destinationFile);
+    } else {
+      report.skipped.push(destinationFile);
+    }
+  }
+}
+
+async function readSkillOverrides(
+  projectRoot: string,
+  root: string,
+  knownSkills: Set<string>,
+  report: SyncReport
+): Promise<Map<string, { relativePath: string; content: string }>> {
+  const overrides = new Map<string, { relativePath: string; content: string }>();
+  const overrideRoot = path.join(projectRoot, root, "overrides", "skills");
+  if (!(await pathExists(overrideRoot))) {
+    return overrides;
+  }
+
+  for (const file of await listFiles(overrideRoot)) {
+    if (path.basename(file) === ".gitkeep") {
+      continue;
+    }
+    const relativePath = path.relative(overrideRoot, file).split(path.sep).join("/");
+    const match = relativePath.match(/^([^/]+)\.md$/);
+    if (!match || !knownSkills.has(match[1])) {
+      report.blocked.push(`unknown skill override: ${path.join(root, "overrides", "skills", relativePath)}`);
+      continue;
+    }
+    const content = await readText(file);
+    if (content.trim()) {
+      overrides.set(match[1], {
+        relativePath: path.join(root, "overrides", "skills", relativePath),
+        content
+      });
+    }
+  }
+  return overrides;
+}
+
+function skillNameForSourceFile(sourceRoot: string, file: string): string | undefined {
+  const relative = path.relative(sourceRoot, file).split(path.sep).join("/");
+  const match = relative.match(/^([^/]+)\/SKILL\.md$/);
+  return match?.[1];
+}
+
+function renderSkillWithOverride(
+  baseContent: string,
+  override?: { relativePath: string; content: string }
+): string {
+  if (!override) {
+    return baseContent;
+  }
+  const header = [
+    "",
+    "",
+    "## Local Override",
+    "",
+    `Source: \`${override.relativePath.split(path.sep).join("/")}\``,
+    "",
+    "The following project-local instructions are appended by `sdlc-harness sync`. Keep package-managed Skill files unchanged; edit the override source instead.",
+    ""
+  ].join("\n");
+  return `${baseContent.trimEnd()}${header}${override.content.trim()}\n`;
 }
 
 async function syncFile(

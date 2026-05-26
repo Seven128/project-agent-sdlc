@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,6 +17,7 @@ const cliConfiguredCamelRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-c
 const cliExistingConfigRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cli-existing-"));
 const makefileMergeRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-makefile-merge-"));
 const brokenMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-broken-marker-"));
+const unknownSkillOverrideRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-unknown-skill-override-"));
 const cliPath = fileURLToPath(new URL("../../packages/sdlc-harness/dist/cli.js", import.meta.url));
 
 try {
@@ -52,6 +53,24 @@ try {
   await assert.rejects(stat(path.join(defaultRoot, ".agent/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/policies/phase_contracts.yaml")));
 
+  await mkdir(path.join(defaultRoot, ".agent/overrides/skills"), { recursive: true });
+  await writeFile(
+    path.join(defaultRoot, ".agent/overrides/skills/pjsdlc_dev_sprint.md"),
+    "项目开发阶段必须优先检查本地业务约束。\n",
+    "utf8"
+  );
+  const overrideSyncReport = await runSync(defaultRoot);
+  assert.equal(overrideSyncReport.blocked.length, 0);
+  const overriddenDevSkill = await readFile(path.join(defaultRoot, ".agent/skills/pjsdlc_dev_sprint/SKILL.md"), "utf8");
+  assert.match(overriddenDevSkill, /# Dev Sprint Skill/);
+  assert.match(overriddenDevSkill, /## Local Override/);
+  assert.match(overriddenDevSkill, /\.agent\/overrides\/skills\/pjsdlc_dev_sprint\.md/);
+  assert.match(overriddenDevSkill, /项目开发阶段必须优先检查本地业务约束。/);
+  const secondOverrideSyncReport = await runSync(defaultRoot);
+  assert.equal(secondOverrideSyncReport.blocked.length, 0);
+  const idempotentDevSkill = await readFile(path.join(defaultRoot, ".agent/skills/pjsdlc_dev_sprint/SKILL.md"), "utf8");
+  assert.equal(idempotentDevSkill.match(/## Local Override/g).length, 1);
+
   const defaultDoctor = await runDoctor(defaultRoot);
   assert.deepEqual(defaultDoctor.errors, []);
   assert.ok(defaultDoctor.info.some((line) => line.includes("harness root: .agent")));
@@ -64,6 +83,12 @@ try {
   );
   const configuredInitReport = await runInit(configuredRoot, { adopt: true, force: false });
   assert.ok(configuredInitReport.some((line) => line.includes("created .harness/config.yaml")));
+  await mkdir(path.join(configuredRoot, ".harness/overrides/skills"), { recursive: true });
+  await writeFile(
+    path.join(configuredRoot, ".harness/overrides/skills/pjsdlc_manager.md"),
+    "项目管理阶段必须用本项目的交接口径报告状态。\n",
+    "utf8"
+  );
 
   const configuredSyncReport = await runSync(configuredRoot);
   assert.equal(configuredSyncReport.blocked.length, 0);
@@ -77,6 +102,9 @@ try {
   await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/policies/phase_contracts.yaml")));
+  const configuredManagerSkill = await readFile(path.join(configuredRoot, ".harness/skills/pjsdlc_manager/SKILL.md"), "utf8");
+  assert.match(configuredManagerSkill, /\.harness\/overrides\/skills\/pjsdlc_manager\.md/);
+  assert.match(configuredManagerSkill, /项目管理阶段必须用本项目的交接口径报告状态。/);
 
   const configuredDoctor = await runDoctor(configuredRoot);
   assert.deepEqual(configuredDoctor.errors, []);
@@ -145,6 +173,16 @@ try {
   assert.ok(brokenMarkerReport.blocked.some((line) => line.includes("AGENTS.md")));
   assert.ok(brokenMarkerReport.blocked.some((line) => line.includes("Makefile")));
 
+  await runInit(unknownSkillOverrideRoot, { adopt: true, force: false });
+  await mkdir(path.join(unknownSkillOverrideRoot, ".agent/overrides/skills"), { recursive: true });
+  await writeFile(path.join(unknownSkillOverrideRoot, ".agent/overrides/skills/pjsdlc_unknown.md"), "unknown\n", "utf8");
+  const unknownSkillOverrideReport = await runSync(unknownSkillOverrideRoot);
+  assert.ok(
+    unknownSkillOverrideReport.blocked.some((line) =>
+      line.includes("unknown skill override: .agent/overrides/skills/pjsdlc_unknown.md")
+    )
+  );
+
   const legacyMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-legacy-marker-"));
   try {
     await writeFile(
@@ -180,4 +218,5 @@ try {
   await rm(cliExistingConfigRoot, { recursive: true, force: true });
   await rm(makefileMergeRoot, { recursive: true, force: true });
   await rm(brokenMarkerRoot, { recursive: true, force: true });
+  await rm(unknownSkillOverrideRoot, { recursive: true, force: true });
 }

@@ -75,6 +75,8 @@ package.json or sdlc-harness.config.json
 
 `<harnessRoot>/skills/pjsdlc_*/SKILL.md` 是 Harness hard file index，保持一层 `skills/<skill_name>/SKILL.md`，并通过 `pjsdlc_` 前缀标识包内 workflow Skill。这个固定路径用于 `active_skill` / `phase_contracts.yaml` 的软路由；它不保证具体 Agent 客户端会把该目录当作 native skill hard index 首轮水合。除 skills 外的 package-managed workflow config 统一放在 `<harnessRoot>/pjsdlc_managed/**`，不再维护 `<harnessRoot>/managed/**`、`<harnessRoot>/policies/**` 或 `<harnessRoot>/templates/**` mirror。
 
+项目本地阶段角色提示词通过 `<harnessRoot>/overrides/skills/<skill_name>.md` 追加到最终 `SKILL.md`。`sdlc-harness sync` 先读取包内 base Skill，再校验 override 文件名必须匹配已有 `pjsdlc_*` workflow Skill，最后在 `<harnessRoot>/skills/<skill_name>/SKILL.md` 末尾写入一个 `Local Override` 区块。直接修改 `<harnessRoot>/skills/**/SKILL.md` 不受支持，因为该目录是 managed output，会在后续 sync/upgrade 中被重新物化。
+
 `sdlc-harness init` 的交互顺序是先选择目标 Agent，再确定 `<harnessRoot>`：
 
 | 选择 | 写入的 `harnessFolderName` |
@@ -128,7 +130,7 @@ Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启
 |---|---|---|---|---|
 | `sdlc-harness init` | CLI command | `--force?`、`--harness-folder?`、cwd；无显式目录时交互选择 Agent | 创建新项目 Harness 骨架并执行 `sync` | 非空冲突、权限不足、未知 Agent 选择 |
 | `sdlc-harness init --adopt` | CLI command | `--harness-folder?`、cwd；无显式目录时交互选择 Agent | 最小接入已有项目，执行安全诊断 | 发现高风险覆盖时停止 |
-| `sdlc-harness sync` | CLI command | `<harnessRoot>/config.yaml`、包内 assets | materialized files、sync report | managed marker 缺失、local override 冲突、never overwrite 命中 |
+| `sdlc-harness sync` | CLI command | `<harnessRoot>/config.yaml`、包内 assets、`<harnessRoot>/overrides/skills/*.md` | materialized files、sync report；Skill 输出包含本地追加 override | managed marker 缺失、未知 Skill override、local override 冲突、never overwrite 命中 |
 | `sdlc-harness upgrade` | CLI command | 当前 package version、schema version | migration report、自动 `sync`、doctor report | migration 失败、checksum 冲突 |
 | `sdlc-harness doctor` | CLI command | cwd | 配置完整性、漂移、override、gate 建议 | 配置不可读 |
 | `sdlc-harness validate-*` | CLI command | cwd | 对应 gate 结果 | gate failure |
@@ -170,7 +172,25 @@ never_overwrite:
   - "tests/**"
 ```
 
-### 5.2 managed metadata
+### 5.2 Skill local overrides
+
+`<harnessRoot>/overrides/skills/<skill_name>.md` 是项目本地补充提示词事实源。v1 只支持追加覆盖，不支持整段替换 managed Skill，也不支持结构化 patch。
+
+```txt
+<harnessRoot>/overrides/skills/pjsdlc_dev_sprint.md
+-> sdlc-harness sync
+-> <harnessRoot>/skills/pjsdlc_dev_sprint/SKILL.md
+   = package base Skill + Local Override block
+```
+
+约束：
+
+- `<skill_name>` 必须匹配包内已有 workflow Skill 目录，例如 `pjsdlc_pm_prd` 或 `pjsdlc_dev_sprint`。
+- 空 override 文件不生成追加区块。
+- 未知或嵌套 override 路径会阻塞 sync，避免用户以为本地提示词已经生效。
+- override 生效时机是运行 `sync` 之后；`upgrade` 自动执行 `sync`，因此升级后会重新合成本地 override。
+
+### 5.3 managed metadata
 
 ```txt
 <!-- pjsdlc:sdlc-harness-managed
@@ -182,7 +202,7 @@ checksum: sha256:...
 -->
 ```
 
-### 5.3 Source sync manifest
+### 5.4 Source sync manifest
 
 ```yaml
 source_mappings:
@@ -208,7 +228,7 @@ source_mappings:
     mode: "copy-file"
 ```
 
-### 5.4 Plan state 与 open task contract
+### 5.5 Plan state 与 open task contract
 
 `<harnessRoot>/state/plan.yaml` 是当前 sprint/阶段的短期执行计划事实源。它只保留当前和未来相关任务：`pending`、`in_progress`、`blocked`、`pending_revision`。done/cancelled task 不长期留在 `plan.yaml`，避免历史现场挤占 Agent 对当前任务的注意力。
 
@@ -241,13 +261,13 @@ task 完成后，先在当前 task 仍位于 `plan.yaml` 时创建 task implemen
 
 默认不追溯 done task 的执行流水。历史 task 查询主要面向“做了什么、为什么做、影响哪个模块、验证了什么”，默认读取模块级 implementation doc、RFC、PRD、tech plan 和代码。task id 和 commit 只作为 provenance；`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。
 
-### 5.5 Implementation doc model
+### 5.6 Implementation doc model
 
 `.docs/04_implementation/` 是最终实现产物的事实层，默认与 architecture / tech plan 中的模块、子系统或核心数据流边界对应。`plan.yaml.tasks[].implementation_doc` 指向本 task 会更新或新增的长期实现事实文档；多个 task 可以指向同一份 implementation doc。
 
 task id、commit、RFC 和 gate 结果记录在 implementation doc 的 provenance / Change Log / Verification 中。task 不再默认生成独立 `dev_*.md` 文档；历史 `dev_*.md` task log 已在 DEV-043 合并进模块级 implementation docs，并从活跃实现文档图中移除。
 
-### 5.6 Gate evidence
+### 5.7 Gate evidence
 
 RFC_014 后，Harness 不再维护 `<harnessRoot>/state/gate_results.log`。gate evidence 属于当前 task 验证过程：执行中可写入 open task 的 `working_notes`，完成后写入 implementation doc 的 `Verification`。CI 系统、release 系统或外部审计系统可以作为长期 gate 记录。
 
@@ -255,13 +275,13 @@ RFC_014 后，Harness 不再维护 `<harnessRoot>/state/gate_results.log`。gate
 
 历史 task 查询同样不依赖 open task execution contract。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；需要理解过去产物时，读取模块级 implementation doc、RFC、PRD、tech plan 和代码。
 
-### 5.7 Active state 不保存执行历史
+### 5.8 Active state 不保存执行历史
 
 `<harnessRoot>/state/lifecycle.yaml` 只保存当前路由状态，不保存 `history`。阶段流转历史、task 执行历史和 gate 历史都不属于 active state；它们是 cold archive，只在显式追溯、audit 或 regression forensic 场景下通过 git、PR、CI、release 系统和阶段产物读取。
 
 `transition.py` 只更新 `current_phase`、`active_role`、`active_skill`、`suspended_phase` 和 `allowed_next_phases`。`--reason` 保留为命令兼容参数，但不写入 state。package migration 会删除既有 lifecycle `history`，避免老项目升级后继续携带阶段流水。
 
-### 5.8 npm release automation
+### 5.9 npm release automation
 
 `tools/release_npm.mjs` 负责本仓库的 npm 发布自动化。默认模式只准备发布并生成 release doc；真正发布必须显式传入 `--publish --yes`。
 
@@ -314,6 +334,7 @@ git commit、tag 和 push 仍由 SPRINTING task protocol 负责，避免 release
 | 根 `Makefile` 与业务项目冲突 | P0 | 只插入 include，不整体覆盖 |
 | `AGENTS.md` 与项目自定义规则冲突 | P0 | 使用 `pjsdlc:sdlc-harness:*` managed block，marker 外内容不改；旧 `sdlc-harness:*` marker 仅作为 migration 输入 |
 | 生成的 Skill 不被 Agent 识别 | P0 | init 默认按目标 Agent 写入 `<harnessRoot>`，Skill 保持 `<harnessRoot>/skills/pjsdlc_<skill_name>/SKILL.md` hard file index；`AGENTS.md` 提供 Harness soft index，native skill 首轮水合由具体 Agent adapter 负责 |
+| 用户直接修改 managed Skill 导致升级丢失 | P1 | 项目定制写入 `<harnessRoot>/overrides/skills/<skill_name>.md`，由 `sync` 追加合成到最终 `SKILL.md` |
 | policy/template 事实源重复 | P1 | 工具只读取 `<harnessRoot>/pjsdlc_managed/policies/**` 和 `<harnessRoot>/pjsdlc_managed/templates/**`，删除 legacy mirror |
 | npm 包 validators 运行环境不稳定 | P1 | validators 运行时使用 TypeScript/Node，不依赖 Python 运行时 |
 | `plan.yaml` 过大导致 Agent 上下文膨胀 | P0 | plan 只保留当前和未来任务，done/cancelled task 完成后移出 plan |

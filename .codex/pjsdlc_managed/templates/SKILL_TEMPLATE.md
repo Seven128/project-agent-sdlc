@@ -15,6 +15,8 @@ description: Use when ...
 
 角色提示词应保持通用，不绑定具体业务项目；如果必须依赖项目事实，应要求读取 `.docs/`、`<harnessRoot>/state/**` 或当前 task contract，而不是写入固定业务假设。
 
+项目如果需要补充阶段角色要求，应在 `<harnessRoot>/overrides/skills/<skill_name>.md` 写追加提示词，并运行 `sdlc-harness sync` 合成最终 `SKILL.md`；不要直接修改 package-managed Skill 文件。
+
 ## 输入
 
 - `<harnessRoot>/state/lifecycle.yaml`

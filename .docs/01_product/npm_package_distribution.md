@@ -21,6 +21,7 @@
 | 新项目接入 Harness | 项目负责人 | 在空项目或新业务项目中运行 `npx sdlc-harness init` | 生成最小 `AGENTS.md`、`<harnessRoot>/config.yaml`、`<harnessRoot>/state/**`、`.docs/**` 和可被 Agent 读取的 Skill |
 | 已有项目中途接入 | 项目负责人 | 在已有 README、src、tests 的仓库中运行 `npx sdlc-harness init --adopt` | 不覆盖业务代码，生成最小 Harness 入口，并通过 `doctor` 报告推荐阶段和缺失产物 |
 | 同步 Agent 可读文件 | Harness 用户 | 运行 `npx sdlc-harness sync` | 将包内 canonical Skill、模板、策略、Makefile 接入片段 materialize 到 `<harnessRoot>/**`，同时保留 local overrides |
+| 自定义阶段角色提示词 | Harness 用户 | 通用阶段 Skill 不能满足项目角色要求 | 在 `<harnessRoot>/overrides/skills/<skill_name>.md` 写追加提示词，运行 `sync` 后合成到最终 `SKILL.md` |
 | 升级已接入项目 | Harness 用户 | 更新 npm 包后运行 `npx sdlc-harness upgrade` | 自动执行 migration 和 sync，不要求用户额外运行 `sync`，并输出升级报告 |
 | 检查接入状态 | Harness 用户 | 运行 `npx sdlc-harness doctor` | 报告配置缺失、managed files 漂移、state/docs 风险和下一步修复建议 |
 
@@ -37,7 +38,7 @@
 | PRD-NPM-007 | `AGENTS.md` 使用 managed block 合并，不整体覆盖项目自有 Agent 规则 | P0 | preferred marker 使用 `pjsdlc:sdlc-harness:begin/end`；旧 `sdlc-harness:begin/end` 仅作为 legacy marker 兼容迁移 |
 | PRD-NPM-008 | `Makefile` 不整体覆盖，优先插入 include 并生成 `<harnessRoot>/pjsdlc_managed/make/sdlc-harness.mk` | P0 | 保护项目自己的 `lint`、`test`、`build` 命令 |
 | PRD-NPM-009 | `.docs/**`、`<harnessRoot>/state/**`、`src/**`、`tests/**` 永远不被 sync/upgrade 覆盖 | P0 | 这些是项目事实源或业务代码 |
-| PRD-NPM-010 | 支持 local overrides 合成最终 Skill、模板或策略 | P1 | 推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml`；不要直接修改 package-managed 文件 |
+| PRD-NPM-010 | 支持 local overrides 合成最终 Skill、模板或策略 | P1 | v1 支持 `<harnessRoot>/overrides/skills/<skill_name>.md` 追加到 managed Skill；推荐 `<harnessRoot>/overrides/**` 和 `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml`；不要直接修改 package-managed 文件 |
 | PRD-NPM-011 | 提供 `doctor` 命令检查配置完整性、文件漂移和升级风险 | P1 | 可以作为 `upgrade` 后的自动检查 |
 | PRD-NPM-012 | 提供 migration 机制处理 schema version 变化 | P1 | 迁移 `<harnessRoot>/config.yaml` 和受管理文件布局 |
 | PRD-NPM-013 | 当本仓库中的 Harness 工作流内容变化时，自动更新 npm 包 canonical source 并校验包内产物一致性 | P0 | 包括 `AGENTS.md` managed block、Skill、templates、policies、Makefile 接入片段、workflow 和 validator 入口 |
@@ -61,6 +62,8 @@
 - [ ] 新仓库执行 `npm install -D agent-project-sdlc && npx sdlc-harness init` 后，可以得到可运行的最小 Harness 骨架。
 - [ ] 已有仓库执行 `npx sdlc-harness init --adopt` 后，不修改 `src/**`、`tests/**`、已有业务文档和已有项目配置，除非用户显式确认。
 - [ ] 执行 `npx sdlc-harness sync` 后，`<harnessRoot>/skills/**/SKILL.md` 作为 canonical source 存在于工作区，Agent 可按本地固定目录读取。
+- [ ] 在 `<harnessRoot>/overrides/skills/pjsdlc_dev_sprint.md` 写入本地补充并执行 `npx sdlc-harness sync` 后，最终 `<harnessRoot>/skills/pjsdlc_dev_sprint/SKILL.md` 包含通用 Skill 和一次本地 override 区块。
+- [ ] `<harnessRoot>/overrides/skills/*.md` 只能指向已有 workflow Skill；未知 skill 名称会阻塞 sync 并输出明确错误。
 - [ ] 执行 `npx sdlc-harness upgrade` 后，自动完成 `sync`，不要求用户再手动运行 `npx sdlc-harness sync`。
 - [ ] `AGENTS.md` 中项目自定义内容在 sync/upgrade 后保持不变，仅 `pjsdlc:sdlc-harness` managed block 被更新；旧 `sdlc-harness` block 可被迁移为新 marker。
 - [ ] 项目根 `Makefile` 中业务自定义 `lint`、`test-all`、`build` 等目标在 sync/upgrade 后保持不变。
@@ -110,7 +113,7 @@
 |---|---|---|
 | 首个 npm 包是否直接发布到 npm registry，还是先以 workspace/local package 验证？ | 用户 | open |
 | CLI 使用 TypeScript/Node 实现，还是保留 Python validators 并由 Node CLI 调用？ | 技术方案阶段 | resolved：使用 TypeScript/Node runtime |
-| managed Skill 与 local override 的合并格式是简单追加，还是支持结构化 patch？ | 技术方案阶段 | open |
+| managed Skill 与 local override 的合并格式是简单追加，还是支持结构化 patch？ | 技术方案阶段 | resolved：v1 采用 sync-time 追加覆盖，未来再评估结构化 patch |
 | `AGENTS.md` managed block 是否引用 `.agent/instructions/AGENTS_CORE.md`，还是直接内联核心规则？ | 技术方案阶段 | open |
 | 是否需要兼容 Cursor、Cline、Claude Code 等工具的专有规则目录同步？ | 用户 | open |
 
