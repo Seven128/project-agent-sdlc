@@ -235,6 +235,8 @@ source_mappings:
 
 `<harnessRoot>/state/plan.yaml` 是当前 sprint/阶段的短期执行计划事实源。它只保留当前和未来相关任务：`pending`、`in_progress`、`blocked`、`pending_revision`。`current_phase` 只保存在 `<harnessRoot>/state/lifecycle.yaml`，`plan.yaml` 不重复保存当前阶段。done/cancelled task 不长期留在 `plan.yaml`，避免历史现场挤占 Agent 对当前任务的注意力。
 
+`plan.yaml` 的抽象边界是“长程目标拆出的可恢复小任务”，不是“Agent 做过的所有动作日志”。通用 Harness 默认只解释 workflow 相关 task，也就是会影响阶段产物、阶段 gate、实现事实或 RFC recalibration 的任务；临时调研、辅助命令、本地团队事项或用户自定义的更宽任务分类，不自动进入通用阶段协议。项目若需要把这些事项也纳入 plan，可通过本地配置、override 或后续扩展声明自己的 task taxonomy 和处理规则。
+
 所有阶段都使用同一个 task contract。产品方案生成、既有文档切片、事实源合成、架构设计、技术方案生成、开发实现、Review、测试、发布准备和 RFC recalibration 都应拆成足够小的 `TASK-*` open task，并通过 `phase` 字段标明所属阶段。历史 `PRD-*`、`DES-*`、`DEV-*` 前缀只作为兼容旧记录和旧提交的 provenance。`next_task_sequence` 负责在删除历史 task 后继续分配后续 `TASK-*` id。典型 open task 结构：
 
 ```yaml

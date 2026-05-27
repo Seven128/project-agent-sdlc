@@ -259,7 +259,11 @@ make validate-doc-overviews
 
 ## 七、任务状态与开发循环
 ### 7.1 plan.yaml
-`.codex/state/plan.yaml` 是阶段任务的机器可读短期执行记忆，只保留当前和未来任务。`current_phase` 只保存在 `.codex/state/lifecycle.yaml`，`plan.yaml` 不重复保存当前阶段。open task 直接保存当前任务需要的执行合同；任务完成后从 `plan.yaml` 移除，避免过往任务变成无效上下文。所有阶段的 Agent 主任务都使用同一个 task contract：产品方案生成、既有文档切片、事实源合成、架构设计、技术方案生成、开发实现、Review、测试、发布准备和 RFC recalibration 都应拆成足够小的 `TASK-*` open task，并通过 `phase` 字段标明所属阶段。历史 `PRD-*`、`DES-*`、`DEV-*` 前缀只作为兼容旧记录和旧提交的 provenance。`next_task_sequence` 负责在历史 task 被移除后继续分配后续 `TASK-*` id，避免 id 冲突。典型 open task 字段：
+`.codex/state/plan.yaml` 是阶段任务的机器可读短期执行记忆，只保留当前和未来任务。`current_phase` 只保存在 `.codex/state/lifecycle.yaml`，`plan.yaml` 不重复保存当前阶段。open task 直接保存当前任务需要的执行合同；任务完成后从 `plan.yaml` 移除，避免过往任务变成无效上下文。
+
+从设计理念上说，`plan.yaml` 是长程目标被拆分后的短期任务容器，而不是只服务开发阶段的 sprint board。凡是与项目目的相关、需要拆成可恢复小步执行的工作，都可以被表达为 plan task。Harness 默认只解释 workflow 关心的任务：产品方案生成、既有文档切片、事实源合成、架构设计、技术方案生成、开发实现、Review、测试、发布准备和 RFC recalibration。这些 Agent 主任务都使用同一个 task contract，并通过 `phase` 字段标明所属阶段。其它团队或用户如果采用更宽的“任务”定义，例如运营事项、外部审批、人工研究、数据标注或业务交付 checklist，应在自己的本地配置中声明额外分类、字段或处理规则；通用 Harness 不把这些辅助事项默认纳入阶段 gate。
+
+历史 `PRD-*`、`DES-*`、`DEV-*` 前缀只作为兼容旧记录和旧提交的 provenance。`next_task_sequence` 负责在历史 task 被移除后继续分配后续 `TASK-*` id，避免 id 冲突。典型 open task 字段：
 
 ```yaml
 current_task_id: "TASK-003"
@@ -379,6 +383,8 @@ task completion ledger commit 发生在 implementation commit 之后，只负责
 
 ### 7.3 Plan Protocol
 `plan.yaml` 是 open task 的执行合同和现场快照，用来约束当前修改范围、记录必要 gate，并降低上下文压缩、中断、新开对话或多人交接时的信息损失。它不是 PRD、不是技术方案，也不是完成后的 implementation doc。
+
+这里的 `task` 有两层含义：产品理念上，它可以表示任何被拆分出来、服务项目目标的可执行小任务；workflow 协议上，Harness 只对阶段产物和阶段 gate 需要处理的任务作默认约束。这个边界让 `plan.yaml` 保持开放，同时避免通用工作流把所有 Agent 辅助动作、临时查询和本地团队事务都强制写进阶段协议。项目需要更广义的任务跟踪时，应通过本地配置或 overlay 扩展，而不是修改通用 `TASK-*` workflow contract 的核心语义。
 
 层级关系：
 

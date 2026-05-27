@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 3753a4448779b829 -->
+<!-- source-hash: b1a1a6b1195c231a -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `3753a4448779b829`
+Source hash: `b1a1a6b1195c231a`
 
 ## Source Slices
 
@@ -910,6 +910,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 
 - `.codex/state/lifecycle.yaml` stores the single source for current phase routing state.
 - `.codex/state/plan.yaml` stores the current and future short-lived task contract across all workflow phases, without duplicating `current_phase`.
+- `plan.yaml` is conceptually a recoverable task-splitting container for long-running project goals; the default Harness workflow only interprets phase-related tasks, while broader project-specific task definitions belong in local configuration or overlays.
 - `.codex/state/plan.draft.yaml` stores draft tasks and `next_task_sequence`, without `current_phase` or `current_task_id`.
 - `TASK-*` is the new task id model; `phase` identifies `REQUIREMENT_GATHERING`, `ARCHITECTING`, `SPRINTING`, `REVIEWING`, `TESTING`, `RELEASING` or `RFC_RECALIBRATION`; historical `PRD-*`, `DES-*` and `DEV-*` ids remain validator-compatible provenance.
 - `next_task_sequence` preserves future `TASK-*` id allocation after done tasks are removed.
@@ -995,6 +996,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 ## 5. 关键实现逻辑
 
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
+- `plan.yaml` is not an exhaustive log of everything an Agent does. The generic workflow contract covers tasks that affect phase deliverables, gates, implementation facts or RFC recalibration; local teams may extend task taxonomy for broader project management needs without changing the core `TASK-*` workflow semantics.
 - `current_phase` belongs only to `lifecycle.yaml`; `plan.yaml`, `plan.draft.yaml` and `parallel_execution` must not duplicate it.
 - `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
 - `plan.draft.yaml` is not active execution state and must not contain `current_task_id`.
@@ -1040,6 +1042,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-27 | `TASK-057` | Working tree | Unified all new workflow tasks under `TASK-*` with `phase`, expanded plan control to review/test/release/RFC, and kept legacy task prefixes compatible. |
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from plan files and parallel execution contracts. |
 | 2026-05-28 | `TASK-061` | Working tree | Added `phase_contracts.yaml#returns` and `transition.py` support so ARCHITECTING can return to REQUIREMENT_GATHERING for PRD edits before SPRINTING, while SPRINTING cannot directly return to PRD. |
+| 2026-05-28 | Spec clarification | Working tree | Clarified that `plan.yaml` is a general recoverable task-splitting container, while default Harness behavior only governs workflow phase tasks; broader task definitions are local configuration concerns. |
 
 ## 9. 后续维护注意事项
 

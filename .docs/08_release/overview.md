@@ -1,25 +1,26 @@
 # .docs/08_release overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 836f7370a1359d2c -->
+<!-- source-hash: 40d60e28c9ddabee -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `836f7370a1359d2c`
+Source hash: `40d60e28c9ddabee`
 
 ## Source Slices
 
 1. [v0.1.0_npm_release.md](v0.1.0_npm_release.md)
 2. [v0.1.10_npm_release.md](v0.1.10_npm_release.md)
-3. [v0.1.1_npm_release.md](v0.1.1_npm_release.md)
-4. [v0.1.2_npm_release.md](v0.1.2_npm_release.md)
-5. [v0.1.3_npm_release.md](v0.1.3_npm_release.md)
-6. [v0.1.4_npm_release.md](v0.1.4_npm_release.md)
-7. [v0.1.5_npm_release.md](v0.1.5_npm_release.md)
-8. [v0.1.6_npm_release.md](v0.1.6_npm_release.md)
-9. [v0.1.7_npm_release.md](v0.1.7_npm_release.md)
-10. [v0.1.8_npm_release.md](v0.1.8_npm_release.md)
-11. [v0.1.9_npm_release.md](v0.1.9_npm_release.md)
+3. [v0.1.11_npm_release.md](v0.1.11_npm_release.md)
+4. [v0.1.1_npm_release.md](v0.1.1_npm_release.md)
+5. [v0.1.2_npm_release.md](v0.1.2_npm_release.md)
+6. [v0.1.3_npm_release.md](v0.1.3_npm_release.md)
+7. [v0.1.4_npm_release.md](v0.1.4_npm_release.md)
+8. [v0.1.5_npm_release.md](v0.1.5_npm_release.md)
+9. [v0.1.6_npm_release.md](v0.1.6_npm_release.md)
+10. [v0.1.7_npm_release.md](v0.1.7_npm_release.md)
+11. [v0.1.8_npm_release.md](v0.1.8_npm_release.md)
+12. [v0.1.9_npm_release.md](v0.1.9_npm_release.md)
 
 ---
 
@@ -159,6 +160,78 @@ Source: [v0.1.10_npm_release.md](v0.1.10_npm_release.md)
 - [x] Verify registry package with `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`.
 - [x] Run installed-consumer smoke from npm registry.
 - [x] Create and push git tag `v0.1.10` after publish success.
+
+## 6. Rollback Plan（回滚方案）
+
+- 触发条件（Trigger）:
+  - `npm publish` 失败且 package 未创建。
+  - 发布成功后发现 CLI 无法安装、初始化、doctor 失败，或包内 assets 与仓库事实源漂移。
+- 步骤（Steps）:
+  1. 如果 publish 未成功，不创建 release tag，保留当前 release doc 的 blocker 状态，修复后重新执行 release gate。
+  2. 如果 publish 已成功但 smoke 失败，立即停止推广该版本。
+  3. 由于 npm package version 不可复用，修复后 bump 到下一个 patch version，重新执行 test/release gate 后发布。
+  4. 如需让消费者回退，指导安装上一稳定版本或从 git commit/tag 固定依赖。
+- 数据注意事项（Data considerations）:
+  - 本包发布的是 CLI 和 Harness assets，不迁移 npm registry 外的数据。
+  - 用户仓库 sync/upgrade 遵循 managed file 增量策略；回滚时不得覆盖用户本地自定义配置。
+- 负责人（Owner）: `release_manager`
+
+---
+
+## v0.1.11_npm_release.md
+
+Source: [v0.1.11_npm_release.md](v0.1.11_npm_release.md)
+
+# Release Note And Rollback Plan（发布说明与回滚方案）
+
+## 1. Release Summary（发布摘要）
+
+- Version: `agent-project-sdlc@0.1.11`
+- Milestone: `MVP`
+- Date: `2026-05-27`
+- Owner: `release_manager`
+- Registry: `https://registry.npmjs.org/`
+- Status: `RELEASED`
+
+## 2. Included Changes（包含变更）
+
+- 发布当前 workspace 中已同步的 AI SDLC Harness package assets 和 CLI build。
+- 本版本由 `tools/release_npm.mjs` 执行发布闭环，覆盖 version bump、test、source drift check、pack dry-run、publish、registry latest verification 和 installed-consumer smoke。
+
+## 3. Build Artifacts（构建产物）
+
+| 产物（Artifact） | 位置（Location） | Checksum/Version |
+|---|---|---|
+| npm package | `agent-project-sdlc` | `0.1.11` |
+| dry-run tarball | `npm pack --dry-run --json --workspace agent-project-sdlc` | `59d3019d26e62bb154952e8a0f8e2e2965c9eab8` |
+| dry-run integrity | same | `sha512-Dyl90XlSoNaQpNarcBAVPCy5MC5gh+oQ2rBsOsNjO0VY83z3f3Ic/kHIEbO+pxviKa0LR9cV17OHFa+RkJ4nXQ==` |
+| package content | dry-run output | 83 files, 58.8 kB package size, 208.4 kB unpacked size |
+| registry package | `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | `version 0.1.11`, `latest 0.1.11`, `integrity sha512-Dyl90XlSoNaQpNarcBAVPCy5MC5gh+oQ2rBsOsNjO0VY83z3f3Ic/kHIEbO+pxviKa0LR9cV17OHFa+RkJ4nXQ==` |
+
+## 4. Smoke Test Result（冒烟测试结果）
+
+- Decision: `PASS`
+- Evidence:
+  - `npm test`: PASS。
+  - `node packages/sdlc-harness/dist/cli.js package check-source`: PASS。
+  - `make validate-harness`: PASS。
+  - `npm pack --dry-run --json --workspace agent-project-sdlc`: PASS。
+  - `git diff --check`: PASS。
+  - `npm publish --workspace agent-project-sdlc`: PASS，registry 返回 agent-project-sdlc@0.1.11。
+  - `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`: PASS，version 和 latest 均为 0.1.11。
+  - Registry installed-consumer smoke: PASS，从 npm registry 安装 agent-project-sdlc@0.1.11 后，init 和 doctor 均通过，doctor 输出 `core package: agent-project-sdlc@0.1.11`。
+
+## 5. Deployment Checklist（部署检查清单）
+
+- [x] Confirm registry latest before publishing.
+- [x] Bump package version to `0.1.11`.
+- [x] Package source drift check passed.
+- [x] npm tests passed.
+- [x] Pack dry run passed.
+- [x] Publish package with `npm publish --workspace agent-project-sdlc`.
+- [x] Verify registry package with `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`.
+- [x] Run installed-consumer smoke from npm registry.
+- [x] Create and push git tag `v0.1.11` after publish success.
 
 ## 6. Rollback Plan（回滚方案）
 
