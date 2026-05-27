@@ -1,4 +1,33 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 54
-tasks: []
+current_task_id: "DEV-054"
+next_task_sequence: 55
+tasks:
+  - id: "DEV-054"
+    title: "Fix init lifecycle default phase"
+    status: "in_progress"
+    summary: "Make package init scaffold new projects into SPRINTING instead of REQUIREMENT_GATHERING."
+    docs:
+      technical:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      implementation:
+        - ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - "packages/sdlc-harness/src/lib/init.ts"
+      - "tests/sdlc-harness/sync-init-doctor.test.mjs"
+      - "tools/consumer_lab_full_test.mjs"
+      - ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+    required_gates:
+      - "npm test"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "New package init lifecycle.yaml starts at current_phase SPRINTING with developer routing."
+      - "Package regression test covers the generated lifecycle default."
+      - "Implementation documentation records the init lifecycle default and verification."
+    working_notes:
+      - "Created from user report that newly initialized consumer repos incorrectly start at REQUIREMENT_GATHERING."
+      - "npm test: PASS on 2026-05-27."
+      - "make validate-harness: PASS on 2026-05-27."
+      - "package check-source: PASS on 2026-05-27."

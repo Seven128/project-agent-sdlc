@@ -266,6 +266,21 @@ async function verifyManagedAssets(labDir, add) {
     status: missing.length === 0 ? "PASS" : "FAIL",
     details: missing.length === 0 ? `${required.length} managed files checked` : `missing: ${missing.join(", ")}`
   });
+
+  if (missing.length === 0) {
+    const lifecycle = await readFile(path.join(labDir, ".codex/state/lifecycle.yaml"), "utf8");
+    const lifecycleReady =
+      lifecycle.includes('current_phase: "SPRINTING"') &&
+      lifecycle.includes('active_role: "developer"') &&
+      lifecycle.includes('active_skill: "pjsdlc_dev_sprint"') &&
+      lifecycle.includes('  - "REVIEWING"');
+    add({
+      area: "Managed assets",
+      evidence: "init lifecycle starts in developer sprint",
+      status: lifecycleReady ? "PASS" : "FAIL",
+      details: lifecycleReady ? "lifecycle.yaml routes to pjsdlc_dev_sprint" : trimOutput(lifecycle)
+    });
+  }
 }
 
 async function verifyAdoptAndConfiguredRoots(labDir, tarballPath, add) {

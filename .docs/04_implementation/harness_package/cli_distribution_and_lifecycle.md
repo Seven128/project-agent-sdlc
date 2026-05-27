@@ -4,7 +4,7 @@
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: CLI package distribution, init/sync/upgrade/doctor lifecycle
-- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`
+- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`, `DEV-054`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_001`, `RFC_002`, `RFC_003`, `RFC_006`, `RFC_007`, `RFC_008`, `RFC_009`
@@ -14,6 +14,7 @@
 
 - `agent-project-sdlc` npm package exposes the `sdlc-harness` CLI binary.
 - `init` / `init --adopt` create or adopt a project Harness without overwriting user-owned project code.
+- Fresh `init` state routes new projects to `SPRINTING` with `active_role: "developer"` and `active_skill: "pjsdlc_dev_sprint"`.
 - `sync` materializes managed Harness assets from package canonical assets into the selected `<harnessRoot>`.
 - `upgrade` runs schema migrations and then syncs managed assets.
 - `doctor` reports Harness config, managed file drift, override state and suggested gates.
@@ -64,6 +65,7 @@ Existing project runs sdlc-harness upgrade
 ## 5. 关键实现逻辑
 
 - Agent selection happens before folder selection. `Codex` is the default and writes `.codex`; `Other` asks for a custom folder and defaults to `.agent`.
+- New project lifecycle scaffolding starts at `SPRINTING` and allows `REVIEWING` next, matching the generated `plan.yaml` / `plan.draft.yaml` sprint task protocol.
 - Explicit CLI flags and existing JSON config have higher priority than interactive defaults.
 - Managed files use package metadata blocks and merge strategies instead of blind overwrites.
 - Package name and CLI name are intentionally separate: npm installs `agent-project-sdlc`, users run `sdlc-harness`.
@@ -79,12 +81,14 @@ Existing project runs sdlc-harness upgrade
 
 | 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
 |---|---|---|
-| `npm test` | TypeScript build and package CLI regression tests | PASS in release and development tasks through `DEV-042` |
-| `tests/sdlc-harness/sync-init-doctor.test.mjs` | init, adopt, sync and doctor behavior | PASS in package regression suite |
+| `npm test` | TypeScript build and package CLI regression tests | PASS for `DEV-054` on 2026-05-27 |
+| `tests/sdlc-harness/sync-init-doctor.test.mjs` | init, adopt, sync and doctor behavior | PASS for `DEV-054`; asserts generated lifecycle starts at `SPRINTING` |
+| `tools/consumer_lab_full_test.mjs` | full consumer lab lifecycle smoke coverage | Checks generated `.codex/state/lifecycle.yaml` routes to `pjsdlc_dev_sprint` |
 | `tests/sdlc-harness/upgrade.test.mjs` | migrations and automatic sync | PASS in package regression suite |
 | `tests/sdlc-harness/harness-root.test.mjs` | root resolution and config precedence | PASS in package regression suite |
 | `tests/sdlc-harness/validators.test.mjs` | package validators | PASS in package regression suite |
-| `make validate-harness` | authoring workspace Harness scaffold and docs | PASS for DEV-043 |
+| `make validate-harness` | authoring workspace Harness scaffold and docs | PASS for `DEV-054` on 2026-05-27 |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | package source mapping drift check | PASS for `DEV-054` on 2026-05-27 |
 
 ## 8. 变更记录（Change Log）
 
@@ -94,6 +98,7 @@ Existing project runs sdlc-harness upgrade
 | 2026-05-25 | `DEV-040` | `40552f0` | Added target-agent selection during init. |
 | 2026-05-25 | `DEV-041` | `c34ad14` | Migrated the authoring workspace Harness root to `.codex`. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Migrated legacy task-grain implementation docs into module-level facts. |
+| 2026-05-27 | `DEV-054` | Pending implementation commit | Changed fresh init lifecycle defaults from `REQUIREMENT_GATHERING` routing to `SPRINTING` developer routing. |
 
 ## 9. 后续维护注意事项
 
