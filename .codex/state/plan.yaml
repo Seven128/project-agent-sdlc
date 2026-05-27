@@ -1,4 +1,37 @@
 current_phase: "SPRINTING"
-current_task_id: ""
-next_task_sequence: 58
-tasks: []
+current_task_id: "TASK-058"
+next_task_sequence: 59
+tasks:
+  - id: "TASK-058"
+    phase: "SPRINTING"
+    title: "同步升级配置中的包版本"
+    status: "in_progress"
+    summary: "修复 package upgrade 后 <harnessRoot>/config.yaml 的 core.version 仍保留旧包版本的问题。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+    allowed_paths:
+      - ".codex/config.yaml"
+      - ".codex/state/plan.yaml"
+      - ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+      - "packages/sdlc-harness/src/lib/config.ts"
+      - "packages/sdlc-harness/src/lib/migrations.ts"
+      - "tests/sdlc-harness/upgrade.test.mjs"
+    required_gates:
+      - "npm test --workspace agent-project-sdlc"
+      - "make docs-overview"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "sdlc-harness upgrade rewrites config core.version to the currently installed package version."
+      - "Existing schema and managed path migrations remain intact."
+      - "Authoring workspace .codex/config.yaml core.version matches packages/sdlc-harness/package.json version."
+    implementation_doc: ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+    working_notes:
+      - "2026-05-28: current package version is 0.1.10 while .codex/config.yaml still records 0.1.0."
+      - "2026-05-28: npm test --workspace agent-project-sdlc PASS after upgrade regression coverage."
+      - "2026-05-28: make docs-overview PASS; make validate-harness PASS."
+      - "2026-05-28: make validate-plan PASS."

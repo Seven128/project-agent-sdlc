@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readdir, rename, rm } from "node:fs/promises";
-import { readConfig } from "./config.js";
+import { defaultConfig, readConfig } from "./config.js";
 import { ensureDir, listFiles, pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import type { ManagedFile } from "./types.js";
@@ -55,6 +55,9 @@ async function migrateConfig(projectRoot: string, root: string, report: Migratio
     return;
   }
   const config = await readConfig(projectRoot);
+  const currentCore = defaultConfig(root).core;
+  config.core.package = currentCore.package;
+  config.core.version = currentCore.version;
   config.core.schema_version = CURRENT_SCHEMA_VERSION;
   config.managed_files = migrateManagedFiles(config.managed_files, root);
   config.local_overrides = config.local_overrides.map((item) => migrateLocalOverride(item, root));

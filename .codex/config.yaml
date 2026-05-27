@@ -1,6 +1,6 @@
 core:
   package: "agent-project-sdlc"
-  version: "0.1.0"
+  version: "0.1.10"
   schema_version: "1"
 
 managed_files:

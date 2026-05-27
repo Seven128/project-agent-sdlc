@@ -4,7 +4,7 @@
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: CLI package distribution, init/sync/upgrade/doctor lifecycle
-- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`, `DEV-054`
+- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`, `DEV-054`, `TASK-058`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_001`, `RFC_002`, `RFC_003`, `RFC_006`, `RFC_007`, `RFC_008`, `RFC_009`
@@ -16,7 +16,7 @@
 - `init` / `init --adopt` create or adopt a project Harness without overwriting user-owned project code.
 - Fresh `init` state routes new projects to `SPRINTING` with `active_role: "developer"` and `active_skill: "pjsdlc_dev_sprint"`.
 - `sync` materializes managed Harness assets from package canonical assets into the selected `<harnessRoot>`.
-- `upgrade` runs schema migrations and then syncs managed assets.
+- `upgrade` refreshes `<harnessRoot>/config.yaml` core package metadata, runs schema migrations and then syncs managed assets.
 - `doctor` reports Harness config, managed file drift, override state and suggested gates.
 - `validate-*` commands expose package-side validation entry points for Harness state and phase artifacts.
 - 当前 authoring workspace 使用 `.codex` as `harnessFolderName`; `Other` agent selection still falls back to `.agent`.
@@ -70,18 +70,20 @@ Existing project runs sdlc-harness upgrade
 - Managed files use package metadata blocks and merge strategies instead of blind overwrites.
 - Package name and CLI name are intentionally separate: npm installs `agent-project-sdlc`, users run `sdlc-harness`.
 - Migrations preserve compatibility with earlier `.harness`, `.agents` and `.agent` layouts while converging new installs on the configured `<harnessRoot>`.
+- `migrateConfig` rewrites `core.package` and `core.version` from the installed package metadata so package upgrades do not leave stale config versions.
 - Validation commands mirror the Python Harness gates closely enough for package consumers to run health checks without depending on this authoring workspace.
 
 ## 6. 与技术方案的偏移
 
 - Earlier plans used `.harness`, `.agents` and then `.agent` as defaults; current behavior is target-agent first, with Codex mapping to `.codex`.
 - Historical task docs were written under `.docs/04_implementation/npm_package/dev_*.md`; DEV-043 migrated those facts into this module-level doc and sibling module docs.
+- TASK-058 is a bug fix to existing `upgrade` metadata persistence; it does not add a public CLI capability, so `README.md`, `packages/sdlc-harness/README.md`, `PROJECT_SPEC.md` and `tools/consumer_lab_full_test.mjs` did not require updates. Regression coverage lives in `tests/sdlc-harness/upgrade.test.mjs`.
 
 ## 7. 测试覆盖（Test Coverage）
 
 | 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
 |---|---|---|
-| `npm test` | TypeScript build and package CLI regression tests | PASS for `DEV-054` on 2026-05-27 |
+| `npm test` | TypeScript build and package CLI regression tests | PASS for `TASK-058` on 2026-05-28 |
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | init, adopt, sync and doctor behavior | PASS for `DEV-054`; asserts generated lifecycle starts at `SPRINTING` |
 | `tools/consumer_lab_full_test.mjs` | full consumer lab lifecycle smoke coverage | Checks generated `.codex/state/lifecycle.yaml` routes to `pjsdlc_dev_sprint` |
 | `tests/sdlc-harness/upgrade.test.mjs` | migrations and automatic sync | PASS in package regression suite |
@@ -99,6 +101,7 @@ Existing project runs sdlc-harness upgrade
 | 2026-05-25 | `DEV-041` | `c34ad14` | Migrated the authoring workspace Harness root to `.codex`. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Migrated legacy task-grain implementation docs into module-level facts. |
 | 2026-05-27 | `DEV-054` | Pending implementation commit | Changed fresh init lifecycle defaults from `REQUIREMENT_GATHERING` routing to `SPRINTING` developer routing. |
+| 2026-05-28 | `TASK-058` | Pending implementation commit | Updated upgrade config migration to refresh `core.version` from the current package version. |
 
 ## 9. 后续维护注意事项
 
