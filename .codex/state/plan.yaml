@@ -1,40 +1,4 @@
 current_phase: "SPRINTING"
-current_task_id: "DEV-053"
+current_task_id: ""
 next_task_sequence: 54
-tasks:
-  - id: "DEV-053"
-    title: "Delete consumer lab repository after full test runs"
-    status: "in_progress"
-    summary: "Make the full consumer lab workflow clean up the test repository after each run, while allowing explicit keep mode for debugging."
-    docs:
-      implementation:
-        - ".docs/04_implementation/harness_package/consumer_lab_validation.md"
-      test:
-        - ".docs/07_test/harness_consumer_lab.md"
-      spec:
-        - "PROJECT_SPEC.md"
-    allowed_paths:
-      - ".codex/state/plan.yaml"
-      - ".codex/skills/authoring/**"
-      - "PROJECT_SPEC.md"
-      - "tools/**"
-      - "tests/sdlc-harness/**"
-      - ".docs/04_implementation/**"
-      - ".docs/07_test/**"
-      - ".docs/**/overview.md"
-      - ".docs/INDEX.md"
-    required_gates:
-      - "npm test"
-      - "node tools/consumer_lab_full_test.mjs --report-only --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab --markdown-report .docs/07_test/harness_consumer_lab.md"
-      - "test ! -e /Users/momoooo/Documents/sdlc-harness-consumer-lab"
-      - "make validate-harness"
-    acceptance_criteria:
-      - "Full consumer lab runs delete the lab repository by default after reports are written."
-      - "A clear explicit option exists to keep the lab for debugging, and committing lab evidence requires keeping the lab."
-      - "Authoring skill, PROJECT_SPEC.md, test docs, implementation docs, and unit tests describe the cleanup behavior."
-    implementation_doc: ".docs/04_implementation/harness_package/consumer_lab_validation.md"
-    working_notes:
-      - "User requested the test repository be deleted after full consumer lab testing completes."
-      - "Script now deletes labDir by default after reports are written; --keep-lab is required to retain it, and --commit-lab requires --keep-lab."
-      - "Required gates passed: npm test; node tools/consumer_lab_full_test.mjs --report-only --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab --markdown-report .docs/07_test/harness_consumer_lab.md; test ! -e /Users/momoooo/Documents/sdlc-harness-consumer-lab; make validate-harness."
-      - "Additional checks passed: node packages/sdlc-harness/dist/cli.js package check-source; python3 tools/validate_allowed_paths.py; python3 tools/validate_task_docs.py; git diff --check."
+tasks: []
