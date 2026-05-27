@@ -17,6 +17,7 @@
 - The script defaults to prepare/check mode; real publishing requires `--publish --yes`.
 - Release evidence is written under `.docs/08_release/vX.Y.Z_npm_release.md`.
 - `packages/sdlc-harness/README.md` is included in the package `files` list so npm displays public install, command, workflow and Skill override documentation.
+- Root `README.md` is packaged as `assets/docs/README.md` so installed-package agents can inspect the full user guide from `node_modules` without changing consumer project files.
 - Git commit, tag and push remain outside the release script and are handled by the SPRINTING task protocol.
 
 ## 3. 真实代码结构
@@ -27,6 +28,7 @@
 | `package.json` | Root script adapter | `scripts.release:npm` |
 | `packages/sdlc-harness/package.json` | Package version and publish metadata | `version`, `files`, `bin`, `prepack` |
 | `packages/sdlc-harness/README.md` | npm registry README | public capability list, command examples, Skill override usage |
+| `packages/sdlc-harness/assets/docs/README.md` | Packaged root README asset | agent-readable full user guide copied from root `README.md` |
 | `package-lock.json` | Workspace lock version record | `packages/sdlc-harness.version` |
 | `.docs/08_release/*.md` | Release evidence and rollback plan | versioned release docs |
 
@@ -84,6 +86,7 @@ npm run release:npm -- --version patch --publish --yes
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Moved release-flow facts out of the old `npm_package` implementation-doc directory. |
 | 2026-05-26 | `DEV-047` | `338b4b5` | Released `agent-project-sdlc@0.1.6`. |
 | 2026-05-26 | `DEV-048` | DEV-048 implementation commit | Released `agent-project-sdlc@0.1.7` with package README registry data and public capability coverage. |
+| 2026-05-27 | Direct user request | Working tree | Added root README to package assets for installed-package agent reads. |
 
 ## 9. 后续维护注意事项
 

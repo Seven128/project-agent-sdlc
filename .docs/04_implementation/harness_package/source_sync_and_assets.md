@@ -12,7 +12,7 @@
 
 ## 2. 当前实现范围
 
-- The authoring workspace is the source of truth for `AGENTS.md`, workflow Skills, templates, policies, Makefile include assets and GitHub workflow assets.
+- The authoring workspace is the source of truth for `AGENTS.md`, root `README.md`, workflow Skills, templates, policies, Makefile include assets and GitHub workflow assets.
 - `package sync-source` copies or extracts those source files into `packages/sdlc-harness/assets/**`.
 - `package check-source` verifies that package assets have not drifted from authoring sources.
 - User-project `sync` materializes package assets into the configured `<harnessRoot>` and project root using managed strategies.
@@ -28,6 +28,7 @@
 | `packages/sdlc-harness/src/lib/sync-engine.ts` | User-project materialization engine | managed strategies, marker handling |
 | `packages/sdlc-harness/src/lib/managed-file.ts` | Managed metadata blocks | `pjsdlc:sdlc-harness:*` markers |
 | `packages/sdlc-harness/assets/**` | Package canonical assets | generated from authoring source by `package sync-source` |
+| `packages/sdlc-harness/assets/docs/README.md` | Packaged agent-readable user guide | copied from root `README.md`, shipped in npm package but not auto-materialized into user project root |
 | `.codex/skills/**` | Authoring source for workflow Skills | `pjsdlc_*`, `authoring/**` exclusion boundary |
 | `.codex/pjsdlc_managed/**` | Authoring source for templates, policies and Makefile include | `templates`, `policies`, `make` |
 | `.github/workflows/harness.yml` | Authoring source for package CI asset | workflow asset mapping |
@@ -48,6 +49,7 @@ Author edits Harness source files
 ## 5. 关键实现逻辑
 
 - `AGENTS.md` is synced as an extracted managed block, so project-specific text outside the block remains user-owned.
+- Root `README.md` is copied into `assets/docs/README.md` so installed packages expose the full user guide to agents without overwriting a consumer repository README.
 - Skills are distributed under `<harnessRoot>/skills`, while policies/templates live under `<harnessRoot>/pjsdlc_managed`.
 - The package keeps a hard source mapping manifest, not a runtime scan of arbitrary repository paths.
 - `copy-tree` supports exclude patterns so authoring-only material stays local to this repository.
@@ -76,8 +78,9 @@ Author edits Harness source files
 | 2026-05-25 | `DEV-006` - `DEV-023` | Historical implementation commits | Migrated roots, markers and managed layout to the current package asset shape. |
 | 2026-05-25 | `DEV-037` - `DEV-039` | Historical implementation commits | Added authoring Skill boundary and excluded authoring assets from package sync. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated source-sync implementation facts from legacy task docs. |
+| 2026-05-27 | Direct user request | Working tree | Added root README as a packaged docs asset for installed-package agent reads. |
 
 ## 9. 后续维护注意事项
 
-- Any change to `.codex/skills/**`, `.codex/pjsdlc_managed/**`, `AGENTS.md`, Makefile include or CI asset source should be followed by `package sync-source` and `package check-source`.
+- Any change to `.codex/skills/**`, `.codex/pjsdlc_managed/**`, `AGENTS.md`, root `README.md`, Makefile include or CI asset source should be followed by `package sync-source` and `package check-source`.
 - If an operation becomes repetitive and deterministic, prefer extracting it into a script and documenting the script here instead of keeping it as manual release/development lore.

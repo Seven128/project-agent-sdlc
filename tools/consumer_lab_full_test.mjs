@@ -247,6 +247,15 @@ async function ensureBaseLab(labDir, tarballPath) {
 }
 
 async function verifyManagedAssets(labDir, add) {
+  const packagedReadmePath = path.join(labDir, "node_modules/agent-project-sdlc/assets/docs/README.md");
+  const packagedReadmeExists = existsSync(packagedReadmePath);
+  add({
+    area: "Managed assets",
+    evidence: "package ships root README as agent-readable docs asset",
+    status: packagedReadmeExists ? "PASS" : "FAIL",
+    details: packagedReadmeExists ? "node_modules/agent-project-sdlc/assets/docs/README.md exists" : "packaged README asset missing"
+  });
+
   const required = [
     "AGENTS.md",
     "Makefile",

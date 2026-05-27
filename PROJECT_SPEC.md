@@ -769,8 +769,8 @@ Authoring overlay 的默认规则：
 
 | 影响面 | 需要遵守的原则 |
 |---|---|
-| README / PROJECT_SPEC / AGENTS | README 说明用户接入和日常使用；PROJECT_SPEC 说明分层模型和设计取舍；AGENTS 可声明本仓库额外读取 `.codex/skills/authoring/**`。 |
-| source mappings | `packages/sdlc-harness/source-mappings.yaml` 默认只同步通用 Harness 配置，不同步 authoring overlay。 |
+| README / PROJECT_SPEC / AGENTS | README 说明用户接入和日常使用，并作为 `assets/docs/README.md` 打入 npm 包供用户 Agent 读取；PROJECT_SPEC 说明分层模型和设计取舍；AGENTS 可声明本仓库额外读取 `.codex/skills/authoring/**`。 |
+| source mappings | `packages/sdlc-harness/source-mappings.yaml` 默认只同步通用 Harness 配置和用户指南资产，不同步 authoring overlay。 |
 | package assets | `packages/sdlc-harness/assets/**` 只保存应分发给用户项目的 canonical source。 |
 | validators | 通用 validators 校验用户项目；authoring-specific validators 应单独声明，避免成为用户项目 gate。 |
 | Skill 设计 | 通用阶段 Skill 放 `.codex/skills/**`；维护 Harness 包自身的专用 Skill 放 `.codex/skills/authoring/**`。 |

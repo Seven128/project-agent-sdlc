@@ -1,11 +1,11 @@
 # .docs/03_tech_plan overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 903d2f6bb520bc63 -->
+<!-- source-hash: 62865c69985b4f18 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `903d2f6bb520bc63`
+Source hash: `62865c69985b4f18`
 
 ## Source Slices
 
@@ -141,7 +141,7 @@ Codex `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启
 - `README.md`：面向用户和 npm 包消费者，介绍 Harness 是什么、如何安装、如何 `init` / `init --adopt` / `sync` / `upgrade` / `doctor`，以及自然语言日常使用方式。
 - `PROJECT_SPEC.md`：面向维护者，保存完整产品说明、阶段设计、包化策略、迁移原则和历史取舍。
 
-这个拆分只改变文档入口，不改变 sync、upgrade、state schema 或 package assets。`init --adopt` 仍可把 `README.md` 作为已有项目识别 marker；本仓库的重型设计内容不再占用用户阅读 README 的首屏。
+这个拆分不改变 sync、upgrade 或 state schema。`README.md` 会作为 `assets/docs/README.md` 打入 npm 包，供用户 Agent 从 `node_modules` 读取完整用户指南，但不会由 `sync` 自动覆盖用户项目根 README。`init --adopt` 仍可把 `README.md` 作为已有项目识别 marker；本仓库的重型设计内容不再占用用户阅读 README 的首屏。
 
 ## 4. 接口契约（Interface Contract）
 

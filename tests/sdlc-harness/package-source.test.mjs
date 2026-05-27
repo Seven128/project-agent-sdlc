@@ -20,6 +20,7 @@ try {
     "before\n<!-- pjsdlc:sdlc-harness:begin -->\n# AI SDLC Harness\n<!-- pjsdlc:sdlc-harness:end -->\nafter\n",
     "utf8"
   );
+  await writeFile(path.join(fixture, "README.md"), "# User Guide\n\nAgent-readable package guide.\n", "utf8");
   await writeFile(path.join(fixture, ".agent/skills/pjsdlc_example/SKILL.md"), "# Skill\n", "utf8");
   await writeFile(path.join(fixture, ".agent/skills/authoring/local_only/SKILL.md"), "# Local only\n", "utf8");
   await writeFile(path.join(fixture, ".agent/pjsdlc_managed/templates/EXAMPLE.md"), "# Template\n", "utf8");
@@ -34,6 +35,9 @@ try {
   - source: "AGENTS.md"
     target: "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"
     mode: "extract-managed-block"
+  - source: "README.md"
+    target: "packages/sdlc-harness/assets/docs/README.md"
+    mode: "copy-file"
   - source: ".agent/skills"
     target: "packages/sdlc-harness/assets/skills"
     mode: "copy-tree"
@@ -64,6 +68,8 @@ try {
   const agentsCore = await readFile(path.join(fixture, "packages/sdlc-harness/assets/agents/AGENTS_CORE.md"), "utf8");
   assert.match(agentsCore, /AI SDLC Harness/);
   assert.doesNotMatch(agentsCore, /before|after/);
+  const packagedReadme = await readFile(path.join(fixture, "packages/sdlc-harness/assets/docs/README.md"), "utf8");
+  assert.match(packagedReadme, /Agent-readable package guide/);
   const workflowSkill = await readFile(path.join(fixture, "packages/sdlc-harness/assets/skills/pjsdlc_example/SKILL.md"), "utf8");
   assert.match(workflowSkill, /Skill/);
   await assert.rejects(readFile(path.join(fixture, "packages/sdlc-harness/assets/skills/authoring/local_only/SKILL.md"), "utf8"));
