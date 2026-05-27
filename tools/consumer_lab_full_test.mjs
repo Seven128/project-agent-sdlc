@@ -331,6 +331,36 @@ async function verifyOverrides(labDir, add) {
     details: sync.status === 0 ? "override appended" : trimOutput(`${sync.stdout}\n${sync.stderr}`)
   });
 
+  await writeFile(
+    path.join(overrideDir, "pjsdlc_pm_prd.md"),
+    [
+      "---",
+      "name: pjsdlc_pm_prd",
+      "description: Use during REQUIREMENT_GATHERING for consumer lab full PRD override.",
+      "---",
+      "",
+      "# Consumer Lab PM Skill",
+      "",
+      "Consumer lab full skill body."
+    ].join("\n"),
+    "utf8"
+  );
+  const fullSkillSync = run("npx", ["sdlc-harness", "sync"], labDir);
+  const fullSkill = await readFile(path.join(labDir, ".codex/skills/pjsdlc_pm_prd/SKILL.md"), "utf8");
+  add({
+    area: "Local overrides",
+    evidence: "complete Skill override merges description and appends stripped body",
+    command: "npx sdlc-harness sync",
+    status:
+      fullSkillSync.status === 0 &&
+      fullSkill.includes("Project override: Use during REQUIREMENT_GATHERING for consumer lab full PRD override.") &&
+      fullSkill.includes("# Consumer Lab PM Skill") &&
+      !fullSkill.includes("name: pjsdlc_pm_prd\n---\n\n# Consumer Lab PM Skill")
+        ? "PASS"
+        : "FAIL",
+    details: fullSkillSync.status === 0 ? "full skill override merged" : trimOutput(`${fullSkillSync.stdout}\n${fullSkillSync.stderr}`)
+  });
+
   await writeFile(path.join(overrideDir, "pjsdlc_unknown.md"), "unknown\n", "utf8");
   const unknown = run("npx", ["sdlc-harness", "sync"], labDir);
   await rm(path.join(overrideDir, "pjsdlc_unknown.md"), { force: true });

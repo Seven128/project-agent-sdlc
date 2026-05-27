@@ -174,20 +174,22 @@ never_overwrite:
 
 ### 5.2 Skill local overrides
 
-`<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` 是项目本地补充提示词事实源。v1 只支持追加覆盖，不支持整段替换 managed Skill，也不支持结构化 patch。
+`<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` 是项目本地补充提示词事实源。v1 只支持追加覆盖，不支持整段替换 managed Skill，也不支持结构化 patch。override 文件可以是普通追加片段，也可以是带 `name` 和 `description` frontmatter 的完整 `SKILL.md` extension。
 
 ```txt
 <harnessRoot>/pjsdlc_managed/override_skills/pjsdlc_dev_sprint.md
 -> sdlc-harness sync
 -> <harnessRoot>/skills/pjsdlc_dev_sprint/SKILL.md
-   = package base Skill + Local Override block
+   = package base Skill + merged override description + Local Override block
 ```
 
 约束：
 
 - `<skill_name>` 必须匹配包内已有 workflow Skill 目录，例如 `pjsdlc_pm_prd` 或 `pjsdlc_dev_sprint`。
+- 如果 override 是完整 `SKILL.md`，frontmatter `name` 必须等于 `<skill_name>`；`description` 会合并进最终 Skill metadata，override frontmatter 不会作为正文重复出现。
 - 空 override 文件不生成追加区块。
 - 未知或嵌套 override 路径会阻塞 sync，避免用户以为本地提示词已经生效。
+- 合并后的 `Local Override` 区块提示用户或用户的 Agent 检查 package base 与 local override 是否存在语义冲突；该检查不阻塞 sync。
 - override 生效时机是运行 `sync` 之后；`upgrade` 自动执行 `sync`，因此升级后会重新合成本地 override。
 - legacy `<harnessRoot>/overrides/skills` 如果存在，upgrade migration 会在目标缺失时移动到 `<harnessRoot>/pjsdlc_managed/override_skills`。
 

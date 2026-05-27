@@ -57,7 +57,7 @@ Then run:
 npx sdlc-harness sync
 ```
 
-The sync output is the package base Skill plus one appended `Local Override` block. Unknown skill names block sync so misspellings do not silently fail.
+The sync output is the package base Skill plus one appended `Local Override` block. Override files support either a plain project-local snippet or a complete `SKILL.md` with `name` and `description` frontmatter. Complete Skill overrides are appended, not replaced: `sync` validates the override `name`, merges the override `description` into the generated top-level metadata, strips the override frontmatter, and appends the full body. After sync, users or their agents should review the merged Skill for semantic conflicts in phase boundaries, `allowed_paths`, `required_gates`, commit/release rules and completion checks. Unknown skill names block sync so misspellings do not silently fail.
 
 ## Optional Parallel Execution
 

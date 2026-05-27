@@ -106,7 +106,7 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 
 不要直接修改 `<harnessRoot>/skills/**/SKILL.md`，这些文件由 package 管理，`sync` 或 `upgrade` 会重新生成。
 
-如果某个项目需要补充阶段角色要求，把追加提示词写到：
+如果某个项目需要补充阶段角色要求，把本地 override 写到：
 
 ```txt
 <harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md
@@ -124,7 +124,9 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 npx sdlc-harness sync
 ```
 
-`sync` 会把通用 Skill 和本地 override 合成到最终 `SKILL.md`。v1 只支持追加覆盖；`<skill_name>` 必须匹配已有 workflow Skill，例如 `pjsdlc_pm_prd`、`pjsdlc_architect_design` 或 `pjsdlc_dev_sprint`。
+override 文件支持两种写法：普通项目追加片段，或带 `name`/`description` frontmatter 的完整 `SKILL.md`。如果写完整 Skill，`sync` 会校验 `name` 必须匹配 `<skill_name>`，把用户写的 `description` 合并进最终 `SKILL.md` 顶部 metadata，并把剥离 frontmatter 后的正文完整追加到 `Local Override` 区块。
+
+`sync` 会把通用 Skill 和本地 override 合成到最终 `SKILL.md`。v1 只支持追加覆盖，不替换 package base Skill；`<skill_name>` 必须匹配已有 workflow Skill，例如 `pjsdlc_pm_prd`、`pjsdlc_architect_design` 或 `pjsdlc_dev_sprint`。合并后应由用户或用户的 Agent 检查 base Skill 与 local override 是否存在语义冲突，尤其是阶段边界、`allowed_paths`、`required_gates`、提交/发布规则和完成检查。
 
 ### 可选并行执行
 

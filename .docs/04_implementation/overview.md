@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: aeee2cb11898c93a -->
+<!-- source-hash: b326bee3ee960129 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `aeee2cb11898c93a`
+Source hash: `b326bee3ee960129`
 
 ## Source Slices
 
@@ -723,6 +723,8 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - Native Agent skill hydration, when supported by the client, is a separate hard-index mechanism based on the client-specific skill root.
 - Natural language intent and `/xxx` macro aliases map to the same workflow actions.
 - Project-local role prompt additions live under `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` and are appended to managed Skill output by `sdlc-harness sync`.
+- Override files support plain snippets and complete `SKILL.md` extensions with `name`/`description` frontmatter; complete extensions merge their `description` into final Skill metadata and append their body after stripping override frontmatter.
+- The generated `Local Override` block tells maintainers and downstream agents to check the merged Skill for semantic conflicts between package base rules and project-local override rules.
 - This authoring repository keeps a private authoring Skill under `.codex/skills/authoring/**`; package source sync excludes it from user projects.
 - The authoring Skill requires README/package README coverage to stay aligned with all public package capabilities.
 - PM, Manager, Dev and Tester prompts now describe optional parallel execution semantics and keep final fact-source integration with the main agent.
@@ -785,7 +787,9 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `/plan` and `/goal` are client modes and are not automatically controlled by Harness.
 - Authoring-only prompts help this repository improve the Harness itself and should not be shipped into user projects by default.
 - Package-facing behavior changes must keep both `README.md` and `packages/sdlc-harness/README.md` aligned with the full public capability list, not only `PROJECT_SPEC.md` or release notes.
-- Local Skill overrides are append-only in v1. They let projects add role preferences without replacing lifecycle, task, gate or allowed-path rules from the package Skill.
+- Local Skill overrides are append-only in v1. They let projects add role preferences or complete local Skill extensions without replacing lifecycle, task, gate or allowed-path rules from the package Skill.
+- `sync` auto-detects a complete Skill override when the override file starts with `name` and `description` frontmatter, validates that `name` matches the target skill, merges the override `description` into the final top-level metadata and appends the stripped body.
+- `sync` writes a semantic maintenance note into each generated `Local Override` block so future agents can review phase boundaries, `allowed_paths`, `required_gates`, commit/release rules and completion checks for conflicts.
 - `sync` blocks unknown files under `<harnessRoot>/pjsdlc_managed/override_skills/*.md`, so a misspelled Skill name cannot silently fail to apply.
 - `pjsdlc_managed/override_skills` keeps override configuration with other managed workflow configuration while preserving `<harnessRoot>/skills/**` as the shallow hard file index.
 
@@ -821,6 +825,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-26 | `DEV-046` | DEV-046 implementation commit | Moved project-local Skill overrides under `pjsdlc_managed/override_skills` and updated authoring impact rules. |
 | 2026-05-26 | `DEV-049` | DEV-049 implementation commit | Added authoring rule that README/package README must cover all public package capabilities. |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in parallel execution prompt rules for PM, Manager, Dev and Tester workflows. |
+| 2026-05-27 | Direct user request | Working tree | Added complete Skill override merge support with description merging and semantic conflict review guidance. |
 
 ## 9. 后续维护注意事项
 

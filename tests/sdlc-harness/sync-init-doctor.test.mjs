@@ -18,6 +18,8 @@ const cliExistingConfigRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-cl
 const makefileMergeRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-makefile-merge-"));
 const brokenMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-broken-marker-"));
 const unknownSkillOverrideRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-unknown-skill-override-"));
+const fullSkillOverrideRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-full-skill-override-"));
+const mismatchedSkillOverrideRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-mismatched-skill-override-"));
 const cliPath = fileURLToPath(new URL("../../packages/sdlc-harness/dist/cli.js", import.meta.url));
 
 try {
@@ -71,6 +73,8 @@ try {
   assert.match(overriddenDevSkill, /# Dev Sprint Skill/);
   assert.match(overriddenDevSkill, /## Local Override/);
   assert.match(overriddenDevSkill, /\.agent\/pjsdlc_managed\/override_skills\/pjsdlc_dev_sprint\.md/);
+  assert.match(overriddenDevSkill, /project-local snippet/);
+  assert.match(overriddenDevSkill, /review the merged Skill for semantic conflicts/);
   assert.match(overriddenDevSkill, /项目开发阶段必须优先检查本地业务约束。/);
   const secondOverrideSyncReport = await runSync(defaultRoot);
   assert.equal(secondOverrideSyncReport.blocked.length, 0);
@@ -189,6 +193,54 @@ try {
     )
   );
 
+  await runInit(fullSkillOverrideRoot, { adopt: true, force: false });
+  await mkdir(path.join(fullSkillOverrideRoot, ".agent/pjsdlc_managed/override_skills"), { recursive: true });
+  await writeFile(
+    path.join(fullSkillOverrideRoot, ".agent/pjsdlc_managed/override_skills/pjsdlc_pm_prd.md"),
+    [
+      "---",
+      "name: pjsdlc_pm_prd",
+      "description: Use during REQUIREMENT_GATHERING for project-local complete PRD role.",
+      "---",
+      "",
+      "# Project PM PRD Skill",
+      "",
+      "## 目的",
+      "",
+      "项目 PRD 必须体现本地业务对象。",
+      "",
+      "## 完成检查",
+      "",
+      "- [ ] 本地业务验收标准已覆盖。"
+    ].join("\n"),
+    "utf8"
+  );
+  const fullSkillOverrideReport = await runSync(fullSkillOverrideRoot);
+  assert.equal(fullSkillOverrideReport.blocked.length, 0);
+  const fullSkill = await readFile(path.join(fullSkillOverrideRoot, ".agent/skills/pjsdlc_pm_prd/SKILL.md"), "utf8");
+  assert.match(fullSkill, /Use during REQUIREMENT_GATHERING to turn raw input into PRD slices with acceptance criteria and boundaries\. Project override: Use during REQUIREMENT_GATHERING for project-local complete PRD role\./);
+  assert.match(fullSkill, /full Skill extension/);
+  assert.match(fullSkill, /frontmatter has been merged into the generated Skill metadata/);
+  assert.match(fullSkill, /review the merged Skill for semantic conflicts/);
+  assert.match(fullSkill, /# Project PM PRD Skill/);
+  assert.match(fullSkill, /项目 PRD 必须体现本地业务对象。/);
+  assert.match(fullSkill, /- \[ \] 本地业务验收标准已覆盖。/);
+  assert.equal(fullSkill.match(/^---$/gm)?.length, 2);
+
+  await runInit(mismatchedSkillOverrideRoot, { adopt: true, force: false });
+  await mkdir(path.join(mismatchedSkillOverrideRoot, ".agent/pjsdlc_managed/override_skills"), { recursive: true });
+  await writeFile(
+    path.join(mismatchedSkillOverrideRoot, ".agent/pjsdlc_managed/override_skills/pjsdlc_pm_prd.md"),
+    "---\nname: pjsdlc_dev_sprint\ndescription: Wrong skill name.\n---\n\n# Wrong Skill\n",
+    "utf8"
+  );
+  const mismatchedSkillOverrideReport = await runSync(mismatchedSkillOverrideRoot);
+  assert.ok(
+    mismatchedSkillOverrideReport.blocked.some((line) =>
+      line.includes("skill override name mismatch: .agent/pjsdlc_managed/override_skills/pjsdlc_pm_prd.md declares name pjsdlc_dev_sprint")
+    )
+  );
+
   const legacyMarkerRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-legacy-marker-"));
   try {
     await writeFile(
@@ -225,4 +277,6 @@ try {
   await rm(makefileMergeRoot, { recursive: true, force: true });
   await rm(brokenMarkerRoot, { recursive: true, force: true });
   await rm(unknownSkillOverrideRoot, { recursive: true, force: true });
+  await rm(fullSkillOverrideRoot, { recursive: true, force: true });
+  await rm(mismatchedSkillOverrideRoot, { recursive: true, force: true });
 }

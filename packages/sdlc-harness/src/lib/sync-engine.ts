@@ -19,6 +19,7 @@ import {
 } from "./managed-file.js";
 import { packageAssetPath } from "./paths.js";
 import type { ManagedFile } from "./types.js";
+import { parseYaml, stringifyYaml } from "./yaml.js";
 
 export interface SyncReport {
   changed: string[];
@@ -32,6 +33,15 @@ export function emptySyncReport(): SyncReport {
     skipped: [],
     blocked: []
   };
+}
+
+type SkillOverride =
+  | { mode: "snippet"; relativePath: string; content: string }
+  | { mode: "full-skill"; relativePath: string; content: string; description: string };
+
+interface SkillFrontmatter {
+  metadata: Record<string, unknown>;
+  body: string;
 }
 
 export async function runSync(projectRoot: string): Promise<SyncReport> {
@@ -300,8 +310,8 @@ async function readSkillOverrides(
   root: string,
   knownSkills: Set<string>,
   report: SyncReport
-): Promise<Map<string, { relativePath: string; content: string }>> {
-  const overrides = new Map<string, { relativePath: string; content: string }>();
+): Promise<Map<string, SkillOverride>> {
+  const overrides = new Map<string, SkillOverride>();
   const overrideRoot = skillOverrideRoot(projectRoot, root);
   if (!(await pathExists(overrideRoot))) {
     return overrides;
@@ -319,8 +329,25 @@ async function readSkillOverrides(
     }
     const content = await readText(file);
     if (content.trim()) {
+      const fullSkill = parseFullSkillOverride(content);
+      if (fullSkill) {
+        if (fullSkill.name !== match[1]) {
+          report.blocked.push(
+            `skill override name mismatch: ${path.join(root, "pjsdlc_managed", "override_skills", relativePath)} declares name ${fullSkill.name}`
+          );
+          continue;
+        }
+        overrides.set(match[1], {
+          relativePath: path.join(root, "pjsdlc_managed", "override_skills", relativePath),
+          mode: "full-skill",
+          content: fullSkill.body,
+          description: fullSkill.description
+        });
+        continue;
+      }
       overrides.set(match[1], {
         relativePath: path.join(root, "pjsdlc_managed", "override_skills", relativePath),
+        mode: "snippet",
         content
       });
     }
@@ -340,11 +367,16 @@ function skillNameForSourceFile(sourceRoot: string, file: string): string | unde
 
 function renderSkillWithOverride(
   baseContent: string,
-  override?: { relativePath: string; content: string }
+  override?: SkillOverride
 ): string {
   if (!override) {
     return baseContent;
   }
+  const renderedBase = override.mode === "full-skill" ? mergeSkillDescription(baseContent, override.description) : baseContent;
+  const guidance =
+    override.mode === "full-skill"
+      ? "The following project-local full Skill extension is appended by `sdlc-harness sync`. Its frontmatter has been merged into the generated Skill metadata; the body below remains the project-local extension."
+      : "The following project-local snippet is appended by `sdlc-harness sync`.";
   const header = [
     "",
     "",
@@ -352,10 +384,60 @@ function renderSkillWithOverride(
     "",
     `Source: \`${override.relativePath.split(path.sep).join("/")}\``,
     "",
-    "The following project-local instructions are appended by `sdlc-harness sync`. Keep package-managed Skill files unchanged; edit the override source instead.",
+    `${guidance} Keep package-managed Skill files unchanged; edit the override source instead.`,
+    "",
+    "After sync, review the merged Skill for semantic conflicts between the package base and local override, especially phase boundaries, `allowed_paths`, `required_gates`, commit/release rules and completion checks.",
     ""
   ].join("\n");
-  return `${baseContent.trimEnd()}${header}${override.content.trim()}\n`;
+  return `${renderedBase.trimEnd()}${header}\n${override.content.trim()}\n`;
+}
+
+function parseFullSkillOverride(content: string): { name: string; description: string; body: string } | undefined {
+  const parsed = parseFrontmatter(content);
+  if (!parsed) {
+    return undefined;
+  }
+  const name = parsed.metadata.name;
+  const description = parsed.metadata.description;
+  if (typeof name !== "string" || typeof description !== "string") {
+    return undefined;
+  }
+  return { name, description, body: parsed.body };
+}
+
+function mergeSkillDescription(baseContent: string, overrideDescription: string): string {
+  const parsed = parseFrontmatter(baseContent);
+  if (!parsed || typeof parsed.metadata.name !== "string" || typeof parsed.metadata.description !== "string") {
+    return baseContent;
+  }
+  const metadata = {
+    ...parsed.metadata,
+    name: parsed.metadata.name,
+    description: `${parsed.metadata.description} Project override: ${overrideDescription}`
+  };
+  return `---\n${stringifyYaml(metadata).trimEnd()}\n---\n${parsed.body.trimStart()}`;
+}
+
+function parseFrontmatter(content: string): SkillFrontmatter | undefined {
+  if (!content.startsWith("---\n")) {
+    return undefined;
+  }
+  const endIndex = content.indexOf("\n---", 4);
+  if (endIndex < 0) {
+    return undefined;
+  }
+  let metadata: unknown;
+  try {
+    metadata = parseYaml(content.slice(4, endIndex));
+  } catch {
+    return undefined;
+  }
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return undefined;
+  }
+  const bodyStart = content.indexOf("\n", endIndex + 4);
+  const body = bodyStart < 0 ? "" : content.slice(bodyStart + 1);
+  return { metadata: metadata as Record<string, unknown>, body };
 }
 
 async function syncFile(
