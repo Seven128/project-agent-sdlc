@@ -102,8 +102,8 @@ package.json or sdlc-harness.config.json
 | 状态查询 | 读取 lifecycle/plan，等价 `/status` |
 | 继续、下一步、推进 | 按 `active_skill` 执行当前阶段，等价 `/next` |
 | 检查或进入下一阶段 | 运行当前阶段出口 gate，通过后用 `transition.py` 流转，等价 `/advance` |
-| 需求或设计变化 | 进入 `RFC_RECALIBRATION` workflow |
-| 完善产品方案、写 PRD | `/prd`：在 `REQUIREMENT_GATHERING` 澄清需求并更新 PRD、验收标准和 open questions |
+| 需求或设计变化 | `ARCHITECTING` 且尚未进入开发时可回到 `REQUIREMENT_GATHERING` 修改 PRD；`SPRINTING` 或之后进入 `RFC_RECALIBRATION` workflow |
+| 完善产品方案、写 PRD | `/prd`：在 `REQUIREMENT_GATHERING` 澄清需求并更新 PRD、验收标准和 open questions；开发前处于 `ARCHITECTING` 时先回退到 `REQUIREMENT_GATHERING` |
 | 设计技术方案、做架构方案、根据 PRD 做技术方案 | `/design`：在 `ARCHITECTING` 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | 开始开发、做当前任务、做下一个任务 | `/dev`：在 `SPRINTING` 创建或选择下一个最小 `TASK-*` development task，并完成一个 task 闭环 |
 | 开始循环：写任务，执行任务；把开发循环跑完 | `/devloop`：连续运行 `/dev`，直到没有明确任务或遇到 blocker |
@@ -342,7 +342,7 @@ RFC_014 后，Harness 不再维护 `<harnessRoot>/state/gate_results.log`。gate
 
 `<harnessRoot>/state/lifecycle.yaml` 只保存当前路由状态，不保存 `history`。阶段流转历史、task 执行历史和 gate 历史都不属于 active state；它们是 cold archive，只在显式追溯、audit 或 regression forensic 场景下通过 git、PR、CI、release 系统和阶段产物读取。
 
-`transition.py` 只更新 `current_phase`、`active_role`、`active_skill`、`suspended_phase` 和 `allowed_next_phases`。`--reason` 保留为命令兼容参数，但不写入 state。package migration 会删除既有 lifecycle `history`，避免老项目升级后继续携带阶段流水。
+`transition.py` 只更新 `current_phase`、`active_role`、`active_skill`、`suspended_phase` 和 `allowed_next_phases`。合法目标来自当前 phase 的 `next`、可选 `returns`、当前 lifecycle 的 `allowed_next_phases`，以及 RFC / BLOCKED 特殊流转。`ARCHITECTING` 默认声明 `returns: ["REQUIREMENT_GATHERING"]`，用于开发前回到 PM/PRD 工作流修正产品事实；`SPRINTING` 不声明该回退，需求变化进入 RFC。`--reason` 保留为命令兼容参数，但不写入 state。package migration 会删除既有 lifecycle `history`，避免老项目升级后继续携带阶段流水。
 
 ### 5.9 npm release automation
 

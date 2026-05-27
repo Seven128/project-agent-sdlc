@@ -4,7 +4,7 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
-- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`, `TASK-061`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`, `RFC_015`
@@ -19,6 +19,7 @@
 - `next_task_sequence` preserves future `TASK-*` id allocation after done tasks are removed.
 - Document, review, test, release and RFC tasks use `result_docs` for planned fact-source outputs; development tasks use `implementation_doc`.
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
+- `phase_contracts.yaml` supports optional `returns` targets for bounded pre-development rollback; the default contract allows `ARCHITECTING -> REQUIREMENT_GATHERING` so PRD facts can be corrected before `SPRINTING`.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 - `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
@@ -32,6 +33,7 @@
 | `.codex/state/plan.yaml` | Active short-term task contract | `current_task_id`, `next_task_sequence`, `tasks[]` |
 | `.codex/state/plan.draft.yaml` | Draft task contract | `next_task_sequence`, `tasks[]` |
 | `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields, `result_docs` and `implementation_doc` examples |
+| `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase routing contract | `next` forward target and optional `returns` rollback targets |
 | `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product task prompt | `TASK-*` document-production task protocol with `phase: "REQUIREMENT_GATHERING"` |
 | `.codex/skills/pjsdlc_architect_design/SKILL.md` | Design task prompt | `TASK-*` document-production task protocol with `phase: "ARCHITECTING"` |
 | `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Development execution prompt | one-task protocol, two-commit ledger, push requirement |
@@ -63,6 +65,15 @@ Any workflow phase task starts
 ```
 
 ```txt
+ARCHITECTING discovers PRD needs revision before development
+-> transition.py reads phase_contracts.yaml#phases.ARCHITECTING.returns
+-> python3 tools/transition.py --to REQUIREMENT_GATHERING is legal without --force
+-> lifecycle active_role/active_skill become pm/pjsdlc_pm_prd
+-> PM updates PRD through one REQUIREMENT_GATHERING task and validate-pm
+-> transition.py --to ARCHITECTING resumes design
+```
+
+```txt
 SPRINTING task starts
 -> plan.yaml contains full open task contract
 -> agent edits only allowed_paths
@@ -89,6 +100,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
 - `current_phase` belongs only to `lifecycle.yaml`; `plan.yaml`, `plan.draft.yaml` and `parallel_execution` must not duplicate it.
+- `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
 - `plan.draft.yaml` is not active execution state and must not contain `current_task_id`.
 - Field audit: `active_role`, `active_skill`, `current_milestone`, `blocked_reason`, `suspended_phase` and `allowed_next_phases` are lifecycle-only; `current_task_id` and `next_task_sequence` are plan-only; `tasks[].phase` is semantic task classification rather than current lifecycle state and remains on each task.
 - Every phase task is task-controlled: one `TASK-*` task should produce one bounded document slice, review batch, test evidence set, release artifact set, RFC impact slice or development change.
@@ -114,6 +126,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | `python3 tools/validate_plan.py` | Current plan shape and no remaining open tasks | PASS in Harness gates |
 | `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
 | `tests/sdlc-harness/validators.test.mjs` | Package validator plan task and optional parallel contract acceptance/failure cases | PASS for TASK-059 |
+| `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
 | `npm test --workspace agent-project-sdlc` | Package migration and validator parity | PASS for TASK-059; 9 tests passed |
 | `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
@@ -130,6 +143,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-27 | `DEV-056` | Working tree | Extended `plan.yaml` task control to PRD and design document generation, slicing and fact-source synthesis. |
 | 2026-05-27 | `TASK-057` | Working tree | Unified all new workflow tasks under `TASK-*` with `phase`, expanded plan control to review/test/release/RFC, and kept legacy task prefixes compatible. |
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from plan files and parallel execution contracts. |
+| 2026-05-28 | `TASK-061` | Working tree | Added `phase_contracts.yaml#returns` and `transition.py` support so ARCHITECTING can return to REQUIREMENT_GATHERING for PRD edits before SPRINTING, while SPRINTING cannot directly return to PRD. |
 
 ## 9. 后续维护注意事项
 

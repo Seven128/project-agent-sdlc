@@ -76,6 +76,8 @@ The CLI does not promise to automatically launch Codex agents. Workers do not ne
 
 Every stage's agent work is plan-controlled. Conversational PRD or design creation, existing document slicing, fact-source-based synthesis, development, review, testing, release preparation and RFC recalibration should create or resume one small `TASK-*` task in `plan.yaml` with a valid `phase`, write the current task's `result_docs` or `implementation_doc`, update indexes/overviews, run `validate-plan`, and remove the task after completion. Phase exit validators reject remaining open tasks.
 
+Before development starts, `ARCHITECTING` can return to `REQUIREMENT_GATHERING` for PRD edits. The manager uses `python3 tools/transition.py --to REQUIREMENT_GATHERING`, the PM workflow updates the PRD through one `TASK-*`, then `validate-pm` and `python3 tools/transition.py --to ARCHITECTING` return the project to design. Requirement changes after `SPRINTING` still use RFC recalibration.
+
 `validate-design` treats semantic slicing as a hard gate. Generated `overview.md` files do not count as deliverables, development draft tasks in `plan.draft.yaml` must reference existing tech plan slices through `docs.tech_plan`, multiple development draft tasks need distinct primary tech plan slices, and explicit AI provider/copilot, external-system, or compliance/permission/audit themes require dedicated architecture slices.
 
 ## Common Commands

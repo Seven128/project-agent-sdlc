@@ -2,6 +2,17 @@
 from harness_utils import dump_yaml, load_lifecycle, load_phase_contracts, make_arg_parser, require, run_main
 
 
+def phase_targets(phase: dict) -> list[str]:
+    targets: list[str] = []
+    next_phase = phase.get("next")
+    if next_phase:
+        targets.append(str(next_phase))
+    for return_phase in phase.get("returns") or []:
+        if return_phase:
+            targets.append(str(return_phase))
+    return list(dict.fromkeys(targets))
+
+
 def main() -> None:
     parser = make_arg_parser("Transition AI SDLC Harness lifecycle phase")
     parser.add_argument("--to", required=True, help="Target lifecycle phase")
@@ -17,9 +28,7 @@ def main() -> None:
     require(current in phases, f"Current phase is not declared in phase_contracts.yaml: {current}")
 
     legal = set(lifecycle.get("allowed_next_phases") or [])
-    configured_next = phases[current].get("next")
-    if configured_next:
-        legal.add(configured_next)
+    legal.update(phase_targets(phases[current]))
     if target in {"RFC_RECALIBRATION", "BLOCKED"}:
         legal.add(target)
     suspended = lifecycle.get("suspended_phase")
@@ -38,8 +47,7 @@ def main() -> None:
     lifecycle["active_role"] = phase.get("role", "")
     lifecycle["active_skill"] = phase.get("skill", "")
 
-    next_phase = phase.get("next")
-    lifecycle["allowed_next_phases"] = [next_phase] if next_phase else []
+    lifecycle["allowed_next_phases"] = phase_targets(phase)
     if target == "BLOCKED" and lifecycle.get("suspended_phase"):
         lifecycle["allowed_next_phases"] = [lifecycle["suspended_phase"]]
 

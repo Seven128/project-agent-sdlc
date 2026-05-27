@@ -201,12 +201,14 @@ python3 tools/transition.py --to <PHASE>
 | 阶段 | Skill | 主要输入 | 主要输出 | 出口 Gate | 下一阶段 |
 |---|---|---|---|---|---|
 | `REQUIREMENT_GATHERING` | `pjsdlc_pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
-| `ARCHITECTING` | `pjsdlc_architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING` |
+| `ARCHITECTING` | `pjsdlc_architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING`；开发前可返回 `REQUIREMENT_GATHERING` |
 | `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
 | `REVIEWING` | `pjsdlc_reviewer` | PRD、技术方案、实现文档、`git diff` | Review report | `make validate-review` | `TESTING` |
 | `TESTING` | `pjsdlc_tester` | PRD、技术方案、实现文档、Review | Test plan、测试矩阵、回归记录 | `make validate-test` | `RELEASING` |
 | `RELEASING` | `pjsdlc_release_manager` | 测试结果、build artifacts | Release note、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
 | `RFC_RECALIBRATION` | `pjsdlc_rfc_recalibrate` | RFC、PRD、技术方案、任务状态 | 局部补丁、任务回退或增量任务 | `make validate-rfc` | 原阶段或 `SPRINTING` |
+
+`phase_contracts.yaml` 支持 `returns` 作为受限回退目标。当前唯一默认回退是 `ARCHITECTING -> REQUIREMENT_GATHERING`，用于尚未进入 `SPRINTING` 时补充或修正 PRD。回退后 lifecycle 的 `active_role` 和 `active_skill` 切到 PM 工作流；PRD task 完成并通过 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化必须走 RFC recalibration。
 
 ## 六、文档切片与阶段产物
 ### 6.1 为什么要语义切片
@@ -520,8 +522,8 @@ RFC 必须包含：
 | “现在到哪了 / 状态如何” | 等价 `/status` |
 | “继续 / 下一步 / 推进” | 等价 `/next` |
 | “能进入下一阶段吗 / 进入下一步” | 等价 `/advance` |
-| “需求变了 / 这个设计要改” | 进入 RFC workflow |
-| “完善产品方案 / 写 PRD / 我提供信息，你帮我完善产品方案” | 等价 `/prd`，在 `REQUIREMENT_GATHERING` 更新 PRD、验收标准和 open questions |
+| “需求变了 / 这个设计要改” | 如果当前仍在 `ARCHITECTING` 且尚未进入开发，可回到 `REQUIREMENT_GATHERING` 修改 PRD；如果已经进入 `SPRINTING` 或之后，进入 RFC workflow |
+| “完善产品方案 / 写 PRD / 我提供信息，你帮我完善产品方案” | 等价 `/prd`；在 `REQUIREMENT_GATHERING` 更新 PRD，或在开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 后更新 |
 | “设计技术方案 / 做架构方案 / 根据 PRD 做技术方案” | 等价 `/design`，在 `ARCHITECTING` 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | “开始开发 / 做当前任务 / 做下一个任务” | 等价 `/dev`，在 `SPRINTING` 创建或选择下一个最小 `TASK-*` development task，并完成一个 task 闭环 |
 | “开始循环：写任务，执行任务 / 把开发循环跑完” | 等价 `/devloop`，连续运行开发循环直到没有明确任务或遇到 blocker |
@@ -539,7 +541,7 @@ RFC 必须包含：
 | `/next` | 根据当前阶段调用对应 Skill |
 | `/advance` | 运行当前阶段出口 gate，通过后流转 |
 | `/rfc <file>` | 挂起当前流程，进入 RFC 变更处理 |
-| `/prd` | 在需求阶段澄清用户目标，更新 PRD、验收标准、open questions、`.docs/INDEX.md` 和 overview |
+| `/prd` | 在需求阶段澄清用户目标，更新 PRD、验收标准、open questions、`.docs/INDEX.md` 和 overview；开发前处于 `ARCHITECTING` 时可先回到 `REQUIREMENT_GATHERING` |
 | `/design` | 在架构阶段基于 PRD 更新 architecture、tech plan 和 `plan.draft.yaml` |
 | `/dev` | 创建或选择下一个最小 `TASK-*` development task，执行一个 task，完成 gate、implementation doc、两段 commit/push 后停止 |
 | `/devloop` | 连续运行 `/dev`，直到没有明确可创建/执行的 task 或遇到需求、架构、allowed_paths、gate、commit/push blocker |

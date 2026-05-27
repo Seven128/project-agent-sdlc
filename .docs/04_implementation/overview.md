@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 3c447567676d1748 -->
+<!-- source-hash: 3753a4448779b829 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `3c447567676d1748`
+Source hash: `3753a4448779b829`
 
 ## Source Slices
 
@@ -440,7 +440,7 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`, `TASK-057`
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`, `TASK-057`, `TASK-061`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`, `PRD-NPM-028`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_015`
@@ -454,6 +454,7 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
   - `/prd` 产品方案入口和 `/design` 架构/技术方案入口。
   - `/dev` 单任务开发闭环和 `/devloop` 连续开发循环语义。
   - `/review`、`/test`、`/release` 和 `/rfc` 也通过 `TASK-*` open task 做小步恢复和阶段 gate 管控。
+  - `ARCHITECTING` 中的 `/prd` 或“需求要改”可以在开发前回到 `REQUIREMENT_GATHERING`，由 PM workflow 修改 PRD。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
   - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
 - 修改（Changed）:
@@ -494,6 +495,7 @@ User input
 - 输入校验（Input validation）: manager 在路由前必须读取 lifecycle 和 plan；如果当前阶段与用户意图冲突，先说明冲突和推荐路径。
 - 入口语义（Entry semantics）: `/xxx` 宏指令是更完整、更细节的提示词别名；自然语言入口映射到同一 action，但由 Agent 结合上下文补足细节。
 - 核心分支（Core branches）: `/prd` 只在需求阶段推进产品方案；`/design` 只在架构阶段推进 architecture / tech plan；`/dev` 执行一个最小 `TASK-*` development task 后停止；`/review`、`/test`、`/release` 和 `/rfc` 也各执行一个最小 `TASK-*`；`/devloop` 每完成一个 task 后重新读取当前状态，再决定是否继续。
+- 开发前 PRD 回退（Pre-development PRD rollback）: 如果当前阶段是 `ARCHITECTING`，用户要求改 PRD 或完善产品方案，Manager 可以先确认没有未收尾的 design task，然后用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM workflow；进入 `SPRINTING` 后同类需求变化必须走 RFC。
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
@@ -509,6 +511,7 @@ User input
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets 与 source workspace 一致 | PASS |
 | `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
+| `tests/sdlc-harness/transition.test.mjs` | ARCHITECTING 中 `/prd` 类需求可以回退到 PM 阶段，SPRINTING 不可直接回退 | PASS for TASK-061 |
 | `python3 tools/validate_allowed_paths.py` | DEV-036 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 
@@ -521,6 +524,7 @@ User input
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
 | 2026-05-27 | `TASK-057` | Working tree | 将 Review、测试、发布和 RFC 入口纳入统一 `TASK-*` 小任务路由语义。 |
+| 2026-05-28 | `TASK-061` | Working tree | 增加开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 的 `/prd` 和需求变化路由规则。 |
 
 ## 9. 后续维护注意事项
 
@@ -745,7 +749,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: workflow Skills, prompt routing, hard/soft indexing and authoring overlay
-- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`, `TASK-060`
+- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`, `TASK-060`, `TASK-061`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`, `PROJECT_SPEC.md`
 - Linked RFC: `RFC_007`, `RFC_009`, `RFC_015`
@@ -765,6 +769,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - PM, Manager, Dev and Tester prompts now describe optional parallel execution semantics and keep final fact-source integration with the main agent.
 - PM and Architect prompts require deleting the superseded monolithic PRD/product or tech plan file after user-requested slicing creates replacement slices and updates the related fact-source references.
 - Architect prompt now treats semantic design slicing as a `make validate-design` hard gate: `plan.draft.yaml` development tasks must reference `docs.tech_plan`, multiple draft tasks need distinct primary tech plan slices, generated `overview.md` cannot satisfy design deliverables, and explicit cross-cutting themes require dedicated architecture slices.
+- Manager, PM and Architect prompts now describe the development-before rollback path from `ARCHITECTING` to `REQUIREMENT_GATHERING` for PRD edits, while preserving RFC workflow for changes after `SPRINTING`.
 - PM, Architect, Reviewer, Tester, Release and RFC prompts now require each main workflow action to run as one small `TASK-*` `plan.yaml` task with `phase` metadata. This covers conversational generation, existing-document slicing, synthesis from prior fact sources, review batches, test evidence, release preparation and RFC recalibration.
 
 ## 3. 真实代码结构
@@ -832,6 +837,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `pjsdlc_managed/override_skills` keeps override configuration with other managed workflow configuration while preserving `<harnessRoot>/skills/**` as the shallow hard file index.
 - When a user explicitly asks to slice an existing complete PRD/product document or complete tech plan into multiple slices, `pjsdlc_pm_prd` and `pjsdlc_architect_design` now require validating replacement slice coverage, updating `.docs/INDEX.md` and generated `overview.md`, synchronizing `plan.draft.yaml` references for tech plan slicing, and then deleting the superseded complete file so the facts are not duplicated.
 - `pjsdlc_architect_design` now states that `make validate-design` hard-checks draft task `docs.tech_plan`, distinct primary tech plan slices, generated overview exclusion and dedicated architecture slices for explicit cross-cutting themes.
+- `pjsdlc_manager`, `pjsdlc_pm_prd` and `pjsdlc_architect_design` share the same routing rule: PRD changes discovered in `ARCHITECTING` can return to `REQUIREMENT_GATHERING`; PRD changes discovered in `SPRINTING` or later use RFC recalibration.
 - `pjsdlc_pm_prd`, `pjsdlc_architect_design`, `pjsdlc_reviewer`, `pjsdlc_tester`, `pjsdlc_release_manager` and `pjsdlc_rfc_recalibrate` create or resume one small `TASK-*` task before writing phase outputs. `pjsdlc_manager` routes `/prd`, `/design`, `/review`, `/test`, `/release` and `/rfc` through those task protocols and treats remaining open tasks as phase-exit blockers.
 
 ## 6. 与技术方案的偏移
@@ -849,6 +855,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect authoring Skill source changes | PASS for DEV-056 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Skills and managed prompt assets match authoring source | PASS for DEV-056 |
 | `make validate-design` | Architect Skill slicing contract is reflected in the design gate | PASS for TASK-060 |
+| `tests/sdlc-harness/transition.test.mjs` | PM/Architect/Manager rollback semantics align with phase transition support | PASS for TASK-061 |
 | `tests/sdlc-harness/package-source.test.mjs` | Authoring Skill exclusion from package assets | PASS in package tests |
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | Skill override append, idempotency, configured root and unknown override blocking | PASS for DEV-046 |
 | `tests/sdlc-harness/upgrade.test.mjs` | Migration from legacy `overrides/skills` to `pjsdlc_managed/override_skills` | PASS for DEV-046 |
@@ -873,6 +880,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-27 | `TASK-057` | Working tree | Generalized prompt rules so every phase main action is a `TASK-*` task governed by `plan.yaml`, with review/test/release/RFC outputs using `result_docs`. |
 | 2026-05-27 | Direct user request | Working tree | Added complete Skill override merge support with description merging and semantic conflict review guidance. |
 | 2026-05-28 | `TASK-060` | Working tree | Promoted architect semantic slicing guidance into explicit hard-gate wording for `plan.draft.yaml` tech plan references and dedicated architecture slices. |
+| 2026-05-28 | `TASK-061` | Working tree | Added Skill routing guidance for returning from `ARCHITECTING` to `REQUIREMENT_GATHERING` before development when PRD facts need revision. |
 
 ## 9. 后续维护注意事项
 
@@ -892,7 +900,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
-- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`, `TASK-061`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`, `RFC_015`
@@ -907,6 +915,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - `next_task_sequence` preserves future `TASK-*` id allocation after done tasks are removed.
 - Document, review, test, release and RFC tasks use `result_docs` for planned fact-source outputs; development tasks use `implementation_doc`.
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
+- `phase_contracts.yaml` supports optional `returns` targets for bounded pre-development rollback; the default contract allows `ARCHITECTING -> REQUIREMENT_GATHERING` so PRD facts can be corrected before `SPRINTING`.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 - `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
@@ -920,6 +929,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `.codex/state/plan.yaml` | Active short-term task contract | `current_task_id`, `next_task_sequence`, `tasks[]` |
 | `.codex/state/plan.draft.yaml` | Draft task contract | `next_task_sequence`, `tasks[]` |
 | `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields, `result_docs` and `implementation_doc` examples |
+| `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase routing contract | `next` forward target and optional `returns` rollback targets |
 | `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product task prompt | `TASK-*` document-production task protocol with `phase: "REQUIREMENT_GATHERING"` |
 | `.codex/skills/pjsdlc_architect_design/SKILL.md` | Design task prompt | `TASK-*` document-production task protocol with `phase: "ARCHITECTING"` |
 | `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Development execution prompt | one-task protocol, two-commit ledger, push requirement |
@@ -951,6 +961,15 @@ Any workflow phase task starts
 ```
 
 ```txt
+ARCHITECTING discovers PRD needs revision before development
+-> transition.py reads phase_contracts.yaml#phases.ARCHITECTING.returns
+-> python3 tools/transition.py --to REQUIREMENT_GATHERING is legal without --force
+-> lifecycle active_role/active_skill become pm/pjsdlc_pm_prd
+-> PM updates PRD through one REQUIREMENT_GATHERING task and validate-pm
+-> transition.py --to ARCHITECTING resumes design
+```
+
+```txt
 SPRINTING task starts
 -> plan.yaml contains full open task contract
 -> agent edits only allowed_paths
@@ -977,6 +996,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
 - `current_phase` belongs only to `lifecycle.yaml`; `plan.yaml`, `plan.draft.yaml` and `parallel_execution` must not duplicate it.
+- `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
 - `plan.draft.yaml` is not active execution state and must not contain `current_task_id`.
 - Field audit: `active_role`, `active_skill`, `current_milestone`, `blocked_reason`, `suspended_phase` and `allowed_next_phases` are lifecycle-only; `current_task_id` and `next_task_sequence` are plan-only; `tasks[].phase` is semantic task classification rather than current lifecycle state and remains on each task.
 - Every phase task is task-controlled: one `TASK-*` task should produce one bounded document slice, review batch, test evidence set, release artifact set, RFC impact slice or development change.
@@ -1002,6 +1022,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | `python3 tools/validate_plan.py` | Current plan shape and no remaining open tasks | PASS in Harness gates |
 | `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
 | `tests/sdlc-harness/validators.test.mjs` | Package validator plan task and optional parallel contract acceptance/failure cases | PASS for TASK-059 |
+| `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
 | `npm test --workspace agent-project-sdlc` | Package migration and validator parity | PASS for TASK-059; 9 tests passed |
 | `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
@@ -1018,6 +1039,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-27 | `DEV-056` | Working tree | Extended `plan.yaml` task control to PRD and design document generation, slicing and fact-source synthesis. |
 | 2026-05-27 | `TASK-057` | Working tree | Unified all new workflow tasks under `TASK-*` with `phase`, expanded plan control to review/test/release/RFC, and kept legacy task prefixes compatible. |
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from plan files and parallel execution contracts. |
+| 2026-05-28 | `TASK-061` | Working tree | Added `phase_contracts.yaml#returns` and `transition.py` support so ARCHITECTING can return to REQUIREMENT_GATHERING for PRD edits before SPRINTING, while SPRINTING cannot directly return to PRD. |
 
 ## 9. 后续维护注意事项
 

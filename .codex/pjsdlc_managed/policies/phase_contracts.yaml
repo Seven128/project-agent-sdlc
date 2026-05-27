@@ -41,6 +41,8 @@ phases:
     gates:
       - "make validate-design"
     next: "SPRINTING"
+    returns:
+      - "REQUIREMENT_GATHERING"
 
   SPRINTING:
     goal: "按任务状态执行开发、测试和实现文档沉淀"

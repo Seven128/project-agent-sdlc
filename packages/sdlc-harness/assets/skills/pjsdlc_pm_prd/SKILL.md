@@ -19,6 +19,8 @@ description: Use during REQUIREMENT_GATHERING to turn raw input into PRD slices 
 
 PRD 产出本身是 workflow task，而不是一次性长文档生成。无论来源是对话式需求澄清、既有完整文档切片，还是根据 `.docs/00_raw/` 等事实源合成产品方案，都要先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "REQUIREMENT_GATHERING"`，只完成当前 `current_task_id` 对应的一片产物。不要在一个任务里连续创建大量 PRD 文件；如果需要多个 slices，先把后续 slices 拆成 pending tasks，当前轮只执行一个 task，方便网络中断后按 `plan.yaml` 恢复。
 
+如果项目已经进入 `ARCHITECTING` 但尚未进入 `SPRINTING`，用户发现 PRD 需要补充或调整时，Manager 可以先通过 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 回到本 Skill。此时按正常 PRD task protocol 修改 `.docs/01_product/**`，完成后再通过 `validate-pm` 回到 `ARCHITECTING`；进入 `SPRINTING` 后的需求变化仍走 RFC workflow。
+
 如果用户在需求阶段明确要求并行、多 agent 或多 worktree，Parallel Execution 只能用于调研、草稿、场景拆解、风险列表或 open questions 收集。worker 不直接写最终 PRD；主 Agent 必须合成最终 `.docs/01_product/**`，并把假设、分歧和未决项写入 PRD。没有用户显式要求时，不要启用 `parallel_execution`。
 
 ## 输入

@@ -19,6 +19,8 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 
 架构和技术方案产出本身也是 workflow task，而不是一次性长文档生成。无论来源是对话式设计、既有完整技术方案切片，还是根据 PRD/architecture 事实源生成新方案，都要先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "ARCHITECTING"`，只完成当前 `current_task_id` 对应的一片 architecture / tech plan / ADR / `plan.draft.yaml` 产物。不要在一个任务里连续创建大量设计文件；如果需要多个 slices，先拆出 pending tasks，当前轮只执行一个 task。
 
+如果在 `ARCHITECTING` 中发现 PRD 缺失、验收标准不清或产品边界需要调整，且项目尚未进入 `SPRINTING`，不要用架构文档替代产品事实。先收尾或移除当前 open design task，再请 Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 回到 PM/PRD 工作流修改 `.docs/01_product/**`。进入 `SPRINTING` 后的需求变化走 RFC workflow。
+
 ## 输入
 
 - `.docs/INDEX.md`

@@ -44,8 +44,8 @@ Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多
 11. 用户自然语言询问状态时，等价执行 `/status`。
 12. 用户自然语言要求继续、推进或下一步时，等价执行 `/next`。
 13. 用户自然语言要求进入下一阶段或检查是否可进入下一阶段时，等价执行 `/advance`。
-14. 用户自然语言表达需求或设计变化时，进入 RFC workflow。
-15. 用户输入 `/prd`，或自然语言要求“完善产品方案”“写 PRD”“文档切片”“我提供信息，你帮我完善产品方案”时，如果 `current_phase` 是 `REQUIREMENT_GATHERING`，调用产品方案工作流；该工作流必须先创建或选择一个最小 `TASK-*` open task，并设置 `phase: "REQUIREMENT_GATHERING"`，再执行一个 PRD 生成或切片 task；否则说明当前阶段冲突和推荐路径。
+14. 用户自然语言表达需求或设计变化时，先判断阶段：如果当前是 `ARCHITECTING` 且尚未进入开发，可以说明将回到 `REQUIREMENT_GATHERING` 并用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流；如果当前是 `SPRINTING` 或之后，进入 RFC workflow。
+15. 用户输入 `/prd`，或自然语言要求“完善产品方案”“写 PRD”“文档切片”“我提供信息，你帮我完善产品方案”时，如果 `current_phase` 是 `REQUIREMENT_GATHERING`，调用产品方案工作流；如果 `current_phase` 是 `ARCHITECTING`，先确认没有 open design task 需要收尾，说明将开发前回退到 `REQUIREMENT_GATHERING`，再用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切换到 PM/PRD 工作流；该工作流必须先创建或选择一个最小 `TASK-*` open task，并设置 `phase: "REQUIREMENT_GATHERING"`，再执行一个 PRD 生成或切片 task；否则说明当前阶段冲突和推荐路径。
 16. 用户输入 `/design`，或自然语言要求“设计技术方案”“做架构方案”“根据 PRD 做技术方案”“切技术方案”时，如果 `current_phase` 是 `ARCHITECTING`，调用架构和技术方案工作流；该工作流必须先创建或选择一个最小 `TASK-*` open task，并设置 `phase: "ARCHITECTING"`，再执行一个 architecture / tech plan / `plan.draft.yaml` 生成或切片 task；否则说明当前阶段冲突和推荐路径。
 17. 用户输入 `/dev`，或自然语言要求“开始开发”“做当前任务”“做下一个任务”“继续开发下一个任务”时，如果 `current_phase` 是 `SPRINTING`，创建或选择一个最小 `TASK-*` development task 并执行一个 task 闭环；否则说明当前阶段冲突和推荐路径。
 18. 用户输入 `/devloop`，或自然语言要求“开始循环：写任务，执行任务”“把开发循环跑完”“连续开发”时，如果 `current_phase` 是 `SPRINTING`，连续运行 `/dev` 循环，直到没有明确可做任务或遇到 blocker；否则说明当前阶段冲突和推荐路径。

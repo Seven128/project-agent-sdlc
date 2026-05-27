@@ -4,7 +4,7 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: natural language and command alias routing
-- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`, `TASK-057`
+- Updated by task: `DEV-034`, `DEV-036`, `DEV-043`, `DEV-050`, `TASK-057`, `TASK-061`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md` (`PRD-NPM-026`, `PRD-NPM-028`)
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_015`
@@ -18,6 +18,7 @@
   - `/prd` 产品方案入口和 `/design` 架构/技术方案入口。
   - `/dev` 单任务开发闭环和 `/devloop` 连续开发循环语义。
   - `/review`、`/test`、`/release` 和 `/rfc` 也通过 `TASK-*` open task 做小步恢复和阶段 gate 管控。
+  - `ARCHITECTING` 中的 `/prd` 或“需求要改”可以在开发前回到 `REQUIREMENT_GATHERING`，由 PM workflow 修改 PRD。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
   - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
 - 修改（Changed）:
@@ -58,6 +59,7 @@ User input
 - 输入校验（Input validation）: manager 在路由前必须读取 lifecycle 和 plan；如果当前阶段与用户意图冲突，先说明冲突和推荐路径。
 - 入口语义（Entry semantics）: `/xxx` 宏指令是更完整、更细节的提示词别名；自然语言入口映射到同一 action，但由 Agent 结合上下文补足细节。
 - 核心分支（Core branches）: `/prd` 只在需求阶段推进产品方案；`/design` 只在架构阶段推进 architecture / tech plan；`/dev` 执行一个最小 `TASK-*` development task 后停止；`/review`、`/test`、`/release` 和 `/rfc` 也各执行一个最小 `TASK-*`；`/devloop` 每完成一个 task 后重新读取当前状态，再决定是否继续。
+- 开发前 PRD 回退（Pre-development PRD rollback）: 如果当前阶段是 `ARCHITECTING`，用户要求改 PRD 或完善产品方案，Manager 可以先确认没有未收尾的 design task，然后用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM workflow；进入 `SPRINTING` 后同类需求变化必须走 RFC。
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
@@ -73,6 +75,7 @@ User input
 |---|---|---|
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets 与 source workspace 一致 | PASS |
 | `make validate-harness` | Harness scaffold、skill language、doc overview、implementation doc index | PASS |
+| `tests/sdlc-harness/transition.test.mjs` | ARCHITECTING 中 `/prd` 类需求可以回退到 PM 阶段，SPRINTING 不可直接回退 | PASS for TASK-061 |
 | `python3 tools/validate_allowed_paths.py` | DEV-036 修改范围符合 allowed_paths | PASS |
 | `git diff --check` | Markdown/YAML trailing whitespace 和 patch 格式 | PASS |
 
@@ -85,6 +88,7 @@ User input
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
 | 2026-05-27 | `TASK-057` | Working tree | 将 Review、测试、发布和 RFC 入口纳入统一 `TASK-*` 小任务路由语义。 |
+| 2026-05-28 | `TASK-061` | Working tree | 增加开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 的 `/prd` 和需求变化路由规则。 |
 
 ## 9. 后续维护注意事项
 
