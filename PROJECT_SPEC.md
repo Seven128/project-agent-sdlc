@@ -235,6 +235,8 @@ RAG 能减少一次性塞进上下文的内容，但固定 chunk 和余弦召回
 
 如果文档变化没有改变语义边界，更新原 slice；如果新增独立场景、拆分模块、合并流程或 RFC 改变影响范围，应新增、拆分、合并或废弃 slice，并更新 `.docs/INDEX.md`。
 
+`validate-design` 将 architecture / tech plan 语义切片作为硬约束。生成的 `overview.md` 不计入 deliverables；`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 引用存在的 `.docs/03_tech_plan/` slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确包含 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，必须有对应的专门 architecture slice。
+
 当用户明确要求把 `.docs/01_product/` 中既有完整 PRD/产品方案文件，或 `.docs/03_tech_plan/` 中既有完整技术方案文件切成多个 slices 时，完成条件不是“完整文件 + slices”并存。主 Agent 必须先确认 replacement slices 覆盖原文件中仍有效的事实；切片完成后更新 `.docs/INDEX.md`，技术方案还要同步 `plan.draft.yaml` 引用，并运行 `make docs-overview`；随后删除被替代的完整文件，避免同一事实源被重复检索和重复维护。`.docs/00_raw/` 原始记录不因 PRD slicing 自动删除。
 
 implementation doc 是最终实现产物的事实层，默认与技术架构和技术方案中的模块、子系统或核心数据流对应。task 是执行和提交边界，task id、commit 和 RFC 只作为 implementation doc 的 provenance；多个 task 可以更新同一份 implementation doc。不要在 `.docs/04_implementation/` 下维护按 task 编号铺开的 `dev_*.md` ledger；历史动作记录由 git commit、tag、release evidence 和模块级 implementation doc 共同承担。
@@ -452,7 +454,7 @@ make validate-rfc
 
 ### 9.2 阶段 gate
 - `validate-pm`：检查 PRD、验收标准、Out of Scope、Open Questions。
-- `validate-design`：检查架构、技术方案和 `plan.draft.yaml`。
+- `validate-design`：检查架构、技术方案、`plan.draft.yaml`、draft task 的 `docs.tech_plan` 引用、tech plan primary slice 去重和横切 architecture slice。
 - `validate-dev`：检查任务状态、open task plan 合同、lint、测试和 implementation docs。
 - `validate-review`：检查 Review report。
 - `validate-test`：检查 test plan、test matrix、回归和覆盖缺口。

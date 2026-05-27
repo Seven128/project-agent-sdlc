@@ -38,8 +38,18 @@ try {
     "utf8"
   );
   await writeFile(
+    path.join(root, ".docs/02_architecture/overview.md"),
+    "# Generated Architecture Overview\n\nGenerated overview should not count as a deliverable.\n",
+    "utf8"
+  );
+  await writeFile(
     path.join(root, ".docs/03_tech_plan/plan.md"),
     "# Plan\n\nAPI contract task breakdown\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".docs/03_tech_plan/overview.md"),
+    "# Generated Technical Plan Overview\n\nGenerated overview should not count as a deliverable.\n",
     "utf8"
   );
   await writeFile(path.join(root, ".docs/04_implementation/example/dev.md"), "# Impl\n", "utf8");
@@ -76,6 +86,34 @@ tasks: []
 `,
     "utf8"
   );
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 2
+tasks:
+  - id: TASK-001
+    phase: SPRINTING
+    title: Implement baseline fixture
+    status: pending
+    summary: Build the baseline package validator fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+      architecture:
+        - .docs/02_architecture/arch.md
+      tech_plan:
+        - .docs/03_tech_plan/plan.md
+    allowed_paths:
+      - src/**
+      - tests/**
+      - .docs/04_implementation/example/dev.md
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - Fixture task has a concrete tech plan slice.
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
 
   for (const gate of [
     "validate-harness",
@@ -104,6 +142,152 @@ tasks: []
     'current_phase: "REQUIREMENT_GATHERING"\n',
     "utf8"
   );
+
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 2
+tasks:
+  - id: TASK-001
+    phase: SPRINTING
+    title: Missing tech plan ref
+    status: pending
+    summary: Negative design slicing fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - src/**
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - Fixture fails design slicing.
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  let designReport = await runValidator(root, "validate-design");
+  assert.match(designReport.errors.join("\n"), /must reference at least one tech plan slice/);
+
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 3
+tasks:
+  - id: TASK-001
+    phase: SPRINTING
+    title: First shared plan task
+    status: pending
+    summary: Negative shared tech plan fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+      tech_plan:
+        - .docs/03_tech_plan/plan.md
+    allowed_paths:
+      - src/one/**
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - First task is scoped.
+    implementation_doc: .docs/04_implementation/example/dev.md
+  - id: TASK-002
+    phase: SPRINTING
+    title: Second shared plan task
+    status: pending
+    summary: Negative shared tech plan fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+      tech_plan:
+        - .docs/03_tech_plan/plan.md
+    allowed_paths:
+      - src/two/**
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - Second task is scoped.
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  designReport = await runValidator(root, "validate-design");
+  assert.match(designReport.errors.join("\n"), /distinct primary tech plan slices/);
+
+  await writeFile(
+    path.join(root, ".docs/03_tech_plan/plan_two.md"),
+    "# Plan Two\n\nAPI contract task breakdown for the second slice.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 3
+tasks:
+  - id: TASK-001
+    phase: SPRINTING
+    title: First sliced plan task
+    status: pending
+    summary: Positive split tech plan fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+      tech_plan:
+        - .docs/03_tech_plan/plan.md
+    allowed_paths:
+      - src/one/**
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - First task is scoped.
+    implementation_doc: .docs/04_implementation/example/dev.md
+  - id: TASK-002
+    phase: SPRINTING
+    title: Second sliced plan task
+    status: pending
+    summary: Positive split tech plan fixture.
+    docs:
+      product:
+        - .docs/01_product/prd.md
+      tech_plan:
+        - .docs/03_tech_plan/plan_two.md
+    allowed_paths:
+      - src/two/**
+    required_gates:
+      - npm test
+    acceptance_criteria:
+      - Second task is scoped.
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  designReport = await runValidator(root, "validate-design");
+  assert.deepEqual(designReport.errors, [], "validate-design allows distinct tech plan slices");
+
+  await writeFile(
+    path.join(root, ".docs/01_product/prd.md"),
+    "# PRD\n\nThe product includes an AI provider, one external system, and compliance audit workflows.\n\n## Acceptance Criteria\n\n## Out of Scope\n\n## Open Questions\n",
+    "utf8"
+  );
+  designReport = await runValidator(root, "validate-design");
+  assert.match(designReport.errors.join("\n"), /dedicated AI copilot\/provider architecture slice/);
+  assert.match(designReport.errors.join("\n"), /dedicated external system boundary architecture slice/);
+  assert.match(designReport.errors.join("\n"), /dedicated compliance\/permission\/audit architecture slice/);
+
+  await writeFile(
+    path.join(root, ".docs/02_architecture/ai.md"),
+    "# AI Provider Architecture\n\nThe AI provider boundary defines prompt handling and model access.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".docs/02_architecture/external.md"),
+    "# External System Architecture\n\nThe external system boundary uses an adapter interface.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".docs/02_architecture/compliance.md"),
+    "# Compliance Architecture\n\nCompliance audit and permission controls protect authorization flows.\n",
+    "utf8"
+  );
+  designReport = await runValidator(root, "validate-design");
+  assert.deepEqual(designReport.errors, [], "validate-design accepts dedicated cross-cutting architecture slices");
 
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),

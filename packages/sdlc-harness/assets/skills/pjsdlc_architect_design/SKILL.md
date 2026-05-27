@@ -44,6 +44,9 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 - `.docs/03_tech_plan/` 按可实现范围、接口契约、数据模型、模块方案或任务组切片。
 - `.docs/05_decisions/` 按单个架构决策切片，即一份 ADR 只记录一个 durable decision。
 - 如果一个技术方案跨越多个独立模块，应拆成多个 tech plan slice，并在 `plan.draft.yaml` 中分别引用。
+- `plan.draft.yaml` 中每个开发 draft task 必须在 `docs.tech_plan` 引用已有 `.docs/03_tech_plan/` slice；多个开发 draft task 默认应引用不同的 primary tech plan slice，不能用一个总纲 tech plan 覆盖全部模块任务。
+- `overview.md` 是 generated artifact，不算 architecture / tech plan deliverable，也不能作为 `docs.tech_plan` 引用。
+- 如果 PRD、tech plan 或 draft task 明确出现 AI provider / AI copilot、外部系统边界、合规 / 权限 / 审计等横切主题，应各自有专门的 architecture slice；不要把多个横切架构问题都塞进一个总览文档。
 - 如果实现计划改变了已有模块边界，应更新相关 architecture slice，而不是只在 task 描述里补一句。
 - 如果用户明确要求把既有完整技术方案文件切成多个 `.docs/03_tech_plan/` slices，先确认 replacement slices 覆盖原文件中仍有效的接口契约、数据模型、模块方案、任务组和 gate；切片完成并更新 `plan.draft.yaml` 引用、`.docs/INDEX.md`、刷新 `overview.md` 后，删除被替代的完整 tech plan file，避免同一事实由完整文件和 slices 双重保留。
 - 每次新增、拆分、合并或废弃 slice 后，都要更新 `.docs/INDEX.md`。
@@ -59,15 +62,17 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 5. 执行当前 task 时只编辑 `allowed_paths` 中的文件，完成后更新 `.docs/INDEX.md`、运行 `make docs-overview`，并至少运行 `make validate-plan`；阶段出口前再运行 `make validate-design`。
 6. task 完成后，从 `plan.yaml.tasks` 移除该 task；如果仍有 pending `TASK-*` design task，下一轮 `/design` 或 `/next` 再继续。
 7. 如果网络或上下文中断，新会话先读取 `current_task_id` 和当前 open task，按 `working_notes` 恢复，而不是重新生成全量技术方案。
+8. `make validate-design` 会硬性检查 `plan.draft.yaml` 的 task shape、`docs.tech_plan` 引用、tech plan primary slice 去重，以及横切 architecture slice；不要把这些要求只写成自然语言建议。
 
 ## 规则
 
 1. 技术方案必须引用 PRD 路径和 requirement IDs。
 2. 每个 open task 必须包含 `id`、`phase`、`title`、`status`、`summary`、`docs`、`allowed_paths`、`required_gates`、`acceptance_criteria` 和 `result_docs`；开发阶段 task 继续使用 `implementation_doc`。
 3. `plan.draft.yaml` 不得自动覆盖 `plan.yaml`。
-4. 风险或不清晰的问题按 `<harnessRoot>/pjsdlc_managed/policies/risk_matrix.yaml` 标记。
-5. 任务边界应足够小，能在一次设计执行内闭环；`result_docs` 应指向将被更新或新增的 architecture、tech plan、ADR 或 `plan.draft.yaml` 文件。
-6. `make validate-design` 是阶段出口 gate；如果还有 open `TASK-*` design task，不要请求进入 `SPRINTING`。
+4. `plan.draft.yaml` 中开发 draft task 的 `docs.tech_plan` 必须指向存在的 tech plan slice；如果 task 数量超过一个，不能全部指向同一个 primary tech plan 文件。
+5. 风险或不清晰的问题按 `<harnessRoot>/pjsdlc_managed/policies/risk_matrix.yaml` 标记。
+6. 任务边界应足够小，能在一次设计执行内闭环；`result_docs` 应指向将被更新或新增的 architecture、tech plan、ADR 或 `plan.draft.yaml` 文件。
+7. `make validate-design` 是阶段出口 gate；如果还有 open `TASK-*` design task，不要请求进入 `SPRINTING`。
 
 ## 完成检查
 
@@ -76,6 +81,7 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 - [ ] 当前设计产出或切片工作已绑定 `plan.yaml` 中一个最小 `TASK-*` task，并设置 `phase: "ARCHITECTING"`。
 - [ ] 当前 task 已从 `plan.yaml` 移除，或因中断/blocker 保留为可恢复 open task。
 - [ ] 已判断 architecture / tech plan / ADR 的语义切片边界。
+- [ ] `plan.draft.yaml` 中每个开发 draft task 已通过 `docs.tech_plan` 绑定到对应 tech plan slice。
 - [ ] 如果用户要求把完整技术方案切成 tech plan slices，已删除被替代的完整 tech plan file，并同步 `plan.draft.yaml` 引用。
 - [ ] task draft 字段完整且范围清晰。
 - [ ] `.docs/INDEX.md` 已链接新增产物。

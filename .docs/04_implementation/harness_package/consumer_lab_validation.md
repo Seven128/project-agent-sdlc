@@ -4,7 +4,7 @@
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: installed-consumer workflow validation
-- Updated by task: `DEV-051`, `DEV-052`, `TASK-057`
+- Updated by task: `DEV-051`, `DEV-052`, `TASK-057`, `TASK-060`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked test evidence: `.docs/07_test/harness_consumer_lab.md`
 - External lab repository: `/Users/momoooo/Documents/sdlc-harness-consumer-lab`
@@ -49,6 +49,7 @@ Key options:
 - Managed assets: `AGENTS.md`, `Makefile`, `.codex/state/**`, `.codex/skills/**`, `.codex/pjsdlc_managed/**`, and `.github/workflows/harness.yml`.
 - Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
 - Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
+- Design fixture: `plan.draft.yaml` references the toy technical plan through `docs.tech_plan`, so installed-consumer `validate-design` covers the strengthened design slicing contract.
 - Protocol checks: retained done task rejection, retained open task rejection, valid explicit `parallel_execution`, and invalid automatic parallel trigger rejection.
 - Static checks: natural-language routing text, GitHub workflow asset, and release automation script presence.
 
@@ -70,8 +71,9 @@ The scripted report also produces defect candidates and a recommended RFC title 
 | Command | Result |
 |---|---|
 | `npm test` | PASS |
+| `npm test --workspace agent-project-sdlc` | PASS for TASK-060 package validator regression; 9 tests passed |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS for script execution; report decision BLOCKED due known Makefile/tools package gap; lab deleted after run |
+| `node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS for TASK-060 script execution; CLI `validate-design` PASS; report decision BLOCKED due known Makefile/tools package gap; 37 PASS / 7 BLOCKED / 0 FAIL; lab deleted after run |
 | `test ! -e /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS after default full lab run |
 | Lab supported package capability subset | PASS: 37 checks |
 | Lab full documented workflow | BLOCKED: 7 known package gaps, 0 unexpected failures |

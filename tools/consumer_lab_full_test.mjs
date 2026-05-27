@@ -453,6 +453,10 @@ tasks:
     docs:
       product:
         - ".docs/01_product/text_summary_prd.md"
+      architecture:
+        - ".docs/02_architecture/text_summary_architecture.md"
+      tech_plan:
+        - ".docs/03_tech_plan/text_summary_plan.md"
     allowed_paths:
       - "src/**"
       - "tests/**"

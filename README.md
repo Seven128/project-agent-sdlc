@@ -60,7 +60,7 @@ npx sdlc-harness init --adopt
 | 同步 managed workflow 文件 | `npx sdlc-harness sync` | 从包内 canonical assets 物化 `AGENTS.md` managed block、workflow skills、templates、policies、Makefile 片段和 GitHub workflow |
 | 升级已接入项目 | `npx sdlc-harness upgrade` | 执行迁移并自动 `sync`，保留 state、docs、业务代码和本地 override |
 | 接入诊断 | `npx sdlc-harness doctor` | 检查 harness root、版本、schema、关键文件和 managed paths |
-| 阶段 gate | `npx sdlc-harness validate-*`、`make validate-current`、`make validate-harness` | 校验需求、设计、开发、Review、测试、发布、RFC、Harness 骨架、提示词语言契约和 overview freshness |
+| 阶段 gate | `npx sdlc-harness validate-*`、`make validate-current`、`make validate-harness` | 校验需求、设计切片、开发、Review、测试、发布、RFC、Harness 骨架、提示词语言契约和 overview freshness |
 | 生命周期工作流 | `lifecycle.yaml`、`plan.yaml`、`.docs/**` | 固定 REQUIREMENT_GATHERING、ARCHITECTING、SPRINTING、REVIEWING、TESTING、RELEASING、RFC_RECALIBRATION 等阶段事实链 |
 | 阶段小任务管控 | `plan.yaml`、`make validate-plan` | 每个阶段的 Agent 主任务都应拆成足够小的 `TASK-*` open task，并用 `phase` 标明所属阶段 |
 | 自然语言控制 | `AGENTS.md` + workflow skills | 用户可说“继续”“开始开发”“跑测试”“需求变了”等，由 Agent 映射到 `/next`、`/dev`、`/test`、RFC 等动作 |
@@ -96,6 +96,8 @@ npx sdlc-harness init --adopt
 ```
 
 Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/plan.yaml`，再按当前阶段选择对应 workflow skill、产物和 gate。任何阶段的 Agent 主任务都不是一次性长生成：产品方案、技术方案、文档切片、基于上一阶段事实源生成、Review、测试、发布和 RFC 处理，都应先落成一个最小 `TASK-*` open task，并设置对应 `phase`；当前轮只执行一个 task，写入 `result_docs` 或 `implementation_doc`、更新索引和 overview，运行 `make validate-plan`，任务完成后再从 `plan.yaml` 移除。
+
+`validate-design` 会把架构阶段的语义切片作为硬 gate：`overview.md` 不计入 deliverables，`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 指向存在的 tech plan slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确出现 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，也需要对应的专门 architecture slice。
 
 ### Workflow skill 如何生效
 

@@ -40,6 +40,8 @@ tasks:
         - ".docs/00_raw/example.md"
       product:
         - ".docs/01_product/example.md"
+      architecture: []
+      tech_plan: []
       rfc: []
     allowed_paths:
       - ".docs/00_raw/**"

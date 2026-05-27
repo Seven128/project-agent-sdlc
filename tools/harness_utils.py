@@ -294,7 +294,7 @@ def markdown_deliverables(relative_dir: str) -> list[Path]:
     return sorted(
         path
         for path in directory.rglob("*.md")
-        if path.name.upper() != "README.MD" and not path.name.startswith(".")
+        if path.name.upper() not in {"README.MD", "OVERVIEW.MD"} and not path.name.startswith(".")
     )
 
 

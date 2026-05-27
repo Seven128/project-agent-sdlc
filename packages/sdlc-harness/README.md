@@ -25,7 +25,7 @@ npx sdlc-harness init --adopt
 | Managed file sync | `npx sdlc-harness sync` | Materializes package canonical assets into the configured Harness root while preserving project state, docs and local overrides. |
 | Upgrade | `npx sdlc-harness upgrade` | Runs migrations and sync for already-adopted projects. |
 | Diagnostics | `npx sdlc-harness doctor` | Reports Harness root, package version, schema version and key managed paths. |
-| Validators | `npx sdlc-harness validate-*`, `make validate-current`, `make validate-harness` | Checks product, design, development, review, test, release, RFC, active plan shape, prompt language contract and generated overview freshness. |
+| Validators | `npx sdlc-harness validate-*`, `make validate-current`, `make validate-harness` | Checks product, design slicing, development, review, test, release, RFC, active plan shape, prompt language contract and generated overview freshness. |
 | Lifecycle workflow | `<harnessRoot>/state/lifecycle.yaml`, `<harnessRoot>/state/plan.yaml`, `.docs/**` | Tracks REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING and RFC_RECALIBRATION facts. |
 | Stage task control | `plan.yaml`, `make validate-plan`, `npx sdlc-harness validate-plan` | Keeps each stage's agent work in small `TASK-*` tasks with `phase` metadata and scoped paths/gates. |
 | Natural-language control | `AGENTS.md` plus workflow skills | Lets users say things like "continue", "start development", "run tests" or "requirements changed"; agents map these to workflow actions. |
@@ -75,6 +75,8 @@ The CLI does not promise to automatically launch Codex agents. Workers do not ne
 ## Stage Task Control
 
 Every stage's agent work is plan-controlled. Conversational PRD or design creation, existing document slicing, fact-source-based synthesis, development, review, testing, release preparation and RFC recalibration should create or resume one small `TASK-*` task in `plan.yaml` with a valid `phase`, write the current task's `result_docs` or `implementation_doc`, update indexes/overviews, run `validate-plan`, and remove the task after completion. Phase exit validators reject remaining open tasks.
+
+`validate-design` treats semantic slicing as a hard gate. Generated `overview.md` files do not count as deliverables, development draft tasks in `plan.draft.yaml` must reference existing tech plan slices through `docs.tech_plan`, multiple development draft tasks need distinct primary tech plan slices, and explicit AI provider/copilot, external-system, or compliance/permission/audit themes require dedicated architecture slices.
 
 ## Common Commands
 

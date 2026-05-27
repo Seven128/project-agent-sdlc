@@ -16,6 +16,25 @@ type Validator = (projectRoot: string) => Promise<ValidatorReport>;
 const PARALLEL_MODES = new Set(["runtime_managed", "user_orchestrated"]);
 const TASK_PHASES = new Set(["REQUIREMENT_GATHERING", "ARCHITECTING", "SPRINTING", "REVIEWING", "TESTING", "RELEASING", "RFC_RECALIBRATION"]);
 const PARALLEL_ALLOWED_PHASES = new Set(["REQUIREMENT_GATHERING", "SPRINTING", "TESTING"]);
+const TASK_STATUSES = new Set(["pending", "in_progress", "done", "blocked", "pending_revision", "cancelled"]);
+const OPEN_TASK_STATUSES = new Set(["pending", "in_progress", "blocked", "pending_revision"]);
+const DESIGN_CATEGORIES = [
+  {
+    label: "AI copilot/provider",
+    triggerTerms: ["ai provider", "ai output", "aioutput", "llm", "copilot", "副驾驶"],
+    architectureTerms: ["ai provider", "ai output", "llm", "copilot", "副驾驶", "模型", "智能", "prompt"]
+  },
+  {
+    label: "external system boundary",
+    triggerTerms: ["external system", "external integration", "webhook", "外部系统", "第三方", "微信", "工商", "税务", "社保", "公积金", "金蝶", "对象存储"],
+    architectureTerms: ["external system", "external integration", "webhook", "adapter", "适配", "边界", "外部系统", "第三方", "微信", "工商", "税务", "社保", "公积金", "金蝶", "对象存储"]
+  },
+  {
+    label: "compliance/permission/audit",
+    triggerTerms: ["compliance", "authorization", "audit log", "audit trail", "合规", "授权", "客户确认", "回执归档", "权限模型", "权限控制", "权限架构", "审计架构", "审计日志"],
+    architectureTerms: ["compliance", "permission", "authorization", "audit", "合规", "权限", "审计", "授权", "客户确认", "回执归档"]
+  }
+];
 
 const validators: Record<string, Validator> = {
   "validate-harness": validateHarness,
@@ -92,9 +111,12 @@ async function validatePm(projectRoot: string): Promise<ValidatorReport> {
 }
 
 async function validateDesign(projectRoot: string): Promise<ValidatorReport> {
-  const plan = await validatePlanState(projectRoot, false);
+  const root = await harnessRoot(projectRoot);
+  const lifecycle = await readYamlObject(path.join(projectRoot, root, "state", "lifecycle.yaml"));
+  const plan = await validatePlanState(projectRoot, String(lifecycle.current_phase ?? "") !== "ARCHITECTING");
   const architecture = await markdownFiles(path.join(projectRoot, ".docs/02_architecture"));
   const techPlan = await markdownFiles(path.join(projectRoot, ".docs/03_tech_plan"));
+  const product = await markdownFiles(path.join(projectRoot, ".docs/01_product"));
   const text = await combinedText([...architecture, ...techPlan]);
   const errors: string[] = [...plan.errors];
   if (architecture.length === 0) errors.push("No architecture deliverables found");
@@ -102,6 +124,9 @@ async function validateDesign(projectRoot: string): Promise<ValidatorReport> {
   if (!containsAny(text, ["prd", "requirement", "需求"])) errors.push("Design must cite product requirements");
   if (!containsAny(text, ["api", "interface", "接口", "contract", "契约"])) errors.push("Design must describe interfaces or contracts");
   if (!containsAny(text, ["task", "任务", "breakdown"])) errors.push("Design must include task breakdown");
+  const draft = await validateDesignDraft(projectRoot, root, techPlan);
+  errors.push(...draft.errors);
+  errors.push(...(await validateCrossCuttingArchitecture(projectRoot, product, techPlan, architecture, draft.tasks)));
   return { info: [`validate-design checked ${architecture.length + techPlan.length} file(s)`], errors };
 }
 
@@ -109,6 +134,150 @@ async function validatePlan(projectRoot: string): Promise<ValidatorReport> {
   const plan = await validatePlanState(projectRoot, true);
   const pathErrors = await validateChangedPaths(projectRoot, plan.plan, true);
   return { info: [`validate-plan checked ${plan.taskCount} task(s)`], errors: [...plan.errors, ...pathErrors] };
+}
+
+async function validateDesignDraft(
+  projectRoot: string,
+  root: string,
+  techPlanFiles: string[]
+): Promise<{ errors: string[]; tasks: Array<Record<string, unknown>> }> {
+  const errors: string[] = [];
+  const draft = await readYamlObject(path.join(projectRoot, root, "state", "plan.draft.yaml"));
+  if ("current_phase" in draft) {
+    errors.push("plan.draft.yaml must not define current_phase; lifecycle.yaml is the single source for current_phase");
+  }
+  if ("current_task_id" in draft) {
+    errors.push("plan.draft.yaml must not define current_task_id because drafts are not active task state");
+  }
+
+  const rawTasks = draft.tasks;
+  if (!Array.isArray(rawTasks) || rawTasks.length === 0) {
+    errors.push("plan.draft.yaml must contain at least one task before leaving ARCHITECTING");
+    return { errors, tasks: [] };
+  }
+
+  const tasks = rawTasks.filter(isRecord);
+  const availableTechPlans = new Set(techPlanFiles.map((file) => repoRelative(projectRoot, file)));
+  const developmentTasks: Array<Record<string, unknown>> = [];
+  const primaryRefs: string[] = [];
+  rawTasks.forEach((rawTask, index) => {
+    if (!isRecord(rawTask)) {
+      errors.push(`Task draft #${index + 1} must be a mapping`);
+      return;
+    }
+    validateDraftTaskShape(rawTask, index, errors);
+    if (rawTask.status !== "pending") {
+      errors.push(`Draft task ${String(rawTask.id ?? "")} should start as pending`);
+    }
+    if (!isDevelopmentDraft(rawTask)) return;
+
+    developmentTasks.push(rawTask);
+    if (!isRecord(rawTask.docs)) {
+      errors.push(`Draft task ${String(rawTask.id ?? "")} docs must be a mapping`);
+      return;
+    }
+    const techRefs = asStringList(rawTask.docs.tech_plan);
+    if (techRefs.length === 0) {
+      errors.push(`Draft task ${String(rawTask.id ?? "")} must reference at least one tech plan slice in docs.tech_plan`);
+      return;
+    }
+    const normalizedRefs = techRefs.map(normalizeDocRef);
+    for (const ref of normalizedRefs) {
+      if (!ref.startsWith(".docs/03_tech_plan/")) {
+        errors.push(`Draft task ${String(rawTask.id ?? "")} docs.tech_plan must point into .docs/03_tech_plan/: ${ref}`);
+      } else if (!availableTechPlans.has(ref)) {
+        errors.push(`Draft task ${String(rawTask.id ?? "")} references missing or generated tech plan slice: ${ref}`);
+      }
+    }
+    primaryRefs.push(normalizedRefs[0]);
+  });
+
+  if (developmentTasks.length === 0) {
+    errors.push("plan.draft.yaml must contain at least one development task with implementation_doc");
+  }
+  if (developmentTasks.length > 1 && new Set(primaryRefs).size !== primaryRefs.length) {
+    errors.push("Draft development tasks must reference distinct primary tech plan slices in docs.tech_plan");
+  }
+  return { errors, tasks };
+}
+
+function validateDraftTaskShape(task: Record<string, unknown>, index: number, errors: string[]): void {
+  const prefix = `Task #${index + 1}`;
+  for (const field of ["id", "title", "status", "summary"]) {
+    if (!task[field]) errors.push(`${prefix} missing field: ${field}`);
+  }
+  const taskId = String(task.id ?? "");
+  if (!/^[A-Z]+-\d+$/.test(taskId)) {
+    errors.push(`${taskId || prefix} id must match PREFIX-###`);
+  }
+  if (taskId.startsWith("TASK-") && !TASK_PHASES.has(String(task.phase ?? ""))) {
+    errors.push(`${taskId} must define valid phase`);
+  } else if (task.phase !== undefined && !TASK_PHASES.has(String(task.phase))) {
+    errors.push(`${taskId} has invalid phase: ${String(task.phase)}`);
+  }
+  if (!TASK_STATUSES.has(String(task.status))) {
+    errors.push(`${String(task.id ?? prefix)} has invalid status: ${String(task.status)}`);
+  }
+  if (typeof task.summary !== "string" || !task.summary.trim()) {
+    errors.push(`${String(task.id ?? prefix)} must define summary`);
+  }
+  const hasImplementationDoc = typeof task.implementation_doc === "string" && task.implementation_doc.trim().length > 0;
+  const hasResultDocs = Array.isArray(task.result_docs) && task.result_docs.length > 0;
+  if (!hasImplementationDoc && !hasResultDocs) {
+    errors.push(`${String(task.id ?? prefix)} must define implementation_doc or result_docs`);
+  }
+  if (OPEN_TASK_STATUSES.has(String(task.status))) {
+    if ("gate_result" in task) errors.push(`${String(task.id ?? prefix)} open task must not define gate_result`);
+    for (const field of ["docs", "allowed_paths", "required_gates", "acceptance_criteria"]) {
+      if (!task[field]) errors.push(`${String(task.id ?? prefix)} open task missing field: ${field}`);
+    }
+    if (!isRecord(task.docs)) errors.push(`${String(task.id ?? prefix)} docs must be a mapping`);
+    if (!Array.isArray(task.allowed_paths) || task.allowed_paths.length === 0) {
+      errors.push(`${String(task.id ?? prefix)} must define allowed_paths`);
+    }
+    if (!Array.isArray(task.required_gates) || task.required_gates.length === 0) {
+      errors.push(`${String(task.id ?? prefix)} must define required_gates`);
+    }
+    if (!Array.isArray(task.acceptance_criteria) || task.acceptance_criteria.length === 0) {
+      errors.push(`${String(task.id ?? prefix)} must define acceptance_criteria`);
+    }
+  } else {
+    for (const field of ["docs", "allowed_paths", "required_gates", "acceptance_criteria", "working_notes", "gate_result", "result_docs"]) {
+      if (field in task) errors.push(`${String(task.id ?? prefix)} closed task must not retain ${field}`);
+    }
+  }
+}
+
+async function validateCrossCuttingArchitecture(
+  projectRoot: string,
+  productFiles: string[],
+  techPlanFiles: string[],
+  architectureFiles: string[],
+  draftTasks: Array<Record<string, unknown>>
+): Promise<string[]> {
+  const errors: string[] = [];
+  const sourceText = [
+    await combinedText(productFiles),
+    await combinedText(techPlanFiles),
+    draftTasks.map(taskText).join("\n")
+  ].join("\n");
+  const architectureTexts = await Promise.all(
+    architectureFiles.map(async (file) => ({ file, text: await readText(file) }))
+  );
+  const assigned = new Set<string>();
+
+  for (const category of DESIGN_CATEGORIES) {
+    if (!containsAny(sourceText, category.triggerTerms)) continue;
+    const match = architectureTexts.find(
+      (doc) => !assigned.has(repoRelative(projectRoot, doc.file)) && containsAny(doc.text, category.architectureTerms)
+    );
+    if (!match) {
+      errors.push(`Design requires a dedicated ${category.label} architecture slice`);
+    } else {
+      assigned.add(repoRelative(projectRoot, match.file));
+    }
+  }
+  return errors;
 }
 
 async function validateDev(projectRoot: string): Promise<ValidatorReport> {
@@ -374,7 +543,10 @@ async function readYamlObject(filePath: string): Promise<Record<string, unknown>
 
 async function markdownFiles(root: string): Promise<string[]> {
   const files = await listFiles(root);
-  return files.filter((file) => file.endsWith(".md") && !file.endsWith("overview.md"));
+  return files.filter((file) => {
+    const name = path.basename(file).toLowerCase();
+    return file.endsWith(".md") && name !== "overview.md" && name !== "readme.md";
+  });
 }
 
 async function combinedText(files: string[]): Promise<string> {
@@ -383,7 +555,40 @@ async function combinedText(files: string[]): Promise<string> {
 }
 
 function containsAny(text: string, needles: string[]): boolean {
-  return needles.some((needle) => text.includes(needle.toLowerCase()));
+  const lowered = text.toLowerCase();
+  return needles.some((needle) => lowered.includes(needle.toLowerCase()));
+}
+
+function isDevelopmentDraft(task: Record<string, unknown>): boolean {
+  const taskId = String(task.id ?? "");
+  return Boolean(task.implementation_doc) || task.phase === "SPRINTING" || taskId.startsWith("DEV-");
+}
+
+function asStringList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+  if (typeof value === "string" && value.trim()) return [value.trim()];
+  return [];
+}
+
+function normalizeDocRef(value: string): string {
+  const normalized = value.replace(/\\/g, "/");
+  return normalized.startsWith("./") ? normalized.slice(2) : normalized;
+}
+
+function repoRelative(projectRoot: string, file: string): string {
+  return path.relative(projectRoot, file).split(path.sep).join("/");
+}
+
+function taskText(task: Record<string, unknown>): string {
+  const parts = ["id", "title", "summary", "phase"].map((key) => String(task[key] ?? "")).filter(Boolean);
+  if (isRecord(task.docs)) {
+    for (const value of Object.values(task.docs)) {
+      parts.push(...asStringList(value));
+    }
+  }
+  return parts.join("\n");
 }
 
 export async function changedFiles(projectRoot: string): Promise<string[]> {

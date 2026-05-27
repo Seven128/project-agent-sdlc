@@ -269,6 +269,8 @@ tasks:
 
 文档、Review、测试、发布和 RFC 类 task 使用 `result_docs` 指向本 task 产出的 PRD、architecture、tech plan、ADR、review report、test plan、release note、RFC 或 `plan.draft.yaml`。开发 task 使用 `implementation_doc` 指向模块级实现事实文档。task 完成后，将该 task 从 `plan.yaml` 的 `tasks` 列表移除。开发阶段仍采用两段提交：先在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；再移除 task，并创建 task completion ledger commit。历史动作记录由 git commit 承载，产物结果由 `.docs/**` slice、`plan.draft.yaml`、Review/Test/Release/RFC 文档或模块级 implementation doc 承载；Harness 不再维护 checkpoint 文件或 `<harnessRoot>/archive/**` 作为常规归档事实源。
 
+架构阶段的 `validate-design` 不再只检查目录里是否有 Markdown。`overview.md` 和 `README.md` 不计入 architecture / tech plan deliverables；`plan.draft.yaml` 中每个开发 draft task 必须在 `docs.tech_plan` 指向存在的 `.docs/03_tech_plan/` slice；多个开发 draft task 的 primary tech plan slice 不能全部相同。PRD、tech plan 或 draft task 明确包含需要独立架构边界的横切主题时，gate 要求对应专门 architecture slice，避免一个总纲文档掩盖模块级事实源。
+
 默认不追溯 done task 的执行流水。历史 task 查询主要面向“做了什么、为什么做、影响哪个模块、验证了什么”，默认读取模块级 implementation doc、RFC、PRD、tech plan 和代码。task id 和 commit 只作为 provenance；`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。
 
 #### Optional parallel_execution contract

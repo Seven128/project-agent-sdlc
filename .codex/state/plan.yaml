@@ -1,3 +1,57 @@
-current_task_id: ""
-next_task_sequence: 60
-tasks: []
+current_task_id: "TASK-060"
+next_task_sequence: 61
+tasks:
+  - id: "TASK-060"
+    title: "Enforce semantic design slicing in validate-design"
+    phase: "SPRINTING"
+    status: "in_progress"
+    summary: "把 ARCHITECTING 阶段的语义切片要求从 Skill 提示升级为 Python 和 package validator 的硬 gate，并同步文档与测试。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      architecture:
+        - ".docs/02_architecture/harness_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - ".codex/state/plan.draft.yaml"
+      - ".codex/skills/pjsdlc_architect_design/SKILL.md"
+      - ".codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"
+      - "AGENTS.md"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".docs/03_tech_plan/harness_package_distribution.md"
+      - ".docs/03_tech_plan/overview.md"
+      - ".docs/04_implementation/harness_workflow/docs_overview_and_validation.md"
+      - ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
+      - ".docs/04_implementation/harness_package/consumer_lab_validation.md"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+      - "packages/sdlc-harness/README.md"
+      - "packages/sdlc-harness/assets/**"
+      - "packages/sdlc-harness/src/lib/validators.ts"
+      - "tests/sdlc-harness/*.mjs"
+      - "tools/harness_utils.py"
+      - "tools/validate_design.py"
+      - "tools/validate_plan_draft.py"
+      - "tools/consumer_lab_full_test.mjs"
+    required_gates:
+      - "make validate-plan"
+      - "make validate-design"
+      - "npm test --workspace agent-project-sdlc"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make docs-overview"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "`make validate-design` excludes generated `overview.md` from design deliverables."
+      - "`make validate-design` requires `plan.draft.yaml` draft tasks to reference existing tech plan slices via `docs.tech_plan`."
+      - "Multiple draft development tasks cannot be satisfied by one shared monolithic tech plan slice."
+      - "Cross-cutting design areas inferred from PRDs/tasks require dedicated architecture slices."
+      - "Package validator, source assets, docs, tests, and consumer lab stay in sync with the new gate behavior."
+    implementation_doc: ".docs/04_implementation/harness_workflow/docs_overview_and_validation.md"
+    working_notes:
+      - "Task created to convert architect semantic slicing guidance into hard validate-design checks."
+      - "Verification PASS: make validate-plan; make validate-design; npm test --workspace agent-project-sdlc; node packages/sdlc-harness/dist/cli.js package sync-source; node packages/sdlc-harness/dist/cli.js package check-source; make docs-overview; make validate-harness; git diff --check."
+      - "Consumer lab PASS/BLOCKED as expected: node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab reported 37 PASS, 7 known BLOCKED Makefile/tools gaps, 0 FAIL; CLI validate-design PASS."

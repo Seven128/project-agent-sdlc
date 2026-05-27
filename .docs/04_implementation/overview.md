@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 42a083543dae829c -->
+<!-- source-hash: 3c447567676d1748 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `42a083543dae829c`
+Source hash: `3c447567676d1748`
 
 ## Source Slices
 
@@ -149,7 +149,7 @@ Source: [harness_package/consumer_lab_validation.md](harness_package/consumer_la
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: installed-consumer workflow validation
-- Updated by task: `DEV-051`, `DEV-052`, `TASK-057`
+- Updated by task: `DEV-051`, `DEV-052`, `TASK-057`, `TASK-060`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked test evidence: `.docs/07_test/harness_consumer_lab.md`
 - External lab repository: `/Users/momoooo/Documents/sdlc-harness-consumer-lab`
@@ -194,6 +194,7 @@ Key options:
 - Managed assets: `AGENTS.md`, `Makefile`, `.codex/state/**`, `.codex/skills/**`, `.codex/pjsdlc_managed/**`, and `.github/workflows/harness.yml`.
 - Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
 - Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
+- Design fixture: `plan.draft.yaml` references the toy technical plan through `docs.tech_plan`, so installed-consumer `validate-design` covers the strengthened design slicing contract.
 - Protocol checks: retained done task rejection, retained open task rejection, valid explicit `parallel_execution`, and invalid automatic parallel trigger rejection.
 - Static checks: natural-language routing text, GitHub workflow asset, and release automation script presence.
 
@@ -215,8 +216,9 @@ The scripted report also produces defect candidates and a recommended RFC title 
 | Command | Result |
 |---|---|
 | `npm test` | PASS |
+| `npm test --workspace agent-project-sdlc` | PASS for TASK-060 package validator regression; 9 tests passed |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
-| `node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS for script execution; report decision BLOCKED due known Makefile/tools package gap; lab deleted after run |
+| `node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS for TASK-060 script execution; CLI `validate-design` PASS; report decision BLOCKED due known Makefile/tools package gap; 37 PASS / 7 BLOCKED / 0 FAIL; lab deleted after run |
 | `test ! -e /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS after default full lab run |
 | Lab supported package capability subset | PASS: 37 checks |
 | Lab full documented workflow | BLOCKED: 7 known package gaps, 0 unexpected failures |
@@ -537,7 +539,7 @@ Source: [harness_workflow/docs_overview_and_validation.md](harness_workflow/docs
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: docs overview generation, documentation indexing and validation
-- Updated by task: `DEV-005`, `DEV-015`, `DEV-025`, `DEV-030`, `DEV-032`, `DEV-043`
+- Updated by task: `DEV-005`, `DEV-015`, `DEV-025`, `DEV-030`, `DEV-032`, `DEV-043`, `TASK-060`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: none
@@ -549,6 +551,7 @@ Source: [harness_workflow/docs_overview_and_validation.md](harness_workflow/docs
 - `.docs/<stage>/overview.md` files are generated artifacts and are not hand edited.
 - `make docs-overview` regenerates all stage overviews from Markdown slices.
 - `make validate-doc-overviews` and `make validate-harness` check that generated overviews are current.
+- `make validate-design` excludes generated `overview.md` and `README.md` from design deliverables, validates `plan.draft.yaml` task shape, requires development draft tasks to link existing tech plan slices through `docs.tech_plan`, rejects one shared primary tech plan for multiple development drafts, and requires dedicated architecture slices for explicit cross-cutting themes.
 - `tools/validate_task_docs.py` requires every implementation doc slice to be linked from `.docs/INDEX.md`.
 - Root README is a user guide; `PROJECT_SPEC.md` carries the heavier product/specification narrative.
 
@@ -558,8 +561,11 @@ Source: [harness_workflow/docs_overview_and_validation.md](harness_workflow/docs
 |---|---|---|
 | `.docs/INDEX.md` | Global documentation router | stage map, active artifacts |
 | `tools/build_doc_overviews.py` | Generated overview builder/checker | source hash, stage scan, Markdown rendering |
+| `tools/harness_utils.py` | Shared local validator utilities | `markdown_deliverables` excludes generated/non-deliverable docs |
+| `tools/validate_design.py` | Local ARCHITECTING gate | design deliverables, `plan.draft.yaml`, tech plan slice refs, cross-cutting architecture slices |
 | `tools/validate_task_docs.py` | Implementation-doc index validator | implementation doc link check |
 | `tools/validate_harness.py` | Harness scaffold validator | structure checks |
+| `packages/sdlc-harness/src/lib/validators.ts` | Package CLI validators | `validate-design`, Markdown deliverable filtering, design draft slice checks |
 | `Makefile` | Validation command entrypoint | `docs-overview`, `validate-doc-overviews`, `validate-harness` |
 | `README.md` | User-facing package guide | install/init/sync/upgrade/commands |
 | `PROJECT_SPEC.md` | Maintainer-facing product/specification doc | architecture, workflow and package background |
@@ -575,6 +581,14 @@ Markdown slice changes
 ```
 
 ```txt
+ARCHITECTING exit or design regression check
+-> tools/validate_design.py / package validate-design scan non-generated architecture and tech plan slices
+-> plan.draft.yaml development tasks must reference existing docs.tech_plan slices
+-> multiple draft tasks must have distinct primary tech plan slices
+-> explicit cross-cutting themes require dedicated architecture slices
+```
+
+```txt
 Implementation doc slice exists
 -> tools/validate_task_docs.py scans .docs/04_implementation/**/*.md
 -> each slice must be linked from .docs/INDEX.md
@@ -585,6 +599,9 @@ Implementation doc slice exists
 
 - Overview files are deterministic and include every non-overview Markdown slice under their stage directory.
 - Generated overviews are for browsing and handoff; Markdown slices and `.docs/INDEX.md` remain the source of truth.
+- Design validation now treats generated `overview.md` and `README.md` as non-deliverables, so visual rollups cannot satisfy architecture or tech plan slice requirements.
+- `plan.draft.yaml` is part of the design gate because task granularity must line up with tech plan fact granularity before SPRINTING starts.
+- Cross-cutting architecture validation uses conservative trigger phrases from PRD, tech plan and draft task text, then requires different architecture docs for different triggered categories.
 - Implementation docs are validated as module/subsystem/core-flow slices, not task ledgers.
 - DEV-043 removes the legacy `npm_package/dev_*.md` docs from the active docs graph and replaces them with module-level slices.
 
@@ -600,6 +617,8 @@ Implementation doc slice exists
 | `make docs-overview` | Regenerate all `.docs/<stage>/overview.md` files | PASS for DEV-043 |
 | `make validate-doc-overviews` | Check generated overview freshness | PASS for DEV-043 |
 | `make validate-harness` | Harness scaffold, prompt language and overview checks | PASS for DEV-043 |
+| `make validate-design` | Design deliverable filtering, draft task tech plan refs and architecture slice checks | PASS for TASK-060 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression, including design slice hard-gate cases | PASS for TASK-060; 9 tests passed |
 | `python3 tools/validate_task_docs.py` | Implementation docs are linked from `.docs/INDEX.md` | Covered by validate-dev and manual checks |
 
 ## 8. 变更记录（Change Log）
@@ -611,6 +630,7 @@ Implementation doc slice exists
 | 2026-05-25 | `DEV-030` | Historical implementation commit | Split lightweight README from full product/specification content. |
 | 2026-05-25 | `DEV-032` | Historical implementation commit | Defined implementation docs as module/subsystem/core-flow facts. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Removed task-grain implementation docs from the active implementation-doc graph. |
+| 2026-05-28 | `TASK-060` | Working tree | Strengthened `validate-design` so generated overviews do not count as deliverables, draft development tasks must link tech plan slices, shared monolithic primary tech plans fail for multiple draft tasks, and explicit cross-cutting themes require dedicated architecture slices. |
 
 ## 9. 后续维护注意事项
 
@@ -725,7 +745,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: workflow Skills, prompt routing, hard/soft indexing and authoring overlay
-- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`
+- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`, `TASK-060`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`, `PROJECT_SPEC.md`
 - Linked RFC: `RFC_007`, `RFC_009`, `RFC_015`
@@ -744,6 +764,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - The authoring Skill requires README/package README coverage to stay aligned with all public package capabilities.
 - PM, Manager, Dev and Tester prompts now describe optional parallel execution semantics and keep final fact-source integration with the main agent.
 - PM and Architect prompts require deleting the superseded monolithic PRD/product or tech plan file after user-requested slicing creates replacement slices and updates the related fact-source references.
+- Architect prompt now treats semantic design slicing as a `make validate-design` hard gate: `plan.draft.yaml` development tasks must reference `docs.tech_plan`, multiple draft tasks need distinct primary tech plan slices, generated `overview.md` cannot satisfy design deliverables, and explicit cross-cutting themes require dedicated architecture slices.
 - PM, Architect, Reviewer, Tester, Release and RFC prompts now require each main workflow action to run as one small `TASK-*` `plan.yaml` task with `phase` metadata. This covers conversational generation, existing-document slicing, synthesis from prior fact sources, review batches, test evidence, release preparation and RFC recalibration.
 
 ## 3. 真实代码结构
@@ -810,6 +831,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `sync` blocks unknown files under `<harnessRoot>/pjsdlc_managed/override_skills/*.md`, so a misspelled Skill name cannot silently fail to apply.
 - `pjsdlc_managed/override_skills` keeps override configuration with other managed workflow configuration while preserving `<harnessRoot>/skills/**` as the shallow hard file index.
 - When a user explicitly asks to slice an existing complete PRD/product document or complete tech plan into multiple slices, `pjsdlc_pm_prd` and `pjsdlc_architect_design` now require validating replacement slice coverage, updating `.docs/INDEX.md` and generated `overview.md`, synchronizing `plan.draft.yaml` references for tech plan slicing, and then deleting the superseded complete file so the facts are not duplicated.
+- `pjsdlc_architect_design` now states that `make validate-design` hard-checks draft task `docs.tech_plan`, distinct primary tech plan slices, generated overview exclusion and dedicated architecture slices for explicit cross-cutting themes.
 - `pjsdlc_pm_prd`, `pjsdlc_architect_design`, `pjsdlc_reviewer`, `pjsdlc_tester`, `pjsdlc_release_manager` and `pjsdlc_rfc_recalibrate` create or resume one small `TASK-*` task before writing phase outputs. `pjsdlc_manager` routes `/prd`, `/design`, `/review`, `/test`, `/release` and `/rfc` through those task protocols and treats remaining open tasks as phase-exit blockers.
 
 ## 6. 与技术方案的偏移
@@ -826,6 +848,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `npm test --workspace agent-project-sdlc` | Package build and CLI behavior regression tests | PASS for DEV-056; 9 tests passed |
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect authoring Skill source changes | PASS for DEV-056 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Skills and managed prompt assets match authoring source | PASS for DEV-056 |
+| `make validate-design` | Architect Skill slicing contract is reflected in the design gate | PASS for TASK-060 |
 | `tests/sdlc-harness/package-source.test.mjs` | Authoring Skill exclusion from package assets | PASS in package tests |
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | Skill override append, idempotency, configured root and unknown override blocking | PASS for DEV-046 |
 | `tests/sdlc-harness/upgrade.test.mjs` | Migration from legacy `overrides/skills` to `pjsdlc_managed/override_skills` | PASS for DEV-046 |
@@ -849,6 +872,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-27 | `DEV-056` | Working tree | Routed PRD and design generation/slicing through recoverable `plan.yaml` tasks. |
 | 2026-05-27 | `TASK-057` | Working tree | Generalized prompt rules so every phase main action is a `TASK-*` task governed by `plan.yaml`, with review/test/release/RFC outputs using `result_docs`. |
 | 2026-05-27 | Direct user request | Working tree | Added complete Skill override merge support with description merging and semantic conflict review guidance. |
+| 2026-05-28 | `TASK-060` | Working tree | Promoted architect semantic slicing guidance into explicit hard-gate wording for `plan.draft.yaml` tech plan references and dedicated architecture slices. |
 
 ## 9. 后续维护注意事项
 

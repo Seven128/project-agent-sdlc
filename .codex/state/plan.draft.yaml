@@ -4,6 +4,13 @@ tasks:
     title: "创建 npm 包骨架与 source sync manifest"
     status: "pending"
     summary: "创建 npm package scaffold、source sync manifest 和初始实现文档。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      architecture:
+        - ".docs/02_architecture/harness_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
     allowed_paths:
       - "package.json"
       - "packages/sdlc-harness/**"
