@@ -1,3 +1,28 @@
-current_task_id: ""
-next_task_sequence: 64
-tasks: []
+current_task_id: "TASK-064"
+next_task_sequence: 65
+tasks:
+  - id: "TASK-064"
+    phase: "SPRINTING"
+    title: "补充 plan.draft 技术方案阶段设计动机"
+    status: "in_progress"
+    summary: "在 PROJECT_SPEC 和 README 中说明为什么技术方案阶段需要产出 plan.draft.yaml，而其它阶段默认即时创建 plan.yaml task。"
+    docs:
+      implementation:
+        - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+    allowed_paths:
+      - "PROJECT_SPEC.md"
+      - "README.md"
+      - "packages/sdlc-harness/assets/docs/README.md"
+      - ".codex/state/plan.yaml"
+    required_gates:
+      - "make validate-plan"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+    acceptance_criteria:
+      - "PROJECT_SPEC.md 解释技术方案阶段产出 plan.draft.yaml 的问题背景和边界。"
+      - "README.md 面向用户解释 plan.draft.yaml 不是第二个 plan，而是跨阶段开发任务草案缓冲。"
+    working_notes:
+      - "make validate-plan: PASS."
+      - "node packages/sdlc-harness/dist/cli.js package sync-source: PASS, changed 24 assets."
+      - "node packages/sdlc-harness/dist/cli.js package check-source: PASS."
+    implementation_doc: ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"

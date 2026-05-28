@@ -99,6 +99,8 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 
 通用规则是：任何阶段或工作流如果把 draft task promote 成 `plan.yaml` 中的正式 `TASK-*`，必须在同一次状态更新里从源 draft queue 删除该 draft；正式 task 的恢复现场只保存在 `plan.yaml`，完成历史由 implementation docs、git/PR/CI 记录承担。当前 Harness 内置的 draft queue 只有 `plan.draft.yaml.tasks[]`，它表示尚未采用的开发草案；`/devloop` 只有在 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可执行任务时，才把开发队列视为耗尽。
 
+技术方案阶段需要产出 `plan.draft.yaml`，是为了解决跨阶段交接和当前执行队列纯净性的冲突。`ARCHITECTING` 必须在进入开发前证明方案可以拆成具体、可验证的开发单元，包括修改范围、gate、implementation doc 和执行顺序；但这些未来开发 task 如果直接进入 `plan.yaml`，会和当前架构阶段 task 混在一起，让阶段 gate 无法区分“架构任务未完成”和“下一阶段任务已预拆”。因此开发任务先作为 draft 暂存，进入 `SPRINTING` 后再逐个 promote 成正式 `TASK-*`。其它阶段默认根据上一阶段已经稳定的事实源即时创建当前阶段 task，只有当某个阶段也需要提前为后续阶段生成具体执行任务时，才应引入同类 draft queue。
+
 在尚未进入开发前，`ARCHITECTING` 可以回到 `REQUIREMENT_GATHERING` 修改 PRD：Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流，完成 PRD task 和 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化仍走 RFC workflow。
 
 `validate-design` 会把架构阶段的语义切片作为硬 gate：`overview.md` 不计入 deliverables，`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 指向存在的 tech plan slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确出现 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，也需要对应的专门 architecture slice。

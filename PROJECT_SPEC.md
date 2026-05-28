@@ -299,6 +299,8 @@ tasks:
 
 通用规则：任何阶段或工作流如果把 draft task promote 成 `plan.yaml` 中的正式 `TASK-*`，必须在同一次状态更新中从源 draft queue 删除该 draft；若正式 task 后续中断或 blocked，恢复现场只读取 `plan.yaml` 中的 open task。draft queue 只表示尚未采用的草案，不是完成历史或半 ledger。当前 Harness 内置 draft queue 只有 `plan.draft.yaml.tasks[]`，默认由 `ARCHITECTING` 生成开发草案、由 `SPRINTING` 消费开发草案。已完成历史继续由 implementation docs、git commit、PR/CI 和 release evidence 承担，不写回 draft queue。
 
+`ARCHITECTING` 产出 `plan.draft.yaml` 的设计动机，是在不污染当前执行状态的前提下完成开发交接。技术方案阶段必须证明 PRD 和架构可以落成具体开发单元，提前明确每个开发单元的边界、`allowed_paths`、`required_gates`、`implementation_doc` 和顺序；但 `plan.yaml` 在 `ARCHITECTING` 时仍是架构阶段的正式执行队列。如果把未来 `SPRINTING` task 直接放进 `plan.yaml`，阶段 gate 会把“下一阶段已预拆任务”误读成当前阶段 open task 残留，Agent 也会在错误阶段尝试执行开发任务。`plan.draft.yaml` 因此是跨阶段开发任务草案缓冲，而不是第二个 plan。其它阶段默认从上一阶段已稳定的事实源即时创建本阶段 `plan.yaml` task；只有当某阶段也需要提前为后续阶段生成具体执行任务、且这些任务不能马上进入当前 `plan.yaml` 时，才应引入同类 draft queue。
+
 task 完成后不再长期保留 done task 字段，当前 plan 回到只含待做任务或空列表：
 
 ```yaml
