@@ -202,7 +202,7 @@ python3 tools/transition.py --to <PHASE>
 |---|---|---|---|---|---|
 | `REQUIREMENT_GATHERING` | `pjsdlc_pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
 | `ARCHITECTING` | `pjsdlc_architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING`；开发前可返回 `REQUIREMENT_GATHERING` |
-| `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录 | `make validate-dev` | `REVIEWING` |
+| `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、`plan.draft.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录、已消费 draft | `make validate-dev` | `REVIEWING` |
 | `REVIEWING` | `pjsdlc_reviewer` | PRD、技术方案、实现文档、`git diff` | Review report | `make validate-review` | `TESTING` |
 | `TESTING` | `pjsdlc_tester` | PRD、技术方案、实现文档、Review | Test plan、测试矩阵、回归记录 | `make validate-test` | `RELEASING` |
 | `RELEASING` | `pjsdlc_release_manager` | 测试结果、build artifacts | Release note、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
@@ -297,6 +297,8 @@ tasks:
 
 文档、Review、测试、发布和 RFC 类 task 使用 `result_docs` 指向本 task 产出的 PRD、architecture、tech plan、ADR、review report、test plan、release note、RFC 或 `plan.draft.yaml`。开发 task 使用 `implementation_doc` 指向模块级实现事实文档。
 
+`plan.draft.yaml.tasks[]` 是架构阶段留下的未采用开发草案队列，不是完成历史或半 ledger。进入 `SPRINTING` 后，Agent 从 draft promote 出正式 `TASK-*` 时，必须在同一次状态更新中把源 draft 从 `plan.draft.yaml.tasks[]` 删除；若正式 task 后续中断或 blocked，恢复现场只读取 `plan.yaml` 中的 open task。已完成历史继续由 implementation docs、git commit、PR/CI 和 release evidence 承担，不写回 `plan.draft.yaml`。
+
 task 完成后不再长期保留 done task 字段，当前 plan 回到只含待做任务或空列表：
 
 ```yaml
@@ -352,6 +354,7 @@ parallel_execution:
 ```txt
 检查 git status，确认没有未归属到当前 task 的脏变更
 -> 如存在历史 task 残留变更，先完成对应 task commit/push 或报告 blocker
+-> 如果 plan.yaml 没有 open task，从 plan.draft.yaml.tasks[] promote 下一个 draft 为正式 TASK-* 并同次删除源 draft
 -> 读取 current_task
 -> 读取当前 open task 的 allowed_paths / required_gates / acceptance_criteria
 -> 执行代码和测试
@@ -363,7 +366,7 @@ parallel_execution:
 -> 从 plan.yaml 中移除当前 task
 -> 创建 task completion ledger commit
 -> git push 两个 commit 到当前 upstream branch
--> 选择下一个 pending task
+-> 重新读取 plan.yaml 和 plan.draft.yaml，选择下一个 open task 或未采用 draft
 ```
 
 开发阶段默认一个 task 对应一个主要实现提交和一个轻量完成记录提交。task implementation commit 的 commit message 应包含 task id，例如 `TASK-003: implement login rate limit`。这个 commit 应包含该 task 的代码、测试、被更新的模块级 implementation doc、`.docs/INDEX.md`、`overview.md` 和必要验证证据；不要把多个 task 混进同一个 commit，也不要把未归属变更顺手带入。
@@ -391,12 +394,13 @@ task completion ledger commit 发生在 implementation commit 之后，只负责
 ```txt
 PRD
 -> tech plan
+-> plan.draft.yaml 中的未采用开发草案
 -> plan.yaml 中的 TASK task
--> `.docs/**` slices、`plan.draft.yaml` 或代码/测试
+-> `.docs/**` slices 或代码/测试
 -> 模块级 implementation doc
 ```
 
-每个 open task 都必须在 `plan.yaml` 中包含 `phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。文档、Review、测试、发布和 RFC 类 task 使用 `result_docs`，开发 task 使用 `implementation_doc`。执行中只把必要现场写成短 `working_notes`；任务完成并写入或更新相关事实源后，把该 task 从当前 `plan.yaml` 移除。历史动作记录以 git/PR/CI/release 系统作为 cold archive，产物结果以 `.docs/**` slice、`plan.draft.yaml`、Review/Test/Release/RFC 文档或模块级 implementation doc 为准。
+每个 open task 都必须在 `plan.yaml` 中包含 `phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。文档、Review、测试、发布和 RFC 类 task 使用 `result_docs`，开发 task 使用 `implementation_doc`。执行中只把必要现场写成短 `working_notes`；任务完成并写入或更新相关事实源后，把该 task 从当前 `plan.yaml` 移除。历史动作记录以 git/PR/CI/release 系统作为 cold archive，产物结果以 `.docs/**` slice、Review/Test/Release/RFC 文档或模块级 implementation doc 为准。`plan.draft.yaml.tasks[]` 只表示尚未采用的开发草案，不表示已完成历史。
 
 过去 phase/task/gate 执行流水不是 Agent 默认上下文。`plan.yaml` 不长期保存 commit hash，`lifecycle.yaml` 不保存 `history`，completion ledger commit 只负责把当前 plan 恢复为短期、低噪声状态。只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
 
@@ -463,7 +467,7 @@ make validate-rfc
 ### 9.2 阶段 gate
 - `validate-pm`：检查 PRD、验收标准、Out of Scope、Open Questions。
 - `validate-design`：检查架构、技术方案、`plan.draft.yaml`、draft task 的 `docs.tech_plan` 引用、tech plan primary slice 去重和横切 architecture slice。
-- `validate-dev`：检查任务状态、open task plan 合同、lint、测试和 implementation docs。
+- `validate-dev`：检查任务状态、已消费 draft、open task plan 合同、lint、测试和 implementation docs。
 - `validate-review`：检查 Review report。
 - `validate-test`：检查 test plan、test matrix、回归和覆盖缺口。
 - `validate-release`：检查 release note、smoke result 和 rollback plan。
@@ -531,8 +535,8 @@ RFC 必须包含：
 | “需求变了 / 这个设计要改” | 如果当前仍在 `ARCHITECTING` 且尚未进入开发，可回到 `REQUIREMENT_GATHERING` 修改 PRD；如果已经进入 `SPRINTING` 或之后，进入 RFC workflow |
 | “完善产品方案 / 写 PRD / 我提供信息，你帮我完善产品方案” | 等价 `/prd`；在 `REQUIREMENT_GATHERING` 更新 PRD，或在开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 后更新 |
 | “设计技术方案 / 做架构方案 / 根据 PRD 做技术方案” | 等价 `/design`，在 `ARCHITECTING` 更新 architecture、tech plan 和 `plan.draft.yaml` |
-| “开始开发 / 做当前任务 / 做下一个任务” | 等价 `/dev`，在 `SPRINTING` 创建或选择下一个最小 `TASK-*` development task，并完成一个 task 闭环 |
-| “开始循环：写任务，执行任务 / 把开发循环跑完” | 等价 `/devloop`，连续运行开发循环直到没有明确任务或遇到 blocker |
+| “开始开发 / 做当前任务 / 做下一个任务” | 等价 `/dev`，在 `SPRINTING` 创建或选择下一个最小 `TASK-*` development task；如来自 draft，同次消费源 draft；并完成一个 task 闭环 |
+| “开始循环：写任务，执行任务 / 把开发循环跑完” | 等价 `/devloop`，连续运行开发循环直到 `plan.yaml` 和 `plan.draft.yaml` 都没有明确任务或遇到 blocker |
 | “跑测试 / 验证一下” | 运行当前 task 或阶段对应 gate |
 | “准备 review / 帮我 review” | 进入只读 Review |
 | “刷新文档总览 / 同步 overview” | 等价 `/overview` |
@@ -549,8 +553,8 @@ RFC 必须包含：
 | `/rfc <file>` | 挂起当前流程，进入 RFC 变更处理 |
 | `/prd` | 在需求阶段澄清用户目标，更新 PRD、验收标准、open questions、`.docs/INDEX.md` 和 overview；开发前处于 `ARCHITECTING` 时可先回到 `REQUIREMENT_GATHERING` |
 | `/design` | 在架构阶段基于 PRD 更新 architecture、tech plan 和 `plan.draft.yaml` |
-| `/dev` | 创建或选择下一个最小 `TASK-*` development task，执行一个 task，完成 gate、implementation doc、两段 commit/push 后停止 |
-| `/devloop` | 连续运行 `/dev`，直到没有明确可创建/执行的 task 或遇到需求、架构、allowed_paths、gate、commit/push blocker |
+| `/dev` | 创建或选择下一个最小 `TASK-*` development task；如来自 draft，同次消费源 draft；执行一个 task，完成 gate、implementation doc、两段 commit/push 后停止 |
+| `/devloop` | 连续运行 `/dev`，直到 `plan.yaml` 和 `plan.draft.yaml` 都没有明确可创建/执行的 task 或遇到需求、架构、allowed_paths、gate、commit/push blocker |
 | `/syncdocs` | 归档/切分长文档，更新 `.docs/INDEX.md` |
 | `/overview` | 运行 `make docs-overview` |
 | `/review` | 进入只读 Review |

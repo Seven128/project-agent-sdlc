@@ -15,7 +15,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 开始编码前，先确认当前 open task 是否完整，修改范围是否覆盖必要文件，验收标准是否能被测试或 gate 验证。如果发现任务边界、产品行为或技术方案不清晰，要停下来说明 blocker、给出可能解释和推荐下一步，而不是扩大范围继续写。
 
-`/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 `TASK-*` development task，设置 `phase: "SPRINTING"`，并只完成一个 task 闭环后停止。`/devloop` 连续运行 `/dev`，直到技术方案中没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
+`/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 `TASK-*` development task，设置 `phase: "SPRINTING"`，并只完成一个 task 闭环后停止。如果这个 task 来自 `plan.draft.yaml.tasks[]`，promote 时必须同次从 `plan.draft.yaml.tasks[]` 删除源 draft，避免已采用草案继续显示为 `pending`。`/devloop` 连续运行 `/dev`，直到 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
 
 实现时遵循小步闭环：先检查 `git status`，确认工作区没有未归属到当前 task 的脏变更；再定位相关代码和测试，做必要修改，运行 gate，修复失败，写入或更新相关 implementation doc 并刷新文档派生视图。此时先不要从 `plan.yaml` 移除当前 task，要在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；随后再移除 task，创建 task completion ledger commit，并 push 两个 commit。不要顺手重构、重排格式或处理无关问题；如果发现无关风险，只记录或报告。
 
@@ -25,6 +25,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 - `<harnessRoot>/state/lifecycle.yaml`
 - `<harnessRoot>/state/plan.yaml`
+- `<harnessRoot>/state/plan.draft.yaml`
 - 当前任务关联的 PRD 和技术方案
 - 当前源码和测试文件
 
@@ -35,6 +36,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - `.docs/04_implementation/` 下相关模块、子系统或核心数据流的 implementation doc
 - 当前 task `working_notes` 或 implementation doc `Verification` 中的 gate evidence
 - 更新后的 `<harnessRoot>/state/plan.yaml`
+- 如果本轮 promote draft，更新后的 `<harnessRoot>/state/plan.draft.yaml`
 - 更新后的 `.docs/INDEX.md`
 - 当前 task 移除前创建的 task implementation commit
 - 从 `plan.yaml` 移除当前 task 后的 task completion ledger commit
@@ -51,8 +53,8 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - 本 Skill 不直接重切 PRD 或 tech plan；如果发现上游语义边界错误，进入 `BLOCKED`、创建 RFC，或请求回到 `ARCHITECTING`。
 - gate 通过后调用 `pjsdlc_implementation_doc`，由该 Skill 按真实实现更新或新增 `.docs/04_implementation/` 模块级 slice。
 - 如果一个任务实际变成多个独立实现边界，应停止扩大范围，拆分后续任务或回到任务规划。
-- `/dev` 是单任务执行入口：没有 open task 时，先根据 PRD、architecture、tech plan 和 `plan.draft.yaml` 创建一个最小 `TASK-*` open task；已有 open task 时，直接执行该 task；完成后停止。
-- `/devloop` 是连续执行入口：每完成一个 task 并 push 两段提交后，重新读取 lifecycle、plan、PRD、architecture 和 tech plan，再决定是否创建/执行下一个最小 task；没有明确任务或出现 blocker 时停止并报告。
+- `/dev` 是单任务执行入口：没有 open task 时，先根据 PRD、architecture、tech plan 和 `plan.draft.yaml` 创建一个最小 `TASK-*` open task；如果从 `plan.draft.yaml.tasks[]` 采用 draft，必须同次从 draft 列表删除源项；已有 open task 时，直接执行该 task；完成后停止。
+- `/devloop` 是连续执行入口：每完成一个 task 并 push 两段提交后，重新读取 lifecycle、`plan.yaml`、`plan.draft.yaml`、PRD、architecture 和 tech plan，再决定是否创建/执行下一个最小 task；没有 open task 且没有未采用 draft，或出现 blocker 时停止并报告。
 - Parallel Execution 是当前 task 的可选协作方式，不替代 task completion protocol；`SPRINTING` 并行从 lifecycle 的 `current_phase` 和 plan 的 `current_task_id` 推断上下文，不在 `parallel_execution` 内重复保存。
 
 ## Plan Protocol
@@ -61,10 +63,11 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 1. `current_task_id` 指向正在执行的 open task。
 2. open task 直接声明 `phase: "SPRINTING"`、`docs`、`allowed_paths`、`required_gates`、`acceptance_criteria` 和 `implementation_doc`。
-3. 任务执行中只保留恢复所需的简短 `working_notes`。
-4. gate、implementation doc、`.docs/INDEX.md` 和 `overview.md` 完成后，在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit。
-5. implementation commit 完成后，再把该 task 从 `plan.yaml` 的 `tasks` 列表移除，并保留/递增 `next_task_sequence`。
-6. 将移除当前 task 后的 `plan.yaml` 提交为 task completion ledger commit，并 `git push` 两个 commit 到当前 upstream branch。
+3. 如果 open task 是由 `plan.draft.yaml.tasks[]` promote 而来，创建正式 `TASK-*` 和删除源 draft 必须发生在同一次状态更新中；正式 task 的恢复现场只保存在 `plan.yaml`。
+4. 任务执行中只保留恢复所需的简短 `working_notes`。
+5. gate、implementation doc、`.docs/INDEX.md` 和 `overview.md` 完成后，在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit。
+6. implementation commit 完成后，再把该 task 从 `plan.yaml` 的 `tasks` 列表移除，并保留/递增 `next_task_sequence`。
+7. 将移除当前 task 后的 `plan.yaml` 提交为 task completion ledger commit，并 `git push` 两个 commit 到当前 upstream branch。
 
 done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认上下文。修 bug、补功能和继续开发时，优先读取当前代码、测试、PRD、技术方案和模块级 implementation doc；历史 task 查询主要看“做了什么、为什么做、影响哪个模块、验证了什么”，task id 和 commit 作为 implementation doc 的 provenance。`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API。只有用户明确要求 forensic/audit/regression 追溯时，才临时使用 git、PR 或 CI 记录。
 
@@ -72,7 +75,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 
 1. 一次只执行一个任务。
 2. 开始修改前检查 `git status`；如果存在不属于当前 task 的未提交变更，先完成对应 task 的 commit/push，或报告 blocker，不要混入当前 task。
-3. 只编辑当前 task 的 `allowed_paths` 允许的文件，以及 `SPRINTING` 阶段允许的 Harness 记账文件。
+3. 只编辑当前 task 的 `allowed_paths` 允许的文件，以及 `SPRINTING` 阶段允许的 Harness 记账文件；如果本轮 promote draft，允许同步编辑 `<harnessRoot>/state/plan.draft.yaml` 来消费源 draft。
 4. 必须运行当前 task 的 `required_gates`。
 5. 如果 gate 因代码或测试逻辑失败，在任务范围内修复。
 6. 如果 gate 因基础设施、凭证缺失、产品行为不清或高风险架构变化失败，进入 `BLOCKED`。
@@ -83,7 +86,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 11. implementation commit 完成后，从当前 `plan.yaml` 移除该 task，并创建 task completion ledger commit。
 12. 默认不追溯已完成 task 的执行流水；只有显式 forensic/audit/regression 任务才临时查询 git、PR 或 CI 记录。
 13. 两个 commit 后必须 `git push` 到当前 upstream branch；如果没有 remote/upstream、权限或凭证导致无法 push，停止推进并报告 blocker。
-14. `/devloop` 每轮都必须重新读取当前状态，不得在一次上下文中假设 plan、代码或远端状态未变化。
+14. `/devloop` 每轮都必须重新读取当前状态，不得在一次上下文中假设 plan、draft、代码或远端状态未变化。
 15. 只有用户明确要求并行、多 agent 或多 worktree 时，才允许创建 `parallel_execution`；否则不得默认并行。
 16. `runtime_managed` 只在当前 runtime 支持 subagent 时使用；没有该能力时，输出 `user_orchestrated` worker prompt，由用户手动打开对话或 worktree 后粘贴。
 17. worker 不更新主事实源；主 Agent 才能更新 `plan.yaml`、`.docs/INDEX.md`、overview、implementation doc 和最终 gate 证据。
@@ -94,6 +97,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 - [ ] 当前 task `required_gates` 已通过，或 blocker 已记录。
 - [ ] open task 在 `plan.yaml` 中包含完整执行合同。
 - [ ] 当前任务仍然是单一清晰的执行单元。
+- [ ] 如果当前 task 来自 `plan.draft.yaml.tasks[]`，源 draft 已在 promote 时从 draft 列表删除。
 - [ ] implementation doc 已生成或更新，并反映相关模块的真实代码。
 - [ ] 如果启用了 `parallel_execution`，worker owned paths、forbidden paths、required gates 和主 Agent 集成结果已记录。
 - [ ] gate 结果已写入 implementation doc `Verification`，必要时当前 task `working_notes` 也记录了恢复现场所需的 gate evidence。

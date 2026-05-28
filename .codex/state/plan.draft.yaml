@@ -1,23 +1,2 @@
 next_task_sequence: 2
-tasks:
-  - id: "DEV-001"
-    title: "创建 npm 包骨架与 source sync manifest"
-    status: "pending"
-    summary: "创建 npm package scaffold、source sync manifest 和初始实现文档。"
-    docs:
-      product:
-        - ".docs/01_product/npm_package_distribution.md"
-      architecture:
-        - ".docs/02_architecture/harness_package_distribution.md"
-      tech_plan:
-        - ".docs/03_tech_plan/harness_package_distribution.md"
-    allowed_paths:
-      - "package.json"
-      - "packages/sdlc-harness/**"
-      - ".docs/04_implementation/harness_package/**"
-    required_gates:
-      - "make lint"
-      - "make test-current-domain"
-    acceptance_criteria:
-      - "npm package scaffold exists"
-    implementation_doc: ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+tasks: []

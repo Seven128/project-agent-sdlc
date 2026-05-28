@@ -12,7 +12,7 @@ help:
 	@echo "  make validate-plan       校验 plan.yaml task 合同，允许当前 open task"
 	@echo "  make validate-pm         校验产品需求产物"
 	@echo "  make validate-design     校验架构设计、技术方案和任务草案"
-	@echo "  make validate-dev        校验 sprint 任务状态、路径、代码 gate 和实现文档"
+	@echo "  make validate-dev        校验 sprint 任务状态、draft 消费、路径、代码 gate 和实现文档"
 	@echo "  make validate-review     校验 Review report"
 	@echo "  make validate-test       校验 regression/test plan"
 	@echo "  make validate-release    校验 release note、smoke result 和 rollback plan"
@@ -49,6 +49,7 @@ validate-design:
 
 validate-dev:
 	$(PYTHON) tools/validate_plan.py
+	$(PYTHON) tools/validate_dev_state.py
 	$(PYTHON) tools/validate_allowed_paths.py
 	$(MAKE) lint
 	$(MAKE) test-current-domain

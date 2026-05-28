@@ -281,8 +281,29 @@ async function validateCrossCuttingArchitecture(
 }
 
 async function validateDev(projectRoot: string): Promise<ValidatorReport> {
+  const root = await harnessRoot(projectRoot);
   const plan = await validatePlanState(projectRoot, false);
-  return { info: [`validate-dev checked ${plan.taskCount} task(s)`], errors: plan.errors };
+  const draftErrors = await validateDevDraftConsumed(projectRoot, root);
+  return { info: [`validate-dev checked ${plan.taskCount} task(s)`], errors: [...plan.errors, ...draftErrors] };
+}
+
+async function validateDevDraftConsumed(projectRoot: string, root: string): Promise<string[]> {
+  const errors: string[] = [];
+  const draft = await readYamlObject(path.join(projectRoot, root, "state", "plan.draft.yaml"));
+  if ("current_phase" in draft) {
+    errors.push("plan.draft.yaml must not define current_phase; lifecycle.yaml is the single source for current_phase");
+  }
+  if ("current_task_id" in draft) {
+    errors.push("plan.draft.yaml must not define current_task_id because drafts are not active task state");
+  }
+  const tasks = Array.isArray(draft.tasks) ? draft.tasks : [];
+  if (tasks.length > 0) {
+    const ids = tasks.map((task) => (isRecord(task) ? String(task.id ?? "<missing id>") : "<missing id>")).join(", ");
+    errors.push(
+      `Unconsumed draft tasks remain in plan.draft.yaml: ${ids}. Promote the next draft into plan.yaml or remove already-consumed drafts before validate-dev.`
+    );
+  }
+  return errors;
 }
 
 async function validateReview(projectRoot: string): Promise<ValidatorReport> {

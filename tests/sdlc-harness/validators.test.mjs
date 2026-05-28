@@ -120,7 +120,6 @@ tasks:
     "validate-plan",
     "validate-pm",
     "validate-design",
-    "validate-dev",
     "validate-review",
     "validate-test",
     "validate-release",
@@ -129,6 +128,18 @@ tasks:
     const report = await runValidator(root, gate);
     assert.deepEqual(report.errors, [], gate);
   }
+
+  const staleDraftDevReport = await runValidator(root, "validate-dev");
+  assert.match(staleDraftDevReport.errors.join("\n"), /Unconsumed draft tasks remain in plan\.draft\.yaml: TASK-001/);
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 2
+tasks: []
+`,
+    "utf8"
+  );
+  const consumedDraftDevReport = await runValidator(root, "validate-dev");
+  assert.deepEqual(consumedDraftDevReport.errors, [], "validate-dev allows consumed draft queue");
 
   await writeFile(
     path.join(root, ".harness/state/lifecycle.yaml"),
@@ -288,6 +299,13 @@ tasks:
   );
   designReport = await runValidator(root, "validate-design");
   assert.deepEqual(designReport.errors, [], "validate-design accepts dedicated cross-cutting architecture slices");
+  await writeFile(
+    path.join(root, ".harness/state/plan.draft.yaml"),
+    `next_task_sequence: 3
+tasks: []
+`,
+    "utf8"
+  );
 
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),

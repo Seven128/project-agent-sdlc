@@ -27,6 +27,7 @@ phases:
       - ".docs/04_implementation/**"
       - ".docs/INDEX.md"
       - "<harnessRoot>/state/plan.yaml"
+      - "<harnessRoot>/state/plan.draft.yaml"
 
   REVIEWING:
     read_only_source: true

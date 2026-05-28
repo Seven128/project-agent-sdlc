@@ -188,6 +188,7 @@ export async function runConsumerLabFullTest(rawOptions) {
   commandCheck("CLI validators", "validate-plan", "npx", ["sdlc-harness", "validate-plan"]);
   commandCheck("CLI validators", "validate-pm", "npx", ["sdlc-harness", "validate-pm"]);
   commandCheck("CLI validators", "validate-design", "npx", ["sdlc-harness", "validate-design"]);
+  await writeFile(path.join(options.labDir, ".codex/state/plan.draft.yaml"), "next_task_sequence: 2\ntasks: []\n", "utf8");
   commandCheck("CLI validators", "validate-dev final empty plan", "npx", ["sdlc-harness", "validate-dev"]);
   commandCheck("CLI validators", "validate-review", "npx", ["sdlc-harness", "validate-review"]);
   commandCheck("CLI validators", "validate-test", "npx", ["sdlc-harness", "validate-test"]);
@@ -501,6 +502,47 @@ async function writeDocs(labDir) {
 
 async function verifyPlanProtocol(labDir, commandCheck, add) {
   const planPath = path.join(labDir, ".codex/state/plan.yaml");
+  const draftPath = path.join(labDir, ".codex/state/plan.draft.yaml");
+  await writeFile(
+    planPath,
+    `current_task_id: ""
+next_task_sequence: 2
+tasks: []
+`,
+    "utf8"
+  );
+  await writeFile(
+    draftPath,
+    `next_task_sequence: 2
+tasks:
+  - id: "TASK-001"
+    phase: "SPRINTING"
+    title: "Stale consumed draft"
+    status: "pending"
+    summary: "Negative protocol check."
+    docs:
+      tech_plan:
+        - ".docs/03_tech_plan/text_summary_plan.md"
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "Draft should have been consumed."
+    implementation_doc: ".docs/04_implementation/text_summary.md"
+`,
+    "utf8"
+  );
+  const staleDraft = run("npx", ["sdlc-harness", "validate-dev"], labDir);
+  add({
+    area: "Task protocol",
+    evidence: "stale draft retained after development is rejected",
+    command: "npx sdlc-harness validate-dev",
+    status: staleDraft.status !== 0 && `${staleDraft.stdout}\n${staleDraft.stderr}`.includes("Unconsumed draft tasks remain") ? "PASS" : "FAIL",
+    details: trimOutput(`${staleDraft.stdout}\n${staleDraft.stderr}`)
+  });
+  await writeFile(draftPath, "next_task_sequence: 2\ntasks: []\n", "utf8");
+
   await writeFile(
     planPath,
     `current_task_id: ""

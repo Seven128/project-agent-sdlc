@@ -1,3 +1,58 @@
-current_task_id: ""
-next_task_sequence: 62
-tasks: []
+current_task_id: "TASK-062"
+next_task_sequence: 63
+tasks:
+  - id: "TASK-062"
+    phase: "SPRINTING"
+    title: "消费已 promote 的 plan.draft 开发草案"
+    status: "in_progress"
+    summary: "实现 promote 即消费规则，防止已完成开发任务继续在 plan.draft.yaml 中显示为 pending。"
+    docs:
+      product:
+        - ".docs/01_product/npm_package_distribution.md"
+      architecture:
+        - ".docs/02_architecture/harness_package_distribution.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+      rfc:
+        - ".docs/rfc/RFC_016_consume_plan_draft_tasks_on_promote.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".codex/state/plan.yaml"
+      - ".codex/state/plan.draft.yaml"
+      - ".codex/skills/pjsdlc_dev_sprint/SKILL.md"
+      - ".codex/skills/pjsdlc_manager/SKILL.md"
+      - ".codex/pjsdlc_managed/policies/**"
+      - ".codex/pjsdlc_managed/make/sdlc-harness.mk"
+      - "tools/validate_dev_state.py"
+      - "tools/consumer_lab_full_test.mjs"
+      - "packages/sdlc-harness/src/lib/validators.ts"
+      - "packages/sdlc-harness/README.md"
+      - "packages/sdlc-harness/assets/**"
+      - "tests/sdlc-harness/validators.test.mjs"
+      - ".docs/rfc/RFC_016_consume_plan_draft_tasks_on_promote.md"
+      - ".docs/rfc/overview.md"
+      - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+    required_gates:
+      - "make validate-plan"
+      - "npm test --workspace agent-project-sdlc"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "已采用的 draft task 不再保留在 plan.draft.yaml.tasks[] 中。"
+      - "validate-dev 会拒绝 plan.yaml 完成态仍残留 pending draft tasks 的状态。"
+      - "通用 Skill、协议文档、package validator 和 consumer lab 覆盖 promote 即消费规则。"
+    working_notes:
+      - "Pre-change regression observed: make validate-dev passed while plan.yaml was empty and plan.draft.yaml retained DEV-001 pending."
+      - "python3 tools/validate_dev_state.py failed before cleanup with stale DEV-001, then passed after plan.draft.yaml was emptied."
+      - "make validate-plan: PASS."
+      - "npm test --workspace agent-project-sdlc: PASS, 10 node:test tests."
+      - "node packages/sdlc-harness/dist/cli.js package sync-source: PASS, changed 26 assets."
+      - "node packages/sdlc-harness/dist/cli.js package check-source: PASS."
+      - "make validate-harness: PASS."
+      - "git diff --check: PASS."
+    implementation_doc: ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"

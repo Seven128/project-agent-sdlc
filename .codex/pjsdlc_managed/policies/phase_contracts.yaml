@@ -45,11 +45,12 @@ phases:
       - "REQUIREMENT_GATHERING"
 
   SPRINTING:
-    goal: "按任务状态执行开发、测试和实现文档沉淀"
+    goal: "按任务状态执行开发、消费已采用草案、测试和实现文档沉淀"
     role: "developer"
     skill: "pjsdlc_dev_sprint"
     inputs:
       - "<harnessRoot>/state/plan.yaml"
+      - "<harnessRoot>/state/plan.draft.yaml"
       - "current open task plan contract"
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
@@ -57,6 +58,7 @@ phases:
       - "src/"
       - "tests/"
       - ".docs/04_implementation/"
+      - "<harnessRoot>/state/plan.draft.yaml"
     gates:
       - "make validate-dev"
     next: "REVIEWING"

@@ -97,6 +97,8 @@ npx sdlc-harness init --adopt
 
 Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/plan.yaml`，再按当前阶段选择对应 workflow skill、产物和 gate。任何阶段的 Agent 主任务都不是一次性长生成：产品方案、技术方案、文档切片、基于上一阶段事实源生成、Review、测试、发布和 RFC 处理，都应先落成一个最小 `TASK-*` open task，并设置对应 `phase`；当前轮只执行一个 task，写入 `result_docs` 或 `implementation_doc`、更新索引和 overview，运行 `make validate-plan`，任务完成后再从 `plan.yaml` 移除。
 
+`plan.draft.yaml.tasks[]` 只表示尚未采用的开发草案。`SPRINTING` 中 `/dev` 从 draft promote 出正式 `TASK-*` 时，必须在同一次状态更新里把源 draft 从 `plan.draft.yaml.tasks[]` 删除；正式 task 的恢复现场只保存在 `plan.yaml`，完成历史由 implementation docs、git/PR/CI 记录承担。`/devloop` 只有在 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可执行任务时，才把开发队列视为耗尽。
+
 在尚未进入开发前，`ARCHITECTING` 可以回到 `REQUIREMENT_GATHERING` 修改 PRD：Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流，完成 PRD task 和 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化仍走 RFC workflow。
 
 `validate-design` 会把架构阶段的语义切片作为硬 gate：`overview.md` 不计入 deliverables，`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 指向存在的 tech plan slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确出现 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，也需要对应的专门 architecture slice。
@@ -156,7 +158,7 @@ Harness CLI v1 不承诺自动启动 Codex agent，也不要求 worker 之间通
 | `/prd` | 完善产品方案 | 在需求阶段创建或选择一个最小 `TASK-*` task；如果当前仍在架构阶段且未进入开发，可先回到 `REQUIREMENT_GATHERING` 修改 PRD |
 | `/design` | 设计技术方案 | 在架构阶段创建或选择一个最小 `TASK-*` task，生成或切分当前 architecture / tech plan / `plan.draft.yaml` 产物 |
 | `/dev` | 做下一个任务 | 创建或选择下一个最小 `TASK-*` development task，完成一个 task 闭环后停止 |
-| `/devloop` | 开始循环：写任务，执行任务 | 连续运行 `/dev`，直到没有明确任务或遇到 blocker |
+| `/devloop` | 开始循环：写任务，执行任务 | 连续运行 `/dev`，直到 `plan.yaml` 和 `plan.draft.yaml` 都没有明确任务或遇到 blocker |
 | `/test` | 跑一下当前验证 | 运行当前 task 或阶段对应 gate |
 | `/review` | 准备 review | 进入只读 Review workflow |
 
