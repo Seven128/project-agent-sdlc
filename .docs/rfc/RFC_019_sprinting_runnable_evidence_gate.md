@@ -44,7 +44,7 @@
 - [x] `npm test --workspace agent-project-sdlc`
 - [x] `node packages/sdlc-harness/dist/cli.js package sync-source`
 - [x] `node packages/sdlc-harness/dist/cli.js package check-source`
-- [ ] `make validate-rfc`
+- [x] `make validate-rfc`
 - [x] `make validate-harness`
 
 ## 7. Test Fact Source Impact（测试事实源影响）

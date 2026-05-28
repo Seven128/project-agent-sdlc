@@ -1,11 +1,11 @@
 # .docs/rfc overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: e3ae881870d12c8c -->
+<!-- source-hash: d820f9db38ad5d63 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `e3ae881870d12c8c`
+Source hash: `d820f9db38ad5d63`
 
 ## Source Slices
 
@@ -1320,7 +1320,7 @@ Source: [RFC_019_sprinting_runnable_evidence_gate.md](RFC_019_sprinting_runnable
 - [x] `npm test --workspace agent-project-sdlc`
 - [x] `node packages/sdlc-harness/dist/cli.js package sync-source`
 - [x] `node packages/sdlc-harness/dist/cli.js package check-source`
-- [ ] `make validate-rfc`
+- [x] `make validate-rfc`
 - [x] `make validate-harness`
 
 ## 7. Test Fact Source Impact（测试事实源影响）
