@@ -431,7 +431,8 @@ async function ensureMemory(projectRoot: string, root: string, report: Migration
     report.skipped.push(relativeMemoryPath);
     return;
   }
-  const content = "# Project Memory\n\n记录跨阶段长期有效的稳定知识，并链接到 `.docs/` 正式出处。\n";
+  const content =
+    "# Project Memory\n\n记录跨阶段长期有效知识的简短摘要和链接。完整决策背景、备选方案、取舍和后果写入 `.docs/05_decisions/` ADR 或其它 `.docs/**` 正式事实源。\n";
   if (await writeTextIfChanged(memoryPath, content)) {
     report.changed.push(relativeMemoryPath);
   }

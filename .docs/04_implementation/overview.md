@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 20910698310fbbdf -->
+<!-- source-hash: c2f7dc27a011c045 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `20910698310fbbdf`
+Source hash: `c2f7dc27a011c045`
 
 ## Source Slices
 
@@ -900,7 +900,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: lifecycle state, plan state, task execution protocol and gate evidence
-- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`, `TASK-061`, `TASK-062`
+- Updated by task: `DEV-010`, `DEV-011`, `DEV-018`, `DEV-019`, `DEV-024`, `DEV-025`, `DEV-026`, `DEV-027`, `DEV-028`, `DEV-043`, `DEV-050`, `DEV-056`, `TASK-057`, `TASK-059`, `TASK-061`, `TASK-062`, `TASK-065`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_004`, `RFC_005`, `RFC_010`, `RFC_011`, `RFC_012`, `RFC_013`, `RFC_014`, `RFC_015`, `RFC_016`
@@ -916,6 +916,8 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - `next_task_sequence` preserves future `TASK-*` id allocation after done tasks are removed.
 - Document, review, test, release and RFC tasks use `result_docs` for planned fact-source outputs; development tasks use `implementation_doc`.
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
+- `.codex/state/memory.md` is a short cross-stage reminder and navigation surface; complete decision context, alternatives, rationale and consequences belong in `.docs/05_decisions/` ADRs or other formal `.docs/**` fact sources.
+- `.docs/05_decisions/` is not a lifecycle phase; it is an `ARCHITECTING`-produced ADR fact source for durable architecture decisions that may outlive a single architecture or tech plan slice.
 - `phase_contracts.yaml` supports optional `returns` targets for bounded pre-development rollback; the default contract allows `ARCHITECTING -> REQUIREMENT_GATHERING` so PRD facts can be corrected before `SPRINTING`.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
 - Generic draft-to-plan rule: when any workflow promotes a draft into a formal `TASK-*`, it removes the source draft in the same state update; the current built-in implementation point is SPRINTING consuming `plan.draft.yaml.tasks[]`.
@@ -930,10 +932,12 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `.codex/state/lifecycle.yaml` | Current phase routing | `current_phase`, `active_skill`, `allowed_next_phases` |
 | `.codex/state/plan.yaml` | Active short-term task contract | `current_task_id`, `next_task_sequence`, `tasks[]` |
 | `.codex/state/plan.draft.yaml` | Built-in unadopted development draft queue | `next_task_sequence`, `tasks[]` |
+| `.codex/state/memory.md` | Cross-stage reminder and navigation surface | short stable summaries plus links to formal fact sources |
+| `.codex/pjsdlc_managed/templates/ADR_TEMPLATE.md` | ADR authoring template | `Options`, `Rationale`, `Supersedes / Superseded by`, related links |
 | `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields, `result_docs` and `implementation_doc` examples |
 | `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase routing contract | `next` forward target and optional `returns` rollback targets |
 | `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product task prompt | `TASK-*` document-production task protocol with `phase: "REQUIREMENT_GATHERING"` |
-| `.codex/skills/pjsdlc_architect_design/SKILL.md` | Design task prompt | `TASK-*` document-production task protocol with `phase: "ARCHITECTING"` |
+| `.codex/skills/pjsdlc_architect_design/SKILL.md` | Design task prompt | `TASK-*` document-production task protocol with `phase: "ARCHITECTING"`, ADR decision boundary guidance |
 | `.codex/skills/pjsdlc_dev_sprint/SKILL.md` | Development execution prompt | one-task protocol, two-commit ledger, push requirement |
 | `.codex/skills/pjsdlc_manager/SKILL.md` | Workflow routing prompt | `/next`, `/dev`, `/devloop`, status routing |
 | `.codex/skills/pjsdlc_rfc_recalibrate/SKILL.md` | Change recalibration prompt | RFC impact checklist |
@@ -948,8 +952,9 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `tools/run_current_gate.py` | Phase gate runner | phase-to-gate dispatch |
 | `tools/status.py` | Human status report | lifecycle and task summary |
 | `tools/transition.py` | Phase transition helper | lifecycle state mutation without history append |
+| `packages/sdlc-harness/src/lib/init.ts` | Package init state seed | memory seed describing summary/link-only scope |
 | `packages/sdlc-harness/src/lib/validators.ts` | Package-side state validators | plan/lifecycle compatibility and package CLI validators |
-| `packages/sdlc-harness/src/lib/migrations.ts` | State migrations | remove checkpoints, history and gate logs |
+| `packages/sdlc-harness/src/lib/migrations.ts` | State migrations | remove checkpoints, history and gate logs; create missing memory with summary/link-only scope |
 
 ## 4. 核心数据流
 
@@ -1004,6 +1009,8 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 - `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
 - Draft queues are not active execution state and must not retain adopted or completed drafts. The current built-in draft queue is `plan.draft.yaml`; it must not contain `current_task_id`.
 - `validate-dev` rejects any remaining `plan.draft.yaml.tasks[]`; agents must either continue promoting real unadopted drafts or remove already-consumed stale drafts before development completion.
+- ADRs solve the long-term "why this option, not another" problem. Architecture and tech plan slices may keep local rationale, but decisions with alternatives, cross-module or cross-stage impact, high reversal cost or future supersede semantics belong in `.docs/05_decisions/`.
+- `memory.md` must not become a decision ledger. It may point to ADRs, PRDs, tech plans or implementation docs, but detailed context, alternatives, tradeoffs and consequences remain in those formal fact sources.
 - Field audit: `active_role`, `active_skill`, `current_milestone`, `blocked_reason`, `suspended_phase` and `allowed_next_phases` are lifecycle-only; `current_task_id` and `next_task_sequence` are plan-only; `tasks[].phase` is semantic task classification rather than current lifecycle state and remains on each task.
 - Every phase task is task-controlled: one `TASK-*` task should produce one bounded document slice, review batch, test evidence set, release artifact set, RFC impact slice or development change.
 - `validate-plan` permits open tasks and checks their shape; phase exit gates reject remaining open tasks.
@@ -1024,15 +1031,18 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 
 | 测试（Test） | 覆盖范围（Coverage） | 最近记录结果（Result） |
 |---|---|---|
-| `python3 tools/validate_plan.py --allow-open` | Current plan shape while a task is in progress | PASS for TASK-059 |
+| `python3 tools/validate_plan.py --allow-open` | Current plan shape while a task is in progress | PASS for TASK-065 |
 | `python3 tools/validate_plan.py` | Current plan shape and no remaining open tasks | PASS in Harness gates |
 | `python3 tools/validate_dev_state.py` | `validate-dev` rejection of stale unconsumed draft tasks | PASS for TASK-062 |
 | `python3 tools/validate_allowed_paths.py` | Current worktree changes within active task boundary | PASS in task gates |
+| `tests/sdlc-harness/sync-init-doctor.test.mjs` | Package init memory seed and managed asset sync behavior | PASS for TASK-065 |
+| `tests/sdlc-harness/upgrade.test.mjs` | Migration-created memory seed and legacy state migration | PASS for TASK-065 |
 | `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption and optional parallel contract acceptance/failure cases | PASS for TASK-062 |
 | `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
-| `npm test --workspace agent-project-sdlc` | Package migration and validator parity | PASS for TASK-062; package validator covers stale draft rejection |
-| `make validate-harness` | Prompt language and generated overview consistency | PASS for DEV-043 |
+| `npm test --workspace agent-project-sdlc` | Package migration, init seed and validator parity | PASS for TASK-065 |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets synchronized from source README, Skill and template files | PASS for TASK-065 |
+| `make validate-harness` | Prompt language and generated overview consistency | PASS for TASK-065 |
 
 ## 8. 变更记录（Change Log）
 
@@ -1050,6 +1060,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-28 | Spec clarification | Working tree | Clarified that `plan.yaml` is a general recoverable task-splitting container, while default Harness behavior only governs workflow phase tasks; broader task definitions are local configuration concerns. |
 | 2026-05-28 | `TASK-062` | Working tree | Added promote-on-consume semantics for `plan.draft.yaml`, dev-state validation, package validator parity, and cleared the stale `DEV-001` draft from current state. |
 | 2026-05-28 | `TASK-063` | Working tree | Clarified that promote-on-consume is the generic rule for any draft-to-plan workflow, while `plan.draft.yaml` remains the current built-in development draft queue. |
+| 2026-05-28 | `TASK-065` | Pending implementation commit | Clarified ADR and memory responsibilities across PROJECT_SPEC, README/package README, architect skill, ADR template and package memory seeds. |
 
 ## 9. 后续维护注意事项
 

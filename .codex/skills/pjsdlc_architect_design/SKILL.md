@@ -17,6 +17,8 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 
 架构产物应区分稳定边界和实现计划：architecture slice 记录领域边界、子系统、关键风险和长期约束；tech plan slice 记录接口契约、数据模型、模块方案、任务拆分和 gate。不要把重大架构变化藏在 task 描述里。
 
+ADR 用来解决“后来的人只看到结果，看不到当年取舍”的问题。architecture / tech plan 可以记录当前方案的局部设计理由；如果一个决定有明确备选方案、影响多个模块或阶段、未来容易被质疑、修改成本高，或需要保留 supersede 关系，就写入 `.docs/05_decisions/`。`<harnessRoot>/state/memory.md` 只保留这类决策的简短提示和链接，不承载完整背景、备选方案、取舍和后果。
+
 架构和技术方案产出本身也是 workflow task，而不是一次性长文档生成。无论来源是对话式设计、既有完整技术方案切片，还是根据 PRD/architecture 事实源生成新方案，都要先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "ARCHITECTING"`，只完成当前 `current_task_id` 对应的一片 architecture / tech plan / ADR / `plan.draft.yaml` 产物。不要在一个任务里连续创建大量设计文件；如果需要多个 slices，先拆出 pending tasks，当前轮只执行一个 task。
 
 如果在 `ARCHITECTING` 中发现 PRD 缺失、验收标准不清或产品边界需要调整，且项目尚未进入 `SPRINTING`，不要用架构文档替代产品事实。先收尾或移除当前 open design task，再请 Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 回到 PM/PRD 工作流修改 `.docs/01_product/**`。进入 `SPRINTING` 后的需求变化走 RFC workflow。
@@ -45,6 +47,7 @@ description: Use during ARCHITECTING to create architecture docs, technical plan
 - `.docs/02_architecture/` 按领域边界、子系统、跨模块架构问题或关键技术风险切片。
 - `.docs/03_tech_plan/` 按可实现范围、接口契约、数据模型、模块方案或任务组切片。
 - `.docs/05_decisions/` 按单个架构决策切片，即一份 ADR 只记录一个 durable decision。
+- 写 ADR 的判断标准：存在备选方案、影响多个产物或阶段、未来容易被质疑、修改成本高、或需要说明 `Supersedes / Superseded by` 时，写 ADR；只影响当前模块内部实现细节、且理由已能在 architecture / tech plan 中局部说明时，不单独写 ADR。
 - 如果一个技术方案跨越多个独立模块，应拆成多个 tech plan slice，并在 `plan.draft.yaml` 中分别引用。
 - `plan.draft.yaml` 中每个开发 draft task 必须在 `docs.tech_plan` 引用已有 `.docs/03_tech_plan/` slice；多个开发 draft task 默认应引用不同的 primary tech plan slice，不能用一个总纲 tech plan 覆盖全部模块任务。
 - `overview.md` 是 generated artifact，不算 architecture / tech plan deliverable，也不能作为 `docs.tech_plan` 引用。

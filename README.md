@@ -105,6 +105,12 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 
 `validate-design` 会把架构阶段的语义切片作为硬 gate：`overview.md` 不计入 deliverables，`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 指向存在的 tech plan slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确出现 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，也需要对应的专门 architecture slice。
 
+### ADR 与 Memory 的边界
+
+`.docs/05_decisions/` 保存 ADR（Architecture Decision Record）。ADR 是软件工程中常见的架构决策记录实践，用来回答“为什么当时选择这个方案，而不是别的方案”。architecture / tech plan 可以写当前方案里的局部设计理由；如果一个决定有备选方案、影响多个模块或阶段、未来容易被质疑，或修改成本高，就应写成 ADR，记录背景、备选方案、理由、后果和替代关系。
+
+`<harnessRoot>/state/memory.md` 只做跨阶段快捷提示和导航，回答“下次进来要先记住什么、去哪里找”。memory 可以链接到 ADR、PRD、tech plan 或 implementation doc；完整背景、备选方案、取舍和长期后果放在 `.docs/05_decisions/` ADR 或其它正式 `.docs/**` 事实源里。
+
 ### Workflow skill 如何生效
 
 `<harnessRoot>/skills/<name>/SKILL.md` 是 Harness 的 workflow skill 事实源，也是稳定的 hard file index。它有两种使用方式：
@@ -216,10 +222,12 @@ make docs-overview
 |---|---|
 | `<harnessRoot>/state/lifecycle.yaml` | 当前生命周期阶段和 active skill |
 | `<harnessRoot>/state/plan.yaml` | 当前和未来 task 的短期执行计划 |
+| `<harnessRoot>/state/memory.md` | 跨阶段稳定知识的摘要和正式事实源链接 |
 | `.docs/01_product/` | PRD、用户场景、验收标准 |
 | `.docs/02_architecture/` | 架构边界和高层设计 |
 | `.docs/03_tech_plan/` | 技术方案、接口契约、任务拆分 |
 | `.docs/04_implementation/` | 模块、子系统和核心数据流的真实实现事实 |
+| `.docs/05_decisions/` | ADR，长期关键决策及其背景、备选方案、理由和后果 |
 | `.docs/06_review/` | Review 报告 |
 | `.docs/07_test/` | 测试计划和回归记录 |
 | `.docs/08_release/` | 发布记录和回滚方案 |

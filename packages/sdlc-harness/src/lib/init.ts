@@ -66,7 +66,10 @@ async function createProjectState(projectRoot: string, root: string, report: str
     ],
     [harnessPath(root, "state", "plan.yaml"), `current_task_id: ""\nnext_task_sequence: 1\ntasks: []\n`],
     [harnessPath(root, "state", "plan.draft.yaml"), `next_task_sequence: 1\ntasks: []\n`],
-    [harnessPath(root, "state", "memory.md"), "# Project Memory\n\n短期执行计划写入 plan.yaml；长期稳定知识简短记录在这里，并链接到 `.docs/` 正式出处。\n"]
+    [
+      harnessPath(root, "state", "memory.md"),
+      "# Project Memory\n\n短期执行计划写入 plan.yaml；长期稳定知识只在这里记录简短摘要和链接。完整决策背景、备选方案、取舍和后果写入 `.docs/05_decisions/` ADR 或其它 `.docs/**` 正式事实源。\n"
+    ]
   ];
   for (const [relative, content] of files) {
     if (await writeTextIfChanged(path.join(projectRoot, relative), content)) {

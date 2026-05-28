@@ -49,6 +49,10 @@ try {
   const defaultDraft = await readFile(path.join(defaultRoot, ".agent/state/plan.draft.yaml"), "utf8");
   assert.doesNotMatch(defaultDraft, /current_phase/);
   assert.doesNotMatch(defaultDraft, /current_task_id/);
+  const defaultMemory = await readFile(path.join(defaultRoot, ".agent/state/memory.md"), "utf8");
+  assert.match(defaultMemory, /简短摘要和链接/);
+  assert.match(defaultMemory, /\.docs\/05_decisions\//);
+  assert.match(defaultMemory, /正式事实源/);
   await assert.rejects(stat(path.join(defaultRoot, ".agent/state/gate_results.log")));
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");

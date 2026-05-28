@@ -82,6 +82,12 @@ Before development starts, `ARCHITECTING` can return to `REQUIREMENT_GATHERING` 
 
 `validate-design` treats semantic slicing as a hard gate. Generated `overview.md` files do not count as deliverables, development draft tasks in `plan.draft.yaml` must reference existing tech plan slices through `docs.tech_plan`, multiple development draft tasks need distinct primary tech plan slices, and explicit AI provider/copilot, external-system, or compliance/permission/audit themes require dedicated architecture slices.
 
+## ADR And Memory Boundaries
+
+`.docs/05_decisions/` stores ADRs, or Architecture Decision Records. ADRs answer why a key architecture choice was made instead of another option. Architecture and tech plan slices may include local design rationale; create an ADR when a decision has real alternatives, affects multiple modules or stages, is likely to be challenged later, or would be expensive to reverse.
+
+`<harnessRoot>/state/memory.md` is only a short cross-stage reminder and navigation surface. It answers what an agent should remember next time and where to find the source. Memory may link to ADRs, PRDs, tech plans or implementation docs; full context, alternatives, tradeoffs and long-term consequences belong in `.docs/05_decisions/` ADRs or other formal `.docs/**` fact sources.
+
 ## Common Commands
 
 ```sh

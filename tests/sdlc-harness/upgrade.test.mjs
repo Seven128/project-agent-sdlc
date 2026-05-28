@@ -15,6 +15,7 @@ try {
     "utf8"
   );
   await runInit(root, { adopt: true, force: false });
+  await rm(path.join(root, ".harness/state/memory.md"), { force: true });
   await mkdir(path.join(root, ".harness/state"), { recursive: true });
   await writeFile(
     path.join(root, ".harness/config.yaml"),
@@ -168,6 +169,10 @@ history:
   assert.doesNotMatch(lifecycle, /active_skill: "pm_prd"/);
   assert.doesNotMatch(lifecycle, /history:/);
   assert.doesNotMatch(lifecycle, /legacy phase history/);
+  const memory = await readFile(path.join(root, ".harness/state/memory.md"), "utf8");
+  assert.match(memory, /简短摘要和链接/);
+  assert.match(memory, /\.docs\/05_decisions\//);
+  assert.match(memory, /正式事实源/);
 } finally {
   await rm(root, { recursive: true, force: true });
 }

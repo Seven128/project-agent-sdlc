@@ -1,3 +1,44 @@
-current_task_id: ""
-next_task_sequence: 65
-tasks: []
+current_task_id: "TASK-065"
+next_task_sequence: 66
+tasks:
+  - id: "TASK-065"
+    phase: "SPRINTING"
+    title: "补充 ADR 与 memory 职责边界"
+    status: "in_progress"
+    summary: "说明 ADR 的用途、适用标准，以及 memory 只作为跨阶段快捷提示和正式事实源导航。"
+    docs:
+      implementation:
+        - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+    allowed_paths:
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".codex/state/plan.yaml"
+      - ".codex/state/memory.md"
+      - ".codex/skills/pjsdlc_architect_design/SKILL.md"
+      - ".codex/pjsdlc_managed/templates/ADR_TEMPLATE.md"
+      - "packages/sdlc-harness/src/lib/init.ts"
+      - "packages/sdlc-harness/src/lib/migrations.ts"
+      - "packages/sdlc-harness/README.md"
+      - "packages/sdlc-harness/assets/**"
+      - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+      - ".docs/04_implementation/overview.md"
+      - "tests/sdlc-harness/sync-init-doctor.test.mjs"
+      - "tests/sdlc-harness/upgrade.test.mjs"
+    required_gates:
+      - "make validate-plan"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "npm test --workspace agent-project-sdlc"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "PROJECT_SPEC.md 和 README.md 清楚解释 ADR 是做什么、为什么使用，以及和 memory 的边界。"
+      - "pjsdlc_architect_design 和 ADR_TEMPLATE.md 指导何时写 ADR、何时只写 architecture/tech plan。"
+      - "memory 初始文案强调只保存摘要和链接，完整决策进入 ADR 或其它正式事实源。"
+      - "package assets 与 package init/migration 文案保持一致。"
+    implementation_doc: ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+    working_notes:
+      - "2026-05-28: npm run build --workspace agent-project-sdlc PASS."
+      - "2026-05-28: make validate-plan PASS."
+      - "2026-05-28: node packages/sdlc-harness/dist/cli.js package sync-source PASS; package check-source PASS."
+      - "2026-05-28: npm test --workspace agent-project-sdlc PASS (10 tests)."
+      - "2026-05-28: make validate-harness PASS; git diff --check PASS."

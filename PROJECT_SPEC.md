@@ -235,6 +235,10 @@ RAG 能减少一次性塞进上下文的内容，但固定 chunk 和余弦召回
 | `.docs/08_release/` | `pjsdlc_release_manager` | 版本、发布批次、hotfix、rollback plan |
 | `.docs/rfc/` | `pjsdlc_rfc_recalibrate` | 一次可独立评估、实现和回归的需求变更 |
 
+`.docs/05_decisions/` 采用 ADR（Architecture Decision Record）实践，用来记录关键长期决策的“为什么”。architecture / tech plan 可以记录当前方案的局部设计理由；当一个选择有明确备选方案、会长期约束多个模块或阶段、未来容易被质疑、修改成本高，或需要保留推翻条件时，应抽成 ADR。ADR 回答“为什么当时选择这个方案，而不是别的方案”，记录背景、备选方案、决策、理由、后果和 supersede 关系；它不是 lifecycle phase，而是 `ARCHITECTING` workflow 可以产出的长期事实源。
+
+`<harnessRoot>/state/memory.md` 不承担完整决策记录。memory 回答“下次进入项目要先记住什么、去哪里找”，只保存跨阶段高频事实、约束摘要和到 `.docs/**` 正式事实源的链接。如果 memory 条目需要解释取舍、备选方案或长期后果，应提升为 `.docs/05_decisions/` ADR 或对应 `.docs/**` slice，memory 只保留一行摘要和链接。
+
 如果文档变化没有改变语义边界，更新原 slice；如果新增独立场景、拆分模块、合并流程或 RFC 改变影响范围，应新增、拆分、合并或废弃 slice，并更新 `.docs/INDEX.md`。
 
 `validate-design` 将 architecture / tech plan 语义切片作为硬约束。生成的 `overview.md` 不计入 deliverables；`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 引用存在的 `.docs/03_tech_plan/` slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确包含 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，必须有对应的专门 architecture slice。
