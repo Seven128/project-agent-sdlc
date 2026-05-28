@@ -38,7 +38,8 @@
 - task 完成并写入或更新相关事实源后，从 `plan.yaml` 的 `tasks` 列表移除该 task；不要长期保留 done/cancelled task 摘要。
 - `plan.draft.yaml` 是架构阶段生成的计划草案，不自动覆盖 `plan.yaml`。
 - `plan.draft.yaml` 不保存 `current_phase` 或 `current_task_id`，只保存待采用的 task 草案和必要的 `next_task_sequence`。
-- `SPRINTING` 阶段从 `plan.draft.yaml.tasks[]` promote 某个开发草案为正式 `TASK-*` 时，必须同次从 `plan.draft.yaml.tasks[]` 删除该 draft；`plan.draft.yaml.tasks[]` 永远表示尚未采用的开发草案。
+- 通用规则：任何阶段或工作流如果把 draft task promote 成 `plan.yaml` 中的正式 `TASK-*`，必须同次从源 draft queue 删除该 draft；draft queue 永远表示尚未采用的草案，不承担完成历史。
+- 当前内置 draft queue 只有 `plan.draft.yaml.tasks[]`，默认用于 `ARCHITECTING` 产出开发草案、`SPRINTING` 消费开发草案。
 - 不维护 checkpoint 文件；任务现场只存在于 open task 的 plan 条目里。
 - 历史动作记录以 git commit 为准，产物结果以模块、子系统或核心数据流级 implementation doc 为准。
 - `SPRINTING` 阶段每完成一个 task，先在 task 仍位于 `plan.yaml` 时创建 task implementation commit；随后再从 `plan.yaml` 移除该 task 并创建 task completion ledger commit。两段提交 push 成功前不进入下一个 task。

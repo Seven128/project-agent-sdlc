@@ -1,11 +1,11 @@
 # .docs/rfc overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 768d6bbe01519d73 -->
+<!-- source-hash: 3988d441f72c17eb -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `768d6bbe01519d73`
+Source hash: `3988d441f72c17eb`
 
 ## Source Slices
 
@@ -1091,7 +1091,7 @@ Source: [RFC_016_consume_plan_draft_tasks_on_promote.md](RFC_016_consume_plan_dr
 ## 2. 变更内容（Change Content）
 
 - Added: `validate-dev` 增加 stale draft 检查，完成态不得保留 `plan.draft.yaml.tasks[]`。
-- Changed: `/dev` 和 `/devloop` 采用“promote 即消费”规则，draft 转正式 `TASK-*` 时同时从 `plan.draft.yaml.tasks[]` 删除。
+- Changed: 协议层采用通用“promote 即消费”规则，任何 draft queue 的 draft 转正式 `TASK-*` 时都必须同步删除源 draft；当前内置实现点是 `/dev` 和 `/devloop` 消费 `plan.draft.yaml.tasks[]`。
 - Changed: `SPRINTING` allowed paths 允许主 Agent 修改 `<harnessRoot>/state/plan.draft.yaml`，用于消费 draft。
 - Changed: Skill、协议文档、README、package validator 和 consumer lab 测试同步描述 draft、active plan 和历史事实源边界。
 - Removed: 当前仓库中已被实现事实覆盖的历史 `DEV-001` pending draft。
@@ -1107,7 +1107,7 @@ Source: [RFC_016_consume_plan_draft_tasks_on_promote.md](RFC_016_consume_plan_dr
 
 | 模块（Module） | 影响（Impact） | 置信度（Confidence） |
 |---|---|---|
-| State and task protocol | 明确 `plan.draft.yaml.tasks[]` 只保存未采用草案，正式 task 恢复点只在 `plan.yaml`。 | high |
+| State and task protocol | 明确 draft queue 只保存未采用草案，正式 task 恢复点只在 `plan.yaml`；当前内置 draft queue 是 `plan.draft.yaml.tasks[]`。 | high |
 | Workflow Skills and policies | `pjsdlc_dev_sprint`、`pjsdlc_manager`、`allowed_paths` 和 phase/gate 文案需要描述 draft 消费规则。 | high |
 | Validators | Python `make validate-dev` 和 package `validate-dev` 需要拒绝完成态残留 pending draft。 | high |
 | Package assets and docs | 通用源变更需要通过 `package sync-source` 同步到 npm package assets。 | high |
@@ -1116,7 +1116,8 @@ Source: [RFC_016_consume_plan_draft_tasks_on_promote.md](RFC_016_consume_plan_dr
 
 ## 5. Acceptance Criteria
 
-- [ ] `plan.draft.yaml.tasks[]` 明确表示未采用开发草案。
+- [ ] 通用协议明确 draft queue 只表示未采用草案，不承担完成历史。
+- [ ] `plan.draft.yaml.tasks[]` 明确表示当前内置的未采用开发草案队列。
 - [ ] `/dev` promote draft 时创建正式 `TASK-*` 并同次删除源 draft。
 - [ ] `validate-dev` 在无 open task 时拒绝残留 draft tasks。
 - [ ] 当前仓库 stale `DEV-001` draft 被清理。

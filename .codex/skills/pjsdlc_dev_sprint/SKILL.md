@@ -15,7 +15,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 开始编码前，先确认当前 open task 是否完整，修改范围是否覆盖必要文件，验收标准是否能被测试或 gate 验证。如果发现任务边界、产品行为或技术方案不清晰，要停下来说明 blocker、给出可能解释和推荐下一步，而不是扩大范围继续写。
 
-`/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 `TASK-*` development task，设置 `phase: "SPRINTING"`，并只完成一个 task 闭环后停止。如果这个 task 来自 `plan.draft.yaml.tasks[]`，promote 时必须同次从 `plan.draft.yaml.tasks[]` 删除源 draft，避免已采用草案继续显示为 `pending`。`/devloop` 连续运行 `/dev`，直到 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
+`/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 `TASK-*` development task，设置 `phase: "SPRINTING"`，并只完成一个 task 闭环后停止。通用规则是从任何 draft queue promote 正式 `TASK-*` 时都必须同次消费源 draft；当前开发阶段的内置 draft queue 是 `plan.draft.yaml.tasks[]`，因此如果这个 task 来自 `plan.draft.yaml.tasks[]`，promote 时必须同次删除源 draft，避免已采用草案继续显示为 `pending`。`/devloop` 连续运行 `/dev`，直到 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
 
 实现时遵循小步闭环：先检查 `git status`，确认工作区没有未归属到当前 task 的脏变更；再定位相关代码和测试，做必要修改，运行 gate，修复失败，写入或更新相关 implementation doc 并刷新文档派生视图。此时先不要从 `plan.yaml` 移除当前 task，要在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit；随后再移除 task，创建 task completion ledger commit，并 push 两个 commit。不要顺手重构、重排格式或处理无关问题；如果发现无关风险，只记录或报告。
 

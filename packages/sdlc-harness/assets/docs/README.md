@@ -97,7 +97,7 @@ npx sdlc-harness init --adopt
 
 Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/plan.yaml`，再按当前阶段选择对应 workflow skill、产物和 gate。任何阶段的 Agent 主任务都不是一次性长生成：产品方案、技术方案、文档切片、基于上一阶段事实源生成、Review、测试、发布和 RFC 处理，都应先落成一个最小 `TASK-*` open task，并设置对应 `phase`；当前轮只执行一个 task，写入 `result_docs` 或 `implementation_doc`、更新索引和 overview，运行 `make validate-plan`，任务完成后再从 `plan.yaml` 移除。
 
-`plan.draft.yaml.tasks[]` 只表示尚未采用的开发草案。`SPRINTING` 中 `/dev` 从 draft promote 出正式 `TASK-*` 时，必须在同一次状态更新里把源 draft 从 `plan.draft.yaml.tasks[]` 删除；正式 task 的恢复现场只保存在 `plan.yaml`，完成历史由 implementation docs、git/PR/CI 记录承担。`/devloop` 只有在 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可执行任务时，才把开发队列视为耗尽。
+通用规则是：任何阶段或工作流如果把 draft task promote 成 `plan.yaml` 中的正式 `TASK-*`，必须在同一次状态更新里从源 draft queue 删除该 draft；正式 task 的恢复现场只保存在 `plan.yaml`，完成历史由 implementation docs、git/PR/CI 记录承担。当前 Harness 内置的 draft queue 只有 `plan.draft.yaml.tasks[]`，它表示尚未采用的开发草案；`/devloop` 只有在 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可执行任务时，才把开发队列视为耗尽。
 
 在尚未进入开发前，`ARCHITECTING` 可以回到 `REQUIREMENT_GATHERING` 修改 PRD：Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流，完成 PRD task 和 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化仍走 RFC workflow。
 

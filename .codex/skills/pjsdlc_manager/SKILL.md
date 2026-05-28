@@ -59,7 +59,7 @@ Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多
 
 ## Plan Protocol
 
-每个 open task 都必须在 `plan.yaml` 中包含 `id`、`phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`；新 task 统一使用 `TASK-*` id，历史 `DEV-*`、`PRD-*`、`DES-*` task 只作为兼容输入保留。文档和流程产物 task 使用 `result_docs` 指向本 task 产出的 PRD、architecture、tech plan、ADR、review、test、release、RFC 或 `plan.draft.yaml`，开发 task 使用 `implementation_doc` 指向模块级实现事实。`plan.draft.yaml.tasks[]` 只保存尚未采用的开发草案；从 draft promote 正式 `TASK-*` 时必须同次消费并删除源 draft。done/cancelled task 不长期留在当前 `plan.yaml`。完成后的产物事实以对应 `.docs/**` slice 或模块级 implementation doc 为准，动作历史以 git/PR/CI/release 系统作为 cold archive，`next_task_sequence` 负责继续分配后续 task id。
+每个 open task 都必须在 `plan.yaml` 中包含 `id`、`phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`；新 task 统一使用 `TASK-*` id，历史 `DEV-*`、`PRD-*`、`DES-*` task 只作为兼容输入保留。文档和流程产物 task 使用 `result_docs` 指向本 task 产出的 PRD、architecture、tech plan、ADR、review、test、release、RFC 或 `plan.draft.yaml`，开发 task 使用 `implementation_doc` 指向模块级实现事实。任何阶段如果从 draft queue promote 正式 `TASK-*`，必须同次消费并删除源 draft；当前内置 draft queue 是 `plan.draft.yaml.tasks[]`，用于保存尚未采用的开发草案。done/cancelled task 不长期留在当前 `plan.yaml`。完成后的产物事实以对应 `.docs/**` slice 或模块级 implementation doc 为准，动作历史以 git/PR/CI/release 系统作为 cold archive，`next_task_sequence` 负责继续分配后续 task id。
 
 `/prd`、`/design`、`/dev`、`/review`、`/test`、`/release` 和 `/rfc` 都是单 task 推进：默认只完成一个 `TASK-*`。`validate-plan` 用于检查当前 open task 合同是否完整；阶段出口 gate `validate-pm`、`validate-design`、`validate-dev`、`validate-review`、`validate-test`、`validate-release` 和 `validate-rfc` 都要求没有 open task 残留。
 

@@ -15,14 +15,14 @@
 - `.codex/state/lifecycle.yaml` stores the single source for current phase routing state.
 - `.codex/state/plan.yaml` stores the current and future short-lived task contract across all workflow phases, without duplicating `current_phase`.
 - `plan.yaml` is conceptually a recoverable task-splitting container for long-running project goals; the default Harness workflow only interprets phase-related tasks, while broader project-specific task definitions belong in local configuration or overlays.
-- `.codex/state/plan.draft.yaml` stores only unadopted development draft tasks and `next_task_sequence`, without `current_phase` or `current_task_id`.
+- `.codex/state/plan.draft.yaml` is the current built-in draft queue; it stores only unadopted development draft tasks and `next_task_sequence`, without `current_phase` or `current_task_id`.
 - `TASK-*` is the new task id model; `phase` identifies `REQUIREMENT_GATHERING`, `ARCHITECTING`, `SPRINTING`, `REVIEWING`, `TESTING`, `RELEASING` or `RFC_RECALIBRATION`; historical `PRD-*`, `DES-*` and `DEV-*` ids remain validator-compatible provenance.
 - `next_task_sequence` preserves future `TASK-*` id allocation after done tasks are removed.
 - Document, review, test, release and RFC tasks use `result_docs` for planned fact-source outputs; development tasks use `implementation_doc`.
 - Checkpoint files, archive directories, gate result logs and lifecycle history are no longer active state facts.
 - `phase_contracts.yaml` supports optional `returns` targets for bounded pre-development rollback; the default contract allows `ARCHITECTING -> REQUIREMENT_GATHERING` so PRD facts can be corrected before `SPRINTING`.
 - A SPRINTING task completes in two commits: implementation commit while the task is still present, then completion ledger commit after removing the task.
-- When SPRINTING promotes a draft from `plan.draft.yaml.tasks[]` into a formal `TASK-*`, it removes the source draft in the same state update; interrupted or blocked execution resumes only from `plan.yaml`.
+- Generic draft-to-plan rule: when any workflow promotes a draft into a formal `TASK-*`, it removes the source draft in the same state update; the current built-in implementation point is SPRINTING consuming `plan.draft.yaml.tasks[]`.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 - `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
 
@@ -33,7 +33,7 @@
 | `AGENTS.md` | Project-level protocol | Plan Protocol, work rules, natural-language routing |
 | `.codex/state/lifecycle.yaml` | Current phase routing | `current_phase`, `active_skill`, `allowed_next_phases` |
 | `.codex/state/plan.yaml` | Active short-term task contract | `current_task_id`, `next_task_sequence`, `tasks[]` |
-| `.codex/state/plan.draft.yaml` | Unadopted draft task queue | `next_task_sequence`, `tasks[]` |
+| `.codex/state/plan.draft.yaml` | Built-in unadopted development draft queue | `next_task_sequence`, `tasks[]` |
 | `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields, `result_docs` and `implementation_doc` examples |
 | `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase routing contract | `next` forward target and optional `returns` rollback targets |
 | `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product task prompt | `TASK-*` document-production task protocol with `phase: "REQUIREMENT_GATHERING"` |
@@ -106,7 +106,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 - `plan.yaml` is not an exhaustive log of everything an Agent does. The generic workflow contract covers tasks that affect phase deliverables, gates, implementation facts or RFC recalibration; local teams may extend task taxonomy for broader project management needs without changing the core `TASK-*` workflow semantics.
 - `current_phase` belongs only to `lifecycle.yaml`; `plan.yaml`, `plan.draft.yaml` and `parallel_execution` must not duplicate it.
 - `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
-- `plan.draft.yaml` is not active execution state, must not contain `current_task_id`, and must not retain adopted or completed drafts.
+- Draft queues are not active execution state and must not retain adopted or completed drafts. The current built-in draft queue is `plan.draft.yaml`; it must not contain `current_task_id`.
 - `validate-dev` rejects any remaining `plan.draft.yaml.tasks[]`; agents must either continue promoting real unadopted drafts or remove already-consumed stale drafts before development completion.
 - Field audit: `active_role`, `active_skill`, `current_milestone`, `blocked_reason`, `suspended_phase` and `allowed_next_phases` are lifecycle-only; `current_task_id` and `next_task_sequence` are plan-only; `tasks[].phase` is semantic task classification rather than current lifecycle state and remains on each task.
 - Every phase task is task-controlled: one `TASK-*` task should produce one bounded document slice, review batch, test evidence set, release artifact set, RFC impact slice or development change.
@@ -153,6 +153,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-28 | `TASK-061` | Working tree | Added `phase_contracts.yaml#returns` and `transition.py` support so ARCHITECTING can return to REQUIREMENT_GATHERING for PRD edits before SPRINTING, while SPRINTING cannot directly return to PRD. |
 | 2026-05-28 | Spec clarification | Working tree | Clarified that `plan.yaml` is a general recoverable task-splitting container, while default Harness behavior only governs workflow phase tasks; broader task definitions are local configuration concerns. |
 | 2026-05-28 | `TASK-062` | Working tree | Added promote-on-consume semantics for `plan.draft.yaml`, dev-state validation, package validator parity, and cleared the stale `DEV-001` draft from current state. |
+| 2026-05-28 | `TASK-063` | Working tree | Clarified that promote-on-consume is the generic rule for any draft-to-plan workflow, while `plan.draft.yaml` remains the current built-in development draft queue. |
 
 ## 9. 后续维护注意事项
 

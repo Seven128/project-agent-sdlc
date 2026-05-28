@@ -297,7 +297,7 @@ tasks:
 
 文档、Review、测试、发布和 RFC 类 task 使用 `result_docs` 指向本 task 产出的 PRD、architecture、tech plan、ADR、review report、test plan、release note、RFC 或 `plan.draft.yaml`。开发 task 使用 `implementation_doc` 指向模块级实现事实文档。
 
-`plan.draft.yaml.tasks[]` 是架构阶段留下的未采用开发草案队列，不是完成历史或半 ledger。进入 `SPRINTING` 后，Agent 从 draft promote 出正式 `TASK-*` 时，必须在同一次状态更新中把源 draft 从 `plan.draft.yaml.tasks[]` 删除；若正式 task 后续中断或 blocked，恢复现场只读取 `plan.yaml` 中的 open task。已完成历史继续由 implementation docs、git commit、PR/CI 和 release evidence 承担，不写回 `plan.draft.yaml`。
+通用规则：任何阶段或工作流如果把 draft task promote 成 `plan.yaml` 中的正式 `TASK-*`，必须在同一次状态更新中从源 draft queue 删除该 draft；若正式 task 后续中断或 blocked，恢复现场只读取 `plan.yaml` 中的 open task。draft queue 只表示尚未采用的草案，不是完成历史或半 ledger。当前 Harness 内置 draft queue 只有 `plan.draft.yaml.tasks[]`，默认由 `ARCHITECTING` 生成开发草案、由 `SPRINTING` 消费开发草案。已完成历史继续由 implementation docs、git commit、PR/CI 和 release evidence 承担，不写回 draft queue。
 
 task 完成后不再长期保留 done task 字段，当前 plan 回到只含待做任务或空列表：
 
@@ -400,7 +400,7 @@ PRD
 -> 模块级 implementation doc
 ```
 
-每个 open task 都必须在 `plan.yaml` 中包含 `phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。文档、Review、测试、发布和 RFC 类 task 使用 `result_docs`，开发 task 使用 `implementation_doc`。执行中只把必要现场写成短 `working_notes`；任务完成并写入或更新相关事实源后，把该 task 从当前 `plan.yaml` 移除。历史动作记录以 git/PR/CI/release 系统作为 cold archive，产物结果以 `.docs/**` slice、Review/Test/Release/RFC 文档或模块级 implementation doc 为准。`plan.draft.yaml.tasks[]` 只表示尚未采用的开发草案，不表示已完成历史。
+每个 open task 都必须在 `plan.yaml` 中包含 `phase`、`docs`、`allowed_paths`、`required_gates` 和 `acceptance_criteria`。文档、Review、测试、发布和 RFC 类 task 使用 `result_docs`，开发 task 使用 `implementation_doc`。执行中只把必要现场写成短 `working_notes`；任务完成并写入或更新相关事实源后，把该 task 从当前 `plan.yaml` 移除。历史动作记录以 git/PR/CI/release 系统作为 cold archive，产物结果以 `.docs/**` slice、Review/Test/Release/RFC 文档或模块级 implementation doc 为准。任何 draft queue 都只表示尚未采用的草案，不表示已完成历史；当前内置的 `plan.draft.yaml.tasks[]` 是开发草案队列。
 
 过去 phase/task/gate 执行流水不是 Agent 默认上下文。`plan.yaml` 不长期保存 commit hash，`lifecycle.yaml` 不保存 `history`，completion ledger commit 只负责把当前 plan 恢复为短期、低噪声状态。只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
 

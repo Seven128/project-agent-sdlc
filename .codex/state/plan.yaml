@@ -1,3 +1,41 @@
-current_task_id: ""
-next_task_sequence: 63
-tasks: []
+current_task_id: "TASK-063"
+next_task_sequence: 64
+tasks:
+  - id: "TASK-063"
+    phase: "SPRINTING"
+    title: "泛化 draft promote 消费协议说明"
+    status: "in_progress"
+    summary: "澄清 plan.yaml 是全阶段正式任务源，任何 draft-to-plan promotion 都应消费源 draft；当前内置实现点仍是 plan.draft.yaml 到 SPRINTING。"
+    docs:
+      rfc:
+        - ".docs/rfc/RFC_016_consume_plan_draft_tasks_on_promote.md"
+      implementation:
+        - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+    allowed_paths:
+      - "AGENTS.md"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - ".codex/state/plan.yaml"
+      - ".codex/skills/pjsdlc_manager/SKILL.md"
+      - ".codex/skills/pjsdlc_dev_sprint/SKILL.md"
+      - "packages/sdlc-harness/README.md"
+      - "packages/sdlc-harness/assets/**"
+      - ".docs/rfc/RFC_016_consume_plan_draft_tasks_on_promote.md"
+      - ".docs/rfc/overview.md"
+      - ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
+      - ".docs/04_implementation/overview.md"
+    required_gates:
+      - "make validate-plan"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "协议明确 draft-to-plan promote 消费规则是通用原则。"
+      - "文档明确当前 Harness 内置 draft queue 只有 plan.draft.yaml，实际 phase gate 仍落在 SPRINTING。"
+    working_notes:
+      - "make validate-plan: PASS."
+      - "node packages/sdlc-harness/dist/cli.js package sync-source: PASS, changed 25 assets."
+      - "node packages/sdlc-harness/dist/cli.js package check-source: PASS."
+      - "make validate-harness: PASS."
+      - "git diff --check: PASS."
+    implementation_doc: ".docs/04_implementation/harness_workflow/state_and_task_protocol.md"
