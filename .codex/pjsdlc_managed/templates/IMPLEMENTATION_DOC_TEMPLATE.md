@@ -40,7 +40,14 @@ Input
 - Fixture/live boundary:
 - Missing runtime boundaries:
 
-## 6. 关键实现逻辑
+## 6. Development Evidence（开发自测证据）
+
+- Runnable Entry:
+- Observable Exit:
+- Basic Self-test Evidence:
+- Not applicable:
+
+## 7. 关键实现逻辑
 
 - 输入校验（Input validation）:
 - 核心分支（Core branches）:
@@ -48,22 +55,22 @@ Input
 - 边界兜底（Boundary fallback）:
 - 性能或并发注意事项（Performance or concurrency notes）:
 
-## 7. 与技术方案的偏移
+## 8. 与技术方案的偏移
 
 - 
 
-## 8. 测试覆盖（Test Coverage）
+## 9. 测试覆盖（Test Coverage）
 
 | 测试（Test） | 覆盖范围（Coverage） | 结果（Result） |
 |---|---|---|
 |  |  |  |
 
-## 9. 变更记录（Change Log）
+## 10. 变更记录（Change Log）
 
 | 日期（Date） | Task ID | Commit | 摘要（Summary） |
 |---|---|---|---|
 |  |  |  |  |
 
-## 10. 后续维护注意事项
+## 11. 后续维护注意事项
 
 - 

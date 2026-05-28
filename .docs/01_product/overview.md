@@ -1,11 +1,11 @@
 # .docs/01_product overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 0b0c07b8e78e7ee3 -->
+<!-- source-hash: 31684332a1985350 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `0b0c07b8e78e7ee3`
+Source hash: `31684332a1985350`
 
 ## Source Slices
 
@@ -76,6 +76,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 | PRD-NPM-026 | 支持自然语言意图和约定指令别名双入口 | P0 | 每个阶段都应支持自然语言和 `/xxx` 快捷入口；`/xxx` 是更完整、更细节的提示词别名，自然语言是低成本入口；产品、架构、开发阶段分别提供 `/prd`、`/design`、`/dev`、`/devloop` |
 | PRD-NPM-027 | npm 发布流程可脚本化执行 | P1 | 提供仓库内 release script，自动执行 version bump、test、source drift check、pack dry-run、publish、registry latest verification、installed-consumer smoke 和 release doc evidence；默认不发布，显式确认后才 publish |
 | PRD-NPM-028 | 支持显式 opt-in 的 Parallel Execution Contract | P1 | 只有用户明确要求并行、多 agent 或多 worktree 时才启用；支持 `runtime_managed` 和 `user_orchestrated` 两种模式；Harness 记录 worker 边界、owned paths、required gates 和主 Agent 集成责任，但 v1 不承诺 CLI 自动启动 Codex agent |
+| PRD-NPM-029 | `validate-dev` 强制 SPRINTING 交付结构化 Development Evidence | P0 | 当前 open dev task 的 implementation doc 必须记录 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`，或带原因的 `Not applicable`；页面类任务要求 dev server/page URL 与 browser check，API/CLI/worker 类任务要求 invocation 与可观察结果 |
 
 ## 5. Acceptance Criteria
 
@@ -117,6 +118,7 @@ Source: [npm_package_distribution.md](npm_package_distribution.md)
 - [ ] 用户显式要求并行、多 agent 或多 worktree 时，Agent 可以生成 `parallel_execution.trigger: "user_requested"` 合同，描述 `mode`、`workers`、`owned_paths`、`forbidden_paths`、worker gates 和主 Agent integration。
 - [ ] 当前 runtime 支持 subagent 时可使用 `runtime_managed`；不支持时使用 `user_orchestrated`，由主 Agent 输出 worker prompts，用户手动多开对话或 worktree 后粘贴执行。
 - [ ] 需求、开发、测试阶段并行的最终事实源更新都由主 Agent 集成；worker 不直接拥有最终 PRD、plan、implementation doc、test result 或 overview。
+- [ ] `validate-dev` 拒绝缺少当前 task `Development Evidence` 的 implementation doc，确保 TESTING 接收到已有预期能力的应用入口与可观察出口。
 
 ## 6. Out Of Scope
 

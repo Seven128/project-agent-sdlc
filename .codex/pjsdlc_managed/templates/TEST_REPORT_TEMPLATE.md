@@ -24,6 +24,7 @@
 
 - Existing entry points under test:
 - Expected exits / side effects:
+- Development Evidence used:
 - Config contract used:
 - Fixture/live boundary:
 - Missing entry/exit blocker:

@@ -15,7 +15,9 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 开始编码前，先确认当前 open task 是否完整，修改范围是否覆盖必要文件，验收标准是否能被测试或 gate 验证。如果发现任务边界、产品行为或技术方案不清晰，要停下来说明 blocker、给出可能解释和推荐下一步，而不是扩大范围继续写。
 
-开发阶段的 Definition of Done 包含可运行的系统入口/出口。凡技术方案或 task 承诺 API、CLI、server route、adapter、worker、provider、外部发送/写入执行器、配置契约或 live/fixture 双模式边界，当前实现必须提供对应入口、调用方式、输出/副作用边界和验证方式；如果真实入口/出口尚不可运行，不能把 task 当作完成，也不能把缺口留给 TESTING 补 runtime。Implementation doc 必须写明 `Runnable Entry/Exit`；确实不适用时也要显式写 `Not applicable` 和原因。此时应保留或创建 `BLOCKED`/后续 dev task，或通过 RFC/ARCHITECTING 处理边界变更。
+开发阶段的 Definition of Done 包含可运行的系统入口/出口。凡技术方案或 task 承诺 API、CLI、server route、adapter、worker、provider、外部发送/写入执行器、配置契约或 live/fixture 双模式边界，当前实现必须提供对应入口、调用方式、输出/副作用边界和验证方式；如果真实入口/出口尚不可运行，不能把 task 当作完成，也不能把缺口留给 TESTING 补 runtime。Implementation doc 必须写明 `Runnable Entry/Exit`，并在 `Development Evidence` 中记录 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`；确实不适用时也要显式写 `Not applicable` 和具体原因。此时应保留或创建 `BLOCKED`/后续 dev task，或通过 RFC/ARCHITECTING 处理边界变更。
+
+页面类任务在开发阶段必须启动 dev server 或等价预览入口，并用浏览器、Playwright、截图或等价方式验证页面可加载、主入口可访问、核心按钮/表单/跳转可用、没有明显报错或空白页。API/CLI/worker/RPA 类任务必须记录实际调用命令、endpoint、worker command、dry-run/live preflight 或 server action，以及可观察的 response、队列 item、审计日志、文件产物、发送结果、错误码或 PASS/BLOCKED 结果。
 
 `/dev` 和 `/devloop` 是开发阶段的两个入口。`/dev` 创建或选择下一个最小 `TASK-*` development task，设置 `phase: "SPRINTING"`，并只完成一个 task 闭环后停止。通用规则是从任何 draft queue promote 正式 `TASK-*` 时都必须同次消费源 draft；当前开发阶段的内置 draft queue 是 `plan.draft.yaml.tasks[]`，因此如果这个 task 来自 `plan.draft.yaml.tasks[]`，promote 时必须同次删除源 draft，避免已采用草案继续显示为 `pending`。`/devloop` 连续运行 `/dev`，直到 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可创建/执行的任务，或遇到需求、架构、allowed_paths、gate、commit/push blocker。
 
@@ -37,7 +39,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - 当前 task `allowed_paths` 范围内的测试改动
 - `.docs/04_implementation/` 下相关模块、子系统或核心数据流的 implementation doc
 - 当前 task `working_notes` 或 implementation doc `Verification` 中的 gate evidence
-- implementation doc 中的 runnable entry/exit、配置契约和 fixture/live 边界事实
+- implementation doc 中的 runnable entry/exit、observable exit、basic self-test evidence、配置契约和 fixture/live 边界事实
 - 更新后的 `<harnessRoot>/state/plan.yaml`
 - 如果本轮 promote draft，更新后的 `<harnessRoot>/state/plan.draft.yaml`
 - 更新后的 `.docs/INDEX.md`
@@ -85,7 +87,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 6. 如果 gate 因代码或测试逻辑失败，在任务范围内修复。
 7. 如果 gate 因基础设施、凭证缺失、产品行为不清或高风险架构变化失败，进入 `BLOCKED`。
 8. gate 通过后调用 `pjsdlc_implementation_doc`。
-9. 只有 gate 通过、承诺的 runnable entry/exit 已实现或明确 `BLOCKED`，且 implementation doc 校验通过后，才能把任务标记为 `done`。
+9. 只有 gate 通过、承诺的 runnable entry/exit 已实现或明确 `BLOCKED`，implementation doc 包含结构化 `Development Evidence`，且 implementation doc 校验通过后，才能把任务标记为 `done`。
 10. 任务完成并写入或更新相关 implementation doc、刷新 `overview.md`、记录 gate 后，先创建 task implementation commit；此时不要移除该 task。
 11. task implementation commit 必须发生在 task 移除前；后续默认不要读取其中的执行期字段，历史查询以模块级 implementation doc、RFC、PRD、tech plan 和代码为主。
 12. implementation commit 完成后，从当前 `plan.yaml` 移除该 task，并创建 task completion ledger commit。
@@ -103,6 +105,7 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 - [ ] open task 在 `plan.yaml` 中包含完整执行合同。
 - [ ] 当前任务仍然是单一清晰的执行单元。
 - [ ] 技术方案或 task 承诺的 API/CLI/adapter/worker/provider、配置契约、输出/副作用和 fixture/live 边界已可运行并写入 implementation doc，或已明确 `BLOCKED`/后续 dev task。
+- [ ] implementation doc `Development Evidence` 已记录 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`，或写明带原因的 `Not applicable`。
 - [ ] 如果当前 task 来自 `plan.draft.yaml.tasks[]`，源 draft 已在 promote 时从 draft 列表删除。
 - [ ] implementation doc 已生成或更新，并反映相关模块的真实代码。
 - [ ] 如果启用了 `parallel_execution`，worker owned paths、forbidden paths、required gates 和主 Agent 集成结果已记录。

@@ -55,7 +55,7 @@ try {
   );
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
     "utf8"
   );
   await writeFile(
@@ -316,6 +316,29 @@ tasks: []
   );
   const consumedDraftDevReport = await runValidator(root, "validate-dev");
   assert.deepEqual(consumedDraftDevReport.errors, [], "validate-dev allows consumed draft queue");
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-002
+next_task_sequence: 3
+tasks:
+  - id: TASK-002
+    phase: SPRINTING
+    title: Open task
+    status: in_progress
+    summary: Active task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "development evidence is structured"
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
   await writeFile(path.join(root, ".docs/04_implementation/example/dev.md"), "# Impl\n", "utf8");
   const missingRunnableEntryExitDevReport = await runValidator(root, "validate-dev");
   assert.match(missingRunnableEntryExitDevReport.errors.join("\n"), /Runnable Entry\/Exit/);
@@ -324,8 +347,86 @@ tasks: []
     "# Impl\n\n## Runnable Entry/Exit\n\nNot applicable: validator fixture implementation has no product runtime boundary.\n",
     "utf8"
   );
+  const missingDevelopmentEvidenceDevReport = await runValidator(root, "validate-dev");
+  assert.match(missingDevelopmentEvidenceDevReport.errors.join("\n"), /Development Evidence/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry:\n- Observable Exit: PASS output.\n- Basic Self-test Evidence: `npm test` PASS.\n",
+    "utf8"
+  );
+  const placeholderDevelopmentEvidenceDevReport = await runValidator(root, "validate-dev");
+  assert.match(placeholderDevelopmentEvidenceDevReport.errors.join("\n"), /Runnable Entry must contain concrete/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
+    "utf8"
+  );
+  const missingObservableExitDevReport = await runValidator(root, "validate-dev");
+  assert.match(missingObservableExitDevReport.errors.join("\n"), /Observable Exit must contain concrete/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n",
+    "utf8"
+  );
+  const missingSelfTestEvidenceDevReport = await runValidator(root, "validate-dev");
+  assert.match(missingSelfTestEvidenceDevReport.errors.join("\n"), /Basic Self-test Evidence must contain concrete/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\nNot applicable: validator fixture implementation has no product runtime boundary.\n\n## Development Evidence\n\n- Not applicable: because this validator fixture has no product runtime boundary, no user-facing entry, and no observable side effect beyond static validation.\n",
+    "utf8"
+  );
   const notApplicableDevReport = await runValidator(root, "validate-dev");
   assert.deepEqual(notApplicableDevReport.errors, [], "validate-dev accepts explicit Not applicable entry/exit docs");
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: frontend page smoke opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Basic Self-test Evidence: smoke PASS.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-002
+next_task_sequence: 3
+tasks:
+  - id: TASK-002
+    phase: SPRINTING
+    title: Open frontend page task
+    status: in_progress
+    summary: Active page task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "page evidence is structured"
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  const pageMissingUrlDevReport = await runValidator(root, "validate-dev");
+  assert.match(pageMissingUrlDevReport.errors.join("\n"), /dev server or page URL/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: dev server page URL `http://localhost:3000/dashboard` opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Basic Self-test Evidence: smoke PASS.\n",
+    "utf8"
+  );
+  const pageMissingBrowserCheckDevReport = await runValidator(root, "validate-dev");
+  assert.match(pageMissingBrowserCheckDevReport.errors.join("\n"), /browser check/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: ""
+next_task_sequence: 3
+tasks: []
+`,
+    "utf8"
+  );
 
   await writeFile(
     path.join(root, ".harness/state/lifecycle.yaml"),
@@ -1057,7 +1158,7 @@ async function writeSprintDevFixture(projectRoot) {
   await writeFile(path.join(projectRoot, ".docs/INDEX.md"), "# Index\n.docs/04_implementation/example/dev.md\n", "utf8");
   await writeFile(
     path.join(projectRoot, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: local fixture API.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: local fixture API.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: API command `node tests/fixture-api.mjs` invokes the local fixture API.\n- Observable Exit: Command output reports PASS validation output only.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for dirty-file scoping regression.\n",
     "utf8"
   );
   await writeFile(path.join(projectRoot, ".harness/state/lifecycle.yaml"), 'current_phase: "SPRINTING"\n', "utf8");

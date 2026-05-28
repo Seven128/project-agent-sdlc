@@ -31,6 +31,7 @@
 - Exit / side effects:
 - Config contract:
 - Fixture/live boundary:
+- Development Evidence:
 - Blocking gaps before TESTING:
 
 ## 7. Gate Result（阶段结论）

@@ -4,10 +4,10 @@
 
 - Domain: `harness_workflow`
 - Module / subsystem / core flow: workflow Skills, prompt routing, hard/soft indexing and authoring overlay
-- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`, `TASK-060`, `TASK-061`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-070`, `TASK-071`
+- Updated by task: `DEV-014`, `DEV-016`, `DEV-017`, `DEV-021`, `DEV-023`, `DEV-029`, `DEV-036`, `DEV-037`, `DEV-038`, `DEV-039`, `DEV-040`, `DEV-043`, `DEV-044`, `DEV-046`, `DEV-049`, `DEV-050`, `DEV-055`, `DEV-056`, `TASK-057`, `TASK-060`, `TASK-061`, `TASK-066`, `TASK-067`, `TASK-069`, `TASK-070`, `TASK-071`, `TASK-072`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`, `PROJECT_SPEC.md`
-- Linked RFC: `RFC_007`, `RFC_009`, `RFC_015`, `RFC_017`, `RFC_018`
+- Linked RFC: `RFC_007`, `RFC_009`, `RFC_015`, `RFC_017`, `RFC_018`, `RFC_019`
 - Linked commits: historical `DEV-*` implementation commits; `DEV-043` migration commit; `DEV-049` implementation commit; `DEV-050` implementation commit
 
 ## 2. 当前实现范围
@@ -31,6 +31,7 @@
 - TESTING distinguishes `.docs/07_test/TEST_STRATEGY.md`, `.docs/07_test/TEST_CASES.md` and `.docs/07_test/TEST_REPORT.md`; `TEST_REPORT.md` is execution-only evidence and `validate-test` no longer falls back to `TEST_PLAN.md`.
 - RFC recalibration now records `Test Fact Source Impact` and removes superseded `.docs/07_test/**` files from current test facts and `.docs/INDEX.md` when a route, entry/exit or acceptance boundary changes.
 - `validate-dev` now requires implementation docs to include `Runnable Entry/Exit` facts or explicit `Not applicable`, so missing runtime boundaries cannot be deferred into TESTING by omission.
+- `validate-dev` now requires the current open SPRINTING task implementation doc to include structured `Development Evidence`: `Runnable Entry`, `Observable Exit`, `Basic Self-test Evidence`, or a justified `Not applicable`.
 - Dev and Manager prompts now distinguish direct SPRINTING `validate-dev` from phase-exit `validate-current`: direct dev gate allows a valid current open task, while phase advancement still requires no open tasks.
 - RELEASING uses `.docs/08_release/CURRENT_RELEASE.md` as the canonical current release status. `validate-release` keeps accepting legacy versioned release docs when the current file is absent, but new release work updates the current status file instead of creating a version ledger.
 
@@ -40,6 +41,13 @@
 - Exit / side effects: updated prompts and validators govern phase behavior; `package sync-source` materializes distributable assets.
 - Config contract: `AGENTS.md`, `.codex/pjsdlc_managed/**`, `packages/sdlc-harness/source-mappings.yaml`, `.docs/07_test/TEST_REPORT.md`.
 - Fixture/live boundary: workflow contract only; TESTING may add fixtures/mocks/assertions/smoke runners under `tests/**` but cannot introduce product runtime/provider/bootstrap/deploy code.
+
+## Development Evidence
+
+- Runnable Entry: CLI command `npx sdlc-harness validate-dev` / `make validate-dev` validates the current SPRINTING task evidence contract through `packages/sdlc-harness/src/lib/validators.ts`.
+- Observable Exit: Validator output reports PASS or concrete errors for missing `Development Evidence`, missing `Observable Exit`, missing `Basic Self-test Evidence`, page URL/browser evidence gaps, or callable invocation/result gaps.
+- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for TASK-072 validator regression; final source sync and Harness gates are recorded in Test Coverage after completion.
+- Not applicable: not applicable only when a module has no product runtime boundary; this workflow validator module has CLI validator entrypoints, so structured evidence is required.
 
 ## 3. 真实代码结构
 
@@ -119,6 +127,8 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `validate-rfc` checks `Test Fact Source Impact` and rejects RFCs that list superseded `.docs/07_test/**` paths still present in current facts or `.docs/INDEX.md`.
 - TESTING boundary checks still reject `tests/runtime/**` and runtime-like test files, but allow clearly test-only fixture, mock, assertion and smoke files under `tests/**`.
 - `validate-dev` checks implementation docs for runnable entry/exit facts, accepting explicit `Not applicable` only when the module truly has no product runtime boundary.
+- `validate-dev` checks the current open SPRINTING task implementation doc for a `Development Evidence` section with concrete `Runnable Entry`, `Observable Exit` and `Basic Self-test Evidence`, or a justified `Not applicable`.
+- Page evidence must include a dev server/page URL plus browser, Playwright, screenshot or equivalent interaction evidence; API/CLI/worker/RPA evidence must include an invocation command/endpoint and observable output, response, side effect, log, artifact or PASS/BLOCKED result.
 - direct `validate-dev` is explicitly an in-development SPRINTING gate. It validates the current open task contract, dirty-file scope, draft consumption and implementation docs without forcing task removal. `validate-current` / `/advance` keeps no-open phase-exit behavior before REVIEWING.
 - Managed Makefile `validate-dev` runs `$(SDLC_HARNESS) validate-dev`, then project `lint` and `test-current-domain`, so installed package consumers no longer need source-repo-only Python validators for this gate.
 - Package Skill overrides remain append-only local extensions. The generated override block now states that package-managed phase boundaries remain authoritative and overrides may narrow local behavior but must not expand TESTING or REVIEWING into implementation/runtime ownership.
@@ -172,6 +182,11 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `make validate-dev` | Managed Makefile direct dev gate uses package CLI without unsynced Python dev-state tools | PASS for TASK-071 |
 | `make validate-current` | Manager phase-exit path keeps no-open safety after direct dev gate | PASS for TASK-071 |
 | `make validate-harness` | Prompt language and generated overview consistency after Dev/Manager prompt changes | PASS for TASK-071 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for structured Development Evidence, placeholder rejection, page evidence and callable evidence | PASS for TASK-072; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect Development Evidence Skill/template/policy/README changes | PASS for TASK-072; changed=26 |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match authoring source after Development Evidence changes | PASS for TASK-072 |
+| `make validate-dev` | Direct SPRINTING gate validates current task structured Development Evidence | PASS for TASK-072 |
+| `make validate-harness` | Prompt language and generated overview consistency after Development Evidence changes | PASS for TASK-072 |
 
 ## 8. 变更记录（Change Log）
 
@@ -198,6 +213,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-29 | `TASK-069` | Working tree | Replaced versioned release document generation with canonical `.docs/08_release/CURRENT_RELEASE.md` release status guidance and validator compatibility wording. |
 | 2026-05-29 | `TASK-070` | Working tree | Split test strategy, test cases and execution report semantics; removed `TEST_PLAN.md` report fallback; added RFC cleanup checks for superseded test facts. |
 | 2026-05-29 | `TASK-071` | Working tree | Clarified direct dev gate open-task semantics in Dev/Manager prompts and moved managed Makefile `validate-dev` to package CLI wiring. |
+| 2026-05-29 | `TASK-072` | Working tree | Added structured SPRINTING Development Evidence requirements and `validate-dev` checks for runnable entry, observable exit and basic self-test evidence. |
 
 ## 9. 后续维护注意事项
 

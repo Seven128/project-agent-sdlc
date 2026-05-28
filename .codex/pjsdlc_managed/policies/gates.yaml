@@ -31,7 +31,7 @@ gates:
 
   validate-dev:
     command: "make validate-dev"
-    purpose: "验证任务状态、已消费 draft、allowed_paths、代码检查、测试和实现文档"
+    purpose: "验证任务状态、已消费 draft、allowed_paths、代码检查、测试、实现文档和 Development Evidence"
     required_for:
       - "SPRINTING"
 

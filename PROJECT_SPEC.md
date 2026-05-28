@@ -206,7 +206,7 @@ python3 tools/transition.py --to <PHASE>
 |---|---|---|---|---|---|
 | `REQUIREMENT_GATHERING` | `pjsdlc_pm_prd` | `.docs/00_raw/` | `.docs/01_product/`, `.docs/INDEX.md` | `make validate-pm` | `ARCHITECTING` |
 | `ARCHITECTING` | `pjsdlc_architect_design` | PRD、现有架构、代码结构 | 架构文档、技术方案、`plan.draft.yaml` | `make validate-design` | `SPRINTING`；开发前可返回 `REQUIREMENT_GATHERING` |
-| `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、`plan.draft.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录、已消费 draft、runnable entry/exit | `make validate-dev` | `REVIEWING` |
+| `SPRINTING` | `pjsdlc_dev_sprint` | `plan.yaml`、`plan.draft.yaml`、PRD、技术方案 | 代码、测试、implementation docs、gate 记录、已消费 draft、runnable entry/exit、Development Evidence | `make validate-dev` | `REVIEWING` |
 | `REVIEWING` | `pjsdlc_reviewer` | PRD、技术方案、实现文档、`git diff` | Review report、entry/exit readiness 结论 | `make validate-review` | `TESTING` |
 | `TESTING` | `pjsdlc_tester` | PRD、技术方案、实现文档、Review、既有 runnable entry/exit | Test strategy、test cases、test report、回归证据、coverage gaps、final decision | `make validate-test` | `RELEASING` |
 | `RELEASING` | `pjsdlc_release_manager` | 测试结果、build artifacts | Current release status、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
@@ -214,7 +214,7 @@ python3 tools/transition.py --to <PHASE>
 
 `phase_contracts.yaml` 支持 `returns` 作为受限回退目标。当前唯一默认回退是 `ARCHITECTING -> REQUIREMENT_GATHERING`，用于尚未进入 `SPRINTING` 时补充或修正 PRD。回退后 lifecycle 的 `active_role` 和 `active_skill` 切到 PM 工作流；PRD task 完成并通过 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化必须走 RFC recalibration。
 
-`make validate-dev` / `npx sdlc-harness validate-dev` 是 SPRINTING 开发中 gate，允许当前 `current_task_id` 对应的 open task 留在 `plan.yaml`，并校验 lifecycle、当前 task 合同、dirty files、`plan.draft.yaml` 消费状态和 implementation doc。`make validate-current` / `/advance` 是阶段出口 gate；在 `SPRINTING` 下会在 dev gate 后继续执行 no-open 检查，确保进入 `REVIEWING` 前已经完成 implementation commit 和 completion ledger。
+`make validate-dev` / `npx sdlc-harness validate-dev` 是 SPRINTING 开发中 gate，允许当前 `current_task_id` 对应的 open task 留在 `plan.yaml`，并校验 lifecycle、当前 task 合同、dirty files、`plan.draft.yaml` 消费状态、implementation doc 和结构化 `Development Evidence`。当前 task 的 implementation doc 必须包含 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`，或带原因的 `Not applicable`；页面类任务还需要 dev server/page URL 与 browser check，API/CLI/worker 类任务需要 command/endpoint/invocation 与 response/output/side effect。`make validate-current` / `/advance` 是阶段出口 gate；在 `SPRINTING` 下会在 dev gate 后继续执行 no-open 检查，确保进入 `REVIEWING` 前已经完成 implementation commit 和 completion ledger。
 
 TESTING 阶段 gate 仍命名为 `validate-test`。`.docs/07_test/TEST_STRATEGY.md` 只描述测试范围、环境、优先级和执行策略；`.docs/07_test/TEST_CASES.md` 只描述绑定真实 runnable entry/exit 的测试用例；`.docs/07_test/TEST_REPORT.md` 只记录 TESTING 阶段实际执行后的测试矩阵、回归证据、runnable entry/exit coverage、coverage gaps 和 final decision。`validate-test` 只接受 `.docs/07_test/TEST_REPORT.md`，不再把 `.docs/07_test/TEST_PLAN.md` 当作 report fallback。
 
@@ -483,7 +483,7 @@ make validate-rfc
 ### 9.2 阶段 gate
 - `validate-pm`：检查 PRD、验收标准、Out of Scope、Open Questions。
 - `validate-design`：检查架构、技术方案、`plan.draft.yaml`、draft task 的 `docs.tech_plan` 引用、tech plan primary slice 去重和横切 architecture slice。
-- `validate-dev`：作为 direct SPRINTING gate，允许合法当前 open task，检查 lifecycle、当前 task 合同、dirty files、已消费 draft、lint、测试、implementation docs 和已承诺 runnable entry/exit 记录；阶段出口仍由 `validate-current` 追加 no-open 检查。
+- `validate-dev`：作为 direct SPRINTING gate，允许合法当前 open task，检查 lifecycle、当前 task 合同、dirty files、已消费 draft、lint、测试、implementation docs、已承诺 runnable entry/exit 和结构化 Development Evidence；阶段出口仍由 `validate-current` 追加 no-open 检查。
 - `validate-review`：检查 Review report 和进入 TESTING 前的 runnable entry/exit readiness 结论。
 - `validate-test`：检查 `TEST_REPORT.md` 执行证据、test matrix、回归证据、覆盖缺口和 TESTING 阶段边界；测试阶段不能新增 product runtime、bootstrap、provider adapter、deploy 或 package runtime script，也不能用 `TEST_PLAN.md` 充当执行报告。
 - `validate-release`：检查 current release status、smoke result 和 rollback plan。

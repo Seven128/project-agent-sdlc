@@ -45,7 +45,7 @@ phases:
       - "REQUIREMENT_GATHERING"
 
   SPRINTING:
-    goal: "按任务状态执行开发、消费已采用草案、开发验证和实现文档沉淀"
+    goal: "按任务状态执行开发、消费已采用草案、开发验证、Development Evidence 和实现文档沉淀"
     role: "developer"
     skill: "pjsdlc_dev_sprint"
     inputs:

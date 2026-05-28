@@ -17,7 +17,7 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 
 执行回归时，优先选择能证明阶段出口的 gate。测试无法运行、环境缺失或数据不可得时，不要宣布通过；如果已经进入 TESTING，应在 `TEST_REPORT.md` 中记录 `BLOCKED`、已完成检查和恢复条件。
 
-TESTING 只能调用 SPRINTING 已经交付的入口做输入/输出验证。可以补充测试、fixture、mock、assertion helper 和测试文档，但不能在 TESTING 中新增或长期维护 product runtime、server/API/CLI/adapter、direct poller、cloud bootstrap、systemd unit、真实 provider adapter、package runtime script 或部署脚本。如果发现真实入口/出口不存在、live 模式不可调用、配置契约缺失或用户目标与已实现通道不一致，应记录 `BLOCKED`、生成 RFC 或后续 dev task 建议，并停止把测试阶段扩大成开发/集成搭建。开发尚未交付可测试 entry/exit 时，不要在 `.docs/07_test/**` 提前生成正式测试用例或正式报告；验收思路应留在 PRD acceptance criteria、tech plan verification strategy 或非 `.docs/07_test/**` 的草稿说明里。
+TESTING 只能调用 SPRINTING 已经交付的入口做输入/输出验证。可以补充测试、fixture、mock、assertion helper 和测试文档，但不能在 TESTING 中新增或长期维护 product runtime、server/API/CLI/adapter、direct poller、cloud bootstrap、systemd unit、真实 provider adapter、package runtime script 或部署脚本。如果发现真实入口/出口不存在、implementation doc 缺少 `Development Evidence`、live 模式不可调用、配置契约缺失或用户目标与已实现通道不一致，应记录 `BLOCKED`、生成 RFC 或后续 dev task 建议，并停止把测试阶段扩大成开发/集成搭建。开发尚未交付可测试 entry/exit 时，不要在 `.docs/07_test/**` 提前生成正式测试用例或正式报告；验收思路应留在 PRD acceptance criteria、tech plan verification strategy 或非 `.docs/07_test/**` 的草稿说明里。
 
 测试设计和回归证据产出本身也是 workflow task。开始测试前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "TESTING"`；当前轮只产出一个测试策略 slice、测试用例 slice、回归批次、风险验证片区或一组 scoped test changes。`plan.yaml` 仍是唯一执行计划事实源，`.docs/07_test/**` 只记录当前方案的 test strategy、test cases、executed regression evidence、coverage gaps 和 final decision，不表达“下一步如何开发”，也不保留已被 RFC supersede 的旧测试结果。
 
@@ -67,11 +67,11 @@ TESTING 只能调用 SPRINTING 已经交付的入口做输入/输出验证。可
 
 ## 规则
 
-1. 测试用例必须追溯到 PRD acceptance criteria 或 Review findings，并绑定 SPRINTING/REVIEWING 已确认的 runnable entry/exit。
+1. 测试用例必须追溯到 PRD acceptance criteria 或 Review findings，并绑定 SPRINTING/REVIEWING 已确认的 runnable entry/exit 和 Development Evidence。
 2. 根据风险补充边界、负向、回归和集成测试。
 3. 如果有意延后覆盖，必须记录风险和 follow-up。
 4. 不得新增 product runtime、server/API/CLI/adapter、poller、cloud bootstrap、systemd unit、真实 provider adapter、package runtime script 或部署脚本；这些属于 SPRINTING/RFC。
-5. 测试发现入口/出口缺失时，Final decision 必须为 `BLOCKED`，并指出回到 SPRINTING/RFC 的具体条件。
+5. 测试发现入口/出口或 Development Evidence 缺失时，Final decision 必须为 `BLOCKED`，并指出回到 SPRINTING/RFC 的具体条件。
 6. 新测试策略使用 `.docs/07_test/TEST_STRATEGY.md`，新测试用例使用 `.docs/07_test/TEST_CASES.md`，执行报告使用 `.docs/07_test/TEST_REPORT.md`；不要新建或继续依赖 `.docs/07_test/TEST_PLAN.md`。
 7. `TEST_REPORT.md` 不得包含 `pending`、`TBD`、`待填`、`TODO` 或占位结论；未执行或不可执行时 Final decision 必须为 `BLOCKED` 并给出恢复条件。
 8. RFC 改变技术路线、entry/exit 或验收边界后，必须确认 `.docs/07_test/**` 中旧路线测试证据已删除或不再从 `.docs/INDEX.md` 暴露。
@@ -86,6 +86,7 @@ TESTING 只能调用 SPRINTING 已经交付的入口做输入/输出验证。可
 - [ ] 当前 task 已从 `plan.yaml` 移除，或因中断/blocker 保留为可恢复 open task。
 - [ ] Regression checklist 已完成。
 - [ ] 测试只调用既有 runnable entry/exit；未在 TESTING 中新增 product runtime、bootstrap、provider adapter、deploy 或 package runtime script。
+- [ ] 已核对 implementation doc 中的 Development Evidence，并只基于已交付入口设计测试。
 - [ ] 已判断 test report / test matrix 的语义切片边界。
 - [ ] 未把测试计划、测试用例或待填内容写成 `TEST_REPORT.md`。
 - [ ] 已确认 `.docs/07_test/**` 只包含当前方案仍有效的测试事实。

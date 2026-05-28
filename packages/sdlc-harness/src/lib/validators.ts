@@ -93,6 +93,36 @@ const RUNNABLE_ENTRY_EXIT_TERMS = [
   "入口/出口",
   "not applicable"
 ];
+const DEVELOPMENT_EVIDENCE_TERMS = ["development evidence", "开发自测证据"];
+const EVIDENCE_PLACEHOLDER_TERMS = [
+  "pending",
+  "tbd",
+  "todo",
+  "placeholder",
+  "待填",
+  "待补",
+  "待确认"
+];
+const PAGE_TASK_TERMS = ["frontend", "front-end", "browser", "page", "页面", "前端", "按钮", "表单", "跳转"];
+const PAGE_ENTRY_TERMS = ["http://", "https://", "localhost", "127.0.0.1", "page url", "页面 url", "dev server"];
+const PAGE_BROWSER_CHECK_TERMS = ["browser check", "playwright", "screenshot", "click", "button", "form", "页面可加载", "浏览器"];
+const CALLABLE_TASK_TERMS = [
+  "api",
+  "endpoint",
+  "cli",
+  "command",
+  "worker",
+  "route",
+  "server action",
+  "adapter",
+  "provider",
+  "rpa",
+  "bot",
+  "机器人",
+  "队列"
+];
+const CALLABLE_ENTRY_TERMS = ["command", "endpoint", "api", "cli", "worker", "route", "curl", "npm ", "npx ", "node ", "python", "make "];
+const CALLABLE_RESULT_TERMS = ["pass", "response", "output", "result", "exit code", "queue", "log", "artifact", "created", "produced", "返回", "输出", "日志", "队列", "产物", "错误码"];
 
 const validators: Record<string, Validator> = {
   "validate-harness": validateHarness,
@@ -355,9 +385,10 @@ async function validateDevInternal(projectRoot: string, options: { phaseExit: bo
   const pathErrors = options.phaseExit ? [] : await validateChangedPaths(projectRoot, plan.plan, true);
   const draftErrors = await validateDevDraftConsumed(projectRoot, root);
   const implementationDocErrors = await validateImplementationDocRunnableEntryExit(projectRoot);
+  const evidenceErrors = options.phaseExit ? [] : await validateCurrentTaskDevelopmentEvidence(projectRoot, plan.plan);
   return {
     info: [`validate-dev checked ${plan.taskCount} task(s)${options.phaseExit ? " for phase exit" : ""}`],
-    errors: [...phaseErrors, ...plan.errors, ...openTaskErrors, ...pathErrors, ...draftErrors, ...implementationDocErrors]
+    errors: [...phaseErrors, ...plan.errors, ...openTaskErrors, ...pathErrors, ...draftErrors, ...implementationDocErrors, ...evidenceErrors]
   };
 }
 
@@ -740,6 +771,114 @@ async function validateImplementationDocRunnableEntryExit(projectRoot: string): 
     }
   }
   return errors;
+}
+
+async function validateCurrentTaskDevelopmentEvidence(projectRoot: string, plan: Record<string, unknown>): Promise<string[]> {
+  const currentTask = currentOpenSprintTask(plan);
+  if (!currentTask) return [];
+  const taskId = String(currentTask.id ?? "");
+  const implementationDoc = String(currentTask.implementation_doc ?? "").trim();
+  if (!implementationDoc) return [];
+  const docPath = path.join(projectRoot, implementationDoc);
+  if (!(await pathExists(docPath))) {
+    return [`${taskId} implementation_doc is missing: ${implementationDoc}`];
+  }
+  const text = await readText(docPath);
+  return validateDevelopmentEvidenceText(text, currentTask, implementationDoc);
+}
+
+function currentOpenSprintTask(plan: Record<string, unknown>): Record<string, unknown> | undefined {
+  const currentTaskId = String(plan.current_task_id ?? "");
+  if (!currentTaskId) return undefined;
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks.filter(isRecord) : [];
+  return tasks.find((task) => String(task.id ?? "") === currentTaskId && OPEN_TASK_STATUSES.has(String(task.status)) && task.phase === "SPRINTING");
+}
+
+function validateDevelopmentEvidenceText(text: string, task: Record<string, unknown>, implementationDoc: string): string[] {
+  const errors: string[] = [];
+  const taskId = String(task.id ?? "current task");
+  const section = markdownSection(text, DEVELOPMENT_EVIDENCE_TERMS);
+  if (!section) {
+    return [`${taskId} implementation_doc must include Development Evidence with Runnable Entry, Observable Exit, and Basic Self-test Evidence: ${implementationDoc}`];
+  }
+  if (hasJustifiedNotApplicableEvidence(section)) return [];
+
+  for (const field of ["Runnable Entry", "Observable Exit", "Basic Self-test Evidence"]) {
+    const value = evidenceFieldValue(section, field);
+    if (!value || isPlaceholderEvidence(value)) {
+      errors.push(`${taskId} Development Evidence ${field} must contain concrete, executed evidence in ${implementationDoc}`);
+    }
+  }
+
+  const context = `${taskText(task)}\n${text}`.toLowerCase();
+  const loweredSection = section.toLowerCase();
+  if (containsAny(context, PAGE_TASK_TERMS)) {
+    if (!containsAny(loweredSection, PAGE_ENTRY_TERMS)) {
+      errors.push(`${taskId} page Development Evidence must include a dev server or page URL in ${implementationDoc}`);
+    }
+    if (!containsAny(loweredSection, PAGE_BROWSER_CHECK_TERMS)) {
+      errors.push(`${taskId} page Development Evidence must include a browser check, Playwright run, screenshot, or equivalent interaction evidence in ${implementationDoc}`);
+    }
+  }
+  if (containsAny(context, CALLABLE_TASK_TERMS)) {
+    if (!containsAny(loweredSection, CALLABLE_ENTRY_TERMS)) {
+      errors.push(`${taskId} callable Development Evidence must include an API/CLI/worker command, endpoint, route, or invocation in ${implementationDoc}`);
+    }
+    if (!containsAny(loweredSection, CALLABLE_RESULT_TERMS)) {
+      errors.push(`${taskId} callable Development Evidence must include an observable response, output, side effect, log, artifact, or PASS/BLOCKED result in ${implementationDoc}`);
+    }
+  }
+  return errors;
+}
+
+function markdownSection(text: string, headerTerms: string[]): string | undefined {
+  const lines = text.split(/\r?\n/);
+  let start = -1;
+  let level = 0;
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index].match(/^(#{1,6})\s+(.+)$/);
+    if (!match) continue;
+    const title = match[2].toLowerCase();
+    if (headerTerms.some((term) => title.includes(term.toLowerCase()))) {
+      start = index;
+      level = match[1].length;
+      break;
+    }
+  }
+  if (start === -1) return undefined;
+  let end = lines.length;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const match = lines[index].match(/^(#{1,6})\s+/);
+    if (match && match[1].length <= level) {
+      end = index;
+      break;
+    }
+  }
+  return lines.slice(start, end).join("\n");
+}
+
+function hasJustifiedNotApplicableEvidence(section: string): boolean {
+  for (const line of section.split(/\r?\n/)) {
+    const match = line.match(/^\s*[-*]\s*Not applicable\s*:[ \t]*(.+)$/i);
+    if (!match) continue;
+    const value = match[1].trim();
+    if (value.length >= 24 && !isPlaceholderEvidence(value) && containsAny(value, ["because", "reason", "原因", "无应用入口", "no product runtime", "no runnable boundary"])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function evidenceFieldValue(section: string, field: string): string | undefined {
+  const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^\\s*[-*]\\s*${escaped}\\s*:[ \\t]*(.+)$`, "im");
+  return section.match(pattern)?.[1]?.trim();
+}
+
+function isPlaceholderEvidence(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized || ["-", "n/a", "na", "none", "null", "不适用", "无"].includes(normalized)) return true;
+  return EVIDENCE_PLACEHOLDER_TERMS.some((term) => normalized === term || normalized.includes(term.toLowerCase()));
 }
 
 async function markdownFiles(root: string): Promise<string[]> {
