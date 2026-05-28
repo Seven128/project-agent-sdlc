@@ -3,6 +3,7 @@ import { writeConfigIfMissing } from "./config.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import { ensureDir, pathExists, writeTextIfChanged } from "./fs.js";
 import { runSync } from "./sync-engine.js";
+import { syncDocsIndexMaintenanceSection, syncMemoryGuidanceSection } from "./user-owned-sections.js";
 
 export interface InitOptions {
   adopt: boolean;
@@ -66,16 +67,16 @@ async function createProjectState(projectRoot: string, root: string, report: str
     ],
     [harnessPath(root, "state", "plan.yaml"), `current_task_id: ""\nnext_task_sequence: 1\ntasks: []\n`],
     [harnessPath(root, "state", "plan.draft.yaml"), `next_task_sequence: 1\ntasks: []\n`],
-    [
-      harnessPath(root, "state", "memory.md"),
-      "# Project Memory\n\n短期执行计划写入 plan.yaml；长期稳定知识只在这里记录简短摘要和链接。完整决策背景、备选方案、取舍和后果写入 `.docs/05_decisions/` ADR 或其它 `.docs/**` 正式事实源。\n"
-    ]
   ];
   for (const [relative, content] of files) {
     if (await writeTextIfChanged(path.join(projectRoot, relative), content)) {
       report.push(`created ${relative}`);
     }
   }
+  await syncMemoryGuidanceSection(projectRoot, root, {
+    changed: report,
+    skipped: []
+  });
 }
 
 async function createDocs(projectRoot: string, report: string[]): Promise<void> {
@@ -83,13 +84,8 @@ async function createDocs(projectRoot: string, report: string[]): Promise<void> 
     await ensureDir(path.join(projectRoot, dir));
     await writeTextIfChanged(path.join(projectRoot, dir, ".gitkeep"), "");
   }
-  const index = ".docs/INDEX.md";
-  if (
-    await writeTextIfChanged(
-      path.join(projectRoot, index),
-      "# Documentation Index\n\n本文件是 AI SDLC Harness 的文档路由表。\n"
-    )
-  ) {
-    report.push(`created ${index}`);
-  }
+  await syncDocsIndexMaintenanceSection(projectRoot, {
+    changed: report,
+    skipped: []
+  });
 }

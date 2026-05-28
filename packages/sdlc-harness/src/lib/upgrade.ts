@@ -9,6 +9,9 @@ export async function runUpgrade(projectRoot: string): Promise<string[]> {
 
   const syncReport = await runSync(projectRoot);
   lines.push(`sync changed=${syncReport.changed.length} skipped=${syncReport.skipped.length} blocked=${syncReport.blocked.length}`);
+  for (const skipped of syncReport.skipped.filter((line) => line.includes("customized"))) {
+    lines.push(`sync skipped: ${skipped}`);
+  }
 
   const doctor = await runDoctor(projectRoot);
   lines.push(`doctor warnings=${doctor.warnings.length} errors=${doctor.errors.length}`);

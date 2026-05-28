@@ -1,3 +1,4 @@
+# pjsdlc:sdlc-harness:github-workflow:begin
 name: Harness Gates
 
 on:
@@ -43,3 +44,4 @@ jobs:
         run: make "${HARNESS_GATE}"
         env:
           HARNESS_GATE: ${{ github.event.inputs.gate || 'validate-harness' }}
+# pjsdlc:sdlc-harness:github-workflow:end

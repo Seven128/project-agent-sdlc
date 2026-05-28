@@ -7,6 +7,14 @@ import { runInit } from "../../packages/sdlc-harness/dist/lib/init.js";
 import { runUpgrade } from "../../packages/sdlc-harness/dist/lib/upgrade.js";
 
 const root = await mkdtemp(path.join(tmpdir(), "sdlc-harness-upgrade-"));
+const rootsToRemove = [root];
+
+function stripWorkflowMarkers(content) {
+  return content
+    .split(/\r?\n/)
+    .filter((line) => !line.includes("pjsdlc:sdlc-harness:github-workflow:"))
+    .join("\n");
+}
 
 try {
   await writeFile(
@@ -16,6 +24,11 @@ try {
   );
   await runInit(root, { adopt: true, force: false });
   await rm(path.join(root, ".harness/state/memory.md"), { force: true });
+  const packageWorkflow = await readFile(
+    fileURLToPath(new URL("../../packages/sdlc-harness/assets/github/harness.yml", import.meta.url)),
+    "utf8"
+  );
+  await writeFile(path.join(root, ".github/workflows/harness.yml"), stripWorkflowMarkers(packageWorkflow), "utf8");
   await mkdir(path.join(root, ".harness/state"), { recursive: true });
   await writeFile(
     path.join(root, ".harness/config.yaml"),
@@ -170,9 +183,56 @@ history:
   assert.doesNotMatch(lifecycle, /history:/);
   assert.doesNotMatch(lifecycle, /legacy phase history/);
   const memory = await readFile(path.join(root, ".harness/state/memory.md"), "utf8");
+  assert.match(memory, /## Harness Guidance/);
   assert.match(memory, /简短摘要和链接/);
   assert.match(memory, /\.docs\/05_decisions\//);
-  assert.match(memory, /正式事实源/);
+  assert.match(memory, /正式 `\.docs\/\*\*` 事实源/);
+  const migratedWorkflow = await readFile(path.join(root, ".github/workflows/harness.yml"), "utf8");
+  assert.match(migratedWorkflow, /pjsdlc:sdlc-harness:github-workflow:begin/);
+
+  const legacyMemoryRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-legacy-memory-"));
+  rootsToRemove.push(legacyMemoryRoot);
+  await runInit(legacyMemoryRoot, { adopt: true, force: false });
+  await writeFile(
+    path.join(legacyMemoryRoot, ".agent/state/memory.md"),
+    [
+      "# Project Memory",
+      "",
+      "短期执行计划写入 plan.yaml；长期稳定知识只在这里记录简短摘要和链接。完整决策背景、备选方案、取舍和后果写入 `.docs/05_decisions/` ADR 或其它 `.docs/**` 正式事实源。",
+      "",
+      "## Project Notes",
+      "",
+      "- 保留用户自己的 memory 条目。"
+    ].join("\n"),
+    "utf8"
+  );
+  await runUpgrade(legacyMemoryRoot);
+  const legacyMemory = await readFile(path.join(legacyMemoryRoot, ".agent/state/memory.md"), "utf8");
+  assert.equal(legacyMemory.match(/## Harness Guidance/g).length, 1);
+  assert.doesNotMatch(legacyMemory, /短期执行计划写入 plan\.yaml/);
+  assert.match(legacyMemory, /保留用户自己的 memory 条目/);
+
+  const customMemoryRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-custom-memory-"));
+  rootsToRemove.push(customMemoryRoot);
+  await runInit(customMemoryRoot, { adopt: true, force: false });
+  await writeFile(
+    path.join(customMemoryRoot, ".agent/state/memory.md"),
+    "# Project Memory\n\n## Project Notes\n\n- 本项目自定义事实保留。\n",
+    "utf8"
+  );
+  await runUpgrade(customMemoryRoot);
+  const customMemory = await readFile(path.join(customMemoryRoot, ".agent/state/memory.md"), "utf8");
+  assert.match(customMemory, /## Harness Guidance/);
+  assert.match(customMemory, /本项目自定义事实保留/);
+
+  const customWorkflowRoot = await mkdtemp(path.join(tmpdir(), "sdlc-harness-custom-workflow-"));
+  rootsToRemove.push(customWorkflowRoot);
+  await runInit(customWorkflowRoot, { adopt: true, force: false });
+  const customWorkflow = "name: Custom Harness\n\non: workflow_dispatch\n\njobs: {}\n";
+  await writeFile(path.join(customWorkflowRoot, ".github/workflows/harness.yml"), customWorkflow, "utf8");
+  const customWorkflowReport = await runUpgrade(customWorkflowRoot);
+  assert.ok(customWorkflowReport.some((line) => line.includes("sync skipped: .github/workflows/harness.yml: customized")));
+  assert.equal(await readFile(path.join(customWorkflowRoot, ".github/workflows/harness.yml"), "utf8"), customWorkflow);
 } finally {
-  await rm(root, { recursive: true, force: true });
+  await Promise.all(rootsToRemove.map((item) => rm(item, { recursive: true, force: true })));
 }

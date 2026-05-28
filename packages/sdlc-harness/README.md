@@ -22,8 +22,8 @@ npx sdlc-harness init --adopt
 | Project initialization | `npx sdlc-harness init` | Creates `AGENTS.md`, `<harnessRoot>/state/**`, workflow skills, managed templates/policies, `.docs/**` and a Makefile include. |
 | Existing project adoption | `npx sdlc-harness init --adopt` | Adds Harness non-destructively to an existing repository. |
 | Configurable Harness root | `--harness-folder`, `package.json#sdlcHarness.harnessFolderName`, `sdlc-harness.config.json` | Supports Codex `.codex`, Claude `.claude`, Cursor `.cursor`, Cline `.cline`, Roo `.roo`, Gemini `.gemini` or a custom folder. |
-| Managed file sync | `npx sdlc-harness sync` | Materializes package canonical assets into the configured Harness root while preserving project state, docs and local overrides. |
-| Upgrade | `npx sdlc-harness upgrade` | Runs migrations and sync for already-adopted projects. |
+| Managed file sync | `npx sdlc-harness sync` | Materializes package canonical assets and safely updates package-managed guidance sections inside user-owned Markdown files while preserving project state, docs and local overrides. |
+| Upgrade | `npx sdlc-harness upgrade` | Runs migrations and sync for already-adopted projects, including legacy seed guidance migration. |
 | Diagnostics | `npx sdlc-harness doctor` | Reports Harness root, package version, schema version and key managed paths. |
 | Validators | `npx sdlc-harness validate-*`, `make validate-current`, `make validate-harness` | Checks product, design slicing, development, review, test, release, RFC, active plan shape, prompt language contract and generated overview freshness. |
 | Lifecycle workflow | `<harnessRoot>/state/lifecycle.yaml`, `<harnessRoot>/state/plan.yaml`, `.docs/**` | Tracks REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING and RFC_RECALIBRATION facts. |
@@ -97,6 +97,8 @@ Do not create formal `.docs/07_test/**` test cases or reports before development
 `.docs/05_decisions/` stores ADRs, or Architecture Decision Records. ADRs answer why a key architecture choice was made instead of another option. Architecture and tech plan slices may include local design rationale; create an ADR when a decision has real alternatives, affects multiple modules or stages, is likely to be challenged later, or would be expensive to reverse.
 
 `<harnessRoot>/state/memory.md` is only a short cross-stage reminder and navigation surface. It answers what an agent should remember next time and where to find the source. Memory may link to ADRs, PRDs, tech plans or implementation docs; full context, alternatives, tradeoffs and long-term consequences belong in `.docs/05_decisions/` ADRs or other formal `.docs/**` fact sources.
+
+`sync` and `upgrade` also maintain fixed package-managed sections inside user-owned Markdown files: `## Harness Guidance` in `<harnessRoot>/state/memory.md` and `## Harness Maintenance Rules` in `.docs/INDEX.md`. User memory entries, artifact maps and links stay outside those sections and are preserved. Legacy untitled seed guidance is migrated into the titled section to avoid duplicates. `.github/workflows/harness.yml` is updated only when it has `pjsdlc:sdlc-harness:github-workflow:*` markers or exactly matches the old generated workflow; customized workflows without markers are skipped and reported as `customized`.
 
 ## Common Commands
 

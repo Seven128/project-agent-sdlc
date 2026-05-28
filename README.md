@@ -57,8 +57,8 @@ npx sdlc-harness init --adopt
 | 新项目初始化 | `npx sdlc-harness init` | 选择目标 Agent，生成 Harness 根目录、状态文件、workflow skills、模板、策略、`.docs/**` 和 Makefile include |
 | 已有项目接入 | `npx sdlc-harness init --adopt` | 非破坏性接入已有仓库，不覆盖业务代码和已有项目事实源 |
 | 可配置 Harness 根目录 | `--harness-folder`、`package.json#sdlcHarness.harnessFolderName`、`sdlc-harness.config.json` | 支持 `.codex`、`.claude`、`.cursor`、`.cline`、`.roo`、`.gemini` 或自定义目录 |
-| 同步 managed workflow 文件 | `npx sdlc-harness sync` | 从包内 canonical assets 物化 `AGENTS.md` managed block、workflow skills、templates、policies、Makefile 片段和 GitHub workflow |
-| 升级已接入项目 | `npx sdlc-harness upgrade` | 执行迁移并自动 `sync`，保留 state、docs、业务代码和本地 override |
+| 同步 managed workflow 文件 | `npx sdlc-harness sync` | 从包内 canonical assets 物化 `AGENTS.md` managed block、workflow skills、templates、policies、Makefile 片段、GitHub workflow，并安全更新 user-owned Markdown guidance sections |
+| 升级已接入项目 | `npx sdlc-harness upgrade` | 执行迁移并自动 `sync`，保留 state、docs、业务代码和本地 override，同时迁移旧 seed guidance |
 | 接入诊断 | `npx sdlc-harness doctor` | 检查 harness root、版本、schema、关键文件和 managed paths |
 | 阶段 gate | `npx sdlc-harness validate-*`、`make validate-current`、`make validate-harness` | 校验需求、设计切片、开发、Review、测试、发布、RFC、Harness 骨架、提示词语言契约和 overview freshness |
 | 生命周期工作流 | `lifecycle.yaml`、`plan.yaml`、`.docs/**` | 固定 REQUIREMENT_GATHERING、ARCHITECTING、SPRINTING、REVIEWING、TESTING、RELEASING、RFC_RECALIBRATION 等阶段事实链 |
@@ -118,6 +118,8 @@ SPRINTING 的 Definition of Done 包含可运行入口/出口：技术方案或 
 `.docs/05_decisions/` 保存 ADR（Architecture Decision Record）。ADR 是软件工程中常见的架构决策记录实践，用来回答“为什么当时选择这个方案，而不是别的方案”。architecture / tech plan 可以写当前方案里的局部设计理由；如果一个决定有备选方案、影响多个模块或阶段、未来容易被质疑，或修改成本高，就应写成 ADR，记录背景、备选方案、理由、后果和替代关系。
 
 `<harnessRoot>/state/memory.md` 只做跨阶段快捷提示和导航，回答“下次进来要先记住什么、去哪里找”。memory 可以链接到 ADR、PRD、tech plan 或 implementation doc；完整背景、备选方案、取舍和长期后果放在 `.docs/05_decisions/` ADR 或其它正式 `.docs/**` 事实源里。
+
+`sync` / `upgrade` 会维护用户耦合文件里的固定 package-managed sections：`<harnessRoot>/state/memory.md` 的 `## Harness Guidance` 和 `.docs/INDEX.md` 的 `## Harness Maintenance Rules`。用户自己的 memory 条目、文档产物地图和链接保留在这些标题区块之外；如果旧项目只有早期无标题 seed 文案，升级会把它迁移到固定标题区块，避免重复。`.github/workflows/harness.yml` 只在文件带 `pjsdlc:sdlc-harness:github-workflow:*` marker 或内容等于旧版 generated workflow 时自动更新；自定义且无 marker 的 workflow 会被跳过并报告 `customized`。
 
 ### Workflow skill 如何生效
 

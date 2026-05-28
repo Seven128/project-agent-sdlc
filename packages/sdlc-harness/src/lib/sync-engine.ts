@@ -10,6 +10,8 @@ import {
 } from "./fs.js";
 import {
   AGENTS_BLOCK_MARKERS,
+  GITHUB_WORKFLOW_BLOCK_END,
+  GITHUB_WORKFLOW_BLOCK_START,
   MAKEFILE_BLOCK_END,
   MAKEFILE_BLOCK_MARKERS,
   MAKEFILE_BLOCK_START,
@@ -19,6 +21,7 @@ import {
 } from "./managed-file.js";
 import { packageAssetPath } from "./paths.js";
 import type { ManagedFile } from "./types.js";
+import { syncProjectGuidanceSections } from "./user-owned-sections.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
 
 export interface SyncReport {
@@ -52,6 +55,7 @@ export async function runSync(projectRoot: string): Promise<SyncReport> {
   for (const managedFile of config.managed_files) {
     await syncManagedFile(projectRoot, root, managedFile, report);
   }
+  await syncProjectGuidanceSections(projectRoot, root, report);
 
   return report;
 }
@@ -83,11 +87,7 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     return;
   }
   if (managedFile.path === ".github/workflows/harness.yml") {
-    if (await pathExists(destination)) {
-      report.skipped.push(managedFile.path);
-      return;
-    }
-    await syncFile(packageAssetPath("github", "harness.yml"), destination, report, "skip-if-missing");
+    await syncGithubWorkflow(packageAssetPath("github", "harness.yml"), destination, managedFile.path, report);
     return;
   }
   report.skipped.push(managedFile.path);
@@ -459,4 +459,68 @@ async function syncFile(
   } else {
     report.skipped.push(destination);
   }
+}
+
+async function syncGithubWorkflow(source: string, destination: string, relativePath: string, report: SyncReport): Promise<void> {
+  if (!(await pathExists(source))) {
+    report.skipped.push(relativePath);
+    return;
+  }
+
+  const sourceContent = await readText(source);
+  if (!(await pathExists(destination))) {
+    if (await writeTextIfChanged(destination, sourceContent)) {
+      report.changed.push(relativePath);
+    } else {
+      report.skipped.push(relativePath);
+    }
+    return;
+  }
+
+  const existing = await readText(destination);
+  const markerState = workflowMarkerState(existing);
+  if (markerState === "invalid") {
+    report.blocked.push(`${relativePath}: incomplete managed workflow markers`);
+    return;
+  }
+  if (markerState === "managed" || normalizeWorkflow(existing) === normalizeWorkflow(stripWorkflowMarkers(sourceContent))) {
+    if (await writeTextIfChanged(destination, sourceContent)) {
+      report.changed.push(relativePath);
+    } else {
+      report.skipped.push(relativePath);
+    }
+    return;
+  }
+  report.skipped.push(`${relativePath}: customized`);
+}
+
+function workflowMarkerState(content: string): "managed" | "missing" | "invalid" {
+  const startIndex = content.indexOf(GITHUB_WORKFLOW_BLOCK_START);
+  const endIndex = content.indexOf(GITHUB_WORKFLOW_BLOCK_END);
+  const hasStart = startIndex >= 0;
+  const hasEnd = endIndex >= 0;
+  if (!hasStart && !hasEnd) {
+    return "missing";
+  }
+  if (hasStart !== hasEnd || endIndex < startIndex) {
+    return "invalid";
+  }
+  if (
+    content.indexOf(GITHUB_WORKFLOW_BLOCK_START, startIndex + GITHUB_WORKFLOW_BLOCK_START.length) >= 0 ||
+    content.indexOf(GITHUB_WORKFLOW_BLOCK_END, endIndex + GITHUB_WORKFLOW_BLOCK_END.length) >= 0
+  ) {
+    return "invalid";
+  }
+  return "managed";
+}
+
+function stripWorkflowMarkers(content: string): string {
+  return content
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== GITHUB_WORKFLOW_BLOCK_START && line.trim() !== GITHUB_WORKFLOW_BLOCK_END)
+    .join("\n");
+}
+
+function normalizeWorkflow(content: string): string {
+  return content.replace(/\r\n/g, "\n").trim();
 }

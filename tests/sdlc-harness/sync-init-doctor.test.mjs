@@ -50,9 +50,13 @@ try {
   assert.doesNotMatch(defaultDraft, /current_phase/);
   assert.doesNotMatch(defaultDraft, /current_task_id/);
   const defaultMemory = await readFile(path.join(defaultRoot, ".agent/state/memory.md"), "utf8");
+  assert.match(defaultMemory, /## Harness Guidance/);
   assert.match(defaultMemory, /简短摘要和链接/);
   assert.match(defaultMemory, /\.docs\/05_decisions\//);
-  assert.match(defaultMemory, /正式事实源/);
+  assert.match(defaultMemory, /正式 `\.docs\/\*\*` 事实源/);
+  const defaultIndex = await readFile(path.join(defaultRoot, ".docs/INDEX.md"), "utf8");
+  assert.match(defaultIndex, /## Harness Maintenance Rules/);
+  assert.match(defaultIndex, /Markdown slices 和 `.docs\/INDEX\.md` 是事实源/);
   await assert.rejects(stat(path.join(defaultRoot, ".agent/state/gate_results.log")));
 
   const defaultAgents = await readFile(path.join(defaultRoot, "AGENTS.md"), "utf8");
@@ -60,6 +64,8 @@ try {
   const defaultMakefile = await readFile(path.join(defaultRoot, "Makefile"), "utf8");
   assert.match(defaultMakefile, /pjsdlc:sdlc-harness:make:begin/);
   assert.match(defaultMakefile, /-include \.agent\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
+  const defaultWorkflow = await readFile(path.join(defaultRoot, ".github/workflows/harness.yml"), "utf8");
+  assert.match(defaultWorkflow, /pjsdlc:sdlc-harness:github-workflow:begin/);
 
   const defaultSyncReport = await runSync(defaultRoot);
   assert.equal(defaultSyncReport.blocked.length, 0);
@@ -70,6 +76,26 @@ try {
   await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/policies/phase_contracts.yaml")));
+
+  await writeFile(
+    path.join(defaultRoot, ".agent/state/memory.md"),
+    `${defaultMemory.trimEnd()}\n\n## Project Notes\n\n- 用户项目自己的长期提示。\n`,
+    "utf8"
+  );
+  await writeFile(
+    path.join(defaultRoot, ".docs/INDEX.md"),
+    `${defaultIndex.trimEnd()}\n\n## Custom Artifact Map\n\n- [Local note](99_local/note.md)\n`,
+    "utf8"
+  );
+  const userOwnedSectionReport = await runSync(defaultRoot);
+  assert.equal(userOwnedSectionReport.blocked.length, 0);
+  const resyncedMemory = await readFile(path.join(defaultRoot, ".agent/state/memory.md"), "utf8");
+  assert.equal(resyncedMemory.match(/## Harness Guidance/g).length, 1);
+  assert.match(resyncedMemory, /用户项目自己的长期提示/);
+  const resyncedIndex = await readFile(path.join(defaultRoot, ".docs/INDEX.md"), "utf8");
+  assert.equal(resyncedIndex.match(/## Harness Maintenance Rules/g).length, 1);
+  assert.match(resyncedIndex, /## Custom Artifact Map/);
+  assert.match(resyncedIndex, /\[Local note\]\(99_local\/note\.md\)/);
 
   await mkdir(path.join(defaultRoot, ".agent/pjsdlc_managed/override_skills"), { recursive: true });
   await writeFile(

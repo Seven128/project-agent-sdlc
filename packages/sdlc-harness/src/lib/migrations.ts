@@ -4,6 +4,7 @@ import { defaultConfig, readConfig } from "./config.js";
 import { ensureDir, listFiles, pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import type { ManagedFile } from "./types.js";
+import { syncDocsIndexMaintenanceSection, syncMemoryGuidanceSection } from "./user-owned-sections.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
 
 export const CURRENT_SCHEMA_VERSION = "1";
@@ -43,7 +44,7 @@ export async function runMigrations(projectRoot: string): Promise<MigrationRepor
   await migratePlan(projectRoot, root, report, "plan.draft.yaml", "tasks.draft.yaml", { activePlan: false });
   await removeLegacyGateResults(projectRoot, root, report);
   await removeLegacyCheckpoints(projectRoot, root, report);
-  await ensureMemory(projectRoot, root, report);
+  await ensureUserOwnedGuidanceSections(projectRoot, root, report);
   return report;
 }
 
@@ -218,6 +219,9 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
     } else {
       migrated.unshift(makefileEntry);
     }
+  }
+  if (!seen.has(".github/workflows/harness.yml")) {
+    push({ path: ".github/workflows/harness.yml", strategy: "create-if-missing" });
   }
 
   return migrated;
@@ -424,16 +428,7 @@ async function removeLegacyGateResults(projectRoot: string, root: string, report
   report.changed.push(relativeGateResultsPath);
 }
 
-async function ensureMemory(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
-  const relativeMemoryPath = harnessPath(root, "state", "memory.md");
-  const memoryPath = path.join(projectRoot, relativeMemoryPath);
-  if (await pathExists(memoryPath)) {
-    report.skipped.push(relativeMemoryPath);
-    return;
-  }
-  const content =
-    "# Project Memory\n\n记录跨阶段长期有效知识的简短摘要和链接。完整决策背景、备选方案、取舍和后果写入 `.docs/05_decisions/` ADR 或其它 `.docs/**` 正式事实源。\n";
-  if (await writeTextIfChanged(memoryPath, content)) {
-    report.changed.push(relativeMemoryPath);
-  }
+async function ensureUserOwnedGuidanceSections(projectRoot: string, root: string, report: MigrationReport): Promise<void> {
+  await syncMemoryGuidanceSection(projectRoot, root, report);
+  await syncDocsIndexMaintenanceSection(projectRoot, report);
 }
