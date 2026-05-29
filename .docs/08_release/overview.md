@@ -1,11 +1,11 @@
 # .docs/08_release overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: ff490037255a5fed -->
+<!-- source-hash: 06d8c92b9d5e9c6c -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `ff490037255a5fed`
+Source hash: `06d8c92b9d5e9c6c`
 
 ## Source Slices
 
@@ -23,7 +23,7 @@ This file is overwritten by each release. Historical release evidence lives in g
 
 ## 1. Release Summary（发布摘要）
 
-- Version: `agent-project-sdlc@0.1.18`
+- Version: `agent-project-sdlc@0.1.19`
 - Milestone: `MVP`
 - Date: `2026-05-29`
 - Owner: `release_manager`
@@ -40,11 +40,11 @@ This file is overwritten by each release. Historical release evidence lives in g
 
 | 产物（Artifact） | 位置（Location） | Checksum/Version |
 |---|---|---|
-| npm package | `agent-project-sdlc` | `0.1.18` |
-| dry-run tarball | `npm pack --dry-run --json --workspace agent-project-sdlc` | `4b6116b61898c2ce8d86257aab32f42a7d90280c` |
-| dry-run integrity | same | `sha512-ucEbCfLHrTxrTE14VGPhOoVZq8p31Tx0nsJKwV129Aji0cHdHOOIY03f0x8GEYhgpps7GgMYUSXVlPK4bPPJFA==` |
-| package content | dry-run output | 87 files, 79.9 kB package size, 284.9 kB unpacked size |
-| registry package | `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | `version 0.1.18`, `latest 0.1.18`, `integrity sha512-ucEbCfLHrTxrTE14VGPhOoVZq8p31Tx0nsJKwV129Aji0cHdHOOIY03f0x8GEYhgpps7GgMYUSXVlPK4bPPJFA==` |
+| npm package | `agent-project-sdlc` | `0.1.19` |
+| dry-run tarball | `npm pack --dry-run --json --workspace agent-project-sdlc` | `26876c2180298a6efab384d00c603ead8bf2c2a2` |
+| dry-run integrity | same | `sha512-MInitt0ikOViwo8R5UmlOqqBOs8LcmpBONtSOLkVFnwHZ0RycUfg1IiMqEEcd+E1Okz2OFVTDCbl3mJSbIo0vA==` |
+| package content | dry-run output | 87 files, 84.5 kB package size, 306.7 kB unpacked size |
+| registry package | `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json` | `version 0.1.19`, `latest 0.1.19`, `integrity sha512-MInitt0ikOViwo8R5UmlOqqBOs8LcmpBONtSOLkVFnwHZ0RycUfg1IiMqEEcd+E1Okz2OFVTDCbl3mJSbIo0vA==` |
 
 ## 4. Smoke Test Result（冒烟测试结果）
 
@@ -52,24 +52,24 @@ This file is overwritten by each release. Historical release evidence lives in g
 - Evidence:
   - `npm test`: PASS。
   - `node packages/sdlc-harness/dist/cli.js package check-source`: PASS。
-  - `make validate-harness`: PASS。
+  - `make validate-harness`: Pending。
   - `npm pack --dry-run --json --workspace agent-project-sdlc`: PASS。
-  - `git diff --check`: PASS。
-  - `npm publish --workspace agent-project-sdlc`: PASS，registry 返回 agent-project-sdlc@0.1.18。
-  - `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`: PASS，version 和 latest 均为 0.1.18。
-  - Registry installed-consumer smoke: PASS，从 npm registry 安装 agent-project-sdlc@0.1.18 后，init 和 doctor 均通过，doctor 输出 `core package: agent-project-sdlc@0.1.18`。
+  - `git diff --check`: Pending。
+  - `npm publish --workspace agent-project-sdlc`: PASS，registry 返回 agent-project-sdlc@0.1.19。
+  - `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`: PASS，version 和 latest 均为 0.1.19。
+  - Registry installed-consumer smoke: PASS，从 npm registry 安装 agent-project-sdlc@0.1.19 后，init 和 doctor 均通过，doctor 输出 `core package: agent-project-sdlc@0.1.19`。
 
 ## 5. Deployment Checklist（部署检查清单）
 
 - [x] Confirm registry latest before publishing.
-- [x] Bump package version to `0.1.18`.
+- [x] Bump package version to `0.1.19`.
 - [x] Package source drift check passed.
 - [x] npm tests passed.
 - [x] Pack dry run passed.
 - [x] Publish package with `npm publish --workspace agent-project-sdlc`.
 - [x] Verify registry package with `npm view agent-project-sdlc version dist-tags.latest dist.integrity --json`.
 - [x] Run installed-consumer smoke from npm registry.
-- [x] Create and push git tag `v0.1.18` after publish success.
+- [ ] Create and push git tag `v0.1.19` after publish success.
 
 ## 6. Rollback Plan（回滚方案）
 
