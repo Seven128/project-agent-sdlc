@@ -55,12 +55,12 @@ try {
   );
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Client / Server Initialization: Local CLI runtime starts from the recorded command and exits with status evidence.\n- Config Contract: no external config required for this fixture.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
     "utf8"
   );
   await writeFile(
     path.join(root, ".docs/06_review/REVIEW_REPORT.md"),
-    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage is intentionally narrow.\n\n## Runnable Entry/Exit Readiness\n\nExisting entry/exit is runnable before testing.\n\n## Decision\n\nPASS\n",
+    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage is intentionally narrow.\n\n## Runnable Entry/Exit Readiness\n\n- Runnable Entry: PASS\n- Observable Exit: PASS\n- Initialization: PASS\n- Config Contract: PASS\n- Testing Handoff Readiness: PASS\n- Notes: Existing entry/exit is runnable before testing.\n\n## Decision\n\nPASS\n",
     "utf8"
   );
   await writeFile(
@@ -154,6 +154,13 @@ tasks:
   assert.match(placeholderReport.errors.join("\n"), /executed evidence/);
   await writeFile(
     path.join(root, ".docs/07_test/TEST_REPORT.md"),
+    "# Test Report\n\n## Matrix\n\n| Scenario | Result |\n|---|---|\n| Runtime handoff | PASS |\n\n## Regression Evidence\n\n- focused regression: PASS\n\n## Runnable Entry/Exit Coverage\n\nNo runnable entry exists and missing Development Evidence remains.\n\n## Coverage Gap\n\nRuntime entry is missing.\n\n## Decision\n\nPASS\n",
+    "utf8"
+  );
+  const missingReadinessPassReport = await runValidator(root, "validate-test");
+  assert.match(missingReadinessPassReport.errors.join("\n"), /cannot PASS/);
+  await writeFile(
+    path.join(root, ".docs/07_test/TEST_REPORT.md"),
     "# Test Report\n\n## Matrix\n\n| Scenario | Result |\n|---|---|\n| Normal | PASS |\n\n## Regression Evidence\n\n- focused regression: PASS\n\n## Runnable Entry/Exit Coverage\n\nExisting entry/exit is exercised through the shipped CLI.\n\n## Coverage Gap\n\nNo browser coverage.\n\n## Decision\n\nPASS\n",
     "utf8"
   );
@@ -204,7 +211,14 @@ tasks:
   assert.match(missingEntryReview.errors.join("\n"), /entry\/exit readiness/);
   await writeFile(
     path.join(root, ".docs/06_review/REVIEW_REPORT.md"),
-    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage is intentionally narrow.\n\n## Runnable Entry/Exit Readiness\n\nExisting entry/exit is runnable before testing.\n\n## Decision\n\nPASS\n",
+    "# Review Report\n\n## Findings\n\nRuntime handoff is incomplete.\n\n## Test Gap\n\nCoverage is blocked by missing runtime readiness.\n\n## Runnable Entry/Exit Readiness\n\n- Runnable Entry: PASS\n- Observable Exit: PASS\n- Initialization: BLOCKED\n- Config Contract: PASS\n- Testing Handoff Readiness: PASS\n- Notes: server startup evidence is missing.\n\n## Decision\n\nBLOCKED\n",
+    "utf8"
+  );
+  const blockedReadinessReview = await runValidator(root, "validate-review");
+  assert.match(blockedReadinessReview.errors.join("\n"), /Review readiness is BLOCKED: Initialization/);
+  await writeFile(
+    path.join(root, ".docs/06_review/REVIEW_REPORT.md"),
+    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage is intentionally narrow.\n\n## Runnable Entry/Exit Readiness\n\n- Runnable Entry: PASS\n- Observable Exit: PASS\n- Initialization: PASS\n- Config Contract: PASS\n- Testing Handoff Readiness: PASS\n- Notes: Existing entry/exit is runnable before testing.\n\n## Decision\n\nPASS\n",
     "utf8"
   );
 
@@ -351,7 +365,7 @@ tasks:
   assert.match(missingDevelopmentEvidenceDevReport.errors.join("\n"), /Development Evidence/);
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry:\n- Observable Exit: PASS output.\n- Basic Self-test Evidence: `npm test` PASS.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry:\n- Observable Exit: PASS output.\n- Client / Server Initialization: Local CLI/test runtime starts from the recorded command and exits with status evidence.\n- Config Contract: no external config required for this fixture.\n- Basic Self-test Evidence: `npm test` PASS.\n",
     "utf8"
   );
   const placeholderDevelopmentEvidenceDevReport = await runValidator(root, "validate-dev");
@@ -372,6 +386,50 @@ tasks:
   assert.match(missingSelfTestEvidenceDevReport.errors.join("\n"), /Basic Self-test Evidence must contain concrete/);
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: cloud agent service.\n- Exit / side effects: fake send adapter output only.\n- Config contract: DASH_SCOPE_API_KEY.\n- Fixture/live boundary: provider live smoke only.\n\n## Development Evidence\n\n- Runnable Entry: provider live smoke calls DashScope with a one-shot smoke message.\n- Observable Exit: fake adapter output reports PASS for provider smoke.\n- Client / Server Initialization: provider client initializes for the one-shot request.\n- Config Contract: env DASH_SCOPE_API_KEY is required.\n- Basic Self-test Evidence: provider live smoke PASS.\n",
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-002
+next_task_sequence: 3
+tasks:
+  - id: TASK-002
+    phase: SPRINTING
+    title: Open cloud agent runtime task
+    status: in_progress
+    summary: Active cloud agent runtime task with live mode
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "application readiness is proven beyond provider smoke"
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  const providerSmokeOnlyDevReport = await runValidator(root, "validate-dev");
+  assert.match(providerSmokeOnlyDevReport.errors.join("\n"), /not enough for application readiness/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: cloud agent service.\n- Exit / side effects: HTTP response and queue item.\n- Config contract: DASH_SCOPE_API_KEY.\n- Fixture/live boundary: runtime HTTP smoke plus provider live smoke.\n\n## Development Evidence\n\n- Runnable Entry: HTTP endpoint `http://localhost:3000/events` receives a live-mode event.\n- Observable Exit: response output and queue log report PASS for runtime HTTP smoke and application readiness.\n- Basic Self-test Evidence: runtime HTTP smoke PASS.\n",
+    "utf8"
+  );
+  const missingInitializationDevReport = await runValidator(root, "validate-dev");
+  assert.match(missingInitializationDevReport.errors.join("\n"), /Client \/ Server Initialization/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: cloud agent service.\n- Exit / side effects: HTTP response and queue item.\n- Config contract: DASH_SCOPE_API_KEY.\n- Fixture/live boundary: runtime HTTP smoke plus provider live smoke.\n\n## Development Evidence\n\n- Runnable Entry: HTTP endpoint `http://localhost:3000/events` receives a live-mode event.\n- Observable Exit: response output and queue log report PASS for runtime HTTP smoke and application readiness.\n- Client / Server Initialization: server startup command `npm run agent:start` listens on localhost and health status returns PASS.\n- Basic Self-test Evidence: runtime HTTP smoke PASS.\n",
+    "utf8"
+  );
+  const missingConfigContractDevReport = await runValidator(root, "validate-dev");
+  assert.match(missingConfigContractDevReport.errors.join("\n"), /Config Contract/);
+  await writeFile(
+    path.join(root, ".docs/04_implementation/example/dev.md"),
     "# Impl\n\n## Runnable Entry/Exit\n\nNot applicable: validator fixture implementation has no product runtime boundary.\n\n## Development Evidence\n\n- Not applicable: because this validator fixture has no product runtime boundary, no user-facing entry, and no observable side effect beyond static validation.\n",
     "utf8"
   );
@@ -379,7 +437,7 @@ tasks:
   assert.deepEqual(notApplicableDevReport.errors, [], "validate-dev accepts explicit Not applicable entry/exit docs");
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: frontend page smoke opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Basic Self-test Evidence: smoke PASS.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: frontend page smoke opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Client / Server Initialization: local page preview startup is recorded for this fixture.\n- Config Contract: fixture config only.\n- Basic Self-test Evidence: smoke PASS.\n",
     "utf8"
   );
   await writeFile(
@@ -409,14 +467,14 @@ tasks:
   assert.match(pageMissingUrlDevReport.errors.join("\n"), /dev server or page URL/);
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: dev server page URL `http://localhost:3000/dashboard` opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Basic Self-test Evidence: smoke PASS.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: page module fixture.\n- Exit / side effects: rendered page state.\n- Config contract: fixture.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: dev server page URL `http://localhost:3000/dashboard` opens the local UI fixture.\n- Observable Exit: PASS output reports rendered page state.\n- Client / Server Initialization: dev server startup is represented by the recorded page URL.\n- Config Contract: fixture config only.\n- Basic Self-test Evidence: smoke PASS.\n",
     "utf8"
   );
   const pageMissingBrowserCheckDevReport = await runValidator(root, "validate-dev");
   assert.match(pageMissingBrowserCheckDevReport.errors.join("\n"), /browser check/);
   await writeFile(
     path.join(root, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: shipped CLI fixture.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: CLI command `npx sdlc-harness validate-dev` runs the package validator fixture.\n- Observable Exit: Command output reports validate-dev PASS with no errors.\n- Client / Server Initialization: Local CLI runtime starts from the recorded command and exits with status evidence.\n- Config Contract: no external config required for this fixture.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for the fixture regression.\n",
     "utf8"
   );
   await writeFile(
@@ -1128,7 +1186,7 @@ async function writeTestingBoundaryFixture(projectRoot) {
   await mkdir(path.join(projectRoot, ".harness/state"), { recursive: true });
   await writeFile(
     path.join(projectRoot, ".docs/06_review/REVIEW_REPORT.md"),
-    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage exists.\n\n## Runnable Entry/Exit Readiness\n\nExisting entry/exit is runnable.\n\n## Decision\n\nPASS\n",
+    "# Review Report\n\n## Findings\n\nNo blocking finding.\n\n## Test Gap\n\nCoverage exists.\n\n## Runnable Entry/Exit Readiness\n\n- Runnable Entry: PASS\n- Observable Exit: PASS\n- Initialization: PASS\n- Config Contract: PASS\n- Testing Handoff Readiness: PASS\n- Notes: Existing entry/exit is runnable.\n\n## Decision\n\nPASS\n",
     "utf8"
   );
   await writeFile(
@@ -1158,7 +1216,7 @@ async function writeSprintDevFixture(projectRoot) {
   await writeFile(path.join(projectRoot, ".docs/INDEX.md"), "# Index\n.docs/04_implementation/example/dev.md\n", "utf8");
   await writeFile(
     path.join(projectRoot, ".docs/04_implementation/example/dev.md"),
-    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: local fixture API.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: API command `node tests/fixture-api.mjs` invokes the local fixture API.\n- Observable Exit: Command output reports PASS validation output only.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for dirty-file scoping regression.\n",
+    "# Impl\n\n## Runnable Entry/Exit\n\n- Entry points: local fixture API.\n- Exit / side effects: validation output only.\n- Config contract: not applicable.\n- Fixture/live boundary: fixture-only.\n\n## Development Evidence\n\n- Runnable Entry: API command `node tests/fixture-api.mjs` invokes the local fixture API.\n- Observable Exit: Command output reports PASS validation output only.\n- Client / Server Initialization: Local API fixture starts from the recorded command.\n- Config Contract: no external config required for this fixture.\n- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for dirty-file scoping regression.\n",
     "utf8"
   );
   await writeFile(path.join(projectRoot, ".harness/state/lifecycle.yaml"), 'current_phase: "SPRINTING"\n', "utf8");

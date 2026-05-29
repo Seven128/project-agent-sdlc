@@ -1,3 +1,56 @@
-current_task_id: ""
-next_task_sequence: 75
-tasks: []
+current_task_id: "TASK-075"
+next_task_sequence: 76
+tasks:
+  - id: "TASK-075"
+    phase: "SPRINTING"
+    title: "Harden application readiness gates"
+    status: "in_progress"
+    summary: "Strengthen dev, review and testing gates so fixture/provider smoke cannot be mistaken for delivered application readiness."
+    docs:
+      rfc:
+        - ".docs/rfc/RFC_020_application_readiness_gates.md"
+      implementation:
+        - ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
+        - ".docs/04_implementation/harness_workflow/docs_overview_and_validation.md"
+      tech_plan:
+        - ".docs/03_tech_plan/harness_package_distribution.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - ".codex/skills/pjsdlc_dev_sprint/SKILL.md"
+      - ".codex/skills/pjsdlc_reviewer/SKILL.md"
+      - ".codex/skills/pjsdlc_tester/SKILL.md"
+      - ".codex/skills/pjsdlc_implementation_doc/SKILL.md"
+      - ".codex/pjsdlc_managed/templates/**"
+      - ".docs/INDEX.md"
+      - ".docs/rfc/**"
+      - ".docs/04_implementation/harness_workflow/**"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/rfc/overview.md"
+      - "README.md"
+      - "packages/sdlc-harness/README.md"
+      - "packages/sdlc-harness/assets/**"
+      - "packages/sdlc-harness/src/lib/validators.ts"
+      - "tools/validate_review.py"
+      - "tools/validate_test_plan.py"
+      - "tools/validate_task_docs.py"
+      - "tests/sdlc-harness/**"
+      - "tools/consumer_lab_full_test.mjs"
+    required_gates:
+      - "npm test --workspace agent-project-sdlc"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make docs-overview"
+      - "make validate-harness"
+      - "make validate-dev"
+    acceptance_criteria:
+      - "validate-dev requires structured application readiness evidence beyond provider or fixture smoke for runtime/service/agent tasks."
+      - "validate-review requires PASS/BLOCKED readiness checklist fields and blocks TESTING handoff when any field is BLOCKED."
+      - "validate-test rejects PASS reports that acknowledge missing delivered entry/exit or Development Evidence."
+      - "Managed workflow skills, templates, package assets and regression tests reflect the hardened readiness contract."
+    implementation_doc: ".docs/04_implementation/harness_workflow/skills_prompt_and_authoring.md"
+    working_notes:
+      - "Layer: common Harness workflow configuration and package validator behavior; not微信机器人 business implementation."
+      - "Verified: npm test --workspace agent-project-sdlc PASS, 10 tests passed."
+      - "Verified: package sync-source changed=26 and package check-source PASS."
+      - "Verified: node tools/consumer_lab_full_test.mjs PASS command exit; report decision BLOCKED with 40 PASS, 7 known Makefile/tools blockers and 0 FAIL."
+      - "Verified: make docs-overview, make validate-dev and make validate-harness PASS."

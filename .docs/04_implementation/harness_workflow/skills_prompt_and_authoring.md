@@ -32,6 +32,9 @@
 - RFC recalibration now records `Test Fact Source Impact` and removes superseded `.docs/07_test/**` files from current test facts and `.docs/INDEX.md` when a route, entry/exit or acceptance boundary changes.
 - `validate-dev` now requires implementation docs to include `Runnable Entry/Exit` facts or explicit `Not applicable`, so missing runtime boundaries cannot be deferred into TESTING by omission.
 - `validate-dev` now requires the current open SPRINTING task implementation doc to include structured `Development Evidence`: `Runnable Entry`, `Observable Exit`, `Basic Self-test Evidence`, or a justified `Not applicable`.
+- `validate-dev` now treats service / agent / runtime readiness as stronger than provider or fixture smoke: current task evidence must include `Client / Server Initialization` and `Config Contract`, and provider smoke, fixture smoke, fake adapter or one-shot smoke cannot alone satisfy application readiness.
+- `validate-review` now requires explicit PASS/BLOCKED readiness fields for `Runnable Entry`, `Observable Exit`, `Initialization`, `Config Contract` and `Testing Handoff Readiness`; any `BLOCKED` field blocks TESTING handoff.
+- `validate-test` now rejects `PASS` reports that acknowledge missing runnable entry/exit or missing `Development Evidence`; TESTING must report `BLOCKED` with recovery conditions instead.
 - Dev and Manager prompts now distinguish direct SPRINTING `validate-dev` from phase-exit `validate-current`: direct dev gate allows a valid current open task, while phase advancement still requires no open tasks.
 - RELEASING uses `.docs/08_release/CURRENT_RELEASE.md` as the canonical current release status. `validate-release` keeps accepting legacy versioned release docs when the current file is absent, but new release work updates the current status file instead of creating a version ledger.
 
@@ -45,8 +48,10 @@
 ## Development Evidence
 
 - Runnable Entry: CLI command `npx sdlc-harness validate-dev` / `make validate-dev` validates the current SPRINTING task evidence contract through `packages/sdlc-harness/src/lib/validators.ts`.
-- Observable Exit: Validator output reports PASS or concrete errors for missing `Development Evidence`, missing `Observable Exit`, missing `Basic Self-test Evidence`, page URL/browser evidence gaps, or callable invocation/result gaps.
-- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS for TASK-072 validator regression; final source sync and Harness gates are recorded in Test Coverage after completion.
+- Observable Exit: Validator output reports PASS or concrete errors for missing `Development Evidence`, missing `Observable Exit`, missing `Client / Server Initialization`, missing `Config Contract`, missing `Basic Self-test Evidence`, insufficient provider/fixture smoke, page URL/browser evidence gaps, or callable invocation/result gaps.
+- Client / Server Initialization: service / agent / runtime tasks must record startup, live entrypoint, health/status, endpoint, CLI command or worker command evidence.
+- Config Contract: service / agent / runtime tasks must record required env/config/API key inputs or an explicit no-config contract.
+- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` covers validator regression for TASK-075 after completion; final source sync and Harness gates are recorded in Test Coverage.
 - Not applicable: not applicable only when a module has no product runtime boundary; this workflow validator module has CLI validator entrypoints, so structured evidence is required.
 
 ## 3. 真实代码结构
@@ -127,7 +132,10 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `validate-rfc` checks `Test Fact Source Impact` and rejects RFCs that list superseded `.docs/07_test/**` paths still present in current facts or `.docs/INDEX.md`.
 - TESTING boundary checks still reject `tests/runtime/**` and runtime-like test files, but allow clearly test-only fixture, mock, assertion and smoke files under `tests/**`.
 - `validate-dev` checks implementation docs for runnable entry/exit facts, accepting explicit `Not applicable` only when the module truly has no product runtime boundary.
-- `validate-dev` checks the current open SPRINTING task implementation doc for a `Development Evidence` section with concrete `Runnable Entry`, `Observable Exit` and `Basic Self-test Evidence`, or a justified `Not applicable`.
+- `validate-dev` checks the current open SPRINTING task implementation doc for a `Development Evidence` section with concrete `Runnable Entry`, `Observable Exit`, `Client / Server Initialization`, `Config Contract` and `Basic Self-test Evidence`, or a justified `Not applicable`.
+- `validate-dev` rejects service / agent / runtime tasks whose evidence only proves provider smoke, fixture smoke, fake adapter or one-shot smoke without application readiness or `BLOCKED`.
+- `validate-review` checks structured readiness fields and treats any `BLOCKED` field as a gate blocker.
+- `validate-test` rejects `PASS` reports that still describe missing entry/exit or missing Development Evidence.
 - Page evidence must include a dev server/page URL plus browser, Playwright, screenshot or equivalent interaction evidence; API/CLI/worker/RPA evidence must include an invocation command/endpoint and observable output, response, side effect, log, artifact or PASS/BLOCKED result.
 - direct `validate-dev` is explicitly an in-development SPRINTING gate. It validates the current open task contract, dirty-file scope, draft consumption and implementation docs without forcing task removal. `validate-current` / `/advance` keeps no-open phase-exit behavior before REVIEWING.
 - Managed Makefile `validate-dev` runs `$(SDLC_HARNESS) validate-dev`, then project `lint` and `test-current-domain`, so installed package consumers no longer need source-repo-only Python validators for this gate.
@@ -187,6 +195,13 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match authoring source after Development Evidence changes | PASS for TASK-072 |
 | `make validate-dev` | Direct SPRINTING gate validates current task structured Development Evidence | PASS for TASK-072 |
 | `make validate-harness` | Prompt language and generated overview consistency after Development Evidence changes | PASS for TASK-072 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for application readiness evidence, Review readiness checklist and TEST_REPORT PASS misuse | PASS for TASK-075; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect application readiness Skill/template/README changes | PASS for TASK-075; changed=26 |
+| `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match authoring source after application readiness changes | PASS for TASK-075 |
+| `node tools/consumer_lab_full_test.mjs` | Installed-consumer validation of application readiness evidence contract | PASS command exit for TASK-075; report decision `BLOCKED` with 40 PASS, 7 known Makefile/tools blockers and 0 FAIL |
+| `make docs-overview` | Generated overview refresh for RFC_020 and implementation docs | PASS for TASK-075 |
+| `make validate-dev` | Direct SPRINTING gate validates current task application readiness evidence contract | PASS for TASK-075 |
+| `make validate-harness` | Prompt language and generated overview consistency after application readiness changes | PASS for TASK-075 |
 
 ## 8. 变更记录（Change Log）
 
@@ -214,6 +229,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-29 | `TASK-070` | Working tree | Split test strategy, test cases and execution report semantics; removed `TEST_PLAN.md` report fallback; added RFC cleanup checks for superseded test facts. |
 | 2026-05-29 | `TASK-071` | Working tree | Clarified direct dev gate open-task semantics in Dev/Manager prompts and moved managed Makefile `validate-dev` to package CLI wiring. |
 | 2026-05-29 | `TASK-072` | Working tree | Added structured SPRINTING Development Evidence requirements and `validate-dev` checks for runnable entry, observable exit and basic self-test evidence. |
+| 2026-05-29 | `TASK-075` | Working tree | Hardened application readiness gates so provider/fixture smoke cannot be mistaken for delivered runtime readiness. |
 
 ## 9. 后续维护注意事项
 

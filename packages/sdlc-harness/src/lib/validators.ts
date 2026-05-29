@@ -123,6 +123,80 @@ const CALLABLE_TASK_TERMS = [
 ];
 const CALLABLE_ENTRY_TERMS = ["command", "endpoint", "api", "cli", "worker", "route", "curl", "npm ", "npx ", "node ", "python", "make "];
 const CALLABLE_RESULT_TERMS = ["pass", "response", "output", "result", "exit code", "queue", "log", "artifact", "created", "produced", "返回", "输出", "日志", "队列", "产物", "错误码"];
+const APPLICATION_READINESS_TASK_TERMS = [
+  "service",
+  "agent",
+  "runtime",
+  "http",
+  "server",
+  "worker",
+  "provider",
+  "adapter",
+  "live mode",
+  "live",
+  "external integration",
+  "webhook",
+  "bot",
+  "机器人",
+  "常驻",
+  "云端",
+  "入口",
+  "出口"
+];
+const APPLICATION_START_TERMS = [
+  "start",
+  "startup",
+  "启动",
+  "listen",
+  "serve",
+  "server",
+  "http://",
+  "https://",
+  "localhost",
+  "endpoint",
+  "cli command",
+  "worker command",
+  "daemon",
+  "常驻",
+  "health",
+  "status"
+];
+const CONFIG_CONTRACT_TERMS = ["config", "configuration", "env", "environment", "api key", "secret", "契约", "配置", "环境变量"];
+const INSUFFICIENT_APPLICATION_SMOKE_TERMS = [
+  "provider smoke",
+  "provider live smoke",
+  "fixture smoke",
+  "fake adapter",
+  "fake send",
+  "one-shot smoke",
+  "one shot smoke",
+  "domain smoke",
+  "受控 smoke"
+];
+const MISSING_READINESS_TERMS = [
+  "missing entry",
+  "missing exit",
+  "missing runnable",
+  "missing development evidence",
+  "no runnable",
+  "no entry",
+  "no exit",
+  "入口缺失",
+  "出口缺失",
+  "缺少入口",
+  "缺少出口",
+  "缺少 development evidence",
+  "尚未交付",
+  "未交付",
+  "不存在"
+];
+const REVIEW_READINESS_FIELDS = [
+  "Runnable Entry",
+  "Observable Exit",
+  "Initialization",
+  "Config Contract",
+  "Testing Handoff Readiness"
+];
 
 const validators: Record<string, Validator> = {
   "validate-harness": validateHarness,
@@ -442,13 +516,15 @@ async function validateDevDraftConsumed(projectRoot: string, root: string): Prom
 
 async function validateReview(projectRoot: string): Promise<ValidatorReport> {
   const plan = await validatePlanState(projectRoot, false);
-  const text = (await readText(path.join(projectRoot, ".docs/06_review/REVIEW_REPORT.md"))).toLowerCase();
+  const rawText = await readText(path.join(projectRoot, ".docs/06_review/REVIEW_REPORT.md"));
+  const text = rawText.toLowerCase();
   const errors = [...plan.errors];
   if (!containsAny(text, ["finding", "发现", "风险"])) errors.push("Review report must include findings or risks");
   if (!containsAny(text, ["test gap", "测试缺口", "coverage"])) errors.push("Review report must include test gaps or coverage notes");
   if (!containsAny(text, ["entry/exit", "entrypoint", "入口", "出口", "runnable", "可运行"])) {
     errors.push("Review report must assess runnable entry/exit readiness before TESTING");
   }
+  errors.push(...validateReviewReadinessChecklist(rawText));
   if (!containsAny(text, ["pass", "blocked", "通过", "阻塞"])) errors.push("Review report must include PASS/BLOCKED decision");
   return { info: ["validate-review checked review report"], errors };
 }
@@ -471,6 +547,7 @@ async function validateTest(projectRoot: string): Promise<ValidatorReport> {
     errors.push("Test report must state existing runnable entry/exit coverage or blocker status");
   }
   if (!containsAny(text, ["pass", "blocked", "通过", "阻塞"])) errors.push("Test report must include PASS/BLOCKED decision");
+  errors.push(...validateTestReadinessDecision(text));
   if (lifecycle.current_phase === "TESTING") {
     errors.push(...testingBoundaryErrorsForChangedFiles(await changedFiles(projectRoot)));
   }
@@ -803,7 +880,7 @@ function validateDevelopmentEvidenceText(text: string, task: Record<string, unkn
   }
   if (hasJustifiedNotApplicableEvidence(section)) return [];
 
-  for (const field of ["Runnable Entry", "Observable Exit", "Basic Self-test Evidence"]) {
+  for (const field of ["Runnable Entry", "Observable Exit", "Client / Server Initialization", "Config Contract", "Basic Self-test Evidence"]) {
     const value = evidenceFieldValue(section, field);
     if (!value || isPlaceholderEvidence(value)) {
       errors.push(`${taskId} Development Evidence ${field} must contain concrete, executed evidence in ${implementationDoc}`);
@@ -828,7 +905,58 @@ function validateDevelopmentEvidenceText(text: string, task: Record<string, unkn
       errors.push(`${taskId} callable Development Evidence must include an observable response, output, side effect, log, artifact, or PASS/BLOCKED result in ${implementationDoc}`);
     }
   }
+  if (containsAny(context, APPLICATION_READINESS_TASK_TERMS)) {
+    if (!containsAny(loweredSection, APPLICATION_START_TERMS)) {
+      errors.push(`${taskId} application readiness evidence must include a real startup, live entrypoint, health/status check, endpoint, CLI command, or worker command in ${implementationDoc}`);
+    }
+    if (!containsAny(loweredSection, CONFIG_CONTRACT_TERMS)) {
+      errors.push(`${taskId} application readiness evidence must include the configuration contract or required env/config inputs in ${implementationDoc}`);
+    }
+    if (containsAny(loweredSection, INSUFFICIENT_APPLICATION_SMOKE_TERMS) && !containsAny(loweredSection, ["application readiness", "runtime http smoke", "external integration smoke", "blocked", "阻塞"])) {
+      errors.push(`${taskId} provider, fixture, fake-adapter, or one-shot smoke is not enough for application readiness; record application readiness evidence or BLOCKED in ${implementationDoc}`);
+    }
+  }
   return errors;
+}
+
+function validateReviewReadinessChecklist(text: string): string[] {
+  const errors: string[] = [];
+  for (const field of REVIEW_READINESS_FIELDS) {
+    const status = readinessStatus(text, field);
+    if (!status) {
+      errors.push(`Review report must include ${field}: PASS/BLOCKED`);
+    } else if (status === "BLOCKED") {
+      errors.push(`Review readiness is BLOCKED: ${field}`);
+    }
+  }
+  return errors;
+}
+
+function readinessStatus(text: string, field: string): "PASS" | "BLOCKED" | undefined {
+  const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp("^\\s*[-*]?\\s*" + escaped + "\\s*:\\s*`?(PASS|BLOCKED)`?\\b", "im"),
+    new RegExp("\\|\\s*" + escaped + "\\s*\\|\\s*`?(PASS|BLOCKED)`?\\s*\\|", "i")
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1].toUpperCase() as "PASS" | "BLOCKED";
+  }
+  return undefined;
+}
+
+function validateTestReadinessDecision(text: string): string[] {
+  const decision = finalDecision(text);
+  if (decision !== "PASS") return [];
+  if (containsAny(text, MISSING_READINESS_TERMS)) {
+    return ["Test report cannot PASS while runnable entry/exit or Development Evidence is missing; use BLOCKED with recovery conditions"];
+  }
+  return [];
+}
+
+function finalDecision(text: string): "PASS" | "BLOCKED" | undefined {
+  const match = text.match(/(?:decision|final decision|结论)\s*:?\s*`?(PASS|BLOCKED)`?/i);
+  return match ? (match[1].toUpperCase() as "PASS" | "BLOCKED") : undefined;
 }
 
 function markdownSection(text: string, headerTerms: string[]): string | undefined {

@@ -44,6 +44,8 @@ Input
 
 - Runnable Entry:
 - Observable Exit:
+- Client / Server Initialization:
+- Config Contract:
 - Basic Self-test Evidence:
 - Not applicable:
 

@@ -17,7 +17,7 @@ description: Use after development gates pass to update module-level implementat
 
 文档应帮助后来者快速理解：某个模块或核心数据流的当前实现是什么、关键对象/函数职责是什么、行为如何从输入流到输出、测试覆盖了什么、还有什么未覆盖。task id 只作为 provenance，不作为默认切片粒度。
 
-如果模块包含或承诺可运行系统边界，implementation doc 必须记录 runnable entry/exit：API/CLI/server route/adapter/worker/provider 的调用方式、配置契约、输入来源、输出或副作用、fixture/live 模式边界，以及哪些真实外部执行器尚未实现。还必须在 `Development Evidence` 中记录开发阶段实际验证过的 `Runnable Entry`、`Observable Exit` 和 `Basic Self-test Evidence`；确实没有应用入口时，`Not applicable` 必须写清原因。不能把未来才会实现的入口写成当前事实。
+如果模块包含或承诺可运行系统边界，implementation doc 必须记录 runnable entry/exit：API/CLI/server route/service/agent/runtime/adapter/worker/provider 的调用方式、初始化方式、配置契约、输入来源、输出或副作用、fixture/live 模式边界，以及哪些真实外部执行器尚未实现。还必须在 `Development Evidence` 中记录开发阶段实际验证过的 `Runnable Entry`、`Observable Exit`、`Client / Server Initialization`、`Config Contract` 和 `Basic Self-test Evidence`；确实没有应用入口时，`Not applicable` 必须写清原因。不能把未来才会实现的入口写成当前事实，不能把 provider smoke、fixture smoke、fake adapter 或 one-shot smoke 单独写成 application readiness。
 
 ## 输入
 
@@ -48,7 +48,7 @@ description: Use after development gates pass to update module-level implementat
 2. 每个被记录的文件都应说明它在该模块或数据流中的作用和关键函数/对象。
 3. 与技术方案的偏移必须明确记录，即便该偏移是合理的。
 4. runnable entry/exit、配置契约和 fixture/live 边界必须记录当前事实；缺失项写入 `未覆盖（Not covered）` 或方案偏移。
-5. `Development Evidence` 必须包含实际可调用入口、可观察出口和开发自测证据；页面类任务记录 dev server/page URL 与 browser check，API/CLI/worker/RPA 类任务记录 invocation command/endpoint 与 response/output/side effect。
+5. `Development Evidence` 必须包含实际可调用入口、可观察出口、初始化方式、配置契约和开发自测证据；页面类任务记录 dev server/page URL 与 browser check，API/CLI/worker/RPA/service/agent/runtime 类任务记录 startup/invocation command、endpoint/health/status 与 response/output/side effect。
 6. 测试覆盖必须列出具体测试，或明确记录覆盖缺口。
 7. 文档粒度保持在模块、子系统或核心数据流级别；不要默认按 task 建文档，也不要写成跨全项目的巨型百科。
 
@@ -59,7 +59,7 @@ description: Use after development gates pass to update module-level implementat
 - [ ] 真实代码结构表已填写。
 - [ ] 核心数据流已说明。
 - [ ] runnable entry/exit、配置契约和 fixture/live 边界已记录，或缺失项已明确标注。
-- [ ] `Development Evidence` 已记录 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`，或带原因的 `Not applicable`。
+- [ ] `Development Evidence` 已记录 `Runnable Entry`、`Observable Exit`、`Client / Server Initialization`、`Config Contract`、`Basic Self-test Evidence`，或带原因的 `Not applicable`。
 - [ ] 已判断 implementation doc 的语义切片边界。
 - [ ] 方案偏移和测试覆盖已记录。
 - [ ] `.docs/INDEX.md` 已链接 implementation doc。

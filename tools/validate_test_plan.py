@@ -14,6 +14,23 @@ from harness_utils import (
 
 TEST_REPORT_PATH = ".docs/07_test/TEST_REPORT.md"
 PLACEHOLDER_TERMS = ["pending", "tbd", "todo", "待填", "待补", "placeholder"]
+MISSING_READINESS_TERMS = [
+    "missing entry",
+    "missing exit",
+    "missing runnable",
+    "missing development evidence",
+    "no runnable",
+    "no entry",
+    "no exit",
+    "入口缺失",
+    "出口缺失",
+    "缺少入口",
+    "缺少出口",
+    "缺少 development evidence",
+    "尚未交付",
+    "未交付",
+    "不存在",
+]
 
 
 def read_test_report() -> tuple[str, str]:
@@ -39,6 +56,11 @@ def main() -> None:
         "Test report must state existing runnable entry/exit coverage or blocker status",
     )
     require(contains_any(text, ["pass", "blocked", "通过", "阻塞"]), "Test report must include PASS/BLOCKED decision")
+    if contains_any(text, ["decision\n\npass", "decision: pass", "decision: `pass`", "final decision: pass"]):
+        require(
+            not contains_any(text, MISSING_READINESS_TERMS),
+            "Test report cannot PASS while runnable entry/exit or Development Evidence is missing; use BLOCKED with recovery conditions",
+        )
     if load_lifecycle().get("current_phase") == "TESTING":
         for error in testing_boundary_errors_for_changed_files(changed_files()):
             require(False, error)

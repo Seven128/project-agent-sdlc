@@ -34,7 +34,15 @@
 - Development Evidence:
 - Blocking gaps before TESTING:
 
-## 7. Gate Result（阶段结论）
+## 7. Application Readiness Checklist（应用就绪检查）
+
+- Runnable Entry: `PASS` / `BLOCKED`
+- Observable Exit: `PASS` / `BLOCKED`
+- Initialization: `PASS` / `BLOCKED`
+- Config Contract: `PASS` / `BLOCKED`
+- Testing Handoff Readiness: `PASS` / `BLOCKED`
+
+## 8. Gate Result（阶段结论）
 
 - Decision: `PASS` / `BLOCKED`
 - Required before testing:

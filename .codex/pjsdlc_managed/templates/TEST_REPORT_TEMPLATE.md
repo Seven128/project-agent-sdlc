@@ -25,6 +25,7 @@
 - Existing entry points under test:
 - Expected exits / side effects:
 - Development Evidence used:
+- Application readiness decision source:
 - Config contract used:
 - Fixture/live boundary:
 - Missing entry/exit blocker:
