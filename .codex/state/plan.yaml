@@ -1,3 +1,47 @@
-current_task_id: ""
-next_task_sequence: 74
-tasks: []
+current_task_id: "TASK-074"
+next_task_sequence: 75
+tasks:
+  - id: "TASK-074"
+    title: "移除 config.yaml 中冗余 package version"
+    phase: "SPRINTING"
+    status: "in_progress"
+    summary: "删除 Harness config core.version 持久化字段，改为运行时从安装包 package metadata 读取版本，避免用户项目 config 版本漂移。"
+    docs:
+      product: ".docs/01_product/npm_package_distribution.md"
+      tech_plan: ".docs/03_tech_plan/harness_package_distribution.md"
+      implementation: ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+    allowed_paths:
+      - ".codex/state/plan.yaml"
+      - ".codex/config.yaml"
+      - ".docs/04_implementation/**"
+      - ".docs/04_implementation/overview.md"
+      - ".docs/INDEX.md"
+      - "packages/sdlc-harness/src/**"
+      - "packages/sdlc-harness/dist/**"
+      - "packages/sdlc-harness/assets/**"
+      - "packages/sdlc-harness/README.md"
+      - "tests/sdlc-harness/**"
+      - "README.md"
+      - "PROJECT_SPEC.md"
+      - "tools/release_npm.mjs"
+    required_gates:
+      - "npm test --workspace agent-project-sdlc"
+      - "node packages/sdlc-harness/dist/cli.js package sync-source"
+      - "node packages/sdlc-harness/dist/cli.js package check-source"
+      - "make validate-dev"
+      - "make validate-harness"
+    acceptance_criteria:
+      - "新生成的 `<harnessRoot>/config.yaml` 不再包含 `core.version`。"
+      - "`upgrade` 迁移会删除旧 config 中的 `core.version`，保留 `core.package` 和 `core.schema_version`。"
+      - "`doctor` 仍显示当前运行包版本，但该版本来自 installed package metadata，不来自 config。"
+      - "release installed-consumer smoke 不再依赖 config 中保存的版本副本。"
+      - "README、package README、PROJECT_SPEC 和 implementation doc 更新 config contract。"
+    implementation_doc: ".docs/04_implementation/harness_package/cli_distribution_and_lifecycle.md"
+    working_notes:
+      - "分层判断：通用 Harness config schema / migration / doctor public behavior 变更；不属于 authoring-only overlay。"
+      - "`npm test --workspace agent-project-sdlc`: PASS，10 个 package regression tests passed。"
+      - "`node packages/sdlc-harness/dist/cli.js package sync-source`: PASS，package assets checked/refreshed。"
+      - "`node packages/sdlc-harness/dist/cli.js package check-source`: PASS，package source OK。"
+      - "`node packages/sdlc-harness/dist/cli.js doctor`: PASS，输出 `core package: agent-project-sdlc@0.1.16`，且 `.codex/config.yaml` 不再包含 `core.version`。"
+      - "`make validate-dev`: PASS。"
+      - "`make validate-harness`: PASS。"

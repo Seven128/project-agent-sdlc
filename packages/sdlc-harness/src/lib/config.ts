@@ -1,18 +1,13 @@
 import path from "node:path";
-import { createRequire } from "node:module";
 import type { HarnessConfig } from "./types.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import { pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
 
-const require = createRequire(import.meta.url);
-const packageMetadata = require("../../package.json") as { version?: string };
-
 export function defaultConfig(root: string): HarnessConfig {
   return {
     core: {
       package: "agent-project-sdlc",
-      version: packageMetadata.version ?? "0.0.0",
       schema_version: "1"
     },
     managed_files: [
@@ -57,7 +52,6 @@ export function normalizeConfig(value: Partial<HarnessConfig>, root = ".agent"):
   return {
     core: {
       package: value.core?.package ?? fallback.core.package,
-      version: value.core?.version ?? fallback.core.version,
       schema_version: value.core?.schema_version ?? fallback.core.schema_version
     },
     managed_files: value.managed_files ?? fallback.managed_files,

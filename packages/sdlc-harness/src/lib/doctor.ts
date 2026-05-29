@@ -1,7 +1,11 @@
+import { createRequire } from "node:module";
 import path from "node:path";
 import { readConfig } from "./config.js";
 import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
 import { pathExists } from "./fs.js";
+
+const require = createRequire(import.meta.url);
+const packageMetadata = require("../../package.json") as { version?: string };
 
 export interface DoctorReport {
   info: string[];
@@ -20,8 +24,9 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
   }
 
   const config = await readConfig(projectRoot);
+  const packageVersion = packageMetadata.version ?? "0.0.0";
   report.info.push(`harness root: ${root}`);
-  report.info.push(`core package: ${config.core.package}@${config.core.version}`);
+  report.info.push(`core package: ${config.core.package}@${packageVersion}`);
   report.info.push(`schema version: ${config.core.schema_version}`);
 
   for (const required of [harnessPath(root, "state", "lifecycle.yaml"), harnessPath(root, "state", "plan.yaml"), ".docs/INDEX.md"]) {

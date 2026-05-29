@@ -1,7 +1,6 @@
 export interface HarnessConfig {
   core: {
     package: string;
-    version: string;
     schema_version: string;
   };
   managed_files: ManagedFile[];

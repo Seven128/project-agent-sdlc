@@ -58,8 +58,8 @@ async function migrateConfig(projectRoot: string, root: string, report: Migratio
   const config = await readConfig(projectRoot);
   const currentCore = defaultConfig(root).core;
   config.core.package = currentCore.package;
-  config.core.version = currentCore.version;
   config.core.schema_version = CURRENT_SCHEMA_VERSION;
+  delete (config.core as Record<string, unknown>).version;
   config.managed_files = migrateManagedFiles(config.managed_files, root);
   config.local_overrides = config.local_overrides.map((item) => migrateLocalOverride(item, root));
   if (await writeTextIfChanged(configPath, stringifyYaml(config))) {

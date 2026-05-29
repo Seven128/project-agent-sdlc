@@ -36,7 +36,7 @@ try {
   assert.match(defaultConfig, /\.agent\/pjsdlc_managed\/override_skills\/\*\.md/);
   assert.doesNotMatch(defaultConfig, /\.agent\/overrides\/\*\*/);
   const packageMetadata = JSON.parse(await readFile(path.join(path.dirname(cliPath), "..", "package.json"), "utf8"));
-  assert.match(defaultConfig, new RegExp(`version: "?${packageMetadata.version}"?`));
+  assert.doesNotMatch(defaultConfig, /^\s*version:/m);
   const defaultLifecycle = await readFile(path.join(defaultRoot, ".agent/state/lifecycle.yaml"), "utf8");
   assert.match(defaultLifecycle, /current_phase: "SPRINTING"/);
   assert.match(defaultLifecycle, /active_role: "developer"/);
@@ -120,6 +120,7 @@ try {
   const defaultDoctor = await runDoctor(defaultRoot);
   assert.deepEqual(defaultDoctor.errors, []);
   assert.ok(defaultDoctor.info.some((line) => line.includes("harness root: .agent")));
+  assert.ok(defaultDoctor.info.some((line) => line.includes(`core package: agent-project-sdlc@${packageMetadata.version}`)));
   assert.ok(defaultDoctor.info.some((line) => line.includes("doctor complete")));
 
   await writeFile(

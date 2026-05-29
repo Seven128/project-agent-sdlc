@@ -849,7 +849,7 @@ sdlc-harness <command>
 - `<harnessRoot>/skills/**`，由 `sdlc-harness sync` 从包内 materialize 到工作区，作为 Skill canonical source。
 - `<harnessRoot>/pjsdlc_managed/**`，承载模板、策略和默认 Makefile targets 等可版本化工作流配置。
 - `<harnessRoot>/state/**` 的具体数据，例如当前 phase、当前 task、open task 执行备注、memory 条目和 gate 结果；这些值只属于当前项目，不由包覆盖。例外是 `memory.md#Harness Guidance` 这类明确隔离的 package-managed section。
-- `<harnessRoot>/config.yaml`，记录 core version、schema version、managed files 和 local overrides。
+- `<harnessRoot>/config.yaml`，记录 core package identity、schema version、managed files 和 local overrides；不记录 package version，运行时版本以已安装 npm package manifest 为准。
 - `.docs/**`，作为当前项目的需求、方案、实现、测试、发布事实源。例外是 `.docs/INDEX.md#Harness Maintenance Rules` 这类明确隔离的 package-managed section。
 
 ### 18.3 Harness 根目录配置
@@ -936,7 +936,7 @@ npx sdlc-harness upgrade
 ```
 
 `sdlc-harness upgrade` 必须自动执行 `sdlc-harness sync`，用户不需要在升级后手动再跑一次同步。推荐执行顺序：
-1. 读取 `<harnessRoot>/config.yaml` 中记录的当前版本和 schema version。
+1. 读取 `<harnessRoot>/config.yaml` 中记录的 package identity 和 schema version；package version 从已安装 npm package manifest 获取，不在 config 中持久化。
 2. 运行必要 migrations。
 3. 按 state schema migration 升级 `<harnessRoot>/state/**` 的结构，但保留项目自己的状态值。
 4. 更新 managed files。

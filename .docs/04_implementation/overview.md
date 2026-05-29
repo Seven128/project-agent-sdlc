@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 5047383198c7f402 -->
+<!-- source-hash: 8f9b55562450a013 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `5047383198c7f402`
+Source hash: `8f9b55562450a013`
 
 ## Source Slices
 
@@ -31,7 +31,7 @@ Source: [harness_package/cli_distribution_and_lifecycle.md](harness_package/cli_
 
 - Domain: `harness_package`
 - Module / subsystem / core flow: CLI package distribution, init/sync/upgrade/doctor lifecycle
-- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`, `DEV-054`, `TASK-058`
+- Updated by task: `DEV-001`, `DEV-002`, `DEV-003`, `DEV-005`, `DEV-006`, `DEV-008`, `DEV-009`, `DEV-020`, `DEV-021`, `DEV-022`, `DEV-023`, `DEV-040`, `DEV-041`, `DEV-043`, `DEV-054`, `TASK-058`, `TASK-074`
 - Linked PRD: `.docs/01_product/npm_package_distribution.md`
 - Linked technical design: `.docs/03_tech_plan/harness_package_distribution.md`
 - Linked RFC: `RFC_001`, `RFC_002`, `RFC_003`, `RFC_006`, `RFC_007`, `RFC_008`, `RFC_009`
@@ -43,8 +43,8 @@ Source: [harness_package/cli_distribution_and_lifecycle.md](harness_package/cli_
 - `init` / `init --adopt` create or adopt a project Harness without overwriting user-owned project code.
 - Fresh `init` lifecycle routes new projects to `SPRINTING` with `active_role: "developer"` and `active_skill: "pjsdlc_dev_sprint"`; generated plan files do not duplicate `current_phase`.
 - `sync` materializes managed Harness assets from package canonical assets into the selected `<harnessRoot>`.
-- `upgrade` refreshes `<harnessRoot>/config.yaml` core package metadata, runs schema migrations and then syncs managed assets.
-- `doctor` reports Harness config, managed file drift, override state and suggested gates.
+- `upgrade` refreshes `<harnessRoot>/config.yaml` package identity and schema metadata, runs schema migrations and then syncs managed assets.
+- `doctor` reports Harness config, managed file drift, override state and suggested gates. The displayed package version is read from the installed npm package metadata, not from project config.
 - `validate-*` commands expose package-side validation entry points for Harness state and phase artifacts.
 - 当前 authoring workspace 使用 `.codex` as `harnessFolderName`; `Other` agent selection still falls back to `.agent`.
 
@@ -97,7 +97,7 @@ Existing project runs sdlc-harness upgrade
 - Managed files use package metadata blocks and merge strategies instead of blind overwrites.
 - Package name and CLI name are intentionally separate: npm installs `agent-project-sdlc`, users run `sdlc-harness`.
 - Migrations preserve compatibility with earlier `.harness`, `.agents` and `.agent` layouts while converging new installs on the configured `<harnessRoot>`.
-- `migrateConfig` rewrites `core.package` and `core.version` from the installed package metadata so package upgrades do not leave stale config versions.
+- `migrateConfig` rewrites `core.package`, deletes legacy `core.version`, and preserves `core.schema_version`. Package version is intentionally not persisted in project config because the installed package manifest is the source of truth.
 - Plan migrations remove stale `current_phase` from active and draft plans, remove draft `current_task_id`, and strip duplicate `phase` / `linked_task_id` from `parallel_execution`.
 - Validation commands mirror the Python Harness gates closely enough for package consumers to run health checks without depending on this authoring workspace.
 
@@ -105,8 +105,14 @@ Existing project runs sdlc-harness upgrade
 
 - Entry points: `sdlc-harness` CLI commands (`init`, `sync`, `upgrade`, `doctor`, `validate-*`) and the root `npm run sdlc-harness` adapter.
 - Exit / side effects: writes or checks Harness state/assets, reports validator diagnostics, and never publishes or pushes by default.
-- Config contract: `package.json#sdlcHarness.harnessFolderName`, `<harnessRoot>/config.yaml`, and package default config.
+- Config contract: `package.json#sdlcHarness.harnessFolderName`, `<harnessRoot>/config.yaml` (`core.package`, `core.schema_version`, managed files and local overrides), and package default config.
 - Fixture/live boundary: package tests and consumer lab use local fixtures; npm registry publish/smoke remains release-stage live behavior.
+
+## Development Evidence
+
+- Runnable Entry: `npm test --workspace agent-project-sdlc`, `node packages/sdlc-harness/dist/cli.js package sync-source`, `node packages/sdlc-harness/dist/cli.js package check-source`, `make validate-dev`, and `make validate-harness` are the task verification entrypoints.
+- Observable Exit: `tests/sdlc-harness/sync-init-doctor.test.mjs` asserts generated config omits `core.version` and `doctor` reports `core package: agent-project-sdlc@<installed package version>`; `tests/sdlc-harness/upgrade.test.mjs` asserts migrated config omits legacy `core.version`; `package check-source` output was `package source OK`.
+- Basic Self-test Evidence: `npm test --workspace agent-project-sdlc` PASS with 10/10 tests; `node packages/sdlc-harness/dist/cli.js package sync-source` PASS; `node packages/sdlc-harness/dist/cli.js package check-source` PASS.
 
 ## 6. 与技术方案的偏移
 
@@ -126,6 +132,8 @@ Existing project runs sdlc-harness upgrade
 | `tests/sdlc-harness/validators.test.mjs` | package validators | PASS in package regression suite |
 | `make validate-harness` | authoring workspace Harness scaffold and docs | PASS for `DEV-054` on 2026-05-27 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package source mapping drift check | PASS for `DEV-054` on 2026-05-27 |
+| `tests/sdlc-harness/sync-init-doctor.test.mjs` | generated config omits `core.version`; doctor reports installed package version from package metadata | PASS for `TASK-074` |
+| `tests/sdlc-harness/upgrade.test.mjs` | upgrade removes legacy `core.version` from existing config | PASS for `TASK-074` |
 
 ## 8. 变更记录（Change Log）
 
@@ -138,6 +146,7 @@ Existing project runs sdlc-harness upgrade
 | 2026-05-27 | `DEV-054` | Pending implementation commit | Changed fresh init lifecycle defaults from `REQUIREMENT_GATHERING` routing to `SPRINTING` developer routing. |
 | 2026-05-28 | `TASK-058` | Pending implementation commit | Updated upgrade config migration to refresh `core.version` from the current package version. |
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from generated and migrated plan files. |
+| 2026-05-29 | `TASK-074` | Working tree | Removed redundant persisted `core.version`; doctor now derives package version from installed package metadata. |
 
 ## 9. 后续维护注意事项
 

@@ -146,11 +146,7 @@ history:
   assert.doesNotMatch(draft, /current_task_id/);
 
   const config = await readFile(path.join(root, ".harness/config.yaml"), "utf8");
-  const packageMetadata = JSON.parse(
-    await readFile(fileURLToPath(new URL("../../packages/sdlc-harness/package.json", import.meta.url)), "utf8")
-  );
-  assert.match(config, new RegExp(`version: "?${packageMetadata.version}"?`));
-  assert.doesNotMatch(config, /version: "?0\.1\.0"?/);
+  assert.doesNotMatch(config, /^\s*version:/m);
   assert.match(config, /\.harness\/skills/);
   assert.doesNotMatch(config, /\.harness\/prompts/);
   assert.match(config, /path: "?Makefile"?/);
