@@ -55,5 +55,6 @@ phases:
       - ".docs/01_product/**"
       - ".docs/03_tech_plan/**"
       - ".docs/07_test/**"
+      - ".docs/09_runbooks/**"
       - "<harnessRoot>/state/plan.yaml"
       - ".docs/INDEX.md"

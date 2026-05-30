@@ -58,6 +58,7 @@ phases:
       - "src/"
       - "tests/"
       - ".docs/04_implementation/"
+      - ".docs/09_runbooks/"
       - "<harnessRoot>/state/plan.draft.yaml"
     gates:
       - "make validate-dev"
@@ -89,6 +90,7 @@ phases:
       - ".docs/01_product/"
       - ".docs/03_tech_plan/"
       - ".docs/04_implementation/"
+      - ".docs/09_runbooks/"
       - ".docs/06_review/"
     outputs:
       - "<harnessRoot>/state/plan.yaml"
@@ -138,6 +140,7 @@ phases:
     outputs:
       - ".docs/rfc/"
       - ".docs/07_test/"
+      - ".docs/09_runbooks/"
       - "<harnessRoot>/state/plan.yaml"
       - ".docs/INDEX.md"
     gates:

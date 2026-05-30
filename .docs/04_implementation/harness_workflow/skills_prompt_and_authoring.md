@@ -37,6 +37,7 @@
 - `validate-design` and `validate-dev` now enforce `self_test_contract`: design binds runnable-boundary tasks to a tech plan `Development Self-Test Contract`, and development requires a completed implementation doc `Development Self-Test Report` before handoff.
 - Development Self-Test Contract / Report now require `module_key_test_path` / `Module Key Test Path`, recording the module key test path from local start or invocation to all self-test scenarios completion. The path is scoped to the current task/module and covers promised runnable entries, internal key paths, boundaries, checkpoints and observable completion evidence for later debug reuse.
 - Dev and Implementation Doc prompts now treat `Development Self-Test Report` as a development deliverable, separate from code/config/test implementation artifacts. When `self_test_contract.status: "required"`, agents must execute the current scenarios and required gates before writing the report; historical reports, template fields, code reading or unrelated green gates cannot stand in for current-run evidence.
+- Development Self-Test Report now has an explicit boundary: it must include `Report Status: PASS | BLOCKED | IN_PROGRESS | STALE`, prove only module entry/core path/exit/minimal evidence, and must not become a debug log, operator log, runbook or exploration history.
 - The authoring-only Harness design prompt now states the lightweight-constraint principle: workflow changes should first align Agent attention with the `PROJECT_SPEC.md` purpose, and heavier validation or execution mechanisms are reserved for heavy logic when issues repeat, risk is high, or machine proof is required.
 - `validate-rfc` now requires `Development Self-Test Impact` for new RFCs that change entry/exit, runtime, gates, handoff or blocker semantics.
 - `validate-review` now requires explicit PASS/BLOCKED readiness fields for `Runnable Entry`, `Observable Exit`, `Initialization`, `Config Contract` and `Testing Handoff Readiness`; any `BLOCKED` field blocks TESTING handoff.
@@ -155,8 +156,11 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `validate-dev` checks implementation docs for runnable entry/exit facts, accepting explicit `Not applicable` only when the module truly has no product runtime boundary.
 - `validate-dev` checks the current open SPRINTING task implementation doc for a `Development Evidence` section with concrete `Runnable Entry`, `Observable Exit`, `Client / Server Initialization`, `Config Contract` and `Basic Self-test Evidence`, or a justified `Not applicable`.
 - `validate-design` checks runnable-boundary draft tasks for `self_test_contract` and verifies the referenced tech plan slice contains a `Development Self-Test Contract`.
-- `validate-dev` checks `self_test_contract.required_gates` against task `required_gates`, requires every contract scenario to have a `PASS` result in `Development Self-Test Report`, and rejects `BLOCKED` self-test scenarios as unfinished development.
+- `validate-dev` checks `self_test_contract.required_gates` against task `required_gates`, requires `Report Status: PASS` and every contract scenario to have a `PASS` result in `Development Self-Test Report`, and rejects `BLOCKED`, `IN_PROGRESS` or `STALE` reports as unfinished development handoff.
 - `validate-design` and `validate-dev` require `module_key_test_path` / `Module Key Test Path` so the implementation doc records the local-start-to-self-test-completion module key test path, including current task/module runnable entries, internal key paths, boundaries, checkpoints and completion evidence for future debug.
+- High-risk runtime/live/remote-operator tasks now use resume-first recovery: Architect reserves `.docs/09_runbooks/**`, Dev maintains `plan.yaml#resume_capsule`, Implementation Doc keeps operation logs out of the main implementation facts, and Review/Testing consume the capsule/runbook before reading exploration appendices.
+- `validate-dev` requires high-risk current SPRINTING tasks to have concrete `resume_capsule` fields, current implementation doc recovery ref, `.docs/09_runbooks/**` recovery ref, a short `Current Operator Path` and a `Gate Breakdown` in `Development Self-Test Report`.
+- Open task `working_notes` now stays resume-first with a validator limit of 8 entries.
 - `pjsdlc_dev_sprint` explicitly frames SPRINTING outputs as implementation artifacts plus development self-test artifacts. It requires scenario/gate execution before report writing, and blocks task completion when current-run runnable entry, internal key path and observable exit/evidence cannot be named.
 - `pjsdlc_implementation_doc` records the same evidence provenance rule for module docs: `Development Self-Test Report` facts must come from the current task run, not from historical PASS text, template placeholders, code inspection or unrelated generic gates.
 - `harness_package_design` distinguishes Agent execution violations from Harness contract gaps and prefers lightweight prompt/checklist/template/content constraints before adding heavier validators, scripts or executors.
@@ -251,12 +255,17 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect clarified Module Key Test Path wording | PASS for TASK-080 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match source after clarified Module Key Test Path wording | PASS for TASK-080 |
 | `make validate-harness` | Prompt language and generated overview consistency after clarified Module Key Test Path wording | PASS for TASK-080 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for resume capsule, runbook refs and Gate Breakdown | PASS in current working tree; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets reflect resume-first Skill/template/validator changes | PASS in current working tree; sync changed=48 |
 | `make validate-rfc` | RFC format, Development Self-Test Impact and no-open-task phase gate | PASS for TASK-080 |
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect self-test report redline prompt changes while excluding authoring-only Skill | PASS on 2026-05-30; changed 44 assets |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match source after prompt redline changes | PASS on 2026-05-30 |
 | `npm test --workspace agent-project-sdlc` | Package regression after prompt-only workflow changes | PASS on 2026-05-30; 10 tests passed |
 | `make docs-overview` | Generated overview refresh after prompt redline implementation doc update | PASS on 2026-05-30 |
 | `make validate-harness` | Prompt language and generated overview consistency after prompt redline changes | PASS on 2026-05-30 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for Report Status, Current Operator Path, disallowed self-test log sections and working_notes limit | PASS on 2026-05-30; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets reflect self-test report boundary Skill/template/README changes | PASS on 2026-05-30; sync changed=48 |
+| `make docs-overview && make validate-harness && make validate-plan` | Generated overview, prompt language and active plan consistency after self-test boundary changes | PASS on 2026-05-30 |
 
 ## 8. 变更记录（Change Log）
 
@@ -291,6 +300,8 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-30 | Direct maintenance | Working tree | Added development self-test report redline prompts and authoring lightweight-constraint guidance. |
 | 2026-05-29 | `TASK-079` | Working tree | Added Module Key Test Path requirements to Development Self-Test Contract / Report and validator checks. |
 | 2026-05-29 | `TASK-080` | Working tree | Clarified Module Key Test Path wording to cover current task/module promised entries and internal key paths without implying whole-system coverage. |
+| 2026-05-30 | Resume-first runtime task protocol | Working tree | Added resume-first prompt rules for high-risk runtime/live tasks and separated runbook/evidence/exploration responsibilities. |
+| 2026-05-30 | Self-test report boundary hardening | Working tree | Added Report Status semantics, Current Operator Path prompt rules, log-section boundary and working_notes limit guidance. |
 
 ## 9. 后续维护注意事项
 

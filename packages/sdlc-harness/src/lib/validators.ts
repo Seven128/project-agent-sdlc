@@ -99,6 +99,7 @@ const TEST_REPORT_PLACEHOLDER_TERMS = ["pending", "tbd", "todo", "待填", "待�
 const TEST_FACT_SOURCE_PHASES = new Set(["TESTING", "RFC_RECALIBRATION"]);
 const TEST_FACT_SOURCE_PATTERNS = [".docs/07_test/**", ".docs/07_test/"];
 const TEST_FACT_SOURCE_REF = /\.docs\/07_test\/[^\s`,)]+/g;
+const RUNBOOK_DOC_PREFIX = ".docs/09_runbooks/";
 const RUNNABLE_ENTRY_EXIT_TERMS = [
   "runnable entry/exit",
   "entry/exit",
@@ -113,6 +114,8 @@ const DEVELOPMENT_SELF_TEST_CONTRACT_TERMS = ["development self-test contract", 
 const DEVELOPMENT_SELF_TEST_REPORT_TERMS = ["development self-test report", "开发自测报告"];
 const DEVELOPMENT_SELF_TEST_IMPACT_TERMS = ["development self-test impact", "开发自测影响"];
 const MODULE_KEY_TEST_PATH_TERMS = ["module key test path", "模块关键测试路径"];
+const GATE_BREAKDOWN_TERMS = ["gate breakdown", "gate 分层", "gate breakdown（gate 分层）"];
+const CURRENT_OPERATOR_PATH_TERMS = ["current operator path", "operator path", "当前操作路径", "当前 operator path"];
 const TESTING_HANDOFF_TERMS = ["testing handoff contract", "测试交接合同"];
 const EVIDENCE_PLACEHOLDER_TERMS = [
   "pending",
@@ -134,6 +137,25 @@ const SELF_TEST_REPORT_PLACEHOLDER_TERMS = [
   "actual internal key paths",
   "observable completion evidence"
 ];
+const SELF_TEST_REPORT_STATUSES = new Set(["PASS", "BLOCKED", "IN_PROGRESS", "STALE"]);
+const SELF_TEST_REPORT_DISALLOWED_SECTION_TERMS = [
+  "debug log",
+  "operator log",
+  "operation log",
+  "runbook",
+  "exploration",
+  "diagnostic attempts",
+  "fallback attempts",
+  "history log",
+  "remote operation log",
+  "调试日志",
+  "操作日志",
+  "远端操作日志",
+  "探索流水",
+  "失败探索",
+  "诊断尝试",
+  "历史流水"
+];
 const SELF_TEST_OBSERVABLE_EVIDENCE_TERMS = [
   "pass output",
   "response",
@@ -152,6 +174,25 @@ const SELF_TEST_OBSERVABLE_EVIDENCE_TERMS = [
   "command output",
   "queue",
   "file"
+];
+const RESUME_CAPSULE_REQUIRED_EVIDENCE_LEVELS = new Set(["external_provider_live", "deployed_runtime", "business_handoff_ready"]);
+const RESUME_CAPSULE_REQUIRED_TARGET_KINDS = new Set(["cloud_vm", "managed_service", "browser", "worker"]);
+const RESUME_CAPSULE_FIELDS = [
+  "task_id",
+  "state",
+  "canonical_path",
+  "next_step",
+  "blocker",
+  "last_passed_gate",
+  "do_not_retry",
+  "recovery_refs"
+];
+const MAX_WORKING_NOTES = 8;
+const GATE_BREAKDOWN_LAYER_GROUPS: Array<[string, string[]]> = [
+  ["local gate", ["local", "unit", "lint", "test", "本地"]],
+  ["cloud/service gate", ["cloud", "service", "runtime", "server", "managed_service", "cloud_vm", "服务", "云端"]],
+  ["executor/operator readiness", ["executor", "operator", "worker", "browser", "provider", "adapter", "readiness", "执行器", "操控", "就绪"]],
+  ["live smoke or handoff", ["live", "smoke", "handoff", "external_provider_live", "deployed_runtime", "business_handoff_ready", "冒烟", "交接"]]
 ];
 const PAGE_TASK_TERMS = ["frontend", "front-end", "browser", "page", "页面", "前端", "按钮", "表单", "跳转"];
 const PAGE_ENTRY_TERMS = ["http://", "https://", "localhost", "127.0.0.1", "page url", "页面 url", "dev server"];
@@ -333,6 +374,7 @@ async function validateHarness(projectRoot: string): Promise<ValidatorReport> {
   for (const required of [
     "AGENTS.md",
     ".docs/INDEX.md",
+    ".docs/09_runbooks",
     harnessPath(root, "config.yaml"),
     harnessPath(root, "state", "lifecycle.yaml"),
     harnessPath(root, "state", "plan.yaml"),
@@ -793,6 +835,7 @@ async function validatePlanState(projectRoot: string, allowOpen: boolean): Promi
       if (!Array.isArray(task.acceptance_criteria) || task.acceptance_criteria.length === 0) {
         errors.push(`Open task ${task.id} must define acceptance_criteria`);
       }
+      errors.push(...validateWorkingNotesLimit(task));
       errors.push(...validateRuntimeEvidenceContract(task));
       errors.push(...testingBoundaryErrorsForAllowedPaths(task));
     } else {
@@ -809,7 +852,95 @@ async function validatePlanState(projectRoot: string, allowOpen: boolean): Promi
   if (currentTaskId && !tasks.some((task) => isRecord(task) && task.id === currentTaskId)) {
     errors.push(`current_task_id does not match a task: ${currentTaskId}`);
   }
+  errors.push(...(await validateResumeCapsule(projectRoot, tasksData)));
   return { taskCount: tasks.length, errors, plan: tasksData };
+}
+
+function validateWorkingNotesLimit(task: Record<string, unknown>): string[] {
+  if (!("working_notes" in task)) return [];
+  const taskId = String(task.id ?? "Open task");
+  const notes = task.working_notes;
+  if (typeof notes !== "string" && !Array.isArray(notes)) {
+    return [`Open task ${taskId} working_notes must be a short string or list with at most ${MAX_WORKING_NOTES} items`];
+  }
+  const count = Array.isArray(notes) ? notes.length : notes.trim() ? 1 : 0;
+  if (count > MAX_WORKING_NOTES) {
+    return [`Open task ${taskId} working_notes must stay resume-first and contain at most ${MAX_WORKING_NOTES} items; found ${count}`];
+  }
+  return [];
+}
+
+async function validateResumeCapsule(projectRoot: string, plan: Record<string, unknown>): Promise<string[]> {
+  const errors: string[] = [];
+  const currentTask = currentOpenSprintTask(plan);
+  const capsule = plan.resume_capsule;
+  if (!currentTask) {
+    if (capsule !== undefined) {
+      errors.push("plan.yaml resume_capsule must only be present for the current open SPRINTING task");
+    }
+    return errors;
+  }
+
+  const taskId = String(currentTask.id ?? "current task");
+  const required = requiresResumeCapsule(currentTask);
+  if (!required && capsule === undefined) return errors;
+  if (!isRecord(capsule)) {
+    errors.push(`${taskId} high-risk runtime task must define top-level resume_capsule`);
+    return errors;
+  }
+
+  for (const field of RESUME_CAPSULE_FIELDS) {
+    if (!(field in capsule)) {
+      errors.push(`${taskId} resume_capsule missing field: ${field}`);
+    }
+  }
+
+  const capsuleTaskId = String(capsule.task_id ?? "").trim();
+  if (capsuleTaskId !== taskId) {
+    errors.push(`${taskId} resume_capsule.task_id must match current_task_id`);
+  }
+  for (const field of ["state", "canonical_path", "next_step", "blocker", "last_passed_gate"]) {
+    const value = String(capsule[field] ?? "").trim();
+    if (!value || isPlaceholderEvidence(value)) {
+      errors.push(`${taskId} resume_capsule.${field} must contain concrete recovery information`);
+    }
+  }
+
+  const doNotRetry = asStringList(capsule.do_not_retry);
+  if (doNotRetry.length === 0 || doNotRetry.some((item) => isPlaceholderEvidence(item))) {
+    errors.push(`${taskId} resume_capsule.do_not_retry must list concrete paths or attempts not to repeat`);
+  }
+
+  const refs = asStringList(capsule.recovery_refs);
+  if (refs.length === 0) {
+    errors.push(`${taskId} resume_capsule.recovery_refs must link implementation doc and runbook/evidence documents`);
+    return errors;
+  }
+  const implementationDoc = String(currentTask.implementation_doc ?? "").trim();
+  if (implementationDoc && !refs.includes(implementationDoc)) {
+    errors.push(`${taskId} resume_capsule.recovery_refs must include current implementation_doc ${implementationDoc}`);
+  }
+  if (!refs.some((ref) => ref.startsWith(RUNBOOK_DOC_PREFIX))) {
+    errors.push(`${taskId} resume_capsule.recovery_refs must include a runbook/evidence document under ${RUNBOOK_DOC_PREFIX}`);
+  }
+
+  for (const ref of refs) {
+    if (!ref.startsWith(".docs/04_implementation/") && !ref.startsWith(RUNBOOK_DOC_PREFIX)) {
+      errors.push(`${taskId} resume_capsule.recovery_refs may only point to implementation docs or runbook/evidence docs: ${ref}`);
+      continue;
+    }
+    if (!(await pathExists(path.join(projectRoot, ref)))) {
+      errors.push(`${taskId} resume_capsule recovery_ref does not exist: ${ref}`);
+    }
+  }
+  return errors;
+}
+
+function requiresResumeCapsule(task: Record<string, unknown>): boolean {
+  if (String(task.phase ?? "") !== "SPRINTING") return false;
+  const evidenceLevel = isRecord(task.evidence_level) ? String(task.evidence_level.required ?? "") : "";
+  const targetKind = isRecord(task.target_runtime_environment) ? String(task.target_runtime_environment.kind ?? "") : "";
+  return RESUME_CAPSULE_REQUIRED_EVIDENCE_LEVELS.has(evidenceLevel) || RESUME_CAPSULE_REQUIRED_TARGET_KINDS.has(targetKind);
 }
 
 function validateRuntimeEvidenceContract(task: Record<string, unknown>): string[] {
@@ -1360,6 +1491,14 @@ function validateDevelopmentSelfTestReport(
     return [`${taskId} implementation_doc must include Development Self-Test Report for self_test_contract: ${implementationDoc}`];
   }
 
+  const reportStatus = normalizeSelfTestReportStatus(evidenceFieldValue(report, "Report Status"));
+  if (!reportStatus) {
+    errors.push(`${taskId} Development Self-Test Report must include Report Status: PASS | BLOCKED | IN_PROGRESS | STALE in ${implementationDoc}`);
+  } else if (reportStatus !== "PASS") {
+    errors.push(`${taskId} Development Self-Test Report Report Status is ${reportStatus}; validate-dev cannot handoff until the report status is PASS`);
+  }
+  errors.push(...validateSelfTestReportBoundary(report, taskId, implementationDoc));
+
   const basicSelfTest = evidenceFieldValue(developmentEvidenceSection, "Basic Self-test Evidence") ?? "";
   if (!containsAny(basicSelfTest, ["Development Self-Test Report", "开发自测报告", "self-test report"])) {
     errors.push(`${taskId} Basic Self-test Evidence must reference the Development Self-Test Report in ${implementationDoc}`);
@@ -1413,11 +1552,11 @@ function validateDevelopmentSelfTestReport(
     }
     const status = scenarioStatus(report, scenarioId);
     if (!status) {
-      errors.push(`${taskId} Development Self-Test Report must record scenario ${scenarioId} as PASS or BLOCKED in ${implementationDoc}`);
+      errors.push(`${taskId} Development Self-Test Report must record scenario ${scenarioId} as PASS, BLOCKED, IN_PROGRESS, or STALE in ${implementationDoc}`);
     } else if (status === "AMBIGUOUS") {
-      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} must choose exactly one of PASS or BLOCKED in ${implementationDoc}`);
-    } else if (status === "BLOCKED") {
-      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} is BLOCKED; keep task open or record a blocker`);
+      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} must choose exactly one status in ${implementationDoc}`);
+    } else if (status !== "PASS") {
+      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} is ${status}; validate-dev cannot handoff until every scenario is PASS`);
     }
     errors.push(...validateScenarioTableEvidence(report, scenarioId, taskId, implementationDoc));
   }
@@ -1433,21 +1572,114 @@ function validateDevelopmentSelfTestReport(
       errors.push(`${taskId} page Development Self-Test Report must include browser, Playwright, screenshot, or equivalent interaction evidence in ${implementationDoc}`);
     }
   }
+  if (requiresResumeCapsule(task)) {
+    errors.push(...validateCurrentOperatorPath(fullText, taskId, implementationDoc));
+    errors.push(...validateGateBreakdown(fullText, taskId, implementationDoc));
+  }
   return errors;
 }
 
-function scenarioStatus(text: string, scenarioId: string): "PASS" | "BLOCKED" | "AMBIGUOUS" | undefined {
+function normalizeSelfTestReportStatus(value: string | undefined): "PASS" | "BLOCKED" | "IN_PROGRESS" | "STALE" | undefined {
+  if (!value) return undefined;
+  const normalized = value.replace(/`/g, "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  return SELF_TEST_REPORT_STATUSES.has(normalized) ? (normalized as "PASS" | "BLOCKED" | "IN_PROGRESS" | "STALE") : undefined;
+}
+
+function validateSelfTestReportBoundary(report: string, taskId: string, implementationDoc: string): string[] {
+  const errors: string[] = [];
+  for (const line of report.split(/\r?\n/)) {
+    const match = line.match(/^(#{1,6})\s+(.+)$/);
+    if (!match) continue;
+    const title = match[2].trim().toLowerCase();
+    const blockedTerm = SELF_TEST_REPORT_DISALLOWED_SECTION_TERMS.find((term) => title.includes(term));
+    if (blockedTerm) {
+      errors.push(`${taskId} Development Self-Test Report must not include debug/operator/runbook/exploration log section "${match[2].trim()}" in ${implementationDoc}; link a runbook or exploration appendix instead`);
+    }
+  }
+  return errors;
+}
+
+function validateCurrentOperatorPath(fullText: string, taskId: string, implementationDoc: string): string[] {
+  const section = markdownSection(fullText, CURRENT_OPERATOR_PATH_TERMS);
+  if (!section) {
+    return [`${taskId} high-risk runtime task must include a short Current Operator Path section in ${implementationDoc}`];
+  }
+
+  const errors: string[] = [];
+  const requiredFields: Array<[string, string[]]> = [
+    ["canonical operator path", ["Canonical operator path", "Canonical path"]],
+    ["runbook link", ["Operator runbook", "Runbook"]],
+    ["credential reference name", ["Credential reference", "Credential reference name"]],
+    ["command/UI channel", ["Command/UI channel", "Command channel", "UI channel"]],
+    ["do-not-retry summary", ["Do-not-retry summary", "Do not retry summary"]]
+  ];
+  for (const [label, fields] of requiredFields) {
+    const value = fields.map((field) => evidenceFieldValue(section, field)).find((candidate) => candidate && candidate.trim());
+    if (!value) {
+      errors.push(`${taskId} Current Operator Path must record ${label} in ${implementationDoc}`);
+    } else if (label !== "credential reference name" && isPlaceholderEvidence(value)) {
+      errors.push(`${taskId} Current Operator Path ${label} must be concrete in ${implementationDoc}`);
+    }
+  }
+  const runbookValue = evidenceFieldValue(section, "Operator runbook") ?? evidenceFieldValue(section, "Runbook") ?? section;
+  if (!runbookValue.includes(RUNBOOK_DOC_PREFIX)) {
+    errors.push(`${taskId} Current Operator Path must link a runbook/evidence document under ${RUNBOOK_DOC_PREFIX} in ${implementationDoc}`);
+  }
+  return errors;
+}
+
+function validateGateBreakdown(fullText: string, taskId: string, implementationDoc: string): string[] {
+  const section = markdownSection(fullText, GATE_BREAKDOWN_TERMS);
+  if (!section) {
+    return [`${taskId} high-risk runtime task Development Self-Test Report must include Gate Breakdown in ${implementationDoc}`];
+  }
+  const errors: string[] = [];
+  const lowered = section.toLowerCase();
+  for (const [label, terms] of GATE_BREAKDOWN_LAYER_GROUPS) {
+    if (!containsAny(lowered, terms)) {
+      errors.push(`${taskId} Gate Breakdown must include ${label} status/evidence in ${implementationDoc}`);
+    }
+  }
+  const rows = markdownTableRows(section).filter((cells) => !cells.some((cell) => /gate layer|layer|层级/i.test(cell)));
+  const concreteRows = rows.filter((cells) => cells.some((cell) => !isPlaceholderSelfTestReportValue(cell)));
+  if (concreteRows.length < 2) {
+    errors.push(`${taskId} Gate Breakdown must split evidence into multiple concrete gate layers in ${implementationDoc}`);
+  }
+  if (concreteRows.length <= 1 && lowered.includes("validate-dev")) {
+    errors.push(`${taskId} Gate Breakdown cannot collapse high-risk runtime progress into only validate-dev in ${implementationDoc}`);
+  }
+  return errors;
+}
+
+type SelfTestScenarioStatus = "PASS" | "BLOCKED" | "IN_PROGRESS" | "STALE" | "AMBIGUOUS";
+
+function scenarioStatus(text: string, scenarioId: string): SelfTestScenarioStatus | undefined {
   const escaped = scenarioId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp("^.*" + escaped + ".*$", "gim");
+  const seen = new Set<SelfTestScenarioStatus>();
   for (const match of text.matchAll(pattern)) {
-    const line = match[0];
-    const hasPass = /\bPASS\b/i.test(line);
-    const hasBlocked = /\bBLOCKED\b/i.test(line);
-    if (hasPass && hasBlocked) return "AMBIGUOUS";
-    if (hasPass) return "PASS";
-    if (hasBlocked) return "BLOCKED";
+    const status = selfTestLineStatus(match[0]);
+    if (status === "AMBIGUOUS") return status;
+    if (status) seen.add(status);
   }
-  return undefined;
+  if (seen.size > 1) return "AMBIGUOUS";
+  return [...seen][0];
+}
+
+function selfTestLineStatus(line: string): SelfTestScenarioStatus | undefined {
+  const normalized = line.toUpperCase().replace(/\bIN[\s-]+PROGRESS\b/g, "IN_PROGRESS");
+  const matches: SelfTestScenarioStatus[] = [];
+  if (hasStatusToken(normalized, "PASS")) matches.push("PASS");
+  if (hasStatusToken(normalized, "BLOCKED")) matches.push("BLOCKED");
+  if (hasStatusToken(normalized, "IN_PROGRESS")) matches.push("IN_PROGRESS");
+  if (hasStatusToken(normalized, "STALE")) matches.push("STALE");
+  if (matches.length > 1) return "AMBIGUOUS";
+  return matches[0];
+}
+
+function hasStatusToken(line: string, status: string): boolean {
+  const escaped = status.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^A-Z0-9_])${escaped}([^A-Z0-9_]|$)`).test(line);
 }
 
 function validateScenarioTableEvidence(report: string, scenarioId: string, taskId: string, implementationDoc: string): string[] {
@@ -1467,8 +1699,11 @@ function validateScenarioTableEvidence(report: string, scenarioId: string, taskI
         errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} table ${label} must contain concrete evidence in ${implementationDoc}`);
       }
     }
-    if (result && scenarioStatus(`| ${cells.join(" | ")} |`, scenarioId) === "AMBIGUOUS") {
-      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} table Result must choose exactly one of PASS or BLOCKED in ${implementationDoc}`);
+    const tableStatus = result ? scenarioStatus(`| ${cells.join(" | ")} |`, scenarioId) : undefined;
+    if (tableStatus === "AMBIGUOUS") {
+      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} table Result must choose exactly one status in ${implementationDoc}`);
+    } else if (tableStatus && tableStatus !== "PASS") {
+      errors.push(`${taskId} Development Self-Test Report scenario ${scenarioId} table Result is ${tableStatus}; validate-dev cannot handoff until every scenario is PASS`);
     }
   }
   return errors;

@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: 02d9321e21e5b457 -->
+<!-- source-hash: d26013df3fc86b3d -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `02d9321e21e5b457`
+Source hash: `d26013df3fc86b3d`
 
 ## Source Slices
 
@@ -100,7 +100,7 @@ Existing project runs sdlc-harness upgrade
 - `migrateConfig` rewrites `core.package`, deletes legacy `core.version`, and preserves `core.schema_version`. Package version is intentionally not persisted in project config because the installed package manifest is the source of truth.
 - Plan migrations remove stale `current_phase` from active and draft plans, remove draft `current_task_id`, and strip duplicate `phase` / `linked_task_id` from `parallel_execution`.
 - Validation commands mirror the Python Harness gates closely enough for package consumers to run health checks without depending on this authoring workspace.
-- `validate-dev` checks `Development Self-Test Report` content against the current `self_test_contract`: it rejects template module-key-path text, ambiguous `PASS / BLOCKED` rows, missing scenario row evidence, missing required gates, and browser reports without page URL plus browser/Playwright/screenshot evidence. It remains a content consistency gate, not a command execution audit.
+- `validate-dev` checks `Development Self-Test Report` content against the current `self_test_contract`: it requires legal `Report Status`, only accepts completion when report status and every scenario are `PASS`, rejects template module-key-path text, ambiguous status rows, missing scenario row evidence, missing required gates, embedded debug/operator/runbook/exploration log sections, and browser reports without page URL plus browser/Playwright/screenshot evidence. It remains a content consistency gate, not a command execution audit.
 
 ## Runnable Entry/Exit
 
@@ -136,8 +136,9 @@ Existing project runs sdlc-harness upgrade
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | generated config omits `core.version`; doctor reports installed package version from package metadata | PASS for `TASK-074` |
 | `tests/sdlc-harness/upgrade.test.mjs` | upgrade removes legacy `core.version` from existing config | PASS for `TASK-074` |
 | `npm test --workspace agent-project-sdlc` | TypeScript build and package regression, including stricter `validate-dev` self-test report fixtures | PASS on 2026-05-30 |
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | package assets reflect template and README source changes | PASS on 2026-05-30; changed 45 assets |
+| `node packages/sdlc-harness/dist/cli.js package sync-source` | package assets reflect template and README source changes | PASS on 2026-05-30; changed 48 assets |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets match source after self-test report validation changes | PASS on 2026-05-30 |
+| `make docs-overview && make validate-harness && make validate-plan` | source docs, generated overviews, scaffold and active plan after self-test report boundary hardening | PASS on 2026-05-30 |
 
 ## 8. 变更记录（Change Log）
 
@@ -152,12 +153,13 @@ Existing project runs sdlc-harness upgrade
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from generated and migrated plan files. |
 | 2026-05-29 | `TASK-074` | Working tree | Removed redundant persisted `core.version`; doctor now derives package version from installed package metadata. |
 | 2026-05-30 | Direct maintenance | Working tree | Strengthened `validate-dev` Development Self-Test Report content checks and documented that it is not execution-proof auditing. |
+| 2026-05-30 | Self-test report boundary hardening | Working tree | Added Report Status, Current Operator Path, disallowed log-section and working_notes validator coverage. |
 
 ## 9. 后续维护注意事项
 
 - Future package lifecycle changes should update this document instead of creating task-grain `dev_*.md` implementation docs.
 - When CLI behavior changes, keep README user guidance, PRD acceptance criteria and package tests in sync.
-- `tools/consumer_lab_full_test.mjs` did not need an update for the 2026-05-30 self-test report change because no CLI command, workflow route, or consumer-lab scenario changed; regression coverage lives in `tests/sdlc-harness/validators.test.mjs`.
+- `tools/consumer_lab_full_test.mjs` keeps its fixture implementation doc aligned with the current `Development Self-Test Report` contract, including `Report Status`, while focused validator regressions live in `tests/sdlc-harness/validators.test.mjs`.
 
 ---
 
@@ -900,6 +902,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - `validate-design` and `validate-dev` now enforce `self_test_contract`: design binds runnable-boundary tasks to a tech plan `Development Self-Test Contract`, and development requires a completed implementation doc `Development Self-Test Report` before handoff.
 - Development Self-Test Contract / Report now require `module_key_test_path` / `Module Key Test Path`, recording the module key test path from local start or invocation to all self-test scenarios completion. The path is scoped to the current task/module and covers promised runnable entries, internal key paths, boundaries, checkpoints and observable completion evidence for later debug reuse.
 - Dev and Implementation Doc prompts now treat `Development Self-Test Report` as a development deliverable, separate from code/config/test implementation artifacts. When `self_test_contract.status: "required"`, agents must execute the current scenarios and required gates before writing the report; historical reports, template fields, code reading or unrelated green gates cannot stand in for current-run evidence.
+- Development Self-Test Report now has an explicit boundary: it must include `Report Status: PASS | BLOCKED | IN_PROGRESS | STALE`, prove only module entry/core path/exit/minimal evidence, and must not become a debug log, operator log, runbook or exploration history.
 - The authoring-only Harness design prompt now states the lightweight-constraint principle: workflow changes should first align Agent attention with the `PROJECT_SPEC.md` purpose, and heavier validation or execution mechanisms are reserved for heavy logic when issues repeat, risk is high, or machine proof is required.
 - `validate-rfc` now requires `Development Self-Test Impact` for new RFCs that change entry/exit, runtime, gates, handoff or blocker semantics.
 - `validate-review` now requires explicit PASS/BLOCKED readiness fields for `Runnable Entry`, `Observable Exit`, `Initialization`, `Config Contract` and `Testing Handoff Readiness`; any `BLOCKED` field blocks TESTING handoff.
@@ -1018,8 +1021,11 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 - `validate-dev` checks implementation docs for runnable entry/exit facts, accepting explicit `Not applicable` only when the module truly has no product runtime boundary.
 - `validate-dev` checks the current open SPRINTING task implementation doc for a `Development Evidence` section with concrete `Runnable Entry`, `Observable Exit`, `Client / Server Initialization`, `Config Contract` and `Basic Self-test Evidence`, or a justified `Not applicable`.
 - `validate-design` checks runnable-boundary draft tasks for `self_test_contract` and verifies the referenced tech plan slice contains a `Development Self-Test Contract`.
-- `validate-dev` checks `self_test_contract.required_gates` against task `required_gates`, requires every contract scenario to have a `PASS` result in `Development Self-Test Report`, and rejects `BLOCKED` self-test scenarios as unfinished development.
+- `validate-dev` checks `self_test_contract.required_gates` against task `required_gates`, requires `Report Status: PASS` and every contract scenario to have a `PASS` result in `Development Self-Test Report`, and rejects `BLOCKED`, `IN_PROGRESS` or `STALE` reports as unfinished development handoff.
 - `validate-design` and `validate-dev` require `module_key_test_path` / `Module Key Test Path` so the implementation doc records the local-start-to-self-test-completion module key test path, including current task/module runnable entries, internal key paths, boundaries, checkpoints and completion evidence for future debug.
+- High-risk runtime/live/remote-operator tasks now use resume-first recovery: Architect reserves `.docs/09_runbooks/**`, Dev maintains `plan.yaml#resume_capsule`, Implementation Doc keeps operation logs out of the main implementation facts, and Review/Testing consume the capsule/runbook before reading exploration appendices.
+- `validate-dev` requires high-risk current SPRINTING tasks to have concrete `resume_capsule` fields, current implementation doc recovery ref, `.docs/09_runbooks/**` recovery ref, a short `Current Operator Path` and a `Gate Breakdown` in `Development Self-Test Report`.
+- Open task `working_notes` now stays resume-first with a validator limit of 8 entries.
 - `pjsdlc_dev_sprint` explicitly frames SPRINTING outputs as implementation artifacts plus development self-test artifacts. It requires scenario/gate execution before report writing, and blocks task completion when current-run runnable entry, internal key path and observable exit/evidence cannot be named.
 - `pjsdlc_implementation_doc` records the same evidence provenance rule for module docs: `Development Self-Test Report` facts must come from the current task run, not from historical PASS text, template placeholders, code inspection or unrelated generic gates.
 - `harness_package_design` distinguishes Agent execution violations from Harness contract gaps and prefers lightweight prompt/checklist/template/content constraints before adding heavier validators, scripts or executors.
@@ -1114,12 +1120,17 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect clarified Module Key Test Path wording | PASS for TASK-080 |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match source after clarified Module Key Test Path wording | PASS for TASK-080 |
 | `make validate-harness` | Prompt language and generated overview consistency after clarified Module Key Test Path wording | PASS for TASK-080 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for resume capsule, runbook refs and Gate Breakdown | PASS in current working tree; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets reflect resume-first Skill/template/validator changes | PASS in current working tree; sync changed=48 |
 | `make validate-rfc` | RFC format, Development Self-Test Impact and no-open-task phase gate | PASS for TASK-080 |
 | `node packages/sdlc-harness/dist/cli.js package sync-source` | Package assets reflect self-test report redline prompt changes while excluding authoring-only Skill | PASS on 2026-05-30; changed 44 assets |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | Package assets match source after prompt redline changes | PASS on 2026-05-30 |
 | `npm test --workspace agent-project-sdlc` | Package regression after prompt-only workflow changes | PASS on 2026-05-30; 10 tests passed |
 | `make docs-overview` | Generated overview refresh after prompt redline implementation doc update | PASS on 2026-05-30 |
 | `make validate-harness` | Prompt language and generated overview consistency after prompt redline changes | PASS on 2026-05-30 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for Report Status, Current Operator Path, disallowed self-test log sections and working_notes limit | PASS on 2026-05-30; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets reflect self-test report boundary Skill/template/README changes | PASS on 2026-05-30; sync changed=48 |
+| `make docs-overview && make validate-harness && make validate-plan` | Generated overview, prompt language and active plan consistency after self-test boundary changes | PASS on 2026-05-30 |
 
 ## 8. 变更记录（Change Log）
 
@@ -1154,6 +1165,8 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-30 | Direct maintenance | Working tree | Added development self-test report redline prompts and authoring lightweight-constraint guidance. |
 | 2026-05-29 | `TASK-079` | Working tree | Added Module Key Test Path requirements to Development Self-Test Contract / Report and validator checks. |
 | 2026-05-29 | `TASK-080` | Working tree | Clarified Module Key Test Path wording to cover current task/module promised entries and internal key paths without implying whole-system coverage. |
+| 2026-05-30 | Resume-first runtime task protocol | Working tree | Added resume-first prompt rules for high-risk runtime/live tasks and separated runbook/evidence/exploration responsibilities. |
+| 2026-05-30 | Self-test report boundary hardening | Working tree | Added Report Status semantics, Current Operator Path prompt rules, log-section boundary and working_notes limit guidance. |
 
 ## 9. 后续维护注意事项
 
@@ -1197,7 +1210,12 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 - Release history is also cold archive. `.docs/08_release/CURRENT_RELEASE.md` stores only the current release status; older release evidence is reconstructed from git tags, registry metadata, CI, release commits or external release systems.
 - `parallel_execution` is an on-demand top-level plan contract. Each stage task defaults to a parallel eligibility check; when omitted for a task, that task remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
+- `resume_capsule` is an optional top-level plan recovery card that becomes required for high-risk runtime/live SPRINTING tasks (`external_provider_live`, `deployed_runtime`, `business_handoff_ready`, or target runtime `cloud_vm`, `managed_service`, `browser`, `worker`). It stores only current state, canonical path, next step, blocker, last passed gate, do-not-retry entries and recovery refs.
+- `.docs/09_runbooks/**` stores runtime/live/remote-operator runbooks, evidence indexes and exploration appendices. `resume_capsule.recovery_refs` must include the current implementation doc and at least one runbook/evidence document.
+- Open task `working_notes` remains a short recovery surface: target 5-8 notes, validator hard limit 8 notes.
 - Direct `validate-dev` is the SPRINTING in-development gate. It allows a valid current open `phase: "SPRINTING"` task, checks scoped dirty files and draft consumption, and rejects missing current-task contracts.
+- `Development Self-Test Report` now requires `Report Status: PASS | BLOCKED | IN_PROGRESS | STALE`; direct `validate-dev` only passes completion-oriented evidence when `Report Status: PASS` and every scenario is `PASS`.
+- High-risk runtime/live implementation docs use a short `Current Operator Path` for canonical operator path, runbook link, credential reference name, command/UI channel and do-not-retry summary. Debug logs, operator logs, runbook bodies, exploration history and diagnostic attempts stay out of the self-test report.
 - `validate-current` and `tools/run_current_gate.py` keep phase-exit safety: after the phase gate runs, `plan.yaml` must have no open tasks before lifecycle advancement.
 
 ## Runnable Entry/Exit
@@ -1221,6 +1239,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 
 ## Development Self-Test Report
 
+- Report Status: PASS
 - Contract Source: .docs/rfc/RFC_026_default_native_subagent_parallel_execution.md#8-development-self-test-impact
 - Scenario Results: parallel-contract-schema PASS; sprinting-path-lock PASS; source-sync-assets PASS.
 - Executed Gates: `npm test --workspace agent-project-sdlc`; `node packages/sdlc-harness/dist/cli.js package sync-source`; `node packages/sdlc-harness/dist/cli.js package check-source`; `make docs-overview`; `make validate-harness`; `make validate-rfc`; `make validate-dev`.
@@ -1246,6 +1265,9 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `.codex/state/memory.md` | Cross-stage reminder and navigation surface | short stable summaries plus links to formal fact sources |
 | `.codex/pjsdlc_managed/templates/ADR_TEMPLATE.md` | ADR authoring template | `Options`, `Rationale`, `Supersedes / Superseded by`, related links |
 | `.codex/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml` | New-task template | open task fields, `result_docs` and `implementation_doc` examples |
+| `.codex/pjsdlc_managed/templates/RUNBOOK_TEMPLATE.md` | Runtime/operator runbook template | canonical path, command channel, credential reference and do-not-retry fields |
+| `.codex/pjsdlc_managed/templates/EVIDENCE_INDEX_TEMPLATE.md` | Runtime evidence index template | scenario, status, evidence pointer and gap table |
+| `.codex/pjsdlc_managed/templates/EXPLORATION_APPENDIX_TEMPLATE.md` | Failed exploration appendix template | failed attempt isolation and promoted decisions |
 | `.codex/pjsdlc_managed/policies/phase_contracts.yaml` | Phase routing contract | `next` forward target and optional `returns` rollback targets |
 | `.codex/skills/pjsdlc_pm_prd/SKILL.md` | Product task prompt | `TASK-*` document-production task protocol with `phase: "REQUIREMENT_GATHERING"` |
 | `.codex/skills/pjsdlc_architect_design/SKILL.md` | Design task prompt | `TASK-*` document-production task protocol with `phase: "ARCHITECTING"`, ADR decision boundary guidance |
@@ -1263,8 +1285,8 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 | `tools/run_current_gate.py` | Phase gate runner | phase-to-gate dispatch plus no-open phase-exit check |
 | `tools/status.py` | Human status report | lifecycle and task summary |
 | `tools/transition.py` | Phase transition helper | lifecycle state mutation without history append |
-| `packages/sdlc-harness/src/lib/init.ts` | Package init state seed | memory seed describing summary/link-only scope |
-| `packages/sdlc-harness/src/lib/validators.ts` | Package-side state validators | direct dev gate, SPRINTING phase-exit gate, plan/lifecycle compatibility and package CLI validators |
+| `packages/sdlc-harness/src/lib/init.ts` | Package init state seed | memory seed and `.docs/09_runbooks` directory creation |
+| `packages/sdlc-harness/src/lib/validators.ts` | Package-side state validators | direct dev gate, resume capsule validation, working_notes limit, Report Status, Current Operator Path, Gate Breakdown checks, SPRINTING phase-exit gate and package CLI validators |
 | `packages/sdlc-harness/src/lib/migrations.ts` | State migrations | remove checkpoints, history and gate logs; create missing memory with summary/link-only scope |
 
 ## 4. 核心数据流
@@ -1301,6 +1323,7 @@ Later-stage review/test/release discovers requirement or development self-test d
 SPRINTING task starts
 -> if no open task exists, agent may promote one plan.draft.yaml task into a formal TASK-* and delete the source draft
 -> plan.yaml contains full open task contract
+-> high-risk runtime/live tasks maintain resume_capsule and .docs/09_runbooks recovery refs
 -> agent edits only allowed_paths
 -> direct validate-dev may run while the current task remains open
 -> required_gates pass
@@ -1334,13 +1357,16 @@ Stage task starts
 - Draft queues are not active execution state and must not retain adopted or completed drafts. The current built-in draft queue is `plan.draft.yaml`; it must not contain `current_task_id`.
 - direct `validate-dev` rejects any remaining `plan.draft.yaml.tasks[]`; agents must either continue promoting real unadopted drafts or remove already-consumed stale drafts before development completion.
 - direct `validate-dev` requires lifecycle `current_phase: "SPRINTING"` and allows either an empty development queue or one valid current open `phase: "SPRINTING"` task with `current_task_id`, `docs`, `allowed_paths`, `required_gates`, `acceptance_criteria` and `implementation_doc`.
+- direct `validate-dev` requires `resume_capsule` for high-risk current SPRINTING tasks, validates its task id, concrete recovery fields, do-not-retry list, current implementation doc ref and `.docs/09_runbooks/**` ref.
+- direct `validate-dev` requires legal `Development Self-Test Report` status. `BLOCKED`, `IN_PROGRESS` and `STALE` reports are recoverable facts but cannot close a development task; `PASS` with any non-PASS scenario also fails.
+- direct `validate-dev` rejects self-test report headings that turn the report into a debug/operator/runbook/exploration log. High-risk tasks must link operator facts through `Current Operator Path` and `.docs/09_runbooks/**`.
 - `validate-dev` enforces dirty-file scoping when a current open task exists; changes outside the current task `allowed_paths` fail the direct dev gate.
 - ADRs solve the long-term "why this option, not another" problem. Architecture and tech plan slices may keep local rationale, but decisions with alternatives, cross-module or cross-stage impact, high reversal cost or future supersede semantics belong in `.docs/05_decisions/`.
 - `memory.md` must not become a decision ledger. It may point to ADRs, PRDs, tech plans or implementation docs, but detailed context, alternatives, tradeoffs and consequences remain in those formal fact sources.
 - Field audit: `active_role`, `active_skill`, `current_milestone`, `blocked_reason`, `suspended_phase` and `allowed_next_phases` are lifecycle-only; `current_task_id` and `next_task_sequence` are plan-only; `tasks[].phase` is semantic task classification rather than current lifecycle state and remains on each task.
 - Every phase task is task-controlled: one `TASK-*` task should produce one bounded document slice, review batch, test evidence set, release artifact set, RFC impact slice or development change.
 - `validate-plan` permits open tasks and checks their shape; phase exit gates reject remaining open tasks. In `SPRINTING`, this no-open rule lives in `validate-current` and `tools/run_current_gate.py`, not in direct `validate-dev`.
-- `allowed_paths`, `required_gates` and `working_notes` are execution-time constraints, not a long-term query API.
+- `allowed_paths`, `required_gates` and `working_notes` are execution-time constraints, not a long-term query API; open task `working_notes` must stay within the 8 item recovery-note limit.
 - Gate evidence belongs in the current task while executing, and in implementation docs, CI logs, current release status or external release systems after completion.
 - `lifecycle.yaml` does not store phase history. Phase history is reconstructed from git, PRs, CI, registry metadata, tags or external release evidence only when explicitly needed.
 - `/dev` runs one task and stops. `/devloop` repeats `/dev` until neither `plan.yaml.tasks[]` nor `plan.draft.yaml.tasks[]` contains a clear next task, or a blocker appears.
@@ -1373,7 +1399,11 @@ Stage task starts
 | `make validate-harness` | Prompt language and generated overview consistency after dev gate wiring changes | PASS for TASK-071 |
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | Package init memory seed and managed asset sync behavior | PASS for TASK-065 |
 | `tests/sdlc-harness/upgrade.test.mjs` | Migration-created memory seed and legacy state migration | PASS for TASK-065 |
-| `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption, default/native parallel contract and path-lock acceptance/failure cases | PASS for TASK-084 |
+| `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption, resume capsule, Gate Breakdown, default/native parallel contract and path-lock acceptance/failure cases | PASS in current working tree |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Managed package assets include resume-first templates, Skills, tools and README updates | PASS in current working tree; sync changed=48 |
+| `npm test --workspace agent-project-sdlc` | Package validator regression for Report Status, Current Operator Path, disallowed self-test log sections and working_notes limit | PASS on 2026-05-30; 10 tests passed |
+| `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Managed package assets include self-test boundary templates, Skills, tools and README updates | PASS on 2026-05-30; sync changed=48 |
+| `make docs-overview && make validate-harness && make validate-plan` | Generated overview, Harness scaffold and active plan contract after self-test boundary hardening | PASS on 2026-05-30 |
 | `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
 | `tests/sdlc-harness/transition.test.mjs` | Controlled `RFC_RECALIBRATION` interrupt from SPRINTING/REVIEWING/TESTING/RELEASING, illegal pre-development RFC entry, RFC return cleanup and unchanged REVIEWING -> TESTING | PASS for TASK-082 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
@@ -1390,6 +1420,8 @@ Stage task starts
 | 2026-05-25 | `DEV-010`, `DEV-011` | Historical implementation commits | Replaced checkpoint/task archive model with `plan.yaml`. |
 | 2026-05-25 | `DEV-018`, `DEV-019` | Historical implementation commits | Added two-commit task completion and pre-compression implementation commit rule. |
 | 2026-05-25 | `DEV-024` - `DEV-028` | Historical implementation commits | Shortened plan/gate/lifecycle state and strengthened RFC impact handling. |
+| 2026-05-30 | Resume-first runtime task protocol | Working tree | Added high-risk runtime `resume_capsule`, `.docs/09_runbooks` recovery docs and Gate Breakdown validation. |
+| 2026-05-30 | Self-test report boundary hardening | Working tree | Added Report Status, Current Operator Path, disallowed log-section checks and working_notes limit validation. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated legacy state/task implementation docs into module facts. |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in `parallel_execution` contract for multi-agent/worktree coordination. |
 | 2026-05-30 | `TASK-084` | TASK-084 implementation commit | Added default Codex native subagent scheduling semantics and SPRINTING path-lock validation. |

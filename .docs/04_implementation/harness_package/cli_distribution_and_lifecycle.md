@@ -73,7 +73,7 @@ Existing project runs sdlc-harness upgrade
 - `migrateConfig` rewrites `core.package`, deletes legacy `core.version`, and preserves `core.schema_version`. Package version is intentionally not persisted in project config because the installed package manifest is the source of truth.
 - Plan migrations remove stale `current_phase` from active and draft plans, remove draft `current_task_id`, and strip duplicate `phase` / `linked_task_id` from `parallel_execution`.
 - Validation commands mirror the Python Harness gates closely enough for package consumers to run health checks without depending on this authoring workspace.
-- `validate-dev` checks `Development Self-Test Report` content against the current `self_test_contract`: it rejects template module-key-path text, ambiguous `PASS / BLOCKED` rows, missing scenario row evidence, missing required gates, and browser reports without page URL plus browser/Playwright/screenshot evidence. It remains a content consistency gate, not a command execution audit.
+- `validate-dev` checks `Development Self-Test Report` content against the current `self_test_contract`: it requires legal `Report Status`, only accepts completion when report status and every scenario are `PASS`, rejects template module-key-path text, ambiguous status rows, missing scenario row evidence, missing required gates, embedded debug/operator/runbook/exploration log sections, and browser reports without page URL plus browser/Playwright/screenshot evidence. It remains a content consistency gate, not a command execution audit.
 
 ## Runnable Entry/Exit
 
@@ -109,8 +109,9 @@ Existing project runs sdlc-harness upgrade
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | generated config omits `core.version`; doctor reports installed package version from package metadata | PASS for `TASK-074` |
 | `tests/sdlc-harness/upgrade.test.mjs` | upgrade removes legacy `core.version` from existing config | PASS for `TASK-074` |
 | `npm test --workspace agent-project-sdlc` | TypeScript build and package regression, including stricter `validate-dev` self-test report fixtures | PASS on 2026-05-30 |
-| `node packages/sdlc-harness/dist/cli.js package sync-source` | package assets reflect template and README source changes | PASS on 2026-05-30; changed 45 assets |
+| `node packages/sdlc-harness/dist/cli.js package sync-source` | package assets reflect template and README source changes | PASS on 2026-05-30; changed 48 assets |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | package canonical assets match source after self-test report validation changes | PASS on 2026-05-30 |
+| `make docs-overview && make validate-harness && make validate-plan` | source docs, generated overviews, scaffold and active plan after self-test report boundary hardening | PASS on 2026-05-30 |
 
 ## 8. 变更记录（Change Log）
 
@@ -125,9 +126,10 @@ Existing project runs sdlc-harness upgrade
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from generated and migrated plan files. |
 | 2026-05-29 | `TASK-074` | Working tree | Removed redundant persisted `core.version`; doctor now derives package version from installed package metadata. |
 | 2026-05-30 | Direct maintenance | Working tree | Strengthened `validate-dev` Development Self-Test Report content checks and documented that it is not execution-proof auditing. |
+| 2026-05-30 | Self-test report boundary hardening | Working tree | Added Report Status, Current Operator Path, disallowed log-section and working_notes validator coverage. |
 
 ## 9. 后续维护注意事项
 
 - Future package lifecycle changes should update this document instead of creating task-grain `dev_*.md` implementation docs.
 - When CLI behavior changes, keep README user guidance, PRD acceptance criteria and package tests in sync.
-- `tools/consumer_lab_full_test.mjs` did not need an update for the 2026-05-30 self-test report change because no CLI command, workflow route, or consumer-lab scenario changed; regression coverage lives in `tests/sdlc-harness/validators.test.mjs`.
+- `tools/consumer_lab_full_test.mjs` keeps its fixture implementation doc aligned with the current `Development Self-Test Report` contract, including `Report Status`, while focused validator regressions live in `tests/sdlc-harness/validators.test.mjs`.

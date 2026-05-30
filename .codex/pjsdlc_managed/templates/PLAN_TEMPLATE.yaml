@@ -1,5 +1,21 @@
 current_task_id: "TASK-001"
 next_task_sequence: 2
+# Required while the current SPRINTING task is high-risk runtime/live work
+# (`external_provider_live`, `deployed_runtime`, `business_handoff_ready`, or
+# target runtime `cloud_vm` / `managed_service` / `browser` / `worker`). Keep this
+# short: 5-8 recovery facts, not a full attempt log.
+# resume_capsule:
+#   task_id: "TASK-001"
+#   state: "in_progress | blocked | ready_for_gate"
+#   canonical_path: "operator/runtime path to continue from"
+#   next_step: "one concrete next action"
+#   blocker: "current blocker, or none with context"
+#   last_passed_gate: "last concrete PASS gate or checkpoint"
+#   do_not_retry:
+#     - "known failed path or repeated trap to avoid"
+#   recovery_refs:
+#     - ".docs/04_implementation/example.md"
+#     - ".docs/09_runbooks/example_live_smoke_runbook.md"
 # Optional top-level execution contract. Omit this block when the current task
 # stays serial after the default parallel eligibility check. Use
 # trigger: "workflow_default" when the workflow safely splits the task by
@@ -46,6 +62,7 @@ tasks:
       architecture: []
       tech_plan: []
       rfc: []
+      runbook: []
     allowed_paths:
       - ".docs/00_raw/**"
       - ".docs/01_product/**"
@@ -85,6 +102,6 @@ tasks:
           evidence: "command/browser/API/log/screenshot/etc"
       not_applicable_reason: ""
     working_notes:
-      - "执行现场备注只在 open task 保留。"
+      - "执行现场备注只保留恢复所需的短备注；目标 5-8 条，validator 上限 8 条；路径选择结论提升到 resume_capsule。"
     result_docs:
       - ".docs/01_product/example.md"

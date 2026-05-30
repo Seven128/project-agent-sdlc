@@ -17,7 +17,7 @@ description: Use during TESTING to produce a test matrix, run regression, and do
 
 执行回归时，优先选择能证明阶段出口的 gate。测试无法运行、环境缺失或数据不可得时，不要宣布通过；如果已经进入 TESTING，应在 `TEST_REPORT.md` 中记录 `BLOCKED`、已完成检查和恢复条件。
 
-TESTING 只能调用 SPRINTING/REVIEWING 已确认 `PASS` 的入口做输入/输出验证。可以补充测试、fixture、mock、assertion helper 和测试文档，但不能在 TESTING 中新增或长期维护 product runtime、server/API/CLI/adapter、direct poller、cloud bootstrap、systemd unit、真实 provider adapter、package runtime script 或部署脚本。如果发现真实入口/出口不存在、implementation doc 缺少 `Development Evidence` 或 `Development Self-Test Report`、自测报告缺少从本地启动或调用入口到完成全部自测用例的 `Module Key Test Path`、或该路径没有覆盖本 task / 本模块承诺的入口、内部关键路径、关键边界、观察点和完成证据，live 模式不可调用、配置契约缺失、Review readiness checklist 不是全 `PASS`，或 `Evidence Level` / `Target Runtime Environment` / `self_test_contract` 与 task 或技术方案承诺不一致，应记录 `BLOCKED`、生成 RFC 或后续 dev task 建议，并停止把测试阶段扩大成开发/集成搭建。开发尚未交付可测试 entry/exit、目标运行环境、Development Self-Test Report 或 Testing Handoff Contract 时，不要在 `.docs/07_test/**` 提前生成正式测试用例或正式报告；验收思路应留在 PRD acceptance criteria、tech plan verification strategy 或非 `.docs/07_test/**` 的草稿说明里。`TEST_REPORT.md` 不能在描述缺少 entry/exit、缺少 Development Evidence、缺少 Development Self-Test Report、证据等级不匹配或未交付应用入口时给出 `PASS`。
+TESTING 只能调用 SPRINTING/REVIEWING 已确认 `PASS` 的入口做输入/输出验证。可以补充测试、fixture、mock、assertion helper 和测试文档，但不能在 TESTING 中新增或长期维护 product runtime、server/API/CLI/adapter、direct poller、cloud bootstrap、systemd unit、真实 provider adapter、package runtime script 或部署脚本。如果发现真实入口/出口不存在、implementation doc 缺少 `Development Evidence` 或 `Development Self-Test Report`、自测报告缺少 `Report Status: PASS`、缺少从本地启动或调用入口到完成全部自测用例的 `Module Key Test Path`、或该路径没有覆盖本 task / 本模块承诺的入口、内部关键路径、关键边界、观察点和完成证据，live 模式不可调用、配置契约缺失、Review readiness checklist 不是全 `PASS`，或 `Evidence Level` / `Target Runtime Environment` / `self_test_contract` 与 task 或技术方案承诺不一致，应记录 `BLOCKED`、生成 RFC 或后续 dev task 建议，并停止把测试阶段扩大成开发/集成搭建。`Development Self-Test Report` 不是 debug log、operator log、runbook 或探索流水；测试只消费其模块入口、核心路径、出口和最小证据。high-risk runtime/live/remote-operator 验证要先读 `plan.yaml#resume_capsule`，再读 `.docs/09_runbooks/**` runbook 和 evidence index，最后才读 exploration appendix；测试只沿 canonical path 验证，不重新尝试 `do_not_retry` 中的失败路径。开发尚未交付可测试 entry/exit、目标运行环境、Development Self-Test Report 或 Testing Handoff Contract 时，不要在 `.docs/07_test/**` 提前生成正式测试用例或正式报告；验收思路应留在 PRD acceptance criteria、tech plan verification strategy 或非 `.docs/07_test/**` 的草稿说明里。`TEST_REPORT.md` 不能在描述缺少 entry/exit、缺少 Development Evidence、缺少 Development Self-Test Report、证据等级不匹配或未交付应用入口时给出 `PASS`。
 
 测试设计和回归证据产出本身也是 workflow task。开始测试前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "TESTING"`；当前轮只产出一个测试策略 slice、测试用例 slice、回归批次、风险验证片区或一组 scoped test changes。`plan.yaml` 仍是唯一执行计划事实源，`.docs/07_test/**` 只记录当前方案的 test strategy、test cases、executed regression evidence、coverage gaps 和 final decision，不表达“下一步如何开发”，也不保留已被 RFC supersede 的旧测试结果。
 
@@ -87,7 +87,8 @@ TESTING 只能调用 SPRINTING/REVIEWING 已确认 `PASS` 的入口做输入/输
 - [ ] Regression checklist 已完成。
 - [ ] 测试只调用既有 runnable entry/exit；未在 TESTING 中新增 product runtime、bootstrap、provider adapter、deploy 或 package runtime script。
 - [ ] 已核对 implementation doc 中的 Development Evidence、Evidence Level、Target Runtime Environment 和 Testing Handoff Contract，并只基于已交付入口设计测试。
-- [ ] 已核对 Development Self-Test Report 中 scenario results、executed gates、Module Key Test Path 和 actual evidence。
+- [ ] 已核对 Development Self-Test Report 中 Report Status、scenario results、executed gates、Module Key Test Path 和 actual evidence。
+- [ ] high-risk runtime/live 验证已优先使用 `resume_capsule` 与 runbook/evidence index，未重复执行 exploration appendix 中的失败路径。
 - [ ] 已判断 test report / test matrix 的语义切片边界。
 - [ ] 未把测试计划、测试用例或待填内容写成 `TEST_REPORT.md`。
 - [ ] 已确认 `.docs/07_test/**` 只包含当前方案仍有效的测试事实。

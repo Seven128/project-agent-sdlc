@@ -17,9 +17,11 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 
 开发阶段的 Definition of Done 包含可运行的系统入口/出口。凡技术方案或 task 承诺 API、CLI、server route、service、agent、runtime、adapter、worker、provider、外部发送/写入执行器、配置契约或 live/fixture 双模式边界，当前实现必须提供对应入口、调用方式、初始化方式、输出/副作用边界和验证方式；如果真实入口/出口尚不可运行，不能把 task 当作完成，也不能把缺口留给 TESTING 补 runtime。runtime/app/provider/live 类 task 必须在 `plan.yaml` 声明 `evidence_level.required`、`target_runtime_environment` 和 `self_test_contract`，并按合同交付：`deployed_runtime` 不能用 `unit`、`local_runtime`、`external_provider_live`、provider smoke、fake adapter 或 localhost smoke 单独关闭；`business_handoff_ready` 必须提供 Testing Handoff Contract。Implementation doc 必须写明 `Runnable Entry/Exit`，并在 `Development Evidence` 中记录 `Evidence Level`、`Target Runtime Environment`、`Runnable Entry`、`Observable Exit`、`Client / Server Initialization`、`Config Contract`、`Testing Handoff Readiness`、`Known Missing Runtime Boundaries` 和 `Basic Self-test Evidence`；其中 `Basic Self-test Evidence` 应指向已执行的 `Development Self-Test Report`。确实不适用时也要显式写 `Not applicable` 和具体原因。provider smoke、fixture smoke、fake adapter 或 one-shot smoke 只能证明局部链路，不能单独证明 `Application readiness`。此时应保留或创建 `BLOCKED`/后续 dev task，或通过 RFC/ARCHITECTING 处理边界变更。
 
-`self_test_contract` 是开发阶段自测合同，由 ARCHITECTING 或 RFC_RECALIBRATION 先定义，SPRINTING 负责执行并在 implementation doc 填写 `Development Self-Test Report`。开发者不得在开发结束后用现有实现反推自测合同；如果合同缺失、入口不匹配、required gates 未同步或场景无法执行，要先回到 ARCHITECTING/RFC 或把 task 保持为 `BLOCKED`。自测报告不是 TESTING 阶段产物，它只证明当前模块级可运行交付边界已经能被 Review/Testing 消费。报告还必须记录 `Module Key Test Path`：从本地启动或调用入口开始，执行并完成 `self_test_contract` 中全部自测用例的模块关键测试路径。该路径应覆盖本 task / 本模块承诺的所有可运行入口，以及自测用例实际经过的内部关键路径、关键边界、观察点和可观测完成证据，供后续 Agent 复用和 debug。
+`self_test_contract` 是开发阶段自测合同，由 ARCHITECTING 或 RFC_RECALIBRATION 先定义，SPRINTING 负责执行并在 implementation doc 填写 `Development Self-Test Report`。开发者不得在开发结束后用现有实现反推自测合同；如果合同缺失、入口不匹配、required gates 未同步或场景无法执行，要先回到 ARCHITECTING/RFC 或把 task 保持为 `BLOCKED`。自测报告不是 TESTING 阶段产物，也不是 debug log、operator log、runbook 或历史流水；它只证明当前模块级可运行交付边界已经能被 Review/Testing 消费。报告必须写 `Report Status: PASS | BLOCKED | IN_PROGRESS | STALE`，只有 `PASS` 且所有 scenario 都是 `PASS` 才能关闭当前 development task；`BLOCKED`、`IN_PROGRESS`、`STALE` 可以作为恢复事实存在，但不能作为交接通过。报告还必须记录 `Module Key Test Path`：从本地启动或调用入口开始，执行并完成 `self_test_contract` 中全部自测用例的模块关键测试路径。该路径应覆盖本 task / 本模块承诺的所有可运行入口，以及自测用例实际经过的内部关键路径、关键边界、观察点和可观测完成证据，供后续 Agent 复用和 debug。
 
-开发阶段交付包含两类产物：实现产物（代码、配置、脚本、测试等）和开发自测产物。`Development Self-Test Report` 是开发阶段产物，不是计划、模板或历史记录。若当前 task 或关联技术方案声明 `self_test_contract.status: "required"`，必须先逐条执行 `self_test_contract.scenarios[]` 和 `self_test_contract.required_gates`，再填写或更新 `Development Self-Test Report`。没有本轮执行过的 runnable entry、内部关键路径、observable exit / artifact / screenshot / response / log 等证据时，不得写 `PASS`，不得完成 task。
+开发阶段交付包含两类产物：实现产物（代码、配置、脚本、测试等）和开发自测产物。`Development Self-Test Report` 是开发阶段产物，不是计划、模板或历史记录。若当前 task 或关联技术方案声明 `self_test_contract.status: "required"`，必须先逐条执行 `self_test_contract.scenarios[]` 和 `self_test_contract.required_gates`，再填写或更新 `Development Self-Test Report`。没有本轮执行过的 runnable entry、内部关键路径、observable exit / artifact / screenshot / response / log 等证据时，不得写 `PASS`，不得完成 task。fallback / diagnostic 在主报告最多一句总结，详细命令、截图过程、UI 操作细节和失败路径进入 `.docs/09_runbooks/**` exploration appendix 或 git history。
+
+高风险 runtime/live/remote-operator task 必须维护恢复优先级。若 `evidence_level.required` 是 `external_provider_live`、`deployed_runtime`、`business_handoff_ready`，或 `target_runtime_environment.kind` 是 `cloud_vm`、`managed_service`、`browser`、`worker`，`plan.yaml` 顶层必须有 `resume_capsule`，并在路径选择结论变化时立即更新：`state`、`canonical_path`、`next_step`、`blocker`、`last_passed_gate`、`do_not_retry` 和 `recovery_refs`。`working_notes` 只保留短恢复备注，目标 5-8 条且不得超过 8 条；canonical operator path 写入 `.docs/09_runbooks/**` runbook，并在 implementation doc 写一个短的 `Current Operator Path` 链接 runbook、credential reference name、command/UI channel 和 do-not-retry summary。证据正文只在 evidence 文件或外部系统，失败探索写入 exploration appendix。不要把 A/B/C 路径探索流水混进 implementation doc 主线或 scenario evidence。
 
 页面类任务在开发阶段必须启动 dev server 或等价预览入口，并用浏览器、Playwright、截图或等价方式验证页面可加载、主入口可访问、核心按钮/表单/跳转可用、没有明显报错或空白页。API/CLI/worker/RPA/service/agent/runtime 类任务必须记录实际启动或调用命令、endpoint、worker command、dry-run/live preflight、health/status 或 server action，以及可观察的 response、队列 item、审计日志、文件产物、发送结果、错误码或 PASS/BLOCKED 结果。
 
@@ -43,6 +45,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 - 当前 task `allowed_paths` 范围内的测试改动
 - `.docs/04_implementation/` 下相关模块、子系统或核心数据流的 implementation doc
 - 当前 task `working_notes` 或 implementation doc `Verification` 中的 gate evidence
+- high-risk runtime/live task 的 `plan.yaml#resume_capsule` 和 `.docs/09_runbooks/**` runbook / evidence index / exploration appendix
 - implementation doc 中的 runnable entry/exit、observable exit、Development Self-Test Report、Module Key Test Path、配置契约和 fixture/live 边界事实
 - 更新后的 `<harnessRoot>/state/plan.yaml`
 - 如果本轮 promote draft，更新后的 `<harnessRoot>/state/plan.draft.yaml`
@@ -74,7 +77,7 @@ description: Use during SPRINTING to execute one task from plan.yaml, respecting
 1. `current_task_id` 指向正在执行的 open task。
 2. open task 直接声明 `phase: "SPRINTING"`、`docs`、`allowed_paths`、`required_gates`、`acceptance_criteria` 和 `implementation_doc`；runtime/app/provider/live 类 task 还必须声明 `evidence_level`、`target_runtime_environment` 和 `self_test_contract`。`self_test_contract.required_gates` 必须同步出现在 task `required_gates`，`self_test_contract.module_key_test_path` 必须描述从本地启动或调用入口开始，到完成所有自测 scenario 的模块关键测试路径，并覆盖本 task / 本模块承诺的所有可运行入口和内部关键路径。
 3. 如果 open task 是由 `plan.draft.yaml.tasks[]` promote 而来，创建正式 `TASK-*` 和删除源 draft 必须发生在同一次状态更新中；正式 task 的恢复现场只保存在 `plan.yaml`。
-4. 任务执行中只保留恢复所需的简短 `working_notes`。
+4. 任务执行中只保留恢复所需的简短 `working_notes`，目标 5-8 条且不得超过 8 条；high-risk runtime/live task 用 `resume_capsule` 保存恢复卡片，并链接 runbook / evidence index / exploration appendix。
 5. gate、implementation doc、`.docs/INDEX.md` 和 `overview.md` 完成后，在当前 task 仍位于 `plan.yaml` 时创建 task implementation commit。
 6. implementation commit 完成后，再把该 task 从 `plan.yaml` 的 `tasks` 列表移除，并保留/递增 `next_task_sequence`。
 7. 将移除当前 task 后的 `plan.yaml` 提交为 task completion ledger commit，并 `git push` 两个 commit 到当前 upstream branch。
@@ -110,7 +113,8 @@ done task 的执行流水不在当前 `plan.yaml` 长期保留，也不是默认
 - [ ] 当前任务仍然是单一清晰的执行单元。
 - [ ] 技术方案或 task 承诺的 API/CLI/adapter/worker/provider、配置契约、输出/副作用和 fixture/live 边界已可运行并写入 implementation doc，或已明确 `BLOCKED`/后续 dev task。
 - [ ] implementation doc `Development Evidence` 已记录 `Evidence Level`、`Target Runtime Environment`、`Runnable Entry`、`Observable Exit`、`Client / Server Initialization`、`Config Contract`、`Testing Handoff Readiness`、`Known Missing Runtime Boundaries`、`Basic Self-test Evidence`，或写明带原因的 `Not applicable`。
-- [ ] 如果当前 task 有 `self_test_contract.status: "required"`，已逐条执行当前 `self_test_contract.scenarios[]` 和 `self_test_contract.required_gates`，并在 implementation doc `Development Self-Test Report` 写入本轮 contract source、scenario results、executed gates、runnable entry、内部关键路径、observable exit/evidence、Module Key Test Path、missing/blockers 和 Testing Handoff Readiness，且没有 `BLOCKED` 场景。
+- [ ] 如果当前 task 有 `self_test_contract.status: "required"`，已逐条执行当前 `self_test_contract.scenarios[]` 和 `self_test_contract.required_gates`，并在 implementation doc `Development Self-Test Report` 写入 `Report Status`、本轮 contract source、scenario results、executed gates、runnable entry、内部关键路径、observable exit/evidence、Module Key Test Path、missing/blockers 和 Testing Handoff Readiness，且 `Report Status: PASS`、所有 scenario 都是 `PASS`。
+- [ ] 如果当前 task 是 high-risk runtime/live/remote-operator 工作，`resume_capsule` 已更新为 5-8 条恢复事实，`recovery_refs` 链接 implementation doc 和 `.docs/09_runbooks/**` runbook/evidence，implementation doc 已填写短的 `Current Operator Path` 和分层 `Gate Breakdown`。
 - [ ] 如果 task 要求 `business_handoff_ready`，implementation doc 已写入 Testing Handoff Contract，包含入口、配置、初始化/health、输入样例、预期出口、清理方式和证据等级。
 - [ ] 如果当前 task 来自 `plan.draft.yaml.tasks[]`，源 draft 已在 promote 时从 draft 列表删除。
 - [ ] implementation doc 已生成或更新，并反映相关模块的真实代码。

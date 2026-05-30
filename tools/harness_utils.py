@@ -375,6 +375,20 @@ CALLABLE_TASK_TERMS = [
     "队列",
 ]
 SELF_TEST_CONTRACT_STATUSES = {"required", "not_applicable"}
+RESUME_CAPSULE_REQUIRED_EVIDENCE_LEVELS = {"external_provider_live", "deployed_runtime", "business_handoff_ready"}
+RESUME_CAPSULE_REQUIRED_TARGET_KINDS = {"cloud_vm", "managed_service", "browser", "worker"}
+RESUME_CAPSULE_FIELDS = [
+    "task_id",
+    "state",
+    "canonical_path",
+    "next_step",
+    "blocker",
+    "last_passed_gate",
+    "do_not_retry",
+    "recovery_refs",
+]
+RUNBOOK_DOC_PREFIX = ".docs/09_runbooks/"
+MAX_WORKING_NOTES = 8
 
 
 def as_string_list(value: Any) -> list[str]:
@@ -415,6 +429,16 @@ def needs_runnable_task_contract(task: dict[str, Any]) -> bool:
         return False
     context = task_text_for_contract(task).lower()
     return contains_any(context, APPLICATION_READINESS_TASK_TERMS + PAGE_TASK_TERMS + CALLABLE_TASK_TERMS)
+
+
+def requires_resume_capsule(task: dict[str, Any]) -> bool:
+    if task.get("phase") != "SPRINTING":
+        return False
+    evidence_level = task.get("evidence_level")
+    target_runtime = task.get("target_runtime_environment")
+    required = str(evidence_level.get("required") or "") if isinstance(evidence_level, dict) else ""
+    kind = str(target_runtime.get("kind") or "") if isinstance(target_runtime, dict) else ""
+    return required in RESUME_CAPSULE_REQUIRED_EVIDENCE_LEVELS or kind in RESUME_CAPSULE_REQUIRED_TARGET_KINDS
 
 
 def self_test_contract_errors_for_task(task: dict[str, Any]) -> list[str]:
@@ -658,6 +682,16 @@ def validate_task_shape(task: dict[str, Any], index: int) -> None:
         require(isinstance(task["allowed_paths"], list) and task["allowed_paths"], f"{task['id']} must define allowed_paths")
         require(isinstance(task["required_gates"], list) and task["required_gates"], f"{task['id']} must define required_gates")
         require(isinstance(task["acceptance_criteria"], list) and task["acceptance_criteria"], f"{task['id']} must define acceptance_criteria")
+        if "working_notes" in task:
+            require(
+                isinstance(task["working_notes"], (list, str)),
+                f"{task['id']} working_notes must be a short string or list with at most {MAX_WORKING_NOTES} items",
+            )
+            note_count = len(task["working_notes"]) if isinstance(task["working_notes"], list) else (1 if str(task["working_notes"]).strip() else 0)
+            require(
+                note_count <= MAX_WORKING_NOTES,
+                f"{task['id']} working_notes must stay resume-first and contain at most {MAX_WORKING_NOTES} items; found {note_count}",
+            )
         for error in self_test_contract_errors_for_task(task):
             require(False, error)
         for error in testing_boundary_errors_for_allowed_paths(task):
@@ -670,6 +704,54 @@ def validate_task_shape(task: dict[str, Any], index: int) -> None:
 def task_sequence_number(task_id: str) -> int:
     match = TASK_ID_PATTERN.match(task_id)
     return int(match.group(1)) if match else 0
+
+
+def validate_resume_capsule_contract(data: dict[str, Any]) -> None:
+    current_task_id = str(data.get("current_task_id") or "")
+    current_task = task_by_id(data, current_task_id) if current_task_id else None
+    if not current_task or current_task.get("status") not in OPEN_TASK_STATUSES or current_task.get("phase") != "SPRINTING":
+        require("resume_capsule" not in data, "plan.yaml resume_capsule must only be present for the current open SPRINTING task")
+        return
+
+    capsule = data.get("resume_capsule")
+    if not requires_resume_capsule(current_task):
+        if capsule is not None:
+            require(isinstance(capsule, dict), f"{current_task_id} resume_capsule must be a mapping when present")
+        return
+
+    require(isinstance(capsule, dict), f"{current_task_id} high-risk runtime task must define top-level resume_capsule")
+    for field in RESUME_CAPSULE_FIELDS:
+        require(field in capsule, f"{current_task_id} resume_capsule missing field: {field}")
+
+    require(str(capsule.get("task_id") or "").strip() == current_task_id, f"{current_task_id} resume_capsule.task_id must match current_task_id")
+    for field in ["state", "canonical_path", "next_step", "blocker", "last_passed_gate"]:
+        value = str(capsule.get(field) or "").strip()
+        require(value and not is_placeholder_evidence(value), f"{current_task_id} resume_capsule.{field} must contain concrete recovery information")
+
+    do_not_retry = as_string_list(capsule.get("do_not_retry"))
+    require(
+        do_not_retry and not any(is_placeholder_evidence(item) for item in do_not_retry),
+        f"{current_task_id} resume_capsule.do_not_retry must list concrete paths or attempts not to repeat",
+    )
+
+    refs = as_string_list(capsule.get("recovery_refs"))
+    require(refs, f"{current_task_id} resume_capsule.recovery_refs must link implementation doc and runbook/evidence documents")
+    implementation_doc = str(current_task.get("implementation_doc") or "").strip()
+    if implementation_doc:
+        require(
+            implementation_doc in refs,
+            f"{current_task_id} resume_capsule.recovery_refs must include current implementation_doc {implementation_doc}",
+        )
+    require(
+        any(ref.startswith(RUNBOOK_DOC_PREFIX) for ref in refs),
+        f"{current_task_id} resume_capsule.recovery_refs must include a runbook/evidence document under {RUNBOOK_DOC_PREFIX}",
+    )
+    for ref in refs:
+        require(
+            ref.startswith(".docs/04_implementation/") or ref.startswith(RUNBOOK_DOC_PREFIX),
+            f"{current_task_id} resume_capsule.recovery_refs may only point to implementation docs or runbook/evidence docs: {ref}",
+        )
+        require(repo_path(ref).exists(), f"{current_task_id} resume_capsule recovery_ref does not exist: {ref}")
 
 
 def validate_plan_contract(data: dict[str, Any], allow_open: bool) -> None:
@@ -695,6 +777,7 @@ def validate_plan_contract(data: dict[str, Any], allow_open: bool) -> None:
     current_task_id = data.get("current_task_id") or ""
     if current_task_id:
         require(task_by_id(data, current_task_id), f"current_task_id does not match a task: {current_task_id}")
+    validate_resume_capsule_contract(data)
 
     open_tasks = [task.get("id") for task in tasks if task.get("status") in OPEN_TASK_STATUSES]
     if not allow_open:

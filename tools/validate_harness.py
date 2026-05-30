@@ -29,6 +29,7 @@ def main() -> None:
         ".docs/06_review",
         ".docs/07_test",
         ".docs/08_release",
+        ".docs/09_runbooks",
         ".docs/rfc",
         ".codex/skills",
         "tools",
