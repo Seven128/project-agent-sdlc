@@ -1238,19 +1238,64 @@ tasks: []
   assert.deepEqual(parallelReport.errors, [], "valid user_orchestrated parallel contract");
 
   await writeFile(
+    path.join(root, ".harness/state/lifecycle.yaml"),
+    'current_phase: "ARCHITECTING"\n',
+    "utf8"
+  );
+  await writeFile(
     path.join(root, ".harness/state/plan.yaml"),
     `current_task_id: ""
 next_task_sequence: 3
 parallel_execution:
   enabled: true
+  trigger: workflow_default
+  mode: runtime_managed
+  runtime:
+    provider: codex_native_subagents
+  coordinator: main_agent
+  workers:
+    - id: worker-risk
+      writes_repo: false
+      owned_paths: []
+      forbidden_paths:
+        - ".harness/state/**"
+      expected_output:
+        - "architecture risk notes"
+      required_gates:
+        - "main agent review"
+  integration:
+    owner: main_agent
+    merge_strategy: "main architect synthesizes final design"
+    required_gates:
+      - "make validate-design"
+    fact_source_updates:
+      - ".docs/03_tech_plan/"
+tasks: []
+`,
+    "utf8"
+  );
+  parallelReport = await runValidator(root, "validate-plan");
+  assert.deepEqual(parallelReport.errors, [], "valid workflow_default native subagent parallel contract");
+
+  await writeFile(
+    path.join(root, ".harness/state/lifecycle.yaml"),
+    'current_phase: "SPRINTING"\n',
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-006
+next_task_sequence: 7
+parallel_execution:
+  enabled: true
   trigger: user_requested
   mode: runtime_managed
+  runtime:
+    provider: codex_native_subagents
   coordinator: main_agent
   workers:
     - id: worker-smoke
       writes_repo: true
-      branch: agent/test-smoke
-      worktree: ../project-test-smoke
       owned_paths:
         - "tests/smoke/**"
       forbidden_paths:
@@ -1266,12 +1311,33 @@ parallel_execution:
       - "make validate-test"
     fact_source_updates:
       - ".docs/07_test/"
-tasks: []
+tasks:
+  - id: TASK-006
+    phase: SPRINTING
+    title: Open task
+    status: in_progress
+    summary: Active task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "tests/smoke/**"
+    required_gates:
+      - "npm test -- tests/smoke"
+    acceptance_criteria:
+      - "smoke worker has a path lock"
+    implementation_doc: .docs/04_implementation/example/dev.md
 `,
     "utf8"
   );
   parallelReport = await runValidator(root, "validate-plan");
-  assert.deepEqual(parallelReport.errors, [], "valid runtime_managed parallel contract");
+  assert.deepEqual(parallelReport.errors, [], "valid runtime_managed native write contract");
+
+  await writeFile(
+    path.join(root, ".harness/state/lifecycle.yaml"),
+    'current_phase: "TESTING"\n',
+    "utf8"
+  );
 
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),
@@ -1302,7 +1368,41 @@ tasks: []
     "utf8"
   );
   parallelReport = await runValidator(root, "validate-plan");
-  assert.match(parallelReport.errors.join("\n"), /parallel_execution\.trigger must be "user_requested"/);
+  assert.match(parallelReport.errors.join("\n"), /parallel_execution\.trigger must be user_requested or workflow_default/);
+
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: ""
+next_task_sequence: 3
+parallel_execution:
+  enabled: true
+  trigger: workflow_default
+  mode: runtime_managed
+  runtime:
+    provider: codex_exec_worktree
+  coordinator: main_agent
+  workers:
+    - id: worker-research
+      writes_repo: false
+      owned_paths: []
+      forbidden_paths: []
+      expected_output:
+        - "research notes"
+      required_gates:
+        - "main agent review"
+  integration:
+    owner: main_agent
+    merge_strategy: "main agent synthesizes result"
+    required_gates:
+      - "make validate-test"
+    fact_source_updates:
+      - ".docs/07_test/"
+tasks: []
+`,
+    "utf8"
+  );
+  parallelReport = await runValidator(root, "validate-plan");
+  assert.match(parallelReport.errors.join("\n"), /runtime\.provider must be "codex_native_subagents" when trigger is workflow_default/);
 
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),
@@ -1377,6 +1477,123 @@ tasks: []
   assert.match(parallelReport.errors.join("\n"), /branch is required when writes_repo is true/);
   assert.match(parallelReport.errors.join("\n"), /worktree is required when writes_repo is true/);
   assert.match(parallelReport.errors.join("\n"), /owned_paths must not be empty when writes_repo is true/);
+
+  await writeFile(
+    path.join(root, ".harness/state/lifecycle.yaml"),
+    'current_phase: "SPRINTING"\n',
+    "utf8"
+  );
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-007
+next_task_sequence: 8
+parallel_execution:
+  enabled: true
+  trigger: workflow_default
+  mode: runtime_managed
+  runtime:
+    provider: codex_native_subagents
+  coordinator: main_agent
+  workers:
+    - id: worker-a
+      writes_repo: true
+      owned_paths:
+        - "src/feature/**"
+      forbidden_paths:
+        - ".harness/state/**"
+      expected_output:
+        - "feature patch"
+      required_gates:
+        - "npm test -- tests/feature"
+    - id: worker-b
+      writes_repo: true
+      owned_paths:
+        - "src/feature/api/**"
+      forbidden_paths:
+        - ".harness/state/**"
+      expected_output:
+        - "api patch"
+      required_gates:
+        - "npm test -- tests/feature"
+  integration:
+    owner: main_agent
+    merge_strategy: "main agent reviews and integrates"
+    required_gates:
+      - "make validate-dev"
+    fact_source_updates:
+      - ".docs/04_implementation/"
+tasks:
+  - id: TASK-007
+    phase: SPRINTING
+    title: Open task
+    status: in_progress
+    summary: Active task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "path locks are enforced"
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  parallelReport = await runValidator(root, "validate-plan");
+  assert.match(parallelReport.errors.join("\n"), /write worker owned_paths must not overlap/);
+
+  await writeFile(
+    path.join(root, ".harness/state/plan.yaml"),
+    `current_task_id: TASK-007
+next_task_sequence: 8
+parallel_execution:
+  enabled: true
+  trigger: workflow_default
+  mode: runtime_managed
+  runtime:
+    provider: codex_native_subagents
+  coordinator: main_agent
+  workers:
+    - id: worker-a
+      writes_repo: true
+      owned_paths:
+        - "README.md"
+      forbidden_paths:
+        - ".harness/state/**"
+      expected_output:
+        - "feature patch"
+      required_gates:
+        - "npm test"
+  integration:
+    owner: main_agent
+    merge_strategy: "main agent reviews and integrates"
+    required_gates:
+      - "make validate-dev"
+    fact_source_updates:
+      - ".docs/04_implementation/"
+tasks:
+  - id: TASK-007
+    phase: SPRINTING
+    title: Open task
+    status: in_progress
+    summary: Active task
+    docs:
+      product:
+        - .docs/01_product/prd.md
+    allowed_paths:
+      - "src/**"
+    required_gates:
+      - "npm test"
+    acceptance_criteria:
+      - "path locks are enforced"
+    implementation_doc: .docs/04_implementation/example/dev.md
+`,
+    "utf8"
+  );
+  parallelReport = await runValidator(root, "validate-plan");
+  assert.match(parallelReport.errors.join("\n"), /owned_paths must be within current task allowed_paths: README\.md/);
 
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),

@@ -30,7 +30,7 @@ npx sdlc-harness init --adopt
 | Lifecycle workflow | `<harnessRoot>/state/lifecycle.yaml`, `<harnessRoot>/state/plan.yaml`, `.docs/**` | Tracks REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING and RFC_RECALIBRATION facts. |
 | Stage task control | `plan.yaml`, `make validate-plan`, `npx sdlc-harness validate-plan` | Keeps each stage's agent work in small `TASK-*` tasks with `phase` metadata and scoped paths/gates. |
 | Natural-language control | `AGENTS.md` plus workflow skills | Lets users say things like "continue", "start development", "run tests" or "requirements changed"; agents map these to workflow actions. |
-| Optional parallel execution contract | `plan.yaml#parallel_execution` | Enabled only when users explicitly request multi-agent, parallel or multi-worktree execution; supports runtime-managed subagents or user-orchestrated worker prompts. |
+| Default parallel scheduling contract | `plan.yaml#parallel_execution` | Stage tasks default to a safe-parallelism check; suitable work uses Codex native subagents first, with user-orchestrated and worktree fallbacks. |
 | Workflow skills | `<harnessRoot>/skills/pjsdlc_*/SKILL.md` | Provides role prompts for product, architecture, development, implementation docs, review, testing, release and RFC recalibration. |
 | Project-local skill overrides | `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` + `npx sdlc-harness sync` | Appends project-specific role instructions to generated Skill output without editing managed Skill files. |
 | Local policy overrides | `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml` | Preserves project-specific policy additions separately from package defaults. |
@@ -62,16 +62,17 @@ npx sdlc-harness sync
 
 The sync output is the package base Skill plus one appended `Local Override` block. Override files support either a plain project-local snippet or a complete `SKILL.md` with `name` and `description` frontmatter. Complete Skill overrides are appended, not replaced: `sync` validates the override `name`, merges the override `description` into the generated top-level metadata, strips the override frontmatter, and appends the full body. After sync, users or their agents should review the merged Skill for semantic conflicts in phase boundaries, `allowed_paths`, `required_gates`, commit/release rules and completion checks. Unknown skill names block sync so misspellings do not silently fail.
 
-## Optional Parallel Execution
+## Default Parallel Scheduling
 
-The default workflow is serial. Agents should only create `parallel_execution` in `plan.yaml` when the user explicitly asks for multi-agent, parallel or multi-worktree execution.
+The default workflow evaluates each stage task for safe parallelism. When the task can be split safely, the main agent creates `parallel_execution.trigger: "workflow_default"` in `plan.yaml` and uses Codex native subagents first. If the task is not safe to split, the main agent keeps the workflow serial and records the reason. Explicit user requests for multi-agent, parallel or multi-worktree execution use `trigger: "user_requested"`.
 
-- `runtime_managed`: use only when the current agent runtime can spawn subagents. The main agent assigns workers, waits for results, reviews, merges or cherry-picks, and runs the total gate.
+- `runtime_managed` with `runtime.provider: "codex_native_subagents"`: the default path. The main agent assigns workers, waits for results, reviews, merges or cherry-picks, and runs the total gate.
 - `user_orchestrated`: use when the runtime cannot spawn subagents. The main agent generates copyable worker prompts, and the user manually opens Codex conversations or worktrees and pastes them.
+- `codex_exec_worktree`: fallback for high-risk writes or user-requested hard isolation. The first version does not add a `sdlc-harness parallel run` CLI.
 
 `parallel_execution` does not store duplicate current phase or current task fields. Agents read phase from `<harnessRoot>/state/lifecycle.yaml#current_phase` and task selection from `<harnessRoot>/state/plan.yaml#current_task_id`.
 
-The CLI does not promise to automatically launch Codex agents. Workers do not need to communicate with each other; the main agent owns final fact-source updates such as PRD, plan, implementation docs, test results and generated overviews.
+SPRINTING write workers must use disjoint `owned_paths`, and each owned path must be within the current task `allowed_paths`. Workers do not own final PRD, plan, implementation docs, review/test/release reports, generated overviews or release actions; the main agent remains the integration owner.
 
 ## Stage Task Control
 

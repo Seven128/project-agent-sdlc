@@ -275,21 +275,21 @@ tasks:
 
 默认不追溯 done task 的执行流水。历史 task 查询主要面向“做了什么、为什么做、影响哪个模块、验证了什么”，默认读取模块级 implementation doc、RFC、PRD、tech plan 和代码。task id 和 commit 只作为 provenance；`allowed_paths`、`required_gates`、临时 `working_notes` 是执行期约束，不作为历史查询 API；只有用户明确要求 forensic/audit/regression 追溯时，Agent 才临时查询 git、PR、CI 或 release 记录。
 
-#### Optional parallel_execution contract
+#### Default parallel_execution contract
 
-`parallel_execution` 是 `plan.yaml` 的可选顶层合同。缺省不存在表示串行 workflow；只有用户明确提出并行、多 agent 或多 worktree 时，Agent 才能创建该合同。它不保存 `phase` 或 `linked_task_id`；当前阶段来自 lifecycle，当前任务来自 `current_task_id`。
+`parallel_execution` 是 `plan.yaml` 的按需顶层合同。阶段 task 开始时，主 Agent 默认执行 parallel eligibility check；适合安全拆分时创建 `parallel_execution.trigger: "workflow_default"` 并优先使用 Codex native subagents，不适合拆分时保持串行并记录原因。用户显式提出并行、多 agent 或多 worktree 时使用 `trigger: "user_requested"`。合同不保存 `phase` 或 `linked_task_id`；当前阶段来自 lifecycle，当前任务来自 `current_task_id`。
 
 ```yaml
 parallel_execution:
   enabled: true
-  trigger: "user_requested"
-  mode: "user_orchestrated" # or "runtime_managed"
+  trigger: "workflow_default" # or "user_requested"
+  mode: "runtime_managed"
+  runtime:
+    provider: "codex_native_subagents" # fallback: "user_orchestrated" or "codex_exec_worktree"
   coordinator: "main_agent"
   workers:
     - id: "worker-feature"
       writes_repo: true
-      branch: "agent/feature"
-      worktree: "../project-feature"
       owned_paths:
         - "src/feature/**"
       forbidden_paths:
@@ -310,20 +310,27 @@ parallel_execution:
 
 模式语义：
 
-- `runtime_managed`：当前 Agent runtime 真实具备 subagent 能力时使用。主 Agent 生成合同、分配 worker、等待结果并集成。
+- `runtime_managed` + `runtime.provider: "codex_native_subagents"`：默认路径。主 Agent 生成合同、分配 worker、等待结果并集成。
 - `user_orchestrated`：runtime 不能自动创建 subagent 时使用。主 Agent 生成每个 worker 的可复制 prompt，用户手动打开对话或 worktree 后粘贴执行。
+- `codex_exec_worktree`：高风险写入或用户要求强隔离时的 fallback；第一版不新增 `sdlc-harness parallel run` CLI。
 
 阶段规则：
 
 - `REQUIREMENT_GATHERING`：worker 只能做调研、草稿、场景拆解、风险和 open questions；最终 PRD 由主 Agent 合成。
-- `SPRINTING`：worker 可写各自 `owned_paths`，但不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc；并行执行上下文从 `lifecycle.yaml#current_phase` 和 `plan.yaml#current_task_id` 推断。
+- `ARCHITECTING`：worker 只能做架构草稿、接口分析、风险和方案对比；最终 architecture、tech plan 和 `plan.draft.yaml` 由主 Agent 合成。
+- `SPRINTING`：worker 可写各自 `owned_paths`，但 `owned_paths` 必须非空、互不重叠、落在当前 task `allowed_paths` 内，且不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc；并行执行上下文从 `lifecycle.yaml#current_phase` 和 `plan.yaml#current_task_id` 推断。
+- `REVIEWING`：worker 只读源码和事实源，按风险维度输出 findings；最终 review report 由主 Agent 汇总。
 - `TESTING`：worker 可并行执行验证片区和提交证据；最终 test plan、coverage gaps 和 PASS/BLOCKED 由主 Agent 汇总。
+- `RELEASING`：worker 只能做 read-only preflight、smoke evidence 收集和风险检查；publish、tag、push、delete、deploy 由主 Agent 单独执行。
+- `RFC_RECALIBRATION`：worker 只能做 impact analysis、patch candidates 和风险清单；最终 RFC 与事实源补丁由主 Agent 汇总。
 
 Validator 行为：
 
 - 无 `parallel_execution` 时保持兼容。
-- 启用时校验 `enabled`、`trigger`、`mode`、`coordinator`、`workers` 和 `integration`，并拒绝重复保存 `phase` 或 `linked_task_id`。
-- `writes_repo: true` 的 worker 必须声明 `branch`、`worktree` 和非空 `owned_paths`。
+- 启用时校验 `enabled`、`trigger`、`mode`、`runtime.provider`、`coordinator`、`workers` 和 `integration`，并拒绝重复保存 `phase` 或 `linked_task_id`。
+- `trigger` 接受 `workflow_default` 和 `user_requested`；`workflow_default` 必须使用 `runtime.provider: "codex_native_subagents"`。
+- 非 native runtime 下 `writes_repo: true` 的 worker 必须声明 `branch`、`worktree` 和非空 `owned_paths`。
+- SPRINTING native write worker 必须声明非空、互不重叠、位于当前 task `allowed_paths` 内的 `owned_paths`。
 - `SPRINTING` 阶段启用并行时必须存在 `current_task_id`。
 
 ### 5.6 Implementation doc model

@@ -329,19 +329,19 @@ next_task_sequence: 4
 tasks: []
 ```
 
-`parallel_execution` 是可选顶层合同，缺省不存在表示串行。只有用户明确提出“并行”“多 agent”或“多 worktree”时，才允许加入该合同。`parallel_execution` 不保存 `phase` 或 `linked_task_id`；当前阶段从 lifecycle 的 `current_phase` 读取，当前任务从 plan 的 `current_task_id` 读取。`runtime_managed` 用于当前 Agent runtime 真实具备 subagent 能力的情况；`user_orchestrated` 用于用户手动打开多个对话或 worktree 并粘贴 worker prompt 的情况。Harness v1 不承诺 CLI 自动启动 Codex agent。
+`parallel_execution` 是按需顶层合同，缺省不存在表示当前任务串行执行。每个阶段 task 开始时，主 Agent 默认执行 parallel eligibility check；适合安全拆分时加入 `parallel_execution.trigger: "workflow_default"` 并优先使用 `runtime.provider: "codex_native_subagents"`，不适合拆分时保持串行并记录原因。用户明确提出“并行”“多 agent”或“多 worktree”时，使用 `trigger: "user_requested"`。`parallel_execution` 不保存 `phase` 或 `linked_task_id`；当前阶段从 lifecycle 的 `current_phase` 读取，当前任务从 plan 的 `current_task_id` 读取。`user_orchestrated` 用于用户手动打开多个对话或 worktree 并粘贴 worker prompt；`codex_exec_worktree` 用于高风险写入或用户要求强隔离的 fallback，第一版不新增独立并行调度 CLI。
 
 ```yaml
 parallel_execution:
   enabled: true
-  trigger: "user_requested"
-  mode: "user_orchestrated"
+  trigger: "workflow_default"
+  mode: "runtime_managed"
+  runtime:
+    provider: "codex_native_subagents"
   coordinator: "main_agent"
   workers:
     - id: "worker-auth"
       writes_repo: true
-      branch: "agent/auth"
-      worktree: "../project-auth"
       owned_paths:
         - "src/auth/**"
       forbidden_paths:
@@ -360,7 +360,7 @@ parallel_execution:
       - ".docs/04_implementation/"
 ```
 
-需求阶段并行只用于调研、草稿、风险和 open questions，最终 PRD 由主 Agent 合成。开发阶段 worker 只能改自己的 `owned_paths`，不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc。测试阶段 worker 可以并行产出验证证据，最终 test report 和 PASS/BLOCKED 决策由主 Agent 汇总。
+需求、架构、Review 和 RFC 阶段的 worker 只产出调研、草稿、风险、findings 或 impact analysis，最终事实源由主 Agent 合成。开发阶段 worker 只能改自己的非空、互不重叠且位于当前 task `allowed_paths` 内的 `owned_paths`，不得直接改 `plan.yaml`、`lifecycle.yaml`、`.docs/INDEX.md`、overview 或最终 implementation doc。测试阶段 worker 可以并行产出验证证据或 scoped test changes，最终 test report 和 PASS/BLOCKED 决策由主 Agent 汇总。发布阶段 worker 只做 read-only preflight，publish/tag/push/delete/deploy 由主 Agent 执行。
 
 ### 任务状态：
 - `pending`

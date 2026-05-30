@@ -21,7 +21,7 @@ TESTING 只能调用 SPRINTING/REVIEWING 已确认 `PASS` 的入口做输入/输
 
 测试设计和回归证据产出本身也是 workflow task。开始测试前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "TESTING"`；当前轮只产出一个测试策略 slice、测试用例 slice、回归批次、风险验证片区或一组 scoped test changes。`plan.yaml` 仍是唯一执行计划事实源，`.docs/07_test/**` 只记录当前方案的 test strategy、test cases、executed regression evidence、coverage gaps 和 final decision，不表达“下一步如何开发”，也不保留已被 RFC supersede 的旧测试结果。
 
-如果用户明确要求并行、多 agent 或多 worktree，测试阶段可以启用 `parallel_execution`，让 worker 分别执行互不依赖的回归片区、smoke、兼容性或风险验证。worker 只提交证据和必要的 scoped test changes；最终 `.docs/07_test/**`、coverage gaps、PASS/BLOCKED 决策和阶段 gate 由主 Agent 汇总。没有用户显式要求时，测试 workflow 保持串行。
+测试阶段默认先评估是否适合并行验证。适合时，主 Tester 使用 `parallel_execution.trigger: "workflow_default"` 和 `runtime.provider: "codex_native_subagents"` 调度 worker 分别执行互不依赖的回归片区、smoke、兼容性或风险验证；用户明确要求并行时使用 `trigger: "user_requested"`。worker 只提交证据和必要的 scoped test changes；最终 `.docs/07_test/**`、coverage gaps、PASS/BLOCKED 决策和阶段 gate 由主 Agent 汇总。不适合拆分时保持串行并记录原因。
 
 ## 输入
 
@@ -75,7 +75,7 @@ TESTING 只能调用 SPRINTING/REVIEWING 已确认 `PASS` 的入口做输入/输
 6. 新测试策略使用 `.docs/07_test/TEST_STRATEGY.md`，新测试用例使用 `.docs/07_test/TEST_CASES.md`，执行报告使用 `.docs/07_test/TEST_REPORT.md`；不要新建或继续依赖 `.docs/07_test/TEST_PLAN.md`。
 7. `TEST_REPORT.md` 不得包含 `pending`、`TBD`、`待填`、`TODO` 或占位结论；未执行或不可执行时 Final decision 必须为 `BLOCKED` 并给出恢复条件。
 8. RFC 改变技术路线、entry/exit 或验收边界后，必须确认 `.docs/07_test/**` 中旧路线测试证据已删除或不再从 `.docs/INDEX.md` 暴露。
-9. 并行测试必须使用 `parallel_execution.trigger: "user_requested"`；`runtime_managed` 只在当前 runtime 支持 subagent 时使用，否则输出 `user_orchestrated` worker prompt。
+9. 测试阶段默认评估并行；workflow 默认触发使用 `parallel_execution.trigger: "workflow_default"` 和 `runtime.provider: "codex_native_subagents"`，用户显式要求并行时使用 `trigger: "user_requested"`；native subagent 不可用时输出 `user_orchestrated` worker prompt。
 10. 宣布阶段完成前运行 `make test-all`。
 11. 测试阶段一次只执行一个 `TASK-*` task。
 

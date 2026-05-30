@@ -57,7 +57,7 @@ Key options:
 - Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
 - Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
 - Design fixture: `plan.draft.yaml` references the toy technical plan through `docs.tech_plan`, so installed-consumer `validate-design` covers the strengthened design slicing contract.
-- Protocol checks: retained done task rejection, retained open task rejection, valid explicit `parallel_execution`, and invalid automatic parallel trigger rejection.
+- Protocol checks: retained done task rejection, retained open task rejection, valid workflow-default Codex native subagent `parallel_execution`, and invalid unsupported trigger rejection.
 - Static checks: natural-language routing text, GitHub workflow asset, and release automation script presence.
 
 ## 4. Implementation Findings

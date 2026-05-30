@@ -23,6 +23,8 @@ description: Use during RFC_RECALIBRATION to process requirement changes with im
 
 RFC recalibration 本身也是 workflow task。开始处理变更前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "RFC_RECALIBRATION"`；当前轮只处理一个 RFC 文件、一个 impact analysis 单元或一个局部补丁单元。
 
+RFC 阶段默认先评估是否适合并行 impact analysis。适合时，主 Agent 使用 `parallel_execution.trigger: "workflow_default"` 和 `runtime.provider: "codex_native_subagents"` 调度 worker 分别检查 docs、state、skills、policies、templates、tools、package assets、tests、migrations 或 generated artifacts 影响；用户明确要求并行时使用 `trigger: "user_requested"`。worker 必须 `writes_repo: false`，只提交影响面、patch candidates 和风险清单；最终 RFC、事实源补丁和任务调整由主 Agent 汇总。
+
 ## 输入
 
 - `.docs/rfc/RFC_*.md`

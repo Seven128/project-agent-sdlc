@@ -20,7 +20,7 @@
   - `/review`、`/test`、`/release` 和 `/rfc` 也通过 `TASK-*` open task 做小步恢复和阶段 gate 管控。
   - `ARCHITECTING` 中的 `/prd` 或“需求要改”可以在开发前回到 `REQUIREMENT_GATHERING`，由 PM workflow 修改 PRD。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
-  - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
+  - 每个阶段 task 默认映射到 parallel eligibility check；安全可拆时创建 `parallel_execution.trigger: "workflow_default"` 合同，用户显式要求并行、多 agent 或多 worktree 时使用 `trigger: "user_requested"`。
 - 修改（Changed）:
   - `AGENTS.md`、`README.md`、`PROJECT_SPEC.md` 的日常控制说明。
   - `pjsdlc_manager` 的路由规则。
@@ -70,7 +70,7 @@ User input
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
-- 并行语义（Parallel semantics）: 并行不是默认入口；只有用户显式提出并行时，Manager 才能创建 `parallel_execution.trigger: "user_requested"`，并根据 runtime 能力选择 `runtime_managed` 或 `user_orchestrated`。
+- 并行语义（Parallel semantics）: 每个阶段 task 默认先做 parallel eligibility check；适合拆分时，Manager 创建 `parallel_execution.trigger: "workflow_default"` 并优先使用 `runtime.provider: "codex_native_subagents"`；用户显式提出并行时使用 `trigger: "user_requested"`；native subagent 不可用时降级为 `user_orchestrated`，高风险写入可选择 `codex_exec_worktree` fallback。
 
 ## 6. 与技术方案的偏移
 
@@ -94,6 +94,7 @@ User input
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
+| 2026-05-30 | `TASK-084` | TASK-084 implementation commit | 将并行入口升级为默认 eligibility check，并记录 Codex native subagent 优先策略。 |
 | 2026-05-27 | `TASK-057` | Working tree | 将 Review、测试、发布和 RFC 入口纳入统一 `TASK-*` 小任务路由语义。 |
 | 2026-05-28 | `TASK-061` | Working tree | 增加开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 的 `/prd` 和需求变化路由规则。 |
 

@@ -24,7 +24,27 @@ TASK_STATUSES = {
 
 OPEN_TASK_STATUSES = {"pending", "in_progress", "blocked", "pending_revision"}
 PARALLEL_MODES = {"runtime_managed", "user_orchestrated"}
-PARALLEL_ALLOWED_PHASES = {"REQUIREMENT_GATHERING", "SPRINTING", "TESTING"}
+PARALLEL_TRIGGERS = {"user_requested", "workflow_default"}
+PARALLEL_RUNTIME_PROVIDERS = {"codex_native_subagents", "user_orchestrated", "codex_exec_worktree"}
+PARALLEL_ALLOWED_PHASES = {
+    "REQUIREMENT_GATHERING",
+    "ARCHITECTING",
+    "SPRINTING",
+    "REVIEWING",
+    "TESTING",
+    "RELEASING",
+    "RFC_RECALIBRATION",
+}
+PARALLEL_READ_ONLY_PHASES = {"REQUIREMENT_GATHERING", "ARCHITECTING", "REVIEWING", "RELEASING", "RFC_RECALIBRATION"}
+PARALLEL_PROTECTED_WRITE_PATTERNS = {
+    ".codex/state/**",
+    "<harnessRoot>/state/**",
+    ".docs/INDEX.md",
+    ".docs/**/overview.md",
+    ".docs/04_implementation/**",
+    ".docs/06_review/**",
+    ".docs/08_release/**",
+}
 TASK_ID_PATTERN = re.compile(r"^[A-Z]+-(\d+)$")
 TASK_PHASES = {
     "REQUIREMENT_GATHERING",
@@ -688,11 +708,19 @@ def validate_parallel_execution_contract(data: dict[str, Any], current_phase: st
 
     require(isinstance(contract, dict), "parallel_execution must be a mapping")
     require(contract.get("enabled") is True, "parallel_execution.enabled must be true when present")
-    require(contract.get("trigger") == "user_requested", 'parallel_execution.trigger must be "user_requested"')
+    require(contract.get("trigger") in PARALLEL_TRIGGERS, "parallel_execution.trigger must be user_requested or workflow_default")
     require(contract.get("mode") in PARALLEL_MODES, "parallel_execution.mode must be runtime_managed or user_orchestrated")
+    provider = parallel_runtime_provider(contract)
+    if provider:
+        require(provider in PARALLEL_RUNTIME_PROVIDERS, "parallel_execution.runtime.provider must be codex_native_subagents, user_orchestrated, or codex_exec_worktree")
+    if contract.get("trigger") == "workflow_default":
+        require(provider == "codex_native_subagents", 'parallel_execution.runtime.provider must be "codex_native_subagents" when trigger is workflow_default')
     require("phase" not in contract, "parallel_execution must not define phase; lifecycle.yaml is the single source for current_phase")
     require("linked_task_id" not in contract, "parallel_execution must not define linked_task_id; use plan.yaml current_task_id")
-    require(current_phase in PARALLEL_ALLOWED_PHASES, "parallel_execution is only supported during REQUIREMENT_GATHERING, SPRINTING, or TESTING")
+    require(
+        current_phase in PARALLEL_ALLOWED_PHASES,
+        "parallel_execution is only supported during REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING, or RFC_RECALIBRATION",
+    )
     require(contract.get("coordinator") == "main_agent", 'parallel_execution.coordinator must be "main_agent"')
 
     if current_phase == "SPRINTING":
@@ -701,6 +729,7 @@ def validate_parallel_execution_contract(data: dict[str, Any], current_phase: st
     workers = contract.get("workers")
     require(isinstance(workers, list) and workers, "parallel_execution.workers must be a non-empty list")
     seen_ids: set[str] = set()
+    write_owned_paths: list[tuple[int, str]] = []
     for index, worker in enumerate(workers):
         prefix = f"parallel_execution.workers[{index}]"
         require(isinstance(worker, dict), f"{prefix} must be a mapping")
@@ -713,10 +742,23 @@ def validate_parallel_execution_contract(data: dict[str, Any], current_phase: st
             require(isinstance(worker.get(field), list), f"{prefix}.{field} must be a list")
         require(worker.get("expected_output"), f"{prefix}.expected_output must not be empty")
         require(worker.get("required_gates"), f"{prefix}.required_gates must not be empty")
+        if current_phase in PARALLEL_READ_ONLY_PHASES:
+            require(worker.get("writes_repo") is False, f"{prefix}.writes_repo must be false during {current_phase}")
         if worker.get("writes_repo") is True:
-            require(isinstance(worker.get("branch"), str) and worker["branch"].strip(), f"{prefix}.branch is required when writes_repo is true")
-            require(isinstance(worker.get("worktree"), str) and worker["worktree"].strip(), f"{prefix}.worktree is required when writes_repo is true")
+            if provider != "codex_native_subagents":
+                require(isinstance(worker.get("branch"), str) and worker["branch"].strip(), f"{prefix}.branch is required when writes_repo is true outside codex_native_subagents runtime")
+                require(isinstance(worker.get("worktree"), str) and worker["worktree"].strip(), f"{prefix}.worktree is required when writes_repo is true outside codex_native_subagents runtime")
             require(worker.get("owned_paths"), f"{prefix}.owned_paths must not be empty when writes_repo is true")
+            validate_parallel_worker_path_lock(data, worker, index)
+            for owned in expand_harness_root(list(worker.get("owned_paths") or [])):
+                write_owned_paths.append((index, owned))
+
+    for left_pos, (left_index, left_path) in enumerate(write_owned_paths):
+        for right_index, right_path in write_owned_paths[left_pos + 1 :]:
+            require(
+                not glob_patterns_overlap(left_path, right_path),
+                f"parallel_execution write worker owned_paths must not overlap: workers[{left_index}] {left_path} vs workers[{right_index}] {right_path}",
+            )
 
     integration = contract.get("integration")
     require(isinstance(integration, dict), "parallel_execution.integration must be a mapping")
@@ -724,6 +766,50 @@ def validate_parallel_execution_contract(data: dict[str, Any], current_phase: st
     require(isinstance(integration.get("merge_strategy"), str) and integration["merge_strategy"].strip(), "parallel_execution.integration.merge_strategy must be a non-empty string")
     require(isinstance(integration.get("required_gates"), list) and integration["required_gates"], "parallel_execution.integration.required_gates must be a non-empty list")
     require(isinstance(integration.get("fact_source_updates"), list) and integration["fact_source_updates"], "parallel_execution.integration.fact_source_updates must be a non-empty list")
+
+
+def parallel_runtime_provider(contract: dict[str, Any]) -> str:
+    runtime = contract.get("runtime")
+    if runtime is None:
+        return ""
+    require(isinstance(runtime, dict), "parallel_execution.runtime must be a mapping when present")
+    provider = runtime.get("provider")
+    return str(provider or "")
+
+
+def validate_parallel_worker_path_lock(data: dict[str, Any], worker: dict[str, Any], index: int) -> None:
+    current_task = task_by_id(data, str(data.get("current_task_id") or ""))
+    if current_task is None:
+        return
+    task_allowed = expand_harness_root(list(current_task.get("allowed_paths") or []))
+    worker_owned = expand_harness_root(list(worker.get("owned_paths") or []))
+    worker_forbidden = expand_harness_root(list(worker.get("forbidden_paths") or []))
+    protected = expand_harness_root(list(PARALLEL_PROTECTED_WRITE_PATTERNS))
+    prefix = f"parallel_execution.workers[{index}]"
+    for owned in worker_owned:
+        require(matches_any(owned, task_allowed), f"{prefix}.owned_paths must be within current task allowed_paths: {owned}")
+        for forbidden in [*worker_forbidden, *protected]:
+            require(not glob_patterns_overlap(owned, forbidden), f"{prefix}.owned_paths must not overlap forbidden paths: {owned} vs {forbidden}")
+
+
+def glob_prefix(pattern: str) -> str:
+    normalized = pattern.replace("\\", "/").replace("<harnessRoot>", ".codex")
+    wildcard_positions = [pos for pos in (normalized.find("*"), normalized.find("["), normalized.find("?")) if pos >= 0]
+    if wildcard_positions:
+        normalized = normalized[: min(wildcard_positions)]
+    return normalized.rstrip("/")
+
+
+def glob_patterns_overlap(left: str, right: str) -> bool:
+    left_clean = left.replace("\\", "/").replace("<harnessRoot>", ".codex")
+    right_clean = right.replace("\\", "/").replace("<harnessRoot>", ".codex")
+    if fnmatch.fnmatch(left_clean, right_clean) or fnmatch.fnmatch(right_clean, left_clean):
+        return True
+    left_prefix = glob_prefix(left_clean)
+    right_prefix = glob_prefix(right_clean)
+    if not left_prefix or not right_prefix:
+        return left_prefix == right_prefix
+    return left_prefix.startswith(right_prefix + "/") or right_prefix.startswith(left_prefix + "/") or left_prefix == right_prefix
 
 
 def expand_harness_root(patterns: list[str], root: str = ".codex") -> list[str]:

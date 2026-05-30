@@ -20,7 +20,7 @@ Skill、执行出口 gate，并记录 blocker。
 
 自然语言和宏指令必须进入同一组 workflow action；区别在于 `/xxx` 入口携带更稳定的细节约束，简单自然语言入口更低成本，但需要你根据当前阶段、plan 和文档上下文补足细节。
 
-Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多 agent”“多 worktree”或等价意图时，才允许创建或使用 `parallel_execution`。不要因为任务看起来可拆就默认启用。当前 runtime 有 subagent 能力时，主 Agent 可使用 `runtime_managed` 编排；没有该能力时，使用 `user_orchestrated`，输出 worker prompts 让用户手动多开对话或 worktree。无论哪种模式，主 Agent 都是 coordinator 和 integration owner。
+Parallel Execution 是默认评估、按需启用：每个阶段 task 开始时，主 Agent 先做 parallel eligibility check；任务能安全拆分时创建或使用 `parallel_execution.trigger: "workflow_default"`，默认通过 `runtime_managed` + `runtime.provider: "codex_native_subagents"` 调度 Codex native subagents；不适合拆分时保持串行并在 task notes 或输出中简短记录原因。用户明确提出“并行”“多 agent”“多 worktree”或等价意图时，使用 `trigger: "user_requested"`。native subagent 不可用时降级为 `user_orchestrated`；高风险写入或用户要求强隔离时可使用 `codex_exec_worktree` fallback。无论哪种模式，主 Agent 都是 coordinator 和 integration owner。
 
 ## 输入
 
@@ -50,8 +50,8 @@ Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多
 17. 用户输入 `/dev`，或自然语言要求“开始开发”“做当前任务”“做下一个任务”“继续开发下一个任务”时，如果 `current_phase` 是 `SPRINTING`，创建或选择一个最小 `TASK-*` development task 并执行一个 task 闭环；如果 task 来自 `plan.draft.yaml.tasks[]`，promote 时必须同次删除源 draft；否则说明当前阶段冲突和推荐路径。
 18. 用户输入 `/devloop`，或自然语言要求“开始循环：写任务，执行任务”“把开发循环跑完”“连续开发”时，如果 `current_phase` 是 `SPRINTING`，连续运行 `/dev` 循环，直到 `plan.yaml.tasks[]` 和 `plan.draft.yaml.tasks[]` 都没有明确可做任务或遇到 blocker；否则说明当前阶段冲突和推荐路径。
 19. 用户自然语言要求跑测试或验证时，运行当前 task 或当前阶段的对应 gate。
-20. 用户明确要求并行、多 agent 或多 worktree 时，先判断当前阶段是否是 `REQUIREMENT_GATHERING`、`SPRINTING` 或 `TESTING`；如果是，生成或使用 `parallel_execution.trigger: "user_requested"` 合同；否则说明当前阶段不支持并行合同。
-21. `runtime_managed` 模式只在当前 Agent runtime 真实具备 subagent 能力时使用；否则使用 `user_orchestrated` 并输出每个 worker 的可复制 prompt。
+20. 每个阶段 task 开始时先判断当前阶段和当前 task 是否适合并行；如果适合，生成或使用 `parallel_execution.trigger: "workflow_default"` 合同；如果用户明确要求并行、多 agent 或多 worktree，使用 `trigger: "user_requested"`。
+21. 默认使用 `runtime_managed` + `runtime.provider: "codex_native_subagents"`；native subagent 不可用时使用 `user_orchestrated` 并输出每个 worker 的可复制 prompt；高风险写入或用户要求强隔离时可选择 `codex_exec_worktree` fallback。
 22. 用户自然语言要求 review 时，如果 `current_phase` 是 `REVIEWING`，创建或选择一个最小 `TASK-*` review task，并设置 `phase: "REVIEWING"`；reviewer 只读源码，不直接改源码。
 23. 用户自然语言要求刷新文档总览时，运行 `make docs-overview`。
 24. `/plan` 和 `/goal` 是客户端模式入口，不由 Harness 自动开启；如果用户手动组合 `/plan` 或 `/goal` 与自然语言或宏指令，应按对应 workflow action 继续执行。
@@ -63,7 +63,7 @@ Parallel Execution 是显式 opt-in：只有用户明确提出“并行”“多
 
 `/prd`、`/design`、`/dev`、`/review`、`/test`、`/release` 和 `/rfc` 都是单 task 推进：默认只完成一个 `TASK-*`。`validate-plan` 用于检查当前 open task 合同是否完整。direct `validate-dev` / `make validate-dev` 是 `SPRINTING` 开发中 gate，允许一个合法当前 open task 存在；`validate-current` / `/advance` 在 `SPRINTING` 下仍是阶段出口 gate，要求没有 open task 残留。其它阶段出口 gate `validate-pm`、`validate-design`、`validate-review`、`validate-test`、`validate-release` 和 `validate-rfc` 也要求没有 open task 残留。
 
-`parallel_execution` 是可选顶层合同，缺省表示串行。启用后必须声明 `enabled`、`trigger`、`mode`、`coordinator`、`workers` 和 `integration`；不要在合同内重复保存 `phase` 或 `linked_task_id`，当前阶段来自 lifecycle 的 `current_phase`，当前任务来自 plan 的 `current_task_id`。
+`parallel_execution` 是按需顶层合同，缺省表示当前 task 串行。启用后必须声明 `enabled`、`trigger`、`mode`、`coordinator`、`workers` 和 `integration`；默认并行还应声明 `runtime.provider: "codex_native_subagents"`。不要在合同内重复保存 `phase` 或 `linked_task_id`，当前阶段来自 lifecycle 的 `current_phase`，当前任务来自 plan 的 `current_task_id`。
 
 `lifecycle.yaml` 和 `plan.yaml` 只用于当前可执行状态。默认不要读取过去 phase/task/gate 执行流水；只有用户明确要求 forensic/audit/regression 追溯时，才临时查询 git、PR、CI 或 release 记录。
 

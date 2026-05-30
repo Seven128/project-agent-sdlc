@@ -14,8 +14,20 @@ export interface ValidatorReport {
 
 type Validator = (projectRoot: string) => Promise<ValidatorReport>;
 const PARALLEL_MODES = new Set(["runtime_managed", "user_orchestrated"]);
+const PARALLEL_TRIGGERS = new Set(["user_requested", "workflow_default"]);
+const PARALLEL_RUNTIME_PROVIDERS = new Set(["codex_native_subagents", "user_orchestrated", "codex_exec_worktree"]);
 const TASK_PHASES = new Set(["REQUIREMENT_GATHERING", "ARCHITECTING", "SPRINTING", "REVIEWING", "TESTING", "RELEASING", "RFC_RECALIBRATION"]);
-const PARALLEL_ALLOWED_PHASES = new Set(["REQUIREMENT_GATHERING", "SPRINTING", "TESTING"]);
+const PARALLEL_ALLOWED_PHASES = new Set(["REQUIREMENT_GATHERING", "ARCHITECTING", "SPRINTING", "REVIEWING", "TESTING", "RELEASING", "RFC_RECALIBRATION"]);
+const PARALLEL_READ_ONLY_PHASES = new Set(["REQUIREMENT_GATHERING", "ARCHITECTING", "REVIEWING", "RELEASING", "RFC_RECALIBRATION"]);
+const PARALLEL_PROTECTED_WRITE_PATTERNS = [
+  ".codex/state/**",
+  "<harnessRoot>/state/**",
+  ".docs/INDEX.md",
+  ".docs/**/overview.md",
+  ".docs/04_implementation/**",
+  ".docs/06_review/**",
+  ".docs/08_release/**"
+];
 const TASK_STATUSES = new Set(["pending", "in_progress", "done", "blocked", "pending_revision", "cancelled"]);
 const OPEN_TASK_STATUSES = new Set(["pending", "in_progress", "blocked", "pending_revision"]);
 const EVIDENCE_LEVELS = new Set(["unit", "local_runtime", "external_provider_live", "deployed_runtime", "business_handoff_ready"]);
@@ -969,9 +981,18 @@ function validateParallelExecutionContract(plan: Record<string, unknown>, curren
   }
 
   if (contract.enabled !== true) errors.push("parallel_execution.enabled must be true when present");
-  if (contract.trigger !== "user_requested") errors.push('parallel_execution.trigger must be "user_requested"');
+  if (!PARALLEL_TRIGGERS.has(String(contract.trigger ?? ""))) {
+    errors.push("parallel_execution.trigger must be user_requested or workflow_default");
+  }
   if (!PARALLEL_MODES.has(String(contract.mode ?? ""))) {
     errors.push("parallel_execution.mode must be runtime_managed or user_orchestrated");
+  }
+  const provider = parallelRuntimeProvider(contract, errors);
+  if (provider && !PARALLEL_RUNTIME_PROVIDERS.has(provider)) {
+    errors.push("parallel_execution.runtime.provider must be codex_native_subagents, user_orchestrated, or codex_exec_worktree");
+  }
+  if (contract.trigger === "workflow_default" && provider !== "codex_native_subagents") {
+    errors.push('parallel_execution.runtime.provider must be "codex_native_subagents" when trigger is workflow_default');
   }
   if ("phase" in contract) {
     errors.push("parallel_execution must not define phase; lifecycle.yaml is the single source for current_phase");
@@ -980,7 +1001,9 @@ function validateParallelExecutionContract(plan: Record<string, unknown>, curren
     errors.push("parallel_execution must not define linked_task_id; use plan.yaml current_task_id");
   }
   if (!PARALLEL_ALLOWED_PHASES.has(currentPhase)) {
-    errors.push("parallel_execution is only supported during REQUIREMENT_GATHERING, SPRINTING, or TESTING");
+    errors.push(
+      "parallel_execution is only supported during REQUIREMENT_GATHERING, ARCHITECTING, SPRINTING, REVIEWING, TESTING, RELEASING, or RFC_RECALIBRATION"
+    );
   }
   if (contract.coordinator !== "main_agent") errors.push('parallel_execution.coordinator must be "main_agent"');
 
@@ -993,6 +1016,7 @@ function validateParallelExecutionContract(plan: Record<string, unknown>, curren
     errors.push("parallel_execution.workers must be a non-empty list");
   } else {
     const seen = new Set<string>();
+    const writeOwnedPaths: Array<{ index: number; path: string }> = [];
     workers.forEach((worker, index) => {
       const prefix = `parallel_execution.workers[${index}]`;
       if (!isRecord(worker)) {
@@ -1016,18 +1040,38 @@ function validateParallelExecutionContract(plan: Record<string, unknown>, curren
       if (Array.isArray(worker.required_gates) && worker.required_gates.length === 0) {
         errors.push(`${prefix}.required_gates must not be empty`);
       }
+      if (PARALLEL_READ_ONLY_PHASES.has(currentPhase) && worker.writes_repo !== false) {
+        errors.push(`${prefix}.writes_repo must be false during ${currentPhase}`);
+      }
       if (worker.writes_repo === true) {
-        if (typeof worker.branch !== "string" || !worker.branch.trim()) {
-          errors.push(`${prefix}.branch is required when writes_repo is true`);
-        }
-        if (typeof worker.worktree !== "string" || !worker.worktree.trim()) {
-          errors.push(`${prefix}.worktree is required when writes_repo is true`);
+        if (provider !== "codex_native_subagents") {
+          if (typeof worker.branch !== "string" || !worker.branch.trim()) {
+            errors.push(`${prefix}.branch is required when writes_repo is true outside codex_native_subagents runtime`);
+          }
+          if (typeof worker.worktree !== "string" || !worker.worktree.trim()) {
+            errors.push(`${prefix}.worktree is required when writes_repo is true outside codex_native_subagents runtime`);
+          }
         }
         if (!Array.isArray(worker.owned_paths) || worker.owned_paths.length === 0) {
           errors.push(`${prefix}.owned_paths must not be empty when writes_repo is true`);
         }
+        validateParallelWorkerPathLock(plan, worker, index, errors);
+        for (const owned of stringArray(worker.owned_paths).map(normalizeParallelPattern)) {
+          writeOwnedPaths.push({ index, path: owned });
+        }
       }
     });
+    for (let left = 0; left < writeOwnedPaths.length; left += 1) {
+      for (let right = left + 1; right < writeOwnedPaths.length; right += 1) {
+        const leftOwned = writeOwnedPaths[left];
+        const rightOwned = writeOwnedPaths[right];
+        if (globPatternsOverlap(leftOwned.path, rightOwned.path)) {
+          errors.push(
+            `parallel_execution write worker owned_paths must not overlap: workers[${leftOwned.index}] ${leftOwned.path} vs workers[${rightOwned.index}] ${rightOwned.path}`
+          );
+        }
+      }
+    }
   }
 
   const integration = contract.integration;
@@ -1045,6 +1089,66 @@ function validateParallelExecutionContract(plan: Record<string, unknown>, curren
   if (!Array.isArray(integration.fact_source_updates) || integration.fact_source_updates.length === 0) {
     errors.push("parallel_execution.integration.fact_source_updates must be a non-empty list");
   }
+}
+
+function parallelRuntimeProvider(contract: Record<string, unknown>, errors: string[]): string {
+  const runtime = contract.runtime;
+  if (runtime === undefined || runtime === null) return "";
+  if (!isRecord(runtime)) {
+    errors.push("parallel_execution.runtime must be a mapping when present");
+    return "";
+  }
+  return String(runtime.provider ?? "");
+}
+
+function validateParallelWorkerPathLock(plan: Record<string, unknown>, worker: Record<string, unknown>, index: number, errors: string[]): void {
+  const currentTask = currentPlanTask(plan);
+  if (!currentTask) return;
+  const taskAllowed = stringArray(currentTask.allowed_paths).map(normalizeParallelPattern);
+  const workerOwned = stringArray(worker.owned_paths).map(normalizeParallelPattern);
+  const workerForbidden = stringArray(worker.forbidden_paths).map(normalizeParallelPattern);
+  const protectedPatterns = PARALLEL_PROTECTED_WRITE_PATTERNS.map(normalizeParallelPattern);
+  for (const owned of workerOwned) {
+    if (!matchesAny(owned, taskAllowed)) {
+      errors.push(`parallel_execution.workers[${index}].owned_paths must be within current task allowed_paths: ${owned}`);
+    }
+    for (const forbidden of [...workerForbidden, ...protectedPatterns]) {
+      if (globPatternsOverlap(owned, forbidden)) {
+        errors.push(`parallel_execution.workers[${index}].owned_paths must not overlap forbidden paths: ${owned} vs ${forbidden}`);
+      }
+    }
+  }
+}
+
+function currentPlanTask(plan: Record<string, unknown>): Record<string, unknown> | undefined {
+  const currentTaskId = String(plan.current_task_id ?? "");
+  const tasks = Array.isArray(plan.tasks) ? plan.tasks.filter(isRecord) : [];
+  return tasks.find((task) => String(task.id ?? "") === currentTaskId);
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)) : [];
+}
+
+function normalizeParallelPattern(pattern: string): string {
+  return pattern.replace(/\\/g, "/").replaceAll("<harnessRoot>", ".codex");
+}
+
+function globPrefix(pattern: string): string {
+  const normalized = normalizeParallelPattern(pattern);
+  const positions = ["*", "[", "?"].map((token) => normalized.indexOf(token)).filter((index) => index >= 0);
+  const prefix = positions.length > 0 ? normalized.slice(0, Math.min(...positions)) : normalized;
+  return prefix.replace(/\/+$/, "");
+}
+
+function globPatternsOverlap(left: string, right: string): boolean {
+  const leftClean = normalizeParallelPattern(left);
+  const rightClean = normalizeParallelPattern(right);
+  if (matchesGlob(leftClean, rightClean) || matchesGlob(rightClean, leftClean)) return true;
+  const leftPrefix = globPrefix(leftClean);
+  const rightPrefix = globPrefix(rightClean);
+  if (!leftPrefix || !rightPrefix) return leftPrefix === rightPrefix;
+  return leftPrefix === rightPrefix || leftPrefix.startsWith(`${rightPrefix}/`) || rightPrefix.startsWith(`${leftPrefix}/`);
 }
 
 async function validateChangedPaths(projectRoot: string, plan: Record<string, unknown>, allowOpen: boolean): Promise<string[]> {

@@ -19,6 +19,8 @@ Current release status 面向当前发布决策，必须说明版本、变更价
 
 发布准备本身也是 workflow task。开始 release 工作前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "RELEASING"`；当前轮只更新 `.docs/08_release/CURRENT_RELEASE.md` 中的当前发布状态、一次 smoke evidence 补充、一个部署检查或一个 rollback plan 单元。发布动作本身仍需用户明确授权。
 
+发布阶段默认先评估是否适合并行 read-only preflight。适合时，主 Release Manager 使用 `parallel_execution.trigger: "workflow_default"` 和 `runtime.provider: "codex_native_subagents"` 调度 worker 分别检查 release notes、build artifacts、smoke evidence、known limitations 或 rollback risk；用户明确要求并行时使用 `trigger: "user_requested"`。RELEASING worker 必须 `writes_repo: false`，不得执行 publish、tag、push、delete、deploy 或生产变更；最终 `CURRENT_RELEASE.md`、发布结论和任何真实发布动作由主 Release Manager 负责。
+
 ## 输入
 
 - `<harnessRoot>/state/plan.yaml`

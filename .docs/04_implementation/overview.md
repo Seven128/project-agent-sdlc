@@ -1,11 +1,11 @@
 # .docs/04_implementation overview
 
 <!-- generated-by: AI SDLC Harness build_doc_overviews.py -->
-<!-- source-hash: f9dd296f819cf185 -->
+<!-- source-hash: 1990092806ffd060 -->
 
 Generated artifact. Markdown slices remain the source of truth.
 
-Source hash: `f9dd296f819cf185`
+Source hash: `1990092806ffd060`
 
 ## Source Slices
 
@@ -218,7 +218,7 @@ Key options:
 - Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
 - Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
 - Design fixture: `plan.draft.yaml` references the toy technical plan through `docs.tech_plan`, so installed-consumer `validate-design` covers the strengthened design slicing contract.
-- Protocol checks: retained done task rejection, retained open task rejection, valid explicit `parallel_execution`, and invalid automatic parallel trigger rejection.
+- Protocol checks: retained done task rejection, retained open task rejection, valid workflow-default Codex native subagent `parallel_execution`, and invalid unsupported trigger rejection.
 - Static checks: natural-language routing text, GitHub workflow asset, and release automation script presence.
 
 ## 4. Implementation Findings
@@ -545,7 +545,7 @@ Source: [harness_workflow/command_intent_model.md](harness_workflow/command_inte
   - `/review`、`/test`、`/release` 和 `/rfc` 也通过 `TASK-*` open task 做小步恢复和阶段 gate 管控。
   - `ARCHITECTING` 中的 `/prd` 或“需求要改”可以在开发前回到 `REQUIREMENT_GATHERING`，由 PM workflow 修改 PRD。
   - `/plan`、`/goal` 与 Harness workflow 的配合边界说明。
-  - 用户显式要求并行、多 agent 或多 worktree 时，映射到 optional `parallel_execution` 合同。
+  - 每个阶段 task 默认映射到 parallel eligibility check；安全可拆时创建 `parallel_execution.trigger: "workflow_default"` 合同，用户显式要求并行、多 agent 或多 worktree 时使用 `trigger: "user_requested"`。
 - 修改（Changed）:
   - `AGENTS.md`、`README.md`、`PROJECT_SPEC.md` 的日常控制说明。
   - `pjsdlc_manager` 的路由规则。
@@ -595,7 +595,7 @@ User input
 - 异常处理（Error handling）: 需求、架构、allowed_paths、gate、commit/push 不清或失败时停止并报告 blocker。
 - 边界兜底（Boundary fallback）: `/plan` 和 `/goal` 属于 Codex 客户端模式，Harness 只说明组合方式，不把它们当作可配置 state。
 - 性能或并发注意事项（Performance or concurrency notes）: `/devloop` 每轮重新读取状态，避免连续执行时使用过期 plan 或远端状态。
-- 并行语义（Parallel semantics）: 并行不是默认入口；只有用户显式提出并行时，Manager 才能创建 `parallel_execution.trigger: "user_requested"`，并根据 runtime 能力选择 `runtime_managed` 或 `user_orchestrated`。
+- 并行语义（Parallel semantics）: 每个阶段 task 默认先做 parallel eligibility check；适合拆分时，Manager 创建 `parallel_execution.trigger: "workflow_default"` 并优先使用 `runtime.provider: "codex_native_subagents"`；用户显式提出并行时使用 `trigger: "user_requested"`；native subagent 不可用时降级为 `user_orchestrated`，高风险写入可选择 `codex_exec_worktree` fallback。
 
 ## 6. 与技术方案的偏移
 
@@ -619,6 +619,7 @@ User input
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | 将当前 workspace path 更新为 `.codex`，并纳入模块级 implementation doc 迁移。 |
 | 2026-05-25 | `DEV-036` | `DEV-036` implementation commit | 澄清宏指令是详细提示词别名，并补齐 `/prd`、`/design` 阶段入口。 |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | 增加显式 opt-in 的 parallel execution 意图路由和降级语义。 |
+| 2026-05-30 | `TASK-084` | TASK-084 implementation commit | 将并行入口升级为默认 eligibility check，并记录 Codex native subagent 优先策略。 |
 | 2026-05-27 | `TASK-057` | Working tree | 将 Review、测试、发布和 RFC 入口纳入统一 `TASK-*` 小任务路由语义。 |
 | 2026-05-28 | `TASK-061` | Working tree | 增加开发前从 `ARCHITECTING` 回到 `REQUIREMENT_GATHERING` 的 `/prd` 和需求变化路由规则。 |
 
@@ -877,7 +878,7 @@ Source: [harness_workflow/skills_prompt_and_authoring.md](harness_workflow/skill
 - The generated `Local Override` block tells maintainers and downstream agents to check the merged Skill for semantic conflicts between package base rules and project-local override rules.
 - This authoring repository keeps a private authoring Skill under `.codex/skills/authoring/**`; package source sync excludes it from user projects.
 - The authoring Skill requires README/package README coverage to stay aligned with all public package capabilities.
-- PM, Manager, Dev and Tester prompts now describe optional parallel execution semantics and keep final fact-source integration with the main agent.
+- PM, Architect, Manager, Dev, Reviewer, Tester, Release and RFC prompts now describe default parallel eligibility checks, Codex native subagent scheduling, fallback modes and final fact-source integration with the main agent.
 - PM and Architect prompts require deleting the superseded monolithic PRD/product or tech plan file after user-requested slicing creates replacement slices and updates the related fact-source references.
 - Architect prompt now treats semantic design slicing as a `make validate-design` hard gate: `plan.draft.yaml` development tasks must reference `docs.tech_plan`, multiple draft tasks need distinct primary tech plan slices, generated `overview.md` cannot satisfy design deliverables, and explicit cross-cutting themes require dedicated architecture slices.
 - Manager, PM and Architect prompts now describe the development-before rollback path from `ARCHITECTING` to `REQUIREMENT_GATHERING` for PRD edits, while preserving RFC workflow for changes after `SPRINTING`.
@@ -1118,6 +1119,7 @@ Package asset packages/sdlc-harness/assets/skills/<skill_name>/SKILL.md
 | 2026-05-26 | `DEV-046` | DEV-046 implementation commit | Moved project-local Skill overrides under `pjsdlc_managed/override_skills` and updated authoring impact rules. |
 | 2026-05-26 | `DEV-049` | DEV-049 implementation commit | Added authoring rule that README/package README must cover all public package capabilities. |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in parallel execution prompt rules for PM, Manager, Dev and Tester workflows. |
+| 2026-05-30 | `TASK-084` | TASK-084 implementation commit | Updated all workflow Skills to default parallel eligibility checks with Codex native subagent scheduling and fallback modes. |
 | 2026-05-27 | `DEV-055` | Working tree | Required PRD and tech plan slicing workflows to delete superseded complete files after replacement slices and references are complete. |
 | 2026-05-27 | `DEV-056` | Working tree | Routed PRD and design generation/slicing through recoverable `plan.yaml` tasks. |
 | 2026-05-27 | `TASK-057` | Working tree | Generalized prompt rules so every phase main action is a `TASK-*` task governed by `plan.yaml`, with review/test/release/RFC outputs using `result_docs`. |
@@ -1177,7 +1179,7 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - Generic draft-to-plan rule: when any workflow promotes a draft into a formal `TASK-*`, it removes the source draft in the same state update; the current built-in implementation point is SPRINTING consuming `plan.draft.yaml.tasks[]`.
 - Past task details are cold archive and only used for explicit forensic/audit/regression requests.
 - Release history is also cold archive. `.docs/08_release/CURRENT_RELEASE.md` stores only the current release status; older release evidence is reconstructed from git tags, registry metadata, CI, release commits or external release systems.
-- `parallel_execution` is an optional top-level plan contract; when omitted the workflow remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
+- `parallel_execution` is an on-demand top-level plan contract. Each stage task defaults to a parallel eligibility check; when omitted for a task, that task remains serial. It does not store `phase` or `linked_task_id`; validators infer phase from lifecycle and task selection from `current_task_id`.
 - Direct `validate-dev` is the SPRINTING in-development gate. It allows a valid current open `phase: "SPRINTING"` task, checks scoped dirty files and draft consumption, and rejects missing current-task contracts.
 - `validate-current` and `tools/run_current_gate.py` keep phase-exit safety: after the phase gate runs, `plan.yaml` must have no open tasks before lifecycle advancement.
 
@@ -1187,6 +1189,34 @@ Source: [harness_workflow/state_and_task_protocol.md](harness_workflow/state_and
 - Exit / side effects: validators accept or reject task contracts, draft consumption and phase-exit readiness; SPRINTING writes implementation and completion ledger commits.
 - Config contract: task fields (`phase`, `allowed_paths`, `required_gates`, `result_docs`, `implementation_doc`) and lifecycle `current_phase`.
 - Fixture/live boundary: workflow state protocol only; no product runtime is owned by plan state itself.
+
+## Development Evidence
+
+- Evidence Level: `local_runtime`, verified through package CLI regression and local Harness gates for TASK-084.
+- Target Runtime Environment: `local`; the handoff entrypoint is `npm test --workspace agent-project-sdlc`.
+- Runnable Entry: `npm test --workspace agent-project-sdlc; npx sdlc-harness validate-plan; npx sdlc-harness validate-dev`.
+- Observable Exit: package regression passed with validator coverage for `workflow_default`, `codex_native_subagents`, legacy `user_requested`, invalid provider cases and SPRINTING path-lock violations; source sync/check also passed.
+- Client / Server Initialization: local Node CLI runtime starts through `npm test --workspace agent-project-sdlc` and package CLI commands; no server process is required.
+- Config Contract: no secrets; Harness root comes from `package.json#sdlcHarness.harnessFolderName` or `sdlc-harness.config.json#harnessFolderName`, and the parallel contract is read from `plan.yaml#parallel_execution`.
+- Testing Handoff Readiness: ready for Review/Testing handoff after package tests, source sync/check, docs overview, validate-harness, validate-rfc and validate-dev pass.
+- Known Missing Runtime Boundaries: no standalone `sdlc-harness parallel run` CLI is implemented in this task; Codex native subagents remain the runtime provider governed by prompt and plan contract.
+- Basic Self-test Evidence: See `Development Self-Test Report`; `npm test --workspace agent-project-sdlc` PASS for TASK-084 package regression.
+
+## Development Self-Test Report
+
+- Contract Source: .docs/rfc/RFC_026_default_native_subagent_parallel_execution.md#8-development-self-test-impact
+- Scenario Results: parallel-contract-schema PASS; sprinting-path-lock PASS; source-sync-assets PASS.
+- Executed Gates: `npm test --workspace agent-project-sdlc`; `node packages/sdlc-harness/dist/cli.js package sync-source`; `node packages/sdlc-harness/dist/cli.js package check-source`; `make docs-overview`; `make validate-harness`; `make validate-rfc`; `make validate-dev`.
+- Module Key Test Path: `npm test --workspace agent-project-sdlc; npx sdlc-harness validate-plan; npx sdlc-harness validate-dev` -> parallel-contract-schema -> sprinting-path-lock -> source-sync-assets -> TypeScript validator schema and path-lock checks -> Python validator parity through `make validate-plan` -> package asset source sync/check -> observable PASS output.
+- Actual Evidence: package regression passed 10 test files; package sync-source reported changed assets and package check-source reported source OK; `make validate-plan` passed with current task allowed paths; docs overview and Harness/RFC/dev validation pass in the final task gate sweep.
+- Missing / Blockers: none.
+- Testing Handoff Readiness: ready for Review/Testing handoff with the required package, source sync, overview, Harness, RFC and dev gates recorded above.
+
+| Scenario ID | Result | Executed Entry | Actual Exit | Evidence |
+|---|---|---|---|---|
+| parallel-contract-schema | PASS | `npm test --workspace agent-project-sdlc` | Validator tests accepted `workflow_default` and `codex_native_subagents`, and rejected invalid provider combinations. | package regression output |
+| sprinting-path-lock | PASS | `npm test --workspace agent-project-sdlc` | Validator tests rejected overlapping owned paths and owned paths outside current task allowed paths. | package regression output |
+| source-sync-assets | PASS | `node packages/sdlc-harness/dist/cli.js package sync-source && node packages/sdlc-harness/dist/cli.js package check-source` | Managed package assets synchronized and checked without drift. | source sync/check output |
 
 ## 3. 真实代码结构
 
@@ -1265,13 +1295,15 @@ SPRINTING task starts
 -> both commits are pushed before the next task starts
 ```
 
-Optional parallel execution:
+Default parallel execution:
 
 ```txt
-User explicitly asks for parallel / multi-agent / multi-worktree
--> main agent creates parallel_execution.trigger = user_requested
--> runtime_managed: main agent spawns subagents when runtime supports it
--> user_orchestrated: main agent outputs worker prompts for manual Codex conversations/worktrees
+Stage task starts
+-> main agent performs parallel eligibility check
+-> if safe, main agent creates parallel_execution.trigger = workflow_default
+-> runtime_managed + codex_native_subagents is the default provider
+-> user_requested keeps explicit user parallel intent
+-> user_orchestrated / codex_exec_worktree are fallback providers
 -> workers operate inside owned_paths and run focused gates
 -> main agent reviews, merges/cherry-picks, runs total gates and updates final fact sources
 ```
@@ -1296,7 +1328,8 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 - `lifecycle.yaml` does not store phase history. Phase history is reconstructed from git, PRs, CI, registry metadata, tags or external release evidence only when explicitly needed.
 - `/dev` runs one task and stops. `/devloop` repeats `/dev` until neither `plan.yaml.tasks[]` nor `plan.draft.yaml.tasks[]` contains a clear next task, or a blocker appears.
 - The workflow assumes a singleton project-level Harness collaboration boundary; concurrent agents must coordinate through git and active state rather than independent archive files.
-- Parallel execution is opt-in only. `trigger` must be `user_requested`, `mode` must be `runtime_managed` or `user_orchestrated`, and validators reject duplicate `phase` / `linked_task_id` fields in the contract.
+- Parallel execution is default-evaluated and on-demand. `trigger` must be `workflow_default` or `user_requested`; `workflow_default` requires `runtime.provider: "codex_native_subagents"`; `mode` must be `runtime_managed` or `user_orchestrated`; validators reject duplicate `phase` / `linked_task_id` fields in the contract.
+- SPRINTING write workers must declare non-empty, non-overlapping `owned_paths` within the current task `allowed_paths`; non-native write runtimes still require `branch` and `worktree`.
 - Workers do not own final fact sources. PRD, plan state, implementation docs, test results, generated overviews and total gate evidence are integrated by the main agent.
 
 ## 6. 与技术方案的偏移
@@ -1323,7 +1356,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | `make validate-harness` | Prompt language and generated overview consistency after dev gate wiring changes | PASS for TASK-071 |
 | `tests/sdlc-harness/sync-init-doctor.test.mjs` | Package init memory seed and managed asset sync behavior | PASS for TASK-065 |
 | `tests/sdlc-harness/upgrade.test.mjs` | Migration-created memory seed and legacy state migration | PASS for TASK-065 |
-| `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption and optional parallel contract acceptance/failure cases | PASS for TASK-062 |
+| `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption, default/native parallel contract and path-lock acceptance/failure cases | PASS for TASK-084 |
 | `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
 | `tests/sdlc-harness/transition.test.mjs` | Controlled `RFC_RECALIBRATION` interrupt from SPRINTING/REVIEWING/TESTING/RELEASING, illegal pre-development RFC entry, RFC return cleanup and unchanged REVIEWING -> TESTING | PASS for TASK-082 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
@@ -1342,6 +1375,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-25 | `DEV-024` - `DEV-028` | Historical implementation commits | Shortened plan/gate/lifecycle state and strengthened RFC impact handling. |
 | 2026-05-26 | `DEV-043` | DEV-043 implementation commit | Consolidated legacy state/task implementation docs into module facts. |
 | 2026-05-27 | `DEV-050` | DEV-050 implementation commit | Added opt-in `parallel_execution` contract for multi-agent/worktree coordination. |
+| 2026-05-30 | `TASK-084` | TASK-084 implementation commit | Added default Codex native subagent scheduling semantics and SPRINTING path-lock validation. |
 | 2026-05-27 | `DEV-056` | Working tree | Extended `plan.yaml` task control to PRD and design document generation, slicing and fact-source synthesis. |
 | 2026-05-27 | `TASK-057` | Working tree | Unified all new workflow tasks under `TASK-*` with `phase`, expanded plan control to review/test/release/RFC, and kept legacy task prefixes compatible. |
 | 2026-05-28 | `TASK-059` | Pending implementation commit | Removed duplicate current phase state from plan files and parallel execution contracts. |

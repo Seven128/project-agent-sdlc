@@ -56,7 +56,7 @@
 | PRD-NPM-025 | implementation doc 默认按模块级事实切片 | P0 | `.docs/04_implementation/` 描述最终实现产物，默认按模块、子系统或核心数据流维护，并与 architecture / tech plan 边界对应；task id 和 commit 仅作为 provenance，不作为默认文档粒度 |
 | PRD-NPM-026 | 支持自然语言意图和约定指令别名双入口 | P0 | 每个阶段都应支持自然语言和 `/xxx` 快捷入口；`/xxx` 是更完整、更细节的提示词别名，自然语言是低成本入口；产品、架构、开发阶段分别提供 `/prd`、`/design`、`/dev`、`/devloop` |
 | PRD-NPM-027 | npm 发布流程可脚本化执行 | P1 | 提供仓库内 release script，自动执行 version bump、test、source drift check、pack dry-run、publish、registry latest verification、installed-consumer smoke 和 release doc evidence；默认不发布，显式确认后才 publish |
-| PRD-NPM-028 | 支持显式 opt-in 的 Parallel Execution Contract | P1 | 只有用户明确要求并行、多 agent 或多 worktree 时才启用；支持 `runtime_managed` 和 `user_orchestrated` 两种模式；Harness 记录 worker 边界、owned paths、required gates 和主 Agent 集成责任，但 v1 不承诺 CLI 自动启动 Codex agent |
+| PRD-NPM-028 | 支持默认 Codex native subagent 并行调度合同 | P1 | 每个阶段 task 默认评估是否适合安全并行；适合时使用 `parallel_execution.trigger: "workflow_default"`、`mode: "runtime_managed"` 和 `runtime.provider: "codex_native_subagents"`；用户显式要求并行时使用 `user_requested`；Harness 记录 worker 边界、owned paths、required gates 和主 Agent 集成责任 |
 | PRD-NPM-029 | `validate-dev` 强制 SPRINTING 交付结构化 Development Evidence | P0 | 当前 open dev task 的 implementation doc 必须记录 `Runnable Entry`、`Observable Exit`、`Basic Self-test Evidence`，或带原因的 `Not applicable`；页面类任务要求 dev server/page URL 与 browser check，API/CLI/worker 类任务要求 invocation 与可观察结果 |
 
 ## 5. Acceptance Criteria
@@ -95,10 +95,11 @@
 - [ ] npm package patch release 可以通过 `npm run release:npm -- --version patch --publish --yes` 执行，并生成 release evidence。
 - [ ] Harness 不再生成或要求 checkpoint 目录、checkpoint 模板或 `validate-checkpoint` gate。
 - [ ] Harness 不再生成或要求 `<harnessRoot>/archive/**` 作为 task/release 常规归档。
-- [ ] 用户未显式要求并行时，`plan.yaml` 不需要 `parallel_execution`，`/prd`、`/dev`、`/test` 保持串行。
-- [ ] 用户显式要求并行、多 agent 或多 worktree 时，Agent 可以生成 `parallel_execution.trigger: "user_requested"` 合同，描述 `mode`、`workers`、`owned_paths`、`forbidden_paths`、worker gates 和主 Agent integration。
-- [ ] 当前 runtime 支持 subagent 时可使用 `runtime_managed`；不支持时使用 `user_orchestrated`，由主 Agent 输出 worker prompts，用户手动多开对话或 worktree 后粘贴执行。
-- [ ] 需求、开发、测试阶段并行的最终事实源更新都由主 Agent 集成；worker 不直接拥有最终 PRD、plan、implementation doc、test result 或 overview。
+- [ ] 每个阶段 task 开始时，Agent 默认执行 parallel eligibility check；适合安全拆分时创建 `parallel_execution.trigger: "workflow_default"` 合同，不适合时保持串行并记录原因。
+- [ ] 用户显式要求并行、多 agent 或多 worktree 时，Agent 可以生成 `parallel_execution.trigger: "user_requested"` 合同，描述 `runtime.provider`、`mode`、`workers`、`owned_paths`、`forbidden_paths`、worker gates 和主 Agent integration。
+- [ ] 默认 runtime 使用 `runtime_managed` + `runtime.provider: "codex_native_subagents"`；不支持 native subagent 时使用 `user_orchestrated`，需要强隔离时可使用 `codex_exec_worktree` fallback。
+- [ ] 全阶段并行的最终事实源更新都由主 Agent 集成；worker 不直接拥有最终 PRD、plan、architecture、tech plan、implementation doc、review/test/release report 或 overview。
+- [ ] SPRINTING 写入 worker 的 `owned_paths` 必须非空、互不重叠，并落在当前 task `allowed_paths` 内。
 - [ ] `validate-dev` 拒绝缺少当前 task `Development Evidence` 的 implementation doc，确保 TESTING 接收到已有预期能力的应用入口与可观察出口。
 
 ## 6. Out Of Scope
@@ -113,7 +114,7 @@
 - 不维护独立 gate results state。
 - 不把过去 phase/task 执行流水写入 active state，也不要求 Agent 默认读取这些流水。
 - 历史 `dev_*.md` task log 已在 DEV-043 合并为模块级 implementation docs；后续不再把 task 粒度文档作为 `.docs/04_implementation/` 的活跃事实源。
-- 不在 v1 提供 CLI 自动启动 Codex subagent、自动打开多个 Codex 对话或强制创建 worktree 的能力；Parallel Execution 是协作合同和提示词协议。
+- 第一版不提供 `sdlc-harness parallel run` 这类独立并行调度 CLI；Harness 使用 Codex native subagent runtime，并保留 `codex_exec_worktree` 作为强隔离 fallback 语义。
 
 ## 7. Open Questions
 

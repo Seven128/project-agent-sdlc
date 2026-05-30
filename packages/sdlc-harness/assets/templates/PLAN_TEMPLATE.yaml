@@ -1,17 +1,20 @@
 current_task_id: "TASK-001"
 next_task_sequence: 2
-# Optional. Omit this block for normal serial workflow. Only add it when the
-# user explicitly asks for parallel / multi-agent / multi-worktree execution.
+# Optional top-level execution contract. Omit this block when the current task
+# stays serial after the default parallel eligibility check. Use
+# trigger: "workflow_default" when the workflow safely splits the task by
+# default; use trigger: "user_requested" when the user explicitly asks for
+# parallel / multi-agent / multi-worktree execution.
 # parallel_execution:
 #   enabled: true
-#   trigger: "user_requested"
-#   mode: "user_orchestrated" # or "runtime_managed" when the current agent runtime can spawn subagents
+#   trigger: "workflow_default"
+#   mode: "runtime_managed"
+#   runtime:
+#     provider: "codex_native_subagents" # fallbacks: user_orchestrated, codex_exec_worktree
 #   coordinator: "main_agent"
 #   workers:
 #     - id: "worker-feature"
 #       writes_repo: true
-#       branch: "agent/feature"
-#       worktree: "../project-feature"
 #       owned_paths:
 #         - "src/feature/**"
 #         - "tests/feature/**"

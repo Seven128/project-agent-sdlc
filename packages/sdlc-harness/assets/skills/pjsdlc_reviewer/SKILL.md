@@ -21,6 +21,8 @@ Review 必须把“当前模块没有可运行入口/出口”视为阻断项，
 
 Review 产出本身也是 workflow task。开始 review 前，先在 `<harnessRoot>/state/plan.yaml` 创建或选择一个足够小的 `TASK-*` open task，并设置 `phase: "REVIEWING"`；当前轮只产出一个 review batch、一个风险主题 slice 或一次 PR review 结论。不要在一个任务里覆盖多个互不相关的 review 主题。
 
+Review 阶段默认先评估是否适合并行只读审查。适合时，主 Reviewer 使用 `parallel_execution.trigger: "workflow_default"` 和 `runtime.provider: "codex_native_subagents"` 调度 worker 分别检查需求一致性、架构风险、测试缺口、runnable entry/exit 或安全风险；用户明确要求并行时使用 `trigger: "user_requested"`。worker 必须 `writes_repo: false`，只提交 findings 和证据；最终 `REVIEW_REPORT.md` 与 PASS/BLOCKED 结论由主 Reviewer 汇总。
+
 ## 输入
 
 - `<harnessRoot>/state/plan.yaml`

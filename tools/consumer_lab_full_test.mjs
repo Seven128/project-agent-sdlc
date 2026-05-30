@@ -674,8 +674,10 @@ tasks:
 next_task_sequence: 2
 parallel_execution:
   enabled: true
-  trigger: "user_requested"
-  mode: "user_orchestrated"
+  trigger: "workflow_default"
+  mode: "runtime_managed"
+  runtime:
+    provider: "codex_native_subagents"
   coordinator: "main_agent"
   workers:
     - id: "worker-smoke"
@@ -699,16 +701,16 @@ tasks: []
     "utf8"
   );
   await writeFile(path.join(labDir, ".codex/state/lifecycle.yaml"), 'current_phase: "TESTING"\nactive_role: "tester"\nactive_skill: "pjsdlc_tester"\n', "utf8");
-  commandCheck("Parallel execution", "valid explicit user_requested contract", "npx", ["sdlc-harness", "validate-test"]);
+  commandCheck("Parallel execution", "valid workflow_default native subagent contract", "npx", ["sdlc-harness", "validate-test"]);
 
   const valid = await readFile(planPath, "utf8");
-  await writeFile(planPath, valid.replace('trigger: "user_requested"', 'trigger: "automatic"'), "utf8");
+  await writeFile(planPath, valid.replace('trigger: "workflow_default"', 'trigger: "automatic"'), "utf8");
   const invalid = run("npx", ["sdlc-harness", "validate-test"], labDir);
   add({
     area: "Parallel execution",
-    evidence: "automatic trigger is rejected",
+    evidence: "unsupported trigger is rejected",
     command: "npx sdlc-harness validate-test",
-    status: invalid.status !== 0 && `${invalid.stdout}\n${invalid.stderr}`.includes("user_requested") ? "PASS" : "FAIL",
+    status: invalid.status !== 0 && `${invalid.stdout}\n${invalid.stderr}`.includes("workflow_default") ? "PASS" : "FAIL",
     details: trimOutput(`${invalid.stdout}\n${invalid.stderr}`)
   });
 
