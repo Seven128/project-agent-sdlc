@@ -94,7 +94,7 @@ export function classifyMissingTools(result) {
   }
   const output = `${result.stdout}\n${result.stderr}`;
   if (output.includes("tools/") && (output.includes("No such file") || output.includes("can't open file"))) {
-    return { status: "BLOCKED", details: "consumer repo is missing generated Makefile tools/** dependency" };
+    return { status: "FAIL", details: "consumer repo is missing package-managed tools/**" };
   }
   return { status: "FAIL", details: trimOutput(output) || `exit ${result.status}` };
 }
@@ -135,19 +135,6 @@ export async function runConsumerLabFullTest(rawOptions) {
     });
     return result;
   };
-  const expectedBlockedOrPass = (area, evidence, command, args, classifier, opts = {}) => {
-    const result = run(command, args, opts.cwd ?? options.labDir);
-    const classified = classifier(result);
-    add({
-      area,
-      evidence,
-      command: renderCommand(command, args),
-      status: classified.status,
-      details: classified.details
-    });
-    return result;
-  };
-
   if (options.resetLab) {
     await rm(options.labDir, { recursive: true, force: true });
   }
@@ -210,16 +197,24 @@ tasks: []
   await verifyStaticWorkflowText(options.labDir, add);
 
   for (const gate of ["validate-harness", "validate-current", "validate-review", "validate-test", "validate-release"]) {
-    expectedBlockedOrPass("Makefile gates", `make ${gate}`, "make", [gate], classifyMissingTools);
+    commandCheck("Makefile gates", `make ${gate}`, "make", [gate]);
   }
-  expectedBlockedOrPass("Docs overview", "make docs-overview", "make", ["docs-overview"], classifyMissingTools);
-  expectedBlockedOrPass(
-    "Lifecycle transition",
-    "python3 tools/transition.py --to ARCHITECTING",
-    "python3",
-    ["tools/transition.py", "--to", "ARCHITECTING"],
-    classifyMissingTools
-  );
+  commandCheck("Docs overview", "make docs-overview", "make", ["docs-overview"]);
+  commandCheck("Lifecycle transition", "python3 tools/transition.py --to REVIEWING", "python3", [
+    "tools/transition.py",
+    "--to",
+    "REVIEWING"
+  ]);
+  commandCheck("Lifecycle transition", "python3 tools/transition.py --to RFC_RECALIBRATION", "python3", [
+    "tools/transition.py",
+    "--to",
+    "RFC_RECALIBRATION"
+  ]);
+  commandCheck("Lifecycle transition", "python3 tools/transition.py --to SPRINTING", "python3", [
+    "tools/transition.py",
+    "--to",
+    "SPRINTING"
+  ]);
   for (const validator of ["validate-review", "validate-test", "validate-release", "validate-rfc"]) {
     commandCheck("Later-stage CLI validators", `npx sdlc-harness validate ${validator}`, "npx", ["sdlc-harness", "validate", validator]);
   }
@@ -259,6 +254,7 @@ async function verifyManagedAssets(labDir, add) {
   const required = [
     "AGENTS.md",
     "Makefile",
+    "tools/transition.py",
     ".github/workflows/harness.yml",
     ".docs/INDEX.md",
     ".codex/config.yaml",
@@ -883,7 +879,7 @@ export function renderMarkdownReport(report) {
 - Started: ${report.startedAt}
 - Finished: ${report.finishedAt}
 
-This script installs the package tarball into the lab, does not copy source-repo \`tools/**\` into the consumer repository, and deletes the lab repository after reports are written unless \`--keep-lab\` is set.
+This script installs the package tarball into the lab, relies on package-managed \`tools/**\` materialization instead of copying source-repo tools directly, and deletes the lab repository after reports are written unless \`--keep-lab\` is set.
 
 ## Summary
 

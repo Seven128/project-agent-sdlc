@@ -43,7 +43,7 @@ test("consumer lab script requires keep-lab when committing evidence", () => {
   );
 });
 
-test("consumer lab script classifies known package boundary gaps", () => {
+test("consumer lab script classifies missing managed tools as failure", () => {
   assert.deepEqual(
     classifyMissingTools({
       status: 2,
@@ -51,8 +51,8 @@ test("consumer lab script classifies known package boundary gaps", () => {
       stderr: "python3: can't open file '/lab/tools/validate_harness.py': [Errno 2] No such file or directory"
     }),
     {
-      status: "BLOCKED",
-      details: "consumer repo is missing generated Makefile tools/** dependency"
+      status: "FAIL",
+      details: "consumer repo is missing package-managed tools/**"
     }
   );
 });

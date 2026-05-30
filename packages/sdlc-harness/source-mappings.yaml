@@ -19,6 +19,12 @@ source_mappings:
   - source: ".codex/pjsdlc_managed/make/sdlc-harness.mk"
     target: "packages/sdlc-harness/assets/make/sdlc-harness.mk"
     mode: "copy-file"
+  - source: "tools"
+    target: "packages/sdlc-harness/assets/tools"
+    mode: "copy-tree"
+    exclude:
+      - "consumer_lab_full_test.mjs"
+      - "release_npm.mjs"
   - source: ".github/workflows/harness.yml"
     target: "packages/sdlc-harness/assets/github/harness.yml"
     mode: "copy-file"

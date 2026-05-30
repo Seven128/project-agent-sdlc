@@ -68,6 +68,7 @@ npx sdlc-harness init --adopt
 | Workflow skills | `<harnessRoot>/skills/pjsdlc_*/SKILL.md` | 提供 PM、架构、开发、实现文档、Review、测试、发布、RFC 等阶段角色提示词 |
 | 阶段角色提示词本地追加 | `<harnessRoot>/pjsdlc_managed/override_skills/<skill_name>.md` + `sync` | 用户不改 managed Skill，通过本地 override 追加项目规则，下一次 sync/upgrade 会重新合成 |
 | 本地策略覆盖 | `<harnessRoot>/pjsdlc_managed/policies/*.local.yaml` | 保留项目自己的策略补充，不和包内默认策略混写 |
+| Harness Python tools | `tools/*.py` | package-managed 本地 workflow tools，包括 `transition.py`、validators 和 overview 生成器；`init/sync/upgrade` 会生成或更新这些脚本 |
 | Agent 可读用户指南 | `node_modules/agent-project-sdlc/assets/docs/README.md` | npm 包内附带本仓库根 README，方便用户 Agent 在安装包中读取完整工作流说明 |
 | 文档 overview | `make docs-overview`、`make validate-doc-overviews` | 从 `.docs/**` facts 生成各阶段 overview，避免手写派生视图 |
 | 包源码一致性检查 | `sdlc-harness package sync-source`、`sdlc-harness package check-source` | 供本仓库维护者同步和检查 package canonical assets，避免源码与发布内容漂移 |
@@ -101,7 +102,7 @@ Agent 会读取 `<harnessRoot>/state/lifecycle.yaml` 和 `<harnessRoot>/state/pl
 
 技术方案阶段需要产出 `plan.draft.yaml`，是为了解决跨阶段交接和当前执行队列纯净性的冲突。`ARCHITECTING` 必须在进入开发前证明方案可以拆成具体、可验证的开发单元，包括修改范围、gate、implementation doc 和执行顺序；但这些未来开发 task 如果直接进入 `plan.yaml`，会和当前架构阶段 task 混在一起，让阶段 gate 无法区分“架构任务未完成”和“下一阶段任务已预拆”。因此开发任务先作为 draft 暂存，进入 `SPRINTING` 后再逐个 promote 成正式 `TASK-*`。其它阶段默认根据上一阶段已经稳定的事实源即时创建当前阶段 task，只有当某个阶段也需要提前为后续阶段生成具体执行任务时，才应引入同类 draft queue。
 
-在尚未进入开发前，`ARCHITECTING` 可以回到 `REQUIREMENT_GATHERING` 修改 PRD：Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流，完成 PRD task 和 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化仍走 RFC workflow。
+在尚未进入开发前，`ARCHITECTING` 可以回到 `REQUIREMENT_GATHERING` 修改 PRD：Manager 使用 `python3 tools/transition.py --to REQUIREMENT_GATHERING` 切回 PM/PRD 工作流，完成 PRD task 和 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求或设计变化走 RFC workflow；`SPRINTING`、`REVIEWING`、`TESTING` 和 `RELEASING` 都可以通过 `python3 tools/transition.py --to RFC_RECALIBRATION` 进入受控 RFC 中断，RFC 完成后回到 `SPRINTING` 重新完成开发自测和 handoff。
 
 `validate-design` 会把架构阶段的语义切片作为硬 gate：`overview.md` 不计入 deliverables，`plan.draft.yaml` 中每个开发 draft task 必须通过 `docs.tech_plan` 指向存在的 tech plan slice；多个开发 draft task 默认需要不同 primary tech plan slice。PRD、tech plan 或 draft task 明确出现 AI provider / copilot、外部系统边界、合规 / 权限 / 审计等横切主题时，也需要对应的专门 architecture slice。可运行边界类 draft task 还必须带 `self_test_contract`，并在 tech plan 中有 `Development Self-Test Contract`；合同必须记录 `module_key_test_path`，说明从本地启动或调用入口开始，到完成全部自测 scenario 的模块关键测试路径，并覆盖本 task / 本模块承诺的所有可运行入口和内部关键路径。
 

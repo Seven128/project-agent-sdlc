@@ -214,9 +214,11 @@ python3 tools/transition.py --to <PHASE>
 | `REVIEWING` | `pjsdlc_reviewer` | PRD、技术方案、实现文档、`git diff` | Review report、entry/exit readiness 结论 | `make validate-review` | `TESTING` |
 | `TESTING` | `pjsdlc_tester` | PRD、技术方案、实现文档、Review、既有 runnable entry/exit | Test strategy、test cases、test report、回归证据、coverage gaps、final decision | `make validate-test` | `RELEASING` |
 | `RELEASING` | `pjsdlc_release_manager` | 测试结果、build artifacts | Current release status、smoke result、rollback plan | `make validate-release` | `COMPLETED` |
-| `RFC_RECALIBRATION` | `pjsdlc_rfc_recalibrate` | RFC、PRD、技术方案、任务状态 | 局部补丁、任务回退或增量任务 | `make validate-rfc` | 原阶段或 `SPRINTING` |
+| `RFC_RECALIBRATION` | `pjsdlc_rfc_recalibrate` | RFC、PRD、技术方案、任务状态 | 局部补丁、任务回退或增量任务 | `make validate-rfc` | `SPRINTING` |
 
 `phase_contracts.yaml` 支持 `returns` 作为受限回退目标。当前唯一默认回退是 `ARCHITECTING -> REQUIREMENT_GATHERING`，用于尚未进入 `SPRINTING` 时补充或修正 PRD。回退后 lifecycle 的 `active_role` 和 `active_skill` 切到 PM 工作流；PRD task 完成并通过 `validate-pm` 后，再用 `python3 tools/transition.py --to ARCHITECTING` 回到设计阶段。进入 `SPRINTING` 后的需求变化必须走 RFC recalibration。
+
+`RFC_RECALIBRATION` 是 SPRINTING 之后的受控中断阶段。`SPRINTING`、`REVIEWING`、`TESTING` 和 `RELEASING` 可以通过 `python3 tools/transition.py --to RFC_RECALIBRATION` 进入 RFC；transition helper 会记录 `suspended_phase`、切换到 `pjsdlc_rfc_recalibrate`，并把 RFC 出口收敛到 `SPRINTING`。RFC 完成并通过 `make validate-rfc` 后回到 `SPRINTING`，由开发阶段重新完成自测合同、implementation doc 和 Review/Testing handoff。
 
 `make validate-dev` / `npx sdlc-harness validate-dev` 是 SPRINTING 开发中 gate，允许当前 `current_task_id` 对应的 open task 留在 `plan.yaml`，并校验 lifecycle、当前 task 合同、dirty files、`plan.draft.yaml` 消费状态、runtime evidence task contract、`self_test_contract`、implementation doc、结构化 `Development Evidence` 和 `Development Self-Test Report`。runtime/app/provider/live 类 task 必须声明 `evidence_level.required`、`target_runtime_environment` 和 `self_test_contract`；`self_test_contract.required_gates` 必须同步出现在 task `required_gates`，`self_test_contract.module_key_test_path` 必须描述从本地启动或调用入口开始，到完成全部自测 scenario 的模块关键测试路径，并覆盖本 task / 本模块承诺的所有可运行入口和内部关键路径；`deployed_runtime` 不能用 `unit`、`local_runtime`、`external_provider_live`、provider smoke、fake adapter 或 localhost smoke 单独关闭，`business_handoff_ready` 必须有 Testing Handoff Contract。当前 task 的 implementation doc 必须包含 `Evidence Level`、`Target Runtime Environment`、`Runnable Entry`、`Observable Exit`、`Client / Server Initialization`、`Config Contract`、`Testing Handoff Readiness`、`Known Missing Runtime Boundaries`、`Basic Self-test Evidence`，或带原因的 `Not applicable`；如果 `self_test_contract.status: "required"`，还必须包含已执行的 `Development Self-Test Report`，记录 contract source、scenario results、executed gates、Module Key Test Path、actual evidence、missing/blockers 和 Testing Handoff Readiness；`Module Key Test Path` 必须记录实际入口、内部关键路径、关键边界、观察点和可观测完成证据。页面类任务还需要 dev server/page URL 与 browser check，API/CLI/worker 类任务需要 command/endpoint/invocation 与 response/output/side effect。`make validate-current` / `/advance` 是阶段出口 gate；在 `SPRINTING` 下会在 dev gate 后继续执行 no-open 检查，确保进入 `REVIEWING` 前已经完成 implementation commit 和 completion ledger。
 
@@ -622,6 +624,8 @@ Codex 不需要真实“模式切换”：
     ├── validate_plan.py
     └── validate_task_docs.py
 ```
+
+`tools/*.py` 是 npm package-managed Harness workflow tools。`sdlc-harness init`、`sync` 和 `upgrade` 会从 package assets 生成或更新这些 Python 脚本，保证旧项目能拿到 `transition.py`、validators 和 overview 生成器的修复；authoring-only `.mjs` scripts 不分发到用户项目。
 
 可选快捷命令：
 - `/status`

@@ -53,7 +53,7 @@ Key options:
 - Package smoke: `npm pack` and tarball install into the lab.
 - Init/adopt/root selection: `init --harness-folder .codex`, `init --adopt`, and `package.json#sdlcHarness.harnessFolderName`.
 - Lifecycle commands: `doctor`, `sync`, `upgrade`, and supported CLI validators.
-- Managed assets: `AGENTS.md`, `Makefile`, `.codex/state/**`, `.codex/skills/**`, `.codex/pjsdlc_managed/**`, and `.github/workflows/harness.yml`.
+- Managed assets: `AGENTS.md`, `Makefile`, `tools/*.py`, `.codex/state/**`, `.codex/skills/**`, `.codex/pjsdlc_managed/**`, and `.github/workflows/harness.yml`.
 - Local customization: Skill override append, unknown Skill override blocking, and local policy preservation.
 - Workflow fixtures: PRD, architecture, technical plan, implementation, review, test, release, and RFC docs for the toy helper.
 - Design fixture: `plan.draft.yaml` references the toy technical plan through `docs.tech_plan`, so installed-consumer `validate-design` covers the strengthened design slicing contract.
@@ -62,14 +62,14 @@ Key options:
 
 ## 4. Implementation Findings
 
-The lab exposed a package boundary issue: installed consumers receive Make targets and workflow instructions that invoke `tools/*.py`, but those tools are not included in package assets or generated into the consumer repository.
+The lab previously exposed a package boundary issue: installed consumers received Make targets and workflow instructions that invoked `tools/*.py`, but those tools were not included in package assets or generated into the consumer repository.
 
-This means the package currently has two validation surfaces:
+`TASK-082` closes that boundary for Python workflow tools by distributing `tools/*.py` as package-managed assets and verifying that installed consumers can run Makefile gates, docs overview generation and lifecycle transition commands without copying source-repo tools directly.
+
+The package now has two compatible validation surfaces:
 
 - Package CLI validators, which work for `validate-harness`, `validate-current`, `validate-plan`, `validate-pm`, `validate-design`, `validate-dev`, `validate-review`, `validate-test`, `validate-release`, and `validate-rfc`.
-- Generated Make targets, which advertise the full lifecycle but fail in a consumer-only repo because `tools/**` is missing.
-
-Overview generation and Makefile gates remain blocked from package-only consumer workflows until either the tools are distributed or CLI coverage replaces those Makefile dependencies.
+- Generated Make targets, which use package-managed `tools/*.py` in the consumer repository for lifecycle gates and overview generation.
 
 The scripted report also produces defect candidates and a recommended RFC title whenever `BLOCKED` items remain. This makes the expected follow-up explicit: every full-lab run that finds package behavior gaps should feed RFC recalibration before bug-fix `TASK-*` development tasks.
 
@@ -81,16 +81,13 @@ The scripted report also produces defect candidates and a recommended RFC title 
 | `npm test --workspace agent-project-sdlc` | PASS for TASK-060 package validator regression; 9 tests passed |
 | `node packages/sdlc-harness/dist/cli.js package check-source` | PASS |
 | `node tools/consumer_lab_full_test.mjs --report-only --reset-lab --lab-dir /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS for TASK-060 script execution; CLI `validate-design` PASS; report decision BLOCKED due known Makefile/tools package gap; 37 PASS / 7 BLOCKED / 0 FAIL; lab deleted after run |
+| `npm test --workspace agent-project-sdlc` | PASS for TASK-082; consumer lab script regression now treats missing package-managed tools as FAIL and checks `tools/transition.py` as an expected managed asset. |
 | `test ! -e /Users/momoooo/Documents/sdlc-harness-consumer-lab` | PASS after default full lab run |
-| Lab supported package capability subset | PASS: 37 checks |
-| Lab full documented workflow | BLOCKED: 7 known package gaps, 0 unexpected failures |
+| Lab supported package capability subset | PASS after `TASK-082` regression coverage for managed tools. |
+| Lab full documented workflow | Missing `tools/**` is no longer an expected BLOCKED category; future missing tool failures are defects. |
 
 ## 6. Follow-up
 
-Create an RFC for the package boundary fix before DEV implementation. The implementation should choose one coherent consumer contract:
-
-- distribute the required `tools/**` into consumer repositories,
-- rewrite generated Make targets to call the packaged CLI,
-- or expand CLI commands and make the Makefile a thin `npx sdlc-harness` wrapper.
+The selected consumer contract is to distribute required Python workflow tools into consumer repositories as package-managed `tools/*.py`. A future RFC may still choose to replace Makefile internals with more package CLI calls, but that is no longer required to close the missing-tools blocker.
 
 Any change to package public behavior, README capabilities, validators, Makefile assets, workflow Skills, sync/upgrade, migrations, release automation, or docs overview generation must also check whether `tools/consumer_lab_full_test.mjs` and `tests/sdlc-harness/**` need updates.

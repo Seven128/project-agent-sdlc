@@ -92,6 +92,15 @@ ARCHITECTING discovers PRD needs revision before development
 ```
 
 ```txt
+Later-stage review/test/release discovers requirement or development self-test drift
+-> python3 tools/transition.py --to RFC_RECALIBRATION is legal from SPRINTING / REVIEWING / TESTING / RELEASING
+-> lifecycle.suspended_phase records the interrupted phase
+-> active_role/active_skill become rfc_owner/pjsdlc_rfc_recalibrate
+-> RFC work runs validate-rfc and creates or adjusts downstream SPRINTING tasks
+-> transition.py --to SPRINTING clears suspended_phase and resumes development
+```
+
+```txt
 SPRINTING task starts
 -> if no open task exists, agent may promote one plan.draft.yaml task into a formal TASK-* and delete the source draft
 -> plan.yaml contains full open task contract
@@ -122,7 +131,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 - `plan.yaml` is intentionally short lived. It is not a historical task database.
 - `plan.yaml` is not an exhaustive log of everything an Agent does. The generic workflow contract covers tasks that affect phase deliverables, gates, implementation facts or RFC recalibration; local teams may extend task taxonomy for broader project management needs without changing the core `TASK-*` workflow semantics.
 - `current_phase` belongs only to `lifecycle.yaml`; `plan.yaml`, `plan.draft.yaml` and `parallel_execution` must not duplicate it.
-- `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, RFC/BLOCKED special routes and BLOCKED resume rules. After transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
+- `transition.py` derives legal targets from the current phase's `next`, optional `returns`, `allowed_next_phases`, controlled RFC interrupt routes and BLOCKED resume rules. `RFC_RECALIBRATION` is legal without `--force` only from `SPRINTING`, `REVIEWING`, `TESTING` and `RELEASING`; after RFC exits to `SPRINTING`, stale `suspended_phase` is cleared. After every transition, `allowed_next_phases` is regenerated from the target phase's `next` plus `returns`.
 - Draft queues are not active execution state and must not retain adopted or completed drafts. The current built-in draft queue is `plan.draft.yaml`; it must not contain `current_task_id`.
 - direct `validate-dev` rejects any remaining `plan.draft.yaml.tasks[]`; agents must either continue promoting real unadopted drafts or remove already-consumed stale drafts before development completion.
 - direct `validate-dev` requires lifecycle `current_phase: "SPRINTING"` and allows either an empty development queue or one valid current open `phase: "SPRINTING"` task with `current_task_id`, `docs`, `allowed_paths`, `required_gates`, `acceptance_criteria` and `implementation_doc`.
@@ -166,6 +175,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | `tests/sdlc-harness/upgrade.test.mjs` | Migration-created memory seed and legacy state migration | PASS for TASK-065 |
 | `tests/sdlc-harness/validators.test.mjs` | Package validator plan task, draft consumption and optional parallel contract acceptance/failure cases | PASS for TASK-062 |
 | `tests/sdlc-harness/transition.test.mjs` | `ARCHITECTING -> REQUIREMENT_GATHERING` rollback, PM role/skill activation and `SPRINTING` rollback rejection | PASS for TASK-061 |
+| `tests/sdlc-harness/transition.test.mjs` | Controlled `RFC_RECALIBRATION` interrupt from SPRINTING/REVIEWING/TESTING/RELEASING, illegal pre-development RFC entry, RFC return cleanup and unchanged REVIEWING -> TESTING | PASS for TASK-082 |
 | `make validate-current` | Phase-specific gate dispatch | PASS in sprint/review/test transitions |
 | `npm test --workspace agent-project-sdlc` | Package migration, init seed and validator parity | PASS for TASK-065 |
 | `node packages/sdlc-harness/dist/cli.js package sync-source && package check-source` | Package assets synchronized from source README, Skill and template files | PASS for TASK-065 |
@@ -192,6 +202,7 @@ User explicitly asks for parallel / multi-agent / multi-worktree
 | 2026-05-28 | `TASK-065` | Pending implementation commit | Clarified ADR and memory responsibilities across PROJECT_SPEC, README/package README, architect skill, ADR template and package memory seeds. |
 | 2026-05-29 | `TASK-069` | Working tree | Clarified that release history is cold archive while `.docs/08_release/CURRENT_RELEASE.md` remains the active release status fact source. |
 | 2026-05-29 | `TASK-071` | Working tree | Split direct `validate-dev` open-task semantics from `validate-current` phase-exit no-open checks and moved managed Makefile dev gate to package CLI. |
+| 2026-05-30 | `TASK-082` | Working tree | Constrained RFC interrupts to SPRINTING and later phases, preserved normal REVIEWING -> TESTING routing, and cleared `suspended_phase` when RFC returns to SPRINTING. |
 
 ## 9. 后续维护注意事项
 

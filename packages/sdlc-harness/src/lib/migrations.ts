@@ -220,6 +220,9 @@ function migrateManagedFiles(managedFiles: ManagedFile[], root: string): Managed
       migrated.unshift(makefileEntry);
     }
   }
+  if (!seen.has("tools")) {
+    push({ path: "tools", strategy: "managed" });
+  }
   if (!seen.has(".github/workflows/harness.yml")) {
     push({ path: ".github/workflows/harness.yml", strategy: "create-if-missing" });
   }

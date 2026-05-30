@@ -17,6 +17,7 @@ export function defaultConfig(root: string): HarnessConfig {
       { path: harnessPath(root, "pjsdlc_managed", "templates"), strategy: "managed" },
       { path: harnessPath(root, "pjsdlc_managed", "policies"), strategy: "merge-with-local" },
       { path: harnessPath(root, "pjsdlc_managed", "make", "sdlc-harness.mk"), strategy: "managed" },
+      { path: "tools", strategy: "managed" },
       { path: ".github/workflows/harness.yml", strategy: "create-if-missing" }
     ],
     local_overrides: [

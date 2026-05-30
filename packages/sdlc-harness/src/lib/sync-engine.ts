@@ -86,6 +86,10 @@ async function syncManagedFile(projectRoot: string, root: string, managedFile: M
     await syncFile(packageAssetPath("make", "sdlc-harness.mk"), destination, report, "skip-if-missing");
     return;
   }
+  if (managedFile.path === "tools") {
+    await syncTree(packageAssetPath("tools"), destination, report);
+    return;
+  }
   if (managedFile.path === ".github/workflows/harness.yml") {
     await syncGithubWorkflow(packageAssetPath("github", "harness.yml"), destination, managedFile.path, report);
     return;

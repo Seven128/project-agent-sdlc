@@ -56,6 +56,8 @@ never_overwrite:
 `,
     "utf8"
   );
+  await mkdir(path.join(root, "tools"), { recursive: true });
+  await writeFile(path.join(root, "tools/transition.py"), "# stale transition helper\n", "utf8");
   await writeFile(
     path.join(root, ".harness/state/plan.yaml"),
     `current_phase: "SPRINTING"
@@ -154,6 +156,7 @@ history:
   assert.doesNotMatch(config, /\.agents\/skills/);
   assert.match(config, /\.harness\/pjsdlc_managed\/templates/);
   assert.match(config, /\.harness\/pjsdlc_managed\/policies/);
+  assert.match(config, /path: "?tools"?/);
   assert.match(config, /\.harness\/pjsdlc_managed\/override_skills\/\*\.md/);
   assert.doesNotMatch(config, /\.harness\/overrides\/\*\*/);
   assert.doesNotMatch(config, /\.harness\/managed\/templates/);
@@ -171,6 +174,9 @@ history:
   const makefile = await readFile(path.join(root, "Makefile"), "utf8");
   assert.match(makefile, /pjsdlc:sdlc-harness:make:begin/);
   assert.match(makefile, /-include \.harness\/pjsdlc_managed\/make\/sdlc-harness\.mk/);
+  const transitionTool = await readFile(path.join(root, "tools/transition.py"), "utf8");
+  assert.match(transitionTool, /RFC_INTERRUPT_SOURCES/);
+  assert.doesNotMatch(transitionTool, /stale transition helper/);
 
   const lifecycle = await readFile(path.join(root, ".harness/state/lifecycle.yaml"), "utf8");
   assert.match(lifecycle, /active_skill: "?pjsdlc_pm_prd"?/);

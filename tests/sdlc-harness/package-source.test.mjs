@@ -29,6 +29,7 @@ try {
   await writeFile(path.join(fixture, ".github/workflows/harness.yml"), "name: Harness\n", "utf8");
   await writeFile(path.join(fixture, "Makefile"), "help:\n\t@echo ok\n", "utf8");
   await writeFile(path.join(fixture, "tools/example.py"), "print('ok')\n", "utf8");
+  await writeFile(path.join(fixture, "tools/authoring.mjs"), "console.log('local only')\n", "utf8");
   await writeFile(
     path.join(fixture, "packages/sdlc-harness/source-mappings.yaml"),
     `source_mappings:
@@ -52,6 +53,11 @@ try {
   - source: ".agent/pjsdlc_managed/make/sdlc-harness.mk"
     target: "packages/sdlc-harness/assets/make/sdlc-harness.mk"
     mode: "copy-file"
+  - source: "tools"
+    target: "packages/sdlc-harness/assets/tools"
+    mode: "copy-tree"
+    exclude:
+      - "authoring.mjs"
   - source: ".github/workflows/harness.yml"
     target: "packages/sdlc-harness/assets/github/harness.yml"
     mode: "copy-file"
@@ -73,6 +79,9 @@ try {
   const workflowSkill = await readFile(path.join(fixture, "packages/sdlc-harness/assets/skills/pjsdlc_example/SKILL.md"), "utf8");
   assert.match(workflowSkill, /Skill/);
   await assert.rejects(readFile(path.join(fixture, "packages/sdlc-harness/assets/skills/authoring/local_only/SKILL.md"), "utf8"));
+  const packagedTool = await readFile(path.join(fixture, "packages/sdlc-harness/assets/tools/example.py"), "utf8");
+  assert.match(packagedTool, /print\('ok'\)/);
+  await assert.rejects(readFile(path.join(fixture, "packages/sdlc-harness/assets/tools/authoring.mjs"), "utf8"));
 } finally {
   await rm(fixture, { recursive: true, force: true });
 }

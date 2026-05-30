@@ -34,6 +34,7 @@ try {
   const defaultConfig = await readFile(path.join(defaultRoot, ".agent/config.yaml"), "utf8");
   assert.match(defaultConfig, /agent-project-sdlc/);
   assert.match(defaultConfig, /\.agent\/pjsdlc_managed\/override_skills\/\*\.md/);
+  assert.match(defaultConfig, /path: "?tools"?/);
   assert.doesNotMatch(defaultConfig, /\.agent\/overrides\/\*\*/);
   const packageMetadata = JSON.parse(await readFile(path.join(path.dirname(cliPath), "..", "package.json"), "utf8"));
   assert.doesNotMatch(defaultConfig, /^\s*version:/m);
@@ -72,6 +73,14 @@ try {
   await stat(path.join(defaultRoot, ".agent/skills/pjsdlc_manager/SKILL.md"));
   await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(defaultRoot, ".agent/pjsdlc_managed/policies/phase_contracts.yaml"));
+  const defaultTransition = await readFile(path.join(defaultRoot, "tools/transition.py"), "utf8");
+  assert.match(defaultTransition, /RFC_INTERRUPT_SOURCES/);
+  await writeFile(path.join(defaultRoot, "tools/transition.py"), "# stale transition\n", "utf8");
+  const staleToolSyncReport = await runSync(defaultRoot);
+  assert.equal(staleToolSyncReport.blocked.length, 0);
+  const refreshedTransition = await readFile(path.join(defaultRoot, "tools/transition.py"), "utf8");
+  assert.match(refreshedTransition, /RFC_INTERRUPT_SOURCES/);
+  assert.doesNotMatch(refreshedTransition, /stale transition/);
   await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/managed/policies/phase_contracts.yaml")));
   await assert.rejects(stat(path.join(defaultRoot, ".agent/templates/PLAN_TEMPLATE.yaml")));
@@ -144,6 +153,7 @@ try {
   await stat(path.join(configuredRoot, ".harness/skills/pjsdlc_manager/SKILL.md"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/templates/PLAN_TEMPLATE.yaml"));
   await stat(path.join(configuredRoot, ".harness/pjsdlc_managed/policies/phase_contracts.yaml"));
+  await stat(path.join(configuredRoot, "tools/transition.py"));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/state/gate_results.log")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/templates/PLAN_TEMPLATE.yaml")));
   await assert.rejects(stat(path.join(configuredRoot, ".harness/managed/policies/phase_contracts.yaml")));
