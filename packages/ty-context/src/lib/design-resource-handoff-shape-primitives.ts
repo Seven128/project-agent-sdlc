@@ -46,27 +46,16 @@ export function verificationMethods(
   label: string,
 ): DesignResourceHandoffCoverageV1["verification_methods"] {
   return array(value, label).map((item, index) =>
-    literal(
-      item,
-      DESIGN_RESOURCE_VERIFICATION_METHODS,
-      `${label}[${index}]`,
-    ),
+    literal(item, DESIGN_RESOURCE_VERIFICATION_METHODS, `${label}[${index}]`),
   );
 }
 
 export function positiveInteger(value: unknown, label: string): number {
-  if (
-    typeof value !== "number" ||
-    !Number.isSafeInteger(value) ||
-    value <= 0
-  )
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0)
     designResourceShapeFail(label, "must be a positive safe integer");
   return value;
 }
 
-export function designResourceShapeFail(
-  label: string,
-  message: string,
-): never {
+export function designResourceShapeFail(label: string, message: string): never {
   throw new Error(`design_resource_handoff_invalid:${label}:${message}`);
 }

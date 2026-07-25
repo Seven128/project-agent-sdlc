@@ -71,6 +71,23 @@ test("visual design and implementation guidance reaches every managed copy", asy
 
   const uiux = uiuxCopies[0];
   assert.match(uiux, /^## Design Context Depth \/ 设计上下文深度$/mu);
+  assert.match(uiux, /^## Design Source Projection \/ 设计资源事实投影$/mu);
+  for (const dimension of [
+    "surface_flow",
+    "visual_content",
+    "component_control",
+    "state_interaction",
+    "motion",
+    "adaptation_input",
+    "accessibility",
+    "assets",
+  ]) assert.match(uiux, new RegExp(dimension, "u"));
+  assert.match(uiux, /每个 adopted target 只能有一个 canonical adoption record/iu);
+  assert.match(
+    uiux,
+    /项目级、系统级或 component-family target[\s\S]*owning Screen Contract/iu,
+  );
+  assert.match(uiux, /handoff 的变化型 coverage index 不复制进 Context/iu);
   assert.match(
     uiux,
     /^## External Design Resource Consumption \/ 外部设计资源消费$/mu,
@@ -143,7 +160,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /covered Source Item and verification method[\s\S]*project-owned checks/iu,
+    /covered Source Items, declared verification methods[\s\S]*project-owned check/iu,
   );
   assert.match(development, /`exact-target`, `constraint` or `inspiration`/iu);
   assert.match(
@@ -178,6 +195,12 @@ test("visual design and implementation guidance reaches every managed copy", asy
     development,
     /planned target cannot unlock fidelity implementation/iu,
   );
+  assert.match(
+    development,
+    /final-current-candidate Contract Conformance[\s\S]*unresolved, unmapped, unexecuted, stale or indistinguishable/iu,
+  );
+  assert.match(development, /do not run the preceding default closure/iu);
+  assert.match(development, /Final Gate is the sole Long-Task carrier/iu);
 });
 
 test("Long-Task visual guidance reuses existing authoring and evidence mechanisms", async () => {
@@ -303,7 +326,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   );
 });
 
-test("complete selected-design conformance is an explicit Long-Task purpose", async () => {
+test("complete selected-design conformance is shared through mutually exclusive carriers", async () => {
   const [
     spec,
     globalContext,
@@ -356,11 +379,15 @@ test("complete selected-design conformance is an explicit Long-Task purpose", as
   }
   assert.match(
     globalContext,
-    /Complete selected-design conformance is a design-specific Long-Task objective/iu,
+    /A selected implementation handoff requires every declared material UI\/UX fact[\s\S]*current-candidate production proof/iu,
   );
   assert.match(
     globalContext,
-    /provider-neutral residual handoff adds scope, applicability, missing meaning and downstream bindings/iu,
+    /Design Source Projection routes durable UI\/UX meaning[\s\S]*each adopted target has one canonical record/iu,
+  );
+  assert.match(
+    globalContext,
+    /default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers/iu,
   );
   assert.match(
     chineseReadme,
@@ -374,6 +401,12 @@ test("complete selected-design conformance is an explicit Long-Task purpose", as
     sourcePlan,
     /Implementation-Source Closure And Provider Selection Amendment/iu,
   );
+  assert.match(
+    sourcePlan,
+    /Shared Conformance And Durable UI\/UX Recovery Amendment/iu,
+  );
+  assert.match(sourcePlan, /REQ-DRA-054/);
+  assert.match(sourcePlan, /AC-DRA-033/);
   assert.match(sourcePlan, /Figma[\s\S]*Penpot[\s\S]*OpenPencil/iu);
 });
 
@@ -403,8 +436,8 @@ test("default workflow routes Design Authority readiness without adding a visual
   ]);
 
   for (const content of [spec, managedSurface]) {
-    assert.match(content, /Visual Coverage Set/iu);
-    assert.match(content, /no (?:visual Schema|`uiux_delivery` block)/iu);
+    assert.match(content, /task-local|ephemeral/iu);
+    assert.match(content, /no (?:visual Schema|`uiux_delivery` block)|There is no `uiux_delivery` block/iu);
     assert.match(content, /no[^\n]*lifecycle state/iu);
   }
   assert.match(
@@ -422,7 +455,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   );
   assert.match(
     workflow,
-    /routes every covered[\s\S]{0,80}Source Item and verification method[\s\S]*real-entry checks/iu,
+    /conserves the exact covered Source-item\/method\/blocker\/target\/condition sets[\s\S]*real-entry checks/iu,
   );
   assert.match(workflow, /^## UI Authority Closure$/mu);
   assert.match(workflow, /material production UI/iu);
@@ -444,32 +477,33 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.doesNotMatch(workflow, /Visual Coverage Set/u);
   assert.match(
     agents,
-    /Before a material product, design, implementation or acceptance decision/iu,
+    /For material UI, reconcile affected stable surface\/control\/target keys/iu,
   );
   assert.match(agents, /stable surface\/control\/target key/iu);
   assert.match(
     agents,
-    /production route\/component owner[\s\S]*cold-start real-user entry journey/iu,
+    /production owner, cold-start journey[\s\S]*final-candidate project check/iu,
   );
   assert.match(
     agents,
-    /Design handoff preflight and file hashes prove semantic-input completeness\/resource integrity only/iu,
+    /Preflight and hashes prove input completeness\/integrity, never production conformance/iu,
   );
+  assert.match(agents, /Local fixes and explicit non-fidelity prototypes stay lightweight/iu);
+  assert.match(agents, /Externally authored resources remain ordinary Source/iu);
+  assert.match(agents, /exactly one canonical record/iu);
   assert.match(
     agents,
-    /unconfigured starter, candidate, style-only guidance or inspiration/iu,
-  );
-  assert.match(agents, /non-fidelity work remains lightweight/iu);
-  assert.match(
-    agents,
-    /Externally authored design resources such as Figma frames, images, prototypes/iu,
-  );
-  assert.match(agents, /registry mention alone is not consumption/iu);
-  assert.match(
-    agents,
-    /readable immutable adopted locator\/digest[\s\S]*editable upstream owner\/locator\/update route/iu,
+    /immutable locator\/digest[\s\S]*editable-upstream update route/iu,
   );
   assert.match(agents, /Never overwrite an adopted baseline/iu);
+  assert.match(
+    agents,
+    /unresolved, unmapped, unexecuted, stale or indistinguishable item blocks a complete-conformance claim/iu,
+  );
+  assert.match(
+    agents,
+    /active Long-Task projects this same obligation[\s\S]*never also runs the default closure/iu,
+  );
   assert.match(managedSurface, /Context-reachable Source/iu);
   assert.match(
     managedSurface,
@@ -490,6 +524,8 @@ test("default workflow routes Design Authority readiness without adding a visual
       content,
       /immutable locator\/digest[\s\S]*editable upstream owner\/locator\/update route/iu,
     );
+    assert.match(content, /exactly one canonical adoption record/iu);
+    assert.match(content, /mutually exclusive/iu);
     assert.match(content, /Product `surface_bindings`/u);
     assert.match(content, /typed `design_conformance`/u);
     assert.match(content, /first runnable production slice/iu);
@@ -508,4 +544,6 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(chineseReadme, /Product `surface_bindings`/u);
   assert.match(chineseReadme, /typed `design_conformance`/u);
   assert.match(chineseReadme, /首个可运行纵向切片/u);
+  assert.match(chineseReadme, /两种证明载体互斥/u);
+  assert.match(chineseReadme, /exactly-one canonical adoption record/iu);
 });

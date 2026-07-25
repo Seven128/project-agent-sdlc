@@ -59,7 +59,12 @@ export async function scoreMechanismRun(options) {
       reported_context_delta_correct: reportedDeltaCorrect,
       conformance_completed: conformance,
       workflow_instruction_bytes: metadata.workflow_instruction_bytes,
-      hard_gate_passed: agentIdentityCorrect && probe.decision === "PASS" && verification.every((item) => item.passed) && updates.correct && reportedDeltaCorrect,
+      hard_gate_passed: agentIdentityCorrect
+        && probe.decision === "PASS"
+        && verification.every((item) => item.passed)
+        && updates.correct
+        && reportedDeltaCorrect
+        && (context.required_source_total === 0 || context.selected_source_recall === 1),
       confidence: {
         product_quality: "high_hidden_probe",
         native_verification: "high_operator_executed",

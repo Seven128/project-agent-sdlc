@@ -30,7 +30,9 @@ export async function designResource(args: string[]): Promise<void> {
   }
   console.log(`Design resource handoff ready: ${result.handoff_path}`);
   console.log(`Scope: ${result.handoff.scope.key}`);
-  console.log(`Targets: ${result.handoff.targets.map((item) => item.key).join(", ")}`);
+  console.log(
+    `Targets: ${result.handoff.targets.map((item) => item.key).join(", ")}`,
+  );
   console.log(
     `Coverage: ${result.counts.subjects} subjects x 8 dimensions (${result.counts.coverage} grouped rows)`,
   );

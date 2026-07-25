@@ -6,7 +6,7 @@
 - Keep three cooperating capabilities small and distinct: **Minimal Context** preserves durable project facts, **Workflow Contract** defines the lightweight default engineering loop, and the explicitly enabled **Long-Task Workflow** adds one complete Contract authority plus current-snapshot machine completion for work that needs durable recovery.
 - Apply one shared architecture-quality obligation to every implementation delivery: an externally observable `Architecture Deliberation` before implementation and one current-candidate `Architecture Conformance` after project verification. Default work carries closure inside Contract Conformance; Long-Task carries it only inside Final Gate.
 - Preventing false completion inside declared authority is the Long-Task Workflow's controlling objective. Intermediate implementation may drift or fail; only fresh evidence for every declared Plan Item/Claim and AC on the complete current final snapshot may accept. Otherwise the task remains explicitly unfinished or `machine_accepted_external_pending` when only named external confirmation remains.
-- Complete selected-design conformance is a design-specific Long-Task objective: Agent implementation, acceptance and testing carry every material UI/UX fact explicitly expressed within selected resources' declared scope/conditions into current-snapshot production proof; silence is not authority. Implementation Web/App handoffs require a completely acquired canonical source plus exact dependencies; the provider-neutral residual handoff adds scope, applicability, missing meaning and downstream bindings through typed locators. Only Contract Conformance/Final Gate proves implementation.
+- A selected implementation handoff requires every declared material UI/UX fact to reach current-candidate production proof; default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers.
 - Preserve that protection at the lowest practical total Authoring, Runtime, State, Recovery, maintenance and test cost. Retain a mechanism only when it closes a distinct false-completion/delivery-drift path or enables a material total-cost reduction without weakening acceptance, and its non-substitutable benefit materially exceeds its total cost.
 
 ## Background
@@ -27,6 +27,7 @@
 - Before material UI implementation or Long-Task Compile, **UI Authority Closure** classifies every affected UI item as Context-covered, requiring a Context update, task-local, explicitly out of scope or genuinely decision-required. Stable surface/control/target keys connect layers; conflicting owners fail closed instead of being resolved by current code or Contract convenience.
 - Versioned authored design targets may remain project Source or verifier inputs referenced from Context/`DESIGN.md`; generated implementation screenshots, diffs and one-off review output remain evidence artifacts rather than durable Context.
 - Explicit Open Design adapters separate `design-system-authoring` adoption from `design-resource-authoring` commissioning. Selected handoffs use completely acquired canonical resources plus one residual `design-resource-handoff-v1`; consumers own Context reachability, implementation, method Assertions and blocker proof.
+- Design Source Projection routes durable UI/UX meaning to existing Context/`DESIGN.md` owners while exact target values and delivery proof stay Source/Contract; each adopted target has one canonical record.
 
 ## Design Rationale
 
@@ -46,6 +47,7 @@
 - Raw/revised proposals, selected design resources and mixed attachments enter one Source-bound Contract Draft loop directly. Inventory, refinement/synthesis, direct/derived/delegated/evidence-backed provenance, applicable control/state expansion, Source markers and Contract mapping converge incrementally before Preflight/Compile; Source-quality work is not a serial stage. `/source-plan-authoring` is only a compatibility pointer; legacy Source Plans remain valid ordinary Source. Unknown decision-changing preferences still cause one targeted clarification and high-risk actions remain external confirmations.
 - No live design provider or fixed artifact sequence/count/directory is required. Figma, Penpot and OpenPencil are optional upstream/sidecars when collaboration, self-hosting or static editing justifies a second representation; none replaces source closure, residual handoff or production proof.
 - Selected implementation handoffs, unlike exploration, must close declared UI/UX scope through shared fail-closed preflight; this adds no second Authority or acceptance result.
+- Default selected-design accounting is task-local and creates no artifact/state/Gate; active Long-Task uses only its compiled projection and Final Gate.
 - Harness never creates or recovers platform Goals, invokes or switches models, persists model routes/checkpoint acknowledgement, schedules agents, creates branches/worktrees, merges, pushes, opens PRs, deploys or manages process trees. The selected workspace and external platform own those operations.
 - No Source Inventory file, Coverage authority, Packet/SFC/Wave/Campaign runtime, second Contract plan, scheduler, Worker registry or external-confirmation state machine belongs in the active product.
 
@@ -70,10 +72,10 @@
 
 ## Current State
 
-- Package version `0.7.9` adds the shared observable Architecture Deliberation/Conformance obligation while preserving the public `long-task-delivery-v2` path, explicit `long-task` profile, package-owned Stop Hook, stateless Authority Revision diagnosis, revision-to-rolling return and declared-machine/native-Goal terminal boundary.
+- The current package line preserves the public `long-task-delivery-v2` path, explicit `long-task` profile, package-owned Stop Hook, stateless Authority Revision diagnosis, revision-to-rolling return and declared-machine/native-Goal terminal boundary while sharing architecture and selected-design obligations across mutually exclusive execution carriers.
 - Managed source lives under `.codex/ty-context-managed/**`; packaged assets live under `packages/ty-context/assets/**`; `packages/ty-context/source-mappings.yaml` is the copy authority.
 - Root `AGENTS.md` is a startup router and hard-boundary surface. Skills own role procedures, `PROJECT_SPEC.md` owns the full stable design explanation, role Context owns durable facts, README owns human usage, and tests own machine proof.
-- `ty-context doctor` reports the deterministic default Context read footprint, excessive/byte-identical default content and `DESIGN.md` authority status without creating a new validation gate.
+- `ty-context doctor` reports the deterministic default Context read footprint, excessive/byte-identical default content and `DESIGN.md` authority status without creating a new validation gate. Byte budgets are advisory: required recovery facts win, and neither source tests nor release gates may force their omission, unreadable compression or wrong `on-demand` classification.
 - `ty-context long-task compile` exposes the first-lock model choice as additive JSON rather than a persistent workflow state.
 
 ## Verification Entry Points

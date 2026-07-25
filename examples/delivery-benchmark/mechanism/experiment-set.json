@@ -10,7 +10,8 @@
         "cross-module-receipt-event",
         "api-schema-tax-jurisdiction",
         "verification-deployment-health",
-        "context-evolution-retry"
+        "context-evolution-retry",
+        "uiux-selected-target-recovery"
       ],
       "decision_thresholds": {
         "hidden_quality_pass_rate": 1,
@@ -27,7 +28,8 @@
         "cross-module-receipt-event",
         "api-schema-tax-jurisdiction",
         "verification-deployment-health",
-        "context-evolution-retry"
+        "context-evolution-retry",
+        "uiux-selected-target-recovery"
       ],
       "decision_thresholds": {
         "hidden_quality_pass_rate": 1,

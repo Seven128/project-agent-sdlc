@@ -36,6 +36,7 @@
 - `npm test`
 - `npm run test:ui`
 - `npm run smoke:health`
+- A selected invoice-board implementation handoff additionally runs `node tools/ty-context.mjs design-resource preflight design/handoffs/invoice-board.md` in formal benchmark runs.
 
 ## Next Safe Action
 
@@ -44,5 +45,6 @@
 ## Context Index
 
 - [Invoice operations](areas/invoice-ops.md)
+- [Invoice board Screen Contract](areas/invoice-ops/screens/invoice-board.md)
 - [Notifications](areas/notifications.md)
 - [Admin](areas/admin.md)

@@ -19,7 +19,14 @@ context_role: area
 - `src/billing/invoiceService.mjs`
 - `src/billing/money.mjs`
 - `src/billing/invoiceSchema.mjs`
+- `src/ui/invoiceBoard.mjs`
 - `tests/base.test.mjs`
+- `tests/ui.test.mjs`
+
+## UI / Design Boundary
+
+- The on-demand `screens/invoice-board.md` owns durable invoice-board semantics and the canonical screen-specific selected-target record.
+- `DESIGN.md` owns the visual system and points to the Screen Contract; exact implementation facts remain in the versioned target and handoff.
 
 ## Verification
 

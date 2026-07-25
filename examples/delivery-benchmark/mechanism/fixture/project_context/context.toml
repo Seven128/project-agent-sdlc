@@ -52,6 +52,12 @@ read_policy = "on-demand"
 triggers = ["test", "verify", "smoke", "health", "browser", "oracle"]
 
 [[context]]
+path = "project_context/areas/invoice-ops/screens/invoice-board.md"
+role = "subdomain"
+read_policy = "on-demand"
+triggers = ["invoice board", "invoice-board-desktop-v1", "selected target", "design resource", "retry invoices", "UIUX"]
+
+[[context]]
 path = "project_context/areas/invoice-ops/deployment.md"
 role = "deployment"
 read_policy = "on-demand"

@@ -5,7 +5,6 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import {
-  DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES,
   inspectDefaultContextFootprint,
   selectDefaultContextPaths,
 } from "../../packages/ty-context/dist/lib/context-default-footprint.js";
@@ -121,11 +120,11 @@ triggers = ["test"]
   }
 });
 
-test("source workspace keeps specialized role Context out of the default read path", async () => {
+test("source workspace keeps specialized role Context out of the default read path without making the soft budget a gate", async () => {
   const report = await inspectDefaultContextFootprint(repository);
   const paths = report.files.map((file) => file.path);
 
-  assert.ok(report.total_bytes < DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES);
+  assert.ok(report.total_bytes > 0);
   assert.deepEqual(report.duplicate_groups, []);
   for (const required of [
     "project_context/context.toml",

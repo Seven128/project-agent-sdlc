@@ -75,36 +75,35 @@ test("default Context routing combines manifest candidates with bounded search",
   }
   assert.match(
     managed,
-    /Before a material product, design, implementation or acceptance decision/iu,
+    /For material UI, reconcile affected stable surface\/control\/target keys/iu,
   );
-  assert.match(managed, /unconfigured starter, candidate, style-only guidance or inspiration/iu);
   assert.match(
     managed,
-    /selected `exact-target` or `constraint`[\s\S]*declared coverage/iu,
+    /open every affected selected `exact-target` or `constraint`/iu,
   );
-  assert.match(managed, /open every affected selected `exact-target` or `constraint`/iu);
-  assert.match(managed, /registry mention alone is not consumption/iu);
-  assert.match(managed, /editable upstream owner\/locator\/update route/iu);
+  assert.match(managed, /^## Selected-Design Conformance Obligation$/mu);
+  assert.match(managed, /exactly one canonical record/iu);
+  assert.match(managed, /editable-upstream update route/iu);
   assert.match(managed, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     managed,
-    /incomplete source\/dependency closure[\s\S]*unresolved typed locator[\s\S]*stale resource digests fail closed/iu,
+    /canonical entry[\s\S]*exact dependency closure[\s\S]*unresolved locators\/cells\/meaning[\s\S]*stale digests fail closed/iu,
   );
   assert.match(
     managed,
-    /covered handoff Source Item and verification method[\s\S]*cold-start real-user entry journey/iu,
+    /covered Source Items, declared verification methods, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
   );
   assert.match(
     managed,
-    /preflight and file hashes prove semantic-input completeness\/resource integrity only[\s\S]*never prove implementation conformance/iu,
+    /Preflight and hashes prove input completeness\/integrity, never production conformance/iu,
   );
   assert.match(
     managed,
-    /implementation Web\/App target[\s\S]*canonical machine-readable entry[\s\S]*exact dependency closure[\s\S]*acquisition: complete/iu,
+    /one ephemeral exact accounting[\s\S]*unresolved, unmapped, unexecuted, stale or indistinguishable/iu,
   );
   assert.match(
     managed,
-    /residual provider-neutral handoff[\s\S]*typed locators[\s\S]*subject.*target.*condition.*dimension/isu,
+    /active Long-Task projects this same obligation[\s\S]*never also runs the default closure/iu,
   );
   assert.match(
     managed,
@@ -226,7 +225,7 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     guidance,
     /`ty-context enable long-task` installs the Long-Task Workflow Skill, the retired Source Plan compatibility pointer and package-owned completion Hook/iu,
   );
-  assert.match(guidance, /`design-system-authoring` is an explicit-only cold-start\/repair capability/iu);
+  assert.match(guidance, /`design-system-authoring` is explicit-only/iu);
 });
 
 test("Workflow Contract names the complete Source-bound-Draft-to-qualified-result lifecycle", async () => {

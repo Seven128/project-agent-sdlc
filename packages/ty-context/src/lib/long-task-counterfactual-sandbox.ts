@@ -171,10 +171,7 @@ export async function removeCounterfactualSandboxRoot(
         error && typeof error === "object" && "code" in error
           ? String(error.code)
           : "";
-      if (
-        !TRANSIENT_REMOVE_CODES.has(code) ||
-        attempt >= REMOVE_RETRY_LIMIT
-      )
+      if (!TRANSIENT_REMOVE_CODES.has(code) || attempt >= REMOVE_RETRY_LIMIT)
         throw error;
       await wait(REMOVE_RETRY_DELAY_MS * (attempt + 1));
     }

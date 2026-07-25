@@ -77,11 +77,16 @@ For a conclusion-grade Context/Workflow pair, transform host tool events into th
     "project_context/global.md",
     "project_context/architecture.md"
   ],
-  "context_read_rounds": 2
+  "context_read_rounds": 2,
+  "source_files_read": [
+    "DESIGN.md",
+    "design/handoffs/invoice-board.md",
+    "design/invoice-board.html"
+  ]
 }
 ```
 
-Count a Context file only when the Agent actually opened/read it. A search result that merely listed a filename is not an actual read. Group consecutive Context reads caused by one routing decision into one read round; document the normalization rule consistently across both paths.
+Count a Context or Source file only when the Agent actually opened/read it. A search result that merely listed a filename is not an actual read. Group consecutive Context reads caused by one routing decision into one read round; document the normalization rule consistently across both paths. Include every gold-required `source_files_read` entry for the UI/UX recovery task; it remains optional elsewhere.
 
 Without this trace, the pair may still validate hidden quality, Git Context correctness, and deterministic resolver candidate recall, but it is calibration-only for actual read cost.
 
@@ -96,7 +101,8 @@ A Context/Workflow hard gate requires:
 - hidden product probe passes;
 - operator-run native verification passes;
 - Git Context update matches the fixed expected Delta;
-- Agent reports the correct Delta.
+- Agent reports the correct Delta;
+- when gold declares `required_source_reads`, every required selected source is recalled; a conclusion-eligible pair must prove that recall through the normalized host trace.
 
 A Long-Task Authoring hard gate requires:
 
@@ -116,6 +122,7 @@ Important boundaries:
 - Context recall must remain `100%`.
 - Hidden quality and Context correctness must not regress.
 - Four-step wording must preserve verification and Conformance behavior.
+- The UI/UX recovery task must preserve full controlling-Context and required selected-source recall, successful shared handoff preflight and hidden eight-dimension production behavior.
 - V3 or other Authoring changes are measured against current Compact V2, not expanded V2.
 - Final Gate parallelism is not tested here unless profiling first proves Final Gate runner time is a dominant cost.
 

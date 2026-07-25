@@ -95,6 +95,10 @@ function compareContextWorkflow(baseline, candidate) {
     baseline_context_recall: b.context_routing.controlling_context_recall,
     candidate_context_recall: c.context_routing.controlling_context_recall,
     context_recall_delta: difference(c.context_routing.controlling_context_recall, b.context_routing.controlling_context_recall),
+    baseline_selected_source_recall: b.context_routing.selected_source_recall,
+    candidate_selected_source_recall: c.context_routing.selected_source_recall,
+    selected_source_recall_preserved: b.context_routing.required_source_total === 0
+      || (b.context_routing.selected_source_recall === 1 && c.context_routing.selected_source_recall === 1),
     baseline_irrelevant_context_bytes: b.context_routing.irrelevant_context_bytes,
     candidate_irrelevant_context_bytes: c.context_routing.irrelevant_context_bytes,
     irrelevant_context_bytes_reduction: reduction(b.context_routing.irrelevant_context_bytes, c.context_routing.irrelevant_context_bytes),
@@ -142,6 +146,7 @@ function aggregateContextWorkflow(items) {
     hidden_quality_pass_rate: passRate(items, (item) => item.metrics.hidden_quality_equal),
     context_update_correctness: passRate(items, (item) => item.metrics.context_update_equal),
     controlling_context_recall: median(items.map((item) => item.metrics.candidate_context_recall)),
+    selected_source_recall: median(items.map((item) => item.metrics.candidate_selected_source_recall)),
     irrelevant_context_bytes_reduction: median(items.map((item) => item.metrics.irrelevant_context_bytes_reduction)),
     read_round_reduction: median(items.map((item) => item.metrics.read_round_reduction)),
     instruction_bytes_reduction: median(items.map((item) => item.metrics.instruction_bytes_reduction)),

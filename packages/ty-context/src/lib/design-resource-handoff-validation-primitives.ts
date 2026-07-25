@@ -34,8 +34,7 @@ export function requireKnownDesignResourceRef(
   ref: string,
   kind: string,
 ): void {
-  if (!known.has(ref))
-    invalidDesignResourceHandoff(`${kind}_ref_unknown`, ref);
+  if (!known.has(ref)) invalidDesignResourceHandoff(`${kind}_ref_unknown`, ref);
 }
 
 export function requireDesignSourceItemKind(

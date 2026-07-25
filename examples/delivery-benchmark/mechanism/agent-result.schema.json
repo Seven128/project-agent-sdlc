@@ -43,6 +43,13 @@
         "resolver_output"
       ]
     },
+    "source_files_read": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
     "verification_commands": {
       "type": "array",
       "items": {

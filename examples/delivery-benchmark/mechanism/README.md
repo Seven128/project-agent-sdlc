@@ -47,13 +47,14 @@ runner/**                  prepare, score, compare and aggregate tools
 agent-result.schema.json   diagnostic Agent handoff shape
 ```
 
-The five Context/Workflow tasks cover:
+The six Context/Workflow tasks cover:
 
 1. local rounding bug;
 2. cross-module receipt idempotency;
 3. API/Schema compatibility rename;
 4. verification/deployment health behavior;
 5. retry lifecycle plus Context evolution.
+6. fresh-agent UI/UX Context, canonical-target and selected-handoff recovery.
 
 The five Authoring tasks cover structured JSON, UI/Playwright, Population, security/migration, and external pending.
 
@@ -68,7 +69,8 @@ Conclusion-grade:
 - compiled Authority projection and fingerprint;
 - benchmark CLI-wrapper records for actual Preflight/Compile invocations;
 - external observer elapsed time;
-- normalized host tool trace when available.
+- normalized host tool trace when available;
+- normalized selected design-source reads for the UI/UX recovery task.
 
 Diagnostic only:
 
@@ -78,7 +80,7 @@ Diagnostic only:
 - resolver candidates without evidence that the Agent actually read them;
 - YAML size before both Contracts compile to equal Authority.
 
-A Context/Workflow pair remains calibration-only without a normalized host trace for both paths. The deterministic resolver result can prove candidate recall, but not actual Agent reading cost.
+A Context/Workflow pair remains calibration-only without a normalized host trace for both paths. The deterministic resolver result can prove candidate recall, but not actual Agent reading cost. The UI/UX task additionally requires trace-confirmed reads of every gold-selected design source; Agent self-report alone is diagnostic.
 
 ## CLI
 

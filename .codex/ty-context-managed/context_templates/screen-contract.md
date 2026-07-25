@@ -11,8 +11,8 @@ Write project-specific facts only. Do not copy visual token values, binary targe
 ## Authority Boundary
 
 - Product Surface Contract owns cross-surface responsibility, main/drilldown placement and shared invariants.
-- This Screen Contract owns stable screen hierarchy, regions, state/navigation behavior and durable material-control semantics.
-- `DESIGN.md` owns visual-system semantics, the authored token source/generation direction and durable target interpretations.
+- This Screen Contract owns stable screen hierarchy, regions, state/navigation behavior, durable material-control semantics and canonical adoption records for one-screen/interaction-specific targets.
+- `DESIGN.md` owns visual-system semantics, the authored token source/generation direction and canonical adoption records for project/system/component-family targets.
 - Versioned authored design targets own their declared concrete composition for named viewport/mode/state/content conditions.
 - Verification Context owns repeatable proof paths. Code is current implementation evidence, not silent design authority.
 
@@ -131,13 +131,13 @@ Describe composition or responsibility changes, not one-off screenshots.
 
 ## Design Target References
 
-Reference project-native targets; do not embed binary content.
+Reference project-native targets; do not embed binary content. Every adopted target has exactly one canonical adoption record. Use this Screen Contract as the canonical owner only for a one-screen/interaction-specific target. For a project/system/component-family target owned by `DESIGN.md`, fill only its stable ID, `DESIGN.md` anchor and this screen's local applicability; do not repeat the full record.
 
-| Target ID | Interpretation | Immutable Adopted Path / URI + Digest | Editable Upstream / Owner / Update Route | Viewport / Platform | Theme / Mode | State / Content Coverage | Selection Basis |
+| Target ID | Canonical Owner / Anchor | Interpretation | Immutable Adopted Path / URI + Digest | Editable Upstream / Owner / Update Route | Declared Condition Coverage | Selection Basis | Local Applicability |
 |---|---|---|---|---|---|---|---|
-| `<stable-target-id>` | `exact-target` / `constraint` / `inspiration` |  |  |  |  |  |  |
+| `<stable-target-id>` | `this Screen Contract#...` / `DESIGN.md#...` | `exact-target` / `constraint` / `inspiration` |  |  |  |  |  |
 
-An `exact-target` authorizes fidelity comparison only for its declared conditions. A `constraint` governs only its named rule. `inspiration` does not authorize reproduction. For an adopted exact target/constraint, the immutable locator must be readable and the editable upstream/update route must be verified or explicitly marked as a manual/external boundary. Relevant work opens the resource rather than treating this row as consumption. Update upstream and register a new immutable version/digest; never overwrite the adopted baseline. An implementation screenshot cannot register itself as its own target.
+The canonical record owns interpretation, selection basis, immutable locator/digest, declared condition coverage and editable upstream/update route. Leave those fields pointer-only when this Screen Contract is not the canonical owner. An `exact-target` authorizes fidelity comparison only for its declared conditions. A `constraint` governs only its named rule. `inspiration` does not authorize reproduction. For an adopted exact target/constraint, the immutable locator must be readable and the editable upstream/update route must be verified or explicitly marked as a manual/external boundary. Relevant work opens the resource rather than treating this row as consumption. Update upstream and register a new immutable version/digest in the canonical record; never overwrite the adopted baseline. An implementation screenshot cannot register itself as its own target.
 
 ### Selected Implementation Handoff
 

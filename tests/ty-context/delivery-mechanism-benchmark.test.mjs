@@ -11,7 +11,7 @@ import {
   scoreMechanismRun
 } from "../../examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs";
 import { resolveContext } from "../../examples/delivery-benchmark/mechanism/runner/context-resolve-r0.mjs";
-import { contextUpdateMetrics } from "../../examples/delivery-benchmark/mechanism/runner/metrics.mjs";
+import { contextMetrics, contextUpdateMetrics } from "../../examples/delivery-benchmark/mechanism/runner/metrics.mjs";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const mechanismRoot = path.join(repoRoot, "examples", "delivery-benchmark", "mechanism");
@@ -21,7 +21,7 @@ test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden bounda
   assert.equal(experiments.baseline_commit, "2ad71874a3e23a2221088ebb58238df64278b5c9");
   assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "workflow-expression"]);
   const taskIds = [...new Set(Object.values(experiments.tracks).flatMap((track) => track.tasks))];
-  assert.equal(taskIds.length, 10);
+  assert.equal(taskIds.length, 11);
   for (const id of taskIds) {
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "tasks", `${id}.json`), "utf8"));
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "gold", `${id}.json`), "utf8"));
@@ -50,6 +50,93 @@ test("stateless Context resolver reaches fixed controlling Context without creat
   assert.equal(result.schema_version, "context-resolve-r0-v1");
   assert.ok(!result.candidates.includes("project_context/areas/admin.md"));
   assert.ok(!result.candidates.includes("project_context/areas/invoice-ops/archive/legacy-tax.md"));
+});
+
+test("UIUX recovery benchmark preserves selected-source closure and one canonical target owner", async () => {
+  const fixture = path.join(mechanismRoot, "fixture");
+  const experiments = JSON.parse(await readFile(path.join(mechanismRoot, "experiment-set.json"), "utf8"));
+  for (const track of ["context-routing", "workflow-expression"]) {
+    assert.ok(experiments.tracks[track].tasks.includes("uiux-selected-target-recovery"), track);
+  }
+
+  const task = JSON.parse(await readFile(path.join(mechanismRoot, "tasks", "uiux-selected-target-recovery.json"), "utf8"));
+  const gold = JSON.parse(await readFile(path.join(mechanismRoot, "gold", "uiux-selected-target-recovery.json"), "utf8"));
+  const handoff = await readFile(path.join(fixture, "design", "handoffs", "invoice-board.md"), "utf8");
+  for (const dimension of [
+    "surface_flow",
+    "visual_content",
+    "component_control",
+    "state_interaction",
+    "motion",
+    "adaptation_input",
+    "accessibility",
+    "assets"
+  ]) {
+    assert.match(handoff, new RegExp(`dimension:\\s+${dimension}\\b`, "u"), dimension);
+    assert.match(
+      handoff,
+      new RegExp(`dimension:\\s+${dimension}\\b[\\s\\S]*?condition_refs:\\s*\\r?\\n\\s*- desktop-default\\s*\\r?\\n\\s*- desktop-reduced`, "u"),
+      `${dimension} condition closure`
+    );
+  }
+  assert.match(handoff, /kind:\s+implementation_web[\s\S]*acquisition:\s+complete/u);
+
+  const screen = await readFile(path.join(fixture, "project_context", "areas", "invoice-ops", "screens", "invoice-board.md"), "utf8");
+  const design = await readFile(path.join(fixture, "DESIGN.md"), "utf8");
+  assert.match(screen, /invoice-board-desktop-v1[\s\S]*sha256:f285fac663d8d08f1d201918a6ce7ebaebc417d80e77bd483f25dc397f24ef98/u);
+  assert.match(screen, /od:\/\/projects\/invoice-operations-lab\/invoice-board/u);
+  assert.match(screen, /desktop Web, 1440 × 900, light/u);
+  assert.match(design, /invoice-board-desktop-v1[\s\S]*canonical owner:[\s\S]*invoice-board\.md#design-target-references/u);
+  assert.doesNotMatch(design, /f285fac663d8d08f1d201918a6ce7ebaebc417d80e77bd483f25dc397f24ef98|od:\/\/projects\/invoice-operations-lab\/invoice-board/u);
+
+  const routed = await resolveContext(fixture, {
+    terms: task.terms,
+    paths: task.paths,
+    facets: task.facets
+  });
+  const routedFiles = [...routed.required, ...routed.candidates];
+  assert.ok(routedFiles.includes("project_context/areas/invoice-ops/screens/invoice-board.md"));
+
+  const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-uiux-trace-"));
+  try {
+    const trace = path.join(temp, "trace.json");
+    await writeFile(trace, `${JSON.stringify({
+      schema_version: "tiny-context-host-trace-v1",
+      source: "host_tool_trace",
+      context_files_read: gold.controlling_context,
+      source_files_read: gold.required_source_reads,
+      context_read_rounds: 2
+    })}\n`);
+    const metrics = await contextMetrics(fixture, gold, {}, trace);
+    assert.equal(metrics.controlling_context_recall, 1);
+    assert.equal(metrics.selected_source_recall, 1);
+    assert.deepEqual(metrics.required_source_missing, []);
+
+    await writeFile(trace, `${JSON.stringify({
+      schema_version: "tiny-context-host-trace-v1",
+      source: "host_tool_trace",
+      context_files_read: gold.controlling_context,
+      source_files_read: ["../outside-source.md"],
+      context_read_rounds: 2
+    })}\n`);
+    const unsafe = await contextMetrics(fixture, gold, {
+      context_files_read: gold.controlling_context,
+      source_files_read: gold.required_source_reads,
+      context_read_rounds: 2
+    }, trace);
+    assert.equal(unsafe.selection_source, "invalid_host_trace_fallback_to_agent_report");
+    assert.equal(unsafe.selection_confidence, "diagnostic");
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+
+  const hidden = await readFile(path.join(mechanismRoot, "hidden", task.probe), "utf8");
+  for (let index = 1; index <= 7; index += 1) {
+    assert.match(hidden, new RegExp(`UIUX-${String(index).padStart(3, "0")}`, "u"));
+  }
+  assert.match(hidden, /event\.command === "design-resource preflight"/u);
+  const prepare = await readFile(path.join(mechanismRoot, "runner", "prepare.mjs"), "utf8");
+  assert.match(prepare, /args\[0\] === "design-resource" && args\[1\] === "preflight"/u);
 });
 
 test("prepare keeps hidden/gold outside the run and records strict pair identity", async () => {

@@ -37,6 +37,38 @@ test("agent harness folder aliases remain portable", () => {
   );
 });
 
+test("default Context byte budgets remain advisory when genuine recovery facts exceed them", async () => {
+  await withTemp("ty-context-footprint-advisory-", async (root) => {
+    await runInit(root, { adopt: false, force: false });
+    const globalPath = path.join(root, "project_context/global.md");
+    const globalContext = await readFile(globalPath, "utf8");
+    await writeFile(
+      globalPath,
+      `${globalContext}\n${"necessary recovery fact ".repeat(4096)}\n`,
+      "utf8",
+    );
+
+    const doctor = await runDoctor(root);
+    assert.deepEqual(doctor.errors, []);
+    assert.ok(
+      doctor.warnings.some(
+        (line) =>
+          line.includes("default Context read path is") &&
+          line.includes("soft budget") &&
+          line.includes("required near-universal facts take precedence"),
+      ),
+    );
+    assert.ok(
+      doctor.warnings.some(
+        (line) =>
+          line.includes("project_context/global.md") &&
+          line.includes("per-file soft budget") &&
+          line.includes("required readable facts take precedence"),
+      ),
+    );
+  });
+});
+
 test("non_codex_sync_does_not_install_codex_hooks", async () => {
   await withTemp("ty-context-default-", async (root) => {
     const report = await runInit(root, { adopt: false, force: false });
@@ -107,16 +139,19 @@ test("non_codex_sync_does_not_install_codex_hooks", async () => {
     assert.match(agents, /Context: no durable fact change/);
     assert.match(
       agents,
-      /Before a material product, design, implementation or acceptance decision/iu,
+      /For material UI, reconcile affected stable surface\/control\/target keys/iu,
     );
 
     const design = await readFile(path.join(root, "DESIGN.md"), "utf8");
     assert.match(design, /name: "Unconfigured Project Design"/u);
     assert.match(design, /Design authority status: `unconfigured`/u);
     assert.match(design, /^### Design Authority Index$/mu);
-    assert.match(design, /`exact-target` \/ `constraint` \/ `inspiration`/u);
+    assert.match(design, /`exact-target`, `constraint` or `inspiration`/u);
     assert.match(design, /readable immutable adopted path\/URI plus digest/iu);
     assert.match(design, /editable upstream owner\/locator\/update route/iu);
+    assert.match(design, /Every adopted target has exactly one canonical record/iu);
+    assert.match(design, /screen-specific target[\s\S]*owning Screen Contract anchor/iu);
+    assert.match(design, /Do not duplicate that metadata/iu);
     assert.match(
       design,
       /must open affected selected exact targets\/constraints/iu,

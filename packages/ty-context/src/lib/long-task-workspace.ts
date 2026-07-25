@@ -459,16 +459,10 @@ async function overlayTrackedEolDifferences(
     if (tab < 0) continue;
     const metadata = record.slice(0, tab);
     const relative = record.slice(tab + 1).replace(/\\/gu, "/");
-    const match = metadata.match(
-      /^i\/(\S+)\s+w\/(\S+)\s+attr\/(.*)$/u,
-    );
+    const match = metadata.match(/^i\/(\S+)\s+w\/(\S+)\s+attr\/(.*)$/u);
     if (!match) continue;
     const [, indexEol, worktreeEol, attributesRaw] = match;
-    const expected = checkoutEol(
-      indexEol,
-      attributesRaw.trim(),
-      autocrlf,
-    );
+    const expected = checkoutEol(indexEol, attributesRaw.trim(), autocrlf);
     if (worktreeEol === expected) continue;
     const source = path.join(sourceRoot, ...relative.split("/"));
     const target = path.join(snapshotRoot, ...relative.split("/"));

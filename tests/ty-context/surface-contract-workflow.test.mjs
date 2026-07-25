@@ -56,10 +56,19 @@ const [
 for (const content of [sourceAgents, packageAgents]) {
   assert.match(content, /product-surface/i);
   assert.match(content, /context_surface_contract/);
-  assert.match(content, /Product Surface Contracts own cross-surface interfaces/);
+  assert.match(
+    content,
+    /confirm information\/action\/feedback ownership[\s\S]*context_surface_contract/iu,
+  );
   assert.match(content, /Workflow Contract/);
-  assert.match(content, /internally classify every material constraint/);
-  assert.match(content, /Conformance must confirm controlling Context reached/);
+  assert.match(
+    content,
+    /For every external product, architecture, technical or acceptance constraint, internally classify/iu,
+  );
+  assert.match(
+    content,
+    /Conformance confirms it reached the correct owner and verification/iu,
+  );
   assert.doesNotMatch(content, /surface-contract` role/);
 }
 
@@ -141,6 +150,12 @@ for (const content of [sourceScreenTemplate, packagedScreenTemplate]) {
   assert.match(content, /Accessibility/);
   assert.match(content, /^## Design Target References$/mu);
   assert.match(content, /exact-target.*constraint.*inspiration/iu);
+  assert.match(content, /Every adopted target has exactly one canonical adoption record/iu);
+  assert.match(content, /Canonical Owner \/ Anchor/iu);
+  assert.match(
+    content,
+    /project\/system\/component-family target owned by `DESIGN\.md`[\s\S]*do not repeat the full record/iu,
+  );
   assert.match(content, /Immutable Adopted Path \/ URI \+ Digest/iu);
   assert.match(content, /Editable Upstream \/ Owner \/ Update Route/iu);
   assert.match(content, /Relevant work opens the resource/iu);

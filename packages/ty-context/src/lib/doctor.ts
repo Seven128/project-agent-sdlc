@@ -71,13 +71,13 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
     );
     if (footprint.total_bytes > DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES) {
       report.warnings.push(
-        `default Context read path is ${footprint.total_bytes} bytes, above the ${DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES}-byte soft budget; shorten near-universal facts or move specialized role Context to read_policy=\"on-demand\"`,
+        `default Context read path is ${footprint.total_bytes} bytes, above the ${DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES}-byte soft budget; review duplication or specialized placement only when complete, readable recovery semantics remain intact—required near-universal facts take precedence`,
       );
     }
     for (const file of footprint.files) {
       if (file.bytes <= DEFAULT_CONTEXT_FILE_SOFT_BUDGET_BYTES) continue;
       report.warnings.push(
-        `default Context file ${file.path} is ${file.bytes} bytes, above the ${DEFAULT_CONTEXT_FILE_SOFT_BUDGET_BYTES}-byte per-file soft budget`,
+        `default Context file ${file.path} is ${file.bytes} bytes, above the ${DEFAULT_CONTEXT_FILE_SOFT_BUDGET_BYTES}-byte per-file soft budget; this is advisory only and required readable facts take precedence`,
       );
     }
     for (const group of footprint.duplicate_groups) {

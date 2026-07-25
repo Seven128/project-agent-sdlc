@@ -9,6 +9,7 @@ import {
   round,
   run
 } from "./shared.mjs";
+import { contextSelection } from "./context-read-selection.mjs";
 
 export async function changedPaths(runDir, initialCommit) {
   const values = new Set();
@@ -52,8 +53,11 @@ export async function contextMetrics(runDir, gold, agentResult, tracePath) {
   const selected = new Set(routing.files.map(normalize));
   const controlling = gold.controlling_context.map(normalize);
   const irrelevant = gold.irrelevant_context.map(normalize);
+  const requiredSources = (gold.required_source_reads ?? []).map(normalize);
+  const selectedSources = new Set((routing.sourceFiles ?? []).map(normalize));
   const recalled = controlling.filter((file) => selected.has(file));
   const irrelevantSelected = irrelevant.filter((file) => selected.has(file));
+  const recalledSources = requiredSources.filter((file) => selectedSources.has(file));
   const selectedContext = [...selected].filter((file) => file.startsWith("project_context/"));
   const selectedBytes = await sumBytes(runDir, selectedContext);
   const irrelevantBytes = await sumBytes(runDir, irrelevantSelected);
@@ -66,6 +70,13 @@ export async function contextMetrics(runDir, gold, agentResult, tracePath) {
     controlling_recalled: recalled.length,
     controlling_missing: controlling.filter((file) => !selected.has(file)),
     controlling_context_recall: round(ratio(recalled.length, controlling.length)),
+    required_source_total: requiredSources.length,
+    required_source_recalled: recalledSources.length,
+    required_source_missing: requiredSources.filter((file) => !selectedSources.has(file)),
+    selected_source_recall: requiredSources.length
+      ? round(ratio(recalledSources.length, requiredSources.length))
+      : null,
+    source_files_read: [...selectedSources].sort(),
     irrelevant_selected: irrelevantSelected,
     selected_context_bytes: selectedBytes,
     irrelevant_context_bytes: irrelevantBytes,
@@ -115,36 +126,6 @@ export async function observerElapsed(runDir) {
     confidence: Number.isFinite(state.duration_ms) ? "high" : "unavailable",
     data_source: Number.isFinite(state.duration_ms) ? "observer_measured" : "unavailable"
   };
-}
-
-async function contextSelection(runDir, agentResult, tracePath) {
-  if (tracePath) {
-    const trace = JSON.parse(await readFile(path.resolve(tracePath), "utf8"));
-    if (isNormalizedHostTrace(trace)) {
-      return { files: trace.context_files_read, rounds: trace.context_read_rounds, source: trace.source, confidence: "high" };
-    }
-    return {
-      files: agentResult.context_files_read ?? [],
-      rounds: agentResult.context_read_rounds ?? null,
-      source: "invalid_host_trace_fallback_to_agent_report",
-      confidence: "diagnostic"
-    };
-  }
-  const resolver = path.join(runDir, ".benchmark", "context-resolve.json");
-  if (existsSync(resolver)) {
-    const value = JSON.parse(await readFile(resolver, "utf8"));
-    return { files: [...(value.required ?? []), ...(value.candidates ?? [])], rounds: 1, source: "resolver_output", confidence: "high_for_candidates" };
-  }
-  return { files: agentResult.context_files_read ?? [], rounds: agentResult.context_read_rounds ?? null, source: agentResult.context_selection_source ?? "agent_reported", confidence: "diagnostic" };
-}
-
-function isNormalizedHostTrace(trace) {
-  return trace?.schema_version === "tiny-context-host-trace-v1"
-    && trace.source === "host_tool_trace"
-    && Array.isArray(trace.context_files_read)
-    && trace.context_files_read.every((file) => typeof file === "string" && normalize(file).startsWith("project_context/"))
-    && Number.isInteger(trace.context_read_rounds)
-    && trace.context_read_rounds >= 0;
 }
 
 async function sumBytes(root, files) {

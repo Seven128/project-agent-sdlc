@@ -1,0 +1,17 @@
+{
+  "component": {
+    "density": "compact",
+    "status_presentation": "badge",
+    "status_token": "--invoice-status-accent",
+    "retry": {
+      "id": "retry-invoices",
+      "label": "Retry"
+    }
+  },
+  "accessibility": {
+    "region_label": "Invoices",
+    "loading_role": "status",
+    "loading_live": "polite",
+    "empty_asset_decorative": true
+  }
+}

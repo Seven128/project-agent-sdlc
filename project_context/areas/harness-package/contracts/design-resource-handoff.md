@@ -6,7 +6,7 @@ read_policy: on-demand
 
 ## Purpose And Boundary
 
-One design-specific purpose of the Single-Goal Long-Task Workflow—and the corresponding outcome on the default Workflow path—is that Agent implementation, acceptance and testing fully conform to every material UI/UX fact selected design resources explicitly express within their declared scope and conditions.
+One shared, conditional design purpose of both development workflows is that Agent implementation, acceptance and testing fully conform to every material UI/UX fact selected design resources explicitly express within their declared scope and conditions. Long-Task is the stronger machine-enforced carrier; it is not a second copy or the sole owner of this purpose.
 
 This does not authorize inference from silence. A static frame does not imply an unshown interaction, and the workflow cannot prove that the user never omitted a requirement. An unexpressed fact must be added to Source, classified `not_applicable`/`excluded_by_scope`, or remain `decision_required`/`unavailable` and block fidelity work.
 
@@ -14,7 +14,7 @@ The causal chain has three owners:
 
 1. **Canonical resources** own exact code-expressible layout, visual, content, control, state, interaction, motion, adaptation/input, accessibility and asset facts.
 2. **`design-resource-handoff-v1`** is the residual scope, applicability, semantic and index adapter. It points to resource facts, adds product meaning/exclusions/unresolved items and binds them downstream; it does not retype every CSS value.
-3. **Context, Contract, Checks and Final Gate/Contract Conformance** force consumption on the production owner and reject current-snapshot drift.
+3. **Context, Contract and Checks** force consumption on the production owner; mutually exclusive **default Contract Conformance** or **Long-Task Final Gate** rejects current-candidate drift.
 
 Open Design has demonstrated source-rich output (`index.html`, component/design specifications, tokens and asset manifests), but capability is not a per-run invariant. `design-resource-authoring` must explicitly commission, retrieve and freeze an implementation-level source before a Web/App handoff may pass.
 
@@ -26,6 +26,7 @@ The adapter connects upstream authoring to both development workflows. It create
 - A selected implementation handoff is one project-native Markdown Source at an authorized path, with readable marked Source Items and exactly one fenced `design-resource-handoff-v1` block.
 - Immutable repository resources plus the handoff remain ordinary Source/verifier inputs. The editable upstream owner/locator/update route is recorded separately.
 - `ty-context design-resource preflight <handoff.md>` is the sole shared input adapter: authoring runs it before `ready`, default Workflow reruns it before UI Authority Closure, and Long-Task Preflight/Compile reruns it before Authority Lock.
+- The shared Selected-Design Conformance Obligation conserves the exact covered Source-item, verification-method, acceptance-blocker, target and condition sets from this handoff into one downstream carrier. Shared input semantics do not imply running both carriers.
 - No fixed directory, live provider, artifact count, one-file-per-control rule or screenshot Cartesian product is required.
 
 ## Implementation Source Profile
@@ -73,11 +74,11 @@ The default Workflow:
 
 1. reruns preflight and opens every affected exact/constraint resource;
 2. reconciles stable subject/target/condition keys through owning Surface/Screen/Control Context and `DESIGN.md`;
-3. routes every covered Source Item and verification method to the production route/component owner and real root-entry journey;
-4. verifies declared geometry/pixel/token/content, component state/interaction, motion, responsive/input, accessibility and asset obligations independently where applicable;
-5. performs current-candidate Contract Conformance plus Context drift checking.
+3. constructs one ephemeral exact accounting of covered Source Items, declared verification methods, acceptance blockers, selected targets and conditions, then routes every item to the production route/component owner and real root-entry journey;
+4. verifies declared geometry/pixel/token/content, component state/interaction, motion, responsive/input, accessibility and asset obligations independently where applicable; one project check may implement several methods only when each method and covered fact remains separately attributable if it fails;
+5. on the final current candidate confirms that every applicable item is mapped, resolved, executed and passed, then performs Contract Conformance plus Context drift checking.
 
-Resource presence, hash success, provider success, a screenshot or detached route cannot substitute for production checks.
+Resource presence, hash success, provider success, a screenshot or detached route cannot substitute for production checks. A selected target, implementation or declared check-input change stales the closure. Any unmapped, unresolved, unexecuted, stale or indistinguishable item blocks the complete-conformance claim; handoff reports the checked scope and gaps instead. The accounting creates no persisted map, Claim set, readiness state or Gate.
 
 ## Long-Task Consumption
 
@@ -88,6 +89,8 @@ Covered Source Items map through `source_claims` into the root conformance Asser
 Each handoff acceptance blocker binds the same Source Items and verification methods in `surface_binding.acceptance_blockers`. A machine blocker must reference the corresponding target-local Claims; an external blocker must use a target-blocking External Confirmation whose impact includes those Claims. A matching key with unrelated proof is invalid.
 
 Existing Controls/`surface_bindings`, production owners/root journey, Evidence Kernel, Counterfactual sensitivity, Authority Revision and one-snapshot Final Gate remain the only acceptance/lifecycle owners.
+
+Long-Task is therefore the machine carrier of the same shared obligation and never runs the default task-local selected-design closure before or after Final Gate.
 
 ## Provider Selection Background
 

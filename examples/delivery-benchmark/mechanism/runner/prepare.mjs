@@ -117,7 +117,8 @@ const result = spawnSync(process.execPath, [cli, ...args], { cwd: process.cwd(),
 if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);
 if (result.error) throw result.error;
-if (args[0] === "long-task" && ["preflight", "compile"].includes(args[1])) {
+if ((args[0] === "long-task" && ["preflight", "compile"].includes(args[1]))
+  || (args[0] === "design-resource" && args[1] === "preflight")) {
   const benchmarkDir = path.join(process.cwd(), ".benchmark");
   mkdirSync(benchmarkDir, { recursive: true });
   let parsed_result = null;

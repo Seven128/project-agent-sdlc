@@ -27,6 +27,7 @@
 ## Design Rationale
 
 - Dependency direction flows from orchestration toward specialized policy/provider modules; UI and admin read through stable product objects rather than owning invoice state.
+- The invoice-board Screen Contract owns durable screen/control semantics and its screen-specific canonical target record; `DESIGN.md` points to that owner, immutable design resources own exact target facts and `src/ui/invoiceBoard.mjs` is the production projection.
 - Idempotency belongs at the state transition/provider boundary that can observe duplicate delivery intent.
 
 ## Constraints And Tradeoffs
