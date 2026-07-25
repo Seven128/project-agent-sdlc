@@ -31,16 +31,22 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
   const diagnostics = deliveryContractStructureDiagnostics(contract);
   assert.ok(
     diagnostics.some((item) =>
-      item.includes("stage_gate_required_target_proof_missing:first:fixture-native"),
+      item.includes(
+        "stage_gate_required_target_proof_missing:first:fixture-native",
+      ),
     ),
   );
   assert.ok(
     diagnostics.some((item) =>
-      item.includes("critical_path_required_target_proof_missing:first:fixture-native"),
+      item.includes(
+        "critical_path_required_target_proof_missing:first:fixture-native",
+      ),
     ),
   );
 
-  const nativeCheck = structuredClone(contract.outcomes[0].acceptance.checks[0]);
+  const nativeCheck = structuredClone(
+    contract.outcomes[0].acceptance.checks[0],
+  );
   nativeCheck.key = "first-native-check";
   nativeCheck.execution_target.target_ref = "fixture-native";
   nativeCheck.runner.type = "project_binary";
@@ -198,6 +204,9 @@ test("selected design targets require root-bound comparison evidence and blocker
         claim_refs: ["control.map-tab.location"],
         conformance_check_ref: "first-check",
         conformance_assertion_ref: "first-result",
+        verification_method_bindings: [
+          { method: "layout_geometry", assertion_ref: "first-result" },
+        ],
         actual_artifact_path: "artifacts/map-actual.png",
         comparison_artifact_path: "artifacts/map-diff.json",
       },
@@ -280,6 +289,8 @@ test("selected design targets require root-bound comparison evidence and blocker
       key: "native-haptics",
       status: "machine_claim",
       refs: [],
+      source_item_refs: ["map-design"],
+      verification_methods: ["layout_geometry"],
       rationale: "Native haptics remain unresolved.",
     },
   ];
@@ -303,6 +314,8 @@ test("selected design targets require root-bound comparison evidence and blocker
         key: "native-haptics",
         status: "external_confirmation",
         refs: ["native-haptics-review"],
+        source_item_refs: ["map-design"],
+        verification_methods: ["layout_geometry"],
         rationale: "Native haptics require device review.",
       },
     ];
@@ -311,16 +324,14 @@ test("selected design targets require root-bound comparison evidence and blocker
     /ui_design_blocker_confirmation_must_block_target:first:map-tab-fixture-app:native-haptics:native-haptics-review/u,
   );
 
-  nonBlockingConfirmation.global.acceptance.external_confirmations[0].blocks_target =
-    true;
+  nonBlockingConfirmation.global.acceptance.external_confirmations[0].blocks_target = true;
   assert.doesNotThrow(() => parse(nonBlockingConfirmation));
 });
 
 test("behavior Claims cannot be proved by presence text and success cannot be replaced by degradation", () => {
   const presenceOnly = deliveryContract();
-  presenceOnly.outcomes[0].acceptance.checks[0].positive_assertions[0].evidence_capabilities = [
-    "presence",
-  ];
+  presenceOnly.outcomes[0].acceptance.checks[0].positive_assertions[0].evidence_capabilities =
+    ["presence"];
   assert.ok(
     deliveryContractStructureDiagnostics(presenceOnly).some((item) =>
       item.includes("presence_cannot_prove_behavior"),
@@ -329,7 +340,9 @@ test("behavior Claims cannot be proved by presence text and success cannot be re
 
   const mergedJourneys = deliveryContract();
   mergedJourneys.outcomes[0].product.degradation_path_required = true;
-  mergedJourneys.outcomes[0].acceptance.checks[0].journey_roles.push("degradation");
+  mergedJourneys.outcomes[0].acceptance.checks[0].journey_roles.push(
+    "degradation",
+  );
   assert.throws(
     () => parse(mergedJourneys),
     /success_degradation_check_must_be_distinct/u,
@@ -495,12 +508,7 @@ function parse(contract) {
   return parseDeliveryContractText(YAML.stringify(contract));
 }
 
-function compiledCheck(
-  contract,
-  declared,
-  outcomeKey,
-  capabilities = null,
-) {
+function compiledCheck(contract, declared, outcomeKey, capabilities = null) {
   const check = structuredClone(declared);
   if (capabilities)
     check.positive_assertions[0].evidence_capabilities = capabilities;
@@ -518,9 +526,7 @@ function compiledCheck(
         .find((outcome) => outcome.key === outcomeKey)
         ?.product.surface_bindings.flatMap((binding) =>
           binding.design_targets
-            .filter(
-              (target) => target.conformance_check_ref === check.key,
-            )
+            .filter((target) => target.conformance_check_ref === check.key)
             .map((target) => ({
               ...target,
               surface_binding_ref: binding.key,

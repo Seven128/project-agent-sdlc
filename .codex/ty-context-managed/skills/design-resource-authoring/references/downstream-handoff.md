@@ -16,7 +16,7 @@ For every material in-scope surface/flow/region/component/control condition, rec
 
 Design resources may show user-visible triggers, transitions, states, feedback and product-rule presentation. Business, data, permission and algorithmic rules remain owned by product/technical Source and must not be invented by visuals.
 
-When a selected source is Figma-native, preserve its exact file/version/nodes/conditions and repository-readable immutable capture according to `figma-native-handoff.md`. Native design context carries addressable visual and component facts; the structured handoff remains the residual coverage, semantic and downstream-binding adapter. It references native facts instead of manually duplicating them.
+Canonical implementation resources own exact code-expressible layout, visual, content, state, interaction, adaptation, motion, semantic and asset facts. The structured handoff is the residual semantic and index layer for scope, applicability and downstream binding: it indexes those facts through typed locators instead of manually duplicating their values, and it is not a second numeric/style source.
 
 ## Final proposal reconciliation
 
@@ -64,7 +64,7 @@ Return scope/intent, visible candidates, resource dispositions, obvious limitati
 
 ### Implementation handoff
 
-After final selection for implementation, add one project-native Markdown Source at an authorized repository path. It is ordinary Source, not a pack or Authority. For Figma-native input this is the residual handoff: frozen native resources carry addressable facts, while this file closes scope, conditions, uncovered meaning, product/technical semantics, blockers and downstream bindings. The file contains readable `ty-source-item:start/end` facts plus exactly one:
+After final selection for implementation, add one project-native Markdown Source at an authorized repository path. It is ordinary Source, not a pack or Authority. Frozen canonical resources carry addressable implementation facts, while this residual handoff closes scope, applicability, uncovered meaning, product/technical semantics, blockers and downstream bindings. The file contains readable `ty-source-item:start/end` facts plus exactly one:
 
 ````markdown
 ```yaml design-resource-handoff-v1
@@ -79,15 +79,15 @@ The strict block includes:
 - selected exact-target/constraint/supporting classification; candidates and inspiration do not enter covered implementation rows;
 - provider version, project/run, capability/template, agent/model and live design-system binding;
 - each repository-local immutable resource path, media type and exact SHA-256;
-- for Figma-native resources, exact file/version/node/condition provenance plus addressable native-property locators; reference those facts rather than manually retranscribing every property;
+- for implementation Web/App targets, a canonical entry, complete declared dependency set and `acquisition: complete`; non-Web resources use `reference` and are not forced into HTML;
 - editable upstream owner, locator and update/export method, or an explicit manual/external-update boundary when unavailable;
 - declared platform, viewport, mode, state, content, input and full/reduced/not-applicable motion conditions;
-- addressable evidence entries whose kinds distinguish frame/component variant/prototype state or transition/motion/responsive/input/accessibility/semantic/token/asset/annotation meaning;
+- typed, locally resolvable evidence locators (`html_selector`, `markdown_anchor`, `json_pointer`, `css_selector`, `css_custom_property` or bounded `whole_resource`) whose kinds distinguish frame/component variant/prototype state or transition/motion/responsive/input/accessibility/semantic/token/asset/annotation meaning;
 - stable subjects grouped only when they truly share meaning;
 - every declared scope surface represented by one unambiguous surface subject, with no stable key owned by two subjects;
-- complete subject-by-dimension coverage for `surface_flow`, `visual_content`, `component_control`, `state_interaction`, `motion`, `adaptation_input`, `accessibility` and `assets`;
-- exactly one disposition per subject/dimension pair: `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`;
-- covered-row target/condition/evidence/Source-item refs and dimension-appropriate project verification methods; referenced design Source Items use `requirement`, `control` or `acceptance` markers;
+- explicit target applicability for each subject and complete subject × target × condition × dimension coverage for `surface_flow`, `visual_content`, `component_control`, `state_interaction`, `motion`, `adaptation_input`, `accessibility` and `assets`;
+- exactly one disposition per applicable cell: `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`;
+- covered-cell same-target/same-condition evidence, Source-item refs and dimension-appropriate project verification methods; referenced design Source Items use `requirement`, `control` or `acceptance` markers;
 - source-backed rationales for non-applicable/excluded rows; unresolved rows remain visible and make preflight fail;
 - target-local acceptance blockers that downstream checks must bind rather than dismiss;
 - selection basis, proposal reconciliation path/status and known limitations;
@@ -107,7 +107,7 @@ Do not call the handoff ready until it passes. Exploration, candidates and unsel
 initial proposal
   -> design-resource-authoring
   -> selected immutable resources
-     + optional exact Figma-native capture
+     + complete canonical implementation resources
      + reconciled initial proposal
   -> validated residual design-resource-handoff-v1
   -> long-task-workflow (explicit long delivery)
@@ -118,11 +118,11 @@ initial proposal
 
 ### Default Workflow consumption
 
-The consuming Goal brings the revised proposal, selected resources and residual handoff as ordinary Source. For Figma-native input it reads the frozen exact version/node/condition artifacts rather than depending on a live mutable link. It reruns shared preflight before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It routes every covered Source Item and verification method through the production owner and real-entry checks. A later update creates a new immutable version rather than overwriting the adopted baseline.
+The consuming Goal brings the revised proposal, selected resources and residual handoff as ordinary Source. It reruns shared preflight before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It routes every covered Source Item and verification method through the production owner and real-entry checks. A later update creates a new immutable version rather than overwriting the adopted baseline.
 
 ### Long-Task consumption
 
-The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus its selected Figma-native or other resource paths and conditions. Covered Source Items map through `source_claims` to Claims in the root conformance Assertion, and handoff acceptance blockers appear in the owning surface binding. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
+The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus every declared resource path and condition. Covered Source Items map through `source_claims` to the root conformance Assertion. Every verification method maps to an independently failing Assertion carrying its relevant Source Claims; every blocker preserves its Source-item/method lineage into a target-local machine Claim or target-blocking External Confirmation. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
 
 ## Forbidden inferences
 
@@ -131,6 +131,6 @@ Unless independently proven downstream, never infer that a generated resource:
 - is selected, authoritative or accepted;
 - covers unlisted states, viewports, modes, platforms or accessibility;
 - is native implementation because an HTML/image preview renders;
-- is complete or editable in Figma because a capability, URL or metadata response exists; native consumption requires operational tools, exact identity, a verified upstream route and immutable repository input;
+- is complete because a preview, URL, metadata response, file hash or provider run exists; implementation handoff requires the declared entry/dependency closure and resolvable evidence;
 - changed Context, `DESIGN.md`, a Source Plan, code or Contract;
 - proves production fidelity, correctness, test completion or release readiness.

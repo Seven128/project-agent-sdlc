@@ -88,7 +88,7 @@ test("default Context routing combines manifest candidates with bounded search",
   assert.match(managed, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     managed,
-    /incomplete eight-dimension coverage[\s\S]*stale resource digests fail closed/iu,
+    /incomplete source\/dependency closure[\s\S]*unresolved typed locator[\s\S]*stale resource digests fail closed/iu,
   );
   assert.match(
     managed,
@@ -100,15 +100,15 @@ test("default Context routing combines manifest candidates with bounded search",
   );
   assert.match(
     managed,
-    /Optional Figma-native input[\s\S]*exact file\/version\/nodes\/conditions[\s\S]*immutable repository captures/iu,
+    /implementation Web\/App target[\s\S]*canonical machine-readable entry[\s\S]*exact dependency closure[\s\S]*acquisition: complete/iu,
   );
   assert.match(
     managed,
-    /residual provider-neutral handoff[\s\S]*mutable link, metadata-only response or flattened screenshot is incomplete/iu,
+    /residual provider-neutral handoff[\s\S]*typed locators[\s\S]*subject.*target.*condition.*dimension/isu,
   );
   assert.match(
     managed,
-    /marked residual handoff[\s\S]*exact Figma-native captures[\s\S]*`verification_inputs`/iu,
+    /marked residual handoff[\s\S]*source-profile entry\/dependencies[\s\S]*`verification_inputs`/iu,
   );
 });
 

@@ -53,7 +53,7 @@ function validateDesignConformance(
   const target = (check.design_conformance_targets ?? []).find(
     (item) =>
       item.key === record.design_target_ref &&
-      item.conformance_assertion_ref === record.assertion_key,
+      designTargetUsesAssertion(item, record.assertion_key),
   );
   if (!target) return "design_target_unknown";
   if (
@@ -75,6 +75,18 @@ function validateDesignConformance(
   if (!artifactHashes[record.comparison_artifact_path])
     return "comparison_artifact_missing";
   return null;
+}
+
+function designTargetUsesAssertion(
+  target: CompiledCheckV2["design_conformance_targets"][number],
+  assertionKey: string,
+): boolean {
+  return (
+    target.conformance_assertion_ref === assertionKey ||
+    target.verification_method_bindings.some(
+      (item) => item.assertion_ref === assertionKey,
+    )
+  );
 }
 
 function validateInteractionTrace(

@@ -55,6 +55,20 @@ function validateDesignTargets({
     if (designAssertionRefs.has(assertionIdentity))
       issue(report, "ui_design_target_assertion_duplicate", label);
     designAssertionRefs.add(assertionIdentity);
+    unique(
+      target.verification_method_bindings.map((item) => item.method),
+      "ui_design_target_verification_method_duplicate",
+      label,
+      report,
+    );
+    unique(
+      target.verification_method_bindings.map((item) => item.assertion_ref),
+      "ui_design_target_verification_assertion_duplicate",
+      label,
+      report,
+    );
+    if (!target.verification_method_bindings.length)
+      issue(report, "ui_design_target_verification_methods_required", label);
     for (const [name, values] of [
       ["source_paths", target.source_paths],
       ["condition_keys", target.condition_keys],
@@ -91,6 +105,30 @@ function validateDesignTargets({
     validateRootJourney(binding, check, label, report);
     validateCarrierInputs(check, carriers, label, report);
     validateDesignAssertion(target, check, label, report);
+    for (const methodBinding of target.verification_method_bindings) {
+      const identity = `${target.conformance_check_ref}\0${methodBinding.assertion_ref}`;
+      if (
+        methodBinding.assertion_ref !== target.conformance_assertion_ref &&
+        designAssertionRefs.has(identity)
+      )
+        issue(
+          report,
+          "ui_design_target_assertion_duplicate",
+          `${label}:${methodBinding.assertion_ref}`,
+        );
+      if (methodBinding.assertion_ref !== target.conformance_assertion_ref)
+        designAssertionRefs.add(identity);
+      if (
+        !check.positive_assertions.some(
+          (item) => item.key === methodBinding.assertion_ref,
+        )
+      )
+        issue(
+          report,
+          "ui_design_target_verification_assertion_unknown",
+          `${label}:${methodBinding.method}:${methodBinding.assertion_ref}`,
+        );
+    }
     validateDesignFiles(target, check, label, report);
   }
 }
@@ -194,6 +232,26 @@ function validateBlockers(context: UiDesignBindingContext): void {
     );
     if (!blocker.refs.length)
       issue(report, "ui_design_blocker_ref_required", blockerLabel);
+    unique(
+      blocker.source_item_refs,
+      "ui_design_blocker_source_item_duplicate",
+      blockerLabel,
+      report,
+    );
+    unique(
+      blocker.verification_methods,
+      "ui_design_blocker_verification_method_duplicate",
+      blockerLabel,
+      report,
+    );
+    if (!blocker.source_item_refs.length)
+      issue(report, "ui_design_blocker_source_item_required", blockerLabel);
+    if (!blocker.verification_methods.length)
+      issue(
+        report,
+        "ui_design_blocker_verification_method_required",
+        blockerLabel,
+      );
     if (blocker.status === "machine_claim")
       validateMachineBlocker(context, blocker.refs, blockerLabel);
     if (blocker.status === "external_confirmation")

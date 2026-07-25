@@ -116,6 +116,17 @@ assert.deepEqual(
   ),
   { filename: "pkg-1.0.0.tgz" },
 );
+assert.deepEqual(
+  parsePackJson(
+    [
+      "> project-tiny-context-harness@1.0.0 prepack",
+      '{"schema_version":"package-build-fingerprint-command-v1"}',
+      JSON.stringify([{ filename: "pkg-1.0.0.tgz" }], null, 2),
+      "",
+    ].join("\n"),
+  ),
+  { filename: "pkg-1.0.0.tgz" },
+);
 assert.throws(
   () =>
     parsePackJson(

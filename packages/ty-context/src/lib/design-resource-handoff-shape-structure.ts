@@ -37,11 +37,11 @@ export function parseDesignResourceHandoffResources(
         "sha256",
         "editable_upstream",
       ]);
-      const upstream = object(row.editable_upstream, `${label}.editable_upstream`, [
-        "owner",
-        "locator",
-        "update_route",
-      ]);
+      const upstream = object(
+        row.editable_upstream,
+        `${label}.editable_upstream`,
+        ["owner", "locator", "update_route"],
+      );
       const digest = string(row.sha256, `${label}.sha256`);
       if (!SHA256.test(digest))
         designResourceShapeFail(
@@ -124,29 +124,33 @@ export function parseDesignResourceHandoffConditions(
 export function parseDesignResourceHandoffSubjects(
   value: unknown,
 ): DesignResourceHandoffSubjectV1[] {
-  return array(value, "design_resource_handoff.subjects").map(
-    (item, index) => {
-      const label = `design_resource_handoff.subjects[${index}]`;
-      const row = object(item, label, ["key", "kind", "stable_keys"]);
-      return {
-        key: stableKey(row.key, `${label}.key`),
-        kind: literal(
-          row.kind,
-          [
-            "surface",
-            "flow",
-            "region",
-            "component_family",
-            "control",
-            "state",
-            "asset",
-          ] as const,
-          `${label}.kind`,
-        ),
-        stable_keys: stableKeys(row.stable_keys, `${label}.stable_keys`),
-      };
-    },
-  );
+  return array(value, "design_resource_handoff.subjects").map((item, index) => {
+    const label = `design_resource_handoff.subjects[${index}]`;
+    const row = object(item, label, [
+      "key",
+      "kind",
+      "stable_keys",
+      "target_refs",
+    ]);
+    return {
+      key: stableKey(row.key, `${label}.key`),
+      kind: literal(
+        row.kind,
+        [
+          "surface",
+          "flow",
+          "region",
+          "component_family",
+          "control",
+          "state",
+          "asset",
+        ] as const,
+        `${label}.kind`,
+      ),
+      stable_keys: stableKeys(row.stable_keys, `${label}.stable_keys`),
+      target_refs: contractKeys(row.target_refs, `${label}.target_refs`),
+    };
+  });
 }
 
 export function parseDesignResourceHandoffTargets(
@@ -159,8 +163,14 @@ export function parseDesignResourceHandoffTargets(
       "interpretation",
       "resource_refs",
       "condition_refs",
+      "source_profile",
       "selection_basis",
     ]);
+    const sourceProfile = object(
+      row.source_profile,
+      `${label}.source_profile`,
+      ["kind", "entry_resource_ref", "dependency_resource_refs", "acquisition"],
+    );
     return {
       key: contractKey(row.key, `${label}.key`),
       interpretation: literal(
@@ -173,6 +183,26 @@ export function parseDesignResourceHandoffTargets(
         row.condition_refs,
         `${label}.condition_refs`,
       ),
+      source_profile: {
+        kind: literal(
+          sourceProfile.kind,
+          ["implementation_web", "implementation_app", "reference"] as const,
+          `${label}.source_profile.kind`,
+        ),
+        entry_resource_ref: stableKey(
+          sourceProfile.entry_resource_ref,
+          `${label}.source_profile.entry_resource_ref`,
+        ),
+        dependency_resource_refs: stableKeys(
+          sourceProfile.dependency_resource_refs,
+          `${label}.source_profile.dependency_resource_refs`,
+        ),
+        acquisition: literal(
+          sourceProfile.acquisition,
+          ["complete"] as const,
+          `${label}.source_profile.acquisition`,
+        ),
+      },
       selection_basis: string(row.selection_basis, `${label}.selection_basis`),
     };
   });

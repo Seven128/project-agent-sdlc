@@ -1,4 +1,11 @@
+import type { DesignResourceVerificationMethod } from "./design-resource-handoff-types.js";
+
 export type DesignTargetInterpretationV2 = "exact_target" | "constraint";
+
+export interface DeliveryDesignVerificationBindingV2 {
+  method: DesignResourceVerificationMethod;
+  assertion_ref: string;
+}
 
 export interface DeliveryDesignTargetV2 {
   key: string;
@@ -8,6 +15,7 @@ export interface DeliveryDesignTargetV2 {
   claim_refs: string[];
   conformance_check_ref: string;
   conformance_assertion_ref: string;
+  verification_method_bindings: DeliveryDesignVerificationBindingV2[];
   actual_artifact_path: string;
   comparison_artifact_path: string;
 }
@@ -19,6 +27,8 @@ export interface DeliveryDesignAcceptanceBlockerV2 {
   key: string;
   status: DesignAcceptanceBlockerStatusV2;
   refs: string[];
+  source_item_refs: string[];
+  verification_methods: DesignResourceVerificationMethod[];
   rationale: string;
 }
 

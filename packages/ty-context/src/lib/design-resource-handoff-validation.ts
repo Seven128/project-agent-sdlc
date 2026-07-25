@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseDesignResourceHandoffMarkdown } from "./design-resource-handoff-parser.js";
+import { validateDesignResourceFiles } from "./design-resource-handoff-file-validation.js";
 import type {
   DesignResourceHandoffPreflightV1,
   ParsedDesignResourceHandoffV1,
@@ -42,6 +43,7 @@ export async function preflightDesignResourceHandoff(
   );
   validateDesignResourceHandoffSemantics(parsed);
   const resourceHashes = await validateResourceIntegrity(repository, parsed);
+  await validateDesignResourceFiles(repository, parsed);
   const handoff = parsed.handoff;
   return {
     schema_version: "design-resource-handoff-preflight-v1",
@@ -69,7 +71,10 @@ export function validateDesignResourceHandoffSemantics(
     "scope_surface_keys_required",
   );
   requireNonemptyDesignResourceValues(handoff.resources, "resources_required");
-  requireNonemptyDesignResourceValues(handoff.conditions, "conditions_required");
+  requireNonemptyDesignResourceValues(
+    handoff.conditions,
+    "conditions_required",
+  );
   requireNonemptyDesignResourceValues(handoff.subjects, "subjects_required");
   requireNonemptyDesignResourceValues(handoff.targets, "targets_required");
   requireNonemptyDesignResourceValues(handoff.evidence, "evidence_required");
@@ -79,7 +84,10 @@ export function validateDesignResourceHandoffSemantics(
     handoff.scope.surface_keys,
     "scope_surface_key_duplicate",
   );
-  requireUniqueDesignResourceObjects(handoff.resources, "resource_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.resources,
+    "resource_key_duplicate",
+  );
   requireUniqueDesignResourceValues(
     handoff.resources.map((item) => item.path),
     "resource_path_duplicate",
@@ -90,8 +98,14 @@ export function validateDesignResourceHandoffSemantics(
   );
   requireUniqueDesignResourceObjects(handoff.subjects, "subject_key_duplicate");
   requireUniqueDesignResourceObjects(handoff.targets, "target_key_duplicate");
-  requireUniqueDesignResourceObjects(handoff.evidence, "evidence_key_duplicate");
-  requireUniqueDesignResourceObjects(handoff.coverage, "coverage_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.evidence,
+    "evidence_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.coverage,
+    "coverage_key_duplicate",
+  );
   requireUniqueDesignResourceObjects(
     handoff.acceptance_blockers,
     "acceptance_blocker_key_duplicate",
@@ -105,7 +119,7 @@ export function validateDesignResourceHandoffSemantics(
   const sourceItems = new Map(Object.entries(parsed.source_item_kinds));
   validateDesignResourceScope(handoff);
   validateDesignResourceConditions(handoff);
-  validateDesignResourceSubjects(handoff);
+  validateDesignResourceSubjects(handoff, targets);
   validateDesignResourceTargets(handoff, resources, conditions);
   validateDesignResourceEvidence(handoff, resources, conditions);
   validateDesignResourceCoverage(
@@ -127,7 +141,10 @@ async function validateResourceIntegrity(
   const hashes: Record<string, string> = {};
   for (const resource of parsed.handoff.resources) {
     if (resource.path === parsed.handoff_path)
-      invalidDesignResourceHandoff("resource_must_not_be_handoff", resource.key);
+      invalidDesignResourceHandoff(
+        "resource_must_not_be_handoff",
+        resource.key,
+      );
     const file = await assertProtectedRepositoryFile(
       repository,
       path.resolve(repository, ...resource.path.split("/")),

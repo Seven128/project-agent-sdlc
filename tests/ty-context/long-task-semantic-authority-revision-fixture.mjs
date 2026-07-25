@@ -44,8 +44,9 @@ export function prepareSemanticAuthority(contract) {
     operator: "equals",
     expected: true,
   });
-  outcome.acceptance.counterfactual_controls[0]
-    .expected_assertion_failures.push("exit-zero-is-insufficient");
+  outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.push(
+    "exit-zero-is-insufficient",
+  );
   outcome.acceptance.checks.push({
     ...structuredClone(outcome.acceptance.checks[0]),
     key: "submit-ui",
@@ -63,7 +64,8 @@ export function prepareSemanticAuthority(contract) {
     positive_assertions: [
       {
         key: "submit-states",
-        criterion: "The submit control is placed correctly and reports terminal states.",
+        criterion:
+          "The submit control is placed correctly and reports terminal states.",
         claims: [
           "result",
           "control.submit.surface",
@@ -98,6 +100,8 @@ export function prepareSemanticAuthority(contract) {
         key: "submit-accessibility-proof",
         status: "machine_claim",
         refs: ["control.submit.accessibility"],
+        source_item_refs: ["submit-design"],
+        verification_methods: ["accessibility_semantics"],
         rationale:
           "The target-local UI Check resolves the declared accessibility blocker.",
       },
@@ -160,16 +164,11 @@ export async function expectDecision(fixture, expectation) {
   );
   if ("includes" in expectation)
     assert.ok(
-      pending.revision_diff[expectation.field].includes(
-        expectation.includes,
-      ),
+      pending.revision_diff[expectation.field].includes(expectation.includes),
       `${expectation.field} must include ${expectation.includes}`,
     );
   if ("equals" in expectation)
-    assert.equal(
-      pending.revision_diff[expectation.field],
-      expectation.equals,
-    );
+    assert.equal(pending.revision_diff[expectation.field], expectation.equals);
   assert.ok(
     pending.revision_diff.reduction_reasons.includes(expectation.reason),
     `reduction reasons must include ${expectation.reason}`,

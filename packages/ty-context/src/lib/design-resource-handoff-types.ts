@@ -48,6 +48,21 @@ export const DESIGN_RESOURCE_VERIFICATION_METHODS = [
 export type DesignResourceVerificationMethod =
   (typeof DESIGN_RESOURCE_VERIFICATION_METHODS)[number];
 
+export const DESIGN_RESOURCE_LOCATOR_KINDS = [
+  "html_selector",
+  "markdown_anchor",
+  "json_pointer",
+  "css_selector",
+  "css_custom_property",
+  "whole_resource",
+] as const;
+
+export type DesignResourceLocatorKind =
+  (typeof DESIGN_RESOURCE_LOCATOR_KINDS)[number];
+
+export type DesignResourceSourceProfileKind =
+  "implementation_web" | "implementation_app" | "reference";
+
 export type DesignResourceCoverageDisposition =
   | "covered"
   | "not_applicable"
@@ -128,6 +143,7 @@ export interface DesignResourceHandoffSubjectV1 {
     | "state"
     | "asset";
   stable_keys: string[];
+  target_refs: string[];
 }
 
 export interface DesignResourceHandoffTargetV1 {
@@ -135,6 +151,12 @@ export interface DesignResourceHandoffTargetV1 {
   interpretation: "exact_target" | "constraint";
   resource_refs: string[];
   condition_refs: string[];
+  source_profile: {
+    kind: DesignResourceSourceProfileKind;
+    entry_resource_ref: string;
+    dependency_resource_refs: string[];
+    acquisition: "complete";
+  };
   selection_basis: string;
 }
 
@@ -142,7 +164,10 @@ export interface DesignResourceHandoffEvidenceV1 {
   key: string;
   resource_ref: string;
   kind: DesignResourceEvidenceKind;
-  locator: string;
+  locator: {
+    kind: DesignResourceLocatorKind;
+    value: string;
+  };
   condition_refs: string[];
 }
 
@@ -176,8 +201,7 @@ export interface ParsedDesignResourceHandoffV1 {
   source_item_kinds: Record<string, string>;
 }
 
-export interface DesignResourceHandoffPreflightV1
-  extends ParsedDesignResourceHandoffV1 {
+export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHandoffV1 {
   schema_version: "design-resource-handoff-preflight-v1";
   status: "ready";
   resource_hashes: Record<string, string>;

@@ -47,10 +47,7 @@ test("missing and skipped Playwright AC cases have distinct findings", async () 
     "acceptance_case_not_executed",
   );
   assert.equal(
-    Object.hasOwn(
-      missingDecoded.observations,
-      "playwright.case.ac-two.passed",
-    ),
+    Object.hasOwn(missingDecoded.observations, "playwright.case.ac-two.passed"),
     false,
   );
   assert.equal(
@@ -150,11 +147,7 @@ test("one Playwright Test Instance cannot bind multiple declared AC ids", () => 
   const decoded = decode(
     check,
     report([
-      tagged(
-        "[ac:ac-one] [ac:ac-two] copied proof",
-        "expected",
-        "passed",
-      ),
+      tagged("[ac:ac-one] [ac:ac-two] copied proof", "expected", "passed"),
     ]),
     0,
   );
@@ -176,10 +169,11 @@ test("the same AC aggregates independently across Playwright projects", () => {
   );
   assert.equal(decoded.execution_status, "completed");
   assert.equal(decoded.observations["playwright.case.ac-one.passed"], true);
-  assert.deepEqual(
-    decoded.observations["playwright.case.ac-one.project_ids"],
-    ["chromium", "firefox", "webkit"],
-  );
+  assert.deepEqual(decoded.observations["playwright.case.ac-one.project_ids"], [
+    "chromium",
+    "firefox",
+    "webkit",
+  ]);
   assert.equal(
     decoded.observations["playwright.case.ac-one.executed_instances"],
     3,
@@ -212,7 +206,10 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
       key: "map-default",
       target_ref: "browser-app",
       condition_keys: ["phone", "dark", "default"],
-      conformance_assertion_ref: "ac-one",
+      conformance_assertion_ref: "root-conformance",
+      verification_method_bindings: [
+        { method: "layout_geometry", assertion_ref: "ac-one" },
+      ],
       actual_artifact_path: "artifacts/map-actual.png",
       comparison_artifact_path: "artifacts/map-diff.json",
     },

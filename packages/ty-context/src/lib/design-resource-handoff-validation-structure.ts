@@ -16,10 +16,7 @@ export function validateDesignResourceScope(
   );
   for (const surfaceKey of handoff.scope.surface_keys)
     if (!surfaceStableKeys.has(surfaceKey))
-      invalidDesignResourceHandoff(
-        "scope_surface_subject_missing",
-        surfaceKey,
-      );
+      invalidDesignResourceHandoff("scope_surface_subject_missing", surfaceKey);
 }
 
 export function validateDesignResourceConditions(
@@ -46,6 +43,7 @@ export function validateDesignResourceConditions(
 
 export function validateDesignResourceSubjects(
   handoff: DesignResourceHandoffV1,
+  targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
 ): void {
   const stableKeys = new Set<string>();
   for (const subject of handoff.subjects) {
@@ -57,12 +55,19 @@ export function validateDesignResourceSubjects(
       subject.stable_keys,
       `subject_stable_key_duplicate:${subject.key}`,
     );
+    requireNonemptyDesignResourceValues(
+      subject.target_refs,
+      `subject_target_refs_required:${subject.key}`,
+    );
+    requireUniqueDesignResourceValues(
+      subject.target_refs,
+      `subject_target_ref_duplicate:${subject.key}`,
+    );
+    for (const ref of subject.target_refs)
+      requireKnownDesignResourceRef(targets, ref, "target");
     for (const stableKey of subject.stable_keys) {
       if (stableKeys.has(stableKey))
-        invalidDesignResourceHandoff(
-          "subject_stable_key_ambiguous",
-          stableKey,
-        );
+        invalidDesignResourceHandoff("subject_stable_key_ambiguous", stableKey);
       stableKeys.add(stableKey);
     }
   }
@@ -94,6 +99,7 @@ export function validateDesignResourceTargets(
       requireKnownDesignResourceRef(resources, ref, "resource");
     for (const ref of target.condition_refs)
       requireKnownDesignResourceRef(conditions, ref, "condition");
+    validateTargetSourceProfile(target, resources);
     const expectedRole =
       target.interpretation === "exact_target" ? "exact_target" : "constraint";
     if (
@@ -106,6 +112,71 @@ export function validateDesignResourceTargets(
         `${target.key}:${expectedRole}`,
       );
   }
+}
+
+function validateTargetSourceProfile(
+  target: DesignResourceHandoffV1["targets"][number],
+  resources: Map<string, DesignResourceHandoffV1["resources"][number]>,
+): void {
+  const profile = target.source_profile;
+  requireKnownDesignResourceRef(
+    resources,
+    profile.entry_resource_ref,
+    "source_profile_entry_resource",
+  );
+  requireUniqueDesignResourceValues(
+    profile.dependency_resource_refs,
+    `source_profile_dependency_resource_ref_duplicate:${target.key}`,
+  );
+  for (const ref of profile.dependency_resource_refs)
+    requireKnownDesignResourceRef(
+      resources,
+      ref,
+      "source_profile_dependency_resource",
+    );
+  if (profile.dependency_resource_refs.includes(profile.entry_resource_ref))
+    invalidDesignResourceHandoff(
+      "source_profile_entry_repeated_as_dependency",
+      target.key,
+    );
+  const declared = [
+    profile.entry_resource_ref,
+    ...profile.dependency_resource_refs,
+  ].sort();
+  const targetResources = [...target.resource_refs].sort();
+  if (
+    declared.length !== targetResources.length ||
+    declared.some((ref, index) => ref !== targetResources[index])
+  )
+    invalidDesignResourceHandoff(
+      "source_profile_resource_closure_mismatch",
+      target.key,
+    );
+  const entry = resources.get(profile.entry_resource_ref)!;
+  if (
+    profile.kind === "implementation_web" &&
+    !["text/html", "application/xhtml+xml"].includes(entry.media_type)
+  )
+    invalidDesignResourceHandoff(
+      "implementation_web_entry_media_type_invalid",
+      `${target.key}:${entry.media_type}`,
+    );
+  if (
+    profile.kind === "implementation_app" &&
+    !(
+      entry.media_type.startsWith("text/") ||
+      [
+        "application/json",
+        "application/javascript",
+        "application/yaml",
+        "application/x-yaml",
+      ].includes(entry.media_type)
+    )
+  )
+    invalidDesignResourceHandoff(
+      "implementation_app_entry_media_type_invalid",
+      `${target.key}:${entry.media_type}`,
+    );
 }
 
 export function validateDesignResourceEvidence(

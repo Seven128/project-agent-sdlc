@@ -225,7 +225,7 @@
     "designTarget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "interpretation", "source_paths", "condition_keys", "claim_refs", "conformance_check_ref", "conformance_assertion_ref", "actual_artifact_path", "comparison_artifact_path"],
+      "required": ["key", "interpretation", "source_paths", "condition_keys", "claim_refs", "conformance_check_ref", "conformance_assertion_ref", "verification_method_bindings", "actual_artifact_path", "comparison_artifact_path"],
       "properties": {
         "key": { "$ref": "#/$defs/key" },
         "interpretation": { "enum": ["exact_target", "constraint"] },
@@ -234,6 +234,20 @@
         "claim_refs": { "$ref": "#/$defs/nonEmptyStrings" },
         "conformance_check_ref": { "$ref": "#/$defs/key" },
         "conformance_assertion_ref": { "$ref": "#/$defs/key" },
+        "verification_method_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["method", "assertion_ref"],
+            "properties": {
+              "method": { "$ref": "#/$defs/designVerificationMethod" },
+              "assertion_ref": { "$ref": "#/$defs/key" }
+            }
+          }
+        },
         "actual_artifact_path": { "$ref": "#/$defs/nonEmpty" },
         "comparison_artifact_path": { "$ref": "#/$defs/nonEmpty" }
       }
@@ -241,13 +255,30 @@
     "designAcceptanceBlocker": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "status", "refs", "rationale"],
+      "required": ["key", "status", "refs", "source_item_refs", "verification_methods", "rationale"],
       "properties": {
         "key": { "$ref": "#/$defs/key" },
         "status": { "enum": ["machine_claim", "external_confirmation"] },
         "refs": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonEmpty" } },
+        "source_item_refs": { "$ref": "#/$defs/nonEmptyStrings" },
+        "verification_methods": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/designVerificationMethod" } },
         "rationale": { "$ref": "#/$defs/nonEmpty" }
       }
+    },
+    "designVerificationMethod": {
+      "enum": [
+        "layout_geometry",
+        "visual_pixel",
+        "design_token",
+        "content",
+        "component_state",
+        "interaction_trace",
+        "motion_timeline",
+        "responsive_reflow",
+        "input_method",
+        "accessibility_semantics",
+        "asset_integrity"
+      ]
     },
     "technical": {
       "type": "object",

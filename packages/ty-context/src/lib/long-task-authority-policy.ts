@@ -163,6 +163,7 @@ const DESIGN_TARGET_AUTHORITY_POLICY = {
   claim_refs: "proof_additive",
   conformance_check_ref: "proof_additive",
   conformance_assertion_ref: "proof_additive",
+  verification_method_bindings: "proof_additive",
   actual_artifact_path: "output_requirement",
   comparison_artifact_path: "output_requirement",
 } satisfies Record<keyof DeliveryDesignTargetV2, AuthorityFieldPolicy>;
@@ -171,6 +172,8 @@ const DESIGN_BLOCKER_AUTHORITY_POLICY = {
   key: "identity",
   status: "semantic_user_review",
   refs: "semantic_user_review",
+  source_item_refs: "semantic_user_review",
+  verification_methods: "proof_additive",
   rationale: "semantic_user_review",
 } satisfies Record<
   keyof DeliveryDesignAcceptanceBlockerV2,

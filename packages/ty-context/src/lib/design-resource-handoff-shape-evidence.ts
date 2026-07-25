@@ -6,6 +6,7 @@ import type {
 import {
   DESIGN_RESOURCE_DIMENSIONS,
   DESIGN_RESOURCE_EVIDENCE_KINDS,
+  DESIGN_RESOURCE_LOCATOR_KINDS,
 } from "./design-resource-handoff-types.js";
 import {
   contractKey,
@@ -15,7 +16,12 @@ import {
   stableKeys,
   verificationMethods,
 } from "./design-resource-handoff-shape-primitives.js";
-import { array, literal, object, string } from "./long-task-shape-primitives.js";
+import {
+  array,
+  literal,
+  object,
+  string,
+} from "./long-task-shape-primitives.js";
 
 export function parseDesignResourceHandoffEvidence(
   value: unknown,
@@ -29,15 +35,19 @@ export function parseDesignResourceHandoffEvidence(
       "locator",
       "condition_refs",
     ]);
+    const locator = object(row.locator, `${label}.locator`, ["kind", "value"]);
     return {
       key: stableKey(row.key, `${label}.key`),
       resource_ref: stableKey(row.resource_ref, `${label}.resource_ref`),
-      kind: literal(
-        row.kind,
-        DESIGN_RESOURCE_EVIDENCE_KINDS,
-        `${label}.kind`,
-      ),
-      locator: string(row.locator, `${label}.locator`),
+      kind: literal(row.kind, DESIGN_RESOURCE_EVIDENCE_KINDS, `${label}.kind`),
+      locator: {
+        kind: literal(
+          locator.kind,
+          DESIGN_RESOURCE_LOCATOR_KINDS,
+          `${label}.locator.kind`,
+        ),
+        value: string(locator.value, `${label}.locator.value`),
+      },
       condition_refs: contractKeys(
         row.condition_refs,
         `${label}.condition_refs`,

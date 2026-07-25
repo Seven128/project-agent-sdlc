@@ -89,6 +89,9 @@ test("production surface bindings and design conformance have Schema/Parser pari
         claim_refs: ["control.save.location"],
         conformance_check_ref: "settings-root",
         conformance_assertion_ref: "settings-conformance",
+        verification_method_bindings: [
+          { method: "layout_geometry", assertion_ref: "settings-layout" },
+        ],
         actual_artifact_path: "artifacts/settings-actual.png",
         comparison_artifact_path: "artifacts/settings-diff.json",
       },
@@ -98,6 +101,8 @@ test("production surface bindings and design conformance have Schema/Parser pari
         key: "save-validation",
         status: "machine_claim",
         refs: ["control.save.validation"],
+        source_item_refs: ["settings-design"],
+        verification_methods: ["component_state"],
         rationale: "The target-local validation Claim resolves the blocker.",
       },
     ],
@@ -119,10 +124,10 @@ test("production surface bindings and design conformance have Schema/Parser pari
   assert.ok(
     schema.$defs.evidenceCapability.enum.includes("design_conformance"),
   );
-  assert.deepEqual(schema.$defs.designAcceptanceBlocker.properties.status.enum, [
-    "machine_claim",
-    "external_confirmation",
-  ]);
+  assert.deepEqual(
+    schema.$defs.designAcceptanceBlocker.properties.status.enum,
+    ["machine_claim", "external_confirmation"],
+  );
 
   const legacy = deliveryContract();
   legacy.outcomes[0].product.controls.push({
@@ -142,9 +147,7 @@ test("production surface bindings and design conformance have Schema/Parser pari
     /semantic_drift_migration_required:outcomes\[0\]\.product\.surface_bindings/u,
   );
   assert.ok(
-    schema.$defs.product.allOf[0].then.required.includes(
-      "surface_bindings",
-    ),
+    schema.$defs.product.allOf[0].then.required.includes("surface_bindings"),
   );
 });
 
@@ -154,9 +157,7 @@ test("negative-only Global Check and zero positive Assertions have Schema/Parser
     key: "no-legacy",
     statement: "Legacy fallback is forbidden.",
   });
-  const check = structuredClone(
-    contract.outcomes[0].acceptance.checks[0],
-  );
+  const check = structuredClone(contract.outcomes[0].acceptance.checks[0]);
   check.key = "negative-only";
   check.positive_assertions = [];
   check.negative_assertions = [
@@ -176,7 +177,10 @@ test("negative-only Global Check and zero positive Assertions have Schema/Parser
   );
   const schema = await deliverySchema();
   assert.equal(
-    Object.hasOwn(schema.$defs.check.properties.positive_assertions, "minItems"),
+    Object.hasOwn(
+      schema.$defs.check.properties.positive_assertions,
+      "minItems",
+    ),
     false,
   );
 });
@@ -201,15 +205,13 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
   );
 
   const missingExpected = deliveryContract();
-  delete missingExpected.outcomes[0].acceptance.checks[0]
-    .positive_assertions[0].expected;
+  delete missingExpected.outcomes[0].acceptance.checks[0].positive_assertions[0]
+    .expected;
   assert.throws(
     () => parseDeliveryContractText(YAML.stringify(missingExpected)),
     /assertion_expected_required/u,
   );
-  assert.ok(
-    schema.$defs.assertion.allOf[0].then.required.includes("expected"),
-  );
+  assert.ok(schema.$defs.assertion.allOf[0].then.required.includes("expected"));
 
   const unaryExpected = deliveryContract();
   unaryExpected.outcomes[0].acceptance.checks[0].positive_assertions[0] = {
@@ -224,10 +226,9 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
     () => parseDeliveryContractText(YAML.stringify(unaryExpected)),
     /assertion_expected_forbidden/u,
   );
-  assert.deepEqual(
-    schema.$defs.assertion.allOf[1].then.not.required,
-    ["expected"],
-  );
+  assert.deepEqual(schema.$defs.assertion.allOf[1].then.not.required, [
+    "expected",
+  ]);
 
   const invalidRegex = deliveryContract();
   invalidRegex.outcomes[0].acceptance.checks[0].positive_assertions[0] = {
@@ -250,10 +251,7 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
 
 test("Source authority cardinality and retired dispositions stay aligned across Schema and Parser", async () => {
   const schema = await deliverySchema();
-  assert.equal(
-    schema.properties.task.properties.source_paths.minItems,
-    1,
-  );
+  assert.equal(schema.properties.task.properties.source_paths.minItems, 1);
   assert.equal(schema.properties.source_claims.minItems, 1);
   assert.equal(
     Object.hasOwn(schema.properties.source_claims, "default"),
@@ -272,8 +270,7 @@ test("Source authority cardinality and retired dispositions stay aligned across 
     refs: ["first.first-check.first-result", "first.first-check.other"],
   };
   assert.throws(
-    () =>
-      parseDeliveryContractText(YAML.stringify(multipleAcceptanceRefs)),
+    () => parseDeliveryContractText(YAML.stringify(multipleAcceptanceRefs)),
     /source_claim_acceptance_ref_count/u,
   );
 });
@@ -318,15 +315,20 @@ test("Preflight and direct Compile reject the same operator and proof-surface sa
       code: "claim_assertion_explicit_expected_required",
       mutate(contract) {
         const assertion =
-          contract.outcomes[0].acceptance.checks[0]
-            .positive_assertions[0];
+          contract.outcomes[0].acceptance.checks[0].positive_assertions[0];
         assertion.operator = "truthy";
         delete assertion.expected;
       },
     },
     ...[
-      ["Requirement", (contract) => contract.outcomes[0].product.requirements[0]],
-      ["Obligation", (contract) => contract.outcomes[0].technical.obligations[0]],
+      [
+        "Requirement",
+        (contract) => contract.outcomes[0].product.requirements[0],
+      ],
+      [
+        "Obligation",
+        (contract) => contract.outcomes[0].technical.obligations[0],
+      ],
     ].flatMap(([name, select]) => [
       {
         code: "required_proof_surfaces_empty",

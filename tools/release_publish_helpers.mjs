@@ -77,7 +77,7 @@ export async function runCommand(command, commandArgs, options = {}) {
 }
 
 export function parsePackJson(output) {
-  const parsed = parseJsonFromOutput(output);
+  const parsed = parseLastJsonDocument(output);
   const candidates = Array.isArray(parsed)
     ? parsed
     : parsed?.filename
@@ -92,6 +92,28 @@ export function parsePackJson(output) {
     throw new Error("Could not parse one npm pack result.");
   }
   return packs[0];
+}
+
+function parseLastJsonDocument(output) {
+  const text = String(output);
+  const starts = [];
+  let offset = 0;
+  for (const line of text.split(/(?<=\n)/u)) {
+    const firstContent = line.search(/\S/u);
+    if (firstContent >= 0 && ["[", "{"].includes(line[firstContent])) {
+      starts.push(offset + firstContent);
+    }
+    offset += line.length;
+  }
+
+  for (const start of starts.reverse()) {
+    try {
+      return JSON.parse(text.slice(start).trim());
+    } catch {
+      // Lifecycle scripts may emit earlier JSON records before npm's pack result.
+    }
+  }
+  return parseJsonFromOutput(output);
 }
 
 export function parseJsonFromOutput(output) {

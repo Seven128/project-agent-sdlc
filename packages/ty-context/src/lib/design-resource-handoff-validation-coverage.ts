@@ -22,7 +22,7 @@ export function validateDesignResourceCoverage(
   evidence: Map<string, DesignResourceHandoffV1["evidence"][number]>,
   sourceItems: Map<string, string>,
 ): void {
-  const pairs = new Set<string>();
+  const cells = new Set<string>();
   const unresolved: string[] = [];
   for (const row of handoff.coverage) {
     requireNonemptyDesignResourceValues(
@@ -45,20 +45,13 @@ export function validateDesignResourceCoverage(
         values,
         `coverage_${name}_duplicate:${row.key}`,
       );
-    for (const ref of row.subject_refs) {
+    for (const ref of row.subject_refs)
       requireKnownDesignResourceRef(subjects, ref, "subject");
-      const pair = `${ref}\0${row.dimension}`;
-      if (pairs.has(pair))
-        invalidDesignResourceHandoff(
-          "coverage_pair_duplicate",
-          `${ref}:${row.dimension}`,
-        );
-      pairs.add(pair);
-    }
     for (const ref of row.source_item_refs) {
       requireKnownDesignResourceRef(sourceItems, ref, "source_item");
       requireDesignSourceItemKind(sourceItems, ref);
     }
+    validateCoverageApplicability(row, handoff, targets, conditions, cells);
     if (row.disposition === "covered")
       validateCoveredRow(row, targets, conditions, evidence);
     else validateNoncoveredRow(row);
@@ -69,17 +62,89 @@ export function validateDesignResourceCoverage(
       unresolved.push(row.key);
   }
   for (const subject of handoff.subjects)
-    for (const dimension of DESIGN_RESOURCE_DIMENSIONS)
-      if (!pairs.has(`${subject.key}\0${dimension}`))
-        invalidDesignResourceHandoff(
-          "coverage_pair_missing",
-          `${subject.key}:${dimension}`,
-        );
+    for (const targetRef of subject.target_refs) {
+      const target = targets.get(targetRef)!;
+      for (const conditionRef of target.condition_refs)
+        for (const dimension of DESIGN_RESOURCE_DIMENSIONS) {
+          const cell = coverageCell(
+            subject.key,
+            targetRef,
+            conditionRef,
+            dimension,
+          );
+          if (!cells.has(cell))
+            invalidDesignResourceHandoff(
+              "coverage_cell_missing",
+              `${subject.key}:${targetRef}:${conditionRef}:${dimension}`,
+            );
+        }
+    }
   if (unresolved.length)
     invalidDesignResourceHandoff(
       "unresolved_coverage",
       unresolved.sort().join(","),
     );
+}
+
+function validateCoverageApplicability(
+  row: DesignResourceHandoffV1["coverage"][number],
+  handoff: DesignResourceHandoffV1,
+  targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
+  conditions: Map<string, unknown>,
+  cells: Set<string>,
+): void {
+  requireNonemptyDesignResourceValues(
+    row.target_refs,
+    `coverage_target_refs_required:${row.key}`,
+  );
+  requireNonemptyDesignResourceValues(
+    row.condition_refs,
+    `coverage_condition_refs_required:${row.key}`,
+  );
+  for (const targetRef of row.target_refs)
+    requireKnownDesignResourceRef(targets, targetRef, "target");
+  for (const conditionRef of row.condition_refs)
+    requireKnownDesignResourceRef(conditions, conditionRef, "condition");
+  const subjects = new Map(handoff.subjects.map((item) => [item.key, item]));
+  for (const subjectRef of row.subject_refs) {
+    const subject = subjects.get(subjectRef)!;
+    for (const targetRef of row.target_refs) {
+      if (!subject.target_refs.includes(targetRef))
+        invalidDesignResourceHandoff(
+          "coverage_target_outside_subject",
+          `${row.key}:${subjectRef}:${targetRef}`,
+        );
+      const target = targets.get(targetRef)!;
+      for (const conditionRef of row.condition_refs) {
+        if (!target.condition_refs.includes(conditionRef))
+          invalidDesignResourceHandoff(
+            "coverage_condition_outside_target",
+            `${row.key}:${targetRef}:${conditionRef}`,
+          );
+        const cell = coverageCell(
+          subjectRef,
+          targetRef,
+          conditionRef,
+          row.dimension,
+        );
+        if (cells.has(cell))
+          invalidDesignResourceHandoff(
+            "coverage_cell_duplicate",
+            `${subjectRef}:${targetRef}:${conditionRef}:${row.dimension}`,
+          );
+        cells.add(cell);
+      }
+    }
+  }
+}
+
+function coverageCell(
+  subjectRef: string,
+  targetRef: string,
+  conditionRef: string,
+  dimension: string,
+): string {
+  return `${subjectRef}\0${targetRef}\0${conditionRef}\0${dimension}`;
 }
 
 export function validateDesignResourceBlockers(
@@ -122,6 +187,29 @@ export function validateDesignResourceBlockers(
         invalidDesignResourceHandoff(
           "acceptance_blocker_dimension_method_missing",
           `${blocker.key}:${dimension}`,
+        );
+    const matchedCoverage = handoff.coverage.filter(
+      (row) =>
+        row.disposition === "covered" &&
+        blocker.target_refs.some((ref) => row.target_refs.includes(ref)) &&
+        blocker.subject_refs.some((ref) => row.subject_refs.includes(ref)) &&
+        blocker.dimensions.includes(row.dimension),
+    );
+    for (const ref of blocker.source_item_refs)
+      if (!matchedCoverage.some((row) => row.source_item_refs.includes(ref)))
+        invalidDesignResourceHandoff(
+          "acceptance_blocker_source_item_without_coverage",
+          `${blocker.key}:${ref}`,
+        );
+    for (const method of blocker.verification_methods)
+      if (
+        !matchedCoverage.some((row) =>
+          row.verification_methods.includes(method),
+        )
+      )
+        invalidDesignResourceHandoff(
+          "acceptance_blocker_method_without_coverage",
+          `${blocker.key}:${method}`,
         );
   }
 }
@@ -194,15 +282,6 @@ function validateCoveredRow(
         "coverage_evidence_kind_incompatible",
         `${row.key}:${row.dimension}:${item.key}:${item.kind}`,
       );
-    if (
-      !row.target_refs.some((targetRef) =>
-        targets.get(targetRef)!.resource_refs.includes(item.resource_ref),
-      )
-    )
-      invalidDesignResourceHandoff(
-        "coverage_evidence_outside_target",
-        `${row.key}:${item.key}`,
-      );
   }
   for (const method of row.verification_methods)
     if (!allowedMethods.has(method))
@@ -210,34 +289,27 @@ function validateCoveredRow(
         "coverage_verification_method_incompatible",
         `${row.key}:${row.dimension}:${method}`,
       );
-  for (const conditionRef of row.condition_refs) {
-    if (
-      !row.target_refs.some((targetRef) =>
-        targets.get(targetRef)!.condition_refs.includes(conditionRef),
+  for (const targetRef of row.target_refs)
+    for (const conditionRef of row.condition_refs)
+      if (
+        !row.evidence_refs.some((evidenceRef) => {
+          const item = evidence.get(evidenceRef)!;
+          return (
+            targets.get(targetRef)!.resource_refs.includes(item.resource_ref) &&
+            item.condition_refs.includes(conditionRef)
+          );
+        })
       )
-    )
-      invalidDesignResourceHandoff(
-        "coverage_condition_outside_target",
-        `${row.key}:${conditionRef}`,
-      );
-    if (
-      !row.evidence_refs.some((evidenceRef) =>
-        evidence.get(evidenceRef)!.condition_refs.includes(conditionRef),
-      )
-    )
-      invalidDesignResourceHandoff(
-        "coverage_condition_without_evidence",
-        `${row.key}:${conditionRef}`,
-      );
-  }
+        invalidDesignResourceHandoff(
+          "coverage_cell_without_evidence",
+          `${row.key}:${targetRef}:${conditionRef}`,
+        );
 }
 
 function validateNoncoveredRow(
   row: DesignResourceHandoffV1["coverage"][number],
 ): void {
   for (const [name, values] of [
-    ["target_refs", row.target_refs],
-    ["condition_refs", row.condition_refs],
     ["evidence_refs", row.evidence_refs],
     ["verification_methods", row.verification_methods],
   ] as const)

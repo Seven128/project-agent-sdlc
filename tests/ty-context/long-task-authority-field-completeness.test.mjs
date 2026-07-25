@@ -63,6 +63,9 @@ test("every Delivery Contract authority structure has a complete field policy re
       claim_refs: ["control.save.location"],
       conformance_check_ref: check.key,
       conformance_assertion_ref: "settings-conformance",
+      verification_method_bindings: [
+        { method: "layout_geometry", assertion_ref: "settings-layout" },
+      ],
       actual_artifact_path: "artifacts/settings-actual.png",
       comparison_artifact_path: "artifacts/settings-diff.json",
     },
@@ -70,6 +73,8 @@ test("every Delivery Contract authority structure has a complete field policy re
       key: "save-validation",
       status: "machine_claim",
       refs: ["control.save.validation"],
+      source_item_refs: ["settings-source"],
+      verification_methods: ["component_state"],
       rationale: "The target-local validation Claim resolves the blocker.",
     },
     outcome_technical: outcome.technical,

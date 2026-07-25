@@ -13,6 +13,7 @@ import {
   DESIGN_CONDITION_KEY,
   DESIGN_HANDOFF_PATH,
   DESIGN_RESOURCE_PATH,
+  DESIGN_RESOURCE_PATHS,
   DESIGN_SOURCE_ITEM_KEY,
   DESIGN_TARGET_KEY,
   writeDesignResourceHandoff,
@@ -47,7 +48,10 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     const check = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(check.runner.resolved_cwd, "");
     assert.equal(check.runner.resolved_target, "tests/oracle.mjs");
-    assert.equal(check.verification_input_hashes["tests/oracle.mjs"].length, 64);
+    assert.equal(
+      check.verification_input_hashes["tests/oracle.mjs"].length,
+      64,
+    );
     assert.equal(compiled.source_hashes["source.md"].length, 64);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -182,14 +186,70 @@ test("Long-Task Compile consumes the same strict design handoff through target, 
     assert.deepEqual(target.condition_keys, [DESIGN_CONDITION_KEY]);
     assert.deepEqual(target.source_paths, [
       DESIGN_HANDOFF_PATH,
-      DESIGN_RESOURCE_PATH,
+      ...DESIGN_RESOURCE_PATHS,
     ]);
+    assert.deepEqual(
+      target.verification_method_bindings.map((item) => item.method).sort(),
+      [
+        "accessibility_semantics",
+        "asset_integrity",
+        "component_state",
+        "design_token",
+        "interaction_trace",
+        "layout_geometry",
+        "motion_timeline",
+        "responsive_reflow",
+        "visual_pixel",
+      ],
+    );
     assert.equal(
       compiled.source_items.some((item) => item.key === DESIGN_SOURCE_ITEM_KEY),
       true,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task Compile binds every declared design verification method to an independent Assertion", async () => {
+  const missingMethod = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(missingMethod);
+    missingMethod.contract.outcomes[0].product.surface_bindings[0].design_targets[0].verification_method_bindings.pop();
+    await writeContract(missingMethod.workdir, missingMethod.contract);
+    await assert.rejects(
+      compileDeliveryContract(missingMethod.workdir, missingMethod.root, {
+        require_completion_gate: false,
+      }),
+      /design_resource_verification_methods_mismatch:main-default/u,
+    );
+  } finally {
+    await rm(missingMethod.root, { recursive: true, force: true });
+  }
+
+  const missingClaim = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(missingClaim);
+    const outcome = missingClaim.contract.outcomes[0];
+    const target = outcome.product.surface_bindings[0].design_targets[0];
+    const binding = target.verification_method_bindings.find(
+      (item) => item.method === "layout_geometry",
+    );
+    const assertion = outcome.acceptance.checks[0].positive_assertions.find(
+      (item) => item.key === binding.assertion_ref,
+    );
+    assertion.claims = assertion.claims.filter(
+      (item) => item !== "requirement.design-handoff",
+    );
+    await writeContract(missingClaim.workdir, missingClaim.contract);
+    await assert.rejects(
+      compileDeliveryContract(missingClaim.workdir, missingClaim.root, {
+        require_completion_gate: false,
+      }),
+      /design_resource_verification_method_claim_not_asserted:main-default:layout_geometry:design-main:requirement\.design-handoff/u,
+    );
+  } finally {
+    await rm(missingClaim.root, { recursive: true, force: true });
   }
 });
 
@@ -237,6 +297,49 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
     );
   } finally {
     await rm(blockerFixture.root, { recursive: true, force: true });
+  }
+
+  const blockerLineageFixture = await createDeliveryFixture();
+  try {
+    const handoff = await attachDesignResourceHandoff(blockerLineageFixture);
+    const handoffBlocker = {
+      key: "accessibility-proof",
+      target_refs: [DESIGN_TARGET_KEY],
+      subject_refs: ["surface.main"],
+      dimensions: ["accessibility"],
+      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
+      verification_methods: ["accessibility_semantics"],
+      description: "The production semantic tree must match the design.",
+    };
+    handoff.acceptance_blockers.push(handoffBlocker);
+    const binding =
+      blockerLineageFixture.contract.outcomes[0].product.surface_bindings[0];
+    binding.acceptance_blockers.push({
+      key: handoffBlocker.key,
+      status: "machine_claim",
+      refs: ["requirement.design-handoff"],
+      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
+      verification_methods: ["layout_geometry"],
+      rationale: "Intentionally mismatched method lineage.",
+    });
+    await writeDesignResourceHandoff(blockerLineageFixture.root, handoff);
+    await writeContract(
+      blockerLineageFixture.workdir,
+      blockerLineageFixture.contract,
+    );
+    await assert.rejects(
+      compileDeliveryContract(
+        blockerLineageFixture.workdir,
+        blockerLineageFixture.root,
+        { require_completion_gate: false },
+      ),
+      /design_resource_acceptance_blocker_methods_mismatch:accessibility-proof/u,
+    );
+  } finally {
+    await rm(blockerLineageFixture.root, {
+      recursive: true,
+      force: true,
+    });
   }
 });
 
@@ -361,12 +464,29 @@ async function attachDesignResourceHandoff(fixture) {
     feedback: "",
     accessibility: "",
   });
-  check.verification_inputs.push(DESIGN_HANDOFF_PATH, DESIGN_RESOURCE_PATH);
+  check.verification_inputs.push(DESIGN_HANDOFF_PATH, ...DESIGN_RESOURCE_PATHS);
   check.artifact_globs = ["artifacts/**"];
   check.positive_assertions[0].claims.push("requirement.design-handoff");
-  check.positive_assertions[0].evidence_capabilities.push(
-    "design_conformance",
-  );
+  check.positive_assertions[0].evidence_capabilities.push("design_conformance");
+  const verificationMethods = [
+    ...new Set(handoff.coverage.flatMap((row) => row.verification_methods)),
+  ];
+  for (const method of verificationMethods) {
+    const capabilities =
+      method === "interaction_trace"
+        ? ["interaction_trace", "target_runtime"]
+        : method === "component_state"
+          ? ["design_conformance", "interaction_trace", "target_runtime"]
+          : ["design_conformance", "target_runtime"];
+    const assertion = structuredClone(check.positive_assertions[0]);
+    assertion.key = `design-${method.replaceAll("_", "-")}`;
+    assertion.observation = `design_${method}`;
+    assertion.claims = ["requirement.design-handoff"];
+    assertion.evidence_capabilities = [
+      ...new Set([...assertion.evidence_capabilities, ...capabilities]),
+    ];
+    check.positive_assertions.push(assertion);
+  }
   outcome.acceptance.counterfactual_controls[0].claims.push(
     "requirement.design-handoff",
     "control.main.surface",
@@ -379,11 +499,15 @@ async function attachDesignResourceHandoff(fixture) {
       {
         key: DESIGN_TARGET_KEY,
         interpretation: "exact_target",
-        source_paths: [DESIGN_HANDOFF_PATH, DESIGN_RESOURCE_PATH],
+        source_paths: [DESIGN_HANDOFF_PATH, ...DESIGN_RESOURCE_PATHS],
         condition_keys: [DESIGN_CONDITION_KEY],
         claim_refs: ["control.main.location"],
         conformance_check_ref: "first-check",
         conformance_assertion_ref: "first-result",
+        verification_method_bindings: verificationMethods.map((method) => ({
+          method,
+          assertion_ref: `design-${method.replaceAll("_", "-")}`,
+        })),
         actual_artifact_path: "artifacts/design-actual.json",
         comparison_artifact_path: "artifacts/design-comparison.json",
       },

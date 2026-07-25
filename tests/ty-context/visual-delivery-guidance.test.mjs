@@ -137,7 +137,10 @@ test("visual design and implementation guidance reaches every managed copy", asy
     /production token source, its generation direction/iu,
   );
   assert.match(development, /first confirm Design Authority readiness/iu);
-  assert.match(development, /ty-context design-resource preflight <handoff\.md>/u);
+  assert.match(
+    development,
+    /ty-context design-resource preflight <handoff\.md>/u,
+  );
   assert.match(
     development,
     /covered Source Item and verification method[\s\S]*project-owned checks/iu,
@@ -296,7 +299,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   );
   assert.match(
     evidence,
-    /Candidate comparison, a mutable Figma link, connector\/extraction success[\s\S]*authoring\/integrity material/iu,
+    /Candidate comparison, a mutable provider link, extraction success[\s\S]*authoring\/integrity material/iu,
   );
 });
 
@@ -341,7 +344,9 @@ test("complete selected-design conformance is an explicit Long-Task purpose", as
       content,
       /Agent implementation, acceptance and testing fully conform/iu,
     );
-    assert.match(content, /Figma-native/iu);
+    assert.match(content, /canonical (?:machine-readable )?(?:entry|source)/iu);
+    assert.match(content, /typed locator/iu);
+    assert.match(content, /subject.*target.*condition.*dimension/isu);
     assert.match(
       content,
       /residual[\s\S]{0,160}handoff|handoff[\s\S]{0,160}residual/iu,
@@ -355,7 +360,7 @@ test("complete selected-design conformance is an explicit Long-Task purpose", as
   );
   assert.match(
     globalContext,
-    /provider-neutral structured handoff remains the residual semantic and coverage boundary/iu,
+    /provider-neutral residual handoff adds scope, applicability, missing meaning and downstream bindings/iu,
   );
   assert.match(
     chineseReadme,
@@ -363,12 +368,13 @@ test("complete selected-design conformance is an explicit Long-Task purpose", as
   );
   assert.match(
     chineseReadme,
-    /Figma 原生[\s\S]*残余结构化 handoff/iu,
+    /canonical entry[\s\S]*typed locator[\s\S]*subject.*target.*condition/isu,
   );
   assert.match(
     sourcePlan,
-    /Figma-Native Input And Residual Handoff Amendment/iu,
+    /Implementation-Source Closure And Provider Selection Amendment/iu,
   );
+  assert.match(sourcePlan, /Figma[\s\S]*Penpot[\s\S]*OpenPencil/iu);
 });
 
 test("default workflow routes Design Authority readiness without adding a visual lifecycle", async () => {
@@ -453,10 +459,7 @@ test("default workflow routes Design Authority readiness without adding a visual
     agents,
     /unconfigured starter, candidate, style-only guidance or inspiration/iu,
   );
-  assert.match(
-    agents,
-    /non-fidelity work remains lightweight/iu,
-  );
+  assert.match(agents, /non-fidelity work remains lightweight/iu);
   assert.match(
     agents,
     /Externally authored design resources such as Figma frames, images, prototypes/iu,

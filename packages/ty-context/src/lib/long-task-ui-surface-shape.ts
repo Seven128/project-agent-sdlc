@@ -3,6 +3,7 @@ import type {
   DeliveryDesignTargetV2,
   DeliverySurfaceBindingV2,
 } from "./long-task-ui-surface-types.js";
+import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-types.js";
 import {
   array,
   key,
@@ -79,6 +80,7 @@ function parseDesignTargets(
       "claim_refs",
       "conformance_check_ref",
       "conformance_assertion_ref",
+      "verification_method_bindings",
       "actual_artifact_path",
       "comparison_artifact_path",
     ]);
@@ -103,6 +105,10 @@ function parseDesignTargets(
         row.conformance_assertion_ref,
         `${itemLabel}.conformance_assertion_ref`,
       ),
+      verification_method_bindings: parseVerificationMethodBindings(
+        row.verification_method_bindings,
+        `${itemLabel}.verification_method_bindings`,
+      ),
       actual_artifact_path: repositoryFile(
         row.actual_artifact_path,
         `${itemLabel}.actual_artifact_path`,
@@ -121,7 +127,14 @@ function parseAcceptanceBlockers(
 ): DeliveryDesignAcceptanceBlockerV2[] {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, ["key", "status", "refs", "rationale"]);
+    const row = object(item, itemLabel, [
+      "key",
+      "status",
+      "refs",
+      "source_item_refs",
+      "verification_methods",
+      "rationale",
+    ]);
     return {
       key: key(row.key, `${itemLabel}.key`),
       status: literal(
@@ -130,7 +143,36 @@ function parseAcceptanceBlockers(
         `${itemLabel}.status`,
       ),
       refs: strings(row.refs, `${itemLabel}.refs`),
+      source_item_refs: strings(
+        row.source_item_refs,
+        `${itemLabel}.source_item_refs`,
+      ),
+      verification_methods: array(
+        row.verification_methods,
+        `${itemLabel}.verification_methods`,
+      ).map((method, methodIndex) =>
+        literal(
+          method,
+          DESIGN_RESOURCE_VERIFICATION_METHODS,
+          `${itemLabel}.verification_methods[${methodIndex}]`,
+        ),
+      ),
       rationale: string(row.rationale, `${itemLabel}.rationale`),
+    };
+  });
+}
+
+function parseVerificationMethodBindings(value: unknown, label: string) {
+  return array(value, label).map((item, index) => {
+    const itemLabel = `${label}[${index}]`;
+    const row = object(item, itemLabel, ["method", "assertion_ref"]);
+    return {
+      method: literal(
+        row.method,
+        DESIGN_RESOURCE_VERIFICATION_METHODS,
+        `${itemLabel}.method`,
+      ),
+      assertion_ref: key(row.assertion_ref, `${itemLabel}.assertion_ref`),
     };
   });
 }

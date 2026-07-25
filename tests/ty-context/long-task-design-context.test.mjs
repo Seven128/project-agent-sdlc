@@ -345,7 +345,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   }
 });
 
-test("Figma-native facts and residual handoff preserve the Long-Task proof chain", async () => {
+test("source-rich facts and residual handoff preserve the Long-Task proof chain", async () => {
   const [skill, sourceAuthoring, contractAuthoring, evidenceDesign, spec, readmes] =
     await Promise.all([
       read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
@@ -374,21 +374,22 @@ test("Figma-native facts and residual handoff preserve the Long-Task proof chain
     readmes,
   ].join("\n");
 
-  assert.match(guidance, /Figma-native|Figma 原生/iu);
-  assert.match(guidance, /exact file\/version\/node/iu);
-  assert.match(guidance, /repository-readable immutable/iu);
+  assert.match(guidance, /canonical (?:machine-readable )?(?:entry|source)/iu);
+  assert.match(guidance, /dependency (?:set|closure)/iu);
+  assert.match(guidance, /typed locator/iu);
+  assert.match(guidance, /subject.*target.*condition.*dimension/isu);
   assert.match(guidance, /residual (?:structured )?(?:semantic\/coverage )?handoff/iu);
   assert.match(
     guidance,
-    /Source Claims[\s\S]*Controls\/`?surface_bindings`?[\s\S]*production[\s\S]*design_conformance[\s\S]*interaction[\s\S]*target-runtime[\s\S]*Final Gate/iu,
+    /Source Claims[\s\S]*Controls\/`?surface_bindings`?[\s\S]*(?:method-specific|independent).*Assertions?[\s\S]*production[\s\S]*design_conformance[\s\S]*interaction[\s\S]*target-runtime[\s\S]*Final Gate/iu,
   );
   assert.match(
     evidenceDesign,
-    /connector\/extraction success[\s\S]*cannot become product acceptance/iu,
+    /extraction success[\s\S]*cannot become product acceptance/iu,
   );
   assert.match(
     guidance,
-    /mutable (?:Figma )?link[\s\S]*(?:metadata-only|flattened screenshot)[\s\S]*(?:incomplete|insufficient|cannot replace)/iu,
+    /mutable (?:provider )?link[\s\S]*(?:metadata-only|partial file set|flattened)[\s\S]*(?:incomplete|insufficient|cannot replace|cannot become)/iu,
   );
   assert.match(
     spec,

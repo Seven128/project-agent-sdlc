@@ -85,7 +85,7 @@ For exploration, ask what remains uncertain inside the scope. For a handoff, ask
 - **visual direction:** composition, typography, color, density, imagery or brand character;
 - **platform/responsiveness:** safe areas, breakpoints, input methods or viewport behavior;
 - **system reuse:** tokens, component variants or cross-surface rules needed by more than the requested artifact;
-- **team editability/native inspection:** a real need for collaborative editable frames/libraries, inspectable component/token facts or an organizational Figma-native handoff.
+- **team editability/native inspection:** a real need for collaborative editable frames/libraries, inspectable component/token facts or an organizational native-platform handoff.
 
 Do not manufacture a gap already resolved by selected Source.
 
@@ -100,7 +100,7 @@ Do not manufacture a gap already resolved by selected Source.
 | Flow/journey board | Multiple surfaces, branches or recovery paths must be compared together | The request is one isolated surface/control |
 | Design-system slice | Several requested artifacts need shared tokens/components or reuse rules | One exploratory candidate does not justify a system |
 | Component inventory/specification | Development handoff needs explicit reusable families, variants, state behavior or mappings for several control instances | Exploration is visual only, or selected component sources already cover every mapped instance |
-| Figma-native input/handoff | Editable collaboration, native property inspection, component/library reuse or organizational Figma handoff is explicitly valuable and the connector/auth/read/export path is operational | A screenshot/HTML/project-native source is sufficient or the native path is unavailable |
+| Collaborative native design input | Existing team authority, editable collaboration, native component/library reuse or organizational handoff is explicitly valuable and the connector/auth/read/export path is operational | Open Design/project-native implementation source is sufficient or the native path would create a second synchronized representation |
 | Image/illustration/icon/media study | Bespoke content materially defines the selected direction | Generic placeholders answer the present decision |
 
 A prototype is often valuable for new Web/App flows, but it is never automatically required. Low- and high-fidelity resources may both be selected only when they answer independent questions. One comprehensive, inspectable artifact may cover page composition and several component families; a static frame cannot claim unseen interaction or state coverage merely because all controls appear in it.
@@ -155,7 +155,7 @@ This is an explanatory shape, not a required file or schema. Never paste or para
 
 - Keep each revision inside the original scope ceiling unless the user explicitly expands it.
 - Reuse the current Open Design project when that preserves context and provenance; preserve the prior artifact hash before overwriting a selected candidate.
-- Do not create low-fi, high-fi, component boards and Figma copies merely because a process diagram lists them.
+- Do not create low-fi, high-fi, component boards or native-platform copies merely because a process diagram lists them.
 - For exploration, stop as soon as the requested decision is supported.
 - For an implementation handoff, stop only when every material in-scope coverage item has an explicit disposition and the resource mapping leaves no material user-visible design decision for the implementer to invent. Honest `decision-required` or `unavailable` items may stop further generation, but the result is a blocked authoring outcome: it cannot pass shared preflight, be called a ready implementation handoff or authorize fidelity work. This does not claim Design Authority or implementation acceptance.
 
