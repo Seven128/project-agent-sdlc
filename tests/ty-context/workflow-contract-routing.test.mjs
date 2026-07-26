@@ -242,7 +242,8 @@ test("Workflow Contract names the complete Source-bound-Draft-to-qualified-resul
     "Preflight",
     "Authority Lock",
     "one-time model choice",
-    "Rolling Frontier",
+    "Goal-owned adaptive implementation",
+    "acceptance/verification Frontier",
     "source-recompiled one-snapshot Final Gate",
     "qualified machine result",
     "Stop/close",
@@ -325,10 +326,13 @@ test("long-task Skill is the only active long-task workflow and normal-long-task
     active,
     /Draft Outcome[\s\S]*not a new schema field or runtime entity/iu,
   );
-  assert.match(active, /`depends_on` means acceptance readiness/iu);
   assert.match(
     active,
-    /must not persist[\s\S]{0,100}scheduler[\s\S]{0,100}Worker queue/iu,
+    /`depends_on` means acceptance(?: and intermediate-proof)? readiness/iu,
+  );
+  assert.match(
+    active,
+    /(?:must not|Do not) persist[\s\S]{0,120}(?:scheduler[\s\S]{0,120}Worker queue|Worker queue[\s\S]{0,120}scheduler)/iu,
   );
   assert.match(
     active,
@@ -342,6 +346,14 @@ test("long-task Skill is the only active long-task workflow and normal-long-task
     /no checkpoint file.*model route.*automatic model switch/is,
   );
   assert.match(active, /second Contract plan/);
+  assert.match(
+    active,
+    /may (?:implement, inspect or repair|work across)[\s\S]{0,180}(?:any in-scope Outcome|Outcome or Stage boundaries)/iu,
+  );
+  assert.match(
+    active,
+    /platform-native internal delegation[\s\S]{0,240}(?:no subagent dispatch|not Progress|not proof|converge)/iu,
+  );
   assert.doesNotMatch(
     active,
     /Do not create a second plan, Authoring Skill product/,

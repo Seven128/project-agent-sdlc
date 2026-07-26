@@ -188,6 +188,88 @@ test("one-time model choice uses Authority Lock without creating model routing s
   assert.deepEqual(affirmativeModelRoutingClaims, []);
 });
 
+test("implementation freedom removes method gates without weakening declared proof", async () => {
+  const [
+    specification,
+    workflow,
+    rationale,
+    efficiency,
+    skill,
+    lifecycle,
+    development,
+    uiux,
+    publicReadme,
+    packageReadme,
+  ] = await Promise.all([
+    read("PROJECT_SPEC.md"),
+    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
+    read("docs/long-task-workflow-efficiency.md"),
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+    ),
+    read(".codex/ty-context-managed/skills/context_uiux_design/SKILL.md"),
+    read("README.md"),
+    read("packages/ty-context/README.md"),
+  ]);
+  const combined = [
+    specification,
+    workflow,
+    rationale,
+    efficiency,
+    skill,
+    lifecycle,
+    development,
+    uiux,
+    publicReadme,
+    packageReadme,
+  ].join("\n");
+
+  assert.match(
+    combined,
+    /Goal-owned adaptive (?:technical )?implementation/iu,
+  );
+  assert.match(
+    combined,
+    /Frontier[\s\S]{0,240}(?:not an implementation gate|does not (?:authorize|prohibit|restrict|gate))/iu,
+  );
+  assert.match(
+    combined,
+    /platform-native (?:internal |opaque )?delegation[\s\S]{0,280}(?:no .*scheduler|non-authoritative|not .*proof|converge)/iu,
+  );
+  assert.match(
+    combined,
+    /recommended targeted-feedback points[\s\S]{0,260}(?:only before an intermediate decision|only before intermediate reliance)/iu,
+  );
+  assert.match(
+    combined,
+    /Final Gate[\s\S]{0,220}(?:ignores Progress|stale or absent Progress)[\s\S]{0,180}reruns?/iu,
+  );
+  assert.match(
+    combined,
+    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
+  );
+  assert.match(combined, /execution_model_checkpoint\.required: true/iu);
+  assert.match(combined, /continue_current_model/iu);
+  assert.match(combined, /switch_model_then_resume/iu);
+
+  for (const obsolete of [
+    /stage-constrained rolling technical implementation/iu,
+    /rolling internal implementation Frontier/iu,
+    /implement only Outcomes in the derived current Stage frontier/iu,
+    /Implement and verify ready Outcome/iu,
+    /Never proactively spawn, assign or coordinate parallel subagents/iu,
+    /refresh[\s\S]{0,100}before (?:dependent reliance or )?Final Gate/iu,
+  ])
+    assert.doesNotMatch(combined, obsolete);
+});
+
 test("Preflight repair ordering remains advisory and creates no authority", async () => {
   const [architecture, efficiency, ...references] = await Promise.all([
     read("project_context/architecture.md"),

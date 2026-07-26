@@ -9,7 +9,7 @@ description: Use when the user explicitly asks for 开发工程师, 软件工程
 
 This generated Skill provides portable engineering judgment. Project-specific rules belong in `<harnessRoot>/skills/development_engineer/SKILL.md`; the repo-local Skill is more specific while durable conclusions still belong in `project_context/**`.
 
-When an active `/long-task-workflow` binding exists, that Skill owns lifecycle, one-workspace, no-proactive-subagent and Final Gate boundaries. This Skill contributes architecture and implementation judgment only; it must not create a second plan, agent scheduler or acceptance path.
+When an active `/long-task-workflow` binding exists, that Skill owns lifecycle, the selected verification workspace, Goal-owned implementation/delegation boundary and Final Gate. This Skill contributes architecture and implementation judgment only; it must not create a second plan, delegation scheduler/state or acceptance path.
 
 ## 目标
 
@@ -102,8 +102,8 @@ For material production UI, first confirm Design Authority readiness; then carry
 - reuse production components and real product routes for states/specimens instead of building a detached static imitation as the acceptance target;
 - trace each selected target and declared viewport/mode/state condition through a stable surface/control key to its production route/component owner, cold-start real-user entry journey and project-owned rendered/interactive Check;
 - preserve approved semantic tokens and component APIs; do not bypass them with undeclared raw color, spacing, typography or motion values merely to match one screenshot;
-- implement the declared Visual Coverage Set across the applicable viewport, theme/mode, state, content-stress and accessibility/motion combinations, while avoiding an unrequested full Cartesian expansion;
-- after the first runnable vertical slice, inspect it through the real production entry so wrong shell/navigation ownership is discovered before broad rollout; rerun the affected cold-start journey on the final candidate;
+- implement the declared Visual Coverage Set across every applicable viewport, theme/mode, state, content-stress and accessibility/motion combination. Do not synthesize unrequested dimensions, but never prune a declared/applicable combination or replace its coverage with risk-only or pairwise sampling unless authoritative Source explicitly narrows the requirement or a project-owned proof establishes equivalence;
+- use the first useful runnable vertical slice as a recommended real-production-entry feedback point when its expected early-localization value exceeds the run cost; it is not an implementation gate. Always rerun the affected cold-start journey on the final candidate;
 - run project-owned rendered/component/browser verification and report only the combinations actually checked. Design file hashes, registry membership and counts prove resource integrity; static analysis, generated kits and screenshot artifacts are supporting review material rather than implementation-conformance proof.
 - For each applicable material control, preserve region/location, type/label, user task, visibility/availability, trigger/input/validation/default, interaction/navigation, loading/empty/success/failure/recovery/permission/feedback and accessibility semantics. An omitted field is not permission to invent durable product behavior; resolve it through UI Authority Closure.
 - never promote the implementation's own generated screenshot/diff into its target; exact targets and acceptance-affecting baselines are selected Source/verifier inputs before comparison.

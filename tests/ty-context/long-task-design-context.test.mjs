@@ -98,7 +98,7 @@ test("Outcome decomposition improves repair without creating scheduling authorit
 
   for (const concept of [
     "requirement coupling",
-    "dependency-ready",
+    "acceptance/verification-ready",
     "targeted verification",
     "localize failure",
     "resume ready Outcomes",
@@ -107,8 +107,14 @@ test("Outcome decomposition improves repair without creating scheduling authorit
     assert.match(combined, new RegExp(concept, "iu"));
   }
 
-  assert.match(combined, /`depends_on` means acceptance readiness/iu);
-  assert.match(combined, /Rolling Frontier[\s\S]*temporary/iu);
+  assert.match(
+    combined,
+    /`depends_on` means acceptance(?: and intermediate-proof)? readiness/iu,
+  );
+  assert.match(
+    combined,
+    /temporary[\s\S]*Rolling Frontier|Rolling Frontier[\s\S]*temporary/iu,
+  );
   assert.match(
     combined,
     /not a persisted scheduler|Frontier is not persisted/iu,
@@ -120,6 +126,14 @@ test("Outcome decomposition improves repair without creating scheduling authorit
   assert.match(
     combined,
     /Outcome decomposes execution and diagnosis, not completion authority/iu,
+  );
+  assert.match(
+    combined,
+    /Frontier[\s\S]{0,240}(?:not an implementation gate|does not (?:authorize|restrict|gate|prescribe))/iu,
+  );
+  assert.match(
+    combined,
+    /(?:current )?Goal[\s\S]{0,180}(?:chooses|choosing) implementation order/iu,
   );
   assert.match(combined, /one Contract[\s\S]*one Final Gate/iu);
 });
@@ -218,6 +232,18 @@ test("target-runtime feedback stays live, rolling, and state-free", async () => 
   assert.match(combined, /earliest (?:owning )?Outcome/iu);
   assert.match(combined, /first runnable (?:slice|boundary)/iu);
   assert.match(combined, /coalesc/iu);
+  assert.match(
+    combined,
+    /recommended[\s\S]{0,180}(?:not mandatory|advisory|Goal owns|Goal-owned)/iu,
+  );
+  assert.match(
+    combined,
+    /refresh(?:es|ed)?[\s\S]{0,180}only before (?:an )?intermediate (?:decision|reliance)/iu,
+  );
+  assert.match(
+    combined,
+    /Final Gate[\s\S]{0,200}(?:stale or absent Progress|ignores Progress)[\s\S]{0,160}reruns?/iu,
+  );
   assert.match(combined, /`input_paths`[\s\S]*Binding carrier/iu);
   assert.match(combined, /smallest sound causal envelope/iu);
   assert.match(
@@ -452,6 +478,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     "Exact material revision summary, self-contained decision brief and rolling return",
     "Stateless same-Contract candidate diagnosis",
     "Targeted verify is repair evidence only",
+    "Adaptive rolling runtime feedback",
     "UI production-surface binding and design conformance",
     "Same-snapshot Final Gate",
     "Stop/close rerun the Live Final Gate",

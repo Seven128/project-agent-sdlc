@@ -135,7 +135,7 @@ provider-neutral handoff 是残余语义与索引层，不是 CSS 的文本副�
 
 只要是已经选定、准备进入实现的设计资源，两种开发路径都会先运行 `ty-context design-resource preflight <handoff.md>`。取得不完整、缺少或多出未声明依赖、不安全路径、过期 digest、虚构 locator、未闭合的适用单元格、不成立的证据类型或未决语义都会 fail closed。preflight 只证明设计输入语义完整且资源身份正确；开发流程仍必须打开真实资源，并从生产入口证明当前实现。
 
-对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个选定 target/condition 及 handoff 精确集合追踪到生产 route/component owner、冷启动真实用户旅程及可独立归因的渲染/交互检查，并在首个可运行纵向切片完成时先从真实入口检查，再扩展其余 UI。只报告真正检查过的组合；资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
+对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个选定 target/condition 及 handoff 精确集合追踪到生产 route/component owner、冷启动真实用户旅程及可独立归因的渲染/交互检查。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。所有已声明/适用组合必须完整覆盖，不能用 risk-only 或 pairwise 抽样替代，除非权威 Source 明确收窄范围或项目自有证明建立等价性。只报告真正检查过的组合；资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
 
 显式 Long-Task 是同一共享义务的强机器载体。它在 Compile 前解决缺失/冲突的 UI 权威，并把每个 applicable Control 的 surface、region/location、type/label、user task、visibility/availability、trigger/input/validation/default、interaction/navigation、loading/empty/success/failure/recovery/permission/feedback/accessibility 完整投影为独立 Source-backed Control Claim 和受保护产品语义；空字段不生成 Claim。聚合的 Product `surface_bindings` 把每个 Control 连接到 owner surface、required product target、既有 Technical route/component Bindings 和 root-entry 成功旅程。选定 exact/constraint target 用 typed `design_conformance` 把冻结输入和声明条件绑定到当前 actual/comparison artifacts；`verification_method_bindings` 让每个 handoff method 都能独立失败，每个已声明 blocker 则保留精确 Source-item/method lineage，并落到目标本地机器证明或会阻断目标的 External Confirmation。它们不能在 Contract 内自行豁免，缩减范围必须修订 Source/Contract 权威。现有 Claim、Assertion、Check、Stage、Binding、revision 与 Final Gate 是唯一 Long-Task 生命周期和 closure。
 
@@ -178,12 +178,12 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 只有用户显式调用 `/long-task-workflow`，或当前 worktree 已有 active long task 时才使用。它固定为：
 
 - 一个平台原生、持续的 Goal；
-- 一个用户选定的仓库/worktree；
+- 一个用户选定的仓库与最终验证/收敛 worktree；
 - 一次完整选定交付、一个 Contract、一个 Final Gate；
-- Outcome 依赖只表示验收就绪关系，不表示 Worker 调度；
+- Outcome 依赖只表示验收与中间证明就绪关系，不限制实现顺序，也不表示 Worker 调度；
 - 第一次 Authority Lock 后、正式实现前有一次用户模型选择；
-- 当前 Goal 内部滚动展开实现 Frontier；
-- targeted verify 只用于修复，永远不能 accepted；
+- 当前 Goal 自主选择实现顺序、局部计划、工具和平台原生 opaque delegation；Frontier 只提供验收/验证建议；
+- targeted verify 是可选反馈与修复证据，永远不能 accepted，也不构成继续实现或进入 Final Gate 的门禁；
 - scope-only revision 可先做无状态候选诊断，机械边界内的修复自动采用；只有稳定且确需用户决策的候选才至多询问一次精确 identity；
 - Final Gate 在一个当前快照上重跑全部 Check；
 - Stop Hook 在结果 stale 时阻止完成。
@@ -213,11 +213,11 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 Long-Task Skill 采用渐进读取：主 `SKILL.md` 只保留目标、硬边界和路由；Draft 输入/Contract Authoring、Evidence Design 与 Authority Lifecycle 细节按当前活动读取一层 reference，其中 Draft 输入与 Contract mapping 同时进行。这只是指令组织，不产生第二权威。共享 Architecture Deliberation 在 Source-bound Draft authoring 中完成；material 架构不变量使用已有 obligations/constraints/forbidden shortcuts、owner/path/Binding 和项目原生 executable Checks，Final Gate 是唯一的 Long-Task Architecture Conformance 承载点。
 
-Draft Outcome 只是 Authority Lock 前的 Outcome。Outcome 按可独立观察、判断、纵向闭环和定向验证的结果拆分，使当前 Goal 能缩小 dependency-ready 工作集、定向验证、定位失败、恢复 finding 并精确失效旧局部结果。`depends_on` 只表示 acceptance readiness。每个 Outcome 属于一个有序 Stage；Stage gate 传递依赖同 Stage 其余 Outcome，后续 Stage 依赖前置 gate。Rolling Frontier 和 Stage 状态都由普通 Outcome Progress 临时派生；Outcome 不是 Worker、scheduler task、queue 或并行单元，Stage 也没有 Receipt 或第二个 Gate。Outcome 拆分执行和诊断，不拆分完成权威，因此最终仍必须在当前最终快照运行一次完整 Final Gate。
+Draft Outcome 只是 Authority Lock 前的 Outcome。Outcome 按可独立观察、判断、纵向闭环和定向验证的结果拆分，用于投影 acceptance/verification-ready 工作集、定位失败、恢复 finding 并精确失效旧局部结果。`depends_on` 只表示 acceptance 与中间证明 readiness，不授权或禁止实现编辑。每个 Outcome 属于一个有序 Stage；Stage gate 传递依赖同 Stage 其余 Outcome，后续 Stage 依赖前置 gate。Rolling Frontier 和 Stage 状态都由普通 Outcome Progress 临时派生，只是建议性验证/诊断投影。当前 Goal 可按代码现实跨 Outcome/Stage 实现、检查或返工，也可使用平台原生 opaque delegation；Harness 不创建 delegation scheduler、不把委派当证明，所有结果必须汇入选定验证 worktree。Outcome 不是 Worker、scheduler task、queue 或并行单元，Stage 也没有 Receipt 或第二个 Gate。Outcome 拆分诊断和证明归属，不拆分完成权威，因此最终仍必须在当前最终快照运行一次完整 Final Gate。
 
 Contract 声明一个有界 target profile、非空 required product target refs，以及每个 target 的 runtime family/root entrypoint。Web/process 代理不能代替单独要求的 Native/desktop 目标；browser 目标由 Playwright 证明，Native/desktop 目标由 project binary 证明。每个 `critical_user_path` Outcome 和 Stage gate 都必须从每个 required target 的 root 证明 `target_runtime`；多 Outcome Stage gate 还必须证明至少两个不同 surface 对应同一运行时状态。
 
-如果一个声明结果可能在代理表面通过、却在目标运行时独立失败，最早拥有可运行边界的 Outcome 必须声明项目自有的真实运行 Check，并在当前 Check 执行中启动或触达目标、从同一会话产生结构化 Observation。仓库内状态报告、截图、二进制、日志或历史运行不能单独证明目标运行时。Check 显式声明带 Key 的 Given/When 场景与 journey role；Assertion 声明 all-of Evidence Capability，并由类型化的当前执行记录证明。静态 `presence` 不能证明行为，降级路径不能替代要求的成功路径，固定输入不能证明输入变化，产生 side effect 的组件也不能自行证明其边界效果。每个 Check 的 `input_paths`/Binding 应是最小可信失效范围，每个 Counterfactual carrier 都要能从声明的 target root 解释其路径。当前 Goal 在第一个可运行切片后执行一次；后续相关修改先合并，`progress_stale` 只表示证据已旧，并在依赖该结果或进入 Final Gate 前刷新。`verify --explain` 可提前展示 Main/Counterfactual/重试次数，但不执行、不写 Progress，也不能看见 runner 内部构建。它不增加通用可达性断言、第二个执行型 diagnose 模式、调度器、逐平台 Progress 或逐编辑完整重建；运行时专属依赖探测、构建进度和进程清理由项目 runner 负责，Final Gate 仍是接受权所有者。
+如果一个声明结果可能在代理表面通过、却在目标运行时独立失败，最早拥有可运行边界的 Outcome 必须声明项目自有的真实运行 Check，并在当前 Check 执行中启动或触达目标、从同一会话产生结构化 Observation。仓库内状态报告、截图、二进制、日志或历史运行不能单独证明目标运行时。Check 显式声明带 Key 的 Given/When 场景与 journey role；Assertion 声明 all-of Evidence Capability，并由类型化的当前执行记录证明。静态 `presence` 不能证明行为，降级路径不能替代要求的成功路径，固定输入不能证明输入变化，产生 side effect 的组件也不能自行证明其边界效果。每个 Check 的 `input_paths`/Binding 应是最小可信失效范围，每个 Counterfactual carrier 都要能从声明的 target root 解释其路径。第一个有价值的可运行切片和合并后的相关变化只是默认建议反馈点；只有中间判断实际依赖某条 Progress 时才必须刷新。继续实现或进入 Final Gate 不要求先跑 targeted verify，因为 Final Gate 会忽略 Progress 并重跑全部 Check。`verify --explain` 可提前展示 Main/Counterfactual/重试次数，但不执行、不写 Progress，也不能看见 runner 内部构建。它不增加通用可达性断言、实现门禁、第二个执行型 diagnose 模式、调度器、逐平台 Progress 或逐编辑完整重建；运行时专属依赖探测、构建进度和进程清理由项目 runner 负责，Final Gate 仍是接受权所有者。
 
 只有 `weak_observability` 同时遇到多 Stage 或多个 required product runtime family 时，才额外要求一个只读 Global Product Conformance Check。它从 required root product target 启动，使用独立 Raw Execution，并在既有 Final Gate 内运行。单 Stage、单 family 继续使用原有 same-Check sensitivity，不支付额外 conformance 执行成本。
 
@@ -248,9 +248,9 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 - `compile` 重复同一 fail-closed workspace 分类，因此直接 Compile 不能绕过 Preflight，再生成 Global 与 Outcome Result/Requirement/Control-field/Non-completing/Technical Claim，拒绝未覆盖 Claim，并让第一次正式成功 Compile 成为 Authority Lock。首次 enable 仅保护配置的 managed destination 中当前 package asset tree 实际存在的精确文件，以及精确的 config/hook 文件；managed 目录根和宽泛 `.codex/**` 均不豁免。每次结果都包含 lifecycle event、`delivery_completed_by_this_event: false`、`native_goal_effect: none` 和 next action。第一次结果附带 `execution_model_checkpoint.required: true` 及 terminal-turn/explicit-choice 契约，后续 Compile 返回 `false`；这些字段不进入 Authority state。
 - `diagnose-revision` 只做无副作用候选 Compile；仅 scope-only 候选能运行 Active Authority 已有且未更换的 Check，输出固定为非验收、非 Progress、非 pending。
 - `compile --revise` 自动采用单调或机械边界内的修订；需要用户决策时返回 `authority_revision_pending`、精确 id、确定性 material 摘要、`user_decision_reasons` 和自包含 `decision_brief`。先展示 brief；只有已明确且精确覆盖全部 reason 的当前任务指令可直接承载该 id。候选再变会生成新 id 并使旧批准失效。采用后证据失效、输出 `authority_revision_adopted` 并回到滚动执行，不表示交付完成。
-- `verify` 在重查 active task/revision/compiled/worktree identity 并依据 immutable baseline 应用同一 workspace 分类后写 scoped Progress；targeted verify 始终只是修复证据。`verify --explain` 只读地合并 Main Raw Execution、列出适用 Counterfactual 调用与声明的重试次数上界，不执行命令、不写 Progress，也不预测耗时或 runner 内部子进程。
-- `status` 输出 `unverified`、`progress_passing`、`progress_failing`、`progress_stale` 或 `blocked_external`，由当前 Progress 派生 `stages`、`ready_stages` 和受 Stage 约束的 Outcome frontier，不持久化 Stage 完成。它同时报告 fresh `final_workflow_status`、target profile/state、完整 `external_confirmations` 与唯一的 `pending_authority_revision`。`progress_passing` 只能表述为定向修复证据，不能简称“Outcome 完成”；`progress_stale` 是证据新鲜度事实，不是当前通过或每次编辑后立即重跑的指令；`final_workflow_status: null` 表示 Goal 尚未完成。
-- `resume` 完全只读，恢复 task/contract identity、风险、相关 Context、Git 状态、相同的 Final/target/Stage/external/pending surface、ready Outcome、findings 和 next safe action。
+- `verify` 在重查 active task/revision/compiled/worktree identity 并依据 immutable baseline 应用同一 workspace 分类后写 scoped Progress；targeted verify 始终只是可选反馈/修复证据。`verify --explain` 只读地合并 Main Raw Execution、列出适用 Counterfactual 调用与声明的重试次数上界，不执行命令、不写 Progress，也不预测耗时或 runner 内部子进程。
+- `status` 输出 `unverified`、`progress_passing`、`progress_failing`、`progress_stale` 或 `blocked_external`，由当前 Progress 派生 `stages`、`ready_stages` 和建议性的验收/验证 Outcome frontier，不持久化 Stage 完成。兼容字段 `ready_for_implementation` 只是该投影的别名，不是实现门禁。它同时报告 fresh `final_workflow_status`、target profile/state、完整 `external_confirmations` 与唯一的 `pending_authority_revision`。`progress_passing` 只能表述为定向修复证据，不能简称“Outcome 完成”；`progress_stale` 是证据新鲜度事实，不是当前通过或每次编辑后立即重跑的指令；`final_workflow_status: null` 表示 Goal 尚未完成。
+- `resume` 完全只读，恢复 task/contract identity、风险、相关 Context、Git 状态、相同的 Final/target/Stage/external/pending surface、ready Outcome、findings 和建议性的验证/修复 next action；该建议不限制实现顺序。
 - `final-gate` 在完整 Check 后再次验证 active identity；并发 revision 不能产生 accepted。Receipt 把每个 Stage 派生为 `passed`、`failed`、`blocked_external` 或 `blocked_dependency`，把 `target_state` 派生为 `not_accepted`、`blocked_external` 或 Contract 精确声明的 `implementation_complete`、`target_profile_usable`、`production_release_ready`。
 - `stop-check` 与 `close` 自己运行 Live Final Gate，并只用 accepted identity 做 CAS clear。每次机器接受的 Stop 都给一个非阻塞 terminal-scope `systemMessage`；外部待确认时同时列出全部确认项。Final/Stop/close 输出 `acceptance_scope: declared_machine_authority` 与 `native_goal_effect: none`，close 另输出 `closed_scope: machine_authority`。`status: closed` 只表示机器 Authority 已清理，不表示原生 Goal 或完整外部交付完成。
 - `abandon --force-corrupt-state` 仅用于损坏/mismatch/legacy-unrecoverable 状态或遗留锁，只删除确定性 active state 与 `<workdir>/.ty-context/**`。
@@ -330,7 +330,7 @@ make validate-harness
 - 它不能证明用户从未遗漏未声明需求。
 - bounded Context keyword search 仍可能漏掉同义词或间接依赖，只能补充语义判断。
 - Harness 不能切换 host 选择的模型，只能在第一次 Authority Lock 后要求一次用户选择。
-- 核心长程执行不提供并行 mutation runtime。
+- Tiny Context 不提供并行 mutation/delegation runtime；平台 Goal 可使用自身 opaque implementation delegation，但 Harness 不持久化它，也不把它当证据。
 - 它不观测平台 token 或模型调用数。
 - Network policy 会约束传给 runner 的代理环境，但不是操作系统 sandbox。
 - 同用户/管理员文件篡改、系统级 Hook 绕过不在安全边界内。

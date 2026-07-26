@@ -142,6 +142,14 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(uiux, /production components or real product routes/iu);
   assert.match(uiux, /never claim an unchecked combination/iu);
+  assert.match(
+    uiux,
+    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
+  );
+  assert.match(
+    uiux,
+    /first useful runnable production slice[\s\S]{0,180}not a prerequisite/iu,
+  );
   assert.match(uiux, /configured.*not.*implementation-ready/iu);
 
   const development = developmentCopies[0];
@@ -174,7 +182,13 @@ test("visual design and implementation guidance reaches every managed copy", asy
   assert.match(development, /Never overwrite an adopted baseline/iu);
   assert.match(development, /production components and real product routes/iu);
   assert.match(development, /cold-start real-user entry journey/iu);
-  assert.match(development, /first runnable vertical slice/iu);
+  assert.match(development, /first useful runnable vertical slice/iu);
+  assert.match(
+    development,
+    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
+  );
+  assert.match(development, /not an implementation gate/iu);
+  assert.match(development, /final candidate/iu);
   assert.match(
     development,
     /resource integrity[\s\S]*implementation-conformance proof/iu,
@@ -528,7 +542,11 @@ test("default workflow routes Design Authority readiness without adding a visual
     assert.match(content, /mutually exclusive/iu);
     assert.match(content, /Product `surface_bindings`/u);
     assert.match(content, /typed `design_conformance`/u);
-    assert.match(content, /first runnable production slice/iu);
+    assert.match(content, /first useful runnable production slice/iu);
+    assert.match(
+      content,
+      /pairwise sampling[\s\S]{0,120}(?:scope narrowing|equivalence proof)/iu,
+    );
     assert.match(
       content,
       /visibility\/availability.*validation\/default.*recovery\/permission.*accessibility/isu,
@@ -543,7 +561,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(chineseReadme, /新 immutable version/u);
   assert.match(chineseReadme, /Product `surface_bindings`/u);
   assert.match(chineseReadme, /typed `design_conformance`/u);
-  assert.match(chineseReadme, /首个可运行纵向切片/u);
+  assert.match(chineseReadme, /第一个有价值的可运行纵向切片/u);
   assert.match(chineseReadme, /两种证明载体互斥/u);
   assert.match(chineseReadme, /exactly-one canonical adoption record/iu);
 });

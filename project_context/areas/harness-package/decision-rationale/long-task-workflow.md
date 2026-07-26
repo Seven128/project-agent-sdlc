@@ -6,7 +6,7 @@ read_policy: on-demand
 
 ## Decision
 
-Single-Goal Long-Task Workflow exists to prevent false completion inside one complete declared delivery authority. It uses one native Goal, one selected workspace, one continuously authored Contract, semantic Outcome boundaries, repair-only targeted verification and one current-snapshot Final Gate. It does not own agent, process, model or Git orchestration.
+Single-Goal Long-Task Workflow exists to prevent false completion inside one complete declared delivery authority. It uses one native Goal, one selected verification workspace, one continuously authored Contract, semantic Outcome boundaries, optional repair-only targeted verification and one current-snapshot Final Gate. It does not own agent, process, model or Git orchestration.
 
 Source-quality rules and Contract Draft authoring form one Source-bound authoring loop, followed by Preflight repair, formal Compile, one model-choice checkpoint, rolling implementation, verification and Final Gate in one `long-task-workflow` lifecycle. `source-plan-authoring` is now only a compatibility pointer.
 
@@ -32,17 +32,17 @@ The Draft is the same object that will later become formal Contract Authority. I
 
 A Draft Outcome groups an independently observable and decidable result whose Claims and acceptance can be target-verified and whose dependencies and ownership boundary can be stated. This separates requirement coupling without splitting completion authority.
 
-Outcome boundaries let one Goal keep a smaller dependency-ready working set, shorten targeted verification, localize failures, restore ready work and findings on resume, and mark precisely which local result became stale. An Outcome is not a response-length fragment, file group, frontend/backend layer, Agent-capacity unit or parallel-work allocation.
+Outcome boundaries let one Goal project a smaller acceptance/verification-ready working set, shorten targeted verification, localize failures, restore findings on resume, and mark precisely which local result became stale. They do not constrain which in-scope code the Goal may implement next. An Outcome is not a response-length fragment, file group, frontend/backend layer, Agent-capacity unit or parallel-work allocation.
 
 > Outcome decomposes execution and diagnosis, not completion authority.
 
 ## Execution Efficiency Without A Scheduler
 
-`depends_on` expresses acceptance readiness. The current Goal uses it with current findings to form a temporary Rolling Frontier and chooses implementation order as code reality becomes known. The Frontier is not persisted and does not prescribe a mandatory implementation schedule.
+`depends_on` expresses acceptance and intermediate-proof readiness. The current Goal uses it with current findings to form a temporary Rolling Frontier while independently choosing implementation order as code reality becomes known. The Frontier is not persisted, does not authorize or prohibit edits and does not prescribe a mandatory implementation schedule.
 
 No Draft Outcome creates a Worker, scheduler item, queue, process tree, model route or durable execution DAG. Outcome decomposition does not guarantee parallelism or fewer model calls. It improves intermediate implementation, verification, diagnosis and recovery while leaving final acceptance to the complete Contract.
 
-The workflow must never proactively spawn, assign or coordinate parallel subagents. Platform or Agent internal delegation may still occur, but it is opaque and non-authoritative: the Harness neither depends on it nor persists it, and all outputs must converge into the unified current workspace snapshot before acceptance.
+Harness never owns, persists, retries or recovers subagent dispatch, a Worker graph, branch/worktree fan-out or delegation state. The current Goal may choose platform-native internal delegation or user-authorized Git parallelism when useful, but it remains opaque and non-authoritative: Harness neither depends on nor records it, and all outputs must converge into the selected verification workspace before any proof can count.
 
 ## Why One Model-Choice Checkpoint Exists
 
@@ -98,7 +98,7 @@ One pure classifier therefore owns protected authority, declared expected change
 
 ## Why Stale Progress And Execution Preview Stay Advisory
 
-`progress_stale` means historical targeted evidence no longer describes the current authority/input snapshot. It is not a scheduler event and cannot know the cheapest trustworthy feedback path for every project. The current Goal may coalesce relevant edits and use project-owned incremental feedback, but must refresh evidence before relying on the affected Outcome or entering Final Gate.
+`progress_stale` means historical targeted evidence no longer describes the current authority/input snapshot. It is not a scheduler event and cannot know the cheapest trustworthy feedback path for every project. The current Goal may coalesce relevant edits and use project-owned incremental feedback, and refreshes evidence only before an intermediate decision relies on that Progress. It may instead continue implementation or enter Final Gate, which ignores Progress and reruns every Check.
 
 `verify --explain` lowers feedback-planning cost by projecting selected compiled main Raw Execution groups and applicable Counterfactual executions without running them. It reports only declared execution counts and boundaries; it cannot promise elapsed time or reveal how many internal builds/processes a project runner may perform. Because it writes no Progress and produces no proof, it adds no acceptance bypass, execution mode or persistent state.
 
@@ -185,9 +185,9 @@ The evidence envelope stores bounded hashes, identifiers, changed-field names an
 
 A same-snapshot Gate is only as truthful as its declared Checks. When a result can pass on a proxy surface while failing in its target runtime, rereading a tracked status report during Final Gate reruns the reader, not the target. The accepting Check must therefore exercise the declared target during its current Raw Execution and derive the asserted Observation from that session. Historical reports, screenshots, binaries and logs remain review artifacts; build, install, process start or absence of fatal logs prove only those exact claims unless a product-owned sentinel or interaction is also observed.
 
-The same Check belongs to the earliest Outcome that owns the first runnable target boundary instead of a terminal omnibus Outcome. Its declared execution target, root/internal entry mode, `input_paths`, Binding carriers, verification inputs and environment requirements bind the runtime-affecting surface. The current Goal targeted-verifies it after the first runnable slice and again before dependent work grows when accumulated relevant changes make Progress stale. Related edits are coalesced, identical Raw Executions may still deduplicate, and a full target rebuild is not required per Outcome or per edit.
+The same Check belongs to the earliest Outcome that owns the first runnable target boundary instead of a terminal omnibus Outcome. Its declared execution target, root/internal entry mode, `input_paths`, Binding carriers, verification inputs and environment requirements bind the runtime-affecting surface. The first useful runnable slice and later coalesced relevant changes are the cheapest default feedback points when early localization is worth the run cost, but the current Goal owns that cadence. No targeted pass gates later implementation; a fresh Progress record is required only when an intermediate decision relies on it. Identical Raw Executions may still deduplicate, and a full target rebuild is not required per Outcome or per edit.
 
-This closes two distinct paths: late discovery that multiplies rework, and false acceptance from a current snapshot containing stale self-reported runtime status. The bounded runtime-family and entrypoint schema prevents a browser or internal route from silently standing in for a native/root journey. Capability-specific probes remain project-owned and are required only for the Claims that need them. Targeted results remain repair-only; the one Final Gate reruns every declared live Check on the final snapshot.
+Live Check ownership plus the one Final Gate close the false-acceptance path from a current snapshot containing stale self-reported runtime status. Early targeted cadence closes no additional completion path; it is retained only as an adaptive late-rework cost recommendation and may be deferred or skipped. The bounded runtime-family and entrypoint schema prevents a browser or internal route from silently standing in for a native/root journey. Capability-specific probes remain project-owned and are required only for the Claims that need them. Targeted results remain repair-only; stale or absent Progress may enter Final Gate because that Gate reruns every declared live Check on the final snapshot.
 
 ## Mechanism Admission And Cost Boundary
 
@@ -227,7 +227,7 @@ When a rolling blocker motivates revision, implementation difficulty alone canno
 - **Targeted verify is repair evidence only** prevents a local pass from being reported as whole-delivery completion; Counterfactual failure is part of the owning Check Result/Progress rather than a transient top-level Finding, so status/resume cannot recover a false `progress_passing` state.
 - **Live target-runtime Check ownership** prevents a proxy pass or tracked self-report from proving a Claim that can fail independently in the target; the earliest owning Outcome executes the target in the current Check run and binds runtime-affecting inputs through existing fields.
 - **UI production-surface binding and design conformance** prevent support-target Controls, detached/deep routes, resource integrity, render-only artifacts or omitted declared blockers from accepting a required production UI. One surface/target projection reuses Technical Bindings, root Checks, Claims and External Confirmations; only selected targets pay comparison evidence.
-- **Coalesced rolling runtime verification** reduces late-rework cost by using that same non-accepting Check at the first runnable boundary and after accumulated relevant input changes, without a per-Outcome rebuild rule, scheduler or new state.
+- **Adaptive rolling runtime feedback** may reduce late-rework cost by using that same non-accepting Check at useful runnable boundaries and after accumulated relevant input changes. Because it closes no independent Final-Gate false-completion path, cadence stays Goal-owned and advisory; no targeted pass is required before later edits or Final Gate, and no per-Outcome rebuild rule, scheduler or new state exists.
 - **Same-snapshot Final Gate** prevents historical pass aggregation and stale evidence reuse.
 - **Shared Architecture Deliberation plus Final-Gate-only Architecture Conformance** makes architecture work observable before implementation and binds every declared invariant to the same final snapshot without a second Gate, field or state. Default Contract Conformance is not run on the Long-Task route.
 - **Stop/close rerun the Live Final Gate** prevents post-Gate Source, Context, Contract, verifier or code drift from being accepted.
@@ -264,7 +264,7 @@ Progress, status, Receipts and compiled cache are audit/recovery projections. Ca
 - No standalone `contract-authoring`, `draft-authoring` or draft-preparation Skill.
 - No second plan, second Contract authority, top-level Contract split or targeted-verify acceptance.
 - No capacity-, layer-, file-, module-, Agent- or parallelism-based Outcome splitting.
-- No proactive parallel subagent dispatch, Worker graph or subagent recovery state.
+- No Harness-owned parallel-subagent dispatch, Worker graph, branch/worktree fan-out or delegation recovery state; opaque platform-native implementation delegation may occur but never becomes proof.
 - No automatic model switch, model-tier scheduler, model routing state, repeated model checkpoints or persisted checkpoint acknowledgement.
 - No open-ended `platform_impact` flags, manually maintained per-platform progress, or mandatory full runtime rebuild per Outcome/edit. The only target qualification is the Contract's bounded required-target/runtime-family/root binding plus `implementation_complete`, `target_profile_usable` or `production_release_ready` at terminal projection.
 - No persistent `authority_revision_in_progress`, native-Goal completion state, Goal restoration runtime or second semantic completion Gate.

@@ -81,9 +81,11 @@ test("resume reports progress_stale as a coalescible freshness fact", async () =
     ]);
     assert.equal(resumed.outcomes.first, "progress_stale");
     assert.match(resumed.next_safe_action, /freshness fact/u);
-    assert.match(resumed.next_safe_action, /not an immediate per-edit rerun/u);
+    assert.match(resumed.next_safe_action, /not an implementation gate/u);
+    assert.match(resumed.next_safe_action, /not.*immediate per-edit rerun/u);
     assert.match(resumed.next_safe_action, /coalesce relevant changes/u);
-    assert.match(resumed.next_safe_action, /before relying/u);
+    assert.match(resumed.next_safe_action, /only before relying/u);
+    assert.match(resumed.next_safe_action, /Final Gate needs no targeted refresh/u);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

@@ -39,8 +39,8 @@ read_policy: on-demand
 ## Why Single Goal And Rolling Frontier
 
 - Physical Goal/Turn lifecycle is a platform concern. Reimplementing it in Harness creates duplicate recovery authority and process orchestration that cannot improve product proof.
-- Outcome dependencies describe acceptance readiness, not implementation scheduling. A rolling Frontier lets the current native Goal adapt file/function/test details to the latest code without freezing a speculative technical DAG.
-- One current workspace removes branch/worktree/integration recovery and combined-gate machinery from the core. Users may explicitly use platform/Git parallelism, but it is not Harness runtime authority.
+- Outcome dependencies describe acceptance and intermediate-proof readiness, not implementation scheduling. The rolling Frontier localizes verification and repair but never gates edits, so the current native Goal can adapt file/function/test order and targeted-feedback cadence to current code without freezing a speculative technical DAG.
+- One selected verification workspace removes branch/worktree/integration recovery and combined-gate machinery from the core. Users or the platform may explicitly use native delegation/Git parallelism as implementation means, but Harness does not create or recover it, and all accepted output converges into that workspace.
 
 ## Why One Model-Choice Checkpoint Returns
 

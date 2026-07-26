@@ -18,7 +18,7 @@ Read this only while authoring or structurally revising the one `delivery-contra
 
 ## Outcome Boundary
 
-Create an Outcome only when its result is independently observable, decidable, target-verifiable, dependency-expressible and localizable to its own Claims, Assertions, Checks and owner boundary. Requirement coupling, dependency-ready work, targeted verification, precise failure localization, semantic resume and stale-result invalidation are valid reasons to decompose. File count, implementation layer, context length, desired parallelism and Agent capacity are not.
+Create an Outcome only when its result is independently observable, decidable, target-verifiable, dependency-expressible and localizable to its own Claims, Assertions, Checks and owner boundary. Requirement coupling, acceptance/verification-ready projection, targeted verification, precise failure localization, semantic resume and stale-result invalidation are valid reasons to decompose. Outcome boundaries never restrict implementation order. File count, implementation layer, context length, desired parallelism and Agent capacity are not.
 
 For every Outcome declare:
 
@@ -66,7 +66,7 @@ Do not encode subjective “clean architecture” or generic quality prose as ma
 
 ## Proxy And Target Runtime Independence
 
-When a declared result can pass on a proxy surface while failing in its target runtime, author independent target-runtime proof for the exact required target ref. Put the project-owned live Check in the earliest Outcome that owns the first runnable target boundary rather than postponing it to a terminal release/quality Outcome.
+When a declared result can pass on a proxy surface while failing in its target runtime, author independent target-runtime proof for the exact required target ref. Put the project-owned live Check in the earliest Outcome that owns the first runnable target boundary rather than postponing it to a terminal release/quality Outcome; this assigns proof ownership and does not dictate implementation order.
 
 Use existing Contract semantics:
 

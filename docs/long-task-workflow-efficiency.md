@@ -28,11 +28,13 @@ This pause exists because locked Source/Contract/Context/risk/acceptance plus ta
 
 After the one-time choice, the current Goal continues through implementation, targeted repair and Final Gate. Small implementation-level plans, reordered steps and repair hypotheses are ordinary internal execution state; they do not become a second plan or authority.
 
-## No Proactive Parallel-Subagent Scheduler
+## No Harness-Owned Parallel-Subagent Scheduler
 
-The Harness never proactively spawns, assigns, coordinates, retries or recovers parallel subagents. It creates no Worker queue, Wave, process tree, branch/worktree fan-out or persisted delegation graph.
+The Harness never owns, persists, retries or recovers parallel-subagent dispatch. It creates no Worker queue, Wave, process tree, branch/worktree fan-out or delegation graph.
 
-A platform or Agent may internally delegate work using its own opaque behavior. The Harness neither depends on nor records that behavior, and it never treats delegation as evidence. All changes must converge into one unified current workspace snapshot; only Contract-declared checks on that snapshot can contribute to acceptance.
+The current Goal may internally delegate work using platform-native opaque behavior or user-authorized Git parallelism. The Harness neither depends on nor records that behavior, and it never treats delegation as evidence. All changes must converge into the selected verification workspace; only Contract-declared Checks on that snapshot can contribute to acceptance.
+
+The same boundary applies to implementation order. Stage/Outcome dependencies and the Rolling Frontier project acceptance and intermediate-proof readiness; they do not authorize or prohibit edits. The Goal may cross those boundaries whenever current code reality makes that cheaper, while an unpassed earlier gate still blocks terminal acceptance.
 
 ## Context Evolution During Implementation
 
@@ -60,18 +62,18 @@ When a declared result can pass on a proxy surface while failing in its target r
 Use the existing Contract and Progress model plus one bounded target profile instead of adding open-ended platform flags or another state machine:
 
 - declare the exact non-empty required product target refs, bounded runtime family and root entrypoint;
-- put the live target Check in the earliest Outcome that owns the first runnable boundary;
+- put the live target Check in the earliest Outcome that owns the runnable proof boundary, independent of implementation order;
 - make its current Raw Execution exercise the target and derive structured Observations from that same session;
 - declare runtime-affecting `input_paths`, Binding carriers, verification inputs and environment requirements so relevant changes stale Progress;
-- targeted-verify once after the first runnable slice and again before dependent work grows after accumulated relevant changes;
+- treat the first useful runnable slice and later coalesced relevant changes as recommended targeted-feedback points only when early localization is worth the run cost;
 - coalesce edits, choose the cheapest reliable Check and reuse identical Raw Execution where valid; and
-- let the one Final Gate rerun the complete live Check set for acceptance.
+- refresh targeted Progress only before an intermediate decision actually relies on it, and let the one Final Gate ignore Progress and rerun the complete live Check set for acceptance.
 
 Historical reports, screenshots, binaries and logs remain review material. Build, install, process start and absence of fatal logs prove only those exact Claims; broader runnable behavior needs a stable product-owned sentinel or declared interaction. Capability-specific probes are required only when their Claims are in scope.
 
 Every vertical Outcome belongs to one Stage. Stage readiness reuses Outcome dependencies and Progress; the gate proves every required target from its root, and only a multi-Outcome Stage pays the additional cross-surface-consistency proof. A separate read-only Product Conformance Check is required only when weak observability combines with multiple Stages or multiple required product runtime families. Single-Stage/single-family work pays no extra conformance run.
 
-This policy adds bounded authoring and selected runtime cost but no open-ended `platform_impact` taxonomy, scheduler, persistent trigger queue, per-platform Progress or mandatory rebuild per Outcome/edit. Terminal target and Stage projections are derived only at Final Gate; they are not another state machine. Its net value comes from earlier defect localization plus closing proxy, stale self-report, degraded-success, fixed-input, self-attested-boundary and cross-surface drift paths while preserving one final authority.
+This policy adds bounded authoring cost and only Goal-chosen feedback runtime cost; it adds no open-ended `platform_impact` taxonomy, implementation gate, scheduler, persistent trigger queue, per-platform Progress or mandatory rebuild per Outcome/edit. Early runs can reduce rework but close no independent completion path, so cadence stays advisory. Live Check ownership and Final Gate close proxy, stale self-report, degraded-success, fixed-input, self-attested-boundary and cross-surface drift paths. Terminal target and Stage projections are derived only at Final Gate; they are not another state machine.
 
 ## Capability-Adequate Evidence
 

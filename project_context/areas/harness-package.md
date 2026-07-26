@@ -17,7 +17,7 @@
 - Selected implementation handoffs use one fail-closed residual `design-resource-handoff-v1`: typed locators index canonical facts; subject × target × condition × dimension applicability, gaps, semantics, blockers and downstream bindings stay explicit. Exploration stays lightweight.
 - Selected-design conformance uses exclusive existing carriers; Design Source Projection gives each target one canonical `DESIGN.md` or Screen owner while other layers keep pointers.
 - `long-task-workflow` sends every input directly into one Source-bound Contract Draft loop. Inventory/synthesis/refinement/provenance/markers and Contract mapping converge there before Preflight/Compile; `/source-plan-authoring` is a compatibility pointer and no Source-authoring intermediate stage exists.
-- The platform Goal owns mutable implementation sequencing. Harness never launches models/agents/AppServer, creates branches/worktrees, merges, pushes, opens PRs or deploys.
+- The platform Goal owns mutable implementation sequencing, local planning, tool choice and any opaque native delegation. Harness never launches or manages models/agents/AppServer, branch/worktree fan-out, merges, pushes, PRs or deployment; delegated or parallel outputs must converge into the selected verification workspace before proof counts.
 - First Authority Lock creates a strict user-choice turn boundary: absent a prior explicit task-specific model strategy, generic continuation is insufficient and implementation/edit/build/test work waits for an explicit current-model or switch-and-resume choice. Harness stores no acknowledgement or route.
 - Authority Revision separates authority change from user decision. Mechanically bounded repairs auto-adopt with evidence invalidation; a true semantic/proof boundary change exposes one self-contained deterministic brief before an exact decision. Exact current-task user instructions may be relayed, while blanket authorization cannot; the brief is a projection, not another authority or state.
 - `/long-task-workflow` is the only active long-task Skill. `/normal-long-task`, `delivery-set` and historical composite commands are retirement pointers/tombstones only.
@@ -38,7 +38,7 @@
 - Every implementation delivery surfaces one risk-proportional `Architecture Deliberation` before implementation. Small work records concrete preservation of the current owner/extension point and no new or worsened debt; material work additionally resolves alternatives, future-change pressure, lifecycle and project-owned architecture checks.
 - Post-implementation `Architecture Conformance` has one owner per candidate snapshot: default Contract Conformance or Long-Task Final Gate. Candidate changes stale the result; no duplicate closure, second authority or architecture state is created.
 - Long-Task architecture invariants use existing obligations/constraints/forbidden shortcuts, path/Binding ownership and executable Checks; no architecture-specific authority layer or generic dependency engine is added.
-- A Claim that can pass on a proxy while failing in its target runtime uses a current-execution Check in the earliest owning Outcome. Existing input freshness drives coalesced rolling feedback, while the one Final Gate reruns the live Check; no platform-impact fields, per-platform state or per-Outcome rebuild mandate is added.
+- A Claim that can pass on a proxy while failing in its target runtime uses a current-execution Check in the earliest owning Outcome. Existing input freshness supports optional coalesced feedback chosen by the Goal, while the one Final Gate reruns the live Check; no implementation gate, platform-impact fields, per-platform state or per-Outcome rebuild mandate is added.
 - Preflight diagnostics may improve repair localization through stable refs, safe repair hints and occurrence counts while remaining read-only.
 - Modularity diagnostics identify the responsible function/location while preserving existing thresholds and waiver policy.
 
@@ -54,7 +54,7 @@
 ## Key Constraints
 
 - No second Contract plan, editable Source Inventory/Coverage authority, SFC/Packet/Wave/Campaign runtime, Worker scheduler, worktree manager, model router or confirmation tracker.
-- No fixed file-level execution plan in Contract Technical authority; stable owners, obligations, boundaries, paths, Bindings and proof remain explicit while implementation order stays internal.
+- No fixed file-level execution plan or Frontier implementation gate in Contract Technical authority; stable owners, obligations, boundaries, paths, Bindings and proof remain explicit while implementation order and optional targeted-feedback cadence stay internal.
 - No targeted-verify acceptance, historical proof splicing, prose/exit-code acceptance, silent risk/scope downgrade or executing-Agent approval of protected authority reduction.
 - No package operation deletes user-authored historical Source/Contract/Campaign data.
 - Local affected-test inference may omit and report untracked `.work_products/**` scratch only; tracked or explicitly supplied paths remain verification inputs, and complete-suite discovery is never capped or pruned by feedback-tier budgets.

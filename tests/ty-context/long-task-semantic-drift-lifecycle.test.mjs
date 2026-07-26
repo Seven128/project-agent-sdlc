@@ -166,6 +166,64 @@ test("[critical:terminal-state-current-evidence] Stage frontier and terminal tar
   }
 });
 
+test("targeted verification is not gated by the acceptance frontier", async () => {
+  const fixture = await createDeliveryFixture({ twoOutcomes: true });
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+
+    const before = await runCli(fixture.root, [
+      "long-task",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.deepEqual(before.ready_outcomes, ["first"]);
+    assert.deepEqual(before.ready_for_implementation, ["first"]);
+    assert.equal(before.stages.second, "locked");
+    const resumed = await runCli(fixture.root, [
+      "long-task",
+      "resume",
+      fixture.workdir,
+    ]);
+    assert.match(
+      resumed.next_safe_action,
+      /advisory acceptance\/verification frontier/u,
+    );
+    assert.match(resumed.next_safe_action, /Implementation order remains Goal-owned/u);
+    assert.doesNotMatch(
+      resumed.next_safe_action,
+      /Implement and verify ready Outcome/u,
+    );
+
+    await writeFile(
+      path.join(fixture.root, "src", "state.json"),
+      `${JSON.stringify({ first: true, second: true })}\n`,
+    );
+    const verified = await runCli(fixture.root, [
+      "long-task",
+      "verify",
+      fixture.workdir,
+      "--outcome",
+      "second",
+    ]);
+    assert.equal(verified.acceptance_authorized, false);
+    assert.equal(verified.check_results[0].status, "passed");
+
+    const after = await runCli(fixture.root, [
+      "long-task",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.equal(after.outcomes.first, "unverified");
+    assert.equal(after.outcomes.second, "progress_passing");
+    assert.equal(after.stages.second, "locked");
+    assert.deepEqual(after.ready_outcomes, ["first"]);
+    assert.deepEqual(after.ready_for_implementation, ["first"]);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 function compiledCheck(contract, declared, outcomeKey) {
   const check = structuredClone(declared);
   const target = contract.task.execution_targets.find(

@@ -52,6 +52,7 @@ export interface DeliveryStatusV2 {
   stages: Record<string, StageStatusV2>;
   ready_stages: string[];
   ready_outcomes: string[];
+  /** Compatibility alias for the advisory acceptance/verification frontier; never an implementation gate. */
   ready_for_implementation: string[];
   needs_reverify: string[];
   progress_passing: string[];
@@ -444,8 +445,8 @@ function nextAction(status: DeliveryStatusV2): string {
   if (status.ready_outcomes.length) {
     const outcome = status.ready_outcomes[0]!;
     if (status.outcomes[outcome] === "progress_stale")
-      return `Targeted evidence for ready Outcome ${outcome} is stale. This is a freshness fact, not an immediate per-edit rerun instruction: coalesce relevant changes, use the cheapest reliable project-owned feedback, and refresh the declared Check before relying on this Outcome or entering Final Gate.`;
-    return `Implement and verify ready Outcome: ${outcome}.`;
+      return `Targeted evidence for Outcome ${outcome} on the acceptance/verification frontier is stale. This is a freshness fact, not an implementation gate or immediate per-edit rerun instruction: coalesce relevant changes and refresh the cheapest reliable declared Check only before relying on this Progress. Implementation may continue, and Final Gate needs no targeted refresh because it reruns every Check.`;
+    return `Outcome ${outcome} is on the advisory acceptance/verification frontier. Implementation order remains Goal-owned; run its declared Check when the feedback value justifies the cost, or continue in-scope implementation before the complete Final Gate.`;
   }
   return "Create a clean candidate commit; Stop will run the authoritative Live Final Gate.";
 }
