@@ -15,12 +15,20 @@ export function prepareSemanticAuthority(contract) {
     role: "product",
     runtime_family: "browser",
     root_entrypoint: "/",
+    capabilities: [
+      "browser-runtime",
+      "cold-start",
+      "production-root",
+      "keyboard-input",
+      "assistive-technology",
+    ],
   });
   contract.task.target_profile.required_target_refs.push("fixture-browser");
   outcome.applicability.push({
     key: "first-browser-success",
     target_ref: "fixture-browser",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -47,6 +55,7 @@ export function prepareSemanticAuthority(contract) {
   outcome.product.control_relation_closure = {
     state: "not_applicable",
     statement: "Only one Control is declared, so no cross-Control relation applies.",
+    applicability_refs: ["first-root-success"],
   };
   outcome.product.non_completing_outcomes.push({
     key: "exit-zero-only",
@@ -120,6 +129,7 @@ export function prepareSemanticAuthority(contract) {
         refs: ["control.submit.accessibility"],
         source_item_refs: ["submit-design"],
         verification_methods: ["accessibility_semantics"],
+        required_capabilities: ["assistive-technology"],
         rationale:
           "The target-local UI Check resolves the declared accessibility blocker.",
       },
@@ -146,9 +156,10 @@ export function prepareSemanticAuthority(contract) {
     claims: uiClaimAssertions.flatMap((assertion) => assertion.claims),
     check_key: "submit-ui",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: uiClaimAssertions.map(
       (assertion) => assertion.key,
@@ -159,6 +170,7 @@ export function prepareSemanticAuthority(contract) {
     key: "global-root-success",
     target_ref: "fixture-app",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -203,9 +215,10 @@ export function prepareSemanticAuthority(contract) {
     claims: ["constraint.stable-runtime"],
     check_key: "stable-runtime-check",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: ["stable-runtime-proof"],
     preserved_assertions: ["stable-runtime-liveness"],

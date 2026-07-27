@@ -66,6 +66,7 @@ test("every Delivery Contract authority structure has a complete field policy re
     control_relation_closure: {
       state: "specified",
       statement: "Declared Control relations are complete.",
+      applicability_refs: ["first-root-success"],
     },
     control_relation: {
       key: "save-updates-status",
@@ -95,7 +96,18 @@ test("every Delivery Contract authority structure has a complete field policy re
       conformance_check_ref: check.key,
       conformance_assertion_ref: "settings-conformance",
       verification_method_bindings: [
-        { method: "layout_geometry", assertion_ref: "settings-layout" },
+        {
+          method: "layout_geometry",
+          assertion_ref: "settings-layout",
+          evidence_artifacts: [
+            {
+              condition_key: "default",
+              path: "artifacts/settings-layout-default.json",
+              observation_path:
+                "artifacts/settings-layout-default-observation.json",
+            },
+          ],
+        },
       ],
       actual_artifact_path: "artifacts/settings-actual.png",
       comparison_artifact_path: "artifacts/settings-diff.json",
@@ -103,6 +115,14 @@ test("every Delivery Contract authority structure has a complete field policy re
     design_verification_binding: {
       method: "layout_geometry",
       assertion_ref: "settings-layout",
+      evidence_artifacts: [
+        {
+          condition_key: "default",
+          path: "artifacts/settings-layout-default.json",
+          observation_path:
+            "artifacts/settings-layout-default-observation.json",
+        },
+      ],
     },
     design_blocker: {
       key: "save-validation",
@@ -110,6 +130,7 @@ test("every Delivery Contract authority structure has a complete field policy re
       refs: ["control.save.validation"],
       source_item_refs: ["settings-source"],
       verification_methods: ["component_state"],
+      required_capabilities: ["browser-runtime"],
       rationale: "The target-local validation Claim resolves the blocker.",
     },
     outcome_technical: outcome.technical,
@@ -130,8 +151,10 @@ test("every Delivery Contract authority structure has a complete field policy re
     runner: check.runner,
     population: {
       check_key: check.key,
+      universe_binding_key: "state-first",
       claims: ["result"],
       observations: {
+        universe_ids: "universe",
         eligible_ids: "eligible",
         observed_ids: "observed",
         excluded_items: "excluded",

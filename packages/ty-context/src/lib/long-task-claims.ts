@@ -22,6 +22,7 @@ import {
   validateClaimAssertionOperator,
   validateGlobalAssertionOperator,
 } from "./long-task-claim-proof-policy.js";
+import { matchesRepoPattern } from "./long-task-paths.js";
 
 export interface CompiledClaimsV2 {
   by_global: GlobalClaimV2[];
@@ -390,14 +391,32 @@ function validatePopulationReferences(
 ): void {
   const population = outcome.acceptance.population;
   if (!population) return;
-  if (
-    !outcome.acceptance.checks.some(
-      (candidate) => candidate.key === population.check_key,
-    )
-  )
+  const check = outcome.acceptance.checks.find(
+    (candidate) => candidate.key === population.check_key,
+  );
+  if (!check)
     fail(
       "outcome_check_reference_unknown",
       `${outcome.key}:${population.check_key}`,
+    );
+  const universeBinding = outcome.technical.bindings.find(
+    (binding) => binding.key === population.universe_binding_key,
+  );
+  if (!universeBinding)
+    fail(
+      "population_universe_binding_unknown",
+      `${outcome.key}:${population.universe_binding_key}`,
+    );
+  const missingUniverseInputs = universeBinding.carrier_paths.filter(
+    (carrier) =>
+      !check.input_paths.some((pattern) =>
+        matchesRepoPattern(carrier, pattern),
+      ),
+  );
+  if (missingUniverseInputs.length)
+    fail(
+      "population_universe_carrier_input_missing",
+      `${outcome.key}:${population.check_key}:${missingUniverseInputs.join(",")}`,
     );
   for (const claim of population.claims)
     if (!claims.has(claim))

@@ -52,7 +52,7 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
   for (const [mutate, expected] of [
     [
       (handoff) => handoff.coverage.pop(),
-      /coverage_cell_missing:surface\.main:main-default:desktop-default:assets/u,
+      /coverage_cell_missing:surface\.main:main-default:desktop-light-default-nominal-mouse:assets/u,
     ],
     [
       (handoff) => handoff.coverage.push(structuredClone(handoff.coverage[0])),
@@ -111,7 +111,7 @@ test("every subject, target and condition cell must close all eight dimensions",
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /coverage_cell_missing:surface\.main:main-secondary:desktop-default:surface_flow/u,
+      /coverage_cell_missing:surface\.main:main-secondary:desktop-light-default-nominal-mouse:surface_flow/u,
     );
   });
 });

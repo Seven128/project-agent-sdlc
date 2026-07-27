@@ -33,6 +33,7 @@ export async function addGlobalClaim(
     key: "global-root-success",
     target_ref: "fixture-app",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -67,18 +68,18 @@ export async function addGlobalClaim(
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
     `import { readFile } from "node:fs/promises";
-let state = { first: false };
+let state = { first: false, first_relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const key = process.argv[2] || "first";
 const globalCheck = process.argv[3] === "global";
 const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:\`fixture-${"${key}"}-session\`,cold_start:true});
 const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
-const claimAssertions = globalCheck ? ["global-state-assertion"] : [\`${"${key}"}-result\`,\`${"${key}"}-requirement\`,\`${"${key}"}-obligation\`];
+const claimAssertions = globalCheck ? ["global-state-assertion"] : [\`${"${key}"}-result\`,\`${"${key}"}-requirement\`,\`${"${key}"}-obligation\`,\`${"${key}"}-relations-na\`,...(key === "first" ? ["first-architecture"] : [])];
 const globalResult = ${constant ? "true" : "state[key] === true"};
 console.log(JSON.stringify({
   schema_version:"long-task-check-result-v3",
   execution_status:"completed",
-  observations:{result:state[key] === true,requirement_result:state[key] === true,obligation_result:state[key] === true,global_result:globalResult,target_live:true,negative:false},
+  observations:{result:state[key] === true,requirement_result:state[key] === true,obligation_result:state[key] === true,architecture_result:state.first === true,relations_applicable:state[\`${"${key}"}_relations_applicable\`] === true,global_result:globalResult,target_live:true,negative:false},
   evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(globalCheck ? "global-state-liveness" : \`${"${key}"}-liveness\`)]
 }));
 `,
@@ -94,9 +95,10 @@ export async function addGlobalCounterfactual(contract) {
     claims: ["constraint.global-state"],
     check_key: "global-state-check",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: ["global-state-assertion"],
     preserved_assertions: ["global-state-liveness"],

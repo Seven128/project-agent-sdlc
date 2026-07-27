@@ -42,6 +42,19 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
         ),
       );
   }
+  if (outcome.product.control_relation_closure.state !== "unresolved")
+    claims.push(
+      claim(
+        outcome.key,
+        "control_relation_closure",
+        "control_relation",
+        [],
+        outcome.product.control_relation_closure.applicability_refs,
+        outcome.product.control_relation_closure.state === "not_applicable"
+          ? "negative"
+          : "positive",
+      ),
+    );
   for (const relation of outcome.product.control_relations)
     claims.push(
       claim(

@@ -12,6 +12,7 @@ import {
 import {
   commitCandidate,
   createDeliveryFixture,
+  fixtureArchitectureSourceItem,
   pathExists,
   readState,
   writeContract,
@@ -29,12 +30,14 @@ test("[critical:live-final-gate-only] controlled real V2 Smoke proves only the c
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 
 <!-- ty-source-item:start key=second-observable kind=requirement -->
 The second outcome must be observable.
@@ -169,12 +172,14 @@ second is observable and implemented.
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 
 <!-- ty-source-item:start key=second-observable kind=requirement -->
 The second outcome must be observable.
@@ -185,7 +190,9 @@ ${revisedAcceptance}
 <!-- ty-source-item:end -->
 `,
     );
-    fixture.contract.source_claims[2].statement = revisedAcceptance;
+    fixture.contract.source_claims.find(
+      (claim) => claim.key === "second-acceptance",
+    ).statement = revisedAcceptance;
     fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions.find(
       (assertion) => assertion.key === "second-requirement",
     ).criterion = revisedAcceptance;

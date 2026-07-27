@@ -28,7 +28,10 @@ test("Authority Revision separates user decisions from mechanically bounded repa
 
     const baseline = structuredClone(fixture.contract);
     const withoutFlag = structuredClone(baseline);
-    withoutFlag.outcomes[0].acceptance.checks[0].negative_assertions = [];
+    withoutFlag.outcomes[0].acceptance.checks[0].negative_assertions =
+      withoutFlag.outcomes[0].acceptance.checks[0].negative_assertions.filter(
+        (assertion) => assertion.key !== "negative-floor",
+      );
     await writeContract(fixture.workdir, withoutFlag);
     await assert.rejects(
       () => runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
@@ -231,6 +234,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       key: "global-root-success",
       target_ref: "fixture-app",
       journey_role: "success",
+      dimensions: [{ key: "fixture-state", value: "loaded" }],
       given_refs: ["fixture-loaded"],
       when_refs: ["read-outcome"],
     });
@@ -271,9 +275,10 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       claims: ["constraint.stable-runtime"],
       check_key: "global-check",
       mutation: {
-        type: "replace_file",
+        type: "replace_json_value",
         path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+        pointer: "/first",
+        value: false,
       },
       expected_assertion_failures: ["global-proof"],
       preserved_assertions: ["global-liveness"],
@@ -400,13 +405,28 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
     await writeFile(
       path.join(fixture.root, "tests", "scoped-oracle.mjs"),
       `import { readFile } from "node:fs/promises";
+import path from "node:path";
 const key = process.argv[2];
 let value = false;
-try { value = JSON.parse(await readFile(new URL(\`../src/\${key}.json\`, import.meta.url), "utf8")); } catch {}
-const claimAssertions = [key + "-result", key + "-requirement", key + "-obligation"];
+let state = {
+  first: false,
+  second: false,
+  first_relations_applicable: false,
+  second_relations_applicable: false
+};
+try { value = JSON.parse(await readFile(path.join(process.cwd(), "src", \`\${key}.json\`), "utf8")); } catch {}
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const observed = value && state[key];
+const claimAssertions = [
+  key + "-result",
+  key + "-requirement",
+  key + "-obligation",
+  key + "-relations-na",
+  ...(key === "first" ? ["first-architecture"] : [])
+];
 const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"scoped-" + key + "-session",cold_start:true});
 const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:value,requirement_result:value,obligation_result:value,target_live:true},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness")]}));
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:observed,requirement_result:observed,obligation_result:observed,architecture_result:state.first,relations_applicable:state[key + "_relations_applicable"],target_live:true},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness")]}));
 `,
     );
     await writeFile(
@@ -417,6 +437,15 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       path.join(fixture.root, "tests", "scoped-semantic-true.json"),
       "true\n",
     );
+    await writeFile(
+      path.join(fixture.root, "src", "state.json"),
+      `${JSON.stringify({
+        first: true,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
+    );
     for (const outcome of fixture.contract.outcomes) {
       const check = outcome.acceptance.checks[0];
       check.runner.target = "tests/scoped-oracle.mjs";
@@ -424,13 +453,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "tests/scoped-oracle.mjs",
         `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`,
       ];
-      check.input_paths = [`src/${outcome.key}.json`];
-      outcome.technical.bindings[0].target = `src/${outcome.key}.json`;
-      outcome.technical.bindings[0].carrier_paths = [`src/${outcome.key}.json`];
-      outcome.acceptance.counterfactual_controls[0].mutation.path =
-        `src/${outcome.key}.json`;
-      outcome.acceptance.counterfactual_controls[0].mutation.fixture_path =
-        `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`;
+      check.input_paths = ["src/state.json", `src/${outcome.key}.json`];
     }
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -479,7 +502,8 @@ test("Counterfactual failure is persisted as failing Check Progress", async () =
       `const claimAssertions=["first-result","first-requirement","first-obligation"];
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"constant-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,requirement_result:true,obligation_result:true,target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness")]}));
+const relationAssertion="first-relations-na";
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,requirement_result:true,obligation_result:true,architecture_result:true,relations_applicable:false,target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-architecture"),delta("first-architecture"),target(relationAssertion),delta(relationAssertion),target("first-liveness")]}));
 `,
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
@@ -513,7 +537,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       failed.findings.filter(
         (finding) => finding.code === "counterfactual_integrity_failed",
       ).length,
-      1,
+      2,
     );
 
     const status = await runCli(fixture.root, [
@@ -550,7 +574,12 @@ test("Live Final Gate rejects dirty state and accepts one clean Git-tree snapsho
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      `${JSON.stringify({ first: true, second: true })}\n`,
+      `${JSON.stringify({
+        first: true,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await assert.rejects(
       () =>

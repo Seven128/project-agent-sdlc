@@ -43,7 +43,11 @@ test("PROJECT_SPEC defines the controlling objective and trusted results", async
   );
   assert.match(
     spec,
-    /machine_accepted_external_pending[\s\S]*not full delivery completion[\s\S]*not a vague third state/iu,
+    /machine_accepted_external_pending[\s\S]*not `AcceptedDeliveryTerminal`[\s\S]*not a vague third state/iu,
+  );
+  assert.match(
+    spec,
+    /MachineVerifiableDeclaredDrift = empty[\s\S]*not full `DeclaredObservableDrift = empty`/iu,
   );
   assert.match(
     spec,
@@ -495,8 +499,24 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   assert.match(rationale, /brief is a projection of canonical summary data/iu);
   assert.match(rationale, /only two trustworthy outcomes/iu);
   assert.match(
+    rationale,
+    /complete-delivery accepted-terminal-state safety[\s\S]*not a termination guarantee/iu,
+  );
+  assert.match(
+    rationale,
+    /AcceptedDeliveryTerminal\(current snapshot\)[\s\S]*DeclaredObservableDrift = empty/iu,
+  );
+  assert.match(
+    rationale,
+    /machine_accepted_external_pending[\s\S]*MachineVerifiableDeclaredDrift = empty[\s\S]*no full `DeclaredObservableDrift = empty` claim/iu,
+  );
+  assert.match(
+    rationale,
+    /atomic Claim × applicability profile × required proof surface/iu,
+  );
+  assert.match(
     globalContext,
-    /Preventing false completion[\s\S]*controlling objective/iu,
+    /Preventing false completion[\s\S]*controlling objective[\s\S]*accepted-terminal-state safety/iu,
   );
   assert.match(verification, /Long-Task design consistency/iu);
 });
@@ -594,7 +614,7 @@ test("blocker revisions use causal evidence without adding completion state", as
   );
   assert.match(
     combined,
-    /semantic [`']?replace_file[`']?[\s\S]*target-runtime liveness/iu,
+    /claim-local [`']?replace_json_value[`']? or [`']?replace_text[`']?[\s\S]*target-runtime liveness/iu,
   );
   assert.match(
     combined,
@@ -718,6 +738,14 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
   assert.match(
     policy,
     /Coverage_new\s*⊇\s*Coverage_old[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_old/iu,
+  );
+  assert.match(
+    policy,
+    /(?:cannot|cannot be) prove(?:d)?[\s\S]*preserve the current formal acceptance path/iu,
+  );
+  assert.match(
+    policy,
+    /(?:cost reduction|lower cost)[\s\S]*never compensates? for (?:reduced|weaker) drift/iu,
   );
   assert.match(
     policy,

@@ -22,6 +22,7 @@ import {
   evaluateAssertionResults,
 } from "./long-task-evidence-findings.js";
 import { classifyPlaywrightCounterfactual } from "./long-task-playwright-counterfactual-policy.js";
+import { applyNarrowSemanticMutation } from "./long-task-semantic-mutation.js";
 import { evaluateEvidenceCapabilities } from "./long-task-evidence-capability-policy.js";
 import { resolveInsideRepository } from "./long-task-workspace.js";
 
@@ -296,7 +297,7 @@ async function evaluateCounterfactualSet(
             ),
             { recursive: true, force: true },
           );
-      } else {
+      } else if (control.mutation.type === "replace_file") {
         await copyFile(
           resolveInsideRepository(
             root,
@@ -309,6 +310,8 @@ async function evaluateCounterfactualSet(
             "counterfactual.path",
           ),
         );
+      } else {
+        await applyNarrowSemanticMutation(root, control.mutation);
       }
       const raw = await executeCheckRunner(check, root);
       const result = await evaluateCheckEvidence(

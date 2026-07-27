@@ -91,7 +91,30 @@ test("production surface bindings and design conformance have Schema/Parser pari
         conformance_check_ref: "settings-root",
         conformance_assertion_ref: "settings-conformance",
         verification_method_bindings: [
-          { method: "layout_geometry", assertion_ref: "settings-layout" },
+          {
+            method: "layout_geometry",
+            assertion_ref: "settings-layout",
+            evidence_artifacts: [
+              {
+                condition_key: "phone",
+                path: "artifacts/settings-layout-phone.json",
+                observation_path:
+                  "artifacts/settings-layout-phone-observation.json",
+              },
+              {
+                condition_key: "dark",
+                path: "artifacts/settings-layout-dark.json",
+                observation_path:
+                  "artifacts/settings-layout-dark-observation.json",
+              },
+              {
+                condition_key: "default",
+                path: "artifacts/settings-layout-default.json",
+                observation_path:
+                  "artifacts/settings-layout-default-observation.json",
+              },
+            ],
+          },
         ],
         actual_artifact_path: "artifacts/settings-actual.png",
         comparison_artifact_path: "artifacts/settings-diff.json",
@@ -104,6 +127,7 @@ test("production surface bindings and design conformance have Schema/Parser pari
         refs: ["control.save.validation"],
         source_item_refs: ["settings-design"],
         verification_methods: ["component_state"],
+        required_capabilities: ["browser-runtime"],
         rationale: "The target-local validation Claim resolves the blocker.",
       },
     ],
@@ -158,6 +182,7 @@ test("negative-only Global Check and zero positive Assertions have Schema/Parser
     key: "global-root-success",
     target_ref: "fixture-app",
     journey_role: "success",
+    dimensions: [{ key: "delivery-state", value: "success" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });

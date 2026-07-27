@@ -4,6 +4,7 @@ import type {
   DeliverySurfaceBindingV2,
 } from "./long-task-ui-surface-types.js";
 import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-types.js";
+import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 import {
   array,
   key,
@@ -133,6 +134,7 @@ function parseAcceptanceBlockers(
       "refs",
       "source_item_refs",
       "verification_methods",
+      "required_capabilities",
       "rationale",
     ]);
     return {
@@ -157,6 +159,16 @@ function parseAcceptanceBlockers(
           `${itemLabel}.verification_methods[${methodIndex}]`,
         ),
       ),
+      required_capabilities: array(
+        row.required_capabilities,
+        `${itemLabel}.required_capabilities`,
+      ).map((capability, capabilityIndex) =>
+        literal(
+          capability,
+          EXECUTION_TARGET_CAPABILITIES,
+          `${itemLabel}.required_capabilities[${capabilityIndex}]`,
+        ),
+      ),
       rationale: string(row.rationale, `${itemLabel}.rationale`),
     };
   });
@@ -165,7 +177,11 @@ function parseAcceptanceBlockers(
 function parseVerificationMethodBindings(value: unknown, label: string) {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, ["method", "assertion_ref"]);
+    const row = object(item, itemLabel, [
+      "method",
+      "assertion_ref",
+      "evidence_artifacts",
+    ]);
     return {
       method: literal(
         row.method,
@@ -173,6 +189,28 @@ function parseVerificationMethodBindings(value: unknown, label: string) {
         `${itemLabel}.method`,
       ),
       assertion_ref: key(row.assertion_ref, `${itemLabel}.assertion_ref`),
+      evidence_artifacts: array(
+        row.evidence_artifacts,
+        `${itemLabel}.evidence_artifacts`,
+      ).map((artifact, artifactIndex) => {
+        const artifactLabel = `${itemLabel}.evidence_artifacts[${artifactIndex}]`;
+        const entry = object(artifact, artifactLabel, [
+          "condition_key",
+          "path",
+          "observation_path",
+        ]);
+        return {
+          condition_key: key(
+            entry.condition_key,
+            `${artifactLabel}.condition_key`,
+          ),
+          path: repositoryFile(entry.path, `${artifactLabel}.path`),
+          observation_path: repositoryFile(
+            entry.observation_path,
+            `${artifactLabel}.observation_path`,
+          ),
+        };
+      }),
     };
   });
 }

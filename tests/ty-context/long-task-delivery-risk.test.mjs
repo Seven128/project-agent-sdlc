@@ -73,6 +73,7 @@ test("strict security proof is required on the affected Outcome, not elsewhere",
   const contract = deliveryContract({ twoOutcomes: true });
   contract.risk.facts.security_boundary_change = ["second"];
   const firstCheck = contract.outcomes[0].acceptance.checks[0];
+  contract.outcomes[1].acceptance.checks[0].negative_assertions = [];
   firstCheck.proof_surface = "security_boundary";
   firstCheck.negative_assertions.push({
     key: "first-negative",
@@ -103,6 +104,7 @@ test("strict security proof is required on the affected Outcome, not elsewhere",
 test("user-requested strict requires falsifiable proof on every Outcome", () => {
   const contract = deliveryContract({ twoOutcomes: true });
   contract.risk.requested_level = "strict";
+  contract.outcomes[0].acceptance.checks[0].negative_assertions = [];
   assert.throws(
     () => validateRiskProof(contract, classifyLongTaskRisk(contract)),
     /strict_negative_assertion_required:first[\s\S]*strict_counterfactual_control_required:second/,

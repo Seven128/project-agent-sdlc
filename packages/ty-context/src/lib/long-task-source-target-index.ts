@@ -58,6 +58,15 @@ export function buildCanonicalSourceTargetIndex(
             outcome.key,
           ),
         );
+    if (outcome.product.control_relation_closure.state !== "unresolved")
+      targets.push(
+        target(
+          `${outcome.key}.control_relation_closure`,
+          "control",
+          outcome.product.control_relation_closure.statement,
+          outcome.key,
+        ),
+      );
     for (const relation of outcome.product.control_relations)
       targets.push(
         target(

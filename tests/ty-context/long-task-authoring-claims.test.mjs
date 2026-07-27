@@ -15,7 +15,10 @@ import {
 
 test("Requirement Claims require coverage on an allowed proof surface", () => {
   const uncovered = deliveryContract();
-  uncovered.outcomes[0].acceptance.checks[0].positive_assertions.splice(1, 1);
+  uncovered.outcomes[0].acceptance.checks[0].positive_assertions =
+    uncovered.outcomes[0].acceptance.checks[0].positive_assertions.filter(
+      (assertion) => assertion.key !== "first-requirement",
+    );
   assert.throws(
     () => parse(uncovered),
     /product_claim_required_surfaces_missing:first:requirement\.observe-first:first-root-success:runtime_behavior/u,
@@ -81,6 +84,7 @@ test("Control Claims require a production target binding and target-local proof"
     role: "support",
     runtime_family: "browser",
     root_entrypoint: "/",
+    capabilities: ["browser-runtime"],
   });
   addProductionControlBinding(proxy, {
     controlKey: "submit",
@@ -231,7 +235,7 @@ test("Compile validates real Source anchors and blocks decisions", async () => {
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=decision -->

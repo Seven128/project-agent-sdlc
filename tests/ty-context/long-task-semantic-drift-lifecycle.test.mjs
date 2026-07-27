@@ -150,7 +150,12 @@ test("[critical:terminal-state-current-evidence] Stage frontier and terminal tar
 
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      `${JSON.stringify({ first: true, second: true })}\n`,
+      `${JSON.stringify({
+        first: true,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await commitCandidate(fixture.root);
     const accepted = await runCli(fixture.root, [
@@ -197,7 +202,12 @@ test("targeted verification is not gated by the acceptance frontier", async () =
 
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      `${JSON.stringify({ first: true, second: true })}\n`,
+      `${JSON.stringify({
+        first: true,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     const verified = await runCli(fixture.root, [
       "long-task",

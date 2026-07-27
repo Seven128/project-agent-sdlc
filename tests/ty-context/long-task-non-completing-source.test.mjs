@@ -6,6 +6,7 @@ import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/lo
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
   createDeliveryFixture,
+  fixtureArchitectureSourceItem,
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -100,7 +101,10 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const outcome = fixture.contract.outcomes[0];
     outcome.product.non_completing_outcomes = [];
-    outcome.acceptance.checks[0].negative_assertions = [];
+    outcome.acceptance.checks[0].negative_assertions =
+      outcome.acceptance.checks[0].negative_assertions.filter(
+        (assertion) => assertion.key !== "spinner-only-rejected",
+      );
     outcome.acceptance.counterfactual_controls[0].claims =
       outcome.acceptance.counterfactual_controls[0].claims.filter(
         (claim) => claim !== "non_completing.spinner-only",
@@ -114,7 +118,7 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
     );
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->\n# Fixture source\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->\n<a id="fixture-source"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n`,
     );
     await writeContract(fixture.workdir, fixture.contract);
     await expectDecision(fixture, {
@@ -173,12 +177,14 @@ async function addNonCompletingSource(fixture) {
   await writeFile(
     path.join(fixture.root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 
 <!-- ty-source-item:start key=spinner-only kind=non_completing -->
 ${nonCompleting}

@@ -22,6 +22,7 @@ import {
   object,
   string,
 } from "./long-task-shape-primitives.js";
+import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 
 export function parseDesignResourceHandoffEvidence(
   value: unknown,
@@ -124,6 +125,7 @@ export function parseDesignResourceHandoffBlockers(
         "dimensions",
         "source_item_refs",
         "verification_methods",
+        "required_capabilities",
         "description",
       ]);
       return {
@@ -145,6 +147,16 @@ export function parseDesignResourceHandoffBlockers(
         verification_methods: verificationMethods(
           row.verification_methods,
           `${label}.verification_methods`,
+        ),
+        required_capabilities: array(
+          row.required_capabilities,
+          `${label}.required_capabilities`,
+        ).map((capability, capabilityIndex) =>
+          literal(
+            capability,
+            EXECUTION_TARGET_CAPABILITIES,
+            `${label}.required_capabilities[${capabilityIndex}]`,
+          ),
         ),
         description: string(row.description, `${label}.description`),
       };

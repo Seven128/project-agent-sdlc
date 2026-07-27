@@ -13,7 +13,10 @@ import {
   loadActiveLongTaskAuthority,
   writeFinalReceipt,
 } from "./long-task-state.js";
-import { assertVerifierAuthorityCurrent } from "./long-task-freshness.js";
+import {
+  assertVerifierAuthorityCurrent,
+  deliveryCompileFreshness,
+} from "./long-task-freshness.js";
 import {
   allCompiledChecks,
   runDeliveryChecks,
@@ -47,6 +50,14 @@ export async function runDeliveryFinalGate(
   if (candidate.dirty.length)
     throw new Error(
       `final_gate_requires_clean_candidate_commit:${candidate.dirty.join(",")}`,
+    );
+
+  const acceptedCompiled = active.authority_snapshot;
+  await assertMatchingActiveBinding(acceptedCompiled);
+  const staleAuthorityInputs = await deliveryCompileFreshness(acceptedCompiled);
+  if (staleAuthorityInputs.length)
+    throw new Error(
+      `final_gate_protected_input_stale:${staleAuthorityInputs.join(",")}`,
     );
 
   const compiled = await compileDeliveryContract(active.workdir, repository, {

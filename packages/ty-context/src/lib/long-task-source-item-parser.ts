@@ -11,6 +11,7 @@ import {
   SOURCE_BACKGROUND_START,
   SOURCE_ITEM_END,
   SOURCE_ITEM_START,
+  validateSourceBackgroundLine,
 } from "./long-task-source-markers.js";
 import { parseStrictYaml, sha256Hex } from "./strict-codec.js";
 
@@ -21,6 +22,7 @@ const FORMAL_BLOCK_END = /^\s*```[ \t]*$/u;
 interface OpenSourceItem {
   key: string;
   kind: SourceItemKind;
+  aspect?: CompiledSourceItemV2["aspect"];
   risk_semantics?: CompiledSourceItemV2["risk_semantics"];
   lines: string[];
   line: number;
@@ -165,6 +167,7 @@ function closeSourceItem(state: SourceParseState): void {
   state.items.push({
     key: open.key,
     kind: open.kind,
+    ...(open.aspect ? { aspect: open.aspect } : {}),
     source_path: state.sourcePath,
     normalized_text: normalizedText,
     text_sha256: sha256Hex(normalizedText),
@@ -235,6 +238,13 @@ function consumeOwnedText(
     );
   if (state.open) state.open.lines.push(line);
   else if (state.background) {
+    validateSourceBackgroundLine(
+      state.sourcePath,
+      state.background.key,
+      state.background.reason,
+      lineNumber,
+      line,
+    );
     if (line.trim()) state.background.substantiveLines += 1;
   } else if (line.trim())
     throw new Error(

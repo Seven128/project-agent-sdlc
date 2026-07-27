@@ -161,6 +161,9 @@ export function projectProductSemantics(
             .map((blocker) => ({
               ...blocker,
               refs: [...blocker.refs].sort(),
+              source_item_refs: [...blocker.source_item_refs].sort(),
+              verification_methods: [...blocker.verification_methods].sort(),
+              required_capabilities: [...blocker.required_capabilities].sort(),
             })),
         })),
       non_completing_outcomes: applicableStatements(

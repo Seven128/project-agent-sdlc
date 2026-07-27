@@ -65,7 +65,17 @@ test("all raw execution fields affect identity and per-check evidence does not",
     conformance_check_ref: "test",
     conformance_assertion_ref: "result",
     verification_method_bindings: [
-      { method: "layout_geometry", assertion_ref: "layout" },
+      {
+        method: "layout_geometry",
+        assertion_ref: "layout",
+        evidence_artifacts: [
+          {
+            condition_key: "default",
+            path: "artifacts/settings-layout.json",
+            observation_path: "artifacts/settings-layout-observation.json",
+          },
+        ],
+      },
     ],
     actual_artifact_path: "artifacts/settings-actual.png",
     comparison_artifact_path: "artifacts/settings-diff.json",
@@ -157,6 +167,7 @@ function compiledCheck() {
       role: "product",
       runtime_family: "process",
       root_entrypoint: "tests/oracle.mjs",
+      capabilities: ["process-runtime", "cold-start", "production-root"],
     },
     known_execution_targets: [
       {
@@ -165,6 +176,7 @@ function compiledCheck() {
         role: "product",
         runtime_family: "process",
         root_entrypoint: "tests/oracle.mjs",
+        capabilities: ["process-runtime", "cold-start", "production-root"],
       },
     ],
     design_conformance_targets: [],

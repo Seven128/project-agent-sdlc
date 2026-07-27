@@ -146,6 +146,51 @@ function evidenceRecordsForCases(
           comparison_artifact_path: target.comparison_artifact_path,
         });
     }
+    if (
+      assertion?.evidence_capabilities.includes("design_method") &&
+      item.executed
+    ) {
+      for (const target of check.design_conformance_targets ?? []) {
+        const binding = target.verification_method_bindings.find(
+          (candidate) => candidate.assertion_ref === assertion.key,
+        );
+        if (!binding) continue;
+        const requiredAttachments = binding.evidence_artifacts.flatMap(
+          (artifact) => [
+            designMethodAttachmentName(
+              target.key,
+              binding.method,
+              artifact.condition_key,
+              "record",
+            ),
+            designMethodAttachmentName(
+              target.key,
+              binding.method,
+              artifact.condition_key,
+              "observation",
+            ),
+          ],
+        );
+        if (
+          !requiredAttachments.every((name) =>
+            item.attachment_names.includes(name),
+          )
+        )
+          continue;
+        evidenceRecords.push({
+          assertion_key: assertion.key,
+          capability: "design_method",
+          design_target_ref: target.key,
+          target_ref: target.target_ref,
+          method: binding.method,
+          cells: binding.evidence_artifacts.map((artifact) => ({
+            condition_key: artifact.condition_key,
+            artifact_path: artifact.path,
+            observation_artifact_path: artifact.observation_path,
+          })),
+        });
+      }
+    }
   }
   return evidenceRecords;
 }
@@ -216,9 +261,24 @@ function aggregateCases(instances: PlaywrightCaseInstance[]): PlaywrightCase[] {
           rows.every((row) => same(row.action_keys, rows[0].action_keys))
             ? rows[0].action_keys
             : [],
+        attachment_names:
+          rows.length === 0
+            ? []
+            : rows[0].attachment_names.filter((name) =>
+                rows.every((row) => row.attachment_names.includes(name)),
+              ),
       };
     })
     .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+export function designMethodAttachmentName(
+  target: string,
+  method: string,
+  condition: string,
+  kind: "record" | "observation",
+): string {
+  return `ty-context-design-method:${target}:${method}:${condition}:${kind}`;
 }
 
 function integer(value: unknown): number | null {

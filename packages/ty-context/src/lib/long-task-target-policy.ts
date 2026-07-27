@@ -5,6 +5,14 @@ type Reporter = (message: string) => void;
 type ExecutionTarget = DeliveryContractV2["task"]["execution_targets"][number];
 type DeliveryCheck =
   DeliveryContractV2["global"]["acceptance"]["checks"][number];
+const FAMILY_CAPABILITY = {
+  browser: "browser-runtime",
+  native: "native-runtime",
+  desktop: "desktop-runtime",
+  service: "service-runtime",
+  process: "process-runtime",
+  external: "external-runtime",
+} as const;
 
 export function validateExecutionTargets(
   contract: DeliveryContractV2,
@@ -27,6 +35,17 @@ function indexExecutionTargets(
     if (targets.has(target.key))
       issue(report, "execution_target_key_duplicate", target.key);
     targets.set(target.key, target);
+    if (!target.capabilities.length)
+      issue(report, "execution_target_capability_required", target.key);
+    if (new Set(target.capabilities).size !== target.capabilities.length)
+      issue(report, "execution_target_capability_duplicate", target.key);
+    const familyCapability = FAMILY_CAPABILITY[target.runtime_family];
+    if (!target.capabilities.includes(familyCapability))
+      issue(
+        report,
+        "execution_target_family_capability_required",
+        `${target.key}:${familyCapability}`,
+      );
   }
   if (![...targets.values()].some((target) => target.role === "product"))
     issue(report, "product_execution_target_required", contract.task.id);
@@ -61,6 +80,15 @@ function validateRequiredTargetRefs(
         "target_profile_required_target_must_be_product",
         targetRef,
       );
+    else {
+      for (const capability of ["cold-start", "production-root"] as const)
+        if (!target.capabilities.includes(capability))
+          issue(
+            report,
+            "required_target_capability_missing",
+            `${targetRef}:${capability}`,
+          );
+    }
   }
 }
 

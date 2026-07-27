@@ -39,9 +39,8 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
     outcome.product.requirements[0].required_proof_surfaces = [
       "security_boundary",
     ];
-    outcome.technical.obligations[0].required_proof_surfaces = [
-      "security_boundary",
-    ];
+    for (const obligation of outcome.technical.obligations)
+      obligation.required_proof_surfaces = ["security_boundary"];
     outcome.product.owner.path_globs.push("artifacts/**");
     outcome.technical.allowed_support_paths.push("artifacts/**");
     check.artifact_globs = ["artifacts/proof.json"];
@@ -77,20 +76,37 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "result",
           "requirement.observe-first",
           "obligation.implement-first",
+          "obligation.architecture-first",
           "forbidden_shortcut.self-report",
         ],
         check_key: check.key,
         mutation: {
-          type: "replace_file",
+          type: "replace_json_value",
           path: "src/state.json",
-          fixture_path: "tests/semantic-false.json",
+          pointer: "/first",
+          value: false,
         },
         expected_assertion_failures: [
           "first-result",
           "first-requirement",
           "first-obligation",
+          "first-architecture",
           "shortcut-rejected",
         ],
+        preserved_assertions: ["first-liveness"],
+      },
+      {
+        key: "make-first-relations-applicable",
+        binding_key: "state-first",
+        claims: ["control_relation_closure"],
+        check_key: check.key,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first_relations_applicable",
+          value: true,
+        },
+        expected_assertion_failures: ["first-relations-na"],
         preserved_assertions: ["first-liveness"],
       },
     ];
@@ -128,9 +144,8 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
     outcome.product.requirements[0].required_proof_surfaces = [
       "population_coverage",
     ];
-    outcome.technical.obligations[0].required_proof_surfaces = [
-      "population_coverage",
-    ];
+    for (const obligation of outcome.technical.obligations)
+      obligation.required_proof_surfaces = ["population_coverage"];
     check.negative_assertions.push({
       key: "negative-path",
       criterion: "The negative population path remains valid.",
@@ -147,8 +162,10 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
     outcome.acceptance.checks.push(populationCheck);
     outcome.acceptance.population = {
       check_key: populationCheck.key,
+      universe_binding_key: "state-first",
       claims: ["result"],
       observations: {
+        universe_ids: "population.universe_ids",
         eligible_ids: "population.eligible_ids",
         observed_ids: "population.observed_ids",
         excluded_items: "population.excluded_items",
@@ -163,18 +180,35 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
           "result",
           "requirement.observe-first",
           "obligation.implement-first",
+          "obligation.architecture-first",
         ],
         check_key: check.key,
         mutation: {
-          type: "replace_file",
+          type: "replace_json_value",
           path: "src/state.json",
-          fixture_path: "tests/semantic-false.json",
+          pointer: "/first",
+          value: false,
         },
         expected_assertion_failures: [
           "first-result",
           "first-requirement",
           "first-obligation",
+          "first-architecture",
         ],
+        preserved_assertions: ["first-liveness"],
+      },
+      {
+        key: "make-first-relations-applicable",
+        binding_key: "state-first",
+        claims: ["control_relation_closure"],
+        check_key: check.key,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first_relations_applicable",
+          value: true,
+        },
+        expected_assertion_failures: ["first-relations-na"],
         preserved_assertions: ["first-liveness"],
       },
     ];
@@ -195,7 +229,13 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
 
     await writeFile(
       path.join(fixture.root, "src/state.json"),
-      `${JSON.stringify({ first: false, second: true })}\n`,
+      `${JSON.stringify({
+        first: true,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+        omit_population: true,
+      })}\n`,
     );
     const failed = await runCliFailure(fixture.root, [
       "long-task",
@@ -244,14 +284,15 @@ async function writeArtifactOracle(root) {
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
     `import { mkdir, readFile, writeFile } from "node:fs/promises";
-let result = false;
-try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; } catch {}
+let state = {};
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const result = state.first === true;
 await mkdir(new URL("../artifacts", import.meta.url), {recursive:true});
 await writeFile(new URL("../artifacts/proof.json", import.meta.url), JSON.stringify({verified:result}));
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"artifact-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,target_live:true,"artifacts-ready":true,negative_ok:result},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"artifact-present",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["artifact"]},{assertion_key:"shortcut-rejected",capability:"state_delta",before_sha256:"4".repeat(64),after_sha256:"5".repeat(64),changed_fields:["negative"]}]}));
+const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,"artifacts-ready":true,negative_ok:result},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"artifact-present",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["artifact"]},{assertion_key:"shortcut-rejected",capability:"state_delta",before_sha256:"4".repeat(64),after_sha256:"5".repeat(64),changed_fields:["negative"]}]}));
 `,
   );
 }
@@ -260,12 +301,13 @@ async function writePopulationOracle(root) {
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
     `import { readFile } from "node:fs/promises";
-let result = false;
-try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; } catch {}
+let state = {};
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const result = state.first === true;
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"population-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,target_live:true,negative_ok:true,population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"negative-path",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
+const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,negative_ok:true,population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:state.omit_population?[]:(result?["first"]:[]),excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"negative-path",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
 `,
   );
 }

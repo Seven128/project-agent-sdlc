@@ -13,6 +13,7 @@ export interface PlaywrightCaseInstance {
   status: string;
   given_keys: string[];
   action_keys: string[];
+  attachment_names: string[];
 }
 
 export interface PlaywrightCase {
@@ -33,6 +34,7 @@ export interface PlaywrightCase {
   interrupted_instances: number;
   given_keys: string[];
   action_keys: string[];
+  attachment_names: string[];
 }
 
 export function collectCases(
@@ -135,6 +137,19 @@ function playwrightCase(
     resultStatuses.length > 0 &&
     resultStatuses.at(-1) === "passed";
   const traces = results.map((result) => scenarioTrace(result!));
+  const attachmentNames = [
+    ...new Set(
+      results.flatMap((result) =>
+        Array.isArray(result!.attachments)
+          ? result!.attachments
+              .map(record)
+              .filter(Boolean)
+              .map((attachment) => attachment!.name)
+              .filter((name): name is string => typeof name === "string")
+          : [],
+      ),
+    ),
+  ].sort();
   const givenKeys = traces[0]?.given_keys ?? [];
   const actionKeys = traces[0]?.action_keys ?? [];
   const traceConsistent = traces.every(
@@ -154,6 +169,7 @@ function playwrightCase(
     status,
     given_keys: traceConsistent ? givenKeys : [],
     action_keys: traceConsistent ? actionKeys : [],
+    attachment_names: attachmentNames,
   };
 }
 

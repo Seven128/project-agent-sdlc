@@ -42,14 +42,35 @@ test("a real Outcome failure outranks Global blocked_external", async () => {
   const fixture = await createDeliveryFixture();
   try {
     addBlockedGlobalCheck(fixture.contract);
+    for (const counterfactual of [
+      ...fixture.contract.outcomes[0].acceptance.counterfactual_controls,
+      ...fixture.contract.global.acceptance.counterfactual_controls,
+    ]) {
+      if (
+        counterfactual.mutation.type === "replace_json_value" &&
+        counterfactual.mutation.pointer === "/first"
+      ) {
+        counterfactual.mutation.value = true;
+      }
+    }
     await writeContract(fixture.workdir, fixture.contract);
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      `${JSON.stringify({ first: false, second: false })}\n`,
+      `${JSON.stringify({
+        first: false,
+        second: false,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "semantic-false.json"),
-      `${JSON.stringify({ first: false, second: true })}\n`,
+      `${JSON.stringify({
+        first: false,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -70,6 +91,7 @@ function addBlockedGlobalCheck(contract) {
     key: "external-service-degradation",
     target_ref: "fixture-app",
     journey_role: "degradation",
+    dimensions: [{ key: "fixture-state", value: "degraded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -108,6 +130,7 @@ function addBlockedGlobalCheck(contract) {
         expected: true,
       },
     ],
+    negative_assertions: [],
     environment_requirements: [
       {
         key: "missing-service-token",
@@ -122,9 +145,10 @@ function addBlockedGlobalCheck(contract) {
     claims: ["constraint.external-service"],
     check_key: "external-service-check",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: ["external-service-proof"],
     preserved_assertions: ["external-service-liveness"],

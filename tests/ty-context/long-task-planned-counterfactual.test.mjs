@@ -75,7 +75,7 @@ test("Final Gate requires a planned carrier and accepts it only with sensitive p
 
     await writeFile(
       path.join(fixture.root, "src", "planned.json"),
-      '{"ready":true}\n',
+      '{"ready":true,"relations_applicable":false}\n',
     );
     const accepted = await runCli(fixture.root, [
       "long-task",
@@ -94,14 +94,14 @@ test("planned carrier changes stale targeted Progress", async () => {
     await configurePlannedCarrier(fixture);
     await writeFile(
       path.join(fixture.root, "src", "planned.json"),
-      '{"ready":true}\n',
+      '{"ready":true,"relations_applicable":false}\n',
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
     await writeFile(
       path.join(fixture.root, "src", "planned.json"),
-      '{"ready":true,"revision":2}\n',
+      '{"ready":true,"relations_applicable":false,"revision":2}\n',
     );
     const status = await runCli(fixture.root, [
       "long-task",
@@ -120,7 +120,7 @@ test("planned to existing enters reviewed Technical Authority revision", async (
     await configurePlannedCarrier(fixture);
     await writeFile(
       path.join(fixture.root, "src", "planned.json"),
-      '{"ready":true}\n',
+      '{"ready":true,"relations_applicable":false}\n',
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -167,19 +167,28 @@ async function configurePlannedCarrier(fixture) {
   const check = outcome.acceptance.checks[0];
   check.input_paths = ["src/planned.json"];
   check.expected_output_paths = ["src/planned.json"];
-  const control = outcome.acceptance.counterfactual_controls[0];
-  control.mutation = {
-    type: "replace_file",
+  const semanticControl = outcome.acceptance.counterfactual_controls[0];
+  semanticControl.mutation = {
+    type: "replace_json_value",
     path: "src/planned.json",
-    fixture_path: "tests/semantic-false.json",
+    pointer: "/ready",
+    value: false,
   };
-  control.preserved_assertions = ["first-liveness"];
+  semanticControl.preserved_assertions = ["first-liveness"];
+  const relationControl = outcome.acceptance.counterfactual_controls[1];
+  relationControl.mutation = {
+    type: "replace_json_value",
+    path: "src/planned.json",
+    pointer: "/relations_applicable",
+    value: true,
+  };
+  relationControl.preserved_assertions = ["first-liveness"];
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
     `import { readFile } from "node:fs/promises";
-let state = { ready: false };
+let state = { ready: false, relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/planned.json", import.meta.url), "utf8")); } catch {}
-const semanticAssertions = ["first-result", "first-requirement", "first-obligation"];
+const semanticAssertions = ["first-result", "first-requirement", "first-obligation", "first-architecture", "first-relations-na"];
 const targetRecord = (assertionKey) => ({
   assertion_key:assertionKey,
   capability:"target_runtime",
@@ -202,6 +211,8 @@ console.log(JSON.stringify({
     result:state.ready === true,
     requirement_result:state.ready === true,
     obligation_result:state.ready === true,
+    architecture_result:state.ready === true,
+    relations_applicable:state.relations_applicable === true,
     target_live:true,
     negative:false
   },

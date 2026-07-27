@@ -165,7 +165,7 @@ test("implementation output uses complete canonical source plus residual handoff
   );
   assert.match(
     handoff,
-    /verification method[\s\S]*independently failing Assertion[\s\S]*blocker[\s\S]*Source-item\/method lineage/isu,
+    /verification method[\s\S]*independently failing Assertion[\s\S]*blocker[\s\S]*Source-item\/method\/required-capability lineage/isu,
   );
   assert.match(
     handoff,

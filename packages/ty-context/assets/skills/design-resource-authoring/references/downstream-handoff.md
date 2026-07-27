@@ -89,7 +89,7 @@ The strict block includes:
 - exactly one disposition per applicable cell: `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`;
 - covered-cell same-target/same-condition evidence, Source-item refs and dimension-appropriate project verification methods; referenced design Source Items use `requirement`, `control` or `acceptance` markers;
 - source-backed rationales for non-applicable/excluded rows; unresolved rows remain visible and make preflight fail;
-- target-local acceptance blockers that downstream checks must bind rather than dismiss;
+- target-local acceptance blockers with exact target/subject/dimension/Source-item/verification-method lineage and a non-empty `required_capabilities` set; use the narrowest truthful capability such as physical device, sensor, camera, orientation, haptic, screen reader, pixel-density, safe-area, input or production runtime rather than weakening it to an available proxy;
 - selection basis, proposal reconciliation path/status and known limitations;
 - outer review and separate provider/artifact/design qualifiers.
 
@@ -122,7 +122,7 @@ The consuming Goal brings the revised proposal, selected resources and residual 
 
 ### Long-Task consumption
 
-The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus every declared resource path and condition. Covered Source Items map through `source_claims` to the root conformance Assertion. Every verification method maps to an independently failing Assertion carrying its relevant Source Claims; every blocker preserves its Source-item/method lineage into a target-local machine Claim or target-blocking External Confirmation. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
+The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus every declared resource path and condition. Covered Source Items map through `source_claims` to the root conformance Assertion. Every verification method maps to an independently failing Assertion carrying its relevant Source Claims; every blocker preserves its Source-item/method/required-capability lineage into a machine Claim proved on the exact capability-qualified target or a target-blocking External Confirmation. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
 
 ## Forbidden inferences
 

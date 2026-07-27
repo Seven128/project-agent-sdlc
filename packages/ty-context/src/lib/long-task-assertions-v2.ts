@@ -120,6 +120,10 @@ export function evaluatePopulation(
   requirement: PopulationRequirementV2,
   observations: Record<string, unknown>,
 ): { passed: boolean; actual: unknown; reason: string | null } {
+  const universe = observationValue(
+    observations,
+    requirement.observations.universe_ids,
+  ).value;
   const eligible = observationValue(
     observations,
     requirement.observations.eligible_ids,
@@ -133,15 +137,23 @@ export function evaluatePopulation(
     requirement.observations.excluded_items,
   ).value;
   const actual = {
+    universe_ids: universe,
     eligible_ids: eligible,
     observed_ids: observed,
     excluded_items: excluded,
   };
+  if (!validIds(universe)) return failure(actual, "universe_ids_invalid");
   if (!validIds(eligible)) return failure(actual, "eligible_ids_invalid");
   if (!validIds(observed)) return failure(actual, "observed_ids_invalid");
   if (!Array.isArray(excluded))
     return failure(actual, "excluded_items_invalid");
   const eligibleSet = new Set(eligible);
+  const universeSet = new Set(universe);
+  if (
+    universeSet.size !== eligibleSet.size ||
+    [...universeSet].some((id) => !eligibleSet.has(id))
+  )
+    return failure(actual, "eligible_universe_mismatch");
   const observedSet = new Set(observed);
   const excludedIds: string[] = [];
   const rules = new Set(requirement.exclusion_rules.map((item) => item.key));

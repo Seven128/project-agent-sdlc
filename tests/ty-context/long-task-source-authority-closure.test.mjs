@@ -14,6 +14,7 @@ import {
   completeControl,
   createDeliveryFixture,
   deliveryContract,
+  fixtureArchitectureSourceItem,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -31,6 +32,8 @@ The first outcome must be observable.
 <!-- ty-source-item:start key=unmapped kind=technical_obligation -->
 The implementation must preserve the declared evidence boundary.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     await assert.rejects(
@@ -60,6 +63,8 @@ The implementation must preserve the declared evidence boundary.
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     await assert.rejects(
@@ -86,6 +91,8 @@ The first outcome must be observable.
 <!-- ty-source-item:start key=first-observable kind=acceptance -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     await assert.rejects(
@@ -104,11 +111,7 @@ test("every declared Source file contains at least one Material Source Item", as
   try {
     await writeFile(
       path.join(fixture.root, "background.md"),
-      `${sourceHeading("Background only", "background-heading")}
-<!-- ty-source-background:start key=background-copy reason=non-authoritative-context -->
-No delivery authority is marked here.
-<!-- ty-source-background:end -->
-`,
+      `${sourceHeading("Background only", "background-heading")}\n`,
     );
     fixture.contract.task.source_paths.push("background.md");
     await writeContract(fixture.workdir, fixture.contract);
@@ -189,6 +192,8 @@ test("typed Source dispositions preserve Result, Risk, and Non-goal meaning", as
         } -->
 ${statement}
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
       );
       fixture.contract.source_claims[0].statement = statement;
@@ -245,9 +250,10 @@ ${statement}
           claims: ["non_goal.no-legacy"],
           check_key: "no-legacy",
           mutation: {
-            type: "replace_file",
+            type: "replace_json_value",
             path: "src/state.json",
-            fixture_path: "tests/semantic-false.json",
+            pointer: "/first",
+            value: false,
           },
           expected_assertion_failures: ["no-legacy"],
           preserved_assertions: ["no-legacy-liveness"],
@@ -786,9 +792,10 @@ async function configureGlobalSourceAcceptance(fixture, { sourceBacked }) {
     claims: ["constraint.no-legacy"],
     check_key: "no-legacy-check",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: ["no-legacy-assertion"],
     preserved_assertions: ["no-legacy-liveness"],
@@ -871,15 +878,28 @@ async function assertPreflightAndCompileReject(fixture, code, message = code) {
 }
 
 async function writeSourceItems(root, items) {
+  const materialItems = items.some(
+    (item) => item.key === "fixture-architecture",
+  )
+    ? items
+    : [
+        ...items,
+        {
+          key: "fixture-architecture",
+          kind: "technical_obligation",
+          aspect: "architecture",
+          statement: "Preserve the fixture state owner and verifier boundary.",
+        },
+      ];
   await writeFile(
     path.join(root, "source.md"),
-    `${sourceHeading()}\n\n${items
+    `${sourceHeading()}\n\n${materialItems
       .map(
         (item) => `<!-- ty-source-item:start key=${item.key} kind=${item.kind}${
           item.kind === "risk_fact"
             ? ` fact=${item.fact} outcome=${item.outcome}`
             : ""
-        } -->
+        }${item.aspect ? ` aspect=${item.aspect}` : ""} -->
 ${item.statement}
 <!-- ty-source-item:end -->`,
       )
@@ -947,9 +967,10 @@ function addGlobalConstraintProof(contract, key, statement) {
     claims: [`constraint.${key}`],
     check_key: check.key,
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: [key],
     preserved_assertions: [`${key}-liveness`],
@@ -963,6 +984,7 @@ function ensureGlobalApplicability(contract) {
       key,
       target_ref: "fixture-app",
       journey_role: "success",
+      dimensions: [{ key: "fixture-state", value: "loaded" }],
       given_refs: ["fixture-loaded"],
       when_refs: ["read-outcome"],
     });
@@ -970,8 +992,12 @@ function ensureGlobalApplicability(contract) {
 }
 
 function sourceHeading(title = "Fixture source", key = "fixture-heading") {
+  const anchor = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-|-$/gu, "");
   return `<!-- ty-source-background:start key=${key} reason=markdown-structure -->
-# ${title}
+<a id="${anchor}"></a>
 <!-- ty-source-background:end -->`;
 }
 

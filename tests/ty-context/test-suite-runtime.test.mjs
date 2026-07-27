@@ -220,7 +220,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.deepEqual([...classified].sort(), available);
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 12);
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 41);
-  assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 10);
+  assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   for (const restoredFile of [
     "long-task-authority-progress-retry.test.mjs",
     "long-task-state-resume.test.mjs",
@@ -228,6 +228,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     "long-task-finding-context.test.mjs",
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
+    "long-task-semantic-assurance-closure.test.mjs",
   ]) {
     assert.equal(LONG_TASK_ISOLATED_TEST_FILES.includes(restoredFile), true);
     assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.includes(restoredFile), false);
@@ -238,6 +239,10 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   );
   assert.equal(
     classifyLongTaskTestFile("long-task-playwright-trust-boundary.test.mjs"),
+    "exclusive",
+  );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-authoring-preflight.test.mjs"),
     "exclusive",
   );
   assert.equal(classifyLongTaskTestFile("long-task-new.test.mjs"), "exclusive");
@@ -315,7 +320,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     (entry) => entry.id === "critical-policy-continuity",
   );
   assert.ok(sentinel);
-  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 15);
+  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 16);
   const expectedFile = path.join(
     repositoryRoot,
     "tests",

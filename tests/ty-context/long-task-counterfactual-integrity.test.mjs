@@ -36,18 +36,35 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "result",
           "requirement.observe-first",
           "obligation.implement-first",
+          "obligation.architecture-first",
         ],
         check_key: check.key,
         mutation: {
-          type: "replace_file",
+          type: "replace_json_value",
           path: "src/state.json",
-          fixture_path: "tests/semantic-false.json",
+          pointer: "/first",
+          value: false,
         },
         expected_assertion_failures: [
           "first-result",
           "first-requirement",
           "first-obligation",
+          "first-architecture",
         ],
+        preserved_assertions: ["first-liveness"],
+      },
+      {
+        key: "make-first-relations-applicable",
+        binding_key: "state-first",
+        claims: ["control_relation_closure"],
+        check_key: check.key,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first_relations_applicable",
+          value: true,
+        },
+        expected_assertion_failures: ["first-relations-na"],
         preserved_assertions: ["first-liveness"],
       },
     ];
@@ -74,19 +91,32 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       artifactFailure,
       fixture.root,
     );
-    assert.equal(findings.length, 1);
-    assert.deepEqual(findings[0].actual.finding_codes.sort(), [
+    assert.equal(findings.length, 2);
+    const mainArtifactFinding = findings.find((finding) =>
+      finding.message.includes("replace-state-semantics"),
+    );
+    const relationArtifactFinding = findings.find((finding) =>
+      finding.message.includes("make-first-relations-applicable"),
+    );
+    assert.deepEqual(mainArtifactFinding.actual.finding_codes.sort(), [
       "artifact_missing",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
+      "assertion_value_mismatch",
+      "assertion_value_mismatch",
+    ]);
+    assert.deepEqual(relationArtifactFinding.actual.finding_codes.sort(), [
+      "artifact_missing",
       "assertion_value_mismatch",
     ]);
 
     const populationFailure = structuredClone(compiled.outcomes[0]);
     populationFailure.acceptance.population = {
       check_key: check.key,
+      universe_binding_key: "state-first",
       claims: ["result"],
       observations: {
+        universe_ids: "population.universe_ids",
         eligible_ids: "population.eligible_ids",
         observed_ids: "population.observed_ids",
         excluded_items: "population.excluded_items",
@@ -99,6 +129,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     );
     assert.equal(findings.length, 1);
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
+      "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
@@ -121,8 +152,13 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
         candidate,
         fixture.root,
       );
-      assert.equal(findings.length, 1, mode);
-      assert.equal(findings[0].code, "counterfactual_integrity_failed", mode);
+      assert.equal(findings.length, 2, mode);
+      assert.ok(
+        findings.every(
+          (finding) => finding.code === "counterfactual_integrity_failed",
+        ),
+        mode,
+      );
     }
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -298,13 +334,14 @@ async function writeOracle(root, mode) {
     path.join(root, "tests/oracle.mjs"),
     `import { readFile } from "node:fs/promises";
 ${prelude}
-let result = false;
-try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; }
+let state = {};
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); }
 catch {}
+const result = state.first === true;
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"counterfactual-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{${resultObservation}requirement_result:result,obligation_result:result,target_live:true,other:${other},population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"other-stays-true",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["other"]}]}));
+const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{${resultObservation}requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,other:${other},population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"other-stays-true",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["other"]}]}));
 `,
   );
 }

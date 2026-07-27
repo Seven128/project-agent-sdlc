@@ -13,9 +13,12 @@ export type SourceItemKind =
   | "external_confirmation"
   | "decision";
 
+export type SourceItemAspect = "architecture";
+
 export interface CompiledSourceItemV2 {
   key: string;
   kind: SourceItemKind;
+  aspect?: SourceItemAspect;
   source_path: string;
   normalized_text: string;
   text_sha256: string;

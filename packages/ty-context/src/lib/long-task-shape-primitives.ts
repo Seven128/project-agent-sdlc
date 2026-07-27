@@ -141,6 +141,7 @@ export const EVIDENCE_CAPABILITIES = [
   "failure_injection",
   "visual_render",
   "design_conformance",
+  "design_method",
   "target_runtime",
   "input_variation",
 ] as const satisfies readonly EvidenceCapabilityV2[];

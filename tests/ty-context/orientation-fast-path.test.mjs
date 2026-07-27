@@ -88,7 +88,10 @@ test("managed guidance and package assets share current routing", async () => {
     assert.match(guidance, /Contract Conformance/);
     assert.match(guidance, /Single-Goal Long-Task Workflow/);
     assert.match(guidance, /ty-context enable long-task/);
-    assert.match(guidance, /Final Gate, Stop and close recompile the source Contract/);
+    assert.match(
+      guidance,
+      /Final Gate, Stop and close first reject stale accepted authority inputs, recompile the source Contract/,
+    );
     assert.match(guidance, /receipts and compiled cache are audit\/recovery surfaces only/i);
     assert.doesNotMatch(guidance, /multi-SFC execution|foreground scheduler/);
   }

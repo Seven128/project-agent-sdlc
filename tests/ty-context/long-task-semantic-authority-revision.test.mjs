@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import {
   createDeliveryFixture,
+  fixtureArchitectureSourceItem,
   runCli,
   runCliFailure,
   writeContract,
@@ -21,12 +22,14 @@ test("Source authority is locked by first compile even before verify", async () 
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 Revised before execution.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     fixture.contract.source_claims[0].statement = "Revised before execution.";
@@ -64,8 +67,8 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
     await writeFile(
       sourceFile,
       `${sourceBaseline}
-<!-- ty-source-background:start key=provenance-note reason=non-authoritative-provenance -->
-Non-Claim provenance note.
+<!-- ty-source-background:start key=provenance-note reason=provenance -->
+<!-- ty-source-provenance input=non-claim mode=direct -->
 <!-- ty-source-background:end -->
 `,
     );
@@ -166,8 +169,8 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
         mutate(contract) {
           contract.outcomes[0].product.requirements[0].required_proof_surfaces =
             ["data_state"];
-          contract.outcomes[0].technical.obligations[0].required_proof_surfaces =
-            ["data_state"];
+          for (const obligation of contract.outcomes[0].technical.obligations)
+            obligation.required_proof_surfaces = ["data_state"];
           contract.outcomes[0].acceptance.checks[0].proof_surface =
             "data_state";
         },
@@ -240,12 +243,14 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
         await writeFile(
           sourceFile,
           `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${statement}
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
         );
       }
@@ -291,9 +296,10 @@ ${statement}
       claims: ["obligation.new-product-scope"],
       check_key: "first-check",
       mutation: {
-        type: "replace_file",
+        type: "replace_json_value",
         path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+        pointer: "/first",
+        value: false,
       },
       expected_assertion_failures: ["new-product-scope-proof"],
       preserved_assertions: ["first-liveness"],

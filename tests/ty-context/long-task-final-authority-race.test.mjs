@@ -112,8 +112,8 @@ test("Final Gate rejects every protected-input class changed during execution", 
         appendFile(
           path.join(fixture.root, "source.md"),
           `
-<!-- ty-source-background:start key=concurrent-note reason=race-test -->
-Concurrent Source background mutation.
+<!-- ty-source-background:start key=concurrent-note reason=markdown-structure -->
+<a id="concurrent-source-background"></a>
 <!-- ty-source-background:end -->
 `,
         ),
@@ -331,6 +331,7 @@ function addBlockedProof(contract) {
         expected: true,
       },
     ],
+    negative_assertions: [],
     environment_requirements: [
       {
         key: "missing-env",

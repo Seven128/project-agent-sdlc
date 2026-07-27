@@ -92,6 +92,16 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
       path.join(fixture.root, "tests", "constant-oracle.mjs"),
       sensitiveStructuredOracle(),
     );
+    const browserControl = fixture.contract.outcomes[0].acceptance
+      .counterfactual_controls.find(
+        (control) => control.key === "replace-ui-semantics",
+      );
+    browserControl.mutation = {
+      type: "replace_json_value",
+      path: "src/state.json",
+      pointer: "/first",
+      value: false,
+    };
     structured.acceptance.counterfactual_controls = [
       {
         key: "replace-second-semantics",
@@ -103,15 +113,30 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
         ],
         check_key: "second-check",
         mutation: {
-          type: "replace_file",
+          type: "replace_json_value",
           path: "src/state.json",
-          fixture_path: "tests/semantic-false.json",
+          pointer: "/second",
+          value: false,
         },
         expected_assertion_failures: [
           "structured-result",
           "structured-acceptance",
           "structured-obligation",
         ],
+        preserved_assertions: ["structured-liveness"],
+      },
+      {
+        key: "make-second-relations-applicable",
+        binding_key: "state-second",
+        claims: ["control_relation_closure"],
+        check_key: "second-check",
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/second_relations_applicable",
+          value: true,
+        },
+        expected_assertion_failures: ["second-relations-na"],
         preserved_assertions: ["structured-liveness"],
       },
     ];
@@ -267,6 +292,7 @@ function constantStructuredOracle() {
   "structured-result",
   "structured-acceptance",
   "structured-obligation",
+  "second-relations-na",
 ];
 const targetRecord = (assertionKey) => ({
   assertion_key: assertionKey,
@@ -290,6 +316,7 @@ console.log(JSON.stringify({
     result: true,
     requirement_result: true,
     obligation_result: true,
+    relations_applicable: false,
     target_live: true
   },
   evidence_records: [
@@ -305,7 +332,7 @@ console.log(JSON.stringify({
 
 function sensitiveStructuredOracle() {
   return `import { readFile } from "node:fs/promises";
-let state = { second: false };
+let state = { second: false, second_relations_applicable: false };
 try {
   state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8"));
 } catch {}
@@ -313,6 +340,7 @@ const assertionKeys = [
   "structured-result",
   "structured-acceptance",
   "structured-obligation",
+  "second-relations-na",
 ];
 const targetRecord = (assertionKey) => ({
   assertion_key: assertionKey,
@@ -336,6 +364,7 @@ console.log(JSON.stringify({
     result: state.second,
     requirement_result: state.second,
     obligation_result: state.second,
+    relations_applicable: state.second_relations_applicable,
     target_live: true
   },
   evidence_records: [

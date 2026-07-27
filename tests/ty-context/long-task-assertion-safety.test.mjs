@@ -230,6 +230,7 @@ test("a Check emits Claim Proof only when its complete status is passed", async 
   const passingRaw = rawExecution(base, {
     result: true,
     population: {
+      universe_ids: ["first"],
       eligible_ids: ["first"],
       observed_ids: [],
       excluded_items: [],
@@ -272,8 +273,10 @@ test("a Check emits Claim Proof only when its complete status is passed", async 
     acceptance: {
       population: {
         check_key: base.key,
+        universe_binding_key: "state-first",
         claims: ["result"],
         observations: {
+          universe_ids: "population.universe_ids",
           eligible_ids: "population.eligible_ids",
           observed_ids: "population.observed_ids",
           excluded_items: "population.excluded_items",

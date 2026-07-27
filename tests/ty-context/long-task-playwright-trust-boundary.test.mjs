@@ -113,6 +113,8 @@ test("a Counterfactual on another Playwright Check cannot satisfy weak UI AC", a
         "// [ac:first-result]",
         "// [ac:first-requirement]",
         "// [ac:first-obligation]",
+        "// [ac:first-architecture]",
+        "// [ac:first-relations-na]",
         "// [ac:first-liveness]",
         "",
       ].join("\n"),
@@ -138,19 +140,19 @@ test("weak-observability Playwright rejects a constant AC and accepts a sensitiv
       await writeFile(
         runner,
         `import { readFile } from "node:fs/promises";
-let ready = ${constant ? "true" : "false"};
-if (!ready) {
-  try { ready = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first === true; }
-  catch {}
-}
+let state = {first:false,first_relations_applicable:false};
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const ready = ${constant ? "true" : "state.first === true"};
+const relationsPass = ${constant ? "true" : "state.first_relations_applicable !== true"};
 const steps = [{title:"[given:fixture-loaded]"},{title:"[action:read-outcome]"}];
-const semantic = ["first-result","first-requirement","first-obligation"].map((id) => ({
+const semantic = ["first-result","first-requirement","first-obligation","first-architecture"].map((id) => ({
   title:\`[ac:\${id}] \${id}\`,
   tests:[{projectId:"default",status:ready?"expected":"unexpected",results:[{status:ready?"passed":"failed",steps}]}]
 }));
+const relations = {title:"[ac:first-relations-na] first-relations-na",tests:[{projectId:"default",status:relationsPass?"expected":"unexpected",results:[{status:relationsPass?"passed":"failed",steps}]}]};
 const liveness = {title:"[ac:first-liveness] first-liveness",tests:[{projectId:"default",status:"expected",results:[{status:"passed",steps}]}]};
-console.log(JSON.stringify({stats:{expected:(ready?3:0)+1,unexpected:ready?0:3,skipped:0,flaky:0},errors:[],suites:[{specs:[...semantic,liveness]}]}));
-process.exitCode = ready ? 0 : 1;
+console.log(JSON.stringify({stats:{expected:(ready?4:0)+(relationsPass?1:0)+1,unexpected:(ready?0:4)+(relationsPass?0:1),skipped:0,flaky:0},errors:[],suites:[{specs:[...semantic,relations,liveness]}]}));
+process.exitCode = ready && relationsPass ? 0 : 1;
 `,
       );
       fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
@@ -171,9 +173,13 @@ process.exitCode = ready ? 0 : 1;
         compiled.outcomes[0],
         fixture.root,
       );
-      assert.equal(findings.length, constant ? 1 : 0, JSON.stringify(findings));
+      assert.equal(findings.length, constant ? 2 : 0, JSON.stringify(findings));
       if (constant)
-        assert.equal(findings[0].code, "counterfactual_integrity_failed");
+        assert.ok(
+          findings.every(
+            (finding) => finding.code === "counterfactual_integrity_failed",
+          ),
+        );
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
     }
@@ -208,6 +214,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
         (finding) => finding.code,
       ),
       [
+        "assertion_value_mismatch",
         "assertion_value_mismatch",
         "assertion_value_mismatch",
         "assertion_value_mismatch",
@@ -407,6 +414,8 @@ function expectedCounterfactualCases() {
     playwrightCase("first-result", "unexpected", "failed"),
     playwrightCase("first-requirement", "unexpected", "failed"),
     playwrightCase("first-obligation", "unexpected", "failed"),
+    playwrightCase("first-architecture", "unexpected", "failed"),
+    playwrightCase("first-relations-na", "expected", "passed"),
     playwrightCase("first-liveness", "expected", "passed"),
   ];
 }
@@ -418,12 +427,19 @@ async function configurePlaywright(fixture, { weak }) {
       "// [ac:first-result]",
       "// [ac:first-requirement]",
       "// [ac:first-obligation]",
+      "// [ac:first-architecture]",
+      "// [ac:first-relations-na]",
       "// [ac:first-liveness]",
       "",
     ].join("\n"),
   );
   const outcome = fixture.contract.outcomes[0];
   fixture.contract.task.execution_targets[0].runtime_family = "browser";
+  fixture.contract.task.execution_targets[0].capabilities = [
+    "browser-runtime",
+    "cold-start",
+    "production-root",
+  ];
   const check = outcome.acceptance.checks[0];
   check.proof_surface = "ui_browser";
   check.runner = {
@@ -449,8 +465,18 @@ async function configurePlaywright(fixture, { weak }) {
     assertion.operator = "equals";
     assertion.expected = true;
   }
+  for (const assertion of check.negative_assertions) {
+    assertion.observation = `playwright.case.${assertion.key}.passed`;
+    assertion.evidence_capabilities = [
+      "interaction_trace",
+      "target_runtime",
+    ];
+    assertion.operator = "equals";
+    assertion.expected = true;
+  }
   outcome.product.requirements[0].required_proof_surfaces = ["ui_browser"];
-  outcome.technical.obligations[0].required_proof_surfaces = ["ui_browser"];
+  for (const obligation of outcome.technical.obligations)
+    obligation.required_proof_surfaces = ["ui_browser"];
   if (weak) fixture.contract.risk.facts.weak_observability = ["first"];
   await writeContract(fixture.workdir, fixture.contract);
 }

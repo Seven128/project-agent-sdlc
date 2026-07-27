@@ -26,6 +26,10 @@ import {
   resolveInsideRepository,
 } from "./long-task-workspace.js";
 import { evidenceAdapterForRunner } from "./long-task-evidence-adapter-policy.js";
+import {
+  freezeLocalVerifierDependencyClosure,
+  packageScriptVerifierRoots,
+} from "./long-task-verifier-dependency-closure.js";
 
 export async function freezeDeliveryCheck(
   check: DeliveryCheckV2,
@@ -286,6 +290,41 @@ async function freezeVerificationInputs(
     );
     result[relative] = sha256Hex(await readFile(protectedFile));
   }
+  if (check.runner.type === "package_script") {
+    const packageJson = JSON.parse(await readFile(target, "utf8")) as {
+      scripts?: Record<string, unknown>;
+    };
+    const script = packageJson.scripts?.[check.runner.target];
+    if (typeof script !== "string" || !script.trim())
+      throw new Error(
+        `package_script_not_found:${check.key}:${check.runner.target}`,
+      );
+    for (const relative of packageScriptVerifierRoots(
+      script,
+      repoRelative(repository, target),
+      manifest,
+    )) {
+      const protectedFile = await assertProtectedRepositoryFile(
+        repository,
+        path.join(repository, ...relative.split("/")),
+        `${check.key}.package_script_entry`,
+      );
+      result[relative] = sha256Hex(await readFile(protectedFile));
+    }
+  }
+  Object.assign(
+    result,
+    await freezeLocalVerifierDependencyClosure(
+      repository,
+      Object.keys(result),
+      manifest,
+      [
+        ...check.input_paths,
+        ...check.expected_output_paths,
+        ...check.artifact_globs,
+      ],
+    ),
+  );
   return sortRecord(result);
 }
 

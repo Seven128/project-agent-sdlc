@@ -61,7 +61,7 @@ The separately named Context drift check asks the reverse question. Contract Con
 
 ## Long-Task Binding
 
-Long-Task Source and Contract authoring perform the same pre-implementation deliberation once. Material, falsifiable architecture conclusions enter existing Source-backed technical obligations, global constraints or forbidden shortcuts, owner/path envelopes, Bindings and project-owned Checks before Authority Lock. Subjective preferences remain task-local, durable Context or `decision_required`; they do not become false machine proof.
+Long-Task Source and Contract authoring perform the same pre-implementation deliberation once. Material, falsifiable architecture conclusions enter existing Source-backed technical obligations, global constraints or forbidden shortcuts, owner/path envelopes, Bindings and project-owned Checks before Authority Lock. At least one real `technical_obligation` Source Item is classified with `aspect=architecture`, maps to an ordinary covered obligation Claim and is rerun by Final Gate; this prevents total omission without adding an architecture Contract field or separate closure. Subjective preferences remain task-local, durable Context or `decision_required`; they do not become false machine proof.
 
 Final Gate is the only Long-Task post-implementation architecture-conformance owner. It recompiles Source authority and reruns every declared architecture Check on the same current snapshot as functional acceptance. Running an additional default closure would add cost and ambiguous ownership without closing another drift path, so it is forbidden.
 

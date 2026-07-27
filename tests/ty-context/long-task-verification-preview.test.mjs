@@ -39,16 +39,18 @@ test("verify --explain previews deduplicated and Counterfactual executions witho
     assert.equal(preview.summary.unique_main_runner_invocations, 1);
     assert.equal(
       preview.summary.counterfactual_runner_invocation_upper_bound,
-      1,
+      2,
     );
-    assert.equal(preview.summary.declared_runner_invocation_upper_bound, 2);
-    assert.equal(preview.summary.declared_command_attempt_upper_bound, 2);
+    assert.equal(preview.summary.declared_runner_invocation_upper_bound, 3);
+    assert.equal(preview.summary.declared_command_attempt_upper_bound, 3);
     assert.deepEqual(preview.main_raw_executions[0].check_refs, [
       "first:first-check",
     ]);
-    assert.equal(
-      preview.counterfactual_executions[0].control_key,
-      "remove-first-state",
+    assert.deepEqual(
+      preview.counterfactual_executions
+        .map((execution) => execution.control_key)
+        .sort(),
+      ["make-first-relations-applicable", "remove-first-state"],
     );
     assert.equal(await pathExists(marker), false);
     assert.deepEqual(await readProgressRecords(fixture.workdir), before);

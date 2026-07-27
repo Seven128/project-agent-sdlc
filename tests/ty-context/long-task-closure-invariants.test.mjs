@@ -101,7 +101,11 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
     "ui_browser",
     "data_state",
   ];
-  outcome.technical.obligations = [];
+  outcome.technical.obligations =
+    outcome.technical.obligations.filter(
+      (obligation) => obligation.key === "architecture-first",
+    );
+  outcome.technical.obligations[0].required_proof_surfaces = ["ui_browser"];
   const browserCheck = outcome.acceptance.checks[0];
   contract.task.execution_targets.push({
     key: "fixture-browser",
@@ -109,6 +113,7 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
     role: "product",
     runtime_family: "browser",
     root_entrypoint: "/",
+    capabilities: ["browser-runtime", "cold-start", "production-root"],
   });
   contract.task.target_profile.required_target_refs = ["fixture-browser"];
   outcome.applicability[0].target_ref = "fixture-browser";
@@ -132,6 +137,16 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
       expected: true,
     },
     {
+      key: "browser-architecture",
+      criterion: "The browser layer preserves the architecture owner.",
+      claims: ["obligation.architecture-first"],
+      applicability_ref: "first-root-success",
+      observation: "playwright.case.browser-architecture.passed",
+      evidence_capabilities: ["interaction_trace", "target_runtime"],
+      operator: "equals",
+      expected: true,
+    },
+    {
       key: "browser-layer",
       criterion: "The browser layer proves the atomic requirement.",
       claims: ["requirement.observe-first"],
@@ -142,6 +157,14 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
       expected: true,
     },
   ];
+  browserCheck.negative_assertions = browserCheck.negative_assertions.map(
+    (assertion) => ({
+      ...assertion,
+      observation: `playwright.case.${assertion.key}.passed`,
+      evidence_capabilities: ["interaction_trace", "target_runtime"],
+      expected: true,
+    }),
+  );
   const dataCheck = structuredClone(browserCheck);
   dataCheck.key = "data-layer";
   dataCheck.journey_roles = ["success"];
@@ -174,19 +197,32 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
       expected: true,
     },
   ];
+  dataCheck.negative_assertions = [];
   outcome.acceptance.checks.push(dataCheck);
   assert.doesNotThrow(() => parse(contract));
 });
 
-test("every Outcome has at least one non-result atomic Claim", () => {
+test("Control relation closure remains an atomic Claim when other atomic declarations are absent", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];
+  contract.source_claims = contract.source_claims.filter(
+    (claim) => claim.key !== "fixture-architecture",
+  );
+  contract.source_claims[0].statement =
+    "The no-Control relation closure is complete.";
+  contract.source_claims[0].disposition.refs = [
+    "first.control_relation_closure",
+  ];
   outcome.product.requirements = [];
   outcome.technical.obligations = [];
-  outcome.acceptance.checks[0].positive_assertions[0].claims = ["result"];
-  assert.throws(
+  outcome.acceptance.checks[0].positive_assertions =
+    outcome.acceptance.checks[0].positive_assertions.filter(
+      (assertion) =>
+        assertion.key === "first-result" ||
+        assertion.key === "first-liveness",
+    );
+  assert.doesNotThrow(
     () => parse(contract),
-    /outcome_atomic_claim_required:first/u,
   );
 });
 

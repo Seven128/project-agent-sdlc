@@ -35,11 +35,71 @@ export function validateRuntimeEvidenceRecord(
         : "artifact_hash_mismatch";
     case "design_conformance":
       return validateDesignConformance(check, record, artifactHashes);
+    case "design_method":
+      return validateDesignMethod(check, record, artifactHashes);
     case "target_runtime":
       return validateTargetRuntime(check, record);
     case "input_variation":
       return validateInputVariation(record);
   }
+}
+
+function validateDesignMethod(
+  check: CompiledCheckV2,
+  record: Extract<EvidenceCapabilityRecordV2, { capability: "design_method" }>,
+  artifactHashes: Record<string, string>,
+): string | null {
+  const target = (check.design_conformance_targets ?? []).find(
+    (item) =>
+      item.key === record.design_target_ref &&
+      item.verification_method_bindings.some(
+        (binding) =>
+          binding.assertion_ref === record.assertion_key &&
+          binding.method === record.method,
+      ),
+  );
+  if (!target) return "design_method_binding_unknown";
+  if (
+    target.target_ref !== record.target_ref ||
+    target.target_ref !== check.execution_target.target_ref
+  )
+    return "target_mismatch";
+  const binding = target.verification_method_bindings.find(
+    (item) =>
+      item.assertion_ref === record.assertion_key &&
+      item.method === record.method,
+  )!;
+  if (
+    !same(
+      [...record.cells.map((item) => item.condition_key)].sort(),
+      [...target.condition_keys].sort(),
+    )
+  )
+    return "design_method_conditions_mismatch";
+  const expected = new Map(
+    binding.evidence_artifacts.map((item) => [
+      item.condition_key,
+      {
+        artifact_path: item.path,
+        observation_artifact_path: item.observation_path,
+      },
+    ]),
+  );
+  if (record.cells.length !== expected.size)
+    return "design_method_cell_count_mismatch";
+  for (const cell of record.cells) {
+    const expectedCell = expected.get(cell.condition_key);
+    if (
+      expectedCell?.artifact_path !== cell.artifact_path ||
+      expectedCell?.observation_artifact_path !== cell.observation_artifact_path
+    )
+      return "design_method_artifact_path_mismatch";
+    if (!artifactHashes[cell.artifact_path])
+      return "design_method_artifact_missing";
+    if (!artifactHashes[cell.observation_artifact_path])
+      return "design_method_observation_artifact_missing";
+  }
+  return null;
 }
 
 function validateDesignConformance(

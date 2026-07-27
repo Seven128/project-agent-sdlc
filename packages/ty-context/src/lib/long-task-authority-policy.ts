@@ -115,6 +115,7 @@ const CLAIM_APPLICABILITY_AUTHORITY_POLICY = {
   key: "identity",
   target_ref: "semantic_user_review",
   journey_role: "semantic_user_review",
+  dimensions: "semantic_user_review",
   given_refs: "semantic_user_review",
   when_refs: "semantic_user_review",
 } satisfies Record<keyof ClaimApplicabilityV2, AuthorityFieldPolicy>;
@@ -190,6 +191,7 @@ const CONTROL_FIELD_COVERAGE_AUTHORITY_POLICY = {
 const CONTROL_RELATION_CLOSURE_AUTHORITY_POLICY = {
   state: "semantic_user_review",
   statement: "semantic_user_review",
+  applicability_refs: "semantic_user_review",
 } satisfies Record<
   keyof DeliveryControlRelationClosureV2,
   AuthorityFieldPolicy
@@ -232,6 +234,7 @@ const DESIGN_TARGET_AUTHORITY_POLICY = {
 const DESIGN_VERIFICATION_BINDING_AUTHORITY_POLICY = {
   method: "proof_additive",
   assertion_ref: "proof_additive",
+  evidence_artifacts: "output_requirement",
 } satisfies Record<
   keyof DeliveryDesignVerificationBindingV2,
   AuthorityFieldPolicy
@@ -243,6 +246,7 @@ const DESIGN_BLOCKER_AUTHORITY_POLICY = {
   refs: "semantic_user_review",
   source_item_refs: "semantic_user_review",
   verification_methods: "proof_additive",
+  required_capabilities: "semantic_user_review",
   rationale: "semantic_user_review",
 } satisfies Record<
   keyof DeliveryDesignAcceptanceBlockerV2,
@@ -327,6 +331,7 @@ const RUNNER_AUTHORITY_POLICY = {
 
 const POPULATION_AUTHORITY_POLICY = {
   check_key: "proof_additive",
+  universe_binding_key: "proof_additive",
   claims: "proof_additive",
   observations: "proof_additive",
   exclusion_rules: "proof_additive",

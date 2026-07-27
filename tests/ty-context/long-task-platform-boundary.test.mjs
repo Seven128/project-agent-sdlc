@@ -104,6 +104,41 @@ test("package_script runner executes in the immutable snapshot with project depe
   }
 });
 
+test("package_script runner rejects unresolved shell and verifier dependency closure", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    fixture.contract.outcomes[0].acceptance.checks[0].runner = {
+      type: "package_script",
+      target: "oracle",
+      argv: [],
+      cwd: ".",
+      timeout_ms: 30_000,
+      effect: "read_only",
+      retry_policy: "none",
+      idempotent: true,
+    };
+    const packageFile = path.join(fixture.root, "package.json");
+    const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
+    packageJson.scripts.oracle =
+      "node tests/oracle.mjs first && node tests/unfrozen-helper.mjs";
+    await writeFile(packageFile, `${JSON.stringify(packageJson, null, 2)}\n`);
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await assert.rejects(
+      runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
+      (error) => {
+        assert.match(
+          `${error.stdout ?? ""}\n${error.stderr ?? ""}`,
+          /package_script_dependency_closure_unresolved:dynamic_shell_syntax/u,
+        );
+        return true;
+      },
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 async function gitShape(root) {
   const [head, branches, worktrees, status] = await Promise.all([
     exec("git", ["rev-parse", "HEAD"], { cwd: root }),

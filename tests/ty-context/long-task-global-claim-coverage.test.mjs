@@ -78,7 +78,7 @@ test("negative Global non-goal/shortcut proof and positive constraint proof comp
   );
   const parsed = parse(contract);
   const coverage = compileProductClaimCoverage(parsed);
-  assert.equal(coverage.summary.claims_total, 6);
+  assert.equal(coverage.summary.claims_total, 8);
   assert.equal(
     coverage.summary.claims_by_global["non_goal.no-legacy"].covered,
     true,
@@ -185,9 +185,10 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       claims: ["constraint.global-runtime"],
       check_key: "global-claim-check",
       mutation: {
-        type: "replace_file",
+        type: "replace_json_value",
         path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+        pointer: "/first",
+        value: false,
       },
       expected_assertion_failures: ["global-positive"],
       preserved_assertions: ["global-liveness"],
@@ -295,6 +296,7 @@ function ensureGlobalApplicability(contract) {
       key,
       target_ref: "fixture-app",
       journey_role: "success",
+      dimensions: [{ key: "fixture-state", value: "loaded" }],
       given_refs: ["fixture-loaded"],
       when_refs: ["read-outcome"],
     });

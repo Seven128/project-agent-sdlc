@@ -24,6 +24,7 @@ import {
   repoRelative,
   resolveInsideRepository,
 } from "./long-task-workspace.js";
+import { mutateSemanticText } from "./long-task-semantic-mutation.js";
 
 export function validateVerificationInputSeparation(
   contract: DeliveryContractV2,
@@ -270,6 +271,30 @@ async function validateScopeCounterfactualPaths(options: {
       throw new Error(
         `counterfactual_path_not_found:${options.scope}:${relative}`,
       );
+  }
+  if (
+    options.mutation.type === "replace_json_value" ||
+    options.mutation.type === "replace_text"
+  ) {
+    const replacementTarget = resolveInsideRepository(
+      options.repository,
+      options.mutation.path,
+      `${options.scope}.counterfactual.path`,
+    );
+    if (!(await stat(replacementTarget).catch(() => null))) return;
+    try {
+      mutateSemanticText(
+        await readFile(replacementTarget, "utf8"),
+        options.mutation,
+        false,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `counterfactual_semantic_mutation_invalid:${options.scope}:${options.controlKey}:${message}`,
+      );
+    }
+    return;
   }
   if (options.mutation.type !== "replace_file") return;
   const fixtureTarget = resolveInsideRepository(

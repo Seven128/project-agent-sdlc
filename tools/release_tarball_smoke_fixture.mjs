@@ -6,7 +6,10 @@ export async function writeReleaseTarballLongTaskFixture(root) {
   await mkdir(path.join(root, "src"), { recursive: true });
   await mkdir(path.join(root, "tests"), { recursive: true });
   await mkdir(workdir, { recursive: true });
-  await writeFile(path.join(root, "src/state.json"), '{"ready":true}\n');
+  await writeFile(
+    path.join(root, "src/state.json"),
+    '{"ready":true,"relations_applicable":false}\n',
+  );
   await writeFile(
     path.join(root, "tests/semantic-false.json"),
     '{"ready":false}\n',
@@ -14,22 +17,27 @@ export async function writeReleaseTarballLongTaskFixture(root) {
   await writeFile(
     path.join(root, "source.md"),
     `<!-- ty-source-background:start key=tarball-heading reason=markdown-structure -->
-# Tarball smoke source
+<a id="tarball-smoke-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=packaged-verifier kind=technical_obligation -->
 Use the packaged verifier.
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=packaged-architecture kind=technical_obligation aspect=architecture -->
+Preserve the packaged state owner and verifier boundary.
 <!-- ty-source-item:end -->
 `,
   );
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
     `import { readFile } from "node:fs/promises";
-let state = { ready: false };
+let state = { ready: false, relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"installed-runtime",root_entrypoint:"tests/oracle.mjs",session_id:"tarball-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["ready"]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{ready:state.ready,obligation_ready:state.ready,target_live:true},evidence_records:[target("installed-result"),delta("installed-result"),target("installed-obligation"),delta("installed-obligation"),target("installed-liveness")]}));
+const claimAssertions=["installed-result","installed-obligation","installed-architecture","installed-relations-na"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{ready:state.ready,obligation_ready:state.ready,architecture_ready:state.ready,relations_applicable:state.relations_applicable,target_live:true},evidence_records:[...claimAssertions.flatMap((key)=>[target(key),delta(key)]),target("installed-liveness")]}));
 `,
   );
   await writeFile(
@@ -50,8 +58,10 @@ task:
       role: product
       runtime_family: process
       root_entrypoint: tests/oracle.mjs
+      capabilities: [process-runtime, cold-start, production-root]
   source_paths: [source.md]
   context_refs: [project_context/areas/main.md]
+  context_snapshot_mode: full
 source_claims:
   - key: packaged-verifier
     source_ref: source.md
@@ -59,6 +69,12 @@ source_claims:
     disposition:
       type: claim
       refs: [installed.obligation.packaged-verifier]
+  - key: packaged-architecture
+    source_ref: source.md
+    statement: Preserve the packaged state owner and verifier boundary.
+    disposition:
+      type: claim
+      refs: [installed.obligation.architecture]
 stages:
   - key: delivery
     title: Delivery
@@ -75,6 +91,7 @@ outcomes:
       - key: installed-root-success
         target_ref: installed-runtime
         journey_role: success
+        dimensions: [{key: installed-state, value: ready}]
         given_refs: [state-ready]
         when_refs: [inspect-installed]
     product:
@@ -89,10 +106,15 @@ outcomes:
       control_relation_closure:
         state: not_applicable
         statement: This Outcome declares no user-visible Controls.
+        applicability_refs: [installed-root-success]
     technical:
       obligations:
         - key: packaged-verifier
           statement: Use the packaged verifier.
+          required_proof_surfaces: [runtime_behavior]
+          applicability_refs: [installed-root-success]
+        - key: architecture
+          statement: Preserve the packaged state owner and verifier boundary.
           required_proof_surfaces: [runtime_behavior]
           applicability_refs: [installed-root-success]
       expected_change_paths: [src/**]
@@ -134,6 +156,14 @@ outcomes:
               evidence_capabilities: [state_delta, target_runtime]
               operator: equals
               expected: true
+            - key: installed-architecture
+              criterion: The packaged state owner and verifier boundary remain conformant.
+              claims: [obligation.architecture]
+              applicability_ref: installed-root-success
+              observation: architecture_ready
+              evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: true
             - key: installed-liveness
               criterion: The installed runtime remains live under semantic mutation.
               claims: []
@@ -141,16 +171,37 @@ outcomes:
               evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
+          negative_assertions:
+            - key: installed-relations-na
+              criterion: Cross-Control relations remain inapplicable when no Controls are declared.
+              claims: [control_relation_closure]
+              applicability_ref: installed-root-success
+              observation: relations_applicable
+              evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: false
       counterfactual_controls:
         - key: replace-state-semantics
           binding_key: state
-          claims: [result, obligation.packaged-verifier]
+          claims: [result, obligation.packaged-verifier, obligation.architecture]
           check_key: installed-check
           mutation:
-            type: replace_file
+            type: replace_json_value
             path: src/state.json
-            fixture_path: tests/semantic-false.json
-          expected_assertion_failures: [installed-result, installed-obligation]
+            pointer: /ready
+            value: false
+          expected_assertion_failures: [installed-result, installed-obligation, installed-architecture]
+          preserved_assertions: [installed-liveness]
+        - key: make-relations-applicable
+          binding_key: state
+          claims: [control_relation_closure]
+          check_key: installed-check
+          mutation:
+            type: replace_json_value
+            path: src/state.json
+            pointer: /relations_applicable
+            value: true
+          expected_assertion_failures: [installed-relations-na]
           preserved_assertions: [installed-liveness]
 `,
   );

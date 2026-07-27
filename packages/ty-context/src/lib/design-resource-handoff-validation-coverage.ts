@@ -160,6 +160,7 @@ export function validateDesignResourceBlockers(
       ["dimensions", blocker.dimensions],
       ["source_item_refs", blocker.source_item_refs],
       ["verification_methods", blocker.verification_methods],
+      ["required_capabilities", blocker.required_capabilities],
     ] as const) {
       requireNonemptyDesignResourceValues(
         values,

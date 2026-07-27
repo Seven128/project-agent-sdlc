@@ -8,6 +8,7 @@ import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/lo
 import {
   createDeliveryFixture,
   deliveryContract,
+  fixtureArchitectureSourceItem,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -18,7 +19,7 @@ test("Compact and expanded V2 authoring normalize to the same Contract", () => {
   const compactParsed = parseDeliveryContractText(YAML.stringify(compact));
 
   assert.deepEqual(compactParsed, expandedParsed);
-  assert.equal(compactParsed.task.context_snapshot_mode, "referenced");
+  assert.equal(compactParsed.task.context_snapshot_mode, "full");
   assert.equal(compactParsed.risk.requested_level, "auto");
   assert.deepEqual(compactParsed.outcomes[0].product.requirements, []);
   assert.deepEqual(compactParsed.global.acceptance.external_confirmations, []);
@@ -26,23 +27,29 @@ test("Compact and expanded V2 authoring normalize to the same Contract", () => {
   const expandedLines = lineCount(YAML.stringify(expanded));
   const compactLines = lineCount(YAML.stringify(compact));
   assert.ok(
-    compactLines <= Math.floor(expandedLines * 0.82),
-    `expected at least 18% fewer lines after explicit applicability and semantic-witness metadata, expanded=${expandedLines}, compact=${compactLines}`,
+    compactLines <= Math.floor(expandedLines * 0.88),
+    `expected at least 12% fewer lines after explicit applicability and semantic-witness metadata, expanded=${expandedLines}, compact=${compactLines}`,
   );
 });
 
 test("Compact and expanded V2 authoring compile to identical authority", async () => {
   const fixture = await createDeliveryFixture();
+  await writeFile(
+    path.join(fixture.root, "tests", "compact-playwright.mjs"),
+    "export const compactPlaywrightFixture = true;\n",
+  );
   const expanded = expandedContract();
   await writeFile(
     path.join(fixture.root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=technical_obligation -->
 Implement first
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
   );
   await writeContract(fixture.workdir, expanded);
@@ -98,8 +105,14 @@ function expandedContract() {
   contract.source_claims[0].statement = "Implement first";
   check.proof_surface = "ui_browser";
   contract.task.execution_targets[0].runtime_family = "browser";
+  contract.task.execution_targets[0].capabilities = [
+    "browser-runtime",
+    "cold-start",
+    "production-root",
+  ];
   check.runner.type = "playwright_test";
-  check.runner.target = "tests/oracle.mjs";
+  check.runner.target = "tests/compact-playwright.mjs";
+  check.verification_inputs = ["tests/compact-playwright.mjs"];
   for (const assertion of check.positive_assertions) {
     if (!assertion.claims.length) continue;
     assertion.observation = `playwright.case.${assertion.key}.passed`;
@@ -108,9 +121,17 @@ function expandedContract() {
       "target_runtime",
     ];
   }
-  contract.outcomes[0].technical.obligations[0].required_proof_surfaces = [
-    "ui_browser",
-  ];
+  for (const assertion of check.negative_assertions) {
+    if (!assertion.claims.length) continue;
+    assertion.observation = `playwright.case.${assertion.key}.passed`;
+    assertion.evidence_capabilities = [
+      "interaction_trace",
+      "target_runtime",
+    ];
+    assertion.expected = true;
+  }
+  for (const obligation of contract.outcomes[0].technical.obligations)
+    obligation.required_proof_surfaces = ["ui_browser"];
   check.artifact_globs = [];
   check.runner.argv = [];
   check.runner.idempotent = false;
@@ -119,14 +140,37 @@ function expandedContract() {
     {
       key: "replace-first-state",
       binding_key: "state-first",
-      claims: ["result", "obligation.implement-first"],
+      claims: [
+        "result",
+        "obligation.implement-first",
+        "obligation.architecture-first",
+      ],
       check_key: "first-check",
       mutation: {
-        type: "replace_file",
+        type: "replace_json_value",
         path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+        pointer: "/first",
+        value: false,
       },
-      expected_assertion_failures: ["first-result", "first-obligation"],
+      expected_assertion_failures: [
+        "first-result",
+        "first-obligation",
+        "first-architecture",
+      ],
+      preserved_assertions: ["first-liveness"],
+    },
+    {
+      key: "make-first-relations-applicable",
+      binding_key: "state-first",
+      claims: ["control_relation_closure"],
+      check_key: "first-check",
+      mutation: {
+        type: "replace_json_value",
+        path: "src/state.json",
+        pointer: "/first_relations_applicable",
+        value: true,
+      },
+      expected_assertion_failures: ["first-relations-na"],
       preserved_assertions: ["first-liveness"],
     },
   ];
@@ -135,7 +179,6 @@ function expandedContract() {
 
 function compactContract(expanded) {
   const contract = structuredClone(expanded);
-  delete contract.task.context_snapshot_mode;
   delete contract.risk.requested_level;
   contract.risk.facts = {};
   delete contract.global.product;
@@ -163,7 +206,6 @@ function compactContract(expanded) {
   delete check.input_paths;
   delete check.expected_output_paths;
   delete check.artifact_globs;
-  delete check.negative_assertions;
   delete check.environment_requirements;
   return contract;
 }

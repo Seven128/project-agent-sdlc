@@ -1,3 +1,7 @@
+import type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
+
+export type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
+
 export interface KeyedStatementV2 {
   key: string;
   statement: string;
@@ -35,6 +39,7 @@ export interface ExecutionTargetV2 {
   role: "product" | "support" | "observer";
   runtime_family: ExecutionTargetRuntimeFamilyV2;
   root_entrypoint: string;
+  capabilities: ExecutionTargetCapabilityV2[];
 }
 
 export interface DeliveryStageV2 {
@@ -51,6 +56,7 @@ export interface ClaimApplicabilityV2 {
   key: string;
   target_ref: string;
   journey_role: DeliveryJourneyRoleV2;
+  dimensions: Array<{ key: string; value: string }>;
   given_refs: string[];
   when_refs: string[];
 }
@@ -66,6 +72,7 @@ export type EvidenceCapabilityV2 =
   | "failure_injection"
   | "visual_render"
   | "design_conformance"
+  | "design_method"
   | "target_runtime"
   | "input_variation";
 

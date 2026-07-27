@@ -40,11 +40,24 @@ export function parseCounterfactuals(
       row.mutation,
       `${itemLabel}.mutation`,
       ["type"],
-      ["paths", "path", "fixture_path"],
+      [
+        "paths",
+        "path",
+        "fixture_path",
+        "pointer",
+        "value",
+        "match",
+        "replacement",
+      ],
     );
     const type = literal(
       mutation.type,
-      ["remove_paths", "replace_file"] as const,
+      [
+        "remove_paths",
+        "replace_file",
+        "replace_json_value",
+        "replace_text",
+      ] as const,
       `${itemLabel}.mutation.type`,
     );
     return {
@@ -52,23 +65,10 @@ export function parseCounterfactuals(
       binding_key: key(row.binding_key, `${itemLabel}.binding_key`),
       claims: strings(row.claims, `${itemLabel}.claims`),
       check_key: key(row.check_key, `${itemLabel}.check_key`),
-      mutation:
-        type === "remove_paths"
-          ? {
-              type,
-              paths: repositoryFiles(
-                mutation.paths,
-                `${itemLabel}.mutation.paths`,
-              ),
-            }
-          : {
-              type,
-              path: repositoryFile(mutation.path, `${itemLabel}.mutation.path`),
-              fixture_path: repositoryFile(
-                mutation.fixture_path,
-                `${itemLabel}.mutation.fixture_path`,
-              ),
-            },
+      mutation: parseCounterfactualMutation(
+        row.mutation,
+        `${itemLabel}.mutation`,
+      ),
       expected_assertion_failures: strings(
         row.expected_assertion_failures,
         `${itemLabel}.expected_assertion_failures`,
@@ -152,26 +152,75 @@ function parseCounterfactualMutation(
     value,
     label,
     ["type"],
-    ["paths", "path", "fixture_path"],
+    [
+      "paths",
+      "path",
+      "fixture_path",
+      "pointer",
+      "value",
+      "match",
+      "replacement",
+    ],
   );
   const type = literal(
     mutation.type,
-    ["remove_paths", "replace_file"] as const,
+    [
+      "remove_paths",
+      "replace_file",
+      "replace_json_value",
+      "replace_text",
+    ] as const,
     `${label}.type`,
   );
-  return type === "remove_paths"
-    ? {
-        type,
-        paths: repositoryFiles(mutation.paths, `${label}.paths`),
-      }
-    : {
-        type,
-        path: repositoryFile(mutation.path, `${label}.path`),
-        fixture_path: repositoryFile(
-          mutation.fixture_path,
-          `${label}.fixture_path`,
-        ),
-      };
+  if (type === "remove_paths")
+    return {
+      type,
+      paths: repositoryFiles(mutation.paths, `${label}.paths`),
+    };
+  const target = repositoryFile(mutation.path, `${label}.path`);
+  if (type === "replace_file")
+    return {
+      type,
+      path: target,
+      fixture_path: repositoryFile(
+        mutation.fixture_path,
+        `${label}.fixture_path`,
+      ),
+    };
+  if (type === "replace_json_value") {
+    const pointer = string(mutation.pointer, `${label}.pointer`);
+    if (!/^\/(?:[^~/]|~[01])+(?:\/(?:[^~/]|~[01])+)*$/u.test(pointer))
+      fail(`${label}.pointer`, "must be a non-root RFC 6901 JSON pointer");
+    if (!Object.hasOwn(mutation, "value"))
+      fail(`${label}.value`, "must be present");
+    assertJsonValue(mutation.value, `${label}.value`);
+    return { type, path: target, pointer, value: mutation.value };
+  }
+  const match = string(mutation.match, `${label}.match`);
+  const replacement =
+    typeof mutation.replacement === "string"
+      ? mutation.replacement
+      : fail(`${label}.replacement`, "must be a string");
+  if (match === replacement)
+    fail(`${label}.replacement`, "must differ from match");
+  return { type, path: target, match, replacement };
+}
+
+function assertJsonValue(value: unknown, label: string): void {
+  if (
+    value === undefined ||
+    typeof value === "function" ||
+    typeof value === "symbol" ||
+    typeof value === "bigint"
+  )
+    fail(label, "must be JSON-compatible");
+  try {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) fail(label, "must be JSON-compatible");
+    JSON.parse(encoded);
+  } catch {
+    fail(label, "must be JSON-compatible");
+  }
 }
 
 export function parsePopulation(
@@ -180,19 +229,29 @@ export function parsePopulation(
 ): PopulationRequirementV2 {
   const row = object(value, label, [
     "check_key",
+    "universe_binding_key",
     "claims",
     "observations",
     "exclusion_rules",
   ]);
   const observations = object(row.observations, `${label}.observations`, [
+    "universe_ids",
     "eligible_ids",
     "observed_ids",
     "excluded_items",
   ]);
   return {
     check_key: key(row.check_key, `${label}.check_key`),
+    universe_binding_key: key(
+      row.universe_binding_key,
+      `${label}.universe_binding_key`,
+    ),
     claims: strings(row.claims, `${label}.claims`),
     observations: {
+      universe_ids: string(
+        observations.universe_ids,
+        `${label}.observations.universe_ids`,
+      ),
       eligible_ids: string(
         observations.eligible_ids,
         `${label}.observations.eligible_ids`,

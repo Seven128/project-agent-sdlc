@@ -1,4 +1,5 @@
 import type { EvidenceCapabilityRecordV2 } from "./long-task-delivery-types.js";
+import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-types.js";
 
 export function decodeEvidenceCapabilityRecords(
   value: unknown,
@@ -221,6 +222,52 @@ function decodeRecord(
         session_id: nonEmpty(row.session_id, `${label}.session_id`),
         cold_start: row.cold_start,
       };
+    case "design_method":
+      exact(row, label, [
+        "assertion_key",
+        "capability",
+        "design_target_ref",
+        "target_ref",
+        "method",
+        "cells",
+      ]);
+      return {
+        ...base,
+        capability,
+        design_target_ref: key(
+          row.design_target_ref,
+          `${label}.design_target_ref`,
+        ),
+        target_ref: key(row.target_ref, `${label}.target_ref`),
+        method: literal(
+          row.method,
+          DESIGN_RESOURCE_VERIFICATION_METHODS,
+          `${label}.method`,
+        ),
+        cells: array(row.cells, `${label}.cells`).map((item, cellIndex) => {
+          const cellLabel = `${label}.cells[${cellIndex}]`;
+          const cell = record(item, cellLabel);
+          exact(cell, cellLabel, [
+            "condition_key",
+            "artifact_path",
+            "observation_artifact_path",
+          ]);
+          return {
+            condition_key: key(
+              cell.condition_key,
+              `${cellLabel}.condition_key`,
+            ),
+            artifact_path: nonEmpty(
+              cell.artifact_path,
+              `${cellLabel}.artifact_path`,
+            ),
+            observation_artifact_path: nonEmpty(
+              cell.observation_artifact_path,
+              `${cellLabel}.observation_artifact_path`,
+            ),
+          };
+        }),
+      };
     case "input_variation":
       exact(row, label, [
         "assertion_key",
@@ -307,4 +354,14 @@ function sha(value: unknown, label: string): string {
   const result = nonEmpty(value, label);
   if (!/^[a-f0-9]{64}$/u.test(result)) throw invalidRecord(label);
   return result;
+}
+
+function literal<T extends readonly string[]>(
+  value: unknown,
+  allowed: T,
+  label: string,
+): T[number] {
+  const result = nonEmpty(value, label);
+  if (!allowed.includes(result)) throw invalidRecord(label);
+  return result as T[number];
 }

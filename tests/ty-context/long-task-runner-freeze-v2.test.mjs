@@ -66,7 +66,15 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
   try {
     await writeFile(path.join(fixture.root, "tests/helper.mjs"), "export {};\n");
     await writeFile(path.join(fixture.root, "tests/fixture.json"), "{}\n");
-    await writeFile(path.join(fixture.root, "tests/ui.spec.mjs"), "// spec\n");
+    await writeFile(
+      path.join(fixture.root, "tests/ui.spec.mjs"),
+      `// [ac:first-result]
+// [ac:first-architecture]
+// [ac:first-requirement]
+// [ac:first-obligation]
+// [ac:first-relations-na]
+`,
+    );
     await writeFile(
       path.join(fixture.root, "playwright.config.mjs"),
       "export default {};\n",
@@ -74,6 +82,11 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
     await writeFile(path.join(fixture.root, "package-lock.json"), "{}\n");
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
     fixture.contract.task.execution_targets[0].runtime_family = "browser";
+    fixture.contract.task.execution_targets[0].capabilities = [
+      "browser-runtime",
+      "cold-start",
+      "production-root",
+    ];
     check.runner.type = "playwright_test";
     check.runner.target = "tests/ui.spec.mjs";
     check.proof_surface = "ui_browser";
@@ -85,10 +98,20 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
         "target_runtime",
       ];
     }
+    for (const assertion of check.negative_assertions) {
+      assertion.observation = `playwright.case.${assertion.key}.passed`;
+      assertion.evidence_capabilities = [
+        "interaction_trace",
+        "target_runtime",
+      ];
+      assertion.operator = "equals";
+      assertion.expected = true;
+    }
     fixture.contract.outcomes[0].product.requirements[0].required_proof_surfaces =
       ["ui_browser"];
-    fixture.contract.outcomes[0].technical.obligations[0].required_proof_surfaces =
-      ["ui_browser"];
+    for (const obligation of fixture.contract.outcomes[0].technical
+      .obligations)
+      obligation.required_proof_surfaces = ["ui_browser"];
     check.verification_inputs = [
       "tests/helper.mjs",
       "tests/fixture.json",

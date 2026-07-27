@@ -1,3 +1,5 @@
+import type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
+
 export const DESIGN_RESOURCE_DIMENSIONS = [
   "surface_flow",
   "visual_content",
@@ -191,6 +193,7 @@ export interface DesignResourceHandoffBlockerV1 {
   dimensions: DesignResourceDimension[];
   source_item_refs: string[];
   verification_methods: DesignResourceVerificationMethod[];
+  required_capabilities: ExecutionTargetCapabilityV2[];
   description: string;
 }
 

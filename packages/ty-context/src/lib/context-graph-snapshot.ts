@@ -40,6 +40,13 @@ export async function captureContextGraphSnapshot(
 
   if (mode === "full") {
     allFiles.forEach((file) => selected.add(file));
+    for (const contextRef of contextRefs) {
+      const normalized = normalizeRepoPath(contextRef);
+      if (!available.has(normalized)) {
+        throw new Error(`context_ref_invalid:${contextRef}`);
+      }
+      explicitlySelected.add(normalized);
+    }
   } else {
     for (const required of [
       CONTEXT_MANIFEST_PATH,

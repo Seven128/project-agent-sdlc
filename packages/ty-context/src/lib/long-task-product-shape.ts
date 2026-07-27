@@ -152,14 +152,26 @@ export function parseControlRelationClosure(
   value: unknown,
   label: string,
 ): DeliveryControlRelationClosureV2 {
-  const row = object(value, label, ["state", "statement"]);
+  const row = object(
+    value,
+    label,
+    ["state", "statement"],
+    ["applicability_refs"],
+  );
+  const state = literal(
+    row.state,
+    ["specified", "not_applicable", "unresolved"] as const,
+    `${label}.state`,
+  );
   return {
-    state: literal(
-      row.state,
-      ["specified", "not_applicable", "unresolved"] as const,
-      `${label}.state`,
-    ),
+    state,
     statement: string(row.statement, `${label}.statement`),
+    applicability_refs:
+      state === "unresolved"
+        ? Object.hasOwn(row, "applicability_refs")
+          ? parseKeyRefs(row.applicability_refs, `${label}.applicability_refs`)
+          : []
+        : parseKeyRefs(row.applicability_refs, `${label}.applicability_refs`),
   };
 }
 

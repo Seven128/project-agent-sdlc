@@ -5,6 +5,7 @@ import test from "node:test";
 import { buildAuthorityRevisionDecisionBrief } from "../../packages/ty-context/dist/lib/long-task-authority-revision-brief.js";
 import {
   createDeliveryFixture,
+  fixtureArchitectureSourceItem,
   runCli,
   runCliFailure,
   writeContract,
@@ -190,12 +191,14 @@ test("protected summaries enumerate removed Source and external-confirmation key
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     fixture.contract.source_claims = fixture.contract.source_claims.filter(

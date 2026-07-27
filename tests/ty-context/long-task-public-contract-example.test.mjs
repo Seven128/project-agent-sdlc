@@ -27,28 +27,33 @@ test("README public Contract example runs through Preflight, Compile and Final G
     await writeFile(
       path.join(fixture.root, "plans", "example.md"),
       `<!-- ty-source-background:start key=example-heading reason=markdown-structure -->
-# Example
-
 <a id="observable-requirement"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=observable-requirement kind=requirement -->
 The outcome is observable.
 <!-- ty-source-item:end -->
+
+<!-- ty-source-background:start key=architecture-anchor reason=markdown-structure -->
+<a id="architecture-owner"></a>
+<!-- ty-source-background:end -->
+
+<!-- ty-source-item:start key=architecture-owner kind=technical_obligation aspect=architecture -->
+Preserve the observable module as the single state owner.
+<!-- ty-source-item:end -->
 `,
-    );
-    await writeFile(
-      path.join(fixture.root, "tests", "observable-false.ts"),
-      "export const hidden = false;\n",
     );
     await writeFile(
       path.join(fixture.root, "tests", "runtime.mjs"),
       `import { readFile } from "node:fs/promises";
-let result = false;
-try { result = (await readFile(new URL("../src/observable.ts", import.meta.url), "utf8")).includes("observable"); } catch {}
+let source = "";
+try { source = await readFile(new URL("../src/observable.ts", import.meta.url), "utf8"); } catch {}
+const result = source.includes("observable = true");
+const relationsApplicable = source.includes("relationsApplicable = true");
 const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"example-runtime",root_entrypoint:"tests/runtime.mjs",session_id:"example-session",cold_start:true});
 const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,target_live:true},evidence_records:[target("result-ac"),delta("result-ac"),target("observable-ac"),delta("observable-ac"),target("runtime-liveness")]}));
+const claimAssertions = ["result-ac","observable-ac","architecture-ac","relations-na-ac"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,architecture_result:result,relations_applicable:relationsApplicable,target_live:true},evidence_records:[...claimAssertions.flatMap((key)=>[target(key),delta(key)]),target("runtime-liveness")]}));
 `,
     );
     await writeContract(fixture.workdir, contract);
@@ -56,7 +61,6 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       "add",
       "plans/example.md",
       "tests/runtime.mjs",
-      "tests/observable-false.ts",
     ]);
     await git(fixture.root, ["commit", "-m", "public example inputs"]);
 
@@ -77,7 +81,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
 
     await writeFile(
       path.join(fixture.root, "src", "observable.ts"),
-      "export const observable = true;\n",
+      "export const observable = true;\nexport const relationsApplicable = false;\n",
     );
     await git(fixture.root, ["add", "src/observable.ts"]);
     await git(fixture.root, ["commit", "-m", "implement public example"]);

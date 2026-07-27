@@ -9,22 +9,22 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 12,
-    reviewed_on: "2026-07-23",
+    max_files: 13,
+    reviewed_on: "2026-07-27",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace-scope completeness; raise only when a new independent invariant cannot be covered by an existing sentinel.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace-scope completeness and semantic-assurance closure; the thirteenth file is the independent Source/applicability/Oracle/design-method sentinel and does not replace any prior false-completion coverage.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 20,
-    reviewed_on: "2026-07-23",
+    max_files: 21,
+    reviewed_on: "2026-07-27",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, design, semantic-drift, direct-Draft authoring, workspace-scope and execution-preview coverage; the twentieth pure file replays the adopted Rev3-Rev36 history to guard decision-rate ROI independently from synthetic classifier cases.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, design, semantic-drift, semantic-assurance closure, direct-Draft authoring, workspace-scope and execution-preview coverage; the added semantic-assurance file closes an independent false-completion family without removing prior coverage.",
   }),
   delivery_contract_focused: Object.freeze({
-    max_files: 10,
-    reviewed_on: "2026-07-23",
+    max_files: 11,
+    reviewed_on: "2026-07-27",
     rationale:
-      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, Source-authority and first-lock workspace-scope sentinels.",
+      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, semantic-assurance closure, Source-authority and first-lock workspace-scope sentinels.",
   }),
   hotspot_fanout: Object.freeze({
     max_tests_per_path: 9,
@@ -96,6 +96,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "Proves that evidence from a different runtime target cannot substitute for the Contract-required target.",
   ),
   criticalSentinel(
+    "semantic-assurance-closure",
+    "long-task-semantic-assurance-closure.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves restricted Source classification, mandatory architecture lineage, atomic applicability, Population-universe ownership, claim-local semantic mutation and verifier dependency closure cannot be bypassed by known false-completion models.",
+  ),
+  criticalSentinel(
     "terminal-state-current-evidence",
     "long-task-semantic-drift-lifecycle.test.mjs",
     ["long-task", "long-task-trust"],
@@ -155,6 +161,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-design-context.test.mjs",
     "long-task-efficiency-design.test.mjs",
     "long-task-model-choice-checkpoint.test.mjs",
+    "long-task-semantic-assurance-closure.test.mjs",
     "long-task-semantic-authority-revision.test.mjs",
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
@@ -174,6 +181,7 @@ export const DELIVERY_CONTRACT_FOCUSED_TESTS = Object.freeze(
     "long-task-delivery-compiler.test.mjs",
     "long-task-delivery-parser.test.mjs",
     "long-task-delivery-risk.test.mjs",
+    "long-task-semantic-assurance-closure.test.mjs",
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
     "long-task-source-authority-closure.test.mjs",
@@ -214,7 +222,6 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
 
 export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-authoring-claims.test.mjs",
-  "long-task-authoring-preflight.test.mjs",
   "long-task-authority-adversarial.test.mjs",
   "long-task-authority-authoring-fields.test.mjs",
   "long-task-authority-progress-retry.test.mjs",
@@ -247,6 +254,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-raw-execution-identity.test.mjs",
   "long-task-runner-freeze-v2.test.mjs",
   "long-task-schema-parser-parity.test.mjs",
+  "long-task-semantic-assurance-closure.test.mjs",
   "long-task-semantic-authority-revision.test.mjs",
   "long-task-semantic-drift-lifecycle.test.mjs",
   "long-task-source-authority-closure.test.mjs",
@@ -258,6 +266,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
 
 export const LONG_TASK_EXCLUSIVE_TEST_FILES = Object.freeze([
   "long-task-active-authority-continuity.test.mjs",
+  "long-task-authoring-preflight.test.mjs",
   "long-task-delivery-compiler.test.mjs",
   "long-task-final-authority-race.test.mjs",
   "long-task-platform-boundary.test.mjs",
@@ -479,10 +488,10 @@ function assertIsolationPolicy() {
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 12 ||
     LONG_TASK_ISOLATED_TEST_FILES.length !== 41 ||
-    LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 10
+    LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 12/41/10 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 12/41/11 population; review the new file explicitly instead of parallelizing it by default.",
     );
 }
 

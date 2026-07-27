@@ -54,7 +54,12 @@ test("status projects rolling progress but always requires a Live Final Gate", a
 
     await writeFile(
       path.join(fixture.root, "src/state.json"),
-      `${JSON.stringify({ first: false, second: false })}\n`,
+      `${JSON.stringify({
+        first: false,
+        second: false,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     status = await runCli(fixture.root, [
       "long-task",
@@ -76,7 +81,12 @@ test("status projects rolling progress but always requires a Live Final Gate", a
 
     await writeFile(
       path.join(fixture.root, "src/state.json"),
-      `${JSON.stringify({ first: true, second: false })}\n`,
+      `${JSON.stringify({
+        first: true,
+        second: false,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     fixture.contract.outcomes[0].acceptance.checks[0].environment_requirements = [
       { key: "missing-token", kind: "env_var", target: "MISSING_TEST_TOKEN" },
@@ -135,7 +145,7 @@ test("source, selected Context, verification inputs and verifier bundle stale au
       "status",
       fixture.workdir,
     ]);
-    assert.equal(status.final_result, "last_gate_passed");
+    assert.equal(status.final_result, "last_gate_inputs_stale");
     await writeFile(
       path.join(fixture.root, "project_context/areas/main.md"),
       "# changed\n",
@@ -173,18 +183,19 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
     await writeFile(
       path.join(fixture.root, "tests/oracle.mjs"),
       `import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 const countFile = new URL("./run-count.txt", import.meta.url);
 const count = Number((await readFile(countFile, "utf8")).trim()) + 1;
 await writeFile(countFile, String(count));
-await mkdir(new URL("../artifacts", import.meta.url), {recursive:true});
-await writeFile(new URL("../artifacts/a.json", import.meta.url), "a");
-await writeFile(new URL("../artifacts/b.json", import.meta.url), "b");
-let state = {first:false};
+await mkdir(path.join(process.cwd(), "artifacts"), {recursive:true});
+await writeFile(path.join(process.cwd(), "artifacts", "a.json"), "a");
+await writeFile(path.join(process.cwd(), "artifacts", "b.json"), "b");
+let state = {first:false,first_relations_applicable:false};
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const claimAssertions = ["first-result", "first-requirement", "first-obligation"];
+const claimAssertions = ["first-result", "first-requirement", "first-obligation", "first-architecture", "first-relations-na"];
 const targetRecord = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"deduplicated-session",cold_start:true});
 const stateRecord = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,requirement_result:state.first,obligation_result:state.first,target_live:true,invocation_count:state.first ? count : 1},evidence_records:[...claimAssertions.flatMap((key)=>[targetRecord(key),stateRecord(key)]),targetRecord("first-liveness"),{assertion_key:"single-invocation",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["invocation_count"]}]}));
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,requirement_result:state.first,obligation_result:state.first,architecture_result:state.first,relations_applicable:state.first_relations_applicable,target_live:true,invocation_count:state.first && !state.first_relations_applicable ? count : 1},evidence_records:[...claimAssertions.flatMap((key)=>[targetRecord(key),stateRecord(key)]),targetRecord("first-liveness"),{assertion_key:"single-invocation",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["invocation_count"]}]}));
 `,
     );
     const original = fixture.contract.outcomes[0].acceptance.checks[0];
@@ -202,10 +213,18 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
     fixture.contract.outcomes[0].acceptance.counterfactual_controls[0].preserved_assertions.push(
       "single-invocation",
     );
+    fixture.contract.outcomes[0].acceptance.counterfactual_controls[1].preserved_assertions.push(
+      "single-invocation",
+    );
     const second = structuredClone(original);
     second.key = "same-execution-check";
     second.artifact_globs = ["artifacts/b.json"];
     second.positive_assertions = second.positive_assertions.map((assertion) => {
+      const claimless = { ...assertion, claims: [] };
+      delete claimless.applicability_ref;
+      return claimless;
+    });
+    second.negative_assertions = second.negative_assertions.map((assertion) => {
       const claimless = { ...assertion, claims: [] };
       delete claimless.applicability_ref;
       return claimless;

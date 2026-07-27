@@ -261,7 +261,14 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     authoring,
     /root journey[\s\S]*`navigation_result`[\s\S]*`interaction_trace`[\s\S]*`target_runtime`/iu,
   );
-  assert.match(authoring, /typed `design_conformance`/iu);
+  assert.match(
+    authoring,
+    /typed current-execution `design_method` evidence/iu,
+  );
+  assert.match(
+    authoring,
+    /all-of `design_conformance`, `interaction_trace` and `target_runtime`/iu,
+  );
   assert.match(
     authoring,
     /explicitly inventory every declared design-acceptance blocker/iu,

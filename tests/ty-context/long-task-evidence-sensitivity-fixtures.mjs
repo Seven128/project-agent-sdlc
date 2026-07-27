@@ -52,9 +52,10 @@ export function counterfactual({ key, checkKey, claims, assertionKeys }) {
     claims,
     check_key: checkKey,
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: assertionKeys,
     preserved_assertions: ["first-liveness"],

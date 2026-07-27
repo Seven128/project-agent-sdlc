@@ -13,11 +13,21 @@ test("Verify, Status and Resume retain Source-Claim-AC repair context", async ()
   try {
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      `${JSON.stringify({ first: false, second: false })}\n`,
+      `${JSON.stringify({
+        first: false,
+        second: false,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "semantic-false.json"),
-      `${JSON.stringify({ first: false, second: true })}\n`,
+      `${JSON.stringify({
+        first: false,
+        second: true,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

@@ -137,11 +137,15 @@ async function writeSource(
   await writeFile(
     path.join(root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=${kind} -->
 ${statement}
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
 `,
   );
@@ -151,7 +155,7 @@ async function writeSourceWithRequirement(root, acceptanceKey) {
   await writeFile(
     path.join(root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=${acceptanceKey} kind=acceptance -->
@@ -160,6 +164,10 @@ The first outcome must be observable.
 
 <!-- ty-source-item:start key=first-requirement kind=requirement -->
 The first outcome must be observable.
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
 `,
   );

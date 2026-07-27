@@ -54,18 +54,18 @@ export async function preflightDeliveryContract(
   }
   const contract = parsed.contract;
   addAuthoringDiagnostics(contract, parsed, diagnostics);
-  const validation = await validateContractForActivation({
-    repository,
-    workdir,
-    contract,
-    mode: "collect",
-    diagnostics,
-  });
-  const active = await loadAuthoringActiveAuthority(
-    repository,
-    workdir,
-    diagnostics,
-  );
+  const activeDiagnostics: AuthoringPreflightDiagnosticV1[] = [];
+  const [validation, active] = await Promise.all([
+    validateContractForActivation({
+      repository,
+      workdir,
+      contract,
+      mode: "collect",
+      diagnostics,
+    }),
+    loadAuthoringActiveAuthority(repository, workdir, activeDiagnostics),
+  ]);
+  diagnostics.push(...activeDiagnostics);
   if (validation.workspace)
     try {
       const changedPaths =

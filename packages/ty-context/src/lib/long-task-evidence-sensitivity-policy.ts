@@ -7,6 +7,7 @@ import type {
 const NON_RESULT_SENSITIVITY_PREFIXES = [
   "requirement.",
   "control.",
+  "control_relation",
   "obligation.",
   "non_completing.",
   "forbidden_shortcut.",
@@ -103,7 +104,7 @@ function validateBehavioralSemanticWitnesses(
       continue;
     const witnesses = counterfactuals.filter(
       (control) =>
-        control.mutation.type === "replace_file" &&
+        isNarrowSemanticMutation(control.mutation.type) &&
         control.expected_assertion_failures.includes(assertion.key) &&
         assertion.claims.every((claim) => control.claims.includes(claim)),
     );
@@ -126,6 +127,10 @@ function validateBehavioralSemanticWitnesses(
         `behavioral_counterfactual_liveness_witness_required:${scope}:${check.key}:${assertion.key}`,
       );
   }
+}
+
+function isNarrowSemanticMutation(type: string): boolean {
+  return type === "replace_json_value" || type === "replace_text";
 }
 
 function isBehavioralAssertion(

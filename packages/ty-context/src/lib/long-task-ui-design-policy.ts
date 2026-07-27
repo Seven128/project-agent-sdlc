@@ -69,6 +69,7 @@ function validateDesignTargets({
     );
     if (!target.verification_method_bindings.length)
       issue(report, "ui_design_target_verification_methods_required", label);
+    const methodArtifactPaths = new Set<string>();
     for (const [name, values] of [
       ["source_paths", target.source_paths],
       ["condition_keys", target.condition_keys],
@@ -118,19 +119,72 @@ function validateDesignTargets({
         );
       if (methodBinding.assertion_ref !== target.conformance_assertion_ref)
         designAssertionRefs.add(identity);
-      if (
-        !check.positive_assertions.some(
-          (item) => item.key === methodBinding.assertion_ref,
-        )
-      )
+      const methodAssertion = check.positive_assertions.find(
+        (item) => item.key === methodBinding.assertion_ref,
+      );
+      if (!methodAssertion)
         issue(
           report,
           "ui_design_target_verification_assertion_unknown",
           `${label}:${methodBinding.method}:${methodBinding.assertion_ref}`,
         );
+      else if (!methodAssertion.evidence_capabilities.includes("design_method"))
+        issue(
+          report,
+          "ui_design_target_verification_capability_required",
+          `${label}:${methodBinding.method}:design_method`,
+        );
+      const conditionKeys = methodBinding.evidence_artifacts.map(
+        (item) => item.condition_key,
+      );
+      unique(
+        conditionKeys,
+        "ui_design_method_evidence_condition_duplicate",
+        `${label}:${methodBinding.method}`,
+        report,
+      );
+      if (!sameSet(conditionKeys, target.condition_keys))
+        issue(
+          report,
+          "ui_design_method_evidence_conditions_mismatch",
+          `${label}:${methodBinding.method}`,
+        );
+      for (const artifact of methodBinding.evidence_artifacts) {
+        for (const [kind, artifactPath] of [
+          ["record", artifact.path],
+          ["observation", artifact.observation_path],
+        ] as const) {
+          if (methodArtifactPaths.has(artifactPath))
+            issue(
+              report,
+              "ui_design_method_evidence_artifact_reused",
+              `${label}:${kind}:${artifactPath}`,
+            );
+          methodArtifactPaths.add(artifactPath);
+          if (
+            !check.artifact_globs.some((pattern) =>
+              matchesRepoPattern(artifactPath, pattern),
+            )
+          )
+            issue(
+              report,
+              "ui_design_method_evidence_artifact_glob_missing",
+              `${label}:${methodBinding.method}:${kind}:${artifactPath}`,
+            );
+        }
+      }
     }
     validateDesignFiles(target, check, label, report);
   }
+}
+
+function sameSet(left: string[], right: string[]): boolean {
+  const leftSet = [...new Set(left)].sort();
+  const rightSet = [...new Set(right)].sort();
+  return (
+    leftSet.length === rightSet.length &&
+    leftSet.every((value, index) => value === rightSet[index])
+  );
 }
 
 function validateDesignAssertion(

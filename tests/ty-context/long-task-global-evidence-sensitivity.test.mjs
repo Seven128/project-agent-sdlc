@@ -74,9 +74,10 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
       claims: ["constraint.global-state"],
       check_key: second.key,
       mutation: {
-        type: "replace_file",
+        type: "replace_json_value",
         path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+        pointer: "/first",
+        value: false,
       },
       expected_assertion_failures: ["other-global-assertion"],
       preserved_assertions: ["global-state-liveness"],
@@ -253,7 +254,7 @@ test("Global Counterfactual carrier changes stale targeted Progress", async () =
     ]);
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
-      '{"first":true,"revision":2}\n',
+      '{"first":true,"second":false,"first_relations_applicable":false,"second_relations_applicable":false,"revision":2}\n',
     );
     const status = await runCli(fixture.root, [
       "long-task",

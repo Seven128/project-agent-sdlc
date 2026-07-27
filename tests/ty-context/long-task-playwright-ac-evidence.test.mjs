@@ -199,6 +199,7 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
   const check = compiledPlaywrightCheck();
   check.positive_assertions[0].evidence_capabilities.push(
     "design_conformance",
+    "design_method",
     "target_runtime",
   );
   check.design_conformance_targets = [
@@ -208,15 +209,57 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
       condition_keys: ["phone", "dark", "default"],
       conformance_assertion_ref: "root-conformance",
       verification_method_bindings: [
-        { method: "layout_geometry", assertion_ref: "ac-one" },
+        {
+          method: "layout_geometry",
+          assertion_ref: "ac-one",
+          evidence_artifacts: [
+            {
+              condition_key: "phone",
+              path: "artifacts/map-layout-phone.json",
+              observation_path:
+                "artifacts/map-layout-phone-observation.json",
+            },
+            {
+              condition_key: "dark",
+              path: "artifacts/map-layout-dark.json",
+              observation_path:
+                "artifacts/map-layout-dark-observation.json",
+            },
+            {
+              condition_key: "default",
+              path: "artifacts/map-layout-default.json",
+              observation_path:
+                "artifacts/map-layout-default-observation.json",
+            },
+          ],
+        },
       ],
       actual_artifact_path: "artifacts/map-actual.png",
       comparison_artifact_path: "artifacts/map-diff.json",
     },
   ];
-  const decoded = decode(
+  const withoutMethodAttachments = decode(
     check,
     report([ac("ac-one", "expected", "passed")]),
+    0,
+  );
+  assert.equal(
+    withoutMethodAttachments.evidence_records.some(
+      (record) => record.capability === "design_method",
+    ),
+    false,
+  );
+  const methodAttachmentNames = ["phone", "dark", "default"].flatMap(
+    (condition) => [
+      `ty-context-design-method:map-default:layout_geometry:${condition}:record`,
+      `ty-context-design-method:map-default:layout_geometry:${condition}:observation`,
+    ],
+  );
+  const decoded = decode(
+    check,
+    report([
+      ac("ac-one", "expected", "passed", "default", methodAttachmentNames),
+    ]),
     0,
   );
   assert.deepEqual(
@@ -243,6 +286,40 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
         record.cold_start,
     ),
   );
+  assert.deepEqual(
+    decoded.evidence_records.filter(
+      (record) => record.capability === "design_method",
+    ),
+    [
+      {
+        assertion_key: "ac-one",
+        capability: "design_method",
+        design_target_ref: "map-default",
+        target_ref: "browser-app",
+        method: "layout_geometry",
+        cells: [
+          {
+            condition_key: "phone",
+            artifact_path: "artifacts/map-layout-phone.json",
+            observation_artifact_path:
+              "artifacts/map-layout-phone-observation.json",
+          },
+          {
+            condition_key: "dark",
+            artifact_path: "artifacts/map-layout-dark.json",
+            observation_artifact_path:
+              "artifacts/map-layout-dark-observation.json",
+          },
+          {
+            condition_key: "default",
+            artifact_path: "artifacts/map-layout-default.json",
+            observation_artifact_path:
+              "artifacts/map-layout-default-observation.json",
+          },
+        ],
+      },
+    ],
+  );
 });
 
 function compiledPlaywrightCheck() {
@@ -258,6 +335,7 @@ function compiledPlaywrightCheck() {
       role: "product",
       runtime_family: "browser",
       root_entrypoint: "/",
+      capabilities: ["browser-runtime", "cold-start", "production-root"],
     },
     known_execution_targets: [
       {
@@ -266,6 +344,7 @@ function compiledPlaywrightCheck() {
         role: "product",
         runtime_family: "browser",
         root_entrypoint: "/",
+        capabilities: ["browser-runtime", "cold-start", "production-root"],
       },
     ],
     scenario: {
@@ -345,7 +424,13 @@ function report(cases) {
   };
 }
 
-function ac(id, status, resultStatus, projectId = "default") {
+function ac(
+  id,
+  status,
+  resultStatus,
+  projectId = "default",
+  attachmentNames = [],
+) {
   return {
     id,
     title: `[ac:${id}] ${id}`,
@@ -359,6 +444,11 @@ function ac(id, status, resultStatus, projectId = "default") {
             { title: "[given:fixture-loaded]" },
             { title: "[action:read-outcome]" },
           ],
+          attachments: attachmentNames.map((name) => ({
+            name,
+            contentType: "application/json",
+            path: `artifacts/${name}.json`,
+          })),
         },
       ],
     },

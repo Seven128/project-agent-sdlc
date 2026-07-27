@@ -1,10 +1,16 @@
 import type { DesignResourceVerificationMethod } from "./design-resource-handoff-types.js";
+import type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
 
 export type DesignTargetInterpretationV2 = "exact_target" | "constraint";
 
 export interface DeliveryDesignVerificationBindingV2 {
   method: DesignResourceVerificationMethod;
   assertion_ref: string;
+  evidence_artifacts: Array<{
+    condition_key: string;
+    path: string;
+    observation_path: string;
+  }>;
 }
 
 export interface DeliveryDesignTargetV2 {
@@ -29,6 +35,7 @@ export interface DeliveryDesignAcceptanceBlockerV2 {
   refs: string[];
   source_item_refs: string[];
   verification_methods: DesignResourceVerificationMethod[];
+  required_capabilities: ExecutionTargetCapabilityV2[];
   rationale: string;
 }
 

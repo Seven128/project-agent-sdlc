@@ -9,12 +9,14 @@ export function configureMixedEvidenceContract(contract) {
     role: "product",
     runtime_family: "browser",
     root_entrypoint: "/",
+    capabilities: ["browser-runtime", "cold-start", "production-root"],
   });
   const browser = contract.outcomes[0];
   browser.applicability.push({
     key: "first-browser-success",
     target_ref: "fixture-browser",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -87,6 +89,7 @@ export function configureMixedEvidenceContract(contract) {
       expected: true,
     },
   ];
+  ui.negative_assertions = [];
   browser.acceptance.checks.push(ui);
   browser.acceptance.counterfactual_controls.push({
     key: "replace-ui-semantics",
@@ -221,7 +224,7 @@ export async function writeSource(
   await writeFile(
     path.join(root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
@@ -250,6 +253,10 @@ The second outcome must be observable.
 
 <!-- ty-source-item:start key=second-structured-acceptance kind=acceptance -->
 ${structuredCriterion}
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
 `,
   );

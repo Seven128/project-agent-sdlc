@@ -19,8 +19,10 @@ test("Population cannot substitute for an attributable per-applicability Asserti
   );
   outcome.acceptance.population = {
     check_key: check.key,
+    universe_binding_key: "state-first",
     claims: ["obligation.implement-first"],
     observations: {
+      universe_ids: "population.universe_ids",
       eligible_ids: "population.eligible_ids",
       observed_ids: "population.observed_ids",
       excluded_items: "population.excluded_items",
@@ -40,8 +42,10 @@ test("Population does not waive semantic sensitivity for its behavioral Assertio
     const check = outcome.acceptance.checks[0];
     outcome.acceptance.population = {
       check_key: check.key,
+      universe_binding_key: "state-first",
       claims: ["obligation.implement-first"],
       observations: {
+        universe_ids: "population.universe_ids",
         eligible_ids: "population.eligible_ids",
         observed_ids: "population.observed_ids",
         excluded_items: "population.excluded_items",
@@ -68,11 +72,21 @@ test("Playwright behavioral Claims also require semantic Counterfactuals", async
       `import { test, expect } from "@playwright/test";
 test("first-result", async () => { expect(true).toBe(true); });
 test("first-requirement", async () => { expect(true).toBe(true); });
+test("first-architecture", async () => { expect(true).toBe(true); });
+test("first-relations-na", async () => { expect(true).toBe(true); });
 `,
     );
-    outcome.technical.obligations = [];
+    outcome.technical.obligations = outcome.technical.obligations.filter(
+      (obligation) => obligation.key === "architecture-first",
+    );
+    outcome.technical.obligations[0].required_proof_surfaces = ["ui_browser"];
     outcome.product.requirements[0].required_proof_surfaces = ["ui_browser"];
     fixture.contract.task.execution_targets[0].runtime_family = "browser";
+    fixture.contract.task.execution_targets[0].capabilities = [
+      "browser-runtime",
+      "cold-start",
+      "production-root",
+    ];
     check.proof_surface = "ui_browser";
     check.runner.type = "playwright_test";
     check.runner.target = "tests/ui.spec.ts";
@@ -106,11 +120,33 @@ test("first-requirement", async () => { expect(true).toBe(true); });
         expected: true,
       },
       {
+        key: "first-architecture",
+        criterion: "The architecture owner remains valid.",
+        claims: ["obligation.architecture-first"],
+        applicability_ref: "first-root-success",
+        observation: "playwright.case.first-architecture.passed",
+        evidence_capabilities: ["interaction_trace", "target_runtime"],
+        operator: "equals",
+        expected: true,
+      },
+      {
         key: "first-liveness",
         criterion: "The browser target remains live.",
         claims: [],
         observation: "target_live",
         evidence_capabilities: ["target_runtime"],
+        operator: "equals",
+        expected: true,
+      },
+    ];
+    check.negative_assertions = [
+      {
+        key: "first-relations-na",
+        criterion: "The no-Control relation closure is enforced.",
+        claims: ["control_relation_closure"],
+        applicability_ref: "first-root-success",
+        observation: "playwright.case.first-relations-na.passed",
+        evidence_capabilities: ["interaction_trace", "target_runtime"],
         operator: "equals",
         expected: true,
       },

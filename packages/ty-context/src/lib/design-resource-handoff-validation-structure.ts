@@ -37,6 +37,11 @@ export function validateDesignResourceConditions(
         values,
         `condition_${name}_duplicate:${condition.key}`,
       );
+      if (values.length !== 1)
+        invalidDesignResourceHandoff(
+          `condition_${name}_must_be_atomic`,
+          condition.key,
+        );
     }
   }
 }

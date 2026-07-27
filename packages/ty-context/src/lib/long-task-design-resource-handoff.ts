@@ -7,7 +7,10 @@ import type {
   DesignResourceVerificationMethod,
 } from "./design-resource-handoff-types.js";
 import { preflightDesignResourceHandoff } from "./design-resource-handoff-validation.js";
-import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import type {
+  DeliveryContractV2,
+  ExecutionTargetCapabilityV2,
+} from "./long-task-delivery-types.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 
 interface ContractDesignTarget {
@@ -43,6 +46,7 @@ export async function validateLongTaskDesignResourceHandoffs(
       invalid("target_handoff_missing", contractTarget.target.key);
     consumed.add(contractTarget.target.key);
     validateTargetIdentity(contractTarget, indexedTarget);
+    validateTargetCapabilities(contract, contractTarget, indexedTarget);
     validateCoverageClaims(contract, contractTarget, indexedTarget);
     validateBlockerBindings(contract, contractTarget, indexedTarget);
   }
@@ -190,6 +194,12 @@ function validateBlockerBindings(
       "acceptance_blocker_methods_mismatch",
       blocker.key,
     );
+    assertSameSet(
+      contractBlocker.required_capabilities,
+      blocker.required_capabilities,
+      "acceptance_blocker_capabilities_mismatch",
+      blocker.key,
+    );
     for (const method of blocker.verification_methods)
       if (!availableMethods.has(method))
         invalid(
@@ -209,6 +219,20 @@ function validateBlockerBindings(
       );
     });
     if (contractBlocker.status === "machine_claim") {
+      const executionTarget = contract.task.execution_targets.find(
+        (item) => item.key === contractTarget.binding.target_ref,
+      );
+      if (!executionTarget)
+        invalid(
+          "execution_target_unknown",
+          `${contractTarget.target.key}:${contractTarget.binding.target_ref}`,
+        );
+      for (const capability of blocker.required_capabilities)
+        if (!executionTarget.capabilities.includes(capability))
+          invalid(
+            "acceptance_blocker_target_capability_missing",
+            `${blocker.key}:${executionTarget.key}:${capability}`,
+          );
       const expectedLocal = fullClaimRefs.map((claimRef) =>
         claimRef.slice(contractTarget.outcome_key.length + 1),
       );
@@ -318,17 +342,76 @@ function validateVerificationMethodBindings(
           "verification_method_capability_required",
           `${target.key}:${binding.method}:${capability}`,
         );
+    assertSameSet(
+      binding.evidence_artifacts.map((item) => item.condition_key),
+      target.condition_keys,
+      "verification_method_evidence_conditions_mismatch",
+      `${target.key}:${binding.method}`,
+    );
   }
 }
 
 function requiredCapabilities(
   method: DesignResourceVerificationMethod,
-): Array<"design_conformance" | "interaction_trace" | "target_runtime"> {
+): Array<
+  | "design_method"
+  | "design_conformance"
+  | "interaction_trace"
+  | "target_runtime"
+> {
   if (method === "interaction_trace")
-    return ["interaction_trace", "target_runtime"];
+    return ["design_method", "interaction_trace", "target_runtime"];
   if (method === "component_state")
-    return ["design_conformance", "interaction_trace", "target_runtime"];
-  return ["design_conformance", "target_runtime"];
+    return [
+      "design_method",
+      "design_conformance",
+      "interaction_trace",
+      "target_runtime",
+    ];
+  return ["design_method", "design_conformance", "target_runtime"];
+}
+
+function validateTargetCapabilities(
+  contract: DeliveryContractV2,
+  contractTarget: ContractDesignTarget,
+  indexed: IndexedHandoffTarget,
+): void {
+  const executionTarget = contract.task.execution_targets.find(
+    (item) => item.key === contractTarget.binding.target_ref,
+  );
+  if (!executionTarget)
+    invalid(
+      "execution_target_unknown",
+      `${contractTarget.target.key}:${contractTarget.binding.target_ref}`,
+    );
+  const required = new Set<ExecutionTargetCapabilityV2>();
+  for (const method of contractTarget.target.verification_method_bindings.map(
+    (item) => item.method,
+  )) {
+    if (method === "responsive_reflow") required.add("viewport-control");
+    if (method === "motion_timeline") required.add("motion-observation");
+    if (method === "accessibility_semantics")
+      required.add("assistive-technology");
+  }
+  for (const conditionRef of indexed.target.condition_refs) {
+    const condition = indexed.preflight.handoff.conditions.find(
+      (item) => item.key === conditionRef,
+    )!;
+    const input = condition.input_methods[0].toLowerCase();
+    if (["mouse", "pointer", "trackpad"].includes(input))
+      required.add("pointer-input");
+    if (input === "keyboard") required.add("keyboard-input");
+    if (["touch", "pen", "stylus"].includes(input)) required.add("touch-input");
+    if (["screen-reader", "voice-control", "switch-control"].includes(input))
+      required.add("assistive-technology");
+    if (condition.motion === "reduced") required.add("reduced-motion");
+  }
+  for (const capability of required)
+    if (!executionTarget.capabilities.includes(capability))
+      invalid(
+        "execution_target_capability_missing",
+        `${contractTarget.target.key}:${executionTarget.key}:${capability}`,
+      );
 }
 
 function assertSameSet(

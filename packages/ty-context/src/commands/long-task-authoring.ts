@@ -40,8 +40,10 @@ task:
       role: product
       runtime_family: process
       root_entrypoint: tests/replace-oracle.mjs
+      capabilities: [process-runtime, cold-start, production-root]
   source_paths: [plans/replace-me.md]
   context_refs: [project_context/areas/replace-me.md]
+  context_snapshot_mode: full
 source_claims:
   - key: replace-requirement
     source_ref: plans/replace-me.md#replace-requirement
@@ -49,6 +51,12 @@ source_claims:
     disposition:
       type: claim
       refs: [replace-outcome.requirement.replace-requirement]
+  - key: replace-architecture
+    source_ref: plans/replace-me.md#replace-architecture
+    statement: Preserve the declared owner, dependency direction, verifier boundary and architecture conformance.
+    disposition:
+      type: claim
+      refs: [replace-outcome.obligation.architecture]
 stages:
   - key: delivery
     title: Delivery
@@ -66,6 +74,7 @@ outcomes:
       - key: root-success
         target_ref: replace-runtime
         journey_role: success
+        dimensions: [{key: delivery-state, value: ready}]
         given_refs: [source-ready]
         when_refs: [inspect-result]
     product:
@@ -85,7 +94,13 @@ outcomes:
       control_relation_closure:
         state: not_applicable
         statement: This Outcome declares no user-visible Controls.
+        applicability_refs: [root-success]
     technical:
+      obligations:
+        - key: architecture
+          statement: Preserve the declared owner, dependency direction, verifier boundary and architecture conformance.
+          required_proof_surfaces: [runtime_behavior]
+          applicability_refs: [root-success]
       expected_change_paths: ["src/**"]
       bindings:
         - key: replace-carrier
@@ -106,7 +121,7 @@ outcomes:
             type: node_oracle
             target: tests/replace-oracle.mjs
             effect: read_only
-          verification_inputs: ["tests/replace-oracle.mjs", "tests/replace-semantic-failure.ts"]
+          verification_inputs: ["tests/replace-oracle.mjs"]
           input_paths: [src/replace-me.ts]
           expected_output_paths: [src/replace-me.ts]
           positive_assertions:
@@ -126,6 +141,14 @@ outcomes:
               evidence_capabilities: [state_delta, target_runtime]
               operator: equals
               expected: true
+            - key: replace-architecture
+              criterion: The declared architecture obligation remains conformant.
+              claims: [obligation.architecture]
+              applicability_ref: root-success
+              observation: architecture_result
+              evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: true
             - key: replace-liveness
               criterion: The declared target remains live under semantic mutation.
               claims: []
@@ -133,16 +156,37 @@ outcomes:
               evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
+          negative_assertions:
+            - key: replace-relations-na
+              criterion: Cross-Control relations remain inapplicable when no Controls are declared.
+              claims: [control_relation_closure]
+              applicability_ref: root-success
+              observation: relations_applicable
+              evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: false
       counterfactual_controls:
         - key: replace-semantic-carrier
           binding_key: replace-carrier
-          claims: [result, requirement.replace-requirement]
+          claims: [result, requirement.replace-requirement, obligation.architecture]
           check_key: replace-check
           mutation:
-            type: replace_file
+            type: replace_text
             path: src/replace-me.ts
-            fixture_path: tests/replace-semantic-failure.ts
-          expected_assertion_failures: [replace-result, replace-requirement]
+            match: IMPLEMENTED_STATE
+            replacement: SEMANTIC_FAILURE_STATE
+          expected_assertion_failures: [replace-result, replace-requirement, replace-architecture]
+          preserved_assertions: [replace-liveness]
+        - key: replace-relation-applicability
+          binding_key: replace-carrier
+          claims: [control_relation_closure]
+          check_key: replace-check
+          mutation:
+            type: replace_text
+            path: src/replace-me.ts
+            match: NO_CROSS_CONTROL_RELATIONS
+            replacement: CROSS_CONTROL_RELATIONS_APPLY
+          expected_assertion_failures: [replace-relations-na]
           preserved_assertions: [replace-liveness]
 `;
 }

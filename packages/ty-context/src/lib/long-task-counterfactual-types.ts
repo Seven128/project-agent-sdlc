@@ -1,6 +1,18 @@
 export type CounterfactualMutationV2 =
   | { type: "remove_paths"; paths: string[] }
-  | { type: "replace_file"; path: string; fixture_path: string };
+  | { type: "replace_file"; path: string; fixture_path: string }
+  | {
+      type: "replace_json_value";
+      path: string;
+      pointer: string;
+      value: unknown;
+    }
+  | {
+      type: "replace_text";
+      path: string;
+      match: string;
+      replacement: string;
+    };
 
 export interface CounterfactualControlV2 {
   key: string;

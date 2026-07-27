@@ -4,6 +4,8 @@ import path from "node:path";
 import test from "node:test";
 import {
   createDeliveryFixture,
+  runCli,
+  runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -141,23 +143,36 @@ test("a result witness remains rooted in at least one atomic non-result Claim", 
   }
 });
 
-test("semantic replacement fixture must actually differ from the carrier", async () => {
+test("a currently bad carrier may compile but cannot pass the Final Gate", async () => {
   const fixture = await createDeliveryFixture();
   try {
     await writeFile(
-      path.join(fixture.root, "tests", "semantic-false.json"),
-      `${JSON.stringify({ first: true, second: false })}\n`,
+      path.join(fixture.root, "src", "state.json"),
+      `${JSON.stringify({
+        first: false,
+        second: false,
+        first_relations_applicable: false,
+        second_relations_applicable: false,
+      })}\n`,
     );
     await writeContract(fixture.workdir, fixture.contract);
-    await assert.rejects(
+    await assert.doesNotReject(
       import("../../packages/ty-context/dist/lib/long-task-delivery-compiler.js").then(
         ({ compileDeliveryContract }) =>
           compileDeliveryContract(fixture.workdir, fixture.root, {
             require_completion_gate: false,
-          }),
+        }),
       ),
-      /counterfactual_replacement_must_change_carrier/u,
     );
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const rejected = await runCliFailure(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(rejected.workflow_status, "needs_work");
+    assert.notEqual(rejected.workflow_status, "machine_accepted");
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

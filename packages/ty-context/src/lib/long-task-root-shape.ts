@@ -18,6 +18,7 @@ import type {
   LongTaskRiskFacts,
   RiskFactName,
 } from "./long-task-delivery-types.js";
+import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 
 const RISK_FACTS = [
   "public_api_or_schema_change",
@@ -90,6 +91,7 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
         "role",
         "runtime_family",
         "root_entrypoint",
+        "capabilities",
       ]);
       return {
         key: key(target.key, `${label}.key`),
@@ -115,6 +117,14 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
           target.root_entrypoint,
           `${label}.root_entrypoint`,
         ),
+        capabilities: strings(target.capabilities, `${label}.capabilities`).map(
+          (item, capabilityIndex) =>
+            literal(
+              item,
+              EXECUTION_TARGET_CAPABILITIES,
+              `${label}.capabilities[${capabilityIndex}]`,
+            ),
+        ),
       };
     }),
     source_paths: repositoryFiles(row.source_paths, "task.source_paths"),
@@ -125,7 +135,7 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
           ["referenced", "full"] as const,
           "task.context_snapshot_mode",
         )
-      : "referenced",
+      : "full",
   };
 }
 

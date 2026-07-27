@@ -1,4 +1,5 @@
 import type { EvidenceCapabilityV2 } from "./long-task-semantic-contract-types.js";
+import type { DesignResourceVerificationMethod } from "./design-resource-handoff-types.js";
 
 interface EvidenceRecordBaseV2 {
   assertion_key: string;
@@ -82,6 +83,18 @@ export interface TargetRuntimeEvidenceV2 extends EvidenceRecordBaseV2 {
   cold_start: boolean;
 }
 
+export interface DesignMethodEvidenceV2 extends EvidenceRecordBaseV2 {
+  capability: "design_method";
+  design_target_ref: string;
+  target_ref: string;
+  method: DesignResourceVerificationMethod;
+  cells: Array<{
+    condition_key: string;
+    artifact_path: string;
+    observation_artifact_path: string;
+  }>;
+}
+
 export interface InputVariationEvidenceV2 extends EvidenceRecordBaseV2 {
   capability: "input_variation";
   cases: Array<{ input_sha256: string; output_sha256: string }>;
@@ -98,5 +111,6 @@ export type EvidenceCapabilityRecordV2 =
   | FailureInjectionEvidenceV2
   | VisualRenderEvidenceV2
   | DesignConformanceEvidenceV2
+  | DesignMethodEvidenceV2
   | TargetRuntimeEvidenceV2
   | InputVariationEvidenceV2;

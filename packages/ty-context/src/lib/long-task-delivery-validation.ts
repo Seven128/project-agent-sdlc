@@ -16,6 +16,7 @@ import {
 } from "./long-task-target-policy.js";
 import { validateUiSurfaceBindings } from "./long-task-ui-surface-policy.js";
 import { controlFieldFacts } from "./long-task-control-fields.js";
+import { validateSemanticAssuranceShape } from "./long-task-semantic-assurance-policy.js";
 
 export function validateDeliveryContractStructure(
   contract: DeliveryContractV2,
@@ -34,6 +35,7 @@ export function validateDeliveryContractStructure(
   assertCompiledClaimsCovered(claims);
   validateDeliveryStages(contract);
   validateExecutionTargets(contract);
+  validateSemanticAssuranceShape(contract);
   validateEvidenceCapabilityDeclarations(contract);
   validateExternalConfirmationImpacts(contract, claims);
 }
@@ -48,6 +50,7 @@ export function deliveryContractStructureDiagnostics(
   validateControlClosure(contract, report);
   validateDeliveryStages(contract, report);
   validateExecutionTargets(contract, report);
+  validateSemanticAssuranceShape(contract, report);
   validateEvidenceCapabilityDeclarations(contract, report);
   validateOwnerAndBindings(contract, report);
   validateDeclaredCheckSafety(contract, report);

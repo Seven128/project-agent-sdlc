@@ -26,8 +26,11 @@ export interface WorkspaceSnapshotV2 {
 }
 
 export async function repositoryRoot(start: string): Promise<string> {
+  const resolved = path.resolve(start);
+  const gitEntry = await stat(path.join(resolved, ".git")).catch(() => null);
+  if (gitEntry?.isDirectory() || gitEntry?.isFile()) return resolved;
   return path.resolve(
-    await gitOutput(path.resolve(start), ["rev-parse", "--show-toplevel"]),
+    await gitOutput(resolved, ["rev-parse", "--show-toplevel"]),
   );
 }
 

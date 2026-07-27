@@ -29,6 +29,7 @@ export function parseClaimApplicability(
       "key",
       "target_ref",
       "journey_role",
+      "dimensions",
       "given_refs",
       "when_refs",
     ]);
@@ -39,6 +40,16 @@ export function parseClaimApplicability(
         row.journey_role,
         JOURNEY_ROLES,
         `${itemLabel}.journey_role`,
+      ),
+      dimensions: array(row.dimensions, `${itemLabel}.dimensions`).map(
+        (dimension, dimensionIndex) => {
+          const dimensionLabel = `${itemLabel}.dimensions[${dimensionIndex}]`;
+          const entry = object(dimension, dimensionLabel, ["key", "value"]);
+          return {
+            key: key(entry.key, `${dimensionLabel}.key`),
+            value: key(entry.value, `${dimensionLabel}.value`),
+          };
+        },
       ),
       given_refs: parseKeyRefs(row.given_refs, `${itemLabel}.given_refs`),
       when_refs: parseKeyRefs(row.when_refs, `${itemLabel}.when_refs`),

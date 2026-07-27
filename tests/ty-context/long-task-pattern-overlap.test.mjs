@@ -106,7 +106,7 @@ test("only proven expected-output overlap permits a missing input path", async (
   const accepted = await createDeliveryFixture();
   try {
     const check = accepted.contract.outcomes[0].acceptance.checks[0];
-    check.input_paths = ["generated/report.json"];
+    check.input_paths = ["src/state.json", "generated/report.json"];
     check.expected_output_paths = ["generated/**"];
     await writeContract(accepted.workdir, accepted.contract);
     await runCli(accepted.root, ["enable", "long-task"]);
@@ -122,7 +122,7 @@ test("only proven expected-output overlap permits a missing input path", async (
   const rejected = await createDeliveryFixture();
   try {
     const check = rejected.contract.outcomes[0].acceptance.checks[0];
-    check.input_paths = ["generated/report.txt"];
+    check.input_paths = ["src/state.json", "generated/report.txt"];
     check.expected_output_paths = ["generated/*.json"];
     await writeContract(rejected.workdir, rejected.contract);
     await runCli(rejected.root, ["enable", "long-task"]);

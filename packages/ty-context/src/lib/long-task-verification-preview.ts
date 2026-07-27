@@ -45,7 +45,19 @@ interface CounterfactualExecutionPreviewV1 {
   raw_execution_identity: string;
   mutation:
     | { type: "remove_paths"; paths: string[] }
-    | { type: "replace_file"; path: string; fixture_path: string };
+    | { type: "replace_file"; path: string; fixture_path: string }
+    | {
+        type: "replace_json_value";
+        path: string;
+        pointer: string;
+        value: unknown;
+      }
+    | {
+        type: "replace_text";
+        path: string;
+        match: string;
+        replacement: string;
+      };
   runner: RunnerPreviewV1;
 }
 

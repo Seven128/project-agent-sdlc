@@ -195,6 +195,7 @@ export interface DeliveryControlRelationV2 extends ApplicableKeyedStatementV2 {
 export interface DeliveryControlRelationClosureV2 {
   state: "specified" | "not_applicable" | "unresolved";
   statement: string;
+  applicability_refs: string[];
 }
 
 interface DeliveryRequirementV2 extends ApplicableKeyedStatementV2 {
@@ -228,8 +229,10 @@ export interface RollbackRecoveryV2 {
 
 export interface PopulationRequirementV2 {
   check_key: string;
+  universe_binding_key: string;
   claims: string[];
   observations: {
+    universe_ids: string;
     eligible_ids: string;
     observed_ids: string;
     excluded_items: string;

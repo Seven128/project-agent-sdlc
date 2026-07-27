@@ -25,6 +25,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     role: "product",
     runtime_family: "native",
     root_entrypoint: "fixture-native.exe",
+    capabilities: ["native-runtime", "cold-start", "production-root"],
   });
   contract.task.target_profile.required_target_refs.push("fixture-native");
   contract.risk.facts.critical_user_path = ["first"];
@@ -53,6 +54,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     key: "first-native-success",
     target_ref: "fixture-native",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -76,6 +78,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
       key: "first-native-liveness",
     },
   ];
+  nativeCheck.negative_assertions = [];
   contract.outcomes[0].acceptance.checks.push(nativeCheck);
   contract.outcomes[0].acceptance.counterfactual_controls.push({
     key: "replace-native-semantics",
@@ -83,9 +86,10 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     claims: ["result"],
     check_key: "first-native-check",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: ["first-native-result"],
     preserved_assertions: ["first-native-liveness"],
@@ -107,6 +111,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
       role: "product",
       runtime_family: "native",
       root_entrypoint: "fixture-native.exe",
+      capabilities: ["native-runtime", "cold-start", "production-root"],
     },
     {
       key: "fixture-browser",
@@ -114,6 +119,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
       role: "support",
       runtime_family: "browser",
       root_entrypoint: "/map",
+      capabilities: ["browser-runtime"],
     },
   );
   proxyUi.task.target_profile.required_target_refs.push("fixture-native");
@@ -122,6 +128,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     key: "first-native-success",
     target_ref: "fixture-native",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
@@ -158,6 +165,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
   proxyOutcome.product.control_relation_closure = {
     state: "not_applicable",
     statement: "Only one Control is declared, so no cross-Control relation applies.",
+    applicability_refs: ["first-root-success", "first-native-success"],
   };
   const nativeShell = structuredClone(proxyOutcome.acceptance.checks[0]);
   nativeShell.key = "native-shell";
@@ -178,6 +186,9 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
       key: "native-shell-liveness",
     },
   ];
+  for (const assertion of nativeShell.negative_assertions)
+    if (assertion.claims.includes("control_relation_closure"))
+      assertion.applicability_ref = "first-native-success";
   const detachedMap = structuredClone(proxyOutcome.acceptance.checks[0]);
   detachedMap.key = "detached-map";
   detachedMap.journey_roles = ["success"];
@@ -225,9 +236,10 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     claims: nativeClaimAssertions.flatMap((assertion) => assertion.claims),
     check_key: "native-shell",
     mutation: {
-      type: "replace_file",
+      type: "replace_json_value",
       path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
+      pointer: "/first",
+      value: false,
     },
     expected_assertion_failures: nativeClaimAssertions.map(
       (assertion) => assertion.key,
@@ -273,6 +285,7 @@ test("selected design targets require root-bound comparison evidence and blocker
   outcome.product.control_relation_closure = {
     state: "not_applicable",
     statement: "Only one Control is declared, so no cross-Control relation applies.",
+    applicability_refs: ["first-root-success"],
   };
   const check = outcome.acceptance.checks[0];
   check.verification_inputs.push("design/map-target.png");
@@ -294,6 +307,26 @@ test("selected design targets require root-bound comparison evidence and blocker
           {
             method: "layout_geometry",
             assertion_ref: "map-tab-location-proof",
+            evidence_artifacts: [
+              {
+                condition_key: "phone",
+                path: "artifacts/map-layout-phone.json",
+                observation_path:
+                  "artifacts/map-layout-phone-observation.json",
+              },
+              {
+                condition_key: "dark",
+                path: "artifacts/map-layout-dark.json",
+                observation_path:
+                  "artifacts/map-layout-dark-observation.json",
+              },
+              {
+                condition_key: "default",
+                path: "artifacts/map-layout-default.json",
+                observation_path:
+                  "artifacts/map-layout-default-observation.json",
+              },
+            ],
           },
         ],
         actual_artifact_path: "artifacts/map-actual.png",
@@ -307,6 +340,7 @@ test("selected design targets require root-bound comparison evidence and blocker
   conformanceAssertion.evidence_capabilities.push(
     "visual_render",
     "design_conformance",
+    "design_method",
   );
   assert.doesNotThrow(() => parse(contract));
 
@@ -344,6 +378,12 @@ test("selected design targets require root-bound comparison evidence and blocker
   const artifacts = {
     "artifacts/map-actual.png": ONE,
     "artifacts/map-diff.json": TWO,
+    "artifacts/map-layout-phone.json": "3".repeat(64),
+    "artifacts/map-layout-dark.json": "4".repeat(64),
+    "artifacts/map-layout-default.json": "5".repeat(64),
+    "artifacts/map-layout-phone-observation.json": "6".repeat(64),
+    "artifacts/map-layout-dark-observation.json": "7".repeat(64),
+    "artifacts/map-layout-default-observation.json": "8".repeat(64),
   };
   const integrityOnly = evaluateEvidenceCapabilities(
     compiled,
@@ -372,11 +412,94 @@ test("selected design targets require root-bound comparison evidence and blocker
         actual_artifact_path: "artifacts/map-actual.png",
         comparison_artifact_path: "artifacts/map-diff.json",
       },
+      {
+        assertion_key: assertionKey,
+        capability: "design_method",
+        design_target_ref: "map-default",
+        target_ref: "fixture-app",
+        method: "layout_geometry",
+        cells: [
+          {
+            condition_key: "phone",
+            artifact_path: "artifacts/map-layout-phone.json",
+            observation_artifact_path:
+              "artifacts/map-layout-phone-observation.json",
+          },
+          {
+            condition_key: "dark",
+            artifact_path: "artifacts/map-layout-dark.json",
+            observation_artifact_path:
+              "artifacts/map-layout-dark-observation.json",
+          },
+          {
+            condition_key: "default",
+            artifact_path: "artifacts/map-layout-default.json",
+            observation_artifact_path:
+              "artifacts/map-layout-default-observation.json",
+          },
+        ],
+      },
     ],
     artifacts,
   );
   assert.equal(conformed.complete[assertionKey], true);
   assert.deepEqual(conformed.findings, []);
+
+  const copiedMethodArtifacts = evaluateEvidenceCapabilities(
+    compiled,
+    [
+      ...commonRecords,
+      {
+        assertion_key: assertionKey,
+        capability: "design_conformance",
+        design_target_ref: "map-default",
+        target_ref: "fixture-app",
+        condition_keys: ["dark", "default", "phone"],
+        actual_artifact_path: "artifacts/map-actual.png",
+        comparison_artifact_path: "artifacts/map-diff.json",
+      },
+      {
+        assertion_key: assertionKey,
+        capability: "design_method",
+        design_target_ref: "map-default",
+        target_ref: "fixture-app",
+        method: "layout_geometry",
+        cells: [
+          {
+            condition_key: "phone",
+            artifact_path: "artifacts/map-layout-phone.json",
+            observation_artifact_path:
+              "artifacts/map-layout-phone-observation.json",
+          },
+          {
+            condition_key: "dark",
+            artifact_path: "artifacts/map-layout-dark.json",
+            observation_artifact_path:
+              "artifacts/map-layout-dark-observation.json",
+          },
+          {
+            condition_key: "default",
+            artifact_path: "artifacts/map-layout-default.json",
+            observation_artifact_path:
+              "artifacts/map-layout-default-observation.json",
+          },
+        ],
+      },
+    ],
+    {
+      ...artifacts,
+      "artifacts/map-layout-phone-observation.json": "9".repeat(64),
+      "artifacts/map-layout-dark-observation.json": "9".repeat(64),
+    },
+  );
+  assert.equal(copiedMethodArtifacts.complete[assertionKey], true);
+  assert.ok(
+    copiedMethodArtifacts.findings.some(
+      (item) =>
+        item.code === "design_method_evidence_reused" &&
+        item.actual?.identity_kind === "sha256",
+    ),
+  );
 
   const blockerMissing = structuredClone(contract);
   blockerMissing.outcomes[0].product.surface_bindings[0].acceptance_blockers = [
@@ -386,6 +509,7 @@ test("selected design targets require root-bound comparison evidence and blocker
       refs: [],
       source_item_refs: ["map-design"],
       verification_methods: ["layout_geometry"],
+      required_capabilities: ["haptic-output"],
       rationale: "Native haptics remain unresolved.",
     },
   ];
@@ -411,6 +535,7 @@ test("selected design targets require root-bound comparison evidence and blocker
         refs: ["native-haptics-review"],
         source_item_refs: ["map-design"],
         verification_methods: ["layout_geometry"],
+        required_capabilities: ["haptic-output"],
         rationale: "Native haptics require device review.",
       },
     ];
@@ -576,6 +701,7 @@ test("variable inputs and external effects require independent typed runtime evi
     role: "observer",
     runtime_family: "external",
     root_entrypoint: "observer://fixture",
+    capabilities: ["external-runtime"],
   });
   baseCheck.execution_target.target_ref = "fixture-observer";
   baseCheck.journey_roles = ["success"];

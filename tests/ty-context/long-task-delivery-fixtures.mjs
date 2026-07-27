@@ -75,7 +75,12 @@ async function initializeSeedRepository(root, externalConfirmation) {
   await mkdir(path.join(root, "project_context", "areas"), { recursive: true });
   await writeFile(
     path.join(root, "src", "state.json"),
-    `${JSON.stringify({ first: true, second: false })}\n`,
+    `${JSON.stringify({
+      first: true,
+      second: false,
+      first_relations_applicable: false,
+      second_relations_applicable: false,
+    })}\n`,
   );
   await writeFile(
     path.join(root, "artifacts", "proof.json"),
@@ -84,17 +89,21 @@ async function initializeSeedRepository(root, externalConfirmation) {
   await writeFile(
     path.join(root, "source.md"),
     `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
 <!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
+<!-- ty-source-item:end -->
 ${
   externalConfirmation
     ? `
 <!-- ty-source-background:start key=fixture-external-heading reason=markdown-structure -->
-## Fixture external
+<a id="fixture-external"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=fixture-external kind=external_confirmation -->
@@ -107,7 +116,12 @@ Confirm the fixture in external delivery.
   );
   await writeFile(
     path.join(root, "tests", "semantic-false.json"),
-    `${JSON.stringify({ first: false, second: false })}\n`,
+    `${JSON.stringify({
+      first: false,
+      second: false,
+      first_relations_applicable: false,
+      second_relations_applicable: false,
+    })}\n`,
   );
   await writeFile(
     path.join(root, "tests", "oracle.mjs"),
@@ -119,6 +133,8 @@ const assertionKeys = [
   \`${"${key}"}-result\`,
   \`${"${key}"}-requirement\`,
   \`${"${key}"}-obligation\`,
+  \`${"${key}"}-relations-na\`,
+  ...(key === "first" ? ["first-architecture"] : []),
 ];
 const targetRecord = (assertionKey) => ({
   assertion_key: assertionKey,
@@ -142,9 +158,12 @@ console.log(JSON.stringify({
     result: state[key],
     requirement_result: state[key],
     obligation_result: state[key],
+    architecture_result: state.first,
+    relations_applicable: state[\`${"${key}"}_relations_applicable\`],
     target_live: true,
     negative: false,
     population: {
+      universe_ids: [key],
       eligible_ids: [key],
       observed_ids: state[key] ? [key] : [],
       excluded_items: []
@@ -234,6 +253,7 @@ export function claimApplicability(outcomeKey = "first") {
     key: `${outcomeKey}-root-success`,
     target_ref: "fixture-app",
     journey_role: "success",
+    dimensions: [{ key: "fixture-state", value: "loaded" }],
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   };
@@ -277,6 +297,20 @@ export function deliveryContract(options = {}) {
         operator: "equals",
         expected: true,
       },
+      ...(outcomeKey === "first"
+        ? [
+            {
+              key: "first-architecture",
+              criterion: "Preserve the fixture state owner and verifier boundary.",
+              claims: ["obligation.architecture-first"],
+              applicability_ref: "first-root-success",
+              observation: "architecture_result",
+              evidence_capabilities: ["target_runtime", "state_delta"],
+              operator: "equals",
+              expected: true,
+            },
+          ]
+        : []),
       {
         key: `${outcomeKey}-requirement`,
         criterion: `${outcomeKey} satisfies its observable requirement.`,
@@ -307,7 +341,19 @@ export function deliveryContract(options = {}) {
         expected: true,
       },
     ],
-    negative_assertions: [],
+    negative_assertions: [
+      {
+        key: `${outcomeKey}-relations-na`,
+        criterion:
+          "Cross-Control relations are not applicable when the Outcome declares no Controls.",
+        claims: ["control_relation_closure"],
+        applicability_ref: `${outcomeKey}-root-success`,
+        observation: "relations_applicable",
+        evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: false,
+      },
+    ],
     environment_requirements: [],
   });
   const outcome = (key, argument, dependsOn = []) => ({
@@ -339,6 +385,7 @@ export function deliveryContract(options = {}) {
       control_relation_closure: {
         state: "not_applicable",
         statement: "This Outcome declares no user-visible Controls.",
+        applicability_refs: [`${key}-root-success`],
       },
       control_relations: [],
       surface_bindings: [],
@@ -352,6 +399,17 @@ export function deliveryContract(options = {}) {
           required_proof_surfaces: ["runtime_behavior"],
           applicability_refs: [`${key}-root-success`],
         },
+        ...(key === "first"
+          ? [
+              {
+                key: "architecture-first",
+                statement:
+                  "Preserve the fixture state owner and verifier boundary.",
+                required_proof_surfaces: ["runtime_behavior"],
+                applicability_refs: ["first-root-success"],
+              },
+            ]
+          : []),
       ],
       expected_change_paths: ["src/**"],
       allowed_support_paths: [],
@@ -393,11 +451,16 @@ export function deliveryContract(options = {}) {
           role: "product",
           runtime_family: "process",
           root_entrypoint: "tests/oracle.mjs",
+          capabilities: [
+            "process-runtime",
+            "cold-start",
+            "production-root",
+          ],
         },
       ],
       source_paths: ["source.md"],
       context_refs: ["project_context/areas/main.md"],
-      context_snapshot_mode: "referenced",
+      context_snapshot_mode: "full",
     },
     source_claims: [
       {
@@ -407,6 +470,15 @@ export function deliveryContract(options = {}) {
         disposition: {
           type: "claim",
           refs: ["first.requirement.observe-first"],
+        },
+      },
+      {
+        key: "fixture-architecture",
+        source_ref: "source.md",
+        statement: "Preserve the fixture state owner and verifier boundary.",
+        disposition: {
+          type: "claim",
+          refs: ["first.obligation.architecture-first"],
         },
       },
       ...(options.externalConfirmation
@@ -655,21 +727,46 @@ function addDefaultSensitivityControls(contract) {
           "result",
           `requirement.observe-${outcome.key}`,
           `obligation.implement-${outcome.key}`,
+          ...(outcome.key === "first"
+            ? ["obligation.architecture-first"]
+            : []),
         ],
         check_key: `${outcome.key}-check`,
         mutation: {
-          type: "replace_file",
+          type: "replace_json_value",
           path: "src/state.json",
-          fixture_path: "tests/semantic-false.json",
+          pointer: `/${outcome.key}`,
+          value: false,
         },
         expected_assertion_failures: [
           `${outcome.key}-result`,
           `${outcome.key}-requirement`,
           `${outcome.key}-obligation`,
+          ...(outcome.key === "first" ? ["first-architecture"] : []),
         ],
         preserved_assertions: [`${outcome.key}-liveness`],
       },
+      {
+        key: `make-${outcome.key}-relations-applicable`,
+        binding_key: `state-${outcome.key}`,
+        claims: ["control_relation_closure"],
+        check_key: `${outcome.key}-check`,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: `/${outcome.key}_relations_applicable`,
+          value: true,
+        },
+        expected_assertion_failures: [`${outcome.key}-relations-na`],
+        preserved_assertions: [`${outcome.key}-liveness`],
+      },
     ];
+}
+
+export function fixtureArchitectureSourceItem() {
+  return `<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
+<!-- ty-source-item:end -->`;
 }
 
 export async function writeContract(workdir, contract) {

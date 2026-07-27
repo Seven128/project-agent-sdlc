@@ -8,6 +8,7 @@ import { classifyLongTaskRisk } from "../../packages/ty-context/dist/lib/long-ta
 import {
   createDeliveryFixture,
   deliveryContract,
+  fixtureArchitectureSourceItem,
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -32,10 +33,14 @@ test("Risk Source marker binds one exact Fact/Affected Outcome pair", async () =
       fixture.root,
       { require_completion_gate: false },
     );
-    assert.deepEqual(compiled.source_items[0].risk_semantics, {
+    assert.deepEqual(
+      compiled.source_items.find((item) => item.key === "risk-source")
+        .risk_semantics,
+      {
       fact: "critical_user_path",
       affected_outcome: "first",
-    });
+      },
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -88,7 +93,7 @@ test("Risk marker requires fact/outcome and rejects those attributes elsewhere",
       fixture.contract.risk.facts.critical_user_path = ["first"];
       await writeFile(
         path.join(fixture.root, "source.md"),
-        `${sourceHeading("Risk", "risk-heading")}\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n`,
+        `${sourceHeading("Risk", "risk-heading")}\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n`,
       );
       await assertPreflightAndCompileReject(fixture, scenario.code);
     } finally {
@@ -135,6 +140,8 @@ test("ambiguous Risk remains decision_required and blocks Compile", async () => 
 <!-- ty-source-item:start key=risk-decision kind=decision -->
 Choose the exact Risk Fact and affected Outcome.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
     );
     await writeContract(fixture.workdir, fixture.contract);
@@ -205,6 +212,8 @@ async function configureRiskSource(
 <!-- ty-source-item:start key=risk-source kind=risk_fact fact=${markerFact} outcome=${markerOutcome} -->
 Risk text.
 <!-- ty-source-item:end -->
+
+${fixtureArchitectureSourceItem()}
 `,
   );
   await writeContract(fixture.workdir, fixture.contract);
@@ -220,8 +229,12 @@ function riskSourceClaim(reference) {
 }
 
 function sourceHeading(title, key) {
+  const anchor = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-|-$/gu, "");
   return `<!-- ty-source-background:start key=${key} reason=markdown-structure -->
-# ${title}
+<a id="${anchor}"></a>
 <!-- ty-source-background:end -->`;
 }
 

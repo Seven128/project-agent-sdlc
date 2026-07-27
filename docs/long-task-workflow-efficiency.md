@@ -8,7 +8,7 @@ Efficiency is subordinate to that objective. The preferred design is the lowest 
 
 Apply two gates in order:
 
-1. prove `Coverage_new ⊇ Coverage_old`, `FalseNegative_new ⊆ FalseNegative_old`, and that Authority, fail-closed behavior and complete-current-final-snapshot proof remain non-bypassable; cost reduction cannot compensate for weaker drift detection, and an unproven experiment stays outside the formal acceptance path;
+1. prove `Coverage_new ⊇ Coverage_old`, `FalseNegative_new ⊆ FalseNegative_old`, and that Authority, fail-closed behavior and complete-current-final-snapshot proof remain non-bypassable; cost reduction cannot compensate for weaker drift detection, and if non-degradation cannot be proved the current formal acceptance path is preserved while experiments stay outside it;
 2. then compare every incremental Authoring, Runtime, State, Recovery, maintenance, test, process, introduction and migration cost with the incremental purpose-fulfillment benefit.
 
 ROI is positive when that incremental benefit exceeds all incremental costs. Positive ROI admits a non-degrading candidate to the consideration set; it does not adopt the candidate automatically.

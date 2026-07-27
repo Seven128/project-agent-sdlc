@@ -16,7 +16,21 @@ export const DESIGN_RESOURCE_PATHS = [
 ];
 export const DESIGN_SOURCE_ITEM_KEY = "design-main";
 export const DESIGN_TARGET_KEY = "main-default";
-export const DESIGN_CONDITION_KEY = "desktop-default";
+const DESIGN_CONDITION_CASES = ["default", "expanded", "focused"].flatMap(
+  (state) =>
+    ["nominal", "long-copy"].flatMap((contentCase) =>
+      ["mouse", "keyboard"].map((inputMethod) => ({
+        key: `desktop-light-${state}-${contentCase}-${inputMethod}`,
+        state,
+        contentCase,
+        inputMethod,
+      })),
+    ),
+);
+export const DESIGN_CONDITION_KEYS = DESIGN_CONDITION_CASES.map(
+  (condition) => condition.key,
+);
+export const DESIGN_CONDITION_KEY = DESIGN_CONDITION_KEYS[0];
 
 export async function writeDesignResourceHandoffFixture(root, mutate) {
   await mkdir(path.join(root, "design"), { recursive: true });
@@ -61,8 +75,6 @@ export async function writeDesignResourceHandoff(root, handoff) {
   const sourceStatement =
     "The main surface must conform to every declared design-resource dimension.";
   const markdown = `<!-- ty-source-background:start key=design-handoff-heading reason=markdown-structure -->
-# Main design implementation handoff
-
 <a id="main-design"></a>
 <!-- ty-source-background:end -->
 
@@ -192,18 +204,20 @@ export function createDesignResourceHandoff(resourceSha256) {
         },
       },
     ],
-    conditions: [
-      {
-        key: DESIGN_CONDITION_KEY,
+    conditions: DESIGN_CONDITION_CASES.map(
+      ({ key, state, contentCase, inputMethod }) => {
+      return {
+        key,
         platform: "desktop-web",
         viewport: { width: 1440, height: 900, unit: "px" },
         modes: ["light"],
-        states: ["default", "expanded", "focused"],
-        content_cases: ["nominal", "long-copy"],
-        input_methods: ["mouse", "keyboard"],
+        states: [state],
+        content_cases: [contentCase],
+        input_methods: [inputMethod],
         motion: "full",
+        };
       },
-    ],
+    ),
     subjects: [
       {
         key: "surface.main",
@@ -222,7 +236,7 @@ export function createDesignResourceHandoff(resourceSha256) {
           "resource.design-spec",
           "resource.component-spec",
         ],
-        condition_refs: [DESIGN_CONDITION_KEY],
+        condition_refs: [...DESIGN_CONDITION_KEYS],
         source_profile: {
           kind: "implementation_web",
           entry_resource_ref: "resource.main",
@@ -295,7 +309,7 @@ function evidenceItem(key, kind, resourceRef, locatorKind, locatorValue) {
       kind: locatorKind,
       value: locatorValue,
     },
-    condition_refs: [DESIGN_CONDITION_KEY],
+    condition_refs: [...DESIGN_CONDITION_KEYS],
   };
 }
 
@@ -306,7 +320,7 @@ function coverage(key, dimension, evidenceRefs, verificationMethods) {
     dimension,
     disposition: "covered",
     target_refs: [DESIGN_TARGET_KEY],
-    condition_refs: [DESIGN_CONDITION_KEY],
+    condition_refs: [...DESIGN_CONDITION_KEYS],
     evidence_refs: evidenceRefs,
     source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
     verification_methods: verificationMethods,

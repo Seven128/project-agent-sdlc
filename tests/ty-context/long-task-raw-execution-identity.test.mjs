@@ -60,7 +60,7 @@ test("different Environment Requirements cannot reuse Raw Execution", async () =
       result.check_results.map((check) => check.status),
       ["passed", "blocked_external", "blocked_external", "blocked_external"],
     );
-    assert.equal(await executionCount(marker), 2);
+    assert.equal(await executionCount(marker), 3);
   } finally {
     await rm(marker, { force: true });
     await rm(fixture.root, { recursive: true, force: true });
@@ -107,7 +107,7 @@ test("identical canonical Environment Requirements may share Raw Execution", asy
       result.check_results.map((check) => check.status),
       ["passed", "passed"],
     );
-    assert.equal(await executionCount(marker), 3);
+    assert.equal(await executionCount(marker), 5);
   } finally {
     restore(keys[0], previous[0]);
     restore(keys[1], previous[1]);
@@ -152,7 +152,7 @@ test("different env var targets produce different Raw Executions", async () => {
       result.check_results.map((check) => check.status),
       ["passed", "passed"],
     );
-    assert.equal(await executionCount(marker), 4);
+    assert.equal(await executionCount(marker), 6);
   } finally {
     restore(keys[0], previous[0]);
     restore(keys[1], previous[1]);
@@ -202,6 +202,17 @@ function configureChecks(fixture, requirements) {
           expected: true,
         },
         {
+          key: "raw-architecture",
+          criterion: `Raw execution architecture ${index} remains conformant.`,
+          claims: ["obligation.architecture-first"],
+          applicability_ref: "first-root-success",
+          observation:
+            index === 0 ? "architecture_result" : "architecture_copy",
+          evidence_capabilities: ["target_runtime", "state_delta"],
+          operator: "equals",
+          expected: true,
+        },
+        {
           key: "raw-liveness",
           criterion: `Raw execution target ${index} remains live.`,
           claims: [],
@@ -211,31 +222,66 @@ function configureChecks(fixture, requirements) {
           expected: true,
         },
       ],
+      negative_assertions: [
+        {
+          key: "raw-relations-na",
+          criterion:
+            "Cross-Control relations remain not applicable in the raw execution fixture.",
+          claims: ["control_relation_closure"],
+          applicability_ref: "first-root-success",
+          observation:
+            index === 0
+              ? "relations_applicable"
+              : "relations_applicable_copy",
+          evidence_capabilities: ["target_runtime", "state_delta"],
+          operator: "equals",
+          expected: false,
+        },
+      ],
       environment_requirements: structuredClone(environment_requirements),
     }),
   );
-  outcome.acceptance.counterfactual_controls = requirements.map(
-    (_environmentRequirements, index) => ({
-      key: `raw-sensitive-${index}`,
-      binding_key: "state-first",
-      claims: [
-        "result",
-        "requirement.observe-first",
-        "obligation.implement-first",
-      ],
-      check_key: `raw-${index}`,
-      mutation: {
-        type: "replace_file",
-        path: "src/state.json",
-        fixture_path: "tests/semantic-false.json",
+  outcome.acceptance.counterfactual_controls = requirements.flatMap(
+    (_environmentRequirements, index) => [
+      {
+        key: `raw-sensitive-${index}`,
+        binding_key: "state-first",
+        claims: [
+          "result",
+          "requirement.observe-first",
+          "obligation.implement-first",
+          "obligation.architecture-first",
+        ],
+        check_key: `raw-${index}`,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first",
+          value: false,
+        },
+        expected_assertion_failures: [
+          "raw-result",
+          "raw-requirement",
+          "raw-obligation",
+          "raw-architecture",
+        ],
+        preserved_assertions: ["raw-liveness"],
       },
-      expected_assertion_failures: [
-        "raw-result",
-        "raw-requirement",
-        "raw-obligation",
-      ],
-      preserved_assertions: ["raw-liveness"],
-    }),
+      {
+        key: `raw-relations-sensitive-${index}`,
+        binding_key: "state-first",
+        claims: ["control_relation_closure"],
+        check_key: `raw-${index}`,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first_relations_applicable",
+          value: true,
+        },
+        expected_assertion_failures: ["raw-relations-na"],
+        preserved_assertions: ["raw-liveness"],
+      },
+    ],
   );
 }
 
@@ -244,12 +290,12 @@ async function installCountingOracle(fixture, marker) {
     path.join(fixture.root, "tests", "oracle.mjs"),
     `import { appendFileSync, readFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(marker)}, "run\\n");
-let state = {first:false};
+let state = {first:false,first_relations_applicable:false};
 try { state = JSON.parse(readFileSync(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"raw-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const semantic=["raw-result","raw-requirement","raw-obligation"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first,requirement_result:state.first,requirement_copy:state.first,obligation_result:state.first,obligation_copy:state.first,target_live:true,target_live_copy:true},evidence_records:[...semantic.flatMap((key)=>[target(key),delta(key)]),target("raw-liveness")]}));
+const semantic=["raw-result","raw-requirement","raw-obligation","raw-architecture","raw-relations-na"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first,requirement_result:state.first,requirement_copy:state.first,obligation_result:state.first,obligation_copy:state.first,architecture_result:state.first,architecture_copy:state.first,relations_applicable:state.first_relations_applicable,relations_applicable_copy:state.first_relations_applicable,target_live:true,target_live_copy:true},evidence_records:[...semantic.flatMap((key)=>[target(key),delta(key)]),target("raw-liveness")]}));
 `,
   );
   await commitCandidate(fixture.root);

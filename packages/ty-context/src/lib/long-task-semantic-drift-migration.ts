@@ -7,7 +7,24 @@ export function semanticDriftMigrationFields(value: unknown): string[] {
   required(root, "$", ["stages"], missing);
   const task = row(root.task);
   if (task) {
-    required(task, "task", ["target_profile", "execution_targets"], missing);
+    required(
+      task,
+      "task",
+      ["target_profile", "execution_targets", "context_snapshot_mode"],
+      missing,
+    );
+    if (
+      Object.hasOwn(task, "context_snapshot_mode") &&
+      task.context_snapshot_mode !== "full"
+    )
+      missing.push("task.context_snapshot_mode=full");
+    for (const [index, target] of rows(task.execution_targets).entries())
+      required(
+        target,
+        `task.execution_targets[${index}]`,
+        ["capabilities"],
+        missing,
+      );
     const profile = row(task.target_profile);
     if (profile)
       required(
@@ -20,6 +37,7 @@ export function semanticDriftMigrationFields(value: unknown): string[] {
   for (const [index, outcome] of rows(root.outcomes).entries())
     collectOutcome(outcome, `outcomes[${index}]`, missing);
   const global = row(root.global);
+  collectApplicability(global?.applicability, "global.applicability", missing);
   const globalAcceptance = row(global?.acceptance);
   collectChecks(globalAcceptance?.checks, "global.acceptance.checks", missing);
   for (const [index, confirmation] of rows(
@@ -54,7 +72,12 @@ export function assertNoSemanticDriftMigration(fields: string[]): void {
 }
 
 function collectOutcome(outcome: Row, label: string, missing: string[]): void {
-  required(outcome, label, ["stage"], missing);
+  required(outcome, label, ["stage", "applicability"], missing);
+  collectApplicability(
+    outcome.applicability,
+    `${label}.applicability`,
+    missing,
+  );
   const product = row(outcome.product);
   if (product) {
     required(
@@ -69,9 +92,76 @@ function collectOutcome(outcome: Row, label: string, missing: string[]): void {
       !Object.hasOwn(product, "surface_bindings")
     )
       missing.push(`${label}.product.surface_bindings`);
+    const relationClosure = row(product.control_relation_closure);
+    if (relationClosure && relationClosure.state !== "unresolved")
+      required(
+        relationClosure,
+        `${label}.product.control_relation_closure`,
+        ["applicability_refs"],
+        missing,
+      );
   }
   const acceptance = row(outcome.acceptance);
   collectChecks(acceptance?.checks, `${label}.acceptance.checks`, missing);
+  const population = row(acceptance?.population);
+  if (population) {
+    required(
+      population,
+      `${label}.acceptance.population`,
+      ["universe_binding_key"],
+      missing,
+    );
+    const observations = row(population.observations);
+    if (observations)
+      required(
+        observations,
+        `${label}.acceptance.population.observations`,
+        ["universe_ids"],
+        missing,
+      );
+  }
+  for (const [bindingIndex, binding] of rows(
+    product?.surface_bindings,
+  ).entries()) {
+    for (const [blockerIndex, blocker] of rows(
+      binding.acceptance_blockers,
+    ).entries())
+      required(
+        blocker,
+        `${label}.product.surface_bindings[${bindingIndex}].acceptance_blockers[${blockerIndex}]`,
+        ["required_capabilities"],
+        missing,
+      );
+    for (const [targetIndex, target] of rows(binding.design_targets).entries())
+      for (const [methodIndex, method] of rows(
+        target.verification_method_bindings,
+      ).entries()) {
+        required(
+          method,
+          `${label}.product.surface_bindings[${bindingIndex}].design_targets[${targetIndex}].verification_method_bindings[${methodIndex}]`,
+          ["evidence_artifacts"],
+          missing,
+        );
+        for (const [artifactIndex, artifact] of rows(
+          method.evidence_artifacts,
+        ).entries())
+          required(
+            artifact,
+            `${label}.product.surface_bindings[${bindingIndex}].design_targets[${targetIndex}].verification_method_bindings[${methodIndex}].evidence_artifacts[${artifactIndex}]`,
+            ["observation_path"],
+            missing,
+          );
+      }
+  }
+}
+
+function collectApplicability(
+  value: unknown,
+  label: string,
+  missing: string[],
+): void {
+  for (const [index, profile] of rows(value).entries())
+    required(profile, `${label}[${index}]`, ["dimensions"], missing);
 }
 
 function collectChecks(value: unknown, label: string, missing: string[]): void {

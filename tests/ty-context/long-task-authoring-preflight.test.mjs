@@ -46,7 +46,7 @@ test("Authoring Preflight is ready, under two seconds and completely read-only",
     assert.ok(performance.now() - started < 2000);
     assert.equal(result.status, "ready");
     assert.equal(result.would_create_authority_lock, true);
-    assert.equal(result.source_coverage.resolved, 1);
+    assert.equal(result.source_coverage.resolved, 2);
     assert.equal(result.claim_coverage.uncovered_claims.length, 0);
     assert.deepEqual(await stateSnapshot(fixture), before);
     assert.equal(await exists(marker), false);
@@ -225,11 +225,15 @@ test("Authoring Preflight Revision Preview reports Source and Context materials 
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-# Fixture source
+<a id="fixture-source"></a>
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${sourceStatement}
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
+Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
 `,
     );
@@ -281,7 +285,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
     await mkdir(path.join(fixture.root, "plans"), { recursive: true });
     await writeFile(
       path.join(fixture.root, "plans", "replace-me.md"),
-      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n# Replace me\n\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-background:start key=replace-architecture-anchor reason=markdown-structure -->\n<a id="replace-architecture"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-architecture kind=technical_obligation aspect=architecture -->\nPreserve the declared owner, dependency direction, verifier boundary and architecture conformance.\n<!-- ty-source-item:end -->\n`,
     );
     await writeFile(
       path.join(fixture.root, "project_context", "areas", "replace-me.md"),
@@ -289,7 +293,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";\nlet result = false;\ntry { result = (await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8")).includes("replace"); } catch {}\nconst target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true});\nconst delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,target_live:true},evidence_records:[target("replace-result"),delta("replace-result"),target("replace-requirement"),delta("replace-requirement"),target("replace-liveness")]}));\n`,
+      `import { readFile } from "node:fs/promises";\nlet text = "";\ntry { text = await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8"); } catch {}\nconst result = text.includes("IMPLEMENTED_STATE");\nconst relationsApplicable = text.includes("CROSS_CONTROL_RELATIONS_APPLY");\nconst target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true});\nconst delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});\nconst assertionKeys = ["replace-result","replace-requirement","replace-architecture","replace-relations-na"];\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,architecture_result:result,relations_applicable:relationsApplicable,target_live:true},evidence_records:[...assertionKeys.flatMap((key) => [target(key),delta(key)]),target("replace-liveness")]}));\n`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-semantic-failure.ts"),
@@ -322,7 +326,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
 
     await writeFile(
       path.join(fixture.root, "src", "replace-me.ts"),
-      "export const replace = true;\n",
+      'export const deliveryState = "IMPLEMENTED_STATE";\nexport const relationState = "NO_CROSS_CONTROL_RELATIONS";\n',
     );
     await git(fixture.root, ["add", "src/replace-me.ts"]);
     await git(fixture.root, ["commit", "-m", "implement init template"]);

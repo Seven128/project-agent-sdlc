@@ -85,7 +85,7 @@ test("legacy Context snapshots fail closed with every file controlling", () => {
   assert.deepEqual(normalized.supporting_files, []);
 });
 
-test("supporting Context revises without approval and preserves scoped Progress", async () => {
+test("full Context revisions invalidate scoped Progress without requiring approval", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const { contextFile: supportFile } = await addTransitiveContext(fixture);
@@ -98,9 +98,12 @@ test("supporting Context revises without approval and preserves scoped Progress"
       "compiled-contract.json",
     );
     let compiled = JSON.parse(await readFile(compiledFile, "utf8"));
-    assert.deepEqual(compiled.context_snapshot.supporting_files, [
-      SUPPORTING_CONTEXT,
-    ]);
+    assert.deepEqual(compiled.context_snapshot.supporting_files, []);
+    assert.ok(
+      compiled.context_snapshot.controlling_files.includes(
+        SUPPORTING_CONTEXT,
+      ),
+    );
     assert.ok(
       compiled.context_snapshot.controlling_files.includes(
         "project_context/areas/main.md",
@@ -143,7 +146,7 @@ test("supporting Context revises without approval and preserves scoped Progress"
       fixture.workdir,
       "--revise",
     ]);
-    assert.equal(revised.progress_preserved, true);
+    assert.equal(revised.progress_preserved, false);
     assert.equal(revised.authority_revision, 2);
     assert.equal(await pathExists(finalReceiptFile), false);
 
@@ -152,7 +155,7 @@ test("supporting Context revises without approval and preserves scoped Progress"
       "status",
       fixture.workdir,
     ]);
-    assert.equal(status.outcomes.first, "progress_passing");
+    assert.equal(status.outcomes.first, "unverified");
     compiled = JSON.parse(await readFile(compiledFile, "utf8"));
     assert.equal(
       compiled.context_snapshot.sha256[SUPPORTING_CONTEXT],
@@ -189,7 +192,7 @@ test("supporting Context revises without approval and preserves scoped Progress"
   }
 });
 
-test("retrieval-only Context manifest edits preserve active authority and scoped Progress", async () => {
+test("retrieval-only manifest edits preserve full Context authority while any Context role edit stales it", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const { manifestFile } = await addTransitiveContext(fixture);
@@ -264,7 +267,11 @@ role = "foundation"`,
       fixture.contract.task.context_refs,
     );
     assert.equal(afterUnselectedEdit.topology_sha256, before.topology_sha256);
-    assert.deepEqual(await deliveryCompileFreshness(compiled), []);
+    assert.ok(
+      (await deliveryCompileFreshness(compiled)).some((finding) =>
+        finding.startsWith("context_changed_after_compile"),
+      ),
+    );
 
     const structurallyChanged = (await readFile(manifestFile, "utf8")).replace(
       `role = "implementation-index"`,

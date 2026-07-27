@@ -9,8 +9,10 @@ import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task
 
 const population = {
   check_key: "population",
+  universe_binding_key: "population-universe",
   claims: ["result"],
   observations: {
+    universe_ids: "population.universe_ids",
     eligible_ids: "population.eligible_ids",
     observed_ids: "population.observed_ids",
     excluded_items: "population.excluded_items",
@@ -23,6 +25,7 @@ const population = {
 test("Population V2 validates exact entity sets", () => {
   const valid = {
     population: {
+      universe_ids: ["a", "b", "c"],
       eligible_ids: ["a", "b", "c"],
       observed_ids: ["a", "b"],
       excluded_items: [{ id: "c", rule: "disabled" }],
@@ -30,6 +33,11 @@ test("Population V2 validates exact entity sets", () => {
   };
   assert.equal(evaluatePopulation(population, valid).passed, true);
   for (const [name, mutate, reason] of [
+    [
+      "eligible population omits a universe member",
+      (value) => value.population.eligible_ids.pop(),
+      "eligible_universe_mismatch",
+    ],
     [
       "observed outside eligible",
       (value) => value.population.observed_ids.push("x"),
