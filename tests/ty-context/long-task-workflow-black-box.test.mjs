@@ -28,7 +28,9 @@ test("[critical:live-final-gate-only] controlled real V2 Smoke proves only the c
   try {
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
@@ -58,9 +60,12 @@ second is observable and implemented.
       statement: "second is observable and implemented.",
       disposition: {
         type: "acceptance",
-        refs: ["second.second-check.second-result"],
+        refs: ["second.second-check.second-requirement"],
       },
     });
+    fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions.find(
+      (assertion) => assertion.key === "second-requirement",
+    ).criterion = "second is observable and implemented.";
     await writeContract(fixture.workdir, fixture.contract);
     await run(fixture.root, ["enable", "long-task"]);
     const preflight = await run(fixture.root, [
@@ -98,8 +103,8 @@ second is observable and implemented.
       secondFailure.check_results[0].findings.some(
         (finding) =>
           finding.source_claim_keys?.includes("second-acceptance") &&
-          finding.assertion_key === "second-result" &&
-          finding.observation === "result",
+          finding.assertion_key === "second-requirement" &&
+          finding.observation === "requirement_result",
       ),
     );
 
@@ -163,7 +168,9 @@ second is observable and implemented.
       "The second outcome remains observable and implemented.";
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
@@ -179,8 +186,9 @@ ${revisedAcceptance}
 `,
     );
     fixture.contract.source_claims[2].statement = revisedAcceptance;
-    fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions[0].criterion =
-      revisedAcceptance;
+    fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions.find(
+      (assertion) => assertion.key === "second-requirement",
+    ).criterion = revisedAcceptance;
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
       () =>

@@ -83,7 +83,9 @@ async function initializeSeedRepository(root, externalConfirmation) {
   );
   await writeFile(
     path.join(root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.
@@ -91,7 +93,9 @@ The first outcome must be observable.
 ${
   externalConfirmation
     ? `
+<!-- ty-source-background:start key=fixture-external-heading reason=markdown-structure -->
 ## Fixture external
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=fixture-external kind=external_confirmation -->
 Confirm the fixture in external delivery.
@@ -102,18 +106,43 @@ Confirm the fixture in external delivery.
 `,
   );
   await writeFile(
+    path.join(root, "tests", "semantic-false.json"),
+    `${JSON.stringify({ first: false, second: false })}\n`,
+  );
+  await writeFile(
     path.join(root, "tests", "oracle.mjs"),
     `import { readFile } from "node:fs/promises";
 let state = { first: false, second: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const key = process.argv[2] || "first";
-const assertionKey = process.argv[3] || \`${"${key}"}-result\`;
+const assertionKeys = [
+  \`${"${key}"}-result\`,
+  \`${"${key}"}-requirement\`,
+  \`${"${key}"}-obligation\`,
+];
+const targetRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "target_runtime",
+  target_ref: "fixture-app",
+  root_entrypoint: "tests/oracle.mjs",
+  session_id: \`fixture-${"${key}"}-session\`,
+  cold_start: true
+});
+const stateRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "state_delta",
+  before_sha256: "0".repeat(64),
+  after_sha256: "1".repeat(64),
+  changed_fields: [key]
+});
 console.log(JSON.stringify({
   schema_version: "long-task-check-result-v3",
   execution_status: "completed",
   observations: {
     result: state[key],
-    result_copy: state[key],
+    requirement_result: state[key],
+    obligation_result: state[key],
+    target_live: true,
     negative: false,
     population: {
       eligible_ids: [key],
@@ -122,21 +151,11 @@ console.log(JSON.stringify({
     }
   },
   evidence_records: [
-    {
-      assertion_key: assertionKey,
-      capability: "target_runtime",
-      target_ref: "fixture-app",
-      root_entrypoint: "tests/oracle.mjs",
-      session_id: \`fixture-${"${key}"}-session\`,
-      cold_start: true
-    },
-    {
-      assertion_key: assertionKey,
-      capability: "state_delta",
-      before_sha256: "0".repeat(64),
-      after_sha256: "1".repeat(64),
-      changed_fields: [key]
-    }
+    ...assertionKeys.flatMap((assertionKey) => [
+      targetRecord(assertionKey),
+      stateRecord(assertionKey)
+    ]),
+    targetRecord(\`${"${key}"}-liveness\`)
   ]
 }));
 `,
@@ -210,6 +229,16 @@ function registerSeedCleanupHook() {
   });
 }
 
+export function claimApplicability(outcomeKey = "first") {
+  return {
+    key: `${outcomeKey}-root-success`,
+    target_ref: "fixture-app",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
+  };
+}
+
 export function deliveryContract(options = {}) {
   const check = (key, argument, outcomeKey) => ({
     key,
@@ -230,7 +259,10 @@ export function deliveryContract(options = {}) {
       retry_policy: "none",
       idempotent: true,
     },
-    verification_inputs: ["tests/oracle.mjs"],
+    verification_inputs: [
+      "tests/oracle.mjs",
+      "tests/semantic-false.json",
+    ],
     input_paths: ["src/**"],
     expected_output_paths: [],
     artifact_globs: ["artifacts/proof.json"],
@@ -238,13 +270,39 @@ export function deliveryContract(options = {}) {
       {
         key: `${outcomeKey}-result`,
         criterion: `${outcomeKey} is observable and implemented.`,
-        claims: [
-          "result",
-          `requirement.observe-${outcomeKey}`,
-          `obligation.implement-${outcomeKey}`,
-        ],
+        claims: ["result"],
+        applicability_ref: `${outcomeKey}-root-success`,
         observation: "result",
         evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: `${outcomeKey}-requirement`,
+        criterion: `${outcomeKey} satisfies its observable requirement.`,
+        claims: [`requirement.observe-${outcomeKey}`],
+        applicability_ref: `${outcomeKey}-root-success`,
+        observation: "requirement_result",
+        evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: `${outcomeKey}-obligation`,
+        criterion: `${outcomeKey} satisfies its implementation obligation.`,
+        claims: [`obligation.implement-${outcomeKey}`],
+        applicability_ref: `${outcomeKey}-root-success`,
+        observation: "obligation_result",
+        evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: `${outcomeKey}-liveness`,
+        criterion: `${outcomeKey} target remains live during semantic mutation.`,
+        claims: [],
+        observation: "target_live",
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
@@ -257,8 +315,10 @@ export function deliveryContract(options = {}) {
     title: `${key} title`,
     stage: key,
     depends_on: dependsOn,
+    applicability: [claimApplicability(key)],
     product: {
       observable_result: `${key} becomes observable`,
+      result_applicability_refs: [`${key}-root-success`],
       success_path_required: true,
       degradation_path_required: false,
       owner: {
@@ -271,10 +331,16 @@ export function deliveryContract(options = {}) {
           key: `observe-${key}`,
           statement: `The ${key} outcome must be observable.`,
           required_proof_surfaces: ["runtime_behavior"],
+          applicability_refs: [`${key}-root-success`],
         },
       ],
       owner_surfaces: [],
       controls: [],
+      control_relation_closure: {
+        state: "not_applicable",
+        statement: "This Outcome declares no user-visible Controls.",
+      },
+      control_relations: [],
       surface_bindings: [],
       non_completing_outcomes: [],
     },
@@ -284,6 +350,7 @@ export function deliveryContract(options = {}) {
           key: `implement-${key}`,
           statement: `Implement ${key}`,
           required_proof_surfaces: ["runtime_behavior"],
+          applicability_refs: [`${key}-root-success`],
         },
       ],
       expected_change_paths: ["src/**"],
@@ -380,6 +447,7 @@ export function deliveryContract(options = {}) {
       },
     },
     global: {
+      applicability: [],
       product: { non_goals: [] },
       technical: {
         constraints: [],
@@ -445,20 +513,136 @@ export function addProductionControlBinding(
       (item) => item.key === rootCheckRef,
     );
     if (!check) throw new Error(`fixture_check_unknown:${rootCheckRef}`);
-    const assertion = check.positive_assertions[0];
     const control = outcome.product.controls.find(
       (item) => item.key === controlKey,
     );
-    const rootClaims = [
-      ...(control?.surface ? [`control.${controlKey}.surface`] : []),
-      rootClaimRef,
-    ];
-    for (const claim of rootClaims)
-      if (!assertion.claims.includes(claim)) assertion.claims.push(claim);
-    if (!assertion.evidence_capabilities.includes("interaction_trace"))
-      assertion.evidence_capabilities.push("interaction_trace");
+    if (!control) throw new Error(`fixture_control_unknown:${controlKey}`);
+    addControlAssertions(outcome, check, control, rootClaimRef, targetRef);
   }
   return outcome.product.surface_bindings.at(-1);
+}
+
+const controlFields = [
+  "surface",
+  "region",
+  "location",
+  "control_type",
+  "label_content",
+  "user_task",
+  "visibility",
+  "availability",
+  "trigger",
+  "input",
+  "validation",
+  "default_value",
+  "interaction",
+  "navigation_result",
+  "loading_state",
+  "empty_state",
+  "success_state",
+  "failure_state",
+  "recovery",
+  "permission",
+  "feedback",
+  "accessibility",
+];
+
+const controlClaimField = {
+  loading_state: "loading",
+  empty_state: "empty",
+  success_state: "success",
+  failure_state: "failure",
+};
+
+export function completeControl(
+  control,
+  { outcomeKey = "first", unresolvedFields = [] } = {},
+) {
+  const unresolved = new Set(unresolvedFields);
+  const specified = controlFields.filter(
+    (field) => !unresolved.has(field) && String(control[field] ?? "").trim(),
+  );
+  const notApplicable = controlFields.filter(
+    (field) => !unresolved.has(field) && !String(control[field] ?? "").trim(),
+  );
+  for (const field of controlFields)
+    if (!Object.hasOwn(control, field)) control[field] = "";
+  control.field_coverage = [
+    ...(specified.length
+      ? [
+          {
+            fields: specified,
+            state: "specified",
+            applicability_refs: [`${outcomeKey}-root-success`],
+          },
+        ]
+      : []),
+    ...(notApplicable.length
+      ? [
+          {
+            fields: notApplicable,
+            state: "not_applicable",
+            statement: `These ${control.key} Control fields do not apply to the declared interaction.`,
+            applicability_refs: [`${outcomeKey}-root-success`],
+          },
+        ]
+      : []),
+    ...(unresolved.size
+      ? [
+          {
+            fields: [...unresolved],
+            state: "unresolved",
+            statement: `These ${control.key} Control fields remain unresolved.`,
+          },
+        ]
+      : []),
+  ];
+  return control;
+}
+
+function addControlAssertions(outcome, check, control, rootClaimRef, targetRef) {
+  const profile =
+    outcome.applicability.find((item) => item.target_ref === targetRef) ??
+    outcome.applicability[0];
+  for (const entry of control.field_coverage) {
+    if (entry.state === "unresolved") continue;
+    for (const field of entry.fields) {
+      const suffix = controlClaimField[field] ?? field;
+      const claim = `control.${control.key}.${suffix}`;
+      const key = `${control.key}-${suffix.replaceAll("_", "-")}-proof`;
+      const assertion = {
+        key,
+        criterion:
+          entry.state === "specified"
+            ? control[field]
+            : entry.statement,
+        claims: [claim],
+        applicability_ref: profile.key,
+        observation: `control_${control.key}_${suffix}`,
+        evidence_capabilities:
+          claim === rootClaimRef
+            ? ["interaction_trace", "target_runtime"]
+            : ["state_delta"],
+        operator: "equals",
+        expected: entry.state === "specified",
+      };
+      const assertions =
+        entry.state === "specified"
+          ? check.positive_assertions
+          : check.negative_assertions;
+      if (!assertions.some((candidate) => candidate.key === key))
+        assertions.push(assertion);
+      const sensitivity = outcome.acceptance.counterfactual_controls.find(
+        (candidate) => candidate.check_key === check.key,
+      );
+      if (sensitivity) {
+        if (!sensitivity.claims.includes(claim))
+          sensitivity.claims.push(claim);
+        if (!sensitivity.expected_assertion_failures.includes(key))
+          sensitivity.expected_assertion_failures.push(key);
+      }
+    }
+  }
 }
 
 function addDefaultSensitivityControls(contract) {
@@ -473,8 +657,17 @@ function addDefaultSensitivityControls(contract) {
           `obligation.implement-${outcome.key}`,
         ],
         check_key: `${outcome.key}-check`,
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
-        expected_assertion_failures: [`${outcome.key}-result`],
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
+        expected_assertion_failures: [
+          `${outcome.key}-result`,
+          `${outcome.key}-requirement`,
+          `${outcome.key}-obligation`,
+        ],
+        preserved_assertions: [`${outcome.key}-liveness`],
       },
     ];
 }

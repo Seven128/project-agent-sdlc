@@ -113,7 +113,7 @@ test("Authority Revision separates user decisions from mechanically bounded repa
           "diagnose-revision",
           fixture.workdir,
         ]),
-      /structured_evidence_sensitivity_required/u,
+      /behavioral_semantic_counterfactual_required/u,
     );
 
     await writeFile(
@@ -203,6 +203,16 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
       '{"proved":true}\n',
     );
     await writeFile(path.join(fixture.root, "src", "extra.json"), "true\n");
+    await writeFile(
+      path.join(fixture.root, "tests", "global-oracle.mjs"),
+      `import { readFile } from "node:fs/promises";
+let stable=false;
+try { stable=JSON.parse(await readFile(new URL("../src/state.json",import.meta.url),"utf8")).first === true; } catch {}
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"global-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["runtime"]});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{stable,target_live:true},evidence_records:[target("global-proof"),delta("global-proof"),target("global-liveness")]}));
+`,
+    );
     const outcomeCheck = fixture.contract.outcomes[0].acceptance.checks[0];
     fixture.contract.outcomes[0].product.owner.path_globs.push(
       "artifacts/**",
@@ -215,21 +225,58 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
     fixture.contract.global.technical.constraints.push({
       key: "stable-runtime",
       statement: "Runtime behavior remains stable.",
+      applicability_refs: ["global-root-success"],
+    });
+    fixture.contract.global.applicability.push({
+      key: "global-root-success",
+      target_ref: "fixture-app",
+      journey_role: "success",
+      given_refs: ["fixture-loaded"],
+      when_refs: ["read-outcome"],
     });
     const globalCheck = structuredClone(outcomeCheck);
     globalCheck.key = "global-check";
-    globalCheck.positive_assertions[0].key = "global-proof";
-    globalCheck.positive_assertions[0].claims = ["constraint.stable-runtime"];
-    globalCheck.positive_assertions[0].observation = "result_copy";
-    globalCheck.runner.argv = ["first", "global-proof"];
+    globalCheck.runner.target = "tests/global-oracle.mjs";
+    globalCheck.runner.argv = [];
+    globalCheck.verification_inputs = [
+      "tests/global-oracle.mjs",
+      "tests/semantic-false.json",
+    ];
+    globalCheck.positive_assertions = [
+      {
+        key: "global-proof",
+        criterion: "Runtime behavior remains stable.",
+        claims: ["constraint.stable-runtime"],
+        applicability_ref: "global-root-success",
+        observation: "stable",
+        evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: "global-liveness",
+        criterion: "The target remains live under semantic mutation.",
+        claims: [],
+        observation: "target_live",
+        evidence_capabilities: ["target_runtime"],
+        operator: "equals",
+        expected: true,
+      },
+    ];
+    globalCheck.negative_assertions = [];
     fixture.contract.global.acceptance.checks.push(globalCheck);
     fixture.contract.global.acceptance.counterfactual_controls.push({
-      key: "remove-global-runtime",
+      key: "replace-global-runtime",
       binding_ref: "first.state-first",
       claims: ["constraint.stable-runtime"],
       check_key: "global-check",
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
       expected_assertion_failures: ["global-proof"],
+      preserved_assertions: ["global-liveness"],
     });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -356,20 +403,34 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
 const key = process.argv[2];
 let value = false;
 try { value = JSON.parse(await readFile(new URL(\`../src/\${key}.json\`, import.meta.url), "utf8")); } catch {}
-const assertionKey = key + "-result";
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:value},evidence_records:[{assertion_key:assertionKey,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"scoped-" + key + "-session",cold_start:true},{assertion_key:assertionKey,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]}]}));
+const claimAssertions = [key + "-result", key + "-requirement", key + "-obligation"];
+const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"scoped-" + key + "-session",cold_start:true});
+const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:value,requirement_result:value,obligation_result:value,target_live:true},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness")]}));
 `,
+    );
+    await writeFile(
+      path.join(fixture.root, "tests", "scoped-semantic-false.json"),
+      "false\n",
+    );
+    await writeFile(
+      path.join(fixture.root, "tests", "scoped-semantic-true.json"),
+      "true\n",
     );
     for (const outcome of fixture.contract.outcomes) {
       const check = outcome.acceptance.checks[0];
       check.runner.target = "tests/scoped-oracle.mjs";
-      check.verification_inputs = ["tests/scoped-oracle.mjs"];
+      check.verification_inputs = [
+        "tests/scoped-oracle.mjs",
+        `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`,
+      ];
       check.input_paths = [`src/${outcome.key}.json`];
       outcome.technical.bindings[0].target = `src/${outcome.key}.json`;
       outcome.technical.bindings[0].carrier_paths = [`src/${outcome.key}.json`];
-      outcome.acceptance.counterfactual_controls[0].mutation.paths = [
-        `src/${outcome.key}.json`,
-      ];
+      outcome.acceptance.counterfactual_controls[0].mutation.path =
+        `src/${outcome.key}.json`;
+      outcome.acceptance.counterfactual_controls[0].mutation.fixture_path =
+        `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`;
     }
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -415,13 +476,19 @@ test("Counterfactual failure is persisted as failing Check Progress", async () =
   try {
     await writeFile(
       path.join(fixture.root, "tests", "constant-oracle.mjs"),
-      `console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,result_copy:true,negative:false},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"constant-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]}]}));
+      `const claimAssertions=["first-result","first-requirement","first-obligation"];
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"constant-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,requirement_result:true,obligation_result:true,target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness")]}));
 `,
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
     check.runner.target = "tests/constant-oracle.mjs";
     check.runner.argv = [];
-    check.verification_inputs = ["tests/constant-oracle.mjs"];
+    check.verification_inputs = [
+      "tests/constant-oracle.mjs",
+      "tests/semantic-false.json",
+    ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

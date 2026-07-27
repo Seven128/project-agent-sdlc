@@ -1,4 +1,5 @@
 export * from "./long-task-contract-types.js";
+export * from "./long-task-control-types.js";
 export * from "./long-task-counterfactual-types.js";
 export * from "./long-task-authority-types.js";
 export * from "./long-task-evidence-adapter-types.js";

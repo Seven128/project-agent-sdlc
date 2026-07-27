@@ -73,8 +73,13 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
       binding_ref: "first.state-first",
       claims: ["constraint.global-state"],
       check_key: second.key,
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
       expected_assertion_failures: ["other-global-assertion"],
+      preserved_assertions: ["global-state-liveness"],
     });
     await assertPreflightAndCompileReject(
       otherGlobal,
@@ -311,7 +316,7 @@ test("redundant Global Counterfactual removal auto-adopts but binding_ref replac
     await writeContract(replaced.workdir, replaced.contract);
     await expectDecision(replaced, {
       field: "counterfactuals_removed",
-      includes: "GLOBAL:remove-global-state",
+      includes: "GLOBAL:replace-global-state",
       reason: "counterfactual_removed",
     });
   } finally {

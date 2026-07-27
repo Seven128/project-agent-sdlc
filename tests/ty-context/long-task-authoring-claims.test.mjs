@@ -7,6 +7,7 @@ import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import {
   addProductionControlBinding,
+  completeControl,
   createDeliveryFixture,
   deliveryContract,
   writeContract,
@@ -14,11 +15,10 @@ import {
 
 test("Requirement Claims require coverage on an allowed proof surface", () => {
   const uncovered = deliveryContract();
-  uncovered.outcomes[0].acceptance.checks[0].positive_assertions[0].claims =
-    ["result", "obligation.implement-first"];
+  uncovered.outcomes[0].acceptance.checks[0].positive_assertions.splice(1, 1);
   assert.throws(
     () => parse(uncovered),
-    /product_claim_uncovered:first\.requirement\.observe-first/u,
+    /product_claim_required_surfaces_missing:first:requirement\.observe-first:first-root-success:runtime_behavior/u,
   );
 
   const wrongSurface = deliveryContract();
@@ -33,18 +33,14 @@ test("Requirement Claims require coverage on an allowed proof surface", () => {
 
 test("Control Claims require a production target binding and target-local proof", () => {
   const legacy = deliveryContract();
-  legacy.outcomes[0].product.controls.push({
-    key: "submit",
-    surface: "settings",
-    location: "settings footer",
-    trigger: "",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  legacy.outcomes[0].product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "settings",
+      location: "settings footer",
+      trigger: "",
+    }),
+  );
   delete legacy.outcomes[0].product.surface_bindings;
   assert.throws(
     () => parse(legacy),
@@ -52,18 +48,14 @@ test("Control Claims require a production target binding and target-local proof"
   );
 
   const uncovered = deliveryContract();
-  uncovered.outcomes[0].product.controls.push({
-    key: "submit",
-    surface: "settings",
-    location: "settings footer",
-    trigger: "activate",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  uncovered.outcomes[0].product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "settings",
+      location: "settings footer",
+      trigger: "activate",
+    }),
+  );
   addProductionControlBinding(uncovered, {
     controlKey: "submit",
     surfaceRef: "settings",
@@ -75,18 +67,14 @@ test("Control Claims require a production target binding and target-local proof"
   );
 
   const proxy = deliveryContract();
-  proxy.outcomes[0].product.controls.push({
-    key: "submit",
-    surface: "settings",
-    location: "settings footer",
-    trigger: "click",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  proxy.outcomes[0].product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "settings",
+      location: "settings footer",
+      trigger: "click",
+    }),
+  );
   proxy.task.execution_targets.push({
     key: "fixture-browser",
     description: "The browser support surface.",
@@ -106,26 +94,19 @@ test("Control Claims require a production target binding and target-local proof"
   );
 
   const covered = deliveryContract();
-  covered.outcomes[0].product.controls.push({
-    key: "submit",
-    surface: "settings",
-    location: "settings footer",
-    trigger: "click",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  covered.outcomes[0].product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "settings",
+      location: "settings footer",
+      trigger: "click",
+    }),
+  );
   addProductionControlBinding(covered, {
     controlKey: "submit",
     surfaceRef: "settings",
-    rootClaimRef: "control.submit.location",
+    rootClaimRef: "control.submit.trigger",
   });
-  covered.outcomes[0].acceptance.checks[0].positive_assertions[0].claims.push(
-    "control.submit.trigger",
-  );
   assert.doesNotThrow(() => parse(covered));
 });
 
@@ -143,7 +124,7 @@ test("Source items map to Requirements or named Acceptance Assertions, never Out
   const acceptance = deliveryContract();
   acceptance.source_claims[0].disposition = {
     type: "acceptance",
-    refs: ["first.first-check.first-result"],
+    refs: ["first.first-check.first-requirement"],
   };
   assert.doesNotThrow(() => parse(acceptance));
 
@@ -198,6 +179,7 @@ test("one Check cannot duplicate an Observation or use playwright.passed for fin
     key: "duplicate-observation",
     criterion: "A second assertion reuses the same broad observation.",
     claims: ["result"],
+    applicability_ref: "first-root-success",
     observation: check.positive_assertions[0].observation,
     evidence_capabilities: ["state_delta"],
     operator: "equals",
@@ -248,7 +230,9 @@ test("Compile validates real Source anchors and blocks decisions", async () => {
     };
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=decision -->
 The first outcome must be observable.

@@ -11,10 +11,17 @@ test("every Delivery Contract authority structure has a complete field policy re
     task: contract.task,
     source_claim: contract.source_claims[0],
     risk: contract.risk,
+    global: contract.global,
     global_product: contract.global.product,
     global_technical: contract.global.technical,
     global_acceptance: contract.global.acceptance,
     outcome,
+    claim_applicability: outcome.applicability[0],
+    applicable_statement: {
+      key: "declared-fact",
+      statement: "The declared fact applies.",
+      applicability_refs: ["first-root-success"],
+    },
     outcome_product: outcome.product,
     owner: outcome.product.owner,
     requirement: outcome.product.requirements[0],
@@ -42,6 +49,30 @@ test("every Delivery Contract authority structure has a complete field policy re
       permission: "requires edit permission",
       feedback: "feedback",
       accessibility: "named button with keyboard activation",
+      field_coverage: [
+        {
+          fields: ["surface"],
+          state: "specified",
+          applicability_refs: ["first-root-success"],
+        },
+      ],
+    },
+    control_field_coverage: {
+      fields: ["empty_state"],
+      state: "not_applicable",
+      statement: "An empty state does not apply.",
+      applicability_refs: ["first-root-success"],
+    },
+    control_relation_closure: {
+      state: "specified",
+      statement: "Declared Control relations are complete.",
+    },
+    control_relation: {
+      key: "save-updates-status",
+      statement: "Saving updates the shared status Control.",
+      applicability_refs: ["first-root-success"],
+      control_refs: ["save", "status"],
+      required_proof_surfaces: ["ui_browser"],
     },
     surface_binding: {
       key: "settings-native",
@@ -68,6 +99,10 @@ test("every Delivery Contract authority structure has a complete field policy re
       ],
       actual_artifact_path: "artifacts/settings-actual.png",
       comparison_artifact_path: "artifacts/settings-diff.json",
+    },
+    design_verification_binding: {
+      method: "layout_geometry",
+      assertion_ref: "settings-layout",
     },
     design_blocker: {
       key: "save-validation",
@@ -110,6 +145,7 @@ test("every Delivery Contract authority structure has a complete field policy re
       check_key: check.key,
       mutation: { type: "remove_paths", paths: ["src/state.json"] },
       expected_assertion_failures: ["first-result"],
+      preserved_assertions: ["first-liveness"],
     },
     global_counterfactual: {
       key: "global-counterfactual",
@@ -118,6 +154,7 @@ test("every Delivery Contract authority structure has a complete field policy re
       check_key: "global-check",
       mutation: { type: "remove_paths", paths: ["src/state.json"] },
       expected_assertion_failures: ["global-assertion"],
+      preserved_assertions: ["global-liveness"],
     },
   };
   assert.deepEqual(

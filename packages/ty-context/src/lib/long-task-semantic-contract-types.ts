@@ -3,6 +3,10 @@ export interface KeyedStatementV2 {
   statement: string;
 }
 
+export interface ApplicableKeyedStatementV2 extends KeyedStatementV2 {
+  applicability_refs: string[];
+}
+
 export type ExternalConfirmationKindV2 =
   | "functional_prerequisite"
   | "field_validation"
@@ -42,6 +46,14 @@ export interface DeliveryStageV2 {
 
 export type DeliveryJourneyRoleV2 =
   "success" | "degradation" | "recovery" | "stage_gate" | "conformance";
+
+export interface ClaimApplicabilityV2 {
+  key: string;
+  target_ref: string;
+  journey_role: DeliveryJourneyRoleV2;
+  given_refs: string[];
+  when_refs: string[];
+}
 
 export type EvidenceCapabilityV2 =
   | "presence"

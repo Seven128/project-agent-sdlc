@@ -71,6 +71,7 @@ export async function evaluateCheckEvidence(
                 assertion_key: result.key,
                 polarity: result.polarity,
                 proof_surface: check.proof_surface,
+                applicability_ref: result.applicability_ref ?? null,
               }))
             : [],
         )
@@ -87,6 +88,7 @@ export async function evaluateCheckEvidence(
         assertion_key: null,
         polarity: "population" as const,
         proof_surface: check.proof_surface,
+        applicability_ref: null,
       })),
     );
   return {

@@ -11,20 +11,28 @@ export function configureMixedEvidenceContract(contract) {
     root_entrypoint: "/",
   });
   const browser = contract.outcomes[0];
-  browser.product.requirements[0].required_proof_surfaces = ["ui_browser"];
-  browser.technical.obligations[0].required_proof_surfaces = [
-    "runtime_behavior",
-    "ui_browser",
-  ];
+  browser.applicability.push({
+    key: "first-browser-success",
+    target_ref: "fixture-browser",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
+  });
+  browser.product.requirements.push(
+    {
+      key: "ui-acceptance",
+      statement: "The UI acceptance requirement is observable.",
+      required_proof_surfaces: ["ui_browser"],
+      applicability_refs: ["first-browser-success"],
+    },
+    {
+      key: "ui-recovery",
+      statement: "The UI recovery requirement is observable.",
+      required_proof_surfaces: ["ui_browser"],
+      applicability_refs: ["first-browser-success"],
+    },
+  );
   const stageGate = browser.acceptance.checks[0];
-  stageGate.positive_assertions[0].claims = [
-    "result",
-    "obligation.implement-first",
-  ];
-  browser.acceptance.counterfactual_controls[0].claims = [
-    "result",
-    "obligation.implement-first",
-  ];
   const ui = structuredClone(stageGate);
   ui.key = "ui-check";
   ui.journey_roles = ["success"];
@@ -43,17 +51,17 @@ export function configureMixedEvidenceContract(contract) {
     retry_policy: "none",
     idempotent: false,
   };
-  ui.verification_inputs = ["tests/ui.spec.ts"];
+  ui.verification_inputs = [
+    "tests/ui.spec.ts",
+    "tests/semantic-false.json",
+  ];
   ui.artifact_globs = [];
   ui.positive_assertions = [
     {
       key: "ui-acceptance",
       criterion: "The UI acceptance case passes.",
-      claims: [
-        "result",
-        "requirement.observe-first",
-        "obligation.implement-first",
-      ],
+      claims: ["requirement.ui-acceptance"],
+      applicability_ref: "first-browser-success",
       observation: "playwright.case.ui-acceptance.passed",
       evidence_capabilities: ["interaction_trace", "target_runtime"],
       operator: "equals",
@@ -62,30 +70,91 @@ export function configureMixedEvidenceContract(contract) {
     {
       key: "ui-recovery",
       criterion: "The UI recovery case passes.",
-      claims: ["requirement.observe-first"],
+      claims: ["requirement.ui-recovery"],
+      applicability_ref: "first-browser-success",
       observation: "playwright.case.ui-recovery.passed",
-      evidence_capabilities: ["interaction_trace"],
+      evidence_capabilities: ["interaction_trace", "target_runtime"],
+      operator: "equals",
+      expected: true,
+    },
+    {
+      key: "ui-liveness",
+      criterion: "The browser target remains live under semantic mutation.",
+      claims: [],
+      observation: "playwright.case.ui-liveness.passed",
+      evidence_capabilities: ["target_runtime"],
       operator: "equals",
       expected: true,
     },
   ];
   browser.acceptance.checks.push(ui);
+  browser.acceptance.counterfactual_controls.push({
+    key: "replace-ui-semantics",
+    binding_key: "state-first",
+    claims: ["requirement.ui-acceptance", "requirement.ui-recovery"],
+    check_key: "ui-check",
+    mutation: {
+      type: "replace_file",
+      path: "src/state.json",
+      fixture_path: "tests/semantic-false.json",
+    },
+    expected_assertion_failures: ["ui-acceptance", "ui-recovery"],
+    preserved_assertions: ["ui-liveness"],
+  });
 
   const structured = contract.outcomes[1];
-  structured.acceptance.checks[0].runner.target =
-    "tests/constant-oracle.mjs";
-  structured.acceptance.checks[0].verification_inputs = [
+  const structuredCheck = structured.acceptance.checks[0];
+  structuredCheck.runner.target = "tests/constant-oracle.mjs";
+  structuredCheck.verification_inputs = [
     "tests/constant-oracle.mjs",
+    "tests/semantic-false.json",
   ];
-  structured.acceptance.checks[0].artifact_globs = [];
-  structured.acceptance.checks[0].positive_assertions[0].key =
-    "structured-acceptance";
-  structured.acceptance.checks[0].runner.argv = [
+  structuredCheck.artifact_globs = [];
+  structuredCheck.runner.argv = [
     "second",
     "structured-acceptance",
   ];
-  structured.acceptance.checks[0].positive_assertions[0].criterion =
-    "The structured outcome is observable and implemented.";
+  structuredCheck.positive_assertions = [
+    {
+      key: "structured-result",
+      criterion: "The structured overall result is observable.",
+      claims: ["result"],
+      applicability_ref: "second-root-success",
+      observation: "result",
+      evidence_capabilities: ["target_runtime", "state_delta"],
+      operator: "equals",
+      expected: true,
+    },
+    {
+      key: "structured-acceptance",
+      criterion: "The structured outcome is observable and implemented.",
+      claims: ["requirement.observe-second"],
+      applicability_ref: "second-root-success",
+      observation: "requirement_result",
+      evidence_capabilities: ["target_runtime", "state_delta"],
+      operator: "equals",
+      expected: true,
+    },
+    {
+      key: "structured-obligation",
+      criterion: "The structured implementation obligation is satisfied.",
+      claims: ["obligation.implement-second"],
+      applicability_ref: "second-root-success",
+      observation: "obligation_result",
+      evidence_capabilities: ["target_runtime", "state_delta"],
+      operator: "equals",
+      expected: true,
+    },
+    {
+      key: "structured-liveness",
+      criterion: "The structured target remains live under semantic mutation.",
+      claims: [],
+      observation: "target_live",
+      evidence_capabilities: ["target_runtime"],
+      operator: "equals",
+      expected: true,
+    },
+  ];
   structured.acceptance.counterfactual_controls = [];
 
   contract.source_claims[0].statement = "Implement first";
@@ -93,11 +162,29 @@ export function configureMixedEvidenceContract(contract) {
     "first.obligation.implement-first",
   ];
   contract.source_claims.push(
+    {
+      key: "first-ui-requirement",
+      source_ref: "source.md#fixture-source",
+      statement: "The UI acceptance requirement is observable.",
+      disposition: {
+        type: "claim",
+        refs: ["first.requirement.ui-acceptance"],
+      },
+    },
     sourceAcceptance(
       "first-ui-acceptance",
       "The UI acceptance case passes.",
       "first.ui-check.ui-acceptance",
     ),
+    {
+      key: "first-ui-recovery-requirement",
+      source_ref: "source.md#fixture-source",
+      statement: "The UI recovery requirement is observable.",
+      disposition: {
+        type: "claim",
+        refs: ["first.requirement.ui-recovery"],
+      },
+    },
     sourceAcceptance(
       "first-ui-recovery",
       "The UI recovery case passes.",
@@ -133,14 +220,24 @@ export async function writeSource(
     : "The first outcome must be observable.";
   await writeFile(
     path.join(root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${firstStatement}
 <!-- ty-source-item:end -->
 
+<!-- ty-source-item:start key=first-ui-requirement kind=requirement -->
+The UI acceptance requirement is observable.
+<!-- ty-source-item:end -->
+
 <!-- ty-source-item:start key=first-ui-acceptance kind=acceptance -->
 The UI acceptance case passes.
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=first-ui-recovery-requirement kind=requirement -->
+The UI recovery requirement is observable.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=first-ui-recovery kind=acceptance -->
@@ -165,12 +262,19 @@ export async function createFakePlaywrightBin() {
     script,
     `import { readFile } from "node:fs/promises";
 const mode = JSON.parse(await readFile("src/ui-mode.json", "utf8"));
+const state = JSON.parse(await readFile("src/state.json", "utf8"));
 const cases = mode === "multiple"
-  ? ["[ac:ui-acceptance] [ac:ui-recovery] copied proof"]
-  : ["[ac:ui-acceptance] acceptance", "[ac:ui-recovery] recovery"];
+  ? ["[ac:ui-acceptance] [ac:ui-recovery] copied proof", "[ac:ui-liveness] liveness"]
+  : ["[ac:ui-acceptance] acceptance", "[ac:ui-recovery] recovery", "[ac:ui-liveness] liveness"];
 const steps = [{title:"[given:fixture-loaded]"},{title:"[action:read-outcome]"}];
-const specs = cases.map((title) => ({title, tests:[{projectId:"default",status:"expected",results:[{status:"passed",steps}]}]}));
-console.log(JSON.stringify({stats:{expected:cases.length,unexpected:0,skipped:0,flaky:0},suites:[{specs}]}));
+const specs = cases.map((title) => {
+  const liveness = title.includes("ui-liveness");
+  const passed = liveness || state.first === true;
+  return {title, tests:[{projectId:"default",status:passed?"expected":"unexpected",results:[{status:passed?"passed":"failed",steps}]}]};
+});
+const unexpected = specs.filter((spec) => spec.tests[0].status === "unexpected").length;
+console.log(JSON.stringify({stats:{expected:specs.length-unexpected,unexpected,skipped:0,flaky:0},errors:[],suites:[{specs}]}));
+process.exitCode = unexpected ? 1 : 0;
 `,
   );
   await chmod(script, 0o755);

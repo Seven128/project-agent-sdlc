@@ -6,8 +6,11 @@ import type {
   CounterfactualControlV2,
   GlobalCounterfactualControlV2,
 } from "./long-task-counterfactual-types.js";
+import type { DeliveryControlFieldNameV2 } from "./long-task-control-types.js";
 import type {
+  ApplicableKeyedStatementV2,
   CheckExecutionTargetV2,
+  ClaimApplicabilityV2,
   DeliveryJourneyRoleV2,
   DeliveryScenarioV2,
   DeliveryStageV2,
@@ -85,6 +88,7 @@ interface DeliveryAssertionBaseV2 {
   key: string;
   criterion?: string;
   claims: string[];
+  applicability_ref?: string;
   observation: string;
   evidence_capabilities: EvidenceCapabilityV2[];
 }
@@ -161,9 +165,39 @@ export interface DeliveryControlV2 {
   permission: string;
   feedback: string;
   accessibility: string;
+  field_coverage: DeliveryControlFieldCoverageV2[];
 }
 
-interface DeliveryRequirementV2 extends KeyedStatementV2 {
+export type DeliveryControlFieldCoverageV2 =
+  | {
+      fields: DeliveryControlFieldNameV2[];
+      state: "specified";
+      applicability_refs: string[];
+    }
+  | {
+      fields: DeliveryControlFieldNameV2[];
+      state: "not_applicable";
+      statement: string;
+      applicability_refs: string[];
+    }
+  | {
+      fields: DeliveryControlFieldNameV2[];
+      state: "unresolved";
+      statement: string;
+      applicability_refs: string[];
+    };
+
+export interface DeliveryControlRelationV2 extends ApplicableKeyedStatementV2 {
+  control_refs: string[];
+  required_proof_surfaces: ProofSurface[];
+}
+
+export interface DeliveryControlRelationClosureV2 {
+  state: "specified" | "not_applicable" | "unresolved";
+  statement: string;
+}
+
+interface DeliveryRequirementV2 extends ApplicableKeyedStatementV2 {
   required_proof_surfaces: ProofSurface[];
 }
 
@@ -173,7 +207,7 @@ export interface DeliveryOwnerV2 {
   path_globs: string[];
 }
 
-export interface DeliveryObligationV2 extends KeyedStatementV2 {
+export interface DeliveryObligationV2 extends ApplicableKeyedStatementV2 {
   required_proof_surfaces: ProofSurface[];
 }
 
@@ -208,16 +242,20 @@ export interface DeliveryOutcomeV2 {
   title: string;
   stage: string;
   depends_on: string[];
+  applicability: ClaimApplicabilityV2[];
   product: {
     observable_result: string;
+    result_applicability_refs: string[];
     success_path_required: boolean;
     degradation_path_required: boolean;
     owner: DeliveryOwnerV2;
     requirements: DeliveryRequirementV2[];
     owner_surfaces: string[];
     controls: DeliveryControlV2[];
+    control_relation_closure: DeliveryControlRelationClosureV2;
+    control_relations: DeliveryControlRelationV2[];
     surface_bindings: DeliverySurfaceBindingV2[];
-    non_completing_outcomes: KeyedStatementV2[];
+    non_completing_outcomes: ApplicableKeyedStatementV2[];
   };
   technical: {
     obligations: DeliveryObligationV2[];
@@ -225,7 +263,7 @@ export interface DeliveryOutcomeV2 {
     allowed_support_paths: string[];
     forbidden_paths: string[];
     bindings: DeliveryBindingV2[];
-    forbidden_shortcuts: KeyedStatementV2[];
+    forbidden_shortcuts: ApplicableKeyedStatementV2[];
     rollback_and_recovery: RollbackRecoveryV2 | null;
   };
   acceptance: {
@@ -254,11 +292,12 @@ export interface DeliveryContractV2 {
     facts: LongTaskRiskFacts;
   };
   global: {
-    product: { non_goals: KeyedStatementV2[] };
+    applicability: ClaimApplicabilityV2[];
+    product: { non_goals: ApplicableKeyedStatementV2[] };
     technical: {
-      constraints: KeyedStatementV2[];
+      constraints: ApplicableKeyedStatementV2[];
       forbidden_paths: KeyedPathV2[];
-      forbidden_shortcuts: KeyedStatementV2[];
+      forbidden_shortcuts: ApplicableKeyedStatementV2[];
     };
     acceptance: {
       checks: DeliveryCheckV2[];

@@ -88,7 +88,7 @@ test("Risk marker requires fact/outcome and rejects those attributes elsewhere",
       fixture.contract.risk.facts.critical_user_path = ["first"];
       await writeFile(
         path.join(fixture.root, "source.md"),
-        `# Risk\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n`,
+        `${sourceHeading("Risk", "risk-heading")}\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n`,
       );
       await assertPreflightAndCompileReject(fixture, scenario.code);
     } finally {
@@ -130,7 +130,7 @@ test("ambiguous Risk remains decision_required and blocks Compile", async () => 
     };
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Risk decision
+      `${sourceHeading("Risk decision", "risk-decision-heading")}
 
 <!-- ty-source-item:start key=risk-decision kind=decision -->
 Choose the exact Risk Fact and affected Outcome.
@@ -200,7 +200,7 @@ async function configureRiskSource(
   fixture.contract.source_claims[0] = riskSourceClaim(dispositionRef);
   await writeFile(
     path.join(fixture.root, "source.md"),
-    `# Risk
+    `${sourceHeading("Risk", "risk-heading")}
 
 <!-- ty-source-item:start key=risk-source kind=risk_fact fact=${markerFact} outcome=${markerOutcome} -->
 Risk text.
@@ -217,6 +217,12 @@ function riskSourceClaim(reference) {
     statement: "Risk text.",
     disposition: { type: "risk_fact", refs: [reference] },
   };
+}
+
+function sourceHeading(title, key) {
+  return `<!-- ty-source-background:start key=${key} reason=markdown-structure -->
+# ${title}
+<!-- ty-source-background:end -->`;
 }
 
 async function assertPreflightAndCompileReject(fixture, code) {

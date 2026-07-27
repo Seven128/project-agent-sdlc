@@ -57,17 +57,21 @@ export interface ProductClaimV2 {
     | "result"
     | "requirement"
     | "control"
+    | "control_relation"
     | "non_completing"
     | "obligation"
     | "forbidden_shortcut";
   required_proof_surfaces: ProofSurface[];
+  required_polarity: "positive" | "negative";
+  applicability_refs: string[];
 }
 
 export interface GlobalClaimV2 {
   id: string;
   local_key: string;
   kind: "global_non_goal" | "global_constraint" | "global_forbidden_shortcut";
-  required_polarity: "any" | "negative";
+  required_polarity: "positive" | "negative";
+  applicability_refs: string[];
 }
 
 export interface ClaimProofV2 {
@@ -75,6 +79,7 @@ export interface ClaimProofV2 {
   assertion_key: string | null;
   polarity: "positive" | "negative" | "population" | "counterfactual";
   proof_surface: ProofSurface;
+  applicability_ref: string | null;
 }
 
 export interface ClaimCoverageSummaryV2 {
@@ -83,7 +88,12 @@ export interface ClaimCoverageSummaryV2 {
   uncovered_claims: string[];
   claims_by_global: Record<
     string,
-    { covered: boolean; proofs: ClaimProofV2[] }
+    {
+      covered: boolean;
+      applicability_refs: string[];
+      uncovered_applicability_refs: string[];
+      proofs: ClaimProofV2[];
+    }
   >;
   claims_by_outcome: Record<
     string,
@@ -94,6 +104,8 @@ export interface ClaimCoverageSummaryV2 {
         covered_surfaces: ProofSurface[];
         missing_surfaces: ProofSurface[];
         covered: boolean;
+        applicability_refs: string[];
+        uncovered_applicability_refs: string[];
         proofs: ClaimProofV2[];
       }
     >
@@ -179,6 +191,7 @@ export interface AssertionResultV2 {
   polarity: "positive" | "negative";
   passed: boolean;
   claims: string[];
+  applicability_ref?: string;
   observation: string;
   evidence_capabilities: EvidenceCapabilityV2[];
   evidence_complete: boolean;

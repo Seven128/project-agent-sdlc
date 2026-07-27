@@ -104,14 +104,12 @@ test("strict risk downgrade remains rejected after cache deletion", async () => 
     check.negative_assertions.push({
       key: "negative-floor",
       criterion: "The strict negative floor remains satisfied.",
-      claims: ["result", "requirement.observe-first"],
+      claims: [],
       observation: "result_copy",
       evidence_capabilities: ["state_delta"],
       operator: "not_equals",
       expected: false,
     });
-    outcome.acceptance.counterfactual_controls[0]
-      .expected_assertion_failures.push("negative-floor");
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

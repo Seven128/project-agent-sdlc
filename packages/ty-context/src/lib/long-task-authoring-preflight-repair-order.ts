@@ -10,6 +10,7 @@ const STRUCTURAL_BLOCKERS = new Set([
 
 const COVERAGE_FOLLOW_UPS = new Set([
   "product_claim_uncovered",
+  "product_claim_required_surfaces_missing",
   "global_claim_uncovered",
 ]);
 
@@ -105,6 +106,14 @@ function repairEntity(
       return scopedClaim(refs, "forbidden_shortcut");
     case "product_claim_uncovered":
       return refs.length === 1 ? refs[0] : null;
+    case "product_claim_required_surfaces_missing":
+      return (
+        refs.find((ref) =>
+          /^[a-z0-9][a-z0-9-]*\.(?:result|requirement\.|control\.|control_relation\.|non_completing\.|obligation\.|forbidden_shortcut\.)/u.test(
+            ref,
+          ),
+        ) ?? null
+      );
     case "global_claim_uncovered":
       return refs.length === 1 ? refs[0] : null;
     default:

@@ -6,6 +6,7 @@ import YAML from "yaml";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
   addProductionControlBinding,
+  completeControl,
   createDeliveryFixture,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -135,7 +136,7 @@ test("preflight rejects invalid Context, missing runner path and Outcome without
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /product_claim_uncovered/,
+      /product_claim_required_surfaces_missing/,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -238,9 +239,7 @@ test("Long-Task Compile binds every declared design verification method to an in
     const assertion = outcome.acceptance.checks[0].positive_assertions.find(
       (item) => item.key === binding.assertion_ref,
     );
-    assertion.claims = assertion.claims.filter(
-      (item) => item !== "requirement.design-handoff",
-    );
+    assertion.claims = ["result"];
     await writeContract(missingClaim.workdir, missingClaim.contract);
     await assert.rejects(
       compileDeliveryContract(missingClaim.workdir, missingClaim.root, {
@@ -352,7 +351,7 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
     check.negative_assertions.push({
       key: "result-not-false",
       criterion: "The result remains comparable in the negative scenario.",
-      claims: ["result"],
+      claims: [],
       observation: "result_not_false",
       evidence_capabilities: ["state_delta"],
       operator: "not_equals",
@@ -363,8 +362,13 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
       binding_key: "state-first",
       claims: ["obligation.implement-first"],
       check_key: check.key,
-      mutation: { type: "remove_paths", paths: ["src/missing.json"] },
-      expected_assertion_failures: ["first-result"],
+      mutation: {
+        type: "replace_file",
+        path: "src/missing.json",
+        fixture_path: "tests/semantic-false.json",
+      },
+      expected_assertion_failures: ["first-obligation"],
+      preserved_assertions: ["first-liveness"],
     });
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
@@ -373,9 +377,8 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
       }),
       /counterfactual_path_outside_binding:first:missing-carrier:src\/missing\.json/,
     );
-    outcome.acceptance.counterfactual_controls[0].mutation.paths = [
-      "tests/oracle.mjs",
-    ];
+    outcome.acceptance.counterfactual_controls[0].mutation.path =
+      "tests/oracle.mjs";
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
       compileDeliveryContract(fixture.workdir, fixture.root, {
@@ -438,36 +441,17 @@ async function attachDesignResourceHandoff(fixture) {
     statement:
       "The main surface must conform to every declared design-resource dimension.",
     required_proof_surfaces: ["runtime_behavior"],
+    applicability_refs: ["first-root-success"],
   });
-  outcome.product.controls.push({
-    key: "main",
-    surface: "fixture-main",
-    region: "",
-    location: "main content",
-    control_type: "",
-    label_content: "",
-    user_task: "",
-    visibility: "",
-    availability: "",
-    trigger: "",
-    input: "",
-    validation: "",
-    default_value: "",
-    interaction: "",
-    navigation_result: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    recovery: "",
-    permission: "",
-    feedback: "",
-    accessibility: "",
-  });
+  outcome.product.controls.push(
+    completeControl({
+      key: "main",
+      surface: "fixture-main",
+      location: "main content",
+    }),
+  );
   check.verification_inputs.push(DESIGN_HANDOFF_PATH, ...DESIGN_RESOURCE_PATHS);
   check.artifact_globs = ["artifacts/**"];
-  check.positive_assertions[0].claims.push("requirement.design-handoff");
-  check.positive_assertions[0].evidence_capabilities.push("design_conformance");
   const verificationMethods = [
     ...new Set(handoff.coverage.flatMap((row) => row.verification_methods)),
   ];
@@ -486,6 +470,8 @@ async function attachDesignResourceHandoff(fixture) {
       ...new Set([...assertion.evidence_capabilities, ...capabilities]),
     ];
     check.positive_assertions.push(assertion);
+    outcome.acceptance.counterfactual_controls[0]
+      .expected_assertion_failures.push(assertion.key);
   }
   outcome.acceptance.counterfactual_controls[0].claims.push(
     "requirement.design-handoff",
@@ -503,7 +489,7 @@ async function attachDesignResourceHandoff(fixture) {
         condition_keys: [DESIGN_CONDITION_KEY],
         claim_refs: ["control.main.location"],
         conformance_check_ref: "first-check",
-        conformance_assertion_ref: "first-result",
+        conformance_assertion_ref: "main-location-proof",
         verification_method_bindings: verificationMethods.map((method) => ({
           method,
           assertion_ref: `design-${method.replaceAll("_", "-")}`,
@@ -513,6 +499,10 @@ async function attachDesignResourceHandoff(fixture) {
       },
     ],
   });
+  const rootAssertion = check.positive_assertions.find(
+    (assertion) => assertion.key === "main-location-proof",
+  );
+  rootAssertion.evidence_capabilities.push("design_conformance");
   fixture.contract.task.source_paths.push(DESIGN_HANDOFF_PATH);
   fixture.contract.source_claims.push({
     key: DESIGN_SOURCE_ITEM_KEY,

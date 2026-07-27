@@ -81,6 +81,28 @@
       "required": ["key", "statement"],
       "properties": { "key": { "$ref": "#/$defs/key" }, "statement": { "$ref": "#/$defs/nonEmpty" } }
     },
+    "applicableStatement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "statement", "applicability_refs"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "statement": { "$ref": "#/$defs/nonEmpty" },
+        "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } }
+      }
+    },
+    "claimApplicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "target_ref", "journey_role", "given_refs", "when_refs"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "target_ref": { "$ref": "#/$defs/key" },
+        "journey_role": { "enum": ["success", "degradation", "recovery", "stage_gate", "conformance"] },
+        "given_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } },
+        "when_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } }
+      }
+    },
     "keyedPath": {
       "type": "object",
       "additionalProperties": false,
@@ -134,14 +156,15 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "product": { "type": "object", "additionalProperties": false, "properties": { "non_goals": { "type": "array", "items": { "$ref": "#/$defs/keyedStatement" }, "default": [] } }, "default": {} },
+        "applicability": { "type": "array", "items": { "$ref": "#/$defs/claimApplicability" }, "default": [] },
+        "product": { "type": "object", "additionalProperties": false, "properties": { "non_goals": { "type": "array", "items": { "$ref": "#/$defs/applicableStatement" }, "default": [] } }, "default": {} },
         "technical": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "constraints": { "type": "array", "items": { "$ref": "#/$defs/keyedStatement" }, "default": [] },
+            "constraints": { "type": "array", "items": { "$ref": "#/$defs/applicableStatement" }, "default": [] },
             "forbidden_paths": { "type": "array", "items": { "$ref": "#/$defs/keyedPath" }, "default": [] },
-            "forbidden_shortcuts": { "type": "array", "items": { "$ref": "#/$defs/keyedStatement" }, "default": [] }
+            "forbidden_shortcuts": { "type": "array", "items": { "$ref": "#/$defs/applicableStatement" }, "default": [] }
           },
           "default": {}
         },
@@ -160,12 +183,13 @@
     "outcome": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "title", "stage", "product", "technical", "acceptance"],
+      "required": ["key", "title", "stage", "applicability", "product", "technical", "acceptance"],
       "properties": {
         "key": { "$ref": "#/$defs/key" },
         "title": { "$ref": "#/$defs/nonEmpty" },
         "stage": { "$ref": "#/$defs/key" },
         "depends_on": { "$ref": "#/$defs/keys", "default": [] },
+        "applicability": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/claimApplicability" } },
         "product": { "$ref": "#/$defs/product" },
         "technical": { "$ref": "#/$defs/technical" },
         "acceptance": { "$ref": "#/$defs/acceptance" }
@@ -174,17 +198,20 @@
     "product": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["observable_result", "success_path_required", "degradation_path_required", "owner"],
+      "required": ["observable_result", "result_applicability_refs", "success_path_required", "degradation_path_required", "owner", "control_relation_closure"],
       "properties": {
         "observable_result": { "$ref": "#/$defs/nonEmpty" },
+        "result_applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } },
         "success_path_required": { "type": "boolean" },
         "degradation_path_required": { "type": "boolean" },
         "owner": { "type": "object", "additionalProperties": false, "required": ["label", "context_refs", "path_globs"], "properties": { "label": { "$ref": "#/$defs/nonEmpty" }, "context_refs": { "$ref": "#/$defs/nonEmptyStrings" }, "path_globs": { "$ref": "#/$defs/nonEmptyStrings" } } },
         "requirements": { "type": "array", "items": { "$ref": "#/$defs/requirement" }, "default": [] },
         "owner_surfaces": { "$ref": "#/$defs/nonEmptyStrings", "default": [] },
         "controls": { "type": "array", "items": { "$ref": "#/$defs/control" }, "default": [] },
+        "control_relation_closure": { "$ref": "#/$defs/controlRelationClosure" },
+        "control_relations": { "type": "array", "items": { "$ref": "#/$defs/controlRelation" }, "default": [] },
         "surface_bindings": { "type": "array", "items": { "$ref": "#/$defs/surfaceBinding" }, "default": [] },
-        "non_completing_outcomes": { "type": "array", "items": { "$ref": "#/$defs/keyedStatement" }, "default": [] }
+        "non_completing_outcomes": { "type": "array", "items": { "$ref": "#/$defs/applicableStatement" }, "default": [] }
       },
       "allOf": [
         {
@@ -196,14 +223,45 @@
     "requirement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "statement", "required_proof_surfaces"],
-      "properties": { "key": { "$ref": "#/$defs/key" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "required_proof_surfaces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/proofSurface" } } }
+      "required": ["key", "statement", "required_proof_surfaces", "applicability_refs"],
+      "properties": { "key": { "$ref": "#/$defs/key" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "required_proof_surfaces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/proofSurface" } }, "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } } }
     },
     "control": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "location"],
-      "properties": { "key": { "$ref": "#/$defs/key" }, "surface": { "type": "string", "default": "" }, "region": { "type": "string", "default": "" }, "location": { "$ref": "#/$defs/nonEmpty" }, "control_type": { "type": "string", "default": "" }, "label_content": { "type": "string", "default": "" }, "user_task": { "type": "string", "default": "" }, "visibility": { "type": "string", "default": "" }, "availability": { "type": "string", "default": "" }, "trigger": { "type": "string", "default": "" }, "input": { "type": "string", "default": "" }, "validation": { "type": "string", "default": "" }, "default_value": { "type": "string", "default": "" }, "interaction": { "type": "string", "default": "" }, "navigation_result": { "type": "string", "default": "" }, "loading_state": { "type": "string", "default": "" }, "empty_state": { "type": "string", "default": "" }, "success_state": { "type": "string", "default": "" }, "failure_state": { "type": "string", "default": "" }, "recovery": { "type": "string", "default": "" }, "permission": { "type": "string", "default": "" }, "feedback": { "type": "string", "default": "" }, "accessibility": { "type": "string", "default": "" } }
+      "required": ["key", "field_coverage"],
+      "properties": { "key": { "$ref": "#/$defs/key" }, "surface": { "type": "string", "default": "" }, "region": { "type": "string", "default": "" }, "location": { "type": "string", "default": "" }, "control_type": { "type": "string", "default": "" }, "label_content": { "type": "string", "default": "" }, "user_task": { "type": "string", "default": "" }, "visibility": { "type": "string", "default": "" }, "availability": { "type": "string", "default": "" }, "trigger": { "type": "string", "default": "" }, "input": { "type": "string", "default": "" }, "validation": { "type": "string", "default": "" }, "default_value": { "type": "string", "default": "" }, "interaction": { "type": "string", "default": "" }, "navigation_result": { "type": "string", "default": "" }, "loading_state": { "type": "string", "default": "" }, "empty_state": { "type": "string", "default": "" }, "success_state": { "type": "string", "default": "" }, "failure_state": { "type": "string", "default": "" }, "recovery": { "type": "string", "default": "" }, "permission": { "type": "string", "default": "" }, "feedback": { "type": "string", "default": "" }, "accessibility": { "type": "string", "default": "" }, "field_coverage": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/controlFieldCoverage" } } }
+    },
+    "controlField": {
+      "enum": ["surface", "region", "location", "control_type", "label_content", "user_task", "visibility", "availability", "trigger", "input", "validation", "default_value", "interaction", "navigation_result", "loading_state", "empty_state", "success_state", "failure_state", "recovery", "permission", "feedback", "accessibility"]
+    },
+    "controlFieldCoverage": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["fields", "state", "applicability_refs"], "properties": { "fields": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/controlField" } }, "state": { "const": "specified" }, "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } } } },
+        { "type": "object", "additionalProperties": false, "required": ["fields", "state", "statement", "applicability_refs"], "properties": { "fields": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/controlField" } }, "state": { "const": "not_applicable" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } } } },
+        { "type": "object", "additionalProperties": false, "required": ["fields", "state", "statement"], "properties": { "fields": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/controlField" } }, "state": { "const": "unresolved" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "applicability_refs": { "type": "array", "maxItems": 0 } } }
+      ]
+    },
+    "controlRelationClosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "statement"],
+      "properties": {
+        "state": { "enum": ["specified", "not_applicable", "unresolved"] },
+        "statement": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "controlRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "statement", "control_refs", "required_proof_surfaces", "applicability_refs"],
+      "properties": {
+        "key": { "$ref": "#/$defs/key" },
+        "statement": { "$ref": "#/$defs/nonEmpty" },
+        "control_refs": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } },
+        "required_proof_surfaces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/proofSurface" } },
+        "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } }
+      }
     },
     "surfaceBinding": {
       "type": "object",
@@ -289,7 +347,7 @@
         "expected_change_paths": { "$ref": "#/$defs/nonEmptyStrings" },
         "allowed_support_paths": { "$ref": "#/$defs/nonEmptyStrings", "default": [] },
         "forbidden_paths": { "$ref": "#/$defs/nonEmptyStrings", "default": [] },
-        "forbidden_shortcuts": { "type": "array", "items": { "$ref": "#/$defs/keyedStatement" }, "default": [] },
+        "forbidden_shortcuts": { "type": "array", "items": { "$ref": "#/$defs/applicableStatement" }, "default": [] },
         "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" }, "default": [] },
         "rollback_and_recovery": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/rollback" }], "default": null }
       }
@@ -297,8 +355,8 @@
     "obligation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "statement", "required_proof_surfaces"],
-      "properties": { "key": { "$ref": "#/$defs/key" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "required_proof_surfaces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/proofSurface" } } }
+      "required": ["key", "statement", "required_proof_surfaces", "applicability_refs"],
+      "properties": { "key": { "$ref": "#/$defs/key" }, "statement": { "$ref": "#/$defs/nonEmpty" }, "required_proof_surfaces": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/proofSurface" } }, "applicability_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/key" } } }
     },
     "proofSurface": { "enum": ["ui_browser", "runtime_behavior", "api_contract", "data_state", "security_boundary", "population_coverage", "implementation_structure"] },
     "binding": {
@@ -366,12 +424,18 @@
         "key": { "$ref": "#/$defs/key" },
         "criterion": { "$ref": "#/$defs/nonEmpty" },
         "claims": { "$ref": "#/$defs/nonEmptyStrings" },
+        "applicability_ref": { "$ref": "#/$defs/key" },
         "observation": { "$ref": "#/$defs/nonEmpty" },
         "evidence_capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/evidenceCapability" } },
         "operator": { "enum": ["equals", "not_equals", "contains", "not_contains", "matches", "not_matches", "greater_than", "greater_or_equal", "less_than", "less_or_equal", "truthy", "falsy", "exists", "set_equals", "subset_of", "superset_of"] },
         "expected": true
       },
       "allOf": [
+        {
+          "if": { "properties": { "claims": { "minItems": 1 } } },
+          "then": { "required": ["applicability_ref"] },
+          "else": { "not": { "required": ["applicability_ref"] } }
+        },
         {
           "if": { "properties": { "operator": { "enum": ["equals", "not_equals", "contains", "not_contains", "matches", "not_matches", "greater_than", "greater_or_equal", "less_than", "less_or_equal", "set_equals", "subset_of", "superset_of"] } } },
           "then": { "required": ["expected"] }
@@ -446,6 +510,7 @@
         "claims": { "$ref": "#/$defs/nonEmptyStrings" },
         "check_key": { "$ref": "#/$defs/key" },
         "expected_assertion_failures": { "$ref": "#/$defs/keys" },
+        "preserved_assertions": { "$ref": "#/$defs/keys", "default": [] },
         "mutation": {
           "oneOf": [
             { "type": "object", "additionalProperties": false, "required": ["type", "paths"], "properties": { "type": { "const": "remove_paths" }, "paths": { "$ref": "#/$defs/nonEmptyStrings" } } },
@@ -464,6 +529,7 @@
         "claims": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/nonEmpty" } },
         "check_key": { "$ref": "#/$defs/key" },
         "expected_assertion_failures": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/key" }, "uniqueItems": true },
+        "preserved_assertions": { "$ref": "#/$defs/keys", "default": [] },
         "mutation": {
           "oneOf": [
             { "type": "object", "additionalProperties": false, "required": ["type", "paths"], "properties": { "type": { "const": "remove_paths" }, "paths": { "$ref": "#/$defs/nonEmptyStrings" } } },

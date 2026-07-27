@@ -26,8 +26,8 @@ test("Compact and expanded V2 authoring normalize to the same Contract", () => {
   const expandedLines = lineCount(YAML.stringify(expanded));
   const compactLines = lineCount(YAML.stringify(compact));
   assert.ok(
-    compactLines <= Math.floor(expandedLines * 0.75),
-    `expected at least 25% fewer lines, expanded=${expandedLines}, compact=${compactLines}`,
+    compactLines <= Math.floor(expandedLines * 0.82),
+    `expected at least 18% fewer lines after explicit applicability and semantic-witness metadata, expanded=${expandedLines}, compact=${compactLines}`,
   );
 });
 
@@ -36,7 +36,9 @@ test("Compact and expanded V2 authoring compile to identical authority", async (
   const expanded = expandedContract();
   await writeFile(
     path.join(fixture.root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=technical_obligation -->
 Implement first
@@ -87,10 +89,9 @@ function expandedContract() {
   const contract = deliveryContract();
   contract.outcomes[0].product.requirements = [];
   const check = contract.outcomes[0].acceptance.checks[0];
-  check.positive_assertions[0].claims =
-    check.positive_assertions[0].claims.filter(
-      (claim) => !claim.startsWith("requirement."),
-    );
+  check.positive_assertions = check.positive_assertions.filter(
+    (assertion) => assertion.key !== "first-requirement",
+  );
   contract.source_claims[0].disposition.refs = [
     "first.obligation.implement-first",
   ];
@@ -99,12 +100,14 @@ function expandedContract() {
   contract.task.execution_targets[0].runtime_family = "browser";
   check.runner.type = "playwright_test";
   check.runner.target = "tests/oracle.mjs";
-  check.positive_assertions[0].observation =
-    "playwright.case.first-result.passed";
-  check.positive_assertions[0].evidence_capabilities = [
-    "interaction_trace",
-    "target_runtime",
-  ];
+  for (const assertion of check.positive_assertions) {
+    if (!assertion.claims.length) continue;
+    assertion.observation = `playwright.case.${assertion.key}.passed`;
+    assertion.evidence_capabilities = [
+      "interaction_trace",
+      "target_runtime",
+    ];
+  }
   contract.outcomes[0].technical.obligations[0].required_proof_surfaces = [
     "ui_browser",
   ];
@@ -112,6 +115,21 @@ function expandedContract() {
   check.runner.argv = [];
   check.runner.idempotent = false;
   check.input_paths = [];
+  contract.outcomes[0].acceptance.counterfactual_controls = [
+    {
+      key: "replace-first-state",
+      binding_key: "state-first",
+      claims: ["result", "obligation.implement-first"],
+      check_key: "first-check",
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
+      expected_assertion_failures: ["first-result", "first-obligation"],
+      preserved_assertions: ["first-liveness"],
+    },
+  ];
   return contract;
 }
 
@@ -135,7 +153,6 @@ function compactContract(expanded) {
   delete outcome.technical.forbidden_shortcuts;
   delete outcome.technical.rollback_and_recovery;
   delete outcome.acceptance.population;
-  delete outcome.acceptance.counterfactual_controls;
 
   const check = outcome.acceptance.checks[0];
   delete check.runner.argv;

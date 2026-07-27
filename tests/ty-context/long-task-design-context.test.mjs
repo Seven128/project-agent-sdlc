@@ -468,9 +468,11 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   assert.match(rationale, /Web GPT[\s\S]*single-response length/iu);
   assert.match(rationale, /Once work enters Codex/iu);
   for (const mechanism of [
-    "Material Source inventory",
+    "Material/background/formal Source ownership closure",
     "Atomic non-Result Claim Coverage",
-    "Source AC to named Assertion",
+    "Control field and cross-Control relation closure",
+    "Claim applicability and one-Claim Assertion closure",
+    "Source AC to named Assertion semantic identity",
     "Shared Preflight/Compile activation-safety kernel",
     "First-Compile Authority Lock and Authority Revision",
     "Executing Agent cannot originate its own weakening decision",
@@ -480,7 +482,8 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     "Targeted verify is repair evidence only",
     "Adaptive rolling runtime feedback",
     "UI production-surface binding and design conformance",
-    "Same-snapshot Final Gate",
+    "Behavioral semantic replacement plus independent liveness",
+    "Same-snapshot Final Gate with pre/post protected-input recompile",
     "Stop/close rerun the Live Final Gate",
     "Machine/native terminal scope isolation",
     "Scope escape and risk escalation",
@@ -587,7 +590,11 @@ test("blocker revisions use causal evidence without adding completion state", as
   );
   assert.match(
     combined,
-    /furthest independently failing boundary[\s\S]*causal capability/iu,
+    /furthest independently failing boundary[\s\S]*(?:causal Counterfactual|wrong-semantic|replace_file)/iu,
+  );
+  assert.match(
+    combined,
+    /semantic [`']?replace_file[`']?[\s\S]*target-runtime liveness/iu,
   );
   assert.match(
     combined,
@@ -708,7 +715,14 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
     policy,
     /mechanism semantics[\s\S]*change the mechanism and its verification[\s\S]*(?:Otherwise change only|stays at) (?:the |its )?owning point/iu,
   );
-  assert.match(policy, /merely positive but marginal ROI is insufficient/iu);
+  assert.match(
+    policy,
+    /Coverage_new\s*⊇\s*Coverage_old[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_old/iu,
+  );
+  assert.match(
+    policy,
+    /incremental (?:purpose-fulfillment )?benefit[\s\S]*exceeds? all incremental costs[\s\S]*(?:consideration set|considered)[\s\S]*(?:not|does not) automatically adopt/iu,
+  );
   assert.match(
     policy,
     /measured data, benchmarks or operational evidence[\s\S]*When none exists[\s\S]*user or project owner[\s\S]*rigorous causal (?:argument|reasoning)[\s\S]*(?:simple, )?bounded validation/iu,
@@ -744,12 +758,22 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
     assert.match(skill, new RegExp(concept, "iu"));
   }
   assert.match(skill, /任何 Long-Task Workflow 改动[\s\S]*既定设计目的/iu);
-  assert.match(skill, /改动会带来的引入成本纳入后续 ROI 判断/iu);
+  assert.match(
+    skill,
+    /引入和迁移成本[\s\S]*增量设计目的收益大于全部增量成本/iu,
+  );
   assert.match(
     skill,
     /不涉及机制的，只修改对应 owner 点，不把局部问题升级成新机制/iu,
   );
-  assert.match(skill, /ROI 必须为正且不能只是勉强为正/iu);
+  assert.match(
+    skill,
+    /Coverage_new\s*⊇\s*Coverage_old[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_old/iu,
+  );
+  assert.match(
+    skill,
+    /增量设计目的收益大于全部增量成本[\s\S]*正 ROI[\s\S]*考虑集[\s\S]*不自动采用/iu,
+  );
   assert.match(
     skill,
     /优先使用数据、benchmark 或实际证据[\s\S]*没有数据时[\s\S]*用户或项目 owner[\s\S]*严密的因果论证[\s\S]*边界明确的验证/iu,

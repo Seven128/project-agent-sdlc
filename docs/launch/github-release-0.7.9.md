@@ -71,7 +71,7 @@ Publishing a new npm version does not automatically migrate existing repositorie
 - Keeps Contract Conformance and Context drift directional: the former checks Source/Context-to-implementation alignment; the latter checks whether implementation or new decisions made durable Context stale.
 - Fails new or worsened debt unless the project owns an explicit bounded exception, while avoiding automatic scope expansion into unrelated legacy debt.
 - Indexes the mechanism purpose, honest limits, debt policy, evidence boundary and future update invariants in `PROJECT_SPEC.md` and `project_context/**` without adding an architecture artifact, Contract field, Authority, Gate or workflow state.
-- Strengthens Long-Task mechanism admission so introduction cost participates in ROI and a merely positive but marginal benefit is insufficient.
+- Strengthened Long-Task mechanism admission so introduction cost participates in ROI. The current clarified rule first requires coverage/False-Negative non-degradation, then treats incremental purpose benefit greater than all incremental costs as positive ROI eligible for consideration, not automatic adoption.
 - Makes package updates explicit through release update modes: `sync-only`, `upgrade-required`, `manual-required`.
 
 ## Boundary

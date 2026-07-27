@@ -23,14 +23,19 @@ export function parseCounterfactuals(
 ): CounterfactualControlV2[] {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, [
-      "key",
-      "binding_key",
-      "claims",
-      "check_key",
-      "mutation",
-      "expected_assertion_failures",
-    ]);
+    const row = object(
+      item,
+      itemLabel,
+      [
+        "key",
+        "binding_key",
+        "claims",
+        "check_key",
+        "mutation",
+        "expected_assertion_failures",
+      ],
+      ["preserved_assertions"],
+    );
     const mutation = object(
       row.mutation,
       `${itemLabel}.mutation`,
@@ -73,6 +78,14 @@ export function parseCounterfactuals(
           `${itemLabel}.expected_assertion_failures[${assertionIndex}]`,
         ),
       ),
+      preserved_assertions: Object.hasOwn(row, "preserved_assertions")
+        ? strings(
+            row.preserved_assertions,
+            `${itemLabel}.preserved_assertions`,
+          ).map((item, assertionIndex) =>
+            key(item, `${itemLabel}.preserved_assertions[${assertionIndex}]`),
+          )
+        : [],
     };
   });
 }
@@ -83,14 +96,19 @@ export function parseGlobalCounterfactuals(
 ): GlobalCounterfactualControlV2[] {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, [
-      "key",
-      "binding_ref",
-      "claims",
-      "check_key",
-      "mutation",
-      "expected_assertion_failures",
-    ]);
+    const row = object(
+      item,
+      itemLabel,
+      [
+        "key",
+        "binding_ref",
+        "claims",
+        "check_key",
+        "mutation",
+        "expected_assertion_failures",
+      ],
+      ["preserved_assertions"],
+    );
     const bindingRef = string(row.binding_ref, `${itemLabel}.binding_ref`);
     if (!/^[a-z0-9][a-z0-9-]*\.[a-z0-9][a-z0-9-]*$/u.test(bindingRef))
       fail(`${itemLabel}.binding_ref`, "must be <outcome-key>.<binding-key>");
@@ -114,6 +132,14 @@ export function parseGlobalCounterfactuals(
         `${itemLabel}.mutation`,
       ),
       expected_assertion_failures: failures,
+      preserved_assertions: Object.hasOwn(row, "preserved_assertions")
+        ? strings(
+            row.preserved_assertions,
+            `${itemLabel}.preserved_assertions`,
+          ).map((entry, assertionIndex) =>
+            key(entry, `${itemLabel}.preserved_assertions[${assertionIndex}]`),
+          )
+        : [],
     };
   });
 }

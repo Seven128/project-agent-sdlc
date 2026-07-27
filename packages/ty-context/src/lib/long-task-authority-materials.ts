@@ -73,12 +73,20 @@ export function projectProductSemantics(
     target_profile: contract.task.target_profile,
     execution_targets: [...contract.task.execution_targets].sort(keyOrder),
     stages: [...contract.stages].sort(keyOrder),
-    global_non_goals: keyedStatements(contract.global.product.non_goals),
+    global_non_goals: applicableStatements(contract.global.product.non_goals),
     outcomes: [...contract.outcomes].sort(keyOrder).map((outcome) => ({
       key: outcome.key,
       title: outcome.title,
       stage: outcome.stage,
+      applicability: [...outcome.applicability].sort(keyOrder).map((item) => ({
+        ...item,
+        given_refs: [...item.given_refs],
+        when_refs: [...item.when_refs],
+      })),
       observable_result: outcome.product.observable_result,
+      result_applicability_refs: [
+        ...outcome.product.result_applicability_refs,
+      ].sort(),
       success_path_required: outcome.product.success_path_required,
       degradation_path_required: outcome.product.degradation_path_required,
       owner: {
@@ -93,6 +101,7 @@ export function projectProductSemantics(
           required_proof_surfaces: [
             ...requirement.required_proof_surfaces,
           ].sort(),
+          applicability_refs: [...requirement.applicability_refs].sort(),
         })),
       controls: [...outcome.product.controls].sort(keyOrder).map((control) => ({
         key: control.key,
@@ -118,7 +127,21 @@ export function projectProductSemantics(
         permission: control.permission,
         feedback: control.feedback,
         accessibility: control.accessibility,
+        field_coverage: [...control.field_coverage].map((entry) => ({
+          ...entry,
+          fields: [...entry.fields].sort(),
+          applicability_refs: [...entry.applicability_refs].sort(),
+        })),
       })),
+      control_relation_closure: outcome.product.control_relation_closure,
+      control_relations: [...outcome.product.control_relations]
+        .sort(keyOrder)
+        .map((relation) => ({
+          ...relation,
+          control_refs: [...relation.control_refs].sort(),
+          required_proof_surfaces: [...relation.required_proof_surfaces].sort(),
+          applicability_refs: [...relation.applicability_refs].sort(),
+        })),
       surface_bindings: [...(outcome.product.surface_bindings ?? [])]
         .sort(keyOrder)
         .map((binding) => ({
@@ -140,7 +163,7 @@ export function projectProductSemantics(
               refs: [...blocker.refs].sort(),
             })),
         })),
-      non_completing_outcomes: keyedStatements(
+      non_completing_outcomes: applicableStatements(
         outcome.product.non_completing_outcomes,
       ),
     })),
@@ -151,8 +174,15 @@ export function projectGlobalSemantics(
   contract: Pick<DeliveryContractV2, "global">,
 ): GlobalSemanticProjectionV2 {
   return {
-    constraints: keyedStatements(contract.global.technical.constraints),
-    forbidden_shortcuts: keyedStatements(
+    applicability: [...contract.global.applicability]
+      .sort(keyOrder)
+      .map((item) => ({
+        ...item,
+        given_refs: [...item.given_refs],
+        when_refs: [...item.when_refs],
+      })),
+    constraints: applicableStatements(contract.global.technical.constraints),
+    forbidden_shortcuts: applicableStatements(
       contract.global.technical.forbidden_shortcuts,
     ),
   };
@@ -164,6 +194,24 @@ function keyedStatements<T extends { key: string; statement: string }>(
   return [...values]
     .sort(keyOrder)
     .map(({ key, statement }) => ({ key, statement }));
+}
+
+function applicableStatements<
+  T extends {
+    key: string;
+    statement: string;
+    applicability_refs: string[];
+  },
+>(
+  values: T[],
+): Array<{ key: string; statement: string; applicability_refs: string[] }> {
+  return [...values]
+    .sort(keyOrder)
+    .map(({ key, statement, applicability_refs }) => ({
+      key,
+      statement,
+      applicability_refs: [...applicability_refs].sort(),
+    }));
 }
 
 function keyOrder(left: { key: string }, right: { key: string }): number {

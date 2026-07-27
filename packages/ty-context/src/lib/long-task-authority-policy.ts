@@ -3,6 +3,9 @@ import type {
   DeliveryBindingV2,
   DeliveryCheckV2,
   DeliveryContractV2,
+  DeliveryControlFieldCoverageV2,
+  DeliveryControlRelationClosureV2,
+  DeliveryControlRelationV2,
   DeliveryControlV2,
   DeliveryObligationV2,
   DeliveryOutcomeV2,
@@ -17,8 +20,13 @@ import type {
   GlobalCounterfactualControlV2,
 } from "./long-task-counterfactual-types.js";
 import type {
+  ApplicableKeyedStatementV2,
+  ClaimApplicabilityV2,
+} from "./long-task-semantic-contract-types.js";
+import type {
   DeliveryDesignAcceptanceBlockerV2,
   DeliveryDesignTargetV2,
+  DeliveryDesignVerificationBindingV2,
   DeliverySurfaceBindingV2,
 } from "./long-task-ui-surface-types.js";
 
@@ -35,6 +43,7 @@ export type AuthorityFieldPolicy =
 
 type TaskV2 = DeliveryContractV2["task"];
 type RiskV2 = DeliveryContractV2["risk"];
+type GlobalV2 = DeliveryContractV2["global"];
 type GlobalProductV2 = DeliveryContractV2["global"]["product"];
 type GlobalTechnicalV2 = DeliveryContractV2["global"]["technical"];
 type GlobalAcceptanceV2 = DeliveryContractV2["global"]["acceptance"];
@@ -42,6 +51,8 @@ type OutcomeProductV2 = DeliveryOutcomeV2["product"];
 type DeliveryRequirementV2 = OutcomeProductV2["requirements"][number];
 type OutcomeTechnicalV2 = DeliveryOutcomeV2["technical"];
 type OutcomeAcceptanceV2 = DeliveryOutcomeV2["acceptance"];
+type ControlFieldCoverageAuthorityKey =
+  keyof DeliveryControlFieldCoverageV2 | "statement";
 
 const TASK_AUTHORITY_POLICY = {
   id: "identity",
@@ -66,6 +77,13 @@ const RISK_AUTHORITY_POLICY = {
   facts: "semantic_user_review",
 } satisfies Record<keyof RiskV2, AuthorityFieldPolicy>;
 
+const GLOBAL_AUTHORITY_POLICY = {
+  applicability: "semantic_user_review",
+  product: "semantic_user_review",
+  technical: "semantic_user_review",
+  acceptance: "proof_additive",
+} satisfies Record<keyof GlobalV2, AuthorityFieldPolicy>;
+
 const GLOBAL_PRODUCT_AUTHORITY_POLICY = {
   non_goals: "semantic_user_review",
 } satisfies Record<keyof GlobalProductV2, AuthorityFieldPolicy>;
@@ -87,19 +105,37 @@ const OUTCOME_AUTHORITY_POLICY = {
   title: "descriptive_non_authoritative",
   stage: "semantic_user_review",
   depends_on: "readiness_only",
+  applicability: "semantic_user_review",
   product: "semantic_user_review",
   technical: "semantic_user_review",
   acceptance: "proof_additive",
 } satisfies Record<keyof DeliveryOutcomeV2, AuthorityFieldPolicy>;
 
+const CLAIM_APPLICABILITY_AUTHORITY_POLICY = {
+  key: "identity",
+  target_ref: "semantic_user_review",
+  journey_role: "semantic_user_review",
+  given_refs: "semantic_user_review",
+  when_refs: "semantic_user_review",
+} satisfies Record<keyof ClaimApplicabilityV2, AuthorityFieldPolicy>;
+
+const APPLICABLE_STATEMENT_AUTHORITY_POLICY = {
+  key: "identity",
+  statement: "semantic_user_review",
+  applicability_refs: "semantic_user_review",
+} satisfies Record<keyof ApplicableKeyedStatementV2, AuthorityFieldPolicy>;
+
 const OUTCOME_PRODUCT_AUTHORITY_POLICY = {
   observable_result: "semantic_user_review",
+  result_applicability_refs: "semantic_user_review",
   success_path_required: "semantic_user_review",
   degradation_path_required: "semantic_user_review",
   owner: "semantic_user_review",
   requirements: "semantic_user_review",
   owner_surfaces: "semantic_user_review",
   controls: "semantic_user_review",
+  control_relation_closure: "semantic_user_review",
+  control_relations: "semantic_user_review",
   surface_bindings: "semantic_user_review",
   non_completing_outcomes: "semantic_user_review",
 } satisfies Record<keyof OutcomeProductV2, AuthorityFieldPolicy>;
@@ -108,6 +144,7 @@ const REQUIREMENT_AUTHORITY_POLICY = {
   key: "identity",
   statement: "semantic_user_review",
   required_proof_surfaces: "proof_additive",
+  applicability_refs: "semantic_user_review",
 } satisfies Record<keyof DeliveryRequirementV2, AuthorityFieldPolicy>;
 
 const OWNER_AUTHORITY_POLICY = {
@@ -140,7 +177,31 @@ const CONTROL_AUTHORITY_POLICY = {
   permission: "semantic_user_review",
   feedback: "semantic_user_review",
   accessibility: "semantic_user_review",
+  field_coverage: "semantic_user_review",
 } satisfies Record<keyof DeliveryControlV2, AuthorityFieldPolicy>;
+
+const CONTROL_FIELD_COVERAGE_AUTHORITY_POLICY = {
+  fields: "semantic_user_review",
+  state: "semantic_user_review",
+  statement: "semantic_user_review",
+  applicability_refs: "semantic_user_review",
+} satisfies Record<ControlFieldCoverageAuthorityKey, AuthorityFieldPolicy>;
+
+const CONTROL_RELATION_CLOSURE_AUTHORITY_POLICY = {
+  state: "semantic_user_review",
+  statement: "semantic_user_review",
+} satisfies Record<
+  keyof DeliveryControlRelationClosureV2,
+  AuthorityFieldPolicy
+>;
+
+const CONTROL_RELATION_AUTHORITY_POLICY = {
+  key: "identity",
+  statement: "semantic_user_review",
+  applicability_refs: "semantic_user_review",
+  control_refs: "semantic_user_review",
+  required_proof_surfaces: "proof_additive",
+} satisfies Record<keyof DeliveryControlRelationV2, AuthorityFieldPolicy>;
 
 const SURFACE_BINDING_AUTHORITY_POLICY = {
   key: "identity",
@@ -168,6 +229,14 @@ const DESIGN_TARGET_AUTHORITY_POLICY = {
   comparison_artifact_path: "output_requirement",
 } satisfies Record<keyof DeliveryDesignTargetV2, AuthorityFieldPolicy>;
 
+const DESIGN_VERIFICATION_BINDING_AUTHORITY_POLICY = {
+  method: "proof_additive",
+  assertion_ref: "proof_additive",
+} satisfies Record<
+  keyof DeliveryDesignVerificationBindingV2,
+  AuthorityFieldPolicy
+>;
+
 const DESIGN_BLOCKER_AUTHORITY_POLICY = {
   key: "identity",
   status: "semantic_user_review",
@@ -194,6 +263,7 @@ const OBLIGATION_AUTHORITY_POLICY = {
   key: "identity",
   statement: "semantic_user_review",
   required_proof_surfaces: "proof_additive",
+  applicability_refs: "semantic_user_review",
 } satisfies Record<keyof DeliveryObligationV2, AuthorityFieldPolicy>;
 
 const BINDING_AUTHORITY_POLICY = {
@@ -237,6 +307,7 @@ const ASSERTION_AUTHORITY_POLICY = {
   key: "identity",
   criterion: "semantic_user_review",
   claims: "proof_additive",
+  applicability_ref: "proof_additive",
   observation: "proof_additive",
   evidence_capabilities: "proof_additive",
   operator: "proof_additive",
@@ -268,6 +339,7 @@ const COUNTERFACTUAL_AUTHORITY_POLICY = {
   check_key: "proof_additive",
   mutation: "proof_additive",
   expected_assertion_failures: "proof_additive",
+  preserved_assertions: "proof_additive",
 } satisfies Record<keyof CounterfactualControlV2, AuthorityFieldPolicy>;
 
 const GLOBAL_COUNTERFACTUAL_AUTHORITY_POLICY = {
@@ -277,22 +349,30 @@ const GLOBAL_COUNTERFACTUAL_AUTHORITY_POLICY = {
   check_key: "proof_additive",
   mutation: "proof_additive",
   expected_assertion_failures: "proof_additive",
+  preserved_assertions: "proof_additive",
 } satisfies Record<keyof GlobalCounterfactualControlV2, AuthorityFieldPolicy>;
 
 export const AUTHORITY_FIELD_POLICY_REGISTRIES = {
   task: TASK_AUTHORITY_POLICY,
   source_claim: SOURCE_CLAIM_AUTHORITY_POLICY,
   risk: RISK_AUTHORITY_POLICY,
+  global: GLOBAL_AUTHORITY_POLICY,
   global_product: GLOBAL_PRODUCT_AUTHORITY_POLICY,
   global_technical: GLOBAL_TECHNICAL_AUTHORITY_POLICY,
   global_acceptance: GLOBAL_ACCEPTANCE_AUTHORITY_POLICY,
   outcome: OUTCOME_AUTHORITY_POLICY,
+  claim_applicability: CLAIM_APPLICABILITY_AUTHORITY_POLICY,
+  applicable_statement: APPLICABLE_STATEMENT_AUTHORITY_POLICY,
   outcome_product: OUTCOME_PRODUCT_AUTHORITY_POLICY,
   requirement: REQUIREMENT_AUTHORITY_POLICY,
   owner: OWNER_AUTHORITY_POLICY,
   control: CONTROL_AUTHORITY_POLICY,
+  control_field_coverage: CONTROL_FIELD_COVERAGE_AUTHORITY_POLICY,
+  control_relation_closure: CONTROL_RELATION_CLOSURE_AUTHORITY_POLICY,
+  control_relation: CONTROL_RELATION_AUTHORITY_POLICY,
   surface_binding: SURFACE_BINDING_AUTHORITY_POLICY,
   design_target: DESIGN_TARGET_AUTHORITY_POLICY,
+  design_verification_binding: DESIGN_VERIFICATION_BINDING_AUTHORITY_POLICY,
   design_blocker: DESIGN_BLOCKER_AUTHORITY_POLICY,
   outcome_technical: OUTCOME_TECHNICAL_AUTHORITY_POLICY,
   obligation: OBLIGATION_AUTHORITY_POLICY,

@@ -20,7 +20,9 @@ test("Source authority is locked by first compile even before verify", async () 
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 Revised before execution.
@@ -59,7 +61,14 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
 
     const sourceFile = path.join(fixture.root, "source.md");
     const sourceBaseline = await readFile(sourceFile, "utf8");
-    await writeFile(sourceFile, `${sourceBaseline}\nNon-Claim provenance note.\n`);
+    await writeFile(
+      sourceFile,
+      `${sourceBaseline}
+<!-- ty-source-background:start key=provenance-note reason=non-authoritative-provenance -->
+Non-Claim provenance note.
+<!-- ty-source-background:end -->
+`,
+    );
     let revised = await runCli(fixture.root, [
       "long-task",
       "compile",
@@ -230,7 +239,9 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
         candidate.source_claims[0].statement = statement;
         await writeFile(
           sourceFile,
-          `# Fixture source
+          `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${statement}
@@ -262,11 +273,13 @@ ${statement}
       key: "new-product-scope",
       statement: "Implement newly declared product scope.",
       required_proof_surfaces: ["runtime_behavior"],
+      applicability_refs: ["first-root-success"],
     });
     addedClaim.outcomes[0].acceptance.checks[0].positive_assertions.push({
       key: "new-product-scope-proof",
       criterion: "The newly declared product scope is implemented.",
       claims: ["obligation.new-product-scope"],
+      applicability_ref: "first-root-success",
       observation: "new_product_scope",
       evidence_capabilities: ["state_delta"],
       operator: "equals",
@@ -277,8 +290,13 @@ ${statement}
       binding_key: "state-first",
       claims: ["obligation.new-product-scope"],
       check_key: "first-check",
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
       expected_assertion_failures: ["new-product-scope-proof"],
+      preserved_assertions: ["first-liveness"],
     });
     await writeContract(fixture.workdir, addedClaim);
     await expectDecision(fixture, {

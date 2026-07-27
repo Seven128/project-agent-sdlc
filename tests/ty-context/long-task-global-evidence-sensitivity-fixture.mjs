@@ -27,6 +27,14 @@ export async function addGlobalClaim(
   fixture.contract.global.technical.constraints.push({
     key: "global-state",
     statement,
+    applicability_refs: ["global-root-success"],
+  });
+  fixture.contract.global.applicability.push({
+    key: "global-root-success",
+    target_ref: "fixture-app",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
   });
   const check = structuredClone(
     fixture.contract.outcomes[0].acceptance.checks[0],
@@ -38,10 +46,20 @@ export async function addGlobalClaim(
       key: "global-state-assertion",
       criterion: statement,
       claims: ["constraint.global-state"],
-      observation: constant ? "negative" : "result",
-      evidence_capabilities: ["state_delta"],
+      applicability_ref: "global-root-success",
+      observation: "global_result",
+      evidence_capabilities: ["target_runtime", "state_delta"],
       operator: "equals",
-      expected: constant ? false : true,
+      expected: true,
+    },
+    {
+      key: "global-state-liveness",
+      criterion: "The product target remains live under semantic mutation.",
+      claims: [],
+      observation: "target_live",
+      evidence_capabilities: ["target_runtime"],
+      operator: "equals",
+      expected: true,
     },
   ];
   check.negative_assertions = [];
@@ -53,14 +71,15 @@ let state = { first: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const key = process.argv[2] || "first";
 const globalCheck = process.argv[3] === "global";
-const assertionKey = globalCheck ? "global-state-assertion" : \`${"${key}"}-result\`;
-const records = [{assertion_key:assertionKey,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]}];
-if (!globalCheck) records.unshift({assertion_key:assertionKey,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:\`fixture-${"${key}"}-session\`,cold_start:true});
+const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:\`fixture-${"${key}"}-session\`,cold_start:true});
+const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
+const claimAssertions = globalCheck ? ["global-state-assertion"] : [\`${"${key}"}-result\`,\`${"${key}"}-requirement\`,\`${"${key}"}-obligation\`];
+const globalResult = ${constant ? "true" : "state[key] === true"};
 console.log(JSON.stringify({
   schema_version:"long-task-check-result-v3",
   execution_status:"completed",
-  observations:{result:state[key] === true,negative:false},
-  evidence_records:records
+  observations:{result:state[key] === true,requirement_result:state[key] === true,obligation_result:state[key] === true,global_result:globalResult,target_live:true,negative:false},
+  evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(globalCheck ? "global-state-liveness" : \`${"${key}"}-liveness\`)]
 }));
 `,
   );
@@ -70,12 +89,17 @@ console.log(JSON.stringify({
 
 export async function addGlobalCounterfactual(contract) {
   contract.global.acceptance.counterfactual_controls.push({
-    key: "remove-global-state",
+    key: "replace-global-state",
     binding_ref: "first.state-first",
     claims: ["constraint.global-state"],
     check_key: "global-state-check",
-    mutation: { type: "remove_paths", paths: ["src/state.json"] },
+    mutation: {
+      type: "replace_file",
+      path: "src/state.json",
+      fixture_path: "tests/semantic-false.json",
+    },
     expected_assertion_failures: ["global-state-assertion"],
+    preserved_assertions: ["global-state-liveness"],
   });
 }
 

@@ -36,8 +36,9 @@ test("release tarball fixture compiles and reaches the Live Final Gate with sens
     assert.equal(receipt.workflow_status, "machine_accepted");
     assert.deepEqual(receipt.findings, []);
     assert.equal(receipt.check_results[0].status, "passed");
-    // Final Gate cannot accept this structured Check unless remove-state ran and
-    // produced exactly the designated mismatch for both declared Claims.
+    // Final Gate cannot accept this structured Check unless the semantic
+    // replacement produced exactly both designated mismatches while liveness
+    // remained passing.
   } finally {
     await rm(root, { recursive: true, force: true });
   }

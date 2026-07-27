@@ -89,7 +89,7 @@ test("required_proof_surfaces uses all-of coverage", () => {
   ];
   assert.throws(
     () => parse(contract),
-    /product_claim_required_surfaces_missing:first:requirement\.observe-first:data_state/u,
+    /product_claim_required_surfaces_missing:first:requirement\.observe-first:first-root-success:data_state/u,
   );
 });
 
@@ -106,11 +106,13 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
   contract.task.execution_targets.push({
     key: "fixture-browser",
     description: "The browser support surface.",
-    role: "support",
+    role: "product",
     runtime_family: "browser",
     root_entrypoint: "/",
   });
-  browserCheck.journey_roles = ["success"];
+  contract.task.target_profile.required_target_refs = ["fixture-browser"];
+  outcome.applicability[0].target_ref = "fixture-browser";
+  browserCheck.journey_roles = ["success", "stage_gate"];
   browserCheck.execution_target = {
     target_ref: "fixture-browser",
     entrypoint: "root",
@@ -120,20 +122,31 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
   browserCheck.runner.target = "tests/ui.spec.ts";
   browserCheck.positive_assertions = [
     {
+      key: "browser-result",
+      criterion: "The browser target proves the observable result.",
+      claims: ["result"],
+      applicability_ref: "first-root-success",
+      observation: "playwright.case.browser-result.passed",
+      evidence_capabilities: ["interaction_trace", "target_runtime"],
+      operator: "equals",
+      expected: true,
+    },
+    {
       key: "browser-layer",
       criterion: "The browser layer proves the atomic requirement.",
       claims: ["requirement.observe-first"],
+      applicability_ref: "first-root-success",
       observation: "playwright.case.browser-layer.passed",
-      evidence_capabilities: ["interaction_trace"],
+      evidence_capabilities: ["interaction_trace", "target_runtime"],
       operator: "equals",
       expected: true,
     },
   ];
   const dataCheck = structuredClone(browserCheck);
   dataCheck.key = "data-layer";
-  dataCheck.journey_roles = ["success", "stage_gate"];
+  dataCheck.journey_roles = ["success"];
   dataCheck.execution_target = {
-    target_ref: "fixture-app",
+    target_ref: "fixture-browser",
     entrypoint: "root",
   };
   dataCheck.proof_surface = "data_state";
@@ -142,10 +155,21 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
   dataCheck.positive_assertions = [
     {
       key: "data-layer",
-      criterion: "The data layer proves the atomic requirement.",
-      claims: ["result", "requirement.observe-first"],
+      criterion: "The data layer proves the observable result.",
+      claims: ["result"],
+      applicability_ref: "first-root-success",
       observation: "result",
-      evidence_capabilities: ["target_runtime", "state_delta"],
+      evidence_capabilities: ["state_delta"],
+      operator: "equals",
+      expected: true,
+    },
+    {
+      key: "data-requirement-layer",
+      criterion: "The data layer proves the atomic requirement.",
+      claims: ["requirement.observe-first"],
+      applicability_ref: "first-root-success",
+      observation: "data_requirement",
+      evidence_capabilities: ["state_delta"],
       operator: "equals",
       expected: true,
     },
@@ -184,21 +208,34 @@ test("truthy and falsy cannot prove an implementation_structure Obligation", () 
     const outcome = contract.outcomes[0];
     outcome.acceptance.counterfactual_controls = [];
     const check = outcome.acceptance.checks[0];
-    check.proof_surface = "implementation_structure";
     outcome.technical.obligations[0].required_proof_surfaces = [
       "implementation_structure",
     ];
-    check.positive_assertions[0] = {
-      key: `structure-${operator}`,
-      criterion: "The implementation carrier exists structurally.",
-      claims: ["obligation.implement-first"],
-      observation: "result",
-      evidence_capabilities: ["state_delta"],
-      operator,
-    };
+    check.positive_assertions = check.positive_assertions.filter(
+      (assertion) => assertion.key !== "first-obligation",
+    );
+    const structureCheck = structuredClone(check);
+    structureCheck.key = `structure-${operator}-check`;
+    structureCheck.journey_roles = ["success"];
+    structureCheck.proof_surface = "implementation_structure";
+    structureCheck.positive_assertions = [
+      {
+        key: `structure-${operator}`,
+        criterion: "The implementation carrier exists structurally.",
+        claims: ["obligation.implement-first"],
+        applicability_ref: "first-root-success",
+        observation: "structure_value",
+        evidence_capabilities: ["state_delta"],
+        operator,
+      },
+    ];
+    outcome.acceptance.checks.push(structureCheck);
     assert.throws(
       () => parse(contract),
-      /claim_assertion_explicit_expected_required:first:first-check:/u,
+      new RegExp(
+        `claim_assertion_explicit_expected_required:first:structure-${operator}-check:`,
+        "u",
+      ),
       operator,
     );
   }
@@ -211,10 +248,10 @@ test("exists may prove only an implementation_structure Obligation", () => {
   outcome.technical.obligations[0].required_proof_surfaces = [
     "implementation_structure",
   ];
-  outcome.acceptance.checks[0].positive_assertions[0].claims = [
-    "result",
-    "requirement.observe-first",
-  ];
+  outcome.acceptance.checks[0].positive_assertions =
+    outcome.acceptance.checks[0].positive_assertions.filter(
+      (assertion) => assertion.key !== "first-obligation",
+    );
   const structureCheck = structuredClone(outcome.acceptance.checks[0]);
   structureCheck.key = "structure-check";
   structureCheck.proof_surface = "implementation_structure";
@@ -223,6 +260,7 @@ test("exists may prove only an implementation_structure Obligation", () => {
       key: "implementation-carrier",
       criterion: "The declared implementation carrier exists.",
       claims: ["obligation.implement-first"],
+      applicability_ref: "first-root-success",
       observation: "result",
       evidence_capabilities: ["presence"],
       operator: "exists",

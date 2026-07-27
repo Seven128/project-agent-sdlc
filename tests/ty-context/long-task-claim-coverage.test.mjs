@@ -7,6 +7,7 @@ import { parseControls } from "../../packages/ty-context/dist/lib/long-task-prod
 import { buildCanonicalSourceTargetIndex } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import {
   addProductionControlBinding,
+  completeControl,
   deliveryContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -17,18 +18,20 @@ function parse(contract) {
 test("result, Control states, non-completing, obligation and shortcut Claims require coverage", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];
-  outcome.product.controls.push({
-    key: "submit",
-    surface: "fixture-main",
-    location: "footer",
-    trigger: "click",
-    input: "content",
-    loading_state: "loading",
-    empty_state: "disabled",
-    success_state: "done",
-    failure_state: "error",
-    feedback: "visible",
-  });
+  outcome.product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "fixture-main",
+      location: "footer",
+      trigger: "click",
+      input: "content",
+      loading_state: "loading",
+      empty_state: "disabled",
+      success_state: "done",
+      failure_state: "error",
+      feedback: "visible",
+    }),
+  );
   addProductionControlBinding(contract, {
     controlKey: "submit",
     rootClaimRef: "control.submit.location",
@@ -41,7 +44,7 @@ test("result, Control states, non-completing, obligation and shortcut Claims req
 
 test("every non-empty control-level UI field becomes a stable Claim and Source target", () => {
   const contract = deliveryContract();
-  const control = {
+  const control = completeControl({
     key: "submit",
     surface: "settings",
     region: "action-footer",
@@ -65,7 +68,7 @@ test("every non-empty control-level UI field becomes a stable Claim and Source t
     permission: "show read-only state when denied",
     feedback: "announce save result",
     accessibility: "named keyboard-operable button",
-  };
+  });
   contract.outcomes[0].product.controls.push(control);
   const expectedFields = [
     "surface",
@@ -106,85 +109,73 @@ test("every non-empty control-level UI field becomes a stable Claim and Source t
   );
 });
 
-test("legacy controls normalize new fields to empty without creating Claims", () => {
+test("Controls fail closed without field closure and N/A fields create negative Claims", () => {
   const contract = deliveryContract();
-  const [control] = parseControls([{
-    key: "legacy",
-    location: "footer",
-    trigger: "click",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  }], "controls");
-  for (const field of [
-    "surface",
-    "region",
-    "control_type",
-    "label_content",
-    "user_task",
-    "visibility",
-    "availability",
-    "validation",
-    "default_value",
-    "interaction",
-    "navigation_result",
-    "recovery",
-    "permission",
-    "accessibility",
-  ])
-    assert.equal(control[field], "", `${field} defaults to empty`);
-  assert.deepEqual(
-    generateClaims({
-      ...contract.outcomes[0],
-      product: {
-        ...contract.outcomes[0].product,
-        controls: [control],
-      },
-    })
-      .map((claim) => claim.id)
-      .filter((claim) => claim.startsWith("first.control.legacy.")),
-    ["first.control.legacy.location", "first.control.legacy.trigger"],
+  assert.throws(
+    () =>
+      parseControls(
+        [{ key: "classified", location: "footer", trigger: "click" }],
+        "controls",
+      ),
+    /missing keys: field_coverage/u,
+  );
+  const [control] = parseControls(
+    [
+      completeControl({
+        key: "classified",
+        location: "footer",
+        trigger: "click",
+      }),
+    ],
+    "controls",
+  );
+  const claims = generateClaims({
+    ...contract.outcomes[0],
+    product: {
+      ...contract.outcomes[0].product,
+      controls: [control],
+    },
+  }).filter((claim) => claim.id.startsWith("first.control.classified."));
+  assert.equal(claims.length, 22);
+  assert.equal(
+    claims.find((claim) => claim.id.endsWith(".location")).required_polarity,
+    "positive",
+  );
+  assert.equal(
+    claims.find((claim) => claim.id.endsWith(".accessibility"))
+      .required_polarity,
+    "negative",
   );
 });
 
 test("unknown and cross-Outcome Claim refs fail", () => {
   const unknown = deliveryContract();
-  unknown.outcomes[0].acceptance.checks[0].positive_assertions[0].claims.push(
+  unknown.outcomes[0].acceptance.checks[0].positive_assertions[0].claims = [
     "missing.claim",
-  );
+  ];
   assert.throws(() => parse(unknown), /assertion_claim_unknown/);
   const cross = deliveryContract({ twoOutcomes: true });
-  cross.outcomes[0].acceptance.checks[0].positive_assertions[0].claims.push(
+  cross.outcomes[0].acceptance.checks[0].positive_assertions[0].claims = [
     "second.result",
-  );
+  ];
   assert.throws(() => parse(cross), /assertion_claim_cross_outcome/);
 });
 
 test("Control Claims follow their production target and obligation surfaces must match", () => {
   const ui = deliveryContract();
   const outcome = ui.outcomes[0];
-  outcome.product.controls.push({
-    key: "submit",
-    surface: "fixture-main",
-    location: "footer",
-    trigger: "click",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  outcome.product.controls.push(
+    completeControl({
+      key: "submit",
+      surface: "fixture-main",
+      location: "footer",
+      trigger: "click",
+    }),
+  );
   addProductionControlBinding(ui, {
     controlKey: "submit",
     rootClaimRef: "control.submit.trigger",
   });
-  outcome.acceptance.checks[0].positive_assertions[0].claims.push(
-    "control.submit.location",
-  );
   assert.doesNotThrow(() => parse(ui));
   const obligation = deliveryContract();
   obligation.outcomes[0].technical.obligations[0].required_proof_surfaces = [
@@ -201,18 +192,30 @@ test("non-completing and forbidden shortcuts reject positive-only coverage", () 
       outcome.product.non_completing_outcomes.push({
         key: "exit-zero-only",
         statement: "Exit zero alone is not completion.",
+        applicability_refs: ["first-root-success"],
       });
     else
       outcome.technical.forbidden_shortcuts.push({
         key: "self-report",
         statement: "Self-report is not proof.",
+        applicability_refs: ["first-root-success"],
       });
-    outcome.acceptance.checks[0].positive_assertions[0].claims.push(
-      `${kind}.` + (kind === "non_completing" ? "exit-zero-only" : "self-report"),
-    );
+    outcome.acceptance.checks[0].positive_assertions.push({
+      key: `${kind.replaceAll("_", "-")}-positive-only`,
+      criterion: "The prohibited state is incorrectly treated as positive.",
+      claims: [
+        `${kind}.` +
+          (kind === "non_completing" ? "exit-zero-only" : "self-report"),
+      ],
+      applicability_ref: "first-root-success",
+      observation: `${kind}_positive`,
+      evidence_capabilities: ["state_delta"],
+      operator: "equals",
+      expected: true,
+    });
     assert.throws(
       () => parse(contract),
-      /negative_or_counterfactual_claim_proof_required/,
+      /claim_proof_polarity_mismatch/,
     );
   }
 });

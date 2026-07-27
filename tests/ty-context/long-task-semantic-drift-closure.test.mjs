@@ -9,6 +9,7 @@ import {
 } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-policy.js";
 import {
   addProductionControlBinding,
+  completeControl,
   deliveryContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -48,12 +49,47 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     contract.outcomes[0].acceptance.checks[0],
   );
   nativeCheck.key = "first-native-check";
+  contract.outcomes[0].applicability.push({
+    key: "first-native-success",
+    target_ref: "fixture-native",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
+  });
+  contract.outcomes[0].product.result_applicability_refs.push(
+    "first-native-success",
+  );
   nativeCheck.execution_target.target_ref = "fixture-native";
   nativeCheck.runner.type = "project_binary";
   nativeCheck.runner.target = "tests/oracle.mjs";
-  nativeCheck.positive_assertions[0].key = "first-native-result";
-  nativeCheck.positive_assertions[0].observation = "result_copy";
+  nativeCheck.positive_assertions = [
+    {
+      ...nativeCheck.positive_assertions[0],
+      key: "first-native-result",
+      applicability_ref: "first-native-success",
+      observation: "result_copy",
+    },
+    {
+      ...nativeCheck.positive_assertions.find(
+        (assertion) => assertion.key === "first-liveness",
+      ),
+      key: "first-native-liveness",
+    },
+  ];
   contract.outcomes[0].acceptance.checks.push(nativeCheck);
+  contract.outcomes[0].acceptance.counterfactual_controls.push({
+    key: "replace-native-semantics",
+    binding_key: "state-first",
+    claims: ["result"],
+    check_key: "first-native-check",
+    mutation: {
+      type: "replace_file",
+      path: "src/state.json",
+      fixture_path: "tests/semantic-false.json",
+    },
+    expected_assertion_failures: ["first-native-result"],
+    preserved_assertions: ["first-native-liveness"],
+  });
   assert.doesNotThrow(() => parse(contract));
 
   const wrongAdapter = structuredClone(contract);
@@ -82,7 +118,15 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
   );
   proxyUi.task.target_profile.required_target_refs.push("fixture-native");
   const proxyOutcome = proxyUi.outcomes[0];
-  proxyOutcome.product.controls.push({
+  proxyOutcome.applicability.push({
+    key: "first-native-success",
+    target_ref: "fixture-native",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
+  });
+  proxyOutcome.product.result_applicability_refs.push("first-native-success");
+  const mapControl = completeControl({
     key: "map-tab",
     surface: "mobile-shell",
     region: "",
@@ -107,21 +151,32 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     feedback: "",
     accessibility: "",
   });
+  for (const coverage of mapControl.field_coverage)
+    if (coverage.state !== "unresolved")
+      coverage.applicability_refs = ["first-native-success"];
+  proxyOutcome.product.controls.push(mapControl);
+  proxyOutcome.product.control_relation_closure = {
+    state: "not_applicable",
+    statement: "Only one Control is declared, so no cross-Control relation applies.",
+  };
   const nativeShell = structuredClone(proxyOutcome.acceptance.checks[0]);
   nativeShell.key = "native-shell";
   nativeShell.execution_target.target_ref = "fixture-native";
   nativeShell.runner.type = "project_binary";
   nativeShell.runner.target = "tests/oracle.mjs";
-  nativeShell.positive_assertions[0].key = "native-shell-map-tab";
-  nativeShell.positive_assertions[0].observation = "result_copy";
-  nativeShell.positive_assertions[0].claims = [
-    "result",
-    "control.map-tab.surface",
-    "control.map-tab.location",
-  ];
-  nativeShell.positive_assertions[0].evidence_capabilities = [
-    "interaction_trace",
-    "target_runtime",
+  nativeShell.positive_assertions = [
+    {
+      ...nativeShell.positive_assertions[0],
+      key: "native-shell-result",
+      applicability_ref: "first-native-success",
+      observation: "result_copy",
+    },
+    {
+      ...nativeShell.positive_assertions.find(
+        (assertion) => assertion.key === "first-liveness",
+      ),
+      key: "native-shell-liveness",
+    },
   ];
   const detachedMap = structuredClone(proxyOutcome.acceptance.checks[0]);
   detachedMap.key = "detached-map";
@@ -138,6 +193,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
       key: "detached-map-navigation",
       criterion: "The detached route shows the Map page.",
       claims: ["control.map-tab.navigation_result"],
+      applicability_ref: "first-native-success",
       observation: "playwright.case.detached-map-navigation.passed",
       evidence_capabilities: ["interaction_trace"],
       operator: "equals",
@@ -151,46 +207,76 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
     surfaceRef: "mobile-shell",
     targetRef: "fixture-native",
     rootCheckRef: "native-shell",
-    rootClaimRef: null,
+    rootClaimRef: "control.map-tab.navigation_result",
   });
+  const nativeNavigation = nativeShell.positive_assertions.find(
+    (assertion) => assertion.key === "map-tab-navigation-result-proof",
+  );
+  nativeShell.positive_assertions = nativeShell.positive_assertions.filter(
+    (assertion) => assertion !== nativeNavigation,
+  );
+  const nativeClaimAssertions = [
+    ...nativeShell.positive_assertions,
+    ...nativeShell.negative_assertions,
+  ].filter((assertion) => assertion.claims.length);
+  const nativeSensitivity = {
+    key: "replace-native-shell-semantics",
+    binding_key: "state-first",
+    claims: nativeClaimAssertions.flatMap((assertion) => assertion.claims),
+    check_key: "native-shell",
+    mutation: {
+      type: "replace_file",
+      path: "src/state.json",
+      fixture_path: "tests/semantic-false.json",
+    },
+    expected_assertion_failures: nativeClaimAssertions.map(
+      (assertion) => assertion.key,
+    ),
+    preserved_assertions: ["native-shell-liveness"],
+  };
+  proxyOutcome.acceptance.counterfactual_controls.push(nativeSensitivity);
   const proxyDiagnostics = deliveryContractStructureDiagnostics(proxyUi);
   assert.ok(
     proxyDiagnostics.some(
       (item) =>
-        item.includes("ui_surface_binding_root_control_proof_missing") &&
-        item.includes("control.map-tab.navigation_result"),
+        item.includes("claim_applicability_target_mismatch") &&
+        item.includes("detached-map-navigation"),
     ),
     JSON.stringify(proxyDiagnostics),
   );
-  nativeShell.positive_assertions[0].claims.push(
-    "control.map-tab.navigation_result",
+  proxyOutcome.acceptance.checks = proxyOutcome.acceptance.checks.filter(
+    (check) => check.key !== "detached-map",
   );
+  nativeShell.positive_assertions.push(nativeNavigation);
+  nativeSensitivity.claims.push(...nativeNavigation.claims);
+  nativeSensitivity.expected_assertion_failures.push(nativeNavigation.key);
   assert.doesNotThrow(() => parse(proxyUi));
 });
 
 test("selected design targets require root-bound comparison evidence and blocker disposition", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];
-  outcome.product.controls.push({
-    key: "map-tab",
-    surface: "mobile-shell",
-    location: "bottom navigation",
-    trigger: "",
-    input: "",
-    loading_state: "",
-    empty_state: "",
-    success_state: "",
-    failure_state: "",
-    feedback: "",
-  });
+  outcome.product.controls.push(
+    completeControl({
+      key: "map-tab",
+      surface: "mobile-shell",
+      location: "bottom navigation",
+      trigger: "",
+      input: "",
+      loading_state: "",
+      empty_state: "",
+      success_state: "",
+      failure_state: "",
+      feedback: "",
+    }),
+  );
+  outcome.product.control_relation_closure = {
+    state: "not_applicable",
+    statement: "Only one Control is declared, so no cross-Control relation applies.",
+  };
   const check = outcome.acceptance.checks[0];
   check.verification_inputs.push("design/map-target.png");
   check.artifact_globs = ["artifacts/**"];
-  check.positive_assertions[0].claims.push("control.map-tab.surface");
-  check.positive_assertions[0].evidence_capabilities.push(
-    "visual_render",
-    "design_conformance",
-  );
   addProductionControlBinding(contract, {
     controlKey: "map-tab",
     surfaceRef: "mobile-shell",
@@ -203,19 +289,35 @@ test("selected design targets require root-bound comparison evidence and blocker
         condition_keys: ["phone", "dark", "default"],
         claim_refs: ["control.map-tab.location"],
         conformance_check_ref: "first-check",
-        conformance_assertion_ref: "first-result",
+        conformance_assertion_ref: "map-tab-location-proof",
         verification_method_bindings: [
-          { method: "layout_geometry", assertion_ref: "first-result" },
+          {
+            method: "layout_geometry",
+            assertion_ref: "map-tab-location-proof",
+          },
         ],
         actual_artifact_path: "artifacts/map-actual.png",
         comparison_artifact_path: "artifacts/map-diff.json",
       },
     ],
   });
+  const conformanceAssertion = check.positive_assertions.find(
+    (assertion) => assertion.key === "map-tab-location-proof",
+  );
+  conformanceAssertion.evidence_capabilities.push(
+    "visual_render",
+    "design_conformance",
+  );
   assert.doesNotThrow(() => parse(contract));
 
   const compiled = compiledCheck(contract, check, "first");
-  const assertionKey = check.positive_assertions[0].key;
+  const assertionKey = conformanceAssertion.key;
+  compiled.positive_assertions = [
+    compiled.positive_assertions.find(
+      (assertion) => assertion.key === assertionKey,
+    ),
+  ];
+  compiled.negative_assertions = [];
   const commonRecords = [
     {
       assertion_key: assertionKey,
@@ -231,13 +333,6 @@ test("selected design targets require root-bound comparison evidence and blocker
       root_entrypoint: "tests/oracle.mjs",
       session_id: "fixture-map-session",
       cold_start: true,
-    },
-    {
-      assertion_key: assertionKey,
-      capability: "state_delta",
-      before_sha256: ZERO,
-      after_sha256: ONE,
-      changed_fields: ["selected-tab"],
     },
     {
       assertion_key: assertionKey,
@@ -354,6 +449,7 @@ test("behavior Claims cannot be proved by presence text and success cannot be re
     "degradation",
     "stage_gate",
   ];
+  degradationOnly.outcomes[0].applicability[0].journey_role = "degradation";
   assert.throws(() => parse(degradationOnly), /success_path_check_required/u);
 
   const deepLinkGate = deliveryContract();
@@ -387,6 +483,8 @@ test("multi-Outcome Stage Gates require typed cross-surface consistency evidence
   const check = compiledCheck(contract, gateCheck, "second", [
     "cross_surface_consistency",
   ]);
+  check.positive_assertions = [check.positive_assertions[0]];
+  check.negative_assertions = [];
   const invalid = evaluateEvidenceCapabilities(
     check,
     [

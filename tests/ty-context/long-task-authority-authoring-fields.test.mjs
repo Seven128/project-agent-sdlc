@@ -18,10 +18,19 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
 
     const removedRequirement = structuredClone(baseline);
     removedRequirement.outcomes[0].product.requirements = [];
-    removedRequirement.outcomes[0].acceptance.checks[0].positive_assertions[0].claims =
-      ["result", "obligation.implement-first"];
+    removedRequirement.outcomes[0].acceptance.checks[0].positive_assertions =
+      removedRequirement.outcomes[0].acceptance.checks[0].positive_assertions.filter(
+        (assertion) => assertion.key !== "first-requirement",
+      );
     removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].claims =
-      ["result", "obligation.implement-first"];
+      removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].claims.filter(
+        (claim) => claim !== "requirement.observe-first",
+      );
+    removedRequirement.outcomes[0].acceptance.counterfactual_controls[0]
+      .expected_assertion_failures =
+      removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures.filter(
+        (assertion) => assertion !== "first-requirement",
+      );
     removedRequirement.source_claims[0].statement = "Implement first";
     removedRequirement.source_claims[0].disposition = {
       type: "claim",
@@ -53,7 +62,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
     const changedSourceAcceptance = structuredClone(baseline);
     changedSourceAcceptance.source_claims[0].disposition = {
       type: "acceptance",
-      refs: ["first.first-check.first-result"],
+      refs: ["first.first-check.first-requirement"],
     };
     changedSourceAcceptance.source_claims.push({
       key: "first-requirement",
@@ -64,8 +73,9 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
         refs: ["first.requirement.observe-first"],
       },
     });
-    changedSourceAcceptance.outcomes[0].acceptance.checks[0].positive_assertions[0].criterion =
-      "The first outcome must be observable.";
+    changedSourceAcceptance.outcomes[0].acceptance.checks[0].positive_assertions.find(
+      (assertion) => assertion.key === "first-requirement",
+    ).criterion = "The first outcome must be observable.";
     await writeSourceWithRequirement(fixture.root, "first-observable");
     await writeContract(fixture.workdir, changedSourceAcceptance);
     await expectDecision(fixture, {
@@ -73,17 +83,24 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
     });
 
     const replacedAcceptance = structuredClone(baseline);
-    replacedAcceptance.outcomes[0].acceptance.checks[0].positive_assertions = [
-      {
-        ...replacedAcceptance.outcomes[0].acceptance.checks[0]
-          .positive_assertions[0],
-        key: "replacement-result",
-        criterion: "The first outcome must be observable.",
-      },
-    ];
+    const replacedCheck =
+      replacedAcceptance.outcomes[0].acceptance.checks[0];
+    const requirementAssertion = replacedCheck.positive_assertions.find(
+      (assertion) => assertion.key === "first-requirement",
+    );
+    replacedCheck.positive_assertions =
+      replacedCheck.positive_assertions.map((assertion) =>
+        assertion.key === "first-requirement"
+          ? {
+              ...requirementAssertion,
+              key: "replacement-requirement",
+              criterion: "The first outcome must be observable.",
+            }
+          : assertion,
+      );
     replacedAcceptance.source_claims[0].disposition = {
       type: "acceptance",
-      refs: ["first.first-check.replacement-result"],
+      refs: ["first.first-check.replacement-requirement"],
     };
     replacedAcceptance.source_claims.push({
       key: "first-requirement",
@@ -95,7 +112,13 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
       },
     });
     replacedAcceptance.outcomes[0].acceptance.counterfactual_controls[0]
-      .expected_assertion_failures = ["replacement-result"];
+      .expected_assertion_failures =
+      replacedAcceptance.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures.map(
+        (assertion) =>
+          assertion === "first-requirement"
+            ? "replacement-requirement"
+            : assertion,
+      );
     await writeSourceWithRequirement(fixture.root, "first-observable");
     await writeContract(fixture.workdir, replacedAcceptance);
     await expectDecision(fixture, {
@@ -113,7 +136,9 @@ async function writeSource(
 ) {
   await writeFile(
     path.join(root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=${kind} -->
 ${statement}
@@ -125,7 +150,9 @@ ${statement}
 async function writeSourceWithRequirement(root, acceptanceKey) {
   await writeFile(
     path.join(root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=${acceptanceKey} kind=acceptance -->
 The first outcome must be observable.

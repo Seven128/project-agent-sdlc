@@ -56,13 +56,21 @@ stages:
     gate_outcome: replace-outcome
 risk:
   facts: {}
-global: {}
+global:
+  applicability: []
 outcomes:
   - key: replace-outcome
     title: Replace outcome
     stage: delivery
+    applicability:
+      - key: root-success
+        target_ref: replace-runtime
+        journey_role: success
+        given_refs: [source-ready]
+        when_refs: [inspect-result]
     product:
       observable_result: Describe what a user or system can observe.
+      result_applicability_refs: [root-success]
       success_path_required: true
       degradation_path_required: false
       owner:
@@ -73,6 +81,10 @@ outcomes:
         - key: replace-requirement
           statement: Preserve one atomic source requirement.
           required_proof_surfaces: [runtime_behavior]
+          applicability_refs: [root-success]
+      control_relation_closure:
+        state: not_applicable
+        statement: This Outcome declares no user-visible Controls.
     technical:
       expected_change_paths: ["src/**"]
       bindings:
@@ -94,25 +106,43 @@ outcomes:
             type: node_oracle
             target: tests/replace-oracle.mjs
             effect: read_only
-          verification_inputs: ["tests/replace-oracle.mjs"]
+          verification_inputs: ["tests/replace-oracle.mjs", "tests/replace-semantic-failure.ts"]
           input_paths: [src/replace-me.ts]
           expected_output_paths: [src/replace-me.ts]
           positive_assertions:
-            - key: replace-success
-              criterion: The declared outcome and requirement are observable.
-              claims: [result, requirement.replace-requirement]
+            - key: replace-result
+              criterion: The declared outcome is observable.
+              claims: [result]
+              applicability_ref: root-success
               observation: result
               evidence_capabilities: [state_delta, target_runtime]
               operator: equals
               expected: true
+            - key: replace-requirement
+              criterion: The atomic Source requirement is observable.
+              claims: [requirement.replace-requirement]
+              applicability_ref: root-success
+              observation: requirement_result
+              evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: true
+            - key: replace-liveness
+              criterion: The declared target remains live under semantic mutation.
+              claims: []
+              observation: target_live
+              evidence_capabilities: [target_runtime]
+              operator: equals
+              expected: true
       counterfactual_controls:
-        - key: remove-replace-carrier
+        - key: replace-semantic-carrier
           binding_key: replace-carrier
           claims: [result, requirement.replace-requirement]
           check_key: replace-check
           mutation:
-            type: remove_paths
-            paths: [src/replace-me.ts]
-          expected_assertion_failures: [replace-success]
+            type: replace_file
+            path: src/replace-me.ts
+            fixture_path: tests/replace-semantic-failure.ts
+          expected_assertion_failures: [replace-result, replace-requirement]
+          preserved_assertions: [replace-liveness]
 `;
 }

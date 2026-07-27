@@ -1,4 +1,5 @@
 import type { DeliveryOutcomeV2 } from "./long-task-delivery-types.js";
+import { parseKeyRefs } from "./long-task-applicability-shape.js";
 import { parseRequiredProofSurfaces } from "./long-task-required-proof-surfaces.js";
 import { array, key, object, string } from "./long-task-shape-primitives.js";
 
@@ -12,6 +13,7 @@ export function parseRequirements(
       "key",
       "statement",
       "required_proof_surfaces",
+      "applicability_refs",
     ]);
     const surfaces = parseRequiredProofSurfaces(
       row.required_proof_surfaces,
@@ -21,6 +23,10 @@ export function parseRequirements(
       key: key(row.key, `${itemLabel}.key`),
       statement: string(row.statement, `${itemLabel}.statement`),
       required_proof_surfaces: surfaces,
+      applicability_refs: parseKeyRefs(
+        row.applicability_refs,
+        `${itemLabel}.applicability_refs`,
+      ),
     };
   });
 }

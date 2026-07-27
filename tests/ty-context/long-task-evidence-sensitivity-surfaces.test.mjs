@@ -1,22 +1,43 @@
+import assert from "node:assert/strict";
 import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { createDeliveryFixture } from "./long-task-delivery-fixtures.mjs";
+import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import YAML from "yaml";
 import {
-  assertActivationReady,
-  assertActivationRejects,
-  counterfactual,
-} from "./long-task-evidence-sensitivity-fixtures.mjs";
+  createDeliveryFixture,
+  deliveryContract,
+} from "./long-task-delivery-fixtures.mjs";
+import { assertActivationRejects } from "./long-task-evidence-sensitivity-fixtures.mjs";
 
-test("same-Check Population exempts only its own Claims from Counterfactual coverage", async () => {
+test("Population cannot substitute for an attributable per-applicability Assertion", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  check.positive_assertions = check.positive_assertions.filter(
+    (assertion) => assertion.key !== "first-obligation",
+  );
+  outcome.acceptance.population = {
+    check_key: check.key,
+    claims: ["obligation.implement-first"],
+    observations: {
+      eligible_ids: "population.eligible_ids",
+      observed_ids: "population.observed_ids",
+      excluded_items: "population.excluded_items",
+    },
+    exclusion_rules: [],
+  };
+  assert.throws(
+    () => parseDeliveryContractText(YAML.stringify(contract)),
+    /product_claim_required_surfaces_missing:first:obligation\.implement-first:first-root-success:runtime_behavior/u,
+  );
+});
+
+test("Population does not waive semantic sensitivity for its behavioral Assertion", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
     const check = outcome.acceptance.checks[0];
-    check.positive_assertions[0].claims = [
-      "result",
-      "requirement.observe-first",
-    ];
     outcome.acceptance.population = {
       check_key: check.key,
       claims: ["obligation.implement-first"],
@@ -27,58 +48,28 @@ test("same-Check Population exempts only its own Claims from Counterfactual cove
       },
       exclusion_rules: [],
     };
-    outcome.acceptance.counterfactual_controls = [
-      counterfactual({
-        key: "non-population-sensitive",
-        checkKey: check.key,
-        claims: ["result", "requirement.observe-first"],
-        assertionKeys: ["first-result"],
-      }),
-    ];
-    await assertActivationReady(fixture);
-  } finally {
-    await rm(fixture.root, { recursive: true, force: true });
-  }
-});
-
-test("weak_observability removes the Population sensitivity exemption", async () => {
-  const fixture = await createDeliveryFixture();
-  try {
-    const outcome = fixture.contract.outcomes[0];
-    const check = outcome.acceptance.checks[0];
-    fixture.contract.risk.facts.weak_observability = ["first"];
-    check.positive_assertions[0].claims = [];
-    outcome.acceptance.population = {
-      check_key: check.key,
-      claims: [
-        "result",
-        "requirement.observe-first",
-        "obligation.implement-first",
-      ],
-      observations: {
-        eligible_ids: "population.eligible_ids",
-        observed_ids: "population.observed_ids",
-        excluded_items: "population.excluded_items",
-      },
-      exclusion_rules: [],
-    };
     outcome.acceptance.counterfactual_controls = [];
-    await assertActivationRejects(fixture, [
-      "result",
-      "requirement.observe-first",
-      "obligation.implement-first",
-    ]);
+    await assertActivationRejects(fixture, {
+      code: "behavioral_semantic_counterfactual_required",
+      includes: ["first-obligation"],
+    });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("Playwright Claims do not require an additional Counterfactual", async () => {
+test("Playwright behavioral Claims also require semantic Counterfactuals", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
     const check = outcome.acceptance.checks[0];
-    await writeFile(path.join(fixture.root, "tests", "ui.spec.ts"), "export {};\n");
+    await writeFile(
+      path.join(fixture.root, "tests", "ui.spec.ts"),
+      `import { test, expect } from "@playwright/test";
+test("first-result", async () => { expect(true).toBe(true); });
+test("first-requirement", async () => { expect(true).toBe(true); });
+`,
+    );
     outcome.technical.obligations = [];
     outcome.product.requirements[0].required_proof_surfaces = ["ui_browser"];
     fixture.contract.task.execution_targets[0].runtime_family = "browser";
@@ -88,21 +79,47 @@ test("Playwright Claims do not require an additional Counterfactual", async () =
     check.runner.argv = [];
     check.runner.effect = "test_sandbox";
     check.runner.idempotent = false;
-    check.verification_inputs = ["tests/ui.spec.ts"];
+    check.verification_inputs = [
+      "tests/ui.spec.ts",
+      "tests/semantic-false.json",
+    ];
     check.artifact_globs = [];
     check.positive_assertions = [
       {
-        key: "first-ui",
-        criterion: "The first browser acceptance case passes.",
-        claims: ["result", "requirement.observe-first"],
-        observation: "playwright.case.first-ui.passed",
+        key: "first-result",
+        criterion: "The browser result is observable.",
+        claims: ["result"],
+        applicability_ref: "first-root-success",
+        observation: "playwright.case.first-result.passed",
         evidence_capabilities: ["interaction_trace", "target_runtime"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: "first-requirement",
+        criterion: "The browser requirement is observable.",
+        claims: ["requirement.observe-first"],
+        applicability_ref: "first-root-success",
+        observation: "playwright.case.first-requirement.passed",
+        evidence_capabilities: ["interaction_trace", "target_runtime"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: "first-liveness",
+        criterion: "The browser target remains live.",
+        claims: [],
+        observation: "target_live",
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
     ];
     outcome.acceptance.counterfactual_controls = [];
-    await assertActivationReady(fixture);
+    await assertActivationRejects(fixture, {
+      code: "behavioral_semantic_counterfactual_required",
+      includes: ["first-result"],
+    });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

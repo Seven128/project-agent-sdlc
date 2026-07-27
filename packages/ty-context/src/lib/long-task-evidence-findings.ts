@@ -35,6 +35,9 @@ export function evaluateAssertionResults(
       polarity,
       passed: evaluation.passed,
       claims: assertion.claims,
+      ...(assertion.applicability_ref
+        ? { applicability_ref: assertion.applicability_ref }
+        : {}),
       observation: assertion.observation,
       evidence_capabilities: assertion.evidence_capabilities,
       evidence_complete: false,

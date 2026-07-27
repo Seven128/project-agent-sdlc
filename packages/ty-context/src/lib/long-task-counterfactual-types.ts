@@ -9,6 +9,7 @@ export interface CounterfactualControlV2 {
   check_key: string;
   mutation: CounterfactualMutationV2;
   expected_assertion_failures: string[];
+  preserved_assertions: string[];
 }
 
 export interface GlobalCounterfactualControlV2 {
@@ -18,4 +19,5 @@ export interface GlobalCounterfactualControlV2 {
   check_key: string;
   mutation: CounterfactualMutationV2;
   expected_assertion_failures: string[];
+  preserved_assertions: string[];
 }

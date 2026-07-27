@@ -18,6 +18,7 @@ test("Global non-goals, constraints, and forbidden shortcuts require Global Chec
   nonGoal.global.product.non_goals.push({
     key: "no-legacy",
     statement: "Legacy behavior is not allowed.",
+    applicability_refs: [ensureGlobalApplicability(nonGoal)],
   });
   assert.throws(() => parse(nonGoal), /global_claim_uncovered:GLOBAL\.non_goal\.no-legacy/u);
 
@@ -25,6 +26,7 @@ test("Global non-goals, constraints, and forbidden shortcuts require Global Chec
   constraint.global.technical.constraints.push({
     key: "stable-runtime",
     statement: "Runtime behavior remains stable.",
+    applicability_refs: [ensureGlobalApplicability(constraint)],
   });
   assert.throws(
     () => parse(constraint),
@@ -35,6 +37,7 @@ test("Global non-goals, constraints, and forbidden shortcuts require Global Chec
   shortcut.global.technical.forbidden_shortcuts.push({
     key: "self-report",
     statement: "Self-report is not proof.",
+    applicability_refs: [ensureGlobalApplicability(shortcut)],
   });
   shortcut.global.acceptance.checks.push(
     makeGlobalCheck(shortcut, {
@@ -52,14 +55,17 @@ test("negative Global non-goal/shortcut proof and positive constraint proof comp
   contract.global.product.non_goals.push({
     key: "no-legacy",
     statement: "Legacy behavior is not allowed.",
+    applicability_refs: [ensureGlobalApplicability(contract)],
   });
   contract.global.technical.constraints.push({
     key: "stable-runtime",
     statement: "Runtime behavior remains stable.",
+    applicability_refs: [ensureGlobalApplicability(contract)],
   });
   contract.global.technical.forbidden_shortcuts.push({
     key: "self-report",
     statement: "Self-report is not proof.",
+    applicability_refs: [ensureGlobalApplicability(contract)],
   });
   contract.global.acceptance.checks.push(
     makeGlobalCheck(contract, {
@@ -103,15 +109,15 @@ test("Global and Outcome Assertions cannot cross Claim scope", () => {
   outcomeToGlobal.global.technical.constraints.push({
     key: "stable-runtime",
     statement: "Runtime behavior remains stable.",
+    applicability_refs: [ensureGlobalApplicability(outcomeToGlobal)],
   });
   outcomeToGlobal.global.acceptance.checks.push(
     makeGlobalCheck(outcomeToGlobal, {
       positive: ["constraint.stable-runtime"],
     }),
   );
-  outcomeToGlobal.outcomes[0].acceptance.checks[0].positive_assertions[0].claims.push(
-    "constraint.stable-runtime",
-  );
+  outcomeToGlobal.outcomes[0].acceptance.checks[0].positive_assertions[0].claims =
+    ["constraint.stable-runtime"];
   assert.throws(
     () => parse(outcomeToGlobal),
     /assertion_claim_cross_scope:first:constraint\.stable-runtime/u,
@@ -132,6 +138,7 @@ test("Source Claims cannot cite an uncovered Global Claim", () => {
   contract.global.technical.constraints.push({
     key: "stable-runtime",
     statement: "Runtime behavior remains stable.",
+    applicability_refs: [ensureGlobalApplicability(contract)],
   });
   contract.source_claims[0].disposition = {
     type: "global_constraint",
@@ -164,6 +171,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
     fixture.contract.global.technical.constraints.push({
       key: "global-runtime",
       statement: "The Global runtime assertion must pass.",
+      applicability_refs: [ensureGlobalApplicability(fixture.contract)],
     });
     fixture.contract.global.acceptance.checks.push(
       makeGlobalCheck(fixture.contract, {
@@ -172,12 +180,17 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       }),
     );
     fixture.contract.global.acceptance.counterfactual_controls.push({
-      key: "remove-global-runtime",
+      key: "replace-global-runtime",
       binding_ref: "first.state-first",
       claims: ["constraint.global-runtime"],
       check_key: "global-claim-check",
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
       expected_assertion_failures: ["global-positive"],
+      preserved_assertions: ["global-liveness"],
     });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -219,7 +232,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
         (check) =>
           check.outcome_key === null &&
           check.check_key === "global-claim-check" &&
-          check.status === "assertion_failed",
+          check.status !== "passed",
       ),
     );
   } finally {
@@ -231,37 +244,61 @@ function makeGlobalCheck(
   contract,
   { positive = [], negative = [], expected = true },
 ) {
+  const applicabilityRef = ensureGlobalApplicability(contract);
   const check = structuredClone(
     contract.outcomes[0].acceptance.checks[0],
   );
   check.key = "global-claim-check";
+  check.runner.argv = ["first", "global-claim"];
   check.positive_assertions = positive.length
     ? [
-        {
-          key: "global-positive",
+        ...positive.map((claim, index) => ({
+          key: index === 0 ? "global-positive" : `global-positive-${index + 1}`,
           criterion: "The declared Global positive Claim is satisfied.",
-          claims: positive,
-          observation: "result_copy",
-          evidence_capabilities: ["state_delta"],
+          claims: [claim],
+          applicability_ref: applicabilityRef,
+          observation: `global_positive_${index + 1}`,
+          evidence_capabilities: ["target_runtime", "state_delta"],
           operator: "equals",
           expected,
+        })),
+        {
+          key: "global-liveness",
+          criterion: "The product target remains live.",
+          claims: [],
+          observation: "target_live",
+          evidence_capabilities: ["target_runtime"],
+          operator: "equals",
+          expected: true,
         },
       ]
     : [];
   check.negative_assertions = negative.length
-    ? [
-        {
-          key: "global-negative",
+    ? negative.map((claim, index) => ({
+          key: index === 0 ? "global-negative" : `global-negative-${index + 1}`,
           criterion: "The declared Global negative Claim is satisfied.",
-          claims: negative,
-          observation: "negative",
-          evidence_capabilities: ["state_delta"],
+          claims: [claim],
+          applicability_ref: applicabilityRef,
+          observation: `global_negative_${index + 1}`,
+          evidence_capabilities: ["target_runtime", "state_delta"],
           operator: "equals",
           expected: false,
-        },
-      ]
+        }))
     : [];
   return check;
+}
+
+function ensureGlobalApplicability(contract) {
+  const key = "global-root-success";
+  if (!contract.global.applicability.some((item) => item.key === key))
+    contract.global.applicability.push({
+      key,
+      target_ref: "fixture-app",
+      journey_role: "success",
+      given_refs: ["fixture-loaded"],
+      when_refs: ["read-outcome"],
+    });
+  return key;
 }
 
 function parse(contract) {

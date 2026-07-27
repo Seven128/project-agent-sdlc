@@ -189,7 +189,9 @@ test("protected summaries enumerate removed Source and external-confirmation key
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.

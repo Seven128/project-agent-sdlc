@@ -10,8 +10,10 @@ export async function prepareAuthorityRevisionFixture(fixture) {
 let state = { first: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const key = process.argv[2] || "first";
-const assertionKey = key + "-result";
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state[key],negative:false},evidence_records:[{assertion_key:assertionKey,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"revision-" + key + "-session",cold_start:true},{assertion_key:assertionKey,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]},{assertion_key:"negative-floor",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
+const claimAssertions = [key + "-result", key + "-requirement", key + "-obligation"];
+const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"revision-" + key + "-session",cold_start:true});
+const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state[key],requirement_result:state[key],obligation_result:state[key],target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness"),{assertion_key:"negative-floor",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
 `,
   );
   await writeFile(
@@ -49,8 +51,17 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "obligation.implement-first",
       ],
       check_key: check.key,
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
-      expected_assertion_failures: ["first-result"],
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
+      expected_assertion_failures: [
+        "first-result",
+        "first-requirement",
+        "first-obligation",
+      ],
+      preserved_assertions: ["first-liveness"],
     },
     {
       key: "remove-state-redundant-proof",
@@ -61,8 +72,17 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "obligation.implement-first",
       ],
       check_key: check.key,
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
-      expected_assertion_failures: ["first-result"],
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
+      expected_assertion_failures: [
+        "first-result",
+        "first-requirement",
+        "first-obligation",
+      ],
+      preserved_assertions: ["first-liveness"],
     },
   ];
   check.negative_assertions.push({
@@ -104,6 +124,7 @@ export const authorityReductionScenarios = [
     mutate(contract) {
       contract.outcomes[0].acceptance.checks[0].verification_inputs = [
         "tests/oracle.mjs",
+        "tests/semantic-false.json",
       ];
     },
   },
@@ -153,11 +174,20 @@ export const authorityReductionScenarios = [
     userDecisionRequired: true,
     mutate(contract) {
       contract.outcomes[0].technical.obligations = [];
-      contract.outcomes[0].acceptance.checks[0].positive_assertions[0].claims =
-        ["result", "requirement.observe-first"];
+      contract.outcomes[0].acceptance.checks[0].positive_assertions =
+        contract.outcomes[0].acceptance.checks[0].positive_assertions.filter(
+          (assertion) => assertion.key !== "first-obligation",
+        );
       for (const control of contract.outcomes[0].acceptance
-        .counterfactual_controls)
-        control.claims = ["result", "requirement.observe-first"];
+        .counterfactual_controls) {
+        control.claims = control.claims.filter(
+          (claim) => claim !== "obligation.implement-first",
+        );
+        control.expected_assertion_failures =
+          control.expected_assertion_failures.filter(
+            (assertion) => assertion !== "first-obligation",
+          );
+      }
     },
   },
   {

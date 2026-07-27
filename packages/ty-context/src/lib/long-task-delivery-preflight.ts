@@ -289,6 +289,21 @@ async function validateScopeCounterfactualPaths(options: {
     throw new Error(
       `counterfactual_fixture_must_be_verification_input:${options.scope}:${fixture}`,
     );
+  const replacementTarget = resolveInsideRepository(
+    options.repository,
+    options.mutation.path,
+    `${options.scope}.counterfactual.path`,
+  );
+  if (await stat(replacementTarget).catch(() => null)) {
+    const [fixtureBytes, targetBytes] = await Promise.all([
+      readFile(fixtureTarget),
+      readFile(replacementTarget),
+    ]);
+    if (fixtureBytes.equals(targetBytes))
+      throw new Error(
+        `counterfactual_replacement_must_change_carrier:${options.scope}:${options.controlKey}`,
+      );
+  }
 }
 
 export async function hashDeclaredFiles(

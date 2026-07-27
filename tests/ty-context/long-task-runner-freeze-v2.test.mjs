@@ -42,7 +42,10 @@ test("runner target resolves from a subdirectory and executes that frozen target
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
     check.runner.cwd = "tools/sub";
     check.runner.target = "oracle.mjs";
-    check.verification_inputs = ["tools/sub/oracle.mjs"];
+    check.verification_inputs = [
+      "tools/sub/oracle.mjs",
+      "tests/semantic-false.json",
+    ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -74,17 +77,23 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
     check.runner.type = "playwright_test";
     check.runner.target = "tests/ui.spec.mjs";
     check.proof_surface = "ui_browser";
-    check.positive_assertions[0].observation =
-      "playwright.case.first-result.passed";
-    check.positive_assertions[0].evidence_capabilities = [
-      "interaction_trace",
-      "target_runtime",
-    ];
+    for (const assertion of check.positive_assertions) {
+      if (!assertion.claims.length) continue;
+      assertion.observation = `playwright.case.${assertion.key}.passed`;
+      assertion.evidence_capabilities = [
+        "interaction_trace",
+        "target_runtime",
+      ];
+    }
     fixture.contract.outcomes[0].product.requirements[0].required_proof_surfaces =
       ["ui_browser"];
     fixture.contract.outcomes[0].technical.obligations[0].required_proof_surfaces =
       ["ui_browser"];
-    check.verification_inputs = ["tests/helper.mjs", "tests/fixture.json"];
+    check.verification_inputs = [
+      "tests/helper.mjs",
+      "tests/fixture.json",
+      "tests/semantic-false.json",
+    ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

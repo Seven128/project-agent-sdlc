@@ -6,8 +6,9 @@ import {
   key,
   literal,
   object,
+  parseApplicableKeyedStatements,
+  parseClaimApplicability,
   parseKeyedPaths,
-  parseKeyedStatements,
   repositoryFiles,
   string,
   strings,
@@ -178,7 +179,7 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
     value,
     "global",
     [],
-    ["product", "technical", "acceptance"],
+    ["applicability", "product", "technical", "acceptance"],
   );
   const product = object(
     Object.hasOwn(row, "product") ? row.product : {},
@@ -199,14 +200,20 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
     ["checks", "counterfactual_controls", "external_confirmations"],
   );
   return {
+    applicability: Object.hasOwn(row, "applicability")
+      ? parseClaimApplicability(row.applicability, "global.applicability")
+      : [],
     product: {
       non_goals: Object.hasOwn(product, "non_goals")
-        ? parseKeyedStatements(product.non_goals, "global.product.non_goals")
+        ? parseApplicableKeyedStatements(
+            product.non_goals,
+            "global.product.non_goals",
+          )
         : [],
     },
     technical: {
       constraints: Object.hasOwn(technical, "constraints")
-        ? parseKeyedStatements(
+        ? parseApplicableKeyedStatements(
             technical.constraints,
             "global.technical.constraints",
           )
@@ -218,7 +225,7 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
           )
         : [],
       forbidden_shortcuts: Object.hasOwn(technical, "forbidden_shortcuts")
-        ? parseKeyedStatements(
+        ? parseApplicableKeyedStatements(
             technical.forbidden_shortcuts,
             "global.technical.forbidden_shortcuts",
           )

@@ -10,6 +10,7 @@ import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/lo
 import { parseControls } from "../../packages/ty-context/dist/lib/long-task-product-shape.js";
 import { parseSurfaceBindings } from "../../packages/ty-context/dist/lib/long-task-ui-surface-shape.js";
 import {
+  completeControl,
   createDeliveryFixture,
   deliveryContract,
   writeContract,
@@ -35,7 +36,7 @@ const activeOperators = [
 ];
 
 test("Control Schema and Parser preserve the complete control-level UI vocabulary", async () => {
-  const input = {
+  const input = completeControl({
     key: "submit",
     surface: "settings",
     region: "footer",
@@ -59,7 +60,7 @@ test("Control Schema and Parser preserve the complete control-level UI vocabular
     permission: "read-only when denied",
     feedback: "announce result",
     accessibility: "named keyboard-operable button",
-  };
+  });
   const [parsed] = parseControls([input], "controls");
   const schema = await deliverySchema();
   assert.deepEqual(
@@ -67,7 +68,7 @@ test("Control Schema and Parser preserve the complete control-level UI vocabular
     Object.keys(schema.$defs.control.properties).sort(),
   );
   assert.deepEqual(parsed, input);
-  assert.deepEqual(schema.$defs.control.required, ["key", "location"]);
+  assert.deepEqual(schema.$defs.control.required, ["key", "field_coverage"]);
 });
 
 test("production surface bindings and design conformance have Schema/Parser parity", async () => {
@@ -153,9 +154,17 @@ test("production surface bindings and design conformance have Schema/Parser pari
 
 test("negative-only Global Check and zero positive Assertions have Schema/Parser parity", async () => {
   const contract = deliveryContract();
+  contract.global.applicability.push({
+    key: "global-root-success",
+    target_ref: "fixture-app",
+    journey_role: "success",
+    given_refs: ["fixture-loaded"],
+    when_refs: ["read-outcome"],
+  });
   contract.global.product.non_goals.push({
     key: "no-legacy",
     statement: "Legacy fallback is forbidden.",
+    applicability_refs: ["global-root-success"],
   });
   const check = structuredClone(contract.outcomes[0].acceptance.checks[0]);
   check.key = "negative-only";
@@ -165,6 +174,7 @@ test("negative-only Global Check and zero positive Assertions have Schema/Parser
       key: "legacy-absent",
       criterion: "The retired legacy behavior remains absent.",
       claims: ["non_goal.no-legacy"],
+      applicability_ref: "global-root-success",
       observation: "negative",
       evidence_capabilities: ["state_delta"],
       operator: "equals",
@@ -211,12 +221,17 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
     () => parseDeliveryContractText(YAML.stringify(missingExpected)),
     /assertion_expected_required/u,
   );
-  assert.ok(schema.$defs.assertion.allOf[0].then.required.includes("expected"));
+  const expectedRequired = schema.$defs.assertion.allOf.find((rule) =>
+    rule.then?.required?.includes("expected"),
+  );
+  assert.ok(expectedRequired);
 
   const unaryExpected = deliveryContract();
   unaryExpected.outcomes[0].acceptance.checks[0].positive_assertions[0] = {
     key: "exists",
-    claims: ["result", "obligation.implement-first"],
+    criterion: "The result carrier exists.",
+    claims: ["result"],
+    applicability_ref: "first-root-success",
     observation: "result",
     evidence_capabilities: ["presence"],
     operator: "exists",
@@ -226,14 +241,19 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
     () => parseDeliveryContractText(YAML.stringify(unaryExpected)),
     /assertion_expected_forbidden/u,
   );
-  assert.deepEqual(schema.$defs.assertion.allOf[1].then.not.required, [
+  const expectedForbidden = schema.$defs.assertion.allOf.find(
+    (rule) => rule.then?.not?.required?.includes("expected"),
+  );
+  assert.deepEqual(expectedForbidden.then.not.required, [
     "expected",
   ]);
 
   const invalidRegex = deliveryContract();
   invalidRegex.outcomes[0].acceptance.checks[0].positive_assertions[0] = {
     key: "regex",
-    claims: ["result", "obligation.implement-first"],
+    criterion: "The result matches the declared pattern.",
+    claims: ["result"],
+    applicability_ref: "first-root-success",
     observation: "result",
     evidence_capabilities: ["state_delta"],
     operator: "matches",
@@ -244,7 +264,9 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
     /assertion_expected_invalid_regex/u,
   );
   assert.equal(
-    schema.$defs.assertion.allOf[2].then.properties.expected.format,
+    schema.$defs.assertion.allOf.find(
+      (rule) => rule.then?.properties?.expected?.format === "regex",
+    ).then.properties.expected.format,
     "regex",
   );
 });

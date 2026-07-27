@@ -57,11 +57,13 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
     outcome.technical.forbidden_shortcuts.push({
       key: "self-report",
       statement: "Do not accept self-reported success.",
+      applicability_refs: ["first-root-success"],
     });
     check.negative_assertions.push({
       key: "shortcut-rejected",
       criterion: "Self-reported success remains rejected.",
       claims: ["forbidden_shortcut.self-report"],
+      applicability_ref: "first-root-success",
       observation: "negative_ok",
       evidence_capabilities: ["state_delta"],
       operator: "equals",
@@ -69,7 +71,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
     });
     outcome.acceptance.counterfactual_controls = [
       {
-        key: "remove-state-carrier",
+        key: "replace-state-semantics",
         binding_key: "state-first",
         claims: [
           "result",
@@ -78,8 +80,18 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "forbidden_shortcut.self-report",
         ],
         check_key: check.key,
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
-        expected_assertion_failures: ["first-result", "shortcut-rejected"],
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
+        expected_assertion_failures: [
+          "first-result",
+          "first-requirement",
+          "first-obligation",
+          "shortcut-rejected",
+        ],
+        preserved_assertions: ["first-liveness"],
       },
     ];
     await writeArtifactOracle(fixture.root);
@@ -130,12 +142,8 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
     });
     const populationCheck = structuredClone(check);
     populationCheck.key = "population-check";
-    populationCheck.positive_assertions = populationCheck.positive_assertions.map(
-      (assertion) => ({ ...assertion, claims: [] }),
-    );
-    populationCheck.negative_assertions = populationCheck.negative_assertions.map(
-      (assertion) => ({ ...assertion, claims: [] }),
-    );
+    populationCheck.positive_assertions = [];
+    populationCheck.negative_assertions = [];
     outcome.acceptance.checks.push(populationCheck);
     outcome.acceptance.population = {
       check_key: populationCheck.key,
@@ -149,7 +157,7 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
     };
     outcome.acceptance.counterfactual_controls = [
       {
-        key: "remove-state-carrier",
+        key: "replace-state-semantics",
         binding_key: "state-first",
         claims: [
           "result",
@@ -157,8 +165,17 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
           "obligation.implement-first",
         ],
         check_key: check.key,
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
-        expected_assertion_failures: ["first-result"],
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
+        expected_assertion_failures: [
+          "first-result",
+          "first-requirement",
+          "first-obligation",
+        ],
+        preserved_assertions: ["first-liveness"],
       },
     ];
     await writePopulationOracle(fixture.root);
@@ -178,7 +195,7 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
 
     await writeFile(
       path.join(fixture.root, "src/state.json"),
-      `${JSON.stringify({ first: false, second: false })}\n`,
+      `${JSON.stringify({ first: false, second: true })}\n`,
     );
     const failed = await runCliFailure(fixture.root, [
       "long-task",
@@ -231,7 +248,10 @@ let result = false;
 try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; } catch {}
 await mkdir(new URL("../artifacts", import.meta.url), {recursive:true});
 await writeFile(new URL("../artifacts/proof.json", import.meta.url), JSON.stringify({verified:result}));
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,"artifacts-ready":true,negative_ok:result},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"artifact-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]},{assertion_key:"artifact-present",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["artifact"]},{assertion_key:"shortcut-rejected",capability:"state_delta",before_sha256:"4".repeat(64),after_sha256:"5".repeat(64),changed_fields:["negative"]}]}));
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"artifact-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
+const claimAssertions=["first-result","first-requirement","first-obligation"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,target_live:true,"artifacts-ready":true,negative_ok:result},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"artifact-present",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["artifact"]},{assertion_key:"shortcut-rejected",capability:"state_delta",before_sha256:"4".repeat(64),after_sha256:"5".repeat(64),changed_fields:["negative"]}]}));
 `,
   );
 }
@@ -242,7 +262,10 @@ async function writePopulationOracle(root) {
     `import { readFile } from "node:fs/promises";
 let result = false;
 try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; } catch {}
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,negative_ok:true,population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"population-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]},{assertion_key:"negative-path",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"population-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
+const claimAssertions=["first-result","first-requirement","first-obligation"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,target_live:true,negative_ok:true,population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"negative-path",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
 `,
   );
 }

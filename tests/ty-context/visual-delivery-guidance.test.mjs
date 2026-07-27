@@ -251,7 +251,10 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     authoring,
     /atomic Requirement, applicable Control field or named AC Assertion/iu,
   );
-  assert.match(authoring, /an omitted combination remains unproven/iu);
+  assert.match(
+    authoring,
+    /risk-based, pairwise, representative or sampled coverage never substitutes for a declared applicable cell/iu,
+  );
   assert.match(authoring, /explicit external confirmation/iu);
   assert.match(authoring, /minimum aggregated Product `surface_bindings`/iu);
   assert.match(
@@ -549,7 +552,11 @@ test("default workflow routes Design Authority readiness without adding a visual
     );
     assert.match(
       content,
-      /visibility\/availability.*validation\/default.*recovery\/permission.*accessibility/isu,
+      /all 22 canonical fields[\s\S]*`field_coverage`[\s\S]*omission never means non-applicable[\s\S]*`control_relation_closure`/iu,
+    );
+    assert.match(
+      content,
+      /applicability profiles?[\s\S]*exact target[\s\S]*Given condition\/input\/state[\s\S]*ordered When/iu,
     );
   }
   assert.match(chineseReadme, /^### 视觉交付指导$/mu);

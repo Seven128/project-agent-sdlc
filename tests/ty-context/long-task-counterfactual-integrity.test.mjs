@@ -30,7 +30,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     });
     outcome.acceptance.counterfactual_controls = [
       {
-        key: "remove-state",
+        key: "replace-state-semantics",
         binding_key: "state-first",
         claims: [
           "result",
@@ -38,8 +38,17 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "obligation.implement-first",
         ],
         check_key: check.key,
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
-        expected_assertion_failures: ["first-result"],
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
+        expected_assertion_failures: [
+          "first-result",
+          "first-requirement",
+          "first-obligation",
+        ],
+        preserved_assertions: ["first-liveness"],
       },
     ];
     await writeOracle(fixture.root, "valid");
@@ -69,6 +78,8 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
       "artifact_missing",
       "assertion_value_mismatch",
+      "assertion_value_mismatch",
+      "assertion_value_mismatch",
     ]);
 
     const populationFailure = structuredClone(compiled.outcomes[0]);
@@ -88,6 +99,8 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     );
     assert.equal(findings.length, 1);
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
+      "assertion_value_mismatch",
+      "assertion_value_mismatch",
       "assertion_value_mismatch",
       "population_coverage_failed",
     ]);
@@ -161,11 +174,13 @@ test("Counterfactual Claims must belong to the designated sensitive Assertion", 
       key: "unrelated",
       statement: "Preserve an unrelated obligation.",
       required_proof_surfaces: ["runtime_behavior"],
+      applicability_refs: ["first-root-success"],
     });
     outcome.acceptance.checks[0].positive_assertions.push({
       key: "unrelated-proof",
       criterion: "The unrelated obligation remains observable.",
       claims: ["obligation.unrelated"],
+      applicability_ref: "first-root-success",
       observation: "other",
       evidence_capabilities: ["state_delta"],
       operator: "equals",
@@ -177,8 +192,13 @@ test("Counterfactual Claims must belong to the designated sensitive Assertion", 
         binding_key: "state-first",
         claims: ["obligation.unrelated"],
         check_key: "first-check",
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
         expected_assertion_failures: ["first-result"],
+        preserved_assertions: ["first-liveness"],
       },
     ];
     await writeContract(fixture.workdir, fixture.contract);
@@ -259,11 +279,11 @@ test("Counterfactual sandbox cleanup retries transient filesystem locks", async 
 });
 
 async function writeOracle(root, mode) {
-  const missing =
+  const prelude =
     mode === "timeout"
       ? "await new Promise(() => {});"
       : mode === "blocked"
-        ? 'console.log(JSON.stringify({schema_version:"long-task-check-result-v2",execution_status:"blocked_external",reason:"fixture"})); process.exit(0);'
+        ? 'console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"blocked_external",reason:"fixture"})); process.exit(0);'
         : mode === "invalid"
           ? 'console.log("not-json"); process.exit(0);'
           : "";
@@ -277,10 +297,14 @@ async function writeOracle(root, mode) {
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
     `import { readFile } from "node:fs/promises";
+${prelude}
 let result = false;
 try { result = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first; }
-catch { ${missing} }
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{${resultObservation}other:${other},population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"counterfactual-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]},{assertion_key:"other-stays-true",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["other"]}]}));
+catch {}
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"counterfactual-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
+const claimAssertions=["first-result","first-requirement","first-obligation"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{${resultObservation}requirement_result:result,obligation_result:result,target_live:true,other:${other},population:{eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"other-stays-true",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["other"]}]}));
 `,
   );
 }

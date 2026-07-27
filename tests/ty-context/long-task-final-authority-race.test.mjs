@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { access, mkdir, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  appendFile,
+  mkdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -90,6 +96,120 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
   }
 });
 
+test("Final Gate rejects every protected-input class changed during execution", async (t) => {
+  const cases = [
+    {
+      name: "raw Contract",
+      mutate: async (fixture) =>
+        appendFile(
+          path.join(fixture.workdir, "delivery-contract.yaml"),
+          "\n# concurrent raw Contract mutation\n",
+        ),
+    },
+    {
+      name: "Source",
+      mutate: async (fixture) =>
+        appendFile(
+          path.join(fixture.root, "source.md"),
+          `
+<!-- ty-source-background:start key=concurrent-note reason=race-test -->
+Concurrent Source background mutation.
+<!-- ty-source-background:end -->
+`,
+        ),
+    },
+    {
+      name: "controlling Context",
+      mutate: async (fixture) =>
+        appendFile(
+          path.join(fixture.root, "project_context", "areas", "main.md"),
+          "\nConcurrent controlling Context mutation.\n",
+        ),
+    },
+    {
+      name: "runner",
+      mutate: async (fixture) =>
+        appendFile(
+          path.join(fixture.root, "tests", "oracle.mjs"),
+          "\n// concurrent runner mutation\n",
+        ),
+    },
+    {
+      name: "verification input",
+      mutate: async (fixture) =>
+        writeFile(
+          path.join(fixture.root, "tests", "semantic-false.json"),
+          `${JSON.stringify({ first: false, second: true })}\n`,
+        ),
+    },
+    {
+      name: "workdir Outcome fragment",
+      fragment: true,
+      mutate: async (fixture) =>
+        appendFile(
+          path.join(fixture.workdir, "outcomes.yaml"),
+          "\n# concurrent workdir fragment mutation\n",
+        ),
+    },
+  ];
+
+  for (const mutation of cases)
+    await t.test(mutation.name, async () => {
+      const fixture = await createDeliveryFixture();
+      const signal = raceSignal(
+        `protected-${mutation.name.toLowerCase().replaceAll(/[^a-z]+/gu, "-")}`,
+      );
+      try {
+        if (mutation.fragment) {
+          const outcomes = fixture.contract.outcomes;
+          delete fixture.contract.outcomes;
+          fixture.contract.outcome_files = ["outcomes.yaml"];
+          await writeFile(
+            path.join(fixture.workdir, "outcomes.yaml"),
+            `${JSON.stringify(
+              {
+                schema_version: "long-task-outcomes-v2",
+                outcomes,
+              },
+              null,
+              2,
+            )}\n`,
+          );
+          await writeContract(fixture.workdir, fixture.contract);
+        }
+        await installSlowOracle(fixture, signal);
+        await runCli(fixture.root, ["enable", "long-task"]);
+        await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+        await commitCandidate(fixture.root);
+
+        const finalProcess = runCliProcess(fixture.root, [
+          "long-task",
+          "final-gate",
+          fixture.workdir,
+        ]);
+        await waitForFile(signal.started);
+        await mutation.mutate(fixture);
+        await writeFile(signal.release, "release\n");
+
+        const final = await finalProcess;
+        assert.notEqual(final.exitCode, 0);
+        const receipt = parseCliJson(final.stdout);
+        assert.equal(receipt.workflow_status, "needs_work");
+        assert.ok(
+          receipt.findings.some(
+            (finding) =>
+              finding.code ===
+              "protected_inputs_changed_during_final_gate",
+          ),
+          JSON.stringify(receipt.findings),
+        );
+      } finally {
+        await rm(signal.folder, { recursive: true, force: true });
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    });
+});
+
 test("targeted verify writes no progress for an Authority that became stale", async () => {
   const fixture = await createDeliveryFixture();
   const signal = raceSignal("verify");
@@ -158,7 +278,7 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
       fixture.workdir,
     ]);
     assert.equal(stop.continue, false);
-    assert.equal(stop.reason, "live_final_gate_needs_work");
+    assert.equal(stop.reason, "live_final_gate_blocked_external");
     assert.equal(
       (await loadActiveLongTaskAuthority(fixture.root)).authority
         .active_authority_identity,
@@ -171,7 +291,7 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
           "close",
           fixture.workdir,
         ]),
-      /close_live_final_gate_failed:needs_work/u,
+      /close_live_final_gate_failed:blocked_external/u,
     );
     assert.equal(
       (await loadActiveLongTaskAuthority(fixture.root)).authority
@@ -204,11 +324,7 @@ function addBlockedProof(contract) {
       {
         key: "blocked-proof-result",
         criterion: "The blocked proof result remains observable.",
-        claims: [
-          "result",
-          "requirement.observe-first",
-          "obligation.implement-first",
-        ],
+        claims: [],
         observation: "result",
         evidence_capabilities: ["state_delta"],
         operator: "equals",
@@ -222,18 +338,6 @@ function addBlockedProof(contract) {
         target: "TY_CONTEXT_MISSING_RACE_ENV",
       },
     ],
-  });
-  contract.outcomes[0].acceptance.counterfactual_controls.push({
-    key: "blocked-proof-sensitive",
-    binding_key: "state-first",
-    claims: [
-      "result",
-      "requirement.observe-first",
-      "obligation.implement-first",
-    ],
-    check_key: "blocked-proof",
-    mutation: { type: "remove_paths", paths: ["src/state.json"] },
-    expected_assertion_failures: ["blocked-proof-result"],
   });
 }
 

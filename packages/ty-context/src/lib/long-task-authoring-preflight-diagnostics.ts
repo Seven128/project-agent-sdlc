@@ -174,6 +174,10 @@ function diagnosticRefs(code: string, message: string): string[] {
     case "global_claim_uncovered":
     case "source_claim_decision_required":
       return payload.flatMap((value) => value.split(",")).filter(Boolean);
+    case "product_claim_required_surfaces_missing":
+      return payload.length >= 2
+        ? [`${payload[0]}.${payload[1]}`, ...payload.slice(2)]
+        : payload;
     case "assertion_criterion_required":
       return payload.length ? [payload.join(":")] : [];
     default:
@@ -193,6 +197,7 @@ function diagnosticRepairHint(code: string): string | null {
     case "forbidden_shortcut_key_duplicate":
       return "Remove an accidental duplicate or assign distinct stable keys while preserving each distinct semantic item.";
     case "product_claim_uncovered":
+    case "product_claim_required_surfaces_missing":
     case "global_claim_uncovered":
       return "Add claim-bearing Assertion coverage for every required proof surface or correct the Claim mapping; do not weaken or delete the uncovered Claim.";
     case "assertion_criterion_required":

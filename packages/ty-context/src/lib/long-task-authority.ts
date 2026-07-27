@@ -37,10 +37,14 @@ export function computeAuthorityHashes(
       target_profile: contract.task.target_profile,
       execution_targets: contract.task.execution_targets,
       stages: contract.stages,
-      global: contract.global.product,
+      global: {
+        applicability: contract.global.applicability,
+        product: contract.global.product,
+      },
       outcomes: contract.outcomes.map((outcome) => ({
         key: outcome.key,
         stage: outcome.stage,
+        applicability: outcome.applicability,
         product: outcome.product,
       })),
     }),
@@ -72,6 +76,7 @@ export function computeAuthorityHashes(
 export function outcomeAuthorityHash(outcome: DeliveryOutcomeV2): string {
   return hash({
     stage: outcome.stage,
+    applicability: outcome.applicability,
     product: outcome.product,
     acceptance: {
       checks: outcome.acceptance.checks.map(acceptanceCheck),
@@ -247,6 +252,7 @@ function assertionsStrengthened(
       !nextAssertion ||
       previousAssertion.criterion !== nextAssertion.criterion ||
       !same(previousAssertion.claims, nextAssertion.claims) ||
+      previousAssertion.applicability_ref !== nextAssertion.applicability_ref ||
       previousAssertion.observation !== nextAssertion.observation ||
       previousAssertion.operator !== nextAssertion.operator ||
       !same(previousAssertion.expected, nextAssertion.expected) ||
@@ -268,6 +274,7 @@ function counterfactualsStrengthened(
     claims: string[];
     mutation: unknown;
     expected_assertion_failures: string[];
+    preserved_assertions: string[];
   }>,
   next: Array<{
     binding_key?: string;
@@ -276,6 +283,7 @@ function counterfactualsStrengthened(
     claims: string[];
     mutation: unknown;
     expected_assertion_failures: string[];
+    preserved_assertions: string[];
   }>,
 ): boolean {
   return previous.every((control) =>
@@ -289,7 +297,8 @@ function counterfactualsStrengthened(
         subset(
           control.expected_assertion_failures,
           candidate.expected_assertion_failures,
-        ),
+        ) &&
+        subset(control.preserved_assertions, candidate.preserved_assertions),
     ),
   );
 }

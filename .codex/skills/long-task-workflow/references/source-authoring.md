@@ -11,8 +11,8 @@ Do not create a Source Plan schema, CLI, Preflight, Compile, Receipt, cache, aut
 ## Input inventory
 
 1. Assign every proposal, selected design resource, screenshot, document, diagram, table and other attachment a stable input ID.
-2. Inspect all material pages/frames/screens/tables/visible states; never silently sample a multi-part artifact.
-3. Classify each input as user instruction, product requirement, technical constraint, existing proposal, selected target, repository/Context evidence, constraint, inspiration or background.
+2. Inspect all pages/frames/screens/tables/visible states; never silently sample a multi-part artifact. Every non-empty line in a declared Markdown Source file must ultimately belong to exactly one Material Source Item, one keyed and reasoned non-authoritative `ty-source-background:start/end` block, or the one validated `design-resource-handoff-v1` formal block.
+3. Classify each input as user instruction, product requirement, technical constraint, existing proposal, selected target, repository/Context evidence, constraint, inspiration or background. Background may hold headings, provenance or genuinely non-authoritative explanation, but it must not hide a qualifier, requirement, acceptance fact, design meaning or other delivery authority.
 4. For visual resources, preserve selection basis, classification (`exact-target`, `constraint` or `inspiration`), stable resource/surface/control/state/target keys, declared platform/viewport/mode/state/content applicability, source profile/canonical entry/dependency set, provider/project/run/entry provenance and immutable digest/snapshot, plus typed locators. A mutable link, metadata-only response, partial file set or prose locator is incomplete. Unselected candidates authorize no fidelity.
 5. Record incorporated meaning and every unreadable, conflicting or intentionally unused part. Higher authority and user-stated precedence win; unresolved conflicts remain decisions.
 
@@ -68,9 +68,11 @@ Use only applicable semantic types:
 
 ## UI and control completeness
 
-For each in-scope surface, record purpose, entry/exit/navigation, regions/overlays and included Control keys. For every material interactive control, independently preserve applicable:
+For each in-scope surface, record purpose, entry/exit/navigation, regions/overlays and included Control keys. For every real material interactive Control, close every canonical field independently:
 
-`surface`, `region`, `control type`, `label/content`, `location`, `user task`, `visibility`, `availability`, `trigger`, `input`, `validation`, `default`, `interaction`, `navigation/result`, `loading`, `empty`, `success`, `failure`, `recovery`, `permission`, `feedback` and `accessibility`.
+`surface`, `region`, `location`, `control type`, `label/content`, `user task`, `visibility`, `availability`, `trigger`, `input`, `validation`, `default`, `interaction`, `navigation/result`, `loading`, `empty`, `success`, `failure`, `recovery`, `permission`, `feedback` and `accessibility`.
+
+For each field record concrete `specified` meaning, an explicit justified `not_applicable` statement, or blocking `unresolved`; omission is not non-applicability. Also preserve every material cross-Control and system relation—including shared state, ordering/dependency, mutual exclusion, navigation, permission, recovery, validation and feedback chains—and explicitly close the Outcome as `none` only when no such relation exists. Each specified or not-applicable fact must name its actual target, condition/input/state and Given/When journey applicability.
 
 Do not invent controls for a non-interface delivery. A coarse frame or configured design system does not supply unshown states. Selected design resources and product/technical Source remain parallel: visuals cannot invent business/data/permission/algorithmic rules.
 
@@ -87,10 +89,10 @@ Use the Runtime's exact risk Fact names when marking risk. Data migration is `da
 Before Preflight/Compile confirm:
 
 1. Every material original statement and qualifier is preserved.
-2. Every supplied input is incorporated or has an explicit unreadable/unused/conflict disposition.
+2. Every supplied input is incorporated or has an explicit unreadable/unused/conflict disposition, and every non-empty Source line is owned by a Material Item, keyed/reasoned background block or validated formal block.
 3. Distinct requirements and independently decidable Outcomes were not collapsed.
-4. Every material UI surface/control/state is explicit or marked not applicable/unresolved.
-5. Every REQ and material CTRL state has acceptance, external confirmation, decision or explicit exception.
+4. Every real Control has all 22 canonical fields closed as specified, justified not applicable or unresolved; every material cross-Control/shared-state/navigation/permission/recovery relation is specified or the Outcome explicitly declares that no such relation exists.
+5. Every REQ, specified/not-applicable CTRL field and Control relation has exact applicability plus acceptance, external confirmation, decision or explicit exception; unresolved coverage blocks.
 6. Derived/delegated/evidence-backed items have traceable basis and no hidden product expansion.
 7. Non-goals, forbidden shortcuts, risks and recovery are concrete.
 8. No unsupported number, threshold, metric or external claim appears.
@@ -98,4 +100,4 @@ Before Preflight/Compile confirm:
 10. Every material UI surface/control can be mapped to a production target/owner, real-user entry journey and acceptance route, while every declared design blocker has an explicit machine or target-blocking external-confirmation disposition. Removing one from scope requires an explicit Source revision; Contract prose cannot waive it.
 11. The Source is self-contained enough to own every mapped Draft semantic and names every still-required external artifact.
 
-Complete non-rendering `ty-source-item:start/end` markers in the real Markdown Source without rewriting direct text, and finish the corresponding Contract mapping in the same loop. Neither markers nor this audit delay opening the Draft; all are fail-closed convergence requirements before Preflight/Compile.
+Complete non-rendering `ty-source-item:start/end` markers in the real Markdown Source without rewriting direct text, wrap genuinely non-authoritative prose in uniquely keyed and reasoned `ty-source-background:start/end` blocks, retain at most one schema-valid `design-resource-handoff-v1` formal block, and finish the corresponding Contract mapping in the same loop. Unclassified text, a background block used to hide material meaning, unresolved Control coverage or missing applicability blocks Preflight/Compile. Neither markers nor this audit delay opening the Draft.

@@ -2,6 +2,7 @@ import type {
   DeliveryContractV2,
   SourceItemKind,
 } from "./long-task-delivery-types.js";
+import { controlFieldFacts } from "./long-task-control-fields.js";
 import { normalizeSourceItemText } from "./long-task-source-item-parser.js";
 
 export interface CanonicalSourceTarget {
@@ -48,16 +49,24 @@ export function buildCanonicalSourceTargetIndex(
         ),
       );
     for (const control of outcome.product.controls)
-      for (const [field, value] of controlFields(control))
-        if (value.trim())
-          targets.push(
-            target(
-              `${outcome.key}.control.${control.key}.${field}`,
-              "control",
-              value,
-              outcome.key,
-            ),
-          );
+      for (const field of controlFieldFacts(control))
+        targets.push(
+          target(
+            `${outcome.key}.control.${control.key}.${field.claim_field}`,
+            "control",
+            field.statement,
+            outcome.key,
+          ),
+        );
+    for (const relation of outcome.product.control_relations)
+      targets.push(
+        target(
+          `${outcome.key}.control_relation.${relation.key}`,
+          "control",
+          relation.statement,
+          outcome.key,
+        ),
+      );
     for (const obligation of outcome.technical.obligations)
       targets.push(
         target(
@@ -157,35 +166,6 @@ function target(
     ...(outcomeKey ? { outcome_key: outcomeKey } : {}),
     ...(scope ? { scope } : {}),
   };
-}
-
-function controlFields(
-  control: DeliveryContractV2["outcomes"][number]["product"]["controls"][number],
-): Array<[string, string]> {
-  return [
-    ["surface", control.surface],
-    ["region", control.region],
-    ["location", control.location],
-    ["control_type", control.control_type],
-    ["label_content", control.label_content],
-    ["user_task", control.user_task],
-    ["visibility", control.visibility],
-    ["availability", control.availability],
-    ["trigger", control.trigger],
-    ["input", control.input],
-    ["validation", control.validation],
-    ["default_value", control.default_value],
-    ["interaction", control.interaction],
-    ["navigation_result", control.navigation_result],
-    ["loading", control.loading_state],
-    ["empty", control.empty_state],
-    ["success", control.success_state],
-    ["failure", control.failure_state],
-    ["recovery", control.recovery],
-    ["permission", control.permission],
-    ["feedback", control.feedback],
-    ["accessibility", control.accessibility],
-  ];
 }
 
 export function sourceKindForTarget(

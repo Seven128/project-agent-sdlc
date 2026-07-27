@@ -170,7 +170,7 @@ function parseAssertions(value: unknown, label: string): DeliveryAssertionV2[] {
       item,
       itemLabel,
       ["key", "claims", "observation", "operator", "evidence_capabilities"],
-      ["criterion", "expected"],
+      ["criterion", "applicability_ref", "expected"],
     );
     const operator = literal(
       row.operator,
@@ -207,6 +207,14 @@ function parseAssertions(value: unknown, label: string): DeliveryAssertionV2[] {
         ? { criterion: string(row.criterion, `${itemLabel}.criterion`) }
         : {}),
       claims: strings(row.claims, `${itemLabel}.claims`),
+      ...(Object.hasOwn(row, "applicability_ref")
+        ? {
+            applicability_ref: key(
+              row.applicability_ref,
+              `${itemLabel}.applicability_ref`,
+            ),
+          }
+        : {}),
       observation: string(row.observation, `${itemLabel}.observation`),
       evidence_capabilities: array(
         row.evidence_capabilities,

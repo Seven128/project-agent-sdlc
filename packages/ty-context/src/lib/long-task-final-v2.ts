@@ -5,7 +5,10 @@ import type {
   LongTaskFindingV2,
 } from "./long-task-delivery-types.js";
 import {
-  activeAuthorityIdentityMatches,
+  captureFinalGateProtectedInputIdentity,
+  finalGateIntegrityFindings,
+} from "./long-task-final-integrity.js";
+import {
   assertMatchingActiveBinding,
   loadActiveLongTaskAuthority,
   writeFinalReceipt,
@@ -53,6 +56,10 @@ export async function runDeliveryFinalGate(
     require_completion_gate: true,
   });
   await assertMatchingActiveBinding(compiled);
+  const protectedInputsBefore = await captureFinalGateProtectedInputIdentity(
+    repository,
+    compiled,
+  );
   const before = await captureWorkspaceFingerprint(repository);
   const snapshot = await createWorkspaceSnapshot(
     repository,
@@ -67,41 +74,16 @@ export async function runDeliveryFinalGate(
       true,
       true,
     );
-    const after = await captureWorkspaceFingerprint(repository);
-    const gitAfter = await currentGitState(repository);
-    if (
-      after.identity !== before.identity ||
-      gitAfter.head !== candidate.head ||
-      gitAfter.tree !== candidate.tree ||
-      gitAfter.dirty.length
-    )
-      run.findings.push({
-        code: "workspace_changed_during_final_gate",
-        outcome_key: null,
-        check_key: null,
-        message: "The workspace changed while Live Final Gate was running.",
-        next_action:
-          "Stop concurrent mutation and rerun the complete Live Final Gate.",
-      });
-    let activeAuthorityChanged = false;
-    try {
-      const currentActive = (await loadActiveLongTaskAuthority(repository))
-        .authority;
-      activeAuthorityChanged =
-        !currentActive ||
-        !activeAuthorityIdentityMatches(currentActive, acceptedAuthority);
-    } catch {
-      activeAuthorityChanged = true;
-    }
-    if (activeAuthorityChanged)
-      run.findings.push({
-        code: "active_authority_changed_during_final_gate",
-        outcome_key: null,
-        check_key: null,
-        message: "Active Authority changed while Live Final Gate was running.",
-        next_action:
-          "Review the new Authority Revision and rerun the complete Live Final Gate.",
-      });
+    run.findings.push(
+      ...(await finalGateIntegrityFindings({
+        repository,
+        active,
+        accepted_authority: acceptedAuthority,
+        candidate,
+        workspace_identity_before: before.identity,
+        protected_inputs_before: protectedInputsBefore,
+      })),
+    );
     const outcomeResults = projectOutcomes(
       compiled.outcomes.map((outcome) => outcome.key),
       run.check_results,

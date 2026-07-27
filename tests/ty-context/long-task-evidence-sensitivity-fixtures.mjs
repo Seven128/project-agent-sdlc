@@ -3,24 +3,27 @@ import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/lo
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { writeContract } from "./long-task-delivery-fixtures.mjs";
 
-export async function assertActivationRejects(fixture, missingClaims) {
+export async function assertActivationRejects(
+  fixture,
+  { code, includes = [] },
+) {
   await writeContract(fixture.workdir, fixture.contract);
   const preflight = await preflightDeliveryContract(
     fixture.workdir,
     fixture.root,
   );
   assert.equal(preflight.status, "not_ready");
-  const diagnostic = preflight.diagnostics.find(
-    (item) => item.code === "structured_evidence_sensitivity_required",
+  const diagnostics = preflight.diagnostics.filter(
+    (item) => item.code === code,
   );
-  assert.ok(diagnostic, "missing structured evidence sensitivity diagnostic");
-  for (const claim of missingClaims)
-    assert.match(JSON.stringify(diagnostic), new RegExp(escapeRegExp(claim)));
+  assert.ok(diagnostics.length, `missing ${code} diagnostic`);
+  for (const value of includes)
+    assert.match(JSON.stringify(diagnostics), new RegExp(escapeRegExp(value)));
   await assert.rejects(
     compileDeliveryContract(fixture.workdir, fixture.root, {
       require_completion_gate: false,
     }),
-    /structured_evidence_sensitivity_required/u,
+    new RegExp(escapeRegExp(code), "u"),
   );
 }
 
@@ -48,8 +51,13 @@ export function counterfactual({ key, checkKey, claims, assertionKeys }) {
     binding_key: "state-first",
     claims,
     check_key: checkKey,
-    mutation: { type: "remove_paths", paths: ["src/state.json"] },
+    mutation: {
+      type: "replace_file",
+      path: "src/state.json",
+      fixture_path: "tests/semantic-false.json",
+    },
     expected_assertion_failures: assertionKeys,
+    preserved_assertions: ["first-liveness"],
   };
 }
 

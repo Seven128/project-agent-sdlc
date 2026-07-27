@@ -19,12 +19,19 @@ export function validateClaimEvidenceSensitivity(
   report?: ValidationReporter,
 ): void {
   validateGlobalStructuredSensitivity(contract, globalChecks, report);
+  validateGlobalSemanticWitnesses(contract, globalChecks, report);
   const weakOutcomes = new Set(contract.risk.facts.weak_observability);
   for (const outcome of outcomes) {
     const population = outcome.acceptance.population;
     const counterfactualsByCheck = groupCounterfactuals(outcome);
     for (const check of outcome.acceptance.checks) {
       const counterfactuals = counterfactualsByCheck.get(check.key) ?? [];
+      validateBehavioralSemanticWitnesses(
+        outcome.key,
+        check,
+        counterfactuals,
+        report,
+      );
       if (check.evidence_adapter === "structured_json_v2") {
         const assertionClaims = new Set(
           assertions(check).flatMap((assertion) => assertion.claims),
@@ -65,6 +72,89 @@ export function validateClaimEvidenceSensitivity(
         );
     }
   }
+}
+
+function validateGlobalSemanticWitnesses(
+  contract: DeliveryContractV2,
+  checks: CompiledCheckV2[],
+  report?: ValidationReporter,
+): void {
+  for (const check of checks)
+    validateBehavioralSemanticWitnesses(
+      "GLOBAL",
+      check,
+      contract.global.acceptance.counterfactual_controls.filter(
+        (control) => control.check_key === check.key,
+      ),
+      report,
+    );
+}
+
+function validateBehavioralSemanticWitnesses(
+  scope: string,
+  check: CompiledCheckV2,
+  counterfactuals:
+    | CompiledOutcomeV2["acceptance"]["counterfactual_controls"]
+    | DeliveryContractV2["global"]["acceptance"]["counterfactual_controls"],
+  report?: ValidationReporter,
+): void {
+  for (const assertion of assertions(check)) {
+    if (!assertion.claims.length || !isBehavioralAssertion(check, assertion))
+      continue;
+    const witnesses = counterfactuals.filter(
+      (control) =>
+        control.mutation.type === "replace_file" &&
+        control.expected_assertion_failures.includes(assertion.key) &&
+        assertion.claims.every((claim) => control.claims.includes(claim)),
+    );
+    if (!witnesses.length) {
+      issue(
+        report,
+        `behavioral_semantic_counterfactual_required:${scope}:${check.key}:${assertion.key}`,
+      );
+      continue;
+    }
+    if (
+      !witnesses.some((control) =>
+        control.preserved_assertions.some((reference) =>
+          isLivenessAssertion(check, reference),
+        ),
+      )
+    )
+      issue(
+        report,
+        `behavioral_counterfactual_liveness_witness_required:${scope}:${check.key}:${assertion.key}`,
+      );
+  }
+}
+
+function isBehavioralAssertion(
+  check: CompiledCheckV2,
+  assertion: CompiledCheckV2["positive_assertions"][number],
+): boolean {
+  return !(
+    check.proof_surface === "implementation_structure" &&
+    assertion.operator === "exists" &&
+    assertion.evidence_capabilities.every(
+      (capability) => capability === "presence",
+    )
+  );
+}
+
+function isLivenessAssertion(
+  check: CompiledCheckV2,
+  reference: string,
+): boolean {
+  const assertion = check.positive_assertions.find(
+    (candidate) => candidate.key === reference,
+  );
+  return Boolean(
+    assertion &&
+    !assertion.claims.length &&
+    assertion.operator === "equals" &&
+    assertion.expected === true &&
+    assertion.evidence_capabilities.includes("target_runtime"),
+  );
 }
 
 function validateGlobalStructuredSensitivity(

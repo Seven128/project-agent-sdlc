@@ -13,11 +13,19 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
-test("standard Playwright trusts frozen verifier input without Counterfactual", async () => {
+test("standard Playwright also requires a same-Check semantic Counterfactual", async () => {
   const fixture = await createDeliveryFixture();
   try {
     await configurePlaywright(fixture, { weak: false });
+    const controls = structuredClone(
+      fixture.contract.outcomes[0].acceptance.counterfactual_controls,
+    );
     fixture.contract.outcomes[0].acceptance.counterfactual_controls = [];
+    await assertPreflightAndCompileReject(
+      fixture,
+      "behavioral_semantic_counterfactual_required",
+    );
+    fixture.contract.outcomes[0].acceptance.counterfactual_controls = controls;
     await writeContract(fixture.workdir, fixture.contract);
     const preflight = await preflightDeliveryContract(
       fixture.workdir,
@@ -41,7 +49,7 @@ test("weak_observability Playwright requires same-Check AC and Claim sensitivity
     missing.contract.outcomes[0].acceptance.counterfactual_controls = [];
     await assertPreflightAndCompileReject(
       missing,
-      "playwright_weak_observability_sensitivity_required",
+      "behavioral_semantic_counterfactual_required",
     );
   } finally {
     await rm(missing.root, { recursive: true, force: true });
@@ -49,10 +57,20 @@ test("weak_observability Playwright requires same-Check AC and Claim sensitivity
 
   const partial = await createDeliveryFixture();
   try {
-    await configurePlaywright(partial, { weak: true, twoAssertions: true });
+    await configurePlaywright(partial, { weak: true });
+    partial.contract.outcomes[0].acceptance.counterfactual_controls[0]
+      .expected_assertion_failures =
+      partial.contract.outcomes[0].acceptance.counterfactual_controls[0]
+        .expected_assertion_failures.filter(
+          (key) => key !== "first-obligation",
+        );
+    partial.contract.outcomes[0].acceptance.counterfactual_controls[0].claims =
+      partial.contract.outcomes[0].acceptance.counterfactual_controls[0].claims.filter(
+        (claim) => claim !== "obligation.implement-first",
+      );
     await assertPreflightAndCompileReject(
       partial,
-      "playwright_weak_observability_sensitivity_required",
+      "behavioral_semantic_counterfactual_required",
     );
   } finally {
     await rm(partial.root, { recursive: true, force: true });
@@ -60,10 +78,7 @@ test("weak_observability Playwright requires same-Check AC and Claim sensitivity
 
   const complete = await createDeliveryFixture();
   try {
-    await configurePlaywright(complete, { weak: true, twoAssertions: true });
-    complete.contract.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures.push(
-      "first-obligation-ac",
-    );
+    await configurePlaywright(complete, { weak: true });
     await writeContract(complete.workdir, complete.contract);
     const preflight = await preflightDeliveryContract(
       complete.workdir,
@@ -88,21 +103,26 @@ test("a Counterfactual on another Playwright Check cannot satisfy weak UI AC", a
     const other = structuredClone(outcome.acceptance.checks[0]);
     other.key = "other-ui-check";
     other.runner.target = "tests/ui-other.spec.ts";
-    other.verification_inputs = ["tests/ui-other.spec.ts"];
-    other.positive_assertions[0].key = "other-ui-ac";
-    other.positive_assertions[0].observation =
-      "playwright.case.other-ui-ac.passed";
+    other.verification_inputs = [
+      "tests/ui-other.spec.ts",
+      "tests/semantic-false.json",
+    ];
     await writeFile(
       path.join(fixture.root, "tests", "ui-other.spec.ts"),
-      "// [ac:other-ui-ac]\n",
+      [
+        "// [ac:first-result]",
+        "// [ac:first-requirement]",
+        "// [ac:first-obligation]",
+        "// [ac:first-liveness]",
+        "",
+      ].join("\n"),
     );
     outcome.acceptance.checks.push(other);
     const control = outcome.acceptance.counterfactual_controls[0];
     control.check_key = "other-ui-check";
-    control.expected_assertion_failures = ["other-ui-ac"];
     await assertPreflightAndCompileReject(
       fixture,
-      "playwright_weak_observability_sensitivity_required",
+      "behavioral_semantic_counterfactual_required",
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -117,7 +137,21 @@ test("weak-observability Playwright rejects a constant AC and accepts a sensitiv
       const runner = path.join(fixture.root, "tests", "fake-playwright.mjs");
       await writeFile(
         runner,
-        `import { access } from "node:fs/promises";\nlet ready = ${constant ? "true" : "false"};\nif (!ready) { try { await access(new URL("../src/state.json", import.meta.url)); ready = true; } catch {} }\nconst status = ready ? "expected" : "unexpected";\nconst resultStatus = ready ? "passed" : "failed";\nconst steps = [{title:"[given:fixture-loaded]"},{title:"[action:read-outcome]"}];\nconsole.log(JSON.stringify({stats:{expected:ready?1:0,unexpected:ready?0:1,skipped:0,flaky:0},errors:[],suites:[{specs:[{title:"[ac:first-result] first-result",tests:[{projectId:"default",status,results:[{status:resultStatus,steps}]}]}]}]}));\nprocess.exitCode = ready ? 0 : 1;\n`,
+        `import { readFile } from "node:fs/promises";
+let ready = ${constant ? "true" : "false"};
+if (!ready) {
+  try { ready = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")).first === true; }
+  catch {}
+}
+const steps = [{title:"[given:fixture-loaded]"},{title:"[action:read-outcome]"}];
+const semantic = ["first-result","first-requirement","first-obligation"].map((id) => ({
+  title:\`[ac:\${id}] \${id}\`,
+  tests:[{projectId:"default",status:ready?"expected":"unexpected",results:[{status:ready?"passed":"failed",steps}]}]
+}));
+const liveness = {title:"[ac:first-liveness] first-liveness",tests:[{projectId:"default",status:"expected",results:[{status:"passed",steps}]}]};
+console.log(JSON.stringify({stats:{expected:(ready?3:0)+1,unexpected:ready?0:3,skipped:0,flaky:0},errors:[],suites:[{specs:[...semantic,liveness]}]}));
+process.exitCode = ready ? 0 : 1;
+`,
       );
       fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
         "tests/fake-playwright.mjs",
@@ -162,7 +196,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
       control,
       root: fixture.root,
       exitCode: 1,
-      cases: [playwrightCase("first-result", "unexpected", "failed")],
+      cases: expectedCounterfactualCases(),
     });
     assert.equal(accepted.classification.accepted_test_failure_exit, true);
     assert.equal(
@@ -173,7 +207,11 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
       accepted.classification.normalized_result.findings.map(
         (finding) => finding.code,
       ),
-      ["assertion_value_mismatch"],
+      [
+        "assertion_value_mismatch",
+        "assertion_value_mismatch",
+        "assertion_value_mismatch",
+      ],
     );
 
     const extraDeclaredCheck = structuredClone(baseCheck);
@@ -181,6 +219,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
       key: "second-result",
       criterion: "The second declared AC passes.",
       claims: ["requirement.observe-first"],
+      applicability_ref: "first-root-success",
       observation: "playwright.case.second-result.passed",
       evidence_capabilities: ["interaction_trace"],
       operator: "equals",
@@ -192,7 +231,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
         check: extraDeclaredCheck,
         exitCode: 1,
         cases: [
-          playwrightCase("first-result", "unexpected", "failed"),
+          ...expectedCounterfactualCases(),
           playwrightCase("second-result", "unexpected", "failed"),
         ],
       },
@@ -201,7 +240,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
         check: baseCheck,
         exitCode: 1,
         cases: [
-          playwrightCase("first-result", "unexpected", "failed"),
+          ...expectedCounterfactualCases(),
           playwrightCase(null, "unexpected", "failed"),
         ],
       },
@@ -209,44 +248,56 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
         name: "timed out AC",
         check: baseCheck,
         exitCode: 1,
-        cases: [playwrightCase("first-result", "unexpected", "timedOut")],
+        cases: [
+          playwrightCase("first-result", "unexpected", "timedOut"),
+          ...expectedCounterfactualCases().slice(1),
+        ],
       },
       {
         name: "interrupted AC",
         check: baseCheck,
         exitCode: 1,
-        cases: [playwrightCase("first-result", "unexpected", "interrupted")],
+        cases: [
+          playwrightCase("first-result", "unexpected", "interrupted"),
+          ...expectedCounterfactualCases().slice(1),
+        ],
       },
       {
         name: "flaky AC",
         check: baseCheck,
         exitCode: 1,
-        cases: [playwrightCase("first-result", "flaky", "passed")],
+        cases: [
+          playwrightCase("first-result", "flaky", "passed"),
+          ...expectedCounterfactualCases().slice(1),
+        ],
       },
       {
         name: "skipped AC",
         check: baseCheck,
         exitCode: 1,
-        cases: [playwrightCase("first-result", "skipped", "skipped")],
+        cases: [
+          playwrightCase("first-result", "skipped", "skipped"),
+          ...expectedCounterfactualCases().slice(1),
+        ],
       },
       {
         name: "missing AC",
         check: baseCheck,
         exitCode: 1,
-        cases: [],
+        cases: expectedCounterfactualCases().slice(1),
       },
       {
         name: "root report error",
         check: baseCheck,
         exitCode: 1,
-        cases: [playwrightCase("first-result", "unexpected", "failed")],
+        cases: expectedCounterfactualCases(),
         errors: [{ message: "global setup failed" }],
       },
       {
         name: "unsupported exit code",
         check: baseCheck,
         exitCode: 2,
-        cases: [playwrightCase("first-result", "unexpected", "failed")],
+        cases: expectedCounterfactualCases(),
       },
     ];
     for (const scenario of scenarios) {
@@ -271,7 +322,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
       control,
       root: fixture.root,
       exitCode: 1,
-      cases: [playwrightCase("first-result", "unexpected", "failed")],
+      cases: expectedCounterfactualCases(),
     });
     assert.equal(baseline.result.status, "test_failed");
     assert.ok(
@@ -351,10 +402,25 @@ function playwrightCase(id, status, resultStatus) {
   };
 }
 
-async function configurePlaywright(fixture, { weak, twoAssertions = false }) {
+function expectedCounterfactualCases() {
+  return [
+    playwrightCase("first-result", "unexpected", "failed"),
+    playwrightCase("first-requirement", "unexpected", "failed"),
+    playwrightCase("first-obligation", "unexpected", "failed"),
+    playwrightCase("first-liveness", "expected", "passed"),
+  ];
+}
+
+async function configurePlaywright(fixture, { weak }) {
   await writeFile(
     path.join(fixture.root, "tests", "ui.spec.ts"),
-    "// [ac:first-result]\n",
+    [
+      "// [ac:first-result]",
+      "// [ac:first-requirement]",
+      "// [ac:first-obligation]",
+      "// [ac:first-liveness]",
+      "",
+    ].join("\n"),
   );
   const outcome = fixture.contract.outcomes[0];
   fixture.contract.task.execution_targets[0].runtime_family = "browser";
@@ -370,27 +436,22 @@ async function configurePlaywright(fixture, { weak, twoAssertions = false }) {
     retry_policy: "none",
     idempotent: false,
   };
-  check.verification_inputs = ["tests/ui.spec.ts"];
-  check.artifact_globs = [];
-  check.positive_assertions[0].observation =
-    "playwright.case.first-result.passed";
-  check.positive_assertions[0].evidence_capabilities = [
-    "interaction_trace",
-    "target_runtime",
+  check.verification_inputs = [
+    "tests/ui.spec.ts",
+    "tests/semantic-false.json",
   ];
+  check.artifact_globs = [];
+  for (const assertion of check.positive_assertions) {
+    assertion.observation = `playwright.case.${assertion.key}.passed`;
+    assertion.evidence_capabilities = assertion.claims.length
+      ? ["interaction_trace", "target_runtime"]
+      : ["target_runtime"];
+    assertion.operator = "equals";
+    assertion.expected = true;
+  }
   outcome.product.requirements[0].required_proof_surfaces = ["ui_browser"];
   outcome.technical.obligations[0].required_proof_surfaces = ["ui_browser"];
   if (weak) fixture.contract.risk.facts.weak_observability = ["first"];
-  if (twoAssertions)
-    check.positive_assertions.push({
-      key: "first-obligation-ac",
-      criterion: "The UI also proves the implementation obligation.",
-      claims: ["obligation.implement-first"],
-      observation: "playwright.case.first-obligation-ac.passed",
-      evidence_capabilities: ["interaction_trace"],
-      operator: "equals",
-      expected: true,
-    });
   await writeContract(fixture.workdir, fixture.contract);
 }
 

@@ -170,9 +170,23 @@ export async function runDeliveryChecks(
 
   const counterfactualFindings: LongTaskFindingV2[] = [];
   if (includeCounterfactuals) {
+    // Counterfactual sensitivity is a closure condition for an otherwise
+    // passing proof. A failed or externally blocked owning Check already
+    // blocks acceptance; rerunning its oracle in a mutated sandbox can only
+    // obscure that primary status (for example, by turning a typed external
+    // blocker into an integrity failure).
+    const passingCheckIds = new Set(
+      mainCheckResults
+        .filter((result) => result.status === "passed")
+        .map((result) => result.internal_id),
+    );
     const selectedGlobalCheckKeys = new Set(
       checks
-        .filter((check) => check.outcome_key === null)
+        .filter(
+          (check) =>
+            check.outcome_key === null &&
+            passingCheckIds.has(check.internal_id),
+        )
         .map((check) => check.key),
     );
     if (selectedGlobalCheckKeys.size)
@@ -194,7 +208,11 @@ export async function runDeliveryChecks(
     )) {
       const selectedKeys = new Set(
         checks
-          .filter((check) => check.outcome_key === outcome.key)
+          .filter(
+            (check) =>
+              check.outcome_key === outcome.key &&
+              passingCheckIds.has(check.internal_id),
+          )
           .map((check) => check.key),
       );
       counterfactualFindings.push(

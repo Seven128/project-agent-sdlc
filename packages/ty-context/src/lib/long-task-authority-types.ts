@@ -1,5 +1,10 @@
-import type { ProofSurface } from "./long-task-contract-types.js";
 import type {
+  DeliveryControlV2,
+  DeliveryOutcomeV2,
+  ProofSurface,
+} from "./long-task-contract-types.js";
+import type {
+  ClaimApplicabilityV2,
   DeliveryStageV2,
   ExecutionTargetV2,
   TargetProfileV2,
@@ -21,12 +26,18 @@ export interface ProductSemanticProjectionV2 {
   target_profile: TargetProfileV2;
   execution_targets: ExecutionTargetV2[];
   stages: DeliveryStageV2[];
-  global_non_goals: Array<{ key: string; statement: string }>;
+  global_non_goals: Array<{
+    key: string;
+    statement: string;
+    applicability_refs: string[];
+  }>;
   outcomes: Array<{
     key: string;
     title: string;
     stage: string;
+    applicability: ClaimApplicabilityV2[];
     observable_result: string;
+    result_applicability_refs: string[];
     success_path_required: boolean;
     degradation_path_required: boolean;
     owner: {
@@ -37,6 +48,7 @@ export interface ProductSemanticProjectionV2 {
       key: string;
       statement: string;
       required_proof_surfaces: ProofSurface[];
+      applicability_refs: string[];
     }>;
     controls: Array<{
       key: string;
@@ -62,15 +74,27 @@ export interface ProductSemanticProjectionV2 {
       permission: string;
       feedback: string;
       accessibility: string;
+      field_coverage: DeliveryControlV2["field_coverage"];
     }>;
+    control_relation_closure: DeliveryOutcomeV2["product"]["control_relation_closure"];
+    control_relations: DeliveryOutcomeV2["product"]["control_relations"];
     surface_bindings: DeliverySurfaceBindingV2[];
     non_completing_outcomes: Array<{ key: string; statement: string }>;
   }>;
 }
 
 export interface GlobalSemanticProjectionV2 {
-  constraints: Array<{ key: string; statement: string }>;
-  forbidden_shortcuts: Array<{ key: string; statement: string }>;
+  applicability: ClaimApplicabilityV2[];
+  constraints: Array<{
+    key: string;
+    statement: string;
+    applicability_refs: string[];
+  }>;
+  forbidden_shortcuts: Array<{
+    key: string;
+    statement: string;
+    applicability_refs: string[];
+  }>;
 }
 
 export interface ContextAuthoritySnapshotV2 {

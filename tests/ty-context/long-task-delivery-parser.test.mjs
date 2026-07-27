@@ -73,7 +73,7 @@ test("uncovered Claims and cyclic dependencies fail closed", () => {
   noCheck.outcomes[0].acceptance.checks = [];
   assert.throws(
     () => parseDeliveryContractText(YAML.stringify(noCheck)),
-    /product_claim_uncovered/,
+    /product_claim_required_surfaces_missing/,
   );
   const cyclic = deliveryContract({ twoOutcomes: true });
   cyclic.outcomes[0].depends_on = ["second"];

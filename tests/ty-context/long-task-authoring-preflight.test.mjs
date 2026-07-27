@@ -65,14 +65,17 @@ test("Authoring Preflight aggregates independent diagnostics", async () => {
     const outcome = fixture.contract.outcomes[0];
     const check = outcome.acceptance.checks[0];
     delete check.positive_assertions[0].criterion;
-    check.positive_assertions[0].claims = [
-      "result",
-      "obligation.implement-first",
-    ];
-    outcome.acceptance.counterfactual_controls[0].claims = [
-      "result",
-      "obligation.implement-first",
-    ];
+    check.positive_assertions = check.positive_assertions.filter(
+      (assertion) => assertion.key !== "first-requirement",
+    );
+    outcome.acceptance.counterfactual_controls[0].claims =
+      outcome.acceptance.counterfactual_controls[0].claims.filter(
+        (claim) => claim !== "requirement.observe-first",
+      );
+    outcome.acceptance.counterfactual_controls[0].expected_assertion_failures =
+      outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.filter(
+        (assertion) => assertion !== "first-requirement",
+      );
     check.runner.target = "tests/missing-oracle.mjs";
     outcome.product.owner.context_refs = ["project_context/areas/missing.md"];
     outcome.product.requirements.push(
@@ -95,7 +98,7 @@ test("Authoring Preflight aggregates independent diagnostics", async () => {
       "owner_context_ref_unknown",
       "requirement_key_duplicate",
       "binding_key_duplicate",
-      "product_claim_uncovered",
+      "product_claim_required_surfaces_missing",
       "assertion_criterion_required",
       "source_claim_anchor_not_found",
       "node_oracle_path_not_found",
@@ -106,7 +109,7 @@ test("Authoring Preflight aggregates independent diagnostics", async () => {
       (item) => item.code === "requirement_key_duplicate",
     );
     const uncoveredRequirement = result.diagnostics.find(
-      (item) => item.code === "product_claim_uncovered",
+      (item) => item.code === "product_claim_required_surfaces_missing",
     );
     const criterion = result.diagnostics.find(
       (item) => item.code === "assertion_criterion_required",
@@ -143,7 +146,7 @@ test("Authoring Preflight aggregates independent diagnostics", async () => {
       fixture.root,
     );
     const remainingCoverage = afterPrimaryRepair.diagnostics.find(
-      (item) => item.code === "product_claim_uncovered",
+      (item) => item.code === "product_claim_required_surfaces_missing",
     );
     assert.ok(remainingCoverage);
     assert.equal(remainingCoverage.occurrences, 2);
@@ -221,7 +224,9 @@ test("Authoring Preflight Revision Preview reports Source and Context materials 
     const sourceStatement = "The revised first outcome remains observable.";
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${sourceStatement}
@@ -276,7 +281,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
     await mkdir(path.join(fixture.root, "plans"), { recursive: true });
     await writeFile(
       path.join(fixture.root, "plans", "replace-me.md"),
-      `# Replace me\n\n<a id="replace-requirement"></a>\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n# Replace me\n\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n`,
     );
     await writeFile(
       path.join(fixture.root, "project_context", "areas", "replace-me.md"),
@@ -284,7 +289,11 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";\nlet result = false;\ntry { result = (await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8")).includes("replace"); } catch {}\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result},evidence_records:[{assertion_key:"replace-success",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]},{assertion_key:"replace-success",capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true}]}));\n`,
+      `import { readFile } from "node:fs/promises";\nlet result = false;\ntry { result = (await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8")).includes("replace"); } catch {}\nconst target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true});\nconst delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,target_live:true},evidence_records:[target("replace-result"),delta("replace-result"),target("replace-requirement"),delta("replace-requirement"),target("replace-liveness")]}));\n`,
+    );
+    await writeFile(
+      path.join(fixture.root, "tests", "replace-semantic-failure.ts"),
+      "export const invalid = false;\n",
     );
     await writeContract(fixture.workdir, contract);
     await git(fixture.root, [
@@ -292,6 +301,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
       "plans/replace-me.md",
       "project_context/areas/replace-me.md",
       "tests/replace-oracle.mjs",
+      "tests/replace-semantic-failure.ts",
     ]);
     await git(fixture.root, ["commit", "-m", "init template inputs"]);
 

@@ -6,10 +6,19 @@ import type {
   ProductClaimV2,
   ProofSurface,
 } from "./long-task-delivery-types.js";
+import { controlFieldFacts } from "./long-task-control-fields.js";
 import { fail } from "./long-task-delivery-shape.js";
 
 export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
-  const claims: ProductClaimV2[] = [claim(outcome.key, "result", "result")];
+  const claims: ProductClaimV2[] = [
+    claim(
+      outcome.key,
+      "result",
+      "result",
+      [],
+      outcome.product.result_applicability_refs,
+    ),
+  ];
   for (const requirement of outcome.product.requirements)
     claims.push(
       claim(
@@ -17,42 +26,42 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
         `requirement.${requirement.key}`,
         "requirement",
         requirement.required_proof_surfaces,
+        requirement.applicability_refs,
       ),
     );
   for (const control of outcome.product.controls) {
-    const fields: Array<[string, string]> = [
-      ["surface", control.surface],
-      ["region", control.region],
-      ["location", control.location],
-      ["control_type", control.control_type],
-      ["label_content", control.label_content],
-      ["user_task", control.user_task],
-      ["visibility", control.visibility],
-      ["availability", control.availability],
-      ["trigger", control.trigger],
-      ["input", control.input],
-      ["validation", control.validation],
-      ["default_value", control.default_value],
-      ["interaction", control.interaction],
-      ["navigation_result", control.navigation_result],
-      ["loading", control.loading_state],
-      ["empty", control.empty_state],
-      ["success", control.success_state],
-      ["failure", control.failure_state],
-      ["recovery", control.recovery],
-      ["permission", control.permission],
-      ["feedback", control.feedback],
-      ["accessibility", control.accessibility],
-    ];
-    for (const [field, value] of fields)
-      if (value.trim())
-        claims.push(
-          claim(outcome.key, `control.${control.key}.${field}`, "control"),
-        );
+    for (const field of controlFieldFacts(control))
+      claims.push(
+        claim(
+          outcome.key,
+          `control.${control.key}.${field.claim_field}`,
+          "control",
+          [],
+          field.applicability_refs,
+          field.state === "not_applicable" ? "negative" : "positive",
+        ),
+      );
   }
+  for (const relation of outcome.product.control_relations)
+    claims.push(
+      claim(
+        outcome.key,
+        `control_relation.${relation.key}`,
+        "control_relation",
+        relation.required_proof_surfaces,
+        relation.applicability_refs,
+      ),
+    );
   for (const item of outcome.product.non_completing_outcomes)
     claims.push(
-      claim(outcome.key, `non_completing.${item.key}`, "non_completing"),
+      claim(
+        outcome.key,
+        `non_completing.${item.key}`,
+        "non_completing",
+        [],
+        item.applicability_refs,
+        "negative",
+      ),
     );
   for (const item of outcome.technical.obligations)
     claims.push(
@@ -61,6 +70,7 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
         `obligation.${item.key}`,
         "obligation",
         item.required_proof_surfaces,
+        item.applicability_refs,
       ),
     );
   for (const item of outcome.technical.forbidden_shortcuts)
@@ -69,6 +79,9 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
         outcome.key,
         `forbidden_shortcut.${item.key}`,
         "forbidden_shortcut",
+        [],
+        item.applicability_refs,
+        "negative",
       ),
     );
   return claims;
@@ -79,16 +92,27 @@ export function generateGlobalClaims(
 ): GlobalClaimV2[] {
   return [
     ...global.product.non_goals.map((item) =>
-      globalClaim(`non_goal.${item.key}`, "global_non_goal", "negative"),
+      globalClaim(
+        `non_goal.${item.key}`,
+        "global_non_goal",
+        "negative",
+        item.applicability_refs,
+      ),
     ),
     ...global.technical.constraints.map((item) =>
-      globalClaim(`constraint.${item.key}`, "global_constraint", "any"),
+      globalClaim(
+        `constraint.${item.key}`,
+        "global_constraint",
+        "positive",
+        item.applicability_refs,
+      ),
     ),
     ...global.technical.forbidden_shortcuts.map((item) =>
       globalClaim(
         `forbidden_shortcut.${item.key}`,
         "global_forbidden_shortcut",
         "negative",
+        item.applicability_refs,
       ),
     ),
   ].sort((left, right) => left.id.localeCompare(right.id));
@@ -98,7 +122,7 @@ export function validateGlobalProofPolarity(
   claim: GlobalClaimV2,
   proof: ClaimProofV2,
 ): void {
-  if (claim.required_polarity === "negative" && proof.polarity !== "negative")
+  if (proof.polarity !== claim.required_polarity)
     fail(
       "global_negative_claim_proof_required",
       `${claim.local_key}:${proof.check_key}`,
@@ -110,14 +134,10 @@ export function validateProofSurface(
   proof: ClaimProofV2,
   outcomeKey: string,
 ): void {
-  if (
-    (claim.kind === "non_completing" || claim.kind === "forbidden_shortcut") &&
-    proof.polarity !== "negative" &&
-    proof.polarity !== "counterfactual"
-  )
+  if (proof.polarity !== claim.required_polarity)
     fail(
-      "negative_or_counterfactual_claim_proof_required",
-      `${outcomeKey}:${claim.local_key}`,
+      "claim_proof_polarity_mismatch",
+      `${outcomeKey}:${claim.local_key}:${proof.polarity}:${claim.required_polarity}`,
     );
   if (
     (claim.kind === "requirement" || claim.kind === "obligation") &&
@@ -145,6 +165,8 @@ function claim(
   localKey: string,
   kind: ProductClaimV2["kind"],
   requiredProofSurfaces: ProofSurface[] = [],
+  applicabilityRefs: string[] = [],
+  requiredPolarity: ProductClaimV2["required_polarity"] = "positive",
 ): ProductClaimV2 {
   return {
     id: `${outcomeKey}.${localKey}`,
@@ -152,6 +174,8 @@ function claim(
     local_key: localKey,
     kind,
     required_proof_surfaces: requiredProofSurfaces,
+    required_polarity: requiredPolarity,
+    applicability_refs: applicabilityRefs,
   };
 }
 
@@ -159,11 +183,13 @@ function globalClaim(
   localKey: string,
   kind: GlobalClaimV2["kind"],
   requiredPolarity: GlobalClaimV2["required_polarity"],
+  applicabilityRefs: string[],
 ): GlobalClaimV2 {
   return {
     id: `GLOBAL.${localKey}`,
     local_key: localKey,
     kind,
     required_polarity: requiredPolarity,
+    applicability_refs: applicabilityRefs,
   };
 }

@@ -295,7 +295,7 @@ test("a Check emits Claim Proof only when its complete status is passed", async 
 function contractWithAssertion(operator) {
   const contract = deliveryContract();
   const coverage = structuredClone(
-    contract.outcomes[0].acceptance.checks[0].positive_assertions[0],
+    contract.outcomes[0].acceptance.checks[0].positive_assertions,
   );
   contract.outcomes[0].acceptance.checks[0].positive_assertions = [
     {
@@ -310,7 +310,7 @@ function contractWithAssertion(operator) {
         ? { expected: expected(operator) }
         : {}),
     },
-    coverage,
+    ...coverage,
   ];
   return contract;
 }

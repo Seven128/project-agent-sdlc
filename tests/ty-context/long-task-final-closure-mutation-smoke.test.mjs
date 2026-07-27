@@ -26,11 +26,15 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     configureMixedEvidenceContract(fixture.contract);
     await writeFile(
       path.join(fixture.root, "tests", "ui.spec.ts"),
-      "// Executed by the controlled fake Playwright reporter.\n",
+      `// Executed by the controlled fake Playwright reporter.
+// [ac:ui-acceptance]
+// [ac:ui-recovery]
+// [ac:ui-liveness]
+`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "constant-oracle.mjs"),
-      'console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true},evidence_records:[{assertion_key:"structured-acceptance",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"constant-session",cold_start:true},{assertion_key:"structured-acceptance",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["second"]}]}));\n',
+      constantStructuredOracle(),
     );
     await writeFile(
       path.join(fixture.root, "src", "ui-mode.json"),
@@ -68,7 +72,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     );
     assert.match(
       JSON.stringify(preflight),
-      /structured_evidence_sensitivity_required/u,
+      /behavioral_semantic_counterfactual_required/u,
     );
 
     fixture.contract.outcomes[1].acceptance.checks[0].artifact_globs = [
@@ -80,19 +84,17 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
         runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
           env,
         }),
-      /structured_evidence_sensitivity_required/u,
+      /behavioral_semantic_counterfactual_required/u,
     );
 
     const structured = fixture.contract.outcomes[1];
-    structured.acceptance.checks[0].runner.target = "tests/oracle.mjs";
-    structured.acceptance.checks[0].verification_inputs = ["tests/oracle.mjs"];
-    await rm(
+    await writeFile(
       path.join(fixture.root, "tests", "constant-oracle.mjs"),
-      { force: true },
+      sensitiveStructuredOracle(),
     );
     structured.acceptance.counterfactual_controls = [
       {
-        key: "remove-second-state",
+        key: "replace-second-semantics",
         binding_key: "state-second",
         claims: [
           "result",
@@ -100,8 +102,17 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
           "obligation.implement-second",
         ],
         check_key: "second-check",
-        mutation: { type: "remove_paths", paths: ["src/state.json"] },
-        expected_assertion_failures: ["structured-acceptance"],
+        mutation: {
+          type: "replace_file",
+          path: "src/state.json",
+          fixture_path: "tests/semantic-false.json",
+        },
+        expected_assertion_failures: [
+          "structured-result",
+          "structured-acceptance",
+          "structured-obligation",
+        ],
+        preserved_assertions: ["structured-liveness"],
       },
     ];
     await writeContract(fixture.workdir, fixture.contract);
@@ -138,11 +149,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
       .flatMap((result) => result.findings)
       .find((item) => item.assertion_key === "structured-acceptance");
     assert.ok(finding);
-    assert.deepEqual(finding.claim_keys, [
-      "result",
-      "requirement.observe-second",
-      "obligation.implement-second",
-    ]);
+    assert.deepEqual(finding.claim_keys, ["requirement.observe-second"]);
     assert.ok(finding.source_claim_keys.includes("second-observable"));
     assert.ok(
       finding.source_claim_keys.includes("second-structured-acceptance"),
@@ -157,7 +164,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
         "second.second-check.structured-acceptance",
       ),
     );
-    assert.equal(finding.observation, "result");
+    assert.equal(finding.observation, "requirement_result");
     assert.deepEqual(finding.owner_paths, ["src/**"]);
 
     const state = await readState(fixture.root);
@@ -191,8 +198,9 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     fixture.contract.source_claims.find(
       (claim) => claim.key === "second-structured-acceptance",
     ).statement = revisedCriterion;
-    structured.acceptance.checks[0].positive_assertions[0].criterion =
-      revisedCriterion;
+    structured.acceptance.checks[0].positive_assertions.find(
+      (assertion) => assertion.key === "structured-acceptance",
+    ).criterion = revisedCriterion;
     await writeSource(fixture.root, {
       wrongRequirementTarget: false,
       structuredCriterion: revisedCriterion,
@@ -253,3 +261,90 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     await rm(fakeBin, { recursive: true, force: true });
   }
 });
+
+function constantStructuredOracle() {
+  return `const assertionKeys = [
+  "structured-result",
+  "structured-acceptance",
+  "structured-obligation",
+];
+const targetRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "target_runtime",
+  target_ref: "fixture-app",
+  root_entrypoint: "tests/oracle.mjs",
+  session_id: "constant-session",
+  cold_start: true
+});
+const stateRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "state_delta",
+  before_sha256: "0".repeat(64),
+  after_sha256: "1".repeat(64),
+  changed_fields: ["second"]
+});
+console.log(JSON.stringify({
+  schema_version: "long-task-check-result-v3",
+  execution_status: "completed",
+  observations: {
+    result: true,
+    requirement_result: true,
+    obligation_result: true,
+    target_live: true
+  },
+  evidence_records: [
+    ...assertionKeys.flatMap((assertionKey) => [
+      targetRecord(assertionKey),
+      stateRecord(assertionKey)
+    ]),
+    targetRecord("structured-liveness")
+  ]
+}));
+`;
+}
+
+function sensitiveStructuredOracle() {
+  return `import { readFile } from "node:fs/promises";
+let state = { second: false };
+try {
+  state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8"));
+} catch {}
+const assertionKeys = [
+  "structured-result",
+  "structured-acceptance",
+  "structured-obligation",
+];
+const targetRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "target_runtime",
+  target_ref: "fixture-app",
+  root_entrypoint: "tests/oracle.mjs",
+  session_id: "sensitive-session",
+  cold_start: true
+});
+const stateRecord = (assertionKey) => ({
+  assertion_key: assertionKey,
+  capability: "state_delta",
+  before_sha256: "0".repeat(64),
+  after_sha256: "1".repeat(64),
+  changed_fields: ["second"]
+});
+console.log(JSON.stringify({
+  schema_version: "long-task-check-result-v3",
+  execution_status: "completed",
+  observations: {
+    result: state.second,
+    requirement_result: state.second,
+    obligation_result: state.second,
+    target_live: true
+  },
+  evidence_records: [
+    ...assertionKeys.flatMap((assertionKey) => [
+      targetRecord(assertionKey),
+      stateRecord(assertionKey)
+    ]),
+    targetRecord("structured-liveness")
+  ]
+}));
+`;
+}

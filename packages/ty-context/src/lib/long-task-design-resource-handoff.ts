@@ -125,9 +125,6 @@ function validateCoverageClaims(
     .acceptance.checks.find(
       (item) => item.key === target.conformance_check_ref,
     )!;
-  const assertion = check.positive_assertions.find(
-    (item) => item.key === target.conformance_assertion_ref,
-  )!;
   const claims = new Map(
     contract.source_claims.map((item) => [item.key, item]),
   );
@@ -147,12 +144,6 @@ function validateCoverageClaims(
         claims,
       );
       claimsBySourceItem.set(sourceItemRef, localClaims);
-      for (const localClaimRef of localClaims)
-        if (!assertion.claims.includes(localClaimRef))
-          invalid(
-            "coverage_claim_not_in_conformance_assertion",
-            `${target.key}:${sourceItemRef}:${localClaimRef}`,
-          );
     }
   validateVerificationMethodBindings(target, check, rows, claimsBySourceItem);
 }

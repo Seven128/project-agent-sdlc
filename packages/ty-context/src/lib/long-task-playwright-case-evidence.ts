@@ -163,7 +163,6 @@ export function declaredCaseIds(check: CompiledCheckV2): Set<string> {
     ...check.positive_assertions,
     ...check.negative_assertions,
   ]) {
-    if (!assertion.claims.length) continue;
     const match = /^playwright\.case\.([a-z0-9][a-z0-9-]*)\.passed$/u.exec(
       assertion.observation,
     );

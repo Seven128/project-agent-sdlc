@@ -172,13 +172,41 @@ function configureChecks(fixture, requirements) {
         {
           key: "raw-result",
           criterion: `Raw execution result ${index} is observable.`,
-          claims: [
-            "result",
-            "requirement.observe-first",
-            "obligation.implement-first",
-          ],
+          claims: ["result"],
+          applicability_ref: "first-root-success",
           observation: index === 0 ? "result" : "result_copy",
           evidence_capabilities: ["target_runtime", "state_delta"],
+          operator: "equals",
+          expected: true,
+        },
+        {
+          key: "raw-requirement",
+          criterion: `Raw execution requirement ${index} is observable.`,
+          claims: ["requirement.observe-first"],
+          applicability_ref: "first-root-success",
+          observation:
+            index === 0 ? "requirement_result" : "requirement_copy",
+          evidence_capabilities: ["target_runtime", "state_delta"],
+          operator: "equals",
+          expected: true,
+        },
+        {
+          key: "raw-obligation",
+          criterion: `Raw execution obligation ${index} is observable.`,
+          claims: ["obligation.implement-first"],
+          applicability_ref: "first-root-success",
+          observation:
+            index === 0 ? "obligation_result" : "obligation_copy",
+          evidence_capabilities: ["target_runtime", "state_delta"],
+          operator: "equals",
+          expected: true,
+        },
+        {
+          key: "raw-liveness",
+          criterion: `Raw execution target ${index} remains live.`,
+          claims: [],
+          observation: index === 0 ? "target_live" : "target_live_copy",
+          evidence_capabilities: ["target_runtime"],
           operator: "equals",
           expected: true,
         },
@@ -196,8 +224,17 @@ function configureChecks(fixture, requirements) {
         "obligation.implement-first",
       ],
       check_key: `raw-${index}`,
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
-      expected_assertion_failures: ["raw-result"],
+      mutation: {
+        type: "replace_file",
+        path: "src/state.json",
+        fixture_path: "tests/semantic-false.json",
+      },
+      expected_assertion_failures: [
+        "raw-result",
+        "raw-requirement",
+        "raw-obligation",
+      ],
+      preserved_assertions: ["raw-liveness"],
     }),
   );
 }
@@ -209,7 +246,10 @@ async function installCountingOracle(fixture, marker) {
 appendFileSync(${JSON.stringify(marker)}, "run\\n");
 let state = {first:false};
 try { state = JSON.parse(readFileSync(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first},evidence_records:[{assertion_key:"raw-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"raw-session",cold_start:true},{assertion_key:"raw-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]}]}));
+const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"raw-session",cold_start:true});
+const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
+const semantic=["raw-result","raw-requirement","raw-obligation"];
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first,requirement_result:state.first,requirement_copy:state.first,obligation_result:state.first,obligation_copy:state.first,target_live:true,target_live_copy:true},evidence_records:[...semantic.flatMap((key)=>[target(key),delta(key)]),target("raw-liveness")]}));
 `,
   );
   await commitCandidate(fixture.root);

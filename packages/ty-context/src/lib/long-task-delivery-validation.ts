@@ -15,12 +15,14 @@ import {
   validateExternalConfirmationImpacts,
 } from "./long-task-target-policy.js";
 import { validateUiSurfaceBindings } from "./long-task-ui-surface-policy.js";
+import { controlFieldFacts } from "./long-task-control-fields.js";
 
 export function validateDeliveryContractStructure(
   contract: DeliveryContractV2,
 ): void {
   validateUniqueKeys(contract);
   validateDependencies(contract);
+  validateControlClosure(contract);
   validateOwnerAndBindings(contract);
   validateDeclaredCheckSafety(contract);
   validateEvidenceAdapters(contract);
@@ -43,6 +45,7 @@ export function deliveryContractStructureDiagnostics(
   const report = (message: string) => diagnostics.push(message);
   validateUniqueKeys(contract, report);
   validateDependencies(contract, report);
+  validateControlClosure(contract, report);
   validateDeliveryStages(contract, report);
   validateExecutionTargets(contract, report);
   validateEvidenceCapabilityDeclarations(contract, report);
@@ -137,6 +140,11 @@ function validateUniqueKeys(
       report,
     );
     unique(
+      outcome.product.control_relations.map((relation) => relation.key),
+      `control_relation_key_duplicate:${outcome.key}`,
+      report,
+    );
+    unique(
       outcome.product.non_completing_outcomes.map((item) => item.key),
       `non_completing_key_duplicate:${outcome.key}`,
       report,
@@ -191,6 +199,80 @@ function validateUniqueKeys(
       `assertion_observation_duplicate:GLOBAL:${check.key}`,
       report,
     );
+}
+
+function validateControlClosure(
+  contract: DeliveryContractV2,
+  report?: ValidationReporter,
+): void {
+  for (const outcome of contract.outcomes) {
+    const controls = new Set(
+      outcome.product.controls.map((control) => control.key),
+    );
+    const closure = outcome.product.control_relation_closure;
+    const relations = outcome.product.control_relations;
+    if (closure.state === "unresolved")
+      issue(report, "control_relation_closure_unresolved", outcome.key);
+    if (closure.state === "specified" && !relations.length)
+      issue(report, "control_relation_required", outcome.key);
+    if (closure.state === "not_applicable" && relations.length)
+      issue(
+        report,
+        "control_relation_forbidden_when_not_applicable",
+        outcome.key,
+      );
+    if (!controls.size && closure.state !== "not_applicable")
+      issue(report, "control_relation_closure_without_controls", outcome.key);
+    for (const control of outcome.product.controls) {
+      const facts = controlFieldFacts(control);
+      const unresolved = facts
+        .filter((fact) => fact.state === "unresolved")
+        .map((fact) => fact.contract_field);
+      if (unresolved.length)
+        issue(
+          report,
+          "control_field_unresolved",
+          `${outcome.key}:${control.key}:${unresolved.join(",")}`,
+        );
+      if (
+        !facts.some(
+          (fact) =>
+            [
+              "navigation_result",
+              "interaction",
+              "trigger",
+              "location",
+            ].includes(fact.contract_field) && fact.state === "specified",
+        )
+      )
+        issue(
+          report,
+          "control_root_behavior_required",
+          `${outcome.key}:${control.key}`,
+        );
+    }
+    for (const relation of relations) {
+      if (relation.control_refs.length < 2)
+        issue(
+          report,
+          "control_relation_control_refs_required",
+          `${outcome.key}:${relation.key}`,
+        );
+      if (new Set(relation.control_refs).size !== relation.control_refs.length)
+        issue(
+          report,
+          "control_relation_control_ref_duplicate",
+          `${outcome.key}:${relation.key}`,
+        );
+      for (const reference of relation.control_refs)
+        if (!controls.has(reference))
+          issue(
+            report,
+            "control_relation_control_ref_unknown",
+            `${outcome.key}:${relation.key}:${reference}`,
+          );
+    }
+  }
 }
 
 function validateOwnerAndBindings(

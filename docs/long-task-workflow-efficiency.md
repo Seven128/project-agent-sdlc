@@ -4,7 +4,14 @@
 
 The Long-Task Workflow exists to prevent false completion inside declared authority. Its acceptable machine result is binary in substance: either fresh evidence on the complete current final snapshot proves every declared Plan Item and AC, or the delivery remains explicitly unfinished or qualified.
 
-Efficiency is subordinate to that objective. The preferred design is the lowest practical total workflow cost that preserves the same false-completion interception, or stronger interception at the same cost. A mechanism is retained only when it closes an independent delivery-drift path or enables a material total-cost reduction without weakening acceptance, fails closed where acceptance is involved and contributes materially more value than its Authoring, Runtime, State, Recovery, maintenance and test cost. Merely positive but marginal ROI is insufficient.
+Efficiency is subordinate to that objective. The preferred design is the lowest practical total workflow cost that preserves the same false-completion interception, or stronger interception at the same cost.
+
+Apply two gates in order:
+
+1. prove `Coverage_new ⊇ Coverage_old`, `FalseNegative_new ⊆ FalseNegative_old`, and that Authority, fail-closed behavior and complete-current-final-snapshot proof remain non-bypassable; cost reduction cannot compensate for weaker drift detection, and an unproven experiment stays outside the formal acceptance path;
+2. then compare every incremental Authoring, Runtime, State, Recovery, maintenance, test, process, introduction and migration cost with the incremental purpose-fulfillment benefit.
+
+ROI is positive when that incremental benefit exceeds all incremental costs. Positive ROI admits a non-degrading candidate to the consideration set; it does not adopt the candidate automatically.
 
 ## Change Principle
 
@@ -12,7 +19,20 @@ Every Long-Task change starts from the controlling design purpose and accounts f
 
 Prefer measured data, benchmarks or operational evidence for the ROI judgment. When none exists, discuss the decision with the user or project owner; rigorous causal reasoning plus simple, bounded validation is sufficient. The Long-Task Workflow itself was admitted on that basis before mature longitudinal data existed. Unsupported intuition alone is insufficient.
 
-Keep the design purpose fixed and require materially positive ROI. At comparable total cost, optimize how effectively the mechanism fulfills its purpose; at comparable purpose fulfillment, optimize implementation and operating cost.
+Keep the design purpose fixed and require positive ROI after the non-degradation gate. At comparable total cost, optimize how effectively the mechanism fulfills its purpose; at comparable purpose fulfillment, optimize implementation and operating cost.
+
+## Current Closure Hardening
+
+Six related changes pass the first gate because they add fail-closed coverage while preserving every prior Claim, Check, Authority, freshness and Final Gate requirement:
+
+- **Source ownership closure** rejects every non-empty line outside a Material Item, a keyed/reasoned background block or the one parsed formal handoff block. It adds marker authoring but no runtime/state plane and closes silent prose omission.
+- **Control and relation closure** accounts for all 22 Control fields plus cross-Control relations as specified, explicit not-applicable or blocking unresolved meaning. Grouped field rows avoid one record per field; only real applicable semantics add Claims and Checks.
+- **Claim applicability closure** binds each Claim to exact target, journey, Given condition/input/state keys and ordered When actions, and each one-Claim Assertion to one such cell. Coverage is complete over declared applicable units and required proof surfaces, not an all-fields Cartesian product and not risk-based, pairwise or sampled substitution.
+- **Semantic Counterfactual closure** requires every behavioral Claim-bearing Assertion to fail under a same-Check `replace_file` wrong-semantic fixture while a claimless target-runtime liveness Assertion remains passing. Related Claims may share one mutation execution when their failures stay distinct.
+- **Final Gate protected-input closure** performs one additional static recompile after all Checks and compares semantic compiled identity plus raw Contract bytes. It catches concurrent Contract/fragments, Source, Controlling Context, verifier, runner and verification/workdir input changes without another executing Gate or rerunning project Checks.
+- **Minimal counterexamples and full-chain regression** exercise omission, relation/applicability mismatch, weak oracle/liveness, protected-input races and public/tarball lifecycle paths. This adds bounded maintenance/runtime cost to the package suite, not to consumer delivery state.
+
+Their purpose benefit is removal of independently reproducible false-negative paths. Their incremental costs are explicit authoring metadata, semantic Counterfactual executions, one post-Check static Compile and focused regression time; no Source Inventory file, persistent matrix, second Authority, second Gate, scheduler or generic analyzer is added. Positive ROI made the cohesive change eligible for adoption; the non-degradation proof and project review, not ROI alone, authorize it.
 
 ## Bounded Context Discovery
 

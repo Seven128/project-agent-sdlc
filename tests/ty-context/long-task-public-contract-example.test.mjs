@@ -26,14 +26,38 @@ test("README public Contract example runs through Preflight, Compile and Final G
     await mkdir(path.join(fixture.root, "plans"), { recursive: true });
     await writeFile(
       path.join(fixture.root, "plans", "example.md"),
-      `# Example\n\n<a id="observable-requirement"></a>\n\n<!-- ty-source-item:start key=observable-requirement kind=requirement -->\nThe outcome is observable.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=example-heading reason=markdown-structure -->
+# Example
+
+<a id="observable-requirement"></a>
+<!-- ty-source-background:end -->
+
+<!-- ty-source-item:start key=observable-requirement kind=requirement -->
+The outcome is observable.
+<!-- ty-source-item:end -->
+`,
+    );
+    await writeFile(
+      path.join(fixture.root, "tests", "observable-false.ts"),
+      "export const hidden = false;\n",
     );
     await writeFile(
       path.join(fixture.root, "tests", "runtime.mjs"),
-      `import { readFile } from "node:fs/promises";\nlet result = false;\ntry { result = (await readFile(new URL("../src/observable.ts", import.meta.url), "utf8")).includes("observable"); } catch {}\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result},evidence_records:[{assertion_key:"observable-ac",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]},{assertion_key:"observable-ac",capability:"target_runtime",target_ref:"example-runtime",root_entrypoint:"tests/runtime.mjs",session_id:"example-session",cold_start:true}]}));\n`,
+      `import { readFile } from "node:fs/promises";
+let result = false;
+try { result = (await readFile(new URL("../src/observable.ts", import.meta.url), "utf8")).includes("observable"); } catch {}
+const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"example-runtime",root_entrypoint:"tests/runtime.mjs",session_id:"example-session",cold_start:true});
+const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,target_live:true},evidence_records:[target("result-ac"),delta("result-ac"),target("observable-ac"),delta("observable-ac"),target("runtime-liveness")]}));
+`,
     );
     await writeContract(fixture.workdir, contract);
-    await git(fixture.root, ["add", "plans/example.md", "tests/runtime.mjs"]);
+    await git(fixture.root, [
+      "add",
+      "plans/example.md",
+      "tests/runtime.mjs",
+      "tests/observable-false.ts",
+    ]);
     await git(fixture.root, ["commit", "-m", "public example inputs"]);
 
     const preflight = await preflightDeliveryContract(

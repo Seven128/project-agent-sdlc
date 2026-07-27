@@ -169,21 +169,48 @@ async function configurePlannedCarrier(fixture) {
   check.expected_output_paths = ["src/planned.json"];
   const control = outcome.acceptance.counterfactual_controls[0];
   control.mutation = {
-    type: "remove_paths",
-    paths: ["src/planned.json"],
+    type: "replace_file",
+    path: "src/planned.json",
+    fixture_path: "tests/semantic-false.json",
   };
+  control.preserved_assertions = ["first-liveness"];
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
     `import { readFile } from "node:fs/promises";
 let state = { ready: false };
 try { state = JSON.parse(await readFile(new URL("../src/planned.json", import.meta.url), "utf8")); } catch {}
+const semanticAssertions = ["first-result", "first-requirement", "first-obligation"];
+const targetRecord = (assertionKey) => ({
+  assertion_key:assertionKey,
+  capability:"target_runtime",
+  target_ref:"fixture-app",
+  root_entrypoint:"tests/oracle.mjs",
+  session_id:"planned-session",
+  cold_start:true
+});
+const stateRecord = (assertionKey) => ({
+  assertion_key:assertionKey,
+  capability:"state_delta",
+  before_sha256:"0".repeat(64),
+  after_sha256:"1".repeat(64),
+  changed_fields:["ready"]
+});
 console.log(JSON.stringify({
   schema_version:"long-task-check-result-v3",
   execution_status:"completed",
-  observations:{result:state.ready === true,negative:false},
+  observations:{
+    result:state.ready === true,
+    requirement_result:state.ready === true,
+    obligation_result:state.ready === true,
+    target_live:true,
+    negative:false
+  },
   evidence_records:[
-    {assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"planned-session",cold_start:true},
-    {assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["ready"]}
+    ...semanticAssertions.flatMap((assertionKey) => [
+      targetRecord(assertionKey),
+      stateRecord(assertionKey)
+    ]),
+    targetRecord("first-liveness")
   ]
 }));
 `,

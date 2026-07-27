@@ -114,7 +114,7 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
     );
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `# Fixture source\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->\n# Fixture source\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n`,
     );
     await writeContract(fixture.workdir, fixture.contract);
     await expectDecision(fixture, {
@@ -134,12 +134,14 @@ async function addNonCompletingSource(fixture) {
   outcome.product.non_completing_outcomes.push({
     key: "spinner-only",
     statement: nonCompleting,
+    applicability_refs: ["first-root-success"],
   });
   const check = outcome.acceptance.checks[0];
   check.negative_assertions.push({
     key: "spinner-only-rejected",
     criterion,
     claims: ["non_completing.spinner-only"],
+    applicability_ref: "first-root-success",
     observation: "negative",
     evidence_capabilities: ["state_delta"],
     operator: "equals",
@@ -170,7 +172,9 @@ async function addNonCompletingSource(fixture) {
   );
   await writeFile(
     path.join(fixture.root, "source.md"),
-    `# Fixture source
+    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
+# Fixture source
+<!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 The first outcome must be observable.

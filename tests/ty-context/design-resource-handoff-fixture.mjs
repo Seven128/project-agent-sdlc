@@ -60,9 +60,12 @@ export async function writeDesignResourceHandoffFixture(root, mutate) {
 export async function writeDesignResourceHandoff(root, handoff) {
   const sourceStatement =
     "The main surface must conform to every declared design-resource dimension.";
-  const markdown = `# Main design implementation handoff
+  const markdown = `<!-- ty-source-background:start key=design-handoff-heading reason=markdown-structure -->
+# Main design implementation handoff
 
 <a id="main-design"></a>
+<!-- ty-source-background:end -->
+
 <!-- ty-source-item:start key=${DESIGN_SOURCE_ITEM_KEY} kind=requirement -->
 ${sourceStatement}
 <!-- ty-source-item:end -->

@@ -224,6 +224,7 @@ export async function compileDeliveryContract(
     source_claims: contract.source_claims,
     stages: contract.stages,
     global: {
+      applicability: contract.global.applicability,
       product: contract.global.product,
       technical: contract.global.technical,
       acceptance: {
