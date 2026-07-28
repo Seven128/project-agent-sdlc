@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { npmCommandSpec } from "./npm_command_spec.mjs";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -204,11 +205,11 @@ async function semanticVerification() {
 
 async function completeVerification() {
   const commands = [
-    ["npm", ["test"]],
-    [process.execPath, ["packages/ty-context/dist/cli.js", "package", "check-source"]],
+    npmCommandSpec(["test"]),
+    { command: process.execPath, args: ["packages/ty-context/dist/cli.js", "package", "check-source"] },
   ];
   const results = [];
-  for (const [command, args] of commands)
+  for (const { command, args } of commands)
     results.push(await run(command, args));
   const completeSuitePassed = results.every((result) => result.code === 0);
   emitResult(
@@ -258,13 +259,12 @@ async function readFiles(paths) {
 }
 
 async function run(command, args) {
-  const actualCommand =
-    process.platform === "win32" && command === "npm" ? "npm.cmd" : command;
   return new Promise((resolve) => {
-    const child = spawn(actualCommand, args, {
+    const child = spawn(command, args, {
       cwd: repositoryRoot,
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
       shell: false,
     });
     let stdout = "";

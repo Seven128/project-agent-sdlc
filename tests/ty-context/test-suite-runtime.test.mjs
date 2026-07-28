@@ -486,6 +486,20 @@ test("final ROI verifier preserves the package pretest build in clean snapshots"
   assert.doesNotMatch(verifierSource, /"--ignore-scripts"/u);
 });
 
+test("design-fact complete verifier uses the portable npm command boundary", async () => {
+  const verifierSource = await readFile(
+    path.join(
+      repositoryRoot,
+      "tools",
+      "verify_design_fact_completeness_delivery.mjs",
+    ),
+    "utf8",
+  );
+  assert.match(verifierSource, /npmCommandSpec\(\["test"\]\)/u);
+  assert.match(verifierSource, /spawn\(command, args,/u);
+  assert.doesNotMatch(verifierSource, /npm\.cmd/u);
+});
+
 test("complete affected routing explicitly supersedes a separate Trust aggregate", () => {
   const selection = selectAffectedTests(["packages/ty-context/package.json"]);
   assert.equal(selection.mode, "full-suite");
