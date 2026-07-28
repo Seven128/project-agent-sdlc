@@ -47,6 +47,8 @@ A selected design target, its exact/constraint interpretation, an authored token
 
 ## Targeted Verification And Recovery
 
+Implementation remains Goal-owned throughout rolling execution. The Goal may use one agent or multiple platform-native agents/subagents when their expected benefit exceeds coordination cost, but Harness allocates and records none of them. Delegated reports are not Progress or proof, and every proof-bearing result must converge into the selected verification workspace. Stage/Outcome readiness, `progress_stale` and targeted feedback never become agent allocation, edit permission, a method Gate or a scheduler.
+
 `verify --explain [--outcome/--check]` is a read-only execution preview. It groups declared Main Raw Executions, lists applicable Counterfactual runner invocations and bounded declared retry-attempt counts, but runs no command, writes no Progress, predicts no duration/internal subprocess count and creates no proof.
 
 Before an expensive first targeted run, use the preview to review selected Check count, deduplicated Main executions, Counterfactual mutations and retry bounds. If the expanded plan reveals an obsolete carrier, unnecessarily broad invalidation surface or repeated expensive runner, repair the same Contract Draft/Authority through the normal revision path. The preview cannot see build systems or subprocesses hidden inside a project runner.

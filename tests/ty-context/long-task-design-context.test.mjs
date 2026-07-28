@@ -213,15 +213,56 @@ test("Contract Draft, Draft Outcome and Plan Item stay lifecycle concepts", asyn
   assert.match(skill, /one `long-task-workflow` lifecycle/iu);
 });
 
-test("Outcome decomposition improves repair without creating scheduling authority", async () => {
-  const [spec, workflow, architecture] = await Promise.all([
+test("[critical:implementation-freedom-boundary] Goal-owned implementation freedom stays protected and non-authoritative", async () => {
+  const [
+    spec,
+    globalContext,
+    architecture,
+    areaRoot,
+    workflow,
+    rationale,
+    implementationIndex,
+    verification,
+    manifest,
+    authoringSkill,
+    managedAgents,
+    managedSkill,
+    managedLifecycle,
+    readme,
+    readmeZh,
+    packageReadme,
+  ] = await Promise.all([
     read("PROJECT_SPEC.md"),
+    read("project_context/global.md"),
+    read("project_context/architecture.md"),
+    read("project_context/areas/harness-package.md"),
     read(
       "project_context/areas/harness-package/contracts/workflow-contract.md",
     ),
-    read("project_context/architecture.md"),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
+    read("project_context/areas/harness-package/implementation-index.md"),
+    read("project_context/areas/harness-package/verification.md"),
+    read("project_context/context.toml"),
+    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
+    ),
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
   ]);
-  const combined = [spec, workflow, architecture].join("\n");
+  const combined = [
+    spec,
+    globalContext,
+    architecture,
+    areaRoot,
+    workflow,
+    rationale,
+  ].join("\n");
 
   for (const concept of [
     "requirement coupling",
@@ -263,6 +304,103 @@ test("Outcome decomposition improves repair without creating scheduling authorit
     /(?:current )?Goal[\s\S]{0,180}(?:chooses|choosing) implementation order/iu,
   );
   assert.match(combined, /one Contract[\s\S]*one Final Gate/iu);
+
+  assert.match(
+    spec,
+    /`F` the \*\*Implementation Freedom Boundary\*\*/u,
+  );
+  assert.match(
+    spec,
+    /`F` is a protected efficiency and anti-process-bloat boundary, not a third implementation responsibility or another premise/iu,
+  );
+  assert.match(
+    spec,
+    /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu,
+  );
+  assert.match(
+    rationale,
+    /accepted-terminal-state safety rather than path safety or termination/iu,
+  );
+
+  for (const surface of [
+    globalContext,
+    architecture,
+    areaRoot,
+    workflow,
+    rationale,
+    authoringSkill,
+    managedAgents,
+    managedSkill,
+    readme,
+    packageReadme,
+  ])
+    assert.match(surface, /Implementation Freedom Boundary/iu);
+
+  const executionGuidance = [
+    workflow,
+    rationale,
+    managedAgents,
+    managedSkill,
+    managedLifecycle,
+    readme,
+    packageReadme,
+  ].join("\n");
+  assert.match(
+    executionGuidance,
+    /one or multiple platform-native agents\/subagents/iu,
+  );
+  assert.match(
+    executionGuidance,
+    /(?:agent reports|their reports)[\s\S]{0,100}(?:not Progress|non-authoritative|not .*proof)/iu,
+  );
+  assert.match(
+    executionGuidance,
+    /converge[\s\S]{0,100}selected verification workspace|selected verification workspace[\s\S]{0,100}converge/iu,
+  );
+  assert.match(
+    combined,
+    /fixed implementation sequence[\s\S]{0,180}(?:phase|method)[\s\S]{0,180}per-edit/iu,
+  );
+  assert.match(
+    combined,
+    /new (?:mandatory )?development-stage constraint[\s\S]{0,280}distinct path[\s\S]{0,280}(?:lighter project-owned check|lighter project check)[\s\S]{0,280}positive net ROI/iu,
+  );
+  assert.match(
+    [spec, globalContext, workflow, rationale, authoringSkill].join("\n"),
+    /explicit project-owner design-purpose decision/iu,
+  );
+
+  for (const trigger of [
+    "implementation freedom boundary",
+    "development-stage restriction",
+    "multi-agent implementation",
+    "multiple agents",
+    "实现自由边界",
+    "开发阶段限制",
+    "多开 agent",
+    "多开agent",
+  ])
+    assert.match(manifest, new RegExp(`"${trigger}"`, "iu"));
+
+  assert.match(
+    implementationIndex,
+    /implementation-freedom-boundary/iu,
+  );
+  assert.match(
+    verification,
+    /\[critical:implementation-freedom-boundary\]/u,
+  );
+  assert.match(readmeZh, /实现自由边界/u);
+  assert.match(readmeZh, /单 agent\/多 agent|多开平台原生 agent/u);
+
+  for (const obsolete of [
+    /Implement only Outcomes in the derived current Stage frontier/iu,
+    /Never proactively spawn, assign or coordinate parallel subagents/iu,
+  ])
+    assert.doesNotMatch(
+      [managedSkill, managedLifecycle, readme, packageReadme].join("\n"),
+      obsolete,
+    );
 });
 
 test("target-runtime feedback stays live, rolling, and state-free", async () => {

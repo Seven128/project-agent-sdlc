@@ -243,6 +243,19 @@ test("implementation freedom removes method gates without weakening declared pro
     combined,
     /platform-native (?:internal |opaque )?delegation[\s\S]{0,280}(?:no .*scheduler|non-authoritative|not .*proof|converge)/iu,
   );
+  assert.match(combined, /Implementation Freedom Boundary/iu);
+  assert.match(
+    combined,
+    /one or multiple platform-native agents\/subagents/iu,
+  );
+  assert.match(
+    combined,
+    /(?:agent reports|their reports)[\s\S]{0,120}(?:not Progress|non-authoritative|not .*proof)/iu,
+  );
+  assert.match(
+    combined,
+    /new development-stage constraint[\s\S]{0,300}distinct path[\s\S]{0,300}(?:lighter project-owned check|lighter project check)[\s\S]{0,300}positive net ROI/iu,
+  );
   assert.match(
     combined,
     /recommended targeted-feedback points[\s\S]{0,260}(?:only before an intermediate decision|only before intermediate reliance)/iu,

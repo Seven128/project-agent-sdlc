@@ -12,7 +12,7 @@ export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
     max_files: 14,
     reviewed_on: "2026-07-28",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace-scope completeness and semantic-assurance closure; the fourteenth file is the fast static causal-chain/current-implementation/anti-degradation sentinel and does not replace behavioral false-completion coverage.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace-scope completeness and semantic-assurance closure; the fourteenth file carries the fast static causal-chain/current-implementation and implementation-freedom anti-degradation sentinels and does not replace behavioral false-completion coverage.",
   }),
   long_task_focused: Object.freeze({
     max_files: 21,
@@ -118,6 +118,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-design-context.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves that design purpose, key logic, actual current implementation owners, theorem boundary, explicit owner-change rule and anti-degradation evidence remain one recoverable causal chain.",
+  ),
+  criticalSentinel(
+    "implementation-freedom-boundary",
+    "long-task-design-context.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves that Goal-owned order/method/cadence and optional multiple-agent implementation remain outside Harness development Gates, scheduling, delegation state and proof while all outputs converge for the unchanged Final Gate.",
   ),
   criticalSentinel(
     "critical-policy-continuity",

@@ -48,13 +48,15 @@ This pause exists because locked Source/Contract/Context/risk/acceptance plus ta
 
 After the one-time choice, the current Goal continues through implementation, targeted repair and Final Gate. Small implementation-level plans, reordered steps and repair hypotheses are ordinary internal execution state; they do not become a second plan or authority.
 
-## No Harness-Owned Parallel-Subagent Scheduler
+## Protected Implementation Freedom Boundary
 
-The Harness never owns, persists, retries or recovers parallel-subagent dispatch. It creates no Worker queue, Wave, process tree, branch/worktree fan-out or delegation graph.
+`F = Implementation Freedom Boundary` protects the minimum sufficient mechanism from silently growing into a prescribed development process. The no-drift theorem is accepted-terminal-state safety, not path safety or guaranteed termination, so fixed implementation order, phase/method permission Gates, mandatory per-edit verification cadence and Harness-owned agent allocation are not theorem premises or necessary acceptance mechanisms.
 
-The current Goal may internally delegate work using platform-native opaque behavior or user-authorized Git parallelism. The Harness neither depends on nor records that behavior, and it never treats delegation as evidence. All changes must converge into the selected verification workspace; only Contract-declared Checks on that snapshot can contribute to acceptance.
+Source/Contract scope, architecture, security, forbidden shortcuts, irreversible effects and external-action boundaries still constrain the path. Inside them, the current Goal chooses implementation order, methods, local feedback cadence and whether one or multiple platform-native agents/subagents or user-authorized Git parallelism provide positive implementation ROI. The Harness never owns, persists, allocates, retries or recovers that dispatch and creates no Worker queue, Wave, process tree, branch/worktree fan-out or delegation graph. Agent reports are not Progress or proof. All changes must converge into the selected verification workspace; only Contract-declared Checks on that snapshot can contribute to acceptance.
 
 The same boundary applies to implementation order. Stage/Outcome dependencies and the Rolling Frontier project acceptance and intermediate-proof readiness; they do not authorize or prohibit edits. The Goal may cross those boundaries whenever current code reality makes that cheaper, while an unpassed earlier gate still blocks terminal acceptance.
+
+A proposed mandatory development-stage constraint must identify an independently uncovered safety, irreversible-effect, false-completion or total-cost path, explain why the existing Final Gate or a lighter project-owned check cannot cover it, preserve Goal ownership and the no-delegation-proof/state boundary, pass coverage/False-Negative non-degradation and receive an explicit project-owner design-purpose decision with positive net ROI. Otherwise it remains optional Goal behavior or stays outside the workflow.
 
 ## Context Evolution During Implementation
 
