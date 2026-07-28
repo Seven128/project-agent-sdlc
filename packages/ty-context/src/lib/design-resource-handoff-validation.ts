@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseDesignResourceHandoffMarkdown } from "./design-resource-handoff-parser.js";
 import { validateDesignResourceFiles } from "./design-resource-handoff-file-validation.js";
+import { validateDesignResourceFacts } from "./design-resource-handoff-validation-facts.js";
 import type {
   DesignResourceHandoffPreflightV1,
   ParsedDesignResourceHandoffV1,
@@ -56,6 +57,8 @@ export async function preflightDesignResourceHandoff(
       subjects: handoff.subjects.length,
       targets: handoff.targets.length,
       evidence: handoff.evidence.length,
+      facts: handoff.facts.length,
+      resource_fact_closure: handoff.resource_fact_closure.length,
       coverage: handoff.coverage.length,
       acceptance_blockers: handoff.acceptance_blockers.length,
     },
@@ -78,6 +81,11 @@ export function validateDesignResourceHandoffSemantics(
   requireNonemptyDesignResourceValues(handoff.subjects, "subjects_required");
   requireNonemptyDesignResourceValues(handoff.targets, "targets_required");
   requireNonemptyDesignResourceValues(handoff.evidence, "evidence_required");
+  requireNonemptyDesignResourceValues(handoff.facts, "facts_required");
+  requireNonemptyDesignResourceValues(
+    handoff.resource_fact_closure,
+    "resource_fact_closure_required",
+  );
   requireNonemptyDesignResourceValues(handoff.coverage, "coverage_required");
 
   requireUniqueDesignResourceValues(
@@ -102,6 +110,11 @@ export function validateDesignResourceHandoffSemantics(
     handoff.evidence,
     "evidence_key_duplicate",
   );
+  requireUniqueDesignResourceObjects(handoff.facts, "fact_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.resource_fact_closure,
+    "resource_fact_closure_key_duplicate",
+  );
   requireUniqueDesignResourceObjects(
     handoff.coverage,
     "coverage_key_duplicate",
@@ -116,6 +129,7 @@ export function validateDesignResourceHandoffSemantics(
   const subjects = indexDesignResourceItems(handoff.subjects);
   const targets = indexDesignResourceItems(handoff.targets);
   const evidence = indexDesignResourceItems(handoff.evidence);
+  const facts = indexDesignResourceItems(handoff.facts);
   const sourceItems = new Map(Object.entries(parsed.source_item_kinds));
   validateDesignResourceScope(handoff);
   validateDesignResourceConditions(handoff);
@@ -127,6 +141,16 @@ export function validateDesignResourceHandoffSemantics(
     subjects,
     targets,
     conditions,
+    evidence,
+    facts,
+    sourceItems,
+  );
+  validateDesignResourceFacts(
+    handoff,
+    resources,
+    conditions,
+    subjects,
+    targets,
     evidence,
     sourceItems,
   );

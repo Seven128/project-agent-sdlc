@@ -16,7 +16,7 @@ For every material in-scope surface/flow/region/component/control condition, rec
 
 Design resources may show user-visible triggers, transitions, states, feedback and product-rule presentation. Business, data, permission and algorithmic rules remain owned by product/technical Source and must not be invented by visuals.
 
-Canonical implementation resources own exact code-expressible layout, visual, content, state, interaction, adaptation, motion, semantic and asset facts. The structured handoff is the residual semantic and index layer for scope, applicability and downstream binding: it indexes those facts through typed locators instead of manually duplicating their values, and it is not a second numeric/style source.
+Canonical implementation resources own exact code-expressible layout, visual, content, state, interaction, adaptation, motion, semantic and asset facts. The structured handoff is the residual semantic and index layer for scope, applicability and downstream binding: it atomically indexes every observable fact through typed locators, records a complete inspection closure for every resource instead of manually duplicating values, and is not a second numeric/style source. Product Controls remain semantic interaction units and do not cap fact granularity; addressable images, text, icons, component parts, smaller primitives, geometry/style/token/state/behavior facts are indexed when expressed.
 
 ## Final proposal reconciliation
 
@@ -83,17 +83,20 @@ The strict block includes:
 - editable upstream owner, locator and update/export method, or an explicit manual/external-update boundary when unavailable;
 - declared platform, viewport, mode, state, content, input and full/reduced/not-applicable motion conditions;
 - typed, locally resolvable evidence locators (`html_selector`, `markdown_anchor`, `json_pointer`, `css_selector`, `css_custom_property` or bounded `whole_resource`) whose kinds distinguish frame/component variant/prototype state or transition/motion/responsive/input/accessibility/semantic/token/asset/annotation meaning;
+- atomic `facts`, each naming exactly one subject, target, condition, dimension, `subject|full_target` observation scope, same-target/same-condition evidence set, Source-item set and verification method;
+- exactly one `resource_fact_closure` entry per resource with a named complete inspector, rationale and either `material_with_facts` plus the exact fact set or `supporting_only` plus no facts;
 - stable subjects grouped only when they truly share meaning;
 - every declared scope surface represented by one unambiguous surface subject, with no stable key owned by two subjects;
 - explicit target applicability for each subject and complete subject × target × condition × dimension coverage for `surface_flow`, `visual_content`, `component_control`, `state_interaction`, `motion`, `adaptation_input`, `accessibility` and `assets`;
 - exactly one disposition per applicable cell: `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`;
-- covered-cell same-target/same-condition evidence, Source-item refs and dimension-appropriate project verification methods; referenced design Source Items use `requirement`, `control` or `acceptance` markers;
+- covered-cell `fact_refs`, same-target/same-condition evidence, Source-item refs and dimension-appropriate project verification methods, each set exactly equal to the union of its facts; every fact appears in exactly one coverage row, and referenced design Source Items use `requirement`, `control` or `acceptance` markers;
+- for every `exact_target` condition, one `full_target` `layout_geometry` fact and one `full_target` `visual_pixel` fact backed by exact-target evidence; if complete visible fidelity cannot be extracted/compared, keep the resource a `constraint` or unresolved;
 - source-backed rationales for non-applicable/excluded rows; unresolved rows remain visible and make preflight fail;
 - target-local acceptance blockers with exact target/subject/dimension/Source-item/verification-method lineage and a non-empty `required_capabilities` set; use the narrowest truthful capability such as physical device, sensor, camera, orientation, haptic, screen reader, pixel-density, safe-area, input or production runtime rather than weakening it to an available proxy;
 - selection basis, proposal reconciliation path/status and known limitations;
 - outer review and separate provider/artifact/design qualifiers.
 
-Unknown fields fail closed. A static frame may support only visible layout/visual/component facts for its shown condition; it cannot cover unseen interaction, motion, adaptation/input or accessibility. Run:
+Unknown fields fail closed. Every resource must be inspected; a material resource cannot be hidden as `supporting_only`, and unsupported/unreadable extraction remains blocking inside the named inspector/oracle TCB. A static frame may support only visible layout/visual/component facts for its shown condition; pixel evidence cannot cover unseen interaction, motion, adaptation/input or accessibility. Run:
 
 ```text
 ty-context design-resource preflight <handoff.md>
@@ -118,11 +121,11 @@ initial proposal
 
 ### Default Workflow consumption
 
-The consuming Goal brings the revised proposal, selected resources and residual handoff as ordinary Source. It reruns shared preflight before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It routes every covered Source Item and verification method through the production owner and real-entry checks. A later update creates a new immutable version rather than overwriting the adopted baseline.
+The consuming Goal brings the revised proposal, selected resources and residual handoff as ordinary Source. It reruns shared preflight before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It routes every fact, covered Source Item and verification method through the production owner and real-entry checks. Any unread, unsupported, unmapped, unimplemented, unverified or indistinguishable applicable fact blocks the complete claim. A later update creates a new immutable version rather than overwriting the adopted baseline.
 
 ### Long-Task consumption
 
-The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus every declared resource path and condition. Covered Source Items map through `source_claims` to the root conformance Assertion. Every verification method maps to an independently failing Assertion carrying its relevant Source Claims; every blocker preserves its Source-item/method/required-capability lineage into a machine Claim proved on the exact capability-qualified target or a target-blocking External Confirmation. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
+The same revised proposal, selected resources and validated residual handoff enter `long-task-workflow`'s Source-bound Contract Draft loop immediately. The marked handoff is `task.source_paths`; each Contract design target's frozen `source_paths` and Check `verification_inputs` equal that handoff plus every declared resource path and condition. Covered Source Items map through `source_claims` to the root conformance Assertion. Every verification method maps to an independently failing Assertion carrying its relevant Source Claims; each method × condition evidence cell carries the exact handoff `fact_refs`, the union equals the target fact set, and current typed `design_method` evidence repeats the exact set. Every blocker preserves its Source-item/method/required-capability lineage into a machine Claim proved on the exact capability-qualified target or a target-blocking External Confirmation. Authority Lock, Authority Revision and Final Gate remain the sole lifecycle. This Skill creates no Contract Draft, Outcome, Receipt, Check result or Gate.
 
 ## Forbidden inferences
 

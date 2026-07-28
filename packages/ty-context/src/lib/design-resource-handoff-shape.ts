@@ -3,6 +3,8 @@ import {
   parseDesignResourceHandoffBlockers,
   parseDesignResourceHandoffCoverage,
   parseDesignResourceHandoffEvidence,
+  parseDesignResourceHandoffFacts,
+  parseDesignResourceHandoffResourceFactClosure,
 } from "./design-resource-handoff-shape-evidence.js";
 import {
   contractKey,
@@ -35,6 +37,8 @@ export function parseDesignResourceHandoffShape(
     "subjects",
     "targets",
     "evidence",
+    "facts",
+    "resource_fact_closure",
     "coverage",
     "acceptance_blockers",
     "proposal",
@@ -132,6 +136,10 @@ export function parseDesignResourceHandoffShape(
     subjects: parseDesignResourceHandoffSubjects(root.subjects),
     targets: parseDesignResourceHandoffTargets(root.targets),
     evidence: parseDesignResourceHandoffEvidence(root.evidence),
+    facts: parseDesignResourceHandoffFacts(root.facts),
+    resource_fact_closure: parseDesignResourceHandoffResourceFactClosure(
+      root.resource_fact_closure,
+    ),
     coverage: parseDesignResourceHandoffCoverage(root.coverage),
     acceptance_blockers: parseDesignResourceHandoffBlockers(
       root.acceptance_blockers,

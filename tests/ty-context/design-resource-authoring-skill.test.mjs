@@ -159,6 +159,13 @@ test("implementation output uses complete canonical source plus residual handoff
   assert.match(handoff, /residual semantic and index layer/iu);
   assert.match(handoff, /typed locator/iu);
   assert.match(handoff, /subject.*target.*condition.*dimension/isu);
+  assert.match(combined, /complete observable design fact/iu);
+  assert.match(handoff, /Product Controls.*do not cap fact granularity/iu);
+  assert.match(handoff, /atomic `facts`/iu);
+  assert.match(handoff, /resource_fact_closure/u);
+  assert.match(handoff, /`fact_refs`/u);
+  assert.match(handoff, /full_target.*layout_geometry/isu);
+  assert.match(handoff, /full_target.*visual_pixel/isu);
   assert.match(
     combined,
     /PNG[\s\S]*(?:derived|visual baseline)[\s\S]*(?:cannot|not).*canonical/iu,
@@ -243,6 +250,11 @@ test("handoff preserves immutable resource identity and direct downstream routin
   ])
     assert.match(handoff, new RegExp(`\\b${dimension}\\b`, "u"));
   assert.match(handoff, /ty-context design-resource preflight <handoff\.md>/u);
+  assert.match(handoff, /complete inspection closure/iu);
+  assert.match(
+    handoff,
+    /material resource cannot be hidden as `supporting_only`/iu,
+  );
   assert.match(
     handoff,
     /static frame[\s\S]*cannot cover unseen interaction, motion, adaptation\/input or accessibility/iu,
@@ -267,6 +279,10 @@ test("handoff preserves immutable resource identity and direct downstream routin
   assert.match(
     handoff,
     /Source Items map through `source_claims`[\s\S]*root conformance Assertion/iu,
+  );
+  assert.match(
+    handoff,
+    /method × condition evidence cell[\s\S]*exact handoff `fact_refs`/iu,
   );
   assert.match(
     handoff,
@@ -344,6 +360,13 @@ test("Source, specification, Context and public docs expose the new resource con
       content,
       /eight.dimension|eight closed|八维|surface\/flow[\s\S]*accessibility[\s\S]*assets/isu,
     );
+    assert.match(content, /complete observable design fact/iu);
+    assert.match(content, /pixel/iu);
+    assert.match(
+      content,
+      /resource_fact_closure|resource.fact closure|资源事实闭包/iu,
+    );
+    assert.match(content, /fact_refs|fact refs/iu);
   }
   for (const content of [plan, spec, contexts, readmes]) {
     assert.match(

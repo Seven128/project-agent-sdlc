@@ -97,6 +97,8 @@ export interface DesignResourceHandoffV1 {
   subjects: DesignResourceHandoffSubjectV1[];
   targets: DesignResourceHandoffTargetV1[];
   evidence: DesignResourceHandoffEvidenceV1[];
+  facts: DesignResourceHandoffFactV1[];
+  resource_fact_closure: DesignResourceHandoffResourceFactClosureV1[];
   coverage: DesignResourceHandoffCoverageV1[];
   acceptance_blockers: DesignResourceHandoffBlockerV1[];
   proposal: {
@@ -173,6 +175,30 @@ export interface DesignResourceHandoffEvidenceV1 {
   condition_refs: string[];
 }
 
+export interface DesignResourceHandoffFactV1 {
+  key: string;
+  subject_ref: string;
+  target_ref: string;
+  condition_ref: string;
+  dimension: DesignResourceDimension;
+  observation_scope: "subject" | "full_target";
+  evidence_refs: string[];
+  source_item_refs: string[];
+  verification_method: DesignResourceVerificationMethod;
+}
+
+export interface DesignResourceHandoffResourceFactClosureV1 {
+  key: string;
+  resource_ref: string;
+  disposition: "material_with_facts" | "supporting_only";
+  fact_refs: string[];
+  inspection: {
+    status: "complete";
+    inspector: string;
+  };
+  rationale: string;
+}
+
 export interface DesignResourceHandoffCoverageV1 {
   key: string;
   subject_refs: string[];
@@ -181,6 +207,7 @@ export interface DesignResourceHandoffCoverageV1 {
   target_refs: string[];
   condition_refs: string[];
   evidence_refs: string[];
+  fact_refs: string[];
   source_item_refs: string[];
   verification_methods: DesignResourceVerificationMethod[];
   rationale: string;
@@ -214,6 +241,8 @@ export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHa
     subjects: number;
     targets: number;
     evidence: number;
+    facts: number;
+    resource_fact_closure: number;
     coverage: number;
     acceptance_blockers: number;
   };

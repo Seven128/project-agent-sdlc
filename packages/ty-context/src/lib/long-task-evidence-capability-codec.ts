@@ -251,6 +251,7 @@ function decodeRecord(
             "condition_key",
             "artifact_path",
             "observation_artifact_path",
+            "fact_refs",
           ]);
           return {
             condition_key: key(
@@ -265,6 +266,7 @@ function decodeRecord(
               cell.observation_artifact_path,
               `${cellLabel}.observation_artifact_path`,
             ),
+            fact_refs: designFactRefs(cell.fact_refs, `${cellLabel}.fact_refs`),
           };
         }),
       };
@@ -348,6 +350,15 @@ function keys(value: unknown, label: string): string[] {
   return array(value, label).map((item, index) =>
     key(item, `${label}[${index}]`),
   );
+}
+
+function designFactRefs(value: unknown, label: string): string[] {
+  return array(value, label).map((item, index) => {
+    const result = nonEmpty(item, `${label}[${index}]`);
+    if (!/^[a-z0-9][a-z0-9._-]*$/u.test(result))
+      throw invalidRecord(`${label}[${index}]`);
+    return result;
+  });
 }
 
 function sha(value: unknown, label: string): string {

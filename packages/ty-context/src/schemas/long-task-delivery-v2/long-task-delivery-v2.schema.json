@@ -39,6 +39,8 @@
     ],
     "$defs": {
         "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "designFactKey": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+        "designFactRefs": { "type": "array", "items": { "$ref": "#/$defs/designFactKey" }, "uniqueItems": true },
         "nonEmpty": { "type": "string", "minLength": 1 },
         "nonEmptyStrings": { "type": "array", "items": { "$ref": "#/$defs/nonEmpty" } },
         "executionTargetCapability": { "enum": ["browser-runtime", "native-runtime", "desktop-runtime", "service-runtime", "process-runtime", "external-runtime", "cold-start", "production-root", "pointer-input", "keyboard-input", "touch-input", "viewport-control", "pixel-density-observation", "safe-area-observation", "motion-observation", "reduced-motion", "color-scheme-control", "text-scale-control", "assistive-technology", "screen-reader", "physical-device", "device-orientation", "sensor-input", "camera-input", "haptic-output", "thermal-observation", "power-mode-control", "persistent-storage", "network-boundary"] },
@@ -304,7 +306,7 @@
                         "properties": {
                             "method": { "$ref": "#/$defs/designVerificationMethod" },
                             "assertion_ref": { "$ref": "#/$defs/key" },
-                            "evidence_artifacts": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["condition_key", "path", "observation_path"], "properties": { "condition_key": { "$ref": "#/$defs/key" }, "path": { "$ref": "#/$defs/nonEmpty" }, "observation_path": { "$ref": "#/$defs/nonEmpty" } } } }
+                            "evidence_artifacts": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["condition_key", "path", "observation_path", "fact_refs"], "properties": { "condition_key": { "$ref": "#/$defs/key" }, "path": { "$ref": "#/$defs/nonEmpty" }, "observation_path": { "$ref": "#/$defs/nonEmpty" }, "fact_refs": { "$ref": "#/$defs/designFactRefs" } } } }
                         }
                     }
                 },

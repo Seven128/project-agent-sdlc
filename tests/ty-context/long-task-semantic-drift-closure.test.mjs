@@ -265,7 +265,7 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
   assert.doesNotThrow(() => parse(proxyUi));
 });
 
-test("selected design targets require root-bound comparison evidence and blocker disposition", () => {
+test("[critical:selected-design-fact-closure] selected design targets require exact fact-bound comparison evidence and blocker disposition", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];
   outcome.product.controls.push(
@@ -313,18 +313,21 @@ test("selected design targets require root-bound comparison evidence and blocker
                 path: "artifacts/map-layout-phone.json",
                 observation_path:
                   "artifacts/map-layout-phone-observation.json",
+                fact_refs: ["map.layout.phone"],
               },
               {
                 condition_key: "dark",
                 path: "artifacts/map-layout-dark.json",
                 observation_path:
                   "artifacts/map-layout-dark-observation.json",
+                fact_refs: ["map.layout.dark"],
               },
               {
                 condition_key: "default",
                 path: "artifacts/map-layout-default.json",
                 observation_path:
                   "artifacts/map-layout-default-observation.json",
+                fact_refs: ["map.layout.default"],
               },
             ],
           },
@@ -399,51 +402,72 @@ test("selected design targets require root-bound comparison evidence and blocker
     ),
   );
 
+  const conformanceRecords = [
+    ...commonRecords,
+    {
+      assertion_key: assertionKey,
+      capability: "design_conformance",
+      design_target_ref: "map-default",
+      target_ref: "fixture-app",
+      condition_keys: ["dark", "default", "phone"],
+      actual_artifact_path: "artifacts/map-actual.png",
+      comparison_artifact_path: "artifacts/map-diff.json",
+    },
+    {
+      assertion_key: assertionKey,
+      capability: "design_method",
+      design_target_ref: "map-default",
+      target_ref: "fixture-app",
+      method: "layout_geometry",
+      cells: [
+        {
+          condition_key: "phone",
+          artifact_path: "artifacts/map-layout-phone.json",
+          observation_artifact_path:
+            "artifacts/map-layout-phone-observation.json",
+          fact_refs: ["map.layout.phone"],
+        },
+        {
+          condition_key: "dark",
+          artifact_path: "artifacts/map-layout-dark.json",
+          observation_artifact_path:
+            "artifacts/map-layout-dark-observation.json",
+          fact_refs: ["map.layout.dark"],
+        },
+        {
+          condition_key: "default",
+          artifact_path: "artifacts/map-layout-default.json",
+          observation_artifact_path:
+            "artifacts/map-layout-default-observation.json",
+          fact_refs: ["map.layout.default"],
+        },
+      ],
+    },
+  ];
   const conformed = evaluateEvidenceCapabilities(
     compiled,
-    [
-      ...commonRecords,
-      {
-        assertion_key: assertionKey,
-        capability: "design_conformance",
-        design_target_ref: "map-default",
-        target_ref: "fixture-app",
-        condition_keys: ["dark", "default", "phone"],
-        actual_artifact_path: "artifacts/map-actual.png",
-        comparison_artifact_path: "artifacts/map-diff.json",
-      },
-      {
-        assertion_key: assertionKey,
-        capability: "design_method",
-        design_target_ref: "map-default",
-        target_ref: "fixture-app",
-        method: "layout_geometry",
-        cells: [
-          {
-            condition_key: "phone",
-            artifact_path: "artifacts/map-layout-phone.json",
-            observation_artifact_path:
-              "artifacts/map-layout-phone-observation.json",
-          },
-          {
-            condition_key: "dark",
-            artifact_path: "artifacts/map-layout-dark.json",
-            observation_artifact_path:
-              "artifacts/map-layout-dark-observation.json",
-          },
-          {
-            condition_key: "default",
-            artifact_path: "artifacts/map-layout-default.json",
-            observation_artifact_path:
-              "artifacts/map-layout-default-observation.json",
-          },
-        ],
-      },
-    ],
+    conformanceRecords,
     artifacts,
   );
   assert.equal(conformed.complete[assertionKey], true);
   assert.deepEqual(conformed.findings, []);
+
+  const factDriftRecords = structuredClone(conformanceRecords);
+  const factDriftMethod = factDriftRecords.find(
+    (record) => record.capability === "design_method",
+  );
+  factDriftMethod.cells[0].fact_refs = ["map.layout.unbound"];
+  const factDrift = evaluateEvidenceCapabilities(
+    compiled,
+    factDriftRecords,
+    artifacts,
+  );
+  assert.equal(factDrift.complete[assertionKey], false);
+  assert.ok(
+    factDrift.findings.some(
+      (item) => item.actual === "design_method_fact_refs_mismatch",
+    ),
+  );
 
   const copiedMethodArtifacts = evaluateEvidenceCapabilities(
     compiled,
@@ -470,18 +494,21 @@ test("selected design targets require root-bound comparison evidence and blocker
             artifact_path: "artifacts/map-layout-phone.json",
             observation_artifact_path:
               "artifacts/map-layout-phone-observation.json",
+            fact_refs: ["map.layout.phone"],
           },
           {
             condition_key: "dark",
             artifact_path: "artifacts/map-layout-dark.json",
             observation_artifact_path:
               "artifacts/map-layout-dark-observation.json",
+            fact_refs: ["map.layout.dark"],
           },
           {
             condition_key: "default",
             artifact_path: "artifacts/map-layout-default.json",
             observation_artifact_path:
               "artifacts/map-layout-default-observation.json",
+            fact_refs: ["map.layout.default"],
           },
         ],
       },

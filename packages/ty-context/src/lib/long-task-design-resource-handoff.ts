@@ -137,6 +137,10 @@ function validateCoverageClaims(
       row.disposition === "covered" && row.target_refs.includes(target.key),
   );
   if (!rows.length) invalid("target_covered_claims_required", target.key);
+  const facts = indexed.preflight.handoff.facts.filter(
+    (fact) => fact.target_ref === target.key,
+  );
+  if (!facts.length) invalid("target_facts_required", target.key);
   const claimsBySourceItem = new Map<string, string[]>();
   for (const row of rows)
     for (const sourceItemRef of row.source_item_refs) {
@@ -149,7 +153,7 @@ function validateCoverageClaims(
       );
       claimsBySourceItem.set(sourceItemRef, localClaims);
     }
-  validateVerificationMethodBindings(target, check, rows, claimsBySourceItem);
+  validateVerificationMethodBindings(target, check, facts, claimsBySourceItem);
 }
 
 function validateBlockerBindings(
@@ -297,11 +301,11 @@ function designSourceItemClaims(
 function validateVerificationMethodBindings(
   target: ContractDesignTarget["target"],
   check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
-  rows: DesignResourceHandoffPreflightV1["handoff"]["coverage"],
+  facts: DesignResourceHandoffPreflightV1["handoff"]["facts"],
   claimsBySourceItem: Map<string, string[]>,
 ): void {
   const expectedMethods = new Set(
-    rows.flatMap((row) => row.verification_methods),
+    facts.map((fact) => fact.verification_method),
   );
   const bindings = target.verification_method_bindings;
   assertSameSet(
@@ -315,6 +319,7 @@ function validateVerificationMethodBindings(
     invalid("verification_method_assertion_duplicate", target.key);
   if (assertionRefs.includes(target.conformance_assertion_ref))
     invalid("verification_method_assertion_must_be_independent", target.key);
+  const boundFactRefs: string[] = [];
   for (const binding of bindings) {
     const assertion = check.positive_assertions.find(
       (item) => item.key === binding.assertion_ref,
@@ -325,9 +330,9 @@ function validateVerificationMethodBindings(
         `${target.key}:${binding.method}:${binding.assertion_ref}`,
       );
     const sourceItems = new Set(
-      rows
-        .filter((row) => row.verification_methods.includes(binding.method))
-        .flatMap((row) => row.source_item_refs),
+      facts
+        .filter((fact) => fact.verification_method === binding.method)
+        .flatMap((fact) => fact.source_item_refs),
     );
     for (const sourceItemRef of sourceItems)
       for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
@@ -348,7 +353,29 @@ function validateVerificationMethodBindings(
       "verification_method_evidence_conditions_mismatch",
       `${target.key}:${binding.method}`,
     );
+    for (const artifact of binding.evidence_artifacts) {
+      const expectedFactRefs = facts
+        .filter(
+          (fact) =>
+            fact.verification_method === binding.method &&
+            fact.condition_ref === artifact.condition_key,
+        )
+        .map((fact) => fact.key);
+      assertSameSet(
+        artifact.fact_refs,
+        expectedFactRefs,
+        "design_method_fact_refs_mismatch",
+        `${target.key}:${binding.method}:${artifact.condition_key}`,
+      );
+      boundFactRefs.push(...artifact.fact_refs);
+    }
   }
+  assertSameSet(
+    boundFactRefs,
+    facts.map((fact) => fact.key),
+    "design_method_fact_refs_mismatch",
+    target.key,
+  );
 }
 
 function requiredCapabilities(

@@ -96,6 +96,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "Proves that evidence from a different runtime target cannot substitute for the Contract-required target.",
   ),
   criticalSentinel(
+    "selected-design-fact-closure",
+    "long-task-semantic-drift-closure.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves that selected-design method evidence must conserve the exact handoff fact set for every target and condition, so artifact presence cannot hide an omitted or substituted design fact.",
+  ),
+  criticalSentinel(
     "semantic-assurance-closure",
     "long-task-semantic-assurance-closure.test.mjs",
     ["long-task", "long-task-trust"],

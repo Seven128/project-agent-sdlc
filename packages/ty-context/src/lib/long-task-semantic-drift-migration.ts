@@ -148,7 +148,7 @@ function collectOutcome(outcome: Row, label: string, missing: string[]): void {
           required(
             artifact,
             `${label}.product.surface_bindings[${bindingIndex}].design_targets[${targetIndex}].verification_method_bindings[${methodIndex}].evidence_artifacts[${artifactIndex}]`,
-            ["observation_path"],
+            ["observation_path", "fact_refs"],
             missing,
           );
       }

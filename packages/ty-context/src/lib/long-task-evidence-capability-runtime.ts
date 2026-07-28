@@ -82,6 +82,7 @@ function validateDesignMethod(
       {
         artifact_path: item.path,
         observation_artifact_path: item.observation_path,
+        fact_refs: item.fact_refs,
       },
     ]),
   );
@@ -94,6 +95,13 @@ function validateDesignMethod(
       expectedCell?.observation_artifact_path !== cell.observation_artifact_path
     )
       return "design_method_artifact_path_mismatch";
+    if (
+      !same(
+        [...cell.fact_refs].sort(),
+        [...(expectedCell?.fact_refs ?? [])].sort(),
+      )
+    )
+      return "design_method_fact_refs_mismatch";
     if (!artifactHashes[cell.artifact_path])
       return "design_method_artifact_missing";
     if (!artifactHashes[cell.observation_artifact_path])

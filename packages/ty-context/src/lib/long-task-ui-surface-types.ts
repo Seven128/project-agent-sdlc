@@ -10,6 +10,7 @@ export interface DeliveryDesignVerificationBindingV2 {
     condition_key: string;
     path: string;
     observation_path: string;
+    fact_refs: string[];
   }>;
 }
 

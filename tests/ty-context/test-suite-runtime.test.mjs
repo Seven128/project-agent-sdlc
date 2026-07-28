@@ -378,7 +378,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     (entry) => entry.id === "critical-policy-continuity",
   );
   assert.ok(sentinel);
-  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 18);
+  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 19);
   const expectedFile = path.join(
     repositoryRoot,
     "tests",

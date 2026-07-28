@@ -7,6 +7,7 @@ import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-
 import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 import {
   array,
+  fail,
   key,
   literal,
   object,
@@ -198,6 +199,7 @@ function parseVerificationMethodBindings(value: unknown, label: string) {
           "condition_key",
           "path",
           "observation_path",
+          "fact_refs",
         ]);
         return {
           condition_key: key(
@@ -209,6 +211,10 @@ function parseVerificationMethodBindings(value: unknown, label: string) {
             entry.observation_path,
             `${artifactLabel}.observation_path`,
           ),
+          fact_refs: designFactRefs(
+            entry.fact_refs,
+            `${artifactLabel}.fact_refs`,
+          ),
         };
       }),
     };
@@ -219,4 +225,14 @@ function keys(value: unknown, label: string): string[] {
   return array(value, label).map((item, index) =>
     key(item, `${label}[${index}]`),
   );
+}
+
+function designFactRefs(value: unknown, label: string): string[] {
+  return array(value, label).map((item, index) => {
+    const itemLabel = `${label}[${index}]`;
+    const result = string(item, itemLabel);
+    if (!/^[a-z0-9][a-z0-9._-]*$/u.test(result))
+      fail(itemLabel, "must match ^[a-z0-9][a-z0-9._-]*$");
+    return result;
+  });
 }

@@ -196,7 +196,9 @@ test("Long-Task Compile consumes the same strict design handoff through target, 
         "accessibility_semantics",
         "asset_integrity",
         "component_state",
+        "content",
         "design_token",
+        "input_method",
         "interaction_trace",
         "layout_geometry",
         "motion_timeline",
@@ -260,8 +262,7 @@ test("Long-Task Compile binds every declared design verification method to an in
         .design_targets[0];
     for (const binding of target.verification_method_bindings)
       for (const artifact of binding.evidence_artifacts)
-        artifact.observation_path =
-          "artifacts/reused-settled-screenshot.png";
+        artifact.observation_path = "artifacts/reused-settled-screenshot.png";
     await writeContract(reusedEvidence.workdir, reusedEvidence.contract);
     await assert.rejects(
       compileDeliveryContract(reusedEvidence.workdir, reusedEvidence.root, {
@@ -316,10 +317,97 @@ test("Long-Task Compile binds every declared design verification method to an in
   }
 });
 
+test("Long-Task Compile rejects every exact design-fact binding drift", async () => {
+  const cases = [
+    [
+      "missing",
+      (target) => {
+        target.verification_method_bindings[0].evidence_artifacts[0].fact_refs =
+          [];
+      },
+      /design_method_fact_refs_mismatch/u,
+    ],
+    [
+      "extra",
+      (target) => {
+        target.verification_method_bindings[0].evidence_artifacts[0].fact_refs.push(
+          "fact.unbound",
+        );
+      },
+      /design_method_fact_refs_mismatch/u,
+    ],
+    [
+      "duplicate",
+      (target) => {
+        const artifact =
+          target.verification_method_bindings[0].evidence_artifacts[0];
+        artifact.fact_refs.push(artifact.fact_refs[0]);
+      },
+      /ui_design_method_fact_ref_duplicate/u,
+    ],
+    [
+      "wrong method",
+      (target) => {
+        const first =
+          target.verification_method_bindings[0].evidence_artifacts[0];
+        const second =
+          target.verification_method_bindings[1].evidence_artifacts[0];
+        [first.fact_refs, second.fact_refs] = [
+          second.fact_refs,
+          first.fact_refs,
+        ];
+      },
+      /design_method_fact_refs_mismatch/u,
+    ],
+    [
+      "wrong condition",
+      (target) => {
+        const artifacts =
+          target.verification_method_bindings[0].evidence_artifacts;
+        [artifacts[0].fact_refs, artifacts[1].fact_refs] = [
+          artifacts[1].fact_refs,
+          artifacts[0].fact_refs,
+        ];
+      },
+      /design_method_fact_refs_mismatch/u,
+    ],
+    [
+      "reused",
+      (target) => {
+        const artifacts =
+          target.verification_method_bindings[0].evidence_artifacts;
+        artifacts[1].fact_refs.push(artifacts[0].fact_refs[0]);
+      },
+      /ui_design_method_fact_ref_reused/u,
+    ],
+  ];
+  for (const [name, mutate, expected] of cases) {
+    const fixture = await createDeliveryFixture();
+    try {
+      await attachDesignResourceHandoff(fixture);
+      const target =
+        fixture.contract.outcomes[0].product.surface_bindings[0]
+          .design_targets[0];
+      mutate(target);
+      await writeContract(fixture.workdir, fixture.contract);
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        expected,
+        name,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+});
+
 test("Long-Task Compile rejects handoff target drift and unbound handoff blockers", async () => {
   const targetFixture = await createDeliveryFixture();
   try {
     const handoff = await attachDesignResourceHandoff(targetFixture);
+    const previousCondition = handoff.conditions[0].key;
     handoff.conditions[0].key = "other-condition";
     const changedConditions = handoff.conditions.map((item) => item.key);
     handoff.targets[0].condition_refs = [...changedConditions];
@@ -327,6 +415,9 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
       item.condition_refs = [...changedConditions];
     for (const row of handoff.coverage)
       row.condition_refs = [...changedConditions];
+    for (const fact of handoff.facts)
+      if (fact.condition_ref === previousCondition)
+        fact.condition_ref = "other-condition";
     await writeDesignResourceHandoff(targetFixture.root, handoff);
     await writeContract(targetFixture.workdir, targetFixture.contract);
     await assert.rejects(
@@ -411,9 +502,7 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
 
   const blockerCapabilityFixture = await createDeliveryFixture();
   try {
-    const handoff = await attachDesignResourceHandoff(
-      blockerCapabilityFixture,
-    );
+    const handoff = await attachDesignResourceHandoff(blockerCapabilityFixture);
     const handoffBlocker = {
       key: "representative-device-proof",
       target_refs: [DESIGN_TARGET_KEY],
@@ -427,8 +516,7 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
     };
     handoff.acceptance_blockers.push(handoffBlocker);
     const binding =
-      blockerCapabilityFixture.contract.outcomes[0].product
-        .surface_bindings[0];
+      blockerCapabilityFixture.contract.outcomes[0].product.surface_bindings[0];
     binding.acceptance_blockers.push({
       key: handoffBlocker.key,
       status: "machine_claim",
@@ -609,8 +697,9 @@ async function attachDesignResourceHandoff(fixture) {
       ...new Set([...assertion.evidence_capabilities, ...capabilities]),
     ];
     check.positive_assertions.push(assertion);
-    outcome.acceptance.counterfactual_controls[0]
-      .expected_assertion_failures.push(assertion.key);
+    outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.push(
+      assertion.key,
+    );
   }
   outcome.acceptance.counterfactual_controls[0].claims.push(
     "requirement.design-handoff",
@@ -636,6 +725,13 @@ async function attachDesignResourceHandoff(fixture) {
             condition_key: conditionKey,
             path: `artifacts/method-${method}-${conditionKey}.json`,
             observation_path: `artifacts/observation-${method}-${conditionKey}.json`,
+            fact_refs: handoff.facts
+              .filter(
+                (fact) =>
+                  fact.verification_method === method &&
+                  fact.condition_ref === conditionKey,
+              )
+              .map((fact) => fact.key),
           })),
         })),
         actual_artifact_path: "artifacts/design-actual.json",

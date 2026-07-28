@@ -20,9 +20,11 @@ export function validateDesignResourceCoverage(
   targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
   conditions: Map<string, unknown>,
   evidence: Map<string, DesignResourceHandoffV1["evidence"][number]>,
+  facts: Map<string, DesignResourceHandoffV1["facts"][number]>,
   sourceItems: Map<string, string>,
 ): void {
   const cells = new Set<string>();
+  const referencedFacts = new Set<string>();
   const unresolved: string[] = [];
   for (const row of handoff.coverage) {
     requireNonemptyDesignResourceValues(
@@ -38,6 +40,7 @@ export function validateDesignResourceCoverage(
       ["target_ref", row.target_refs],
       ["condition_ref", row.condition_refs],
       ["evidence_ref", row.evidence_refs],
+      ["fact_ref", row.fact_refs],
       ["source_item_ref", row.source_item_refs],
       ["verification_method", row.verification_methods],
     ] as const)
@@ -53,13 +56,21 @@ export function validateDesignResourceCoverage(
     }
     validateCoverageApplicability(row, handoff, targets, conditions, cells);
     if (row.disposition === "covered")
-      validateCoveredRow(row, targets, conditions, evidence);
-    else validateNoncoveredRow(row);
-    if (
+      validateCoveredRow(
+        row,
+        handoff,
+        targets,
+        conditions,
+        evidence,
+        facts,
+        referencedFacts,
+      );
+    else if (
       row.disposition === "decision_required" ||
       row.disposition === "unavailable"
     )
       unresolved.push(row.key);
+    else validateNoncoveredRow(row);
   }
   for (const subject of handoff.subjects)
     for (const targetRef of subject.target_refs) {
@@ -84,6 +95,12 @@ export function validateDesignResourceCoverage(
       "unresolved_coverage",
       unresolved.sort().join(","),
     );
+  for (const fact of handoff.facts)
+    if (!referencedFacts.has(fact.key))
+      invalidDesignResourceHandoff(
+        "design_resource_fact_unreferenced",
+        fact.key,
+      );
 }
 
 function validateCoverageApplicability(
@@ -249,14 +266,18 @@ export function validateDesignResourceReachability(
 
 function validateCoveredRow(
   row: DesignResourceHandoffV1["coverage"][number],
+  handoff: DesignResourceHandoffV1,
   targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
   conditions: Map<string, unknown>,
   evidence: Map<string, DesignResourceHandoffV1["evidence"][number]>,
+  facts: Map<string, DesignResourceHandoffV1["facts"][number]>,
+  referencedFacts: Set<string>,
 ): void {
   for (const [name, values] of [
     ["target_refs", row.target_refs],
     ["condition_refs", row.condition_refs],
     ["evidence_refs", row.evidence_refs],
+    ["fact_refs", row.fact_refs],
     ["verification_methods", row.verification_methods],
   ] as const)
     requireNonemptyDesignResourceValues(
@@ -269,6 +290,15 @@ function validateCoveredRow(
     requireKnownDesignResourceRef(conditions, ref, "condition");
   for (const ref of row.evidence_refs)
     requireKnownDesignResourceRef(evidence, ref, "evidence");
+  for (const ref of row.fact_refs) {
+    requireKnownDesignResourceRef(facts, ref, "fact");
+    if (referencedFacts.has(ref))
+      invalidDesignResourceHandoff(
+        "coverage_fact_ref_duplicate",
+        `${row.key}:${ref}`,
+      );
+    referencedFacts.add(ref);
+  }
 
   const allowedEvidence = new Set(
     DESIGN_RESOURCE_EVIDENCE_BY_DIMENSION[row.dimension],
@@ -290,21 +320,52 @@ function validateCoveredRow(
         "coverage_verification_method_incompatible",
         `${row.key}:${row.dimension}:${method}`,
       );
-  for (const targetRef of row.target_refs)
-    for (const conditionRef of row.condition_refs)
-      if (
-        !row.evidence_refs.some((evidenceRef) => {
-          const item = evidence.get(evidenceRef)!;
-          return (
-            targets.get(targetRef)!.resource_refs.includes(item.resource_ref) &&
-            item.condition_refs.includes(conditionRef)
+  const expectedFacts = handoff.facts.filter(
+    (fact) =>
+      fact.dimension === row.dimension &&
+      row.subject_refs.includes(fact.subject_ref) &&
+      row.target_refs.includes(fact.target_ref) &&
+      row.condition_refs.includes(fact.condition_ref),
+  );
+  assertSameSet(
+    row.fact_refs,
+    expectedFacts.map((fact) => fact.key),
+    "coverage_fact_refs_mismatch",
+    row.key,
+  );
+  assertSameSet(
+    row.evidence_refs,
+    expectedFacts.flatMap((fact) => fact.evidence_refs),
+    "coverage_fact_evidence_refs_mismatch",
+    row.key,
+  );
+  assertSameSet(
+    row.source_item_refs,
+    expectedFacts.flatMap((fact) => fact.source_item_refs),
+    "coverage_fact_source_item_refs_mismatch",
+    row.key,
+  );
+  assertSameSet(
+    row.verification_methods,
+    expectedFacts.map((fact) => fact.verification_method),
+    "coverage_fact_verification_methods_mismatch",
+    row.key,
+  );
+  for (const subjectRef of row.subject_refs)
+    for (const targetRef of row.target_refs)
+      for (const conditionRef of row.condition_refs)
+        if (
+          !expectedFacts.some(
+            (fact) =>
+              fact.subject_ref === subjectRef &&
+              fact.target_ref === targetRef &&
+              fact.condition_ref === conditionRef,
+          )
+        )
+          invalidDesignResourceHandoff(
+            "coverage_cell_without_fact",
+            `${row.key}:${subjectRef}:${targetRef}:${conditionRef}`,
           );
-        })
-      )
-        invalidDesignResourceHandoff(
-          "coverage_cell_without_evidence",
-          `${row.key}:${targetRef}:${conditionRef}`,
-        );
 }
 
 function validateNoncoveredRow(
@@ -312,6 +373,7 @@ function validateNoncoveredRow(
 ): void {
   for (const [name, values] of [
     ["evidence_refs", row.evidence_refs],
+    ["fact_refs", row.fact_refs],
     ["verification_methods", row.verification_methods],
   ] as const)
     if (values.length)
@@ -319,4 +381,22 @@ function validateNoncoveredRow(
         "noncovered_binding_forbidden",
         `${row.key}:${row.disposition}:${name}`,
       );
+}
+
+function assertSameSet(
+  actual: string[],
+  expected: string[],
+  code: string,
+  detail: string,
+): void {
+  const left = [...new Set(actual)].sort();
+  const right = [...new Set(expected)].sort();
+  if (
+    left.length !== right.length ||
+    left.some((item, index) => item !== right[index])
+  )
+    invalidDesignResourceHandoff(
+      code,
+      `${detail}:${left.join(",")}:${right.join(",")}`,
+    );
 }

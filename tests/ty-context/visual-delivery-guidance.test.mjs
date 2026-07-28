@@ -98,6 +98,10 @@ test("visual design and implementation guidance reaches every managed copy", asy
     uiux,
     /surface\/flow、visual\/content、component\/control、state\/interaction、motion、adaptation\/input、accessibility、assets/u,
   );
+  assert.match(uiux, /可观察的设计事实/iu);
+  assert.match(uiux, /Control 是产品交互语义单位，不是 UI 原子粒度上限/iu);
+  assert.match(uiux, /完整 fact\/resource closure/iu);
+  assert.match(uiux, /整目标 layout 与 pixel 事实/iu);
   assert.match(uiux, /不复制 provider.*提示词\/模板/isu);
   assert.match(
     uiux,
@@ -168,7 +172,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /covered Source Items, declared verification methods[\s\S]*project-owned check/iu,
+    /complete observable design fact[\s\S]*fact\/Source\/method\/blocker\/target\/condition sets[\s\S]*project-owned check/iu,
   );
   assert.match(development, /`exact-target`, `constraint` or `inspiration`/iu);
   assert.match(
@@ -211,8 +215,10 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /final-current-candidate Contract Conformance[\s\S]*unresolved, unmapped, unexecuted, stale or indistinguishable/iu,
+    /final-current-candidate Contract Conformance[\s\S]*unread, unsupported, unresolved, unmapped, unimplemented, unexecuted, stale or indistinguishable/iu,
   );
+  assert.match(development, /exact handoff `fact_refs`/iu);
+  assert.match(development, /full-target layout and pixel proof/iu);
   assert.match(development, /do not run the preceding default closure/iu);
   assert.match(development, /Final Gate is the sole Long-Task carrier/iu);
 });
@@ -234,6 +240,8 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   assert.match(authoring, /resolve Design Authority before Compile/iu);
   assert.match(authoring, /perform UI Authority Closure/iu);
   assert.match(authoring, /design-resource-handoff-v1/u);
+  assert.match(authoring, /complete observable design fact/iu);
+  assert.match(authoring, /full-target layout and pixel facts/iu);
   assert.match(
     authoring,
     /exact handoff target key and interpretation[\s\S]*condition_keys[\s\S]*source_claims[\s\S]*root conformance Assertion/iu,
@@ -265,6 +273,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     authoring,
     /typed current-execution `design_method` evidence/iu,
   );
+  assert.match(authoring, /exact handoff `fact_refs`/iu);
   assert.match(
     authoring,
     /all-of `design_conformance`, `interaction_trace` and `target_runtime`/iu,
@@ -303,6 +312,8 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   const evidence = evidenceCopies[0];
   assert.match(evidence, /^## Visual UI Evidence$/mu);
   assert.match(evidence, /ty-context design-resource preflight/iu);
+  assert.match(evidence, /complete per-resource fact closure/iu);
+  assert.match(evidence, /exact handoff `fact_refs`/iu);
   assert.match(
     evidence,
     /geometry\/pixel\/token\/content[\s\S]*motion timeline[\s\S]*accessibility semantics[\s\S]*asset integrity/iu,
@@ -401,9 +412,21 @@ test("complete selected-design conformance is shared through mutually exclusive 
     assert.match(content, /immutable/iu);
     assert.match(content, /Final Gate/iu);
   }
+  for (const content of [
+    spec,
+    handoffContract,
+    longTaskCopies[0],
+    rootReadme,
+    packageReadme,
+  ]) {
+    assert.match(content, /complete observable (?:design )?fact/iu);
+    assert.match(content, /pixel/iu);
+  }
+  assert.match(handoffContract, /resource_fact_closure/u);
+  assert.match(handoffContract, /fact_refs/u);
   assert.match(
     globalContext,
-    /A selected implementation handoff requires every declared material UI\/UX fact[\s\S]*current-candidate production proof/iu,
+    /A selected implementation handoff defaults to every complete observable design fact[\s\S]*current-candidate production proof/iu,
   );
   assert.match(
     globalContext,
@@ -421,6 +444,8 @@ test("complete selected-design conformance is shared through mutually exclusive 
     chineseReadme,
     /canonical entry[\s\S]*typed locator[\s\S]*subject.*target.*condition/isu,
   );
+  assert.match(chineseReadme, /complete observable design fact/iu);
+  assert.match(chineseReadme, /pixel/iu);
   assert.match(
     sourcePlan,
     /Implementation-Source Closure And Provider Selection Amendment/iu,

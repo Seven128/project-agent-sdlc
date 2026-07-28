@@ -87,11 +87,11 @@ test("default Context routing combines manifest candidates with bounded search",
   assert.match(managed, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     managed,
-    /canonical entry[\s\S]*exact dependency closure[\s\S]*unresolved locators\/cells\/meaning[\s\S]*stale digests fail closed/iu,
+    /canonical entry[\s\S]*exact dependency closure[\s\S]*unresolved locators\/cells\/facts\/meaning[\s\S]*stale digests fail closed/iu,
   );
   assert.match(
     managed,
-    /covered Source Items, declared verification methods, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
+    /covered facts, Source Items, declared verification methods, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
   );
   assert.match(
     managed,

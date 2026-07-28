@@ -216,20 +216,20 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
             {
               condition_key: "phone",
               path: "artifacts/map-layout-phone.json",
-              observation_path:
-                "artifacts/map-layout-phone-observation.json",
+              observation_path: "artifacts/map-layout-phone-observation.json",
+              fact_refs: ["map.layout.phone"],
             },
             {
               condition_key: "dark",
               path: "artifacts/map-layout-dark.json",
-              observation_path:
-                "artifacts/map-layout-dark-observation.json",
+              observation_path: "artifacts/map-layout-dark-observation.json",
+              fact_refs: ["map.layout.dark"],
             },
             {
               condition_key: "default",
               path: "artifacts/map-layout-default.json",
-              observation_path:
-                "artifacts/map-layout-default-observation.json",
+              observation_path: "artifacts/map-layout-default-observation.json",
+              fact_refs: ["map.layout.default"],
             },
           ],
         },
@@ -303,18 +303,21 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
             artifact_path: "artifacts/map-layout-phone.json",
             observation_artifact_path:
               "artifacts/map-layout-phone-observation.json",
+            fact_refs: ["map.layout.phone"],
           },
           {
             condition_key: "dark",
             artifact_path: "artifacts/map-layout-dark.json",
             observation_artifact_path:
               "artifacts/map-layout-dark-observation.json",
+            fact_refs: ["map.layout.dark"],
           },
           {
             condition_key: "default",
             artifact_path: "artifacts/map-layout-default.json",
             observation_artifact_path:
               "artifacts/map-layout-default-observation.json",
+            fact_refs: ["map.layout.default"],
           },
         ],
       },

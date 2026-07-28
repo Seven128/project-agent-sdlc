@@ -24,6 +24,8 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     implementationIndex,
     verification,
     manifest,
+    designHandoff,
+    designFactPolicy,
     authoringSkill,
     managedAgents,
     managedSkill,
@@ -42,6 +44,10 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     read("project_context/areas/harness-package/implementation-index.md"),
     read("project_context/areas/harness-package/verification.md"),
     read("project_context/context.toml"),
+    read(
+      "project_context/areas/harness-package/contracts/design-resource-handoff.md",
+    ),
+    read("packages/ty-context/src/lib/design-resource-fact-policy.ts"),
     read(".codex/skills/authoring/harness_package_design/SKILL.md"),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
@@ -98,8 +104,25 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
   );
   assert.match(
     rationale,
-    /current implementation realizes the first responsibility through Source-bound authoring[\s\S]*second through complete Claim\/applicability\/proof-surface expansion/iu,
+    /current implementation realizes the first responsibility through Source-bound authoring[\s\S]*second through complete Claim\/applicability\/fact\/proof-surface expansion/iu,
   );
+  assert.match(spec, /complete observable design fact/iu);
+  assert.match(rationale, /Product Control is a semantic interaction unit/iu);
+  assert.match(designHandoff, /resource_fact_closure/u);
+  assert.match(designHandoff, /full_target.*visual_pixel/isu);
+  assert.match(designHandoff, /Coverage_new ⊇ Coverage_old/iu);
+  assert.match(designHandoff, /FalseNegative_new ⊆ FalseNegative_old/iu);
+  for (const marker of [
+    "complete_observable_design_fact_delivery",
+    "resource_fact_inventory_closure_required",
+    "exact_target_visual_pixel_required",
+    "exact_fact_set_conservation_required",
+    "unsupported_design_fact_blocks",
+    "control_granularity_is_not_design_fact_granularity",
+    "no_second_design_fact_authority",
+    "selected_design_fact_antidegradation_required",
+  ])
+    assert.match(designFactPolicy, new RegExp(`\\b${marker}\\b`, "u"));
   assert.match(
     [spec, globalContext, rationale, workflow].join("\n"),
     /explicit project-owner design-purpose decision[\s\S]*old\/new implication[\s\S]*replacement proof/iu,
@@ -135,6 +158,8 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     "packages/ty-context/src/lib/long-task-semantic-assurance-policy.ts",
     "packages/ty-context/src/lib/long-task-final-v2.ts",
     "packages/ty-context/src/lib/long-task-final-integrity.ts",
+    "packages/ty-context/src/lib/design-resource-fact-policy.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-facts.ts",
     "tests/ty-context/long-task-semantic-assurance-closure.test.mjs",
     "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
     "tests/ty-context/long-task-semantic-drift-lifecycle.test.mjs",

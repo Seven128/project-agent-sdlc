@@ -2,6 +2,8 @@ import type {
   DesignResourceHandoffBlockerV1,
   DesignResourceHandoffCoverageV1,
   DesignResourceHandoffEvidenceV1,
+  DesignResourceHandoffFactV1,
+  DesignResourceHandoffResourceFactClosureV1,
 } from "./design-resource-handoff-types.js";
 import {
   DESIGN_RESOURCE_DIMENSIONS,
@@ -70,6 +72,7 @@ export function parseDesignResourceHandoffCoverage(
       "target_refs",
       "condition_refs",
       "evidence_refs",
+      "fact_refs",
       "source_item_refs",
       "verification_methods",
       "rationale",
@@ -99,6 +102,7 @@ export function parseDesignResourceHandoffCoverage(
         `${label}.condition_refs`,
       ),
       evidence_refs: stableKeys(row.evidence_refs, `${label}.evidence_refs`),
+      fact_refs: stableKeys(row.fact_refs, `${label}.fact_refs`),
       source_item_refs: sourceItemKeys(
         row.source_item_refs,
         `${label}.source_item_refs`,
@@ -110,6 +114,94 @@ export function parseDesignResourceHandoffCoverage(
       rationale: string(row.rationale, `${label}.rationale`),
     };
   });
+}
+
+export function parseDesignResourceHandoffFacts(
+  value: unknown,
+): DesignResourceHandoffFactV1[] {
+  return array(value, "design_resource_handoff.facts").map((item, index) => {
+    const label = `design_resource_handoff.facts[${index}]`;
+    const row = object(item, label, [
+      "key",
+      "subject_ref",
+      "target_ref",
+      "condition_ref",
+      "dimension",
+      "observation_scope",
+      "evidence_refs",
+      "source_item_refs",
+      "verification_method",
+    ]);
+    return {
+      key: stableKey(row.key, `${label}.key`),
+      subject_ref: stableKey(row.subject_ref, `${label}.subject_ref`),
+      target_ref: contractKey(row.target_ref, `${label}.target_ref`),
+      condition_ref: contractKey(row.condition_ref, `${label}.condition_ref`),
+      dimension: literal(
+        row.dimension,
+        DESIGN_RESOURCE_DIMENSIONS,
+        `${label}.dimension`,
+      ),
+      observation_scope: literal(
+        row.observation_scope,
+        ["subject", "full_target"] as const,
+        `${label}.observation_scope`,
+      ),
+      evidence_refs: stableKeys(row.evidence_refs, `${label}.evidence_refs`),
+      source_item_refs: sourceItemKeys(
+        row.source_item_refs,
+        `${label}.source_item_refs`,
+      ),
+      verification_method: verificationMethods(
+        [row.verification_method],
+        `${label}.verification_method`,
+      )[0],
+    };
+  });
+}
+
+export function parseDesignResourceHandoffResourceFactClosure(
+  value: unknown,
+): DesignResourceHandoffResourceFactClosureV1[] {
+  return array(value, "design_resource_handoff.resource_fact_closure").map(
+    (item, index) => {
+      const label = `design_resource_handoff.resource_fact_closure[${index}]`;
+      const row = object(item, label, [
+        "key",
+        "resource_ref",
+        "disposition",
+        "fact_refs",
+        "inspection",
+        "rationale",
+      ]);
+      const inspection = object(row.inspection, `${label}.inspection`, [
+        "status",
+        "inspector",
+      ]);
+      return {
+        key: stableKey(row.key, `${label}.key`),
+        resource_ref: stableKey(row.resource_ref, `${label}.resource_ref`),
+        disposition: literal(
+          row.disposition,
+          ["material_with_facts", "supporting_only"] as const,
+          `${label}.disposition`,
+        ),
+        fact_refs: stableKeys(row.fact_refs, `${label}.fact_refs`),
+        inspection: {
+          status: literal(
+            inspection.status,
+            ["complete"] as const,
+            `${label}.inspection.status`,
+          ),
+          inspector: string(
+            inspection.inspector,
+            `${label}.inspection.inspector`,
+          ),
+        },
+        rationale: string(row.rationale, `${label}.rationale`),
+      };
+    },
+  );
 }
 
 export function parseDesignResourceHandoffBlockers(

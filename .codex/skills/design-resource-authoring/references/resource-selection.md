@@ -105,7 +105,7 @@ Do not manufacture a gap already resolved by selected Source.
 
 A prototype is often valuable for new Web/App flows, but it is never automatically required. Low- and high-fidelity resources may both be selected only when they answer independent questions. One comprehensive, inspectable artifact may cover page composition and several component families; a static frame cannot claim unseen interaction or state coverage merely because all controls appear in it.
 
-Do not translate control-level completeness into one artifact per control. Map ordinary controls to selected shared component variants, group related states in one component-family board or workbench, and reserve dedicated resources for unique or complex controls whose material meaning is otherwise uncovered.
+Do not translate Product Control closure into one artifact per control. Artifact grouping is an authoring optimization, while the later implementation handoff still inventories every observable design fact inside those artifacts, including component parts and smaller primitives. Map ordinary controls to selected shared component variants, group related states in one component-family board or workbench, and reserve dedicated resources for unique or complex controls whose material meaning is otherwise uncovered.
 
 ## 7. Assign a disposition to every considered resource
 
@@ -132,6 +132,7 @@ scope:
   viewports: []
 coverage:
   material_needs: []
+  observable_fact_families: []
   existing_mappings: []
   required_content_visual: []
   required_components_states: []
@@ -157,7 +158,7 @@ This is an explanatory shape, not a required file or schema. Never paste or para
 - Reuse the current Open Design project when that preserves context and provenance; preserve the prior artifact hash before overwriting a selected candidate.
 - Do not create low-fi, high-fi, component boards or native-platform copies merely because a process diagram lists them.
 - For exploration, stop as soon as the requested decision is supported.
-- For an implementation handoff, stop only when every material in-scope coverage item has an explicit disposition and the resource mapping leaves no material user-visible design decision for the implementer to invent. Honest `decision-required` or `unavailable` items may stop further generation, but the result is a blocked authoring outcome: it cannot pass shared preflight, be called a ready implementation handoff or authorize fidelity work. This does not claim Design Authority or implementation acceptance.
+- For an implementation handoff, stop only when every material in-scope coverage item and every supported observable fact in the selected resources has an explicit inventory/disposition, every resource has a complete inspection closure, and the mapping leaves no material user-visible design decision for the implementer to invent. An exact target also needs full-target layout and pixel facts for every declared condition. Honest `decision-required` or `unavailable` items may stop further generation, but the result is a blocked authoring outcome: it cannot pass shared preflight, be called a ready implementation handoff or authorize fidelity work. This does not claim Design Authority or implementation acceptance.
 
 During iteration, keep accepted, rejected and unresolved implications in a task-local delta buffer. Do not require or emit an interim delta after every iteration and never continuously synchronize the initial proposal. After explicit human selection or explicitly delegated selection, consolidate the buffer once and reconcile only accepted decisions into the initial proposal. If it is a writable file, update it in place while preserving original intent/provenance; otherwise return one complete revised proposal. The operation must be idempotent, name selected artifact locators/hashes and affected stable keys, and exclude rejected/unresolved choices. Never write a Source Plan, Context, `DESIGN.md`, code, tests or Contract.
 

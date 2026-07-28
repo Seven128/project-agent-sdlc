@@ -40,10 +40,12 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/design-resource-handoff-shape-evidence.ts",
     "packages/ty-context/src/lib/design-resource-handoff-parser.ts",
     "packages/ty-context/src/lib/design-resource-handoff-policy.ts",
+    "packages/ty-context/src/lib/design-resource-fact-policy.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-primitives.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-structure.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-coverage.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-facts.ts",
   ].map((sourcePath) => [
     sourcePath,
     [
@@ -393,6 +395,14 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-evidence-capability-codec.ts",
     [
       "long-task-evidence-kernel.test.mjs",
+      "long-task-semantic-drift-closure.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/lib/long-task-evidence-capability-types.ts",
+    [
+      "long-task-evidence-kernel.test.mjs",
+      "long-task-playwright-ac-evidence.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],

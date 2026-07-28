@@ -70,6 +70,7 @@ function validateDesignTargets({
     if (!target.verification_method_bindings.length)
       issue(report, "ui_design_target_verification_methods_required", label);
     const methodArtifactPaths = new Set<string>();
+    const methodFactRefs = new Set<string>();
     for (const [name, values] of [
       ["source_paths", target.source_paths],
       ["condition_keys", target.condition_keys],
@@ -150,6 +151,21 @@ function validateDesignTargets({
           `${label}:${methodBinding.method}`,
         );
       for (const artifact of methodBinding.evidence_artifacts) {
+        unique(
+          artifact.fact_refs,
+          "ui_design_method_fact_ref_duplicate",
+          `${label}:${methodBinding.method}:${artifact.condition_key}`,
+          report,
+        );
+        for (const factRef of artifact.fact_refs) {
+          if (methodFactRefs.has(factRef))
+            issue(
+              report,
+              "ui_design_method_fact_ref_reused",
+              `${label}:${factRef}`,
+            );
+          methodFactRefs.add(factRef);
+        }
         for (const [kind, artifactPath] of [
           ["record", artifact.path],
           ["observation", artifact.observation_path],

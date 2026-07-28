@@ -92,6 +92,7 @@ export interface DesignMethodEvidenceV2 extends EvidenceRecordBaseV2 {
     condition_key: string;
     artifact_path: string;
     observation_artifact_path: string;
+    fact_refs: string[];
   }>;
 }
 

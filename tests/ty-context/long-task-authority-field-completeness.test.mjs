@@ -105,6 +105,7 @@ test("every Delivery Contract authority structure has a complete field policy re
               path: "artifacts/settings-layout-default.json",
               observation_path:
                 "artifacts/settings-layout-default-observation.json",
+              fact_refs: ["settings.layout.default"],
             },
           ],
         },
@@ -121,6 +122,7 @@ test("every Delivery Contract authority structure has a complete field policy re
           path: "artifacts/settings-layout-default.json",
           observation_path:
             "artifacts/settings-layout-default-observation.json",
+          fact_refs: ["settings.layout.default"],
         },
       ],
     },

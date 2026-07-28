@@ -100,18 +100,21 @@ test("production surface bindings and design conformance have Schema/Parser pari
                 path: "artifacts/settings-layout-phone.json",
                 observation_path:
                   "artifacts/settings-layout-phone-observation.json",
+                fact_refs: ["settings.layout.phone"],
               },
               {
                 condition_key: "dark",
                 path: "artifacts/settings-layout-dark.json",
                 observation_path:
                   "artifacts/settings-layout-dark-observation.json",
+                fact_refs: ["settings.layout.dark"],
               },
               {
                 condition_key: "default",
                 path: "artifacts/settings-layout-default.json",
                 observation_path:
                   "artifacts/settings-layout-default-observation.json",
+                fact_refs: ["settings.layout.default"],
               },
             ],
           },
@@ -266,12 +269,10 @@ test("Assertion operator and expected rules stay aligned across Schema and Parse
     () => parseDeliveryContractText(YAML.stringify(unaryExpected)),
     /assertion_expected_forbidden/u,
   );
-  const expectedForbidden = schema.$defs.assertion.allOf.find(
-    (rule) => rule.then?.not?.required?.includes("expected"),
+  const expectedForbidden = schema.$defs.assertion.allOf.find((rule) =>
+    rule.then?.not?.required?.includes("expected"),
   );
-  assert.deepEqual(expectedForbidden.then.not.required, [
-    "expected",
-  ]);
+  assert.deepEqual(expectedForbidden.then.not.required, ["expected"]);
 
   const invalidRegex = deliveryContract();
   invalidRegex.outcomes[0].acceptance.checks[0].positive_assertions[0] = {

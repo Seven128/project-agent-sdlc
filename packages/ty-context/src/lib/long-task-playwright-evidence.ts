@@ -187,6 +187,7 @@ function evidenceRecordsForCases(
             condition_key: artifact.condition_key,
             artifact_path: artifact.path,
             observation_artifact_path: artifact.observation_path,
+            fact_refs: artifact.fact_refs,
           })),
         });
       }

@@ -32,6 +32,19 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
     assert.equal(result.status, "ready");
     assert.equal(result.counts.subjects, 1);
     assert.equal(result.counts.coverage, 8);
+    assert.ok(result.counts.facts > result.counts.coverage);
+    assert.equal(
+      result.counts.resource_fact_closure,
+      result.handoff.resources.length,
+    );
+    assert.ok(
+      result.handoff.resource_fact_closure.some(
+        (row) =>
+          row.resource_ref === "resource.supporting-notes" &&
+          row.disposition === "supporting_only" &&
+          row.fact_refs.length === 0,
+      ),
+    );
     assert.deepEqual(
       result.handoff.coverage.map((row) => row.dimension).sort(),
       [...DESIGN_RESOURCE_DIMENSIONS].sort(),
@@ -87,6 +100,86 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
   }
 });
 
+test("fact inventory and resource fact closure fail closed on every conservation break", async () => {
+  for (const [mutate, expected] of [
+    [
+      (handoff) => handoff.coverage[0].fact_refs.pop(),
+      /coverage_fact_refs_mismatch:coverage\.surface-flow/u,
+    ],
+    [(handoff) => handoff.facts.pop(), /fact_ref_unknown/u],
+    [
+      (handoff) => {
+        handoff.facts[0].evidence_refs = [];
+      },
+      /fact_evidence_refs_required/u,
+    ],
+    [
+      (handoff) => {
+        handoff.facts[0].source_item_refs = [];
+      },
+      /fact_source_item_refs_required/u,
+    ],
+    [
+      (handoff) => handoff.resource_fact_closure.pop(),
+      /resource_fact_closure_missing:resource\.supporting-notes/u,
+    ],
+    [
+      (handoff) => {
+        handoff.resource_fact_closure[0].disposition = "supporting_only";
+      },
+      /supporting_only_resource_fact_forbidden:closure\.main/u,
+    ],
+    [
+      (handoff) => {
+        handoff.facts[0].unknown_fact_semantics = true;
+      },
+      /unknown keys: unknown_fact_semantics/u,
+    ],
+  ]) {
+    await withFixture(async (root, handoff) => {
+      mutate(handoff);
+      await writeDesignResourceHandoff(root, handoff);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+        expected,
+      );
+    });
+  }
+});
+
+test("an exact target requires full-target layout and visual_pixel facts while a partial constraint is not promoted", async () => {
+  await withFixture(async (root, handoff) => {
+    removeVisualPixelFacts(handoff);
+    await writeDesignResourceHandoff(root, handoff);
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      /exact_target_full_target_fact_missing:main-default:desktop-light-default-nominal-mouse:visual_pixel/u,
+    );
+  });
+
+  await withFixture(async (root, handoff) => {
+    handoff.targets[0].interpretation = "constraint";
+    handoff.resources[0].role = "constraint";
+    for (const fact of handoff.facts)
+      if (fact.observation_scope === "full_target")
+        fact.observation_scope = "subject";
+    removeVisualPixelFacts(handoff);
+    await writeDesignResourceHandoff(root, handoff);
+    const result = await preflightDesignResourceHandoff(
+      root,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.equal(result.status, "ready");
+    assert.equal(result.handoff.targets[0].interpretation, "constraint");
+    assert.equal(
+      result.handoff.facts.some(
+        (fact) => fact.verification_method === "visual_pixel",
+      ),
+      false,
+    );
+  });
+});
+
 test("every subject, target and condition cell must close all eight dimensions", async () => {
   await withFixture(async (root, handoff) => {
     handoff.conditions.push({
@@ -112,6 +205,22 @@ test("every subject, target and condition cell must close all eight dimensions",
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
       /coverage_cell_missing:surface\.main:main-secondary:desktop-light-default-nominal-mouse:surface_flow/u,
+    );
+  });
+
+  await withFixture(async (root, handoff) => {
+    handoff.scope.surface_keys.push("surface.secondary");
+    handoff.subjects.push({
+      ...structuredClone(handoff.subjects[0]),
+      key: "subject.secondary",
+      stable_keys: ["surface.secondary"],
+    });
+    for (const row of handoff.coverage)
+      row.subject_refs.push("subject.secondary");
+    await writeDesignResourceHandoff(root, handoff);
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      /coverage_cell_without_fact:coverage\.surface-flow:subject\.secondary:main-default:desktop-light-default-nominal-mouse/u,
     );
   });
 });
@@ -267,4 +376,21 @@ async function withFixture(action) {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+}
+
+function removeVisualPixelFacts(handoff) {
+  const removed = new Set(
+    handoff.facts
+      .filter((fact) => fact.verification_method === "visual_pixel")
+      .map((fact) => fact.key),
+  );
+  handoff.facts = handoff.facts.filter((fact) => !removed.has(fact.key));
+  for (const row of handoff.coverage) {
+    row.fact_refs = row.fact_refs.filter((ref) => !removed.has(ref));
+    row.verification_methods = row.verification_methods.filter(
+      (method) => method !== "visual_pixel",
+    );
+  }
+  for (const closure of handoff.resource_fact_closure)
+    closure.fact_refs = closure.fact_refs.filter((ref) => !removed.has(ref));
 }

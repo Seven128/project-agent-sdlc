@@ -6,14 +6,14 @@ read_policy: on-demand
 
 ## Purpose And Boundary
 
-One shared, conditional design purpose of both development workflows is that Agent implementation, acceptance and testing fully conform to every material UI/UX fact selected design resources explicitly express within their declared scope and conditions. Long-Task is the stronger machine-enforced carrier; it is not a second copy or the sole owner of this purpose.
+One shared, conditional design purpose of both development workflows is that Agent implementation, acceptance and testing fully conform to every material UI/UX fact selected design resources explicitly express within their declared scope and conditions. The default handoff granularity is the complete observable design fact set: any addressable surface, region, image, text, icon, Control, component part, smaller visual primitive, layout relation, geometry, style/token value, content, state, interaction, motion, adaptation/input rule, accessibility semantic or asset identity carried by the selected resources. It is not capped at Product Control granularity. Long-Task is the stronger machine-enforced carrier; it is not a second copy or the sole owner of this purpose.
 
-This does not authorize inference from silence. A static frame does not imply an unshown interaction, and the workflow cannot prove that the user never omitted a requirement. An unexpressed fact must be added to Source, classified `not_applicable`/`excluded_by_scope`, or remain `decision_required`/`unavailable` and block fidelity work.
+This does not authorize inference from silence. A static frame does not imply an unshown interaction, and the workflow cannot prove that the user never omitted a requirement. “Observable” is relative to the acquired immutable format plus a named inspector/project oracle whose supported extraction and verification capabilities are an explicit trusted-computing boundary. An unexpressed fact must be added to Source or explicitly classified; an expressed but unreadable, unsupported or unprovable fact remains `decision_required`/`unavailable` and blocks fidelity work.
 
 The causal chain has three owners:
 
 1. **Canonical resources** own exact code-expressible layout, visual, content, control, state, interaction, motion, adaptation/input, accessibility and asset facts.
-2. **`design-resource-handoff-v1`** is the residual scope, applicability, semantic and index adapter. It points to resource facts, adds product meaning/exclusions/unresolved items and binds them downstream; it does not retype every CSS value.
+2. **`design-resource-handoff-v1`** is the residual scope, applicability, semantic and index adapter. It atomically indexes resource facts, proves a complete inspection disposition for every resource, adds product meaning/exclusions/unresolved items and binds exact fact identities downstream; it does not retype every CSS value.
 3. **Context, Contract and Checks** force consumption on the production owner; mutually exclusive **default Contract Conformance** or **Long-Task Final Gate** rejects current-candidate drift.
 
 Open Design has demonstrated source-rich output (`index.html`, component/design specifications, tokens and asset manifests), but capability is not a per-run invariant. `design-resource-authoring` must explicitly commission, retrieve and freeze an implementation-level source before a Web/App handoff may pass.
@@ -26,7 +26,7 @@ The adapter connects upstream authoring to both development workflows. It create
 - A selected implementation handoff is one project-native Markdown Source at an authorized path, with readable marked Source Items and exactly one fenced `design-resource-handoff-v1` block.
 - Immutable repository resources plus the handoff remain ordinary Source/verifier inputs. The editable upstream owner/locator/update route is recorded separately.
 - `ty-context design-resource preflight <handoff.md>` is the sole shared input adapter: authoring runs it before `ready`, default Workflow reruns it before UI Authority Closure, and Long-Task Preflight/Compile reruns it before Authority Lock.
-- The shared Selected-Design Conformance Obligation conserves the exact covered Source-item, verification-method, acceptance-blocker, target and condition sets from this handoff into one downstream carrier. Shared input semantics do not imply running both carriers.
+- The shared Selected-Design Conformance Obligation conserves the exact covered fact, Source-item, verification-method, acceptance-blocker, target and condition sets from this handoff into one downstream carrier. Shared input semantics do not imply running both carriers.
 - No fixed directory, live provider, artifact count, one-file-per-control rule or screenshot Cartesian product is required.
 
 ## Implementation Source Profile
@@ -52,7 +52,9 @@ The embedded block records:
 - `subjects`: stable semantic keys plus the selected targets to which each subject applies;
 - `targets`: interpretation, complete resource set, condition set, source profile and selection basis;
 - `evidence`: kind, condition set and a typed local locator;
-- `coverage`: explicit applicability cells, Source Items and verification methods;
+- `facts`: one atomic subject, target, condition, dimension, `subject|full_target` observation scope, evidence set, Source-item set and verification method per stable fact identity;
+- `resource_fact_closure`: exactly one named complete-inspection record per resource, classifying it as `material_with_facts` with the exact fact set or `supporting_only` with an empty fact set and rationale;
+- `coverage`: explicit applicability cells whose `fact_refs`, evidence, Source Items and verification methods are exactly the set-union projection of their atomic facts;
 - `acceptance_blockers`: target/subject/dimension plus Source Item and verification-method lineage;
 - `proposal`: final proposal-reconciliation status/path/revision.
 
@@ -60,11 +62,15 @@ Supported typed locator kinds are deliberately bounded: `html_selector`, `markdo
 
 The eight dimensions are `surface_flow`, `visual_content`, `component_control`, `state_interaction`, `motion`, `adaptation_input`, `accessibility` and `assets`.
 
-After grouped refs are expanded, every applicable **subject × target × condition × dimension** cell appears exactly once. Each cell is `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`. Covered cells require evidence from the same target and condition, real marked `requirement`/`control`/`acceptance` Source Items and dimension-compatible verification methods. Non-covered cells retain explicit applicability and rationale; `decision_required`/`unavailable` blocks `ready`.
+After grouped refs are expanded, every applicable **subject × target × condition × dimension** cell appears exactly once. Each cell is `covered`, `not_applicable`, `excluded_by_scope`, `decision_required` or `unavailable`. Covered cells require at least one exact fact for every target/condition cell, evidence from the same target and condition, real marked `requirement`/`control`/`acceptance` Source Items and dimension-compatible verification methods. Every fact belongs to exactly one coverage row; the coverage row's fact/evidence/Source/method sets must equal the facts' unions, so neither grouped coverage nor a method declaration can conceal a missing fact. Non-covered cells retain explicit applicability and rationale; `decision_required`/`unavailable` blocks `ready`.
+
+Every resource is inspected, including files believed to carry only provenance or export support. A material fact cannot be hidden by relabeling its resource `supporting_only`; non-supporting target/constraint resources always require `material_with_facts`. Exact values and bytes remain solely in immutable canonical resources. The handoff stores stable identities, typed locators and relations, not a second style/value authority.
+
+An `exact_target` asserts complete visible target fidelity under every declared condition. Each condition therefore has at least one `full_target` `layout_geometry` fact and one `full_target` `visual_pixel` fact backed by exact-target resource evidence. If complete layout/pixel extraction and comparison are unavailable, the resource is a partial `constraint` or remains unresolved; it cannot silently retain exact-target status. Pixel comparison proves visible rendering only and never substitutes for state/interaction, motion, responsive/input, accessibility or asset methods.
 
 ## Fail-Closed Validation
 
-Preflight rejects unknown fields, duplicate/unknown keys, unsafe paths, missing/stale files, digest mismatch, source-profile closure mismatch, undeclared Web dependencies, unsupported or absent locators, evidence/media/dimension substitution, unreferenced inputs, missing/duplicate applicability cells, cross-target/condition evidence substitution, unresolved cells and blocker lineage without matching covered facts.
+Preflight rejects unknown fields, duplicate/unknown keys, unsafe paths, missing/stale files, digest mismatch, source-profile closure mismatch, undeclared Web dependencies, unsupported or absent locators, evidence/media/dimension substitution, missing/duplicate/unreferenced facts, fact/evidence/Source/method set drift, absent or false resource inspection closure, material resources disguised as supporting-only, exact targets without full-target layout/pixel facts, unreferenced inputs, missing/duplicate applicability cells, cross-target/condition evidence substitution, unresolved cells and blocker lineage without matching covered facts.
 
 Preflight proves semantic-input completeness, addressability and immutable resource integrity only. It does not judge taste, reproduce authoring's runtime/cross-resource source QA, prove verifier sensitivity or establish production conformance. The project verifier remains trusted within the Harness boundary, so mutation tests must demonstrate that each declared implementation method actually fails when its production fact is broken.
 
@@ -74,17 +80,17 @@ The default Workflow:
 
 1. reruns preflight and opens every affected exact/constraint resource;
 2. reconciles stable subject/target/condition keys through owning Surface/Screen/Control Context and `DESIGN.md`;
-3. constructs one ephemeral exact accounting of covered Source Items, declared verification methods, acceptance blockers, selected targets and conditions, then routes every item to the production route/component owner and real root-entry journey;
+3. constructs one ephemeral exact accounting of covered facts, Source Items, declared verification methods, acceptance blockers, selected targets and conditions, then routes every item to the production route/component owner and real root-entry journey;
 4. verifies declared geometry/pixel/token/content, component state/interaction, motion, responsive/input, accessibility and asset obligations independently where applicable; one project check may implement several methods only when each method and covered fact remains separately attributable if it fails;
 5. on the final current candidate confirms that every applicable item is mapped, resolved, executed and passed, then performs Contract Conformance plus Context drift checking.
 
-Resource presence, hash success, provider success, a screenshot or detached route cannot substitute for production checks. A selected target, implementation or declared check-input change stales the closure. Any unmapped, unresolved, unexecuted, stale or indistinguishable item blocks the complete-conformance claim; handoff reports the checked scope and gaps instead. The accounting creates no persisted map, Claim set, readiness state or Gate.
+Resource presence, hash success, provider success, a screenshot or detached route cannot substitute for production checks. A selected target, fact inventory, implementation or declared check-input change stales the closure. Any unread, unsupported, unmapped, unimplemented, unresolved, unexecuted, stale or indistinguishable applicable fact blocks the complete-conformance claim; handoff reports the checked scope and gaps instead. The accounting creates no persisted map, Claim set, readiness state or Gate.
 
 ## Long-Task Consumption
 
 Long-Task Preflight/Compile requires each Contract `design_target` to match exactly one handoff target's key, interpretation, conditions and complete handoff/resource file set. The handoff is real `task.source_paths` Source; the handoff and every target entry/dependency are Check `verification_inputs`.
 
-Covered Source Items map through `source_claims` into the root conformance Assertion. The exact set of handoff verification methods maps through `verification_method_bindings` to distinct positive Assertions in the same target Check; each method Assertion carries the relevant Source Claims and required typed capabilities. Runtime `design_conformance` records accept either the root Assertion or one of those explicit method bindings, so method-level failures remain independently attributable.
+Covered Source Items map through `source_claims` into the root conformance Assertion. The exact set of handoff verification methods maps through `verification_method_bindings` to distinct positive Assertions in the same target Check; each method Assertion carries the relevant Source Claims and required typed capabilities. Every method × condition `evidence_artifacts` cell carries exactly the handoff facts for that target/method/condition, and their union equals the target's complete handoff fact set. Runtime `design_method` records must repeat exactly those `fact_refs` along with the distinct record and primary-observation paths; empty, omitted, extra or substituted fact sets fail independently from artifact presence. Runtime `design_conformance` records accept either the root Assertion or one of those explicit method bindings, so method-level failures remain independently attributable.
 
 Each handoff acceptance blocker binds the same Source Items and verification methods in `surface_binding.acceptance_blockers`. A machine blocker must reference the corresponding target-local Claims; an external blocker must use a target-blocking External Confirmation whose impact includes those Claims. A matching key with unrelated proof is invalid.
 
@@ -108,7 +114,10 @@ V1 is strict and currently unreleased, so these stronger invariants replace its 
 
 Implementation owners are:
 
-- parser, shape, addressability/source-profile/integrity/coverage validators and CLI: `packages/ty-context/src/lib/design-resource-handoff-*.ts` and `packages/ty-context/src/commands/design-resource.ts`;
+- invariant owner and compatibility rules: `packages/ty-context/src/lib/design-resource-fact-policy.ts`;
+- parser, shape, addressability/source-profile/integrity/coverage/fact/resource-closure validators and CLI: `packages/ty-context/src/lib/design-resource-handoff-*.ts` and `packages/ty-context/src/commands/design-resource.ts`;
 - Contract schema/UI surface and Long-Task activation/runtime binding: `long-task-ui-surface-*`, `long-task-design-resource-handoff.ts`, Evidence Capability runtime/Playwright adapters and shared activation;
 - authoring/consumer guidance: package-managed `design-resource-authoring`, UIUX/engineering and `long-task-workflow` Skills;
-- deterministic input/Contract/runtime mutations: `tests/ty-context/design-resource-handoff*.mjs`, `long-task-delivery-compiler.test.mjs`, `long-task-playwright-ac-evidence.test.mjs` and guidance/parity suites.
+- deterministic input/Contract/runtime mutations: `tests/ty-context/design-resource-handoff*.mjs`, `long-task-delivery-compiler.test.mjs`, `long-task-playwright-ac-evidence.test.mjs`, the `selected-design-fact-closure` Trust sentinel and guidance/parity suites.
+
+This construction is monotone over the earlier handoff/method path: every old target, condition, dimension, Source, method, blocker and artifact obligation remains, while fact inventory/resource closure/pixel-default/exact runtime fact equality add rejection paths. It therefore preserves `Coverage_new ⊇ Coverage_old`, `FalseNegative_new ⊆ FalseNegative_old`, the existing non-bypassable Authority/fail-closed behavior/current-snapshot carrier and the Implementation Freedom Boundary. Its incremental cost is limited to selected implementation resources and compact fact references on already-required proof cells; it adds no value duplication, universal per-Control matrix, provider registry, lifecycle state, second Authority or second Gate.
