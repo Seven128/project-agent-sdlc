@@ -15,11 +15,44 @@ const missing = (relative) =>
     () => true,
   );
 
-test("PROJECT_SPEC defines the controlling objective and trusted results", async () => {
-  const spec = await read("PROJECT_SPEC.md");
+test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current implementation, and anti-degradation assurance stay causally aligned", async () => {
+  const [
+    spec,
+    globalContext,
+    rationale,
+    workflow,
+    implementationIndex,
+    verification,
+    manifest,
+    authoringSkill,
+    managedAgents,
+    managedSkill,
+    readme,
+    readmeZh,
+    packageReadme,
+  ] = await Promise.all([
+    read("PROJECT_SPEC.md"),
+    read("project_context/global.md"),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
+    read("project_context/areas/harness-package/implementation-index.md"),
+    read("project_context/areas/harness-package/verification.md"),
+    read("project_context/context.toml"),
+    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
+  ]);
 
   for (const heading of [
     "Long-Task Workflow Controlling Objective",
+    "Long-Task Anti-Degradation Assurance",
     "Authority Scope And Trusted Results",
     "Contract Draft And Draft Outcome Semantics",
     "Source-Bound Contract Draft Boundary",
@@ -53,6 +86,96 @@ test("PROJECT_SPEC defines the controlling objective and trusted results", async
     spec,
     /cannot prove that the user never omitted a real requirement/iu,
   );
+
+  assert.match(
+    spec,
+    /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu,
+  );
+  assert.match(spec, /not a third implementation responsibility/iu);
+  assert.match(
+    rationale,
+    /Current causal-chain truth[\s\S]*Cross-version non-degradation/iu,
+  );
+  assert.match(
+    rationale,
+    /current implementation realizes the first responsibility through Source-bound authoring[\s\S]*second through complete Claim\/applicability\/proof-surface expansion/iu,
+  );
+  assert.match(
+    [spec, globalContext, rationale, workflow].join("\n"),
+    /explicit project-owner design-purpose decision[\s\S]*old\/new implication[\s\S]*replacement proof/iu,
+  );
+  assert.match(
+    [spec, globalContext, rationale, workflow, verification].join("\n"),
+    /positive net ROI[\s\S]*incremental[\s\S]*benefit[\s\S]*exceed/iu,
+  );
+  assert.match(
+    [spec, globalContext, rationale, workflow].join("\n"),
+    /no second Authority[\s\S]*(?:Gate|state)/iu,
+  );
+
+  for (const trigger of [
+    "current implementation truth",
+    "causal chain",
+    "theory implementation gap",
+    "anti-degradation assurance",
+    "anti-degradation construction",
+    "positive net ROI",
+    "当前实现",
+    "逻辑链",
+    "理论与实际",
+    "实现脱节",
+    "防劣化保障",
+    "防劣化建设",
+  ]) {
+    assert.match(manifest, new RegExp(`"${trigger}"`, "iu"));
+  }
+
+  for (const owner of [
+    "packages/ty-context/src/lib/long-task-source-item-parser.ts",
+    "packages/ty-context/src/lib/long-task-semantic-assurance-policy.ts",
+    "packages/ty-context/src/lib/long-task-final-v2.ts",
+    "packages/ty-context/src/lib/long-task-final-integrity.ts",
+    "tests/ty-context/long-task-semantic-assurance-closure.test.mjs",
+    "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
+    "tests/ty-context/long-task-semantic-drift-lifecycle.test.mjs",
+    "tools/affected_test_selection.mjs",
+    "packages/ty-context/source-mappings.yaml",
+  ]) {
+    assert.equal(await missing(owner), false, `${owner} must remain indexed code`);
+    assert.match(
+      implementationIndex,
+      new RegExp(
+        path.basename(owner).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"),
+        "u",
+      ),
+    );
+  }
+
+  assert.match(
+    implementationIndex,
+    /^## Anti-Degradation Assurance Owners$/mu,
+  );
+  assert.match(
+    verification,
+    /^## Anti-Degradation Assurance Evidence$/mu,
+  );
+  assert.match(
+    verification,
+    /\[critical:mechanism-causal-chain-continuity\]/u,
+  );
+
+  for (const surface of [
+    authoringSkill,
+    managedAgents,
+    managedSkill,
+    readme,
+    packageReadme,
+  ]) {
+    assert.match(surface, /Anti-Degradation Assurance/iu);
+    assert.match(surface, /project-owner design-purpose decision/iu);
+  }
+  assert.match(readmeZh, /防劣化保障/u);
+  assert.match(readmeZh, /项目 owner[\s\S]*设计目的变更决策/u);
 });
 
 test("Contract Draft, Draft Outcome and Plan Item stay lifecycle concepts", async () => {
