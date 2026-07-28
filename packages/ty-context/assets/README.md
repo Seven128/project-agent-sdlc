@@ -73,11 +73,15 @@ It does not launch or switch models, spawn agents, create branches or worktrees,
 
 ## Capability Model
 
-1. **Minimal Context** — small, role-aware durable facts under `project_context/**`.
-2. **Workflow Contract** — Context-first default engineering behavior using the platform's internal plan; no required plan artifact.
-3. **Long-Task Workflow** — explicit Single-Goal Rolling Delivery with `long-task-delivery-v2`, compiled Claim Coverage and a verifier-owned Live Final Gate.
+| Capability | When and how to use it | What it owns |
+|---|---|---|
+| **Minimal Context** | Installed by default. Agents read and update `project_context/**` on every delivery route. | Durable goals, ownership, architecture/interface/state boundaries and repeatable verification/deployment facts. It never claims that implementation or tests passed. |
+| **Workflow Contract** | The default after `init`. Ask the coding agent to do ordinary work normally; there is no slash command and no `delivery-contract.yaml`. | The lightweight loop: Context discovery, Architecture Deliberation, one `Context Delta`, implementation, project checks, Contract Conformance and Context drift. |
+| **Long-Task Workflow** | Enable the `long-task` profile once, then explicitly invoke `/long-task-workflow`, or resume an existing valid binding. Task size alone never activates it. | One Source-bound Delivery Contract, Authority Lock, recoverable scoped progress, protected revision and one current-snapshot Live Final Gate. |
 
-The base managed set also provides two explicitly triggered Open Design adapters: `/design-system-authoring` generates/selects/adopts project Design Authority at cold start, while `/design-resource-authoring` commissions task-local resources. The opt-in long-task profile provides `/long-task-workflow`; `/source-plan-authoring` remains only as a retired compatibility pointer because Long-Task inputs now enter one Source-bound Contract Draft loop directly.
+The relationship is deliberately one-of-two at execution time: every delivery consumes Minimal Context, then ordinary work uses the default Workflow Contract while an explicitly selected Long-Task uses `/long-task-workflow` as its execution and completion carrier. Long-Task Final Gate carries the final architecture and selected-design closure instead of duplicating the default Contract Conformance closure.
+
+The base managed set also provides two explicitly triggered Open Design adapters: `/design-system-authoring` generates/selects/adopts project Design Authority at cold start, while `/design-resource-authoring` commissions task-local resources. They are optional upstream Skills, not a fourth mechanism and not stages inside Long-Task. Their selected outputs may feed either execution route, and `/long-task-workflow` is the only active long-task execution Skill. `/source-plan-authoring` remains only as a retired compatibility pointer because Long-Task inputs now enter one Source-bound Contract Draft loop directly.
 
 Default profiles are `core-portable` and `workflow-default`. Enable the opt-in profile with:
 
@@ -89,10 +93,12 @@ This additionally installs `/long-task-workflow`, the `/source-plan-authoring` c
 
 ## Recommended Usage
 
-Start from an initial proposal: either a concise product intent or a detailed proposal authored elsewhere, including Web GPT. For UI work that needs standalone design resources:
+Start from the delivery request: either concise product intent or a detailed initial proposal authored elsewhere, including Web GPT. That input does not imply design authoring or Long-Task; choose the execution route independently of whether design resources are involved:
 
-- **Long delivery:** initial proposal → explicitly initialize/adopt a design system with `/design-system-authoring` when the project has none → `/design-resource-authoring` generates/selects resources, completely freezes an implementation-level source when needed, reconciles accepted decisions once and emits a validated residual `design-resource-handoff-v1` → pass the revised proposal plus selected immutable resources and the validated handoff to `/long-task-workflow`. Those inputs enter one Source-bound Contract Draft loop immediately in the same native Goal.
-- **Non-long delivery:** use the same sequence, then give the revised proposal plus selected immutable resources and the validated handoff directly to Codex's current native Goal under the default Workflow Contract.
+- **Ordinary delivery, no new design resources:** ask the current coding Goal to implement the request. The default Workflow Contract applies automatically; no workflow Skill or Contract file is needed.
+- **Long delivery, no new design resources:** enable the profile once, invoke `/long-task-workflow` with the request or proposal, and let that Skill author the Source-bound Contract Draft. Design authoring is not a prerequisite.
+- **Delivery that first needs design resources:** explicitly run `/design-system-authoring` only if project Design Authority is absent, then use `/design-resource-authoring` to generate/select resources, completely freeze an implementation-level source when needed, reconcile accepted decisions once and emit a validated residual `design-resource-handoff-v1`. Feed the revised proposal plus selected immutable resources to either the default Workflow Contract or `/long-task-workflow`, based on recovery and completion-authority needs.
+- **Design-resource-only request:** stop after `/design-resource-authoring`; do not create a Long-Task Contract unless implementation delivery was also explicitly selected.
 
 The design-system step is user-invoked, normally at project cold start; no command or downstream Skill runs it automatically. `/design-resource-authoring` gates only style-bearing work when Design Authority is unconfigured. Low-fidelity structure, IA/flow and semantics-only state studies remain available without that gate. A legacy Source Plan is accepted as ordinary input, but it is no longer a recommended intermediate service.
 
@@ -146,7 +152,7 @@ The smoke packs the local workspace, installs it into a disposable repo and vali
 
 ```sh
 cd /path/to/your/test-repo
-npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.3.tgz
+npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.4.tgz
 npx --no-install ty-context init --adopt
 make validate-context
 ```
@@ -583,8 +589,6 @@ Version 0.6.0 defined the first public V2 semantics while retaining the `long-ta
 
 The current V2 semantic-assurance closure additionally requires full Context, an architecture-classified Source obligation, atomic applicability dimensions, explicit target and blocker capabilities, applicability-bound Control-relation closure, Population universe carriers, claim-local semantic mutation, per-method/condition record and primary-observation artifacts, and the supported direct-literal verifier dependency closure. An older V2 Contract missing those meanings reports the indexed manual migration `long-task-v2-semantic-drift-authority`; re-author them from Source. Upgrade never infers those semantics or imports old Progress/Receipts as passing evidence.
 
-`/normal-long-task` is also a retirement pointer to `/long-task-workflow`; it creates no checklist, prompt, audit, matrix, verdict or second authority.
-
 ### Package update modes
 
 After updating the package, run `ty-context upgrade`. Use `ty-context upgrade --check` first when you need a read-only plan.
@@ -614,7 +618,7 @@ make validate-harness
 
 The modularity gate is `ty-context check-modularity`. Scoped waivers require `owner`, `introduced_at`, `reason`, `tracking_issue` and `expiry_condition`.
 
-`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.8.3.tgz` under the preview output directory.
+`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.8.4.tgz` under the preview output directory.
 
 ## Community And Further Reading
 

@@ -257,7 +257,7 @@ test("Workflow Contract names the complete Source-bound-Draft-to-qualified-resul
   );
 });
 
-test("long-task Skill is the only active long-task workflow and normal-long-task is a tombstone", async () => {
+test("long-task Skill is the only active long-task workflow", async () => {
   const [active, generated, packaged] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
@@ -358,13 +358,13 @@ test("long-task Skill is the only active long-task workflow and normal-long-task
     active,
     /Do not create a second plan, Authoring Skill product/,
   );
-  const normal = await read(
+  for (const relative of [
     ".codex/ty-context-managed/skills/normal-long-task/SKILL.md",
-  );
-  assert.match(normal, /retired/i);
-  assert.match(normal, /long-task-workflow/);
-  assert.match(normal, /Do not create.*target-mode prompt.*Local Audit/s);
-  assert.doesNotMatch(normal, /^## (Acceptance Checklist|Local Audit)/m);
+    ".codex/skills/normal-long-task/SKILL.md",
+    "packages/ty-context/assets/skills/normal-long-task/SKILL.md",
+  ]) {
+    assert.equal(await missing(path.join(repo, relative)), true, relative);
+  }
   assert.equal(
     await missing(
       path.join(

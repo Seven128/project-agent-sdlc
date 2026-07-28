@@ -93,7 +93,6 @@ test("non_codex_sync_does_not_install_codex_hooks", async () => {
       ".agent/skills/context_harness_upgrade/SKILL.md",
       ".agent/skills/design-system-authoring/SKILL.md",
       ".agent/skills/design-resource-authoring/SKILL.md",
-      ".agent/skills/normal-long-task/SKILL.md",
     ]) {
       await stat(path.join(root, file));
     }
@@ -131,7 +130,7 @@ test("non_codex_sync_does_not_install_codex_hooks", async () => {
     assert.match(agents, /never requires a plan artifact/);
     assert.match(
       agents,
-      /Otherwise remain on the default Workflow Contract, even when work is long/,
+      /Otherwise remain on the default Workflow Contract, even when work appears long/,
     );
     assert.match(agents, /Context Delta: none\|required/);
     assert.match(agents, /Contract Conformance/);
@@ -467,7 +466,12 @@ test("configured non-Codex harness root remains portable by default", async () =
       "utf8",
     );
     await runInit(root, { adopt: true, force: false });
-    await stat(path.join(root, ".harness/skills/normal-long-task/SKILL.md"));
+    assert.equal(
+      await exists(
+        path.join(root, ".harness/skills/normal-long-task/SKILL.md"),
+      ),
+      false,
+    );
     assert.equal(
       await exists(
         path.join(

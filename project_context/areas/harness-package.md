@@ -20,7 +20,7 @@
 - The platform Goal owns mutable implementation sequencing, local planning, tool choice and whether one or multiple platform-native agents/subagents are useful. Harness never launches, allocates, schedules, retries or recovers those agents or manages models/AppServer, branch/worktree fan-out, merges, pushes, PRs or deployment; delegated or parallel outputs are not Progress or proof and must converge into the selected verification workspace before verification counts.
 - First Authority Lock creates a strict user-choice turn boundary: absent a prior explicit task-specific model strategy, generic continuation is insufficient and implementation/edit/build/test work waits for an explicit current-model or switch-and-resume choice. Harness stores no acknowledgement or route.
 - Authority Revision separates authority change from user decision. Mechanically bounded repairs auto-adopt with evidence invalidation; a true semantic/proof boundary change exposes one self-contained deterministic brief before an exact decision. Exact current-task user instructions may be relayed, while blanket authorization cannot; the brief is a projection, not another authority or state.
-- `/long-task-workflow` is the only active long-task Skill. `/normal-long-task`, `delivery-set` and historical composite commands are retirement pointers/tombstones only.
+- `/long-task-workflow` is the only active long-task Skill. No alternate “normal” long-task Skill is installed; ordinary work stays on the default Workflow Contract. `delivery-set` and historical composite commands remain command tombstones only.
 - Runtime floor is Node.js `>=24`; public package behavior is documented in English with aligned Chinese translation.
 
 ## Context Loading Contract

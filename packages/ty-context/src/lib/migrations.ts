@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 import {
@@ -78,6 +79,10 @@ async function verifyNoop(): Promise<void> {
   return;
 }
 
+const REMOVED_NORMAL_LONG_TASK_SKILL = "normal-long-task";
+const REMOVED_NORMAL_LONG_TASK_SKILL_SHA256 =
+  "7a4f755da9a32e07f258d6c7fc5e5c70395257c72efb8a9ad4995cddcc4c73ba";
+
 export const migrations: Migration[] = [
   legacySdlcHarnessMigration,
   {
@@ -91,6 +96,19 @@ export const migrations: Migration[] = [
       "These product and proof semantics cannot be inferred safely. Preserve Source, then explicitly author stages, vertical Outcome membership, target profile and execution targets, success/degradation requirements, Given/When scenarios, evidence capabilities and typed external-confirmation impact before recompiling. Historical Progress and Receipts remain audit-only and must not be imported as acceptance.",
     detect: detectLongTaskSemanticDriftAuthority,
     verify: verifyNoop,
+  },
+  {
+    id: "remove-normal-long-task-skill",
+    introducedIn: "0.8.4",
+    description:
+      "Remove the obsolete normal-long-task compatibility Skill; long-task-workflow is the sole explicit Long-Task execution Skill.",
+    scope: "<harnessRoot>/skills/normal-long-task",
+    risk: "safe",
+    manualMessage:
+      "The same-name directory differs from the former package-owned compatibility Skill. Preserve any user-authored content elsewhere, then remove the directory manually.",
+    detect: detectRemovedNormalLongTaskSkill,
+    apply: migrateRemovedNormalLongTaskSkill,
+    verify: verifyRemovedNormalLongTaskSkill,
   },
   {
     id: "long-task-v1-retirement",
@@ -225,6 +243,85 @@ async function detectLongTaskSemanticDriftAuthority(
       `The active/draft V2 Contract predates semantic-drift authority and is missing: ${fields.slice(0, 12).join(", ")}${fields.length > 12 ? `, +${fields.length - 12} more` : ""}. Re-author these meanings from Source; do not synthesize them from old passing evidence.`,
     ),
   ];
+}
+
+async function detectRemovedNormalLongTaskSkill(
+  projectRoot: string,
+  root: string,
+  migration: string,
+): Promise<UpgradePlanItem[]> {
+  const skill = removedNormalLongTaskSkillPath(projectRoot, root);
+  const state = await removedNormalLongTaskSkillState(skill);
+  if (state === "absent") return [];
+  const relative = path.relative(projectRoot, skill).split(path.sep).join("/");
+  return [
+    item(
+      migration,
+      state === "package-owned" ? "safe_pending" : "manual_required",
+      relative,
+      state === "package-owned"
+        ? "Remove the exact obsolete package-owned compatibility Skill."
+        : "The obsolete Skill directory contains modified or additional content; preserve any user-authored material elsewhere and remove it manually.",
+    ),
+  ];
+}
+
+async function migrateRemovedNormalLongTaskSkill(
+  projectRoot: string,
+  root: string,
+  report: MigrationReport,
+): Promise<void> {
+  const skill = removedNormalLongTaskSkillPath(projectRoot, root);
+  const state = await removedNormalLongTaskSkillState(skill);
+  const relative = path.relative(projectRoot, skill).split(path.sep).join("/");
+  if (state === "absent") {
+    report.skipped.push("remove-normal-long-task-skill");
+    return;
+  }
+  if (state !== "package-owned") {
+    throw new Error(
+      `${relative} changed after upgrade planning; rerun upgrade and resolve the manual_required item`,
+    );
+  }
+  await fs.rm(skill, { recursive: true, force: true });
+  report.changed.push(relative);
+}
+
+async function verifyRemovedNormalLongTaskSkill(
+  projectRoot: string,
+  root: string,
+): Promise<void> {
+  if (await pathExists(removedNormalLongTaskSkillPath(projectRoot, root))) {
+    throw new Error(
+      "remove-normal-long-task-skill migration verification failed",
+    );
+  }
+}
+
+function removedNormalLongTaskSkillPath(
+  projectRoot: string,
+  root: string,
+): string {
+  return path.join(projectRoot, root, "skills", REMOVED_NORMAL_LONG_TASK_SKILL);
+}
+
+async function removedNormalLongTaskSkillState(
+  skill: string,
+): Promise<"absent" | "package-owned" | "modified"> {
+  if (!(await pathExists(skill))) return "absent";
+  const files = await listFiles(skill);
+  if (files.length === 0) return "package-owned";
+  if (
+    files.length !== 1 ||
+    path.relative(skill, files[0]).split(path.sep).join("/") !== "SKILL.md"
+  ) {
+    return "modified";
+  }
+  const normalized = (await readText(files[0])).replace(/\r\n/g, "\n");
+  const digest = createHash("sha256").update(normalized).digest("hex");
+  return digest === REMOVED_NORMAL_LONG_TASK_SKILL_SHA256
+    ? "package-owned"
+    : "modified";
 }
 
 async function detectLongTaskV1Retirement(

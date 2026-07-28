@@ -15,7 +15,7 @@ This contract defines source-only, managed, packaged and human-facing surfaces f
 - `.codex/ty-context-managed/**` is source-workspace managed source for portable/default guidance, Context templates, profile metadata and package-managed Skills. The executable Long-Task Hook entry is package-owned compiled code.
 - Managed Context templates include cross-surface `product-surface-contract.md` and optional on-demand `screen-contract.md`. They teach ownership/structure only and never generate consumer product facts.
 - `packages/ty-context/assets/**` is packaged canonical output produced by source mappings.
-- `.codex/skills/**` exposes generated/default Skills. The base set includes `design-system-authoring` and `design-resource-authoring`; `long-task` owns `long-task-workflow` plus the retired `source-plan-authoring` pointer; `normal-long-task` is also a retirement pointer. Copies are sync-overwritten.
+- `.codex/skills/**` exposes generated/default Skills. The base set includes `design-system-authoring` and `design-resource-authoring`; `long-task` owns `long-task-workflow` plus the retired `source-plan-authoring` pointer. No alternate normal long-task Skill is installed. Copies are sync-overwritten.
 - `.codex/skills/authoring/**` is source-workspace-only and never packaged.
 - `README.md`, `README.zh-CN.md`, `packages/ty-context/README.md`, npm metadata and release docs are human-facing public surfaces and must match behavior.
 - `PROJECT_SPEC.md` is the full source-workspace workflow design specification, not a consumer asset.
@@ -54,7 +54,7 @@ This contract defines source-only, managed, packaged and human-facing surfaces f
 - CLI JSON, the package-owned Stop Hook, the managed Long-Task Skill and English/Chinese public docs preserve revision and terminal scope consistently: revision adoption explicitly returns to rolling execution and cannot complete delivery; pending external confirmation remains named through status/resume/stop-check/`systemMessage`/close; accepted terminal output identifies `declared_machine_authority`; and `closed` denotes only machine Authority cleanup with no native-Goal effect. Generated and packaged copies must not erase those distinctions or add revision/native-Goal/external-confirmation state.
 - Managed/package Long-Task surfaces expose the same generic workspace classification before activation and during verification, the same fact-only `progress_stale` meaning, and the same read-only `verify --explain` execution preview. They must not add business/runtime-specific build heuristics, a scheduler, timing promises or preview state.
 - Any managed/package proposal to constrain development stages, methods, verification cadence or agent allocation must name an independently uncovered safety/irreversible-effect, false-completion or total-cost path, show that final proof or a lighter project-owned check cannot cover it, preserve the non-authoritative Goal-owned boundary, pass non-degradation and have positive net ROI. It cannot enter through guidance wording alone.
-- `/normal-long-task` only reports retirement and points to `/long-task-workflow`; it creates no checklist, target prompt or Local Audit.
+- A versioned safe migration removes an exact legacy package-owned `normal-long-task` compatibility Skill directory. A modified or expanded same-name directory is `manual_required`; ordinary `sync` carries no permanent tombstone or deleted-Skill registry.
 - No package-managed Skill may restore Source Unit/SFC/Packet/Wave/Campaign artifacts or a second authority.
 
 ## Change Impact Rule

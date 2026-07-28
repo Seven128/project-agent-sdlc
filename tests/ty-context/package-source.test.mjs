@@ -15,7 +15,6 @@ try {
     "agents",
     "context_templates",
     "skills/context_product_plan",
-    "skills/normal-long-task",
     "skills/long-task-workflow/agents",
     "minimal_tools",
     "make",
@@ -32,7 +31,6 @@ try {
   await writeFile(path.join(managed, "hooks/long-task-hook.mjs"), "export default {};\n");
   await writeFile(path.join(managed, "context_templates/global.md"), "# Global\n");
   await writeFile(path.join(managed, "skills/context_product_plan/SKILL.md"), "---\nname: context_product_plan\n---\n");
-  await writeFile(path.join(managed, "skills/normal-long-task/SKILL.md"), "---\nname: normal-long-task\n---\n\nRetired.\n");
   await writeFile(path.join(managed, "skills/long-task-workflow/SKILL.md"), "---\nname: long-task-workflow\n---\n");
   await writeFile(path.join(managed, "skills/long-task-workflow/agents/openai.yaml"), "name: Long Task\n");
   await writeFile(path.join(managed, "minimal_tools/validate_context.py"), "print('ok')\n");
@@ -81,14 +79,6 @@ try {
     ),
     /name: long-task-workflow/,
   );
-  assert.match(
-    await readFile(
-      path.join(fixture, "packages/ty-context/assets/skills/normal-long-task/SKILL.md"),
-      "utf8",
-    ),
-    /Retired/,
-  );
-
   await mkdir(path.join(fixture, "packages/ty-context/assets/skills/stale"), {
     recursive: true,
   });

@@ -57,7 +57,6 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
   assert.match(workflow, /no required `plan\.md`/);
   assert.match(workflow, /Existing `plan\.md` files.*ordinary user files/);
   assert.match(workflow, /Do not auto-detect or auto-activate long-task state/);
-  assert.match(workflow, /\/normal-long-task/);
   assert.match(workflow, /\/long-task-workflow/);
   assert.match(workflow, /Targeted verify.*never accepted authority/s);
   assert.match(workflow, /Contract Conformance/);

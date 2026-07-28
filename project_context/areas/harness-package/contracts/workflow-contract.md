@@ -84,8 +84,7 @@ Routing order is:
 
 1. A valid common-dir active record plus matching worktree Git-config marker resumes through `/long-task-workflow` and `ty-context long-task resume`.
 2. Explicit `/long-task-workflow` creates, preflights, compiles, executes or resumes exactly one complete V2 Contract authority for the selected delivery in the current native Goal.
-3. Explicit `/normal-long-task` returns a retirement pointer to `/long-task-workflow`; it creates no artifacts.
-4. Otherwise remain on the default Workflow Contract, regardless of apparent duration or file count.
+3. Otherwise remain on the default Workflow Contract, regardless of apparent duration or file count.
 
 Do not auto-detect or auto-activate long-task state.
 

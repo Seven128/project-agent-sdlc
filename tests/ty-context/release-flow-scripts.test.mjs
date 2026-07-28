@@ -240,8 +240,8 @@ try {
     {
       TY_CONTEXT_RELEASE_COMMAND_LOG: fastLog,
       TY_CONTEXT_RELEASE_CHANGED_FILES: [
-        ".codex/ty-context-managed/skills/normal-long-task/SKILL.md",
-        "packages/ty-context/assets/skills/normal-long-task/SKILL.md",
+        ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+        "packages/ty-context/assets/skills/design-resource-authoring/SKILL.md",
       ].join("\n"),
     },
   );

@@ -75,6 +75,7 @@
 ## Current State
 
 - The current package line preserves the public `long-task-delivery-v2` path, explicit `long-task` profile, package-owned Stop Hook, stateless Authority Revision diagnosis, revision-to-rolling return and declared-machine/native-Goal terminal boundary while sharing architecture and selected-design obligations across mutually exclusive execution carriers.
+- `/long-task-workflow` is the only active long-task execution Skill. `design-resource-authoring` is an independent optional upstream authoring Skill whose selected outputs may feed either the default Workflow Contract or Long-Task; it is not a Long-Task stage or activation requirement.
 - Managed source lives under `.codex/ty-context-managed/**`; packaged assets live under `packages/ty-context/assets/**`; `packages/ty-context/source-mappings.yaml` is the copy authority.
 - Root `AGENTS.md` is a startup router and hard-boundary surface. Skills own role procedures, `PROJECT_SPEC.md` owns the full stable design explanation, role Context owns durable facts, README owns human usage, and tests own machine proof.
 - `ty-context doctor` reports the deterministic default Context read footprint, excessive/byte-identical default content and `DESIGN.md` authority status without creating a new validation gate. Byte budgets are advisory: required recovery facts win, and neither source tests nor release gates may force their omission, unreadable compression or wrong `on-demand` classification.

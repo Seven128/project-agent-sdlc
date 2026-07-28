@@ -10,13 +10,21 @@ Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层
 
 编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及长任务经历多轮修改或上下文压缩后仍可信的完成检查。
 
-Tiny Context 将这些能力保持为窄边界：
-
-1. **Minimal Context**：`project_context/**` 保存产品归属、架构、契约和可重复验证等耐久事实。
-2. **Workflow Contract**：普通任务使用 Context-first 的轻量默认循环和平台内部计划，不要求计划文件。
-3. **Long-Task Workflow**：显式使用 `long-task-delivery-v2`、编译期 Claim Coverage、一次 Authority Lock 后的模型选择、滚动修复验证与 Live Final Gate。
+Tiny Context 将这些能力保持为窄边界。
 
 它不会启动或切换模型，不会创建 Agent、分支或 worktree，不会 merge、push、创建 PR 或部署，也不会取代项目测试和人工产品验收。
+
+## 三个机制如何配合
+
+| 机制 | 何时、如何使用 | 负责什么 |
+|---|---|---|
+| **Minimal Context** | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。 | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。 |
+| **Workflow Contract** | `init` 后默认生效。普通任务直接交给当前 coding Goal；没有 slash command，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、Architecture Deliberation、唯一 `Context Delta`、实现、项目检查、Contract Conformance 与 Context drift。 |
+| **Long-Task Workflow** | 先启用一次 `long-task` profile，再显式调用 `/long-task-workflow`；已有有效绑定时恢复。不能因为任务看起来很长就自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复的局部进度、受保护修订和当前快照 Live Final Gate。 |
+
+三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `/long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载最终架构与选定设计闭环，不再重复默认 Contract Conformance。
+
+`/design-system-authoring` 与 `/design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `/long-task-workflow`。
 
 ## 快速开始
 
@@ -48,10 +56,12 @@ ty-context enable long-task
 
 ## 推荐用法
 
-初始输入可以是一段产品意图，也可以是 Web GPT 等外部服务给出的详细初始方案。涉及独立设计资源时：
+初始输入可以是简要产品意图，也可以是 Web GPT 等外部服务给出的详细初始方案。该输入本身不要求设计 authoring 或 Long-Task；应按交付需要选择执行路径，不要把“是否需要设计资源”和“是否需要 Long-Task”绑定在一起：
 
-- **长程任务：** 初始方案 → 项目尚无设计系统时由用户显式调用 `/design-system-authoring` 生成、选择并采纳 → `/design-resource-authoring` 生成/选择资源、按需完整冻结实现级 Source、一次性回改已接受决策，并生成通过校验的残余 `design-resource-handoff-v1` → 把“修订后的初始方案 + handoff + 选定且身份稳定的设计资源”交给 `/long-task-workflow`；输入立即进入同一个原生 Goal 内的 Source-bound Contract Draft 循环。
-- **非长程任务：** 使用同样步骤 → 把“修订后的初始方案 + 已校验 handoff + 选定设计资源”直接交给 Codex 当前原生 Goal，按默认 Workflow Contract 执行。
+- **普通交付、不需要新设计资源：** 直接把需求交给当前 coding Goal；默认 Workflow Contract 自动生效，不需要 Workflow Skill 或 Contract 文件。
+- **长程交付、不需要新设计资源：** 启用一次 Profile 后，直接用需求或初始方案调用 `/long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
+- **交付前确实需要设计资源：** 项目缺少 Design Authority 时才显式调用 `/design-system-authoring`，再用 `/design-resource-authoring` 生成/选择资源、按需完整冻结实现级 Source、一次性回改已接受决策并生成通过校验的残余 `design-resource-handoff-v1`。随后根据恢复与完成权威需求，把修订方案和选定资源交给默认 Workflow Contract 或 `/long-task-workflow`。
+- **只需要设计资源：** 在 `/design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
 设计系统通常在项目冷启动时确定，但该 Skill 只由用户调用，`init`、`sync` 与下游 Skill 都不会自动执行。`/design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为普通输入，但不再是推荐中间服务。
 
