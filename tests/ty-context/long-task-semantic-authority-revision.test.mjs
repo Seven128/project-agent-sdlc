@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { readCompiledDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import { inspectAuthorityRevisionCandidate } from "./long-task-authority-revision-fixture.mjs";
 import {
   createDeliveryFixture,
   fixtureArchitectureSourceItem,
@@ -141,6 +143,8 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
     const sourceFile = path.join(fixture.root, "source.md");
     const sourceBaseline = await readFile(sourceFile, "utf8");
     const contractBaseline = structuredClone(fixture.contract);
+    const previousAuthority =
+      await readCompiledDeliveryContract(fixture.workdir);
 
     const semanticCases = [
       {
@@ -255,7 +259,7 @@ ${fixtureArchitectureSourceItem()}
         );
       }
       await writeContract(fixture.workdir, candidate);
-      await expectDecision(fixture, {
+      await expectProjectedDecision(fixture, previousAuthority, {
         field: "product_semantics_changed",
         includes: scenario.address,
         reason: "product_semantics_changed",
@@ -314,6 +318,37 @@ ${fixtureArchitectureSourceItem()}
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+async function expectProjectedDecision(
+  fixture,
+  previousAuthority,
+  expectation,
+) {
+  const projection = await inspectAuthorityRevisionCandidate(
+    fixture,
+    previousAuthority,
+  );
+  assert.equal(projection.decision.user_decision_required, true);
+  if ("includes" in expectation)
+    assert.ok(
+      projection.proposal.revision_diff[expectation.field].includes(
+        expectation.includes,
+      ),
+      `${expectation.field} must include ${expectation.includes}`,
+    );
+  if ("equals" in expectation)
+    assert.equal(
+      projection.proposal.revision_diff[expectation.field],
+      expectation.equals,
+    );
+  assert.ok(
+    projection.proposal.revision_diff.reduction_reasons.includes(
+      expectation.reason,
+    ),
+    `reduction reasons must include ${expectation.reason}`,
+  );
+  return projection;
+}
 
 test("mechanical proof additions and path tightening remain automatic revisions", async () => {
   const fixture = await createDeliveryFixture();

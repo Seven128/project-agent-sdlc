@@ -216,8 +216,21 @@ default = true
     cwd: root,
   });
   await exec("git", ["config", "user.name", "Fixture"], { cwd: root });
+  await configureEphemeralFixtureRepository(root);
   await exec("git", ["add", "."], { cwd: root });
   await exec("git", ["commit", "-m", "fixture"], { cwd: root });
+}
+
+async function configureEphemeralFixtureRepository(root) {
+  // These repositories are disposable test inputs. Crash-durability flushes and
+  // background object maintenance add cost without changing the Git semantics
+  // under test; production repositories retain their own Git configuration.
+  for (const [key, value] of [
+    ["core.fsync", "none"],
+    ["maintenance.auto", "false"],
+    ["gc.auto", "0"],
+  ])
+    await exec("git", ["config", "--local", key, value], { cwd: root });
 }
 
 async function resolveFixtureSeedRoot(explicitRoot) {

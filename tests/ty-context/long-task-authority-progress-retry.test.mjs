@@ -6,11 +6,13 @@ import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task
 import { readCompiledDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
   authorityReductionScenarios,
+  inspectAuthorityRevisionCandidate,
   prepareAuthorityRevisionFixture,
 } from "./long-task-authority-revision-fixture.mjs";
 import {
   commitCandidate,
   createDeliveryFixture,
+  pathExists,
   runCli,
   runCliFailure,
   writeContract,
@@ -46,55 +48,38 @@ test("Authority Revision separates user decisions from mechanically bounded repa
       const candidate = structuredClone(baseline);
       scenario.mutate(candidate);
       await writeContract(fixture.workdir, candidate);
-      const diagnosis = await runCli(fixture.root, [
-        "long-task",
-        "diagnose-revision",
-        fixture.workdir,
-      ]).catch((error) => {
+      const projection = await inspectAuthorityRevisionCandidate(
+        fixture,
+        initial,
+      ).catch((error) => {
         error.message = `${scenario.name}: ${error.message}`;
         throw error;
       });
       assert.equal(
-        diagnosis.revision.user_decision_required,
+        projection.decision.user_decision_required,
         scenario.userDecisionRequired,
         scenario.name,
       );
       if (scenario.reason)
         assert.ok(
-          diagnosis.revision.approval_summary.protected_reasons.includes(
+          projection.decision.approval_summary.protected_reasons.includes(
             scenario.reason,
           ),
           scenario.name,
         );
       if (scenario.userDecisionRequired) {
-        await assert.rejects(
-          () =>
-            runCli(fixture.root, [
-              "long-task",
-              "compile",
-              fixture.workdir,
-              "--revise",
-            ]),
-          /authority_change_requires_user_decision/u,
-          scenario.name,
-        );
-        const pending = JSON.parse(
-          await readFile(
-            path.join(
-              fixture.workdir,
-              ".ty-context/authority-revision-pending.json",
-            ),
-            "utf8",
-          ),
-        );
         assert.ok(
-          pending.revision_diff[scenario.field].length > 0,
+          projection.proposal.revision_diff[scenario.field].length > 0,
           scenario.name,
         );
-        assert.equal(pending.user_decision_required, true, scenario.name);
+        assert.equal(
+          projection.proposal.user_decision_required,
+          true,
+          scenario.name,
+        );
       } else {
         assert.notEqual(
-          diagnosis.revision.change_class,
+          projection.decision.change_class,
           "protected_semantic_or_proof_change",
           scenario.name,
         );
@@ -105,6 +90,16 @@ test("Authority Revision separates user decisions from mechanically bounded repa
           { force: true },
         );
     }
+    assert.equal(
+      await pathExists(
+        path.join(
+          fixture.workdir,
+          ".ty-context",
+          "authority-revision-pending.json",
+        ),
+      ),
+      false,
+    );
 
     const uncoveredCounterfactual = structuredClone(baseline);
     uncoveredCounterfactual.outcomes[0].acceptance.counterfactual_controls = [];

@@ -1,5 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { projectAuthorityRevisionDecision } from "../../packages/ty-context/dist/lib/long-task-authority-revision-summary.js";
 
 export async function prepareAuthorityRevisionFixture(fixture) {
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
@@ -125,6 +127,30 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
     operator: "equals",
     expected: false,
   });
+}
+
+export async function inspectAuthorityRevisionCandidate(
+  fixture,
+  previousAuthority,
+) {
+  let proposal = null;
+  await compileDeliveryContract(
+    fixture.workdir,
+    fixture.root,
+    {
+      revise: true,
+      previous_authority: previousAuthority,
+      authority_revision_mode: "diagnose",
+      on_authority_revision(value) {
+        proposal = value;
+      },
+    },
+  );
+  if (!proposal) throw new Error("authority_revision_candidate_unchanged");
+  return {
+    proposal,
+    decision: projectAuthorityRevisionDecision(proposal),
+  };
 }
 
 export const authorityReductionScenarios = [

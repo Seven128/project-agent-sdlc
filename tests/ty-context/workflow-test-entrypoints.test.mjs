@@ -98,6 +98,28 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
     packageJson.scripts["test:long-task-performance"],
     "npm run build && node ../../tests/ty-context/long-task-performance.mjs",
   );
+  const performanceProbe = read(
+    "tests/ty-context/long-task-performance.mjs",
+  );
+  assert.match(
+    performanceProbe,
+    /addGlobalClaim\(target, \{ counterfactual: true \}\)/u,
+  );
+  assert.doesNotMatch(performanceProbe, /key: "performance-global"/u);
+  assert.ok(
+    performanceProbe.indexOf(
+      "const globalCounterfactual = await measureGlobalCounterfactualFixture();",
+    ) <
+      performanceProbe.indexOf(
+        "const fixture = await createDeliveryFixture();",
+      ),
+    "small semantic performance fixtures must fail before the 10k-file repository is seeded",
+  );
+  assert.match(performanceProbe, /uniqueExecutionDurationMs/u);
+  assert.match(performanceProbe, /"default-v1"/u);
+  assert.match(performanceProbe, /"windows-v1"/u);
+  assert.match(performanceProbe, /large_repository_seed_ms/u);
+  assert.match(performanceProbe, /probe_total_ms/u);
   assert.equal(packageJson.scripts["test:composite-workflow"], undefined);
 
   const suiteRunner = read("tests/ty-context/run-package-suite.mjs");

@@ -32,24 +32,51 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  addGlobalClaim,
+} from "./long-task-global-evidence-sensitivity-fixture.mjs";
 
 const exec = promisify(execFile);
-const budgets = {
-  status_ms: 1000,
-  resume_ms: 1000,
-  preflight_ms: 2000,
-  compile_ms: 2000,
-  snapshot_ms: 5000,
-  final_gate_ms: 10000,
-  global_counterfactual_fixture_ms: 10000,
-  planned_binding_fixture_ms: 10000,
-  stop_harness_ms: 3000,
+const performanceBudgetProfiles = {
+  "default-v1": {
+    status_ms: 1000,
+    resume_ms: 1000,
+    preflight_ms: 2000,
+    compile_ms: 2000,
+    snapshot_ms: 5000,
+    final_gate_ms: 10000,
+    global_counterfactual_fixture_ms: 10000,
+    planned_binding_fixture_ms: 10000,
+    stop_harness_ms: 3000,
+    large_repository_seed_ms: 60000,
+    probe_total_ms: 120000,
+  },
+  "windows-v1": {
+    status_ms: 2500,
+    resume_ms: 2500,
+    preflight_ms: 3000,
+    compile_ms: 3000,
+    snapshot_ms: 15000,
+    final_gate_ms: 30000,
+    global_counterfactual_fixture_ms: 15000,
+    planned_binding_fixture_ms: 15000,
+    stop_harness_ms: 15000,
+    large_repository_seed_ms: 60000,
+    probe_total_ms: 180000,
+  },
 };
+const budgetProfile = process.platform === "win32" ? "windows-v1" : "default-v1";
+const budgets = performanceBudgetProfiles[budgetProfile];
+const probeStarted = performance.now();
 
+const globalCounterfactual = await measureGlobalCounterfactualFixture();
+const plannedBinding = await measurePlannedBindingFixture();
 const fixture = await createDeliveryFixture();
 const previousCwd = process.cwd();
 try {
-  await seedLargeRepository(fixture.root);
+  const largeRepositorySeed = await timed(() =>
+    seedLargeRepository(fixture.root),
+  );
   fixture.contract.outcomes[0].product.owner.path_globs.push(
     "large/**",
     "untracked/**",
@@ -124,13 +151,10 @@ try {
   const stop = await timed(() => stopCheckDeliveryTask(fixture.workdir));
   assert.equal(stop.value.continue, true);
   const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
-  const globalCounterfactual = await measureGlobalCounterfactualFixture();
-  const plannedBinding = await measurePlannedBindingFixture();
-  const runnerMs = receipt.check_results.reduce(
-    (sum, result) => sum + result.duration_ms,
-    0,
-  );
+  const runnerMs = uniqueExecutionDurationMs(receipt.check_results);
   const result = {
+    platform: process.platform,
+    budget_profile: budgetProfile,
     tracked_files: 10000,
     untracked_files: 100,
     status_ms: round(status.ms),
@@ -141,11 +165,16 @@ try {
     final_gate_ms: round(stop.ms),
     global_counterfactual_fixture_ms: round(globalCounterfactual.ms),
     planned_binding_fixture_ms: round(plannedBinding.ms),
+    large_repository_seed_ms: round(largeRepositorySeed.ms),
+    unique_runner_invocations: new Set(
+      receipt.check_results.map((entry) => entry.execution_identity),
+    ).size,
     stop_total_ms: round(stop.ms),
     stop_snapshot_ms: round(receipt.snapshot_preparation_ms),
     stop_harness_ms: round(
       Math.max(0, stop.ms - runnerMs - receipt.snapshot_preparation_ms),
     ),
+    probe_total_ms: round(performance.now() - probeStarted),
     budgets,
   };
   assert.ok(result.status_ms <= budgets.status_ms, JSON.stringify(result));
@@ -173,6 +202,14 @@ try {
     result.stop_harness_ms <= budgets.stop_harness_ms,
     JSON.stringify(result),
   );
+  assert.ok(
+    result.large_repository_seed_ms <= budgets.large_repository_seed_ms,
+    JSON.stringify(result),
+  );
+  assert.ok(
+    result.probe_total_ms <= budgets.probe_total_ms,
+    JSON.stringify(result),
+  );
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 } finally {
   process.chdir(previousCwd);
@@ -187,53 +224,7 @@ try {
 async function measureGlobalCounterfactualFixture() {
   const target = await createDeliveryFixture();
   try {
-    const statement = "The performance fixture preserves global state.";
-    target.contract.global.technical.constraints.push({
-      key: "performance-global",
-      statement,
-    });
-    const check = structuredClone(
-      target.contract.outcomes[0].acceptance.checks[0],
-    );
-    check.key = "performance-global-check";
-    check.journey_roles = ["success"];
-    check.runner.argv = ["first", "performance-global-assertion"];
-    check.positive_assertions = [
-      {
-        key: "performance-global-assertion",
-        criterion: statement,
-        claims: ["constraint.performance-global"],
-        observation: "result",
-        evidence_capabilities: ["target_runtime", "state_delta"],
-        operator: "equals",
-        expected: true,
-      },
-    ];
-    check.negative_assertions = [];
-    target.contract.global.acceptance.checks.push(check);
-    target.contract.global.acceptance.counterfactual_controls.push({
-      key: "remove-global-state",
-      binding_ref: "first.state-first",
-      claims: ["constraint.performance-global"],
-      check_key: check.key,
-      mutation: { type: "remove_paths", paths: ["src/state.json"] },
-      expected_assertion_failures: ["performance-global-assertion"],
-    });
-    target.contract.source_claims.push({
-      key: "performance-global-source",
-      source_ref: "source.md",
-      statement,
-      disposition: {
-        type: "global_constraint",
-        refs: ["constraint.performance-global"],
-      },
-    });
-    const source = await readFile(path.join(target.root, "source.md"), "utf8");
-    await writeFile(
-      path.join(target.root, "source.md"),
-      `${source.trimEnd()}\n\n<!-- ty-source-item:start key=performance-global-source kind=technical_obligation -->\n${statement}\n<!-- ty-source-item:end -->\n`,
-    );
-    await writeContract(target.workdir, target.contract);
+    await addGlobalClaim(target, { counterfactual: true });
     await runCli(target.root, ["enable", "long-task"]);
     await runCli(target.root, ["long-task", "compile", target.workdir]);
     return await timed(() =>
@@ -346,4 +337,17 @@ function pad(value, width) {
 
 function round(value) {
   return Math.round(value * 10) / 10;
+}
+
+function uniqueExecutionDurationMs(checkResults) {
+  const durations = new Map();
+  for (const result of checkResults) {
+    const previous = durations.get(result.execution_identity);
+    assert.ok(
+      previous === undefined || previous === result.duration_ms,
+      `shared runner duration mismatch for ${result.execution_identity}`,
+    );
+    durations.set(result.execution_identity, result.duration_ms);
+  }
+  return [...durations.values()].reduce((sum, duration) => sum + duration, 0);
 }

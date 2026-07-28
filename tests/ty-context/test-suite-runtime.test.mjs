@@ -178,6 +178,15 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
     );
     assert.equal(await git(first.root, ["remote"]), "");
     assert.equal(await git(second.root, ["remote"]), "");
+    assert.equal(
+      await git(first.root, ["config", "--local", "core.fsync"]),
+      "none",
+    );
+    assert.equal(
+      await git(first.root, ["config", "--local", "maintenance.auto"]),
+      "false",
+    );
+    assert.equal(await git(first.root, ["config", "--local", "gc.auto"]), "0");
 
     const secondSource = await readFile(
       path.join(second.root, "source.md"),
@@ -205,6 +214,55 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
       seed.cleanup(),
     ]);
   }
+});
+
+test("bulk revision and verifier migration probes preserve canonical owners and real boundaries", async () => {
+  const [
+    revisionFixture,
+    progressSuite,
+    semanticSuite,
+    verifierMigrationSuite,
+  ] = await Promise.all(
+    [
+      "long-task-authority-revision-fixture.mjs",
+      "long-task-authority-progress-retry.test.mjs",
+      "long-task-semantic-authority-revision.test.mjs",
+      "long-task-verifier-migration.test.mjs",
+    ].map((name) =>
+      readFile(path.join(repositoryRoot, "tests", "ty-context", name), "utf8"),
+    ),
+  );
+
+  assert.match(revisionFixture, /compileDeliveryContract/u);
+  assert.match(revisionFixture, /authority_revision_mode:\s*"diagnose"/u);
+  assert.match(revisionFixture, /projectAuthorityRevisionDecision/u);
+  assert.match(progressSuite, /inspectAuthorityRevisionCandidate/u);
+  assert.match(semanticSuite, /inspectAuthorityRevisionCandidate/u);
+  assert.match(semanticSuite, /expectDecision\(fixture/u);
+
+  assert.equal(
+    [...verifierMigrationSuite.matchAll(/\bcopyPackage\(/gu)].length,
+    2,
+  );
+  for (const boundary of [
+    "rename(packageA, packageB)",
+    "rename(packageB, packageC)",
+    "rename(packageC, changedPackage)",
+    '"dist/lib/long-task-status-projection.js"',
+    '"dist/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json"',
+    '"dist/long-task-hook.js"',
+    '"final-gate"',
+    '"stop-check"',
+    '"close"',
+  ])
+    assert.ok(
+      verifierMigrationSuite.includes(boundary),
+      `verifier migration must retain ${boundary}`,
+    );
+  assert.match(
+    verifierMigrationSuite,
+    /if \(index === 0\)[\s\S]*"verify"[\s\S]*"compile"/u,
+  );
 });
 
 test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files closed", async () => {

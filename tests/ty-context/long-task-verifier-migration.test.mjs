@@ -4,6 +4,7 @@ import {
   cp,
   mkdtemp,
   readFile,
+  rename,
   rm,
   symlink,
   writeFile,
@@ -29,7 +30,6 @@ const exec = promisify(execFile);
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const sourcePackage = path.join(repository, "packages", "ty-context");
 const dependencyRoot = path.join(repository, "node_modules");
-
 test("Verifier relocation is automatic while content changes require approval", async () => {
   const packagesRoot = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-verifier-packages-"),
@@ -37,11 +37,6 @@ test("Verifier relocation is automatic while content changes require approval", 
   const fixture = await createDeliveryFixture();
   try {
     const packageA = await copyPackage(packagesRoot, "package-a");
-    const packageB = await copyPackage(packagesRoot, "package-b");
-    const packageC = await copyPackage(packagesRoot, "package-c", {
-      version: "0.6.0-relocated.0",
-    });
-
     fixture.contract.outcomes[0].product.owner.path_globs.push(
       ".codex/hooks.json",
     );
@@ -70,7 +65,8 @@ test("Verifier relocation is automatic while content changes require approval", 
     const initialBase = (
       await loadActiveLongTaskAuthority(fixture.root)
     ).authority.initial_task_base;
-
+    const packageB = path.join(packagesRoot, "package-b");
+    await rename(packageA, packageB);
     await runPackageCli(packageB, fixture.root, ["enable", "long-task"]);
     await assertPackageFailure(
       packageB,
@@ -124,7 +120,9 @@ test("Verifier relocation is automatic while content changes require approval", 
       ),
       false,
     );
-
+    const packageC = path.join(packagesRoot, "package-c");
+    await rename(packageB, packageC);
+    await setPackageVersion(packageC, "0.6.0-relocated.0");
     await runPackageCli(packageC, fixture.root, ["enable", "long-task"]);
     await assertPackageFailure(
       packageC,
@@ -145,17 +143,13 @@ test("Verifier relocation is automatic while content changes require approval", 
       "0.6.0-relocated.0",
     );
     assert.deepEqual(active.initial_task_base, initialBase);
-
-    for (const scenario of [
+    const changedPackage = path.join(packagesRoot, "package-changed");
+    await rename(packageC, changedPackage);
+    for (const [index, scenario] of [
       {
         name: "bundle",
-        mutate: async (packageRoot) => {
-          const file = path.join(
-            packageRoot,
-            "dist",
-            "lib",
-            "long-task-status-projection.js",
-          );
+        relativeFile: "dist/lib/long-task-status-projection.js",
+        mutate: async (file) => {
           await writeFile(
             file,
             `${await readFile(file, "utf8")}\n// verifier bundle change\n`,
@@ -165,14 +159,9 @@ test("Verifier relocation is automatic while content changes require approval", 
       },
       {
         name: "schema",
-        mutate: async (packageRoot) => {
-          const file = path.join(
-            packageRoot,
-            "dist",
-            "schemas",
-            "long-task-delivery-v2",
-            "long-task-delivery-v2.schema.json",
-          );
+        relativeFile:
+          "dist/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
+        mutate: async (file) => {
           const schema = JSON.parse(await readFile(file, "utf8"));
           schema.$comment = "verifier schema change";
           await writeFile(file, `${JSON.stringify(schema)}\n`);
@@ -181,8 +170,8 @@ test("Verifier relocation is automatic while content changes require approval", 
       },
       {
         name: "hook",
-        mutate: async (packageRoot) => {
-          const file = path.join(packageRoot, "dist", "long-task-hook.js");
+        relativeFile: "dist/long-task-hook.js",
+        mutate: async (file) => {
           await writeFile(
             file,
             `${await readFile(file, "utf8")}\n// verifier hook change\n`,
@@ -190,66 +179,72 @@ test("Verifier relocation is automatic while content changes require approval", 
         },
         expectedFile: "<hook>",
       },
-    ]) {
-      const changedPackage = await copyPackage(
-        packagesRoot,
-        `package-${scenario.name}`,
-      );
-      await scenario.mutate(changedPackage);
-      await runPackageCli(changedPackage, fixture.root, [
-        "enable",
-        "long-task",
-      ]);
-      await assertPackageFailure(
+    ].entries()) {
+      const changedFile = path.join(
         changedPackage,
-        fixture.root,
-        ["long-task", "verify", fixture.workdir],
-        /verifier_authority_migration_required/u,
+        ...scenario.relativeFile.split("/"),
       );
-      await assertPackageFailure(
-        changedPackage,
-        fixture.root,
-        ["long-task", "compile", fixture.workdir, "--revise"],
-        /authority_change_requires_user_decision/u,
-      );
-      const pending = JSON.parse(
-        await readFile(
-          path.join(
-            fixture.workdir,
-            ".ty-context",
-            "authority-revision-pending.json",
+      const original = await readFile(changedFile);
+      try {
+        await scenario.mutate(changedFile);
+        await runPackageCli(changedPackage, fixture.root, [
+          "enable",
+          "long-task",
+        ]);
+        if (index === 0)
+          await assertPackageFailure(
+            changedPackage,
+            fixture.root,
+            ["long-task", "verify", fixture.workdir],
+            /verifier_authority_migration_required/u,
+          );
+        await assertPackageFailure(
+          changedPackage,
+          fixture.root,
+          ["long-task", "compile", fixture.workdir, "--revise"],
+          /authority_change_requires_user_decision/u,
+        );
+        const pending = JSON.parse(
+          await readFile(
+            path.join(
+              fixture.workdir,
+              ".ty-context",
+              "authority-revision-pending.json",
+            ),
+            "utf8",
           ),
-          "utf8",
-        ),
-      );
-      assert.equal(pending.revision_diff.verifier_content_changed, true);
-      assert.equal(
-        pending.revision_diff.verifier_runtime_locator_changed,
-        true,
-      );
-      assert.ok(
-        pending.revision_diff.verifier_files_changed.includes(
-          scenario.expectedFile,
-        ),
-      );
-      assert.ok(
-        pending.revision_diff.reduction_reasons.includes(
-          "verifier_content_changed",
-        ),
-      );
-      assert.equal(
-        pending.revision_diff.previous_verifier.package_version,
-        "0.6.0-relocated.0",
-      );
-      assert.ok(pending.revision_diff.next_verifier.package_version);
-
-      await runPackageCli(packageC, fixture.root, ["enable", "long-task"]);
-      await runPackageCli(packageC, fixture.root, [
-        "long-task",
-        "compile",
-        fixture.workdir,
-      ]);
+        );
+        assert.equal(pending.revision_diff.verifier_content_changed, true);
+        assert.equal(
+          pending.revision_diff.verifier_runtime_locator_changed,
+          true,
+        );
+        assert.ok(
+          pending.revision_diff.verifier_files_changed.includes(
+            scenario.expectedFile,
+          ),
+        );
+        assert.ok(
+          pending.revision_diff.reduction_reasons.includes(
+            "verifier_content_changed",
+          ),
+        );
+        assert.equal(
+          pending.revision_diff.previous_verifier.package_version,
+          "0.6.0-relocated.0",
+        );
+        assert.ok(pending.revision_diff.next_verifier.package_version);
+      } finally {
+        await writeFile(changedFile, original);
+      }
     }
+    await rename(changedPackage, packageC);
+    await runPackageCli(packageC, fixture.root, ["enable", "long-task"]);
+    await runPackageCli(packageC, fixture.root, [
+      "long-task",
+      "compile",
+      fixture.workdir,
+    ]);
 
     assert.equal(first.authority_revision, 1);
     assert.deepEqual(
@@ -263,7 +258,7 @@ test("Verifier relocation is automatic while content changes require approval", 
   }
 });
 
-async function copyPackage(root, name, options = {}) {
+async function copyPackage(root, name) {
   const target = path.join(root, name);
   await cp(sourcePackage, target, {
     recursive: true,
@@ -274,13 +269,14 @@ async function copyPackage(root, name, options = {}) {
     path.join(target, "node_modules"),
     process.platform === "win32" ? "junction" : "dir",
   );
-  if (options.version) {
-    const packageFile = path.join(target, "package.json");
-    const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
-    packageJson.version = options.version;
-    await writeFile(packageFile, `${JSON.stringify(packageJson, null, 2)}\n`);
-  }
   return target;
+}
+
+async function setPackageVersion(packageRoot, version) {
+  const packageFile = path.join(packageRoot, "package.json");
+  const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
+  packageJson.version = version;
+  await writeFile(packageFile, `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
 async function runPackageCli(packageRoot, cwd, args) {
