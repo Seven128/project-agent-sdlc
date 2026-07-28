@@ -2,7 +2,7 @@
 
 Snapshot date: 2026-06-10.
 
-This is the copy-ready launch packet for the first public push after `project-tiny-context-harness@0.8.2` is published.
+This is the copy-ready launch packet for the first public push after `project-tiny-context-harness@0.8.3` is published.
 
 ## Launch Decision
 
@@ -27,8 +27,8 @@ Confirm:
 
 - `npm run launch:strict-external` passes; if npm ever returns 404 again, use `docs/launch/npm-publish-runbook.md` before broad posting.
 - GitHub stars/forks and npm downloads baseline are recorded with `npm run launch:metrics`.
-- npm `project-tiny-context-harness@0.8.2` is published and installable.
-- The `v0.8.2` GitHub Release is published from [github-release-0.8.2.md](github-release-0.8.2.md); future npm Trusted Publishing real runs create or update this release automatically after publish.
+- npm `project-tiny-context-harness@0.8.3` is published and installable.
+- The `v0.8.3` GitHub Release is published from [github-release-0.8.3.md](github-release-0.8.3.md); future npm Trusted Publishing real runs create or update this release automatically after publish.
 - Issue #4 is pinned and open for adoption reports.
 - Issue #5 has the current demo packet and repo-hosted GIF URL.
 - README first screen still shows install, 60-second trial and non-goals.
