@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseDesignResourceHandoffMarkdown } from "./design-resource-handoff-parser.js";
 import { validateDesignResourceFiles } from "./design-resource-handoff-file-validation.js";
+import { loadAndValidateDesignResourceFactManifests } from "./design-resource-fact-manifest-validation.js";
 import { validateDesignResourceFacts } from "./design-resource-handoff-validation-facts.js";
 import type {
   DesignResourceHandoffPreflightV1,
@@ -45,6 +46,10 @@ export async function preflightDesignResourceHandoff(
   validateDesignResourceHandoffSemantics(parsed);
   const resourceHashes = await validateResourceIntegrity(repository, parsed);
   await validateDesignResourceFiles(repository, parsed);
+  const manifests = await loadAndValidateDesignResourceFactManifests(
+    repository,
+    parsed,
+  );
   const handoff = parsed.handoff;
   return {
     schema_version: "design-resource-handoff-preflight-v1",
@@ -53,11 +58,21 @@ export async function preflightDesignResourceHandoff(
     resource_hashes: resourceHashes,
     counts: {
       resources: handoff.resources.length,
+      manifests: manifests.size,
+      axis_dispositions: handoff.axis_dispositions.length,
       conditions: handoff.conditions.length,
       subjects: handoff.subjects.length,
+      variations: handoff.variations.length,
+      properties: handoff.properties.length,
+      lineage_nodes: handoff.lineage_nodes.length,
       targets: handoff.targets.length,
       evidence: handoff.evidence.length,
+      fact_cells: handoff.fact_cells.length,
       facts: handoff.facts.length,
+      proof_obligations: handoff.proof_obligations.length,
+      oracles: handoff.oracles.length,
+      environments: handoff.environments.length,
+      asset_bindings: handoff.asset_bindings.length,
       resource_fact_closure: handoff.resource_fact_closure.length,
       coverage: handoff.coverage.length,
       acceptance_blockers: handoff.acceptance_blockers.length,
@@ -75,13 +90,42 @@ export function validateDesignResourceHandoffSemantics(
   );
   requireNonemptyDesignResourceValues(handoff.resources, "resources_required");
   requireNonemptyDesignResourceValues(
+    handoff.axis_dispositions,
+    "axis_dispositions_required",
+  );
+  requireNonemptyDesignResourceValues(
     handoff.conditions,
     "conditions_required",
   );
   requireNonemptyDesignResourceValues(handoff.subjects, "subjects_required");
+  requireNonemptyDesignResourceValues(
+    handoff.variation_axis_dispositions,
+    "variation_axis_dispositions_required",
+  );
+  requireNonemptyDesignResourceValues(
+    handoff.variations,
+    "variations_required",
+  );
+  requireNonemptyDesignResourceValues(
+    handoff.properties,
+    "properties_required",
+  );
   requireNonemptyDesignResourceValues(handoff.targets, "targets_required");
   requireNonemptyDesignResourceValues(handoff.evidence, "evidence_required");
+  requireNonemptyDesignResourceValues(
+    handoff.fact_cells,
+    "fact_cells_required",
+  );
   requireNonemptyDesignResourceValues(handoff.facts, "facts_required");
+  requireNonemptyDesignResourceValues(
+    handoff.proof_obligations,
+    "proof_obligations_required",
+  );
+  requireNonemptyDesignResourceValues(handoff.oracles, "oracles_required");
+  requireNonemptyDesignResourceValues(
+    handoff.environments,
+    "environments_required",
+  );
   requireNonemptyDesignResourceValues(
     handoff.resource_fact_closure,
     "resource_fact_closure_required",
@@ -101,16 +145,61 @@ export function validateDesignResourceHandoffSemantics(
     "resource_path_duplicate",
   );
   requireUniqueDesignResourceObjects(
+    handoff.axis_dispositions,
+    "axis_disposition_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.condition_exclusions,
+    "condition_exclusion_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
     handoff.conditions,
     "condition_key_duplicate",
   );
   requireUniqueDesignResourceObjects(handoff.subjects, "subject_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.variation_axis_dispositions,
+    "variation_axis_disposition_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.variation_exclusions,
+    "variation_exclusion_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.variations,
+    "variation_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.properties,
+    "property_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.lineage_nodes,
+    "lineage_node_key_duplicate",
+  );
   requireUniqueDesignResourceObjects(handoff.targets, "target_key_duplicate");
   requireUniqueDesignResourceObjects(
     handoff.evidence,
     "evidence_key_duplicate",
   );
   requireUniqueDesignResourceObjects(handoff.facts, "fact_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.fact_cells,
+    "fact_cell_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.proof_obligations,
+    "proof_obligation_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(handoff.oracles, "oracle_key_duplicate");
+  requireUniqueDesignResourceObjects(
+    handoff.environments,
+    "environment_key_duplicate",
+  );
+  requireUniqueDesignResourceObjects(
+    handoff.asset_bindings,
+    "asset_binding_key_duplicate",
+  );
   requireUniqueDesignResourceObjects(
     handoff.resource_fact_closure,
     "resource_fact_closure_key_duplicate",

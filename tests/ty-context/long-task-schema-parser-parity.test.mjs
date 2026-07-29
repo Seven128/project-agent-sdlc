@@ -13,6 +13,7 @@ import {
   completeControl,
   createDeliveryFixture,
   deliveryContract,
+  designFactExpectationFixture,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -101,6 +102,9 @@ test("production surface bindings and design conformance have Schema/Parser pari
                 observation_path:
                   "artifacts/settings-layout-phone-observation.json",
                 fact_refs: ["settings.layout.phone"],
+                fact_expectations: [
+                  designFactExpectationFixture("settings.layout.phone"),
+                ],
               },
               {
                 condition_key: "dark",
@@ -108,6 +112,9 @@ test("production surface bindings and design conformance have Schema/Parser pari
                 observation_path:
                   "artifacts/settings-layout-dark-observation.json",
                 fact_refs: ["settings.layout.dark"],
+                fact_expectations: [
+                  designFactExpectationFixture("settings.layout.dark"),
+                ],
               },
               {
                 condition_key: "default",
@@ -115,6 +122,9 @@ test("production surface bindings and design conformance have Schema/Parser pari
                 observation_path:
                   "artifacts/settings-layout-default-observation.json",
                 fact_refs: ["settings.layout.default"],
+                fact_expectations: [
+                  designFactExpectationFixture("settings.layout.default"),
+                ],
               },
             ],
           },

@@ -1,5 +1,7 @@
 import type { EvidenceCapabilityRecordV2 } from "./long-task-delivery-types.js";
 import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-types.js";
+import { DESIGN_RESOURCE_COMPARATORS } from "./design-resource-fact-manifest-types.js";
+import { DESIGN_RESOURCE_LOCATOR_KINDS } from "./design-resource-handoff-types.js";
 
 export function decodeEvidenceCapabilityRecords(
   value: unknown,
@@ -252,6 +254,7 @@ function decodeRecord(
             "artifact_path",
             "observation_artifact_path",
             "fact_refs",
+            "fact_results",
           ]);
           return {
             condition_key: key(
@@ -267,6 +270,15 @@ function decodeRecord(
               `${cellLabel}.observation_artifact_path`,
             ),
             fact_refs: designFactRefs(cell.fact_refs, `${cellLabel}.fact_refs`),
+            fact_results: array(
+              cell.fact_results,
+              `${cellLabel}.fact_results`,
+            ).map((result, resultIndex) =>
+              decodeDesignFactResult(
+                result,
+                `${cellLabel}.fact_results[${resultIndex}]`,
+              ),
+            ),
           };
         }),
       };
@@ -299,6 +311,270 @@ function decodeRecord(
     default:
       throw invalidRecord(`${label}.capability_unsupported:${capability}`);
   }
+}
+
+function decodeDesignFactResult(value: unknown, label: string) {
+  const row = record(value, label);
+  exact(row, label, [
+    "fact_ref",
+    "subject_ref",
+    "variation_ref",
+    "property_ref",
+    "actual_observation",
+    "actual_environment",
+    "expected",
+    "comparison",
+    "verdict",
+    "oracle",
+    "environment",
+  ]);
+  const actual = record(row.actual_observation, `${label}.actual_observation`);
+  exact(actual, `${label}.actual_observation`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "value_sha256",
+    "sensitivity",
+    "redaction",
+  ]);
+  const expected = decodeLocatedDigest(row.expected, `${label}.expected`);
+  const actualEnvironment = record(
+    row.actual_environment,
+    `${label}.actual_environment`,
+  );
+  exact(actualEnvironment, `${label}.actual_environment`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "value_sha256",
+  ]);
+  const comparison = record(row.comparison, `${label}.comparison`);
+  exact(comparison, `${label}.comparison`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "result_sha256",
+    "comparator",
+    "mode",
+    "parameters",
+    "tolerance",
+    "mask",
+    "passed",
+  ]);
+  const comparator = nonEmpty(
+    comparison.comparator,
+    `${label}.comparison.comparator`,
+  );
+  if (
+    !DESIGN_RESOURCE_COMPARATORS.includes(
+      comparator as (typeof DESIGN_RESOURCE_COMPARATORS)[number],
+    ) &&
+    !/^custom\.[a-z0-9][a-z0-9._-]*$/u.test(comparator)
+  )
+    throw invalidRecord(`${label}.comparison.comparator`);
+  if (typeof comparison.passed !== "boolean")
+    throw invalidRecord(`${label}.comparison.passed`);
+  const oracle = record(row.oracle, `${label}.oracle`);
+  exact(oracle, `${label}.oracle`, [
+    "key",
+    "trust",
+    "identity",
+    "version",
+    "sha256",
+  ]);
+  const environment = record(row.environment, `${label}.environment`);
+  exact(environment, `${label}.environment`, ["key", "identity", "definition"]);
+  return {
+    fact_ref: designFactRef(row.fact_ref, `${label}.fact_ref`),
+    subject_ref: designFactRef(row.subject_ref, `${label}.subject_ref`),
+    variation_ref: designFactRef(row.variation_ref, `${label}.variation_ref`),
+    property_ref: designFactRef(row.property_ref, `${label}.property_ref`),
+    actual_observation: {
+      artifact_path: nonEmpty(
+        actual.artifact_path,
+        `${label}.actual_observation.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        actual.artifact_sha256,
+        `${label}.actual_observation.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        actual.locator,
+        `${label}.actual_observation.locator`,
+      ),
+      value_sha256: sha(
+        actual.value_sha256,
+        `${label}.actual_observation.value_sha256`,
+      ),
+      sensitivity: literal(
+        actual.sensitivity,
+        ["plain", "protected"] as const,
+        `${label}.actual_observation.sensitivity`,
+      ),
+      redaction: nullable(actual.redaction, (value) => {
+        const redaction = record(
+          value,
+          `${label}.actual_observation.redaction`,
+        );
+        exact(redaction, `${label}.actual_observation.redaction`, [
+          "policy_ref",
+          "representation",
+          "raw_persisted",
+        ]);
+        if (redaction.raw_persisted !== false)
+          throw invalidRecord(
+            `${label}.actual_observation.redaction.raw_persisted`,
+          );
+        return {
+          policy_ref: designFactRef(
+            redaction.policy_ref,
+            `${label}.actual_observation.redaction.policy_ref`,
+          ),
+          representation: literal(
+            redaction.representation,
+            ["digest_only", "redacted_structured"] as const,
+            `${label}.actual_observation.redaction.representation`,
+          ),
+          raw_persisted: false as const,
+        };
+      }),
+    },
+    actual_environment: {
+      artifact_path: nonEmpty(
+        actualEnvironment.artifact_path,
+        `${label}.actual_environment.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        actualEnvironment.artifact_sha256,
+        `${label}.actual_environment.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        actualEnvironment.locator,
+        `${label}.actual_environment.locator`,
+      ),
+      value_sha256: sha(
+        actualEnvironment.value_sha256,
+        `${label}.actual_environment.value_sha256`,
+      ),
+    },
+    expected,
+    comparison: {
+      artifact_path: nonEmpty(
+        comparison.artifact_path,
+        `${label}.comparison.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        comparison.artifact_sha256,
+        `${label}.comparison.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        comparison.locator,
+        `${label}.comparison.locator`,
+      ),
+      result_sha256: sha(
+        comparison.result_sha256,
+        `${label}.comparison.result_sha256`,
+      ),
+      comparator,
+      mode: literal(
+        comparison.mode,
+        ["exact", "tolerance"] as const,
+        `${label}.comparison.mode`,
+      ),
+      parameters: decodeLocatedDigest(
+        comparison.parameters,
+        `${label}.comparison.parameters`,
+      ),
+      tolerance: nullable(comparison.tolerance, (value) =>
+        decodeLocatedDigest(value, `${label}.comparison.tolerance`),
+      ),
+      mask: nullable(comparison.mask, (value) =>
+        decodeLocatedDigest(value, `${label}.comparison.mask`),
+      ),
+      passed: comparison.passed,
+    },
+    verdict: literal(
+      row.verdict,
+      ["passed", "failed"] as const,
+      `${label}.verdict`,
+    ),
+    oracle: {
+      key: designFactRef(oracle.key, `${label}.oracle.key`),
+      trust: literal(
+        oracle.trust,
+        ["frozen_executable", "named_external_tcb"] as const,
+        `${label}.oracle.trust`,
+      ),
+      identity: nonEmpty(oracle.identity, `${label}.oracle.identity`),
+      version: nonEmpty(oracle.version, `${label}.oracle.version`),
+      sha256: nullableSha(oracle.sha256, `${label}.oracle.sha256`),
+    },
+    environment: {
+      key: designFactRef(environment.key, `${label}.environment.key`),
+      identity: nonEmpty(environment.identity, `${label}.environment.identity`),
+      definition: decodeLocatedDigest(
+        environment.definition,
+        `${label}.environment.definition`,
+      ),
+    },
+  };
+}
+
+export function decodeDesignFactResults(value: unknown, label: string) {
+  return array(value, label).map((item, index) =>
+    decodeDesignFactResult(item, `${label}[${index}]`),
+  );
+}
+
+function decodeLocatedDigest(value: unknown, label: string) {
+  const row = record(value, label);
+  exact(row, label, ["locator", "sha256"]);
+  const locator = record(row.locator, `${label}.locator`);
+  exact(locator, `${label}.locator`, ["resource_ref", "kind", "value"]);
+  return {
+    locator: {
+      resource_ref: designFactRef(
+        locator.resource_ref,
+        `${label}.locator.resource_ref`,
+      ),
+      kind: literal(
+        locator.kind,
+        DESIGN_RESOURCE_LOCATOR_KINDS,
+        `${label}.locator.kind`,
+      ),
+      value: nonEmpty(locator.value, `${label}.locator.value`),
+    },
+    sha256: sha(row.sha256, `${label}.sha256`),
+  };
+}
+
+function decodeEvidenceLocator(value: unknown, label: string) {
+  const row = record(value, label);
+  exact(row, label, ["kind", "value"]);
+  return {
+    kind: literal(
+      row.kind,
+      [
+        "json_pointer",
+        "image_region",
+        "semantic_node",
+        "trace_event",
+        "timeline_sample",
+        "asset_ref",
+        "custom",
+      ] as const,
+      `${label}.kind`,
+    ),
+    value: nonEmpty(row.value, `${label}.value`),
+  };
+}
+
+function nullableSha(value: unknown, label: string): string | null {
+  return value === null ? null : sha(value, label);
+}
+
+function nullable<T>(value: unknown, decode: (value: unknown) => T): T | null {
+  return value === null ? null : decode(value);
 }
 
 function invalidRecord(detail: string): Error {
@@ -359,6 +635,12 @@ function designFactRefs(value: unknown, label: string): string[] {
       throw invalidRecord(`${label}[${index}]`);
     return result;
   });
+}
+
+function designFactRef(value: unknown, label: string): string {
+  const result = nonEmpty(value, label);
+  if (!/^[a-z0-9][a-z0-9._-]*$/u.test(result)) throw invalidRecord(label);
+  return result;
 }
 
 function sha(value: unknown, label: string): string {

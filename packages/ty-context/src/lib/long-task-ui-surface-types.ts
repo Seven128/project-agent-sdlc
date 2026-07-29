@@ -1,7 +1,39 @@
 import type { DesignResourceVerificationMethod } from "./design-resource-handoff-types.js";
+import type {
+  DesignResourceComparator,
+  DesignResourceLocatedDigestV1,
+} from "./design-resource-fact-manifest-types.js";
 import type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
 
 export type DesignTargetInterpretationV2 = "exact_target" | "constraint";
+
+export interface DeliveryDesignFactExpectationV2 {
+  fact_ref: string;
+  subject_ref: string;
+  variation_ref: string;
+  property_ref: string;
+  observation_sensitivity: "plain" | "protected";
+  expected: DesignResourceLocatedDigestV1;
+  comparison: {
+    comparator: DesignResourceComparator | string;
+    mode: "exact" | "tolerance";
+    parameters: DesignResourceLocatedDigestV1;
+    tolerance: DesignResourceLocatedDigestV1 | null;
+    mask: DesignResourceLocatedDigestV1 | null;
+  };
+  oracle: {
+    key: string;
+    trust: "frozen_executable" | "named_external_tcb";
+    identity: string;
+    version: string;
+    sha256: string | null;
+  };
+  environment: {
+    key: string;
+    identity: string;
+    definition: DesignResourceLocatedDigestV1;
+  };
+}
 
 export interface DeliveryDesignVerificationBindingV2 {
   method: DesignResourceVerificationMethod;
@@ -11,6 +43,7 @@ export interface DeliveryDesignVerificationBindingV2 {
     path: string;
     observation_path: string;
     fact_refs: string[];
+    fact_expectations: DeliveryDesignFactExpectationV2[];
   }>;
 }
 

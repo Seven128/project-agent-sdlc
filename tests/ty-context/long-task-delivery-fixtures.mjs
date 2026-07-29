@@ -23,6 +23,124 @@ const ownedFixtureSeeds = new Set();
 let standaloneSeedPromise = null;
 let cleanupHookRegistered = false;
 
+export const DESIGN_FACT_FIXTURE_SHA256 = "a".repeat(64);
+
+export function designFactExpectationFixture(factRef = "fixture.fact.default") {
+  return {
+    fact_ref: factRef,
+    subject_ref: "subject.fixture",
+    variation_ref: "variation.fixture.default",
+    property_ref: "geometry.width",
+    observation_sensitivity: "plain",
+    expected: {
+      locator: {
+        resource_ref: "resource.fixture",
+        kind: "json_pointer",
+        value: `/facts/${factRef}`,
+      },
+      sha256: DESIGN_FACT_FIXTURE_SHA256,
+    },
+    comparison: {
+      comparator: "exact_value",
+      mode: "exact",
+      parameters: {
+        locator: {
+          resource_ref: "resource.fixture",
+          kind: "json_pointer",
+          value: "/comparators/exact-value",
+        },
+        sha256: "b".repeat(64),
+      },
+      tolerance: null,
+      mask: null,
+    },
+    oracle: {
+      key: "oracle.fixture",
+      trust: "named_external_tcb",
+      identity: "fixture-oracle",
+      version: "1.0.0",
+      sha256: null,
+    },
+    environment: {
+      key: "environment.fixture",
+      identity: "fixture-environment",
+      definition: {
+        locator: {
+          resource_ref: "resource.fixture",
+          kind: "json_pointer",
+          value: "/environment",
+        },
+        sha256: "c".repeat(64),
+      },
+    },
+  };
+}
+
+export function designFactResultFixture(
+  expectation,
+  {
+    artifactPath,
+    observationPath,
+    artifactSha256 = "d".repeat(64),
+    observationSha256 = "e".repeat(64),
+    locatorSuffix = expectation.fact_ref,
+    sensitivity = "plain",
+  },
+) {
+  return {
+    fact_ref: expectation.fact_ref,
+    subject_ref: expectation.subject_ref,
+    variation_ref: expectation.variation_ref,
+    property_ref: expectation.property_ref,
+    actual_observation: {
+      artifact_path: observationPath,
+      artifact_sha256: observationSha256,
+      locator: {
+        kind: "json_pointer",
+        value: `/observations/${locatorSuffix}`,
+      },
+      value_sha256: "f".repeat(64),
+      sensitivity,
+      redaction:
+        sensitivity === "protected"
+          ? {
+              policy_ref: "policy.fixture-redaction",
+              representation: "digest_only",
+              raw_persisted: false,
+            }
+          : null,
+    },
+    actual_environment: {
+      artifact_path: observationPath,
+      artifact_sha256: observationSha256,
+      locator: {
+        kind: "json_pointer",
+        value: `/environments/${locatorSuffix}`,
+      },
+      value_sha256: expectation.environment.definition.sha256,
+    },
+    expected: structuredClone(expectation.expected),
+    comparison: {
+      artifact_path: artifactPath,
+      artifact_sha256: artifactSha256,
+      locator: {
+        kind: "json_pointer",
+        value: `/comparisons/${locatorSuffix}`,
+      },
+      result_sha256: "1".repeat(64),
+      comparator: expectation.comparison.comparator,
+      mode: expectation.comparison.mode,
+      parameters: structuredClone(expectation.comparison.parameters),
+      tolerance: structuredClone(expectation.comparison.tolerance),
+      mask: structuredClone(expectation.comparison.mask),
+      passed: true,
+    },
+    verdict: "passed",
+    oracle: structuredClone(expectation.oracle),
+    environment: structuredClone(expectation.environment),
+  };
+}
+
 export async function createDeliveryFixture(options = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-delivery-"));
   try {
@@ -192,7 +310,10 @@ console.log(JSON.stringify({
       2,
     )}\n`,
   );
-  await writeFile(path.join(root, "project_context", "global.md"), "# Global\n");
+  await writeFile(
+    path.join(root, "project_context", "global.md"),
+    "# Global\n",
+  );
   await writeFile(
     path.join(root, "project_context", "architecture.md"),
     "# Architecture\n",
@@ -292,10 +413,7 @@ export function deliveryContract(options = {}) {
       retry_policy: "none",
       idempotent: true,
     },
-    verification_inputs: [
-      "tests/oracle.mjs",
-      "tests/semantic-false.json",
-    ],
+    verification_inputs: ["tests/oracle.mjs", "tests/semantic-false.json"],
     input_paths: ["src/**"],
     expected_output_paths: [],
     artifact_globs: ["artifacts/proof.json"],
@@ -314,7 +432,8 @@ export function deliveryContract(options = {}) {
         ? [
             {
               key: "first-architecture",
-              criterion: "Preserve the fixture state owner and verifier boundary.",
+              criterion:
+                "Preserve the fixture state owner and verifier boundary.",
               claims: ["obligation.architecture-first"],
               applicability_ref: "first-root-success",
               observation: "architecture_result",
@@ -453,7 +572,8 @@ export function deliveryContract(options = {}) {
       goal: "Prove the declared fixture outcomes.",
       target_profile: {
         key: "fixture-target",
-        description: "The executable fixture is usable through its declared root.",
+        description:
+          "The executable fixture is usable through its declared root.",
         required_state: "target_profile_usable",
         required_target_refs: ["fixture-app"],
       },
@@ -464,11 +584,7 @@ export function deliveryContract(options = {}) {
           role: "product",
           runtime_family: "process",
           root_entrypoint: "tests/oracle.mjs",
-          capabilities: [
-            "process-runtime",
-            "cold-start",
-            "production-root",
-          ],
+          capabilities: ["process-runtime", "cold-start", "production-root"],
         },
       ],
       source_paths: ["source.md"],
@@ -510,11 +626,26 @@ export function deliveryContract(options = {}) {
     ],
     stages: options.twoOutcomes
       ? [
-          { key: "first", title: "First", depends_on: [], gate_outcome: "first" },
-          { key: "second", title: "Second", depends_on: ["first"], gate_outcome: "second" },
+          {
+            key: "first",
+            title: "First",
+            depends_on: [],
+            gate_outcome: "first",
+          },
+          {
+            key: "second",
+            title: "Second",
+            depends_on: ["first"],
+            gate_outcome: "second",
+          },
         ]
       : [
-          { key: "first", title: "First", depends_on: [], gate_outcome: "first" },
+          {
+            key: "first",
+            title: "First",
+            depends_on: [],
+            gate_outcome: "first",
+          },
         ],
     risk: {
       requested_level: "auto",
@@ -685,7 +816,13 @@ export function completeControl(
   return control;
 }
 
-function addControlAssertions(outcome, check, control, rootClaimRef, targetRef) {
+function addControlAssertions(
+  outcome,
+  check,
+  control,
+  rootClaimRef,
+  targetRef,
+) {
   const profile =
     outcome.applicability.find((item) => item.target_ref === targetRef) ??
     outcome.applicability[0];
@@ -698,9 +835,7 @@ function addControlAssertions(outcome, check, control, rootClaimRef, targetRef) 
       const assertion = {
         key,
         criterion:
-          entry.state === "specified"
-            ? control[field]
-            : entry.statement,
+          entry.state === "specified" ? control[field] : entry.statement,
         claims: [claim],
         applicability_ref: profile.key,
         observation: `control_${control.key}_${suffix}`,
@@ -721,8 +856,7 @@ function addControlAssertions(outcome, check, control, rootClaimRef, targetRef) 
         (candidate) => candidate.check_key === check.key,
       );
       if (sensitivity) {
-        if (!sensitivity.claims.includes(claim))
-          sensitivity.claims.push(claim);
+        if (!sensitivity.claims.includes(claim)) sensitivity.claims.push(claim);
         if (!sensitivity.expected_assertion_failures.includes(key))
           sensitivity.expected_assertion_failures.push(key);
       }
@@ -740,9 +874,7 @@ function addDefaultSensitivityControls(contract) {
           "result",
           `requirement.observe-${outcome.key}`,
           `obligation.implement-${outcome.key}`,
-          ...(outcome.key === "first"
-            ? ["obligation.architecture-first"]
-            : []),
+          ...(outcome.key === "first" ? ["obligation.architecture-first"] : []),
         ],
         check_key: `${outcome.key}-check`,
         mutation: {
@@ -790,12 +922,18 @@ export async function writeContract(workdir, contract) {
 }
 
 export async function readState(root) {
-  return JSON.parse(await readFile(path.join(root, "src", "state.json"), "utf8"));
+  return JSON.parse(
+    await readFile(path.join(root, "src", "state.json"), "utf8"),
+  );
 }
 
 export async function runCli(cwd, args, options = {}) {
   const { skipCandidateCommit = false, ...execOptions } = options;
-  if (!skipCandidateCommit && args[0] === "long-task" && args[1] === "final-gate")
+  if (
+    !skipCandidateCommit &&
+    args[0] === "long-task" &&
+    args[1] === "final-gate"
+  )
     await commitCandidate(cwd);
   const result = await exec(process.execPath, [cli, ...args], {
     cwd,

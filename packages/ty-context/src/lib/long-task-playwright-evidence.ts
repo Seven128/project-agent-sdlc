@@ -2,6 +2,7 @@ import type {
   CompiledCheckV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
+import { decodeDesignFactResults } from "./long-task-evidence-capability-codec.js";
 import {
   collectCases,
   declaredCaseIds,
@@ -177,17 +178,35 @@ function evidenceRecordsForCases(
           )
         )
           continue;
+        const cells = binding.evidence_artifacts.map((artifact) => {
+          const recordName = designMethodAttachmentName(
+            target.key,
+            binding.method,
+            artifact.condition_key,
+            "record",
+          );
+          const payload = designFactResultAttachment(
+            item.attachment_payloads[recordName],
+            `${target.key}:${binding.method}:${artifact.condition_key}`,
+          );
+          return {
+            condition_key: artifact.condition_key,
+            artifact_path: artifact.path,
+            observation_artifact_path: artifact.observation_path,
+            fact_refs: artifact.fact_refs,
+            fact_results: payload,
+          };
+        });
+        if (cells.some((cell) => cell.fact_results === null)) continue;
         evidenceRecords.push({
           assertion_key: assertion.key,
           capability: "design_method",
           design_target_ref: target.key,
           target_ref: target.target_ref,
           method: binding.method,
-          cells: binding.evidence_artifacts.map((artifact) => ({
-            condition_key: artifact.condition_key,
-            artifact_path: artifact.path,
-            observation_artifact_path: artifact.observation_path,
-            fact_refs: artifact.fact_refs,
+          cells: cells.map((cell) => ({
+            ...cell,
+            fact_results: cell.fact_results!,
           })),
         });
       }
@@ -268,9 +287,41 @@ function aggregateCases(instances: PlaywrightCaseInstance[]): PlaywrightCase[] {
             : rows[0].attachment_names.filter((name) =>
                 rows.every((row) => row.attachment_names.includes(name)),
               ),
+        attachment_payloads:
+          rows.length === 0
+            ? {}
+            : Object.fromEntries(
+                Object.entries(rows[0].attachment_payloads).filter(
+                  ([name, value]) =>
+                    rows.every(
+                      (row) => row.attachment_payloads[name] === value,
+                    ),
+                ),
+              ),
       };
     })
     .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function designFactResultAttachment(
+  content: string | undefined,
+  label: string,
+) {
+  if (!content) return null;
+  try {
+    const payload = JSON.parse(content) as Record<string, unknown>;
+    if (
+      payload.schema_version !== "design-method-fact-results-v1" ||
+      !Object.hasOwn(payload, "fact_results")
+    )
+      return null;
+    return decodeDesignFactResults(
+      payload.fact_results,
+      `playwright_design_method.${label}.fact_results`,
+    );
+  } catch {
+    return null;
+  }
 }
 
 export function designMethodAttachmentName(

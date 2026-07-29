@@ -39,7 +39,14 @@ test("default workflow uses internal planning and creates no second authority", 
 });
 
 test("default Context routing combines manifest candidates with bounded search", async () => {
-  const [managed, rootAgents, packaged, development, longTask, contractAuthoring] = await Promise.all([
+  const [
+    managed,
+    rootAgents,
+    packaged,
+    development,
+    longTask,
+    contractAuthoring,
+  ] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read("AGENTS.md"),
     read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
@@ -96,23 +103,31 @@ test("default Context routing combines manifest candidates with bounded search",
   assert.match(managed, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     managed,
-    /canonical entry[\s\S]*exact dependency closure[\s\S]*incomplete implementation-source acquisition[\s\S]*unresolved locators\/cells\/facts\/meaning[\s\S]*stale digests fail closed/iu,
+    /canonical entry[\s\S]*exact dependency closure[\s\S]*frozen-Inspector observable-Fact manifest/iu,
   );
   assert.match(
     managed,
-    /Deliberately partial design input[\s\S]*explicitly scoped constraint[\s\S]*never becomes an exact target/iu,
+    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts/iu,
   );
   assert.match(
     managed,
-    /covered facts, Source Items, declared verification methods, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
+    /Incomplete acquisition[\s\S]*unreadable Census\/locators[\s\S]*missing\/extra Fact Cells or proofs[\s\S]*stale digests fail closed/iu,
   );
   assert.match(
     managed,
-    /Preflight and hashes prove input completeness\/integrity, never production conformance/iu,
+    /Deliberately partial input remains a constraint or blocking unresolved/iu,
   );
   assert.match(
     managed,
-    /one ephemeral exact accounting[\s\S]*unresolved, unmapped, unexecuted, stale or indistinguishable/iu,
+    /Fact Cells, Facts, property-required proof methods, Source Items, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
+  );
+  assert.match(
+    managed,
+    /Preflight proves input completeness\/integrity relative to the named Inspector\/Oracle TCB, never production conformance/iu,
+  );
+  assert.match(
+    managed,
+    /one ephemeral exact accounting[\s\S]*unresolved, unmapped, unexecuted, stale, failed or indistinguishable/iu,
   );
   assert.match(
     managed,
@@ -134,22 +149,21 @@ test("shared architecture quality is observable, risk-proportional, and single-c
     authoring,
     workflow,
     rationale,
-  ] =
-    await Promise.all([
-      read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-      read("AGENTS.md"),
-      read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
-      read(
-        ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-      ),
-      read(".codex/skills/authoring/harness_package_design/SKILL.md"),
-      read(
-        "project_context/areas/harness-package/contracts/workflow-contract.md",
-      ),
-      read(
-        "project_context/areas/harness-package/decision-rationale/architecture-quality.md",
-      ),
-    ]);
+  ] = await Promise.all([
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read("AGENTS.md"),
+    read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
+    read(
+      ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+    ),
+    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
+    read(
+      "project_context/areas/harness-package/decision-rationale/architecture-quality.md",
+    ),
+  ]);
 
   assert.equal(packaged, managed, "package AGENTS Core drift");
   for (const guidance of [managed, rootAgents, workflow, rationale]) {
@@ -161,7 +175,10 @@ test("shared architecture quality is observable, risk-proportional, and single-c
       guidance,
       /externally observable|对用户可见|可见.*流程检查点/iu,
     );
-    assert.match(guidance, /before the first implementation edit|第一处实现编辑前/iu);
+    assert.match(
+      guidance,
+      /before the first implementation edit|第一处实现编辑前/iu,
+    );
     assert.match(guidance, /risk-proportional|风险.*深度/iu);
     assert.match(guidance, /owner|所有者/iu);
     assert.match(guidance, /extension point/iu);
@@ -248,7 +265,9 @@ test("CLI and managed guidance route only explicit or active work to long-task",
 test("Goal ownership, active recovery, and explicit Codex invocation stay independent", async () => {
   const [agents, workflow, skill] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
   ]);
 
@@ -273,17 +292,28 @@ test("Goal ownership, active recovery, and explicit Codex invocation stay indepe
 test("real-entry feedback stays advisory while final-candidate cold-start proof stays required", async () => {
   const [agents, workflow, spec, verification] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read("PROJECT_SPEC.md"),
     read("project_context/areas/harness-package/verification.md"),
   ]);
 
   for (const content of [agents, workflow]) {
-    assert.match(content, /first useful independently runnable production slice/iu);
+    assert.match(
+      content,
+      /first useful independently runnable production slice/iu,
+    );
     assert.match(content, /recommended real-entry feedback point/iu);
-    assert.match(content, /expected early-localization value exceeds the run cost/iu);
+    assert.match(
+      content,
+      /expected early-localization value exceeds the run cost/iu,
+    );
     assert.match(content, /not a prerequisite for expanding implementation/iu);
-    assert.match(content, /Detached routes, specimens and deep links remain supplemental/iu);
+    assert.match(
+      content,
+      /Detached routes, specimens and deep links remain supplemental/iu,
+    );
   }
   for (const content of [agents, workflow, spec, verification]) {
     assert.match(
@@ -300,19 +330,27 @@ test("real-entry feedback stays advisory while final-candidate cold-start proof 
 test("partial design constraints stay distinct from incomplete implementation-source acquisition", async () => {
   const [agents, workflow, skill, contractAuthoring] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
-    read(".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
   ]);
 
   for (const content of [agents, workflow, skill, contractAuthoring]) {
     assert.match(
       content,
-      /Deliberately partial design input[\s\S]*explicitly scoped constraint[\s\S]*never (?:becomes an |an )?exact target/iu,
+      /Deliberately partial (?:design )?input[\s\S]{0,100}(?:explicitly scoped )?constraint or blocking unresolved/iu,
     );
     assert.match(
       content,
-      /incomplete implementation-source acquisition[\s\S]{0,160}(?:blocking|block|fail closed)/iu,
+      /incomplete (?:implementation-source )?(?:acquisition|acquisition\/Census)[\s\S]{0,240}(?:blocking|block|fail closed)/iu,
+    );
+    assert.match(
+      content,
+      /exact[- ]target[\s\S]{0,180}(?:layout and pixel|layout\/pixel) Facts/iu,
     );
   }
 });
@@ -347,7 +385,14 @@ test("Workflow Contract names the complete Source-bound-Draft-to-qualified-resul
 });
 
 test("long-task Skill is the only active long-task workflow", async () => {
-  const [active, generated, packaged, codexMetadata, generatedMetadata, packagedMetadata] = await Promise.all([
+  const [
+    active,
+    generated,
+    packaged,
+    codexMetadata,
+    generatedMetadata,
+    packagedMetadata,
+  ] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
     read("packages/ty-context/assets/skills/long-task-workflow/SKILL.md"),
@@ -355,12 +400,22 @@ test("long-task Skill is the only active long-task workflow", async () => {
       ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
     ),
     read(".codex/skills/long-task-workflow/agents/openai.yaml"),
-    read("packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml"),
+    read(
+      "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
+    ),
   ]);
   assert.equal(generated, active, "source-workspace long-task Skill drift");
   assert.equal(packaged, active, "package long-task Skill drift");
-  assert.equal(generatedMetadata, codexMetadata, "source-workspace Long-Task metadata drift");
-  assert.equal(packagedMetadata, codexMetadata, "package Long-Task metadata drift");
+  assert.equal(
+    generatedMetadata,
+    codexMetadata,
+    "source-workspace Long-Task metadata drift",
+  );
+  assert.equal(
+    packagedMetadata,
+    codexMetadata,
+    "package Long-Task metadata drift",
+  );
   assert.match(active, /delivery-contract\.yaml/);
   assert.match(active, /currently selected host execution Goal/i);
   assert.match(
@@ -373,15 +428,15 @@ test("long-task Skill is the only active long-task workflow", async () => {
   assert.match(active, /Final Gate/i);
   assert.match(codexMetadata, /Use \$long-task-workflow/);
   assert.doesNotMatch(codexMetadata, /Use \/long-task-workflow/);
-  assert.equal(YAML.parse(codexMetadata).policy.allow_implicit_invocation, false);
+  assert.equal(
+    YAML.parse(codexMetadata).policy.allow_implicit_invocation,
+    false,
+  );
   assert.match(
     active,
     /ordinary prose proposal, legacy Source Plan or externally authored design resource/is,
   );
-  assert.match(
-    active,
-    /does not need to match a recommended structure/is,
-  );
+  assert.match(active, /does not need to match a recommended structure/is);
   assert.match(active, /stable semantic keys and Markdown anchors/is);
   assert.match(
     active,
@@ -495,7 +550,10 @@ test("retired Source Plan entry points to the Source-bound Contract Draft loop",
     ),
   ]);
   assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
-  assert.match(sourcePlan, /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu);
+  assert.match(
+    sourcePlan,
+    /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu,
+  );
   assert.match(sourcePlan, /Do not rewrite it merely for compatibility/iu);
   assert.match(sourcePlan, /create a new Source Plan artifact/iu);
   assert.doesNotMatch(

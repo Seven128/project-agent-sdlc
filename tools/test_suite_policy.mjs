@@ -99,7 +99,7 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "selected-design-fact-closure",
     "long-task-semantic-drift-closure.test.mjs",
     ["long-task", "long-task-trust"],
-    "Proves that selected-design method evidence must conserve the exact handoff fact set for every target and condition, so artifact presence cannot hide an omitted or substituted design fact.",
+    "Proves that selected-design method evidence must conserve the exact manifest-backed atomic Fact and property-required proof set for every target/condition, freeze each Fact's expected locator/comparator/tolerance/mask/Oracle/environment/sensitivity authority, and return one attributable passing current-snapshot result per Fact, so artifact or aggregate-pass presence cannot hide omission, substitution, stale authority, unsafe sensitive evidence, or a failed design Fact.",
   ),
   criticalSentinel(
     "semantic-assurance-closure",
@@ -384,19 +384,26 @@ export function planLongTaskIsolationLanes(
   availableFiles,
   safeConcurrency = LONG_TASK_DEFAULT_ISOLATED_CONCURRENCY,
 ) {
-  if (!Number.isSafeInteger(safeConcurrency) || safeConcurrency < 1 || safeConcurrency > 2)
+  if (
+    !Number.isSafeInteger(safeConcurrency) ||
+    safeConcurrency < 1 ||
+    safeConcurrency > 2
+  )
     throw new Error(
       "Long-Task isolated concurrency must be 1 or 2; use 1 as the serial rollback.",
     );
   const normalized = availableFiles.map((file) => path.basename(file));
   if (new Set(normalized).size !== normalized.length)
-    throw new Error("Long-Task isolation planning received duplicate test files.");
+    throw new Error(
+      "Long-Task isolation planning received duplicate test files.",
+    );
   const safe = [];
   const exclusive = [];
   const unknown = [];
   for (const file of normalized) {
     const classification = classifyLongTaskTestFile(file);
-    if (classification === "pure" || classification === "isolated") safe.push(file);
+    if (classification === "pure" || classification === "isolated")
+      safe.push(file);
     else {
       exclusive.push(file);
       if (!longTaskExclusiveFiles.has(file)) unknown.push(file);
@@ -439,10 +446,7 @@ export function resolveTestTimingOutput(
   return null;
 }
 
-export function resolveSuiteWallTimeBudgetMs(
-  suite,
-  environment = process.env,
-) {
+export function resolveSuiteWallTimeBudgetMs(suite, environment = process.env) {
   if (environment.TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON)
     throw new Error(
       "TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON is retired; select a repository-reviewed TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE instead.",
@@ -530,27 +534,38 @@ function assertCriticalTestSentinels() {
     if (ids.has(entry.id))
       throw new Error(`Duplicate critical test sentinel id: ${entry.id}.`);
     ids.add(entry.id);
-    if (path.basename(entry.file) !== entry.file || !entry.file.endsWith(".test.mjs"))
+    if (
+      path.basename(entry.file) !== entry.file ||
+      !entry.file.endsWith(".test.mjs")
+    )
       throw new Error(`Invalid critical test sentinel file: ${entry.file}.`);
     if (
       entry.required_suites.length === 0 ||
       new Set(entry.required_suites).size !== entry.required_suites.length ||
       entry.required_suites.some((suite) => !SUPPORTED_TEST_SUITES.has(suite))
     )
-      throw new Error(`Invalid suite placement for critical sentinel ${entry.id}.`);
+      throw new Error(
+        `Invalid suite placement for critical sentinel ${entry.id}.`,
+      );
     const isLongTaskFile = entry.file.startsWith("long-task-");
     if (
       (entry.required_suites.includes("default") && isLongTaskFile) ||
       (entry.required_suites.some((suite) => suite.startsWith("long-task")) &&
         !isLongTaskFile)
     )
-      throw new Error(`Critical sentinel ${entry.id} is assigned to the wrong suite family.`);
+      throw new Error(
+        `Critical sentinel ${entry.id} is assigned to the wrong suite family.`,
+      );
     if (
       entry.required_suites.includes("long-task-trust") &&
       !entry.required_suites.includes("long-task")
     )
-      throw new Error(`Trust sentinel ${entry.id} must also run in the complete Long-Task suite.`);
+      throw new Error(
+        `Trust sentinel ${entry.id} must also run in the complete Long-Task suite.`,
+      );
     if (typeof entry.rationale !== "string" || entry.rationale.length <= 40)
-      throw new Error(`Critical sentinel ${entry.id} requires a review rationale.`);
+      throw new Error(
+        `Critical sentinel ${entry.id} requires a review rationale.`,
+      );
   }
 }

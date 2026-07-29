@@ -348,6 +348,32 @@ test("design authoring profile and provider changes select focused coverage", ()
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
   ]);
 
+  const splitManifest = selectAffectedTests([
+    "packages/ty-context/src/lib/design-resource-fact-universe-inspector.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-fact-cells.ts",
+    "packages/ty-context/src/lib/long-task-design-target-capabilities.ts",
+  ]);
+  assert.equal(splitManifest.mode, "selected");
+  assert.deepEqual(splitManifest.tests, adapter.tests);
+
+  const splitPlaywright = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-playwright-case-primitives.ts",
+  ]);
+  assert.equal(splitPlaywright.mode, "selected");
+  assert.deepEqual(splitPlaywright.tests, [
+    "tests/ty-context/long-task-playwright-ac-evidence.test.mjs",
+    "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
+  ]);
+
+  const modularity = selectAffectedTests([
+    "packages/ty-context/src/lib/modularity.ts",
+  ]);
+  assert.equal(modularity.mode, "selected");
+  assert.deepEqual(modularity.tests, [
+    "tests/ty-context/check-modularity.test.mjs",
+    "tests/ty-context/validators.test.mjs",
+  ]);
+
   const activation = selectAffectedTests([
     "packages/ty-context/src/lib/long-task-activation-validation.ts",
   ]);
@@ -498,20 +524,16 @@ test("reviewed tier and hotspot budgets fail closed without limiting complete di
 
   assert.throws(
     () =>
-      assertReviewedTestList(
-        "synthetic tier",
-        ["a.test.mjs", "b.test.mjs"],
-        { max_files: 1 },
-      ),
+      assertReviewedTestList("synthetic tier", ["a.test.mjs", "b.test.mjs"], {
+        max_files: 1,
+      }),
     /above its reviewed maximum[\s\S]*do not delete coverage/iu,
   );
   assert.throws(
     () =>
-      assertReviewedTestList(
-        "synthetic tier",
-        ["a.test.mjs", "a.test.mjs"],
-        { max_files: 2 },
-      ),
+      assertReviewedTestList("synthetic tier", ["a.test.mjs", "a.test.mjs"], {
+        max_files: 2,
+      }),
     /duplicate/iu,
   );
   assert.throws(
@@ -522,8 +544,7 @@ test("reviewed tier and hotspot budgets fail closed without limiting complete di
           Array.from(
             {
               length:
-                TEST_TIER_REVIEW_BUDGETS.hotspot_fanout.max_tests_per_path +
-                1,
+                TEST_TIER_REVIEW_BUDGETS.hotspot_fanout.max_tests_per_path + 1,
             },
             (_, index) => `test-${index}.test.mjs`,
           ),

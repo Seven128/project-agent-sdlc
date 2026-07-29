@@ -83,6 +83,7 @@ function validateDesignMethod(
         artifact_path: item.path,
         observation_artifact_path: item.observation_path,
         fact_refs: item.fact_refs,
+        fact_expectations: item.fact_expectations,
       },
     ]),
   );
@@ -102,12 +103,109 @@ function validateDesignMethod(
       )
     )
       return "design_method_fact_refs_mismatch";
+    if (
+      !same(
+        [...cell.fact_results.map((item) => item.fact_ref)].sort(),
+        [...(expectedCell?.fact_refs ?? [])].sort(),
+      )
+    )
+      return "design_method_fact_results_mismatch";
     if (!artifactHashes[cell.artifact_path])
       return "design_method_artifact_missing";
     if (!artifactHashes[cell.observation_artifact_path])
       return "design_method_observation_artifact_missing";
+    const expectations = new Map(
+      (expectedCell?.fact_expectations ?? []).map((item) => [
+        item.fact_ref,
+        item,
+      ]),
+    );
+    const actualIdentities = new Set<string>();
+    const comparisonIdentities = new Set<string>();
+    for (const result of cell.fact_results) {
+      const expectation = expectations.get(result.fact_ref);
+      if (!expectation) return "design_method_fact_expectation_missing";
+      if (
+        result.subject_ref !== expectation.subject_ref ||
+        result.variation_ref !== expectation.variation_ref ||
+        result.property_ref !== expectation.property_ref ||
+        result.actual_observation.sensitivity !==
+          expectation.observation_sensitivity
+      )
+        return "design_method_fact_identity_mismatch";
+      if (
+        (result.actual_observation.sensitivity === "plain" &&
+          result.actual_observation.redaction !== null) ||
+        (result.actual_observation.sensitivity === "protected" &&
+          result.actual_observation.redaction === null)
+      )
+        return "design_method_observation_protection_mismatch";
+      if (
+        canonicalJson(result.expected) !== canonicalJson(expectation.expected)
+      )
+        return "design_method_expected_value_mismatch";
+      if (
+        result.comparison.comparator !== expectation.comparison.comparator ||
+        result.comparison.mode !== expectation.comparison.mode ||
+        canonicalJson(result.comparison.parameters) !==
+          canonicalJson(expectation.comparison.parameters) ||
+        canonicalJson(result.comparison.tolerance) !==
+          canonicalJson(expectation.comparison.tolerance) ||
+        canonicalJson(result.comparison.mask) !==
+          canonicalJson(expectation.comparison.mask)
+      )
+        return "design_method_comparison_authority_mismatch";
+      if (
+        canonicalJson(result.oracle) !== canonicalJson(expectation.oracle) ||
+        canonicalJson(result.environment) !==
+          canonicalJson(expectation.environment)
+      )
+        return "design_method_oracle_environment_mismatch";
+      if (
+        result.actual_observation.artifact_path !==
+          cell.observation_artifact_path ||
+        result.actual_observation.artifact_sha256 !==
+          artifactHashes[cell.observation_artifact_path]
+      )
+        return "design_method_actual_observation_mismatch";
+      if (
+        result.actual_environment.artifact_path !==
+          cell.observation_artifact_path ||
+        result.actual_environment.artifact_sha256 !==
+          artifactHashes[cell.observation_artifact_path] ||
+        result.actual_environment.value_sha256 !==
+          expectation.environment.definition.sha256
+      )
+        return "design_method_actual_environment_mismatch";
+      if (
+        result.comparison.artifact_path !== cell.artifact_path ||
+        result.comparison.artifact_sha256 !== artifactHashes[cell.artifact_path]
+      )
+        return "design_method_comparison_artifact_mismatch";
+      const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
+      if (actualIdentities.has(actualIdentity))
+        return "design_method_actual_observation_reused";
+      actualIdentities.add(actualIdentity);
+      const comparisonIdentity = `${result.comparison.artifact_path}\0${canonicalJson(result.comparison.locator)}`;
+      if (comparisonIdentities.has(comparisonIdentity))
+        return "design_method_comparison_result_reused";
+      comparisonIdentities.add(comparisonIdentity);
+      if (result.verdict !== "passed" || result.comparison.passed !== true)
+        return "design_method_fact_failed";
+    }
   }
   return null;
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (value && typeof value === "object")
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
+      .join(",")}}`;
+  return JSON.stringify(value);
 }
 
 function validateDesignConformance(

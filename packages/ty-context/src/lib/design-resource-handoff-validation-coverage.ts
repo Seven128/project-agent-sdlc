@@ -1,11 +1,5 @@
-import {
-  DESIGN_RESOURCE_EVIDENCE_BY_DIMENSION,
-  DESIGN_RESOURCE_METHODS_BY_DIMENSION,
-} from "./design-resource-handoff-policy.js";
-import {
-  DESIGN_RESOURCE_DIMENSIONS,
-  type DesignResourceHandoffV1,
-} from "./design-resource-handoff-types.js";
+import { DESIGN_RESOURCE_METHODS_BY_DIMENSION } from "./design-resource-handoff-policy.js";
+import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import {
   invalidDesignResourceHandoff,
   requireDesignSourceItemKind,
@@ -23,24 +17,30 @@ export function validateDesignResourceCoverage(
   facts: Map<string, DesignResourceHandoffV1["facts"][number]>,
   sourceItems: Map<string, string>,
 ): void {
-  const cells = new Set<string>();
+  const variations = new Map(
+    handoff.variations.map((item) => [item.key, item]),
+  );
+  const properties = new Map(
+    handoff.properties.map((item) => [item.key, item]),
+  );
+  const factCells = new Map(handoff.fact_cells.map((item) => [item.key, item]));
+  const proofs = new Map(
+    handoff.proof_obligations.map((item) => [item.key, item]),
+  );
+  const referencedCells = new Set<string>();
   const referencedFacts = new Set<string>();
-  const unresolved: string[] = [];
+  const referencedProofs = new Set<string>();
   for (const row of handoff.coverage) {
-    requireNonemptyDesignResourceValues(
-      row.subject_refs,
-      `coverage_subject_refs_required:${row.key}`,
-    );
-    requireNonemptyDesignResourceValues(
-      row.source_item_refs,
-      `coverage_source_item_refs_required:${row.key}`,
-    );
     for (const [name, values] of [
       ["subject_ref", row.subject_refs],
       ["target_ref", row.target_refs],
       ["condition_ref", row.condition_refs],
+      ["variation_ref", row.variation_refs],
+      ["property_ref", row.property_refs],
       ["evidence_ref", row.evidence_refs],
+      ["fact_cell_ref", row.fact_cell_refs],
       ["fact_ref", row.fact_refs],
+      ["proof_obligation_ref", row.proof_obligation_refs],
       ["source_item_ref", row.source_item_refs],
       ["verification_method", row.verification_methods],
     ] as const)
@@ -48,120 +48,232 @@ export function validateDesignResourceCoverage(
         values,
         `coverage_${name}_duplicate:${row.key}`,
       );
+    for (const [name, values] of [
+      ["subject_refs", row.subject_refs],
+      ["target_refs", row.target_refs],
+      ["condition_refs", row.condition_refs],
+      ["variation_refs", row.variation_refs],
+      ["property_refs", row.property_refs],
+      ["fact_cell_refs", row.fact_cell_refs],
+      ["source_item_refs", row.source_item_refs],
+    ] as const)
+      requireNonemptyDesignResourceValues(
+        values,
+        `coverage_${name}_required:${row.key}`,
+      );
     for (const ref of row.subject_refs)
       requireKnownDesignResourceRef(subjects, ref, "subject");
+    for (const ref of row.target_refs)
+      requireKnownDesignResourceRef(targets, ref, "target");
+    for (const ref of row.condition_refs)
+      requireKnownDesignResourceRef(conditions, ref, "condition");
+    for (const ref of row.variation_refs)
+      requireKnownDesignResourceRef(variations, ref, "variation");
+    for (const ref of row.property_refs)
+      requireKnownDesignResourceRef(properties, ref, "property");
     for (const ref of row.source_item_refs) {
       requireKnownDesignResourceRef(sourceItems, ref, "source_item");
       requireDesignSourceItemKind(sourceItems, ref);
     }
-    validateCoverageApplicability(row, handoff, targets, conditions, cells);
+    const cells = row.fact_cell_refs.map((ref) => {
+      requireKnownDesignResourceRef(factCells, ref, "fact_cell");
+      if (referencedCells.has(ref))
+        invalidDesignResourceHandoff(
+          "coverage_fact_cell_ref_duplicate",
+          `${row.key}:${ref}`,
+        );
+      referencedCells.add(ref);
+      return factCells.get(ref)!;
+    });
+    for (const cell of cells) {
+      const property = properties.get(cell.property_ref)!;
+      if (
+        property.dimension !== row.dimension ||
+        cell.disposition !== row.disposition ||
+        !row.subject_refs.includes(cell.subject_ref) ||
+        !row.target_refs.includes(cell.target_ref) ||
+        !row.condition_refs.includes(cell.condition_ref) ||
+        !row.variation_refs.includes(cell.variation_ref) ||
+        !row.property_refs.includes(cell.property_ref)
+      )
+        invalidDesignResourceHandoff(
+          "coverage_fact_cell_mismatch",
+          `${row.key}:${cell.key}`,
+        );
+    }
+    assertSameSet(
+      row.subject_refs,
+      cells.map((cell) => cell.subject_ref),
+      "coverage_subject_refs_mismatch",
+      row.key,
+    );
+    assertSameSet(
+      row.target_refs,
+      cells.map((cell) => cell.target_ref),
+      "coverage_target_refs_mismatch",
+      row.key,
+    );
+    assertSameSet(
+      row.condition_refs,
+      cells.map((cell) => cell.condition_ref),
+      "coverage_condition_refs_mismatch",
+      row.key,
+    );
+    assertSameSet(
+      row.variation_refs,
+      cells.map((cell) => cell.variation_ref),
+      "coverage_variation_refs_mismatch",
+      row.key,
+    );
+    assertSameSet(
+      row.property_refs,
+      cells.map((cell) => cell.property_ref),
+      "coverage_property_refs_mismatch",
+      row.key,
+    );
     if (row.disposition === "covered")
       validateCoveredRow(
         row,
-        handoff,
-        targets,
-        conditions,
+        cells,
         evidence,
         facts,
+        proofs,
         referencedFacts,
+        referencedProofs,
       );
-    else if (
-      row.disposition === "decision_required" ||
-      row.disposition === "unavailable"
-    )
-      unresolved.push(row.key);
-    else validateNoncoveredRow(row);
+    else validateNoncoveredRow(row, cells);
   }
-  for (const subject of handoff.subjects)
-    for (const targetRef of subject.target_refs) {
-      const target = targets.get(targetRef)!;
-      for (const conditionRef of target.condition_refs)
-        for (const dimension of DESIGN_RESOURCE_DIMENSIONS) {
-          const cell = coverageCell(
-            subject.key,
-            targetRef,
-            conditionRef,
-            dimension,
-          );
-          if (!cells.has(cell))
-            invalidDesignResourceHandoff(
-              "coverage_cell_missing",
-              `${subject.key}:${targetRef}:${conditionRef}:${dimension}`,
-            );
-        }
-    }
-  if (unresolved.length)
-    invalidDesignResourceHandoff(
-      "unresolved_coverage",
-      unresolved.sort().join(","),
-    );
-  for (const fact of handoff.facts)
-    if (!referencedFacts.has(fact.key))
-      invalidDesignResourceHandoff(
-        "design_resource_fact_unreferenced",
-        fact.key,
-      );
+  assertSameSet(
+    [...referencedCells],
+    handoff.fact_cells.map((cell) => cell.key),
+    "coverage_fact_cell_set_mismatch",
+    "handoff",
+  );
+  assertSameSet(
+    [...referencedFacts],
+    handoff.facts.map((fact) => fact.key),
+    "coverage_fact_set_mismatch",
+    "handoff",
+  );
+  assertSameSet(
+    [...referencedProofs],
+    handoff.proof_obligations.map((proof) => proof.key),
+    "coverage_proof_obligation_set_mismatch",
+    "handoff",
+  );
 }
 
-function validateCoverageApplicability(
+function validateCoveredRow(
   row: DesignResourceHandoffV1["coverage"][number],
-  handoff: DesignResourceHandoffV1,
-  targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
-  conditions: Map<string, unknown>,
-  cells: Set<string>,
+  cells: DesignResourceHandoffV1["fact_cells"],
+  evidence: Map<string, DesignResourceHandoffV1["evidence"][number]>,
+  facts: Map<string, DesignResourceHandoffV1["facts"][number]>,
+  proofs: Map<string, DesignResourceHandoffV1["proof_obligations"][number]>,
+  referencedFacts: Set<string>,
+  referencedProofs: Set<string>,
 ): void {
-  requireNonemptyDesignResourceValues(
-    row.target_refs,
-    `coverage_target_refs_required:${row.key}`,
+  for (const [name, values] of [
+    ["evidence_refs", row.evidence_refs],
+    ["fact_refs", row.fact_refs],
+    ["proof_obligation_refs", row.proof_obligation_refs],
+    ["verification_methods", row.verification_methods],
+  ] as const)
+    requireNonemptyDesignResourceValues(
+      values,
+      `coverage_${name}_required:${row.key}`,
+    );
+  const expectedFactRefs = cells.map((cell) => cell.fact_ref!);
+  assertSameSet(
+    row.fact_refs,
+    expectedFactRefs,
+    "coverage_fact_refs_mismatch",
+    row.key,
   );
-  requireNonemptyDesignResourceValues(
-    row.condition_refs,
-    `coverage_condition_refs_required:${row.key}`,
-  );
-  for (const targetRef of row.target_refs)
-    requireKnownDesignResourceRef(targets, targetRef, "target");
-  for (const conditionRef of row.condition_refs)
-    requireKnownDesignResourceRef(conditions, conditionRef, "condition");
-  const subjects = new Map(handoff.subjects.map((item) => [item.key, item]));
-  for (const subjectRef of row.subject_refs) {
-    const subject = subjects.get(subjectRef)!;
-    for (const targetRef of row.target_refs) {
-      if (!subject.target_refs.includes(targetRef))
-        invalidDesignResourceHandoff(
-          "coverage_target_outside_subject",
-          `${row.key}:${subjectRef}:${targetRef}`,
-        );
-      const target = targets.get(targetRef)!;
-      for (const conditionRef of row.condition_refs) {
-        if (!target.condition_refs.includes(conditionRef))
-          invalidDesignResourceHandoff(
-            "coverage_condition_outside_target",
-            `${row.key}:${targetRef}:${conditionRef}`,
-          );
-        const cell = coverageCell(
-          subjectRef,
-          targetRef,
-          conditionRef,
-          row.dimension,
-        );
-        if (cells.has(cell))
-          invalidDesignResourceHandoff(
-            "coverage_cell_duplicate",
-            `${subjectRef}:${targetRef}:${conditionRef}:${row.dimension}`,
-          );
-        cells.add(cell);
-      }
-    }
+  for (const ref of row.fact_refs) {
+    requireKnownDesignResourceRef(facts, ref, "fact");
+    if (referencedFacts.has(ref))
+      invalidDesignResourceHandoff(
+        "coverage_fact_ref_duplicate",
+        `${row.key}:${ref}`,
+      );
+    referencedFacts.add(ref);
   }
+  const localFacts = row.fact_refs.map((ref) => facts.get(ref)!);
+  for (const ref of row.evidence_refs)
+    requireKnownDesignResourceRef(evidence, ref, "evidence");
+  assertSameSet(
+    row.evidence_refs,
+    localFacts.flatMap((fact) => fact.evidence_refs),
+    "coverage_fact_evidence_refs_mismatch",
+    row.key,
+  );
+  assertSameSet(
+    row.source_item_refs,
+    localFacts.flatMap((fact) => fact.source_item_refs),
+    "coverage_fact_source_item_refs_mismatch",
+    row.key,
+  );
+  const localProofs = row.proof_obligation_refs.map((ref) => {
+    requireKnownDesignResourceRef(proofs, ref, "proof_obligation");
+    if (referencedProofs.has(ref))
+      invalidDesignResourceHandoff(
+        "coverage_proof_obligation_ref_duplicate",
+        `${row.key}:${ref}`,
+      );
+    referencedProofs.add(ref);
+    return proofs.get(ref)!;
+  });
+  assertSameSet(
+    row.proof_obligation_refs,
+    [...proofs.values()]
+      .filter((proof) => row.fact_refs.includes(proof.fact_ref))
+      .map((proof) => proof.key),
+    "coverage_proof_obligation_refs_mismatch",
+    row.key,
+  );
+  assertSameSet(
+    row.verification_methods,
+    localProofs.map((proof) => proof.method),
+    "coverage_verification_methods_mismatch",
+    row.key,
+  );
+  const allowedMethods = new Set(
+    DESIGN_RESOURCE_METHODS_BY_DIMENSION[row.dimension],
+  );
+  for (const method of row.verification_methods)
+    if (!allowedMethods.has(method))
+      invalidDesignResourceHandoff(
+        "coverage_verification_method_incompatible",
+        `${row.key}:${row.dimension}:${method}`,
+      );
 }
 
-function coverageCell(
-  subjectRef: string,
-  targetRef: string,
-  conditionRef: string,
-  dimension: string,
-): string {
-  return `${subjectRef}\0${targetRef}\0${conditionRef}\0${dimension}`;
+function validateNoncoveredRow(
+  row: DesignResourceHandoffV1["coverage"][number],
+  cells: DesignResourceHandoffV1["fact_cells"],
+): void {
+  for (const [name, values] of [
+    ["evidence_refs", row.evidence_refs],
+    ["fact_refs", row.fact_refs],
+    ["proof_obligation_refs", row.proof_obligation_refs],
+    ["verification_methods", row.verification_methods],
+  ] as const)
+    if (values.length)
+      invalidDesignResourceHandoff(
+        "noncovered_binding_forbidden",
+        `${row.key}:${row.disposition}:${name}`,
+      );
+  assertSameSet(
+    row.source_item_refs,
+    cells.flatMap((cell) => cell.source_item_refs),
+    "coverage_noncovered_source_item_refs_mismatch",
+    row.key,
+  );
+  if (
+    row.disposition === "decision_required" ||
+    row.disposition === "unavailable"
+  )
+    invalidDesignResourceHandoff("unresolved_coverage", row.key);
 }
 
 export function validateDesignResourceBlockers(
@@ -170,11 +282,19 @@ export function validateDesignResourceBlockers(
   targets: Map<string, unknown>,
   sourceItems: Map<string, string>,
 ): void {
+  const cells = new Map(handoff.fact_cells.map((item) => [item.key, item]));
+  const facts = new Map(handoff.facts.map((item) => [item.key, item]));
+  const proofs = new Map(
+    handoff.proof_obligations.map((item) => [item.key, item]),
+  );
   for (const blocker of handoff.acceptance_blockers) {
     for (const [name, values] of [
       ["target_refs", blocker.target_refs],
       ["subject_refs", blocker.subject_refs],
       ["dimensions", blocker.dimensions],
+      ["fact_cell_refs", blocker.fact_cell_refs],
+      ["fact_refs", blocker.fact_refs],
+      ["proof_obligation_refs", blocker.proof_obligation_refs],
       ["source_item_refs", blocker.source_item_refs],
       ["verification_methods", blocker.verification_methods],
       ["required_capabilities", blocker.required_capabilities],
@@ -192,6 +312,12 @@ export function validateDesignResourceBlockers(
       requireKnownDesignResourceRef(targets, ref, "target");
     for (const ref of blocker.subject_refs)
       requireKnownDesignResourceRef(subjects, ref, "subject");
+    for (const ref of blocker.fact_cell_refs)
+      requireKnownDesignResourceRef(cells, ref, "fact_cell");
+    for (const ref of blocker.fact_refs)
+      requireKnownDesignResourceRef(facts, ref, "fact");
+    for (const ref of blocker.proof_obligation_refs)
+      requireKnownDesignResourceRef(proofs, ref, "proof_obligation");
     for (const ref of blocker.source_item_refs) {
       requireKnownDesignResourceRef(sourceItems, ref, "source_item");
       requireDesignSourceItemKind(sourceItems, ref);
@@ -206,30 +332,33 @@ export function validateDesignResourceBlockers(
           "acceptance_blocker_dimension_method_missing",
           `${blocker.key}:${dimension}`,
         );
-    const matchedCoverage = handoff.coverage.filter(
-      (row) =>
-        row.disposition === "covered" &&
-        blocker.target_refs.some((ref) => row.target_refs.includes(ref)) &&
-        blocker.subject_refs.some((ref) => row.subject_refs.includes(ref)) &&
-        blocker.dimensions.includes(row.dimension),
-    );
-    for (const ref of blocker.source_item_refs)
-      if (!matchedCoverage.some((row) => row.source_item_refs.includes(ref)))
-        invalidDesignResourceHandoff(
-          "acceptance_blocker_source_item_without_coverage",
-          `${blocker.key}:${ref}`,
-        );
-    for (const method of blocker.verification_methods)
+    for (const ref of blocker.fact_refs)
       if (
-        !matchedCoverage.some((row) =>
-          row.verification_methods.includes(method),
-        )
+        !blocker.fact_cell_refs.includes(facts.get(ref)!.cell_ref) ||
+        !blocker.subject_refs.includes(facts.get(ref)!.subject_ref) ||
+        !blocker.target_refs.includes(facts.get(ref)!.target_ref)
       )
         invalidDesignResourceHandoff(
-          "acceptance_blocker_method_without_coverage",
-          `${blocker.key}:${method}`,
+          "acceptance_blocker_fact_scope_mismatch",
+          `${blocker.key}:${ref}`,
         );
+    for (const ref of blocker.proof_obligation_refs) {
+      const proof = proofs.get(ref)!;
+      if (
+        !blocker.fact_refs.includes(proof.fact_ref) ||
+        !blocker.verification_methods.includes(proof.method)
+      )
+        invalidDesignResourceHandoff(
+          "acceptance_blocker_proof_scope_mismatch",
+          `${blocker.key}:${ref}`,
+        );
+    }
   }
+  if (handoff.acceptance_blockers.length)
+    invalidDesignResourceHandoff(
+      "acceptance_blockers_unresolved",
+      handoff.acceptance_blockers.map((item) => item.key).join(","),
+    );
 }
 
 export function validateDesignResourceReachability(
@@ -247,6 +376,18 @@ export function validateDesignResourceReachability(
   const coverageEvidence = new Set(
     handoff.coverage.flatMap((row) => row.evidence_refs),
   );
+  const lineageRefs = new Set(
+    handoff.facts.flatMap((fact) => [
+      ...fact.lineage.token_chain_refs,
+      ...fact.lineage.override_chain_refs,
+    ]),
+  );
+  const oracleRefs = new Set(
+    handoff.proof_obligations.map((proof) => proof.oracle_ref),
+  );
+  const environmentRefs = new Set(
+    handoff.proof_obligations.map((proof) => proof.environment_ref),
+  );
   for (const resource of handoff.resources)
     if (!targetResources.has(resource.key))
       invalidDesignResourceHandoff("resource_unreferenced", resource.key);
@@ -262,125 +403,15 @@ export function validateDesignResourceReachability(
   for (const item of handoff.evidence)
     if (!coverageEvidence.has(item.key))
       invalidDesignResourceHandoff("evidence_unreferenced", item.key);
-}
-
-function validateCoveredRow(
-  row: DesignResourceHandoffV1["coverage"][number],
-  handoff: DesignResourceHandoffV1,
-  targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
-  conditions: Map<string, unknown>,
-  evidence: Map<string, DesignResourceHandoffV1["evidence"][number]>,
-  facts: Map<string, DesignResourceHandoffV1["facts"][number]>,
-  referencedFacts: Set<string>,
-): void {
-  for (const [name, values] of [
-    ["target_refs", row.target_refs],
-    ["condition_refs", row.condition_refs],
-    ["evidence_refs", row.evidence_refs],
-    ["fact_refs", row.fact_refs],
-    ["verification_methods", row.verification_methods],
-  ] as const)
-    requireNonemptyDesignResourceValues(
-      values,
-      `coverage_${name}_required:${row.key}`,
-    );
-  for (const ref of row.target_refs)
-    requireKnownDesignResourceRef(targets, ref, "target");
-  for (const ref of row.condition_refs)
-    requireKnownDesignResourceRef(conditions, ref, "condition");
-  for (const ref of row.evidence_refs)
-    requireKnownDesignResourceRef(evidence, ref, "evidence");
-  for (const ref of row.fact_refs) {
-    requireKnownDesignResourceRef(facts, ref, "fact");
-    if (referencedFacts.has(ref))
-      invalidDesignResourceHandoff(
-        "coverage_fact_ref_duplicate",
-        `${row.key}:${ref}`,
-      );
-    referencedFacts.add(ref);
-  }
-
-  const allowedEvidence = new Set(
-    DESIGN_RESOURCE_EVIDENCE_BY_DIMENSION[row.dimension],
-  );
-  const allowedMethods = new Set(
-    DESIGN_RESOURCE_METHODS_BY_DIMENSION[row.dimension],
-  );
-  for (const ref of row.evidence_refs) {
-    const item = evidence.get(ref)!;
-    if (!allowedEvidence.has(item.kind))
-      invalidDesignResourceHandoff(
-        "coverage_evidence_kind_incompatible",
-        `${row.key}:${row.dimension}:${item.key}:${item.kind}`,
-      );
-  }
-  for (const method of row.verification_methods)
-    if (!allowedMethods.has(method))
-      invalidDesignResourceHandoff(
-        "coverage_verification_method_incompatible",
-        `${row.key}:${row.dimension}:${method}`,
-      );
-  const expectedFacts = handoff.facts.filter(
-    (fact) =>
-      fact.dimension === row.dimension &&
-      row.subject_refs.includes(fact.subject_ref) &&
-      row.target_refs.includes(fact.target_ref) &&
-      row.condition_refs.includes(fact.condition_ref),
-  );
-  assertSameSet(
-    row.fact_refs,
-    expectedFacts.map((fact) => fact.key),
-    "coverage_fact_refs_mismatch",
-    row.key,
-  );
-  assertSameSet(
-    row.evidence_refs,
-    expectedFacts.flatMap((fact) => fact.evidence_refs),
-    "coverage_fact_evidence_refs_mismatch",
-    row.key,
-  );
-  assertSameSet(
-    row.source_item_refs,
-    expectedFacts.flatMap((fact) => fact.source_item_refs),
-    "coverage_fact_source_item_refs_mismatch",
-    row.key,
-  );
-  assertSameSet(
-    row.verification_methods,
-    expectedFacts.map((fact) => fact.verification_method),
-    "coverage_fact_verification_methods_mismatch",
-    row.key,
-  );
-  for (const subjectRef of row.subject_refs)
-    for (const targetRef of row.target_refs)
-      for (const conditionRef of row.condition_refs)
-        if (
-          !expectedFacts.some(
-            (fact) =>
-              fact.subject_ref === subjectRef &&
-              fact.target_ref === targetRef &&
-              fact.condition_ref === conditionRef,
-          )
-        )
-          invalidDesignResourceHandoff(
-            "coverage_cell_without_fact",
-            `${row.key}:${subjectRef}:${targetRef}:${conditionRef}`,
-          );
-}
-
-function validateNoncoveredRow(
-  row: DesignResourceHandoffV1["coverage"][number],
-): void {
-  for (const [name, values] of [
-    ["evidence_refs", row.evidence_refs],
-    ["fact_refs", row.fact_refs],
-    ["verification_methods", row.verification_methods],
-  ] as const)
-    if (values.length)
-      invalidDesignResourceHandoff(
-        "noncovered_binding_forbidden",
-        `${row.key}:${row.disposition}:${name}`,
-      );
+  for (const node of handoff.lineage_nodes)
+    if (!lineageRefs.has(node.key))
+      invalidDesignResourceHandoff("lineage_node_unreferenced", node.key);
+  for (const oracle of handoff.oracles)
+    if (!oracleRefs.has(oracle.key))
+      invalidDesignResourceHandoff("oracle_unreferenced", oracle.key);
+  for (const environment of handoff.environments)
+    if (!environmentRefs.has(environment.key))
+      invalidDesignResourceHandoff("environment_unreferenced", environment.key);
 }
 
 function assertSameSet(

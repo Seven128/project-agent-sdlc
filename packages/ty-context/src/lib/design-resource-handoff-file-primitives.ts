@@ -21,7 +21,9 @@ export function isTextResource(resource: DesignResource): boolean {
     [
       "application/javascript",
       "application/json",
+      "application/typescript",
       "application/xhtml+xml",
+      "image/svg+xml",
     ].includes(resource.media_type)
   );
 }

@@ -7,10 +7,8 @@ import type {
   DesignResourceVerificationMethod,
 } from "./design-resource-handoff-types.js";
 import { preflightDesignResourceHandoff } from "./design-resource-handoff-validation.js";
-import type {
-  DeliveryContractV2,
-  ExecutionTargetCapabilityV2,
-} from "./long-task-delivery-types.js";
+import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import { validateLongTaskDesignTargetCapabilities } from "./long-task-design-target-capabilities.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 
 interface ContractDesignTarget {
@@ -46,7 +44,11 @@ export async function validateLongTaskDesignResourceHandoffs(
       invalid("target_handoff_missing", contractTarget.target.key);
     consumed.add(contractTarget.target.key);
     validateTargetIdentity(contractTarget, indexedTarget);
-    validateTargetCapabilities(contract, contractTarget, indexedTarget);
+    validateLongTaskDesignTargetCapabilities(
+      contract,
+      contractTarget,
+      indexedTarget,
+    );
     validateCoverageClaims(contract, contractTarget, indexedTarget);
     validateBlockerBindings(contract, contractTarget, indexedTarget);
   }
@@ -140,6 +142,10 @@ function validateCoverageClaims(
   const facts = indexed.preflight.handoff.facts.filter(
     (fact) => fact.target_ref === target.key,
   );
+  const factRefs = new Set(facts.map((fact) => fact.key));
+  const proofs = indexed.preflight.handoff.proof_obligations.filter((proof) =>
+    factRefs.has(proof.fact_ref),
+  );
   if (!facts.length) invalid("target_facts_required", target.key);
   const claimsBySourceItem = new Map<string, string[]>();
   for (const row of rows)
@@ -153,7 +159,14 @@ function validateCoverageClaims(
       );
       claimsBySourceItem.set(sourceItemRef, localClaims);
     }
-  validateVerificationMethodBindings(target, check, facts, claimsBySourceItem);
+  validateVerificationMethodBindings(
+    target,
+    check,
+    facts,
+    proofs,
+    indexed,
+    claimsBySourceItem,
+  );
 }
 
 function validateBlockerBindings(
@@ -302,11 +315,11 @@ function validateVerificationMethodBindings(
   target: ContractDesignTarget["target"],
   check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
   facts: DesignResourceHandoffPreflightV1["handoff"]["facts"],
+  proofs: DesignResourceHandoffPreflightV1["handoff"]["proof_obligations"],
+  indexed: IndexedHandoffTarget,
   claimsBySourceItem: Map<string, string[]>,
 ): void {
-  const expectedMethods = new Set(
-    facts.map((fact) => fact.verification_method),
-  );
+  const expectedMethods = new Set(proofs.map((proof) => proof.method));
   const bindings = target.verification_method_bindings;
   assertSameSet(
     bindings.map((item) => item.method),
@@ -331,7 +344,12 @@ function validateVerificationMethodBindings(
       );
     const sourceItems = new Set(
       facts
-        .filter((fact) => fact.verification_method === binding.method)
+        .filter((fact) =>
+          proofs.some(
+            (proof) =>
+              proof.fact_ref === fact.key && proof.method === binding.method,
+          ),
+        )
         .flatMap((fact) => fact.source_item_refs),
     );
     for (const sourceItemRef of sourceItems)
@@ -357,14 +375,41 @@ function validateVerificationMethodBindings(
       const expectedFactRefs = facts
         .filter(
           (fact) =>
-            fact.verification_method === binding.method &&
-            fact.condition_ref === artifact.condition_key,
+            proofs.some(
+              (proof) =>
+                proof.fact_ref === fact.key && proof.method === binding.method,
+            ) && fact.condition_ref === artifact.condition_key,
         )
         .map((fact) => fact.key);
       assertSameSet(
         artifact.fact_refs,
         expectedFactRefs,
         "design_method_fact_refs_mismatch",
+        `${target.key}:${binding.method}:${artifact.condition_key}`,
+      );
+      const expectedFactExpectations = proofs
+        .filter(
+          (proof) =>
+            proof.method === binding.method &&
+            facts.some(
+              (fact) =>
+                fact.key === proof.fact_ref &&
+                fact.condition_ref === artifact.condition_key,
+            ),
+        )
+        .map((proof) =>
+          designFactExpectation(indexed, proof.fact_ref, proof.key),
+        );
+      assertSameSet(
+        artifact.fact_expectations.map((item) => item.fact_ref),
+        expectedFactRefs,
+        "design_method_fact_expectation_refs_mismatch",
+        `${target.key}:${binding.method}:${artifact.condition_key}`,
+      );
+      assertCanonicalRows(
+        artifact.fact_expectations,
+        expectedFactExpectations,
+        "design_method_fact_expectations_mismatch",
         `${target.key}:${binding.method}:${artifact.condition_key}`,
       );
       boundFactRefs.push(...artifact.fact_refs);
@@ -376,6 +421,71 @@ function validateVerificationMethodBindings(
     "design_method_fact_refs_mismatch",
     target.key,
   );
+}
+
+function designFactExpectation(
+  indexed: IndexedHandoffTarget,
+  factRef: string,
+  proofRef: string,
+) {
+  const handoff = indexed.preflight.handoff;
+  const fact = handoff.facts.find((item) => item.key === factRef)!;
+  const proof = handoff.proof_obligations.find(
+    (item) => item.key === proofRef,
+  )!;
+  const oracle = handoff.oracles.find((item) => item.key === proof.oracle_ref)!;
+  const environment = handoff.environments.find(
+    (item) => item.key === proof.environment_ref,
+  )!;
+  return {
+    fact_ref: fact.key,
+    subject_ref: fact.subject_ref,
+    variation_ref: fact.variation_ref,
+    property_ref: fact.property_ref,
+    observation_sensitivity: fact.observation_sensitivity,
+    expected: fact.value,
+    comparison: proof.comparison,
+    oracle: {
+      key: oracle.key,
+      trust: oracle.trust,
+      identity: oracle.identity,
+      version: oracle.version,
+      sha256: oracle.sha256,
+    },
+    environment: {
+      key: environment.key,
+      identity: environment.identity,
+      definition: environment.definition,
+    },
+  };
+}
+
+function assertCanonicalRows(
+  actual: Array<{ fact_ref: string }>,
+  expected: Array<{ fact_ref: string }>,
+  code: string,
+  detail: string,
+): void {
+  const left = new Map(
+    actual.map((item) => [item.fact_ref, canonicalJson(item)]),
+  );
+  const right = new Map(
+    expected.map((item) => [item.fact_ref, canonicalJson(item)]),
+  );
+  assertSameSet([...left.keys()], [...right.keys()], code, detail);
+  for (const [key, value] of right)
+    if (left.get(key) !== value) invalid(code, `${detail}:${key}`);
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
+  if (value && typeof value === "object")
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
+      .join(",")}}`;
+  return JSON.stringify(value);
 }
 
 function requiredCapabilities(
@@ -396,49 +506,6 @@ function requiredCapabilities(
       "target_runtime",
     ];
   return ["design_method", "design_conformance", "target_runtime"];
-}
-
-function validateTargetCapabilities(
-  contract: DeliveryContractV2,
-  contractTarget: ContractDesignTarget,
-  indexed: IndexedHandoffTarget,
-): void {
-  const executionTarget = contract.task.execution_targets.find(
-    (item) => item.key === contractTarget.binding.target_ref,
-  );
-  if (!executionTarget)
-    invalid(
-      "execution_target_unknown",
-      `${contractTarget.target.key}:${contractTarget.binding.target_ref}`,
-    );
-  const required = new Set<ExecutionTargetCapabilityV2>();
-  for (const method of contractTarget.target.verification_method_bindings.map(
-    (item) => item.method,
-  )) {
-    if (method === "responsive_reflow") required.add("viewport-control");
-    if (method === "motion_timeline") required.add("motion-observation");
-    if (method === "accessibility_semantics")
-      required.add("assistive-technology");
-  }
-  for (const conditionRef of indexed.target.condition_refs) {
-    const condition = indexed.preflight.handoff.conditions.find(
-      (item) => item.key === conditionRef,
-    )!;
-    const input = condition.input_methods[0].toLowerCase();
-    if (["mouse", "pointer", "trackpad"].includes(input))
-      required.add("pointer-input");
-    if (input === "keyboard") required.add("keyboard-input");
-    if (["touch", "pen", "stylus"].includes(input)) required.add("touch-input");
-    if (["screen-reader", "voice-control", "switch-control"].includes(input))
-      required.add("assistive-technology");
-    if (condition.motion === "reduced") required.add("reduced-motion");
-  }
-  for (const capability of required)
-    if (!executionTarget.capabilities.includes(capability))
-      invalid(
-        "execution_target_capability_missing",
-        `${contractTarget.target.key}:${executionTarget.key}:${capability}`,
-      );
 }
 
 function assertSameSet(

@@ -1,4 +1,22 @@
 import type { ExecutionTargetCapabilityV2 } from "./execution-target-capabilities.js";
+import type {
+  DesignResourceAssetBindingV1,
+  DesignResourceAxisDispositionV1,
+  DesignResourceConditionCombinationDispositionV1,
+  DesignResourceEnvironmentV1,
+  DesignResourceFactCellV1,
+  DesignResourceFactV1,
+  DesignResourceLineageNodeV1,
+  DesignResourceOracleV1,
+  DesignResourcePropertyDefinitionV1,
+  DesignResourceProofObligationV1,
+  DesignResourceRelationEndpointV1,
+  DesignResourceSubjectKind,
+  DesignResourceSubjectPresenceKind,
+  DesignResourceSubjectVariationV1,
+  DesignResourceVariationAxisDispositionV1,
+  DesignResourceVariationCombinationDispositionV1,
+} from "./design-resource-fact-manifest-types.js";
 
 export const DESIGN_RESOURCE_DIMENSIONS = [
   "surface_flow",
@@ -28,6 +46,13 @@ export const DESIGN_RESOURCE_EVIDENCE_KINDS = [
   "token_spec",
   "asset",
   "annotation",
+  "localization_spec",
+  "system_ui_spec",
+  "haptic_spec",
+  "sound_spec",
+  "sound_capture",
+  "render_environment",
+  "relation_spec",
 ] as const;
 
 export type DesignResourceEvidenceKind =
@@ -44,6 +69,14 @@ export const DESIGN_RESOURCE_VERIFICATION_METHODS = [
   "responsive_reflow",
   "input_method",
   "accessibility_semantics",
+  "accessibility_navigation",
+  "accessibility_visual",
+  "gesture_trace",
+  "scroll_navigation",
+  "localization",
+  "system_ui",
+  "haptic_feedback",
+  "sound_feedback",
   "asset_integrity",
 ] as const;
 
@@ -52,10 +85,17 @@ export type DesignResourceVerificationMethod =
 
 export const DESIGN_RESOURCE_LOCATOR_KINDS = [
   "html_selector",
+  "html_inner_html",
   "markdown_anchor",
   "json_pointer",
   "css_selector",
   "css_custom_property",
+  "html_attribute",
+  "css_declaration",
+  "javascript_export",
+  "svg_selector",
+  "svg_inner_xml",
+  "svg_attribute",
   "whole_resource",
 ] as const;
 
@@ -93,11 +133,23 @@ export interface DesignResourceHandoffV1 {
     design_system_id: string;
   };
   resources: DesignResourceHandoffResourceV1[];
+  axis_dispositions: DesignResourceAxisDispositionV1[];
+  condition_exclusions: DesignResourceConditionCombinationDispositionV1[];
   conditions: DesignResourceHandoffConditionV1[];
   subjects: DesignResourceHandoffSubjectV1[];
+  variation_axis_dispositions: DesignResourceVariationAxisDispositionV1[];
+  variation_exclusions: DesignResourceVariationCombinationDispositionV1[];
+  variations: DesignResourceSubjectVariationV1[];
+  properties: DesignResourcePropertyDefinitionV1[];
+  lineage_nodes: DesignResourceLineageNodeV1[];
   targets: DesignResourceHandoffTargetV1[];
   evidence: DesignResourceHandoffEvidenceV1[];
-  facts: DesignResourceHandoffFactV1[];
+  fact_cells: DesignResourceFactCellV1[];
+  facts: DesignResourceFactV1[];
+  proof_obligations: DesignResourceProofObligationV1[];
+  oracles: DesignResourceOracleV1[];
+  environments: DesignResourceEnvironmentV1[];
+  asset_bindings: DesignResourceAssetBindingV1[];
   resource_fact_closure: DesignResourceHandoffResourceFactClosureV1[];
   coverage: DesignResourceHandoffCoverageV1[];
   acceptance_blockers: DesignResourceHandoffBlockerV1[];
@@ -124,30 +176,78 @@ export interface DesignResourceHandoffResourceV1 {
 export interface DesignResourceHandoffConditionV1 {
   key: string;
   platform: string;
+  os_version: string;
+  device_profile: string;
+  form_factor: string;
   viewport: {
+    key: string;
     width: number;
     height: number;
     unit: "px";
   };
-  modes: string[];
-  states: string[];
-  content_cases: string[];
-  input_methods: string[];
-  motion: "full" | "reduced" | "not_applicable";
+  orientation: string;
+  density: {
+    key: string;
+    pixel_ratio: number;
+  };
+  safe_area: {
+    key: string;
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    unit: "px";
+  };
+  window_state: string;
+  fold_state: string;
+  display_mode: string;
+  color_scheme: string;
+  locale: string;
+  language: string;
+  script: string;
+  direction: "ltr" | "rtl" | "not_applicable";
+  pseudo_localization: string;
+  content_case: string;
+  data_case: string;
+  text_scale: {
+    key: string;
+    multiplier: number;
+  };
+  input_method: string;
+  assistive_technology: string;
+  motion: string;
+  transparency: string;
+  contrast: string;
+  bold_text: string;
+  button_shapes: string;
+  system_ui: string;
+  ime: string;
+  permission: string;
+  capability: string;
+  connectivity: string;
+  lifecycle: string;
+  custom_axes: Array<{
+    axis_ref: string;
+    value_ref: string;
+  }>;
 }
 
 export interface DesignResourceHandoffSubjectV1 {
   key: string;
-  kind:
-    | "surface"
-    | "flow"
-    | "region"
-    | "component_family"
-    | "control"
-    | "state"
-    | "asset";
+  kind: DesignResourceSubjectKind;
   stable_keys: string[];
   target_refs: string[];
+  parent_ref: string | null;
+  instance_of_ref: string | null;
+  slot_key: string | null;
+  override_of_ref: string | null;
+  family_ref: string | null;
+  presence: DesignResourceSubjectPresenceKind;
+  presence_rule_ref: string | null;
+  population_ref: string | null;
+  portal_host_ref: string | null;
+  relation_endpoints: DesignResourceRelationEndpointV1[];
+  census_refs: string[];
 }
 
 export interface DesignResourceHandoffTargetV1 {
@@ -159,6 +259,7 @@ export interface DesignResourceHandoffTargetV1 {
     kind: DesignResourceSourceProfileKind;
     entry_resource_ref: string;
     dependency_resource_refs: string[];
+    fact_manifest_resource_ref: string;
     acquisition: "complete";
   };
   selection_basis: string;
@@ -175,17 +276,7 @@ export interface DesignResourceHandoffEvidenceV1 {
   condition_refs: string[];
 }
 
-export interface DesignResourceHandoffFactV1 {
-  key: string;
-  subject_ref: string;
-  target_ref: string;
-  condition_ref: string;
-  dimension: DesignResourceDimension;
-  observation_scope: "subject" | "full_target";
-  evidence_refs: string[];
-  source_item_refs: string[];
-  verification_method: DesignResourceVerificationMethod;
-}
+export type DesignResourceHandoffFactV1 = DesignResourceFactV1;
 
 export interface DesignResourceHandoffResourceFactClosureV1 {
   key: string;
@@ -206,8 +297,12 @@ export interface DesignResourceHandoffCoverageV1 {
   disposition: DesignResourceCoverageDisposition;
   target_refs: string[];
   condition_refs: string[];
+  variation_refs: string[];
+  property_refs: string[];
   evidence_refs: string[];
+  fact_cell_refs: string[];
   fact_refs: string[];
+  proof_obligation_refs: string[];
   source_item_refs: string[];
   verification_methods: DesignResourceVerificationMethod[];
   rationale: string;
@@ -218,6 +313,9 @@ export interface DesignResourceHandoffBlockerV1 {
   target_refs: string[];
   subject_refs: string[];
   dimensions: DesignResourceDimension[];
+  fact_cell_refs: string[];
+  fact_refs: string[];
+  proof_obligation_refs: string[];
   source_item_refs: string[];
   verification_methods: DesignResourceVerificationMethod[];
   required_capabilities: ExecutionTargetCapabilityV2[];
@@ -237,11 +335,21 @@ export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHa
   resource_hashes: Record<string, string>;
   counts: {
     resources: number;
+    manifests: number;
+    axis_dispositions: number;
     conditions: number;
     subjects: number;
+    variations: number;
+    properties: number;
+    lineage_nodes: number;
     targets: number;
     evidence: number;
+    fact_cells: number;
     facts: number;
+    proof_obligations: number;
+    oracles: number;
+    environments: number;
+    asset_bindings: number;
     resource_fact_closure: number;
     coverage: number;
     acceptance_blockers: number;

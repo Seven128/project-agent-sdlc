@@ -81,8 +81,12 @@ test("visual design and implementation guidance reaches every managed copy", asy
     "adaptation_input",
     "accessibility",
     "assets",
-  ]) assert.match(uiux, new RegExp(dimension, "u"));
-  assert.match(uiux, /每个 adopted target 只能有一个 canonical adoption record/iu);
+  ])
+    assert.match(uiux, new RegExp(dimension, "u"));
+  assert.match(
+    uiux,
+    /每个 adopted target 只能有一个 canonical adoption record/iu,
+  );
   assert.match(
     uiux,
     /项目级、系统级或 component-family target[\s\S]*owning Screen Contract/iu,
@@ -96,12 +100,21 @@ test("visual design and implementation guidance reaches every managed copy", asy
   assert.match(uiux, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     uiux,
-    /surface\/flow、visual\/content、component\/control、state\/interaction、motion、adaptation\/input、accessibility、assets/u,
+    /八个 UI\/UX dimension 是 roll-up[\s\S]*不是 UI Fact 粒度上限/u,
   );
-  assert.match(uiux, /可观察的设计事实/iu);
-  assert.match(uiux, /Control 是产品交互语义单位，不是 UI 原子粒度上限/iu);
-  assert.match(uiux, /完整 fact\/resource closure/iu);
-  assert.match(uiux, /整目标 layout 与 pixel 事实/iu);
+  assert.match(
+    uiux,
+    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts/iu,
+  );
+  assert.match(uiux, /subject × target × condition × variation × property/iu);
+  assert.match(
+    uiux,
+    /Control 是产品交互语义单位[\s\S]*都不是 UI Fact 粒度上限/iu,
+  );
+  assert.match(uiux, /完整 Fact Cell\/Fact\/proof\/resource closure/iu);
+  assert.match(uiux, /Inspector Census/iu);
+  assert.match(uiux, /设计系统 effective-value\/conflict lineage/iu);
+  assert.match(uiux, /整目标 layout 与 pixel (?:事实|Facts)/iu);
   assert.match(uiux, /不复制 provider.*提示词\/模板/isu);
   assert.match(
     uiux,
@@ -172,7 +185,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /complete observable design fact[\s\S]*fact\/Source\/method\/blocker\/target\/condition sets[\s\S]*project-owned check/iu,
+    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts[\s\S]*Fact Cell\/Fact\/proof\/Source\/blocker\/target\/condition sets[\s\S]*project-owned check/iu,
   );
   assert.match(development, /`exact-target`, `constraint` or `inspiration`/iu);
   assert.match(
@@ -215,9 +228,14 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /final-current-candidate Contract Conformance[\s\S]*unread, unsupported, unresolved, unmapped, unimplemented, unexecuted, stale or indistinguishable/iu,
+    /final-current-candidate Contract Conformance[\s\S]*unread, unsupported, unresolved, unmapped, unimplemented, unexecuted, stale, failed or indistinguishable/iu,
   );
-  assert.match(development, /exact handoff `fact_refs`/iu);
+  assert.match(development, /exact `fact_refs`/iu);
+  assert.match(development, /canonical `fact_expectations`/iu);
+  assert.match(
+    development,
+    /set-equal per-Fact `fact_results`[\s\S]*actual observation\/environment\/comparison\/verdict/iu,
+  );
   assert.match(development, /full-target layout and pixel proof/iu);
   assert.match(development, /do not run the preceding default closure/iu);
   assert.match(development, /Final Gate is the sole Long-Task carrier/iu);
@@ -240,7 +258,14 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   assert.match(authoring, /resolve Design Authority before Compile/iu);
   assert.match(authoring, /perform UI Authority Closure/iu);
   assert.match(authoring, /design-resource-handoff-v1/u);
-  assert.match(authoring, /complete observable design fact/iu);
+  assert.match(
+    authoring,
+    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts/iu,
+  );
+  assert.match(
+    authoring,
+    /subject × target × condition × variation × property/iu,
+  );
   assert.match(authoring, /full-target layout and pixel facts/iu);
   assert.match(
     authoring,
@@ -269,11 +294,13 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     authoring,
     /root journey[\s\S]*`navigation_result`[\s\S]*`interaction_trace`[\s\S]*`target_runtime`/iu,
   );
+  assert.match(authoring, /typed current-execution `design_method` evidence/iu);
+  assert.match(authoring, /exact proof-owned `fact_refs`/iu);
+  assert.match(authoring, /canonical `fact_expectations` row for every Fact/iu);
   assert.match(
     authoring,
-    /typed current-execution `design_method` evidence/iu,
+    /one exact `fact_results` row per Fact[\s\S]*actual observation[\s\S]*pass\/fail verdict/iu,
   );
-  assert.match(authoring, /exact handoff `fact_refs`/iu);
   assert.match(
     authoring,
     /all-of `design_conformance`, `interaction_trace` and `target_runtime`/iu,
@@ -312,11 +339,23 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   const evidence = evidenceCopies[0];
   assert.match(evidence, /^## Visual UI Evidence$/mu);
   assert.match(evidence, /ty-context design-resource preflight/iu);
-  assert.match(evidence, /complete per-resource fact closure/iu);
-  assert.match(evidence, /exact handoff `fact_refs`/iu);
   assert.match(
     evidence,
-    /geometry\/pixel\/token\/content[\s\S]*motion timeline[\s\S]*accessibility semantics[\s\S]*asset integrity/iu,
+    /complete per-resource\/Fact Cell\/Fact\/proof closure/iu,
+  );
+  assert.match(evidence, /exact handoff `fact_refs`/iu);
+  assert.match(evidence, /full `fact_expectations`/iu);
+  assert.match(
+    evidence,
+    /each current `fact_results` row[\s\S]*actual observation[\s\S]*pass\/fail verdict/iu,
+  );
+  assert.match(
+    evidence,
+    /aggregate Boolean[\s\S]*one `all-states` result[\s\S]*per-Fact rows/iu,
+  );
+  assert.match(
+    evidence,
+    /geometry\/pixel\/token\/content[\s\S]*motion\/haptic\/sound timeline[\s\S]*accessibility semantic\/navigation\/visual[\s\S]*asset integrity/iu,
   );
   assert.match(
     evidence,
@@ -400,11 +439,11 @@ test("complete selected-design conformance is shared through mutually exclusive 
   ]) {
     assert.match(
       content,
-      /Agent implementation, acceptance and testing fully conform/iu,
+      /Agent implementation, acceptance and testing fully conform|full implementation\/acceptance\/test conformance/iu,
     );
     assert.match(content, /canonical (?:machine-readable )?(?:entry|source)/iu);
     assert.match(content, /typed locator/iu);
-    assert.match(content, /subject.*target.*condition.*dimension/isu);
+    assert.match(content, /subject.*target.*condition.*variation.*property/isu);
     assert.match(
       content,
       /residual[\s\S]{0,160}handoff|handoff[\s\S]{0,160}residual/iu,
@@ -419,14 +458,14 @@ test("complete selected-design conformance is shared through mutually exclusive 
     rootReadme,
     packageReadme,
   ]) {
-    assert.match(content, /complete observable (?:design )?fact/iu);
+    assert.match(content, /Expected Fact Universe/iu);
     assert.match(content, /pixel/iu);
   }
   assert.match(handoffContract, /resource_fact_closure/u);
   assert.match(handoffContract, /fact_refs/u);
   assert.match(
     globalContext,
-    /A selected implementation handoff[\s\S]*every complete observable design fact[\s\S]*current-candidate production checks/iu,
+    /formal selected Web\/App handoff[\s\S]*Expected Fact Universe[\s\S]*per-Fact current-candidate production checks/iu,
   );
   assert.match(
     globalContext,
@@ -444,7 +483,11 @@ test("complete selected-design conformance is shared through mutually exclusive 
     chineseReadme,
     /canonical entry[\s\S]*typed locator[\s\S]*subject.*target.*condition/isu,
   );
-  assert.match(chineseReadme, /complete observable design fact/iu);
+  assert.match(chineseReadme, /Expected Fact Universe/iu);
+  assert.match(
+    chineseReadme,
+    /subject × selected target × condition combination × variation combination × property/iu,
+  );
   assert.match(chineseReadme, /pixel/iu);
   assert.match(
     sourcePlan,
@@ -486,7 +529,10 @@ test("default workflow routes Design Authority readiness without adding a visual
 
   for (const content of [spec, managedSurface]) {
     assert.match(content, /task-local|ephemeral/iu);
-    assert.match(content, /no (?:visual Schema|`uiux_delivery` block)|There is no `uiux_delivery` block/iu);
+    assert.match(
+      content,
+      /no (?:visual Schema|`uiux_delivery` block)|There is no `uiux_delivery` block/iu,
+    );
     assert.match(content, /no[^\n]*lifecycle state/iu);
   }
   assert.match(
@@ -500,11 +546,11 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(workflow, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     workflow,
-    /every subject across surface\/flow[\s\S]*accessibility and assets/iu,
+    /subject × target × condition × variation × property[\s\S]*Product Controls\/eight dimensions are not the Fact ceiling/iu,
   );
   assert.match(
     workflow,
-    /conserves the exact covered Source-item\/method\/blocker\/target\/condition sets[\s\S]*real-entry checks/iu,
+    /exact Fact Cell\/Fact\/proof\/Source\/blocker\/target\/condition accounting[\s\S]*real root-entry journey[\s\S]*per-Fact final-candidate check/iu,
   );
   assert.match(workflow, /^## UI Authority Closure$/mu);
   assert.match(workflow, /material production UI/iu);
@@ -535,10 +581,16 @@ test("default workflow routes Design Authority readiness without adding a visual
   );
   assert.match(
     agents,
-    /Preflight and hashes prove input completeness\/integrity, never production conformance/iu,
+    /Preflight(?: and hashes)? proves? input completeness\/integrity[\s\S]*never production conformance/iu,
   );
-  assert.match(agents, /Local fixes and explicit non-fidelity prototypes stay lightweight/iu);
-  assert.match(agents, /Externally authored resources remain ordinary Source/iu);
+  assert.match(
+    agents,
+    /Local fixes and explicit non-fidelity prototypes stay lightweight/iu,
+  );
+  assert.match(
+    agents,
+    /Externally authored resources remain ordinary Source/iu,
+  );
   assert.match(agents, /exactly one canonical record/iu);
   assert.match(
     agents,
@@ -547,7 +599,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(agents, /Never overwrite an adopted baseline/iu);
   assert.match(
     agents,
-    /unresolved, unmapped, unexecuted, stale or indistinguishable item blocks a complete(?:-conformance)? claim/iu,
+    /unresolved, unmapped, unexecuted, stale, failed or indistinguishable item blocks a complete(?:-conformance)? claim/iu,
   );
   assert.match(
     agents,
@@ -576,7 +628,10 @@ test("default workflow routes Design Authority readiness without adding a visual
     assert.match(content, /exactly one canonical adoption record/iu);
     assert.match(content, /mutually exclusive/iu);
     assert.match(content, /Product `surface_bindings`/u);
-    assert.match(content, /typed `design_conformance`/u);
+    assert.match(
+      content,
+      /`design_conformance`[\s\S]*typed current-execution record/iu,
+    );
     assert.match(content, /first useful runnable production slice/iu);
     assert.match(
       content,
@@ -584,7 +639,7 @@ test("default workflow routes Design Authority readiness without adding a visual
     );
     assert.match(
       content,
-      /all 22 canonical fields[\s\S]*`field_coverage`[\s\S]*omission never means non-applicable[\s\S]*`control_relation_closure`/iu,
+      /all 22 canonical fields[\s\S]*`field_coverage`[\s\S]*never caps[\s\S]*finer design Fact universe[\s\S]*Control Claims\/relations/iu,
     );
     assert.match(
       content,
@@ -599,7 +654,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(chineseReadme, /Context-reachable Source/iu);
   assert.match(chineseReadme, /新 immutable version/u);
   assert.match(chineseReadme, /Product `surface_bindings`/u);
-  assert.match(chineseReadme, /typed `design_conformance`/u);
+  assert.match(chineseReadme, /`design_conformance`[\s\S]*当前执行记录/iu);
   assert.match(chineseReadme, /第一个有价值的可运行纵向切片/u);
   assert.match(chineseReadme, /两种证明载体互斥/u);
   assert.match(chineseReadme, /exactly-one canonical adoption record/iu);

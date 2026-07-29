@@ -70,7 +70,7 @@ function validateDesignTargets({
     if (!target.verification_method_bindings.length)
       issue(report, "ui_design_target_verification_methods_required", label);
     const methodArtifactPaths = new Set<string>();
-    const methodFactRefs = new Set<string>();
+    const methodFactObligations = new Set<string>();
     for (const [name, values] of [
       ["source_paths", target.source_paths],
       ["condition_keys", target.condition_keys],
@@ -157,14 +157,32 @@ function validateDesignTargets({
           `${label}:${methodBinding.method}:${artifact.condition_key}`,
           report,
         );
+        unique(
+          artifact.fact_expectations.map((item) => item.fact_ref),
+          "ui_design_method_fact_expectation_duplicate",
+          `${label}:${methodBinding.method}:${artifact.condition_key}`,
+          report,
+        );
+        if (
+          !sameSet(
+            artifact.fact_expectations.map((item) => item.fact_ref),
+            artifact.fact_refs,
+          )
+        )
+          issue(
+            report,
+            "ui_design_method_fact_expectation_refs_mismatch",
+            `${label}:${methodBinding.method}:${artifact.condition_key}`,
+          );
         for (const factRef of artifact.fact_refs) {
-          if (methodFactRefs.has(factRef))
+          const obligationIdentity = `${methodBinding.method}\0${artifact.condition_key}\0${factRef}`;
+          if (methodFactObligations.has(obligationIdentity))
             issue(
               report,
-              "ui_design_method_fact_ref_reused",
-              `${label}:${factRef}`,
+              "ui_design_method_fact_obligation_reused",
+              `${label}:${methodBinding.method}:${artifact.condition_key}:${factRef}`,
             );
-          methodFactRefs.add(factRef);
+          methodFactObligations.add(obligationIdentity);
         }
         for (const [kind, artifactPath] of [
           ["record", artifact.path],

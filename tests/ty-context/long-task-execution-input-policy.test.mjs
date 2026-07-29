@@ -6,6 +6,7 @@ import {
   computeRawExecutionIdentity,
   rawExecutionInputProjection,
 } from "../../packages/ty-context/dist/lib/long-task-check-execution-policy.js";
+import { designFactExpectationFixture } from "./long-task-delivery-fixtures.mjs";
 
 test("every DeliveryCheck field has an explicit execution-input policy", () => {
   assert.deepEqual(Object.keys(CHECK_EXECUTION_INPUT_POLICY).sort(), [
@@ -74,6 +75,9 @@ test("all raw execution fields affect identity and per-check evidence does not",
             path: "artifacts/settings-layout.json",
             observation_path: "artifacts/settings-layout-observation.json",
             fact_refs: ["settings.layout.default"],
+            fact_expectations: [
+              designFactExpectationFixture("settings.layout.default"),
+            ],
           },
         ],
       },

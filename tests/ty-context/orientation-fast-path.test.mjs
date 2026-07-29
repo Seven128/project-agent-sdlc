@@ -26,7 +26,10 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
       ),
     ]);
 
-  assert.match(global, /Minimal Context.*Workflow Contract.*Long-Task Workflow/s);
+  assert.match(
+    global,
+    /Minimal Context.*Workflow Contract.*Long-Task Workflow/s,
+  );
   assert.match(global, /default Workflow Contract[\s\S]{0,220}prompt-level/iu);
   assert.match(global, /Context Delta: none\|required/);
   assert.match(global, /Single-Goal Rolling Delivery/);
@@ -60,7 +63,10 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
     /Workflow Contract is (?:the automatically applicable )?prompt-level order of thought/,
   );
   assert.match(model, /Source-to-Context judgment.*not a Markdown table/s);
-  assert.match(model, /Context-to-Implementation alignment.*not a Markdown table/s);
+  assert.match(
+    model,
+    /Context-to-Implementation alignment.*not a Markdown table/s,
+  );
 
   assert.match(workflow, /platform-internal planning/);
   assert.match(workflow, /no required `plan\.md`/);
@@ -96,8 +102,14 @@ test("managed guidance and package assets share current routing", async () => {
     assert.match(guidance, /Contract Conformance/);
     assert.match(guidance, /Single-Goal Long-Task Workflow/);
     assert.match(guidance, /ty-context enable long-task/);
-    assert.match(guidance, /load and follow the package-managed `long-task-workflow` Skill/i);
-    assert.match(guidance, /Long-Task Final Gate is the sole `Architecture Conformance`/i);
+    assert.match(
+      guidance,
+      /load and follow the (?:installed )?package-managed `long-task-workflow` Skill/i,
+    );
+    assert.match(
+      guidance,
+      /Long-Task Final Gate is the sole `Architecture Conformance`/i,
+    );
     assert.match(
       guidance,
       /Receipts, compiled cache[\s\S]{0,80}never create acceptance/i,
@@ -166,7 +178,10 @@ test("public documentation is English-complete for profiles and current workflow
     await read("packages/ty-context/README.md"),
   ]) {
     assert.match(document, /Why It Exists/);
-    assert.match(document, /Minimal Context.*Workflow Contract.*Long-Task Workflow/s);
+    assert.match(
+      document,
+      /Minimal Context.*Workflow Contract.*Long-Task Workflow/s,
+    );
     assert.match(document, /platform's internal plan/);
     assert.match(document, /core-portable/);
     assert.match(document, /workflow-default/);
@@ -177,6 +192,9 @@ test("public documentation is English-complete for profiles and current workflow
     assert.match(document, /Final Gate/);
     assert.match(document, /Plan Validator commands no longer exist/);
     assert.match(document, /check-modularity/);
-    assert.match(document, /owner.*introduced_at.*tracking_issue.*expiry_condition/s);
+    assert.match(
+      document,
+      /owner.*introduced_at.*tracking_issue.*expiry_condition/s,
+    );
   }
 });

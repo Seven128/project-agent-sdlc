@@ -5,16 +5,24 @@ import type {
   DesignResourceHandoffTargetV1,
 } from "./design-resource-handoff-types.js";
 import {
+  DESIGN_RESOURCE_SUBJECT_KINDS,
+  DESIGN_RESOURCE_SUBJECT_PRESENCE_KINDS,
+} from "./design-resource-fact-manifest-types.js";
+import {
+  atomicAxisValue,
   contractKey,
   contractKeys,
   designResourceShapeFail,
+  nonnegativeNumber,
   positiveInteger,
+  positiveNumber,
   stableKey,
   stableKeys,
 } from "./design-resource-handoff-shape-primitives.js";
 import {
   array,
   literal,
+  nullable,
   object,
   repositoryFile,
   string,
@@ -83,22 +91,73 @@ export function parseDesignResourceHandoffConditions(
       const row = object(item, label, [
         "key",
         "platform",
+        "os_version",
+        "device_profile",
+        "form_factor",
         "viewport",
-        "modes",
-        "states",
-        "content_cases",
-        "input_methods",
+        "orientation",
+        "density",
+        "safe_area",
+        "window_state",
+        "fold_state",
+        "display_mode",
+        "color_scheme",
+        "locale",
+        "language",
+        "script",
+        "direction",
+        "pseudo_localization",
+        "content_case",
+        "data_case",
+        "text_scale",
+        "input_method",
+        "assistive_technology",
         "motion",
+        "transparency",
+        "contrast",
+        "bold_text",
+        "button_shapes",
+        "system_ui",
+        "ime",
+        "permission",
+        "capability",
+        "connectivity",
+        "lifecycle",
+        "custom_axes",
       ]);
       const viewport = object(row.viewport, `${label}.viewport`, [
+        "key",
         "width",
         "height",
         "unit",
       ]);
+      const density = object(row.density, `${label}.density`, [
+        "key",
+        "pixel_ratio",
+      ]);
+      const safeArea = object(row.safe_area, `${label}.safe_area`, [
+        "key",
+        "top",
+        "right",
+        "bottom",
+        "left",
+        "unit",
+      ]);
+      const textScale = object(row.text_scale, `${label}.text_scale`, [
+        "key",
+        "multiplier",
+      ]);
       return {
         key: contractKey(row.key, `${label}.key`),
-        platform: string(row.platform, `${label}.platform`),
+        platform: atomicAxisValue(row.platform, `${label}.platform`),
+        os_version: atomicAxisValue(row.os_version, `${label}.os_version`),
+        device_profile: atomicAxisValue(
+          row.device_profile,
+          `${label}.device_profile`,
+        ),
+        form_factor: atomicAxisValue(row.form_factor, `${label}.form_factor`),
         viewport: {
+          key: atomicAxisValue(viewport.key, `${label}.viewport.key`),
           width: positiveInteger(viewport.width, `${label}.viewport.width`),
           height: positiveInteger(viewport.height, `${label}.viewport.height`),
           unit: literal(
@@ -107,14 +166,106 @@ export function parseDesignResourceHandoffConditions(
             `${label}.viewport.unit`,
           ),
         },
-        modes: strings(row.modes, `${label}.modes`),
-        states: strings(row.states, `${label}.states`),
-        content_cases: strings(row.content_cases, `${label}.content_cases`),
-        input_methods: strings(row.input_methods, `${label}.input_methods`),
-        motion: literal(
-          row.motion,
-          ["full", "reduced", "not_applicable"] as const,
-          `${label}.motion`,
+        orientation: atomicAxisValue(row.orientation, `${label}.orientation`),
+        density: {
+          key: atomicAxisValue(density.key, `${label}.density.key`),
+          pixel_ratio: positiveNumber(
+            density.pixel_ratio,
+            `${label}.density.pixel_ratio`,
+          ),
+        },
+        safe_area: {
+          key: atomicAxisValue(safeArea.key, `${label}.safe_area.key`),
+          top: nonnegativeNumber(safeArea.top, `${label}.safe_area.top`),
+          right: nonnegativeNumber(safeArea.right, `${label}.safe_area.right`),
+          bottom: nonnegativeNumber(
+            safeArea.bottom,
+            `${label}.safe_area.bottom`,
+          ),
+          left: nonnegativeNumber(safeArea.left, `${label}.safe_area.left`),
+          unit: literal(
+            safeArea.unit,
+            ["px"] as const,
+            `${label}.safe_area.unit`,
+          ),
+        },
+        window_state: atomicAxisValue(
+          row.window_state,
+          `${label}.window_state`,
+        ),
+        fold_state: atomicAxisValue(row.fold_state, `${label}.fold_state`),
+        display_mode: atomicAxisValue(
+          row.display_mode,
+          `${label}.display_mode`,
+        ),
+        color_scheme: atomicAxisValue(
+          row.color_scheme,
+          `${label}.color_scheme`,
+        ),
+        locale: atomicAxisValue(row.locale, `${label}.locale`),
+        language: atomicAxisValue(row.language, `${label}.language`),
+        script: atomicAxisValue(row.script, `${label}.script`),
+        direction: literal(
+          row.direction,
+          ["ltr", "rtl", "not_applicable"] as const,
+          `${label}.direction`,
+        ),
+        pseudo_localization: atomicAxisValue(
+          row.pseudo_localization,
+          `${label}.pseudo_localization`,
+        ),
+        content_case: atomicAxisValue(
+          row.content_case,
+          `${label}.content_case`,
+        ),
+        data_case: atomicAxisValue(row.data_case, `${label}.data_case`),
+        text_scale: {
+          key: atomicAxisValue(textScale.key, `${label}.text_scale.key`),
+          multiplier: positiveNumber(
+            textScale.multiplier,
+            `${label}.text_scale.multiplier`,
+          ),
+        },
+        input_method: atomicAxisValue(
+          row.input_method,
+          `${label}.input_method`,
+        ),
+        assistive_technology: atomicAxisValue(
+          row.assistive_technology,
+          `${label}.assistive_technology`,
+        ),
+        motion: atomicAxisValue(row.motion, `${label}.motion`),
+        transparency: atomicAxisValue(
+          row.transparency,
+          `${label}.transparency`,
+        ),
+        contrast: atomicAxisValue(row.contrast, `${label}.contrast`),
+        bold_text: atomicAxisValue(row.bold_text, `${label}.bold_text`),
+        button_shapes: atomicAxisValue(
+          row.button_shapes,
+          `${label}.button_shapes`,
+        ),
+        system_ui: atomicAxisValue(row.system_ui, `${label}.system_ui`),
+        ime: atomicAxisValue(row.ime, `${label}.ime`),
+        permission: atomicAxisValue(row.permission, `${label}.permission`),
+        capability: atomicAxisValue(row.capability, `${label}.capability`),
+        connectivity: atomicAxisValue(
+          row.connectivity,
+          `${label}.connectivity`,
+        ),
+        lifecycle: atomicAxisValue(row.lifecycle, `${label}.lifecycle`),
+        custom_axes: array(row.custom_axes, `${label}.custom_axes`).map(
+          (item, itemIndex) => {
+            const itemLabel = `${label}.custom_axes[${itemIndex}]`;
+            const custom = object(item, itemLabel, ["axis_ref", "value_ref"]);
+            return {
+              axis_ref: stableKey(custom.axis_ref, `${itemLabel}.axis_ref`),
+              value_ref: atomicAxisValue(
+                custom.value_ref,
+                `${itemLabel}.value_ref`,
+              ),
+            };
+          },
         ),
       };
     },
@@ -131,24 +282,67 @@ export function parseDesignResourceHandoffSubjects(
       "kind",
       "stable_keys",
       "target_refs",
+      "parent_ref",
+      "instance_of_ref",
+      "slot_key",
+      "override_of_ref",
+      "family_ref",
+      "presence",
+      "presence_rule_ref",
+      "population_ref",
+      "portal_host_ref",
+      "relation_endpoints",
+      "census_refs",
     ]);
     return {
       key: stableKey(row.key, `${label}.key`),
-      kind: literal(
-        row.kind,
-        [
-          "surface",
-          "flow",
-          "region",
-          "component_family",
-          "control",
-          "state",
-          "asset",
-        ] as const,
-        `${label}.kind`,
-      ),
+      kind: literal(row.kind, DESIGN_RESOURCE_SUBJECT_KINDS, `${label}.kind`),
       stable_keys: stableKeys(row.stable_keys, `${label}.stable_keys`),
       target_refs: contractKeys(row.target_refs, `${label}.target_refs`),
+      parent_ref: nullable(row.parent_ref, (item) =>
+        stableKey(item, `${label}.parent_ref`),
+      ),
+      instance_of_ref: nullable(row.instance_of_ref, (item) =>
+        stableKey(item, `${label}.instance_of_ref`),
+      ),
+      slot_key: nullable(row.slot_key, (item) =>
+        stableKey(item, `${label}.slot_key`),
+      ),
+      override_of_ref: nullable(row.override_of_ref, (item) =>
+        stableKey(item, `${label}.override_of_ref`),
+      ),
+      family_ref: nullable(row.family_ref, (item) =>
+        stableKey(item, `${label}.family_ref`),
+      ),
+      presence: literal(
+        row.presence,
+        DESIGN_RESOURCE_SUBJECT_PRESENCE_KINDS,
+        `${label}.presence`,
+      ),
+      presence_rule_ref: nullable(row.presence_rule_ref, (item) =>
+        stableKey(item, `${label}.presence_rule_ref`),
+      ),
+      population_ref: nullable(row.population_ref, (item) =>
+        stableKey(item, `${label}.population_ref`),
+      ),
+      portal_host_ref: nullable(row.portal_host_ref, (item) =>
+        stableKey(item, `${label}.portal_host_ref`),
+      ),
+      relation_endpoints: array(
+        row.relation_endpoints,
+        `${label}.relation_endpoints`,
+      ).map((endpoint, endpointIndex) => {
+        const endpointLabel = `${label}.relation_endpoints[${endpointIndex}]`;
+        const parsed = object(endpoint, endpointLabel, ["role", "subject_ref"]);
+        return {
+          role: stableKey(parsed.role, `${endpointLabel}.role`),
+          subject_ref: stableKey(
+            parsed.subject_ref,
+            `${endpointLabel}.subject_ref`,
+          ),
+        };
+      }),
+      census_refs: stableKeys(row.census_refs, `${label}.census_refs`),
     };
   });
 }
@@ -169,7 +363,13 @@ export function parseDesignResourceHandoffTargets(
     const sourceProfile = object(
       row.source_profile,
       `${label}.source_profile`,
-      ["kind", "entry_resource_ref", "dependency_resource_refs", "acquisition"],
+      [
+        "kind",
+        "entry_resource_ref",
+        "dependency_resource_refs",
+        "fact_manifest_resource_ref",
+        "acquisition",
+      ],
     );
     return {
       key: contractKey(row.key, `${label}.key`),
@@ -196,6 +396,10 @@ export function parseDesignResourceHandoffTargets(
         dependency_resource_refs: stableKeys(
           sourceProfile.dependency_resource_refs,
           `${label}.source_profile.dependency_resource_refs`,
+        ),
+        fact_manifest_resource_ref: stableKey(
+          sourceProfile.fact_manifest_resource_ref,
+          `${label}.source_profile.fact_manifest_resource_ref`,
         ),
         acquisition: literal(
           sourceProfile.acquisition,

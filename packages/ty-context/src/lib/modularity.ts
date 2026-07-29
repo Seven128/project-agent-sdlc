@@ -134,7 +134,10 @@ export async function runModularityCheck(
 
   const files: ModularityFileReport[] = [];
   for (const relativePath of [...candidates].sort()) {
-    if (!shouldIncludeCodeFile(relativePath)) {
+    if (
+      isWorkflowAuthorityArtifact(relativePath) ||
+      !shouldIncludeCodeFile(relativePath)
+    ) {
       continue;
     }
     const absolutePath = path.join(projectRoot, ...relativePath.split("/"));
@@ -188,6 +191,14 @@ export async function runModularityCheck(
     waivedWarnings,
     errors: [...configErrors, ...waiverErrors, ...waiverTargetErrors],
   };
+}
+
+function isWorkflowAuthorityArtifact(relativePath: string): boolean {
+  const normalized = toPosix(relativePath);
+  return (
+    normalized.startsWith(".work_products/") &&
+    normalized.endsWith("/delivery-contract.yaml")
+  );
 }
 
 function analyzeFile(

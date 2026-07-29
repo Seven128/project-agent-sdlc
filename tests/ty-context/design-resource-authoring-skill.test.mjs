@@ -52,6 +52,10 @@ test("resource selection preserves the smallest sufficient scoped commission", a
   assert.match(combined, /smallest sufficient/iu);
   assert.match(
     combined,
+    /(?:artifact count|artifact\/file set)[\s\S]*never information granularity/iu,
+  );
+  assert.match(
+    combined,
     /material UI\/UX decisions inside the explicit development scope/iu,
   );
   assert.match(combined, /one artifact per control/iu);
@@ -140,28 +144,40 @@ test("implementation output uses complete canonical source plus residual handoff
     copies("references/downstream-handoff.md").then((items) => items[0]),
   ]);
   const combined = `${skill}\n${provider}\n${handoff}`;
-  assert.match(skill, /complete implementation source/iu);
+  assert.match(
+    skill,
+    /complete canonical source|canonical implementation source/iu,
+  );
   assert.match(provider, /Implementation-level output profile/iu);
   assert.match(provider, /canonical machine-readable entry/iu);
   assert.match(provider, /complete output set/iu);
   assert.match(provider, /without truncation/iu);
   assert.match(provider, /exact bytes.*media types.*SHA-256/isu);
   assert.match(provider, /implementation_web.*implementation_app/isu);
-  assert.match(provider, /every local HTML\/CSS\/JS dependency/iu);
   assert.match(
     provider,
-    /every declared verification method[\s\S]*code, specifications, tokens and asset manifests[\s\S]*decision_required.*unavailable/isu,
+    /every locally referenced dependency[\s\S]*declared target set/iu,
   );
   assert.match(
     provider,
-    /stable IDs\/data attributes.*Markdown anchors.*JSON Pointers.*CSS selectors\/custom properties/isu,
+    /every property-required verification method[\s\S]*code, specifications, tokens and asset manifests[\s\S]*decision_required.*unavailable/isu,
+  );
+  assert.match(
+    provider,
+    /stable IDs\/data attributes.*Markdown anchors.*JSON Pointers.*HTML\/CSS\/JS\/SVG selectors.*declarations.*attributes/isu,
   );
   assert.match(handoff, /residual semantic and index layer/iu);
-  assert.match(handoff, /typed locator/iu);
-  assert.match(handoff, /subject.*target.*condition.*dimension/isu);
-  assert.match(combined, /complete observable design fact/iu);
+  assert.match(
+    handoff,
+    /typed located digests|typed, locally resolvable .* locators/iu,
+  );
+  assert.match(
+    handoff,
+    /subject × target × condition × variation × property/iu,
+  );
+  assert.match(combined, /Expected Fact Universe/iu);
   assert.match(handoff, /Product Controls.*do not cap fact granularity/iu);
-  assert.match(handoff, /atomic `facts`/iu);
+  assert.match(handoff, /one atomic Fact for every covered cell/iu);
   assert.match(handoff, /resource_fact_closure/u);
   assert.match(handoff, /`fact_refs`/u);
   assert.match(handoff, /full_target.*layout_geometry/isu);
@@ -178,6 +194,102 @@ test("implementation output uses complete canonical source plus residual handoff
     handoff,
     /no second numeric\/style source|not a second numeric\/style source/iu,
   );
+});
+
+test("formal Web/App authoring closes the complete atomic Fact universe before handoff", async () => {
+  const [skill, provider, handoff, selection] = await Promise.all([
+    copies("SKILL.md").then((items) => items[0]),
+    copies("references/open-design-provider.md").then((items) => items[0]),
+    copies("references/downstream-handoff.md").then((items) => items[0]),
+    copies("references/resource-selection.md").then((items) => items[0]),
+  ]);
+  const combined = `${skill}\n${provider}\n${handoff}\n${selection}`;
+
+  assert.match(
+    combined,
+    /derive.*Expected Fact Universe.*before generation/isu,
+  );
+  assert.match(
+    combined,
+    /Expected Fact Universe[\s\S]*Canonical Resource Facts[\s\S]*Handoff Indexed Facts/iu,
+  );
+  assert.match(
+    combined,
+    /subject × target × condition × variation × property/iu,
+  );
+  assert.match(combined, /all 33 standard target-condition axes/iu);
+  for (const axis of [
+    "platform",
+    "viewport",
+    "density",
+    "Safe Area",
+    "text scale",
+    "assistive technology",
+    "permission",
+    "connectivity",
+    "lifecycle",
+  ])
+    assert.match(combined, new RegExp(axis, "iu"));
+  assert.match(
+    combined,
+    /`variant`.*`state`.*`interaction_phase`.*`presence_phase`.*`instance_case`/isu,
+  );
+  assert.match(
+    combined,
+    /Surface.*region.*component family.*Control.*Anatomy Part\/slot.*primitive.*text.*icon.*media.*asset.*relation/isu,
+  );
+  assert.match(combined, /complete standard atomic property catalog/iu);
+  for (const family of [
+    "geometry",
+    "layout",
+    "scroll",
+    "typography",
+    "color",
+    "decoration",
+    "content",
+    "interaction",
+    "navigation",
+    "motion",
+    "feedback",
+    "responsive",
+    "accessibility",
+    "asset",
+    "system",
+    "relation",
+  ])
+    assert.match(combined, new RegExp(`\\b${family}\\b`, "iu"));
+
+  assert.match(combined, /design-resource-observable-fact-manifest-v1/u);
+  assert.match(combined, /frozen Inspector/iu);
+  assert.match(
+    combined,
+    /resource\/node\/declaration\/token\/asset\/relation\/custom.prop.*variant\/state\/interaction.*dynamic.population.*Census/isu,
+  );
+  assert.match(combined, /complete_enumeration/iu);
+  assert.match(combined, /sampling: forbidden/iu);
+  assert.match(combined, /truncation: forbidden/iu);
+  assert.match(
+    combined,
+    /all-21-state-catalog.*cannot impersonate 21 atomic states/iu,
+  );
+  assert.match(combined, /one explicit Fact Cell for every applicable/iu);
+  assert.match(combined, /one atomic Fact for every covered cell/iu);
+  assert.match(combined, /typed value locators\/digests/iu);
+  assert.match(combined, /effective design-system lineage/iu);
+  assert.match(combined, /dynamic\/lazy\/virtualized\/portal population/iu);
+  assert.match(combined, /separate `proof_obligations` for every Fact/iu);
+  assert.match(
+    combined,
+    /comparator.*tolerance.*mask.*Oracle.*render environment/isu,
+  );
+  assert.match(combined, /exact manifest↔handoff row\/set equality/iu);
+  assert.match(combined, /complete_explicit/iu);
+  assert.match(combined, /count plus identity digest/iu);
+  assert.match(
+    handoff,
+    /`fact_expectations`[\s\S]*`fact_results`[\s\S]*actual observation[\s\S]*pass\/fail verdict/iu,
+  );
+  assert.match(combined, /digest-only\/redacted|digest-only or redacted/iu);
 });
 
 test("final selection performs one idempotent initial-proposal reconciliation", async () => {
@@ -233,10 +345,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
     handoff,
     /editable upstream owner, locator and update\/export method/iu,
   );
-  assert.match(
-    handoff,
-    /declared platform, viewport, mode, state, content, input and full\/reduced\/not-applicable motion conditions/iu,
-  );
+  assert.match(handoff, /all 33 standard target-condition axes/iu);
   assert.match(handoff, /exactly one:[\s\S]*design-resource-handoff-v1/iu);
   for (const dimension of [
     "surface_flow",
@@ -250,7 +359,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
   ])
     assert.match(handoff, new RegExp(`\\b${dimension}\\b`, "u"));
   assert.match(handoff, /ty-context design-resource preflight <handoff\.md>/u);
-  assert.match(handoff, /complete inspection closure/iu);
+  assert.match(handoff, /complete inspection\/proof closure/iu);
   assert.match(
     handoff,
     /material resource cannot be hidden as `supporting_only`/iu,
@@ -259,9 +368,10 @@ test("handoff preserves immutable resource identity and direct downstream routin
     handoff,
     /static frame[\s\S]*cannot cover unseen interaction, motion, adaptation\/input or accessibility/iu,
   );
+  assert.match(handoff, /blocking `decision_required`\/`unavailable`/iu);
   assert.match(
     handoff,
-    /`decision_required` or `unavailable`[\s\S]*make preflight fail/iu,
+    /unresolved rows remain visible and make preflight fail/iu,
   );
   assert.match(
     handoff,
@@ -300,36 +410,38 @@ test("handoff preserves immutable resource identity and direct downstream routin
 });
 
 test("Source, specification, Context and public docs expose the new resource contract", async () => {
-  const [plan, spec, contexts, readmes, profile, manifest] = await Promise.all([
-    read("docs/design-resource-authoring-source-plan.md"),
-    read("PROJECT_SPEC.md"),
-    Promise.all([
-      read("project_context/global.md"),
-      read("project_context/architecture.md"),
-      read("project_context/areas/harness-package.md"),
-      read(
-        "project_context/areas/harness-package/contracts/workflow-contract.md",
-      ),
-      read(
-        "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-      ),
-      read(
-        "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
-      ),
-      read(
-        "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      ),
-      read("project_context/areas/harness-package/implementation-index.md"),
-      read("project_context/areas/harness-package/verification.md"),
-    ]).then((items) => items.join("\n")),
-    Promise.all([
-      read("README.md"),
-      read("README.zh-CN.md"),
-      read("packages/ty-context/README.md"),
-    ]).then((items) => items.join("\n")),
-    read("packages/ty-context/src/lib/profiles.ts"),
-    read("project_context/context.toml"),
-  ]);
+  const [plan, factCompleteness, spec, contexts, readmes, profile, manifest] =
+    await Promise.all([
+      read("docs/design-resource-authoring-source-plan.md"),
+      read("docs/design-fact-completeness.md"),
+      read("PROJECT_SPEC.md"),
+      Promise.all([
+        read("project_context/global.md"),
+        read("project_context/architecture.md"),
+        read("project_context/areas/harness-package.md"),
+        read(
+          "project_context/areas/harness-package/contracts/workflow-contract.md",
+        ),
+        read(
+          "project_context/areas/harness-package/contracts/design-resource-handoff.md",
+        ),
+        read(
+          "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+        ),
+        read(
+          "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+        ),
+        read("project_context/areas/harness-package/implementation-index.md"),
+        read("project_context/areas/harness-package/verification.md"),
+      ]).then((items) => items.join("\n")),
+      Promise.all([
+        read("README.md"),
+        read("README.zh-CN.md"),
+        read("packages/ty-context/README.md"),
+      ]).then((items) => items.join("\n")),
+      read("packages/ty-context/src/lib/profiles.ts"),
+      read("project_context/context.toml"),
+    ]);
   assert.match(plan, /Plan key: `PLAN-DRA-001`/u);
   assert.match(plan, /^## 2026-07-22 Workflow And Provider Amendment$/mu);
   assert.match(
@@ -360,13 +472,29 @@ test("Source, specification, Context and public docs expose the new resource con
       content,
       /eight.dimension|eight closed|八维|surface\/flow[\s\S]*accessibility[\s\S]*assets/isu,
     );
-    assert.match(content, /complete observable design fact/iu);
+    assert.match(content, /Expected Fact Universe/iu);
     assert.match(content, /pixel/iu);
     assert.match(
       content,
-      /resource_fact_closure|resource.fact closure|资源事实闭包/iu,
+      /resource_fact_closure|resource.fact closure|资源事实闭包|Fact Cell\/Fact\/proof|Fact\/proof closure/iu,
     );
     assert.match(content, /fact_refs|fact refs/iu);
+  }
+  for (const content of [factCompleteness, spec, contexts, readmes]) {
+    assert.match(content, /Expected Fact Universe/iu);
+    assert.match(
+      content,
+      /subject × (?:selected )?target × condition(?: combination)? × variation(?: combination)? × (?:atomic )?property/iu,
+    );
+    assert.match(content, /33 (?:standard )?(?:target-)?condition axes/iu);
+    assert.match(content, /five variation axes|5 variation axes/iu);
+    assert.match(content, /design-resource-observable-fact-manifest-v1/u);
+    assert.match(content, /Inspector/iu);
+    assert.match(content, /Census/iu);
+    assert.match(content, /fact_expectations/u);
+    assert.match(content, /fact_results/u);
+    assert.match(content, /actual observation/iu);
+    assert.match(content, /Oracle/iu);
   }
   for (const content of [plan, spec, contexts, readmes]) {
     assert.match(
@@ -377,7 +505,10 @@ test("Source, specification, Context and public docs expose the new resource con
       content,
       /typed locator|typed, locally resolvable locators|typed HTML\/Markdown\/JSON\/CSS locator/iu,
     );
-    assert.match(content, /subject.*target.*condition.*dimension/isu);
+    assert.match(
+      content,
+      /subject.*target.*condition.*(?:dimension|variation.*property)/isu,
+    );
     assert.match(content, /residual handoff|残余.*handoff/iu);
     assert.match(content, /immutable|不可变/iu);
     assert.match(content, /Final Gate/iu);

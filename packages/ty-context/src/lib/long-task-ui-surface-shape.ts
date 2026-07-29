@@ -4,12 +4,15 @@ import type {
   DeliverySurfaceBindingV2,
 } from "./long-task-ui-surface-types.js";
 import { DESIGN_RESOURCE_VERIFICATION_METHODS } from "./design-resource-handoff-types.js";
+import { DESIGN_RESOURCE_COMPARATORS } from "./design-resource-fact-manifest-types.js";
+import { parseDesignResourceLocatedDigest } from "./design-resource-fact-shape-primitives.js";
 import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 import {
   array,
   fail,
   key,
   literal,
+  nullable,
   object,
   repositoryFile,
   repositoryFiles,
@@ -200,6 +203,7 @@ function parseVerificationMethodBindings(value: unknown, label: string) {
           "path",
           "observation_path",
           "fact_refs",
+          "fact_expectations",
         ]);
         return {
           condition_key: key(
@@ -215,8 +219,131 @@ function parseVerificationMethodBindings(value: unknown, label: string) {
             entry.fact_refs,
             `${artifactLabel}.fact_refs`,
           ),
+          fact_expectations: parseDesignFactExpectations(
+            entry.fact_expectations,
+            `${artifactLabel}.fact_expectations`,
+          ),
         };
       }),
+    };
+  });
+}
+
+function parseDesignFactExpectations(value: unknown, label: string) {
+  return array(value, label).map((item, index) => {
+    const itemLabel = `${label}[${index}]`;
+    const row = object(item, itemLabel, [
+      "fact_ref",
+      "subject_ref",
+      "variation_ref",
+      "property_ref",
+      "observation_sensitivity",
+      "expected",
+      "comparison",
+      "oracle",
+      "environment",
+    ]);
+    const comparison = object(row.comparison, `${itemLabel}.comparison`, [
+      "comparator",
+      "mode",
+      "parameters",
+      "tolerance",
+      "mask",
+    ]);
+    const comparator = string(
+      comparison.comparator,
+      `${itemLabel}.comparison.comparator`,
+    );
+    if (
+      !DESIGN_RESOURCE_COMPARATORS.includes(
+        comparator as (typeof DESIGN_RESOURCE_COMPARATORS)[number],
+      ) &&
+      !/^custom\.[a-z0-9][a-z0-9._-]*$/u.test(comparator)
+    )
+      fail(
+        `${itemLabel}.comparison.comparator`,
+        "must be a standard comparator or custom.*",
+      );
+    const oracle = object(row.oracle, `${itemLabel}.oracle`, [
+      "key",
+      "trust",
+      "identity",
+      "version",
+      "sha256",
+    ]);
+    const environment = object(row.environment, `${itemLabel}.environment`, [
+      "key",
+      "identity",
+      "definition",
+    ]);
+    return {
+      fact_ref: designFactRef(row.fact_ref, `${itemLabel}.fact_ref`),
+      subject_ref: designFactRef(row.subject_ref, `${itemLabel}.subject_ref`),
+      variation_ref: designFactRef(
+        row.variation_ref,
+        `${itemLabel}.variation_ref`,
+      ),
+      property_ref: designFactRef(
+        row.property_ref,
+        `${itemLabel}.property_ref`,
+      ),
+      observation_sensitivity: literal(
+        row.observation_sensitivity,
+        ["plain", "protected"] as const,
+        `${itemLabel}.observation_sensitivity`,
+      ),
+      expected: parseDesignResourceLocatedDigest(
+        row.expected,
+        `${itemLabel}.expected`,
+      ),
+      comparison: {
+        comparator,
+        mode: literal(
+          comparison.mode,
+          ["exact", "tolerance"] as const,
+          `${itemLabel}.comparison.mode`,
+        ),
+        parameters: parseDesignResourceLocatedDigest(
+          comparison.parameters,
+          `${itemLabel}.comparison.parameters`,
+        ),
+        tolerance: nullable(comparison.tolerance, (entry) =>
+          parseDesignResourceLocatedDigest(
+            entry,
+            `${itemLabel}.comparison.tolerance`,
+          ),
+        ),
+        mask: nullable(comparison.mask, (entry) =>
+          parseDesignResourceLocatedDigest(
+            entry,
+            `${itemLabel}.comparison.mask`,
+          ),
+        ),
+      },
+      oracle: {
+        key: designFactRef(oracle.key, `${itemLabel}.oracle.key`),
+        trust: literal(
+          oracle.trust,
+          ["frozen_executable", "named_external_tcb"] as const,
+          `${itemLabel}.oracle.trust`,
+        ),
+        identity: string(oracle.identity, `${itemLabel}.oracle.identity`),
+        version: string(oracle.version, `${itemLabel}.oracle.version`),
+        sha256: nullable(oracle.sha256, (entry) =>
+          digest(entry, `${itemLabel}.oracle.sha256`),
+        ),
+      },
+      environment: {
+        key: designFactRef(environment.key, `${itemLabel}.environment.key`),
+        identity: string(
+          environment.identity,
+          `${itemLabel}.environment.identity`,
+        ),
+        definition: parseDesignResourceLocatedDigest(
+          environment.definition,
+          `${itemLabel}.environment.definition`,
+        ),
+      },
     };
   });
 }
@@ -235,4 +362,18 @@ function designFactRefs(value: unknown, label: string): string[] {
       fail(itemLabel, "must match ^[a-z0-9][a-z0-9._-]*$");
     return result;
   });
+}
+
+function designFactRef(value: unknown, label: string): string {
+  const result = string(value, label);
+  if (!/^[a-z0-9][a-z0-9._-]*$/u.test(result))
+    fail(label, "must match ^[a-z0-9][a-z0-9._-]*$");
+  return result;
+}
+
+function digest(value: unknown, label: string): string {
+  const result = string(value, label);
+  if (!/^[a-f0-9]{64}$/u.test(result))
+    fail(label, "must be a lowercase SHA-256");
+  return result;
 }

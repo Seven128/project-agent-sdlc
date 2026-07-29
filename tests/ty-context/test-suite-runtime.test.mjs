@@ -497,6 +497,26 @@ test("design-fact complete verifier uses the portable npm command boundary", asy
   );
   assert.match(verifierSource, /npmCommandSpec\(\["test"\]\)/u);
   assert.match(verifierSource, /spawn\(command, args,/u);
+  assert.match(
+    verifierSource,
+    /containsRequirement\(file,\s*files\.get\(file\) \?\? "",\s*needle\)/u,
+  );
+  assert.match(
+    verifierSource,
+    /\(\?!\[A-Za-z0-9_\]\)[\s\S]*?\.test\(\s*contents\s*,?\s*\)/u,
+  );
+  assert.match(
+    verifierSource,
+    /args:\s*\[\s*"packages\/ty-context\/dist\/cli\.js",\s*"validate-context",?\s*\]/u,
+  );
+  assert.match(
+    verifierSource,
+    /"check-modularity",\s*"--touched",\s*"--fail-on-warning"/u,
+  );
+  assert.doesNotMatch(
+    verifierSource,
+    /files\.get\(file\)[\s\S]{0,80}\.includes\(needle\)/u,
+  );
   assert.doesNotMatch(verifierSource, /npm\.cmd/u);
 });
 

@@ -1,4 +1,14 @@
 import type { CompiledCheckV2 } from "./long-task-delivery-types.js";
+import {
+  consistentScenarioTrace,
+  playwrightAttachments,
+  playwrightExecutionState,
+  playwrightIdentity,
+  playwrightResults,
+  record,
+} from "./long-task-playwright-case-primitives.js";
+
+export { record, same } from "./long-task-playwright-case-primitives.js";
 
 export interface PlaywrightCaseInstance {
   id: string;
@@ -14,6 +24,7 @@ export interface PlaywrightCaseInstance {
   given_keys: string[];
   action_keys: string[];
   attachment_names: string[];
+  attachment_payloads: Record<string, string>;
 }
 
 export interface PlaywrightCase {
@@ -35,6 +46,7 @@ export interface PlaywrightCase {
   given_keys: string[];
   action_keys: string[];
   attachment_names: string[];
+  attachment_payloads: Record<string, string>;
 }
 
 export function collectCases(
@@ -107,69 +119,21 @@ function playwrightCase(
   id: string,
   test: Record<string, unknown>,
 ): PlaywrightCaseInstance {
-  const status = typeof test.status === "string" ? test.status : "invalid";
-  const projectId =
-    typeof test.projectId === "string"
-      ? test.projectId
-      : typeof test.projectName === "string"
-        ? test.projectName
-        : "default";
-  const results = Array.isArray(test.results)
-    ? test.results.map(record).filter(Boolean)
-    : [];
+  const { status, projectId } = playwrightIdentity(test);
+  const results = playwrightResults(test);
   const resultStatuses = results
-    .map((result) => result!.status)
+    .map((result) => result.status)
     .filter((value): value is string => typeof value === "string");
-  const skipped =
-    status === "skipped" ||
-    (resultStatuses.length > 0 &&
-      resultStatuses.every((value) => value === "skipped"));
-  const executed = !skipped && resultStatuses.length > 0;
-  const flaky = status === "flaky";
-  const unexpected = status === "unexpected";
-  const timedOut = resultStatuses.includes("timedOut");
-  const interrupted = resultStatuses.includes("interrupted");
-  const passed =
-    executed &&
-    !flaky &&
-    !unexpected &&
-    status === "expected" &&
-    resultStatuses.length > 0 &&
-    resultStatuses.at(-1) === "passed";
-  const traces = results.map((result) => scenarioTrace(result!));
-  const attachmentNames = [
-    ...new Set(
-      results.flatMap((result) =>
-        Array.isArray(result!.attachments)
-          ? result!.attachments
-              .map(record)
-              .filter(Boolean)
-              .map((attachment) => attachment!.name)
-              .filter((name): name is string => typeof name === "string")
-          : [],
-      ),
-    ),
-  ].sort();
-  const givenKeys = traces[0]?.given_keys ?? [];
-  const actionKeys = traces[0]?.action_keys ?? [];
-  const traceConsistent = traces.every(
-    (trace) =>
-      same(trace.given_keys, givenKeys) && same(trace.action_keys, actionKeys),
-  );
+  const state = playwrightExecutionState(status, resultStatuses);
+  const trace = consistentScenarioTrace(results);
+  const attachments = playwrightAttachments(results);
   return {
     id,
     project_id: projectId,
-    executed,
-    passed,
-    skipped,
-    flaky,
-    unexpected,
-    timed_out: timedOut,
-    interrupted,
+    ...state,
     status,
-    given_keys: traceConsistent ? givenKeys : [],
-    action_keys: traceConsistent ? actionKeys : [],
-    attachment_names: attachmentNames,
+    ...trace,
+    ...attachments,
   };
 }
 
@@ -197,41 +161,4 @@ export function duplicateCaseInstance(
     seen.add(identity);
   }
   return null;
-}
-
-export function record(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function scenarioTrace(result: Record<string, unknown>): {
-  given_keys: string[];
-  action_keys: string[];
-} {
-  const givenKeys: string[] = [];
-  const actionKeys: string[] = [];
-  const visit = (value: unknown): void => {
-    if (!Array.isArray(value)) return;
-    for (const item of value) {
-      const step = record(item);
-      if (!step) continue;
-      if (typeof step.title === "string") {
-        const given = /^\[given:([a-z0-9][a-z0-9-]*)\]$/u.exec(step.title);
-        const action = /^\[action:([a-z0-9][a-z0-9-]*)\]$/u.exec(step.title);
-        if (given) givenKeys.push(given[1]);
-        if (action) actionKeys.push(action[1]);
-      }
-      visit(step.steps);
-    }
-  };
-  visit(result.steps);
-  return { given_keys: givenKeys, action_keys: actionKeys };
-}
-
-export function same(left: string[], right: string[]): boolean {
-  return (
-    left.length === right.length &&
-    left.every((value, index) => value === right[index])
-  );
 }

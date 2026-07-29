@@ -12,6 +12,7 @@ import { DESIGN_RESOURCE_DIMENSIONS } from "../../packages/ty-context/dist/lib/d
 import {
   DESIGN_HANDOFF_PATH,
   DESIGN_RESOURCE_PATH,
+  writeDesignResourceFactManifest,
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
@@ -30,8 +31,15 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
       DESIGN_HANDOFF_PATH,
     );
     assert.equal(result.status, "ready");
-    assert.equal(result.counts.subjects, 1);
-    assert.equal(result.counts.coverage, 8);
+    assert.equal(result.counts.subjects, result.handoff.subjects.length);
+    assert.ok(result.counts.subjects >= 6);
+    assert.equal(result.counts.conditions, 2);
+    assert.equal(result.counts.properties, 217);
+    assert.equal(result.counts.lineage_nodes, 2);
+    assert.equal(result.counts.fact_cells, 3038);
+    assert.equal(result.counts.facts, 36);
+    assert.equal(result.counts.proof_obligations, 48);
+    assert.equal(result.counts.coverage, result.handoff.coverage.length);
     assert.ok(result.counts.facts > result.counts.coverage);
     assert.equal(
       result.counts.resource_fact_closure,
@@ -46,14 +54,14 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
       ),
     );
     assert.deepEqual(
-      result.handoff.coverage.map((row) => row.dimension).sort(),
+      [...new Set(result.handoff.coverage.map((row) => row.dimension))].sort(),
       [...DESIGN_RESOURCE_DIMENSIONS].sort(),
     );
 
     const { stdout } = await exec(
       process.execPath,
       [cli, "design-resource", "preflight", DESIGN_HANDOFF_PATH, "--json"],
-      { cwd: root },
+      { cwd: root, maxBuffer: 16 * 1024 * 1024 },
     );
     const reported = JSON.parse(stdout);
     assert.equal(reported.status, "ready");
@@ -65,7 +73,7 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
   for (const [mutate, expected] of [
     [
       (handoff) => handoff.coverage.pop(),
-      /coverage_cell_missing:surface\.main:main-default:desktop-light-default-nominal-mouse:assets/u,
+      /coverage_fact_cell_set_mismatch:handoff/u,
     ],
     [
       (handoff) => handoff.coverage.push(structuredClone(handoff.coverage[0])),
@@ -80,7 +88,7 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
         row.evidence_refs = [];
         row.verification_methods = [];
       },
-      /unresolved_coverage:coverage\.motion/u,
+      /coverage_fact_cell_mismatch:coverage\.motion\.not_applicable/u,
     ],
     [
       (handoff) => {
@@ -104,7 +112,7 @@ test("fact inventory and resource fact closure fail closed on every conservation
   for (const [mutate, expected] of [
     [
       (handoff) => handoff.coverage[0].fact_refs.pop(),
-      /coverage_fact_refs_mismatch:coverage\.surface-flow/u,
+      /coverage_fact_refs_mismatch:coverage\.surface_flow\.covered/u,
     ],
     [(handoff) => handoff.facts.pop(), /fact_ref_unknown/u],
     [
@@ -121,13 +129,13 @@ test("fact inventory and resource fact closure fail closed on every conservation
     ],
     [
       (handoff) => handoff.resource_fact_closure.pop(),
-      /resource_fact_closure_missing:resource\.supporting-notes/u,
+      /resource_fact_closure_missing:resource\./u,
     ],
     [
       (handoff) => {
         handoff.resource_fact_closure[0].disposition = "supporting_only";
       },
-      /supporting_only_resource_fact_forbidden:closure\.main/u,
+      /supporting_only_resource_fact_forbidden:closure\.resource\.main/u,
     ],
     [
       (handoff) => {
@@ -149,11 +157,11 @@ test("fact inventory and resource fact closure fail closed on every conservation
 
 test("an exact target requires full-target layout and visual_pixel facts while a partial constraint is not promoted", async () => {
   await withFixture(async (root, handoff) => {
-    removeVisualPixelFacts(handoff);
+    demoteFullTargetFacts(handoff, "visual_pixel");
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /exact_target_full_target_fact_missing:main-default:desktop-light-default-nominal-mouse:visual_pixel/u,
+      /exact_target_full_target_fact_missing:main-default:desktop-light-mouse:visual_pixel/u,
     );
   });
 
@@ -163,7 +171,6 @@ test("an exact target requires full-target layout and visual_pixel facts while a
     for (const fact of handoff.facts)
       if (fact.observation_scope === "full_target")
         fact.observation_scope = "subject";
-    removeVisualPixelFacts(handoff);
     await writeDesignResourceHandoff(root, handoff);
     const result = await preflightDesignResourceHandoff(
       root,
@@ -173,7 +180,7 @@ test("an exact target requires full-target layout and visual_pixel facts while a
     assert.equal(result.handoff.targets[0].interpretation, "constraint");
     assert.equal(
       result.handoff.facts.some(
-        (fact) => fact.verification_method === "visual_pixel",
+        (fact) => fact.observation_scope === "full_target",
       ),
       false,
     );
@@ -182,16 +189,26 @@ test("an exact target requires full-target layout and visual_pixel facts while a
 
 test("every subject, target and condition cell must close all eight dimensions", async () => {
   await withFixture(async (root, handoff) => {
+    handoff.targets[0].interpretation = "constraint";
+    handoff.resources[0].role = "constraint";
+    for (const fact of handoff.facts)
+      if (fact.observation_scope === "full_target")
+        fact.observation_scope = "subject";
     handoff.conditions.push({
       ...structuredClone(handoff.conditions[0]),
       key: "mobile-default",
-      viewport: { width: 390, height: 844, unit: "px" },
+      viewport: {
+        key: "mobile-390x844",
+        width: 390,
+        height: 844,
+        unit: "px",
+      },
     });
     handoff.targets[0].condition_refs.push("mobile-default");
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /coverage_cell_missing:surface\.main:main-default:mobile-default:surface_flow/u,
+      /manifest_condition_axis_value_unknown:mobile-default:viewport:mobile-390x844/u,
     );
   });
 
@@ -204,7 +221,7 @@ test("every subject, target and condition cell must close all eight dimensions",
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /coverage_cell_missing:surface\.main:main-secondary:desktop-light-default-nominal-mouse:surface_flow/u,
+      /exact_target_full_target_fact_missing:main-secondary:desktop-light-mouse:layout_geometry/u,
     );
   });
 
@@ -220,9 +237,47 @@ test("every subject, target and condition cell must close all eight dimensions",
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /coverage_cell_without_fact:coverage\.surface-flow:subject\.secondary:main-default:desktop-light-default-nominal-mouse/u,
+      /coverage_subject_refs_mismatch:coverage\.surface_flow\.covered/u,
     );
   });
+});
+
+test("condition profile keys have one exact geometry or scale definition", async () => {
+  for (const [mutate, expected] of [
+    [
+      (condition) => {
+        condition.viewport.width += 1;
+      },
+      /condition_viewport_profile_conflict:desktop-1440x900:desktop-light-keyboard/u,
+    ],
+    [
+      (condition) => {
+        condition.density.pixel_ratio = 2;
+      },
+      /condition_density_profile_conflict:density-1x:desktop-light-keyboard/u,
+    ],
+    [
+      (condition) => {
+        condition.safe_area.bottom = 34;
+      },
+      /condition_safe_area_profile_conflict:zero-insets:desktop-light-keyboard/u,
+    ],
+    [
+      (condition) => {
+        condition.text_scale.multiplier = 2;
+      },
+      /condition_text_scale_profile_conflict:text-100-percent:desktop-light-keyboard/u,
+    ],
+  ]) {
+    await withFixture(async (root, handoff) => {
+      mutate(handoff.conditions[1]);
+      await writeDesignResourceHandoff(root, handoff);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+        expected,
+      );
+    });
+  }
 });
 
 test("typed locators must resolve in the immutable resource", async () => {
@@ -231,7 +286,7 @@ test("typed locators must resolve in the immutable resource", async () => {
     await writeDesignResourceHandoff(root, handoff);
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-      /locator_not_found:frame-main:resource\.main:html_selector:#does-not-exist/u,
+      /locator_not_found:evidence\.frame-main:resource\.main:html_selector:#does-not-exist/u,
     );
   });
 
@@ -281,13 +336,21 @@ test("implementation source profiles close the declared and discovered dependenc
 test("a static frame cannot substitute for motion or accessibility evidence", async () => {
   for (const dimension of ["motion", "accessibility"]) {
     await withFixture(async (root, handoff) => {
-      const row = handoff.coverage.find((item) => item.dimension === dimension);
+      const row = handoff.coverage.find(
+        (item) =>
+          item.dimension === dimension && item.disposition === "covered",
+      );
       row.evidence_refs = ["frame-main"];
+      for (const fact of handoff.facts)
+        if (row.fact_refs.includes(fact.key))
+          fact.evidence_refs = ["frame-main"];
       await writeDesignResourceHandoff(root, handoff);
       await assert.rejects(
         preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
         new RegExp(
-          `coverage_evidence_kind_incompatible:coverage\\.${dimension}:${dimension}:frame-main:frame`,
+          dimension === "motion"
+            ? `fact_evidence_kind_incompatible:.*:${dimension}:frame-main:frame`
+            : `proof_method_evidence_missing:.*:accessibility_semantics`,
           "u",
         ),
       );
@@ -356,6 +419,316 @@ test("repository paths, scoped surfaces and design Source kinds remain fail clos
   });
 });
 
+test("the frozen manifest and residual handoff conserve every atomic universe collection", async () => {
+  for (const [mutate, expected, refreshGeneration = true] of [
+    [
+      (_handoff, manifest) => {
+        manifest.subjects.find(
+          (subject) => subject.key === "part.card-label",
+        ).parent_ref = "surface.main";
+      },
+      /manifest_handoff_subjects_row_mismatch:main-default:part\.card-label/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.properties.pop();
+      },
+      /manifest_standard_property_missing/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.lineage_nodes[0].value.sha256 = "0".repeat(64);
+      },
+      /located_value_digest_mismatch:manifest\.lineage_node/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        const cellRef = manifest.fact_cells.at(-1).key;
+        for (const census of manifest.inspector.census)
+          census.fact_cell_refs = census.fact_cell_refs.filter(
+            (ref) => ref !== cellRef,
+          );
+      },
+      /manifest_census_fact_cell_set_mismatch/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.inspector.identity = "changed-inspector";
+      },
+      /manifest_resource_closure_inspector_mismatch/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.design_system.sha256 = "0".repeat(64);
+      },
+      /manifest_design_system_digest_mismatch/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.subjects
+          .find((subject) => subject.key === "relation.card-label")
+          .relation_endpoints.pop();
+      },
+      /manifest_relation_endpoints_required/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.asset_bindings.length = 0;
+      },
+      /manifest_asset_subject_binding_missing/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.generation.collections.pop();
+      },
+      /manifest_generation_collection_set_mismatch/u,
+      false,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.generation.sampling = "representative";
+      },
+      /design_resource_fact_manifest\.generation\.sampling:must be one of forbidden/u,
+      false,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.generation.truncation = "allowed";
+      },
+      /design_resource_fact_manifest\.generation\.truncation:must be one of forbidden/u,
+      false,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.facts[0].value.locator.value = "/values/does-not-exist";
+      },
+      /locator_not_found/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.inspector.census[0].basis_refs = [];
+      },
+      /manifest_census:.*:basis_refs_required/u,
+    ],
+    [
+      (_handoff, manifest) => {
+        manifest.inspector.census.find(
+          (entry) => entry.key === "census.subject.component.card",
+        ).kind = "custom_property";
+      },
+      /manifest_census_semantic_owner_missing:census\.subject\.component\.card:custom_property/u,
+    ],
+  ]) {
+    await withFixture(async (root, handoff, manifest) => {
+      mutate(handoff, manifest);
+      await writeDesignResourceFactManifest(root, handoff, manifest, {
+        refreshGeneration,
+      });
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+        expected,
+      );
+    });
+  }
+});
+
+test("atomic axes, dynamic subjects and unresolved blockers cannot collapse into labels", async () => {
+  for (const [mutate, expected] of [
+    [
+      (handoff) => {
+        handoff.variation_axis_dispositions.find(
+          (axis) =>
+            axis.subject_ref === "component.card" && axis.axis === "state",
+        ).values[0].key = "all-21-state-catalog";
+      },
+      /must identify one atomic value, not a compound collection/u,
+    ],
+    [
+      (handoff) => {
+        handoff.variation_axis_dispositions.find(
+          (axis) =>
+            axis.subject_ref === "component.card" && axis.axis === "state",
+        ).values[0].key = "initial,loading,error";
+      },
+      /must match \^\[a-z0-9\]/u,
+    ],
+    [
+      (handoff) => {
+        handoff.axis_dispositions = handoff.axis_dispositions.filter(
+          (axis) => axis.axis !== "text_scale",
+        );
+      },
+      /manifest_standard_axis_missing:text_scale/u,
+    ],
+    [
+      (handoff) => {
+        const extra = structuredClone(
+          handoff.subjects.find((subject) => subject.kind === "surface"),
+        );
+        extra.key = "surface.outside-scope";
+        extra.stable_keys = ["outside-scope"];
+        extra.census_refs = ["census.subject.surface.main"];
+        handoff.subjects.push(extra);
+      },
+      /scope_surface_subject_outside_scope:surface\.outside-scope/u,
+    ],
+    [
+      (handoff) => {
+        const subject = handoff.subjects.find(
+          (item) => item.key === "component.card",
+        );
+        subject.presence = "virtualized";
+      },
+      /subject_dynamic_presence_rule_required:component\.card/u,
+    ],
+    [
+      (handoff) => {
+        const fact = handoff.facts[0];
+        const proof = handoff.proof_obligations.find(
+          (item) => item.fact_ref === fact.key,
+        );
+        handoff.acceptance_blockers.push({
+          key: "unresolved-design-fact",
+          target_refs: [fact.target_ref],
+          subject_refs: [fact.subject_ref],
+          dimensions: [fact.dimension],
+          fact_cell_refs: [fact.cell_ref],
+          fact_refs: [fact.key],
+          proof_obligation_refs: [proof.key],
+          source_item_refs: [...fact.source_item_refs],
+          verification_methods: [proof.method],
+          required_capabilities: ["browser-runtime"],
+          description: "The Fact cannot yet be proven.",
+        });
+      },
+      /acceptance_blockers_unresolved:unresolved-design-fact/u,
+    ],
+  ]) {
+    await withFixture(async (root, handoff) => {
+      mutate(handoff);
+      await writeDesignResourceHandoff(root, handoff);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+        expected,
+      );
+    });
+  }
+});
+
+test("lineage, comparator and oracle authority remain Fact-scoped and method-specific", async () => {
+  for (const [mutate, expected] of [
+    [
+      (handoff) => {
+        handoff.facts.find(
+          (fact) => fact.property_ref === "color.background",
+        ).lineage.token_chain_refs = [];
+      },
+      /manifest_fact_design_system_chain_required/u,
+    ],
+    [
+      (handoff) => {
+        const fact = handoff.facts.find(
+          (item) => item.property_ref === "color.background",
+        );
+        fact.lineage.design_system_ref = null;
+        fact.lineage.token_chain_refs = [];
+      },
+      /manifest_style_fact_design_system_lineage_required/u,
+    ],
+    [
+      (handoff) => {
+        const width = handoff.facts.find(
+          (fact) => fact.property_ref === "geometry.width",
+        );
+        const copy = handoff.facts.find(
+          (fact) => fact.property_ref === "content.copy",
+        );
+        width.value = structuredClone(copy.value);
+        width.lineage.resolved_value = structuredClone(copy.value);
+      },
+      /located_value_kind_mismatch:.*geometry\.width.*:length/u,
+    ],
+    [
+      (handoff) => {
+        const fact = handoff.facts.find(
+          (item) => item.property_ref === "typography.font-size",
+        );
+        const proof = handoff.proof_obligations.find(
+          (item) =>
+            item.fact_ref === fact.key && item.method === "layout_geometry",
+        );
+        handoff.proof_obligations = handoff.proof_obligations.filter(
+          (item) => item.key !== proof.key,
+        );
+        for (const row of handoff.coverage) {
+          row.proof_obligation_refs = row.proof_obligation_refs.filter(
+            (ref) => ref !== proof.key,
+          );
+          row.verification_methods = [
+            ...new Set(
+              handoff.proof_obligations
+                .filter((item) => row.proof_obligation_refs.includes(item.key))
+                .map((item) => item.method),
+            ),
+          ];
+        }
+      },
+      /manifest_fact_required_proof_method_missing:.*:layout_geometry/u,
+    ],
+    [
+      (handoff) => {
+        const proof = handoff.proof_obligations.find(
+          (item) => item.method === "visual_pixel",
+        );
+        proof.comparison.comparator = "exact_value";
+      },
+      /proof_comparator_method_incompatible:.*:visual_pixel:exact_value/u,
+    ],
+    [
+      (handoff) => {
+        handoff.oracles[0].capability_refs =
+          handoff.oracles[0].capability_refs.filter(
+            (capability) => capability !== "accessibility",
+          );
+      },
+      /proof_oracle_capability_missing:.*:accessibility_semantics/u,
+    ],
+    [
+      (handoff) => {
+        const proof = handoff.proof_obligations.find(
+          (item) => item.method === "layout_geometry",
+        );
+        const pixelProof = handoff.proof_obligations.find(
+          (item) => item.method === "visual_pixel",
+        );
+        proof.comparison.mode = "tolerance";
+        proof.comparison.tolerance = structuredClone(
+          pixelProof.comparison.tolerance,
+        );
+        proof.comparison.mask = structuredClone(
+          pixelProof.comparison.tolerance,
+        );
+      },
+      /proof_mask_comparator_incompatible:.*:geometry_delta/u,
+    ],
+    [
+      (handoff) => {
+        handoff.facts[0].lineage.conflict_status = "resolved";
+      },
+      /manifest_fact_conflict_resolution_required/u,
+    ],
+  ]) {
+    await withFixture(async (root, handoff) => {
+      mutate(handoff);
+      await writeDesignResourceHandoff(root, handoff);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+        expected,
+      );
+    });
+  }
+});
+
 test("the embedded YAML is unique and remains readable ordinary Markdown Source", async () => {
   await withFixture(async (root) => {
     const file = path.join(root, DESIGN_HANDOFF_PATH);
@@ -371,26 +744,20 @@ test("the embedded YAML is unique and remains readable ordinary Markdown Source"
 async function withFixture(action) {
   const root = await mkdtemp(path.join(os.tmpdir(), "design-handoff-"));
   try {
-    const { handoff } = await writeDesignResourceHandoffFixture(root);
-    await action(root, handoff);
+    const { handoff, manifest } = await writeDesignResourceHandoffFixture(root);
+    await action(root, handoff, manifest);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 }
 
-function removeVisualPixelFacts(handoff) {
-  const removed = new Set(
-    handoff.facts
-      .filter((fact) => fact.verification_method === "visual_pixel")
-      .map((fact) => fact.key),
+function demoteFullTargetFacts(handoff, method) {
+  const proofs = new Set(
+    handoff.proof_obligations
+      .filter((proof) => proof.method === method)
+      .map((proof) => proof.fact_ref),
   );
-  handoff.facts = handoff.facts.filter((fact) => !removed.has(fact.key));
-  for (const row of handoff.coverage) {
-    row.fact_refs = row.fact_refs.filter((ref) => !removed.has(ref));
-    row.verification_methods = row.verification_methods.filter(
-      (method) => method !== "visual_pixel",
-    );
-  }
-  for (const closure of handoff.resource_fact_closure)
-    closure.fact_refs = closure.fact_refs.filter((ref) => !removed.has(ref));
+  for (const fact of handoff.facts)
+    if (proofs.has(fact.key) && fact.observation_scope === "full_target")
+      fact.observation_scope = "subject";
 }

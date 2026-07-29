@@ -303,14 +303,14 @@ test("Long-Task Compile binds every declared design verification method to an in
   const bundledCondition = await createDeliveryFixture();
   try {
     const handoff = await attachDesignResourceHandoff(bundledCondition);
-    handoff.conditions[0].modes.push("dark");
+    handoff.conditions[0].display_mode = "planning|dark";
     await writeDesignResourceHandoff(bundledCondition.root, handoff);
     await writeContract(bundledCondition.workdir, bundledCondition.contract);
     await assert.rejects(
       compileDeliveryContract(bundledCondition.workdir, bundledCondition.root, {
         require_completion_gate: false,
       }),
-      /condition_modes_must_be_atomic/u,
+      /display_mode:must match \^\[a-z0-9\]/u,
     );
   } finally {
     await rm(bundledCondition.root, { recursive: true, force: true });
@@ -322,17 +322,23 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
     [
       "missing",
       (target) => {
-        target.verification_method_bindings[0].evidence_artifacts[0].fact_refs =
-          [];
+        const artifact =
+          target.verification_method_bindings[0].evidence_artifacts[0];
+        artifact.fact_refs = [];
+        artifact.fact_expectations = [];
       },
       /design_method_fact_refs_mismatch/u,
     ],
     [
       "extra",
       (target) => {
-        target.verification_method_bindings[0].evidence_artifacts[0].fact_refs.push(
-          "fact.unbound",
-        );
+        const artifact =
+          target.verification_method_bindings[0].evidence_artifacts[0];
+        artifact.fact_refs.push("fact.unbound");
+        artifact.fact_expectations.push({
+          ...structuredClone(artifact.fact_expectations[0]),
+          fact_ref: "fact.unbound",
+        });
       },
       /design_method_fact_refs_mismatch/u,
     ],
@@ -342,6 +348,9 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
         const artifact =
           target.verification_method_bindings[0].evidence_artifacts[0];
         artifact.fact_refs.push(artifact.fact_refs[0]);
+        artifact.fact_expectations.push(
+          structuredClone(artifact.fact_expectations[0]),
+        );
       },
       /ui_design_method_fact_ref_duplicate/u,
     ],
@@ -356,6 +365,10 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
           second.fact_refs,
           first.fact_refs,
         ];
+        [first.fact_expectations, second.fact_expectations] = [
+          second.fact_expectations,
+          first.fact_expectations,
+        ];
       },
       /design_method_fact_refs_mismatch/u,
     ],
@@ -368,6 +381,10 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
           artifacts[1].fact_refs,
           artifacts[0].fact_refs,
         ];
+        [artifacts[0].fact_expectations, artifacts[1].fact_expectations] = [
+          artifacts[1].fact_expectations,
+          artifacts[0].fact_expectations,
+        ];
       },
       /design_method_fact_refs_mismatch/u,
     ],
@@ -377,8 +394,11 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
         const artifacts =
           target.verification_method_bindings[0].evidence_artifacts;
         artifacts[1].fact_refs.push(artifacts[0].fact_refs[0]);
+        artifacts[1].fact_expectations.push(
+          structuredClone(artifacts[0].fact_expectations[0]),
+        );
       },
-      /ui_design_method_fact_ref_reused/u,
+      /design_method_fact_refs_mismatch/u,
     ],
   ];
   for (const [name, mutate, expected] of cases) {
@@ -403,28 +423,137 @@ test("Long-Task Compile rejects every exact design-fact binding drift", async ()
   }
 });
 
+test("Long-Task Compile freezes every per-Fact expectation authority field", async () => {
+  const locatedDrift = {
+    locator: {
+      resource_ref: "resource.main",
+      kind: "json_pointer",
+      value: "/drift",
+    },
+    sha256: "f".repeat(64),
+  };
+  const cases = [
+    [
+      "missing expectation",
+      (artifact) => artifact.fact_expectations.pop(),
+      /ui_design_method_fact_expectation_refs_mismatch/u,
+    ],
+    [
+      "extra expectation",
+      (artifact) =>
+        artifact.fact_expectations.push({
+          ...structuredClone(artifact.fact_expectations[0]),
+          fact_ref: "fact.unbound",
+        }),
+      /ui_design_method_fact_expectation_refs_mismatch/u,
+    ],
+    [
+      "duplicate expectation",
+      (artifact) =>
+        artifact.fact_expectations.push(
+          structuredClone(artifact.fact_expectations[0]),
+        ),
+      /ui_design_method_fact_expectation_duplicate/u,
+    ],
+    [
+      "subject identity",
+      (_artifact, expectation) => {
+        expectation.subject_ref = "subject.drift";
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "expected locator",
+      (_artifact, expectation) => {
+        expectation.expected.locator.value = "/drift";
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "expected digest",
+      (_artifact, expectation) => {
+        expectation.expected.sha256 = "f".repeat(64);
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "comparator",
+      (_artifact, expectation) => {
+        expectation.comparison.comparator = "content_equal";
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "comparison parameters",
+      (_artifact, expectation) => {
+        expectation.comparison.parameters = structuredClone(locatedDrift);
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "tolerance",
+      (_artifact, expectation) => {
+        expectation.comparison.tolerance = structuredClone(locatedDrift);
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "mask",
+      (_artifact, expectation) => {
+        expectation.comparison.mask = structuredClone(locatedDrift);
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "oracle identity",
+      (_artifact, expectation) => {
+        expectation.oracle.identity = "different-oracle";
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+    [
+      "environment identity",
+      (_artifact, expectation) => {
+        expectation.environment.definition.sha256 = "f".repeat(64);
+      },
+      /design_method_fact_expectations_mismatch/u,
+    ],
+  ];
+  for (const [name, mutate, expected] of cases) {
+    const fixture = await createDeliveryFixture();
+    try {
+      await attachDesignResourceHandoff(fixture);
+      const artifact =
+        fixture.contract.outcomes[0].product.surface_bindings[0]
+          .design_targets[0].verification_method_bindings[0]
+          .evidence_artifacts[0];
+      mutate(artifact, artifact.fact_expectations[0]);
+      await writeContract(fixture.workdir, fixture.contract);
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        expected,
+        name,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+});
+
 test("Long-Task Compile rejects handoff target drift and unbound handoff blockers", async () => {
   const targetFixture = await createDeliveryFixture();
   try {
-    const handoff = await attachDesignResourceHandoff(targetFixture);
-    const previousCondition = handoff.conditions[0].key;
-    handoff.conditions[0].key = "other-condition";
-    const changedConditions = handoff.conditions.map((item) => item.key);
-    handoff.targets[0].condition_refs = [...changedConditions];
-    for (const item of handoff.evidence)
-      item.condition_refs = [...changedConditions];
-    for (const row of handoff.coverage)
-      row.condition_refs = [...changedConditions];
-    for (const fact of handoff.facts)
-      if (fact.condition_ref === previousCondition)
-        fact.condition_ref = "other-condition";
-    await writeDesignResourceHandoff(targetFixture.root, handoff);
+    await attachDesignResourceHandoff(targetFixture);
+    targetFixture.contract.outcomes[0].product.surface_bindings[0].design_targets[0].condition_keys =
+      ["other-condition"];
     await writeContract(targetFixture.workdir, targetFixture.contract);
     await assert.rejects(
       compileDeliveryContract(targetFixture.workdir, targetFixture.root, {
         require_completion_gate: false,
       }),
-      /design_resource_target_conditions_mismatch:main-default/u,
+      /ui_design_method_evidence_conditions_mismatch/u,
     );
   } finally {
     await rm(targetFixture.root, { recursive: true, force: true });
@@ -433,23 +562,16 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
   const blockerFixture = await createDeliveryFixture();
   try {
     const handoff = await attachDesignResourceHandoff(blockerFixture);
-    handoff.acceptance_blockers.push({
-      key: "accessibility-proof",
-      target_refs: [DESIGN_TARGET_KEY],
-      subject_refs: ["surface.main"],
-      dimensions: ["accessibility"],
-      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
-      verification_methods: ["accessibility_semantics"],
-      required_capabilities: ["assistive-technology"],
-      description: "The production semantic tree must match the design.",
-    });
+    handoff.acceptance_blockers.push(
+      designAcceptanceBlocker(handoff, "accessibility_semantics"),
+    );
     await writeDesignResourceHandoff(blockerFixture.root, handoff);
     await writeContract(blockerFixture.workdir, blockerFixture.contract);
     await assert.rejects(
       compileDeliveryContract(blockerFixture.workdir, blockerFixture.root, {
         require_completion_gate: false,
       }),
-      /design_resource_acceptance_blocker_unbound:main-default:accessibility-proof/u,
+      /acceptance_blockers_unresolved:accessibility-proof/u,
     );
   } finally {
     await rm(blockerFixture.root, { recursive: true, force: true });
@@ -458,16 +580,10 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
   const blockerLineageFixture = await createDeliveryFixture();
   try {
     const handoff = await attachDesignResourceHandoff(blockerLineageFixture);
-    const handoffBlocker = {
-      key: "accessibility-proof",
-      target_refs: [DESIGN_TARGET_KEY],
-      subject_refs: ["surface.main"],
-      dimensions: ["accessibility"],
-      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
-      verification_methods: ["accessibility_semantics"],
-      required_capabilities: ["assistive-technology"],
-      description: "The production semantic tree must match the design.",
-    };
+    const handoffBlocker = designAcceptanceBlocker(
+      handoff,
+      "accessibility_semantics",
+    );
     handoff.acceptance_blockers.push(handoffBlocker);
     const binding =
       blockerLineageFixture.contract.outcomes[0].product.surface_bindings[0];
@@ -476,9 +592,10 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
       status: "machine_claim",
       refs: ["requirement.design-handoff"],
       source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
-      verification_methods: ["layout_geometry"],
+      verification_methods: [...handoffBlocker.verification_methods],
       required_capabilities: ["assistive-technology"],
-      rationale: "Intentionally mismatched method lineage.",
+      rationale:
+        "Even a mirrored downstream binding cannot launder an unresolved handoff blocker.",
     });
     await writeDesignResourceHandoff(blockerLineageFixture.root, handoff);
     await writeContract(
@@ -491,56 +608,10 @@ test("Long-Task Compile rejects handoff target drift and unbound handoff blocker
         blockerLineageFixture.root,
         { require_completion_gate: false },
       ),
-      /design_resource_acceptance_blocker_methods_mismatch:accessibility-proof/u,
+      /acceptance_blockers_unresolved:accessibility-proof/u,
     );
   } finally {
     await rm(blockerLineageFixture.root, {
-      recursive: true,
-      force: true,
-    });
-  }
-
-  const blockerCapabilityFixture = await createDeliveryFixture();
-  try {
-    const handoff = await attachDesignResourceHandoff(blockerCapabilityFixture);
-    const handoffBlocker = {
-      key: "representative-device-proof",
-      target_refs: [DESIGN_TARGET_KEY],
-      subject_refs: ["surface.main"],
-      dimensions: ["state_interaction"],
-      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
-      verification_methods: ["interaction_trace"],
-      required_capabilities: ["physical-device"],
-      description:
-        "The production interaction must be observed on a representative physical device.",
-    };
-    handoff.acceptance_blockers.push(handoffBlocker);
-    const binding =
-      blockerCapabilityFixture.contract.outcomes[0].product.surface_bindings[0];
-    binding.acceptance_blockers.push({
-      key: handoffBlocker.key,
-      status: "machine_claim",
-      refs: ["requirement.design-handoff"],
-      source_item_refs: [DESIGN_SOURCE_ITEM_KEY],
-      verification_methods: ["interaction_trace"],
-      required_capabilities: ["physical-device"],
-      rationale: "Intentionally bound to a non-device target.",
-    });
-    await writeDesignResourceHandoff(blockerCapabilityFixture.root, handoff);
-    await writeContract(
-      blockerCapabilityFixture.workdir,
-      blockerCapabilityFixture.contract,
-    );
-    await assert.rejects(
-      compileDeliveryContract(
-        blockerCapabilityFixture.workdir,
-        blockerCapabilityFixture.root,
-        { require_completion_gate: false },
-      ),
-      /design_resource_acceptance_blocker_target_capability_missing:representative-device-proof:fixture-app:physical-device/u,
-    );
-  } finally {
-    await rm(blockerCapabilityFixture.root, {
       recursive: true,
       force: true,
     });
@@ -610,6 +681,10 @@ async function attachDesignResourceHandoff(fixture) {
     "viewport-control",
     "motion-observation",
     "assistive-technology",
+    "pixel-density-observation",
+    "safe-area-observation",
+    "network-state-control",
+    "lifecycle-control",
   );
   fixture.contract.task.execution_targets.push({
     key: "fixture-browser",
@@ -661,7 +736,7 @@ async function attachDesignResourceHandoff(fixture) {
   outcome.product.requirements.push({
     key: "design-handoff",
     statement:
-      "The main surface must conform to every declared design-resource dimension.",
+      "The main surface must conform to every declared atomic observable design Fact.",
     required_proof_surfaces: ["runtime_behavior"],
     applicability_refs: ["first-root-success"],
   });
@@ -675,7 +750,7 @@ async function attachDesignResourceHandoff(fixture) {
   check.verification_inputs.push(DESIGN_HANDOFF_PATH, ...DESIGN_RESOURCE_PATHS);
   check.artifact_globs = ["artifacts/**"];
   const verificationMethods = [
-    ...new Set(handoff.coverage.flatMap((row) => row.verification_methods)),
+    ...new Set(handoff.proof_obligations.map((proof) => proof.method)),
   ];
   for (const method of verificationMethods) {
     const capabilities =
@@ -725,13 +800,28 @@ async function attachDesignResourceHandoff(fixture) {
             condition_key: conditionKey,
             path: `artifacts/method-${method}-${conditionKey}.json`,
             observation_path: `artifacts/observation-${method}-${conditionKey}.json`,
-            fact_refs: handoff.facts
+            fact_refs: handoff.proof_obligations
               .filter(
-                (fact) =>
-                  fact.verification_method === method &&
-                  fact.condition_ref === conditionKey,
+                (proof) =>
+                  proof.method === method &&
+                  handoff.facts.some(
+                    (fact) =>
+                      fact.key === proof.fact_ref &&
+                      fact.condition_ref === conditionKey,
+                  ),
               )
-              .map((fact) => fact.key),
+              .map((proof) => proof.fact_ref),
+            fact_expectations: handoff.proof_obligations
+              .filter(
+                (proof) =>
+                  proof.method === method &&
+                  handoff.facts.some(
+                    (fact) =>
+                      fact.key === proof.fact_ref &&
+                      fact.condition_ref === conditionKey,
+                  ),
+              )
+              .map((proof) => designFactExpectation(handoff, proof)),
           })),
         })),
         actual_artifact_path: "artifacts/design-actual.json",
@@ -748,11 +838,61 @@ async function attachDesignResourceHandoff(fixture) {
     key: DESIGN_SOURCE_ITEM_KEY,
     source_ref: `${DESIGN_HANDOFF_PATH}#main-design`,
     statement:
-      "The main surface must conform to every declared design-resource dimension.",
+      "The main surface must conform to every declared atomic observable design Fact.",
     disposition: {
       type: "claim",
       refs: ["first.requirement.design-handoff"],
     },
   });
   return handoff;
+}
+
+function designFactExpectation(handoff, proof) {
+  const fact = handoff.facts.find((item) => item.key === proof.fact_ref);
+  const oracle = handoff.oracles.find((item) => item.key === proof.oracle_ref);
+  const environment = handoff.environments.find(
+    (item) => item.key === proof.environment_ref,
+  );
+  return {
+    fact_ref: fact.key,
+    subject_ref: fact.subject_ref,
+    variation_ref: fact.variation_ref,
+    property_ref: fact.property_ref,
+    observation_sensitivity: fact.observation_sensitivity,
+    expected: structuredClone(fact.value),
+    comparison: structuredClone(proof.comparison),
+    oracle: {
+      key: oracle.key,
+      trust: oracle.trust,
+      identity: oracle.identity,
+      version: oracle.version,
+      sha256: oracle.sha256,
+    },
+    environment: {
+      key: environment.key,
+      identity: environment.identity,
+      definition: structuredClone(environment.definition),
+    },
+  };
+}
+
+function designAcceptanceBlocker(handoff, method) {
+  const proof = handoff.proof_obligations.find(
+    (item) => item.method === method,
+  );
+  const fact = handoff.facts.find((item) => item.key === proof.fact_ref);
+  return {
+    key: "accessibility-proof",
+    target_refs: [fact.target_ref],
+    subject_refs: [fact.subject_ref],
+    dimensions: [fact.dimension],
+    fact_cell_refs: [fact.cell_ref],
+    fact_refs: [fact.key],
+    proof_obligation_refs: [proof.key],
+    source_item_refs: [...fact.source_item_refs],
+    verification_methods: [proof.method],
+    required_capabilities: ["assistive-technology"],
+    description:
+      "The production semantic tree remains unresolved and must block ready handoff.",
+  };
 }

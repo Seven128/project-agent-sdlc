@@ -5,6 +5,8 @@ import type {
   DesignResourceHandoffFactV1,
   DesignResourceHandoffResourceFactClosureV1,
 } from "./design-resource-handoff-types.js";
+import { DESIGN_RESOURCE_VALUE_KINDS } from "./design-resource-fact-manifest-types.js";
+import { parseDesignResourceLocatedDigest } from "./design-resource-fact-shape-primitives.js";
 import {
   DESIGN_RESOURCE_DIMENSIONS,
   DESIGN_RESOURCE_EVIDENCE_KINDS,
@@ -21,8 +23,10 @@ import {
 import {
   array,
   literal,
+  nullable,
   object,
   string,
+  text,
 } from "./long-task-shape-primitives.js";
 import { EXECUTION_TARGET_CAPABILITIES } from "./execution-target-capabilities.js";
 
@@ -71,8 +75,12 @@ export function parseDesignResourceHandoffCoverage(
       "disposition",
       "target_refs",
       "condition_refs",
+      "variation_refs",
+      "property_refs",
       "evidence_refs",
+      "fact_cell_refs",
       "fact_refs",
+      "proof_obligation_refs",
       "source_item_refs",
       "verification_methods",
       "rationale",
@@ -101,8 +109,15 @@ export function parseDesignResourceHandoffCoverage(
         row.condition_refs,
         `${label}.condition_refs`,
       ),
+      variation_refs: stableKeys(row.variation_refs, `${label}.variation_refs`),
+      property_refs: stableKeys(row.property_refs, `${label}.property_refs`),
       evidence_refs: stableKeys(row.evidence_refs, `${label}.evidence_refs`),
+      fact_cell_refs: stableKeys(row.fact_cell_refs, `${label}.fact_cell_refs`),
       fact_refs: stableKeys(row.fact_refs, `${label}.fact_refs`),
+      proof_obligation_refs: stableKeys(
+        row.proof_obligation_refs,
+        `${label}.proof_obligation_refs`,
+      ),
       source_item_refs: sourceItemKeys(
         row.source_item_refs,
         `${label}.source_item_refs`,
@@ -123,20 +138,37 @@ export function parseDesignResourceHandoffFacts(
     const label = `design_resource_handoff.facts[${index}]`;
     const row = object(item, label, [
       "key",
+      "cell_ref",
       "subject_ref",
       "target_ref",
       "condition_ref",
+      "variation_ref",
+      "property_ref",
       "dimension",
       "observation_scope",
+      "observation_sensitivity",
+      "value_kind",
+      "value",
       "evidence_refs",
       "source_item_refs",
-      "verification_method",
+      "lineage",
+    ]);
+    const lineage = object(row.lineage, `${label}.lineage`, [
+      "design_system_ref",
+      "token_chain_refs",
+      "override_chain_refs",
+      "resolved_value",
+      "conflict_status",
+      "conflict_resolution",
     ]);
     return {
       key: stableKey(row.key, `${label}.key`),
+      cell_ref: stableKey(row.cell_ref, `${label}.cell_ref`),
       subject_ref: stableKey(row.subject_ref, `${label}.subject_ref`),
       target_ref: contractKey(row.target_ref, `${label}.target_ref`),
       condition_ref: contractKey(row.condition_ref, `${label}.condition_ref`),
+      variation_ref: stableKey(row.variation_ref, `${label}.variation_ref`),
+      property_ref: stableKey(row.property_ref, `${label}.property_ref`),
       dimension: literal(
         row.dimension,
         DESIGN_RESOURCE_DIMENSIONS,
@@ -147,15 +179,48 @@ export function parseDesignResourceHandoffFacts(
         ["subject", "full_target"] as const,
         `${label}.observation_scope`,
       ),
+      observation_sensitivity: literal(
+        row.observation_sensitivity,
+        ["plain", "protected"] as const,
+        `${label}.observation_sensitivity`,
+      ),
+      value_kind: literal(
+        row.value_kind,
+        DESIGN_RESOURCE_VALUE_KINDS,
+        `${label}.value_kind`,
+      ),
+      value: parseDesignResourceLocatedDigest(row.value, `${label}.value`),
       evidence_refs: stableKeys(row.evidence_refs, `${label}.evidence_refs`),
       source_item_refs: sourceItemKeys(
         row.source_item_refs,
         `${label}.source_item_refs`,
       ),
-      verification_method: verificationMethods(
-        [row.verification_method],
-        `${label}.verification_method`,
-      )[0],
+      lineage: {
+        design_system_ref: nullable(lineage.design_system_ref, (item) =>
+          stableKey(item, `${label}.lineage.design_system_ref`),
+        ),
+        token_chain_refs: stableKeys(
+          lineage.token_chain_refs,
+          `${label}.lineage.token_chain_refs`,
+        ),
+        override_chain_refs: stableKeys(
+          lineage.override_chain_refs,
+          `${label}.lineage.override_chain_refs`,
+        ),
+        resolved_value: parseDesignResourceLocatedDigest(
+          lineage.resolved_value,
+          `${label}.lineage.resolved_value`,
+        ),
+        conflict_status: literal(
+          lineage.conflict_status,
+          ["none", "resolved"] as const,
+          `${label}.lineage.conflict_status`,
+        ),
+        conflict_resolution: text(
+          lineage.conflict_resolution,
+          `${label}.lineage.conflict_resolution`,
+        ),
+      },
     };
   });
 }
@@ -215,6 +280,9 @@ export function parseDesignResourceHandoffBlockers(
         "target_refs",
         "subject_refs",
         "dimensions",
+        "fact_cell_refs",
+        "fact_refs",
+        "proof_obligation_refs",
         "source_item_refs",
         "verification_methods",
         "required_capabilities",
@@ -231,6 +299,15 @@ export function parseDesignResourceHandoffBlockers(
               DESIGN_RESOURCE_DIMENSIONS,
               `${label}.dimensions[${itemIndex}]`,
             ),
+        ),
+        fact_cell_refs: stableKeys(
+          row.fact_cell_refs,
+          `${label}.fact_cell_refs`,
+        ),
+        fact_refs: stableKeys(row.fact_refs, `${label}.fact_refs`),
+        proof_obligation_refs: stableKeys(
+          row.proof_obligation_refs,
+          `${label}.proof_obligation_refs`,
         ),
         source_item_refs: sourceItemKeys(
           row.source_item_refs,

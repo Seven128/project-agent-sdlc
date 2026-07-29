@@ -9,41 +9,87 @@ import {
 export function validateDesignResourceScope(
   handoff: DesignResourceHandoffV1,
 ): void {
+  const scopedSurfaceKeys = new Set(handoff.scope.surface_keys);
+  const surfaceSubjects = handoff.subjects.filter(
+    (subject) => subject.kind === "surface",
+  );
   const surfaceStableKeys = new Set(
-    handoff.subjects
-      .filter((subject) => subject.kind === "surface")
-      .flatMap((subject) => subject.stable_keys),
+    surfaceSubjects.flatMap((subject) => subject.stable_keys),
   );
   for (const surfaceKey of handoff.scope.surface_keys)
     if (!surfaceStableKeys.has(surfaceKey))
       invalidDesignResourceHandoff("scope_surface_subject_missing", surfaceKey);
+  for (const subject of surfaceSubjects)
+    if (!subject.stable_keys.some((key) => scopedSurfaceKeys.has(key)))
+      invalidDesignResourceHandoff(
+        "scope_surface_subject_outside_scope",
+        subject.key,
+      );
 }
 
 export function validateDesignResourceConditions(
   handoff: DesignResourceHandoffV1,
 ): void {
+  const viewportProfiles = new Map<string, string>();
+  const densityProfiles = new Map<string, string>();
+  const safeAreaProfiles = new Map<string, string>();
+  const textScaleProfiles = new Map<string, string>();
   for (const condition of handoff.conditions) {
-    for (const [name, values] of [
-      ["modes", condition.modes],
-      ["states", condition.states],
-      ["content_cases", condition.content_cases],
-      ["input_methods", condition.input_methods],
-    ] as const) {
-      requireNonemptyDesignResourceValues(
-        values,
-        `condition_${name}_required:${condition.key}`,
-      );
-      requireUniqueDesignResourceValues(
-        values,
-        `condition_${name}_duplicate:${condition.key}`,
-      );
-      if (values.length !== 1)
-        invalidDesignResourceHandoff(
-          `condition_${name}_must_be_atomic`,
-          condition.key,
-        );
-    }
+    requireConsistentConditionProfile(
+      viewportProfiles,
+      condition.viewport.key,
+      `${condition.viewport.width}\0${condition.viewport.height}\0${condition.viewport.unit}`,
+      "viewport",
+      condition.key,
+    );
+    requireConsistentConditionProfile(
+      densityProfiles,
+      condition.density.key,
+      String(condition.density.pixel_ratio),
+      "density",
+      condition.key,
+    );
+    requireConsistentConditionProfile(
+      safeAreaProfiles,
+      condition.safe_area.key,
+      `${condition.safe_area.top}\0${condition.safe_area.right}\0${condition.safe_area.bottom}\0${condition.safe_area.left}\0${condition.safe_area.unit}`,
+      "safe_area",
+      condition.key,
+    );
+    requireConsistentConditionProfile(
+      textScaleProfiles,
+      condition.text_scale.key,
+      String(condition.text_scale.multiplier),
+      "text_scale",
+      condition.key,
+    );
+    requireUniqueDesignResourceValues(
+      condition.custom_axes.map((item) => item.axis_ref),
+      `condition_custom_axis_duplicate:${condition.key}`,
+    );
+    requireUniqueDesignResourceValues(
+      condition.custom_axes.map(
+        (item) => `${item.axis_ref}\0${item.value_ref}`,
+      ),
+      `condition_custom_axis_value_duplicate:${condition.key}`,
+    );
   }
+}
+
+function requireConsistentConditionProfile(
+  profiles: Map<string, string>,
+  key: string,
+  definition: string,
+  profileKind: "viewport" | "density" | "safe_area" | "text_scale",
+  conditionKey: string,
+): void {
+  const existing = profiles.get(key);
+  if (existing !== undefined && existing !== definition)
+    invalidDesignResourceHandoff(
+      `condition_${profileKind}_profile_conflict`,
+      `${key}:${conditionKey}`,
+    );
+  profiles.set(key, definition);
 }
 
 export function validateDesignResourceSubjects(
@@ -51,6 +97,9 @@ export function validateDesignResourceSubjects(
   targets: Map<string, DesignResourceHandoffV1["targets"][number]>,
 ): void {
   const stableKeys = new Set<string>();
+  const subjects = new Map(
+    handoff.subjects.map((subject) => [subject.key, subject]),
+  );
   for (const subject of handoff.subjects) {
     requireNonemptyDesignResourceValues(
       subject.stable_keys,
@@ -75,6 +124,41 @@ export function validateDesignResourceSubjects(
         invalidDesignResourceHandoff("subject_stable_key_ambiguous", stableKey);
       stableKeys.add(stableKey);
     }
+    for (const ref of [
+      subject.parent_ref,
+      subject.instance_of_ref,
+      subject.override_of_ref,
+      subject.family_ref,
+      subject.portal_host_ref,
+    ])
+      if (ref !== null && !subjects.has(ref))
+        invalidDesignResourceHandoff(
+          "subject_hierarchy_ref_unknown",
+          `${subject.key}:${ref}`,
+        );
+    requireUniqueDesignResourceValues(
+      subject.census_refs,
+      `subject_census_ref_duplicate:${subject.key}`,
+    );
+    requireUniqueDesignResourceValues(
+      subject.relation_endpoints.map((item) => item.role),
+      `subject_relation_endpoint_role_duplicate:${subject.key}`,
+    );
+    if (subject.presence === "always" && subject.presence_rule_ref !== null)
+      invalidDesignResourceHandoff(
+        "subject_always_presence_rule_forbidden",
+        subject.key,
+      );
+    if (subject.presence !== "always" && subject.presence_rule_ref === null)
+      invalidDesignResourceHandoff(
+        "subject_dynamic_presence_rule_required",
+        subject.key,
+      );
+    if (subject.presence === "virtualized" && subject.population_ref === null)
+      invalidDesignResourceHandoff(
+        "subject_virtualized_population_required",
+        subject.key,
+      );
   }
 }
 
@@ -138,6 +222,20 @@ function validateTargetSourceProfile(
       resources,
       ref,
       "source_profile_dependency_resource",
+    );
+  requireKnownDesignResourceRef(
+    resources,
+    profile.fact_manifest_resource_ref,
+    "source_profile_fact_manifest_resource",
+  );
+  if (
+    !profile.dependency_resource_refs.includes(
+      profile.fact_manifest_resource_ref,
+    )
+  )
+    invalidDesignResourceHandoff(
+      "source_profile_fact_manifest_dependency_missing",
+      target.key,
     );
   if (profile.dependency_resource_refs.includes(profile.entry_resource_ref))
     invalidDesignResourceHandoff(

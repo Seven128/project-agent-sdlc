@@ -93,10 +93,7 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     /cannot prove that the user never omitted a real requirement/iu,
   );
 
-  assert.match(
-    spec,
-    /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu,
-  );
+  assert.match(spec, /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu);
   assert.match(spec, /not a third implementation responsibility/iu);
   assert.match(
     rationale,
@@ -120,6 +117,16 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     "unsupported_design_fact_blocks",
     "control_granularity_is_not_design_fact_granularity",
     "no_second_design_fact_authority",
+    "authoring_obligation_universe_precedes_generation",
+    "frozen_inspector_census_required",
+    "first_class_condition_variation_property_axes_required",
+    "atomic_fact_cell_identity_required",
+    "expected_canonical_handoff_fact_universe_equality_required",
+    "complete_generation_without_sampling_or_truncation_required",
+    "fact_identity_and_proof_method_obligation_separation_required",
+    "per_fact_expected_comparison_authority_required",
+    "per_fact_current_result_required",
+    "protected_fact_observation_redaction_required",
     "selected_design_fact_antidegradation_required",
   ])
     assert.match(designFactPolicy, new RegExp(`\\b${marker}\\b`, "u"));
@@ -159,14 +166,24 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     "packages/ty-context/src/lib/long-task-final-v2.ts",
     "packages/ty-context/src/lib/long-task-final-integrity.ts",
     "packages/ty-context/src/lib/design-resource-fact-policy.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-types.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-catalog.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-universe.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-validation.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-facts.ts",
+    "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
+    "packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts",
     "tests/ty-context/long-task-semantic-assurance-closure.test.mjs",
     "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
     "tests/ty-context/long-task-semantic-drift-lifecycle.test.mjs",
     "tools/affected_test_selection.mjs",
     "packages/ty-context/source-mappings.yaml",
   ]) {
-    assert.equal(await missing(owner), false, `${owner} must remain indexed code`);
+    assert.equal(
+      await missing(owner),
+      false,
+      `${owner} must remain indexed code`,
+    );
     assert.match(
       implementationIndex,
       new RegExp(
@@ -176,18 +193,9 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
     );
   }
 
-  assert.match(
-    implementationIndex,
-    /^## Anti-Degradation Assurance Owners$/mu,
-  );
-  assert.match(
-    verification,
-    /^## Anti-Degradation Assurance Evidence$/mu,
-  );
-  assert.match(
-    verification,
-    /\[critical:mechanism-causal-chain-continuity\]/u,
-  );
+  assert.match(implementationIndex, /^## Anti-Degradation Assurance Owners$/mu);
+  assert.match(verification, /^## Anti-Degradation Assurance Evidence$/mu);
+  assert.match(verification, /\[critical:mechanism-causal-chain-continuity\]/u);
 
   for (const surface of [
     authoringSkill,
@@ -330,18 +338,12 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   );
   assert.match(combined, /one Contract[\s\S]*one Final Gate/iu);
 
-  assert.match(
-    spec,
-    /`F` the \*\*Implementation Freedom Boundary\*\*/u,
-  );
+  assert.match(spec, /`F` the \*\*Implementation Freedom Boundary\*\*/u);
   assert.match(
     spec,
     /`F` is a protected efficiency and anti-process-bloat boundary, not a third implementation responsibility or another premise/iu,
   );
-  assert.match(
-    spec,
-    /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu,
-  );
+  assert.match(spec, /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu);
   assert.match(
     rationale,
     /accepted-terminal-state safety rather than path safety or termination/iu,
@@ -407,14 +409,8 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   ])
     assert.match(manifest, new RegExp(`"${trigger}"`, "iu"));
 
-  assert.match(
-    implementationIndex,
-    /implementation-freedom-boundary/iu,
-  );
-  assert.match(
-    verification,
-    /\[critical:implementation-freedom-boundary\]/u,
-  );
+  assert.match(implementationIndex, /implementation-freedom-boundary/iu);
+  assert.match(verification, /\[critical:implementation-freedom-boundary\]/u);
   assert.match(readmeZh, /实现自由边界/u);
   assert.match(readmeZh, /单 agent\/多 agent|多开平台原生 agent/u);
 
@@ -589,7 +585,10 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
 
   assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
   assert.match(sourcePlan, /no longer defines a separate handoff/iu);
-  assert.match(sourcePlan, /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu);
+  assert.match(
+    sourcePlan,
+    /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu,
+  );
   assert.match(
     sourcePlan,
     /pre-existing Source Plan remains valid ordinary Source/iu,
@@ -631,10 +630,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
     longTask,
     /Source completeness is a Preflight\/Compile convergence requirement, not an earlier internal stage/iu,
   );
-  assert.match(
-    agents,
-    /loaded Skill[\s\S]*own Source\/Contract authoring/iu,
-  );
+  assert.match(agents, /loaded Skill[\s\S]*own Source\/Contract authoring/iu);
   assert.match(publicReadmes, /compatibility pointer/iu);
   assert.match(publicReadmes, /initial proposal[\s\S]*Web GPT/iu);
   assert.match(
@@ -662,25 +658,31 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
 });
 
 test("source-rich facts and residual handoff preserve the Long-Task proof chain", async () => {
-  const [skill, sourceAuthoring, contractAuthoring, evidenceDesign, spec, readmes] =
-    await Promise.all([
-      read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
-      read(
-        ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
-      ),
-      read(
-        ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
-      ),
-      read(
-        ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
-      ),
-      read("PROJECT_SPEC.md"),
-      Promise.all([
-        read("README.md"),
-        read("README.zh-CN.md"),
-        read("packages/ty-context/README.md"),
-      ]).then((contents) => contents.join("\n")),
-    ]);
+  const [
+    skill,
+    sourceAuthoring,
+    contractAuthoring,
+    evidenceDesign,
+    spec,
+    readmes,
+  ] = await Promise.all([
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+    ),
+    read("PROJECT_SPEC.md"),
+    Promise.all([
+      read("README.md"),
+      read("README.zh-CN.md"),
+      read("packages/ty-context/README.md"),
+    ]).then((contents) => contents.join("\n")),
+  ]);
   const guidance = [
     skill,
     sourceAuthoring,
@@ -694,11 +696,16 @@ test("source-rich facts and residual handoff preserve the Long-Task proof chain"
   assert.match(guidance, /dependency (?:set|closure)/iu);
   assert.match(guidance, /typed locator/iu);
   assert.match(guidance, /subject.*target.*condition.*dimension/isu);
-  assert.match(guidance, /residual (?:structured )?(?:semantic\/coverage )?handoff/iu);
   assert.match(
     guidance,
-    /Source Claims[\s\S]*Controls\/`?surface_bindings`?[\s\S]*(?:method-specific|independent).*Assertions?[\s\S]*production[\s\S]*design_conformance[\s\S]*interaction[\s\S]*target-runtime[\s\S]*Final Gate/iu,
+    /residual (?:structured )?(?:semantic\/coverage )?handoff/iu,
   );
+  assert.match(contractAuthoring, /production `surface_bindings`/iu);
+  assert.match(
+    contractAuthoring,
+    /`source_claims`[\s\S]*method-specific Source Claims[\s\S]*single-Claim Assertions[\s\S]*`design_conformance`[\s\S]*`interaction_trace`[\s\S]*`target_runtime`/iu,
+  );
+  assert.match(guidance, /Final Gate/iu);
   assert.match(
     evidenceDesign,
     /extraction success[\s\S]*cannot become product acceptance/iu,
@@ -707,10 +714,8 @@ test("source-rich facts and residual handoff preserve the Long-Task proof chain"
     guidance,
     /mutable (?:provider )?link[\s\S]*(?:metadata-only|partial file set|flattened)[\s\S]*(?:incomplete|insufficient|cannot replace|cannot become)/iu,
   );
-  assert.match(
-    spec,
-    /no provider-specific schema[\s\S]*second Authority[\s\S]*second Gate/iu,
-  );
+  assert.match(spec, /provider-neutral residual adapter/iu);
+  assert.match(spec, /No matrix[\s\S]*second Authority\/Gate\/state/iu);
 });
 
 test("registered rationale owns history, mechanism mapping and trusted limits", async () => {
@@ -771,7 +776,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     "Stateless same-Contract candidate diagnosis",
     "Targeted verify is repair evidence only",
     "Adaptive rolling runtime feedback",
-    "UI production-surface binding and design conformance",
+    "Manifest-backed atomic selected-design closure",
     "Behavioral semantic replacement plus independent liveness",
     "Same-snapshot Final Gate with pre/post protected-input recompile",
     "Stop/close rerun the Live Final Gate",
@@ -796,10 +801,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     rationale,
     /machine_accepted_external_pending[\s\S]*MachineVerifiableDeclaredDrift = empty[\s\S]*no full `DeclaredObservableDrift = empty` claim/iu,
   );
-  assert.match(
-    rationale,
-    /atomic Claim × applicability profile × required proof surface/iu,
-  );
+  assert.match(rationale, /atomic Claim × applicability × proof surface/iu);
   assert.match(
     globalContext,
     /Preventing false completion[\s\S]*controlling objective[\s\S]*accepted-terminal-state safety/iu,

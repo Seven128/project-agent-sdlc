@@ -23,10 +23,7 @@ const HOTSPOT_TESTS = new Map([
   ],
   [
     "packages/ty-context/src/commands/index.ts",
-    [
-      "design-resource-handoff.test.mjs",
-      "workflow-test-entrypoints.test.mjs",
-    ],
+    ["design-resource-handoff.test.mjs", "workflow-test-entrypoints.test.mjs"],
   ],
   [
     "packages/ty-context/src/index.ts",
@@ -40,12 +37,46 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/design-resource-handoff-shape-evidence.ts",
     "packages/ty-context/src/lib/design-resource-handoff-parser.ts",
     "packages/ty-context/src/lib/design-resource-handoff-policy.ts",
+    "packages/ty-context/src/lib/design-resource-fact-enums.ts",
+    "packages/ty-context/src/lib/design-resource-fact-locator-extractors.ts",
+    "packages/ty-context/src/lib/design-resource-fact-locator-resolver.ts",
     "packages/ty-context/src/lib/design-resource-fact-policy.ts",
+    "packages/ty-context/src/lib/design-resource-fact-locator-validation.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-catalog.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-model.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-shape-axes.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-shape-evidence.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-shape-facts.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-shape-inspector.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-shape.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-types.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-universe.ts",
+    "packages/ty-context/src/lib/design-resource-fact-manifest-validation.ts",
+    "packages/ty-context/src/lib/design-resource-fact-property-methods.ts",
+    "packages/ty-context/src/lib/design-resource-fact-shape-primitives.ts",
+    "packages/ty-context/src/lib/design-resource-fact-types.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-assets.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-catalog.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-conditions.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-facts.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-helpers.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-inspector.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-proof.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-subjects.ts",
+    "packages/ty-context/src/lib/design-resource-fact-universe-variations.ts",
+    "packages/ty-context/src/lib/design-resource-fact-value-validation.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-file-primitives.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-file-validation.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-web-dependency-validation.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-primitives.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-structure.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-coverage.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-fact-cells.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-fact-records.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-facts.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-proofs.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation-resource-closure.ts",
   ].map((sourcePath) => [
     sourcePath,
     [
@@ -53,13 +84,16 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
     ],
   ]),
-  [
+  ...[
     "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
+    "packages/ty-context/src/lib/long-task-design-target-capabilities.ts",
+  ].map((sourcePath) => [
+    sourcePath,
     [
       "design-resource-handoff.test.mjs",
       "long-task-delivery-compiler.test.mjs",
     ],
-  ],
+  ]),
   [
     "packages/ty-context/src/lib/long-task-activation-validation.ts",
     [
@@ -425,6 +459,36 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-playwright-evidence.ts",
     [
       "long-task-playwright-ac-evidence.test.mjs",
+      "long-task-semantic-drift-closure.test.mjs",
+    ],
+  ],
+  ...[
+    "packages/ty-context/src/lib/long-task-playwright-case-evidence.ts",
+    "packages/ty-context/src/lib/long-task-playwright-case-primitives.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "long-task-playwright-ac-evidence.test.mjs",
+      "long-task-semantic-drift-closure.test.mjs",
+    ],
+  ]),
+  [
+    "packages/ty-context/src/lib/modularity.ts",
+    ["check-modularity.test.mjs", "validators.test.mjs"],
+  ],
+  [
+    "packages/ty-context/src/lib/execution-target-capabilities.ts",
+    [
+      "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-drift-closure.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
+    [
+      "long-task-authority-field-completeness.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-schema-parser-parity.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],

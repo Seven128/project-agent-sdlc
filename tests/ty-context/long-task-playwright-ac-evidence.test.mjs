@@ -3,6 +3,10 @@ import path from "node:path";
 import test from "node:test";
 import { decodeCheckEvidence } from "../../packages/ty-context/dist/lib/long-task-check-evidence-decoder.js";
 import { evaluateCheckEvidence } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
+import {
+  designFactExpectationFixture,
+  designFactResultFixture,
+} from "./long-task-delivery-fixtures.mjs";
 
 test("Playwright exposes independent AC observations and localizes a failed case", async () => {
   const check = compiledPlaywrightCheck();
@@ -218,18 +222,27 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
               path: "artifacts/map-layout-phone.json",
               observation_path: "artifacts/map-layout-phone-observation.json",
               fact_refs: ["map.layout.phone"],
+              fact_expectations: [
+                designFactExpectationFixture("map.layout.phone"),
+              ],
             },
             {
               condition_key: "dark",
               path: "artifacts/map-layout-dark.json",
               observation_path: "artifacts/map-layout-dark-observation.json",
               fact_refs: ["map.layout.dark"],
+              fact_expectations: [
+                designFactExpectationFixture("map.layout.dark"),
+              ],
             },
             {
               condition_key: "default",
               path: "artifacts/map-layout-default.json",
               observation_path: "artifacts/map-layout-default-observation.json",
               fact_refs: ["map.layout.default"],
+              fact_expectations: [
+                designFactExpectationFixture("map.layout.default"),
+              ],
             },
           ],
         },
@@ -255,10 +268,34 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
       `ty-context-design-method:map-default:layout_geometry:${condition}:observation`,
     ],
   );
+  const methodAttachmentPayloads = Object.fromEntries(
+    ["phone", "dark", "default"].map((condition) => {
+      const factRef = `map.layout.${condition}`;
+      return [
+        `ty-context-design-method:map-default:layout_geometry:${condition}:record`,
+        {
+          schema_version: "design-method-fact-results-v1",
+          fact_results: [
+            designFactResultFixture(designFactExpectationFixture(factRef), {
+              artifactPath: `artifacts/map-layout-${condition}.json`,
+              observationPath: `artifacts/map-layout-${condition}-observation.json`,
+            }),
+          ],
+        },
+      ];
+    }),
+  );
   const decoded = decode(
     check,
     report([
-      ac("ac-one", "expected", "passed", "default", methodAttachmentNames),
+      ac(
+        "ac-one",
+        "expected",
+        "passed",
+        "default",
+        methodAttachmentNames,
+        methodAttachmentPayloads,
+      ),
     ]),
     0,
   );
@@ -304,6 +341,16 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
             observation_artifact_path:
               "artifacts/map-layout-phone-observation.json",
             fact_refs: ["map.layout.phone"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.phone"),
+                {
+                  artifactPath: "artifacts/map-layout-phone.json",
+                  observationPath:
+                    "artifacts/map-layout-phone-observation.json",
+                },
+              ),
+            ],
           },
           {
             condition_key: "dark",
@@ -311,6 +358,15 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
             observation_artifact_path:
               "artifacts/map-layout-dark-observation.json",
             fact_refs: ["map.layout.dark"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.dark"),
+                {
+                  artifactPath: "artifacts/map-layout-dark.json",
+                  observationPath: "artifacts/map-layout-dark-observation.json",
+                },
+              ),
+            ],
           },
           {
             condition_key: "default",
@@ -318,6 +374,16 @@ test("an executed Playwright AC emits its compiled design-conformance record", (
             observation_artifact_path:
               "artifacts/map-layout-default-observation.json",
             fact_refs: ["map.layout.default"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.default"),
+                {
+                  artifactPath: "artifacts/map-layout-default.json",
+                  observationPath:
+                    "artifacts/map-layout-default-observation.json",
+                },
+              ),
+            ],
           },
         ],
       },
@@ -433,6 +499,7 @@ function ac(
   resultStatus,
   projectId = "default",
   attachmentNames = [],
+  attachmentPayloads = {},
 ) {
   return {
     id,
@@ -451,6 +518,13 @@ function ac(
             name,
             contentType: "application/json",
             path: `artifacts/${name}.json`,
+            ...(attachmentPayloads[name]
+              ? {
+                  body: Buffer.from(
+                    JSON.stringify(attachmentPayloads[name]),
+                  ).toString("base64"),
+                }
+              : {}),
           })),
         },
       ],

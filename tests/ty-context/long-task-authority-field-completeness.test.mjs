@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { AUTHORITY_FIELD_POLICY_REGISTRIES } from "../../packages/ty-context/dist/lib/long-task-authority-policy.js";
-import { deliveryContract } from "./long-task-delivery-fixtures.mjs";
+import {
+  deliveryContract,
+  designFactExpectationFixture,
+} from "./long-task-delivery-fixtures.mjs";
 
 test("every Delivery Contract authority structure has a complete field policy registry", () => {
   const contract = deliveryContract();
@@ -106,6 +109,9 @@ test("every Delivery Contract authority structure has a complete field policy re
               observation_path:
                 "artifacts/settings-layout-default-observation.json",
               fact_refs: ["settings.layout.default"],
+              fact_expectations: [
+                designFactExpectationFixture("settings.layout.default"),
+              ],
             },
           ],
         },
@@ -123,6 +129,9 @@ test("every Delivery Contract authority structure has a complete field policy re
           observation_path:
             "artifacts/settings-layout-default-observation.json",
           fact_refs: ["settings.layout.default"],
+          fact_expectations: [
+            designFactExpectationFixture("settings.layout.default"),
+          ],
         },
       ],
     },

@@ -11,6 +11,8 @@ import {
   addProductionControlBinding,
   completeControl,
   deliveryContract,
+  designFactExpectationFixture,
+  designFactResultFixture,
 } from "./long-task-delivery-fixtures.mjs";
 
 const ZERO = "0".repeat(64);
@@ -164,7 +166,8 @@ test("[critical:target-runtime-non-substitution] required target refs prevent a 
   proxyOutcome.product.controls.push(mapControl);
   proxyOutcome.product.control_relation_closure = {
     state: "not_applicable",
-    statement: "Only one Control is declared, so no cross-Control relation applies.",
+    statement:
+      "Only one Control is declared, so no cross-Control relation applies.",
     applicability_refs: ["first-root-success", "first-native-success"],
   };
   const nativeShell = structuredClone(proxyOutcome.acceptance.checks[0]);
@@ -284,7 +287,8 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
   );
   outcome.product.control_relation_closure = {
     state: "not_applicable",
-    statement: "Only one Control is declared, so no cross-Control relation applies.",
+    statement:
+      "Only one Control is declared, so no cross-Control relation applies.",
     applicability_refs: ["first-root-success"],
   };
   const check = outcome.acceptance.checks[0];
@@ -311,16 +315,20 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
               {
                 condition_key: "phone",
                 path: "artifacts/map-layout-phone.json",
-                observation_path:
-                  "artifacts/map-layout-phone-observation.json",
+                observation_path: "artifacts/map-layout-phone-observation.json",
                 fact_refs: ["map.layout.phone"],
+                fact_expectations: [
+                  designFactExpectationFixture("map.layout.phone"),
+                ],
               },
               {
                 condition_key: "dark",
                 path: "artifacts/map-layout-dark.json",
-                observation_path:
-                  "artifacts/map-layout-dark-observation.json",
+                observation_path: "artifacts/map-layout-dark-observation.json",
                 fact_refs: ["map.layout.dark"],
+                fact_expectations: [
+                  designFactExpectationFixture("map.layout.dark"),
+                ],
               },
               {
                 condition_key: "default",
@@ -328,6 +336,9 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
                 observation_path:
                   "artifacts/map-layout-default-observation.json",
                 fact_refs: ["map.layout.default"],
+                fact_expectations: [
+                  designFactExpectationFixture("map.layout.default"),
+                ],
               },
             ],
           },
@@ -426,6 +437,17 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
           observation_artifact_path:
             "artifacts/map-layout-phone-observation.json",
           fact_refs: ["map.layout.phone"],
+          fact_results: [
+            designFactResultFixture(
+              designFactExpectationFixture("map.layout.phone"),
+              {
+                artifactPath: "artifacts/map-layout-phone.json",
+                observationPath: "artifacts/map-layout-phone-observation.json",
+                artifactSha256: "3".repeat(64),
+                observationSha256: "6".repeat(64),
+              },
+            ),
+          ],
         },
         {
           condition_key: "dark",
@@ -433,6 +455,17 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
           observation_artifact_path:
             "artifacts/map-layout-dark-observation.json",
           fact_refs: ["map.layout.dark"],
+          fact_results: [
+            designFactResultFixture(
+              designFactExpectationFixture("map.layout.dark"),
+              {
+                artifactPath: "artifacts/map-layout-dark.json",
+                observationPath: "artifacts/map-layout-dark-observation.json",
+                artifactSha256: "4".repeat(64),
+                observationSha256: "7".repeat(64),
+              },
+            ),
+          ],
         },
         {
           condition_key: "default",
@@ -440,6 +473,18 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
           observation_artifact_path:
             "artifacts/map-layout-default-observation.json",
           fact_refs: ["map.layout.default"],
+          fact_results: [
+            designFactResultFixture(
+              designFactExpectationFixture("map.layout.default"),
+              {
+                artifactPath: "artifacts/map-layout-default.json",
+                observationPath:
+                  "artifacts/map-layout-default-observation.json",
+                artifactSha256: "5".repeat(64),
+                observationSha256: "8".repeat(64),
+              },
+            ),
+          ],
         },
       ],
     },
@@ -451,6 +496,97 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
   );
   assert.equal(conformed.complete[assertionKey], true);
   assert.deepEqual(conformed.findings, []);
+
+  assertFactResultDriftClosure({
+    compiled,
+    conformanceRecords,
+    artifacts,
+    assertionKey,
+  });
+
+  const protectedCompiled = structuredClone(compiled);
+  protectedCompiled.design_conformance_targets[0].verification_method_bindings[0].evidence_artifacts[0].fact_expectations[0].observation_sensitivity =
+    "protected";
+  const protectedRecords = structuredClone(conformanceRecords);
+  const protectedResult = protectedRecords.find(
+    (record) => record.capability === "design_method",
+  ).cells[0].fact_results[0];
+  protectedResult.actual_observation.sensitivity = "protected";
+  protectedResult.actual_observation.redaction = null;
+  const missingProtection = evaluateEvidenceCapabilities(
+    protectedCompiled,
+    protectedRecords,
+    artifacts,
+  );
+  assert.equal(missingProtection.complete[assertionKey], false);
+  assert.ok(
+    missingProtection.findings.some(
+      (item) => item.actual === "design_method_observation_protection_mismatch",
+    ),
+  );
+  protectedResult.actual_observation.redaction = {
+    policy_ref: "policy.fixture-redaction",
+    representation: "digest_only",
+    raw_persisted: false,
+  };
+  const protectedConformed = evaluateEvidenceCapabilities(
+    protectedCompiled,
+    protectedRecords,
+    artifacts,
+  );
+  assert.equal(protectedConformed.complete[assertionKey], true);
+
+  for (const [name, identityField, expectedCode] of [
+    [
+      "actual observation reuse",
+      "actual_observation",
+      "design_method_actual_observation_reused",
+    ],
+    [
+      "comparison result reuse",
+      "comparison",
+      "design_method_comparison_result_reused",
+    ],
+  ]) {
+    const twoFactCompiled = structuredClone(compiled);
+    const phoneArtifact =
+      twoFactCompiled.design_conformance_targets[0]
+        .verification_method_bindings[0].evidence_artifacts[0];
+    const secondExpectation = designFactExpectationFixture(
+      "map.layout.phone.second",
+    );
+    phoneArtifact.fact_refs.push(secondExpectation.fact_ref);
+    phoneArtifact.fact_expectations.push(secondExpectation);
+    const records = structuredClone(conformanceRecords);
+    const methodRecord = records.find(
+      (record) => record.capability === "design_method",
+    );
+    const phoneCell = methodRecord.cells[0];
+    const secondResult = designFactResultFixture(secondExpectation, {
+      artifactPath: phoneCell.artifact_path,
+      observationPath: phoneCell.observation_artifact_path,
+      artifactSha256: artifacts[phoneCell.artifact_path],
+      observationSha256: artifacts[phoneCell.observation_artifact_path],
+    });
+    if (identityField === "actual_observation")
+      secondResult.actual_observation.locator =
+        phoneCell.fact_results[0].actual_observation.locator;
+    else
+      secondResult.comparison.locator =
+        phoneCell.fact_results[0].comparison.locator;
+    phoneCell.fact_refs.push(secondExpectation.fact_ref);
+    phoneCell.fact_results.push(secondResult);
+    const result = evaluateEvidenceCapabilities(
+      twoFactCompiled,
+      records,
+      artifacts,
+    );
+    assert.equal(result.complete[assertionKey], false, name);
+    assert.ok(
+      result.findings.some((item) => item.actual === expectedCode),
+      name,
+    );
+  }
 
   const factDriftRecords = structuredClone(conformanceRecords);
   const factDriftMethod = factDriftRecords.find(
@@ -495,6 +631,18 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
             observation_artifact_path:
               "artifacts/map-layout-phone-observation.json",
             fact_refs: ["map.layout.phone"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.phone"),
+                {
+                  artifactPath: "artifacts/map-layout-phone.json",
+                  observationPath:
+                    "artifacts/map-layout-phone-observation.json",
+                  artifactSha256: "3".repeat(64),
+                  observationSha256: "9".repeat(64),
+                },
+              ),
+            ],
           },
           {
             condition_key: "dark",
@@ -502,6 +650,17 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
             observation_artifact_path:
               "artifacts/map-layout-dark-observation.json",
             fact_refs: ["map.layout.dark"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.dark"),
+                {
+                  artifactPath: "artifacts/map-layout-dark.json",
+                  observationPath: "artifacts/map-layout-dark-observation.json",
+                  artifactSha256: "4".repeat(64),
+                  observationSha256: "9".repeat(64),
+                },
+              ),
+            ],
           },
           {
             condition_key: "default",
@@ -509,6 +668,18 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
             observation_artifact_path:
               "artifacts/map-layout-default-observation.json",
             fact_refs: ["map.layout.default"],
+            fact_results: [
+              designFactResultFixture(
+                designFactExpectationFixture("map.layout.default"),
+                {
+                  artifactPath: "artifacts/map-layout-default.json",
+                  observationPath:
+                    "artifacts/map-layout-default-observation.json",
+                  artifactSha256: "5".repeat(64),
+                  observationSha256: "8".repeat(64),
+                },
+              ),
+            ],
           },
         ],
       },
@@ -754,6 +925,141 @@ test("variable inputs and external effects require independent typed runtime evi
   );
   assert.equal(evidence.complete[observedKey], true);
 });
+
+function assertFactResultDriftClosure({
+  compiled,
+  conformanceRecords,
+  artifacts,
+  assertionKey,
+}) {
+  const factResultDrifts = [
+    [
+      "missing result",
+      (record) => {
+        record.cells[0].fact_results = [];
+      },
+      "design_method_fact_results_mismatch",
+    ],
+    [
+      "extra result",
+      (record) => {
+        const result = structuredClone(record.cells[0].fact_results[0]);
+        result.fact_ref = "map.layout.unbound";
+        record.cells[0].fact_results.push(result);
+      },
+      "design_method_fact_results_mismatch",
+    ],
+    [
+      "fact identity",
+      (record) => {
+        record.cells[0].fact_results[0].subject_ref = "subject.drift";
+      },
+      "design_method_fact_identity_mismatch",
+    ],
+    [
+      "observation sensitivity authority",
+      (record) => {
+        record.cells[0].fact_results[0].actual_observation.sensitivity =
+          "protected";
+        record.cells[0].fact_results[0].actual_observation.redaction = {
+          policy_ref: "policy.fixture-redaction",
+          representation: "digest_only",
+          raw_persisted: false,
+        };
+      },
+      "design_method_fact_identity_mismatch",
+    ],
+    [
+      "expected value",
+      (record) => {
+        record.cells[0].fact_results[0].expected.sha256 = "9".repeat(64);
+      },
+      "design_method_expected_value_mismatch",
+    ],
+    [
+      "comparator authority",
+      (record) => {
+        record.cells[0].fact_results[0].comparison.comparator = "content_equal";
+      },
+      "design_method_comparison_authority_mismatch",
+    ],
+    [
+      "tolerance authority",
+      (record) => {
+        record.cells[0].fact_results[0].comparison.tolerance = {
+          locator: {
+            resource_ref: "resource.fixture",
+            kind: "json_pointer",
+            value: "/tolerance/drift",
+          },
+          sha256: "9".repeat(64),
+        };
+      },
+      "design_method_comparison_authority_mismatch",
+    ],
+    [
+      "oracle identity",
+      (record) => {
+        record.cells[0].fact_results[0].oracle.identity = "other-oracle";
+      },
+      "design_method_oracle_environment_mismatch",
+    ],
+    [
+      "environment digest",
+      (record) => {
+        record.cells[0].fact_results[0].environment.definition.sha256 =
+          "9".repeat(64);
+      },
+      "design_method_oracle_environment_mismatch",
+    ],
+    [
+      "actual observation",
+      (record) => {
+        record.cells[0].fact_results[0].actual_observation.artifact_sha256 =
+          "9".repeat(64);
+      },
+      "design_method_actual_observation_mismatch",
+    ],
+    [
+      "actual environment",
+      (record) => {
+        record.cells[0].fact_results[0].actual_environment.value_sha256 =
+          "9".repeat(64);
+      },
+      "design_method_actual_environment_mismatch",
+    ],
+    [
+      "comparison artifact",
+      (record) => {
+        record.cells[0].fact_results[0].comparison.artifact_sha256 = "9".repeat(
+          64,
+        );
+      },
+      "design_method_comparison_artifact_mismatch",
+    ],
+    [
+      "failed verdict",
+      (record) => {
+        record.cells[0].fact_results[0].verdict = "failed";
+        record.cells[0].fact_results[0].comparison.passed = false;
+      },
+      "design_method_fact_failed",
+    ],
+  ];
+  for (const [name, mutate, expectedCode] of factResultDrifts) {
+    const records = structuredClone(conformanceRecords);
+    const methodRecord = records.find(
+      (record) => record.capability === "design_method",
+    );
+    mutate(methodRecord);
+    const result = evaluateEvidenceCapabilities(compiled, records, artifacts);
+    assert.equal(result.complete[assertionKey], false, name);
+    assert.ok(
+      result.findings.some((item) => item.actual === expectedCode),
+      name,
+    );
+  }
+}
 
 function parse(contract) {
   return parseDeliveryContractText(YAML.stringify(contract));

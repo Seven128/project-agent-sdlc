@@ -1,9 +1,25 @@
 import type { EvidenceCapabilityV2 } from "./long-task-semantic-contract-types.js";
 import type { DesignResourceVerificationMethod } from "./design-resource-handoff-types.js";
+import type {
+  DesignResourceComparator,
+  DesignResourceLocatedDigestV1,
+} from "./design-resource-fact-manifest-types.js";
 
 interface EvidenceRecordBaseV2 {
   assertion_key: string;
   capability: EvidenceCapabilityV2;
+}
+
+export interface DesignEvidenceLocatorV2 {
+  kind:
+    | "json_pointer"
+    | "image_region"
+    | "semantic_node"
+    | "trace_event"
+    | "timeline_sample"
+    | "asset_ref"
+    | "custom";
+  value: string;
 }
 
 export interface InteractionTraceEvidenceV2 extends EvidenceRecordBaseV2 {
@@ -93,7 +109,59 @@ export interface DesignMethodEvidenceV2 extends EvidenceRecordBaseV2 {
     artifact_path: string;
     observation_artifact_path: string;
     fact_refs: string[];
+    fact_results: DesignFactResultV2[];
   }>;
+}
+
+export interface DesignFactResultV2 {
+  fact_ref: string;
+  subject_ref: string;
+  variation_ref: string;
+  property_ref: string;
+  actual_observation: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    value_sha256: string;
+    sensitivity: "plain" | "protected";
+    redaction: {
+      policy_ref: string;
+      representation: "digest_only" | "redacted_structured";
+      raw_persisted: false;
+    } | null;
+  };
+  actual_environment: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    value_sha256: string;
+  };
+  expected: DesignResourceLocatedDigestV1;
+  comparison: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    result_sha256: string;
+    comparator: DesignResourceComparator | string;
+    mode: "exact" | "tolerance";
+    parameters: DesignResourceLocatedDigestV1;
+    tolerance: DesignResourceLocatedDigestV1 | null;
+    mask: DesignResourceLocatedDigestV1 | null;
+    passed: boolean;
+  };
+  verdict: "passed" | "failed";
+  oracle: {
+    key: string;
+    trust: "frozen_executable" | "named_external_tcb";
+    identity: string;
+    version: string;
+    sha256: string | null;
+  };
+  environment: {
+    key: string;
+    identity: string;
+    definition: DesignResourceLocatedDigestV1;
+  };
 }
 
 export interface InputVariationEvidenceV2 extends EvidenceRecordBaseV2 {

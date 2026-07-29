@@ -331,6 +331,41 @@ modularity:
   }
 });
 
+test("check-modularity excludes only the Long-Task authority Contract while auditing sibling runners", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-modularity-authority-"),
+  );
+  try {
+    const workdir = path.join(root, ".work_products", "delivery");
+    await mkdir(workdir, { recursive: true });
+    await writeFile(
+      path.join(workdir, "delivery-contract.yaml"),
+      lines(["contract:", "  claims:", "    - first"]),
+      "utf8",
+    );
+    await writeFile(
+      path.join(workdir, "runner.mjs"),
+      lines(["one", "two", "three"]),
+      "utf8",
+    );
+    const result = runCli(root, [
+      "check-modularity",
+      "--file",
+      ".work_products/delivery/delivery-contract.yaml",
+      "--file",
+      ".work_products/delivery/runner.mjs",
+      "--limit",
+      "1",
+    ]);
+    assert.equal(result.status, 0, output(result));
+    assert.match(result.stdout, /check-modularity audited=1 warning=1 limit=1/);
+    assert.match(result.stdout, /\.work_products\/delivery\/runner\.mjs/);
+    assert.doesNotMatch(result.stdout, /delivery-contract\.yaml/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("check-modularity fails on unknown modularity policy", async () => {
   const root = await createGitFixture();
   try {
