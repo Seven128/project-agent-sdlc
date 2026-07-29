@@ -30,6 +30,26 @@ test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden bounda
   assert.doesNotMatch(serialized, /benchmark-proven|completed result|speedup achieved/iu);
 });
 
+test("prompt, Context, and Skill packaging equivalence requires independent paired Agent evidence", async () => {
+  const verification = await readFile(
+    path.join(repoRoot, "project_context", "areas", "harness-package", "verification.md"),
+    "utf8",
+  );
+
+  assert.match(
+    verification,
+    /Static\/unit tests may prove instruction distribution, canonical-source parity, core-runtime identity and known semantic invariants/iu,
+  );
+  assert.match(
+    verification,
+    /prompt, Context or Skill-packaging changes[\s\S]*do not by themselves prove Agent-level recall\/adherence[\s\S]*conclusion-grade independent paired A\/B runs/iu,
+  );
+  assert.match(
+    verification,
+    /narrow evidence rule does not replace deterministic mechanism proof for machine-runtime changes/iu,
+  );
+});
+
 test("stateless Context resolver reaches fixed controlling Context without creating state", async () => {
   const fixture = path.join(mechanismRoot, "fixture");
   const result = await resolveContext(fixture, {
