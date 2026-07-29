@@ -90,6 +90,11 @@ export async function freezeDeliveryCheck(
     cwd,
     target,
   );
+  validateSemanticFactOracleInputs(
+    check.key,
+    semanticFactExpectations,
+    verificationInputHashes,
+  );
   const compiled = {
     ...check,
     internal_id: `${prefix}.${check.key}`,
@@ -112,6 +117,29 @@ export async function freezeDeliveryCheck(
     ...compiled,
     raw_execution_identity: computeRawExecutionIdentity(compiled),
   };
+}
+
+function validateSemanticFactOracleInputs(
+  checkKey: string,
+  expectations: SemanticFactExpectationV2[],
+  verificationInputHashes: Record<string, string>,
+): void {
+  const frozenOracles = new Map(
+    expectations
+      .filter((expectation) => expectation.oracle.trust === "frozen_executable")
+      .map((expectation) => [expectation.oracle.key, expectation.oracle]),
+  );
+  for (const oracle of frozenOracles.values()) {
+    const frozenSha256 = verificationInputHashes[oracle.identity];
+    if (!frozenSha256)
+      throw new Error(
+        `semantic_fact_oracle_verification_input_missing:${checkKey}:${oracle.key}:${oracle.identity}`,
+      );
+    if (frozenSha256 !== oracle.sha256)
+      throw new Error(
+        `semantic_fact_oracle_verification_input_mismatch:${checkKey}:${oracle.key}:${oracle.identity}`,
+      );
+  }
 }
 
 async function resolvedRunnerTarget(

@@ -96,6 +96,11 @@ test("shared non-UI semantic Fact runtime changes widen to the complete Long-Tas
     "packages/ty-context/src/lib/semantic-fact-policy-authority.ts",
     "packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts",
     "packages/ty-context/src/lib/long-task-semantic-fact-contract-proofs.ts",
+    "tools/semantic_fact_delivery_catalog.mjs",
+    "tools/semantic_fact_delivery_evidence.mjs",
+    "tools/semantic_fact_delivery_observations.mjs",
+    "tools/semantic_fact_delivery_verifier_support.mjs",
+    "tools/verify_semantic_fact_completeness_delivery.mjs",
   ]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "long-task-suite", file);
@@ -474,11 +479,7 @@ test("direct test edits run that test while shared fixture edits widen safely", 
     const fixture = selectAffectedTests([file]);
     assert.equal(fixture.mode, "long-task-suite", file);
     assert.deepEqual(fixture.tests, [], file);
-    assert.deepEqual(
-      fixture.reasons,
-      [`${file}:shared_test_support`],
-      file,
-    );
+    assert.deepEqual(fixture.reasons, [`${file}:shared_test_support`], file);
   }
 });
 

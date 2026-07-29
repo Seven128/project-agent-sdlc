@@ -87,13 +87,6 @@ modularity:
       reason: The independently authored delivery verifier is frozen as one self-contained Authority snapshot so its semantic, population, cost and single-aggregate oracle cannot acquire implementation-carrier dependencies after Authority Lock.
       tracking_issue: test-suite-roi-antidegradation-verifier-retirement
       expiry_condition: Remove this waiver when the delivery verifier is retired; before adding behavior, adopt a protected Authority Revision and split the verifier below the project limits.
-    - path: tools/verify_semantic_fact_completeness_delivery.mjs
-      category: fixture_snapshot
-      owner: harness-maintainers
-      introduced_at: "2026-07-30"
-      reason: The independently authored semantic-completeness delivery verifier is frozen as one self-contained Authority snapshot so its expected Fact universe, exact-set comparison and evidence oracle cannot acquire implementation-carrier dependencies after Authority Lock.
-      tracking_issue: semantic-fact-completeness-verifier-retirement
-      expiry_condition: Remove this waiver when the delivery verifier is retired; before adding behavior, adopt a protected Authority Revision and split the verifier below the project limits.
 managed_files:
   - path: AGENTS.md
     strategy: merge-block

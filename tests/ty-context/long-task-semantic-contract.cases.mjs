@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -89,10 +90,9 @@ test("ordinary Material Source cannot be hidden as supporting-only", async () =>
     input.disposition = "supporting_only";
     input.fact_refs = [];
     refreshFixtureSemanticManifest(manifest);
-    const serialized = YAML.stringify(
-      JSON.parse(JSON.stringify(manifest)),
-      { lineWidth: 0 },
-    ).trimEnd();
+    const serialized = YAML.stringify(JSON.parse(JSON.stringify(manifest)), {
+      lineWidth: 0,
+    }).trimEnd();
     await writeFile(
       sourcePath,
       source.replace(
@@ -176,6 +176,49 @@ test("declared semantic observers must be independent observer-role targets", as
         require_completion_gate: false,
       }),
       /proof_observer_target_role_mismatch/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("a frozen semantic Oracle is bound to its actual verification-input digest", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const oracleSha256 = createHash("sha256")
+      .update(await readFile(path.join(fixture.root, "tests", "oracle.mjs")))
+      .digest("hex");
+    await mutateFixtureSemanticManifest(fixture, (manifest) => {
+      manifest.oracles[0] = {
+        ...manifest.oracles[0],
+        trust: "frozen_executable",
+        identity: "tests/oracle.mjs",
+        sha256: oracleSha256,
+      };
+    });
+    await compileDeliveryContract(fixture.workdir, fixture.root, {
+      require_completion_gate: false,
+    });
+
+    await mutateFixtureSemanticManifest(fixture, (manifest) => {
+      manifest.oracles[0].identity = "tests/not-the-oracle.mjs";
+    });
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /semantic_fact_oracle_verification_input_missing:first-check:oracle\.fixture-semantic:tests\/not-the-oracle\.mjs/u,
+    );
+
+    await mutateFixtureSemanticManifest(fixture, (manifest) => {
+      manifest.oracles[0].identity = "tests/oracle.mjs";
+      manifest.oracles[0].sha256 = "0".repeat(64);
+    });
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /semantic_fact_oracle_verification_input_mismatch:first-check:oracle\.fixture-semantic:tests\/oracle\.mjs/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

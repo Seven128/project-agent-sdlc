@@ -9447,7 +9447,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/oracles/0"
         },
-        "identity_sha256": "c3bf9fdad86f49fe23147f6e63cf9e4c51cc0d92e8b72019c110f9449836bd0a",
+        "identity_sha256": "69804850aee1ecce00c4948b9bda2e132d7a51c4eeca1c19978b5797764f1bf5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.actor-role-tenant-entitlement-and-responsibility",
@@ -22481,7 +22481,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "trust": "frozen_executable",
       "identity": "tools/verify_semantic_fact_completeness_delivery.mjs",
       "version": "1",
-      "sha256": "4cd2b5732cf4e0de69fd146ddaf634288df187be21bac9b9c9d12ce9bdd5b909",
+      "sha256": "46ad22fc8a2e4fd7619bde143a9fe3a3f86ee984fff9f66ab1515b89c2cbc354",
       "capabilities": [
         "exact_value"
       ]

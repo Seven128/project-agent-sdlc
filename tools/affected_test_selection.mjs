@@ -19,6 +19,8 @@ export {
 const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/semantic-fact-",
   "packages/ty-context/src/lib/long-task-semantic-fact-",
+  "tools/semantic_fact_delivery_",
+  "tools/verify_semantic_fact_completeness_delivery.mjs",
 ]);
 
 const HOTSPOT_TESTS = new Map([
