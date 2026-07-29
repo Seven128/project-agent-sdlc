@@ -7,6 +7,7 @@ import {
   key,
   literal,
   object,
+  semanticRef,
   string,
   strings,
 } from "./long-task-shape-primitives.js";
@@ -46,8 +47,8 @@ export function parseClaimApplicability(
           const dimensionLabel = `${itemLabel}.dimensions[${dimensionIndex}]`;
           const entry = object(dimension, dimensionLabel, ["key", "value"]);
           return {
-            key: key(entry.key, `${dimensionLabel}.key`),
-            value: key(entry.value, `${dimensionLabel}.value`),
+            key: semanticRef(entry.key, `${dimensionLabel}.key`),
+            value: semanticRef(entry.value, `${dimensionLabel}.value`),
           };
         },
       ),

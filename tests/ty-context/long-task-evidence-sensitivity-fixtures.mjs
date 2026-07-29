@@ -23,7 +23,12 @@ export async function assertActivationRejects(
     compileDeliveryContract(fixture.workdir, fixture.root, {
       require_completion_gate: false,
     }),
-    new RegExp(escapeRegExp(code), "u"),
+    new RegExp(
+      code === "behavioral_semantic_counterfactual_required"
+        ? `${escapeRegExp(code)}|proof_counterfactual_required|semantic_fact_counterfactual_unknown`
+        : escapeRegExp(code),
+      "u",
+    ),
   );
 }
 

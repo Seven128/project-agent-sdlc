@@ -14,6 +14,35 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import YAML from "yaml";
+import {
+  fixtureSemanticManifest,
+} from "./long-task-semantic-manifest-fixture.mjs";
+import {
+  writeFixtureSourceAndOracle,
+} from "./long-task-semantic-oracle-fixture.mjs";
+import {
+  authoringTemplateSemanticManifest,
+  publicExampleSemanticManifest,
+  releaseTarballSemanticManifest,
+} from "./long-task-semantic-variant-fixture.mjs";
+import {
+  digestCanonical,
+  refreshFixtureSemanticManifest,
+  semanticManifestIdentity,
+} from "./long-task-semantic-refresh-fixture.mjs";
+import {
+  synchronizeFixtureSemanticManifest,
+} from "./long-task-semantic-sync-fixture.mjs";
+
+export {
+  fixtureSemanticManifest,
+  writeFixtureSourceAndOracle,
+  authoringTemplateSemanticManifest,
+  publicExampleSemanticManifest,
+  releaseTarballSemanticManifest,
+  refreshFixtureSemanticManifest,
+  semanticManifestIdentity,
+};
 
 const exec = promisify(execFile);
 const repo = fileURLToPath(new URL("../..", import.meta.url));
@@ -149,6 +178,16 @@ export async function createDeliveryFixture(options = {}) {
     const template = path.join(seedRoot, variant);
     await assertSeedRepository(template);
     await cp(template, root, { recursive: true, force: true });
+    if (options.twoOutcomes) {
+      await writeFixtureSourceAndOracle(root, {
+        twoOutcomes: true,
+        externalConfirmation: Boolean(options.externalConfirmation),
+      });
+      await exec("git", ["add", "source.md", "tests/oracle.mjs"], {
+        cwd: root,
+      });
+      await exec("git", ["commit", "--amend", "--no-edit"], { cwd: root });
+    }
   } catch (error) {
     await rm(root, { recursive: true, force: true });
     throw error;
@@ -157,7 +196,9 @@ export async function createDeliveryFixture(options = {}) {
   await mkdir(workdir, { recursive: true });
   const contract = deliveryContract(options);
   addDefaultSensitivityControls(contract);
-  await writeContract(workdir, contract);
+  await writeContract(workdir, contract, {
+    synchronizeSemanticManifest: false,
+  });
   return { root, workdir, contract };
 }
 
@@ -204,34 +245,9 @@ async function initializeSeedRepository(root, externalConfirmation) {
     path.join(root, "artifacts", "proof.json"),
     '{"fixture_proof":true}\n',
   );
-  await writeFile(
-    path.join(root, "source.md"),
-    `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-<a id="fixture-source"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=first-observable kind=requirement -->
-The first outcome must be observable.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
-Preserve the fixture state owner and verifier boundary.
-<!-- ty-source-item:end -->
-${
-  externalConfirmation
-    ? `
-<!-- ty-source-background:start key=fixture-external-heading reason=markdown-structure -->
-<a id="fixture-external"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=fixture-external kind=external_confirmation -->
-Confirm the fixture in external delivery.
-<!-- ty-source-item:end -->
-`
-    : ""
-}
-`,
-  );
+  await writeFixtureSourceAndOracle(root, {
+    externalConfirmation,
+  });
   await writeFile(
     path.join(root, "tests", "semantic-false.json"),
     `${JSON.stringify({
@@ -240,62 +256,6 @@ Confirm the fixture in external delivery.
       first_relations_applicable: false,
       second_relations_applicable: false,
     })}\n`,
-  );
-  await writeFile(
-    path.join(root, "tests", "oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
-let state = { first: false, second: false };
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const key = process.argv[2] || "first";
-const assertionKeys = [
-  \`${"${key}"}-result\`,
-  \`${"${key}"}-requirement\`,
-  \`${"${key}"}-obligation\`,
-  \`${"${key}"}-relations-na\`,
-  ...(key === "first" ? ["first-architecture"] : []),
-];
-const targetRecord = (assertionKey) => ({
-  assertion_key: assertionKey,
-  capability: "target_runtime",
-  target_ref: "fixture-app",
-  root_entrypoint: "tests/oracle.mjs",
-  session_id: \`fixture-${"${key}"}-session\`,
-  cold_start: true
-});
-const stateRecord = (assertionKey) => ({
-  assertion_key: assertionKey,
-  capability: "state_delta",
-  before_sha256: "0".repeat(64),
-  after_sha256: "1".repeat(64),
-  changed_fields: [key]
-});
-console.log(JSON.stringify({
-  schema_version: "long-task-check-result-v3",
-  execution_status: "completed",
-  observations: {
-    result: state[key],
-    requirement_result: state[key],
-    obligation_result: state[key],
-    architecture_result: state.first,
-    relations_applicable: state[\`${"${key}"}_relations_applicable\`],
-    target_live: true,
-    negative: false,
-    population: {
-      universe_ids: [key],
-      eligible_ids: [key],
-      observed_ids: state[key] ? [key] : [],
-      excluded_items: []
-    }
-  },
-  evidence_records: [
-    ...assertionKeys.flatMap((assertionKey) => [
-      targetRecord(assertionKey),
-      stateRecord(assertionKey)
-    ]),
-    targetRecord(\`${"${key}"}-liveness\`)
-  ]
-}));
-`,
   );
   await writeFile(
     path.join(root, "package.json"),
@@ -394,6 +354,8 @@ export function claimApplicability(outcomeKey = "first") {
 }
 
 export function deliveryContract(options = {}) {
+  const semanticManifest = fixtureSemanticManifest(options);
+  const semanticManifestSha256 = digestCanonical(semanticManifest);
   const check = (key, argument, outcomeKey) => ({
     key,
     journey_roles: ["success", "stage_gate"],
@@ -425,6 +387,16 @@ export function deliveryContract(options = {}) {
         applicability_ref: `${outcomeKey}-root-success`,
         observation: "result",
         evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+      {
+        key: `${outcomeKey}-semantic-fact`,
+        criterion: `${outcomeKey}'s atomic observable-result Fact is proven against its frozen Source oracle.`,
+        claims: [`semantic_fact.fact.${outcomeKey}.observable`],
+        applicability_ref: `${outcomeKey}-root-success`,
+        observation: "semantic_fact_result",
+        evidence_capabilities: ["semantic_fact"],
         operator: "equals",
         expected: true,
       },
@@ -494,6 +466,28 @@ export function deliveryContract(options = {}) {
     stage: key,
     depends_on: dependsOn,
     applicability: [claimApplicability(key)],
+    semantic_fact_bindings: {
+      manifest_ref: semanticManifest.key,
+      facts: [
+        {
+          fact_ref: `fact.${key}.observable`,
+          claim_ref: `semantic_fact.fact.${key}.observable`,
+          applicability_ref: `${key}-root-success`,
+        },
+      ],
+      proofs: [
+        {
+          proof_ref: `proof.${key}.observable.exact`,
+          fact_ref: `fact.${key}.observable`,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["semantic_fact"],
+          authority: "machine",
+          check_ref: `${key}-check`,
+          assertion_ref: `${key}-semantic-fact`,
+        },
+      ],
+    },
     product: {
       observable_result: `${key} becomes observable`,
       result_applicability_refs: [`${key}-root-success`],
@@ -566,6 +560,11 @@ export function deliveryContract(options = {}) {
   });
   return {
     schema_version: "long-task-delivery-v2",
+    semantic_fact_manifest: {
+      key: semanticManifest.key,
+      source_path: "source.md",
+      sha256: semanticManifestSha256,
+    },
     task: {
       id: "fixture-task",
       title: "Fixture task",
@@ -601,6 +600,19 @@ export function deliveryContract(options = {}) {
           refs: ["first.requirement.observe-first"],
         },
       },
+      ...(options.twoOutcomes
+        ? [
+            {
+              key: "second-observable",
+              source_ref: "source.md",
+              statement: "The second outcome must be observable.",
+              disposition: {
+                type: "claim",
+                refs: ["second.requirement.observe-second"],
+              },
+            },
+          ]
+        : []),
       {
         key: "fixture-architecture",
         source_ref: "source.md",
@@ -874,6 +886,7 @@ function addDefaultSensitivityControls(contract) {
           "result",
           `requirement.observe-${outcome.key}`,
           `obligation.implement-${outcome.key}`,
+          `semantic_fact.fact.${outcome.key}.observable`,
           ...(outcome.key === "first" ? ["obligation.architecture-first"] : []),
         ],
         check_key: `${outcome.key}-check`,
@@ -885,6 +898,7 @@ function addDefaultSensitivityControls(contract) {
         },
         expected_assertion_failures: [
           `${outcome.key}-result`,
+          `${outcome.key}-semantic-fact`,
           `${outcome.key}-requirement`,
           `${outcome.key}-obligation`,
           ...(outcome.key === "first" ? ["first-architecture"] : []),
@@ -914,7 +928,17 @@ Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->`;
 }
 
-export async function writeContract(workdir, contract) {
+export async function writeContract(
+  workdir,
+  contract,
+  { synchronizeSemanticManifest = true } = {},
+) {
+  if (
+    synchronizeSemanticManifest &&
+    contract.task?.id === "fixture-task" &&
+    Array.isArray(contract.outcomes)
+  )
+    await synchronizeFixtureSemanticManifest(workdir, contract);
   await writeFile(
     path.join(workdir, "delivery-contract.yaml"),
     YAML.stringify(contract, { lineWidth: 0 }),

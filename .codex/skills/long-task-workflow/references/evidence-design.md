@@ -26,6 +26,26 @@ Across all Checks sharing a Raw Execution, one Claim-bearing Observation belongs
 - `boundary_invocation` and `external_side_effect` require the Check itself to execute on the named observer target. `failure_injection` requires an observed fault and recovery state; `visual_render` binds a declared artifact hash; `design_conformance` binds one compiled selected target, exact required product target, declared condition set and distinct current actual/comparison artifact paths; `design_method` binds one handoff verification method, its exact condition, exact handoff `fact_refs`, declared method-record path and declared primary-observation path. Runtime Fact refs and `fact_results` must be set-equal to the compiled cell, all property-required Fact × method obligations must be present, and all cells must conserve the complete target Fact set. Every result preserves subject/variation/property, attributable actual observation/environment, frozen expected/comparator/tolerance/mask/Oracle/environment authority and explicit verdict; every row must pass. Protected observations use the declared digest-only/redacted policy without persisting raw values. Missing, extra, duplicate, stale, failed, authority-drifted or reused/indistinguishable rows fail closed. Primary observations are pairwise unique by current path and digest across method/condition cells; `target_runtime` binds exact target/root/current session and requires a cold start for a root journey whose execution target declares the matching family, `cold-start` and `production-root` capabilities; `input_variation` requires at least two distinct inputs, differing propagated outputs and an observed failure case.
 - Structured runners emit `long-task-check-result-v3` for capability records. V2 payloads remain decodable only for presence-only compatibility; they cannot satisfy a declared non-presence capability. Evidence records contain bounded hashes/ids/refs, not unrestricted raw payloads.
 
+## Non-UI Semantic Fact Evidence
+
+Every machine `semantic_fact` proof binding compiles one immutable expectation row identified by manifest/digest, Outcome, Fact, proof method, Claim, applicability, subject/relation/population, exact condition and property. It freezes the Source-located expected value digest, sensitivity, comparator/mode/parameters/tolerance/mask, Oracle identity/version/digest/capabilities, environment identity/definition digest and observer refs. Runtime evidence cannot rewrite any of these fields.
+
+The owning Check emits exactly one current `semantic_fact` result for every and only every expectation assigned to it. Each result records:
+
+- exact assertion/manifest/Outcome/target/Fact/proof/method/subject/condition/property identity;
+- an attributable actual-observation artifact, current digest, typed locator and value digest;
+- an attributable actual-environment artifact, current digest, typed locator and value digest;
+- the frozen expected located authority and comparison tuple, plus a current comparison artifact/locator/result digest;
+- explicit `passed|failed` comparison and verdict;
+- the exact Oracle/environment identity; and
+- one result for every declared independent observer where applicable.
+
+Exact mode requires the actual value digest to equal the expected digest; tolerance mode still freezes Fact-local tolerance and optional narrow mask as Source/verifier input. Global/widened runtime tolerances, implementation-generated expectations and self-baselines are invalid. Protected observations use the declared digest-only/redacted representation and policy identity with `raw_persisted: false`; secrets, tokens, personal or regulated values never enter Contract, logs, findings, Context or artifacts in raw form.
+
+Result identities and primary observations are duplicate-free. One aggregate Boolean/report/log/screenshot, one reused artifact+locator+value tuple, one all-states row or one Check exit code cannot satisfy several Facts or methods. A Fact may legitimately require several independent methods/observers, and all must pass. Population/quantified Facts additionally prove exact expected universe = eligible = observed plus valid exclusions. Evidence must reach the furthest independently failing named boundary; parser/request/queue acceptance or implementation self-report does not prove storage, downstream delivery, recovery, security or external effect.
+
+Final Gate requires exact expectation/result set equality on its one current snapshot and rejects missing, extra, duplicate, stale, failed, authority-drifted, environment-mismatched, proxy-only, reused or indistinguishable results. External-confirmation obligations emit no fabricated machine row and remain pending through terminal reporting. Manifest/preflight success, hashes, Census, schema validation, focused tests and Progress prove only their own input/integrity/intermediate claims.
+
 ## Live Target Runtime Evidence
 
 - For a target-runtime Claim, the accepting Check must exercise the exact declared required target during the current runner invocation and derive structured Observations from the same runtime session. Browser target runtime is proved only by Playwright; Native/Desktop target runtime is proved only by the project binary. Rerunning a parser for a tracked or generated status report reruns the parser, not the target.

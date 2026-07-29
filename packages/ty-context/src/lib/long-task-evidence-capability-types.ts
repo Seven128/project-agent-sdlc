@@ -4,6 +4,11 @@ import type {
   DesignResourceComparator,
   DesignResourceLocatedDigestV1,
 } from "./design-resource-fact-manifest-types.js";
+import type {
+  SemanticFactEnvironmentV1,
+  SemanticFactLocatedValueV1,
+  SemanticFactOracleV1,
+} from "./semantic-fact-types.js";
 
 interface EvidenceRecordBaseV2 {
   assertion_key: string;
@@ -164,6 +169,63 @@ export interface DesignFactResultV2 {
   };
 }
 
+export interface SemanticFactEvidenceV2 extends EvidenceRecordBaseV2 {
+  capability: "semantic_fact";
+  manifest_ref: string;
+  manifest_sha256: string;
+  outcome_ref: string;
+  target_ref: string;
+  fact_ref: string;
+  proof_ref: string;
+  method: string;
+  subject_ref: string;
+  condition_ref: string;
+  property_ref: string;
+  actual_observation: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    value_sha256: string;
+    sensitivity: "plain" | "protected";
+    redaction: {
+      policy_ref: string;
+      representation: "digest_only" | "redacted_structured";
+      raw_persisted: false;
+    } | null;
+  };
+  actual_environment: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    value_sha256: string;
+  };
+  expected: SemanticFactLocatedValueV1;
+  comparison: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    result_sha256: string;
+    comparator: string;
+    mode: "exact" | "tolerance";
+    parameters: SemanticFactLocatedValueV1;
+    tolerance: SemanticFactLocatedValueV1 | null;
+    mask: SemanticFactLocatedValueV1 | null;
+    passed: boolean;
+  };
+  verdict: "passed" | "failed";
+  oracle: SemanticFactOracleV1;
+  environment: SemanticFactEnvironmentV1;
+  observer_results: Array<{
+    target_ref: string;
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: DesignEvidenceLocatorV2;
+    value_sha256: string;
+    comparison_result_sha256: string;
+    passed: boolean;
+  }>;
+}
+
 export interface InputVariationEvidenceV2 extends EvidenceRecordBaseV2 {
   capability: "input_variation";
   cases: Array<{ input_sha256: string; output_sha256: string }>;
@@ -181,5 +243,6 @@ export type EvidenceCapabilityRecordV2 =
   | VisualRenderEvidenceV2
   | DesignConformanceEvidenceV2
   | DesignMethodEvidenceV2
+  | SemanticFactEvidenceV2
   | TargetRuntimeEvidenceV2
   | InputVariationEvidenceV2;

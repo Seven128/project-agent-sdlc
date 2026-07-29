@@ -113,13 +113,15 @@ function expandedContract() {
   check.runner.type = "playwright_test";
   check.runner.target = "tests/compact-playwright.mjs";
   check.verification_inputs = ["tests/compact-playwright.mjs"];
+  contract.outcomes[0].semantic_fact_bindings.proofs[0].proof_surface =
+    "ui_browser";
   for (const assertion of check.positive_assertions) {
     if (!assertion.claims.length) continue;
     assertion.observation = `playwright.case.${assertion.key}.passed`;
-    assertion.evidence_capabilities = [
-      "interaction_trace",
-      "target_runtime",
-    ];
+    assertion.evidence_capabilities =
+      assertion.key === "first-semantic-fact"
+        ? ["semantic_fact"]
+        : ["interaction_trace", "target_runtime"];
   }
   for (const assertion of check.negative_assertions) {
     if (!assertion.claims.length) continue;
@@ -132,7 +134,7 @@ function expandedContract() {
   }
   for (const obligation of contract.outcomes[0].technical.obligations)
     obligation.required_proof_surfaces = ["ui_browser"];
-  check.artifact_globs = [];
+  check.artifact_globs = ["artifacts/proof.json"];
   check.runner.argv = [];
   check.runner.idempotent = false;
   check.input_paths = [];
@@ -144,6 +146,7 @@ function expandedContract() {
         "result",
         "obligation.implement-first",
         "obligation.architecture-first",
+        "semantic_fact.fact.first.observable",
       ],
       check_key: "first-check",
       mutation: {
@@ -156,6 +159,7 @@ function expandedContract() {
         "first-result",
         "first-obligation",
         "first-architecture",
+        "first-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
     },
@@ -205,7 +209,6 @@ function compactContract(expanded) {
   delete check.runner.idempotent;
   delete check.input_paths;
   delete check.expected_output_paths;
-  delete check.artifact_globs;
   delete check.environment_requirements;
   return contract;
 }

@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { loadSemanticFactManifest } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import {
   createDeliveryFixture,
   runCli,
@@ -183,9 +184,22 @@ async function configurePlannedCarrier(fixture) {
     value: true,
   };
   relationControl.preserved_assertions = ["first-liveness"];
+  await writeContract(fixture.workdir, fixture.contract);
+  const parsedManifest = await loadSemanticFactManifest(fixture.root, [
+    "source.md",
+  ]);
+  const semanticManifest = parsedManifest.manifest;
+  const semanticAuthority = JSON.stringify({
+    manifestSha256: parsedManifest.sha256,
+    fact: semanticManifest.facts[0],
+    proof: semanticManifest.proof_obligations[0],
+    environment: semanticManifest.environments[0],
+    oracle: semanticManifest.oracles[0],
+  });
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
+    `import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 let state = { ready: false, relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/planned.json", import.meta.url), "utf8")); } catch {}
 const semanticAssertions = ["first-result", "first-requirement", "first-obligation", "first-architecture", "first-relations-na"];
@@ -204,6 +218,38 @@ const stateRecord = (assertionKey) => ({
   after_sha256:"1".repeat(64),
   changed_fields:["ready"]
 });
+const semantic = ${semanticAuthority};
+const artifactPath = "artifacts/proof.json";
+const artifact = await readFile(new URL("../artifacts/proof.json", import.meta.url));
+const artifactSha256 = createHash("sha256").update(artifact).digest("hex");
+const actualSha256 = createHash("sha256").update(JSON.stringify(state.ready === true)).digest("hex");
+const canonicalize = (value) => {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((name) => [name, canonicalize(value[name])])
+    );
+  return value;
+};
+const comparisonPassed = state.ready === true;
+const comparisonResultSha256 = createHash("sha256")
+  .update(JSON.stringify(canonicalize({
+    fact_ref: semantic.fact.key,
+    proof_ref: semantic.proof.key,
+    target_ref: "fixture-app",
+    actual_value_sha256: actualSha256,
+    expected_value_sha256: semantic.fact.expected.sha256,
+    comparator: semantic.proof.comparison.comparator,
+    mode: semantic.proof.comparison.mode,
+    parameters_sha256: semantic.proof.comparison.parameters.sha256,
+    tolerance_sha256: semantic.proof.comparison.tolerance?.sha256 ?? null,
+    mask_sha256: semantic.proof.comparison.mask?.sha256 ?? null,
+    passed: comparisonPassed
+  })))
+  .digest("hex");
+const semanticRecord = {assertion_key:"first-semantic-fact",capability:"semantic_fact",manifest_ref:"${semanticManifest.key}",manifest_sha256:semantic.manifestSha256,outcome_ref:"first",target_ref:"fixture-app",fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,method:semantic.proof.method,subject_ref:semantic.fact.unit_ref,condition_ref:semantic.fact.condition_ref,property_ref:semantic.fact.property_ref,actual_observation:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/ready"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semantic.environment.definition.sha256},expected:semantic.fact.expected,comparison:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters:semantic.proof.comparison.parameters,tolerance:semantic.proof.comparison.tolerance,mask:semantic.proof.comparison.mask,passed:comparisonPassed},verdict:comparisonPassed?"passed":"failed",oracle:semantic.oracle,environment:semantic.environment,observer_results:[]};
 console.log(JSON.stringify({
   schema_version:"long-task-check-result-v3",
   execution_status:"completed",
@@ -212,6 +258,7 @@ console.log(JSON.stringify({
     requirement_result:state.ready === true,
     obligation_result:state.ready === true,
     architecture_result:state.ready === true,
+    semantic_fact_result:state.ready === true,
     relations_applicable:state.relations_applicable === true,
     target_live:true,
     negative:false
@@ -221,10 +268,10 @@ console.log(JSON.stringify({
       targetRecord(assertionKey),
       stateRecord(assertionKey)
     ]),
-    targetRecord("first-liveness")
+    targetRecord("first-liveness"),
+    semanticRecord
   ]
 }));
 `,
   );
-  await writeContract(fixture.workdir, fixture.contract);
 }

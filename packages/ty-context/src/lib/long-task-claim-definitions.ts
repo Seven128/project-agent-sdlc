@@ -86,6 +86,20 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
         item.applicability_refs,
       ),
     );
+  for (const binding of outcome.semantic_fact_bindings?.facts ?? []) {
+    const requiredSurfaces = [
+      ...new Set(
+        (outcome.semantic_fact_bindings?.proofs ?? [])
+          .filter((proof) => proof.fact_ref === binding.fact_ref)
+          .map((proof) => proof.proof_surface),
+      ),
+    ];
+    claims.push(
+      claim(outcome.key, binding.claim_ref, "semantic_fact", requiredSurfaces, [
+        binding.applicability_ref,
+      ]),
+    );
+  }
   for (const item of outcome.technical.forbidden_shortcuts)
     claims.push(
       claim(
@@ -153,7 +167,9 @@ export function validateProofSurface(
       `${outcomeKey}:${claim.local_key}:${proof.polarity}:${claim.required_polarity}`,
     );
   if (
-    (claim.kind === "requirement" || claim.kind === "obligation") &&
+    (claim.kind === "requirement" ||
+      claim.kind === "obligation" ||
+      claim.kind === "semantic_fact") &&
     claim.required_proof_surfaces.length > 0 &&
     !claim.required_proof_surfaces.includes(proof.proof_surface)
   )

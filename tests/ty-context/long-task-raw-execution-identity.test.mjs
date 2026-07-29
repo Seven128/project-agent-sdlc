@@ -11,6 +11,10 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  preserveFixtureSemanticOracle,
+  preservedFixtureOracleDelegationPrelude,
+} from "./long-task-delegating-oracle-fixture.mjs";
 
 test("different Environment Requirements cannot reuse Raw Execution", async () => {
   const fixture = await createDeliveryFixture();
@@ -19,7 +23,6 @@ test("different Environment Requirements cannot reuse Raw Execution", async () =
     `ty-context-raw-${process.pid}-${Date.now()}.txt`,
   );
   try {
-    await installCountingOracle(fixture, marker);
     configureChecks(fixture, [
       [],
       [
@@ -40,6 +43,8 @@ test("different Environment Requirements cannot reuse Raw Execution", async () =
         },
       ],
     ]);
+    await preserveFixtureSemanticOracle(fixture);
+    await installCountingOracle(fixture, marker);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -78,12 +83,13 @@ test("identical canonical Environment Requirements may share Raw Execution", asy
   process.env[keys[0]] = "secret-value-a";
   process.env[keys[1]] = "secret-value-b";
   try {
-    await installCountingOracle(fixture, marker);
     const first = [
       { key: "env-a", kind: "env_var", target: keys[0] },
       { key: "env-b", kind: "env_var", target: keys[1] },
     ];
     configureChecks(fixture, [first, [...first].reverse()]);
+    await preserveFixtureSemanticOracle(fixture);
+    await installCountingOracle(fixture, marker);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -127,11 +133,12 @@ test("different env var targets produce different Raw Executions", async () => {
   process.env[keys[0]] = "present-a";
   process.env[keys[1]] = "present-b";
   try {
-    await installCountingOracle(fixture, marker);
     configureChecks(fixture, [
       [{ key: "env", kind: "env_var", target: keys[0] }],
       [{ key: "env", kind: "env_var", target: keys[1] }],
     ]);
+    await preserveFixtureSemanticOracle(fixture);
+    await installCountingOracle(fixture, marker);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -221,6 +228,21 @@ function configureChecks(fixture, requirements) {
           operator: "equals",
           expected: true,
         },
+        ...(index === 0
+          ? [
+              {
+                key: "first-semantic-fact",
+                criterion:
+                  "The atomic fixture Fact remains bound to its frozen Source oracle.",
+                claims: ["semantic_fact.fact.first.observable"],
+                applicability_ref: "first-root-success",
+                observation: "semantic_fact_result",
+                evidence_capabilities: ["semantic_fact"],
+                operator: "equals",
+                expected: true,
+              },
+            ]
+          : []),
       ],
       negative_assertions: [
         {
@@ -251,6 +273,9 @@ function configureChecks(fixture, requirements) {
           "requirement.observe-first",
           "obligation.implement-first",
           "obligation.architecture-first",
+          ...(index === 0
+            ? ["semantic_fact.fact.first.observable"]
+            : []),
         ],
         check_key: `raw-${index}`,
         mutation: {
@@ -264,6 +289,7 @@ function configureChecks(fixture, requirements) {
           "raw-requirement",
           "raw-obligation",
           "raw-architecture",
+          ...(index === 0 ? ["first-semantic-fact"] : []),
         ],
         preserved_assertions: ["raw-liveness"],
       },
@@ -283,19 +309,49 @@ function configureChecks(fixture, requirements) {
       },
     ],
   );
+  outcome.semantic_fact_bindings.proofs[0].check_ref = "raw-0";
+  outcome.semantic_fact_bindings.proofs[0].assertion_ref =
+    "first-semantic-fact";
 }
 
 async function installCountingOracle(fixture, marker) {
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { appendFileSync, readFileSync } from "node:fs";
+    `import { appendFileSync } from "node:fs";
 appendFileSync(${JSON.stringify(marker)}, "run\\n");
-let state = {first:false,first_relations_applicable:false};
-try { state = JSON.parse(readFileSync(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+${preservedFixtureOracleDelegationPrelude()}
+const observed = result.observations.result;
+const relationsApplicable = result.observations.relations_applicable;
+const semanticRecord = result.evidence_records.find(
+  (record) => record.capability === "semantic_fact"
+);
 const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"raw-session",cold_start:true});
 const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
 const semantic=["raw-result","raw-requirement","raw-obligation","raw-architecture","raw-relations-na"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first,requirement_result:state.first,requirement_copy:state.first,obligation_result:state.first,obligation_copy:state.first,architecture_result:state.first,architecture_copy:state.first,relations_applicable:state.first_relations_applicable,relations_applicable_copy:state.first_relations_applicable,target_live:true,target_live_copy:true},evidence_records:[...semantic.flatMap((key)=>[target(key),delta(key)]),target("raw-liveness")]}));
+result.observations = {
+  result: observed,
+  result_copy: observed,
+  requirement_result: observed,
+  requirement_copy: observed,
+  obligation_result: observed,
+  obligation_copy: observed,
+  architecture_result: observed,
+  architecture_copy: observed,
+  semantic_fact_result: observed,
+  relations_applicable: relationsApplicable,
+  relations_applicable_copy: relationsApplicable,
+  target_live: true,
+  target_live_copy: true
+};
+result.evidence_records = [
+  ...semantic.flatMap((assertionKey)=>[
+    target(assertionKey),
+    delta(assertionKey)
+  ]),
+  target("raw-liveness"),
+  semanticRecord
+];
+console.log(JSON.stringify(result));
 `,
   );
   await commitCandidate(fixture.root);

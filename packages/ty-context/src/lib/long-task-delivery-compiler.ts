@@ -219,6 +219,7 @@ export async function compileDeliveryContract(
     authority_materials: authorityMaterials,
     authority_revision: authorityRevision,
     claim_coverage: claims.summary,
+    semantic_fact_manifest: contract.semantic_fact_manifest,
     task: contract.task,
     risk: contract.risk,
     source_claims: contract.source_claims,

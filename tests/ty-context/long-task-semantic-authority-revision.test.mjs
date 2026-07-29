@@ -105,6 +105,7 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
       contextFile,
       `${contextBaseline}\nUpdated implementation guidance.\n`,
     );
+    await writeContract(fixture.workdir, fixture.contract);
     revised = await runCli(fixture.root, [
       "long-task",
       "compile",

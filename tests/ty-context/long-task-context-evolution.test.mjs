@@ -89,6 +89,7 @@ test("full Context revisions invalidate scoped Progress without requiring approv
   const fixture = await createDeliveryFixture();
   try {
     const { contextFile: supportFile } = await addTransitiveContext(fixture);
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
 
@@ -136,6 +137,7 @@ test("full Context revisions invalidate scoped Progress without requiring approv
       supportFile,
       "# Implementation index\n\nUpdated navigation discovered during execution.\n",
     );
+    await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
       () => runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
       /authority_revision_requires_revise_flag/u,
@@ -172,6 +174,7 @@ test("full Context revisions invalidate scoped Progress without requiring approv
       controllingFile,
       "# Main\n\nChanged owning boundary discovered during execution.\n",
     );
+    await writeContract(fixture.workdir, fixture.contract);
     const controllingRevision = await runCli(fixture.root, [
       "long-task",
       "compile",
@@ -197,6 +200,7 @@ test("retrieval-only manifest edits preserve full Context authority while any Co
   try {
     const { manifestFile } = await addTransitiveContext(fixture);
     const unselected = await addUnselectedContext(fixture, manifestFile);
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await runCli(fixture.root, [
@@ -361,6 +365,7 @@ test("[critical:context-freshness] verification Context remains controlling in r
       role: "verification",
       content: "# Verification\n\nCurrent executable checks.\n",
     });
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = JSON.parse(

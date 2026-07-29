@@ -282,35 +282,343 @@ function decodeRecord(
           };
         }),
       };
+    case "semantic_fact":
+      return decodeSemanticFactEvidence(row, label, base);
     case "input_variation":
-      exact(row, label, [
-        "assertion_key",
-        "capability",
-        "cases",
-        "failure_case_observed",
-      ]);
-      if (typeof row.failure_case_observed !== "boolean")
-        throw invalidRecord(`${label}.failure_case_observed`);
-      return {
-        ...base,
-        capability,
-        cases: array(row.cases, `${label}.cases`).map((item, caseIndex) => {
-          const caseLabel = `${label}.cases[${caseIndex}]`;
-          const entry = record(item, caseLabel);
-          exact(entry, caseLabel, ["input_sha256", "output_sha256"]);
-          return {
-            input_sha256: sha(entry.input_sha256, `${caseLabel}.input_sha256`),
-            output_sha256: sha(
-              entry.output_sha256,
-              `${caseLabel}.output_sha256`,
-            ),
-          };
-        }),
-        failure_case_observed: row.failure_case_observed,
-      };
+      return decodeInputVariationEvidence(row, label, base);
     default:
       throw invalidRecord(`${label}.capability_unsupported:${capability}`);
   }
+}
+
+function decodeInputVariationEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "input_variation" }> {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "cases",
+    "failure_case_observed",
+  ]);
+  if (typeof row.failure_case_observed !== "boolean")
+    throw invalidRecord(`${label}.failure_case_observed`);
+  return {
+    ...base,
+    capability: "input_variation",
+    cases: array(row.cases, `${label}.cases`).map((item, caseIndex) => {
+      const caseLabel = `${label}.cases[${caseIndex}]`;
+      const entry = record(item, caseLabel);
+      exact(entry, caseLabel, ["input_sha256", "output_sha256"]);
+      return {
+        input_sha256: sha(entry.input_sha256, `${caseLabel}.input_sha256`),
+        output_sha256: sha(entry.output_sha256, `${caseLabel}.output_sha256`),
+      };
+    }),
+    failure_case_observed: row.failure_case_observed,
+  };
+}
+
+function decodeSemanticFactEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "semantic_fact" }> {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "manifest_ref",
+    "manifest_sha256",
+    "outcome_ref",
+    "target_ref",
+    "fact_ref",
+    "proof_ref",
+    "method",
+    "subject_ref",
+    "condition_ref",
+    "property_ref",
+    "actual_observation",
+    "actual_environment",
+    "expected",
+    "comparison",
+    "verdict",
+    "oracle",
+    "environment",
+    "observer_results",
+  ]);
+  const actual = record(row.actual_observation, `${label}.actual_observation`);
+  exact(actual, `${label}.actual_observation`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "value_sha256",
+    "sensitivity",
+    "redaction",
+  ]);
+  const actualEnvironment = record(
+    row.actual_environment,
+    `${label}.actual_environment`,
+  );
+  exact(actualEnvironment, `${label}.actual_environment`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "value_sha256",
+  ]);
+  const comparison = record(row.comparison, `${label}.comparison`);
+  exact(comparison, `${label}.comparison`, [
+    "artifact_path",
+    "artifact_sha256",
+    "locator",
+    "result_sha256",
+    "comparator",
+    "mode",
+    "parameters",
+    "tolerance",
+    "mask",
+    "passed",
+  ]);
+  if (typeof comparison.passed !== "boolean")
+    throw invalidRecord(`${label}.comparison.passed`);
+  const oracle = record(row.oracle, `${label}.oracle`);
+  exact(oracle, `${label}.oracle`, [
+    "key",
+    "trust",
+    "identity",
+    "version",
+    "sha256",
+    "capabilities",
+  ]);
+  const environment = record(row.environment, `${label}.environment`);
+  exact(environment, `${label}.environment`, ["key", "identity", "definition"]);
+  return {
+    ...base,
+    capability: "semantic_fact",
+    manifest_ref: semanticFactRef(row.manifest_ref, `${label}.manifest_ref`),
+    manifest_sha256: sha(row.manifest_sha256, `${label}.manifest_sha256`),
+    outcome_ref: semanticFactRef(row.outcome_ref, `${label}.outcome_ref`),
+    target_ref: key(row.target_ref, `${label}.target_ref`),
+    fact_ref: semanticFactRef(row.fact_ref, `${label}.fact_ref`),
+    proof_ref: semanticFactRef(row.proof_ref, `${label}.proof_ref`),
+    method: semanticFactRef(row.method, `${label}.method`),
+    subject_ref: semanticFactRef(row.subject_ref, `${label}.subject_ref`),
+    condition_ref: semanticFactRef(row.condition_ref, `${label}.condition_ref`),
+    property_ref: semanticFactRef(row.property_ref, `${label}.property_ref`),
+    actual_observation: {
+      artifact_path: nonEmpty(
+        actual.artifact_path,
+        `${label}.actual_observation.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        actual.artifact_sha256,
+        `${label}.actual_observation.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        actual.locator,
+        `${label}.actual_observation.locator`,
+      ),
+      value_sha256: sha(
+        actual.value_sha256,
+        `${label}.actual_observation.value_sha256`,
+      ),
+      sensitivity: literal(
+        actual.sensitivity,
+        ["plain", "protected"] as const,
+        `${label}.actual_observation.sensitivity`,
+      ),
+      redaction: nullable(actual.redaction, (value) => {
+        const entry = record(value, `${label}.actual_observation.redaction`);
+        exact(entry, `${label}.actual_observation.redaction`, [
+          "policy_ref",
+          "representation",
+          "raw_persisted",
+        ]);
+        if (entry.raw_persisted !== false)
+          throw invalidRecord(
+            `${label}.actual_observation.redaction.raw_persisted`,
+          );
+        return {
+          policy_ref: semanticFactRef(
+            entry.policy_ref,
+            `${label}.actual_observation.redaction.policy_ref`,
+          ),
+          representation: literal(
+            entry.representation,
+            ["digest_only", "redacted_structured"] as const,
+            `${label}.actual_observation.redaction.representation`,
+          ),
+          raw_persisted: false as const,
+        };
+      }),
+    },
+    actual_environment: {
+      artifact_path: nonEmpty(
+        actualEnvironment.artifact_path,
+        `${label}.actual_environment.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        actualEnvironment.artifact_sha256,
+        `${label}.actual_environment.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        actualEnvironment.locator,
+        `${label}.actual_environment.locator`,
+      ),
+      value_sha256: sha(
+        actualEnvironment.value_sha256,
+        `${label}.actual_environment.value_sha256`,
+      ),
+    },
+    expected: decodeSemanticLocatedValue(row.expected, `${label}.expected`),
+    comparison: {
+      artifact_path: nonEmpty(
+        comparison.artifact_path,
+        `${label}.comparison.artifact_path`,
+      ),
+      artifact_sha256: sha(
+        comparison.artifact_sha256,
+        `${label}.comparison.artifact_sha256`,
+      ),
+      locator: decodeEvidenceLocator(
+        comparison.locator,
+        `${label}.comparison.locator`,
+      ),
+      result_sha256: sha(
+        comparison.result_sha256,
+        `${label}.comparison.result_sha256`,
+      ),
+      comparator: semanticFactRef(
+        comparison.comparator,
+        `${label}.comparison.comparator`,
+      ),
+      mode: literal(
+        comparison.mode,
+        ["exact", "tolerance"] as const,
+        `${label}.comparison.mode`,
+      ),
+      parameters: decodeSemanticLocatedValue(
+        comparison.parameters,
+        `${label}.comparison.parameters`,
+      ),
+      tolerance: nullable(comparison.tolerance, (value) =>
+        decodeSemanticLocatedValue(value, `${label}.comparison.tolerance`),
+      ),
+      mask: nullable(comparison.mask, (value) =>
+        decodeSemanticLocatedValue(value, `${label}.comparison.mask`),
+      ),
+      passed: comparison.passed,
+    },
+    verdict: literal(
+      row.verdict,
+      ["passed", "failed"] as const,
+      `${label}.verdict`,
+    ),
+    oracle: {
+      key: semanticFactRef(oracle.key, `${label}.oracle.key`),
+      trust: literal(
+        oracle.trust,
+        ["frozen_executable", "named_external_tcb"] as const,
+        `${label}.oracle.trust`,
+      ),
+      identity: nonEmpty(oracle.identity, `${label}.oracle.identity`),
+      version: nonEmpty(oracle.version, `${label}.oracle.version`),
+      sha256: nullableSha(oracle.sha256, `${label}.oracle.sha256`),
+      capabilities: semanticFactRefs(
+        oracle.capabilities,
+        `${label}.oracle.capabilities`,
+      ),
+    },
+    environment: {
+      key: semanticFactRef(environment.key, `${label}.environment.key`),
+      identity: nonEmpty(environment.identity, `${label}.environment.identity`),
+      definition: decodeSemanticLocatedValue(
+        environment.definition,
+        `${label}.environment.definition`,
+      ),
+    },
+    observer_results: array(
+      row.observer_results,
+      `${label}.observer_results`,
+    ).map((item, index) => {
+      const itemLabel = `${label}.observer_results[${index}]`;
+      const entry = record(item, itemLabel);
+      exact(entry, itemLabel, [
+        "target_ref",
+        "artifact_path",
+        "artifact_sha256",
+        "locator",
+        "value_sha256",
+        "comparison_result_sha256",
+        "passed",
+      ]);
+      if (typeof entry.passed !== "boolean")
+        throw invalidRecord(`${itemLabel}.passed`);
+      return {
+        target_ref: key(entry.target_ref, `${itemLabel}.target_ref`),
+        artifact_path: nonEmpty(
+          entry.artifact_path,
+          `${itemLabel}.artifact_path`,
+        ),
+        artifact_sha256: sha(
+          entry.artifact_sha256,
+          `${itemLabel}.artifact_sha256`,
+        ),
+        locator: decodeEvidenceLocator(entry.locator, `${itemLabel}.locator`),
+        value_sha256: sha(entry.value_sha256, `${itemLabel}.value_sha256`),
+        comparison_result_sha256: sha(
+          entry.comparison_result_sha256,
+          `${itemLabel}.comparison_result_sha256`,
+        ),
+        passed: entry.passed,
+      };
+    }),
+  };
+}
+
+function decodeSemanticLocatedValue(value: unknown, label: string) {
+  const row = record(value, label);
+  const representation = literal(
+    row.representation,
+    ["inline", "located", "digest_only"] as const,
+    `${label}.representation`,
+  );
+  exact(
+    row,
+    label,
+    representation === "inline"
+      ? ["representation", "locator", "sha256", "value"]
+      : ["representation", "locator", "sha256"],
+  );
+  const locator = record(row.locator, `${label}.locator`);
+  exact(locator, `${label}.locator`, ["material_ref", "kind", "value"]);
+  return {
+    representation,
+    locator: {
+      material_ref: semanticFactRef(
+        locator.material_ref,
+        `${label}.locator.material_ref`,
+      ),
+      kind: literal(
+        locator.kind,
+        [
+          "source_item",
+          "manifest_pointer",
+          "json_pointer",
+          "yaml_pointer",
+          "whole_resource",
+          "schema_pointer",
+          "api_operation",
+          "code_symbol",
+          "custom",
+        ] as const,
+        `${label}.locator.kind`,
+      ),
+      value: nonEmpty(locator.value, `${label}.locator.value`),
+    },
+    sha256: sha(row.sha256, `${label}.sha256`),
+    ...(representation === "inline" ? { value: row.value } : {}),
+  };
 }
 
 function decodeDesignFactResult(value: unknown, label: string) {
@@ -640,6 +948,18 @@ function designFactRefs(value: unknown, label: string): string[] {
 function designFactRef(value: unknown, label: string): string {
   const result = nonEmpty(value, label);
   if (!/^[a-z0-9][a-z0-9._-]*$/u.test(result)) throw invalidRecord(label);
+  return result;
+}
+
+function semanticFactRefs(value: unknown, label: string): string[] {
+  return array(value, label).map((item, index) =>
+    semanticFactRef(item, `${label}[${index}]`),
+  );
+}
+
+function semanticFactRef(value: unknown, label: string): string {
+  const result = nonEmpty(value, label);
+  if (!/^[a-z0-9][a-z0-9._:-]*$/u.test(result)) throw invalidRecord(label);
   return result;
 }
 

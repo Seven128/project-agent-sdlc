@@ -46,7 +46,7 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     );
     assert.match(compiled.compiled_identity, /^[a-f0-9]{64}$/u);
     assert.equal(compiled.claim_coverage.uncovered_claims.length, 0);
-    assert.equal(compiled.claim_coverage.claims_total, 9);
+    assert.equal(compiled.claim_coverage.claims_total, 11);
     const check = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(check.runner.resolved_cwd, "");
     assert.equal(check.runner.resolved_target, "tests/oracle.mjs");
@@ -110,7 +110,9 @@ test("preflight rejects invalid Context, missing runner path and Outcome without
     fixture.contract.outcomes[0].product.owner.context_refs = [
       "project_context/areas/missing.md",
     ];
-    await writeContract(fixture.workdir, fixture.contract);
+    await writeContract(fixture.workdir, fixture.contract, {
+      synchronizeSemanticManifest: false,
+    });
     await assert.rejects(
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,

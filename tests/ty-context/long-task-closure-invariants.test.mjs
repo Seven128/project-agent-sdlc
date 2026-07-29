@@ -196,9 +196,22 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
       operator: "equals",
       expected: true,
     },
+    {
+      key: "first-semantic-fact",
+      criterion:
+        "The exact Source-indexed semantic Fact passes its frozen comparison.",
+      claims: ["semantic_fact.fact.first.observable"],
+      applicability_ref: "first-root-success",
+      observation: "semantic_fact_result",
+      evidence_capabilities: ["semantic_fact"],
+      operator: "equals",
+      expected: true,
+    },
   ];
   dataCheck.negative_assertions = [];
   outcome.acceptance.checks.push(dataCheck);
+  outcome.semantic_fact_bindings.proofs[0].proof_surface = "data_state";
+  outcome.semantic_fact_bindings.proofs[0].check_ref = "data-layer";
   assert.doesNotThrow(() => parse(contract));
 });
 
@@ -219,6 +232,7 @@ test("Control relation closure remains an atomic Claim when other atomic declara
     outcome.acceptance.checks[0].positive_assertions.filter(
       (assertion) =>
         assertion.key === "first-result" ||
+        assertion.key === "first-semantic-fact" ||
         assertion.key === "first-liveness",
     );
   assert.doesNotThrow(

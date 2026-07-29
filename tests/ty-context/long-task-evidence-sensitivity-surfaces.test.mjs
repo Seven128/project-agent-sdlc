@@ -73,6 +73,7 @@ test("Playwright behavioral Claims also require semantic Counterfactuals", async
 test("first-result", async () => { expect(true).toBe(true); });
 test("first-requirement", async () => { expect(true).toBe(true); });
 test("first-architecture", async () => { expect(true).toBe(true); });
+test("first-semantic-fact", async () => { expect(true).toBe(true); });
 test("first-relations-na", async () => { expect(true).toBe(true); });
 `,
     );
@@ -97,7 +98,7 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
       "tests/ui.spec.ts",
       "tests/semantic-false.json",
     ];
-    check.artifact_globs = [];
+    check.artifact_globs = ["artifacts/proof.json"];
     check.positive_assertions = [
       {
         key: "first-result",
@@ -130,6 +131,17 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
         expected: true,
       },
       {
+        key: "first-semantic-fact",
+        criterion:
+          "The atomic browser-visible semantic Fact remains Source-bound.",
+        claims: ["semantic_fact.fact.first.observable"],
+        applicability_ref: "first-root-success",
+        observation: "playwright.case.first-semantic-fact.passed",
+        evidence_capabilities: ["semantic_fact"],
+        operator: "equals",
+        expected: true,
+      },
+      {
         key: "first-liveness",
         criterion: "The browser target remains live.",
         claims: [],
@@ -151,7 +163,22 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
         expected: true,
       },
     ];
-    outcome.acceptance.counterfactual_controls = [];
+    outcome.acceptance.counterfactual_controls = [
+      {
+        key: "semantic-fact-only",
+        binding_key: "state-first",
+        claims: ["semantic_fact.fact.first.observable"],
+        check_key: check.key,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first",
+          value: false,
+        },
+        expected_assertion_failures: ["first-semantic-fact"],
+        preserved_assertions: ["first-liveness"],
+      },
+    ];
     await assertActivationRejects(fixture, {
       code: "behavioral_semantic_counterfactual_required",
       includes: ["first-result"],

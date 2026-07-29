@@ -31,6 +31,7 @@ export function computeAuthorityHashes(
     source_authority_hash: hash({
       source_paths: contract.task.source_paths,
       source_claims: contract.source_claims,
+      semantic_fact_manifest: contract.semantic_fact_manifest,
     }),
     product_authority_hash: hash({
       goal: contract.task.goal,
@@ -45,6 +46,14 @@ export function computeAuthorityHashes(
         key: outcome.key,
         stage: outcome.stage,
         applicability: outcome.applicability,
+        ...(outcome.semantic_fact_bindings
+          ? {
+              semantic_fact_bindings: {
+                manifest_ref: outcome.semantic_fact_bindings.manifest_ref,
+                facts: outcome.semantic_fact_bindings.facts,
+              },
+            }
+          : {}),
         product: outcome.product,
       })),
     }),
@@ -55,6 +64,9 @@ export function computeAuthorityHashes(
         contract.global.acceptance.counterfactual_controls,
       outcomes: contract.outcomes.map((outcome) => ({
         key: outcome.key,
+        ...(outcome.semantic_fact_bindings
+          ? { semantic_fact_proofs: outcome.semantic_fact_bindings.proofs }
+          : {}),
         checks: outcome.acceptance.checks.map(acceptanceCheck),
         population: outcome.acceptance.population,
         counterfactual_controls: outcome.acceptance.counterfactual_controls,
@@ -77,6 +89,7 @@ export function outcomeAuthorityHash(outcome: DeliveryOutcomeV2): string {
   return hash({
     stage: outcome.stage,
     applicability: outcome.applicability,
+    semantic_fact_bindings: outcome.semantic_fact_bindings,
     product: outcome.product,
     acceptance: {
       checks: outcome.acceptance.checks.map(acceptanceCheck),

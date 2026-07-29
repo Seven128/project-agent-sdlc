@@ -6,8 +6,11 @@ import {
   createDeliveryFixture,
   runCli,
   runCliFailure,
-  writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  preserveFixtureSemanticOracle,
+  preservedFixtureOracleDelegationPrelude,
+} from "./long-task-delegating-oracle-fixture.mjs";
 import { decodeEvidenceCapabilityRecords } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-policy.js";
 
 test("design-conformance evidence has a strict target, condition and artifact shape", () => {
@@ -78,6 +81,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "obligation.implement-first",
           "obligation.architecture-first",
           "forbidden_shortcut.self-report",
+          "semantic_fact.fact.first.observable",
         ],
         check_key: check.key,
         mutation: {
@@ -92,6 +96,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "first-obligation",
           "first-architecture",
           "shortcut-rejected",
+          "first-semantic-fact",
         ],
         preserved_assertions: ["first-liveness"],
       },
@@ -110,8 +115,8 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
         preserved_assertions: ["first-liveness"],
       },
     ];
+    await preserveFixtureSemanticOracle(fixture);
     await writeArtifactOracle(fixture.root);
-    await writeContract(fixture.workdir, fixture.contract);
 
     await runCli(fixture.root, ["enable", "long-task"]);
     const compiled = await runCli(fixture.root, [
@@ -181,6 +186,7 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
           "requirement.observe-first",
           "obligation.implement-first",
           "obligation.architecture-first",
+          "semantic_fact.fact.first.observable",
         ],
         check_key: check.key,
         mutation: {
@@ -194,6 +200,7 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
           "first-requirement",
           "first-obligation",
           "first-architecture",
+          "first-semantic-fact",
         ],
         preserved_assertions: ["first-liveness"],
       },
@@ -212,8 +219,8 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
         preserved_assertions: ["first-liveness"],
       },
     ];
+    await preserveFixtureSemanticOracle(fixture);
     await writePopulationOracle(fixture.root);
-    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     assert.equal(
@@ -283,16 +290,26 @@ test("exit zero, handwritten status and invalid Result Protocol cannot manufactu
 async function writeArtifactOracle(root) {
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
-    `import { mkdir, readFile, writeFile } from "node:fs/promises";
-let state = {};
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const result = state.first === true;
-await mkdir(new URL("../artifacts", import.meta.url), {recursive:true});
-await writeFile(new URL("../artifacts/proof.json", import.meta.url), JSON.stringify({verified:result}));
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"artifact-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,"artifacts-ready":true,negative_ok:result},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"artifact-present",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["artifact"]},{assertion_key:"shortcut-rejected",capability:"state_delta",before_sha256:"4".repeat(64),after_sha256:"5".repeat(64),changed_fields:["negative"]}]}));
+    `${preservedFixtureOracleDelegationPrelude()}
+result.observations["artifacts-ready"] = true;
+result.observations.negative_ok = result.observations.result;
+result.evidence_records.push(
+  {
+    assertion_key: "artifact-present",
+    capability: "state_delta",
+    before_sha256: "2".repeat(64),
+    after_sha256: "3".repeat(64),
+    changed_fields: ["artifact"]
+  },
+  {
+    assertion_key: "shortcut-rejected",
+    capability: "state_delta",
+    before_sha256: "4".repeat(64),
+    after_sha256: "5".repeat(64),
+    changed_fields: ["negative"]
+  }
+);
+console.log(JSON.stringify(result));
 `,
   );
 }
@@ -301,13 +318,24 @@ async function writePopulationOracle(root) {
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
     `import { readFile } from "node:fs/promises";
+${preservedFixtureOracleDelegationPrelude()}
 let state = {};
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const result = state.first === true;
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"population-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,negative_ok:true,population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:state.omit_population?[]:(result?["first"]:[]),excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"negative-path",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
+try {
+  state = JSON.parse(
+    await readFile(new URL("../src/state.json", import.meta.url), "utf8")
+  );
+} catch {}
+result.observations.negative_ok = true;
+if (state.omit_population)
+  result.observations.population.observed_ids = [];
+result.evidence_records.push({
+  assertion_key: "negative-path",
+  capability: "state_delta",
+  before_sha256: "2".repeat(64),
+  after_sha256: "3".repeat(64),
+  changed_fields: ["negative"]
+});
+console.log(JSON.stringify(result));
 `,
   );
 }

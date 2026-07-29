@@ -135,6 +135,20 @@ Harness 只路由仓库原生 lint/AST/dependency/contract check，不实现跨�
 
 material UI 在实现前执行 **UI Authority Closure**：每个稳定 surface/control/target key 必须归类为现有 Context 已覆盖、需要 Context 更新、task-local、显式 out-of-scope 或真正 decision-required。Design Source Projection 把长期 surface/flow/Screen/Control/state 含义放入既有 Surface 或 Screen/interaction Context，把视觉系统/token/motion policy/rationale 放入 `DESIGN.md`，把精确构图/数值/条件/asset 留在 versioned target，把可重复证明路径放入 verification Context，而 delivery-local coverage/provenance/blocker 留在任务或 Contract Source。出现冲突时 fail closed；当前代码、时间戳、YAML 或实现截图不能静默胜出。
 
+### 非 UI 语义完整性
+
+两条开发路径都把非 UI 需求的“完整、准确表达”定义为：在直接表达、逻辑必然、明确委托或权威仓库证据支持的范围内，下钻到最细、可独立判定的 semantic Fact。这既包括产品/业务语义，也包括技术、后端和架构语义；段落、Requirement、Product Control、宽泛状态目录和当前代码都不是粒度上限。
+
+作者端必须完整索引 material 请求片段、附件、controlling Context unit、canonical specification、外部约束、需要保留的仓库事实和 delegated instruction。标准目录是强制下限：目标/scope/glossary；actor/role/tenant/entitlement；业务规则/计算；entity/field/relation；command/query/workflow/state/time；validation/output/error/API/protocol/event/job；persistence/cache/search/transaction/consistency/concurrency/idempotency；fault/retry/degradation/recovery/backup；configuration/flag/secret；compatibility/migration/rollout；performance/capacity/cost/reliability/SLO；security/privacy/safety/compliance；observability/deployment/operations；integration/notification/file/media/localization/commercial；hardware；AI/ML；architecture owner/boundary/debt。领域特有 family、property、condition axis 和 proof method 必须扩展这个下限。
+
+每个适用 subject、typed relation 和 static/dynamic population 都有稳定身份。actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/dependency/failure/migration/rollout/threat/custom condition 的每个适用值与精确组合都是一等原子项。每个 atomic property 要么明确 specified，要么有准确对象、basis 和 rationale 的 N/A/exclusion；unresolved、unavailable、conflict 或 unreadable 会阻断。`all-states` 等聚合字符串、默认路径、representative/pairwise sample 和无依据 N/A 都不能冒充原子 cell。
+
+一个 semantic Fact 绑定 `Outcome × subject/relation/population × exact condition × atomic property × typed expected predicate`，并保留 owner、Source locator/digest、provenance、quantifier、observation boundary 和 sensitivity。Fact identity 与 proof obligation 分离：每个 Fact 展开所有 required methods，并一直观察到最远可独立失败边界，同时冻结 comparator/parameters/tolerance/mask、Oracle capability/identity、environment 和 protected-value policy。精确值留在 Source 或 owning Context，下游只保存身份与比较权威，不复制成第二份语义数值源。
+
+普通默认流程在任务内保持精确 accounting，要求 `Expected Semantic Facts = Source Indexed Facts = implementation/acceptance accounted Facts`，并为每个 `Fact × required-method` 保存当前候选可归因的 observation/environment/comparison/Oracle/verdict；它不创建 manifest、matrix、Claim set、state 或 Gate。显式 Long-Task 则在 Source 中持久化一个 `semantic-fact-manifest-v1`，要求 `Expected = Source Indexed = Contract Indexed Facts`，把每个机器义务映射到单 Fact Assertion 和 typed `semantic_fact` result（或命名 External Confirmation），并在现有唯一 Final Gate 中验证 expectation/result 精确相等。任何 missing、extra、duplicate、unresolved、unmapped、unimplemented、unexecuted、stale、failed、proxy-only、reused 或 indistinguishable row 都阻止完成。
+
+该机制不能发现用户从未表达的意图，也不能证明任意 Inspector/Oracle 的语义绝对正确。它只能补全必要推导与用户明确委托且可辩护的选择；真正的产品、法律、安全、商业、安全性或外部 owner 决策继续阻断。耐久含义仍进入既有 Context owner，代码仍是当前实现事实；不会新增第二 plan、registry、Authority、Gate 或固定实现顺序。
+
 ### 视觉交付指导
 
 两种开发路径共享一个条件式设计目的：当存在已选 implementation handoff 时，让 Agent 的开发、验收和测试在 UI/UX 方面完整遵循选定设计资源在声明范围与条件内明确表达的全部材料性信息。它不授权从静态图推断未表达的交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。

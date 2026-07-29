@@ -16,6 +16,11 @@ export {
   LONG_TASK_TRUST_TESTS,
 } from "./test_suite_policy.mjs";
 
+const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
+  "packages/ty-context/src/lib/semantic-fact-",
+  "packages/ty-context/src/lib/long-task-semantic-fact-",
+]);
+
 const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/commands/design-resource.ts",
@@ -94,12 +99,41 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
     ],
   ]),
+  ...[
+    "packages/ty-context/src/commands/long-task-authoring.ts",
+    "packages/ty-context/src/lib/long-task-authoring-authority-preview.ts",
+    "packages/ty-context/src/lib/long-task-claims.ts",
+    "packages/ty-context/src/lib/long-task-delivery-parser.ts",
+    "packages/ty-context/src/lib/long-task-delivery-types.ts",
+    "packages/ty-context/src/lib/long-task-delivery-validation.ts",
+    "packages/ty-context/src/lib/long-task-outcome-parser.ts",
+    "packages/ty-context/src/lib/long-task-semantic-drift-migration.ts",
+    "packages/ty-context/src/lib/long-task-shape-primitives.ts",
+    "packages/ty-context/src/lib/long-task-source-item-parser.ts",
+    "packages/ty-context/src/lib/long-task-source-target-continuity.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-delivery-parser.test.mjs",
+      "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
+    ],
+  ]),
+  [
+    "packages/ty-context/src/lib/long-task-runner-freeze.ts",
+    [
+      "long-task-runner-freeze-v2.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
+    ],
+  ],
   [
     "packages/ty-context/src/lib/long-task-activation-validation.ts",
     [
       "design-resource-handoff.test.mjs",
       "long-task-authoring-preflight.test.mjs",
       "long-task-delivery-compiler.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-workspace-scope.test.mjs",
     ],
   ],
@@ -122,6 +156,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-authority-field-completeness.test.mjs",
       "long-task-claim-coverage.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-schema-parser-parity.test.mjs",
     ],
   ],
@@ -179,12 +214,14 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-authoring-claims.test.mjs",
       "long-task-claim-coverage.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
     ],
   ],
   [
     "packages/ty-context/src/lib/long-task-source-target-index.ts",
     [
       "long-task-claim-coverage.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-source-authority-closure.test.mjs",
     ],
   ],
@@ -192,6 +229,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-authority-policy.ts",
     [
       "long-task-authority-field-completeness.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-authority-revision.test.mjs",
     ],
   ],
@@ -208,6 +246,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-context-evolution.test.mjs",
       "long-task-delivery-compiler.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-authority-revision.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
       "long-task-semantic-drift-lifecycle.test.mjs",
@@ -331,6 +370,7 @@ const HOTSPOT_TESTS = new Map([
       "long-task-authority-progress-retry.test.mjs",
       "long-task-authority-revision-classification.test.mjs",
       "long-task-authority-revision-replay.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-authority-revision.test.mjs",
     ],
   ],
@@ -409,6 +449,7 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
       "long-task-authority-revision-classification.test.mjs",
       "long-task-authority-revision-diagnosis.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-authority-revision.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
       "long-task-semantic-drift-lifecycle.test.mjs",
@@ -421,6 +462,7 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
       "long-task-delivery-parser.test.mjs",
       "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
       "long-task-semantic-drift-lifecycle.test.mjs",
     ],
@@ -429,6 +471,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-evidence-capability-codec.ts",
     [
       "long-task-evidence-kernel.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -437,6 +480,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-evidence-kernel.test.mjs",
       "long-task-playwright-ac-evidence.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -444,6 +488,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts",
     [
       "long-task-evidence-kernel.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -452,6 +497,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-assertion-safety.test.mjs",
       "long-task-evidence-kernel.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -459,6 +505,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-playwright-evidence.ts",
     [
       "long-task-playwright-ac-evidence.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -489,6 +536,7 @@ const HOTSPOT_TESTS = new Map([
       "long-task-authority-field-completeness.test.mjs",
       "long-task-delivery-compiler.test.mjs",
       "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],
@@ -605,6 +653,16 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
+    if (
+      SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES.some((prefix) =>
+        file.startsWith(prefix),
+      )
+    ) {
+      mode = widen(mode, "long-task-suite");
+      reasons.push(`${file}:shared_semantic_fact_runtime`);
+      continue;
+    }
+
     const hotspot = HOTSPOT_TESTS.get(file);
     if (hotspot) {
       hotspot.map(testPath).forEach((test) => tests.add(test));
@@ -677,6 +735,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
         tests.add(testPath("design-resource-authoring-provider.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
+      tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("package-source.test.mjs"));
       tests.add(testPath("source-plan-authoring-skill.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
@@ -690,6 +749,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
+      tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("source-plan-authoring-skill.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
       tests.add(testPath("validators.test.mjs"));
@@ -706,6 +766,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
+      tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("package-source.test.mjs"));
       tests.add(testPath("source-plan-authoring-skill.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
@@ -737,6 +798,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
         tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
+      tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("source-plan-authoring-skill.test.mjs"));
       reasons.push(`${file}:documentation`);
       continue;

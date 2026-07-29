@@ -86,7 +86,27 @@ test("control-level UI authority changes select parser, Claim and revision cover
   assert.deepEqual(policy.tests, [
     "tests/ty-context/long-task-authority-field-completeness.test.mjs",
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
   ]);
+});
+
+test("shared non-UI semantic Fact runtime changes widen to the complete Long-Task suite", () => {
+  for (const file of [
+    "packages/ty-context/src/lib/semantic-fact-policy.ts",
+    "packages/ty-context/src/lib/semantic-fact-policy-authority.ts",
+    "packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts",
+    "packages/ty-context/src/lib/long-task-semantic-fact-contract-proofs.ts",
+  ]) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.mode, "long-task-suite", file);
+    assert.equal(selection.requires_build, true, file);
+    assert.deepEqual(selection.tests, [], file);
+    assert.deepEqual(
+      selection.reasons,
+      [`${file}:shared_semantic_fact_runtime`],
+      file,
+    );
+  }
 });
 
 test("Long-Task command changes include the one-time model-choice regression", () => {
@@ -134,6 +154,7 @@ test("Authority monotonic-comparison changes retain the adopted-revision replay"
     "tests/ty-context/long-task-authority-revision-classification.test.mjs",
     "tests/ty-context/long-task-authority-revision-replay.test.mjs",
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
   ]);
 });
 
@@ -222,6 +243,7 @@ test("shared long-task runtime types use focused authority and recovery coverage
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
     "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
     "tests/ty-context/long-task-semantic-drift-lifecycle.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/long-task-state-resume.test.mjs",
   ]);
 });
@@ -281,6 +303,7 @@ test("guidance-only changes select static consistency checks", () => {
     "tests/ty-context/design-system-authoring-skill.test.mjs",
     "tests/ty-context/long-task-design-context.test.mjs",
     "tests/ty-context/long-task-efficiency-design.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
     "tests/ty-context/source-plan-authoring-skill.test.mjs",
     "tests/ty-context/visual-delivery-guidance.test.mjs",
@@ -382,6 +405,7 @@ test("design authoring profile and provider changes select focused coverage", ()
     "tests/ty-context/design-resource-handoff.test.mjs",
     "tests/ty-context/long-task-authoring-preflight.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/long-task-workspace-scope.test.mjs",
   ]);
 });
@@ -442,10 +466,20 @@ test("direct test edits run that test while shared fixture edits widen safely", 
     "tests/ty-context/long-task-context-evolution.test.mjs",
   ]);
 
-  const fixture = selectAffectedTests([
+  for (const file of [
     "tests/ty-context/long-task-delivery-fixtures.mjs",
-  ]);
-  assert.equal(fixture.mode, "long-task-suite");
+    "tests/ty-context/long-task-semantic-sync-fixture.mjs",
+    "tests/ty-context/long-task-delegating-oracle-fixture.mjs",
+  ]) {
+    const fixture = selectAffectedTests([file]);
+    assert.equal(fixture.mode, "long-task-suite", file);
+    assert.deepEqual(fixture.tests, [], file);
+    assert.deepEqual(
+      fixture.reasons,
+      [`${file}:shared_test_support`],
+      file,
+    );
+  }
 });
 
 test("package scripts expose affected and focused developer loops", async () => {

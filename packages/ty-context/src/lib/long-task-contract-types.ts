@@ -21,6 +21,10 @@ import type {
   TargetProfileV2,
 } from "./long-task-semantic-contract-types.js";
 import type { DeliverySurfaceBindingV2 } from "./long-task-ui-surface-types.js";
+import type {
+  SemanticFactManifestRefV2,
+  SemanticFactOutcomeBindingsV2,
+} from "./semantic-fact-types.js";
 
 export type SourceClaimDispositionV2 =
   | { type: "claim"; refs: string[] }
@@ -246,6 +250,7 @@ export interface DeliveryOutcomeV2 {
   stage: string;
   depends_on: string[];
   applicability: ClaimApplicabilityV2[];
+  semantic_fact_bindings: SemanticFactOutcomeBindingsV2;
   product: {
     observable_result: string;
     result_applicability_refs: string[];
@@ -278,6 +283,7 @@ export interface DeliveryOutcomeV2 {
 
 export interface DeliveryContractV2 {
   schema_version: "long-task-delivery-v2";
+  semantic_fact_manifest: SemanticFactManifestRefV2;
   task: {
     id: string;
     title: string;

@@ -25,6 +25,7 @@ import {
   parseStages,
   parseTask,
 } from "./long-task-root-shape.js";
+import { parseSemanticFactManifestRef } from "./long-task-semantic-fact-shape.js";
 import { repositoryRoot } from "./long-task-workspace.js";
 import {
   assertNoSemanticDriftMigration,
@@ -144,7 +145,15 @@ function parseRoot(raw: string, bundle: boolean): Record<string, unknown> {
   return object(
     decoded,
     "$",
-    ["schema_version", "task", "source_claims", "stages", "risk", "global"],
+    [
+      "schema_version",
+      "semantic_fact_manifest",
+      "task",
+      "source_claims",
+      "stages",
+      "risk",
+      "global",
+    ],
     bundle ? ["outcomes", "outcome_files"] : ["outcomes"],
   );
 }
@@ -160,6 +169,10 @@ function parseContractRoot(
   );
   return {
     schema_version: "long-task-delivery-v2",
+    semantic_fact_manifest: parseSemanticFactManifestRef(
+      root.semantic_fact_manifest,
+      "semantic_fact_manifest",
+    ),
     task: parseTask(root.task),
     source_claims: parseSourceClaims(root.source_claims, "source_claims"),
     stages: parseStages(root.stages),

@@ -80,6 +80,29 @@ active Long-Task 下不再执行这个默认 closure；同一架构义务由 Con
 
 sample provider / interface / page 证据不能替代 all-provider / all-interface / all-platform 或全量完成。来源要求全量而当前只能交付框架/样本时标记 `scope_conflict_requires_decision`；权威范围未收窄前不得声称完成。
 
+## Non-UI Semantic Implementation / 非 UI 语义实现
+
+产品方案和技术方案都默认下钻到范围内最细、可独立判断的语义 Fact。该义务不只覆盖产品文字，也覆盖后端与架构实现：API/schema/data、状态机与时序、事务/一致性/并发/幂等、错误/降级/恢复、配置/兼容/迁移、性能/容量/可靠性、隐私/安全/审计、集成/部署/运维/可观测性、商业、硬件、AI/ML 及项目自定义域。Requirement、模块、接口名、宽泛状态列表和当前代码结构都不是粒度上限。
+
+实现前，把所有 material Source/Context/attachment/spec/external/repository-preservation meaning 路由为：
+
+- 稳定 `subject | relation | population` 身份与 owner；
+- 每个适用 actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/dependency/failure/migration/rollout/threat/custom condition 的原子值与精确组合；
+- 每个适用 atomic property 的 typed expected predicate、单位/边界/量词/空值与缺失语义、Source locator/digest 和 direct/derived/delegated/evidence-backed provenance；
+- 每个 Fact 的全部 required proof methods、furthest independently failing boundary、comparator/parameters/tolerance/mask、Oracle、environment、observer 和 protected-value policy。
+
+标准 family/property/condition catalogue 是完整性下限；Source 或仓库结构暴露的领域概念必须作为 custom extension 进入集合。N/A/exclusion 必须列出准确对象、basis 和 rationale；持续域用范围/分段/公式，动态 population 用确定的 universe/enumeration/partition/exclusion。禁止 `all-states`、逗号串、默认路径、代表/抽样/pairwise、实现自产 expected、一个 aggregate pass 或近端 proxy 冒充若干 Fact。
+
+默认 Workflow 只在任务内保持：
+
+`Expected Semantic Facts = Source Indexed Facts = implementation/acceptance accounted Facts`
+
+`Fact × required-method obligations = attributable current-candidate result rows`
+
+Contract Conformance 对每个结果保留 actual observation/environment、冻结的 expected/comparison/tolerance/mask、Oracle 与 verdict，并从真实 production owner/target 到最远独立失败边界执行。任何未读、缺失、额外、重复、未决、不可用、未映射、未实现、未执行、过期、失败、proxy-only、复用或不可区分项阻止完整结论；protected observation 只持久化允许的 digest/redaction。这个 accounting 不落盘成 matrix/registry/Gate。
+
+显式 Long-Task 不再运行上述默认 carrier；把同一全集写入 Source `semantic-fact-manifest-v1`，通过现有 semantic Fact Claims、单 Fact Assertions、Checks、typed `semantic_fact` results 和唯一 Final Gate 精确闭包。值留在 Source/Context，Contract 只保留身份和比较权威。真正缺失的产品、法律、安全、商业、外部权限或物理世界决策保持 `decision_required`/External Confirmation；不能因为实现困难而改成外部，也不能由工程师发明。
+
 ## Product Surface
 
 涉及 Web/移动/桌面/游戏 UI、CLI/TUI、表单、配置、输入、选择、搜索、筛选、调度、预算/配额/限流或状态反馈时：

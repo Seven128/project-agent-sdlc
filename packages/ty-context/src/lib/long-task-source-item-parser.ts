@@ -3,6 +3,7 @@ import type {
   SourceItemKind,
 } from "./long-task-delivery-types.js";
 import { parseDesignResourceHandoffShape } from "./design-resource-handoff-shape.js";
+import { parseSemanticFactManifestShape } from "./semantic-fact-manifest-shape.js";
 import {
   normalizeSourceItemText,
   parseSourceBackgroundMarker,
@@ -17,6 +18,8 @@ import { parseStrictYaml, sha256Hex } from "./strict-codec.js";
 
 const DESIGN_RESOURCE_START =
   /^\s*```yaml[ \t]+design-resource-handoff-v1[ \t]*$/u;
+const SEMANTIC_FACT_START =
+  /^\s*```yaml[ \t]+semantic-fact-manifest-v1[ \t]*$/u;
 const FORMAL_BLOCK_END = /^\s*```[ \t]*$/u;
 
 interface OpenSourceItem {
@@ -36,7 +39,7 @@ interface OpenSourceBackground {
 }
 
 interface OpenFormalBlock {
-  owner: "design-resource-handoff-v1";
+  owner: "design-resource-handoff-v1" | "semantic-fact-manifest-v1";
   lines: string[];
   line: number;
 }
@@ -50,6 +53,7 @@ interface SourceParseState {
   background: OpenSourceBackground | null;
   formalBlock: OpenFormalBlock | null;
   designResourceBlocks: number;
+  semanticFactBlocks: number;
 }
 
 export function parseSourceItems(
@@ -74,6 +78,7 @@ function sourceParseState(sourcePath: string): SourceParseState {
     background: null,
     formalBlock: null,
     designResourceBlocks: 0,
+    semanticFactBlocks: 0,
   };
 }
 
@@ -99,9 +104,10 @@ function consumeOpenFormalBlock(
     return true;
   }
   try {
-    parseDesignResourceHandoffShape(
-      parseStrictYaml(state.formalBlock.lines.join("\n")),
-    );
+    const value = parseStrictYaml(state.formalBlock.lines.join("\n"));
+    if (state.formalBlock.owner === "design-resource-handoff-v1")
+      parseDesignResourceHandoffShape(value);
+    else parseSemanticFactManifestShape(value);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
@@ -117,15 +123,28 @@ function startFormalBlock(
   line: string,
   lineNumber: number,
 ): boolean {
-  if (!DESIGN_RESOURCE_START.test(line)) return false;
+  const owner = DESIGN_RESOURCE_START.test(line)
+    ? "design-resource-handoff-v1"
+    : SEMANTIC_FACT_START.test(line)
+      ? "semantic-fact-manifest-v1"
+      : null;
+  if (!owner) return false;
   assertNoOpenOwnedSection(state, lineNumber);
-  state.designResourceBlocks += 1;
-  if (state.designResourceBlocks > 1)
-    throw new Error(
-      `source_formal_block_duplicate:${state.sourcePath}:design-resource-handoff-v1`,
-    );
+  if (owner === "design-resource-handoff-v1") {
+    state.designResourceBlocks += 1;
+    if (state.designResourceBlocks > 1)
+      throw new Error(
+        `source_formal_block_duplicate:${state.sourcePath}:design-resource-handoff-v1`,
+      );
+  } else {
+    state.semanticFactBlocks += 1;
+    if (state.semanticFactBlocks > 1)
+      throw new Error(
+        `source_formal_block_duplicate:${state.sourcePath}:semantic-fact-manifest-v1`,
+      );
+  }
   state.formalBlock = {
-    owner: "design-resource-handoff-v1",
+    owner,
     lines: [],
     line: lineNumber,
   };

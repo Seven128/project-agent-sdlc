@@ -106,6 +106,7 @@ const OUTCOME_AUTHORITY_POLICY = {
   stage: "semantic_user_review",
   depends_on: "readiness_only",
   applicability: "semantic_user_review",
+  semantic_fact_bindings: "semantic_user_review",
   product: "semantic_user_review",
   technical: "semantic_user_review",
   acceptance: "proof_additive",

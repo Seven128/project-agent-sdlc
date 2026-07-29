@@ -8,6 +8,7 @@ import { decodeCheckEvidence } from "../../packages/ty-context/dist/lib/long-tas
 import { evaluateCheckEvidence } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
 import { evaluateOutcomeCounterfactuals } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
 import { classifyPlaywrightCounterfactual } from "../../packages/ty-context/dist/lib/long-task-playwright-counterfactual-policy.js";
+import { loadSemanticFactManifest } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import {
   createDeliveryFixture,
   writeContract,
@@ -136,10 +137,22 @@ test("weak-observability Playwright rejects a constant AC and accepts a sensitiv
     const fixture = await createDeliveryFixture();
     try {
       await configurePlaywright(fixture, { weak: true });
+      const parsedManifest = await loadSemanticFactManifest(fixture.root, [
+        "source.md",
+      ]);
+      const semanticManifest = parsedManifest.manifest;
+      const semanticAuthority = JSON.stringify({
+        manifestSha256: parsedManifest.sha256,
+        fact: semanticManifest.facts[0],
+        proof: semanticManifest.proof_obligations[0],
+        environment: semanticManifest.environments[0],
+        oracle: semanticManifest.oracles[0],
+      });
       const runner = path.join(fixture.root, "tests", "fake-playwright.mjs");
       await writeFile(
         runner,
-        `import { readFile } from "node:fs/promises";
+        `import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 let state = {first:false,first_relations_applicable:false};
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const ready = ${constant ? "true" : "state.first === true"};
@@ -149,9 +162,40 @@ const semantic = ["first-result","first-requirement","first-obligation","first-a
   title:\`[ac:\${id}] \${id}\`,
   tests:[{projectId:"default",status:ready?"expected":"unexpected",results:[{status:ready?"passed":"failed",steps}]}]
 }));
+const semanticAuthority = ${semanticAuthority};
+const artifact = await readFile(new URL("../artifacts/proof.json", import.meta.url));
+const artifactSha256 = createHash("sha256").update(artifact).digest("hex");
+const actualSha256 = createHash("sha256").update(JSON.stringify(ready)).digest("hex");
+const canonicalize = (value) => {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((name) => [name, canonicalize(value[name])])
+    );
+  return value;
+};
+const comparisonResultSha256 = createHash("sha256")
+  .update(JSON.stringify(canonicalize({
+    fact_ref: semanticAuthority.fact.key,
+    proof_ref: semanticAuthority.proof.key,
+    target_ref: "fixture-app",
+    actual_value_sha256: actualSha256,
+    expected_value_sha256: semanticAuthority.fact.expected.sha256,
+    comparator: semanticAuthority.proof.comparison.comparator,
+    mode: semanticAuthority.proof.comparison.mode,
+    parameters_sha256: semanticAuthority.proof.comparison.parameters.sha256,
+    tolerance_sha256: semanticAuthority.proof.comparison.tolerance?.sha256 ?? null,
+    mask_sha256: semanticAuthority.proof.comparison.mask?.sha256 ?? null,
+    passed: ready
+  })))
+  .digest("hex");
+const semanticRecord = {assertion_key:"first-semantic-fact",capability:"semantic_fact",manifest_ref:"${semanticManifest.key}",manifest_sha256:semanticAuthority.manifestSha256,outcome_ref:"first",target_ref:"fixture-app",fact_ref:semanticAuthority.fact.key,proof_ref:semanticAuthority.proof.key,method:semanticAuthority.proof.method,subject_ref:semanticAuthority.fact.unit_ref,condition_ref:semanticAuthority.fact.condition_ref,property_ref:semanticAuthority.fact.property_ref,actual_observation:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/first"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semanticAuthority.environment.definition.sha256},expected:semanticAuthority.fact.expected,comparison:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semanticAuthority.proof.comparison.comparator,mode:semanticAuthority.proof.comparison.mode,parameters:semanticAuthority.proof.comparison.parameters,tolerance:semanticAuthority.proof.comparison.tolerance,mask:semanticAuthority.proof.comparison.mask,passed:ready},verdict:ready?"passed":"failed",oracle:semanticAuthority.oracle,environment:semanticAuthority.environment,observer_results:[]};
+const semanticFact = {title:"[ac:first-semantic-fact] first-semantic-fact",tests:[{projectId:"default",status:ready?"expected":"unexpected",results:[{status:ready?"passed":"failed",steps,attachments:[{name:\`ty-semantic-fact:\${semanticAuthority.proof.key}\`,contentType:"application/json",body:Buffer.from(JSON.stringify(semanticRecord)).toString("base64")}]}]}]};
 const relations = {title:"[ac:first-relations-na] first-relations-na",tests:[{projectId:"default",status:relationsPass?"expected":"unexpected",results:[{status:relationsPass?"passed":"failed",steps}]}]};
 const liveness = {title:"[ac:first-liveness] first-liveness",tests:[{projectId:"default",status:"expected",results:[{status:"passed",steps}]}]};
-console.log(JSON.stringify({stats:{expected:(ready?4:0)+(relationsPass?1:0)+1,unexpected:(ready?0:4)+(relationsPass?0:1),skipped:0,flaky:0},errors:[],suites:[{specs:[...semantic,relations,liveness]}]}));
+console.log(JSON.stringify({stats:{expected:(ready?5:0)+(relationsPass?1:0)+1,unexpected:(ready?0:5)+(relationsPass?0:1),skipped:0,flaky:0},errors:[],suites:[{specs:[...semantic,semanticFact,relations,liveness]}]}));
 process.exitCode = ready && relationsPass ? 0 : 1;
 `,
       );
@@ -214,6 +258,7 @@ test("Playwright Counterfactual accepts only an exactly explained exit 1", async
         (finding) => finding.code,
       ),
       [
+        "assertion_value_mismatch",
         "assertion_value_mismatch",
         "assertion_value_mismatch",
         "assertion_value_mismatch",
@@ -412,6 +457,7 @@ function playwrightCase(id, status, resultStatus) {
 function expectedCounterfactualCases() {
   return [
     playwrightCase("first-result", "unexpected", "failed"),
+    playwrightCase("first-semantic-fact", "unexpected", "failed"),
     playwrightCase("first-requirement", "unexpected", "failed"),
     playwrightCase("first-obligation", "unexpected", "failed"),
     playwrightCase("first-architecture", "unexpected", "failed"),
@@ -425,6 +471,7 @@ async function configurePlaywright(fixture, { weak }) {
     path.join(fixture.root, "tests", "ui.spec.ts"),
     [
       "// [ac:first-result]",
+      "// [ac:first-semantic-fact]",
       "// [ac:first-requirement]",
       "// [ac:first-obligation]",
       "// [ac:first-architecture]",
@@ -456,7 +503,7 @@ async function configurePlaywright(fixture, { weak }) {
     "tests/ui.spec.ts",
     "tests/semantic-false.json",
   ];
-  check.artifact_globs = [];
+  check.artifact_globs = ["artifacts/proof.json"];
   for (const assertion of check.positive_assertions) {
     assertion.observation = `playwright.case.${assertion.key}.passed`;
     assertion.evidence_capabilities = assertion.claims.length
@@ -496,6 +543,11 @@ async function assertPreflightAndCompileReject(fixture, code) {
     compileDeliveryContract(fixture.workdir, fixture.root, {
       require_completion_gate: false,
     }),
-    new RegExp(code, "u"),
+    new RegExp(
+      code === "behavioral_semantic_counterfactual_required"
+        ? `${code}|proof_counterfactual_required|semantic_fact_counterfactual_unknown`
+        : code,
+      "u",
+    ),
   );
 }

@@ -6,6 +6,7 @@ import type {
   LongTaskFindingV2,
 } from "./long-task-delivery-types.js";
 import { validateRuntimeEvidenceRecord } from "./long-task-evidence-capability-runtime.js";
+import { validateDistinctSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
 import { checkFinding } from "./long-task-evidence-findings.js";
 
 export { decodeEvidenceCapabilityRecords } from "./long-task-evidence-capability-codec.js";
@@ -85,6 +86,22 @@ function validateAssertionEvidenceCapabilityDeclarations(
     !assertion.evidence_capabilities.includes("presence")
   )
     issue(report, "exists_requires_presence_capability", label);
+  validateArtifactCapabilityDeclarations(assertion, check, label, report);
+  validateRunnerCapabilityDeclarations(
+    assertion,
+    check,
+    targets,
+    label,
+    report,
+  );
+}
+
+function validateArtifactCapabilityDeclarations(
+  assertion: EvidenceDeclarationCheck["positive_assertions"][number],
+  check: EvidenceDeclarationCheck,
+  label: string,
+  report?: Reporter,
+): void {
   if (
     assertion.evidence_capabilities.includes("visual_render") &&
     !check.artifact_globs.length
@@ -101,6 +118,20 @@ function validateAssertionEvidenceCapabilityDeclarations(
   )
     issue(report, "design_method_artifact_required", label);
   if (
+    assertion.evidence_capabilities.includes("semantic_fact") &&
+    !check.artifact_globs.length
+  )
+    issue(report, "semantic_fact_artifact_required", label);
+}
+
+function validateRunnerCapabilityDeclarations(
+  assertion: EvidenceDeclarationCheck["positive_assertions"][number],
+  check: EvidenceDeclarationCheck,
+  targets: Map<string, ExecutionTarget>,
+  label: string,
+  report?: Reporter,
+): void {
+  if (
     assertion.evidence_capabilities.includes("interaction_trace") &&
     !check.scenario.when.length
   )
@@ -113,6 +144,7 @@ function validateAssertionEvidenceCapabilityDeclarations(
         capability !== "interaction_trace" &&
         capability !== "design_conformance" &&
         capability !== "design_method" &&
+        capability !== "semantic_fact" &&
         capability !== "target_runtime",
     )
   )
@@ -273,6 +305,19 @@ export function evaluateEvidenceCapabilities(
     artifactHashes,
     findings,
   );
+  const semanticDistinctness =
+    validateDistinctSemanticFactEvidence(runtimeRecords);
+  if (semanticDistinctness)
+    findings.push({
+      ...checkFinding(
+        check,
+        "semantic_fact_evidence_reused",
+        `Semantic Fact evidence is not independently attributable: ${semanticDistinctness}.`,
+        "Emit exactly one independently located current observation and comparison result for every Fact-by-method obligation.",
+      ),
+      expected: "unique_fact_proof_and_artifact_locator_identity",
+      actual: semanticDistinctness,
+    });
   return { complete, findings };
 }
 

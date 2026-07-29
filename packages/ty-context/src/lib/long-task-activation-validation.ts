@@ -28,6 +28,7 @@ import {
 } from "./long-task-delivery-validation.js";
 import { validateRawExecutionObservationOwnership } from "./long-task-observation-ownership.js";
 import { validateLongTaskDesignResourceHandoffs } from "./long-task-design-resource-handoff.js";
+import { validateLongTaskSemanticFactClosure } from "./long-task-semantic-fact-closure.js";
 import { freezeDeliveryCheck } from "./long-task-runner-freeze.js";
 import {
   classifyLongTaskRisk,
@@ -121,6 +122,17 @@ export async function validateContractForActivation(options: {
       contract.task.context_snapshot_mode,
     ),
   );
+  const semanticFactClosure =
+    sourceItems && context
+      ? await attempt(mode, diagnostics, () =>
+          validateLongTaskSemanticFactClosure(
+            contract,
+            repository,
+            sourceItems,
+            context.files,
+          ),
+        )
+      : null;
 
   const workdirRelative = repoRelative(repository, workdir);
   const workspace = await attempt(mode, diagnostics, async () => {
@@ -155,6 +167,7 @@ export async function validateContractForActivation(options: {
           executionTarget,
           contract.task.execution_targets,
           [],
+          [],
         ),
       null,
       check.key,
@@ -181,6 +194,7 @@ export async function validateContractForActivation(options: {
             executionTarget,
             contract.task.execution_targets,
             designTargetsForCheck(outcome, check.key),
+            semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
           ),
         outcome.key,
         check.key,

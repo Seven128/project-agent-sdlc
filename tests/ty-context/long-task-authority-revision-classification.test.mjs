@@ -28,7 +28,9 @@ test("[critical:protected-revision-classification] semantic or proof changes are
     const candidate = structuredClone(fixture.contract);
     candidate.outcomes[0].product.owner.path_globs.push("shared/**");
     candidate.outcomes[1].product.owner.label = "changed product owner";
-    candidate.outcomes[0].acceptance.checks[0].artifact_globs = [];
+    candidate.outcomes[0].acceptance.checks[0].artifact_globs = [
+      "artifacts/replacement.json",
+    ];
     await writeContract(fixture.workdir, candidate);
     const diagnosis = await runCli(fixture.root, [
       "long-task",

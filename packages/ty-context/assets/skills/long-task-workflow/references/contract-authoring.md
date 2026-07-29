@@ -16,6 +16,27 @@ Read this only while authoring or structurally revising the one `delivery-contra
 - Once the material preference envelope is clear, use current authoritative or primary evidence for external capability, price, quota, license, compatibility, region, security posture or support claims. When one defensible recommendation exists, record the authoring instruction, preference/evidence or conservative-default basis and exact added meaning in real Source, then preserve that keyed item as ordinary Source of its semantic kind. If ordinary prose is the Source, append the delegated item without rewriting the user's original text; never place the choice only in Contract YAML.
 - A delegated plan choice is not action authorization. Payment, contracting, production deployment/publication, destructive production mutation, real permission grants, sensitive-data transmission and required legal/security/human approval remain named External Confirmations. Conflicting authority, an explicitly user-reserved choice, a missing material preference or the absence of a defensible recommendation remains `decision_required`; high impact or multiple options with known criteria alone does not.
 - A rolling implementation blocker is not an External Confirmation merely because work is difficult, delayed or unavailable through the current implementation path. Reclassify or remove machine-verifiable scope only through an explicit marked Source change and protected exact approval; otherwise keep the requirement and revise the implementation/evidence path.
+- Exactly one Source-embedded `semantic-fact-manifest-v1` is mandatory. Root `semantic_fact_manifest` binds its key, declared Source path and immutable digest. Its scope includes every Outcome and every Material Source Item; ordinary Material Source cannot be `supporting_only`, while independently validated design-owned Source may be `ui_design`. Full Controlling Context inventory and every other declared attachment/specification/repository/external/delegated input are classified with exact digest, Fact refs or explicit basis-backed disposition.
+
+## Non-UI Semantic Fact Projection
+
+The semantic manifest is the task-local Source index, not a second Contract or durable value authority. It must already close the complete standard/custom semantic family floor, stable subject/relation/population Census, exact applicable condition axes/values/combinations, atomic property partitions, Fact Cells/Facts, proof obligations, Oracles/environments/blockers and complete-generation identities before Compile. Values stay at their Source locators; Contract freezes identities, located digests and comparison authority.
+
+For every Outcome:
+
+- `semantic_fact_bindings.manifest_ref` equals the root manifest key;
+- `semantic_fact_bindings.facts` is set-equal to that Outcome's manifest Facts. Each row binds one `fact_ref` to exactly the generated `semantic_fact.<fact_ref>` Claim and one matching atomic applicability profile;
+- `semantic_fact_bindings.proofs` is set-equal to that Outcome's Fact × required-method obligations. A machine row preserves method, proof surface and all evidence capabilities, binds one owning Check and one single-Claim Assertion at the same applicability, and requires typed `semantic_fact` evidence. An external row binds one typed External Confirmation whose impacts include the full Fact Claim;
+- every declared observer resolves to an execution target capable of observing the furthest independently failing boundary; a product/self-reporting proxy cannot impersonate an independent observer;
+- the Claim/Assertion/Check projection must be bijective. Missing, extra, duplicate, reused, narrowed or orphan Fact/proof identities block Authority Lock.
+
+The exact invariants are:
+
+`Expected Semantic Facts = Source Indexed Facts = Contract Indexed Facts`
+
+`Source Fact × required-method obligations = Contract proof bindings = current Final-Gate result identities`
+
+Do not copy raw semantic values into Contract, merge multiple atomic facts into one Claim, use one Assertion for several Fact obligations, turn a machine-verifiable Fact external because implementation is difficult, or accept a default/sample/aggregate path. A protected Fact uses digest-only expected authority and a policy-bound redacted/digest observation with no raw persistence. Genuine decision/external authority remains explicit and target-blocking as required.
 
 ## Outcome Boundary
 

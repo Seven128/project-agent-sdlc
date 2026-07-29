@@ -105,6 +105,13 @@ export function key(value: unknown, label: string): string {
   return result;
 }
 
+export function semanticRef(value: unknown, label: string): string {
+  const result = string(value, label);
+  if (!/^[a-z0-9][a-z0-9._:-]*$/u.test(result))
+    fail(label, "must be a stable lowercase semantic reference");
+  return result;
+}
+
 export function nullable<T>(
   value: unknown,
   parser: (value: unknown) => T,
@@ -142,6 +149,7 @@ export const EVIDENCE_CAPABILITIES = [
   "visual_render",
   "design_conformance",
   "design_method",
+  "semantic_fact",
   "target_runtime",
   "input_variation",
 ] as const satisfies readonly EvidenceCapabilityV2[];

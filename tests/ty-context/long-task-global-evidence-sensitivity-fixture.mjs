@@ -4,6 +4,10 @@ import path from "node:path";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { writeContract } from "./long-task-delivery-fixtures.mjs";
+import {
+  preserveFixtureSemanticOracle,
+  preservedFixtureSemanticOraclePath,
+} from "./long-task-delegating-oracle-fixture.mjs";
 
 export async function addGlobalClaim(
   fixture,
@@ -65,27 +69,40 @@ export async function addGlobalClaim(
   ];
   check.negative_assertions = [];
   fixture.contract.global.acceptance.checks.push(check);
+  if (counterfactual) await addGlobalCounterfactual(fixture.contract);
+  await preserveFixtureSemanticOracle(fixture);
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
+    `import { execFileSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
 let state = { first: false, first_relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const key = process.argv[2] || "first";
 const globalCheck = process.argv[3] === "global";
 const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:\`fixture-${"${key}"}-session\`,cold_start:true});
 const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
-const claimAssertions = globalCheck ? ["global-state-assertion"] : [\`${"${key}"}-result\`,\`${"${key}"}-requirement\`,\`${"${key}"}-obligation\`,\`${"${key}"}-relations-na\`,...(key === "first" ? ["first-architecture"] : [])];
 const globalResult = ${constant ? "true" : "state[key] === true"};
-console.log(JSON.stringify({
-  schema_version:"long-task-check-result-v3",
-  execution_status:"completed",
-  observations:{result:state[key] === true,requirement_result:state[key] === true,obligation_result:state[key] === true,architecture_result:state.first === true,relations_applicable:state[\`${"${key}"}_relations_applicable\`] === true,global_result:globalResult,target_live:true,negative:false},
-  evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(globalCheck ? "global-state-liveness" : \`${"${key}"}-liveness\`)]
-}));
+const result = globalCheck
+  ? {
+      schema_version: "long-task-check-result-v3",
+      execution_status: "completed",
+      observations: { global_result: globalResult, target_live: true },
+      evidence_records: [
+        target("global-state-assertion"),
+        delta("global-state-assertion"),
+        target("global-state-liveness")
+      ]
+    }
+  : JSON.parse(
+      execFileSync(
+        process.execPath,
+        [${JSON.stringify(preservedFixtureSemanticOraclePath)}, key],
+        {cwd:process.cwd(),encoding:"utf8"}
+      )
+    );
+console.log(JSON.stringify(result));
 `,
   );
-  if (counterfactual) await addGlobalCounterfactual(fixture.contract);
-  await writeContract(fixture.workdir, fixture.contract);
 }
 
 export async function addGlobalCounterfactual(contract) {

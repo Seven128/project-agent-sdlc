@@ -25,6 +25,7 @@ export function compactLongTaskTemplate(): string {
 
 function template(): string {
   return `schema_version: long-task-delivery-v2
+semantic_fact_manifest: {key: replace-semantic-facts, source_path: plans/replace-me.md, sha256: "1111111111111111111111111111111111111111111111111111111111111111"}
 task:
   id: replace-me
   title: Replace me
@@ -77,6 +78,21 @@ outcomes:
         dimensions: [{key: delivery-state, value: ready}]
         given_refs: [source-ready]
         when_refs: [inspect-result]
+    semantic_fact_bindings:
+      manifest_ref: replace-semantic-facts
+      facts:
+        - fact_ref: replace.result.observable
+          claim_ref: semantic_fact.replace.result.observable
+          applicability_ref: root-success
+      proofs:
+        - proof_ref: replace.result.observable.runtime
+          fact_ref: replace.result.observable
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities: [semantic_fact]
+          authority: machine
+          check_ref: replace-check
+          assertion_ref: replace-semantic-fact
     product:
       observable_result: Describe what a user or system can observe.
       result_applicability_refs: [root-success]
@@ -124,6 +140,7 @@ outcomes:
           verification_inputs: ["tests/replace-oracle.mjs"]
           input_paths: [src/replace-me.ts]
           expected_output_paths: [src/replace-me.ts]
+          artifact_globs: [artifacts/replace-semantic-fact.json]
           positive_assertions:
             - key: replace-result
               criterion: The declared outcome is observable.
@@ -131,6 +148,14 @@ outcomes:
               applicability_ref: root-success
               observation: result
               evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: true
+            - key: replace-semantic-fact
+              criterion: The exact Source-indexed semantic Fact passes its frozen comparison on the current target.
+              claims: [semantic_fact.replace.result.observable]
+              applicability_ref: root-success
+              observation: semantic_fact_replace_result_observable
+              evidence_capabilities: [semantic_fact]
               operator: equals
               expected: true
             - key: replace-requirement
@@ -168,14 +193,14 @@ outcomes:
       counterfactual_controls:
         - key: replace-semantic-carrier
           binding_key: replace-carrier
-          claims: [result, requirement.replace-requirement, obligation.architecture]
+          claims: [result, requirement.replace-requirement, obligation.architecture, semantic_fact.replace.result.observable]
           check_key: replace-check
           mutation:
             type: replace_text
             path: src/replace-me.ts
             match: IMPLEMENTED_STATE
             replacement: SEMANTIC_FAILURE_STATE
-          expected_assertion_failures: [replace-result, replace-requirement, replace-architecture]
+          expected_assertion_failures: [replace-result, replace-requirement, replace-architecture, replace-semantic-fact]
           preserved_assertions: [replace-liveness]
         - key: replace-relation-applicability
           binding_key: replace-carrier

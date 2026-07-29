@@ -12,6 +12,10 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  preserveFixtureSemanticOracle,
+  preservedFixtureOracleDelegationPrelude,
+} from "./long-task-delegating-oracle-fixture.mjs";
 
 test("Counterfactual accepts only the exact designated Assertion failure", async () => {
   const fixture = await createDeliveryFixture();
@@ -37,6 +41,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "requirement.observe-first",
           "obligation.implement-first",
           "obligation.architecture-first",
+          "semantic_fact.fact.first.observable",
         ],
         check_key: check.key,
         mutation: {
@@ -50,6 +55,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "first-requirement",
           "first-obligation",
           "first-architecture",
+          "first-semantic-fact",
         ],
         preserved_assertions: ["first-liveness"],
       },
@@ -68,8 +74,8 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
         preserved_assertions: ["first-liveness"],
       },
     ];
+    await preserveFixtureSemanticOracle(fixture);
     await writeOracle(fixture.root, "valid");
-    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = JSON.parse(
@@ -104,10 +110,12 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
+      "assertion_value_mismatch",
     ]);
     assert.deepEqual(relationArtifactFinding.actual.finding_codes.sort(), [
       "artifact_missing",
       "assertion_value_mismatch",
+      "evidence_capability_invalid",
     ]);
 
     const populationFailure = structuredClone(compiled.outcomes[0]);
@@ -129,6 +137,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     );
     assert.equal(findings.length, 1);
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
+      "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
@@ -172,11 +181,15 @@ test("Counterfactual cannot delete the runner or a declared helper", async () =>
       await writeFile(path.join(fixture.root, "tests/helper.mjs"), "export {};\n");
       const outcome = fixture.contract.outcomes[0];
       const check = outcome.acceptance.checks[0];
+      const semanticControls = structuredClone(
+        outcome.acceptance.counterfactual_controls,
+      );
       check.verification_inputs.push("tests/helper.mjs");
       outcome.product.owner.path_globs.push("tests/**");
       outcome.technical.allowed_support_paths.push("tests/**");
       outcome.technical.bindings[0].carrier_paths.push(target);
       outcome.acceptance.counterfactual_controls = [
+        ...semanticControls,
         {
           key: "delete-verifier-input",
           binding_key: "state-first",
@@ -206,6 +219,9 @@ test("Counterfactual Claims must belong to the designated sensitive Assertion", 
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
+    const semanticControls = structuredClone(
+      outcome.acceptance.counterfactual_controls,
+    );
     outcome.technical.obligations.push({
       key: "unrelated",
       statement: "Preserve an unrelated obligation.",
@@ -223,6 +239,7 @@ test("Counterfactual Claims must belong to the designated sensitive Assertion", 
       expected: true,
     });
     outcome.acceptance.counterfactual_controls = [
+      ...semanticControls,
       {
         key: "unrelated-claim",
         binding_key: "state-first",
@@ -332,16 +349,28 @@ async function writeOracle(root, mode) {
         : "result,";
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
-${prelude}
-let state = {};
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); }
-catch {}
-const result = state.first === true;
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"counterfactual-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const claimAssertions=["first-result","first-requirement","first-obligation","first-architecture","first-relations-na"];
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{${resultObservation}requirement_result:result,obligation_result:result,architecture_result:result,relations_applicable:state.first_relations_applicable,target_live:true,other:${other},population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:result?["first"]:[],excluded_items:[]}},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-liveness"),{assertion_key:"other-stays-true",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["other"]}]}));
+    `${preservedFixtureOracleDelegationPrelude({
+      beforeDelegation: prelude,
+    })}
+const observedResult = result.observations.result;
+${resultObservation ? `result.observations.result = ${
+      mode === "observation-type" ? '"not-a-boolean"' : "observedResult"
+    };` : "delete result.observations.result;"}
+result.observations.other = ${other};
+result.observations.population = {
+  universe_ids: ["first"],
+  eligible_ids: ["first"],
+  observed_ids: observedResult ? ["first"] : [],
+  excluded_items: []
+};
+result.evidence_records.push({
+  assertion_key: "other-stays-true",
+  capability: "state_delta",
+  before_sha256: "2".repeat(64),
+  after_sha256: "3".repeat(64),
+  changed_fields: ["other"]
+});
+console.log(JSON.stringify(result));
 `,
   );
 }

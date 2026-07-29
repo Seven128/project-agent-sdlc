@@ -196,7 +196,8 @@ function compileOutcomeScope(
       proof.assertion.observation === "playwright.passed" &&
       (claim.kind === "requirement" ||
         claim.kind === "control" ||
-        claim.kind === "control_relation")
+        claim.kind === "control_relation" ||
+        claim.kind === "semantic_fact")
     )
       fail(
         "fine_grained_claim_requires_ac_observation",
@@ -224,6 +225,40 @@ function compileOutcomeScope(
       proof.check.key,
     );
     addProof(proofs, claimKey, claimProof);
+  }
+
+  for (const binding of outcome.semantic_fact_bindings.proofs) {
+    if (binding.authority !== "external_confirmation") continue;
+    const factBinding = outcome.semantic_fact_bindings.facts.find(
+      (item) => item.fact_ref === binding.fact_ref,
+    );
+    if (!factBinding)
+      fail(
+        "semantic_fact_external_fact_binding_missing",
+        `${outcomeKey}:${binding.proof_ref}:${binding.fact_ref}`,
+      );
+    const claim = claimMap.get(factBinding.claim_ref);
+    if (!claim)
+      fail(
+        "semantic_fact_external_claim_unknown",
+        `${outcomeKey}:${factBinding.claim_ref}`,
+      );
+    const confirmation = contract.global.acceptance.external_confirmations.find(
+      (item) => item.key === binding.confirmation_ref,
+    );
+    const fullClaim = `${outcomeKey}.${factBinding.claim_ref}`;
+    if (!confirmation || !confirmation.impact_claims.includes(fullClaim))
+      fail(
+        "semantic_fact_external_confirmation_invalid",
+        `${outcomeKey}:${binding.confirmation_ref}:${fullClaim}`,
+      );
+    addProof(proofs, factBinding.claim_ref, {
+      check_key: `EXTERNAL.${binding.confirmation_ref}`,
+      assertion_key: null,
+      polarity: "positive",
+      proof_surface: binding.proof_surface,
+      applicability_ref: factBinding.applicability_ref,
+    });
   }
 
   validatePopulationReferences(outcome, claimMap);

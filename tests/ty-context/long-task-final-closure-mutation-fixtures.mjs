@@ -106,7 +106,16 @@ export function configureMixedEvidenceContract(contract) {
   });
 
   const structured = contract.outcomes[1];
-  const structuredCheck = structured.acceptance.checks[0];
+  const semanticCheck = structured.acceptance.checks[0];
+  semanticCheck.key = "second-semantic-check";
+  for (const binding of structured.semantic_fact_bindings.proofs)
+    if (binding.check_ref === "second-check")
+      binding.check_ref = semanticCheck.key;
+  for (const control of structured.acceptance.counterfactual_controls)
+    if (control.check_key === "second-check")
+      control.check_key = semanticCheck.key;
+  const structuredCheck = structuredClone(semanticCheck);
+  structuredCheck.key = "second-check";
   structuredCheck.runner.target = "tests/constant-oracle.mjs";
   structuredCheck.verification_inputs = [
     "tests/constant-oracle.mjs",
@@ -158,7 +167,7 @@ export function configureMixedEvidenceContract(contract) {
       expected: true,
     },
   ];
-  structured.acceptance.counterfactual_controls = [];
+  structured.acceptance.checks.push(structuredCheck);
 
   contract.source_claims[0].statement = "Implement first";
   contract.source_claims[0].disposition.refs = [
@@ -193,15 +202,6 @@ export function configureMixedEvidenceContract(contract) {
       "The UI recovery case passes.",
       "first.ui-check.ui-recovery",
     ),
-    {
-      key: "second-observable",
-      source_ref: "source.md#fixture-source",
-      statement: "The second outcome must be observable.",
-      disposition: {
-        type: "claim",
-        refs: ["second.requirement.observe-second"],
-      },
-    },
     sourceAcceptance(
       "second-structured-acceptance",
       "The structured outcome is observable and implemented.",

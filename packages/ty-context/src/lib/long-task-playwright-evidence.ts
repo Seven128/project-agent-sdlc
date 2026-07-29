@@ -2,7 +2,6 @@ import type {
   CompiledCheckV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
-import { decodeDesignFactResults } from "./long-task-evidence-capability-codec.js";
 import {
   collectCases,
   declaredCaseIds,
@@ -12,6 +11,12 @@ import {
   type PlaywrightCase,
   type PlaywrightCaseInstance,
 } from "./long-task-playwright-case-evidence.js";
+import { evidenceRecordsForPlaywrightCases } from "./long-task-playwright-capability-records.js";
+
+export {
+  designMethodAttachmentName,
+  semanticFactAttachmentName,
+} from "./long-task-playwright-capability-records.js";
 
 export interface PlaywrightEvidence {
   observations: Record<string, unknown>;
@@ -89,130 +94,11 @@ export function extractPlaywrightEvidence(
     }
   }
   observations["playwright.case_ids"] = cases.map((item) => item.id).sort();
-  const evidenceRecords = evidenceRecordsForCases(check, cases);
-  return { observations, evidence_records: evidenceRecords, error: null };
-}
-
-function evidenceRecordsForCases(
-  check: CompiledCheckV2,
-  cases: PlaywrightCase[],
-): EvidenceCapabilityRecordV2[] {
-  const evidenceRecords: EvidenceCapabilityRecordV2[] = [];
-  for (const item of cases) {
-    const assertion = [
-      ...check.positive_assertions,
-      ...check.negative_assertions,
-    ].find((candidate) => candidate.key === item.id);
-    if (
-      assertion?.evidence_capabilities.includes("interaction_trace") &&
-      item.executed
-    )
-      evidenceRecords.push({
-        assertion_key: assertion.key,
-        capability: "interaction_trace",
-        target_ref: check.execution_target.target_ref,
-        given_keys: item.given_keys,
-        action_keys: item.action_keys,
-      });
-    if (
-      assertion?.evidence_capabilities.includes("target_runtime") &&
-      item.executed
-    )
-      evidenceRecords.push({
-        assertion_key: assertion.key,
-        capability: "target_runtime",
-        target_ref: check.execution_target.target_ref,
-        root_entrypoint: check.execution_target_definition.root_entrypoint,
-        session_id: `playwright:${item.id}:${item.project_ids.join(",")}`,
-        cold_start: check.execution_target.entrypoint === "root",
-      });
-    if (
-      assertion?.evidence_capabilities.includes("design_conformance") &&
-      item.executed
-    ) {
-      for (const target of (check.design_conformance_targets ?? []).filter(
-        (candidate) =>
-          candidate.conformance_assertion_ref === assertion.key ||
-          candidate.verification_method_bindings.some(
-            (binding) => binding.assertion_ref === assertion.key,
-          ),
-      ))
-        evidenceRecords.push({
-          assertion_key: assertion.key,
-          capability: "design_conformance",
-          design_target_ref: target.key,
-          target_ref: target.target_ref,
-          condition_keys: target.condition_keys,
-          actual_artifact_path: target.actual_artifact_path,
-          comparison_artifact_path: target.comparison_artifact_path,
-        });
-    }
-    if (
-      assertion?.evidence_capabilities.includes("design_method") &&
-      item.executed
-    ) {
-      for (const target of check.design_conformance_targets ?? []) {
-        const binding = target.verification_method_bindings.find(
-          (candidate) => candidate.assertion_ref === assertion.key,
-        );
-        if (!binding) continue;
-        const requiredAttachments = binding.evidence_artifacts.flatMap(
-          (artifact) => [
-            designMethodAttachmentName(
-              target.key,
-              binding.method,
-              artifact.condition_key,
-              "record",
-            ),
-            designMethodAttachmentName(
-              target.key,
-              binding.method,
-              artifact.condition_key,
-              "observation",
-            ),
-          ],
-        );
-        if (
-          !requiredAttachments.every((name) =>
-            item.attachment_names.includes(name),
-          )
-        )
-          continue;
-        const cells = binding.evidence_artifacts.map((artifact) => {
-          const recordName = designMethodAttachmentName(
-            target.key,
-            binding.method,
-            artifact.condition_key,
-            "record",
-          );
-          const payload = designFactResultAttachment(
-            item.attachment_payloads[recordName],
-            `${target.key}:${binding.method}:${artifact.condition_key}`,
-          );
-          return {
-            condition_key: artifact.condition_key,
-            artifact_path: artifact.path,
-            observation_artifact_path: artifact.observation_path,
-            fact_refs: artifact.fact_refs,
-            fact_results: payload,
-          };
-        });
-        if (cells.some((cell) => cell.fact_results === null)) continue;
-        evidenceRecords.push({
-          assertion_key: assertion.key,
-          capability: "design_method",
-          design_target_ref: target.key,
-          target_ref: target.target_ref,
-          method: binding.method,
-          cells: cells.map((cell) => ({
-            ...cell,
-            fact_results: cell.fact_results!,
-          })),
-        });
-      }
-    }
-  }
-  return evidenceRecords;
+  return {
+    observations,
+    evidence_records: evidenceRecordsForPlaywrightCases(check, cases),
+    error: null,
+  };
 }
 
 function aggregateCases(instances: PlaywrightCaseInstance[]): PlaywrightCase[] {
@@ -301,36 +187,6 @@ function aggregateCases(instances: PlaywrightCaseInstance[]): PlaywrightCase[] {
       };
     })
     .sort((left, right) => left.id.localeCompare(right.id));
-}
-
-function designFactResultAttachment(
-  content: string | undefined,
-  label: string,
-) {
-  if (!content) return null;
-  try {
-    const payload = JSON.parse(content) as Record<string, unknown>;
-    if (
-      payload.schema_version !== "design-method-fact-results-v1" ||
-      !Object.hasOwn(payload, "fact_results")
-    )
-      return null;
-    return decodeDesignFactResults(
-      payload.fact_results,
-      `playwright_design_method.${label}.fact_results`,
-    );
-  } catch {
-    return null;
-  }
-}
-
-export function designMethodAttachmentName(
-  target: string,
-  method: string,
-  condition: string,
-  kind: "record" | "observation",
-): string {
-  return `ty-context-design-method:${target}:${method}:${condition}:${kind}`;
 }
 
 function integer(value: unknown): number | null {

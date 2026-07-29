@@ -49,15 +49,6 @@ second is observable and implemented.
 `,
     );
     fixture.contract.source_claims.push({
-      key: "second-observable",
-      source_ref: "source.md#fixture-source",
-      statement: "The second outcome must be observable.",
-      disposition: {
-        type: "claim",
-        refs: ["second.requirement.observe-second"],
-      },
-    });
-    fixture.contract.source_claims.push({
       key: "second-acceptance",
       source_ref: "source.md#fixture-source",
       statement: "second is observable and implemented.",

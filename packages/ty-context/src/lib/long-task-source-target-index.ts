@@ -17,6 +17,7 @@ export interface CanonicalSourceTarget {
     | "non_goal"
     | "forbidden_shortcut"
     | "acceptance"
+    | "semantic_fact"
     | "risk_fact"
     | "external_confirmation";
   normalized_text?: string;
@@ -45,6 +46,15 @@ export function buildCanonicalSourceTargetIndex(
           `${outcome.key}.requirement.${requirement.key}`,
           "requirement",
           requirement.statement,
+          outcome.key,
+        ),
+      );
+    for (const binding of outcome.semantic_fact_bindings.facts)
+      targets.push(
+        target(
+          `${outcome.key}.${binding.claim_ref}`,
+          "semantic_fact",
+          undefined,
           outcome.key,
         ),
       );
@@ -182,5 +192,7 @@ export function sourceKindForTarget(
 ): SourceItemKind | null {
   return target.kind === "global_constraint"
     ? "technical_obligation"
-    : target.kind;
+    : target.kind === "semantic_fact"
+      ? null
+      : target.kind;
 }

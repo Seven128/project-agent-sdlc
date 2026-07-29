@@ -9,28 +9,28 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 14,
-    reviewed_on: "2026-07-28",
+    max_files: 15,
+    reviewed_on: "2026-07-29",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace-scope completeness and semantic-assurance closure; the fourteenth file carries the fast static causal-chain/current-implementation and implementation-freedom anti-degradation sentinels and does not replace behavioral false-completion coverage.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace scope, prior semantic assurance, selected-design Fact closure and the independent non-UI semantic input→Fact→proof→current-result closure; the added fifteenth file strengthens false-completion rejection without replacing prior behavioral coverage.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 21,
-    reviewed_on: "2026-07-27",
+    max_files: 22,
+    reviewed_on: "2026-07-29",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, design, semantic-drift, semantic-assurance closure, direct-Draft authoring, workspace-scope and execution-preview coverage; the added semantic-assurance file closes an independent false-completion family without removing prior coverage.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, design, semantic-drift, prior semantic assurance, direct-Draft authoring, workspace-scope and execution-preview coverage; the added non-UI semantic Fact file closes an independent input/universe/proof/result false-completion family without removing prior coverage.",
   }),
   delivery_contract_focused: Object.freeze({
-    max_files: 11,
-    reviewed_on: "2026-07-27",
+    max_files: 12,
+    reviewed_on: "2026-07-29",
     rationale:
-      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, semantic-assurance closure, Source-authority and first-lock workspace-scope sentinels.",
+      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, prior semantic assurance, Source-authority, first-lock workspace-scope and the independent non-UI semantic manifest/Contract projection sentinel.",
   }),
   hotspot_fanout: Object.freeze({
-    max_tests_per_path: 9,
-    reviewed_on: "2026-07-23",
+    max_tests_per_path: 10,
+    reviewed_on: "2026-07-29",
     rationale:
-      "A single implementation path selecting more tests requires remapping or explicit review; the ninth slot covers the independent workspace-scope/preview boundary without reducing existing coverage, while complete-suite discovery remains uncapped.",
+      "A single implementation path selecting more tests requires remapping or explicit review; the tenth slot lets the central Delivery compiler retain all nine existing authority/workspace/design/revision regressions plus the independent non-UI semantic Fact closure, while complete-suite discovery remains uncapped.",
   }),
 });
 
@@ -100,6 +100,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-semantic-drift-closure.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves that selected-design method evidence must conserve the exact manifest-backed atomic Fact and property-required proof set for every target/condition, freeze each Fact's expected locator/comparator/tolerance/mask/Oracle/environment/sensitivity authority, and return one attributable passing current-snapshot result per Fact, so artifact or aggregate-pass presence cannot hide omission, substitution, stale authority, unsafe sensitive evidence, or a failed design Fact.",
+  ),
+  criticalSentinel(
+    "non-ui-semantic-fact-closure",
+    "long-task-semantic-fact-closure.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves complete standard/custom non-UI semantic input, family, unit, condition, property, Fact and proof universes; exact Source→Fact→Contract binding; and one attributable current result per Fact×method, rejecting aggregate, supporting-only, omission, stale authority and evidence reuse bypasses.",
   ),
   criticalSentinel(
     "semantic-assurance-closure",
@@ -183,6 +189,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-authority-revision.test.mjs",
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
+    "long-task-semantic-fact-closure.test.mjs",
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
     "source-plan-authoring-skill.test.mjs",
@@ -202,6 +209,7 @@ export const DELIVERY_CONTRACT_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-assurance-closure.test.mjs",
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
+    "long-task-semantic-fact-closure.test.mjs",
     "long-task-source-authority-closure.test.mjs",
     "long-task-workspace-scope.test.mjs",
   ].map(testPath),
@@ -273,6 +281,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-runner-freeze-v2.test.mjs",
   "long-task-schema-parser-parity.test.mjs",
   "long-task-semantic-assurance-closure.test.mjs",
+  "long-task-semantic-fact-closure.test.mjs",
   "long-task-semantic-authority-revision.test.mjs",
   "long-task-semantic-drift-lifecycle.test.mjs",
   "long-task-source-authority-closure.test.mjs",
@@ -509,11 +518,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 12 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 41 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 42 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 12/41/11 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 12/42/11 population; review the new file explicitly instead of parallelizing it by default.",
     );
 }
 

@@ -102,7 +102,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
       pointer: "/first",
       value: false,
     };
-    structured.acceptance.counterfactual_controls = [
+    structured.acceptance.counterfactual_controls.push(
       {
         key: "replace-second-semantics",
         binding_key: "state-second",
@@ -126,7 +126,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
         preserved_assertions: ["structured-liveness"],
       },
       {
-        key: "make-second-relations-applicable",
+        key: "make-second-structured-relations-applicable",
         binding_key: "state-second",
         claims: ["control_relation_closure"],
         check_key: "second-check",
@@ -139,7 +139,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
         expected_assertion_failures: ["second-relations-na"],
         preserved_assertions: ["structured-liveness"],
       },
-    ];
+    );
     await writeContract(fixture.workdir, fixture.contract);
     const compiled = await runCli(
       fixture.root,
@@ -223,9 +223,11 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     fixture.contract.source_claims.find(
       (claim) => claim.key === "second-structured-acceptance",
     ).statement = revisedCriterion;
-    structured.acceptance.checks[0].positive_assertions.find(
-      (assertion) => assertion.key === "structured-acceptance",
-    ).criterion = revisedCriterion;
+    structured.acceptance.checks
+      .find((check) => check.key === "second-check")
+      .positive_assertions.find(
+        (assertion) => assertion.key === "structured-acceptance",
+      ).criterion = revisedCriterion;
     await writeSource(fixture.root, {
       wrongRequirementTarget: false,
       structuredCriterion: revisedCriterion,

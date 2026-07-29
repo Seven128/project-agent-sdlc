@@ -73,6 +73,7 @@ export type EvidenceCapabilityV2 =
   | "visual_render"
   | "design_conformance"
   | "design_method"
+  | "semantic_fact"
   | "target_runtime"
   | "input_variation";
 

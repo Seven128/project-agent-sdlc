@@ -6,6 +6,7 @@ import type {
   DeliveryCheckV2,
   ExecutionTargetV2,
   FrozenRunnerV2,
+  SemanticFactExpectationV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import { computeRawExecutionIdentity } from "./long-task-check-execution-policy.js";
@@ -39,6 +40,7 @@ export async function freezeDeliveryCheck(
   executionTarget: ExecutionTargetV2,
   knownExecutionTargets: ExecutionTargetV2[],
   designConformanceTargets: CompiledDesignTargetV2[],
+  semanticFactExpectations: SemanticFactExpectationV2[],
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
   const expectedOutputs = check.expected_output_paths.map((pattern, index) =>
@@ -104,6 +106,7 @@ export async function freezeDeliveryCheck(
     execution_target_definition: executionTarget,
     known_execution_targets: knownExecutionTargets,
     design_conformance_targets: designConformanceTargets,
+    semantic_fact_expectations: semanticFactExpectations,
   };
   return {
     ...compiled,

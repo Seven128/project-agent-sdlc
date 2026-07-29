@@ -31,6 +31,7 @@ import {
   semanticDriftOutcomeMigrationFields,
 } from "./long-task-semantic-drift-migration.js";
 import { parseSurfaceBindings } from "./long-task-ui-surface-shape.js";
+import { parseSemanticFactOutcomeBindings } from "./long-task-semantic-fact-shape.js";
 
 export function parseOutcome(value: unknown, label: string): DeliveryOutcomeV2 {
   assertNoSemanticDriftMigration(
@@ -44,6 +45,7 @@ export function parseOutcome(value: unknown, label: string): DeliveryOutcomeV2 {
       "title",
       "stage",
       "applicability",
+      "semantic_fact_bindings",
       "product",
       "technical",
       "acceptance",
@@ -101,6 +103,10 @@ export function parseOutcome(value: unknown, label: string): DeliveryOutcomeV2 {
     applicability: parseClaimApplicability(
       row.applicability,
       `${label}.applicability`,
+    ),
+    semantic_fact_bindings: parseSemanticFactOutcomeBindings(
+      row.semantic_fact_bindings,
+      `${label}.semantic_fact_bindings`,
     ),
     product: {
       observable_result: string(
@@ -239,6 +245,7 @@ export function parseOutcomeFragment(
       "stage",
       "depends_on",
       "applicability",
+      "semantic_fact_bindings",
       "product",
       "technical",
       "acceptance",

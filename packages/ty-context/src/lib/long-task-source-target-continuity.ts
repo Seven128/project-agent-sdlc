@@ -73,7 +73,11 @@ function validateSourceClaimContinuity(
   }
   const ref = refs[0];
   const target = state.targets.get(ref);
-  if (!target || sourceKindForTarget(target) !== item.kind) {
+  if (
+    !target ||
+    (target.kind !== "semantic_fact" &&
+      sourceKindForTarget(target) !== item.kind)
+  ) {
     issue(
       report,
       `source_target_kind_mismatch:${claim.key}:${item.kind}:${target ? sourceKindForTarget(target) : "unknown"}:${ref}`,
@@ -117,6 +121,7 @@ function validateSourceClaimContinuity(
       "technical_obligation",
       "non_completing",
       "forbidden_shortcut",
+      "semantic_fact",
     ].includes(target.kind)
   )
     state.sourceBackedOutcomeClaims.add(ref);

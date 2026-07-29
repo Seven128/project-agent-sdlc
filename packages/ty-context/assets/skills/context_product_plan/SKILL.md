@@ -41,6 +41,26 @@ Project-specific product planning rules belong in a separate project-local Skill
 13. Verification / Deployment Role Context 只记录长期可复用的重复执行路径事实：特殊准备、最短命令或路径、预期阶段 / 信号、可接受 warning、已排除的重复探索点。不要记录一次性测试日志、完整输出、临时 JSON、CI artifact、测试报告、release ledger、secret、token、cookie、device id 或 raw payload。
 14. 收尾时做 `Contract Conformance` 和 Context drift check，只报告轻量状态：`Context: 已更新 ...` 或 `Context: 本次无长期事实变化`。Conformance 说明本次契约满足情况、未满足或延期项和验证入口；一次性证据、测试日志、截图结果、任务契约和实现摘要不写入 Context。
 
+## 非 UI 产品语义的默认粒度
+
+产品方案的默认完成单位是范围内最细、可独立判断的语义 Fact，不是段落、用户故事、Requirement、页面、Product Control、宽泛状态列表或“开发再定”。先完整索引用户文字、附件、Context、既有规范、外部约束和需要保留的仓库事实，再把每个新增/补全事实标为直接表达、逻辑必然推导、用户明确委托、证据支持的现状保留或 `decision_required`。不能从实现代码反推并静默升级为产品意图，也不能用一个 `all-states`、默认路径或代表样例代替若干原子条件。
+
+对每个适用产品域显式闭合：
+
+- 目标、范围、非目标、术语、单位、不变量、假设、优先级和验收含义；
+- actor、role、tenant、organization、plan/entitlement、所有权、权限、隔离、审批与升级；
+- 业务谓词、完整决策表分支、优先级、例外、公式、版本、单位、精度、舍入、阈值和生效期；
+- entity、identifier、field、relation 的类型、空值/缺失/默认、枚举、唯一性、基数、生命周期、来源、敏感性、保留与序列化；
+- command/query/workflow 的触发、前置、输入、guard、顺序、状态转换、同步/异步副作用、输出、部分成功、取消/替换/补偿、禁止效果；
+- 每个 state/transition/illegal path，以及 timeout、stale、conflict、interruption、re-entry、recovery、archive/delete；
+- 时间、时区/DST、边界包含性、调度/递归、grace/debounce/throttle/lease/retry；
+- 输入校验、输出/错误分类、API/protocol/event/job、分页/排序、版本/兼容、幂等、重试、回放、死信和背压；
+- 数据一致性/并发/事务、故障/降级/恢复、配置/flag、迁移/回滚、性能/容量/可靠性、隐私/安全/审计、部署/运维/可观测性、外部集成，以及适用的商业、硬件、AI/ML 与自定义域语义。
+
+每个 Fact 都应能按 `Outcome × subject/relation/population × 精确条件组合 × 原子属性 × typed expected predicate` 独立定位，并有 owner、来源/basis、适用性和验收方法。actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/failure/migration/rollout 等适用条件必须是一等原子值或有依据的精确排除；N/A 不是省略的同义词。持续区间用边界/分段/公式表达，动态集合用可枚举 universe/partition 表达。
+
+普通默认 Workflow 在内部保持一次性的精确 Fact 与验收闭包，不创建方案矩阵或新状态；显式 Long-Task 则把同一全集写入其 Source `semantic-fact-manifest-v1` 并由现有 Contract/Final Gate 承载。两者都要求任何适用 Fact 未声明、未决、不可读、未映射或无可信验收边界时不得声称方案已完整。真正的产品、法律、安全、商业或外部决策应向用户/owner 阻断，不以“补全细节”为名发明。
+
 ## 内部执行约束与 Conformance
 
 - `Context Delta` 只能是 `none` 或 `required`。`required` 先把足以指导实现的长期事实写入 owning Context；`none` 直接按现有 Context 工作，不制造 Context 噪音。

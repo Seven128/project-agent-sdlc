@@ -17,6 +17,10 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  constantFixtureOracleSource,
+  scopedFixtureOracleSource,
+} from "./long-task-delegating-oracle-fixture.mjs";
 
 test("Authority Revision separates user decisions from mechanically bounded repairs", async () => {
   const fixture = await createDeliveryFixture();
@@ -111,7 +115,7 @@ test("Authority Revision separates user decisions from mechanically bounded repa
           "diagnose-revision",
           fixture.workdir,
         ]),
-      /behavioral_semantic_counterfactual_required/u,
+      /proof_counterfactual_required|behavioral_semantic_counterfactual_required/u,
     );
 
     await writeFile(
@@ -399,30 +403,7 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
     await writeFile(path.join(fixture.root, "src", "second.json"), "false\n");
     await writeFile(
       path.join(fixture.root, "tests", "scoped-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";
-import path from "node:path";
-const key = process.argv[2];
-let value = false;
-let state = {
-  first: false,
-  second: false,
-  first_relations_applicable: false,
-  second_relations_applicable: false
-};
-try { value = JSON.parse(await readFile(path.join(process.cwd(), "src", \`\${key}.json\`), "utf8")); } catch {}
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const observed = value && state[key];
-const claimAssertions = [
-  key + "-result",
-  key + "-requirement",
-  key + "-obligation",
-  key + "-relations-na",
-  ...(key === "first" ? ["first-architecture"] : [])
-];
-const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"scoped-" + key + "-session",cold_start:true});
-const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:observed,requirement_result:observed,obligation_result:observed,architecture_result:state.first,relations_applicable:state[key + "_relations_applicable"],target_live:true},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness")]}));
-`,
+      scopedFixtureOracleSource(),
     );
     await writeFile(
       path.join(fixture.root, "tests", "scoped-semantic-false.json"),
@@ -446,6 +427,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       check.runner.target = "tests/scoped-oracle.mjs";
       check.verification_inputs = [
         "tests/scoped-oracle.mjs",
+        "tests/oracle.mjs",
         `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`,
       ];
       check.input_paths = ["src/state.json", `src/${outcome.key}.json`];
@@ -494,18 +476,14 @@ test("Counterfactual failure is persisted as failing Check Progress", async () =
   try {
     await writeFile(
       path.join(fixture.root, "tests", "constant-oracle.mjs"),
-      `const claimAssertions=["first-result","first-requirement","first-obligation"];
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"constant-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
-const relationAssertion="first-relations-na";
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,requirement_result:true,obligation_result:true,architecture_result:true,relations_applicable:false,target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target("first-architecture"),delta("first-architecture"),target(relationAssertion),delta(relationAssertion),target("first-liveness")]}));
-`,
+      constantFixtureOracleSource(),
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
     check.runner.target = "tests/constant-oracle.mjs";
     check.runner.argv = [];
     check.verification_inputs = [
       "tests/constant-oracle.mjs",
+      "tests/oracle.mjs",
       "tests/semantic-false.json",
     ];
     await writeContract(fixture.workdir, fixture.contract);

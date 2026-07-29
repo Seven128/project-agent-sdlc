@@ -234,6 +234,20 @@ Newly generated Harness configs default to `strict_except_generated`. Generated/
 
 For material UI, **UI Authority Closure** reconciles each stable surface/control/target key as covered by existing Context, requiring a Context update, task-local, explicitly out of scope or genuinely decision-required. Design Source Projection sends durable cross-surface and Screen/Control/state meaning to existing Product Surface or Screen/interaction Context, durable visual-system/token/motion-policy/rationale meaning to `DESIGN.md`, exact composition/value/condition/asset facts to versioned targets, repeatable proof routes to verification Context and delivery-local coverage/provenance/blockers to task or Contract Source. Conflicts fail closed; current code, timestamps, YAML or implementation screenshots do not silently win.
 
+### Non-UI Semantic Completeness
+
+Both development paths treat “complete and accurate requirements” for non-UI work as the finest independently decidable semantic Facts supported by expressed, logically entailed, explicitly delegated or evidence-backed authority. This covers product and business meaning as well as technical, backend and architecture meaning. Paragraphs, Requirements, Product Controls, broad state catalogues and current code are not the granularity ceiling.
+
+The authoring obligation inventories every material request fragment, attachment, controlling Context unit, canonical specification, external constraint, repository-preservation source and delegated instruction. Its standard catalog is a mandatory floor: goals/scope/glossary; actors/roles/tenants/entitlements; business rules/calculations; entities/fields/relations; commands/queries/workflows/state/time; validation/output/error/API/protocol/event/job; persistence/cache/search/transactions/consistency/concurrency/idempotency; faults/retry/degradation/recovery/backup; configuration/flags/secrets; compatibility/migration/rollout; performance/capacity/cost/reliability/SLO; security/privacy/safety/compliance; observability/deployment/operations; integrations/notification/file/media/localization/commercial; hardware; AI/ML; architecture ownership/boundaries/debt. Domain-specific families, properties, condition axes and proof methods extend this floor.
+
+Every applicable subject, typed relation and static/dynamic population receives a stable identity. Applicable actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/dependency/failure/migration/rollout/threat/custom conditions are first-class atomic values and exact combinations. Every atomic property is specified or carries an exact basis-backed N/A/exclusion; unresolved, unavailable, conflicting or unreadable meaning blocks. Aggregate strings such as `all-states`, default paths, representative/pairwise samples and ungrounded N/A cannot stand for atomic cells.
+
+One semantic Fact binds `Outcome × subject/relation/population × exact condition × atomic property × typed expected predicate`, together with owner, Source locator/digest, provenance, quantifier, observation boundary and sensitivity. Fact identity is separate from proof obligation: every Fact expands to all required methods and the furthest independently failing boundary, with frozen comparator/parameters/tolerance/mask, Oracle capability/identity, environment and protected-value policy. Exact values remain in Source or owning Context; downstream carriers retain identities and comparison authority rather than becoming a second semantic value source.
+
+Default work keeps an ephemeral exact accounting and requires `Expected Semantic Facts = Source Indexed Facts = implementation/acceptance accounted Facts`, plus one attributable current-candidate observation/environment/comparison/Oracle/verdict for every Fact × required-method obligation. It creates no manifest, matrix, Claim set, state or Gate. Explicit Long-Task persists one Source `semantic-fact-manifest-v1`, requires `Expected = Source Indexed = Contract Indexed Facts`, maps every machine obligation to one single-Fact Assertion and typed `semantic_fact` result (or to a named External Confirmation), and enforces exact expectation/result equality in its existing Final Gate. Missing, extra, duplicate, unresolved, unmapped, unimplemented, unexecuted, stale, failed, proxy-only, reused or indistinguishable rows block completion.
+
+This mechanism cannot discover intent the user never expressed or prove an arbitrary Inspector/Oracle semantically sound. It may complete only necessary derivations and explicitly delegated defensible choices; real product, legal, security, commercial, safety or externally owned decisions remain blocking. Durable meaning still goes to its existing Context owner, code remains current implementation truth, and no second plan, registry, Authority, Gate or prescribed implementation sequence is introduced.
+
 ### Visual Delivery Guidance
 
 One shared conditional purpose of both development paths is that Agent implementation, acceptance and testing fully conform to every material UI/UX fact selected design resources explicitly express within their declared scope and conditions. It activates only for a selected implementation handoff and does not infer unexpressed behavior or prove that the user supplied every desired requirement. Open Design can produce implementation-rich HTML/CSS/JS, specifications, tokens and assets, but capability is not a per-run guarantee: for a selected Web/App implementation handoff, `design-resource-authoring` must explicitly commission and completely retrieve one machine-readable canonical entry plus its exact dependency closure, freeze every file with a digest and expose stable typed locators. Before `ready`, it exercises every declared verification method on those immutable bytes and blocks unresolved conflicts among code, specs, tokens and assets. That is source QA, not production acceptance. PNG may be a visual baseline, never the sole implementation source.
@@ -370,6 +384,7 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 <!-- long-task-public-contract-example:start -->
 ```yaml
 schema_version: long-task-delivery-v2
+semantic_fact_manifest: {key: example-semantic-facts, source_path: plans/example.md, sha256: "1111111111111111111111111111111111111111111111111111111111111111"}
 task:
   id: example-task
   title: Example task
@@ -421,6 +436,21 @@ outcomes:
         dimensions: [{key: runtime-state, value: ready}]
         given_refs: [source-ready]
         when_refs: [inspect-result]
+    semantic_fact_bindings:
+      manifest_ref: example-semantic-facts
+      facts:
+        - fact_ref: example.result.observable
+          claim_ref: semantic_fact.example.result.observable
+          applicability_ref: runtime-root-success
+      proofs:
+        - proof_ref: example.result.observable.runtime
+          fact_ref: example.result.observable
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities: [semantic_fact]
+          authority: machine
+          check_ref: runtime
+          assertion_ref: semantic-fact-ac
     product:
       observable_result: What a user or system can observe
       result_applicability_refs: [runtime-root-success]
@@ -468,6 +498,7 @@ outcomes:
           verification_inputs: [tests/runtime.mjs]
           input_paths: [src/observable.ts]
           expected_output_paths: [src/observable.ts]
+          artifact_globs: [artifacts/proof.json]
           positive_assertions:
             - key: result-ac
               criterion: The declared overall result is observable.
@@ -483,6 +514,14 @@ outcomes:
               applicability_ref: runtime-root-success
               observation: requirement_result
               evidence_capabilities: [state_delta, target_runtime]
+              operator: equals
+              expected: true
+            - key: semantic-fact-ac
+              criterion: The exact Source-indexed semantic Fact passes its frozen comparison.
+              claims: [semantic_fact.example.result.observable]
+              applicability_ref: runtime-root-success
+              observation: semantic_fact_result
+              evidence_capabilities: [semantic_fact]
               operator: equals
               expected: true
             - key: architecture-ac
@@ -512,14 +551,14 @@ outcomes:
       counterfactual_controls:
         - key: replace-observable-semantics
           binding_key: observable-carrier
-          claims: [result, requirement.observable, obligation.preserve-observable-owner]
+          claims: [result, requirement.observable, obligation.preserve-observable-owner, semantic_fact.example.result.observable]
           check_key: runtime
           mutation:
             type: replace_text
             path: src/observable.ts
             match: "observable = true"
             replacement: "observable = false"
-          expected_assertion_failures: [result-ac, observable-ac, architecture-ac]
+          expected_assertion_failures: [result-ac, observable-ac, architecture-ac, semantic-fact-ac]
           preserved_assertions: [runtime-liveness]
         - key: make-relations-applicable
           binding_key: observable-carrier

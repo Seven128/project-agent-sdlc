@@ -13,6 +13,7 @@ import test from "node:test";
 import { promisify } from "node:util";
 import YAML from "yaml";
 import { compactLongTaskTemplate } from "../../packages/ty-context/dist/commands/long-task-authoring.js";
+import { authoringRevisionPreview } from "../../packages/ty-context/dist/lib/long-task-authoring-authority-preview.js";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import {
@@ -21,13 +22,47 @@ import {
   runtimePath,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
+  authoringTemplateSemanticManifest,
   createDeliveryFixture,
   runCli,
   runCliFailure,
+  semanticManifestIdentity,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
 const exec = promisify(execFile);
+
+test("Authoring Preflight compares a pre-semantic active Authority without weakening the revision", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const legacySnapshot = structuredClone(fixture.contract);
+    delete legacySnapshot.semantic_fact_manifest;
+    for (const outcome of legacySnapshot.outcomes)
+      delete outcome.semantic_fact_bindings;
+    legacySnapshot.contract_sha256 = "pre-semantic-contract";
+
+    const preview = authoringRevisionPreview(
+      fixture.contract,
+      null,
+      null,
+      null,
+      {
+        authority_revision: 1,
+        authority_snapshot: legacySnapshot,
+      },
+    );
+
+    assert.equal(preview.active, true);
+    assert.equal(preview.contract_changed, true);
+    assert.deepEqual(preview.declared_authority_sections_changed, [
+      "source",
+      "product",
+      "acceptance",
+    ]);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
 
 test("Authoring Preflight is ready, under two seconds and completely read-only", async () => {
   const fixture = await createDeliveryFixture();
@@ -253,6 +288,7 @@ Preserve the fixture state owner and verifier boundary.
       path.join(fixture.root, "project_context", "areas", "main.md"),
       "# Main\n\nRevised durable Context.\n",
     );
+    await writeContract(fixture.workdir, fixture.contract);
     result = await preflightDeliveryContract(fixture.workdir, fixture.root);
     assert.equal(result.status, "ready");
     assert.ok(
@@ -282,10 +318,27 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
   const fixture = await createDeliveryFixture();
   try {
     const contract = parseDeliveryContractText(compactLongTaskTemplate());
+    const semanticManifest = authoringTemplateSemanticManifest();
+    contract.semantic_fact_manifest.sha256 =
+      semanticManifestIdentity(semanticManifest);
+    contract.outcomes[0].acceptance.checks[0].artifact_globs = [
+      "artifacts/proof.json",
+    ];
+    const semanticFact = semanticManifest.facts[0];
+    const semanticProof = semanticManifest.proof_obligations[0];
+    const semanticEnvironment = semanticManifest.environments[0];
+    const semanticOracle = semanticManifest.oracles[0];
+    const semanticAuthority = JSON.stringify({
+      manifestSha256: contract.semantic_fact_manifest.sha256,
+      fact: semanticFact,
+      proof: semanticProof,
+      environment: semanticEnvironment,
+      oracle: semanticOracle,
+    });
     await mkdir(path.join(fixture.root, "plans"), { recursive: true });
     await writeFile(
       path.join(fixture.root, "plans", "replace-me.md"),
-      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-background:start key=replace-architecture-anchor reason=markdown-structure -->\n<a id="replace-architecture"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-architecture kind=technical_obligation aspect=architecture -->\nPreserve the declared owner, dependency direction, verifier boundary and architecture conformance.\n<!-- ty-source-item:end -->\n`,
+      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-background:start key=replace-architecture-anchor reason=markdown-structure -->\n<a id="replace-architecture"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-architecture kind=technical_obligation aspect=architecture -->\nPreserve the declared owner, dependency direction, verifier boundary and architecture conformance.\n<!-- ty-source-item:end -->\n\n\`\`\`yaml semantic-fact-manifest-v1\n${YAML.stringify(JSON.parse(JSON.stringify(semanticManifest)), { lineWidth: 0 }).trimEnd()}\n\`\`\`\n`,
     );
     await writeFile(
       path.join(fixture.root, "project_context", "areas", "replace-me.md"),
@@ -293,7 +346,7 @@ test("init template runs through Preflight, Compile and planned-carrier Final Ga
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";\nlet text = "";\ntry { text = await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8"); } catch {}\nconst result = text.includes("IMPLEMENTED_STATE");\nconst relationsApplicable = text.includes("CROSS_CONTROL_RELATIONS_APPLY");\nconst target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true});\nconst delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});\nconst assertionKeys = ["replace-result","replace-requirement","replace-architecture","replace-relations-na"];\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,architecture_result:result,relations_applicable:relationsApplicable,target_live:true},evidence_records:[...assertionKeys.flatMap((key) => [target(key),delta(key)]),target("replace-liveness")]}));\n`,
+      `import { createHash } from "node:crypto";\nimport { readFile } from "node:fs/promises";\nlet text = "";\ntry { text = await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8"); } catch {}\nconst result = text.includes("IMPLEMENTED_STATE");\nconst relationsApplicable = text.includes("CROSS_CONTROL_RELATIONS_APPLY");\nconst target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"replace-runtime",root_entrypoint:"tests/replace-oracle.mjs",session_id:"replace-session",cold_start:true});\nconst delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["result"]});\nconst assertionKeys = ["replace-result","replace-requirement","replace-architecture","replace-relations-na"];\nconst semantic = ${semanticAuthority};\nconst artifactPath = "artifacts/proof.json";\nconst artifact = await readFile(new URL("../artifacts/proof.json", import.meta.url));\nconst artifactSha256 = createHash("sha256").update(artifact).digest("hex");\nconst actualSha256 = createHash("sha256").update(JSON.stringify(result)).digest("hex");\nconst canonicalize = (value) => Array.isArray(value) ? value.map(canonicalize) : value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])])) : value;\nconst comparisonResultSha256 = createHash("sha256").update(JSON.stringify(canonicalize({fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,target_ref:"replace-runtime",actual_value_sha256:actualSha256,expected_value_sha256:semantic.fact.expected.sha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters_sha256:semantic.proof.comparison.parameters.sha256,tolerance_sha256:semantic.proof.comparison.tolerance?.sha256 ?? null,mask_sha256:semantic.proof.comparison.mask?.sha256 ?? null,passed:result}))).digest("hex");\nconst semanticRecord = {assertion_key:"replace-semantic-fact",capability:"semantic_fact",manifest_ref:"replace-semantic-facts",manifest_sha256:semantic.manifestSha256,outcome_ref:"replace-outcome",target_ref:"replace-runtime",fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,method:semantic.proof.method,subject_ref:semantic.fact.unit_ref,condition_ref:semantic.fact.condition_ref,property_ref:semantic.fact.property_ref,actual_observation:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/result"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semantic.environment.definition.sha256},expected:semantic.fact.expected,comparison:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters:semantic.proof.comparison.parameters,tolerance:semantic.proof.comparison.tolerance,mask:semantic.proof.comparison.mask,passed:result},verdict:result?"passed":"failed",oracle:semantic.oracle,environment:semantic.environment,observer_results:[]};\nconsole.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result,requirement_result:result,architecture_result:result,semantic_fact_replace_result_observable:result,relations_applicable:relationsApplicable,target_live:true},evidence_records:[...assertionKeys.flatMap((key) => [target(key),delta(key)]),target("replace-liveness"),semanticRecord]}));\n`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-semantic-failure.ts"),

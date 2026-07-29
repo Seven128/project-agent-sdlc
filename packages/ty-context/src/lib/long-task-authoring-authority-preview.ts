@@ -57,6 +57,7 @@ export function authoringRevisionPreview(
   const hashes = computeAuthorityHashes(contract);
   const previousDeclaredHashes = computeAuthorityHashes({
     schema_version: "long-task-delivery-v2",
+    semantic_fact_manifest: active.authority_snapshot.semantic_fact_manifest,
     task: active.authority_snapshot.task,
     source_claims: active.authority_snapshot.source_claims,
     stages: active.authority_snapshot.stages,

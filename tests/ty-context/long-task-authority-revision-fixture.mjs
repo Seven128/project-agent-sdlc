@@ -2,32 +2,16 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { projectAuthorityRevisionDecision } from "../../packages/ty-context/dist/lib/long-task-authority-revision-summary.js";
+import {
+  revisionFixtureOracleSource,
+} from "./long-task-delegating-oracle-fixture.mjs";
 
 export async function prepareAuthorityRevisionFixture(fixture) {
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
   const outcome = fixture.contract.outcomes[0];
   await writeFile(
-    path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
-let state = {
-  first: false,
-  second: false,
-  first_relations_applicable: false,
-  second_relations_applicable: false
-};
-try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const key = process.argv[2] || "first";
-const claimAssertions = [
-  key + "-result",
-  key + "-requirement",
-  key + "-obligation",
-  key + "-relations-na",
-  ...(key === "first" ? ["first-architecture"] : [])
-];
-const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"revision-" + key + "-session",cold_start:true});
-const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state[key],requirement_result:state[key],obligation_result:state[key],architecture_result:state.first,relations_applicable:state[key + "_relations_applicable"],target_live:true,negative:false},evidence_records:[...claimAssertions.flatMap((assertionKey)=>[target(assertionKey),delta(assertionKey)]),target(key + "-liveness"),{assertion_key:"negative-floor",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));
-`,
+    path.join(fixture.root, "tests", "revision-oracle.mjs"),
+    revisionFixtureOracleSource(),
   );
   await writeFile(
     path.join(fixture.root, "tests", "helper.mjs"),
@@ -39,8 +23,19 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
     path.join(fixture.root, "artifacts", "proof.json"),
     '{"proved":true}\n',
   );
-  check.verification_inputs.push("tests/helper.mjs");
-  check.artifact_globs = ["artifacts/proof.json"];
+  await writeFile(
+    path.join(fixture.root, "artifacts", "optional-proof.json"),
+    '{"optional":true}\n',
+  );
+  check.runner.target = "tests/revision-oracle.mjs";
+  check.verification_inputs.push(
+    "tests/revision-oracle.mjs",
+    "tests/helper.mjs",
+  );
+  check.artifact_globs = [
+    "artifacts/proof.json",
+    "artifacts/optional-proof.json",
+  ];
   check.environment_requirements = [
     { key: "path", kind: "env_var", target: "PATH" },
   ];
@@ -63,6 +58,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "requirement.observe-first",
         "obligation.implement-first",
         "obligation.architecture-first",
+        "semantic_fact.fact.first.observable",
       ],
       check_key: check.key,
       mutation: {
@@ -76,6 +72,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "first-requirement",
         "first-obligation",
         "first-architecture",
+        "first-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
     },
@@ -87,6 +84,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "requirement.observe-first",
         "obligation.implement-first",
         "obligation.architecture-first",
+        "semantic_fact.fact.first.observable",
       ],
       check_key: check.key,
       mutation: {
@@ -100,6 +98,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         "first-requirement",
         "first-obligation",
         "first-architecture",
+        "first-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
     },
@@ -265,7 +264,9 @@ export const authorityReductionScenarios = [
     reason: "artifact_removed",
     userDecisionRequired: true,
     mutate(contract) {
-      contract.outcomes[0].acceptance.checks[0].artifact_globs = [];
+      contract.outcomes[0].acceptance.checks[0].artifact_globs = [
+        "artifacts/proof.json",
+      ];
     },
   },
   {

@@ -4,7 +4,7 @@ export function semanticDriftMigrationFields(value: unknown): string[] {
   const root = row(value);
   if (!root || root.schema_version !== "long-task-delivery-v2") return [];
   const missing: string[] = [];
-  required(root, "$", ["stages"], missing);
+  required(root, "$", ["stages", "semantic_fact_manifest"], missing);
   const task = row(root.task);
   if (task) {
     required(
@@ -72,7 +72,12 @@ export function assertNoSemanticDriftMigration(fields: string[]): void {
 }
 
 function collectOutcome(outcome: Row, label: string, missing: string[]): void {
-  required(outcome, label, ["stage", "applicability"], missing);
+  required(
+    outcome,
+    label,
+    ["stage", "applicability", "semantic_fact_bindings"],
+    missing,
+  );
   collectApplicability(
     outcome.applicability,
     `${label}.applicability`,

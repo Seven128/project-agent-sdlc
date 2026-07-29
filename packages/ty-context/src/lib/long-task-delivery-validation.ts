@@ -127,6 +127,47 @@ function validateUniqueKeys(
     report,
   );
   for (const outcome of contract.outcomes) {
+    if (
+      outcome.semantic_fact_bindings.manifest_ref !==
+      contract.semantic_fact_manifest.key
+    )
+      issue(report, "semantic_fact_manifest_ref_mismatch", outcome.key);
+    if (!outcome.semantic_fact_bindings.facts.length)
+      issue(report, "semantic_fact_binding_required", outcome.key);
+    if (!outcome.semantic_fact_bindings.proofs.length)
+      issue(report, "semantic_fact_proof_binding_required", outcome.key);
+    unique(
+      outcome.semantic_fact_bindings.facts.map((item) => item.fact_ref),
+      `semantic_fact_ref_duplicate:${outcome.key}`,
+      report,
+    );
+    unique(
+      outcome.semantic_fact_bindings.facts.map((item) => item.claim_ref),
+      `semantic_fact_claim_duplicate:${outcome.key}`,
+      report,
+    );
+    unique(
+      outcome.semantic_fact_bindings.proofs.map((item) => item.proof_ref),
+      `semantic_fact_proof_duplicate:${outcome.key}`,
+      report,
+    );
+    const semanticFacts = new Set(
+      outcome.semantic_fact_bindings.facts.map((item) => item.fact_ref),
+    );
+    for (const proof of outcome.semantic_fact_bindings.proofs)
+      if (!semanticFacts.has(proof.fact_ref))
+        issue(
+          report,
+          "semantic_fact_proof_fact_unknown",
+          `${outcome.key}:${proof.proof_ref}:${proof.fact_ref}`,
+        );
+    for (const fact of semanticFacts)
+      if (
+        !outcome.semantic_fact_bindings.proofs.some(
+          (proof) => proof.fact_ref === fact,
+        )
+      )
+        issue(report, "semantic_fact_proof_required", `${outcome.key}:${fact}`);
     unique(
       outcome.acceptance.checks.map((check) => check.key),
       `check_key_duplicate:${outcome.key}`,

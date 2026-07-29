@@ -2,6 +2,7 @@ import type {
   CompiledCheckV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
+import { validateSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
 
 export function validateRuntimeEvidenceRecord(
   check: CompiledCheckV2,
@@ -37,6 +38,8 @@ export function validateRuntimeEvidenceRecord(
       return validateDesignConformance(check, record, artifactHashes);
     case "design_method":
       return validateDesignMethod(check, record, artifactHashes);
+    case "semantic_fact":
+      return validateSemanticFactEvidence(check, record, artifactHashes);
     case "target_runtime":
       return validateTargetRuntime(check, record);
     case "input_variation":

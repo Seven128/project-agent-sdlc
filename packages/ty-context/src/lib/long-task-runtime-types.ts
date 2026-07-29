@@ -23,6 +23,7 @@ import type {
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-risk-types.js";
+import type { SemanticFactExpectationV2 } from "./semantic-fact-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
 
@@ -47,6 +48,7 @@ export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   execution_target_definition: ExecutionTargetV2;
   known_execution_targets: ExecutionTargetV2[];
   design_conformance_targets: CompiledDesignTargetV2[];
+  semantic_fact_expectations: SemanticFactExpectationV2[];
 }
 
 export interface ProductClaimV2 {
@@ -60,6 +62,7 @@ export interface ProductClaimV2 {
     | "control_relation"
     | "non_completing"
     | "obligation"
+    | "semantic_fact"
     | "forbidden_shortcut";
   required_proof_surfaces: ProofSurface[];
   required_polarity: "positive" | "negative";
@@ -144,6 +147,7 @@ export interface CompiledDeliveryContractV2 {
   authority_materials: NextAuthorityMaterialsV2;
   authority_revision: number;
   claim_coverage: ClaimCoverageSummaryV2;
+  semantic_fact_manifest: DeliveryContractV2["semantic_fact_manifest"];
   task: DeliveryContractV2["task"];
   risk: DeliveryContractV2["risk"];
   source_claims: DeliveryContractV2["source_claims"];

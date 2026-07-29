@@ -10,3 +10,4 @@ export * from "./long-task-semantic-contract-types.js";
 export * from "./long-task-ui-surface-types.js";
 export * from "./long-task-source-authority-types.js";
 export * from "./long-task-workspace-runtime-types.js";
+export * from "./semantic-fact-types.js";
