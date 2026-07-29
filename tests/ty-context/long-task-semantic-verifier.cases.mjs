@@ -7,6 +7,7 @@ import {
   semanticFactObservationRefs,
   semanticRows,
 } from "../../tools/semantic_fact_delivery_catalog.mjs";
+import { collectSemanticObservations } from "../../tools/semantic_fact_delivery_observations.mjs";
 import { resolveSemanticFactResults } from "../../tools/semantic_fact_delivery_verifier_support.mjs";
 
 const manifest = {
@@ -40,6 +41,76 @@ test("self-host semantic evidence preserves independent per-Fact outcomes", () =
       ["fact.alpha", true],
       ["fact.beta", false],
     ],
+  );
+});
+
+test("semantic observations separate infrastructure failure from localized policy sensitivity", () => {
+  const requiredFiles = [
+    "docs/non-ui-semantic-fact-completeness.md",
+    "domain.txt",
+  ];
+  const files = new Map([
+    [
+      requiredFiles[0],
+      [
+        "<!-- ty-source-item:start key=alpha kind=requirement -->",
+        "<!-- ty-source-item:start key=no-semantic-fact-shortcuts kind=forbidden_shortcut -->",
+        "<!-- ty-source-item:start key=semantic-inventory-is-not-completion kind=non_completing -->",
+      ].join("\n"),
+    ],
+    ["domain.txt", "domain evidence"],
+  ]);
+  const options = {
+    files,
+    requiredFiles,
+    semanticRows: [["alpha_result", "domain", "alpha"]],
+    groupFiles: { domain: ["domain.txt"] },
+    buildCode: 0,
+    focusedCode: 0,
+  };
+  const ready = collectSemanticObservations({
+    ...options,
+    policy:
+      "complete_non_ui_semantic_fact_delivery NO_SEMANTIC_FACT_SHORTCUTS SEMANTIC_INVENTORY_IS_NOT_COMPLETION",
+  });
+  assert.equal(ready.alpha_result, true);
+  assert.equal(ready.no_semantic_fact_shortcuts, true);
+  assert.equal(ready.semantic_inventory_is_not_completion, true);
+
+  const disabled = collectSemanticObservations({
+    ...options,
+    policy: "NO_SEMANTIC_FACT_SHORTCUTS SEMANTIC_INVENTORY_IS_NOT_COMPLETION",
+  });
+  assert.equal(disabled.alpha_result, false);
+  assert.equal(disabled.no_semantic_fact_shortcuts, false);
+  assert.equal(disabled.semantic_inventory_is_not_completion, false);
+
+  const shortcut = collectSemanticObservations({
+    ...options,
+    policy:
+      "complete_non_ui_semantic_fact_delivery SEMANTIC_FACT_SHORTCUT_USED SEMANTIC_INVENTORY_IS_NOT_COMPLETION",
+  });
+  assert.equal(shortcut.alpha_result, true);
+  assert.equal(shortcut.no_semantic_fact_shortcuts, false);
+  assert.equal(shortcut.semantic_inventory_is_not_completion, true);
+
+  assert.throws(
+    () =>
+      collectSemanticObservations({
+        ...options,
+        buildCode: 1,
+        policy: "complete_non_ui_semantic_fact_delivery",
+      }),
+    /semantic_delivery_build_failed:1/u,
+  );
+  assert.throws(
+    () =>
+      collectSemanticObservations({
+        ...options,
+        files: new Map([[requiredFiles[0], "source"]]),
+        policy: "complete_non_ui_semantic_fact_delivery",
+      }),
+    /semantic_delivery_input_missing:domain\.txt/u,
   );
 });
 

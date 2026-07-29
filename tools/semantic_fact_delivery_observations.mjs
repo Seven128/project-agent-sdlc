@@ -8,13 +8,13 @@ export function collectSemanticObservations(options) {
     buildCode,
     focusedCode,
   } = options;
+  assertSemanticObservationInputs(files, requiredFiles, buildCode);
   const sourceKeys = sourceItemKeys(
     files.get("docs/non-ui-semantic-fact-completeness.md") ?? "",
   );
-  const mechanismReady =
-    policy.includes("complete_non_ui_semantic_fact_delivery") &&
-    buildCode === 0 &&
-    requiredFiles.every((file) => hasText(files, file));
+  const mechanismReady = policy.includes(
+    "complete_non_ui_semantic_fact_delivery",
+  );
   return {
     ...collectCatalogObservations({
       semanticRows,
@@ -23,7 +23,7 @@ export function collectSemanticObservations(options) {
       sourceKeys,
       mechanismReady,
     }),
-    ...collectShortcutObservations(policy, sourceKeys),
+    ...collectShortcutObservations(policy, sourceKeys, mechanismReady),
     ...collectRiskObservations({
       policy,
       files,
@@ -47,7 +47,7 @@ function collectCatalogObservations(options) {
   );
 }
 
-function collectShortcutObservations(policy, sourceKeys) {
+function collectShortcutObservations(policy, sourceKeys, mechanismReady) {
   const shortcutUsed = policy.includes("SEMANTIC_FACT_SHORTCUT_USED");
   const inventoryCompletesDelivery = policy.includes(
     "SEMANTIC_INVENTORY_COMPLETES_DELIVERY",
@@ -59,14 +59,24 @@ function collectShortcutObservations(policy, sourceKeys) {
       policy.includes("UI_CONTROL_RELATIONS_APPLY") &&
       !policy.includes("NO_UI_CONTROL_RELATIONS"),
     no_semantic_fact_shortcuts:
+      mechanismReady &&
       sourceKeys.has("no-semantic-fact-shortcuts") &&
       policy.includes("NO_SEMANTIC_FACT_SHORTCUTS") &&
       !shortcutUsed,
     semantic_inventory_is_not_completion:
+      mechanismReady &&
       sourceKeys.has("semantic-inventory-is-not-completion") &&
       policy.includes("SEMANTIC_INVENTORY_IS_NOT_COMPLETION") &&
       !inventoryCompletesDelivery,
   };
+}
+
+function assertSemanticObservationInputs(files, requiredFiles, buildCode) {
+  if (buildCode !== 0)
+    throw new Error(`semantic_delivery_build_failed:${buildCode ?? "none"}`);
+  const missing = requiredFiles.filter((file) => !hasText(files, file));
+  if (missing.length)
+    throw new Error(`semantic_delivery_input_missing:${missing.join(",")}`);
 }
 
 function collectRiskObservations(options) {
