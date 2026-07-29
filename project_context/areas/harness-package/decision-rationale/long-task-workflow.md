@@ -83,7 +83,7 @@ Outcome boundaries let one Goal project a smaller acceptance/verification-ready 
 
 ## Protected Implementation Freedom Without A Scheduler
 
-`depends_on` expresses acceptance and intermediate-proof readiness. The current Goal uses it with current findings to form a temporary Rolling Frontier while independently choosing implementation order as code reality becomes known. The Frontier is not persisted, does not authorize or prohibit edits and does not prescribe a mandatory implementation schedule.
+`depends_on` expresses acceptance and intermediate-proof readiness. The current Goal uses it with current findings to form a temporary Rolling Frontier while independently choosing implementation order as code reality becomes known. The Frontier is a derived view, not a runtime type and adds no schema field; it is not persisted, does not authorize or prohibit edits and does not prescribe a mandatory implementation schedule.
 
 No Draft Outcome creates a Worker, scheduler item, queue, process tree, model route or durable execution DAG. Outcome decomposition does not guarantee parallelism or fewer model calls. It improves intermediate implementation, verification, diagnosis and recovery while leaving final acceptance to the complete Contract.
 

@@ -92,7 +92,7 @@ test("long-task-workflow owns the former Source-quality authoring semantics", as
   assert.match(contract, /revised initial proposal and selected design resources are parallel Source inputs/iu);
   assert.match(spec, /^## Source-Bound Contract Draft Boundary$/mu);
   assert.match(spec, /Source-quality work is not an earlier lifecycle stage/iu);
-  assert.match(spec, /`\/source-plan-authoring` is a retired explicit-invocation compatibility pointer/iu);
+  assert.match(spec, /`source-plan-authoring` is a retired explicit-selection compatibility pointer/iu);
   assert.match(readmes, /Retired Source Plan Compatibility/iu);
   assert.match(readmes, /退役 Source Plan 兼容入口/u);
   assert.match(readmes, /Source-bound Contract Draft loop immediately/iu);
@@ -100,14 +100,20 @@ test("long-task-workflow owns the former Source-quality authoring semantics", as
 });
 
 test("profile keeps the pointer only with long-task while one Draft loop owns authoring", async () => {
-  const [profile, context, agents] = await Promise.all([
+  const [profile, context, agents, sourceAuthoring] = await Promise.all([
     read("packages/ty-context/src/lib/profiles.ts"),
     read("project_context/areas/harness-package/contracts/package-managed-surfaces.md"),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
+    ),
   ]);
   assert.match(profile, /if \(isProfileEnabled\(config, "long-task"\)\)[\s\S]*names\.add\("long-task-workflow"\)[\s\S]*names\.add\("source-plan-authoring"\)/u);
   assert.match(context, /retired `source-plan-authoring` pointer/iu);
-  assert.match(agents, /enter one Source-bound Contract Draft loop immediately/iu);
-  assert.match(agents, /there is no prior or internal Source-authoring stage/iu);
-  assert.match(agents, /legacy Source Plan remains ordinary input/iu);
+  assert.match(agents, /loaded Skill[\s\S]*own Source\/Contract authoring/iu);
+  assert.match(
+    sourceAuthoring,
+    /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
+  );
+  assert.match(sourceAuthoring, /pre-existing Source Plan is simply one possible input/iu);
 });

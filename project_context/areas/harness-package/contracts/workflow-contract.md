@@ -6,7 +6,7 @@ read_policy: on-demand
 
 ## Role
 
-This contract defines the lightweight default workflow and the explicit Single-Goal Long-Task Workflow boundary. It controls authority and order of thought, not a required plan file or scheduler.
+This contract defines the lightweight default workflow and the explicit Single-Goal Long-Task Workflow boundary. The default route is an automatically applicable prompt-level execution protocol: it controls order of thought and reporting, but creates no required plan file, validator result, Receipt, persisted workflow state, scheduler or machine-completion authority.
 
 ## Shared Architecture Quality Obligation
 
@@ -18,7 +18,7 @@ The obligation makes the performance of architecture work visible; it does not p
 
 ## Default Workflow
 
-When no active long-task binding or explicit `/long-task-workflow` invocation applies:
+When no active long-task binding or explicit selection of the logical `long-task-workflow` Skill applies:
 
 1. Read `project_context/global.md`, `project_context/architecture.md`, `project_context/context.toml`, the default area root and graph/trigger candidate role Context.
 2. Before deciding `Context Delta`, run one bounded text search over `project_context/**` using a small set of high-signal terms from the task, including explicit area/module names and relevant API/schema/state/security/verification/deployment terms. Merge matching Context with manifest candidates and read only relevant files.
@@ -82,8 +82,8 @@ This closure is an internal reconciliation and routing check. It creates no requ
 
 Routing order is:
 
-1. A valid common-dir active record plus matching worktree Git-config marker resumes through `/long-task-workflow` and `ty-context long-task resume`.
-2. Explicit `/long-task-workflow` creates, preflights, compiles, executes or resumes exactly one complete V2 Contract authority for the selected delivery in the current native Goal.
+1. A valid common-dir active record plus matching worktree Git-config marker loads the `long-task-workflow` Skill and resumes with `ty-context long-task resume`.
+2. Explicit selection of `long-task-workflow` creates, preflights, compiles, executes or resumes exactly one complete V2 Contract authority for the selected delivery in the current native Goal. In Codex, select it with `$long-task-workflow` or through `/skills`.
 3. Otherwise remain on the default Workflow Contract, regardless of apparent duration or file count.
 
 Do not auto-detect or auto-activate long-task state.
@@ -91,7 +91,7 @@ Do not auto-detect or auto-activate long-task state.
 ## Entry Risk Levels
 
 - L0 local: reversible, Context-complete, no durable API/schema/data/security/recovery/product change, directly testable and no cross-session recovery need. Use default Workflow only.
-- L1 standard: multiple observable Outcomes or recovery need, no L2 trigger, reliable executable verification. Use one complete Contract authority, native Goal/workspace, scoped progress and Live Final Gate.
+- L1 standard: after Long-Task is explicitly selected, multiple observable Outcomes or recovery need, no L2 trigger and reliable executable verification use one complete Contract authority, native Goal/workspace, scoped progress and Live Final Gate. Risk classification never auto-activates Long-Task.
 - L2 strict: public API/schema, persistent data, migration, security/permission boundary, irreversible external effect, full population, or critical-path work with weak end-to-end observability. Compiler raises the floor and enforces proof on each affected Outcome; multi-repository delivery is rejected.
 
 An explicit user request may raise risk to strict. Neither Skill nor execution may lower the compiler floor.
@@ -106,7 +106,7 @@ Legacy Source Plans and external design resources remain ordinary Source, not a 
 
 Capacity, file length, implementation layers, module count, parallelism and Agent preference never create a Contract or Outcome boundary. Existing `outcome_files` remain only a physical compatibility form of the same Contract; new authoring uses inline Outcomes. Delivery Set and top-level splitting within one selected delivery stay retired. Protected authority reductions require explicit revision approval, risk downgrade is rejected, and the immutable first baseline remains. Machine acceptance is limited to declared Claims/Checks and does not imply external confirmation.
 
-- Harness does not create or simulate the native Goal. The current session is the Goal; a new session recovers semantic state, not the prior physical Turn.
+- Harness does not create, persist or reconnect a native Goal identifier. “One native Goal” is the currently selected host execution Goal for the delivery/workspace; compaction may continue inside it, while a later physical Goal/session recovers semantic state through `resume`, not the prior Turn.
 - The user-selected workspace is the verification/convergence surface. Harness creates no internal parallel mutation runtime, extra worktree, branch, agent, worker or delegation state. The current Goal may use one or multiple platform-native agents/subagents or user-authorized Git parallelism as optional implementation means, but their reports are not Progress, proof or completion authority and every proof-bearing output converges into the selected workspace before verification counts.
 - Outcome is an independently decidable, vertical user result that belongs to exactly one Source-declared stage and is verifiable against a declared execution target. Outcome dependencies plus stage gate dependencies determine acceptance and intermediate-proof readiness, never permission to edit or implement. Each target profile has non-empty `required_target_refs`; every required ref resolves to a product execution target, and every Stage Gate and critical journey proves each required target from its root entrypoint. It is never an output-length/file/module/frontend/backend fragment. Stage status is derived from existing Outcome Progress and creates no Receipt, authority, implementation gate or persistent scheduler state.
 - If a declared result can pass on a proxy surface while failing in its target runtime, the earliest Outcome that owns the runnable boundary declares a project-owned target-runtime Check. The Check binds to the declared runtime family, root/internal entry mode and required capability set; its accepting Raw Execution must exercise that exact target in the current run and emit matching typed evidence. Browser target runtime requires Playwright, Native/Desktop requires a project binary, and a static report, screenshot, binary, log, deep/internal entry or historical run cannot substitute for a required root journey. Physical-device, sensor, haptic, assistive-technology, input, viewport and motion requirements cannot be silently satisfied by a proxy without the corresponding target capability.

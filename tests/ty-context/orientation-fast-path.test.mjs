@@ -27,12 +27,18 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
     ]);
 
   assert.match(global, /Minimal Context.*Workflow Contract.*Long-Task Workflow/s);
+  assert.match(global, /default Workflow Contract[\s\S]{0,220}prompt-level/iu);
   assert.match(global, /Context Delta: none\|required/);
   assert.match(global, /Single-Goal Rolling Delivery/);
   assert.match(global, /one complete Contract authority/);
+  assert.match(global, /not a Harness-persisted Goal ID/iu);
+  assert.match(
+    architecture,
+    /currently selected host execution Goal[\s\S]*later physical Goal\/session restores semantic state/iu,
+  );
   assert.match(architecture, /Product, Technical Boundary and Acceptance/);
   assert.match(architecture, /same-snapshot Live Final Gate/);
-  assert.match(architecture, /targeted verifier/);
+  assert.match(architecture, /Evidence Kernel/);
 
   assert.match(manifest, /id = "harness-package"/);
   assert.match(manifest, /role = "foundation"/);
@@ -49,7 +55,10 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
 
   assert.match(model, /`project_context\/\*\*` is authoritative/);
   assert.match(model, /Code is current implementation evidence/);
-  assert.match(model, /Workflow Contract is prompt-level order of thought/);
+  assert.match(
+    model,
+    /Workflow Contract is (?:the automatically applicable )?prompt-level order of thought/,
+  );
   assert.match(model, /Source-to-Context judgment.*not a Markdown table/s);
   assert.match(model, /Context-to-Implementation alignment.*not a Markdown table/s);
 
@@ -57,7 +66,7 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
   assert.match(workflow, /no required `plan\.md`/);
   assert.match(workflow, /Existing `plan\.md` files.*ordinary user files/);
   assert.match(workflow, /Do not auto-detect or auto-activate long-task state/);
-  assert.match(workflow, /\/long-task-workflow/);
+  assert.match(workflow, /\$long-task-workflow[\s\S]*\/skills/);
   assert.match(workflow, /Targeted verify.*never accepted authority/s);
   assert.match(workflow, /Contract Conformance/);
   assert.match(quality, /Reason And Honest Guarantee/);
@@ -87,11 +96,12 @@ test("managed guidance and package assets share current routing", async () => {
     assert.match(guidance, /Contract Conformance/);
     assert.match(guidance, /Single-Goal Long-Task Workflow/);
     assert.match(guidance, /ty-context enable long-task/);
+    assert.match(guidance, /load and follow the package-managed `long-task-workflow` Skill/i);
+    assert.match(guidance, /Long-Task Final Gate is the sole `Architecture Conformance`/i);
     assert.match(
       guidance,
-      /Final Gate, Stop and close first reject stale accepted authority inputs, recompile the source Contract/,
+      /Receipts, compiled cache[\s\S]{0,80}never create acceptance/i,
     );
-    assert.match(guidance, /receipts and compiled cache are audit\/recovery surfaces only/i);
     assert.doesNotMatch(guidance, /multi-SFC execution|foreground scheduler/);
   }
 });

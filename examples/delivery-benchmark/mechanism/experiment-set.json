@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-mechanism-benchmark-v1",
-  "baseline_commit": "2ad71874a3e23a2221088ebb58238df64278b5c9",
+  "baseline_commit": "89b04869a2b29ae09944839370f1e373aa55085f",
   "purpose": "Compare mechanism variants under fixed product quality and canonical authority without publishing results from unpaired or non-agent calibration runs.",
   "tracks": {
     "context-routing": {

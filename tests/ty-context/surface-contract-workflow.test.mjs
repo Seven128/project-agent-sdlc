@@ -126,12 +126,15 @@ for (const content of [sourceProductSkill, sourceUiuxSkill, sourceDevelopmentSki
   assert.match(content, /editable upstream.*update route/isu);
 }
 
-for (const content of [rootReadme, packageReadme, spec, globalContext]) {
+for (const content of [rootReadme, packageReadme, spec]) {
   assert.match(content, /Product Surface Contract/i);
   assert.match(content, /context_surface_contract/);
   assert.match(content, /contract.*role/i);
   assert.match(content, /no new|not add|must not add/i);
 }
+assert.match(globalContext, /Product Surface\/Screen contracts/iu);
+assert.match(globalContext, /existing Context roles/iu);
+assert.match(globalContext, /Material UI[\s\S]*stable surface\/control\/target keys/iu);
 
 for (const content of [sourceScreenTemplate, packagedScreenTemplate]) {
   assert.match(content, /^# Screen Contract$/mu);

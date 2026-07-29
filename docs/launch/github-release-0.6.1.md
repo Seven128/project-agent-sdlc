@@ -65,10 +65,10 @@ Publishing a new npm version does not automatically migrate existing repositorie
 ## What Changed
 
 - Publishes `project-tiny-context-harness@0.6.1` with the synchronized package assets and CLI build.
-- Expands `/source-plan-authoring` to refine a near-complete plan or synthesize a sparse brief plus mixed notes, product/technical documents, screenshots, diagrams and other attachments.
+- Expands the historical `source-plan-authoring` Skill to refine a near-complete plan or synthesize a sparse brief plus mixed notes, product/technical documents, screenshots, diagrams and other attachments.
 - Adds complete input accounting, reference-versus-exact interpretation and control-level UI coverage across surfaces, regions, controls, states, feedback and accessibility.
 - Records explicitly delegated low-impact/reversible elaboration as traceable Source while keeping permissions, destructive behavior, pricing, retention, security policy and other high-impact choices as `decision_required`.
-- Keeps `/long-task-workflow` compatible with delegated Source provenance without adding a new Claim kind, Contract disposition, authority layer or permission to extend the delegation.
+- Keeps the `long-task-workflow` Skill compatible with delegated Source provenance without adding a new Claim kind, Contract disposition, authority layer or permission to extend the delegation.
 - Keeps the Minimal Context boundary explicit: `AGENTS.md` is the startup router, `project_context/**` keeps durable recovery facts, and `validate-context` checks recoverability.
 - Makes package updates explicit through release update modes: `sync-only`, `upgrade-required`, `manual-required`.
 - Keeps the old stage-based Tiny Context workflow out of the default package surface.

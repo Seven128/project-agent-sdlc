@@ -65,7 +65,7 @@ Publishing a new npm version does not automatically migrate existing repositorie
 ## What Changed
 
 - Publishes `project-tiny-context-harness@0.7.7` with the synchronized package assets and CLI build.
-- Refines `/design-resource-authoring` around one workflow-independent rule: the explicit requested output or development content is the hard scope ceiling.
+- Refines `design-resource-authoring` around one workflow-independent rule: the explicit requested output or development content is the hard scope ceiling.
 - Makes implementation handoffs cover every material in-scope UI/UX decision through relevant controls, including layout and visual treatment, copy/content, component anatomy and variants, states, interaction/feedback/recovery, motion, responsive/platform/input behavior, accessibility and necessary assets.
 - Reuses selected page targets, comprehensive artifacts and shared component families where they explicitly cover the need; it does not require one design file per control and reserves dedicated studies for unique or complex uncovered controls.
 - Prevents static/default frames from silently claiming unseen states, interaction, motion, responsiveness or accessibility, while keeping business, data, permission and algorithmic rules in product/technical Source.

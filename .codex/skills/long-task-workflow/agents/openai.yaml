@@ -1,4 +1,4 @@
 interface:
   display_name: "Long-Task Workflow"
   short_description: "Run one Delivery Contract in the current native Goal"
-  default_prompt: "Use /long-task-workflow to prepare, execute, resume, verify, or close one Canonical Delivery Contract in the current workspace."
+  default_prompt: "Use $long-task-workflow to prepare, execute, resume, verify, or close one Canonical Delivery Contract in the current workspace."

@@ -38,15 +38,23 @@ test("default workflow uses internal planning and creates no second authority", 
 });
 
 test("default Context routing combines manifest candidates with bounded search", async () => {
-  const [managed, rootAgents, packaged, development] = await Promise.all([
+  const [managed, rootAgents, packaged, development, longTask, contractAuthoring] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read("AGENTS.md"),
     read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
     read(
       ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
     ),
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
   ]);
   assert.equal(packaged, managed, "package AGENTS Core drift");
+  assert.match(
+    managed,
+    /prompt-level protocol applies automatically[\s\S]*no validator result[\s\S]*machine-completion authority/iu,
+  );
   assert.match(
     rootAgents,
     /bounded text search over `project_context\/\*\*`/iu,
@@ -103,11 +111,12 @@ test("default Context routing combines manifest candidates with bounded search",
   );
   assert.match(
     managed,
-    /active Long-Task projects this same obligation[\s\S]*never also runs the default closure/iu,
+    /active Long-Task projects (?:this|the) same obligation[\s\S]*never also runs the default closure/iu,
   );
+  assert.match(managed, /low-frequency rules in this startup router/iu);
   assert.match(
-    managed,
-    /marked residual handoff[\s\S]*source-profile entry\/dependencies[\s\S]*`verification_inputs`/iu,
+    `${longTask}\n${contractAuthoring}`,
+    /marked `design-resource-handoff-v1`[\s\S]*`verification_inputs`/iu,
   );
 });
 
@@ -159,10 +168,13 @@ test("shared architecture quality is observable, risk-proportional, and single-c
 
   assert.match(
     managed,
-    /default path embeds it in Contract Conformance; an active Long-Task embeds it only in Final Gate/iu,
+    /Default (?:path|work) embeds it in Contract Conformance; an active Long-Task embeds it only in Final Gate/iu,
   );
   assert.match(managed, /Never schedule both/iu);
-  assert.match(managed, /changed candidate invalidates the closure/iu);
+  assert.match(
+    managed,
+    /changed candidate invalidates the closure|recheck after any candidate change/iu,
+  );
   assert.match(
     workflow,
     /Contract Conformance including `Architecture Conformance`[\s\S]*then check Context drift/iu,
@@ -258,10 +270,13 @@ test("Workflow Contract names the complete Source-bound-Draft-to-qualified-resul
 });
 
 test("long-task Skill is the only active long-task workflow", async () => {
-  const [active, generated, packaged] = await Promise.all([
+  const [active, generated, packaged, codexMetadata] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
     read("packages/ty-context/assets/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
+    ),
   ]);
   assert.equal(generated, active, "source-workspace long-task Skill drift");
   assert.equal(packaged, active, "package long-task Skill drift");
@@ -275,6 +290,8 @@ test("long-task Skill is the only active long-task workflow", async () => {
   assert.match(active, /preflight/);
   assert.match(active, /delivery-set.*retired and non-executing/is);
   assert.match(active, /Final Gate/i);
+  assert.match(codexMetadata, /Use \$long-task-workflow/);
+  assert.doesNotMatch(codexMetadata, /Use \/long-task-workflow/);
   assert.match(
     active,
     /ordinary prose proposal, legacy Source Plan or externally authored design resource/is,
@@ -396,7 +413,7 @@ test("retired Source Plan entry points to the Source-bound Contract Draft loop",
     ),
   ]);
   assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
-  assert.match(sourcePlan, /invoke `\/long-task-workflow`/iu);
+  assert.match(sourcePlan, /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu);
   assert.match(sourcePlan, /Do not rewrite it merely for compatibility/iu);
   assert.match(sourcePlan, /create a new Source Plan artifact/iu);
   assert.doesNotMatch(

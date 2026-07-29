@@ -46,7 +46,7 @@ export function globalContextTemplate(): string {
     "",
     "## Next Safe Action",
     "",
-    "- State the safest next step for a fresh agent, including whether the next change should update Context before code.",
+    "- State a stable safe re-entry rule for a fresh agent, including when Context must be updated before code. Do not store task-local progress or a one-off next edit here.",
     "",
     "## Context Index",
     "",

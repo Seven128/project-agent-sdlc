@@ -110,10 +110,12 @@ test("base profile, public docs and Context expose the same design-system bounda
     read("project_context/areas/harness-package/verification.md"),
   ]);
   assert.match(profile, /"design-system-authoring"[\s\S]*"design-resource-authoring"/u);
-  for (const content of [spec, readmes, globalContext, packageSurface, implementation, verification]) {
+  for (const content of [spec, readmes, packageSurface, implementation, verification]) {
     assert.match(content, /design-system-authoring/u);
     assert.match(content, /Open Design/u);
   }
+  assert.match(globalContext, /Material UI[\s\S]*stable surface\/control\/target keys/iu);
+  assert.match(globalContext, /Each adopted target has one canonical record/iu);
   assert.match(readmes, /^## Recommended Usage$/mu);
   assert.match(readmes, /^## 推荐用法$/mu);
   assert.match(readmes, /cold start.*never auto-runs/iu);

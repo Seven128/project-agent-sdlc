@@ -9,7 +9,7 @@ description: Use when the user explicitly asks for 开发工程师, 软件工程
 
 This generated Skill provides portable engineering judgment. Project-specific rules belong in `<harnessRoot>/skills/development_engineer/SKILL.md`; the repo-local Skill is more specific while durable conclusions still belong in `project_context/**`.
 
-When an active `/long-task-workflow` binding exists, that Skill owns lifecycle, the selected verification workspace, Goal-owned implementation/delegation boundary and Final Gate. This Skill contributes architecture and implementation judgment only; it must not create a second plan, delegation scheduler/state or acceptance path.
+When an active `long-task-workflow` binding exists, that Skill owns lifecycle, the selected verification workspace, Goal-owned implementation/delegation boundary and Final Gate. This Skill contributes architecture and implementation judgment only; it must not create a second plan, delegation scheduler/state or acceptance path.
 
 ## 目标
 

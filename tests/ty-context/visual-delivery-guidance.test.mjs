@@ -426,11 +426,11 @@ test("complete selected-design conformance is shared through mutually exclusive 
   assert.match(handoffContract, /fact_refs/u);
   assert.match(
     globalContext,
-    /A selected implementation handoff defaults to every complete observable design fact[\s\S]*current-candidate production proof/iu,
+    /A selected implementation handoff[\s\S]*every complete observable design fact[\s\S]*current-candidate production checks/iu,
   );
   assert.match(
     globalContext,
-    /Design Source Projection routes durable UI\/UX meaning[\s\S]*each adopted target has one canonical record/iu,
+    /Material UI follows stable surface\/control\/target keys[\s\S]*each adopted target has one canonical record/iu,
   );
   assert.match(
     globalContext,
@@ -547,11 +547,11 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(agents, /Never overwrite an adopted baseline/iu);
   assert.match(
     agents,
-    /unresolved, unmapped, unexecuted, stale or indistinguishable item blocks a complete-conformance claim/iu,
+    /unresolved, unmapped, unexecuted, stale or indistinguishable item blocks a complete(?:-conformance)? claim/iu,
   );
   assert.match(
     agents,
-    /active Long-Task projects this same obligation[\s\S]*never also runs the default closure/iu,
+    /active Long-Task projects (?:this|the) same obligation[\s\S]*never also runs the default closure/iu,
   );
   assert.match(managedSurface, /Context-reachable Source/iu);
   assert.match(

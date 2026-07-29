@@ -127,11 +127,18 @@ test("non_codex_sync_does_not_install_codex_hooks", async () => {
     const agents = await readFile(path.join(root, "AGENTS.md"), "utf8");
     assert.match(agents, /Minimal Context Harness Protocol/);
     assert.match(agents, /agent\/platform internal plan/);
+    const globalContext = await readFile(
+      path.join(root, "project_context/global.md"),
+      "utf8",
+    );
+    assert.match(globalContext, /stable safe re-entry rule/iu);
+    assert.match(globalContext, /Do not store task-local progress or a one-off next edit/iu);
     assert.match(agents, /never requires a plan artifact/);
     assert.match(
       agents,
-      /Otherwise remain on the default Workflow Contract, even when work appears long/,
+      /Do not infer long-task mode from duration, complexity, file count or agent preference/,
     );
+    assert.match(agents, /Otherwise remain on the default Workflow Contract/);
     assert.match(agents, /Context Delta: none\|required/);
     assert.match(agents, /Contract Conformance/);
     assert.match(agents, /Context drift check/);

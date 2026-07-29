@@ -18,7 +18,7 @@ const mechanismRoot = path.join(repoRoot, "examples", "delivery-benchmark", "mec
 
 test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden boundaries", async () => {
   const experiments = JSON.parse(await readFile(path.join(mechanismRoot, "experiment-set.json"), "utf8"));
-  assert.equal(experiments.baseline_commit, "2ad71874a3e23a2221088ebb58238df64278b5c9");
+  assert.equal(experiments.baseline_commit, "89b04869a2b29ae09944839370f1e373aa55085f");
   assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "workflow-expression"]);
   const taskIds = [...new Set(Object.values(experiments.tracks).flatMap((track) => track.tasks))];
   assert.equal(taskIds.length, 11);

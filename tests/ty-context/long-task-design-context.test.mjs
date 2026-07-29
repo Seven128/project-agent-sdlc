@@ -388,7 +388,7 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   );
   assert.match(
     combined,
-    /new (?:mandatory )?development-stage constraint[\s\S]{0,280}distinct path[\s\S]{0,280}(?:lighter project-owned check|lighter project check)[\s\S]{0,280}positive net ROI/iu,
+    /(?:proposed )?mandatory development-stage constraint[\s\S]{0,400}distinct path[\s\S]{0,400}(?:lighter project-owned check|lighter project check)[\s\S]{0,400}positive net ROI/iu,
   );
   assert.match(
     [spec, globalContext, workflow, rationale, authoringSkill].join("\n"),
@@ -589,7 +589,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
 
   assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
   assert.match(sourcePlan, /no longer defines a separate handoff/iu);
-  assert.match(sourcePlan, /invoke `\/long-task-workflow`/iu);
+  assert.match(sourcePlan, /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu);
   assert.match(
     sourcePlan,
     /pre-existing Source Plan remains valid ordinary Source/iu,
@@ -633,7 +633,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   );
   assert.match(
     agents,
-    /enter one Source-bound Contract Draft loop immediately/iu,
+    /loaded Skill[\s\S]*own Source\/Contract authoring/iu,
   );
   assert.match(publicReadmes, /compatibility pointer/iu);
   assert.match(publicReadmes, /initial proposal[\s\S]*Web GPT/iu);
@@ -896,11 +896,15 @@ test("blocker revisions use causal evidence without adding completion state", as
   );
   assert.match(
     combined,
-    /furthest independently failing boundary[\s\S]*(?:causal Counterfactual|wrong-semantic|replace_file)/iu,
+    /furthest independently failing boundary[\s\S]*(?:causal Counterfactual|wrong-semantic|replace_json_value|replace_text)/iu,
   );
   assert.match(
     combined,
     /claim-local [`']?replace_json_value[`']? or [`']?replace_text[`']?[\s\S]*target-runtime liveness/iu,
+  );
+  assert.doesNotMatch(
+    combined,
+    /requires every behavioral Claim-bearing Assertion[\s\S]{0,160}`replace_file` wrong-semantic/iu,
   );
   assert.match(
     combined,

@@ -1,131 +1,108 @@
 # Architecture Context
 
-This is the minimum durable architecture map for the Harness source repository. Detailed role contracts and design rationale are selected on demand through `project_context/context.toml`.
+This is the minimum durable architecture map for the Harness source repository. Detailed contracts, current implementation owners, proof routes and rationale are selected on demand through `project_context/context.toml`.
 
 ## System Boundary
 
 - The repository owns the `project-tiny-context-harness` npm package, `ty-context` CLI, managed Minimal Context/default Workflow assets, validators, source sync, explicit Long-Task capability, release automation and delivery benchmark.
-- Consumer projects receive portable core/default assets including explicit-only design-system/resource Skills. `ty-context enable long-task` adds the Long-Task Skill, retired Source Plan compatibility pointer and package-owned Stop Hook.
-- Harness owns durable Context and declared workflow authority, not product quality. Project tests, CI, runtime observation and human acceptance remain the evidence authorities.
-- Harness does not own platform Goal/Turn lifecycle, models, agents, process trees, network isolation, branches/worktrees, merge/push/PR, CI, deployment or external confirmation execution.
+- Consumer projects receive portable core/default assets. `ty-context enable long-task` adds the Long-Task Skill, retired Source Plan pointer and package-owned Stop Hook.
+- Harness owns durable Context and declared workflow authority, not product quality. Project tests, CI, runtime observation and human acceptance remain evidence authorities.
+- Harness does not own host Goal/Turn lifecycle, models, agents, process trees, network isolation, Git collaboration, CI/deployment or external-confirmation execution.
 
 ## Component Map
 
-- CLI and command routing: `packages/ty-context/src/commands/**`.
-- Context manifest, graph, validation, export, sync and doctor: `packages/ty-context/src/lib/context-*`, `validators.ts`, `sync-engine.ts`, `doctor.ts`.
-- Design Authority scaffold and advisory inspection: `packages/ty-context/src/lib/design-md.ts` and `doctor.ts`; inspection reports observable system-level index/token/reference signals but never infers per-surface implementation readiness. Project-authored visual targets remain referenced Source/verifier inputs rather than a package-owned design artifact tree.
-- UI authority authoring: managed Surface/Screen structures and Skills use existing roles; Design Source Projection follows stable keys to one canonical record per target.
-- Design-provider boundary: Open Design is default; `design-resource-handoff-*` validates shared immutable inputs/coverage. Default Contract Conformance or Long-Task Final Gate proves them, never both; no provider runtime/state is owned.
-- Context Authority projection: `long-task-context-authority-topology.ts` separates selected delivery-authority structure from retrieval-only manifest guidance before `context-graph-snapshot.ts` freezes Long-Task Context.
-- Active Contract schema: `packages/ty-context/src/schemas/long-task-delivery-v2/**` plus focused `long-task-*` parser/compiler/claims/risk modules. The Control projection carries control identity, placement/task, visibility/availability, input/validation/default, interaction/navigation, states/recovery/permission/feedback and accessibility; `surface_bindings` tie Controls to the production target, owner and root journey without a UI lifecycle.
-- Shared activation safety: `long-task-activation-validation.ts`, used by collecting Preflight and fail-fast Compile, plus one workspace-scope owner shared by Preflight, direct Compile and verification. Before first lock its classification input is `HEAD` to current workspace; after lock it is immutable `initial_task_base` to current workspace. First enable may add only actual current package-asset files for configured managed destinations plus exact config/hook files to protected input, never a managed directory root or broad `.codex/**`. No lifecycle or persisted classification state is added.
-- Source authority: Source marker/parser/inventory/target-continuity modules derive text-bound Source/REQ/CTRL/OBL/NCOMP/AC projections without another editable Source authority.
-- Evidence Kernel: runner-derived adapters, explicit runners, structured/Playwright observations, Counterfactual and Population sensitivity, target-runtime-current-execution proof, selected-target `design_conformance`, targeted verifier, Git-aware snapshot and source-recompiled same-snapshot Live Final Gate.
-- Authority/recovery: one common-dir Active Authority V3 snapshot plus matching worktree marker; workdir compiled output, Progress and Receipts are rebuildable audit/recovery projections.
-- Revision diagnosis: `long-task-authority-revision*.ts` deterministically classifies and summarizes the candidate, including exact changed semantic fields, Source/Product Claim reductions and external-confirmation keys, then derives the same concise human decision brief for Compile/status/resume; `long-task-authority-revision-diagnosis.ts` exercises only scope-only candidates through existing active Check identities with unchanged runner/verifier authority, without publishing authority or evidence.
-- Compile handoff: `commands/long-task-revision.ts` emits an additive one-time `execution_model_checkpoint` after first Authority Lock with an explicit terminal-turn and explicit-choice contract; it does not switch models or persist acknowledgement/model-route state.
-- Test feedback and runtime cost: `tools/affected_change_discovery.mjs`, `affected_test_selection.mjs` and `test_suite_policy.mjs` own fail-safe tier selection, explicit aggregate dominance, the small critical-sentinel mapping, named controlled-CI budgets and isolation classes; `tools/package_build_fingerprint.mjs` owns current-source `dist` freshness; `tests/ty-context/run-package-suite.mjs` plus its file reporter own exhaustive execution, terminal sentinel observation and ephemeral per-file/top-10 timing; `long-task-delivery-fixtures.mjs` owns immutable suite-scoped seed preparation and per-fixture repository isolation. `long-task-status-v2.ts` owns `resume` coordination and must finish the workspace-status snapshot's index-writing phase before starting `currentGitState` against the same repository. These surfaces never define Delivery acceptance, cache green results or remove complete release coverage.
-- Release pipeline: `.github/workflows/npm-publish.yml` separates one complete prepare/test/pack/smoke job from the protected publish job. The second job downloads and verifies the exact prepared artifact for the same source commit; it never rebuilds, retests or repacks.
-- Managed source: `.codex/ty-context-managed/**`; package assets: `packages/ty-context/assets/**`; mapping authority: `packages/ty-context/source-mappings.yaml`.
-- Full stable mental model: `PROJECT_SPEC.md`; high-frequency durable facts: `project_context/**`.
+- CLI/command routing: `packages/ty-context/src/commands/**`.
+- Context manifest, graph, validation, export, sync and doctor: `packages/ty-context/src/lib/context-*`, `validators.ts`, `sync-engine.ts` and `doctor.ts`.
+- Design Authority scaffold/advisory inspection: `design-md.ts`, managed UI Skills and project-owned `DESIGN.md`/Context. Selected targets remain ordinary Source or verifier inputs, not a package-owned design registry.
+- Long-Task schema/compiler: `packages/ty-context/src/schemas/long-task-delivery-v2/**` plus focused `long-task-*` Source, Contract, activation, authority, revision, evidence and lifecycle modules.
+- Long-Task Context authority: `long-task-context-authority-topology.ts` separates selected delivery-authority structure from retrieval guidance; `context-graph-snapshot.ts` freezes the selected/full Context boundary required by the active mode.
+- Evidence Kernel: runner adapters, structured/Playwright observations, Counterfactual and Population sensitivity, exact target-runtime evidence, Git-aware snapshots and the source-recompiled same-snapshot Live Final Gate.
+- Authority/recovery: one Git common-dir Active Authority plus matching worktree marker; workdir compiled output, Progress and Receipts are rebuildable audit/recovery projections.
+- Test feedback/cost: `tools/affected_change_discovery.mjs`, `affected_test_selection.mjs`, `test_suite_policy.mjs`, package build fingerprinting and the package-suite runner/reporters. These surfaces never define Delivery acceptance or cache green results.
+- Release: `.github/workflows/npm-publish.yml` prepares/tests/packs/smokes once, then the protected publisher verifies and publishes those exact bytes without rebuilding.
+- Managed-source owner: `.codex/ty-context-managed/**`; package output: `packages/ty-context/assets/**`; copy authority: `packages/ty-context/source-mappings.yaml`.
+- Exact current modules and test owners live in the on-demand [implementation index](areas/harness-package/implementation-index.md); detailed commands and tier semantics live in [verification](areas/harness-package/verification.md).
 
 ## Default Context Read Architecture
 
 - Near-universal startup Context is limited to `global.md`, `architecture.md`, `context.toml` and the default area root.
-- Foundation, workflow-contract, package-managed-surface and verification detail is task-triggered `on-demand` Context. This changes loading cost, not fact authority.
-- Before `Context Delta`, the Agent combines graph/trigger candidates with one bounded text search over `project_context/**`, using a small set of high-signal task terms such as explicit area/module names and API/schema/state/security/verification/deployment language.
-- The bounded search only discovers candidates. Semantic judgment decides relevance; it creates no vector/persistent index, cache, registry, search state or second authority.
-- `ty-context doctor` deterministically reports selected default files, bytes, soft-budget overages, exact duplicate content and `DESIGN.md` authority status. The report is advisory and creates no Context state or completion authority; an absolute byte threshold cannot override complete, readable recovery semantics or become a source-release acceptance gate.
-- A Context fact has one primary owning file. Other high-frequency surfaces use short routing pointers instead of copying detailed rules.
-- `context.toml` retrieval fields (`triggers`, `read_when`, `read_policy`, default selection and unselected nodes) guide future Agent reads. Referenced Long-Task authority instead hashes the selected area/role/dependency projection plus selected Context contents, so retrieval-only maintenance does not create an Authority Revision or stale scoped Progress.
+- Foundation, workflow-contract, package-managed-surface, implementation-index, verification and rationale Context is selected on demand.
+- Before `Context Delta`, the Agent combines graph/trigger candidates with one bounded high-signal text search over `project_context/**`.
+- Search discovers candidates only; semantic judgment decides relevance. It creates no vector/persistent index, cache, registry, state or second authority.
+- A durable fact has one primary Context owner. Startup surfaces retain short routing/hard-boundary statements instead of copying specialized rules.
+- `ty-context doctor` reports deterministic default files/bytes, exact duplicates and Design Authority signals as advisory maintenance information, never as acceptance state or an absolute byte gate.
 
 ## Design Rationale
 
-- Keep the startup graph small because every fresh Agent pays that read and attention cost; preserve specialized facts by routing them on demand rather than deleting them.
-- Add one bounded Context search because manifest triggers are cheap but natural-language recall is imperfect. Searching only the small durable Context surface adds low fixed cost and reduces the direct trigger-miss path without introducing retrieval infrastructure.
-- Keep ordinary planning and architecture judgment inside the platform Goal. Persist only durable project facts and use project-native executable checks for objective boundaries.
-- Make architecture work externally observable through one task-local deliberation checkpoint, but do not persist private reasoning or create an architecture-plan authority. Risk changes depth, not whether the checkpoint occurs.
-- Keep Long-Task acceptance separate from implementation sequencing: one Contract and one Final Gate provide completion authority without a scheduler, second plan or worker state.
-- Protect `F = Implementation Freedom Boundary` as an adjacent efficiency invariant rather than a third acceptance mechanism: within declared authority and architecture/safety/external-effect boundaries, the current Goal selects order, methods, feedback cadence and optional one-agent or multi-agent/subagent execution. Harness does not turn Stages, methods, per-edit checks or agent allocation into development permission, proof or persistent orchestration.
-- Use the first Authority Lock as a one-time user model-choice boundary. The locked Contract and Final Gate make lower-cost execution a viable user choice; the first-lock turn ends before implementation unless an explicit task-specific choice already exists, while Harness still owns no model routing and adds no repeated pause or state.
-- Keep retrieval guidance outside active delivery authority because it changes how a future Agent finds facts, not the meaning of the Context files already selected for the current delivery. Selected ownership, role/dependency structure and file contents remain fail-closed.
+- Keep the startup graph small because every fresh Agent pays its read and attention cost; preserve specialized truth through on-demand ownership.
+- Add bounded search because manifest triggers are cheap but wording recall is imperfect. Search supplements rather than replaces semantic reasoning.
+- Keep ordinary planning, architecture judgment and implementation order inside the current host Goal. Persist only durable facts and use project-native executable checks for objective boundaries.
+- Make Architecture Deliberation externally observable and risk-proportional without creating an architecture-plan authority or claiming private-reasoning proof.
+- Keep Long-Task acceptance separate from implementation sequencing: one Contract and one Final Gate provide completion authority without a scheduler, second plan or Worker state.
+- Protect `F = Implementation Freedom Boundary`: within declared authority and architecture/safety/external-effect constraints, the Goal selects methods, feedback cadence and optional native delegation; delegated reports are never proof and all proof-bearing results converge into one workspace.
 
 ## Shared Workflow And Architecture Quality
 
-- Every implementation delivery uses one shared architecture-quality obligation. Before implementation it surfaces a concise repository-bound `Architecture Deliberation`; after project verification it performs one `Architecture Conformance` on the current candidate snapshot.
-- Default execution uses manifest routing plus bounded Context search, the shared deliberation, one `Context Delta: none|required`, a conditional Design Authority Check for material production UI, platform-internal planning, precise implementation, project-owned verification, Contract Conformance including architecture closure and a separately named Context drift check.
-- The UI check first performs UI Authority Closure over affected stable surface/control/target keys, then reads relevant screen/surface Context, `DESIGN.md`, one authored token source/generation direction and selected versioned design references. Exact targets may support fidelity claims, constraints prove only their declared scope, and inspiration never becomes an implicit reproduction target. Missing authority routes to a Context update, task-local explicit design authoring/delegation or a genuine decision before production styling; local style fixes and explicit prototypes stay lightweight.
-- Architecture Deliberation always identifies the concrete owner/current extension point and debt disposition. Its depth rises when work creates or changes a durable module/capability, public API/schema/data/persistence, state/source of truth, ownership/dependency direction, cross-area boundary, migration/security/recovery behavior or reusable abstraction.
-- Material deliberation resolves owner, unique source of truth, dependency direction, interface/state/lifecycle, failure/retry/recovery/compatibility, selected and rejected alternatives, a plausible future-change challenge, forbidden shortcuts, touched technical debt and the project-owned executable check that protects the boundary. Small fixes record a concrete preservation finding rather than paying full ceremony or skipping the checkpoint.
-- Durable results update owning Context; local conclusions remain task-local. Scope, owner, Context or selected-design changes stale the deliberation before implementation continues.
-- Default Contract Conformance is the broad internal implementation-alignment review and contains the architecture closure. Context drift remains explicit because it checks the reverse direction from implementation/new decisions back to durable Context.
-- Harness may route project-owned architecture checks but must not become a language-generic dependency analyzer. Repositories use their native lint/AST/architecture tools.
-- Modularity checks report physical and semantic risk, including the highest-risk function location, without changing project thresholds or creating lifecycle state.
+- Every implementation delivery surfaces one repository-bound `Architecture Deliberation` before the first implementation edit and performs one current-candidate `Architecture Conformance` after project verification.
+- Deliberation always identifies the concrete owner/source of truth/extension point and debt disposition. Material work also resolves dependency direction, interface/state/lifecycle, failure/recovery/compatibility, alternatives, a plausible future-change challenge, forbidden shortcuts and project-owned checks.
+- Durable conclusions update owning Context; local conclusions remain task-local. A material scope, owner, Context or selected-design change refreshes the deliberation.
+- Default work automatically follows the prompt-level Workflow Contract, uses platform-internal planning and carries Architecture Conformance inside Contract Conformance. It creates no workflow state or machine-completion result.
+- An explicitly selected or validly bound Long-Task loads the `long-task-workflow` Skill; its Final Gate is the sole post-implementation architecture and selected-design closure carrier.
+- Harness routes project-owned architecture checks but is not a language-generic dependency analyzer. Objective boundaries use repository-native lint/AST/architecture checks.
 
 ## Data / Control Flow
 
-`initial/revised proposal + selected immutable resources + source/dependency closure + residual handoff + minimum Context -> one Source-bound Contract Draft loop (inventory/provenance/refinement/markers/mapping plus UI Authority Closure) -> Outcome/control/repository/method/blocker binding -> Preflight -> Compile / Authority Lock -> one-time model choice -> Goal-owned adaptive implementation (one or multiple platform-native agents/subagents optional) + non-authoritative acceptance/verification Frontier -> optional targeted feedback/repair -> protected revision when needed -> clean candidate commit -> source-recompiled same-snapshot Live Final Gate`
+Default:
 
-- Product, Technical Boundary and Acceptance are distinct logical authorities inside one Contract.
-- Outcomes are independently observable, decidable and target-verifiable acceptance/diagnosis units. Dependencies express acceptance and intermediate-proof readiness only; the Frontier does not gate implementation order, and no scheduler or mandatory implementation DAG is persisted.
-- A Draft Outcome is the pre-Authority-Lock lifecycle of that same Outcome, not a runtime type; it adds no schema field, state file, Worker or completion boundary.
-- Preflight and Compile share activation safety. Preflight diagnostics may include stable references, repair hints, duplicate occurrence counts and narrowly proven primary/dependent repair links, but remain read-only and non-authoritative.
-- First Compile emits the one-time model choice and a terminal-turn contract. A prior explicit task-specific user model strategy satisfies it; generic continue/resume wording does not, later revisions do not repeat it, and the choice is not completion proof.
-- Targeted verify may localize repair and store scoped current-snapshot Progress; it cannot accept.
-- A target-runtime Claim that can diverge from a proxy surface is owned by the earliest runnable Outcome and proved by a Check that exercises the exact declared target in its current Raw Execution. A target profile explicitly names its required product targets; bounded runtime-family and root-entry bindings prevent one target from substituting for another. The first useful runnable boundary and later coalesced input changes are recommended feedback points, but the current Goal chooses whether their localization value justifies a targeted run; this creates no implementation gate, scheduler or per-target progress state.
-- `verify --explain` is a read-only projection over active compiled Check and Counterfactual declarations. It groups declared Raw Executions and reports bounded execution counts without invoking the runner, predicting duration/internal subprocess count, writing Progress or creating proof. `progress_stale` remains a freshness projection and must be refreshed only before intermediate reliance; implementation may continue and Final Gate may start with stale or absent Progress because it reruns all Checks.
-- Revision diagnosis is stateless, non-authoritative repair: bounded changes need no user decision and only scope-safe unchanged Checks may run. Decision-relevant semantic/proof/boundary/runner-type/verifier-kernel changes stay preview-only; risk downgrade is rejected. Only `compile --revise` atomically auto-adopts bounded repair or creates one exact pending decision and shared brief.
-- Revision adoption invalidates affected evidence and returns control to rolling implementation; it never creates delivery acceptance or changes the platform-native Goal. CLI revision results expose that no-completion effect and a next action without adding lifecycle state.
-- Final Gate, Stop and close recompile Source authority, bind active task/revision/worktree/Git-tree identity and rerun all declared Global and Outcome checks. Only this complete current snapshot can create machine acceptance, and public JSON/Hook output identifies its scope as declared machine Authority rather than native-Goal completion.
+`minimum Context + manifest candidates + bounded Context search -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> project verification -> Contract Conformance / Architecture Conformance -> Context drift check`
+
+Long-Task:
+
+`proposal/resources + minimum Context -> one Source-bound Contract Draft loop -> Preflight -> Compile / Authority Lock -> one-time model choice -> Goal-owned adaptive implementation -> optional targeted repair evidence -> protected revision when needed -> source-recompiled same-snapshot Final Gate`
+
+- Product, Technical Boundary and Acceptance remain distinct logical authorities inside one Contract.
+- A Draft Outcome is the pre-lock lifecycle of an Outcome, not another runtime type or authority. Dependencies express acceptance/intermediate-proof readiness and never implementation permission.
+- Preflight is read-only and non-authoritative; Compile creates Authority Lock and the one-time explicit model-choice boundary.
+- Targeted verification localizes repair and may store scoped Progress, but only Final Gate can create Long-Task machine acceptance.
+- One native Goal means the currently selected host execution Goal, not a Harness-created or persisted Goal identifier. Compaction may continue in that Goal; a later physical Goal/session restores semantic state through `resume`.
+- Revision adoption invalidates affected evidence and returns to rolling implementation; it never completes delivery or mutates the host Goal.
+- Final Gate/Stop/close bind current Source, Context, Contract, verifier/runner and workspace inputs and rerun all declared Checks on one snapshot. Public output preserves declared-machine versus native-Goal scope.
 
 ## Contract And Architecture Closure
 
-- Default and Long-Task execution share one architecture obligation but use mutually exclusive post-implementation carriers. Default embeds Architecture Conformance in Contract Conformance; Long-Task uses only Final Gate. A changed candidate snapshot invalidates closure and requires the owning carrier again.
-- Stable architecture requirements are represented through existing Source-backed technical obligations, global constraints or forbidden shortcuts, owner/path envelopes, Bindings and project-owned executable Checks.
-- Functional behavior and architecture structure are separate claims when either can pass without the other. Both must have falsifiable proof when both are required.
-- Unsupported architecture preference, inferred product semantics or an unverifiable “good design” claim must not become false authority. Resolve it as durable Context, task-local judgment or `decision_required`.
-- A material UI request with only an unconfigured starter, style prose or inspiration cannot use the implementation itself as its own target. A design authored under explicit delegation must be selected and frozen as Source before fidelity implementation or comparison begins.
-- Scope/path escape, duplicate authority, bypass of an owning service/facade, wrong dependency direction or second source of truth blocks only when the Contract or controlling Context declares the invariant and a reliable check can observe it.
-- New or worsened debt blocks conformance unless a project-owned bounded exception identifies owner, rationale, tracking and removal condition. Unrelated legacy debt is not pulled into scope automatically, but debt touched, relied on or worsened by the delivery cannot remain hidden.
+- Default and Long-Task share one architecture obligation but use mutually exclusive closure carriers. Any later candidate change invalidates the owning closure.
+- Stable architecture requirements use existing Source-backed technical obligations/constraints/forbidden shortcuts, owner/path boundaries, Bindings and project-owned executable Checks.
+- Functional behavior and architecture structure are separate claims when either can pass independently.
+- Unsupported design preference, inferred product semantics or unverifiable “good design” remains durable Context, task-local judgment or `decision_required`, never false proof.
+- Scope escape, duplicate authority, owner/service bypass, wrong dependency direction, a second source of truth or new/worsened debt blocks handoff when the declared invariant applies and no bounded project-owned exception closes it.
 
 ## Constraints And Tradeoffs
 
-- Minimal default Context trades automatic reading of every specialized rule for lower recurring attention cost; manifest routing plus bounded search reduces recall risk without loading the whole Context graph.
-- Keyword search cannot understand every synonym or indirect dependency, so it supplements rather than replaces semantic reasoning, Architecture Deliberation and final Conformance.
-- Retrieval-only manifest edits may preserve active Authority and scoped Progress, but they never preserve a Final Receipt across a changed Git tree; Final Gate still runs against the final committed snapshot.
-- Architecture enforcement is limited to declared, falsifiable project invariants. The visible checkpoint proves occurrence, not private cognition or universal future-proofing; subjective design quality remains engineering review rather than false machine proof.
-- Runtime evidence is likewise project-owned: Harness can require current-execution semantics, a Source-authored bounded target/runtime-family/root profile, evidence to the furthest independently failing declared boundary, causal Counterfactuals when carrier presence can diverge from capability, and frozen runner/verifier identity. It cannot infer which targets the product requires or independently attest that a trusted project oracle exercises the intended target.
-- The first successful Compile creates Authority Lock and immutable initial base. Later protected changes cannot be silently adopted; candidate diagnosis leaves the old Authority active and cannot create a second Draft authority, state plane or acceptance path.
-- The execution-model checkpoint is one additive compile signal and mandatory terminal turn unless already satisfied by an explicit task-specific model strategy; generic continuation does not satisfy it, and no model switch, route, tier scheduler, acknowledgement file or repeated checkpoint exists.
-- One user-selected delivery has one Contract, one selected verification workspace and one Final Gate. Harness owns no delegation/branch/worktree fan-out; any platform-native implementation parallelism is opaque, non-authoritative and must converge into that workspace before verification counts. Existing `outcome_files` are physical compatibility only.
-- No active Source Inventory/Coverage file, SFC/Packet/Wave/Campaign runtime, Worker scheduler, execution registry, second plan or external-confirmation tracker exists.
-- No persistent `authority_revision_in_progress`, native-Goal completion state or Goal-restoration runtime exists; current candidate files, pending exact revision identity and the host Goal remain the respective owners.
-- `init`, `sync` and `upgrade` never import or execute retired Campaign or development-period authority state.
-- Package-managed asset changes require source/package parity, idempotent sync and consumer-facing verification.
-- Test-cost optimization preserves one owner per concern: build freshness is derived from current build inputs; critical IDs, Trust derivation, named CI budgets and isolation live in the existing suite policy; the runner/reporter derives terminal semantic coverage and disposable timing from one event stream; fixture seeds are process-scoped infrastructure copied into independent repositories whose test-only local Git config removes optional durability/maintenance cost without changing production repository policy; bulk revision permutations call the canonical compiler's state-free diagnose mode and decision projector while real CLI/pending cases keep process and persistence coverage; verifier migration reuses one disposable package through real locator renames and exact-byte restoration while retaining bundle/schema/Hook and content-Verify proof; the opt-in performance probe reuses the canonical Global semantic fixture, fails before large-repository preparation on fixture/schema drift and counts shared runner cost once per execution identity; `resume` orders same-repository Git index observation at its status coordinator instead of serializing independent repositories or masking locks. None is workflow state, a second classifier/test authority, a scheduler, a persistent worker, a result cache or reusable acceptance evidence.
+- Smaller default Context trades automatic reading of every specialized rule for lower recurring attention cost; manifest routing plus bounded search reduces but cannot eliminate recall risk.
+- The default Workflow Contract is soft/prompt-level. Project checks prove behavior; it deliberately has no validator, Receipt, persisted phase state or machine acceptance.
+- Long-Task is explicit or binding-driven and pays durable Contract/Authority/Final-Gate cost only where recovery and machine completion justify it.
+- The first successful Long-Task Compile creates Authority Lock and a terminal model-choice turn unless an explicit task-specific choice already exists; Harness stores no acknowledgement or model route.
+- One selected delivery has one Contract, selected verification workspace and Final Gate. Harness owns no delegation, branch/worktree or process fan-out.
+- Selected-design preflight/integrity never substitutes for production conformance. Default ephemeral accounting and Long-Task compiled proof are mutually exclusive.
+- Retrieval guidance, test timing and benchmark output remain non-authoritative. Formal mechanism adoption requires non-degradation first and positive total ROI second.
+- Package-managed asset changes require canonical-source edits, generated/package parity, idempotent sync and consumer-facing verification.
 
 ## Verification Implications
 
-- `ty-context doctor` reports default Context footprint, exact duplicate default files and Design Authority system/index/token/reference signals as advisory maintenance information; it explicitly does not compute surface-level implementation readiness.
-- Default-footprint regression proves deterministic selection and advisory overage reporting, not compliance with an absolute repository byte cap. Required recovery facts remain in the correct owner even when that produces a warning.
-- `make validate-context` protects required recovery structure and registered role consistency; it is not relaxed to obtain a smaller Context.
-- Workflow guidance tests must prove manifest routing and bounded search are both present, search remains limited to `project_context/**`, and no index/state is introduced.
-- Context Authority topology tests prove retrieval-only edits preserve selected authority while selected area, role and dependency changes remain hash-visible; Context evolution tests prove the same boundary through Compile, Progress and status.
-- Long-Task CLI tests must prove first Compile emits `execution_model_checkpoint.required: true` with terminal-turn, explicit-choice and generic-continue-invalid semantics, later Compile emits `false`, and Skill/reference/package copies preserve the same one-time/no-state contract.
-- Preflight remains read-only and Compile remains the fail-closed activation boundary. Added references, repair hints, occurrence counts and repair-order metadata may improve repair but cannot change acceptance.
-- Revision tests must prove the three-way classifier, exact summary/hash binding, deterministic human decision brief across Compile/status/resume, scope-only candidate execution with zero durable-state mutation, red-candidate non-execution, approval invalidation after edits and full evidence invalidation after adoption.
-- Test-routing tests must prove inferred local discovery ignores and reports only untracked `.work_products/**`, while tracked or explicit paths remain fail-safe inputs. One canonical plan selects only its highest aggregate, so complete Long-Task/release coverage supersedes a separate Trust invocation. Canonical Trust/focused/hotspot review budgets block silent structural growth, complete discovery remains exhaustive, and `github-ubuntu-v1` runs only on its declared GitHub/Linux environment as a cost-regression guard rather than test-result authority.
-- Test-runtime tests must prove stale `--no-build` fails before a suite starts, the fingerprint covers every declared build input, each required critical ID occurs exactly once in its reviewed file and passes, count-preserving semantic replacement fails, per-file/top-10 diagnostics are exhaustive but non-authoritative, suite-seed copies have distinct Git common directories and no remotes, disposable fixture Git settings stay local and explicit, the performance probe remains bound to the shared Global fixture/fail-fast ordering/platform profiles/unique runner accounting, Trace2 observes `resume` finish same-repository `write-tree` before starting `git status`, explicit 12/41/11 isolation lanes are disjoint/exhaustive, load-sensitive wall-time assertions remain serial, and every unknown file remains serial.
-- Project-native architecture checks and `check-modularity` protect declared structural boundaries; Final Gate alone carries Long-Task Architecture Conformance and reruns the complete authority on one current snapshot.
-- Managed source/package/generated copies must remain byte-aligned through source sync and package parity checks.
-- Guidance parity tests prove that a proxy, tracked status report or historical artifact cannot be the sole proof of a target-runtime Claim; Goal-chosen targeted feedback remains coalesced through existing input freshness, and only the bounded required-target/runtime-family/root profile plus exact terminal target/Stage projections are added—never an implementation gate, open-ended `platform_impact`, per-platform Progress or a per-Outcome rebuild rule.
-- The `implementation-freedom-boundary` critical sentinel proves that `F` remains distinct from `R1`/`R2`, fixed phase/order/method/per-edit Gates stay absent, optional multiple-agent execution stays Goal-owned/non-authoritative, and every delegated result still converges before the one Final Gate.
-- Trusted publication binds the tested tarball SHA-256, dispatch source commit and a CRLF/LF-stable lockfile identity across the job boundary. Node/npm versions remain build provenance, not a requirement that the later publisher process use byte-identical tools.
+- `make validate-context` protects required recovery structure and registered role consistency; it is not weakened to obtain a smaller Context.
+- Default-footprint tests prove deterministic selection, exact-duplicate reporting and advisory budgets, not compliance with an absolute byte ceiling.
+- Workflow tests prove manifest routing plus bounded search, prompt-level default semantics, explicit/bound Long-Task routing and absence of added index/state/authority.
+- Long-Task tests prove Source/Contract/Authority continuity, one-time model choice, protected revision, exact evidence sensitivity, current-snapshot Final Gate and declared-machine/native-Goal separation.
+- The `implementation-freedom-boundary` critical sentinel protects Goal-owned order/method/feedback/delegation choices without weakening final proof.
+- Affected/focused and Trust tests are feedback/package regression evidence only. Unknown or shared changes widen fail safe; complete selection supersedes a redundant Trust invocation.
+- Managed source, generated workspace copies and package assets remain byte-aligned through source sync and `package check-source`.
+- Project-native architecture/modularity checks protect declared structural boundaries; Final Gate alone carries Long-Task Architecture Conformance.
+- Trusted publication binds the tested tarball, source commit and stable lockfile identity across the protected job boundary.
 
 ## Open Risks
 
-- A structurally complete Contract cannot discover undeclared requirements.
-- Bounded keyword search can still miss synonyms or indirect semantics; real Agent routing evidence is required to quantify residual recall risk.
-- Same-user files, installed package code and Git metadata are trusted drift boundaries, not hostile-host security isolation.
-- Architecture quality beyond declared and observable invariants, and requirements never declared or foreseeably challenged, still depends on engineering judgment and review.
-- Public docs, managed source, package assets and generated workspace copies can drift unless parity checks remain enforced.
+- A structurally complete Contract cannot discover requirements omitted from Source.
+- Bounded keyword search can miss synonyms or indirect dependencies; conclusion-grade Agent routing evidence is required before replacing it.
+- Same-user files, installed package/runtime behavior, Git metadata and declared external observers are trusted boundaries, not hostile-host isolation.
+- Architecture quality beyond declared/falsifiable invariants still depends on engineering judgment and review.
+- Public docs, Context, managed source, package assets and generated copies can drift unless parity checks remain enforced.

@@ -19,12 +19,14 @@ Tiny Context 将这些能力保持为窄边界。
 | 机制 | 何时、如何使用 | 负责什么 |
 |---|---|---|
 | **Minimal Context** | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。 | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。 |
-| **Workflow Contract** | `init` 后默认生效。普通任务直接交给当前 coding Goal；没有 slash command，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、Architecture Deliberation、唯一 `Context Delta`、实现、项目检查、Contract Conformance 与 Context drift。 |
-| **Long-Task Workflow** | 先启用一次 `long-task` profile，再显式调用 `/long-task-workflow`；已有有效绑定时恢复。不能因为任务看起来很长就自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复的局部进度、受保护修订和当前快照 Live Final Gate。 |
+| **Workflow Contract** | `init` 后自动生效的 prompt-level 默认协议。普通任务直接交给当前 coding Goal；没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、Architecture Deliberation、唯一 `Context Delta`、实现、项目检查、Contract Conformance 与 Context drift；不产生 validator 结果、Receipt、持久工作流状态或机器完成权威。 |
+| **Long-Task Workflow** | 先启用一次 `long-task` profile，再显式选择 `long-task-workflow` Skill；已有有效绑定时恢复。不能因为任务看起来很长就自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复的局部进度、受保护修订和当前快照 Live Final Gate。 |
 
-三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `/long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载最终架构与选定设计闭环，不再重复默认 Contract Conformance。
+三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载最终架构与选定设计闭环，不再重复默认 Contract Conformance。
 
-`/design-system-authoring` 与 `/design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `/long-task-workflow`。
+`design-system-authoring` 与 `design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `long-task-workflow`。
+
+本文使用宿主无关的逻辑 Skill 名。Codex 中用 `$skill-name`（例如 `$long-task-workflow`）显式选择，或通过 `/skills` 选择；其他宿主使用各自的 Skill 入口。
 
 ## 快速开始
 
@@ -46,24 +48,24 @@ npx --yes project-tiny-context-harness ty-context sync
 
 `upgrade` 先执行安全迁移再同步；资产刷新不会推断或覆盖用户编写的 Context、Source、Delivery Contract 或历史文件。
 
-默认 Profile 是 `core-portable` 与 `workflow-default`，基础 managed set 已包含显式调用的 `/design-system-authoring` 与 `/design-resource-authoring`。显式启用长程能力：
+默认 Profile 是 `core-portable` 与 `workflow-default`，基础 managed set 已包含显式选择的 `design-system-authoring` 与 `design-resource-authoring`。显式启用长程能力：
 
 ```powershell
 ty-context enable long-task
 ```
 
-启用长程能力会额外安装 `/long-task-workflow`、退役兼容指引 `/source-plan-authoring` 与完成 Hook；`ty-context disable long-task` 只移除这些 Long-Task-owned surfaces，并保留两个基础设计 Skill。Tiny Context 不安装 Open Design、模型 Worker、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
+启用长程能力会额外安装 `long-task-workflow`、退役兼容指引 `source-plan-authoring` 与完成 Hook；`ty-context disable long-task` 只移除这些 Long-Task-owned surfaces，并保留两个基础设计 Skill。Tiny Context 不安装 Open Design、模型 Worker、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
 
 ## 推荐用法
 
 初始输入可以是简要产品意图，也可以是 Web GPT 等外部服务给出的详细初始方案。该输入本身不要求设计 authoring 或 Long-Task；应按交付需要选择执行路径，不要把“是否需要设计资源”和“是否需要 Long-Task”绑定在一起：
 
 - **普通交付、不需要新设计资源：** 直接把需求交给当前 coding Goal；默认 Workflow Contract 自动生效，不需要 Workflow Skill 或 Contract 文件。
-- **长程交付、不需要新设计资源：** 启用一次 Profile 后，直接用需求或初始方案调用 `/long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
-- **交付前确实需要设计资源：** 项目缺少 Design Authority 时才显式调用 `/design-system-authoring`，再用 `/design-resource-authoring` 生成/选择资源、按需完整冻结实现级 Source、一次性回改已接受决策并生成通过校验的残余 `design-resource-handoff-v1`。随后根据恢复与完成权威需求，把修订方案和选定资源交给默认 Workflow Contract 或 `/long-task-workflow`。
-- **只需要设计资源：** 在 `/design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
+- **长程交付、不需要新设计资源：** 启用一次 Profile 后，直接用需求或初始方案选择 `long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
+- **交付前确实需要设计资源：** 项目缺少 Design Authority 时才显式选择 `design-system-authoring`，再用 `design-resource-authoring` 生成/选择资源、按需完整冻结实现级 Source、一次性回改已接受决策并生成通过校验的残余 `design-resource-handoff-v1`。随后根据恢复与完成权威需求，把修订方案和选定资源交给默认 Workflow Contract 或 `long-task-workflow`。
+- **只需要设计资源：** 在 `design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
-设计系统通常在项目冷启动时确定，但该 Skill 只由用户调用，`init`、`sync` 与下游 Skill 都不会自动执行。`/design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为普通输入，但不再是推荐中间服务。
+设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为普通输入，但不再是推荐中间服务。
 
 ## Minimal Context 与默认工作流
 
@@ -135,13 +137,13 @@ material UI 在实现前执行 **UI Authority Closure**：每个稳定 surface/c
 
 ### 视觉交付指导
 
-两种开发路径共享一个条件式设计目的：当存在已选 implementation handoff 时，让 Agent 的开发、验收和测试在 UI/UX 方面完整遵循选定设计资源在声明范围与条件内明确表达的全部材料性信息。它不授权从静态图推断未表达的交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`/design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
+两种开发路径共享一个条件式设计目的：当存在已选 implementation handoff 时，让 Agent 的开发、验收和测试在 UI/UX 方面完整遵循选定设计资源在声明范围与条件内明确表达的全部材料性信息。它不授权从静态图推断未表达的交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
 
 provider-neutral handoff 是残余语义与索引层，不是 CSS 的文本副本。它默认按完整可观察设计事实（complete observable design fact）而不是 Product Control 粒度工作：只要已取得资源和声明的 inspector/oracle 能表达，图片、文字、图标、组件内部片段、更小视觉 primitive、geometry、layout、style/token、content、state、interaction 等事实都要原子索引。每个资源必须闭合为“material 且列出精确 facts”或“确实 supporting-only”，每个适用的 subject × selected target × declared condition × UI/UX dimension 单元格则必须无损守恒其精确 fact/evidence/Source/method 集合，覆盖 surface/flow、visual/content、component/control、state/interaction、motion、adaptation/input、accessibility、assets 八个维度。`exact_target` 的每个 condition 还必须有 full-target layout 与 pixel 事实；做不到就只能保持 partial constraint 或阻断。preflight 会解析 typed locator、校验 source/dependency/fact closure，并拒绝不可解析、unsupported 或 media 不兼容的证据；探索候选仍不需要 schema。
 
 这些输入仍是普通 Source。默认 Workflow 对 fact/Source/method/blocker/target/condition 精确集合保持 task-local accounting；每一项都必须到达生产 owner、冷启动旅程和已经执行的 final-candidate check，并能在失败时明确归因。任何 unread、unsupported、unresolved、unmapped、unimplemented、unexecuted、stale 或无法区分的适用事实都会阻止“完整遵循”声明并作为 gap 报告。Long-Task 把同一组含义投影进已有 Claims、method Assertions、`surface_bindings`、fact-bound typed evidence 和 Final Gate。两种证明载体互斥：active Long-Task 不再执行默认 closure。生成成功、截图、hash 与 preflight 只证明输入完整性或资源完整性。
 
-默认 Workflow 会在 material 产品、设计、实现或验收判断前执行 UI Authority Closure 和条件式 Design Authority Check。它沿稳定 key 到 exactly-one canonical adoption record，再主动打开每个受影响的 selected `exact-target`/`constraint`；只看到 registry 或 handoff index 不算已消费。项目/系统/component-family target 由 `DESIGN.md` canonical 记录，单 screen/interaction target 由 owning Screen Contract 记录；该 record 独占 interpretation、selection basis、immutable locator/digest、condition coverage 和 editable upstream/update route，其他层只保留 stable key、owner/anchor 和 local applicability。缺失、不可读、过期或冲突时 fail closed；更新必须产生新 immutable version，不能覆盖旧基线。未配置 starter、候选稿、只有风格文字或灵感图都不能授权 agent 发明生产布局。明确的设计系统采纳请求路由到 `/design-system-authoring`，独立资源生成请求路由到 `/design-resource-authoring`；已有充分权威的普通实现、局部样式修复和 throwaway prototype 仍保持轻量。
+默认 Workflow 会在 material 产品、设计、实现或验收判断前执行 UI Authority Closure 和条件式 Design Authority Check。它沿稳定 key 到 exactly-one canonical adoption record，再主动打开每个受影响的 selected `exact-target`/`constraint`；只看到 registry 或 handoff index 不算已消费。项目/系统/component-family target 由 `DESIGN.md` canonical 记录，单 screen/interaction target 由 owning Screen Contract 记录；该 record 独占 interpretation、selection basis、immutable locator/digest、condition coverage 和 editable upstream/update route，其他层只保留 stable key、owner/anchor 和 local applicability。缺失、不可读、过期或冲突时 fail closed；更新必须产生新 immutable version，不能覆盖旧基线。未配置 starter、候选稿、只有风格文字或灵感图都不能授权 agent 发明生产布局。明确的设计系统采纳请求路由到 `design-system-authoring`，独立资源生成请求路由到 `design-resource-authoring`；已有充分权威的普通实现、局部样式修复和 throwaway prototype 仍保持轻量。
 
 只要是已经选定、准备进入实现的设计资源，两种开发路径都会先运行 `ty-context design-resource preflight <handoff.md>`。取得不完整、缺少或多出未声明依赖、不安全路径、过期 digest、虚构 locator、缺失/未引用 fact、伪造 resource-fact closure、未闭合的适用单元格、exact target 缺少 layout/pixel 事实、不成立的证据类型或未决语义都会 fail closed。preflight 只证明设计输入语义完整且资源身份正确；开发流程仍必须打开真实资源，并从生产入口证明当前实现。
 
@@ -157,17 +159,17 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 ### 显式 Design System Authoring
 
-只有用户明确要求初始化、生成、选择、采纳、替换或修复项目设计系统/设计风格时，才使用 `/design-system-authoring`。安装只让冷启动能力可用，不会自动运行。Skill 会发现 Open Design 当前真实 MCP resource/tool；若当前版本只通过 MCP 读取设计系统而没有创建 tool，则使用同一个已安装 Open Design daemon 的官方 generation/revision/accept API，不复制 provider prompt，也不把 daemon 调用冒充 MCP。
+只有用户明确要求初始化、生成、选择、采纳、替换或修复项目设计系统/设计风格时，才使用 `design-system-authoring`。安装只让冷启动能力可用，不会自动运行。Skill 会发现 Open Design 当前真实 MCP resource/tool；若当前版本只通过 MCP 读取设计系统而没有创建 tool，则使用同一个已安装 Open Design daemon 的官方 generation/revision/accept API，不复制 provider prompt，也不把 daemon 调用冒充 MCP。
 
 生成结果先是候选。必须有明确人工选择，或用户明确委托且选择标准已知，才会采纳到项目 canonical `DESIGN.md`、唯一 authored exact-value token source/generation direction，以及真正拥有 surface/interaction 耐久事实的 Context。Open Design provider ID、revision、digest 与 project binding 只是同步 provenance，不是第二权威。provider 执行成功、artifact ready、selected、authority adopted 与 `get_project.designSystemId` binding verified 会分开报告。
 
 ### 可选 Design Resource Authoring
 
-只有在用户明确要求生成、迭代、准备独立设计资源、为一段明确开发内容准备设计资源或使用 Open Design 时，才使用 `/design-resource-authoring`。输入可以是零散笔记或初始方案、产品/技术方案、专门视觉 brief、截图、已有资源或历史 Source Plan。独立 Source Plan 不是前置项，也不再是推荐中间步骤。
+只有在用户明确要求生成、迭代、准备独立设计资源、为一段明确开发内容准备设计资源或使用 Open Design 时，才使用 `design-resource-authoring`。输入可以是零散笔记或初始方案、产品/技术方案、专门视觉 brief、截图、已有资源或历史 Source Plan。独立 Source Plan 不是前置项，也不再是推荐中间步骤。
 
 Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
 
-Skill 会先分类 visual-style dependency。高保真/品牌化输出、视觉方向、字体/颜色/密度、组件视觉处理和 production-style prototype 属于 style-bearing：若 `DESIGN.md` 未配置或没有唯一 authored token source/direction，Skill 必须在创建 provider project/run 前停下，并提示用户显式调用 `/design-system-authoring`，绝不自动初始化。低保真结构、IA/flow topology 和纯语义 behavior/state study 属于 non-fidelity。style-bearing 工作必须把已采纳 provider ID 传给 MCP `create_project.designSystem`，并用 `get_project.designSystemId` 验证一致。
+Skill 会先分类 visual-style dependency。高保真/品牌化输出、视觉方向、字体/颜色/密度、组件视觉处理和 production-style prototype 属于 style-bearing：若 `DESIGN.md` 未配置或没有唯一 authored token source/direction，Skill 必须在创建 provider project/run 前停下，并提示用户显式选择 `design-system-authoring`，绝不自动初始化。低保真结构、IA/flow topology 和纯语义 behavior/state study 属于 non-fidelity。style-bearing 工作必须把已采纳 provider ID 传给 MCP `create_project.designSystem`，并用 `get_project.designSystemId` 验证一致。
 
 Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）委托最小充分资源集。一个可定位、可检查的大页面稿、原型或组件族 workbench 可以覆盖多个事项；重复控件映射到共享变体，只有仍缺少材料性含义的独特/复杂控件才需要专门状态或交互稿。静态/default 页面不能自动代表没展示的动态状态、交互、动效、响应式或可访问性。原型、低/高保真组合、组件板、provider-native 输入、逐控件一份稿、变体数量和目录都不是全局必选项。设计资源可以表达用户可感知的交互语义和产品规则的呈现方式，但业务、数据、权限和算法逻辑仍由产品/技术 Source 所有。Tiny Context 不复制 Open Design 的 prompt/template，也不内置 provider catalogue。
 
@@ -181,13 +183,13 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 ### 退役 Source Plan 兼容入口
 
-`/source-plan-authoring` 仅作为 long-task profile 的兼容指引保留。`/long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有 Source Plan 仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
+`source-plan-authoring` 仅作为 long-task profile 的兼容指引保留。`long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有 Source Plan 仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
 
 ## Single-Goal Rolling Delivery
 
-只有用户显式调用 `/long-task-workflow`，或当前 worktree 已有 active long task 时才使用。它固定为：
+只有用户显式选择 `long-task-workflow`，或当前 worktree 已有 active long task 时才使用。它固定为：
 
-- 一个平台原生、持续的 Goal；
+- 一个当前宿主选定的原生执行 Goal；压缩可在该 Goal 内继续，后续物理 Goal/session 只恢复语义状态，不重连旧 Turn；
 - 一个用户选定的仓库与最终验证/收敛 worktree；
 - 一次完整选定交付、一个 Contract、一个 Final Gate；
 - Outcome 依赖只表示验收与中间证明就绪关系，不限制实现顺序，也不表示 Worker 调度；
@@ -202,7 +204,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 原始/修订方案、选定设计资源和混合附件会立即进入一个 Source-bound Contract Draft 循环；完整 input inventory、稳定 Key、Product Control 级含义、选定资源设计事实、acceptance/risk、direct/derived/delegated/evidence-backed 溯源、Source 归属与 Contract 映射一起收敛。声明为 Source 的 Markdown 中，每一行非空文本都必须属于一个 Material `ty-source-item` 块、唯一且通过 schema 校验的 `design-resource-handoff-v1` formal block，或满足封闭语法的 background：`markdown-structure` 只能包含不承载自然语言的锚点/分隔线，`provenance` 只能包含固定 `input`、`mode`、条件式 `source` 与可选 `sha256` 字段的 `ty-source-provenance` 注释；有文字的标题或自由说明字段可能表达权威含义，因此不能放进 background。任意背景说明文字和其他未分类文本都 fail closed。每次交付至少有一个标注 `aspect=architecture` 的 technical obligation Source Item，并映射到可独立证明的架构 obligation。若未知偏好会实质改变调研或选型，Preflight/Compile 成功前必须先询问；标准明确后，有依据的推荐才写入真实 Source，不能只藏在 YAML。方案委托不授权真实高危外部动作；输入冲突、用户保留、偏好缺失或无可靠推荐仍为 `decision_required`。旧 Source Plan 结构本身不构成阻塞。
 
-第一次正式 Compile 成功前，`delivery-contract.yaml` 是同一份非权威 Contract Draft。`/long-task-workflow` 从入口开始，跨 Source 细化、仓库/Context 读取、映射和 Preflight 修复持续修改它，不要求一次响应生成完整 Contract。Source 完备性是 Preflight/Compile 的收敛条件，不是前置阶段。不存在单独 Contract Draft Skill、Draft Receipt 或 Authoring State。
+第一次正式 Compile 成功前，`delivery-contract.yaml` 是同一份非权威 Contract Draft。`long-task-workflow` 从入口开始，跨 Source 细化、仓库/Context 读取、映射和 Preflight 修复持续修改它，不要求一次响应生成完整 Contract。Source 完备性是 Preflight/Compile 的收敛条件，不是前置阶段。不存在单独 Contract Draft Skill、Draft Receipt 或 Authoring State。
 
 第一次成功 Compile 创建 Authority Lock，并返回：
 

@@ -66,9 +66,9 @@ Publishing a new npm version does not automatically migrate existing repositorie
 
 - Publishes `project-tiny-context-harness@0.8.0` with the synchronized package assets and CLI build.
 - Keeps the install path on the renamed package: `project-tiny-context-harness`.
-- Adds the explicit-only `/design-system-authoring` cold-start flow for generating, selecting and adopting Open Design systems into canonical project Design Authority.
-- Gates only style-bearing `/design-resource-authoring` work on configured Design Authority, verifies Open Design project binding, and reconciles accepted final decisions into the initial proposal once.
-- Sends revised proposals and selected resources directly into `/long-task-workflow`'s Source-bound Contract Draft loop; Source completeness and Contract mapping converge there without an internal Source-authoring stage, while `/source-plan-authoring` remains only a retired compatibility pointer.
+- Adds the explicit-only `design-system-authoring` cold-start flow for generating, selecting and adopting Open Design systems into canonical project Design Authority.
+- Gates only style-bearing `design-resource-authoring` work on configured Design Authority, verifies Open Design project binding, and reconciles accepted final decisions into the initial proposal once.
+- Sends revised proposals and selected resources directly into the `long-task-workflow` Skill's Source-bound Contract Draft loop; Source completeness and Contract mapping converge there without an internal Source-authoring stage, while `source-plan-authoring` remains only a retired compatibility pointer.
 - Keeps the authority boundary explicit: provider candidates and bindings are provenance, while `DESIGN.md`, its one authored token source and owning `project_context/**` remain canonical.
 - Makes package updates explicit through release update modes: `sync-only`, `upgrade-required`, `manual-required`.
 

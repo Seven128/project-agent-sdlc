@@ -3,10 +3,10 @@
 This module prepares controlled Codex Agent experiments for mechanism decisions that cannot be settled by package unit tests alone. It is based on repository `main` at:
 
 ```text
-2ad71874a3e23a2221088ebb58238df64278b5c9
+89b04869a2b29ae09944839370f1e373aa55085f
 ```
 
-That baseline already includes bounded Context search, Compact V2 authoring, conservative Preflight repair ordering, Context retrieval/Authority projection separation, and the one-time post-Authority-Lock model choice.
+That baseline already includes bounded Context search, Compact V2 authoring, conservative Preflight repair ordering, Context retrieval/Authority projection separation, the one-time post-Authority-Lock model choice and the current selected-design fact-closure boundary. It was refreshed before the startup/default-Context ownership optimization. Any benchmark-listed resolver, four-step replacement or Authoring candidate still requires the formal paired evidence below before production adoption.
 
 No benchmark result is committed here. A prepared run, calibration run, or single pair is not evidence that a mechanism has positive ROI.
 
