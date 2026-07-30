@@ -18,7 +18,11 @@ import {
 test("capacity probe reports bounded metrics and enforces declared information counts", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "design-capacity-probe-"));
   try {
-    const { handoff } = await writeDesignResourceHandoffFixture(root);
+    const { handoff } = await writeDesignResourceHandoffFixture(
+      root,
+      undefined,
+      { representation: "embedded" },
+    );
     const expectedCounts = {
       source_items: 1,
       targets: 1,

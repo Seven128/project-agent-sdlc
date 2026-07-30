@@ -133,7 +133,7 @@ test("single-decode handoff parsing preserves YAML keep-chomp trailing lines", a
 });
 
 test("the handoff adapter decodes strict YAML and the root shape exactly once", async () => {
-  await withFixture(async (root) => {
+  await withEmbeddedFixture(async (root) => {
     const content = await readFile(
       path.join(root, DESIGN_HANDOFF_PATH),
       "utf8",
@@ -221,7 +221,7 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
 });
 
 test("the same V1 marker can hydrate a lossless manifest-backed handoff", async () => {
-  await withFixture(async (root, handoff) => {
+  await withEmbeddedFixture(async (root, handoff) => {
     const embedded = await preflightDesignResourceHandoff(
       root,
       DESIGN_HANDOFF_PATH,
@@ -400,7 +400,7 @@ test("DSA bundle publication validates the frozen manifest set and is atomic", a
 });
 
 test("missing, duplicate, unresolved and unknown coverage fail closed", async () => {
-  for (const [mutate, expected] of [
+  for (const [mutate, expected, fixtureOptions] of [
     [
       (handoff) => handoff.coverage.pop(),
       /coverage_fact_cell_set_mismatch:handoff/u,
@@ -425,6 +425,7 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
         handoff.unknown_future_semantics = true;
       },
       /unknown keys: unknown_future_semantics/u,
+      { representation: "embedded" },
     ],
   ]) {
     await withFixture(async (root, handoff) => {
@@ -434,7 +435,7 @@ test("missing, duplicate, unresolved and unknown coverage fail closed", async ()
         preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
         expected,
       );
-    });
+    }, fixtureOptions);
   }
 });
 
@@ -542,7 +543,7 @@ test("every subject, target and condition cell must close all eight dimensions",
     );
   });
 
-  await withFixture(async (root, handoff) => {
+  await withEmbeddedFixture(async (root, handoff) => {
     handoff.targets.push({
       ...structuredClone(handoff.targets[0]),
       key: "main-secondary",
@@ -631,7 +632,7 @@ test("typed locators must resolve in the immutable resource", async () => {
 });
 
 test("implementation source profiles close the declared and discovered dependency set", async () => {
-  await withFixture(async (root, handoff) => {
+  await withEmbeddedFixture(async (root, handoff) => {
     handoff.targets[0].source_profile.dependency_resource_refs = [
       "resource.undeclared",
     ];
@@ -849,7 +850,7 @@ test("the frozen manifest and residual handoff conserve every atomic universe co
       /manifest_census_semantic_owner_missing:census\.subject\.component\.card:custom_property/u,
     ],
   ]) {
-    await withFixture(async (root, handoff, manifest) => {
+    await withEmbeddedFixture(async (root, handoff, manifest) => {
       mutate(handoff, manifest);
       await writeDesignResourceFactManifest(root, handoff, manifest, {
         refreshGeneration,
@@ -1071,14 +1072,22 @@ test("the embedded YAML is unique and remains readable ordinary Markdown Source"
   });
 });
 
-async function withFixture(action) {
+async function withFixture(action, options = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "design-handoff-"));
   try {
-    const { handoff, manifest } = await writeDesignResourceHandoffFixture(root);
+    const { handoff, manifest } = await writeDesignResourceHandoffFixture(
+      root,
+      undefined,
+      options,
+    );
     await action(root, handoff, manifest);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+}
+
+async function withEmbeddedFixture(action) {
+  return withFixture(action, { representation: "embedded" });
 }
 
 function demoteFullTargetFacts(handoff, method) {

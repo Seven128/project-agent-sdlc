@@ -117,13 +117,18 @@ const SUBJECT_SPECS = [
   },
 ];
 
-export async function writeDesignResourceHandoffFixture(root, mutate) {
+export async function writeDesignResourceHandoffFixture(
+  root,
+  mutate,
+  options = {},
+) {
   await mkdir(path.join(root, "design"), { recursive: true });
   const bundle = createFixtureBundle();
+  bundle.representation = options.representation ?? "manifest_backed";
   bundles.set(bundle.handoff, bundle);
   mutate?.(bundle.handoff, bundle.manifest);
   await writeFixtureResources(root, bundle);
-  await writeDesignResourceHandoff(root, bundle.handoff);
+  await writeDesignResourceHandoff(root, bundle.handoff, options);
   return {
     handoff: bundle.handoff,
     manifest: bundle.manifest,
@@ -146,10 +151,17 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
     if (manifestResource) manifestResource.sha256 = sha256(manifestContent);
   }
   const handoffPath = options.handoffPath ?? DESIGN_HANDOFF_PATH;
+  const representation =
+    options.representation ?? bundle?.representation ?? "manifest_backed";
+  const renderedHandoff =
+    representation === "embedded" ||
+    handoff.representation === "manifest_backed"
+      ? handoff
+      : manifestBackedDesignResourceHandoff(handoff);
   await mkdir(path.dirname(path.join(root, handoffPath)), { recursive: true });
   await writeFile(
     path.join(root, handoffPath),
-    renderDesignResourceHandoffMarkdown(handoff),
+    renderDesignResourceHandoffMarkdown(renderedHandoff),
   );
 }
 
@@ -198,7 +210,10 @@ export async function writeDesignResourceFactManifest(
   handoff.resources.find(
     (resource) => resource.key === "resource.fact-manifest",
   ).sha256 = sha256(manifestContent);
-  await writeDesignResourceHandoff(root, handoff, { syncManifest: false });
+  await writeDesignResourceHandoff(root, handoff, {
+    syncManifest: false,
+    representation: options.representation,
+  });
 }
 
 export function createDesignResourceHandoff() {
