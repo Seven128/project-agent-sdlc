@@ -72,21 +72,23 @@ Declare cheap machine-checkable prerequisites through existing environment requi
 - `task.target_profile` declares `required_state` plus a non-empty, duplicate-free `required_target_refs`. Each ref resolves to a `product` execution target with one bounded runtime family, root entrypoint and explicit capabilities. A required product target declares its family capability plus `cold-start` and `production-root`; every Stage Gate and every `critical_user_path` Outcome provides root `target_runtime` proof for every required ref. Optional support/observer targets never substitute.
 - Use `implementation_complete` only when code-level implementation is the selected target, `target_profile_usable` when the declared required targets must be usable, and `production_release_ready` only when release gates are part of the selected target. These are terminal target qualifications, not Outcome progress states.
 
-## Architecture Deliberation And Closure
+## Engineering Quality Deliberation And Closure
 
-Architecture Deliberation occurs once for every implementation delivery before formal Compile and the first implementation edit; risk changes depth, not occurrence. Surface concise conclusions and repository evidence rather than private chain-of-thought. A preservation result still names the concrete owner/extension point and explains why durable boundaries and debt do not worsen. Material work covers module ownership, unique source of truth, dependency direction, API/schema/data boundary, state lifecycle, persistence/recovery, security boundary, compatibility/migration, selected and rejected alternatives, one plausible future-change challenge, touched technical debt and forbidden bypasses.
+Architecture Deliberation occurs once for every implementation delivery before formal Compile and the first implementation edit; risk changes depth, not occurrence. Surface concise conclusions and repository evidence rather than private chain-of-thought. A preservation result still names the concrete owner/extension point, applicable engineering-quality attributes or their concrete preservation basis, and why durable boundaries and debt do not worsen. Material work covers module ownership, unique source of truth, dependency direction, API/schema/data boundary, state/resource lifecycle, persistence/recovery, security boundary, compatibility/migration, selected and rejected alternatives, one plausible future-change challenge, touched technical debt, forbidden bypasses and triggered failure/load/threat scenarios.
 
-Represent every material falsifiable invariant with existing Contract fields:
+Correctness/invariants and maintainability/changeability always receive at least preservation. Reliability/resource lifecycle, concurrency/consistency, performance/capacity/cost, security/privacy/safety, compatibility/migration/rollout and operability/observability/testability activate only when the Source or implementation risk makes them material. Exact expected predicates remain in Semantic Facts or selected-design authority. A performance claim additionally binds workload, metric, baseline or budget, environment, comparator/tolerance and a project-owned benchmark/probe; static shape cannot prove runtime performance.
+
+Represent every material independently falsifiable architecture or engineering-quality invariant with existing Contract fields:
 
 1. a Source-backed technical obligation, global constraint or forbidden shortcut;
 2. owner Context and expected/support/forbidden paths;
 3. a Binding to the implementation carrier when Counterfactual sensitivity is required;
-4. a project-owned executable architecture check, such as the repository's lint, AST, dependency or contract test;
-5. a separate Assertion when functional behavior could pass while the architecture invariant fails.
+4. a project-owned executable type, compiler, lint, AST, dependency, contract, behavior, benchmark or probe Check; and
+5. a separate Assertion when functional behavior could pass while the quality invariant fails.
 
 New or worsened debt is unacceptable unless a project-owned bounded exception identifies owner, rationale, tracking and removal/expiry condition. Unrelated legacy debt does not automatically expand delivery scope, but debt touched, relied on or worsened by the implementation cannot remain hidden. Material changes to scope, owner, Context, dependency direction, selected design or debt disposition refresh the deliberation and, after Authority Lock, use protected revision.
 
-Do not encode subjective “clean architecture” or generic quality prose as machine authority. If no reliable observation can falsify it, keep it as durable Context/review judgment or return `decision_required`. Harness routes the repository's architecture check; it does not become a language-generic dependency analyzer. Final Gate is the only Long-Task Architecture Conformance carrier and reruns these declared Checks on its current snapshot; do not add a default-workflow closure, architecture field, second Gate or state.
+Do not encode subjective “clean architecture”, `quality == true`, a functional pass or generic quality prose as machine authority. If no reliable observation can falsify it, keep it as durable Context/review judgment or return `decision_required`. Harness routes repository-native checks; it does not become a language-generic dependency, quality or performance analyzer. Final Gate is the only Long-Task Engineering Quality/Architecture Conformance carrier and reruns these declared Checks on its current snapshot. It proves only the declared project-check-bound invariant set, not overall code quality. Do not add a default-workflow closure, quality matrix, Source aspect, Claim/risk kind, Contract field, second Gate, state or Receipt.
 
 ## Proxy And Target Runtime Independence
 

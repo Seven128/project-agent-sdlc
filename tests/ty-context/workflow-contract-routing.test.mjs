@@ -428,7 +428,7 @@ read_policy: on-demand
   }
 });
 
-test("shared architecture quality is observable, risk-proportional, and single-carrier", async () => {
+test("shared engineering quality is observable, risk-proportional, and single-carrier", async () => {
   const [
     managed,
     rootAgents,
@@ -457,6 +457,7 @@ test("shared architecture quality is observable, risk-proportional, and single-c
   for (const guidance of [managed, rootAgents, workflow, rationale]) {
     assert.match(guidance, /Architecture Deliberation/iu);
     assert.match(guidance, /Architecture Conformance/iu);
+    assert.match(guidance, /Engineering Quality Conformance/iu);
   }
   for (const guidance of [managed, development, workflow, rationale]) {
     assert.match(
@@ -472,22 +473,23 @@ test("shared architecture quality is observable, risk-proportional, and single-c
     assert.match(guidance, /extension point/iu);
     assert.match(guidance, /source of truth/iu);
     assert.match(guidance, /future-change|future change|未来变化/iu);
-    assert.match(guidance, /technical debt|技术债/iu);
+    assert.match(guidance, /technical debt|技术债|touched debt/iu);
     assert.match(guidance, /project-owned|项目原生/iu);
+    assert.match(guidance, /quality|质量/iu);
   }
 
   assert.match(
     managed,
-    /Default (?:path|work) embeds it in Contract Conformance; an active Long-Task embeds it only in Final Gate/iu,
+    /Default work embeds it in Contract Conformance; an active Long-Task embeds it only in Final Gate/iu,
   );
   assert.match(managed, /Never schedule both/iu);
   assert.match(
     managed,
-    /changed candidate invalidates the closure|recheck after any candidate change/iu,
+    /recheck after any candidate or controlling-input change/iu,
   );
   assert.match(
     workflow,
-    /Contract Conformance including `Architecture Conformance`[\s\S]*then check Context drift/iu,
+    /Contract Conformance carrying `Engineering Quality Conformance` including `Architecture Conformance`[\s\S]*then check Context drift/iu,
   );
   assert.match(
     rationale,
@@ -499,11 +501,11 @@ test("shared architecture quality is observable, risk-proportional, and single-c
   );
   assert.match(
     workflow,
-    /no required architecture artifact, second `Context Delta`, Contract, Authority, Gate, state machine, scheduler or language-generic analyzer/iu,
+    /no quality artifact\/matrix, second `Context Delta`, Contract, Source aspect, Claim\/risk kind, Authority, Gate, state, scheduler, broad quality Boolean or language-generic analyzer/iu,
   );
   assert.match(
     authoring,
-    /decision-rationale\/architecture-quality\.md[\s\S]*每个实现需求[\s\S]*普通 Contract Conformance 与 Long-Task Final Gate[\s\S]*候选变化[\s\S]*Context drift/iu,
+    /decision-rationale\/architecture-quality\.md[\s\S]*每个实现需求[\s\S]*Goal 拥有[\s\S]*整体代码质量[\s\S]*unsupported metric[\s\S]*普通 sync 不迁移/iu,
   );
 });
 

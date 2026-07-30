@@ -26,8 +26,13 @@ test("managed guidance includes Modularity Check workflow contract hints", () =>
     assert.match(skill, /<harnessRoot>\/config\.yaml/);
     assert.match(skill, /service \/ facade/);
     assert.match(skill, /verification helper/);
-    assert.match(skill, /单函数语句数/);
-    assert.match(skill, /压成一行不能规避/);
+    assert.match(skill, /capability-aware/);
+    assert.match(skill, /JS\/TS family/);
+    assert.match(skill, /Python/);
+    assert.match(skill, /line-only/);
+    assert.match(skill, /不支持的指标为 `n\/a`/);
+    assert.match(skill, /不是完整跨语言 static analysis/);
+    assert.match(skill, /普通 `sync` 不做迁移/);
     assert.match(skill, /owner.*introduced_at.*tracking_issue.*expiry_condition/s);
   }
   for (const makefile of [managedMake, packagedMake]) {
@@ -41,12 +46,17 @@ test("public docs describe Modularity Check hard gate and scoped waivers", () =>
   for (const doc of [read("README.md"), read("packages/ty-context/README.md")]) {
     assert.match(doc, /Modularity Check: none\|required\|exception/);
     assert.match(doc, /validate-code-modularity/);
-    assert.match(doc, /enforce it separately from `validate-context`/);
+    assert.match(doc, /capability-aware portable risk signal/);
+    assert.match(doc, /analysis=js-ts-heuristic\|python-heuristic\|line-only/);
+    assert.match(doc, /unsupported metrics are `null` internally and `n\/a` in CLI output/);
+    assert.match(doc, /not complete static analysis, architecture proof or runtime-performance evidence/);
     assert.match(doc, /Modularity Policy/);
     assert.match(doc, /Newly generated Harness configs default to `strict_except_generated`/);
     assert.match(doc, /strict_except_generated/);
     assert.match(doc, /scoped_waivers/);
     assert.match(doc, /modularity\.waivers/);
+    assert.match(doc, /explicit `ty-context upgrade` removes only waivers/);
+    assert.match(doc, /ordinary `sync` never performs that migration/);
     assert.match(doc, /owner.*introduced_at.*tracking_issue.*expiry_condition/s);
   }
 });

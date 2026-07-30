@@ -10,7 +10,7 @@ Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层
 
 编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及长任务经历多轮修改或上下文压缩后仍可信的完成检查。
 
-Tiny Context 将这些能力保持为窄边界。
+Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次实现前、风险比例化的 Architecture Deliberation 与适用质量路由，实施过程保留 Goal 自主但遵守边界型实现质量 guardrails，项目验证后只由一个 carrier 对当前候选执行包含 Architecture Conformance 的 Engineering Quality Conformance。
 
 它不会启动或切换模型，不会创建 Agent、分支或 worktree，不会 merge、push、创建 PR 或部署，也不会取代项目测试和人工产品验收。
 
@@ -19,10 +19,10 @@ Tiny Context 将这些能力保持为窄边界。
 | 机制 | 何时、如何使用 | 负责什么 |
 |---|---|---|
 | **Minimal Context** | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。 | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。 |
-| **Workflow Contract** | `init` 后自动生效的 prompt-level 默认协议。普通任务直接交给当前 coding Goal；没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、Architecture Deliberation、唯一 `Context Delta`、实现、项目检查、Contract Conformance 与 Context drift；不产生 validator 结果、Receipt、持久工作流状态或机器完成权威。 |
+| **Workflow Contract** | `init` 后自动生效的 prompt-level 默认协议。普通任务直接交给当前 coding Goal；没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、带适用质量路由的 Architecture Deliberation、唯一 `Context Delta`、Goal-owned 实现、项目检查、承载 Engineering Quality Conformance 的 Contract Conformance 与 Context drift；不产生 validator 结果、Receipt、持久工作流状态或机器完成权威。 |
 | **Long-Task Workflow** | 先启用一次 `long-task` profile，再显式选择 `long-task-workflow` Skill；已有有效绑定时恢复。不能因为任务看起来很长就自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复的局部进度、受保护修订和当前快照 Live Final Gate。 |
 
-三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载最终架构与选定设计闭环，不再重复默认 Contract Conformance。
+三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载 Engineering Quality/Architecture Conformance 与选定设计闭环，不再重复默认 Contract Conformance。
 
 `design-system-authoring` 与 `design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `long-task-workflow`。
 
@@ -120,11 +120,11 @@ Monorepo 应优先用一个小型顶层 Area 保存仓库公共的 default Conte
 1. 读取 core/default Context，收集 manifest 候选；
 2. 在 `project_context/**` 做一次 bounded Context search，并在依赖需要时继续扩读；
 3. 多目标仓库先解析本任务 intended workspace(s)，但不把 Context workspace 或 Area 变成读取/修改权限；
-4. 对用户可见地给出一次简洁、仓库事实绑定的 Architecture Deliberation；
+4. 对用户可见地给出一次简洁、仓库事实绑定的 Architecture Deliberation，并说明触发的质量属性或具体 preservation basis；
 5. 决定 `Context Delta: none|required`，耐久语义改变时先更新 owner Context；
 6. 使用平台内部计划；
-7. 实现并运行项目验证，包括仓库已有的 changed-path / target-scope check；
-8. 执行 Contract Conformance，其中包含当前候选快照的 Architecture Conformance 和最终 change-scope 审查；
+7. 在 Goal-owned 边界型质量 guardrails 下实现并运行项目验证，包括仓库已有的 changed-path / target-scope check；
+8. 执行 Contract Conformance，其中包含当前候选快照的 Engineering Quality Conformance、其 Architecture Conformance 子集和最终 change-scope 审查；
 9. 单独执行 Context drift check 后交付。
 
 默认工作流不要求 `plan.md`、target declaration、matrix、verdict、evidence ledger、持久检索索引或第二份执行计划。任务时长、文件数和复杂度不会自动激活长程状态。
@@ -137,17 +137,21 @@ Context: updated <文件/原因>
 Context: no durable fact change
 ```
 
-### 架构与模块质量
+### 工程质量与模块化
 
-技术架构能力是两条实现路径共享的 Workflow 义务。每个实现需求都在第一处实现编辑前，对用户可见地完成一次 `Architecture Deliberation`；风险改变深度，不取消这个环节。小修改要指出具体 owner / 当前 extension point、未改变的耐久边界，以及为何没有新增或加重技术债。material 工作还要覆盖唯一 source of truth、dependency 与 interface/state/lifecycle 边界、failure/recovery/compatibility、选中和拒绝的方案、至少一个合理未来变化及其扩展点、触达的技术债、forbidden shortcuts 和项目原生可执行检查。
+Shared Engineering Quality 在不增加工作流的前提下扩展原有架构义务。每个实现需求都在第一处实现编辑前，对用户可见地完成一次 `Architecture Deliberation`；风险改变深度，不取消这个环节。小修改要指出具体 owner / 当前 extension point、未改变的耐久边界、适用质量属性的 preservation，以及为何没有新增或加重技术债。material 工作还要覆盖唯一 source of truth、dependency 与 interface/state/resource lifecycle 边界、选中和拒绝的方案、至少一个合理未来变化及其扩展点、触达的技术债、forbidden shortcuts、项目原生可执行检查和触发的 failure/load/threat 场景。correctness/invariant 与 maintainability/changeability 至少给出 preservation；reliability/resource lifecycle、concurrency/consistency、performance/capacity/cost、security/privacy/safety、compatibility/migration/rollout、operability/observability/testability 只在 material 时激活。
 
-实现和项目验证之后，`Architecture Conformance` 对当前候选快照检查 scope/path escape、owner 或 dependency direction 违规、service/facade 绕过、重复权威或第二 source of truth、未声明 API/Schema/state/persistence 变化、缺失架构检查和新增/加重技术债。候选再变化就使结果失效。普通任务把它放在 Contract Conformance 内；Long-Task 用已有 obligation/constraint/forbidden shortcut、owner/path/Binding 和 executable Check 表达不变量，只由 Final Gate 收口，同一候选不会执行两次。
+实现顺序、方法和反馈节奏仍由 Goal 决定。轻量纪律只要求复用 owning service/facade/adapter 与唯一 source of truth，做最小而完整的变化，保留明确 failure/resource 语义，并仅为稳定概念或有证据的变化轴增加抽象。精确产品/技术谓词继续由 Semantic Facts 拥有，精确选定 UI/UX 值由 selected-design closure 拥有。
+
+实现和项目验证之后，`Engineering Quality Conformance` 包含 `Architecture Conformance`，对当前候选快照检查 scope/path escape、owner/dependency 违规或 bypass、重复 truth、未声明 boundary/lifecycle 变化、silent failure、适用 resource/concurrency/security/compatibility/operability 缺陷、无证据性能声称、缺失声明检查和新增/加重技术债。性能声称必须绑定 workload、metric、baseline 或 budget、environment、comparator/tolerance 和项目原生 benchmark/probe；静态形状不证明运行时性能。候选或 controlling input 再变化就使结果失效。普通任务把它放在 Contract Conformance 内；Long-Task 用已有 Source-backed obligation/constraint/forbidden shortcut、owner/path/Binding、executable Check，以及功能 pass 时仍可能独立失败的 Assertion 表达不变量。Final Gate 是唯一 Long-Task carrier，只证明该声明、可证伪、项目检查绑定的集合，不证明整体代码质量；同一候选不会执行两套 carrier。
 
 Contract Conformance 主要检查当前 Source/Context 是否到达实现和验证；单独命名的 Context drift check 反向检查实现或新决策是否让耐久 Context 过时。新增或加重技术债默认阻塞，除非项目有带 owner、rationale、tracking 和 removal condition 的显式 bounded exception。无关 legacy debt 不自动扩张任务范围，但本次触达、依赖或加重的债不能隐藏。
 
-`Architecture Context Hit`、`Decision Rationale Hit: existing|required|none` 和 `Modularity Check: none|required|exception` 仍是内部路由问题，不创建 Task Contract 或固定 `plan.md`。可见检查点证明“做过架构考量”，不暴露私有思维链，也不保证最佳设计或预知所有未知未来需求。
+`Architecture Context Hit`、`Decision Rationale Hit: existing|required|none` 和 `Modularity Check: none|required|exception` 仍是内部路由问题，不创建 Task Contract 或固定 `plan.md`。可见检查点只证明“存在可审查的考量”，不暴露私有思维链，也不保证最佳设计或预知所有未知未来需求。该义务不增加质量 plan/stage/matrix、第二 Authority、Contract field/aspect/Claim/risk kind、Gate、state 或 Receipt。
 
-Harness 只路由仓库原生 lint/AST/dependency/contract check，不实现跨语言通用架构分析器或新增架构 artifact/state。`check-modularity` 的语句数/分支风险会定位到最高风险函数和行号。
+Harness 只路由仓库原生 type/compiler/lint/AST/dependency/contract/behavior/benchmark/probe，不实现跨语言通用架构、质量或性能分析器。`ty-context check-modularity` 是 capability-aware portable risk signal：所有纳入格式检查物理行；JS/TS family 另做 lexical 单函数语句/分支、export、state-transition 与 responsibility 启发式；Python 只做专用 lexical 单函数语句/分支；其他格式（包括没有 SFC parser 的 Vue）只做 line-only。输出明确 `analysis=js-ts-heuristic|python-heuristic|line-only`；不支持指标内部为 `null`、CLI 为 `n/a`，绝不伪装成零，也不参与 risk/regression。它不是完整 static analysis、架构证明或运行时性能证据。
+
+新配置默认 `strict_except_generated`；需要 bounded legacy exception 的项目可使用 lifecycle-complete `scoped_waivers`。显式 `ty-context upgrade` 只清理那些纯粹因退役跨语言 JS 启发式的现已不支持指标而存在、且目标没有当前受支持风险的 waiver；普通 `sync` 不执行该迁移，其他 stale/invalid waiver 继续 fail closed。
 
 ### Product Surface 与 Screen Contract
 
@@ -265,7 +269,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 锁定后的修订把“Authority 有变化”和“需要用户决策”分开：单调增强、锁定 Claims/targets/proof obligations 不变的 Source/Context snapshot 更新、Runner/input 实装修复、repo-bound scope 扩展、风险增强，以及 carrier、mutation、Check 相同且 Claim/预期失败断言覆盖不减少的等价 Counterfactual 覆盖可自动采用；产品/Source Claim/target/external-confirmation 变化，丢失 scenario/Claim/Evidence Capability/失败拦截，移除 forbidden/owner Context，runner type/effect、verifier kernel 或未知 reason 则只预览并等待精确 identity，风险降级直接拒绝。`diagnose-revision` 无副作用，撤回/替换候选只在同一 `delivery-contract.yaml` 合并，不产生询问。最终 pending brief 先解释 Authority Revision 是什么，再区分 `user_decision_reasons` 与机械边界变化。必须先展示 brief；若当前任务已有明确指令精确覆盖全部决策 reason，可机械转录而不二次询问，泛化“继续”、一揽子批准、建议或 Agent 推断不算。每次采用都保留 exact identity、旧 Authority 连续性、证据失效和完整 Final Gate，并返回滚动实现，绝不表示完成。
 
-Long-Task Skill 采用渐进读取：主 `SKILL.md` 只保留目标、硬边界和路由；Draft 输入/Contract Authoring、Evidence Design 与 Authority Lifecycle 细节按当前活动读取一层 reference，其中 Draft 输入与 Contract mapping 同时进行。这只是指令组织，不产生第二权威。共享 Architecture Deliberation 在 Source-bound Draft authoring 中完成；material 架构不变量使用已有 obligations/constraints/forbidden shortcuts、owner/path/Binding 和项目原生 executable Checks，Final Gate 是唯一的 Long-Task Architecture Conformance 承载点。
+Long-Task Skill 采用渐进读取：主 `SKILL.md` 只保留目标、硬边界和路由；Draft 输入/Contract Authoring、Evidence Design 与 Authority Lifecycle 细节按当前活动读取一层 reference，其中 Draft 输入与 Contract mapping 同时进行。这只是指令组织，不产生第二权威。共享 Architecture Deliberation 与适用质量路由在 Source-bound Draft authoring 中完成；material 且可独立证伪的架构/工程质量不变量使用已有 Source-backed obligations/constraints/forbidden shortcuts、owner/path/Binding、项目原生 executable Checks，以及功能行为可独立通过时的单独 Assertion。Final Gate 是唯一的 Long-Task Engineering Quality/Architecture Conformance 承载点，只证明该声明、项目检查绑定的集合。
 
 Draft Outcome 只是 Authority Lock 前的 Outcome。Outcome 按可独立观察、判断、纵向闭环和定向验证的结果拆分，用于投影 acceptance/verification-ready 工作集、定位失败、恢复 finding 并精确失效旧局部结果。`depends_on` 只表示 acceptance 与中间证明 readiness，不授权或禁止实现编辑。每个 Outcome 属于一个有序 Stage；Stage gate 传递依赖同 Stage 其余 Outcome，后续 Stage 依赖前置 gate。Rolling Frontier 和 Stage 状态都由普通 Outcome Progress 临时派生，只是建议性验证/诊断投影。当前 Goal 可按代码现实跨 Outcome/Stage 实现、检查或返工，也可使用平台原生 opaque delegation；Harness 不创建 delegation scheduler、不把委派当证明，所有结果必须汇入选定验证 worktree。Outcome 不是 Worker、scheduler task、queue 或并行单元，Stage 也没有 Receipt 或第二个 Gate。Outcome 拆分诊断和证明归属，不拆分完成权威，因此最终仍必须在当前最终快照运行一次完整 Final Gate。
 
@@ -380,7 +384,7 @@ make validate-harness
 
 `test:affected` 用于日常修改和修复循环；本地推断只会报告并略过未跟踪的 `.work_products/**`，tracked 与显式路径仍按 fail-safe 路由。`test:long-task:trust` 是冻结候选版本后的高风险边界门，也是 PR CI 使用的层级；经审阅的 Trust/focused/hotspot 预算防止反馈层静默膨胀，但完整套件发现不设裁剪上限。`npm test` 是 `main` 和发布保留的完整发布回归，不应在每次小修复后重跑。受控 Ubuntu CI 使用有充分余量的分层灾难性耗时上限，本地耗时仍只做诊断。Delivery Contract 和完整 Long-Task 门仍可通过 package workspace scripts 显式执行。
 
-模块化门禁是 `ty-context check-modularity`；例外必须包含 `owner`、`introduced_at`、`reason`、`tracking_issue` 和 `expiry_condition`。
+模块化门禁是 capability-aware 的 `ty-context check-modularity`；例外必须包含 `owner`、`introduced_at`、`reason`、`tracking_issue` 和 `expiry_condition`，不支持指标不会以零值制造通过假象。
 
 ## 诚实限制
 

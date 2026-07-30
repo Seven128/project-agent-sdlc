@@ -398,8 +398,40 @@ test("design authoring profile and provider changes select focused coverage", ()
   ]);
   assert.equal(modularity.mode, "selected");
   assert.deepEqual(modularity.tests, [
+    "tests/ty-context/check-modularity-capability.test.mjs",
     "tests/ty-context/check-modularity.test.mjs",
+    "tests/ty-context/modularity-python.test.mjs",
     "tests/ty-context/validators.test.mjs",
+  ]);
+
+  for (const source of [
+    "packages/ty-context/src/commands/check-modularity.ts",
+    "packages/ty-context/src/lib/modularity-python.ts",
+    "packages/ty-context/src/lib/source-files.ts",
+  ]) {
+    const capability = selectAffectedTests([source]);
+    assert.equal(capability.mode, "selected", source);
+    assert.deepEqual(capability.tests, modularity.tests, source);
+  }
+
+  const migration = selectAffectedTests([
+    "packages/ty-context/src/lib/modularity-capability-migration.ts",
+  ]);
+  assert.deepEqual(migration.tests, [
+    "tests/ty-context/check-modularity.test.mjs",
+    "tests/ty-context/modularity-capability-upgrade.test.mjs",
+    "tests/ty-context/upgrade.test.mjs",
+  ]);
+
+  const migrationRegistry = selectAffectedTests([
+    "packages/ty-context/src/lib/migrations.ts",
+  ]);
+  assert.deepEqual(migrationRegistry.tests, [
+    "tests/ty-context/legacy-upgrade.test.mjs",
+    "tests/ty-context/long-task-verifier-migration.test.mjs",
+    "tests/ty-context/modularity-capability-upgrade.test.mjs",
+    "tests/ty-context/surface-contract-upgrade.test.mjs",
+    "tests/ty-context/upgrade.test.mjs",
   ]);
 
   const activation = selectAffectedTests([

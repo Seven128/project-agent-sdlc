@@ -53,8 +53,8 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
   assert.match(manifest, /"architecture deliberation"/);
   assert.match(manifest, /"架构考量"/);
   assert.match(area, /Role Context Map/);
-  assert.match(area, /Architecture Quality Rationale/);
-  assert.match(global, /Architecture quality rationale/);
+  assert.match(area, /Engineering Quality Rationale/);
+  assert.match(global, /Engineering quality rationale/);
 
   assert.match(model, /`project_context\/\*\*` is authoritative/);
   assert.match(model, /Code is current implementation evidence/);
@@ -75,14 +75,17 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
   assert.match(workflow, /\$long-task-workflow[\s\S]*\/skills/);
   assert.match(workflow, /Targeted verify.*never accepted authority/s);
   assert.match(workflow, /Contract Conformance/);
-  assert.match(quality, /Reason And Honest Guarantee/);
+  assert.match(quality, /Shared Engineering Quality Assurance Rationale/);
   assert.match(quality, /Architecture Deliberation/);
+  assert.match(quality, /Applicable Quality/);
+  assert.match(quality, /Implementation Quality Discipline/);
+  assert.match(quality, /Engineering Quality Conformance/);
   assert.match(quality, /Architecture Conformance/);
   assert.match(quality, /Contract Conformance And Context Drift/);
   assert.match(quality, /Evidence And Update Principles/);
   assert.match(
     quality,
-    /Final Gate is the only Long-Task post-implementation architecture-conformance owner/iu,
+    /Final Gate is the only Long-Task `Engineering Quality Conformance` and `Architecture Conformance` carrier/iu,
   );
   assert.doesNotMatch(workflow, /Plan Validator Boundary/);
 });
@@ -108,7 +111,7 @@ test("managed guidance and package assets share current routing", async () => {
     );
     assert.match(
       guidance,
-      /Long-Task Final Gate is the sole `Architecture Conformance`/i,
+      /Long-Task Final Gate is the sole `Engineering Quality Conformance`, `Architecture Conformance`/i,
     );
     assert.match(
       guidance,
@@ -145,7 +148,8 @@ test("role Skills preserve Context-first semantics without fixed workflow artifa
   assert.match(engineering, /Architecture Context Hit/);
   assert.match(engineering, /Decision Rationale Hit: existing\|required\|none/);
   assert.match(engineering, /Modularity Check: none\|required\|exception/);
-  assert.match(engineering, /压成一行不能规避/);
+  assert.match(engineering, /capability-aware/iu);
+  assert.match(engineering, /不支持的指标为 `n\/a`/);
   assert.match(
     engineering,
     /owner.*introduced_at.*reason.*tracking_issue.*expiry_condition/s,

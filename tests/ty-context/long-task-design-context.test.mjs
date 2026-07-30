@@ -919,7 +919,7 @@ test("blocker revisions use causal evidence without adding completion state", as
   );
 });
 
-test("Long-Task carries shared architecture quality once through Final Gate", async () => {
+test("Long-Task carries shared engineering quality once through Final Gate", async () => {
   const [skill, authoring, lifecycle, workflow, rationale, spec] =
     await Promise.all([
       read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
@@ -956,15 +956,15 @@ test("Long-Task carries shared architecture quality once through Final Gate", as
   );
   assert.match(
     authoring,
-    /Source-backed technical obligation, global constraint or forbidden shortcut[\s\S]*owner Context[\s\S]*Binding[\s\S]*project-owned executable architecture check/iu,
+    /Source-backed technical obligation, global constraint or forbidden shortcut[\s\S]*owner Context[\s\S]*Binding[\s\S]*project-owned executable type, compiler, lint, AST, dependency, contract, behavior, benchmark or probe Check/iu,
   );
   assert.match(
     lifecycle,
-    /sole Long-Task `Architecture Conformance` carrier/iu,
+    /sole Long-Task `Engineering Quality Conformance`\/`Architecture Conformance` carrier/iu,
   );
   assert.match(
     skill,
-    /Do not also run the default Workflow's standalone Contract Conformance closure/iu,
+    /Do not also run the default Workflow's Contract Conformance closure/iu,
   );
   assert.match(
     workflow,
@@ -972,12 +972,18 @@ test("Long-Task carries shared architecture quality once through Final Gate", as
   );
   assert.match(
     rationale,
-    /Adding a second architecture Gate, field, Receipt or default Contract Conformance pass would duplicate ownership and runtime cost/iu,
+    /Adding a second quality Gate, field, Receipt or default Contract Conformance pass would duplicate ownership and runtime cost/iu,
   );
   assert.match(
     rationale,
-    /independent read-only Global product-conformance Check[\s\S]*distinct from the shared Architecture Conformance obligation/iu,
+    /independent read-only Global product-conformance Check[\s\S]*distinct from the shared Engineering Quality\/Architecture Conformance obligation/iu,
   );
+  assert.match(
+    guidance,
+    /proves (?:exactly |only )?(?:that |the )?declared[\s\S]{0,120}(?:not|never) overall code quality/iu,
+  );
+  assert.match(guidance, /independent Assertion|separate Assertion/iu);
+  assert.doesNotMatch(guidance, /quality_conformance_state|quality_gate_receipt/iu);
   assert.match(
     guidance,
     /changed candidate|candidate change|later candidate.*invalidates/iu,

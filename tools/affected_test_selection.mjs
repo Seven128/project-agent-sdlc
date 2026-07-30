@@ -521,9 +521,37 @@ const HOTSPOT_TESTS = new Map([
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ]),
-  [
+  ...[
+    "packages/ty-context/src/commands/check-modularity.ts",
+    "packages/ty-context/src/lib/modularity-python.ts",
     "packages/ty-context/src/lib/modularity.ts",
-    ["check-modularity.test.mjs", "validators.test.mjs"],
+    "packages/ty-context/src/lib/source-files.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "check-modularity-capability.test.mjs",
+      "check-modularity.test.mjs",
+      "modularity-python.test.mjs",
+      "validators.test.mjs",
+    ],
+  ]),
+  [
+    "packages/ty-context/src/lib/modularity-capability-migration.ts",
+    [
+      "check-modularity.test.mjs",
+      "modularity-capability-upgrade.test.mjs",
+      "upgrade.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/lib/migrations.ts",
+    [
+      "legacy-upgrade.test.mjs",
+      "long-task-verifier-migration.test.mjs",
+      "modularity-capability-upgrade.test.mjs",
+      "surface-contract-upgrade.test.mjs",
+      "upgrade.test.mjs",
+    ],
   ],
   [
     "packages/ty-context/src/lib/execution-target-capabilities.ts",

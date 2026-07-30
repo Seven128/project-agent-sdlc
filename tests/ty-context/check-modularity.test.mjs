@@ -196,38 +196,6 @@ test("check-modularity catches compressed one-line branch complexity", async () 
   }
 });
 
-test("check-modularity measures Python complexity per function instead of aggregating the file", async () => {
-  const root = await mkdtemp(
-    path.join(os.tmpdir(), "ty-context-modularity-python-"),
-  );
-  try {
-    await mkdir(path.join(root, "tools"), { recursive: true });
-    const functions = Array.from(
-      { length: 10 },
-      (_, index) =>
-        `def check_${index}(value):\n    if value:\n        return value\n    return None`,
-    ).join("\n\n");
-    await writeFile(
-      path.join(root, "tools/checks.py"),
-      `${functions}\n`,
-      "utf8",
-    );
-    const result = runCli(root, [
-      "check-modularity",
-      "--file",
-      "tools/checks.py",
-      "--limit",
-      "300",
-      "--fail-on-warning",
-    ]);
-    assert.equal(result.status, 0, output(result));
-    assert.match(result.stdout, /statements=3 branches=2/);
-    assert.match(result.stdout, /statement_at=check_0:1 branch_at=check_0:1/);
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
-});
-
 test("check-modularity does not treat a declaration-only module as one giant function", async () => {
   const root = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-modularity-schema-"),

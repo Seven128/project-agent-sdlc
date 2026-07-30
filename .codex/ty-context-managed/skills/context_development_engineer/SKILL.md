@@ -22,12 +22,12 @@ When an active `long-task-workflow` binding exists, that Skill owns lifecycle, t
 3. 在 monorepo 或其他多产品目标仓库中，把“为理解任务而读取什么”和“本任务 intended workspace(s)”分开。可选的 `project_context/workspaces/<workspace-id>/**` 只镜像确有耐久 Context 的实现 workspace；每个已表示 Context workspace 用现有 manifest `root/context` 精确对应一个代码根，内部 Area 负责语义 ownership，跨 workspace Area 留在顶层，未表示的代码 workspace 不建空目录。目录/default/read policy 既不是读取 ACL，也不是修改授权。用用户、产品、路径和仓库事实消歧；仍有多个实质不同的同级目标时，产品编辑前只问一个精确问题。跨 workspace 任务显式列全 intended 与 supporting/shared scope。
 4. 确认目标、约束、成功标准、影响域、验证/部署路径和风险。能从代码或 Context 得到的事实不要重复询问。
 5. Context 决定“应该是什么”；代码说明“现在是什么”；测试和运行证据证明行为。冲突是实现漂移、缺失工作或 stale Context，不能由代码静默重定义归属。
-6. 第一处实现编辑前，完成并对用户可见地给出一次简洁、仓库事实绑定的 `Architecture Deliberation`。不输出私有思维链；输出结论及其 Context、模块/路径、symbol/extension point 和验证依据。风险只改变深度，不取消这个环节。
+6. 第一处实现编辑前，完成并对用户可见地给出一次简洁、仓库事实绑定的 `Architecture Deliberation`，同时给出适用工程质量属性或具体 preservation basis。不输出私有思维链；输出结论及其 Context、模块/路径、symbol/extension point 和验证依据。风险只改变深度，不取消这个环节。
 7. 根据架构考量决定唯一 `Context Delta: none|required`。影响 durable architecture boundary、module ownership、API / Schema / data contract、state / runtime semantics、dependency direction、verification / deployment semantics 或 durable rationale / tradeoff 时为 `required`，先更新 owning Context。不要创建 `plan.md`、Task Contract 文件或 Markdown 映射表。
 8. 用 Agent 内部计划保持 goal、non-goals、owner、boundaries、implementation surfaces、risk 和 verification 清晰。默认流程不要求或验证固定 `plan.md`、matrix、verdict 或 evidence ledger。
-9. 实现后先运行 project-owned verification。仓库已有 changed-path / target-scope checker 时，以本任务准确变更路径和 intended/supporting targets 调用；没有时在 Conformance 中按 durable owner 审查最终 diff，不能把无 provenance 的既有脏改动算进本任务。再在 `Contract Conformance` 中对当前候选快照执行 `Architecture Conformance`，随后单独做 Context drift check；报告实现、验证、架构符合性、Context 状态和 blockers。
+9. 实现顺序、方法和反馈节奏仍由 Goal 决定，但遵守下述边界型实现质量纪律。实现后先运行 project-owned verification。仓库已有 changed-path / target-scope checker 时，以本任务准确变更路径和 intended/supporting targets 调用；没有时在 Conformance 中按 durable owner 审查最终 diff，不能把无 provenance 的既有脏改动算进本任务。再在 `Contract Conformance` 中对当前候选快照执行包含 `Architecture Conformance` 的 `Engineering Quality Conformance`，随后单独做 Context drift check；报告实现、验证、工程/架构符合性、Context 状态和 blockers。
 
-## 必经 Architecture Deliberation
+## 必经 Architecture Deliberation 与适用质量判断
 
 每个实现需求都执行一次。small code task 可以得到“保持现有架构”的浅层结论，但必须具体指出当前 owner / extension point、未改变的 durable boundary、验证入口，以及为何没有引入或加重技术债，不能用“无需架构考虑”跳过。
 
@@ -54,21 +54,33 @@ When an active `long-task-workflow` binding exists, that Skill owns lifecycle, t
 - 应复用的 extension point，或新抽象为何确有净收益；
 - 哪个 project-owned lint/AST/dependency/contract test 能证明边界。
 
-范围、owner、controlling Context、dependency direction 或选定设计发生实质变化时，原考量失效，继续实现前先更新。持久结论进入最小 owning Context；实现细节留在代码。不要把“代码更优雅”当作架构要求，也不要让 Harness 变成跨语言通用 dependency analyzer。
+适用质量属性是风险触发的约束与权衡，不是要求全部最大化的 checklist。正确性/invariant 与 maintainability/modularity/changeability 至少给出 preservation 判断；external I/O、async/long-lived resource 或 partial failure 触发 reliability/resource lifecycle；共享可变状态、并行、事务、消息、重试或多 writer 触发 concurrency/consistency；显式性能要求/声称或 hot path、无界 population、I/O、batch/cache/serialization/memory/public abstraction 风险触发 performance/capacity/cost；trust/identity/permission/sensitive data/external input/audit/irreversible effect 触发 security/privacy/safety；公共 API/schema/protocol/storage/config/versioned state 触发 compatibility/migration/rollout；生产 runtime、后台任务或外部集成触发 operability/observability/testability。精确产品/技术谓词继续由 Semantic Facts 拥有，精确选定 UI/UX 值由 selected-design closure 拥有。
 
-## Architecture Conformance
+性能声称必须绑定 workload、metric、baseline 或 budget、environment、comparator/tolerance 和 project-owned benchmark/probe；静态形状检查不能证明运行时性能。没有可归因测量时，只能报告 preservation 或未验证，不能声称改善或满足预算。未触发的质量族给出具体 preservation basis，不创建空矩阵。
 
-默认流程在项目验证之后，把架构符合性作为 `Contract Conformance` 的必检子项，只针对当前候选快照检查：
+范围、owner、controlling Context、dependency direction、选定设计、质量适用性或 debt disposition 发生实质变化时，原考量失效，继续实现前先更新。持久结论进入最小 owning Context；实现细节留在代码。不要把“代码更优雅”当作架构要求，也不要让 Harness 变成跨语言通用 dependency analyzer。
+
+## Implementation Quality Discipline
+
+实现自由保留在当前 Goal，但必须复用 owning service/facade/adapter/extension point 和唯一 source of truth，做最小而完整、语义清晰且在真实边界验证的修改；不得吞掉 failure、发明未授权 default、隐藏 mutable global state 或复制 owner-held rule。只有真实路径需要时才补齐 timeout/cancellation/retry/idempotency/transaction/concurrency/resource-release；只有稳定概念或有证据的变化轴具有正净收益时才引入抽象。函数更短、文件更多或接口更多本身不等于质量。优先使用项目原生 type/compiler/lint/architecture/behavior/benchmark/probe，不让 Harness 启发式或实现自产 expected 代替权威。
+
+这些是边界 guardrails，不是新阶段、逐编辑强制动作或“整体代码已干净”的机器结论。
+
+## Engineering Quality Conformance
+
+默认流程在项目验证之后，把工程质量符合性作为 `Contract Conformance` 的必检子项，只针对当前候选快照检查；`Architecture Conformance` 是其中的架构子集：
 
 - 实际改动是否逃逸预期 capability/path；
 - owner、dependency direction、service/facade/adapter 和唯一 source of truth 是否被绕过或复制；
 - API/Schema/data/state/persistence/lifecycle/recovery 是否出现未声明变化；
+- 适用的 failure/resource、concurrency/consistency、security、compatibility/rollout、operability 或 performance 不变量是否有真实处理与可归因的当前候选证据；
+- 是否存在 silent fallback、swallowed failure、resource leak、不可恢复 partial state 或无 workload/environment/measurement 支撑的性能声称；
 - 是否命中 forbidden shortcut，是否运行了声明的 project-owned architecture/modularity checks；
 - 是否新增或加重重复、职责膨胀、脆弱耦合或无依据抽象等技术债。
 
 发现问题就返回实现并重跑受影响验证；候选代码或配置再变化，先前 closure 失效。新增或加重技术债默认阻塞交付，除非项目已有显式、收窄、带 owner/reason/tracking/removal condition 的例外。无关 legacy debt 不自动扩张任务范围，但本次触达、依赖或加重的债不能隐藏。
 
-active Long-Task 下不再执行这个默认 closure；同一架构义务由 Contract 中现有 obligations/constraints/forbidden shortcuts、owners/paths/Bindings 和 executable Checks 表达，并只由 Final Gate 对最终快照收口。
+active Long-Task 下不再执行这个默认 closure；同一义务由 Contract 中现有 Source-backed obligations/constraints/forbidden shortcuts、owners/paths/Bindings 和 executable Checks 表达。功能行为通过但工程质量不变量仍可能失败时，必须使用独立 Assertion，不能用 `quality == true`、功能 pass 或 prose review 聚合代替。Final Gate 是唯一 `Engineering Quality Conformance`/`Architecture Conformance` carrier，只证明声明、可证伪且绑定项目检查的集合，不证明整体代码质量；不新增 Source aspect、Claim/risk kind、字段、Gate、状态或 Receipt。
 
 ## 稀疏 Context Workspace / Monorepo 修改边界
 
@@ -152,10 +164,11 @@ If an active Long-Task applies, do not run the preceding default closure. Expres
 新实现、重构、重复逻辑、模块边界或影响面控制需要内部记录 `Modularity Check: none|required|exception`。
 
 - 可用 `ty-context check-modularity --file <path> --limit 300` 做计划编辑审计，用 `make validate-code-modularity` 或 `ty-context check-modularity --touched --limit 300 --fail-on-warning` 做交付前硬审计；项目本地 Skill 的 limit 优先。
-- 同时检查物理行数、单函数语句数、分支复杂度、导出数、状态转换和职责；压成一行不能规避。
+- 该 capability-aware signal 对所有已纳入格式检查物理行风险；JS/TS family 另做 lexical 单函数语句/分支、导出、状态转换和职责启发式；Python 只做专用 lexical 单函数语句/分支；其他格式（含没有 SFC parser 的 Vue）是 line-only。报告的 `analysis` 说明能力，不支持的指标为 `n/a` 而不是零，且不得参与 risk/regression。
+- 这是 portable risk signal，不是完整跨语言 static analysis、架构证明或运行时性能证据；对应主张优先用 project-native 工具。压缩 JS/TS/Python 代码不能规避其受支持的 lexical 指标。
 - 风险点按 product surface、hook、model、adapter、component、service / facade 或 verification helper 等稳定边界判断，优先复用现有 extension point。
 - 只实施高收益、低风险、语义稳定的抽象；不为一次性代码、不稳定语义或视觉整洁做抽象。
-- `exception` 必须由 `<harnessRoot>/config.yaml` 中 lifecycle-complete waiver 授权，至少包含收窄的 `path`/`category`、`owner`、`introduced_at`、`reason`、`tracking_issue`、`expiry_condition`。交付说明不是机器豁免，已有债务不得继续接收新职责。
+- `exception` 必须由 `<harnessRoot>/config.yaml` 中 lifecycle-complete waiver 授权，至少包含收窄的 `path`/`category`、`owner`、`introduced_at`、`reason`、`tracking_issue`、`expiry_condition`。交付说明不是机器豁免，已有债务不得继续接收新职责。旧版跨语言 JS 启发式造成且只覆盖现已不支持指标的 waiver，由显式 `ty-context upgrade` 安全清理；普通 `sync` 不做迁移，其他 stale/invalid waiver 继续 fail closed。
 
 ## 自动化机会
 
@@ -165,8 +178,8 @@ If an active Long-Task applies, do not run the preceding default closure. Expres
 
 - area/domain/subdomain：产品或包责任；contract：API/schema/event/workflow/interface；foundation：稳定概念；verification/deployment：可重复路径；implementation-index：导航；decision-rationale：会影响未来选择的稳定原因。
 - 模块 Context 只保留 principles、design logic、rejected alternative/tradeoff 和长期约束；不编造 rationale，不复制实现摘要、命令输出、debug 过程、截图、日志、临时 JSON、raw payload、测试报告或 secrets。
-- `Context Delta: none|required` 是唯一长期事实结果；`Architecture Deliberation` 是可见但 task-local 的流程检查点，`Architecture Context Hit`、`Decision Rationale Hit` 与 `Modularity Check` 仍只是内部路由问题。
+- `Context Delta: none|required` 是唯一长期事实结果；`Architecture Deliberation`、适用质量判断和 `Engineering Quality Conformance` 是可见但 task-local 的流程检查点/子项，`Architecture Context Hit`、`Decision Rationale Hit` 与 `Modularity Check` 仍只是内部路由问题。
 
 ## 输出边界
 
-不默认创建 `.work_products/**`、tech plan、ADR、implementation doc、review/test/release 文档或 lifecycle phases。`Architecture Deliberation` 与 `Architecture Conformance` 通过工作更新和交付状态可见，不生成新的持久产物。用户明确要求独立开发/技术方案时可以临时生成；稳定结论仍提炼回 `project_context/**`。
+不默认创建 `.work_products/**`、tech plan、ADR、implementation doc、review/test/release 文档或 lifecycle phases。`Architecture Deliberation` 与 `Engineering Quality Conformance`（含 `Architecture Conformance`）通过工作更新和交付状态可见，不生成新的持久产物，也不增加 Contract/aspect/Claim/risk/Gate/state。用户明确要求独立开发/技术方案时可以临时生成；稳定结论仍提炼回 `project_context/**`。

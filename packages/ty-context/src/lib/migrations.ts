@@ -23,6 +23,7 @@ import {
 } from "./fs.js";
 import { harnessConfigPath, harnessRoot } from "./harness-root.js";
 import { legacySdlcHarnessMigration } from "./legacy-sdlc-migration.js";
+import { modularityCapabilityWaiverMigration } from "./modularity-capability-migration.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
 import { semanticDriftMigrationFields } from "./long-task-semantic-drift-migration.js";
 
@@ -85,6 +86,7 @@ const REMOVED_NORMAL_LONG_TASK_SKILL_SHA256 =
 
 export const migrations: Migration[] = [
   legacySdlcHarnessMigration,
+  modularityCapabilityWaiverMigration,
   {
     id: "long-task-v2-semantic-drift-authority",
     introducedIn: "0.7.2",

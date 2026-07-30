@@ -59,7 +59,7 @@ export async function checkModularity(args: string[]): Promise<void> {
               ? "observed-risk"
               : "ok";
       console.log(
-        `${prefix}: ${file.relativePath} ${file.lines} lines statements=${file.metrics.maxFunctionStatements} branches=${file.metrics.maxBranchComplexity} exports=${file.metrics.exports} transitions=${file.metrics.stateTransitions} responsibilities=${file.metrics.responsibilities.join(",") || "none"} statement_at=${formatLocation(file.metrics.maxFunctionStatementsLocation)} branch_at=${formatLocation(file.metrics.maxBranchComplexityLocation)}`,
+        `${prefix}: ${file.relativePath} ${file.lines} lines analysis=${file.metrics.analysis} statements=${formatMetric(file.metrics.maxFunctionStatements)} branches=${formatMetric(file.metrics.maxBranchComplexity)} exports=${formatMetric(file.metrics.exports)} transitions=${formatMetric(file.metrics.stateTransitions)} responsibilities=${formatResponsibilities(file.metrics.responsibilities)} statement_at=${formatLocation(file.metrics.maxFunctionStatementsLocation, file.metrics.maxFunctionStatements !== null)} branch_at=${formatLocation(file.metrics.maxBranchComplexityLocation, file.metrics.maxBranchComplexity !== null)}`,
       );
     }
     for (const error of report.errors) {
@@ -92,8 +92,23 @@ export async function checkModularity(args: string[]): Promise<void> {
 
 function formatLocation(
   location: { symbol: string; line: number } | undefined,
+  supported: boolean,
 ): string {
+  if (!supported) {
+    return "n/a";
+  }
   return location ? `${location.symbol}:${location.line}` : "none";
+}
+
+function formatMetric(value: number | null): string {
+  return value === null ? "n/a" : String(value);
+}
+
+function formatResponsibilities(value: string[] | null): string {
+  if (value === null) {
+    return "n/a";
+  }
+  return value.join(",") || "none";
 }
 
 function parseArgs(args: string[]): CheckModularityArgs {
@@ -194,7 +209,8 @@ function helpText(): string {
   check-modularity --base <ref> [--limit 300] [--fail-on-warning]
   check-modularity --config-only
 
-Audits physical lines, per-function statements and branch complexity, exports, state transitions and module responsibilities.
+Portable heuristic risk signal: all selected files get physical-line analysis; JS/TS gets lexical function/branch/export/state-transition/responsibility metrics; Python gets lexical per-function statement/branch metrics; other included formats are line-only.
+The report names analysis=js-ts-heuristic|python-heuristic|line-only and prints n/a for unsupported metrics. It is not complete cross-language static analysis, architecture proof or runtime-performance evidence; prefer project-native tools for those claims.
 For --touched and --base, existing findings are reported but only new or worsened non-line complexity is a warning; physical lines remain a risk signal and new files are audited in full.
 The default is warning-only; --fail-on-warning lets projects opt into CI enforcement.
 Generated configs default to modularity.policy: strict_except_generated; omitted policy is treated as scoped_waivers for compatibility.

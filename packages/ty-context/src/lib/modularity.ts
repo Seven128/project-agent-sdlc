@@ -3,12 +3,18 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { readConfig } from "./config.js";
-import { shouldIncludeCodeFile, toPosix } from "./source-files.js";
+import { analyzePythonFunctions } from "./modularity-python.js";
+import {
+  modularityAnalysisCapability,
+  shouldIncludeCodeFile,
+  toPosix,
+  type ModularityAnalysisCapability,
+} from "./source-files.js";
 import type { ModularityWaiverConfig } from "./types.js";
 
 const execFileAsync = promisify(execFile);
 const GIT_MAX_BUFFER = 16 * 1024 * 1024;
-const DEFAULT_LINE_LIMIT = 300;
+export const DEFAULT_MODULARITY_LINE_LIMIT = 300;
 const DEFAULT_MODULARITY_POLICY = "scoped_waivers";
 const MODULARITY_POLICIES = new Set([
   DEFAULT_MODULARITY_POLICY,
@@ -38,6 +44,15 @@ const WAIVER_CATEGORIES = new Set([
   "aggregate_styles",
   "fixture_snapshot",
 ]);
+const MODULARITY_WAIVER_REQUIRED_FIELDS = [
+  "path",
+  "category",
+  "owner",
+  "introduced_at",
+  "reason",
+  "tracking_issue",
+  "expiry_condition",
+] as const;
 
 export interface ModularityCheckOptions {
   touched?: boolean;
@@ -68,13 +83,14 @@ export interface ModularityMetricLocation {
 }
 
 export interface ModularityMetrics {
-  maxFunctionStatements: number;
+  analysis: ModularityAnalysisCapability;
+  maxFunctionStatements: number | null;
   maxFunctionStatementsLocation?: ModularityMetricLocation;
-  maxBranchComplexity: number;
+  maxBranchComplexity: number | null;
   maxBranchComplexityLocation?: ModularityMetricLocation;
-  exports: number;
-  stateTransitions: number;
-  responsibilities: string[];
+  exports: number | null;
+  stateTransitions: number | null;
+  responsibilities: string[] | null;
 }
 
 export interface ModularityCheckReport {
@@ -95,6 +111,28 @@ export interface ModularityWaiver {
   expiryCondition: string;
 }
 
+export function isLifecycleCompleteModularityWaiverConfig(
+  value: unknown,
+): value is ModularityWaiverConfig {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const waiver = value as ModularityWaiverConfig;
+  if (
+    MODULARITY_WAIVER_REQUIRED_FIELDS.some(
+      (field) =>
+        typeof waiver[field] !== "string" || waiver[field]!.trim().length === 0,
+    )
+  ) {
+    return false;
+  }
+  return (
+    WAIVER_CATEGORIES.has(waiver.category!.trim()) &&
+    /^\d{4}-\d{2}-\d{2}$/u.test(waiver.introduced_at!.trim()) &&
+    !Number.isNaN(Date.parse(`${waiver.introduced_at!.trim()}T00:00:00Z`))
+  );
+}
+
 export async function runModularityCheck(
   projectRoot: string,
   options: ModularityCheckOptions,
@@ -109,7 +147,8 @@ export async function runModularityCheck(
     projectRoot,
     waiverValues,
   );
-  const limit = options.limit ?? configuredLimit ?? DEFAULT_LINE_LIMIT;
+  const limit =
+    options.limit ?? configuredLimit ?? DEFAULT_MODULARITY_LINE_LIMIT;
   const waiverTargetErrors = await validateWaiverTargets(
     projectRoot,
     waivers,
@@ -234,8 +273,8 @@ function modularityRegressions(
   }
 
   const checks: Array<{
-    current: number;
-    baseline: number;
+    current: number | null;
+    baseline: number | null;
     limit: number;
     message: string;
   }> = [
@@ -264,15 +303,26 @@ function modularityRegressions(
       message: `${current.metrics.stateTransitions} state transitions exceeds limit ${COMPLEXITY_LIMITS.stateTransitions}`,
     },
     {
-      current: current.metrics.responsibilities.length,
-      baseline: baseline.metrics.responsibilities.length,
+      current: current.metrics.responsibilities?.length ?? null,
+      baseline: baseline.metrics.responsibilities?.length ?? null,
       limit: COMPLEXITY_LIMITS.responsibilities,
-      message: `${current.metrics.responsibilities.length} module responsibilities exceeds limit ${COMPLEXITY_LIMITS.responsibilities}`,
+      message: `${current.metrics.responsibilities?.length ?? 0} module responsibilities exceeds limit ${COMPLEXITY_LIMITS.responsibilities}`,
     },
   ];
   return checks
     .filter(
-      (check) => check.current > check.limit && check.current > check.baseline,
+      (
+        check,
+      ): check is {
+        current: number;
+        baseline: number;
+        limit: number;
+        message: string;
+      } =>
+        check.current !== null &&
+        check.baseline !== null &&
+        check.current > check.limit &&
+        check.current > check.baseline,
     )
     .map((check) => check.message);
 }
@@ -281,10 +331,68 @@ export function analyzeModularity(
   content: string,
   relativePath = "",
 ): ModularityMetrics {
+  const analysis =
+    (relativePath
+      ? modularityAnalysisCapability(relativePath)
+      : "js-ts-heuristic") ?? "line-only";
+  if (analysis === "line-only") {
+    return unavailableMetrics(analysis);
+  }
+  if (analysis === "python-heuristic") {
+    const bodies = analyzePythonFunctions(content);
+    const statementPeak = maxMetricBody(bodies, "statements");
+    const branchPeak = maxMetricBody(bodies, "branches");
+    return {
+      analysis,
+      maxFunctionStatements: statementPeak?.statements ?? 0,
+      ...(statementPeak
+        ? {
+            maxFunctionStatementsLocation: {
+              symbol: statementPeak.symbol,
+              line: statementPeak.line,
+            },
+          }
+        : {}),
+      maxBranchComplexity: branchPeak?.branches ?? 0,
+      ...(branchPeak
+        ? {
+            maxBranchComplexityLocation: {
+              symbol: branchPeak.symbol,
+              line: branchPeak.line,
+            },
+          }
+        : {}),
+      exports: null,
+      stateTransitions: null,
+      responsibilities: null,
+    };
+  }
+  return analyzeJsTsModularity(content);
+}
+
+export function hasLegacyHeuristicOnlyWaiverRisk(
+  content: string,
+  relativePath: string,
+  lineLimit: number,
+): boolean {
+  if (modularityAnalysisCapability(relativePath) !== "line-only") {
+    return false;
+  }
+  const lines = countPhysicalLines(content);
+  if (
+    modularityRisks(lines, lineLimit, analyzeModularity(content, relativePath))
+      .length > 0
+  ) {
+    return false;
+  }
+  return (
+    modularityRisks(lines, lineLimit, analyzeJsTsModularity(content)).length > 0
+  );
+}
+
+function analyzeJsTsModularity(content: string): ModularityMetrics {
   const code = sanitizeCode(content);
-  const bodies = relativePath.toLowerCase().endsWith(".py")
-    ? pythonFunctionBodies(code)
-    : functionBodies(code);
+  const bodies = functionBodies(code);
   const analyzedBodies = bodies.map((body) => ({
     ...body,
     statements: statementCount(body.body),
@@ -293,6 +401,7 @@ export function analyzeModularity(
   const statementPeak = maxMetricBody(analyzedBodies, "statements");
   const branchPeak = maxMetricBody(analyzedBodies, "branches");
   return {
+    analysis: "js-ts-heuristic",
     maxFunctionStatements: statementPeak?.statements ?? 0,
     ...(statementPeak
       ? {
@@ -317,6 +426,19 @@ export function analyzeModularity(
   };
 }
 
+function unavailableMetrics(
+  analysis: ModularityAnalysisCapability,
+): ModularityMetrics {
+  return {
+    analysis,
+    maxFunctionStatements: null,
+    maxBranchComplexity: null,
+    exports: null,
+    stateTransitions: null,
+    responsibilities: null,
+  };
+}
+
 function modularityRisks(
   lines: number,
   lineLimit: number,
@@ -325,27 +447,39 @@ function modularityRisks(
   const risks: string[] = [];
   if (lines > lineLimit)
     risks.push(`${lines} physical lines exceeds limit ${lineLimit}`);
-  if (metrics.maxFunctionStatements > COMPLEXITY_LIMITS.functionStatements) {
+  if (
+    metrics.maxFunctionStatements !== null &&
+    metrics.maxFunctionStatements > COMPLEXITY_LIMITS.functionStatements
+  ) {
     risks.push(
       `${metrics.maxFunctionStatements} statements in one function exceeds limit ${COMPLEXITY_LIMITS.functionStatements}${formatMetricLocation(metrics.maxFunctionStatementsLocation)}`,
     );
   }
-  if (metrics.maxBranchComplexity > COMPLEXITY_LIMITS.branchComplexity) {
+  if (
+    metrics.maxBranchComplexity !== null &&
+    metrics.maxBranchComplexity > COMPLEXITY_LIMITS.branchComplexity
+  ) {
     risks.push(
       `${metrics.maxBranchComplexity} branch complexity exceeds limit ${COMPLEXITY_LIMITS.branchComplexity}${formatMetricLocation(metrics.maxBranchComplexityLocation)}`,
     );
   }
-  if (metrics.exports > COMPLEXITY_LIMITS.exports) {
+  if (metrics.exports !== null && metrics.exports > COMPLEXITY_LIMITS.exports) {
     risks.push(
       `${metrics.exports} exports exceeds limit ${COMPLEXITY_LIMITS.exports}`,
     );
   }
-  if (metrics.stateTransitions > COMPLEXITY_LIMITS.stateTransitions) {
+  if (
+    metrics.stateTransitions !== null &&
+    metrics.stateTransitions > COMPLEXITY_LIMITS.stateTransitions
+  ) {
     risks.push(
       `${metrics.stateTransitions} state transitions exceeds limit ${COMPLEXITY_LIMITS.stateTransitions}`,
     );
   }
-  if (metrics.responsibilities.length > COMPLEXITY_LIMITS.responsibilities) {
+  if (
+    metrics.responsibilities !== null &&
+    metrics.responsibilities.length > COMPLEXITY_LIMITS.responsibilities
+  ) {
     risks.push(
       `${metrics.responsibilities.length} module responsibilities exceeds limit ${COMPLEXITY_LIMITS.responsibilities}`,
     );
@@ -497,7 +631,9 @@ interface FunctionBody {
   line: number;
 }
 
-interface AnalyzedFunctionBody extends FunctionBody {
+interface AnalyzedMetricBody {
+  symbol: string;
+  line: number;
   statements: number;
   branches: number;
 }
@@ -544,32 +680,6 @@ function functionBodies(code: string): FunctionBody[] {
     .filter((body): body is FunctionBody => body !== undefined);
 }
 
-function pythonFunctionBodies(code: string): FunctionBody[] {
-  const lines = code.split(/\r\n|\n|\r/u);
-  const bodies: FunctionBody[] = [];
-  for (let index = 0; index < lines.length; index += 1) {
-    const match =
-      /^(\s*)(?:async\s+)?def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/u.exec(
-        lines[index],
-      );
-    if (!match) continue;
-    const indentation = indentationWidth(match[1]);
-    const body: string[] = [];
-    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
-      const line = lines[cursor];
-      if (!line.trim()) {
-        body.push(line);
-        continue;
-      }
-      const leading = /^\s*/u.exec(line)?.[0] ?? "";
-      if (indentationWidth(leading) <= indentation) break;
-      body.push(line);
-    }
-    bodies.push({ body: body.join("\n"), symbol: match[2], line: index + 1 });
-  }
-  return bodies;
-}
-
 function inferArrowSymbol(code: string, arrowIndex: number): string {
   const prefix = code.slice(Math.max(0, arrowIndex - 240), arrowIndex);
   const assignment =
@@ -588,11 +698,11 @@ function lineNumberAt(code: string, index: number): number {
   return code.slice(0, index).split(/\r\n|\n|\r/u).length;
 }
 
-function maxMetricBody(
-  bodies: AnalyzedFunctionBody[],
+function maxMetricBody<T extends AnalyzedMetricBody>(
+  bodies: T[],
   metric: "statements" | "branches",
-): AnalyzedFunctionBody | undefined {
-  let selected: AnalyzedFunctionBody | undefined;
+): T | undefined {
+  let selected: T | undefined;
   for (const body of bodies) {
     if (!selected || body[metric] > selected[metric]) selected = body;
   }
@@ -605,13 +715,6 @@ function formatMetricLocation(
   return location
     ? ` in function ${location.symbol} at line ${location.line}`
     : "";
-}
-
-function indentationWidth(value: string): number {
-  return [...value].reduce(
-    (width, character) => width + (character === "\t" ? 4 : 1),
-    0,
-  );
 }
 
 function balancedBody(code: string, openingBrace: number): string | undefined {
@@ -979,14 +1082,13 @@ async function validateWaiverTargets(
       );
       continue;
     }
-    const analyzed = analyzeFile(
-      await fs.readFile(target, "utf8"),
-      limit,
-      waiver.relativePath,
-    );
+    const content = await fs.readFile(target, "utf8");
+    const analyzed = analyzeFile(content, limit, waiver.relativePath);
     if (analyzed.risks.length === 0) {
       errors.push(
-        `${label} is unnecessary because the source does not currently exceed a modularity threshold`,
+        hasLegacyHeuristicOnlyWaiverRisk(content, waiver.relativePath, limit)
+          ? `${label} is obsolete because this target now has line-only analysis and exceeded only unsupported legacy heuristic metrics; run ty-context upgrade to remove the waiver`
+          : `${label} is unnecessary because the source does not currently exceed a modularity threshold`,
       );
     }
   }
@@ -1017,6 +1119,10 @@ async function isRegularFile(target: string): Promise<boolean> {
 
 async function isLikelyGeneratedFile(target: string): Promise<boolean> {
   const content = await fs.readFile(target, "utf8");
+  return isLikelyGeneratedSourceContent(content);
+}
+
+export function isLikelyGeneratedSourceContent(content: string): boolean {
   const sample = content.slice(0, 8192);
   return GENERATED_FILE_PATTERNS.some((pattern) => pattern.test(sample));
 }
