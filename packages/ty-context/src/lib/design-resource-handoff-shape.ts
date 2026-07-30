@@ -1,4 +1,8 @@
-import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
+import type {
+  DesignResourceHandoffInputV1,
+  DesignResourceHandoffManifestBackedV1,
+  DesignResourceHandoffV1,
+} from "./design-resource-handoff-types.js";
 import {
   parseDesignResourceAssetBindings,
   parseDesignResourceAxisDispositions,
@@ -37,6 +41,19 @@ import {
   string,
   strings,
 } from "./long-task-shape-primitives.js";
+
+export function parseDesignResourceHandoffInputShape(
+  value: unknown,
+): DesignResourceHandoffInputV1 {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).representation === "manifest_backed"
+  )
+    return parseManifestBackedDesignResourceHandoffShape(value);
+  return parseDesignResourceHandoffShape(value);
+}
 
 export function parseDesignResourceHandoffShape(
   value: unknown,
@@ -207,5 +224,66 @@ export function parseDesignResourceHandoffShape(
         "design_resource_handoff.proposal.revision",
       ),
     },
+  };
+}
+
+function parseManifestBackedDesignResourceHandoffShape(
+  value: unknown,
+): DesignResourceHandoffManifestBackedV1 {
+  const root = object(value, "design_resource_handoff", [
+    "schema_version",
+    "representation",
+    "intent",
+    "scope",
+    "provenance",
+    "resources",
+    "targets",
+    "resource_fact_closure",
+    "coverage",
+    "proposal",
+  ]);
+  const parsed = parseDesignResourceHandoffShape({
+    schema_version: root.schema_version,
+    intent: root.intent,
+    scope: root.scope,
+    provenance: root.provenance,
+    resources: root.resources,
+    axis_dispositions: [],
+    condition_exclusions: [],
+    conditions: [],
+    subjects: [],
+    variation_axis_dispositions: [],
+    variation_exclusions: [],
+    variations: [],
+    properties: [],
+    lineage_nodes: [],
+    targets: root.targets,
+    evidence: [],
+    fact_cells: [],
+    facts: [],
+    proof_obligations: [],
+    oracles: [],
+    environments: [],
+    asset_bindings: [],
+    resource_fact_closure: root.resource_fact_closure,
+    coverage: root.coverage,
+    acceptance_blockers: [],
+    proposal: root.proposal,
+  });
+  return {
+    schema_version: parsed.schema_version,
+    representation: literal(
+      root.representation,
+      ["manifest_backed"] as const,
+      "design_resource_handoff.representation",
+    ),
+    intent: parsed.intent,
+    scope: parsed.scope,
+    provenance: parsed.provenance,
+    resources: parsed.resources,
+    targets: parsed.targets,
+    resource_fact_closure: parsed.resource_fact_closure,
+    coverage: parsed.coverage,
+    proposal: parsed.proposal,
   };
 }

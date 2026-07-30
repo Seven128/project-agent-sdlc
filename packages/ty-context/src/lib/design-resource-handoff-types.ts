@@ -7,6 +7,7 @@ import type {
   DesignResourceFactCellV1,
   DesignResourceFactV1,
   DesignResourceLineageNodeV1,
+  DesignResourceManifestCollectionName,
   DesignResourceOracleV1,
   DesignResourcePropertyDefinitionV1,
   DesignResourceProofObligationV1,
@@ -159,6 +160,24 @@ export interface DesignResourceHandoffV1 {
     revision: string;
   };
 }
+
+export type DesignResourceHandoffManifestBackedV1 = Pick<
+  DesignResourceHandoffV1,
+  | "schema_version"
+  | "intent"
+  | "scope"
+  | "provenance"
+  | "resources"
+  | "targets"
+  | "resource_fact_closure"
+  | "coverage"
+  | "proposal"
+> & {
+  representation: "manifest_backed";
+};
+
+export type DesignResourceHandoffInputV1 =
+  DesignResourceHandoffV1 | DesignResourceHandoffManifestBackedV1;
 
 export interface DesignResourceHandoffResourceV1 {
   key: string;
@@ -329,10 +348,29 @@ export interface ParsedDesignResourceHandoffV1 {
   source_item_kinds: Record<string, string>;
 }
 
+export interface ParsedDesignResourceHandoffInputV1 {
+  handoff_path: string;
+  handoff: DesignResourceHandoffInputV1;
+  source_item_keys: string[];
+  source_item_kinds: Record<string, string>;
+}
+
 export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHandoffV1 {
   schema_version: "design-resource-handoff-preflight-v1";
   status: "ready";
   resource_hashes: Record<string, string>;
+  manifest_identities: Array<{
+    resource_ref: string;
+    path: string;
+    sha256: string;
+    scope_key: string;
+    target_key: string;
+    collections: Array<{
+      name: DesignResourceManifestCollectionName;
+      expected_count: number;
+      identity_sha256: string;
+    }>;
+  }>;
   counts: {
     resources: number;
     manifests: number;

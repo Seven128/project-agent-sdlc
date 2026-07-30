@@ -1,34 +1,60 @@
-import { parseDesignResourceHandoffShape } from "./design-resource-handoff-shape.js";
-import type { ParsedDesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
-import { parseSourceItems } from "./long-task-source-item-parser.js";
-import { parseStrictYaml } from "./strict-codec.js";
+import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-types.js";
+import { parseSourceDocument } from "./long-task-source-item-parser.js";
+import { forEachSourceLine } from "./source-line-scanner.js";
 
-const FENCE =
-  /^```yaml[ \t]+design-resource-handoff-v1[ \t]*\r?\n([\s\S]*?)^```[ \t]*$/gmu;
+const DESIGN_RESOURCE_START =
+  /^```yaml[ \t]+design-resource-handoff-v1[ \t]*$/u;
+const FORMAL_BLOCK_END = /^```[ \t]*$/u;
+
+export interface DesignResourceHandoffBlockSpan {
+  bodyStartOffset: number;
+  bodyEndOffset: number;
+}
 
 export function containsDesignResourceHandoff(content: string): boolean {
-  FENCE.lastIndex = 0;
-  return FENCE.test(content);
+  return scanDesignResourceHandoffBlocks(content).length > 0;
+}
+
+export function scanDesignResourceHandoffBlocks(
+  content: string,
+): DesignResourceHandoffBlockSpan[] {
+  const blocks: DesignResourceHandoffBlockSpan[] = [];
+  let bodyStartOffset: number | null = null;
+  forEachSourceLine(content, (line, startOffset, _endOffset, nextOffset) => {
+    if (bodyStartOffset === null) {
+      if (DESIGN_RESOURCE_START.test(line)) bodyStartOffset = nextOffset;
+      return;
+    }
+    if (!FORMAL_BLOCK_END.test(line)) return;
+    blocks.push({
+      bodyStartOffset,
+      bodyEndOffset: startOffset,
+    });
+    bodyStartOffset = null;
+  });
+  return blocks;
 }
 
 export function parseDesignResourceHandoffMarkdown(
   handoffPath: string,
   content: string,
-): ParsedDesignResourceHandoffV1 {
-  FENCE.lastIndex = 0;
-  const blocks = [...content.matchAll(FENCE)];
+): ParsedDesignResourceHandoffInputV1 {
+  const blocks = scanDesignResourceHandoffBlocks(content);
   if (blocks.length !== 1)
     throw new Error(
       `design_resource_handoff_invalid:block_count:${handoffPath}:${blocks.length}`,
     );
   try {
-    const sourceItems = parseSourceItems(handoffPath, content);
+    const parsedSource = parseSourceDocument(handoffPath, content);
+    const handoff = parsedSource.designResourceHandoff;
+    if (!handoff)
+      throw new Error("design-resource-handoff-v1 block was not decoded");
     return {
       handoff_path: handoffPath,
-      handoff: parseDesignResourceHandoffShape(parseStrictYaml(blocks[0][1])),
-      source_item_keys: sourceItems.map((item) => item.key),
+      handoff,
+      source_item_keys: parsedSource.items.map((item) => item.key),
       source_item_kinds: Object.fromEntries(
-        sourceItems.map((item) => [item.key, item.kind]),
+        parsedSource.items.map((item) => [item.key, item.kind]),
       ),
     };
   } catch (error) {

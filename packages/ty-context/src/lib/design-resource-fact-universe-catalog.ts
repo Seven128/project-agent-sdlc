@@ -211,12 +211,7 @@ export function validateManifestFactCells(
     actual.set(fingerprint, cell.key);
     validateFactCellDisposition(cell, coveredFacts);
   }
-  sameSet(
-    [...actual.keys()],
-    expectedFactCellFingerprints(manifest),
-    "manifest_expected_fact_cell_universe_mismatch",
-    manifest.target_key,
-  );
+  assertExpectedFactCellFingerprints(manifest, actual);
   unique(coveredFacts, "manifest_fact_ref_reused_by_cells");
   sameSet(
     coveredFacts,
@@ -274,24 +269,40 @@ function validateFactCellDisposition(
     invalid("manifest_fact_cell_unresolved", cell.key);
 }
 
-function expectedFactCellFingerprints(
+function assertExpectedFactCellFingerprints(
   manifest: DesignResourceObservableFactManifestV1,
-): string[] {
-  const expected: string[] = [];
+  actual: Map<string, string>,
+): void {
+  const variationsBySubject = new Map<string, string[]>();
+  for (const variation of manifest.variations) {
+    const rows = variationsBySubject.get(variation.subject_ref) ?? [];
+    rows.push(variation.key);
+    variationsBySubject.set(variation.subject_ref, rows);
+  }
+  let expectedCount = 0;
   for (const subject of manifest.subjects)
     for (const condition of manifest.conditions)
-      for (const variation of manifest.variations.filter(
-        (item) => item.subject_ref === subject.key,
-      ))
+      for (const variationRef of variationsBySubject.get(subject.key) ?? [])
         for (const property of manifest.properties)
-          expected.push(
-            factCellFingerprint({
-              subject_ref: subject.key,
-              target_ref: manifest.target_key,
-              condition_ref: condition.key,
-              variation_ref: variation.key,
-              property_ref: property.key,
-            }),
-          );
-  return expected;
+          if (
+            !actual.has(
+              factCellFingerprint({
+                subject_ref: subject.key,
+                target_ref: manifest.target_key,
+                condition_ref: condition.key,
+                variation_ref: variationRef,
+                property_ref: property.key,
+              }),
+            )
+          )
+            invalid(
+              "manifest_expected_fact_cell_universe_mismatch",
+              `${manifest.target_key}:missing:${subject.key}:${condition.key}:${variationRef}:${property.key}`,
+            );
+          else expectedCount += 1;
+  if (actual.size !== expectedCount)
+    invalid(
+      "manifest_expected_fact_cell_universe_mismatch",
+      `${manifest.target_key}:count:${actual.size}:${expectedCount}`,
+    );
 }

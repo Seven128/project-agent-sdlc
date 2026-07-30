@@ -2,10 +2,18 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseDesignResourceHandoffMarkdown } from "./design-resource-handoff-parser.js";
 import { validateDesignResourceFiles } from "./design-resource-handoff-file-validation.js";
-import { loadAndValidateDesignResourceFactManifests } from "./design-resource-fact-manifest-validation.js";
+import {
+  parseDesignResourceFactManifests,
+  validateDesignResourceFactManifests,
+} from "./design-resource-fact-manifest-validation.js";
+import { hydrateManifestBackedDesignResourceHandoff } from "./design-resource-handoff-manifest-projection.js";
+import { readDesignResourceSnapshot } from "./design-resource-handoff-snapshot.js";
 import { validateDesignResourceFacts } from "./design-resource-handoff-validation-facts.js";
 import type {
+  DesignResourceHandoffInputV1,
+  DesignResourceHandoffManifestBackedV1,
   DesignResourceHandoffPreflightV1,
+  ParsedDesignResourceHandoffInputV1,
   ParsedDesignResourceHandoffV1,
 } from "./design-resource-handoff-types.js";
 import {
@@ -28,7 +36,6 @@ import {
   validateDesignResourceTargets,
 } from "./design-resource-handoff-validation-structure.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
-import { sha256Hex } from "./strict-codec.js";
 
 export async function preflightDesignResourceHandoff(
   repository: string,
@@ -43,19 +50,62 @@ export async function preflightDesignResourceHandoff(
     handoffPath,
     await readFile(handoffFile, "utf8"),
   );
-  validateDesignResourceHandoffSemantics(parsed);
-  const resourceHashes = await validateResourceIntegrity(repository, parsed);
-  await validateDesignResourceFiles(repository, parsed);
-  const manifests = await loadAndValidateDesignResourceFactManifests(
-    repository,
-    parsed,
+  return preflightParsedDesignResourceHandoff(repository, parsed);
+}
+
+export async function preflightParsedDesignResourceHandoff(
+  repository: string,
+  parsed: ParsedDesignResourceHandoffInputV1,
+): Promise<DesignResourceHandoffPreflightV1> {
+  const inputHandoff = parsed.handoff;
+  if (isManifestBacked(inputHandoff) && inputHandoff.targets.length !== 1)
+    invalidDesignResourceHandoff(
+      "manifest_backed_one_target_required",
+      String(inputHandoff.targets.length),
+    );
+  if (!isManifestBacked(inputHandoff))
+    validateDesignResourceHandoffSemantics({
+      ...parsed,
+      handoff: inputHandoff,
+    });
+  const snapshot = await readDesignResourceSnapshot(repository, parsed);
+  const manifests = parseDesignResourceFactManifests(parsed, snapshot.contents);
+  const handoff = isManifestBacked(inputHandoff)
+    ? hydrateManifestBackedDesignResourceHandoff(inputHandoff, manifests)
+    : inputHandoff;
+  const normalized: ParsedDesignResourceHandoffV1 = { ...parsed, handoff };
+  if (isManifestBacked(inputHandoff))
+    validateDesignResourceHandoffSemantics(normalized);
+  validateDesignResourceFiles(normalized, snapshot.contents);
+  validateDesignResourceFactManifests(
+    normalized,
+    snapshot.contents,
+    manifests,
+    !isManifestBacked(inputHandoff),
   );
-  const handoff = parsed.handoff;
+  const resources = new Map(
+    handoff.resources.map((resource) => [resource.key, resource]),
+  );
   return {
     schema_version: "design-resource-handoff-preflight-v1",
     status: "ready",
-    ...parsed,
-    resource_hashes: resourceHashes,
+    ...normalized,
+    resource_hashes: snapshot.hashes,
+    manifest_identities: handoff.targets.map((target) => {
+      const resourceRef = target.source_profile.fact_manifest_resource_ref;
+      const resource = resources.get(resourceRef)!;
+      const manifest = manifests.get(target.key)!;
+      return {
+        resource_ref: resourceRef,
+        path: resource.path,
+        sha256: snapshot.hashes[resourceRef],
+        scope_key: manifest.scope_key,
+        target_key: manifest.target_key,
+        collections: manifest.generation.collections.map((collection) => ({
+          ...collection,
+        })),
+      };
+    }),
     counts: {
       resources: handoff.resources.length,
       manifests: manifests.size,
@@ -78,6 +128,12 @@ export async function preflightDesignResourceHandoff(
       acceptance_blockers: handoff.acceptance_blockers.length,
     },
   };
+}
+
+function isManifestBacked(
+  handoff: DesignResourceHandoffInputV1,
+): handoff is DesignResourceHandoffManifestBackedV1 {
+  return "representation" in handoff;
 }
 
 export function validateDesignResourceHandoffSemantics(
@@ -245,31 +301,4 @@ export function validateDesignResourceHandoffSemantics(
   );
   validateDesignResourceBlockers(handoff, subjects, targets, sourceItems);
   validateDesignResourceReachability(handoff);
-}
-
-async function validateResourceIntegrity(
-  repository: string,
-  parsed: ParsedDesignResourceHandoffV1,
-): Promise<Record<string, string>> {
-  const hashes: Record<string, string> = {};
-  for (const resource of parsed.handoff.resources) {
-    if (resource.path === parsed.handoff_path)
-      invalidDesignResourceHandoff(
-        "resource_must_not_be_handoff",
-        resource.key,
-      );
-    const file = await assertProtectedRepositoryFile(
-      repository,
-      path.resolve(repository, ...resource.path.split("/")),
-      `design_resource:${resource.key}`,
-    );
-    const digest = sha256Hex(await readFile(file));
-    if (digest !== resource.sha256)
-      invalidDesignResourceHandoff(
-        "resource_digest_mismatch",
-        `${resource.key}:${resource.sha256}:${digest}`,
-      );
-    hashes[resource.key] = digest;
-  }
-  return hashes;
 }

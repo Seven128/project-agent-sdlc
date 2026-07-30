@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type {
   DesignResourceHandoffEvidenceV1,
   ParsedDesignResourceHandoffV1,
@@ -11,24 +9,14 @@ import {
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
 import { resolveDesignResourceLocatorValue } from "./design-resource-fact-locator-validation.js";
 import { validateDesignResourceImplementationDependencyClosure } from "./design-resource-handoff-web-dependency-validation.js";
-import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 
-export async function validateDesignResourceFiles(
-  repository: string,
+export function validateDesignResourceFiles(
   parsed: ParsedDesignResourceHandoffV1,
-): Promise<void> {
+  contents: Map<string, Buffer>,
+): void {
   const resources = new Map(
     parsed.handoff.resources.map((resource) => [resource.key, resource]),
   );
-  const contents = new Map<string, Buffer>();
-  for (const resource of parsed.handoff.resources) {
-    const file = await assertProtectedRepositoryFile(
-      repository,
-      path.resolve(repository, ...resource.path.split("/")),
-      `design_resource:${resource.key}`,
-    );
-    contents.set(resource.key, await readFile(file));
-  }
   for (const evidence of parsed.handoff.evidence)
     validateLocator(
       evidence,

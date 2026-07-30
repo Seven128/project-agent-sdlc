@@ -67,6 +67,58 @@ test("Design Authority scaffold and advisory changes select focused coverage", (
   ]);
 });
 
+test("shared Source line scanning selects handoff and both formal Source consumers", () => {
+  const selection = selectAffectedTests([
+    "packages/ty-context/src/lib/source-line-scanner.ts",
+  ]);
+  assert.equal(selection.mode, "selected");
+  assert.equal(selection.requires_build, true);
+  assert.deepEqual(selection.tests, [
+    "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
+    "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-semantic-assurance-closure.test.mjs",
+    "tests/ty-context/long-task-source-authority-closure.test.mjs",
+  ]);
+
+  for (const sourcePath of [
+    "packages/ty-context/src/commands/design-resource.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-bundle.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-manifest-projection.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-parser.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-snapshot.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-validation.ts",
+  ])
+    assert.ok(
+      selectAffectedTests([sourcePath]).tests.includes(
+        "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
+      ),
+    );
+
+  const ownedSections = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-source-owned-sections.ts",
+  ]);
+  assert.equal(ownedSections.mode, "selected");
+  assert.deepEqual(ownedSections.tests, [
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-semantic-assurance-closure.test.mjs",
+    "tests/ty-context/long-task-source-authority-closure.test.mjs",
+  ]);
+
+  const sharedSourceParser = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-source-item-parser.ts",
+  ]);
+  for (const testPath of [
+    "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
+    "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-delivery-parser.test.mjs",
+    "tests/ty-context/long-task-schema-parser-parity.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
+  ])
+    assert.ok(sharedSourceParser.tests.includes(testPath), testPath);
+});
+
 test("control-level UI authority changes select parser, Claim and revision coverage", () => {
   const shape = selectAffectedTests([
     "packages/ty-context/src/lib/long-task-product-shape.ts",
@@ -372,6 +424,7 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.equal(adapter.mode, "selected");
   assert.equal(adapter.requires_build, true);
   assert.deepEqual(adapter.tests, [
+    "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
     "tests/ty-context/design-resource-handoff.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
   ]);

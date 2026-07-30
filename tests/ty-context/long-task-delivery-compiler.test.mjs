@@ -3,7 +3,9 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
+import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import {
   addProductionControlBinding,
   completeControl,
@@ -211,6 +213,167 @@ test("Long-Task Compile consumes the same strict design handoff through target, 
     assert.equal(
       compiled.source_items.some((item) => item.key === DESIGN_SOURCE_ITEM_KEY),
       true,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task consumes target handoffs in either order and rejects missing, extra or duplicate targets", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(fixture);
+    const primary = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    const {
+      handoff: secondary,
+      mapping,
+      reverseMapping,
+    } = cloneDesignHandoffTarget(primary);
+    attachSecondaryDesignTarget(fixture.contract, secondary, mapping);
+
+    assert.equal(
+      secondary.handoff.fact_cells.length,
+      primary.handoff.fact_cells.length,
+    );
+    assert.equal(secondary.handoff.facts.length, primary.handoff.facts.length);
+    assert.equal(
+      secondary.handoff.proof_obligations.length,
+      primary.handoff.proof_obligations.length,
+    );
+    assert.deepEqual(
+      secondary.handoff.targets[0].condition_refs,
+      primary.handoff.targets[0].condition_refs,
+    );
+    const normalizedSecondary = structuredClone(secondary.handoff);
+    replaceExactStringMap(normalizedSecondary, reverseMapping);
+    assert.deepEqual(normalizedSecondary, primary.handoff);
+
+    for (const handoffs of [
+      [primary, secondary],
+      [secondary, primary],
+    ]) {
+      const consumer = createLongTaskDesignHandoffConsumer(fixture.contract);
+      for (const handoff of handoffs) consumer.consume(handoff);
+      assert.doesNotThrow(() => consumer.finish());
+    }
+
+    const missing = createLongTaskDesignHandoffConsumer(fixture.contract);
+    missing.consume(primary);
+    assert.throws(
+      () => missing.finish(),
+      /design_resource_target_handoff_missing:secondary-default/u,
+    );
+
+    const primaryOnlyContract = structuredClone(fixture.contract);
+    primaryOnlyContract.outcomes[0].product.surface_bindings[0].design_targets =
+      primaryOnlyContract.outcomes[0].product.surface_bindings[0].design_targets.filter(
+        (target) => target.key !== "secondary-default",
+      );
+    const extra = createLongTaskDesignHandoffConsumer(primaryOnlyContract);
+    extra.consume(primary);
+    extra.consume(secondary);
+    assert.throws(
+      () => extra.finish(),
+      /design_resource_handoff_target_unbound:secondary-default/u,
+    );
+
+    const duplicate = createLongTaskDesignHandoffConsumer(fixture.contract);
+    duplicate.consume(primary);
+    assert.doesNotThrow(() => duplicate.consume(primary));
+    assert.throws(
+      () => duplicate.finish(),
+      /design_resource_handoff_target_duplicate:main-default/u,
+    );
+
+    const invalidPrimary = structuredClone(primary);
+    invalidPrimary.handoff.targets[0].interpretation = "constraint";
+    const earlierValidation = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    earlierValidation.consume(invalidPrimary);
+    assert.throws(
+      () => earlierValidation.finish(),
+      /design_resource_target_interpretation_mismatch:main-default/u,
+    );
+
+    const invalidSecondary = structuredClone(secondary);
+    invalidSecondary.handoff.targets[0].interpretation = "constraint";
+    const earlierMissing = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    earlierMissing.consume(invalidSecondary);
+    assert.throws(
+      () => earlierMissing.finish(),
+      /design_resource_target_handoff_missing:main-default/u,
+    );
+
+    const conflictingPropertyHandoff = structuredClone(secondary);
+    conflictingPropertyHandoff.handoff.properties[0].standard =
+      !conflictingPropertyHandoff.handoff.properties[0].standard;
+    const conflictingProperty = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    conflictingProperty.consume(primary);
+    conflictingProperty.consume(conflictingPropertyHandoff);
+    assert.throws(
+      () => conflictingProperty.finish(),
+      /design_resource_handoff_set_shared_row_conflict:properties:/u,
+    );
+
+    const conflictingHeaderHandoff = structuredClone(secondary);
+    conflictingHeaderHandoff.handoff.provenance.run = "changed-handoff-run";
+    const conflictingHeader = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    conflictingHeader.consume(primary);
+    conflictingHeader.consume(conflictingHeaderHandoff);
+    assert.throws(
+      () => conflictingHeader.finish(),
+      /design_resource_handoff_set_header_conflict:provenance/u,
+    );
+
+    const conflictingResourcePathHandoff = structuredClone(secondary);
+    conflictingResourcePathHandoff.handoff.resources[0].path =
+      primary.handoff.resources[0].path;
+    const conflictingResourcePath = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    conflictingResourcePath.consume(primary);
+    conflictingResourcePath.consume(conflictingResourcePathHandoff);
+    assert.throws(
+      () => conflictingResourcePath.finish(),
+      /design_resource_handoff_set_resource_path_conflict:/u,
+    );
+
+    const conflictingResourceClosureHandoff = structuredClone(secondary);
+    conflictingResourceClosureHandoff.handoff.resource_fact_closure[0].resource_ref =
+      primary.handoff.resource_fact_closure[0].resource_ref;
+    const conflictingResourceClosure = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    conflictingResourceClosure.consume(primary);
+    conflictingResourceClosure.consume(conflictingResourceClosureHandoff);
+    assert.throws(
+      () => conflictingResourceClosure.finish(),
+      /design_resource_handoff_set_resource_closure_conflict:/u,
+    );
+
+    const duplicateSourceHandoff = structuredClone(secondary);
+    replaceExactStringMap(
+      duplicateSourceHandoff,
+      new Map([["design-secondary", DESIGN_SOURCE_ITEM_KEY]]),
+    );
+    const duplicateSource = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+    );
+    duplicateSource.consume(primary);
+    duplicateSource.consume(duplicateSourceHandoff);
+    assert.throws(
+      () => duplicateSource.finish(),
+      /design_resource_handoff_set_source_item_duplicate:/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -668,6 +831,96 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+function cloneDesignHandoffTarget(primary) {
+  const secondary = structuredClone(primary);
+  secondary.handoff_path = "design/handoff-secondary.md";
+  const mapping = new Map([
+    [DESIGN_TARGET_KEY, "secondary-default"],
+    [DESIGN_SOURCE_ITEM_KEY, "design-secondary"],
+  ]);
+  for (const collection of [
+    "resources",
+    "axis_dispositions",
+    "condition_exclusions",
+    "subjects",
+    "variation_axis_dispositions",
+    "variation_exclusions",
+    "variations",
+    "lineage_nodes",
+    "targets",
+    "evidence",
+    "fact_cells",
+    "facts",
+    "proof_obligations",
+    "environments",
+    "asset_bindings",
+    "resource_fact_closure",
+    "coverage",
+    "acceptance_blockers",
+  ])
+    for (const row of secondary.handoff[collection])
+      if (!mapping.has(row.key)) mapping.set(row.key, `secondary.${row.key}`);
+  for (const resource of secondary.handoff.resources)
+    mapping.set(resource.path, `design/secondary/${resource.path}`);
+  replaceExactStringMap(secondary, mapping);
+  const reverseMapping = new Map([...mapping].map(([from, to]) => [to, from]));
+  return { handoff: secondary, mapping, reverseMapping };
+}
+
+function attachSecondaryDesignTarget(contract, secondary, mapping) {
+  const binding = contract.outcomes[0].product.surface_bindings[0];
+  const secondaryTarget = structuredClone(binding.design_targets[0]);
+  replaceExactStringMap(secondaryTarget, mapping);
+  secondaryTarget.key = "secondary-default";
+  const handoffTarget = secondary.handoff.targets[0];
+  secondaryTarget.source_paths = [
+    secondary.handoff_path,
+    ...handoffTarget.resource_refs.map(
+      (ref) =>
+        secondary.handoff.resources.find((resource) => resource.key === ref)
+          .path,
+    ),
+  ];
+  binding.design_targets.push(secondaryTarget);
+  contract.task.source_paths.push(secondary.handoff_path);
+  contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
+    secondary.handoff_path,
+    secondary.handoff.resources.find(
+      (resource) => resource.key === "secondary.resource.fact-manifest",
+    ).path,
+  );
+  const sourceClaim = structuredClone(
+    contract.source_claims.find(
+      (claim) => claim.key === DESIGN_SOURCE_ITEM_KEY,
+    ),
+  );
+  sourceClaim.key = "design-secondary";
+  sourceClaim.source_ref = `${secondary.handoff_path}#main-design`;
+  contract.source_claims.push(sourceClaim);
+}
+
+function replaceExactStringMap(value, mapping) {
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index += 1) {
+      if (typeof value[index] === "string" && mapping.has(value[index]))
+        value[index] = mapping.get(value[index]);
+      else replaceExactStringMap(value[index], mapping);
+    }
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, entry] of Object.entries(value)) {
+    const nextKey = mapping.get(key) ?? key;
+    if (nextKey !== key) {
+      delete value[key];
+      value[nextKey] = entry;
+    }
+    if (typeof entry === "string" && mapping.has(entry))
+      value[nextKey] = mapping.get(entry);
+    else replaceExactStringMap(value[nextKey], mapping);
+  }
+}
 
 async function attachDesignResourceHandoff(fixture) {
   const { handoff } = await writeDesignResourceHandoffFixture(fixture.root);

@@ -1,34 +1,22 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { parseDesignResourceFactManifestJson } from "./design-resource-fact-manifest-shape.js";
 import { validateDesignResourceFactManifestUniverse } from "./design-resource-fact-manifest-universe.js";
 import type { DesignResourceObservableFactManifestV1 } from "./design-resource-fact-manifest-types.js";
 import type {
+  ParsedDesignResourceHandoffInputV1,
   ParsedDesignResourceHandoffV1,
   DesignResourceHandoffV1,
 } from "./design-resource-handoff-types.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
-import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 
-export async function loadAndValidateDesignResourceFactManifests(
-  repository: string,
-  parsed: ParsedDesignResourceHandoffV1,
-): Promise<Map<string, DesignResourceObservableFactManifestV1>> {
+export function parseDesignResourceFactManifests(
+  parsed: ParsedDesignResourceHandoffInputV1,
+  contents: Map<string, Buffer>,
+): Map<string, DesignResourceObservableFactManifestV1> {
   const resources = new Map(
     parsed.handoff.resources.map((resource) => [resource.key, resource]),
   );
-  const contents = new Map<string, Buffer>();
-  for (const resource of parsed.handoff.resources) {
-    const file = await assertProtectedRepositoryFile(
-      repository,
-      path.resolve(repository, ...resource.path.split("/")),
-      `design_resource:${resource.key}`,
-    );
-    contents.set(resource.key, await readFile(file));
-  }
   const manifests = new Map<string, DesignResourceObservableFactManifestV1>();
-  const sourceItems = new Map(Object.entries(parsed.source_item_kinds));
   for (const target of parsed.handoff.targets) {
     const manifestRef = target.source_profile.fact_manifest_resource_ref;
     const manifestResource = resources.get(manifestRef);
@@ -61,15 +49,6 @@ export async function loadAndValidateDesignResourceFactManifests(
         "fact_manifest_identity_mismatch",
         `${target.key}:${manifest.scope_key}:${manifest.target_key}`,
       );
-    validateDesignResourceFactManifestUniverse(
-      manifest,
-      parsed.handoff,
-      target,
-      resources,
-      contents,
-      sourceItems,
-    );
-    validateManifestProjection(parsed.handoff, target.key, manifest);
     manifests.set(target.key, manifest);
   }
   sameSet(
@@ -79,6 +58,32 @@ export async function loadAndValidateDesignResourceFactManifests(
     "handoff",
   );
   return manifests;
+}
+
+export function validateDesignResourceFactManifests(
+  parsed: ParsedDesignResourceHandoffV1,
+  contents: Map<string, Buffer>,
+  manifests: Map<string, DesignResourceObservableFactManifestV1>,
+  validateProjection: boolean,
+): void {
+  const resources = new Map(
+    parsed.handoff.resources.map((resource) => [resource.key, resource]),
+  );
+  const sourceItems = new Map(Object.entries(parsed.source_item_kinds));
+  for (const target of parsed.handoff.targets) {
+    const manifest = manifests.get(target.key);
+    if (!manifest) invalid("fact_manifest_target_missing", target.key);
+    validateDesignResourceFactManifestUniverse(
+      manifest,
+      parsed.handoff,
+      target,
+      resources,
+      contents,
+      sourceItems,
+    );
+    if (validateProjection)
+      validateManifestProjection(parsed.handoff, target.key, manifest);
+  }
 }
 
 function validateManifestProjection(
@@ -227,24 +232,25 @@ function exactRows(
   collection: string,
   targetKey: string,
 ): void {
-  const handoff = new Map(
-    handoffRows.map((row) => [row.key, canonicalJson(row)]),
-  );
-  const manifest = new Map(
-    manifestRows.map((row) => [row.key, canonicalJson(row)]),
-  );
-  sameSet(
-    [...handoff.keys()],
-    [...manifest.keys()],
-    `manifest_handoff_${collection}_set_mismatch`,
-    targetKey,
-  );
-  for (const [key, value] of manifest)
-    if (handoff.get(key) !== value)
+  const handoff = new Map(handoffRows.map((row) => [row.key, row]));
+  if (handoff.size !== manifestRows.length)
+    invalid(
+      `manifest_handoff_${collection}_set_mismatch`,
+      `${targetKey}:count:${handoff.size}:${manifestRows.length}`,
+    );
+  for (const manifestRow of manifestRows) {
+    const handoffRow = handoff.get(manifestRow.key);
+    if (!handoffRow)
+      invalid(
+        `manifest_handoff_${collection}_set_mismatch`,
+        `${targetKey}:missing:${manifestRow.key}`,
+      );
+    if (canonicalJson(handoffRow) !== canonicalJson(manifestRow))
       invalid(
         `manifest_handoff_${collection}_row_mismatch`,
-        `${targetKey}:${key}`,
+        `${targetKey}:${manifestRow.key}`,
       );
+  }
 }
 
 function canonicalJson(value: unknown): string {

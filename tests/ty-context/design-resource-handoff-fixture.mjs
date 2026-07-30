@@ -145,9 +145,18 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
     );
     if (manifestResource) manifestResource.sha256 = sha256(manifestContent);
   }
+  const handoffPath = options.handoffPath ?? DESIGN_HANDOFF_PATH;
+  await mkdir(path.dirname(path.join(root, handoffPath)), { recursive: true });
+  await writeFile(
+    path.join(root, handoffPath),
+    renderDesignResourceHandoffMarkdown(handoff),
+  );
+}
+
+export function renderDesignResourceHandoffMarkdown(handoff) {
   const sourceStatement =
     "The main surface must conform to every declared atomic observable design Fact.";
-  const markdown = `<!-- ty-source-background:start key=design-handoff-heading reason=markdown-structure -->
+  return `<!-- ty-source-background:start key=design-handoff-heading reason=markdown-structure -->
 <a id="main-design"></a>
 <!-- ty-source-background:end -->
 
@@ -159,7 +168,21 @@ ${sourceStatement}
 ${YAML.stringify(JSON.parse(JSON.stringify(handoff)), { lineWidth: 0 }).trimEnd()}
 \`\`\`
 `;
-  await writeFile(path.join(root, DESIGN_HANDOFF_PATH), markdown);
+}
+
+export function manifestBackedDesignResourceHandoff(handoff) {
+  return {
+    schema_version: handoff.schema_version,
+    representation: "manifest_backed",
+    intent: handoff.intent,
+    scope: structuredClone(handoff.scope),
+    provenance: structuredClone(handoff.provenance),
+    resources: structuredClone(handoff.resources),
+    targets: structuredClone(handoff.targets),
+    resource_fact_closure: structuredClone(handoff.resource_fact_closure),
+    coverage: structuredClone(handoff.coverage),
+    proposal: structuredClone(handoff.proposal),
+  };
 }
 
 export async function writeDesignResourceFactManifest(

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   DESIGN_RESOURCE_STANDARD_CONDITION_AXES,
   type DesignResourceObservableFactManifestV1,
@@ -6,15 +7,15 @@ import {
   type DesignResourceVariationAxis,
 } from "./design-resource-fact-manifest-types.js";
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
-import { sha256Hex } from "./strict-codec.js";
 
 export function manifestIdentityDigest(rows: ReadonlyArray<unknown>): string {
-  return sha256Hex(
-    rows
-      .map((row) => stableJson(row))
-      .sort()
-      .join("\n"),
-  );
+  const hash = createHash("sha256");
+  const identities = rows.map((row) => stableJson(row)).sort();
+  for (let index = 0; index < identities.length; index += 1) {
+    if (index > 0) hash.update("\n");
+    hash.update(identities[index]);
+  }
+  return hash.digest("hex");
 }
 
 export function manifestCollectionRows(

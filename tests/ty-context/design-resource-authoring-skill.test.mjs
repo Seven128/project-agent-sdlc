@@ -166,7 +166,7 @@ test("implementation output uses complete canonical source plus residual handoff
     provider,
     /stable IDs\/data attributes.*Markdown anchors.*JSON Pointers.*HTML\/CSS\/JS\/SVG selectors.*declarations.*attributes/isu,
   );
-  assert.match(handoff, /residual semantic and index layer/iu);
+  assert.match(handoff, /residual semantic and binding layer/iu);
   assert.match(
     handoff,
     /typed located digests|typed, locally resolvable .* locators/iu,
@@ -192,7 +192,7 @@ test("implementation output uses complete canonical source plus residual handoff
   );
   assert.match(
     handoff,
-    /no second numeric\/style source|not a second numeric\/style source/iu,
+    /sole complete index[\s\S]*residual semantic and binding layer/iu,
   );
 });
 
@@ -282,7 +282,10 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
     combined,
     /comparator.*tolerance.*mask.*Oracle.*render environment/isu,
   );
-  assert.match(combined, /exact manifest↔handoff row\/set equality/iu);
+  assert.match(
+    combined,
+    /hydration from the declared manifest bytes[\s\S]*cannot restate or certify a narrower universe/iu,
+  );
   assert.match(combined, /complete_explicit/iu);
   assert.match(combined, /count plus identity digest/iu);
   assert.match(
@@ -337,7 +340,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
   assert.match(handoff, /Candidate, selection and authority are separate/iu);
   assert.match(
     handoff,
-    /stable resource, subject, surface\/control\/state and target keys/iu,
+    /stable resource and exactly one target identity/iu,
   );
   assert.match(handoff, /provider\/project\/run\/entry/iu);
   assert.match(handoff, /immutable digest\/snapshot/iu);
@@ -347,6 +350,32 @@ test("handoff preserves immutable resource identity and direct downstream routin
   );
   assert.match(handoff, /all 33 standard target-condition axes/iu);
   assert.match(handoff, /exactly one:[\s\S]*design-resource-handoff-v1/iu);
+  assert.match(handoff, /representation: manifest_backed/u);
+  assert.match(
+    handoff,
+    /canonical per-target observable-Fact manifest is the sole complete index/iu,
+  );
+  assert.match(
+    handoff,
+    /explicit canonical manifest path set[\s\S]*file SHA-256[\s\S]*collection counts\/identity digests/iu,
+  );
+  assert.match(handoff, /truthful UTF-8 ceiling/iu);
+  assert.match(
+    handoff,
+    /ty-context design-resource bundle <draft-dir> <new-output-dir>/u,
+  );
+  assert.match(
+    handoff,
+    /rejects any embedded\/full-array or multi-target draft/iu,
+  );
+  assert.match(handoff, /atomically renames the complete set/iu);
+  assert.match(handoff, /not a post-hoc split/iu);
+  assert.match(handoff, /a semantic target is never divided/iu);
+  assert.match(
+    handoff,
+    /File size, parser capacity, model output or memory pressure never permits sampling, truncation, Fact coarsening/iu,
+  );
+  assert.match(handoff, /older embedded V1 read compatibility/iu);
   for (const dimension of [
     "surface_flow",
     "visual_content",
@@ -359,7 +388,10 @@ test("handoff preserves immutable resource identity and direct downstream routin
   ])
     assert.match(handoff, new RegExp(`\\b${dimension}\\b`, "u"));
   assert.match(handoff, /ty-context design-resource preflight <handoff\.md>/u);
-  assert.match(handoff, /complete inspection\/proof closure/iu);
+  assert.match(
+    handoff,
+    /referenced canonical manifest plus this residual block normalize to the complete handoff/iu,
+  );
   assert.match(
     handoff,
     /material resource cannot be hidden as `supporting_only`/iu,
@@ -384,7 +416,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
   );
   assert.match(
     handoff,
-    /marked handoff is `task\.source_paths`[\s\S]*Check `verification_inputs`/iu,
+    /Every marked handoff is in `task\.source_paths`[\s\S]*Check `verification_inputs`/iu,
   );
   assert.match(
     handoff,
@@ -537,7 +569,10 @@ test("Source, specification, Context and public docs expose the new resource con
       /writable(?: project-native)? initial proposal|可写的初始方案/iu,
     );
     assert.match(content, /\$design-resource-authoring/u);
-    assert.match(content, /selected immutable canonical resources|选定的不可变规范资源/iu);
+    assert.match(
+      content,
+      /selected immutable canonical resources|选定的不可变规范资源/iu,
+    );
     assert.match(content, /manifest/iu);
     assert.match(content, /dependenc/iu);
     assert.match(content, /\$long-task-workflow/u);

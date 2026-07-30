@@ -29,6 +29,10 @@ const HOTSPOT_TESTS = new Map([
     ["design-resource-handoff.test.mjs"],
   ],
   [
+    "tools/design_resource_handoff_capacity_probe.mjs",
+    ["design-resource-handoff-capacity-probe.test.mjs"],
+  ],
+  [
     "packages/ty-context/src/commands/index.ts",
     ["design-resource-handoff.test.mjs", "workflow-test-entrypoints.test.mjs"],
   ],
@@ -36,7 +40,40 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/index.ts",
     ["design-resource-handoff.test.mjs", "package-source.test.mjs"],
   ],
+  [
+    "packages/ty-context/src/lib/source-line-scanner.ts",
+    [
+      "design-resource-handoff-capacity-probe.test.mjs",
+      "design-resource-handoff.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-semantic-assurance-closure.test.mjs",
+      "long-task-source-authority-closure.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/lib/long-task-source-owned-sections.ts",
+    [
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-semantic-assurance-closure.test.mjs",
+      "long-task-source-authority-closure.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/lib/long-task-source-item-parser.ts",
+    [
+      "design-resource-handoff-capacity-probe.test.mjs",
+      "design-resource-handoff.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-delivery-parser.test.mjs",
+      "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
+    ],
+  ],
   ...[
+    "packages/ty-context/src/commands/design-resource.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-bundle.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-manifest-projection.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-snapshot.ts",
     "packages/ty-context/src/lib/design-resource-handoff-types.ts",
     "packages/ty-context/src/lib/design-resource-handoff-shape.ts",
     "packages/ty-context/src/lib/design-resource-handoff-shape-primitives.ts",
@@ -88,11 +125,14 @@ const HOTSPOT_TESTS = new Map([
     sourcePath,
     [
       "design-resource-handoff.test.mjs",
+      "design-resource-handoff-capacity-probe.test.mjs",
       "long-task-delivery-compiler.test.mjs",
     ],
   ]),
   ...[
+    "packages/ty-context/src/lib/design-resource-handoff-set-integrity.ts",
     "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
+    "packages/ty-context/src/lib/long-task-design-resource-method-binding.ts",
     "packages/ty-context/src/lib/long-task-design-target-capabilities.ts",
   ].map((sourcePath) => [
     sourcePath,
@@ -111,7 +151,6 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/long-task-outcome-parser.ts",
     "packages/ty-context/src/lib/long-task-semantic-drift-migration.ts",
     "packages/ty-context/src/lib/long-task-shape-primitives.ts",
-    "packages/ty-context/src/lib/long-task-source-item-parser.ts",
     "packages/ty-context/src/lib/long-task-source-target-continuity.ts",
   ].map((sourcePath) => [
     sourcePath,

@@ -1,17 +1,31 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import YAML from "yaml";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
+import {
+  containsDesignResourceHandoff,
+  parseDesignResourceHandoffMarkdown,
+  scanDesignResourceHandoffBlocks,
+} from "../../packages/ty-context/dist/lib/design-resource-handoff-parser.js";
 import { DESIGN_RESOURCE_DIMENSIONS } from "../../packages/ty-context/dist/lib/design-resource-handoff-types.js";
 import {
   DESIGN_HANDOFF_PATH,
   DESIGN_RESOURCE_PATH,
+  manifestBackedDesignResourceHandoff,
   writeDesignResourceFactManifest,
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
@@ -23,6 +37,143 @@ const repo = path.resolve(
   "../..",
 );
 const cli = path.join(repo, "packages", "ty-context", "dist", "cli.js");
+
+test("field-scale Unicode handoff fences use bounded linear scanning", () => {
+  const payload = "中".repeat(10 * 1024 * 1024 + 1024);
+  const prefix = ": intentionally-not-yaml ";
+  const body = `${prefix}${payload}`;
+  const content = `\`\`\`yaml design-resource-handoff-v1\r\n${body}\r\n\`\`\`\r\n`;
+  assert.ok(content.length > 10 * 1024 * 1024);
+  assert.ok(Buffer.byteLength(content, "utf8") > 10 * 1024 * 1024);
+  const originalParseAllDocuments = YAML.parseAllDocuments;
+  let yamlCalls = 0;
+  YAML.parseAllDocuments = (...args) => {
+    yamlCalls += 1;
+    return Reflect.apply(originalParseAllDocuments, YAML, args);
+  };
+  try {
+    const blocks = scanDesignResourceHandoffBlocks(content);
+    assert.equal(blocks.length, 1);
+    assert.equal(
+      blocks[0].bodyEndOffset - blocks[0].bodyStartOffset,
+      body.length + 2,
+    );
+    assert.equal(
+      content.slice(
+        blocks[0].bodyStartOffset,
+        blocks[0].bodyStartOffset + prefix.length,
+      ),
+      prefix,
+    );
+    assert.equal(
+      content.slice(blocks[0].bodyEndOffset - 3, blocks[0].bodyEndOffset),
+      "中\r\n",
+    );
+    assert.equal(containsDesignResourceHandoff(content), true);
+    assert.equal(yamlCalls, 0);
+  } finally {
+    YAML.parseAllDocuments = originalParseAllDocuments;
+  }
+});
+
+test("handoff fence scanning has explicit LF, CRLF, CR, EOF and block-count boundaries", () => {
+  for (const newline of ["\n", "\r\n", "\r"]) {
+    const content = [
+      "intro",
+      "```yaml design-resource-handoff-v1",
+      "body",
+      "```",
+    ].join(newline);
+    const blocks = scanDesignResourceHandoffBlocks(content);
+    assert.equal(blocks.length, 1);
+    assert.equal(
+      content.slice(blocks[0].bodyStartOffset, blocks[0].bodyEndOffset),
+      `body${newline}`,
+    );
+  }
+  assert.equal(scanDesignResourceHandoffBlocks("ordinary markdown").length, 0);
+  assert.equal(
+    scanDesignResourceHandoffBlocks(
+      "```yaml design-resource-handoff-v1\nunclosed",
+    ).length,
+    0,
+  );
+  assert.equal(
+    scanDesignResourceHandoffBlocks(
+      [
+        "```yaml design-resource-handoff-v1",
+        "one",
+        "```",
+        "```yaml design-resource-handoff-v1",
+        "two",
+        "```",
+      ].join("\n"),
+    ).length,
+    2,
+  );
+});
+
+test("single-decode handoff parsing preserves YAML keep-chomp trailing lines", async () => {
+  await withFixture(async (root) => {
+    const content = await readFile(
+      path.join(root, DESIGN_HANDOFF_PATH),
+      "utf8",
+    );
+    const keepChomp = content.replace(
+      "  revision: fixture-selected-v2",
+      "  revision: |+\n    fixture-selected-v2\n",
+    );
+    assert.notEqual(keepChomp, content);
+    const parsed = parseDesignResourceHandoffMarkdown(
+      DESIGN_HANDOFF_PATH,
+      keepChomp,
+    );
+    assert.equal(parsed.handoff.proposal.revision, "fixture-selected-v2\n\n");
+  });
+});
+
+test("the handoff adapter decodes strict YAML and the root shape exactly once", async () => {
+  await withFixture(async (root) => {
+    const content = await readFile(
+      path.join(root, DESIGN_HANDOFF_PATH),
+      "utf8",
+    );
+    const originalParseAllDocuments = YAML.parseAllDocuments;
+    let yamlCalls = 0;
+    let toJSCalls = 0;
+    let shapeRootReads = 0;
+    YAML.parseAllDocuments = (...args) => {
+      yamlCalls += 1;
+      const documents = Reflect.apply(originalParseAllDocuments, YAML, args);
+      for (const document of documents) {
+        const originalToJS = document.toJS.bind(document);
+        document.toJS = (...toJSArgs) => {
+          toJSCalls += 1;
+          const value = originalToJS(...toJSArgs);
+          return new Proxy(value, {
+            get(target, property, receiver) {
+              if (property === "schema_version") shapeRootReads += 1;
+              return Reflect.get(target, property, receiver);
+            },
+          });
+        };
+      }
+      return documents;
+    };
+    try {
+      const parsed = parseDesignResourceHandoffMarkdown(
+        DESIGN_HANDOFF_PATH,
+        content,
+      );
+      assert.equal(parsed.handoff.fact_cells.length, 3038);
+      assert.equal(yamlCalls, 1);
+      assert.equal(toJSCalls, 1);
+      assert.equal(shapeRootReads, 1);
+    } finally {
+      YAML.parseAllDocuments = originalParseAllDocuments;
+    }
+  });
+});
 
 test("one strict handoff preflight closes all eight dimensions and serves the CLI", async () => {
   await withFixture(async (root) => {
@@ -66,6 +217,185 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
     const reported = JSON.parse(stdout);
     assert.equal(reported.status, "ready");
     assert.equal(reported.handoff.targets[0].key, "main-default");
+  });
+});
+
+test("the same V1 marker can hydrate a lossless manifest-backed handoff", async () => {
+  await withFixture(async (root, handoff) => {
+    const embedded = await preflightDesignResourceHandoff(
+      root,
+      DESIGN_HANDOFF_PATH,
+    );
+    const embeddedBytes = Buffer.byteLength(
+      await readFile(path.join(root, DESIGN_HANDOFF_PATH), "utf8"),
+    );
+    const descriptor = manifestBackedDesignResourceHandoff(handoff);
+    await writeDesignResourceHandoff(root, descriptor);
+    const descriptorText = await readFile(
+      path.join(root, DESIGN_HANDOFF_PATH),
+      "utf8",
+    );
+    assert.match(descriptorText, /representation: manifest_backed/u);
+    assert.doesNotMatch(descriptorText, /\nfact_cells:/u);
+    assert.ok(Buffer.byteLength(descriptorText) < embeddedBytes / 3);
+
+    const parsed = parseDesignResourceHandoffMarkdown(
+      DESIGN_HANDOFF_PATH,
+      descriptorText,
+    );
+    assert.equal(parsed.handoff.schema_version, "design-resource-handoff-v1");
+    assert.equal(parsed.handoff.representation, "manifest_backed");
+
+    const hydrated = await preflightDesignResourceHandoff(
+      root,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.deepEqual(hydrated.counts, embedded.counts);
+    assert.deepEqual(hydrated.resource_hashes, embedded.resource_hashes);
+    assert.deepEqual(hydrated.manifest_identities, [
+      {
+        resource_ref: "resource.fact-manifest",
+        path: "design/observable-facts.json",
+        sha256: handoff.resources.find(
+          (resource) => resource.key === "resource.fact-manifest",
+        ).sha256,
+        scope_key: "main-surface",
+        target_key: "main-default",
+        collections: hydrated.manifest_identities[0].collections,
+      },
+    ]);
+    assert.equal(hydrated.manifest_identities[0].collections.length, 19);
+    assert.equal(
+      hydrated.manifest_identities[0].collections.find(
+        (collection) => collection.name === "fact_cells",
+      ).expected_count,
+      3038,
+    );
+    for (const collection of [
+      "axis_dispositions",
+      "condition_exclusions",
+      "conditions",
+      "subjects",
+      "variation_axis_dispositions",
+      "variation_exclusions",
+      "variations",
+      "properties",
+      "lineage_nodes",
+      "evidence",
+      "fact_cells",
+      "facts",
+      "proof_obligations",
+      "oracles",
+      "environments",
+      "asset_bindings",
+      "acceptance_blockers",
+    ])
+      assert.deepEqual(
+        hydrated.handoff[collection],
+        embedded.handoff[collection],
+        collection,
+      );
+
+    const multiTargetDescriptor = structuredClone(descriptor);
+    multiTargetDescriptor.targets.push(
+      structuredClone(multiTargetDescriptor.targets[0]),
+    );
+    multiTargetDescriptor.resources[0].path = "design/not-present.html";
+    await writeDesignResourceHandoff(root, multiTargetDescriptor);
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      /manifest_backed_one_target_required:2/u,
+    );
+  });
+});
+
+test("DSA bundle publication validates the frozen manifest set and is atomic", async () => {
+  await withFixture(async (root, handoff) => {
+    const descriptor = manifestBackedDesignResourceHandoff(handoff);
+    await writeDesignResourceHandoff(root, descriptor, {
+      handoffPath: "draft/main.md",
+    });
+    await mkdir(path.join(root, "handoffs"));
+    const { stdout } = await exec(
+      process.execPath,
+      [
+        cli,
+        "design-resource",
+        "bundle",
+        "draft",
+        "handoffs/selected-bundle",
+        "--manifest",
+        "design/observable-facts.json",
+        "--max-handoff-bytes",
+        "1048576",
+        "--json",
+      ],
+      { cwd: root, maxBuffer: 16 * 1024 * 1024 },
+    );
+    const result = JSON.parse(stdout);
+    assert.equal(result.status, "published");
+    assert.equal(result.handoffs.length, 1);
+    assert.equal(result.handoffs[0].target_key, "main-default");
+    assert.equal(result.manifests[0].collections.length, 19);
+    assert.equal(
+      result.manifests[0].collections.find(
+        (collection) => collection.name === "fact_cells",
+      ).expected_count,
+      3038,
+    );
+    const publishedPath = "handoffs/selected-bundle/main.md";
+    assert.equal(
+      await readFile(path.join(root, publishedPath), "utf8"),
+      await readFile(path.join(root, "draft/main.md"), "utf8"),
+    );
+    assert.equal(
+      (await preflightDesignResourceHandoff(root, publishedPath)).counts
+        .fact_cells,
+      3038,
+    );
+
+    await assert.rejects(
+      exec(
+        process.execPath,
+        [
+          cli,
+          "design-resource",
+          "bundle",
+          "draft",
+          "handoffs/rejected-manifest-set",
+          "--manifest",
+          "design/observable-facts.json",
+          "--manifest",
+          "design/entry.html",
+          "--max-handoff-bytes",
+          "1048576",
+        ],
+        { cwd: root },
+      ),
+      /manifest_path_set_mismatch/u,
+    );
+    await assert.rejects(
+      exec(
+        process.execPath,
+        [
+          cli,
+          "design-resource",
+          "bundle",
+          "draft",
+          "handoffs/rejected-bundle",
+          "--manifest",
+          "design/observable-facts.json",
+          "--max-handoff-bytes",
+          "1",
+        ],
+        { cwd: root },
+      ),
+      /handoff_byte_limit_exceeded/u,
+    );
+    assert.deepEqual(
+      (await readdir(path.join(root, "handoffs"))).sort(),
+      ["selected-bundle"],
+    );
   });
 });
 
