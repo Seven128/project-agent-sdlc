@@ -520,6 +520,32 @@ test("Source, specification, Context and public docs expose the new resource con
   }
   assert.match(readmes, /^## Recommended Usage$/mu);
   assert.match(readmes, /^## 推荐用法$/mu);
+  const publicReadmes = await Promise.all([
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
+  ]);
+  for (const content of publicReadmes) {
+    assert.match(
+      content,
+      /^### (?:Design-First Long-Task Workflow|设计优先的 Long-Task 工作流)$/mu,
+    );
+    assert.match(content, /ty-context enable long-task/u);
+    assert.match(content, /\$design-system-authoring/u);
+    assert.match(
+      content,
+      /writable(?: project-native)? initial proposal|可写的初始方案/iu,
+    );
+    assert.match(content, /\$design-resource-authoring/u);
+    assert.match(content, /selected immutable canonical resources|选定的不可变规范资源/iu);
+    assert.match(content, /manifest/iu);
+    assert.match(content, /dependenc/iu);
+    assert.match(content, /\$long-task-workflow/u);
+    assert.match(
+      content,
+      /one-time current-model or switch-and-resume choice|一次性的“继续使用当前模型”或“切换模型后恢复”选择/iu,
+    );
+  }
   assert.match(profile, /"design-resource-authoring"/u);
   assert.match(manifest, /design-resource-authoring/u);
   assert.match(manifest, /proposal reconciliation/u);

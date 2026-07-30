@@ -60,9 +60,35 @@ ty-context enable long-task
 
 初始输入可以是简要产品意图，也可以是 Web GPT 等外部服务给出的详细初始方案。该输入本身不要求设计 authoring 或 Long-Task；应按交付需要选择执行路径，不要把“是否需要设计资源”和“是否需要 Long-Task”绑定在一起：
 
+### 设计优先的 Long-Task 工作流
+
+这条路径适合确实需要新 style-bearing 设计资源的长程实现交付。它组合已有能力，但不是所有 Long-Task 的前置流程：
+
+1. **只启用一次 Long-Task。** 选择工作流 Skill 前先运行 `ty-context enable long-task`。
+2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
+3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过 Source Plan 阶段。
+4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 随后会在实现前给出一次性的“继续使用当前模型”或“切换模型后恢复”选择。
+
+一组可以直接改写使用的调用顺序如下：
+
+```text
+$design-system-authoring 为这个 style-bearing 范围生成、选择并采用项目设计系统；如果 DESIGN.md 已经配置，则跳过本请求。
+
+为 <交付范围> 在 docs/initial-proposal.md 准备一份可写、项目原生的初始方案。
+
+$design-resource-authoring 使用 docs/initial-proposal.md，覆盖 <精确开发范围和目标>。返回完成回改的方案路径、通过校验的 design-resource-handoff-v1 路径，以及选定的不可变规范资源、manifest 和 dependency 路径。
+
+$long-task-workflow 将 docs/initial-proposal.md、<handoff.md> 以及选定的规范资源、manifest 和 dependencies 作为 Source，完成一次完整实现交付。
+```
+
+上面的路径只是示例，不是固定目录。候选图片或可编辑探索本身不构成保真实现权威；下游实现使用选定的不可变规范资源及其已校验 handoff。
+
+其他有效路径仍然保留：
+
 - **普通交付、不需要新设计资源：** 直接把需求交给当前 coding Goal；默认 Workflow Contract 自动生效，不需要 Workflow Skill 或 Contract 文件。
 - **长程交付、不需要新设计资源：** 启用一次 Profile 后，直接用需求或初始方案选择 `long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
-- **交付前确实需要设计资源：** 项目缺少 Design Authority 时才显式选择 `design-system-authoring`，再用 `design-resource-authoring` 生成/选择资源、按需完整冻结实现级 Source、一次性回改已接受决策并生成通过校验的残余 `design-resource-handoff-v1`。随后根据恢复与完成权威需求，把修订方案和选定资源交给默认 Workflow Contract 或 `long-task-workflow`。
+- **交付前确实需要设计资源：** 按上面的设计优先顺序执行，再根据恢复与完成权威需求，把修订方案、已校验 handoff 和选定的不可变规范资源集合交给默认 Workflow Contract 或 `long-task-workflow`。
 - **只需要设计资源：** 在 `design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
 设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为普通输入，但不再是推荐中间服务。

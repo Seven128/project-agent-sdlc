@@ -101,9 +101,33 @@ Enabling Long-Task additionally installs `long-task-workflow`, the retired `sour
 
 Start from either a concise product request or a detailed initial proposal authored elsewhere, including Web GPT. That input does not require design authoring or Long-Task; choose the execution route independently.
 
+### Design-First Long-Task Workflow
+
+Use this route for a long-running implementation delivery that genuinely needs new style-bearing design resources. It is not a prerequisite for every Long-Task:
+
+1. Run `ty-context enable long-task` once.
+2. If Design Authority is absent and the scope is style-bearing, explicitly select `$design-system-authoring` to generate, select and adopt the canonical `DESIGN.md`, token source and provider binding. Skip it when Design Authority is already configured.
+3. Prepare a writable project-native initial proposal at a concrete path such as `docs/initial-proposal.md`. It may come from the user, an external service or an explicitly requested applicable proposal capability; `design-resource-authoring` does not author it, and no Source Plan stage is required.
+4. Select `$design-resource-authoring` with that path plus the exact development scope and targets. Keep its reconciled proposal, validated residual `design-resource-handoff-v1`, and selected immutable canonical resources, manifest and dependencies.
+5. Select `$long-task-workflow` with the exact paths to all of those inputs. It authors the Source-bound Contract Draft, and the first Compile/Authority Lock presents the one-time current-model or switch-and-resume choice before implementation.
+
+```text
+$design-system-authoring Generate, select and adopt the project design system for this style-bearing scope. Skip this request when DESIGN.md is already configured.
+
+Prepare a writable project-native initial proposal at docs/initial-proposal.md for <delivery scope>.
+
+$design-resource-authoring Use docs/initial-proposal.md for <exact development scope and targets>. Return the reconciled proposal path, validated design-resource-handoff-v1 path, and selected immutable canonical resource, manifest and dependency paths.
+
+$long-task-workflow Use docs/initial-proposal.md, <handoff.md>, and the selected canonical resources, manifest and dependencies as Source for one complete implementation delivery.
+```
+
+These paths are illustrative. Candidate images or editable explorations alone do not authorize fidelity; implementation uses the selected immutable canonical resources and their validated handoff.
+
+Other valid routes remain available:
+
 - **Ordinary delivery, no new design resources:** give the request directly to the current coding Goal; the default Workflow Contract applies automatically.
 - **Long delivery, no new design resources:** select `long-task-workflow` with the request or proposal. It authors the Source-bound Contract Draft; design authoring is not a prerequisite.
-- **Delivery that needs new design resources:** select `design-system-authoring` only when Design Authority is absent, then `design-resource-authoring` to select and freeze resources and emit the validated residual handoff. Send the result to either the default Workflow Contract or `long-task-workflow`, based on recovery and completion-authority needs.
+- **Delivery that needs new design resources:** follow the sequence above, then send the reconciled proposal, validated handoff and selected immutable canonical resource set to either the default Workflow Contract or `long-task-workflow`, based on recovery and completion-authority needs.
 - **Design-resource-only request:** stop after `design-resource-authoring`; do not create a Long-Task Contract unless implementation delivery was also selected.
 
 The design-system Skill is normally used at cold start but never auto-runs. Only style-bearing resource work is gated; low-fidelity structure, IA/flow and semantics-only state studies remain available. A legacy Source Plan remains ordinary input, not a recommended intermediate service.
