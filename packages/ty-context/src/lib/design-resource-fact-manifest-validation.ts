@@ -2,10 +2,10 @@ import { parseDesignResourceFactManifestJson } from "./design-resource-fact-mani
 import { validateDesignResourceFactManifestUniverse } from "./design-resource-fact-manifest-universe.js";
 import type { DesignResourceObservableFactManifestV1 } from "./design-resource-fact-manifest-types.js";
 import type {
-  ParsedDesignResourceHandoffInputV1,
   ParsedDesignResourceHandoffV1,
   DesignResourceHandoffV1,
 } from "./design-resource-handoff-types.js";
+import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
 

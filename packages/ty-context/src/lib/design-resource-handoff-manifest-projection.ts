@@ -1,8 +1,6 @@
 import type { DesignResourceObservableFactManifestV1 } from "./design-resource-fact-manifest-types.js";
-import type {
-  DesignResourceHandoffManifestBackedV1,
-  DesignResourceHandoffV1,
-} from "./design-resource-handoff-types.js";
+import type { DesignResourceHandoffManifestBackedV1 } from "./design-resource-handoff-input-types.js";
+import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
 
 export function hydrateManifestBackedDesignResourceHandoff(

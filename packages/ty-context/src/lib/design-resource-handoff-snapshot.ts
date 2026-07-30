@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-types.js";
+import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import { sha256Hex } from "./strict-codec.js";

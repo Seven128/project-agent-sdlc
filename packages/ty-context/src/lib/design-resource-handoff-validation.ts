@@ -12,8 +12,10 @@ import { validateDesignResourceFacts } from "./design-resource-handoff-validatio
 import type {
   DesignResourceHandoffInputV1,
   DesignResourceHandoffManifestBackedV1,
-  DesignResourceHandoffPreflightV1,
   ParsedDesignResourceHandoffInputV1,
+} from "./design-resource-handoff-input-types.js";
+import type {
+  DesignResourceHandoffPreflightV1,
   ParsedDesignResourceHandoffV1,
 } from "./design-resource-handoff-types.js";
 import {

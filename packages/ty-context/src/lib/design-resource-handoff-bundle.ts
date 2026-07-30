@@ -1,26 +1,21 @@
 import {
   lstat,
   mkdtemp,
-  readFile,
   readdir,
   realpath,
   rename,
   rm,
-  writeFile,
 } from "node:fs/promises";
 import path from "node:path";
 import type { DesignResourceManifestCollectionName } from "./design-resource-fact-manifest-types.js";
-import { parseDesignResourceHandoffMarkdown } from "./design-resource-handoff-parser.js";
+import { stageDesignResourceHandoffDraft } from "./design-resource-handoff-bundle-draft.js";
 import { createDesignResourceHandoffSetIntegrity } from "./design-resource-handoff-set-integrity.js";
 import { preflightParsedDesignResourceHandoff } from "./design-resource-handoff-validation.js";
 import {
   normalizeRepositoryCwd,
   normalizeRepositoryFile,
 } from "./long-task-paths.js";
-import {
-  repoRelative,
-  resolveInsideRepository,
-} from "./long-task-workspace.js";
+import { resolveInsideRepository } from "./long-task-workspace.js";
 import { sha256Hex } from "./strict-codec.js";
 
 export interface DesignResourceHandoffBundleOptions {
@@ -130,43 +125,19 @@ export async function publishDesignResourceHandoffBundle(
       (code, detail) => invalid(code, detail),
     );
     for (const entry of draftEntries) {
-      const draftFile = path.join(draftAbsolute, entry.name);
-      const info = await lstat(draftFile);
-      if (typeof info.nlink === "number" && info.nlink > 1)
-        invalid("draft_hardlink_not_allowed", entry.name);
-      if (info.size > options.max_handoff_bytes)
-        invalid(
-          "handoff_byte_limit_exceeded",
-          `${entry.name}:${info.size}:${options.max_handoff_bytes}`,
-        );
-      const bytes = await readFile(draftFile);
-      if (bytes.length > options.max_handoff_bytes)
-        invalid(
-          "handoff_byte_limit_exceeded",
-          `${entry.name}:${bytes.length}:${options.max_handoff_bytes}`,
-        );
-      const content = bytes.toString("utf8");
-      if (!Buffer.from(content, "utf8").equals(bytes))
-        invalid("handoff_utf8_invalid", entry.name);
-      const stagedFile = path.join(temporary, entry.name);
-      await writeFile(stagedFile, bytes, { flag: "wx" });
-      const stagedPath = repoRelative(repository, stagedFile);
-      const parsed = parseDesignResourceHandoffMarkdown(stagedPath, content);
-      if (!("representation" in parsed.handoff))
-        invalid("manifest_backed_representation_required", entry.name);
-      if (parsed.handoff.targets.length !== 1)
-        invalid(
-          "one_target_per_handoff_required",
-          `${entry.name}:${parsed.handoff.targets.length}`,
-        );
-      const declaredTarget = parsed.handoff.targets[0];
-      const manifestResource = parsed.handoff.resources.find(
-        (resource) =>
-          resource.key ===
-          declaredTarget.source_profile.fact_manifest_resource_ref,
+      const {
+        bytes,
+        parsed,
+        target: declaredTarget,
+        manifest_resource: manifestResource,
+      } = await stageDesignResourceHandoffDraft(
+        repository,
+        draftAbsolute,
+        temporary,
+        entry.name,
+        options.max_handoff_bytes,
+        invalid,
       );
-      if (!manifestResource)
-        invalid("target_manifest_resource_missing", declaredTarget.key);
       if (!declaredManifestPaths.has(manifestResource.path))
         invalid(
           "target_manifest_not_declared",

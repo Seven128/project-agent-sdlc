@@ -1,6 +1,6 @@
 import type { CompiledSourceItemV2 } from "./long-task-delivery-types.js";
 import { parseDesignResourceHandoffInputShape } from "./design-resource-handoff-shape.js";
-import type { DesignResourceHandoffInputV1 } from "./design-resource-handoff-types.js";
+import type { DesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
 import { parseSemanticFactManifestShape } from "./semantic-fact-manifest-shape.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import {

@@ -72,6 +72,8 @@ const HOTSPOT_TESTS = new Map([
   ...[
     "packages/ty-context/src/commands/design-resource.ts",
     "packages/ty-context/src/lib/design-resource-handoff-bundle.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-bundle-draft.ts",
+    "packages/ty-context/src/lib/design-resource-handoff-input-types.ts",
     "packages/ty-context/src/lib/design-resource-handoff-manifest-projection.ts",
     "packages/ty-context/src/lib/design-resource-handoff-snapshot.ts",
     "packages/ty-context/src/lib/design-resource-handoff-types.ts",

@@ -1,4 +1,4 @@
-import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-types.js";
+import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
 import { parseSourceDocument } from "./long-task-source-item-parser.js";
 import { forEachSourceLine } from "./source-line-scanner.js";
 

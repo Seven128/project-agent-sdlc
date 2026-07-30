@@ -1,8 +1,8 @@
 import type {
   DesignResourceHandoffInputV1,
   DesignResourceHandoffManifestBackedV1,
-  DesignResourceHandoffV1,
-} from "./design-resource-handoff-types.js";
+} from "./design-resource-handoff-input-types.js";
+import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import {
   parseDesignResourceAssetBindings,
   parseDesignResourceAxisDispositions,

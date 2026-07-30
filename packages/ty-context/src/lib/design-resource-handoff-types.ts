@@ -161,24 +161,6 @@ export interface DesignResourceHandoffV1 {
   };
 }
 
-export type DesignResourceHandoffManifestBackedV1 = Pick<
-  DesignResourceHandoffV1,
-  | "schema_version"
-  | "intent"
-  | "scope"
-  | "provenance"
-  | "resources"
-  | "targets"
-  | "resource_fact_closure"
-  | "coverage"
-  | "proposal"
-> & {
-  representation: "manifest_backed";
-};
-
-export type DesignResourceHandoffInputV1 =
-  DesignResourceHandoffV1 | DesignResourceHandoffManifestBackedV1;
-
 export interface DesignResourceHandoffResourceV1 {
   key: string;
   role: "exact_target" | "constraint" | "supporting";
@@ -344,13 +326,6 @@ export interface DesignResourceHandoffBlockerV1 {
 export interface ParsedDesignResourceHandoffV1 {
   handoff_path: string;
   handoff: DesignResourceHandoffV1;
-  source_item_keys: string[];
-  source_item_kinds: Record<string, string>;
-}
-
-export interface ParsedDesignResourceHandoffInputV1 {
-  handoff_path: string;
-  handoff: DesignResourceHandoffInputV1;
   source_item_keys: string[];
   source_item_kinds: Record<string, string>;
 }
