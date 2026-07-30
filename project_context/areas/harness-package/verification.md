@@ -64,6 +64,14 @@ The assurance is a composition of independently scoped evidence, not a new aggre
 
 These checks establish current repository evidence only for their declared invariants. They do not make Context authoritative over contradictory code, prove omitted requirements, validate an arbitrary external oracle, or prevent an authorized maintainer from deliberately weakening all specification/code/test owners together. Any changed implementation or verification owner must update the implementation index and this proof routing in the same candidate.
 
+## Multi-Area / Monorepo Context Evidence
+
+- `workflow-contract-routing.test.mjs` checks that managed AGENTS, the engineering Skill, Context templates, owning Context/specification and English/Chinese/package docs all say the initial Context set is expandable, Area is not a read/edit ACL or mandatory one-to-one workspace map, target ambiguity is conditional and fail-closed, cross-target work remains allowed, and project-owned changed-path verification is the objective extension point.
+- The same suite initializes an unchanged single-Area consumer and validates a multi-Area fixture containing separate client and shared-service roots using only the existing manifest fields. This proves no new required schema, migration or monorepo-only activation path was introduced.
+- `context-default-footprint.test.mjs` proves non-default Areas stay out of the advisory startup footprint. The guidance test separately prevents that optimization from being described as a maximum readable set; neither test claims to enforce what an Agent reads.
+- Existing `long-task-workspace-scope.test.mjs`, causal-chain and `implementation-freedom-boundary` sentinels remain the owners for Long-Task scope escape, full Context Authority and Goal-owned implementation method/order. Multi-Area default guidance must not add a parallel classifier, scope state, Gate or scheduler.
+- These are deterministic structure, compatibility and distribution checks. A claim that the wording improves real Agent Context recall, target selection or cost requires fixed independent paired runs in the fresh-Agent mechanism benchmark with hidden product probes; repository wording presence or a hand-authored trace is insufficient.
+
 ## Focused Gates
 
 - `npm run format:check`: TypeScript formatting.

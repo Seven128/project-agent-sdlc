@@ -29,6 +29,8 @@ This is the minimum durable architecture map for the Harness source repository. 
 - Foundation, workflow-contract, package-managed-surface, implementation-index, verification and rationale Context is selected on demand.
 - Before `Context Delta`, the Agent combines graph/trigger candidates with one bounded high-signal text search over `project_context/**`.
 - Search discovers candidates only; semantic judgment decides relevance. It creates no vector/persistent index, cache, registry, state or second authority.
+- The selected startup/candidate set is a minimum working set rather than a read sandbox. The Agent may widen to any Context or code needed for an indirect/shared dependency, while a complete-graph default remains intentionally absent.
+- Area topology records durable semantic ownership and discovery. Workspace/package/repository topology remains ordinary project architecture: an Area may own multiple roots and a shared or governance Area may own none; when the mapping is material, each root has one primary Area owner. Neither Area selection nor `read_policy` grants or denies edits.
 - A durable fact has one primary Context owner. Startup surfaces retain short routing/hard-boundary statements instead of copying specialized rules.
 - `ty-context doctor` reports deterministic default files/bytes, exact duplicates and Design Authority signals as advisory maintenance information, never as acceptance state or an absolute byte gate.
 
@@ -36,6 +38,8 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 - Keep the startup graph small because every fresh Agent pays its read and attention cost; preserve specialized truth through on-demand ownership.
 - Add bounded search because manifest triggers are cheap but wording recall is imperfect. Search supplements rather than replaces semantic reasoning.
+- Keep retrieval and mutation as separate questions: shared Context/code can be read for a client task without becoming a product target. Only unresolved ambiguity among materially different sibling product targets pauses product edits; an intentional cross-target task names every target.
+- Let consumer repositories own exact path-to-target rules and changed-path verification. Harness invokes or follows those project-native checks when present and otherwise uses final diff/owner Conformance; it does not infer a universal monorepo dependency or applicability graph.
 - Keep ordinary planning, architecture judgment and implementation order inside the current host Goal. Persist only durable facts and use project-native executable checks for objective boundaries.
 - Make Architecture Deliberation externally observable and risk-proportional without creating an architecture-plan authority or claiming private-reasoning proof.
 - Keep Long-Task acceptance separate from implementation sequencing: one Contract and one Final Gate provide completion authority without a scheduler, second plan or Worker state.
@@ -54,7 +58,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 Default:
 
-`minimum Context + manifest candidates + bounded Context search -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> project verification -> Contract Conformance / Architecture Conformance -> Context drift check`
+`minimum Context + manifest candidates + bounded Context search + dependency-driven widening -> target disambiguation when needed -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> project verification / project-owned changed-path scope check -> Contract Conformance / Architecture Conformance -> Context drift check`
 
 Long-Task:
 
@@ -75,10 +79,12 @@ Long-Task:
 - Functional behavior and architecture structure are separate claims when either can pass independently.
 - Unsupported design preference, inferred product semantics or unverifiable “good design” remains durable Context, task-local judgment or `decision_required`, never false proof.
 - Scope escape, duplicate authority, owner/service bypass, wrong dependency direction, a second source of truth or new/worsened debt blocks handoff when the declared invariant applies and no bounded project-owned exception closes it.
+- Default Contract Conformance distinguishes read dependencies, intended product targets, allowed supporting changes and actual changed paths. It uses a repository-owned scope verifier when available; unrelated pre-existing dirty paths are not attributed to the current task without task provenance.
 
 ## Constraints And Tradeoffs
 
 - Smaller default Context trades automatic reading of every specialized rule for lower recurring attention cost; manifest routing plus bounded search reduces but cannot eliminate recall risk.
+- The multi-Area target check is conditional. A single-Area repository or an already explicit/unambiguous target pays no schema, state, migration or clarification ceremony.
 - The default Workflow Contract is soft/prompt-level. Project checks prove behavior; it deliberately has no validator, Receipt, persisted phase state or machine acceptance.
 - Long-Task is explicit or binding-driven and pays durable Contract/Authority/Final-Gate cost only where recovery and machine completion justify it.
 - The first successful Long-Task Compile creates Authority Lock and a terminal model-choice turn unless an explicit task-specific choice already exists; Harness stores no acknowledgement or model route.
@@ -92,6 +98,7 @@ Long-Task:
 - `make validate-context` protects required recovery structure and registered role consistency; it is not weakened to obtain a smaller Context.
 - Default-footprint tests prove deterministic selection, exact-duplicate reporting and advisory budgets, not compliance with an absolute byte ceiling.
 - Workflow tests prove manifest routing plus bounded search, prompt-level default semantics, explicit/bound Long-Task routing and absence of added index/state/authority.
+- Multi-Area tests prove the default set remains a starting set, Area/workspace mapping stays non-1:1 and schema-optional, ambiguous-target/change-scope guidance reaches managed/generated/public surfaces, and single-Area initialization remains unchanged. Static guidance tests do not prove Agent adherence; an effectiveness claim requires fixed independent fresh-Agent runs.
 - Long-Task tests prove Source/Contract/Authority continuity, one-time model choice, protected revision, exact evidence sensitivity, current-snapshot Final Gate and declared-machine/native-Goal separation.
 - The `implementation-freedom-boundary` critical sentinel protects Goal-owned order/method/feedback/delegation choices without weakening final proof.
 - Affected/focused and Trust tests are feedback/package regression evidence only. Unknown or shared changes widen fail safe; complete selection supersedes a redundant Trust invocation.

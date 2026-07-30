@@ -76,6 +76,8 @@ export async function inspectDefaultContextFootprint(
   };
 }
 
+// This is the advisory startup set only. It does not restrict later reads or
+// turn default Area/read-policy selection into a Context or edit permission.
 export function selectDefaultContextPaths(
   manifest: ContextManifest,
 ): Map<string, Set<DefaultContextSelectionReason>> {

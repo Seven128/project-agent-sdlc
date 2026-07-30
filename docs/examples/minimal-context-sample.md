@@ -150,6 +150,37 @@ Use area Context for ownership and local constraints:
 - `tests/label-routing.test.ts`
 ```
 
+## Multi-Area / Monorepo Variant
+
+For a monorepo, add Areas for durable product or technical ownership—not mechanically for every workspace:
+
+```toml
+[[areas]]
+id = "mobile"
+root = "apps/mobile"
+context = "project_context/areas/mobile.md"
+kind = "app"
+default = true
+
+[[areas]]
+id = "miniapp"
+root = "apps/miniapp"
+context = "project_context/areas/miniapp.md"
+kind = "app"
+
+[[areas]]
+id = "shared-service"
+root = "packages/service"
+context = "project_context/areas/shared-service.md"
+kind = "service"
+```
+
+One Area may own several workspace roots, and a shared/governance Area may own none. When the mapping matters, give each code/workspace root one primary Area owner and put that durable mapping in each Area's `Code Entry Points` or in `architecture.md`; no extra manifest field is required.
+
+The default Area, `read_policy`, triggers and bounded search choose the initial Context working set only. A miniapp task may read shared-service or mobile contract Context when that is necessary to understand an interface, but those reads do not authorize mobile edits. If “change the homepage” could still mean several sibling clients after reading user and repository ownership facts, clarify the target before product edits. A cross-client request names every intended target.
+
+If the repository has a project-specific changed-path scope verifier, index its stable command in verification Context and run it on the paths attributable to the current task. Otherwise review the final diff against Area/code ownership during Conformance. Do not add a generic workspace registry, read ACL, full-Context default or persisted target declaration merely because the repository is a monorepo.
+
 ## project_context/areas/main/verification.md
 
 Use verification role Context for repeatable validation paths, not one-off logs:

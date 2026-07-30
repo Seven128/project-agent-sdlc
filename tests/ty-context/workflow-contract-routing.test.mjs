@@ -9,6 +9,10 @@ import { promisify } from "node:util";
 import YAML from "yaml";
 import { runInit } from "../../packages/ty-context/dist/lib/init.js";
 import { runValidator } from "../../packages/ty-context/dist/lib/validators.js";
+import {
+  areaContext,
+  createContextProject,
+} from "./context-manifest-fixtures.mjs";
 
 const repo = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -138,6 +142,189 @@ test("default Context routing combines manifest candidates with bounded search",
     `${longTask}\n${contractAuthoring}`,
     /marked `design-resource-handoff-v1`[\s\S]*`verification_inputs`/iu,
   );
+});
+
+test("multi-Area guidance keeps Context reads expandable and change targets explicit", async () => {
+  const [
+    managed,
+    rootAgents,
+    packaged,
+    development,
+    manifestTemplate,
+    areaTemplate,
+    architectureTemplate,
+    verificationTemplate,
+    workflow,
+    rationale,
+    specification,
+    readme,
+    chineseReadme,
+    packageReadme,
+    sample,
+    implementationIndex,
+    verification,
+  ] = await Promise.all([
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read("AGENTS.md"),
+    read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
+    read(
+      ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+    ),
+    read(".codex/ty-context-managed/context_templates/context.toml"),
+    read(".codex/ty-context-managed/context_templates/area.md"),
+    read(".codex/ty-context-managed/context_templates/architecture.md"),
+    read(".codex/ty-context-managed/context_templates/verification.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
+    read(
+      "project_context/areas/harness-package/decision-rationale/minimal-context.md",
+    ),
+    read("PROJECT_SPEC.md"),
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
+    read("docs/examples/minimal-context-sample.md"),
+    read("project_context/areas/harness-package/implementation-index.md"),
+    read("project_context/areas/harness-package/verification.md"),
+  ]);
+
+  assert.equal(packaged, managed, "package AGENTS Core drift");
+  for (const guidance of [managed, workflow, rationale, specification]) {
+    assert.match(guidance, /expandable/iu);
+    assert.match(guidance, /read ACL|read isolation/iu);
+    assert.match(guidance, /one-to-one|one-Area-per-workspace|一一对应/iu);
+    assert.match(guidance, /change target/iu);
+    assert.match(guidance, /shared|supporting/iu);
+    assert.match(guidance, /changed-path|target-scope/iu);
+    assert.match(guidance, /project-owned|repository-owned/iu);
+    assert.match(
+      guidance,
+      /task-attributable|paths attributable to the current task/iu,
+    );
+  }
+  assert.match(
+    rootAgents,
+    /separate the expandable read scope from the intended change target/iu,
+  );
+  assert.match(
+    managed,
+    /ask one concise target question before product edits/iu,
+  );
+  assert.match(managed, /enumerate every intentional cross-Area target/iu);
+  assert.match(
+    managed,
+    /Do not make the full Context graph the ordinary default/iu,
+  );
+  assert.match(managed, /required workspace\/applicability schema/iu);
+  assert.match(managed, /duplicate Long-Task scope classifier/iu);
+  assert.match(development, /读取什么.*修改哪个产品目标/iu);
+  assert.match(development, /Area 与 workspace 不要求一一对应/iu);
+  assert.match(development, /不能仅凭 default Area、最近修改/iu);
+  assert.match(
+    development,
+    /单 Area\/非 monorepo 不增加 schema、迁移或状态[\s\S]*实际暴露多个.*才需要询问/iu,
+  );
+  assert.match(manifestTemplate, /not a read\/edit ACL/iu);
+  assert.match(manifestTemplate, /starting read set, not a maximum/iu);
+  assert.match(manifestTemplate, /need no additional manifest fields/iu);
+  assert.match(areaTemplate, /One Area may own several workspaces/iu);
+  assert.match(architectureTemplate, /Do not assume one Area per workspace/iu);
+  assert.match(
+    verificationTemplate,
+    /changed-path\/target-scope verifier[\s\S]*task-attributable paths/iu,
+  );
+  for (const publicEnglish of [readme, packageReadme]) {
+    assert.match(publicEnglish, /Multi-Area/iu);
+    assert.match(
+      publicEnglish,
+      /starting working set|expandable working set/iu,
+    );
+    assert.match(publicEnglish, /changed-path|target-scope/iu);
+    assert.match(publicEnglish, /Single-Area/iu);
+  }
+  assert.match(sample, /## Multi-Area \/ Monorepo Variant/iu);
+  assert.match(sample, /initial Context working set/iu);
+  assert.match(sample, /no extra manifest field is required/iu);
+  assert.match(sample, /changed-path scope verifier/iu);
+  assert.match(chineseReadme, /### Multi-Area 与 Monorepo/u);
+  assert.match(chineseReadme, /不是读取 ACL 或最大可读集合/u);
+  assert.match(chineseReadme, /单 Area 项目没有新增 schema/u);
+  assert.match(
+    implementationIndex,
+    /^## Multi-Area \/ Monorepo Context Owners$/mu,
+  );
+  assert.match(verification, /^## Multi-Area \/ Monorepo Context Evidence$/mu);
+  assert.match(
+    verification,
+    /fixed independent paired runs[\s\S]*fresh-Agent mechanism benchmark/iu,
+  );
+  assert.doesNotMatch(
+    `${managed}\n${workflow}`,
+    /must only read the target Area|must read the full Context graph|persist(?:ed)? target declaration/iu,
+  );
+});
+
+test("single-Area init and existing-field multi-Area manifests need no migration", async () => {
+  await withInitializedProject(async (root) => {
+    const manifest = await readFile(
+      path.join(root, "project_context", "context.toml"),
+      "utf8",
+    );
+    assert.match(manifest, /id = "main"[\s\S]*root = "\."/u);
+    assert.match(manifest, /not a read\/edit ACL/iu);
+    assert.match(manifest, /starting read set, not a maximum/iu);
+    assert.doesNotMatch(
+      manifest,
+      /^(?:workspace|owner_area|applies_to|requires)\s*=/mu,
+    );
+    assert.deepEqual((await runValidator(root, "validate-context")).errors, []);
+  });
+
+  const root = await createContextProject({
+    manifest: `[[areas]]
+id = "mobile"
+root = "apps/mobile"
+context = "project_context/areas/main.md"
+kind = "app"
+default = true
+
+[[areas]]
+id = "miniapp"
+root = "apps/miniapp"
+context = "project_context/areas/miniapp.md"
+kind = "app"
+
+[[areas]]
+id = "shared-service"
+root = "packages/service"
+context = "project_context/areas/shared-service.md"
+kind = "service"
+
+[[context]]
+path = "project_context/areas/main/verification.md"
+role = "verification"
+read_policy = "default"
+triggers = ["test"]
+`,
+    extraFiles: {
+      "apps/mobile/package.json": "{}\n",
+      "apps/miniapp/package.json": "{}\n",
+      "packages/service/package.json": "{}\n",
+      "project_context/areas/miniapp.md": areaContext("miniapp"),
+      "project_context/areas/shared-service.md": areaContext("shared-service"),
+    },
+  });
+  try {
+    const report = await runValidator(root, "validate-context");
+    assert.deepEqual(report.errors, []);
+    assert.match(
+      report.info.join("\n"),
+      /loaded project_context\/context\.toml with 3 area\(s\)/u,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("shared architecture quality is observable, risk-proportional, and single-carrier", async () => {

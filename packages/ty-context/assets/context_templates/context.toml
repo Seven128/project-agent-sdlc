@@ -1,8 +1,14 @@
 # Schema v4 Minimal Context graph manifest.
 # Keep the default product/domain area for ordinary projects. Role context nodes
 # are read-purpose slices owned by an area or, only when cross-domain, by the project root.
+# An area is a durable ownership/discovery unit, not a read/edit ACL or a required
+# one-to-one workspace mapping. One area may own several code/workspace roots.
 # Use read_policy = "default" only for near-universal recovery facts; prefer
 # "on-demand" for specialized architecture, contract, deployment or history detail.
+# Default/on-demand selection defines the starting read set, not a maximum:
+# widen to any relevant area/shared Context when task dependencies require it.
+# Monorepos need no additional manifest fields; record useful code/workspace
+# ownership in area or architecture Context and use project-owned scope checks.
 # `ty-context doctor` reports the deterministic default read footprint and exact duplicates.
 # When migrating deep files under project_context/areas/**, refine obvious
 # contract/foundation/subdomain/verification/deployment/implementation-index/

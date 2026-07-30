@@ -28,6 +28,7 @@
 ## Code Entry Points
 
 - `src/` or the concrete file/function entry points.
+- In a monorepo, name the code/workspace roots this Area primarily owns and any shared/supporting roots future work commonly needs. Give each root one primary Area owner when the mapping is material; one Area may own several workspaces. This documents ownership and discovery, not read isolation or edit permission.
 
 ## Related Role Context
 

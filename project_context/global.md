@@ -20,6 +20,9 @@
 - `project_context/**` stores the smallest durable non-implementation facts future agents need to recover intent, ownership, architecture/dependency boundaries, contracts, state/recovery semantics and repeatable verification/deployment.
 - The default recovery path reads `global.md`, `architecture.md`, `context.toml` and the default area root, collects manifest candidates, then performs one bounded high-signal search over `project_context/**` before `Context Delta`. Specialized workflow, package, implementation and verification detail remains `on-demand`.
 - Search supplements triggers and semantic judgment. It creates no vector/persistent index, cache, registry, state or second authority.
+- The default and discovered files are an expandable working set, not a maximum readable set or access-control boundary. An Agent reads any additional Area Context, shared Context, design authority or code needed to understand the task; the package does not make the complete Context graph the ordinary default.
+- An Area is a durable product/technical ownership and discovery unit, not a workspace mirror, read permission or edit authorization. One Area may own several workspaces, one shared or governance Area may own no build workspace, and relevant workspace/code roots remain project facts in Area or architecture Context rather than required manifest fields.
+- Context is responsible for storing durable facts in the correct owner and making them recoverable with low search cost. It can route and fail closed on missing authority, but it cannot guarantee that a soft-guided Agent applies every fact correctly; project checks and review remain the behavioral boundary.
 - Context owns intended durable truth; code owns current implementation truth; tests, CI, runtime evidence and human observation prove behavior. Disagreement is drift, missing work or stale Context.
 - Non-UI semantic closure never treats current code as missing-intent authority. Source/Context own product, business, API/data/state, architecture, security, reliability and operational semantics; implementation may select and record delegated engineering decisions, but a user-reserved or materially preference-sensitive choice stays `decision_required`.
 - Every task decides exactly one `Context Delta: none|required`. Durable ownership, architecture, API/schema/data, state/recovery, dependency, security, product-surface responsibility or repeatable verification/deployment changes are `required`; semantics-preserving local fixes are `none`.
@@ -30,6 +33,8 @@
 
 - Give each durable fact one primary owner, keep the near-universal read small and route specialized facts on demand rather than deleting them.
 - Use manifest routing plus bounded search because triggers are cheap but wording recall is imperfect; semantic judgment still decides relevance.
+- Separate Context read scope from product change scope. Reading a shared backend, sibling Area or cross-client contract supplies understanding and never silently adds that Area to the intended edit targets.
+- Resolve a genuinely ambiguous sibling product target before product edits, explicitly enumerate intentional cross-Area targets, and use a repository-owned changed-path scope check when one exists. Keep this conditional and task-local instead of adding a target registry, workspace ACL or universal dependency scanner.
 - Prefer existing Context, Contract and project-verification carriers over new artifacts, state or duplicate authority.
 - Make architecture consideration observable and risk-proportional without claiming access to private reasoning or universal future-proofing.
 - Keep acceptance fail closed: lower authoring, model, recovery or test cost never substitutes prose, historical evidence or Agent judgment for current-snapshot proof.
@@ -43,6 +48,7 @@
 - Product Surface/Screen contracts use existing Context roles and do not duplicate visual tokens or target pixels. Default selected-design accounting is ephemeral; Long-Task uses only its compiled carrier and Final Gate.
 - Raw proposals, selected resources and attachments enter one Source-bound Contract Draft loop. `source-plan-authoring` is only a retired compatibility name; legacy Source Plans remain ordinary Source.
 - Harness never creates or restores platform Goals, invokes or switches models, schedules agents, creates branches/worktrees, merges, pushes, opens PRs, deploys, executes external confirmations or manages process trees.
+- Minimal Context does not impose read isolation, a one-Area-per-workspace schema, a mandatory Area dependency closure, a full-Context default read, persisted target declarations or a language/tool-specific workspace/path/import analyzer.
 - No Source Inventory authority, Coverage authority, Packet/SFC/Wave/Campaign runtime, second Contract plan, scheduler, Worker registry, native-Goal state or external-confirmation state machine belongs in the active product.
 
 ## Architecture Context

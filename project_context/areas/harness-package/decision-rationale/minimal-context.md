@@ -24,6 +24,38 @@ read_policy: on-demand
 - The default Workflow therefore adds one bounded text search over `project_context/**` before `Context Delta`, using only a small set of high-signal task terms such as explicit area/module names and API/schema/state/security/verification/deployment language. Matching files are merged with manifest candidates and then filtered by semantic relevance.
 - The search is intentionally narrow: it does not scan the whole codebase, create a vector index, persist search state or automatically treat every keyword hit as authority. This adds low fixed cost while reducing the most direct trigger-miss path.
 
+## Why The Selected Read Set Is Expandable
+
+- Core/default files, manifest candidates and the bounded search optimize the first useful read, not a maximum permitted read. Shared backend rules, cross-client contracts, design authority or an indirect dependency may become relevant only after code inspection.
+- Hard read isolation is not reliable in a prompt-level Harness and would reject legitimate cross-Area work. Making the full Context graph the global default has the opposite cost: every ordinary task pays all repository complexity even when only a small subset matters.
+- The selected design therefore keeps the existing adaptive path: start from the common minimum, read discovered relevant Context, and freely widen as dependencies emerge. `read_policy`, triggers and default selection are retrieval hints rather than access control. This cannot guarantee perfect Agent application, but it stores intended facts in recoverable owners without inventing enforcement that the mechanism does not possess.
+
+## Why Area Does Not Equal Workspace
+
+- Workspace/package/repository roots are code, build and dependency units. Areas are stable product or technical responsibility and Context ownership units. Their useful correspondence is durable and discoverable, but it is not necessarily one-to-one.
+- One Area may own several workspaces; a shared, infrastructure or repository-governance Area may own no build workspace; shared code may be read by several client tasks while retaining one owner. When the mapping matters, each code/workspace root has one primary Area owner and projects record it in Area `Code Entry Points`, architecture Context or a project-native ownership resolver.
+- Adding required `workspace`, `owner_area`, `applies_to` or `requires` manifest fields would force migrations and a generic topology model before evidence shows one representation fits npm, Nx, Bazel, Cargo, Maven and multi-repository projects. Existing Area roots, role Context, architecture ownership and project checks already express the durable facts without making a new schema mandatory.
+
+## Why Read Scope And Change Scope Are Separate
+
+- Reading Context answers “what must I understand?”; the change target answers “which product/workspace/surface did the user ask to modify?”. Reading a sibling Area or shared backend is not edit authorization, and omitting a sibling from the initial read set is not an edit prohibition.
+- The concrete failure to intercept is a legal but wrong-client change: a vague “homepage” request can be implemented in a sibling client while dependencies and tests remain valid. Dependency rules cannot detect that intent mismatch.
+- Default work therefore fails closed only when explicit user language and durable repository ownership still leave more than one materially different sibling product target. It asks one concise target question before product edits, never chooses from the default Area, recent edits or generic keyword collisions, and explicitly enumerates all intended targets for cross-client work.
+- After implementation, a consumer-provided changed-path/target-scope verifier is the preferred objective extension point. It receives the exact paths attributable to the current task and the intended/supporting target envelope; unrelated pre-existing dirty work is not silently charged to the task. Without such a checker, final diff/owner review remains part of Contract and Architecture Conformance. Long-Task already owns expected/supporting/forbidden/unclassified path classification and `scope_escape`, so the default route does not duplicate it.
+
+## Why The Generic Mechanism Stays Light
+
+- Tiny Context does not add a persisted primary/supporting/forbidden target declaration, workspace registry, required applicability matrix, orphan/overlap doctor Gate or universal import/path/runtime dependency scanner. Those mechanisms would create new state or a second authority, mis-model consumer-specific semantics, or charge single-Area projects for a multi-target failure path.
+- Project-specific applicability remains a durable fact when it matters: place it in the owning Area/contract/architecture/`DESIGN.md`, and enforce objective path or dependency boundaries with project-owned checks. A future optional resolver can be considered only after multiple consumers demonstrate a common, low-state contract with stronger coverage and positive total ROI.
+- Single-Area and non-monorepo projects retain the same schema and initialization. Their target-disambiguation check collapses to a no-op unless the repository itself exposes multiple materially different product targets.
+
+## Multi-Area Anti-Degradation Argument
+
+- The change preserves the prior discovery floor: core/default Context, manifest/trigger candidates, one bounded search and semantic judgment remain required, and later reads are explicitly unconstrained. No previously readable Context is removed and no full-graph read is imposed.
+- It adds one rejection path for a known false-negative class: unresolved sibling-product ambiguity can no longer silently select the default or nearest client, and final changed paths can be checked by an existing project oracle. Shared and cross-client work remains allowed through explicit targets/supporting scope.
+- Authority and proof boundaries do not weaken. Context still owns intended facts, project tests/review still prove ordinary work, and Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`.
+- Incremental cost is bounded to guidance, optional ownership notes and existing project verification. There is no required schema, migration, persistent state, extra Gate or generic scanner; unambiguous and single-Area tasks pay no clarification. Static routing/parity/fixture tests prove distribution and compatibility only. Any claim that Agents actually recall more Context or choose the correct target more often still requires fixed independent fresh-Agent paired runs.
+
 ## Why Retrieval Metadata Is Not Delivery Authority
 
 - `triggers`, `read_when`, `read_policy`, default selection and unselected manifest nodes change how a future Agent discovers Context; they do not change the meaning of the Context already selected for an active delivery. Freezing them as delivery Authority creates revision and Progress-invalidating work without closing a false-completion path.

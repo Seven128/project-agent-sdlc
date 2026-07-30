@@ -181,17 +181,26 @@ Before deciding `Context Delta`, the Agent combines two low-state routes:
 
 The bounded search supplements rather than replaces Agent semantic judgment. It creates no vector or persistent index, cache, registry, search state or second authority. It can still miss unrelated synonyms or indirect dependencies, so every implementation delivery still performs Architecture Deliberation and final Conformance.
 
+### Multi-Area and monorepo repositories
+
+Area is a durable product/technical owner and discovery entry; workspace/package/root is a code, build and dependency unit. They need not map one-to-one: one Area may own several workspaces, and shared/infrastructure/governance Areas may own none. When the mapping matters, give each code/workspace root one primary Area owner and record it in Area `Code Entry Points`, architecture Context or a project-owned resolver. Existing manifest fields remain sufficient.
+
+The default set plus manifest/search candidates is an expandable working set, not read isolation or a maximum. Read any additional Area/shared Context or code needed for an indirect dependency, but keep read scope separate from the intended product change target. If user language and durable repository ownership still leave materially different sibling product targets ambiguous, ask one concise target question before product edits. Explicitly enumerate intentional cross-Area targets; shared/backend reads do not silently expand edit scope.
+
+After implementation, use a repository-owned changed-path/target-scope verifier on exact task-attributable paths when available, or review the final diff against durable owners during Conformance. Tiny Context adds no required workspace/applicability schema, full-graph default, persistent target state, registry, generic path/import/runtime scanner or duplicate Long-Task scope classifier. Single-Area projects keep the same initialization and validation path; an already unambiguous single-target task adds no clarification.
+
 Ordinary tasks:
 
 1. resolve minimum relevant Context through manifest routing plus bounded Context search;
-2. surface one concise, repository-bound Architecture Deliberation;
-3. decide `Context Delta: none|required` and update durable facts before code when required;
-4. use the platform's internal plan;
-5. implement and run project-owned verification;
-6. perform Contract Conformance, including Architecture Conformance on the current candidate;
-7. perform the separate Context drift check and hand off.
+2. widen the Context working set when shared or indirect dependencies require it, and disambiguate a genuinely unclear sibling product target before product edits;
+3. surface one concise, repository-bound Architecture Deliberation;
+4. decide `Context Delta: none|required` and update durable facts before code when required;
+5. use the platform's internal plan;
+6. implement and run project-owned verification, including an available changed-path/target-scope check;
+7. perform Contract Conformance, including Architecture Conformance and final change-scope review on the current candidate;
+8. perform the separate Context drift check and hand off.
 
-The default workflow has no required plan artifact, matrix, verdict, evidence ledger, persistent retrieval index or second plan. Duration, file count and complexity never auto-enable long-task state.
+The default workflow has no required plan artifact, target declaration, matrix, verdict, evidence ledger, persistent retrieval index or second plan. Duration, file count and complexity never auto-enable long-task state.
 
 Plan Validator commands no longer exist; existing plan, matrix or verdict files remain ordinary user files.
 

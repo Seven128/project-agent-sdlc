@@ -9,6 +9,7 @@ This is the restrained architecture context. Keep only facts that help a fresh a
 ## Component Map
 
 - List the smallest useful set of components, areas or context units and how they relate.
+- In a monorepo, record durable Area-to-code/workspace ownership and shared dependency direction where it helps recovery. Do not assume one Area per workspace or turn the map into a read/edit ACL.
 
 ## Data / Control Flow
 
