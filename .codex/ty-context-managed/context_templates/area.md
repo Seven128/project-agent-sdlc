@@ -28,11 +28,11 @@
 ## Code Entry Points
 
 - `src/` or the concrete file/function entry points.
-- In a monorepo, name the code/workspace roots this Area primarily owns and any shared/supporting roots future work commonly needs. Give each root one primary Area owner when the mapping is material; one Area may own several workspaces. This documents ownership and discovery, not read isolation or edit permission.
+- In a monorepo, a workspace-local Area belongs under `project_context/workspaces/<workspace-id>/areas/**`; its manifest entry maps that Context workspace to one code root. Name this Area's semantic responsibility within that root and any shared/supporting owners commonly needed. Cross-workspace Areas stay under top-level `project_context/areas/**`. This documents ownership and discovery, not read isolation or edit permission.
 
 ## Related Role Context
 
-- Verification paths live in this area's `verification` role Context, such as `project_context/areas/main/verification.md`.
+- Verification paths live in this area's `verification` role Context, such as `project_context/areas/main/verification.md` or `project_context/workspaces/mobile/areas/verification.md`.
 - Deployment/runtime/bootstrap paths live in this area's optional `deployment` role Context when those facts exist.
 
 ## Open Risks

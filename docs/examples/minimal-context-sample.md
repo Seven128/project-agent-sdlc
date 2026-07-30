@@ -150,22 +150,51 @@ Use area Context for ownership and local constraints:
 - `tests/label-routing.test.ts`
 ```
 
-## Multi-Area / Monorepo Variant
+## Sparse Context Workspace / Monorepo Variant
 
-For a monorepo, add Areas for durable product or technical ownership—not mechanically for every workspace:
+Keep Context centralized and add a workspace directory only when that implementation workspace owns durable non-code facts:
+
+```text
+project_context/
+  areas/
+    repository.md
+    shared-service.md
+  workspaces/
+    mobile/
+      areas/
+        product.md
+        verification.md
+    miniapp/
+      areas/
+        product.md
+```
+
+Use the existing manifest fields to map each represented Context workspace to one repository-relative code root:
 
 ```toml
 [[areas]]
-id = "mobile"
-root = "apps/mobile"
-context = "project_context/areas/mobile.md"
-kind = "app"
+id = "repository"
+root = "."
+context = "project_context/areas/repository.md"
+kind = "repository"
 default = true
 
 [[areas]]
-id = "miniapp"
+id = "mobile-product"
+root = "apps/mobile"
+context = "project_context/workspaces/mobile/areas/product.md"
+kind = "app"
+
+[[context]]
+path = "project_context/workspaces/mobile/areas/verification.md"
+role = "verification"
+read_policy = "on-demand"
+triggers = ["mobile test", "mobile verification"]
+
+[[areas]]
+id = "miniapp-product"
 root = "apps/miniapp"
-context = "project_context/areas/miniapp.md"
+context = "project_context/workspaces/miniapp/areas/product.md"
 kind = "app"
 
 [[areas]]
@@ -175,11 +204,11 @@ context = "project_context/areas/shared-service.md"
 kind = "service"
 ```
 
-One Area may own several workspace roots, and a shared/governance Area may own none. When the mapping matters, give each code/workspace root one primary Area owner and put that durable mapping in each Area's `Code Entry Points` or in `architecture.md`; no extra manifest field is required.
+The small top-level `repository` Area owns only the common default recovery facts. The `mobile` and `miniapp` Context workspaces each refer to exactly one code root and remain on-demand; more workspace-local Area/role Context can live below the same directory when that root has several durable semantic responsibilities. `shared-service.md` stays top-level because it is cross-workspace. A code workspace such as `packages/eslint-config` may exist without any Context directory or manifest entry when it owns no durable non-code facts. Package-manager/build configuration—not Context—remains the complete workspace inventory.
 
-The default Area, `read_policy`, triggers and bounded search choose the initial Context working set only. A miniapp task may read shared-service or mobile contract Context when that is necessary to understand an interface, but those reads do not authorize mobile edits. If “change the homepage” could still mean several sibling clients after reading user and repository ownership facts, clarify the target before product edits. A cross-client request names every intended target.
+The default Area, `read_policy`, triggers and bounded search choose the initial Context working set only. A miniapp task may read shared-service or mobile contract Context when necessary, but those reads do not authorize mobile edits. Resolve intended workspace(s) from user/product/path/repository facts; if “change the homepage” still identifies several sibling clients, clarify the target before product edits. A cross-client request names every intended workspace and any supporting/shared scope.
 
-If the repository has a project-specific changed-path scope verifier, index its stable command in verification Context and run it on the paths attributable to the current task. Otherwise review the final diff against Area/code ownership during Conformance. Do not add a generic workspace registry, read ACL, full-Context default or persisted target declaration merely because the repository is a monorepo.
+If the repository has a project-specific changed-path scope verifier, index its stable command in verification Context and run it on task-attributable paths. Otherwise review the final diff against Context/code ownership during Conformance. Root `DESIGN.md` remains the shared Design Authority. This layout adds no `[[workspaces]]` schema, empty-directory requirement, automatic topology scan, read ACL, full-Context default or persisted target declaration.
 
 ## project_context/areas/main/verification.md
 

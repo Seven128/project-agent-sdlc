@@ -19,7 +19,7 @@ When an active `long-task-workflow` binding exists, that Skill owns lifecycle, t
 
 1. 读取 `project_context/global.md`、`project_context/architecture.md`、`project_context/context.toml`、default area root，并按 triggers/read policy 收集相关 on-demand Context 候选。
 2. 在判断 `Context Delta` 前，用任务中明确的 area/module/API/Schema/state/security/verification/deployment 等少量高信号词，对 `project_context/**` 做一次 bounded text search；把命中的 Context 与 manifest 候选合并，读取真正相关文件，并在代码或语义依赖暴露其他 owner 时继续扩读。搜索只补充语义判断，不创建索引、缓存或第二权威，也不创建读取隔离。
-3. 在 multi-Area、monorepo 或其他多产品目标仓库中，把“为理解任务而读取什么”和“用户要修改哪个产品目标”分开。Area/default/read policy 既不是读取 ACL，也不是修改授权；Area 与 workspace 不要求一一对应。若用户表达和耐久 ownership 仍无法区分多个实质不同的同级产品目标，在产品编辑前只问一个精确的目标问题；跨 Area 任务显式列全目标，共享/后端读取只进入 supporting scope。
+3. 在 monorepo 或其他多产品目标仓库中，把“为理解任务而读取什么”和“本任务 intended workspace(s)”分开。可选的 `project_context/workspaces/<workspace-id>/**` 只镜像确有耐久 Context 的实现 workspace；每个已表示 Context workspace 用现有 manifest `root/context` 精确对应一个代码根，内部 Area 负责语义 ownership，跨 workspace Area 留在顶层，未表示的代码 workspace 不建空目录。目录/default/read policy 既不是读取 ACL，也不是修改授权。用用户、产品、路径和仓库事实消歧；仍有多个实质不同的同级目标时，产品编辑前只问一个精确问题。跨 workspace 任务显式列全 intended 与 supporting/shared scope。
 4. 确认目标、约束、成功标准、影响域、验证/部署路径和风险。能从代码或 Context 得到的事实不要重复询问。
 5. Context 决定“应该是什么”；代码说明“现在是什么”；测试和运行证据证明行为。冲突是实现漂移、缺失工作或 stale Context，不能由代码静默重定义归属。
 6. 第一处实现编辑前，完成并对用户可见地给出一次简洁、仓库事实绑定的 `Architecture Deliberation`。不输出私有思维链；输出结论及其 Context、模块/路径、symbol/extension point 和验证依据。风险只改变深度，不取消这个环节。
@@ -70,14 +70,16 @@ When an active `long-task-workflow` binding exists, that Skill owns lifecycle, t
 
 active Long-Task 下不再执行这个默认 closure；同一架构义务由 Contract 中现有 obligations/constraints/forbidden shortcuts、owners/paths/Bindings 和 executable Checks 表达，并只由 Final Gate 对最终快照收口。
 
-## Multi-Area / Monorepo Context 与修改边界
+## 稀疏 Context Workspace / Monorepo 修改边界
 
 - Context 的职责是把 UI/UX Authority、产品、后端、架构、安全、验证/部署等耐久事实存进正确的全局、共享或 Area owner，并让 Agent 低成本找回；它不能保证软约束下的 Agent 一定正确应用，行为仍由项目检查和 review 证明。
-- Workspace/package/repository root 是代码、构建和依赖单元；Area 是产品/技术责任和 Context owner。一个 Area 可以拥有多个 workspace，共享/基础设施/治理 Area 可以没有独立 workspace。ownership 有长期价值时，每个代码/workspace root 只指定一个 primary Area owner，并把映射写进 Area `Code Entry Points`、architecture Context 或项目自己的 ownership resolver；不要机械地为每个 workspace 新建 Area。
-- 默认集合、manifest/trigger 候选和 bounded search 只是起始 working set，不是最大可读集合。开发 B 时可以读取 A/C 或共享后端；只有它们变成用户意图中的修改目标时才进入 target scope。不要把全量 Context 设成所有任务默认，也不要做强制读取闭包。
-- “首页、页面、客户端、前端”等泛词只有在仓库中确实对应多个实质不同的同级产品目标、且用户/路径/owner 事实仍不能消歧时才阻塞。不能仅凭 default Area、最近修改、最近读取或通用关键词选择客户端。已明确的单目标直接继续；跨端目标全部列明。
-- 最终 scope check 区分 intended product targets、allowed supporting changes、forbidden sibling targets 与实际 task-attributable paths。优先复用 verification Context 指向的项目原生 verifier；它可以理解项目自己的 ownership/applicability。Tiny Context 不创建通用 npm/Nx/Bazel/Cargo/Maven workspace mapper、import/path/runtime scanner、持久 target declaration、applicability matrix、Registry 或第二 Authority。
-- 单 Area/非 monorepo 不增加 schema、迁移或状态；只有仓库实际暴露多个仍然歧义的产品目标时才需要询问。显式 Long-Task 继续由既有 expected/supporting/forbidden/unclassified classifier、Authority Revision、`scope_escape` 和 Final Gate 负责，不再运行一套默认 classifier。
+- Context 继续集中在 `project_context/**`。Monorepo 可以只为确有耐久非代码事实的实现 workspace 建 `project_context/workspaces/<workspace-id>/**`；每个已表示 Context workspace 通过现有 `[[areas]].root/context` 精确映射一个仓库相对代码根，并可包含多个负责不同语义的 Area。完整 workspace 清单仍由 package-manager/build 配置拥有，没 Context 的 workspace 不建空目录。
+- 只属于一个实现 workspace 的 Area/role Context 放在该 Context workspace 内；真正跨 workspace、仓库级、共享、基础设施或治理 Area 继续放在顶层 `project_context/areas/**`。单 workspace/非 monorepo 保持原有顶层布局。不要新增 `[[workspaces]]`、`workspace` 字段、自动拓扑扫描或迁移。
+- Monorepo 的 default Area 通常只保留顶层、仓库公共的最小恢复事实；workspace-local Context 默认 `on-demand`，除非它确实近乎所有任务都需要。不能因为某个客户端被表示，就把它变成隐式全局默认。
+- 默认集合、manifest/trigger 候选和 bounded search 只是起始 working set，不是最大可读集合。开发 B 时可以按需读取 A/C、共享后端、`DESIGN.md` 或相关代码；不要把全量 Context 设成所有任务默认，也不要把 Context workspace 变成强制读取闭包。
+- “首页、页面、客户端、前端”等泛词只有在仓库中确实对应多个实质不同的同级 workspace、且用户/产品/路径/owner 事实仍不能消歧时才阻塞。不能仅凭 default Area、最近修改、最近读取或通用关键词选择客户端。已明确的单目标直接继续；跨端任务列全 intended workspace，并明确 supporting/shared scope。
+- 最终 scope check 区分 intended workspaces、allowed supporting changes、forbidden sibling targets 与实际 task-attributable paths。优先复用 verification Context 指向的项目原生 verifier；没有时在最终 diff/owner Conformance 中检查，且不归因无 provenance 的既有脏改动。Tiny Context 不创建通用 workspace mapper、import/path/runtime scanner、持久 target declaration、Registry 或第二 Authority。
+- 根 `DESIGN.md` 仍是当前共享项目 Design Authority；Context workspace 目录不会自动拆出多套设计系统。单 Area/非 monorepo 不增加 schema、迁移、状态或行为成本。显式 Long-Task 继续由既有 classifier、Authority Revision、`scope_escape` 和 Final Gate 负责，不再运行一套默认 classifier。
 
 ## Capability-First Delivery Boundary
 

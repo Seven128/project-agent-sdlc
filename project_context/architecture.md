@@ -30,7 +30,9 @@ This is the minimum durable architecture map for the Harness source repository. 
 - Before `Context Delta`, the Agent combines graph/trigger candidates with one bounded high-signal text search over `project_context/**`.
 - Search discovers candidates only; semantic judgment decides relevance. It creates no vector/persistent index, cache, registry, state or second authority.
 - The selected startup/candidate set is a minimum working set rather than a read sandbox. The Agent may widen to any Context or code needed for an indirect/shared dependency, while a complete-graph default remains intentionally absent.
-- Area topology records durable semantic ownership and discovery. Workspace/package/repository topology remains ordinary project architecture: an Area may own multiple roots and a shared or governance Area may own none; when the mapping is material, each root has one primary Area owner. Neither Area selection nor `read_policy` grants or denies edits.
+- Monorepos may mirror only Context-bearing implementation workspaces under `project_context/workspaces/<workspace-id>/**`. Every represented Context workspace maps exactly one repository-relative code root through existing `[[areas]].root` and `context`; multiple workspace-local Areas may own distinct durable responsibilities within that root. Package-manager/build files remain the complete implementation-workspace authority, so unrepresented workspaces require no empty Context directory.
+- Cross-workspace, repository-wide, shared and governance Areas remain under top-level `project_context/areas/**`; single-workspace and non-monorepo projects retain that existing layout. Directory placement, Area selection and `read_policy` guide ownership/discovery and never grant or deny reads or edits.
+- A monorepo's default Area should normally be the small top-level repository-common owner; workspace-local Areas and role Context stay `on-demand` unless their facts are truly near-universal.
 - A durable fact has one primary Context owner. Startup surfaces retain short routing/hard-boundary statements instead of copying specialized rules.
 - `ty-context doctor` reports deterministic default files/bytes, exact duplicates and Design Authority signals as advisory maintenance information, never as acceptance state or an absolute byte gate.
 
@@ -38,7 +40,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 - Keep the startup graph small because every fresh Agent pays its read and attention cost; preserve specialized truth through on-demand ownership.
 - Add bounded search because manifest triggers are cheap but wording recall is imperfect. Search supplements rather than replaces semantic reasoning.
-- Keep retrieval and mutation as separate questions: shared Context/code can be read for a client task without becoming a product target. Only unresolved ambiguity among materially different sibling product targets pauses product edits; an intentional cross-target task names every target.
+- Keep retrieval and mutation as separate questions: shared Context/code can be read for a client task without becoming a product target. Resolve task-local intended workspace(s) from explicit user/product/path/repository facts; only unresolved ambiguity among materially different siblings pauses product edits, while intentional cross-workspace work names every target and any supporting/shared scope.
 - Let consumer repositories own exact path-to-target rules and changed-path verification. Harness invokes or follows those project-native checks when present and otherwise uses final diff/owner Conformance; it does not infer a universal monorepo dependency or applicability graph.
 - Keep ordinary planning, architecture judgment and implementation order inside the current host Goal. Persist only durable facts and use project-native executable checks for objective boundaries.
 - Make Architecture Deliberation externally observable and risk-proportional without creating an architecture-plan authority or claiming private-reasoning proof.
@@ -58,7 +60,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 Default:
 
-`minimum Context + manifest candidates + bounded Context search + dependency-driven widening -> target disambiguation when needed -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> project verification / project-owned changed-path scope check -> Contract Conformance / Architecture Conformance -> Context drift check`
+`minimum Context + manifest candidates + bounded Context search + dependency-driven widening -> intended-workspace resolution when needed -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> project verification / project-owned changed-path scope check -> Contract Conformance / Architecture Conformance -> Context drift check`
 
 Long-Task:
 
@@ -84,7 +86,7 @@ Long-Task:
 ## Constraints And Tradeoffs
 
 - Smaller default Context trades automatic reading of every specialized rule for lower recurring attention cost; manifest routing plus bounded search reduces but cannot eliminate recall risk.
-- The multi-Area target check is conditional. A single-Area repository or an already explicit/unambiguous target pays no schema, state, migration or clarification ceremony.
+- Intended-workspace resolution is conditional. A non-monorepo repository or an already explicit/unambiguous target pays no schema, state, migration or clarification ceremony.
 - The default Workflow Contract is soft/prompt-level. Project checks prove behavior; it deliberately has no validator, Receipt, persisted phase state or machine acceptance.
 - Long-Task is explicit or binding-driven and pays durable Contract/Authority/Final-Gate cost only where recovery and machine completion justify it.
 - The first successful Long-Task Compile creates Authority Lock and a terminal model-choice turn unless an explicit task-specific choice already exists; Harness stores no acknowledgement or model route.
@@ -98,7 +100,7 @@ Long-Task:
 - `make validate-context` protects required recovery structure and registered role consistency; it is not weakened to obtain a smaller Context.
 - Default-footprint tests prove deterministic selection, exact-duplicate reporting and advisory budgets, not compliance with an absolute byte ceiling.
 - Workflow tests prove manifest routing plus bounded search, prompt-level default semantics, explicit/bound Long-Task routing and absence of added index/state/authority.
-- Multi-Area tests prove the default set remains a starting set, Area/workspace mapping stays non-1:1 and schema-optional, ambiguous-target/change-scope guidance reaches managed/generated/public surfaces, and single-Area initialization remains unchanged. Static guidance tests do not prove Agent adherence; an effectiveness claim requires fixed independent fresh-Agent runs.
+- Sparse-workspace tests prove the default set remains a starting set, represented Context workspaces map through existing fields, unrepresented code workspaces need no Context directory, ambiguous-target/change-scope guidance reaches managed/generated/public surfaces, and non-monorepo initialization remains unchanged. Static guidance tests do not prove Agent adherence; an effectiveness claim requires fixed independent fresh-Agent runs.
 - Long-Task tests prove Source/Contract/Authority continuity, one-time model choice, protected revision, exact evidence sensitivity, current-snapshot Final Gate and declared-machine/native-Goal separation.
 - The `implementation-freedom-boundary` critical sentinel protects Goal-owned order/method/feedback/delegation choices without weakening final proof.
 - Affected/focused and Trust tests are feedback/package regression evidence only. Unknown or shared changes widen fail safe; complete selection supersedes a redundant Trust invocation.

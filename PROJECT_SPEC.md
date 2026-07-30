@@ -32,21 +32,51 @@ The Long-Task Workflow V2 product equation is:
 
 The controlling objective, trusted-result boundary, Draft lifecycle, upstream Source boundary and mechanism-admission rule below govern every later Long-Task section. Existing implementation convenience, historical progress or local wording cannot weaken them.
 
-## Multi-Area / Monorepo Context And Change Scope
+## Sparse Context Workspaces / Monorepo Change Scope
 
-Context's responsibility is to store durable product, technical, UI/UX-authority and verification facts in the correct owner and make them efficiently recoverable. It does not promise that a prompt-guided Agent will apply every recovered fact correctly; project tests, runtime evidence and review remain the behavior boundary. Exact visual values/resources remain in canonical design Source while Context/`DESIGN.md` owns their stable authority, applicability and update route through the existing Design Source Projection model.
+Context stores durable product, technical, UI/UX-authority and verification facts in one recoverable project-owned tree. It does not promise that a prompt-guided Agent applies every recovered fact correctly; project tests, runtime evidence and review remain the behavior boundary. Exact visual values/resources remain in canonical design Source while Context/`DESIGN.md` owns stable authority, applicability and update routes.
 
-An Area is a stable semantic responsibility, Context owner and discovery entry, whereas a workspace/package/repository root is a code/build/dependency unit. They should correspond through durable project ownership but need not be one-to-one: one Area may own several workspaces, and shared/infrastructure/governance Areas may own none. When that mapping is material, each code/workspace root has one primary Area owner; the mapping lives in Area `Code Entry Points`, architecture Context or a project-native ownership resolver. Existing `[[areas]]`, `[[context]]`, role/read-policy/trigger and root fields remain sufficient; no `workspace`, `owner_area`, `applies_to` or `requires` field becomes mandatory.
+For a monorepo, `project_context/workspaces/<workspace-id>/**` is an optional centralized, sparse mirror of implementation workspaces that actually own durable non-code facts:
 
-Default reading is adaptive rather than isolated. The Agent begins with core/default Context, manifest/trigger candidates and one bounded search, reads semantically relevant matches and freely widens to shared backend, sibling-client, cross-Area contract, `DESIGN.md`, selected resource or code owners as the task reveals dependencies. `read_policy`, default selection and Area membership are retrieval guidance, not permissions. Hard read isolation would block legitimate cross-Area reasoning while remaining unenforceable as a soft prompt rule; a full-graph default would make every ordinary task pay the repository's complete attention cost. Neither becomes product behavior.
+```text
+project_context/
+  global.md
+  architecture.md
+  context.toml
+  areas/                         # cross-workspace, repository-wide and shared owners
+  workspaces/
+    mobile/
+      areas/
+        product.md
+        screens.md
+        verification.md
+    wechat-miniapp/
+      areas/
+        product.md
+        screens.md
+    api/
+      areas/
+        contract.md
+        verification.md
+```
 
-Read scope and change target are separate. A mobile task may need shared backend or another client's contract in its read scope without authorizing edits to that sibling. When explicit user language plus durable repository ownership still leaves more than one materially different sibling product Area/workspace as a plausible target, the default workflow asks one concise question before product edits; it never silently chooses the default Area, nearest/recently changed client or a generic keyword collision. An intentional cross-client task explicitly enumerates every intended product target and keeps supporting/shared scope distinct.
+Every represented Context workspace corresponds to exactly one repository-relative implementation/code root through existing `[[areas]].root` and `context`. It may contain several Areas for distinct durable semantic responsibilities. The reverse mapping is intentionally optional: an npm/Nx/Bazel/Cargo/Maven workspace with no durable Context gets no empty directory, placeholder or manifest row. Package-manager/build files remain the complete implementation-workspace inventory; Context does not duplicate or auto-discover that topology.
 
-After implementation, the preferred objective extension point is a repository-owned changed-path/target-scope verifier. It compares exact paths attributable to the current task against intended product targets plus allowed supporting scope and must not charge unrelated pre-existing dirty paths to the task without provenance. When no such checker exists, Contract and Architecture Conformance review the final diff against durable Area/code ownership. Tiny Context does not add a universal npm/Nx/Bazel/Cargo/Maven workspace mapper, path/import/runtime dependency scanner, persisted primary/supporting/forbidden target declaration, applicability matrix, workspace registry, orphan/overlap doctor Gate or second Authority. Active Long-Task already owns expected/supporting/forbidden/unclassified path classification and `scope_escape`; the default route does not duplicate it.
+Workspace-local Areas stay under their Context workspace. Genuinely cross-workspace, repository-wide, shared, infrastructure or governance Areas stay under top-level `project_context/areas/**` and are not copied into every consumer. Single-workspace and non-monorepo projects retain the existing top-level `areas/**` layout, initialization and validation. Existing `[[areas]]`, `[[context]]`, `root`, `context`, role, read-policy and trigger fields are sufficient; there is no `[[workspaces]]` block or mandatory `workspace`, `owner_area`, `applies_to` or `requires` field.
 
-Compatibility is additive. Single-Area and non-monorepo projects keep the same initialization, manifest schema, default selection and validation; target disambiguation naturally becomes a no-op when only one product target is plausible. Projects may keep stronger local ownership/applicability indexes and scope checks. A future generic resolver is admissible only after multiple consumers demonstrate one common low-state contract, stronger failure interception than project-native checks and positive total ROI without creating another authority.
+The monorepo default Area should normally be a small top-level repository-common owner. Workspace-local Area/role Context stays `on-demand` unless its facts are genuinely near-universal; representing a client workspace never makes that client the implicit global default. This keeps the default path public/common while preserving precise on-demand discovery.
 
-The anti-degradation argument is monotone but bounded to this prompt-level mechanism. Core/default/manifest/trigger/bounded-search coverage is not reduced, later reading is explicitly unconstrained, and no full-read burden is added. The new rule adds a rejection path for the legal-but-wrong-client false negative while preserving intentional shared and multi-target changes. It does not weaken Long-Task's full Context Authority, existing scope classifier, Final Gate or `F = Implementation Freedom Boundary`. Static tests can prove schema compatibility, guidance distribution, source parity and absence of duplicate state/scanners; only fixed independent fresh-Agent paired runs with hidden product probes can justify a claim that real Agent target selection or Context recall improved.
+The input to this placement is ordinary repository fact: the code-root path and the durable semantic owner. The transformation is only a stable central directory plus the existing explicit `root -> context` mapping. Workspace placement is therefore an ownership/discovery namespace, not another Authority, package graph, permission model or runtime state. The design avoids an abstract scope layer, exhaustive empty mirrors, scattered Context and universal topology scanning because they add maintenance or a second mental model without improving that ownership truth.
+
+Default reading remains adaptive. The Agent starts with core/default Context, manifest/trigger candidates and one bounded search, reads semantically relevant matches and widens to shared backend, sibling-client, cross-workspace contract, `DESIGN.md`, selected resources or code owners as dependencies emerge. A Context workspace can prioritize where to look, but it is never a read ACL, a maximum readable set or a mandate to read every file below the target workspace. A full-graph read does not become the ordinary default.
+
+Read scope and intended workspace set are separate. The workflow resolves task-local intended workspace(s) from explicit user/product/path/repository facts. If those facts still leave materially different sibling workspaces plausible, it asks one concise target question before product edits rather than choosing the default Area, nearest/recently changed client or a generic keyword collision. Intentional cross-workspace work enumerates every intended workspace. Shared/backend Context or code may be read freely and may be changed when it is an attributable supporting requirement, but reading alone does not authorize that edit.
+
+After implementation, the preferred objective extension point is a repository-owned changed-path/target-scope verifier. It compares exact paths attributable to the current task against intended workspaces plus declared supporting/shared scope and must not charge unrelated pre-existing dirty paths to the task. Without such a checker, Contract and Architecture Conformance review the final diff against durable Context/code owners. Tiny Context adds no universal package-manager mapper, path/import/runtime dependency scanner, persisted target declaration, applicability matrix, workspace registry, orphan/overlap doctor Gate or second Authority. Active Long-Task retains its existing expected/supporting/forbidden/unclassified path classifier and `scope_escape`; the default route does not duplicate it.
+
+Root `DESIGN.md` remains the current shared project Design Authority for both monorepo and non-monorepo layouts. Creating a Context workspace does not create an independent design system. Multiple workspace-local Design Authorities would require a separate future mechanism that deliberately changes canonical ownership, doctor, authoring, token-source and update-route behavior.
+
+Compatibility and cost remain bounded: non-monorepo behavior is unchanged, monorepos opt in only where Context exists, and unambiguous tasks add no clarification or full-read cost. Core/default/manifest/trigger/bounded-search coverage is not reduced; later reading remains unconstrained; the wrong-sibling rejection path is added without weakening Long-Task's full Context Authority, existing scope classifier, Final Gate or `F = Implementation Freedom Boundary`. Static tests prove directory/schema compatibility, guidance distribution, parity and non-degradation sentinels only. Claims about improved real-Agent recall, target selection or total ROI require fixed independent fresh-Agent paired runs with hidden product probes.
 
 ## Architecture Quality Assurance
 
@@ -275,7 +305,7 @@ Use the default Workflow Contract when work is local, reversible, directly testa
 
 Default Context discovery reads the core/default set, collects manifest area/role/trigger candidates and then performs one bounded text search over `project_context/**` before `Context Delta`. The search uses a small set of high-signal task terms, reads only relevant matches and creates no vector/persistent index, cache, registry or search state. Keyword matching supplements semantic judgment and final Conformance rather than replacing them.
 
-That result is the first working set, not a read sandbox. Widen it whenever shared or indirect dependencies require more Context/code. Area and `read_policy` never authorize edits. If several sibling product Areas/workspaces remain materially plausible after user language and durable ownership are considered, clarify the target before product edits; otherwise proceed without ceremony. Cross-Area work names all intended targets. During final Conformance, use any repository-owned changed-path scope checker on task-attributable paths, or review the final diff against durable owners when no checker exists.
+That result is the first working set, not a read sandbox. Widen it whenever shared or indirect dependencies require more Context/code. Context workspace, Area and `read_policy` never authorize edits. Resolve intended workspace(s) from user/product/path/repository facts; if materially different siblings remain plausible, clarify the target before product edits, otherwise proceed without ceremony. Cross-workspace work names all intended targets and supporting/shared scope. During final Conformance, use any repository-owned changed-path scope checker on task-attributable paths, or review the final diff against durable owners when no checker exists.
 
 `Architecture Context Hit` and `Decision Rationale Hit: existing|required|none` remain internal routing questions. They are not durable facts, roles, validators or artifacts, and the checkpoint never creates a rationale delta or required file. `Context Delta` remains the only durable-fact decision point.
 
@@ -632,7 +662,7 @@ Trusted publication uses one prepare/test/pack/smoke execution per source commit
 
 - The near-universal default Context set is measured against advisory byte budgets; `doctor` reports but does not block overages, required recovery facts take precedence, and source regression tests do not convert the absolute byte heuristic into a release gate.
 - Bounded Context discovery searches only `project_context/**`, uses a small high-signal term set and creates no persistent retrieval infrastructure.
-- Multi-Area routing retains the same minimum read path and allows dependency-driven widening without a full-graph default. Conditional target disambiguation and project-owned changed-path verification add no schema, persisted target state, generic scanner or cost for an already unambiguous single-Area task.
+- Sparse Context workspace routing retains the same minimum read path and allows dependency-driven widening without a full-graph default. Conditional target disambiguation and project-owned changed-path verification add no schema, persisted target state, generic scanner or cost for an already unambiguous non-monorepo task.
 - First Authority Lock emits one model-choice checkpoint with a mandatory terminal-turn and explicit-choice contract; generic continuation does not satisfy it, later revisions do not repeat it and no acknowledgement/model-route state exists.
 - Compact single-Outcome fixtures are at least 35% shorter than expanded form while compiling identically.
 - Small-fixture Preflight and Compile targets are each at most two seconds; status/resume at most one second.
@@ -666,7 +696,7 @@ Stable honest limits:
 - Harness does not prove the user never omitted an undeclared requirement.
 - Complete selected-design conformance is bounded to facts explicitly covered by the selected handoff and the conditions actually checked. The default path provides fail-closed scoped conformance but not Long-Task's durable machine authority or cross-session recovery.
 - Bounded keyword search cannot guarantee every synonym or indirect Context dependency is found during default-workflow discovery; explicit Long-Task Authority therefore freezes the full Context graph rather than claiming a referenced subset is complete.
-- Prompt guidance cannot force an Agent to apply every Context fact or make target ownership mechanically correct. Default multi-Area work can fail closed on unresolved target ambiguity and use project-owned changed-path proof, but repositories without such an oracle retain a review-bound soft Conformance limit.
+- Prompt guidance cannot force an Agent to apply every Context fact or make target ownership mechanically correct. Default multi-workspace work can fail closed on unresolved target ambiguity and use project-owned changed-path proof, but repositories without such an oracle retain a review-bound soft Conformance limit.
 - Harness provides no core parallel mutation.
 - Harness does not observe platform token/model-call accounting.
 - Git/PR/CI/deployment/human product confirmation remain external.

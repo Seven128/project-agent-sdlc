@@ -70,6 +70,77 @@ test("default Context selection includes only core, default areas and default-ro
   assert.equal(selected.has("project_context/areas/main/archive.md"), false);
 });
 
+test("repository-common defaults keep sparse workspace Context on-demand", () => {
+  const selected = selectDefaultContextPaths({
+    areas: [
+      {
+        id: "repository",
+        root: ".",
+        context: "project_context/areas/repository.md",
+        kind: "repository",
+        default: true,
+      },
+      {
+        id: "mobile-product",
+        root: "apps/mobile",
+        context: "project_context/workspaces/mobile/areas/product.md",
+        kind: "app",
+        default: false,
+      },
+      {
+        id: "miniapp-product",
+        root: "apps/miniapp",
+        context: "project_context/workspaces/miniapp/areas/product.md",
+        kind: "app",
+        default: false,
+      },
+      {
+        id: "shared-service",
+        root: "packages/service",
+        context: "project_context/areas/shared-service.md",
+        kind: "service",
+        default: false,
+      },
+    ],
+    contexts: [
+      {
+        path: "project_context/workspaces/mobile/areas/verification.md",
+        role: "verification",
+        read_policy: "on-demand",
+        triggers: [],
+        default_children: [],
+      },
+      {
+        path: "project_context/workspaces/miniapp/areas/verification.md",
+        role: "verification",
+        read_policy: "on-demand",
+        triggers: [],
+        default_children: [],
+      },
+    ],
+  });
+
+  assert.deepEqual([...selected.keys()].sort(), [
+    "project_context/architecture.md",
+    "project_context/areas/repository.md",
+    "project_context/context.toml",
+    "project_context/global.md",
+  ]);
+  assert.equal(
+    selected.has("project_context/workspaces/mobile/areas/product.md"),
+    false,
+  );
+  assert.equal(
+    selected.has("project_context/workspaces/mobile/areas/verification.md"),
+    false,
+  );
+  assert.equal(
+    selected.has("project_context/workspaces/miniapp/areas/product.md"),
+    false,
+  );
+  assert.equal(selected.has("project_context/areas/shared-service.md"), false);
+});
+
 test("default Context footprint reports bytes and exact duplicate owners without mutating files", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-footprint-"));
   try {

@@ -144,7 +144,7 @@ test("default Context routing combines manifest candidates with bounded search",
   );
 });
 
-test("multi-Area guidance keeps Context reads expandable and change targets explicit", async () => {
+test("sparse Context workspace guidance keeps reads expandable and change targets explicit", async () => {
   const [
     managed,
     rootAgents,
@@ -191,10 +191,20 @@ test("multi-Area guidance keeps Context reads expandable and change targets expl
 
   assert.equal(packaged, managed, "package AGENTS Core drift");
   for (const guidance of [managed, workflow, rationale, specification]) {
+    assert.match(guidance, /project_context\/workspaces\/<workspace-id>/iu);
+    assert.match(guidance, /sparse/iu);
+    assert.match(
+      guidance,
+      /one (?:repository-relative )?(?:implementation\/)?code root|corresponds to exactly one repository-relative/iu,
+    );
+    assert.match(guidance, /no empty|without durable Context.*no empty/iu);
+    assert.match(
+      guidance,
+      /default Area[\s\S]{0,100}repository-common|repository-common(?: top-level)? Area[\s\S]{0,100}(?:the monorepo )?default|repository-common[\s\S]{0,100}default Area/iu,
+    );
     assert.match(guidance, /expandable/iu);
     assert.match(guidance, /read ACL|read isolation/iu);
-    assert.match(guidance, /one-to-one|one-Area-per-workspace|一一对应/iu);
-    assert.match(guidance, /change target/iu);
+    assert.match(guidance, /intended workspace/iu);
     assert.match(guidance, /shared|supporting/iu);
     assert.match(guidance, /changed-path|target-scope/iu);
     assert.match(guidance, /project-owned|repository-owned/iu);
@@ -205,56 +215,91 @@ test("multi-Area guidance keeps Context reads expandable and change targets expl
   }
   assert.match(
     rootAgents,
-    /separate the expandable read scope from the intended change target/iu,
+    /separate the expandable read scope from the task-local intended workspace/iu,
   );
   assert.match(
     managed,
     /ask one concise target question before product edits/iu,
   );
-  assert.match(managed, /enumerate every intentional cross-Area target/iu);
+  assert.match(managed, /Enumerate intentional multi-workspace targets/iu);
   assert.match(
     managed,
     /Do not make the full Context graph the ordinary default/iu,
   );
-  assert.match(managed, /required workspace\/applicability schema/iu);
+  assert.match(managed, /required Context directory for every package-manager workspace/iu);
+  assert.match(managed, /automatic topology scan/iu);
   assert.match(managed, /duplicate Long-Task scope classifier/iu);
-  assert.match(development, /读取什么.*修改哪个产品目标/iu);
-  assert.match(development, /Area 与 workspace 不要求一一对应/iu);
+  assert.match(
+    rationale,
+    /Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`/iu,
+  );
+  assert.match(
+    workflow,
+    /active Long-Task keeps its existing scope classifier and `scope_escape` owner/iu,
+  );
+  assert.match(development, /读取什么.*intended workspace/iu);
+  assert.match(development, /没 Context 的 workspace 不建空目录/iu);
+  assert.match(development, /跨 workspace.*顶层 `project_context\/areas/iu);
+  assert.match(development, /default Area.*仓库公共.*workspace-local Context 默认 `on-demand`/iu);
   assert.match(development, /不能仅凭 default Area、最近修改/iu);
   assert.match(
     development,
-    /单 Area\/非 monorepo 不增加 schema、迁移或状态[\s\S]*实际暴露多个.*才需要询问/iu,
+    /根 `DESIGN\.md` 仍是当前共享项目 Design Authority[\s\S]*单 Area\/非 monorepo 不增加 schema、迁移、状态或行为成本/iu,
   );
-  assert.match(manifestTemplate, /not a read\/edit ACL/iu);
+  assert.match(manifestTemplate, /project_context\/workspaces\/<workspace-id>/iu);
+  assert.match(manifestTemplate, /maps one code root/iu);
+  assert.match(manifestTemplate, /do not create empty/iu);
+  assert.match(manifestTemplate, /repository-common default Area/iu);
+  assert.match(manifestTemplate, /workspace-local[\s\S]*on-demand/iu);
+  assert.match(manifestTemplate, /no workspace schema or read\/edit ACL/iu);
   assert.match(manifestTemplate, /starting read set, not a maximum/iu);
-  assert.match(manifestTemplate, /need no additional manifest fields/iu);
-  assert.match(areaTemplate, /One Area may own several workspaces/iu);
-  assert.match(architectureTemplate, /Do not assume one Area per workspace/iu);
+  assert.match(
+    areaTemplate,
+    /workspace-local Area belongs under `project_context\/workspaces\/<workspace-id>\/areas/iu,
+  );
+  assert.match(areaTemplate, /Cross-workspace Areas stay under top-level/iu);
+  assert.match(architectureTemplate, /each represented `project_context\/workspaces/iu);
+  assert.match(architectureTemplate, /no durable Context merely to complete a mirror/iu);
   assert.match(
     verificationTemplate,
-    /changed-path\/target-scope verifier[\s\S]*task-attributable paths/iu,
+    /changed-path\/target-scope verifier[\s\S]*intended workspace\(s\)[\s\S]*task-attributable paths/iu,
   );
   for (const publicEnglish of [readme, packageReadme]) {
-    assert.match(publicEnglish, /Multi-Area/iu);
+    assert.match(publicEnglish, /project_context\/workspaces\/<workspace-id>/iu);
     assert.match(
       publicEnglish,
-      /starting working set|expandable working set/iu,
+      /expandable starting set|expandable working set/iu,
     );
+    assert.match(publicEnglish, /no empty directory/iu);
+    assert.match(publicEnglish, /Single-workspace and non-monorepo/iu);
+    assert.match(publicEnglish, /repository-common default Area/iu);
+    assert.match(publicEnglish, /workspace-local Context `on-demand`/iu);
+    assert.match(publicEnglish, /Root `DESIGN\.md` remains the current shared project Design Authority/iu);
     assert.match(publicEnglish, /changed-path|target-scope/iu);
-    assert.match(publicEnglish, /Single-Area/iu);
   }
-  assert.match(sample, /## Multi-Area \/ Monorepo Variant/iu);
+  assert.match(sample, /## Sparse Context Workspace \/ Monorepo Variant/iu);
+  assert.match(sample, /project_context\/workspaces\/mobile\/areas\/product\.md/iu);
+  assert.match(sample, /id = "repository"[\s\S]*default = true/iu);
+  assert.doesNotMatch(
+    sample,
+    /id = "mobile-product"[\s\S]*?default = true[\s\S]*?\[\[areas\]\][\s\S]*?id = "miniapp-product"/iu,
+  );
   assert.match(sample, /initial Context working set/iu);
-  assert.match(sample, /no extra manifest field is required/iu);
+  assert.match(sample, /packages\/eslint-config[\s\S]*without any Context directory/iu);
+  assert.match(sample, /adds no `\[\[workspaces\]\]` schema/iu);
   assert.match(sample, /changed-path scope verifier/iu);
-  assert.match(chineseReadme, /### Multi-Area 与 Monorepo/u);
-  assert.match(chineseReadme, /不是读取 ACL 或最大可读集合/u);
-  assert.match(chineseReadme, /单 Area 项目没有新增 schema/u);
+  assert.match(chineseReadme, /### 稀疏 Context Workspace 与 Monorepo/u);
+  assert.match(chineseReadme, /没有耐久 Context 的 package-manager workspace 不创建空目录/u);
+  assert.match(chineseReadme, /不是读取 ACL、最大集合/u);
+  assert.match(chineseReadme, /单 workspace\/非 monorepo 项目保持原有/u);
   assert.match(
     implementationIndex,
-    /^## Multi-Area \/ Monorepo Context Owners$/mu,
+    /^## Sparse Context Workspace \/ Monorepo Owners$/mu,
   );
-  assert.match(verification, /^## Multi-Area \/ Monorepo Context Evidence$/mu);
+  assert.match(
+    verification,
+    /^## Sparse Context Workspace \/ Monorepo Evidence$/mu,
+  );
   assert.match(
     verification,
     /fixed independent paired runs[\s\S]*fresh-Agent mechanism benchmark/iu,
@@ -263,36 +308,56 @@ test("multi-Area guidance keeps Context reads expandable and change targets expl
     `${managed}\n${workflow}`,
     /must only read the target Area|must read the full Context graph|persist(?:ed)? target declaration/iu,
   );
+  assert.doesNotMatch(
+    `${managed}\n${development}\n${workflow}\n${rationale}\n${specification}`,
+    /one Area may own several workspaces|Area 与 workspace 不要求一一对应/iu,
+  );
 });
 
-test("single-Area init and existing-field multi-Area manifests need no migration", async () => {
+test("non-monorepo init and sparse Context workspace manifests need no schema or migration", async () => {
   await withInitializedProject(async (root) => {
     const manifest = await readFile(
       path.join(root, "project_context", "context.toml"),
       "utf8",
     );
     assert.match(manifest, /id = "main"[\s\S]*root = "\."/u);
-    assert.match(manifest, /not a read\/edit ACL/iu);
+    assert.match(manifest, /no workspace schema or read\/edit ACL/iu);
     assert.match(manifest, /starting read set, not a maximum/iu);
     assert.doesNotMatch(
       manifest,
-      /^(?:workspace|owner_area|applies_to|requires)\s*=/mu,
+      /^(?:workspace|owner_area|applies_to|requires)\s*=|^\[\[workspaces\]\]/mu,
+    );
+    assert.equal(
+      await missing(path.join(root, "project_context", "workspaces")),
+      true,
     );
     assert.deepEqual((await runValidator(root, "validate-context")).errors, []);
   });
 
   const root = await createContextProject({
     manifest: `[[areas]]
-id = "mobile"
-root = "apps/mobile"
+id = "repository"
+root = "."
 context = "project_context/areas/main.md"
-kind = "app"
+kind = "repository"
 default = true
 
 [[areas]]
-id = "miniapp"
+id = "mobile-product"
+root = "apps/mobile"
+context = "project_context/workspaces/mobile/areas/product.md"
+kind = "app"
+
+[[context]]
+path = "project_context/workspaces/mobile/areas/verification.md"
+role = "verification"
+read_policy = "on-demand"
+triggers = ["mobile test"]
+
+[[areas]]
+id = "miniapp-product"
 root = "apps/miniapp"
-context = "project_context/areas/miniapp.md"
+context = "project_context/workspaces/miniapp/areas/product.md"
 kind = "app"
 
 [[areas]]
@@ -302,17 +367,39 @@ context = "project_context/areas/shared-service.md"
 kind = "service"
 
 [[context]]
-path = "project_context/areas/main/verification.md"
+path = "project_context/areas/shared-service/verification.md"
 role = "verification"
-read_policy = "default"
-triggers = ["test"]
+read_policy = "on-demand"
+triggers = ["shared service test"]
 `,
     extraFiles: {
       "apps/mobile/package.json": "{}\n",
       "apps/miniapp/package.json": "{}\n",
       "packages/service/package.json": "{}\n",
-      "project_context/areas/miniapp.md": areaContext("miniapp"),
+      "packages/eslint-config/package.json": "{}\n",
+      "project_context/workspaces/mobile/areas/product.md":
+        areaContext("mobile-product"),
+      "project_context/workspaces/mobile/areas/verification.md": `---
+context_role: verification
+read_policy: on-demand
+---
+# Mobile Verification
+
+## Verification Paths
+- \`npm test --workspace mobile\`
+`,
+      "project_context/workspaces/miniapp/areas/product.md":
+        areaContext("miniapp-product"),
       "project_context/areas/shared-service.md": areaContext("shared-service"),
+      "project_context/areas/shared-service/verification.md": `---
+context_role: verification
+read_policy: on-demand
+---
+# Shared Service Verification
+
+## Verification Paths
+- \`npm test --workspace shared-service\`
+`,
     },
   });
   try {
@@ -320,7 +407,21 @@ triggers = ["test"]
     assert.deepEqual(report.errors, []);
     assert.match(
       report.info.join("\n"),
-      /loaded project_context\/context\.toml with 3 area\(s\)/u,
+      /loaded project_context\/context\.toml with 4 area\(s\)/u,
+    );
+    assert.equal(
+      await missing(
+        path.join(root, "project_context", "workspaces", "eslint-config"),
+      ),
+      true,
+    );
+    const manifest = await readFile(
+      path.join(root, "project_context", "context.toml"),
+      "utf8",
+    );
+    assert.doesNotMatch(
+      manifest,
+      /^(?:workspace|owner_area|applies_to|requires)\s*=|^\[\[workspaces\]\]/mu,
     );
   } finally {
     await rm(root, { recursive: true, force: true });

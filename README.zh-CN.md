@@ -96,19 +96,30 @@ manifest/trigger 命中的少量 area/role Context
 
 Context 负责耐久的意图和边界，代码负责当前实现，测试/CI/浏览器或运行时证据/人工负责行为与产品验收。
 
-### Multi-Area 与 Monorepo
+### 稀疏 Context Workspace 与 Monorepo
 
-Area 与 workspace 有关联，但不是同一种单元。Area 负责耐久的产品/技术语义、ownership 和发现；workspace/package/root 是代码、构建与依赖单元。一个 Area 可以拥有多个 workspace，共享、基础设施或仓库治理 Area 也可以不直接拥有 workspace。映射有长期价值时，每个代码/workspace root 只指定一个 primary Area owner，并写进 Area `Code Entry Points`、architecture Context 或项目自己的 resolver；不需要新增 manifest 字段，也不要求一个 workspace 对应一个 Area。
+Monorepo 可以让 Context 继续集中维护，同时只镜像确实拥有耐久非代码事实的实现 workspace：
 
-core/default 集合、manifest 候选和 bounded search 是起始 working set，不是读取 ACL 或最大可读集合。任务需要时可以继续读取其他 Area、共享后端、跨客户端 contract、`DESIGN.md`、选定资源或代码。不要把全量 Context 设成普通任务的全局默认，也不要把“读到兄弟 Area”解释为“获得修改它的权限”。
+```text
+project_context/
+  areas/                              # 跨 workspace、仓库级、共享 owner
+  workspaces/
+    mobile/areas/...
+    wechat-miniapp/areas/...
+    api/areas/...
+```
 
-产品编辑前应把 read scope 与 change target 分开。只有当用户明确表达和仓库耐久 ownership 仍无法区分多个实质不同的同级产品目标时，才问一个精确的目标问题；不能默认选择 default Area、最近改过的客户端或通用关键词命中。跨 Area 任务列全目标，共享/supporting 读取保持独立。实现后，如果仓库已有 changed-path / target-scope verifier，就用本任务准确变更路径调用；否则在 Conformance 中按 durable owner 检查最终 diff。Tiny Context 不增加持久 target declaration、workspace Registry、applicability matrix、通用 import/path/runtime scanner 或第二套 Long-Task scope classifier。单 Area 项目没有新增 schema 或状态；已经明确的单目标任务没有新增询问。
+每个已表示的 `project_context/workspaces/<workspace-id>/**` 通过现有 `[[areas]].root` 与 `context` 精确对应一个仓库相对代码根，内部可以有多个 workspace-local Area/role owner。反向映射是稀疏的：没有耐久 Context 的 package-manager workspace 不创建空目录。真正跨 workspace、仓库级、共享或治理 Area 仍放在顶层 `project_context/areas/**`；完整代码 workspace 清单继续由 package-manager/build 配置拥有。单 workspace/非 monorepo 项目保持原有顶层 Area 布局、初始化和验证。
+
+Monorepo 应优先用一个小型顶层 Area 保存仓库公共的 default Context；workspace-local Context 默认 `on-demand`，除非它确实近乎所有任务都需要。core/default 集合、manifest 候选和 bounded search 仍只是可扩展的起始 working set，不是读取 ACL、最大集合，也不要求读完整个目标 workspace。任务需要时可以继续读取兄弟 Area、共享后端、跨客户端 contract、根 `DESIGN.md`、选定资源或代码。根 `DESIGN.md` 仍是当前共享项目 Design Authority；Context workspace 目录不会自动拆出多套设计系统。
+
+产品编辑前，用用户、产品、路径和仓库事实解析本任务 intended workspace(s)。只有仍无法区分多个实质不同的同级目标时，才问一个精确问题；不能默认选择 default Area、最近改过的客户端或通用关键词命中。跨 workspace 任务列全目标和 supporting/shared scope。实现后，如果仓库已有 changed-path / target-scope verifier，就用本任务准确变更路径调用；否则在 Conformance 中按 durable owner 检查最终 diff。Tiny Context 不新增 `[[workspaces]]` schema、自动 package-manager 拓扑扫描、强制迁移、持久 target 状态、通用 import/path/runtime scanner 或第二套 Long-Task scope classifier。
 
 普通任务：
 
 1. 读取 core/default Context，收集 manifest 候选；
 2. 在 `project_context/**` 做一次 bounded Context search，并在依赖需要时继续扩读；
-3. 多目标仓库先消歧 change target，但不把 Area 变成读取/修改权限；
+3. 多目标仓库先解析本任务 intended workspace(s)，但不把 Context workspace 或 Area 变成读取/修改权限；
 4. 对用户可见地给出一次简洁、仓库事实绑定的 Architecture Deliberation；
 5. 决定 `Context Delta: none|required`，耐久语义改变时先更新 owner Context；
 6. 使用平台内部计划；

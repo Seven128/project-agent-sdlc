@@ -187,13 +187,24 @@ Only near-universal recovery facts should use `read_policy = "default"`; special
 
 Typical roles are area/domain, contract, foundation, decision-rationale, implementation-index, verification and deployment. Context owns durable intended boundaries; code owns current implementation; tests, CI, browser/runtime evidence and people own behavior and product acceptance.
 
-### Multi-Area And Monorepo Repositories
+### Sparse Context Workspaces And Monorepo Repositories
 
-Area and workspace are related but different. An Area owns durable product or technical meaning and helps discovery; a workspace/package/root is a code, build and dependency unit. One Area may own several workspaces, and a shared/infrastructure/governance Area may own none. When the mapping matters, give each code/workspace root one primary Area owner and record it in Area `Code Entry Points`, architecture Context or a project-owned resolver—no extra manifest field or one-Area-per-workspace migration is required.
+Monorepos may keep Context centralized while mirroring only the implementation workspaces that actually own durable non-code facts:
 
-The core/default set, manifest candidates and bounded search are the starting working set, not a read ACL or maximum. Read any additional Area, shared backend, cross-client contract, `DESIGN.md`, selected resource or code needed to understand the task. Do not make the complete Context graph the ordinary default, and do not treat reading a sibling Area as permission to edit it.
+```text
+project_context/
+  areas/                              # cross-workspace/repository/shared owners
+  workspaces/
+    mobile/areas/...
+    wechat-miniapp/areas/...
+    api/areas/...
+```
 
-Before product edits, separate read scope from change target. If explicit user language and durable repository ownership still leave several materially different sibling product targets plausible, ask one concise target question rather than choosing the default Area, recent client or a generic keyword match. Intentional cross-Area work names every target; shared/supporting reads remain separate. After implementation, run the repository's own changed-path/target-scope verifier on exact task-attributable paths when available, or review the final diff against durable owners during Conformance. Tiny Context adds no persistent target declaration, workspace registry, applicability matrix, generic import/path/runtime scanner or duplicate Long-Task scope classifier. Single-Area projects keep the same schema and state model; an already unambiguous single-target task adds no clarification.
+Each represented `project_context/workspaces/<workspace-id>/**` maps to exactly one repository-relative code root through existing `[[areas]].root` and `context`; it may contain several workspace-local Area/role owners. The mapping is sparse in the other direction: package-manager workspaces with no durable Context get no empty directory. Cross-workspace, repository-wide, shared and governance Areas stay under top-level `project_context/areas/**`. Package-manager/build files remain the complete code-workspace inventory. Single-workspace and non-monorepo projects keep the existing top-level Area layout, initialization and validation.
+
+For a monorepo, prefer a small top-level repository-common default Area; keep workspace-local Context `on-demand` unless it is genuinely near-universal. The core/default set, manifest candidates and bounded search remain an expandable starting set, not a read ACL, a maximum or an instruction to read an entire target workspace. Read any additional sibling Area, shared backend, cross-client contract, root `DESIGN.md`, selected resource or code needed to understand dependencies. Root `DESIGN.md` remains the current shared project Design Authority; Context workspace placement does not create independent design systems.
+
+Before product edits, resolve task-local intended workspace(s) from explicit user/product/path/repository facts. If materially different siblings remain plausible, ask one concise target question rather than choosing the default Area, recent client or a generic keyword match. Intentional multi-workspace work names every target and any supporting/shared scope. After implementation, run the repository's changed-path/target-scope verifier on exact task-attributable paths when available, or review the final diff against durable owners during Conformance. Tiny Context adds no `[[workspaces]]` schema, automatic package-manager topology scan, forced migration, persistent target state, generic import/path/runtime scanner or duplicate Long-Task scope classifier.
 
 Every engineering handoff reports one Context result:
 
@@ -209,7 +220,7 @@ Ordinary tasks stay lightweight:
 
 1. read core/default Context and collect manifest candidates;
 2. run one bounded Context search over `project_context/**`, read relevant matches and widen when dependencies require more Context;
-3. in a multi-target repository, resolve the intended change target without turning Area selection into read/edit permission;
+3. in a multi-target repository, resolve task-local intended workspace(s) without turning Context workspace or Area selection into read/edit permission;
 4. surface one concise, repository-bound Architecture Deliberation;
 5. decide `Context Delta: none|required` and update the owning Context first when durable semantics change;
 6. use the platform's internal plan;
