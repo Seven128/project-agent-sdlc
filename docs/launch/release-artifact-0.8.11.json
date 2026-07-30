@@ -1,0 +1,10 @@
+{
+  "schema_version": "ty-context-release-artifact-v2",
+  "package_name": "project-tiny-context-harness",
+  "version": "0.8.11",
+  "filename": "project-tiny-context-harness-0.8.11.tgz",
+  "sha256": "b3133ebc04e44d3e88ba5533865c1a8a1adc99968f370d94704b3941455ef1f7",
+  "node_version": "v24.16.0",
+  "npm_version": "11.13.0",
+  "lockfile_sha256": "863ef70d2ca53f5be6029e4cbf4ccdfbfcf1113c58b73f4021c3a3584ae85b18"
+}

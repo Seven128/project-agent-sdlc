@@ -9,6 +9,7 @@ export {
   parseDeliveryContractBundle,
 } from "./lib/long-task-delivery-parser.js";
 export { evaluateContractBoundary } from "./lib/long-task-boundary-check.js";
+export { publishDesignResourceHandoffBundle } from "./lib/design-resource-handoff-bundle.js";
 export { preflightDesignResourceHandoff } from "./lib/design-resource-handoff-validation.js";
 export {
   classifyLongTaskRisk,
@@ -30,14 +31,12 @@ export {
   readFinalReceipt,
 } from "./lib/long-task-state.js";
 export type {
-  HarnessConfig,
-  HarnessProfile,
-  ManagedFile,
-  SourceMapping,
-} from "./lib/types.js";
-export type {
+  BoundaryCheckDecisionV2,
+  BoundaryCheckInputV2,
   CheckExecutionResultV2,
   CompiledDeliveryContractV2,
+  DesignResourceHandoffBundleOptions,
+  DesignResourceHandoffBundleResult,
   DeliveryAssertionV2,
   DeliveryCheckV2,
   DeliveryContractV2,
@@ -53,8 +52,8 @@ export type {
   RunnerType,
   SourceClaimV2,
   TargetedVerificationResultV2,
-} from "./lib/long-task-delivery-types.js";
-export type {
-  BoundaryCheckDecisionV2,
-  BoundaryCheckInputV2,
-} from "./lib/long-task-boundary-check.js";
+  HarnessConfig,
+  HarnessProfile,
+  ManagedFile,
+  SourceMapping,
+} from "./public-types.js";
