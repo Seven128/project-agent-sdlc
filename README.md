@@ -154,7 +154,7 @@ The smoke packs the local workspace, installs it into a disposable repo and vali
 
 ```sh
 cd /path/to/your/test-repo
-npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.7.tgz
+npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.8.tgz
 npx --no-install ty-context init --adopt
 make validate-context
 ```
@@ -687,7 +687,7 @@ make validate-harness
 
 The modularity gate is `ty-context check-modularity`. Scoped waivers require `owner`, `introduced_at`, `reason`, `tracking_issue` and `expiry_condition`.
 
-`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.8.7.tgz` under the preview output directory.
+`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.8.8.tgz` under the preview output directory.
 
 ## Community And Further Reading
 

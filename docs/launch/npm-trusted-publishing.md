@@ -22,7 +22,7 @@ Important current constraints:
 
 The renamed package exists on npm. Use local token publishing only as an emergency fallback.
 
-The current published package is `project-tiny-context-harness@0.8.7`. Prefer one real workflow run through GitHub Actions Trusted Publishing; use the local fallback only when workflow dispatch is unavailable and the normal release checks pass. `dry_run: true` remains an optional prepare-only diagnostic, not a mandatory rehearsal that duplicates the full suite. Do not publish different bytes for an existing version; npm versions are immutable.
+The current published package is `project-tiny-context-harness@0.8.8`. Prefer one real workflow run through GitHub Actions Trusted Publishing; use the local fallback only when workflow dispatch is unavailable and the normal release checks pass. `dry_run: true` remains an optional prepare-only diagnostic, not a mandatory rehearsal that duplicates the full suite. Do not publish different bytes for an existing version; npm versions are immutable.
 
 Real publish runs also create or update the matching GitHub Release from `docs/launch/github-release-<version>.md` by running `node tools/github_release_publish.mjs --version <version> --target <github.sha>`. Dry runs do not create or edit GitHub releases.
 
