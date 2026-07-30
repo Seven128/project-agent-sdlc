@@ -1,6 +1,6 @@
 {
   "name": "project-tiny-context-harness",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "description": "Minimal project memory and validation harness for AI coding agents.",
   "license": "MIT",
   "author": "Seven128",

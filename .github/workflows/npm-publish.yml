@@ -6,7 +6,7 @@ on:
       expected_version:
         description: "Must match packages/ty-context/package.json version."
         required: true
-        default: "0.8.9"
+        default: "0.8.10"
       dry_run:
         description: "Optional prepare-only diagnostic; false prepares once and publishes the same artifact."
         required: true
