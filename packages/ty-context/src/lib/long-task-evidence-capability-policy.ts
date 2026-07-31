@@ -118,6 +118,11 @@ function validateArtifactCapabilityDeclarations(
   )
     issue(report, "design_method_artifact_required", label);
   if (
+    assertion.evidence_capabilities.includes("design_symbolic_certificate") &&
+    !check.artifact_globs.length
+  )
+    issue(report, "design_symbolic_certificate_artifact_required", label);
+  if (
     assertion.evidence_capabilities.includes("semantic_fact") &&
     !check.artifact_globs.length
   )
@@ -144,6 +149,7 @@ function validateRunnerCapabilityDeclarations(
         capability !== "interaction_trace" &&
         capability !== "design_conformance" &&
         capability !== "design_method" &&
+        capability !== "design_symbolic_certificate" &&
         capability !== "semantic_fact" &&
         capability !== "target_runtime",
     )
@@ -330,7 +336,43 @@ function validateDistinctDesignMethodArtifacts(
   const pathOwners = new Map<string, string>();
   const digestOwners = new Map<string, string>();
   for (const record of records) {
+    if (record.capability === "design_symbolic_certificate") {
+      addDistinctArtifact(
+        check,
+        findings,
+        pathOwners,
+        digestOwners,
+        record.assertion_key,
+        `symbolic-certificate:${record.design_target_ref}`,
+        record.artifact_path,
+        artifactHashes,
+      );
+      continue;
+    }
     if (record.capability !== "design_method") continue;
+    if ("fact_model" in record) {
+      addDistinctArtifact(
+        check,
+        findings,
+        pathOwners,
+        digestOwners,
+        record.assertion_key,
+        `symbolic-method:${record.design_target_ref}:${record.method}:observation`,
+        record.observation_artifact_path,
+        artifactHashes,
+      );
+      addDistinctArtifact(
+        check,
+        findings,
+        pathOwners,
+        digestOwners,
+        record.assertion_key,
+        `symbolic-method:${record.design_target_ref}:${record.method}:comparison`,
+        record.artifact_path,
+        artifactHashes,
+      );
+      continue;
+    }
     for (const cell of record.cells) {
       const currentOwner = `${record.method}:${cell.condition_key}`;
       const pathOwner = pathOwners.get(cell.observation_artifact_path);
@@ -364,6 +406,46 @@ function validateDistinctDesignMethodArtifacts(
       else digestOwners.set(digest, currentOwner);
     }
   }
+}
+
+function addDistinctArtifact(
+  check: CompiledCheckV2,
+  findings: LongTaskFindingV2[],
+  pathOwners: Map<string, string>,
+  digestOwners: Map<string, string>,
+  assertionKey: string,
+  currentOwner: string,
+  path: string,
+  artifactHashes: Record<string, string>,
+): void {
+  const pathOwner = pathOwners.get(path);
+  if (pathOwner)
+    findings.push(
+      reusedDesignMethodArtifactFinding(
+        check,
+        assertionKey,
+        currentOwner,
+        pathOwner,
+        "path",
+        path,
+      ),
+    );
+  else pathOwners.set(path, currentOwner);
+  const digest = artifactHashes[path];
+  if (!digest) return;
+  const digestOwner = digestOwners.get(digest);
+  if (digestOwner)
+    findings.push(
+      reusedDesignMethodArtifactFinding(
+        check,
+        assertionKey,
+        currentOwner,
+        digestOwner,
+        "sha256",
+        digest,
+      ),
+    );
+  else digestOwners.set(digest, currentOwner);
 }
 
 function reusedDesignMethodArtifactFinding(

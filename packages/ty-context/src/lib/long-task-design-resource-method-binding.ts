@@ -2,17 +2,24 @@ import type {
   DesignResourceHandoffPreflightV1,
   DesignResourceVerificationMethod,
 } from "./design-resource-handoff-types.js";
+import type {
+  DesignResourceHandoffPreflightV2,
+  DesignResourceSymbolicHandoffTargetV2,
+} from "./design-resource-symbolic-fact-types.js";
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
 import type {
   ContractDesignTarget,
   IndexedHandoffTarget,
 } from "./long-task-design-resource-handoff.js";
+import { matchesRepoPattern } from "./long-task-paths.js";
 
 export function validateTargetIdentity(
   contractTarget: ContractDesignTarget,
   indexed: IndexedHandoffTarget,
 ): void {
   const { target } = contractTarget;
+  if (target.fact_model !== undefined)
+    invalid("v1_target_fact_model_must_be_absent", target.key);
   const handoffTarget = indexed.target;
   if (target.interpretation !== handoffTarget.interpretation)
     invalid(
@@ -38,10 +45,213 @@ export function validateTargetIdentity(
   );
 }
 
+export interface IndexedSymbolicHandoffTarget {
+  preflight: DesignResourceHandoffPreflightV2;
+  target: DesignResourceSymbolicHandoffTargetV2;
+}
+
+export function validateSymbolicTargetIdentity(
+  contractTarget: ContractDesignTarget,
+  indexed: IndexedSymbolicHandoffTarget,
+): void {
+  const { target } = contractTarget;
+  const handoffTarget = indexed.target;
+  if (target.fact_model !== "symbolic_rules_v2")
+    invalid("v2_target_fact_model_required", target.key);
+  if (target.interpretation !== handoffTarget.interpretation)
+    invalid(
+      "target_interpretation_mismatch",
+      `${target.key}:${target.interpretation}:${handoffTarget.interpretation}`,
+    );
+  if (target.condition_keys.length)
+    invalid("v2_ground_condition_keys_forbidden", target.key);
+  if (target.verification_method_bindings.length)
+    invalid("v2_ground_method_bindings_forbidden", target.key);
+  const resourcePaths = handoffTarget.resource_refs.map(
+    (ref) =>
+      indexed.preflight.handoff.resources.find((item) => item.key === ref)!
+        .path,
+  );
+  assertSameSet(
+    target.source_paths,
+    [indexed.preflight.handoff_path, ...resourcePaths],
+    "target_source_paths_mismatch",
+    target.key,
+  );
+}
+
+export function validateSymbolicVerificationMethodBindings(
+  contract: DeliveryContractV2,
+  contractTarget: ContractDesignTarget,
+  indexed: IndexedSymbolicHandoffTarget,
+  claimsBySourceItem: Map<string, string[]>,
+): void {
+  const target = contractTarget.target;
+  const preflight = indexed.preflight;
+  const check = contract.outcomes
+    .find((item) => item.key === contractTarget.outcome_key)!
+    .acceptance.checks.find(
+      (item) => item.key === target.conformance_check_ref,
+    )!;
+  const bindings = target.symbolic_method_bindings ?? [];
+  const expectedMethods = [
+    ...new Set(
+      preflight.manifest.semantic_proof_obligations.map((item) => item.method),
+    ),
+  ];
+  assertSameSet(
+    bindings.map((item) => item.method),
+    expectedMethods,
+    "v2_verification_methods_mismatch",
+    target.key,
+  );
+  const assertionRefs = bindings.map((item) => item.assertion_ref);
+  if (new Set(assertionRefs).size !== assertionRefs.length)
+    invalid("v2_verification_method_assertion_duplicate", target.key);
+  if (assertionRefs.includes(target.conformance_assertion_ref))
+    invalid("v2_verification_method_assertion_must_be_independent", target.key);
+  const boundObligationRefs: string[] = [];
+  const artifactPaths = new Set<string>();
+  for (const binding of bindings) {
+    const assertion = check.positive_assertions.find(
+      (item) => item.key === binding.assertion_ref,
+    );
+    if (!assertion)
+      invalid(
+        "v2_verification_method_assertion_unknown",
+        `${target.key}:${binding.method}:${binding.assertion_ref}`,
+      );
+    for (const capability of requiredCapabilities(binding.method))
+      if (!assertion.evidence_capabilities.includes(capability))
+        invalid(
+          "v2_verification_method_capability_required",
+          `${target.key}:${binding.method}:${capability}`,
+        );
+    const expected = preflight.manifest.semantic_proof_obligations
+      .filter((obligation) => obligation.method === binding.method)
+      .map((obligation) => symbolicRuleExpectation(preflight, obligation.key));
+    assertCanonicalRowsByKey(
+      binding.rule_expectations,
+      expected,
+      "obligation_ref",
+      "v2_rule_expectations_mismatch",
+      `${target.key}:${binding.method}`,
+    );
+    for (const expectation of expected) {
+      const rule = preflight.manifest.fact_rules.find(
+        (item) => item.key === expectation.fact_rule_ref,
+      )!;
+      for (const sourceItemRef of rule.source_item_refs)
+        for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
+          if (!assertion.claims.includes(claimRef))
+            invalid(
+              "v2_verification_method_claim_not_asserted",
+              `${target.key}:${binding.method}:${sourceItemRef}:${claimRef}`,
+            );
+      boundObligationRefs.push(expectation.obligation_ref);
+    }
+    for (const artifactPath of [
+      binding.artifact_path,
+      binding.observation_path,
+    ]) {
+      if (artifactPaths.has(artifactPath))
+        invalid("v2_evidence_artifact_reused", `${target.key}:${artifactPath}`);
+      artifactPaths.add(artifactPath);
+      if (
+        !check.artifact_globs.some((pattern) =>
+          matchesRepoPattern(artifactPath, pattern),
+        )
+      )
+        invalid("v2_evidence_artifact_glob_missing", artifactPath);
+    }
+  }
+  assertSameSet(
+    boundObligationRefs,
+    preflight.manifest.semantic_proof_obligations.map((item) => item.key),
+    "v2_semantic_obligation_binding_mismatch",
+    target.key,
+  );
+  validateSymbolicCertificateBinding(
+    target,
+    preflight,
+    check,
+    assertionRefs,
+    artifactPaths,
+  );
+}
+
+function validateSymbolicCertificateBinding(
+  target: ContractDesignTarget["target"],
+  preflight: DesignResourceHandoffPreflightV2,
+  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+  assertionRefs: string[],
+  artifactPaths: Set<string>,
+): void {
+  const certificateBinding = target.symbolic_certificate_binding;
+  if (!certificateBinding)
+    invalid("v2_certificate_binding_required", target.key);
+  const certificateAssertion = check.positive_assertions.find(
+    (item) => item.key === certificateBinding.assertion_ref,
+  );
+  if (!certificateAssertion)
+    invalid(
+      "v2_certificate_assertion_unknown",
+      `${target.key}:${certificateBinding.assertion_ref}`,
+    );
+  if (
+    certificateBinding.assertion_ref === target.conformance_assertion_ref ||
+    assertionRefs.includes(certificateBinding.assertion_ref)
+  )
+    invalid("v2_certificate_assertion_must_be_independent", target.key);
+  if (
+    !certificateAssertion.evidence_capabilities.includes(
+      "design_symbolic_certificate",
+    )
+  )
+    invalid(
+      "v2_certificate_capability_required",
+      `${target.key}:${certificateBinding.assertion_ref}`,
+    );
+  const expectedCertificates =
+    preflight.manifest.noninterference_certificates.map((certificate) => ({
+      certificate_ref: certificate.key,
+      fact_rule_refs: [...certificate.fact_rule_refs],
+      omitted_axis_refs: [...certificate.omitted_axis_refs],
+      dependency_edge_refs: [...certificate.dependency_edge_refs],
+      canonical_rule_dag_sha256: certificate.canonical_rule_dag_sha256,
+    }));
+  assertCanonicalRowsByKey(
+    certificateBinding.expectations,
+    expectedCertificates,
+    "certificate_ref",
+    "v2_certificate_expectations_mismatch",
+    target.key,
+  );
+  if (
+    canonicalJson(certificateBinding.metrics) !==
+    canonicalJson(preflight.metrics)
+  )
+    invalid("v2_certificate_metrics_mismatch", target.key);
+  if (
+    !check.artifact_globs.some((pattern) =>
+      matchesRepoPattern(certificateBinding.artifact_path, pattern),
+    )
+  )
+    invalid(
+      "v2_certificate_artifact_glob_missing",
+      certificateBinding.artifact_path,
+    );
+  if (artifactPaths.has(certificateBinding.artifact_path))
+    invalid(
+      "v2_certificate_artifact_reused",
+      `${target.key}:${certificateBinding.artifact_path}`,
+    );
+}
+
 export function designSourceItemClaims(
   contract: DeliveryContractV2,
   contractTarget: ContractDesignTarget,
-  indexed: IndexedHandoffTarget,
+  indexed: IndexedHandoffTarget | IndexedSymbolicHandoffTarget,
   sourceItemRef: string,
   claims = new Map(contract.source_claims.map((item) => [item.key, item])),
 ): string[] {
@@ -221,6 +431,52 @@ function designFactExpectation(
   };
 }
 
+function symbolicRuleExpectation(
+  preflight: DesignResourceHandoffPreflightV2,
+  obligationRef: string,
+) {
+  const obligation = preflight.manifest.semantic_proof_obligations.find(
+    (item) => item.key === obligationRef,
+  )!;
+  const rule = preflight.manifest.fact_rules.find(
+    (item) => item.key === obligation.fact_rule_ref,
+  )!;
+  const oracle = preflight.manifest.oracles.find(
+    (item) => item.key === obligation.oracle_ref,
+  )!;
+  const environment = preflight.manifest.environments.find(
+    (item) => item.key === obligation.environment_ref,
+  )!;
+  return {
+    obligation_ref: obligation.key,
+    fact_rule_ref: rule.key,
+    region_sha256: obligation.region_sha256,
+    subject_or_relation_ref: rule.subject_or_relation_ref,
+    property_ref: rule.property_ref,
+    population_ref: rule.population_ref,
+    quantifier: structuredClone(rule.quantifier),
+    observation_sensitivity: rule.observation_sensitivity,
+    expected: structuredClone(rule.expected),
+    proof_surface: obligation.proof_surface,
+    observation_boundary: obligation.observation_boundary,
+    comparison: structuredClone(obligation.comparison),
+    oracle: {
+      key: oracle.key,
+      trust: oracle.trust,
+      identity: oracle.identity,
+      version: oracle.version,
+      sha256: oracle.sha256,
+    },
+    environment: {
+      key: environment.key,
+      identity: environment.identity,
+      definition: structuredClone(environment.definition),
+    },
+    protected_value_policy: obligation.protected_value_policy,
+    completion_effect: obligation.completion_effect,
+  };
+}
+
 function assertCanonicalRows(
   actual: Array<{ fact_ref: string }>,
   expected: Array<{ fact_ref: string }>,
@@ -232,6 +488,24 @@ function assertCanonicalRows(
   );
   const right = new Map(
     expected.map((item) => [item.fact_ref, canonicalJson(item)]),
+  );
+  assertSameSet([...left.keys()], [...right.keys()], code, detail);
+  for (const [key, value] of right)
+    if (left.get(key) !== value) invalid(code, `${detail}:${key}`);
+}
+
+function assertCanonicalRowsByKey<T extends Record<string, unknown>>(
+  actual: T[],
+  expected: T[],
+  keyName: keyof T,
+  code: string,
+  detail: string,
+): void {
+  const left = new Map(
+    actual.map((item) => [String(item[keyName]), canonicalJson(item)]),
+  );
+  const right = new Map(
+    expected.map((item) => [String(item[keyName]), canonicalJson(item)]),
   );
   assertSameSet([...left.keys()], [...right.keys()], code, detail);
   for (const [key, value] of right)

@@ -153,7 +153,15 @@ test("production surface bindings and design conformance have Schema/Parser pari
   );
   assert.deepEqual(
     Object.keys(parsed.design_targets[0]).sort(),
-    Object.keys(schema.$defs.designTarget.properties).sort(),
+    [...schema.$defs.designTarget.required].sort(),
+  );
+  assert.deepEqual(
+    [
+      "fact_model",
+      "symbolic_certificate_binding",
+      "symbolic_method_bindings",
+    ].every((key) => key in schema.$defs.designTarget.properties),
+    true,
   );
   assert.deepEqual(
     Object.keys(parsed.acceptance_blockers[0]).sort(),
@@ -161,6 +169,11 @@ test("production surface bindings and design conformance have Schema/Parser pari
   );
   assert.ok(
     schema.$defs.evidenceCapability.enum.includes("design_conformance"),
+  );
+  assert.ok(
+    schema.$defs.evidenceCapability.enum.includes(
+      "design_symbolic_certificate",
+    ),
   );
   assert.deepEqual(
     schema.$defs.designAcceptanceBlocker.properties.status.enum,

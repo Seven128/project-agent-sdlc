@@ -221,6 +221,7 @@ const SURFACE_BINDING_AUTHORITY_POLICY = {
 
 const DESIGN_TARGET_AUTHORITY_POLICY = {
   key: "identity",
+  fact_model: "semantic_user_review",
   interpretation: "semantic_user_review",
   source_paths: "scope",
   condition_keys: "semantic_user_review",
@@ -228,6 +229,8 @@ const DESIGN_TARGET_AUTHORITY_POLICY = {
   conformance_check_ref: "proof_additive",
   conformance_assertion_ref: "proof_additive",
   verification_method_bindings: "proof_additive",
+  symbolic_method_bindings: "proof_additive",
+  symbolic_certificate_binding: "proof_additive",
   actual_artifact_path: "output_requirement",
   comparison_artifact_path: "output_requirement",
 } satisfies Record<keyof DeliveryDesignTargetV2, AuthorityFieldPolicy>;

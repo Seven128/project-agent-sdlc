@@ -1,5 +1,8 @@
 import type {
   CompiledCheckV2,
+  DesignGroundMethodEvidenceV2,
+  DesignSymbolicCertificateEvidenceV2,
+  DesignSymbolicMethodEvidenceV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
 import { validateSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
@@ -38,6 +41,8 @@ export function validateRuntimeEvidenceRecord(
       return validateDesignConformance(check, record, artifactHashes);
     case "design_method":
       return validateDesignMethod(check, record, artifactHashes);
+    case "design_symbolic_certificate":
+      return validateDesignSymbolicCertificate(check, record, artifactHashes);
     case "semantic_fact":
       return validateSemanticFactEvidence(check, record, artifactHashes);
     case "target_runtime":
@@ -50,6 +55,16 @@ export function validateRuntimeEvidenceRecord(
 function validateDesignMethod(
   check: CompiledCheckV2,
   record: Extract<EvidenceCapabilityRecordV2, { capability: "design_method" }>,
+  artifactHashes: Record<string, string>,
+): string | null {
+  return "fact_model" in record
+    ? validateSymbolicDesignMethod(check, record, artifactHashes)
+    : validateGroundDesignMethod(check, record, artifactHashes);
+}
+
+function validateGroundDesignMethod(
+  check: CompiledCheckV2,
+  record: DesignGroundMethodEvidenceV2,
   artifactHashes: Record<string, string>,
 ): string | null {
   const target = (check.design_conformance_targets ?? []).find(
@@ -72,6 +87,21 @@ function validateDesignMethod(
       item.assertion_ref === record.assertion_key &&
       item.method === record.method,
   )!;
+  return validateGroundDesignCells(target, binding, record, artifactHashes);
+}
+
+type CompiledDesignTarget = NonNullable<
+  CompiledCheckV2["design_conformance_targets"]
+>[number];
+type CompiledGroundBinding =
+  CompiledDesignTarget["verification_method_bindings"][number];
+
+function validateGroundDesignCells(
+  target: CompiledDesignTarget,
+  binding: CompiledGroundBinding,
+  record: DesignGroundMethodEvidenceV2,
+  artifactHashes: Record<string, string>,
+): string | null {
   if (
     !same(
       [...record.cells.map((item) => item.condition_key)].sort(),
@@ -92,6 +122,21 @@ function validateDesignMethod(
   );
   if (record.cells.length !== expected.size)
     return "design_method_cell_count_mismatch";
+  return validateGroundCellSet(record, expected, artifactHashes);
+}
+
+type GroundExpectedCell = {
+  artifact_path: string;
+  observation_artifact_path: string;
+  fact_refs: string[];
+  fact_expectations: CompiledGroundBinding["evidence_artifacts"][number]["fact_expectations"];
+};
+
+function validateGroundCellSet(
+  record: DesignGroundMethodEvidenceV2,
+  expected: Map<string, GroundExpectedCell>,
+  artifactHashes: Record<string, string>,
+): string | null {
   for (const cell of record.cells) {
     const expectedCell = expected.get(cell.condition_key);
     if (
@@ -117,85 +162,366 @@ function validateDesignMethod(
       return "design_method_artifact_missing";
     if (!artifactHashes[cell.observation_artifact_path])
       return "design_method_observation_artifact_missing";
-    const expectations = new Map(
-      (expectedCell?.fact_expectations ?? []).map((item) => [
-        item.fact_ref,
-        item,
-      ]),
+    const resultIssue = validateGroundCellResults(
+      cell,
+      expectedCell!,
+      artifactHashes,
     );
-    const actualIdentities = new Set<string>();
-    const comparisonIdentities = new Set<string>();
-    for (const result of cell.fact_results) {
-      const expectation = expectations.get(result.fact_ref);
-      if (!expectation) return "design_method_fact_expectation_missing";
-      if (
-        result.subject_ref !== expectation.subject_ref ||
-        result.variation_ref !== expectation.variation_ref ||
-        result.property_ref !== expectation.property_ref ||
-        result.actual_observation.sensitivity !==
-          expectation.observation_sensitivity
-      )
-        return "design_method_fact_identity_mismatch";
-      if (
-        (result.actual_observation.sensitivity === "plain" &&
-          result.actual_observation.redaction !== null) ||
-        (result.actual_observation.sensitivity === "protected" &&
-          result.actual_observation.redaction === null)
-      )
-        return "design_method_observation_protection_mismatch";
-      if (
-        canonicalJson(result.expected) !== canonicalJson(expectation.expected)
-      )
-        return "design_method_expected_value_mismatch";
-      if (
-        result.comparison.comparator !== expectation.comparison.comparator ||
-        result.comparison.mode !== expectation.comparison.mode ||
-        canonicalJson(result.comparison.parameters) !==
-          canonicalJson(expectation.comparison.parameters) ||
-        canonicalJson(result.comparison.tolerance) !==
-          canonicalJson(expectation.comparison.tolerance) ||
-        canonicalJson(result.comparison.mask) !==
-          canonicalJson(expectation.comparison.mask)
-      )
-        return "design_method_comparison_authority_mismatch";
-      if (
-        canonicalJson(result.oracle) !== canonicalJson(expectation.oracle) ||
-        canonicalJson(result.environment) !==
-          canonicalJson(expectation.environment)
-      )
-        return "design_method_oracle_environment_mismatch";
-      if (
-        result.actual_observation.artifact_path !==
-          cell.observation_artifact_path ||
-        result.actual_observation.artifact_sha256 !==
-          artifactHashes[cell.observation_artifact_path]
-      )
-        return "design_method_actual_observation_mismatch";
-      if (
-        result.actual_environment.artifact_path !==
-          cell.observation_artifact_path ||
-        result.actual_environment.artifact_sha256 !==
-          artifactHashes[cell.observation_artifact_path] ||
-        result.actual_environment.value_sha256 !==
-          expectation.environment.definition.sha256
-      )
-        return "design_method_actual_environment_mismatch";
-      if (
-        result.comparison.artifact_path !== cell.artifact_path ||
-        result.comparison.artifact_sha256 !== artifactHashes[cell.artifact_path]
-      )
-        return "design_method_comparison_artifact_mismatch";
-      const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
-      if (actualIdentities.has(actualIdentity))
-        return "design_method_actual_observation_reused";
-      actualIdentities.add(actualIdentity);
-      const comparisonIdentity = `${result.comparison.artifact_path}\0${canonicalJson(result.comparison.locator)}`;
-      if (comparisonIdentities.has(comparisonIdentity))
-        return "design_method_comparison_result_reused";
-      comparisonIdentities.add(comparisonIdentity);
-      if (result.verdict !== "passed" || result.comparison.passed !== true)
-        return "design_method_fact_failed";
-    }
+    if (resultIssue) return resultIssue;
+  }
+  return null;
+}
+
+type GroundCell = DesignGroundMethodEvidenceV2["cells"][number];
+
+function validateGroundCellResults(
+  cell: GroundCell,
+  expectedCell: GroundExpectedCell,
+  artifactHashes: Record<string, string>,
+): string | null {
+  const expectations = new Map(
+    expectedCell.fact_expectations.map((item) => [item.fact_ref, item]),
+  );
+  const actualIdentities = new Set<string>();
+  const comparisonIdentities = new Set<string>();
+  for (const result of cell.fact_results) {
+    const expectation = expectations.get(result.fact_ref);
+    if (!expectation) return "design_method_fact_expectation_missing";
+    const identityIssue = validateGroundFactIdentity(result, expectation);
+    if (identityIssue) return identityIssue;
+    const authorityIssue = validateGroundFactAuthority(result, expectation);
+    if (authorityIssue) return authorityIssue;
+    const artifactIssue = validateGroundFactArtifacts(
+      result,
+      expectation,
+      cell,
+      artifactHashes,
+    );
+    if (artifactIssue) return artifactIssue;
+    const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
+    if (actualIdentities.has(actualIdentity))
+      return "design_method_actual_observation_reused";
+    actualIdentities.add(actualIdentity);
+    const comparisonIdentity = `${result.comparison.artifact_path}\0${canonicalJson(result.comparison.locator)}`;
+    if (comparisonIdentities.has(comparisonIdentity))
+      return "design_method_comparison_result_reused";
+    comparisonIdentities.add(comparisonIdentity);
+    if (result.verdict !== "passed" || result.comparison.passed !== true)
+      return "design_method_fact_failed";
+  }
+  return null;
+}
+
+type GroundResult = GroundCell["fact_results"][number];
+type GroundExpectation = GroundExpectedCell["fact_expectations"][number];
+
+function validateGroundFactIdentity(
+  result: GroundResult,
+  expectation: GroundExpectation,
+): string | null {
+  if (
+    result.subject_ref !== expectation.subject_ref ||
+    result.variation_ref !== expectation.variation_ref ||
+    result.property_ref !== expectation.property_ref ||
+    result.actual_observation.sensitivity !==
+      expectation.observation_sensitivity
+  )
+    return "design_method_fact_identity_mismatch";
+  if (
+    (result.actual_observation.sensitivity === "plain" &&
+      result.actual_observation.redaction !== null) ||
+    (result.actual_observation.sensitivity === "protected" &&
+      result.actual_observation.redaction === null)
+  )
+    return "design_method_observation_protection_mismatch";
+  return canonicalJson(result.expected) === canonicalJson(expectation.expected)
+    ? null
+    : "design_method_expected_value_mismatch";
+}
+
+function validateGroundFactAuthority(
+  result: GroundResult,
+  expectation: GroundExpectation,
+): string | null {
+  if (
+    result.comparison.comparator !== expectation.comparison.comparator ||
+    result.comparison.mode !== expectation.comparison.mode ||
+    canonicalJson(result.comparison.parameters) !==
+      canonicalJson(expectation.comparison.parameters) ||
+    canonicalJson(result.comparison.tolerance) !==
+      canonicalJson(expectation.comparison.tolerance) ||
+    canonicalJson(result.comparison.mask) !==
+      canonicalJson(expectation.comparison.mask)
+  )
+    return "design_method_comparison_authority_mismatch";
+  return canonicalJson(result.oracle) === canonicalJson(expectation.oracle) &&
+    canonicalJson(result.environment) === canonicalJson(expectation.environment)
+    ? null
+    : "design_method_oracle_environment_mismatch";
+}
+
+function validateGroundFactArtifacts(
+  result: GroundResult,
+  expectation: GroundExpectation,
+  cell: GroundCell,
+  artifactHashes: Record<string, string>,
+): string | null {
+  if (
+    result.actual_observation.artifact_path !==
+      cell.observation_artifact_path ||
+    result.actual_observation.artifact_sha256 !==
+      artifactHashes[cell.observation_artifact_path]
+  )
+    return "design_method_actual_observation_mismatch";
+  if (
+    result.actual_environment.artifact_path !==
+      cell.observation_artifact_path ||
+    result.actual_environment.artifact_sha256 !==
+      artifactHashes[cell.observation_artifact_path] ||
+    result.actual_environment.value_sha256 !==
+      expectation.environment.definition.sha256
+  )
+    return "design_method_actual_environment_mismatch";
+  return result.comparison.artifact_path === cell.artifact_path &&
+    result.comparison.artifact_sha256 === artifactHashes[cell.artifact_path]
+    ? null
+    : "design_method_comparison_artifact_mismatch";
+}
+
+function validateSymbolicDesignMethod(
+  check: CompiledCheckV2,
+  record: DesignSymbolicMethodEvidenceV2,
+  artifactHashes: Record<string, string>,
+): string | null {
+  const target = (check.design_conformance_targets ?? []).find(
+    (item) =>
+      item.key === record.design_target_ref &&
+      item.fact_model === "symbolic_rules_v2" &&
+      (item.symbolic_method_bindings ?? []).some(
+        (binding) =>
+          binding.assertion_ref === record.assertion_key &&
+          binding.method === record.method,
+      ),
+  );
+  if (!target) return "design_symbolic_method_binding_unknown";
+  if (
+    target.target_ref !== record.target_ref ||
+    target.target_ref !== check.execution_target.target_ref
+  )
+    return "target_mismatch";
+  const binding = target.symbolic_method_bindings!.find(
+    (item) =>
+      item.assertion_ref === record.assertion_key &&
+      item.method === record.method,
+  )!;
+  if (
+    binding.artifact_path !== record.artifact_path ||
+    binding.observation_path !== record.observation_artifact_path
+  )
+    return "design_symbolic_method_artifact_path_mismatch";
+  if (!artifactHashes[record.artifact_path])
+    return "design_symbolic_method_artifact_missing";
+  if (!artifactHashes[record.observation_artifact_path])
+    return "design_symbolic_method_observation_artifact_missing";
+  const expectedRefs = binding.rule_expectations
+    .map((item) => item.obligation_ref)
+    .sort();
+  const actualRefs = record.rule_results
+    .map((item) => item.obligation_ref)
+    .sort();
+  if (
+    new Set(actualRefs).size !== actualRefs.length ||
+    !same(actualRefs, expectedRefs)
+  )
+    return "design_symbolic_method_obligations_mismatch";
+  return validateSymbolicRuleResults(binding, record, artifactHashes);
+}
+
+type CompiledSymbolicBinding = NonNullable<
+  CompiledDesignTarget["symbolic_method_bindings"]
+>[number];
+
+function validateSymbolicRuleResults(
+  binding: CompiledSymbolicBinding,
+  record: DesignSymbolicMethodEvidenceV2,
+  artifactHashes: Record<string, string>,
+): string | null {
+  const expectations = new Map(
+    binding.rule_expectations.map((item) => [item.obligation_ref, item]),
+  );
+  const actualIdentities = new Set<string>();
+  const comparisonIdentities = new Set<string>();
+  for (const result of record.rule_results) {
+    const expectation = expectations.get(result.obligation_ref);
+    if (!expectation) return "design_symbolic_method_expectation_missing";
+    const identityIssue = validateSymbolicResultIdentity(result, expectation);
+    if (identityIssue) return identityIssue;
+    const authorityIssue = validateSymbolicResultAuthority(result, expectation);
+    if (authorityIssue) return authorityIssue;
+    const artifactIssue = validateSymbolicResultArtifacts(
+      result,
+      expectation,
+      record,
+      artifactHashes,
+    );
+    if (artifactIssue) return artifactIssue;
+    const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
+    if (actualIdentities.has(actualIdentity))
+      return "design_symbolic_method_actual_observation_reused";
+    actualIdentities.add(actualIdentity);
+    const comparisonIdentity = `${result.comparison.artifact_path}\0${canonicalJson(result.comparison.locator)}`;
+    if (comparisonIdentities.has(comparisonIdentity))
+      return "design_symbolic_method_comparison_result_reused";
+    comparisonIdentities.add(comparisonIdentity);
+    if (result.verdict !== "passed" || result.comparison.passed !== true)
+      return "design_symbolic_method_obligation_failed";
+  }
+  return null;
+}
+
+type SymbolicResult = DesignSymbolicMethodEvidenceV2["rule_results"][number];
+type SymbolicExpectation = CompiledSymbolicBinding["rule_expectations"][number];
+
+function validateSymbolicResultIdentity(
+  result: SymbolicResult,
+  expectation: SymbolicExpectation,
+): string | null {
+  if (
+    result.fact_rule_ref !== expectation.fact_rule_ref ||
+    result.region_sha256 !== expectation.region_sha256 ||
+    result.subject_or_relation_ref !== expectation.subject_or_relation_ref ||
+    result.property_ref !== expectation.property_ref ||
+    result.population_ref !== expectation.population_ref ||
+    canonicalJson(result.quantifier) !==
+      canonicalJson(expectation.quantifier) ||
+    result.observation_sensitivity !== expectation.observation_sensitivity
+  )
+    return "design_symbolic_method_identity_mismatch";
+  if (
+    result.actual_observation.sensitivity !==
+      expectation.observation_sensitivity ||
+    (result.actual_observation.sensitivity === "plain" &&
+      result.actual_observation.redaction !== null) ||
+    (result.actual_observation.sensitivity === "protected" &&
+      result.actual_observation.redaction === null)
+  )
+    return "design_symbolic_method_observation_protection_mismatch";
+  return canonicalJson(result.expected) === canonicalJson(expectation.expected)
+    ? null
+    : "design_symbolic_method_expected_value_mismatch";
+}
+
+function validateSymbolicResultAuthority(
+  result: SymbolicResult,
+  expectation: SymbolicExpectation,
+): string | null {
+  if (
+    result.proof_surface !== expectation.proof_surface ||
+    result.observation_boundary !== expectation.observation_boundary ||
+    result.protected_value_policy !== expectation.protected_value_policy ||
+    result.completion_effect !== expectation.completion_effect
+  )
+    return "design_symbolic_method_proof_denotation_mismatch";
+  if (
+    result.comparison.comparator !== expectation.comparison.comparator ||
+    result.comparison.mode !== expectation.comparison.mode ||
+    canonicalJson(result.comparison.parameters) !==
+      canonicalJson(expectation.comparison.parameters) ||
+    canonicalJson(result.comparison.tolerance) !==
+      canonicalJson(expectation.comparison.tolerance) ||
+    canonicalJson(result.comparison.mask) !==
+      canonicalJson(expectation.comparison.mask)
+  )
+    return "design_symbolic_method_comparison_authority_mismatch";
+  return canonicalJson(result.oracle) === canonicalJson(expectation.oracle) &&
+    canonicalJson(result.environment) === canonicalJson(expectation.environment)
+    ? null
+    : "design_symbolic_method_oracle_environment_mismatch";
+}
+
+function validateSymbolicResultArtifacts(
+  result: SymbolicResult,
+  expectation: SymbolicExpectation,
+  record: DesignSymbolicMethodEvidenceV2,
+  artifactHashes: Record<string, string>,
+): string | null {
+  if (
+    result.actual_observation.artifact_path !==
+      record.observation_artifact_path ||
+    result.actual_observation.artifact_sha256 !==
+      artifactHashes[record.observation_artifact_path]
+  )
+    return "design_symbolic_method_actual_observation_mismatch";
+  if (
+    result.actual_environment.artifact_path !==
+      record.observation_artifact_path ||
+    result.actual_environment.artifact_sha256 !==
+      artifactHashes[record.observation_artifact_path] ||
+    result.actual_environment.value_sha256 !==
+      expectation.environment.definition.sha256
+  )
+    return "design_symbolic_method_actual_environment_mismatch";
+  return result.comparison.artifact_path === record.artifact_path &&
+    result.comparison.artifact_sha256 === artifactHashes[record.artifact_path]
+    ? null
+    : "design_symbolic_method_comparison_artifact_mismatch";
+}
+
+function validateDesignSymbolicCertificate(
+  check: CompiledCheckV2,
+  record: DesignSymbolicCertificateEvidenceV2,
+  artifactHashes: Record<string, string>,
+): string | null {
+  const target = (check.design_conformance_targets ?? []).find(
+    (item) =>
+      item.key === record.design_target_ref &&
+      item.fact_model === "symbolic_rules_v2" &&
+      item.symbolic_certificate_binding?.assertion_ref === record.assertion_key,
+  );
+  if (!target) return "design_symbolic_certificate_binding_unknown";
+  if (
+    target.target_ref !== record.target_ref ||
+    target.target_ref !== check.execution_target.target_ref
+  )
+    return "target_mismatch";
+  const binding = target.symbolic_certificate_binding!;
+  if (record.artifact_path !== binding.artifact_path)
+    return "design_symbolic_certificate_artifact_path_mismatch";
+  if (artifactHashes[record.artifact_path] !== record.artifact_sha256)
+    return "design_symbolic_certificate_artifact_hash_mismatch";
+  if (canonicalJson(record.metrics) !== canonicalJson(binding.metrics))
+    return "design_symbolic_certificate_metrics_mismatch";
+  const expectedRefs = binding.expectations
+    .map((item) => item.certificate_ref)
+    .sort();
+  const actualRefs = record.certificate_results
+    .map((item) => item.certificate_ref)
+    .sort();
+  if (
+    new Set(actualRefs).size !== actualRefs.length ||
+    !same(actualRefs, expectedRefs)
+  )
+    return "design_symbolic_certificate_results_mismatch";
+  const expectations = new Map(
+    binding.expectations.map((item) => [item.certificate_ref, item]),
+  );
+  for (const result of record.certificate_results) {
+    const expectation = expectations.get(result.certificate_ref);
+    if (!expectation) return "design_symbolic_certificate_expectation_missing";
+    if (
+      canonicalJson({
+        certificate_ref: result.certificate_ref,
+        fact_rule_refs: result.fact_rule_refs,
+        omitted_axis_refs: result.omitted_axis_refs,
+        dependency_edge_refs: result.dependency_edge_refs,
+        canonical_rule_dag_sha256: result.canonical_rule_dag_sha256,
+      }) !== canonicalJson(expectation)
+    )
+      return "design_symbolic_certificate_denotation_mismatch";
+    if (result.recomputed !== true)
+      return "design_symbolic_certificate_not_recomputed";
+    if (result.verdict !== "passed")
+      return "design_symbolic_certificate_failed";
   }
   return null;
 }
@@ -253,6 +579,9 @@ function designTargetUsesAssertion(
   return (
     target.conformance_assertion_ref === assertionKey ||
     target.verification_method_bindings.some(
+      (item) => item.assertion_ref === assertionKey,
+    ) ||
+    (target.symbolic_method_bindings ?? []).some(
       (item) => item.assertion_ref === assertionKey,
     )
   );

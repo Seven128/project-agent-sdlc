@@ -9,16 +9,16 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 15,
-    reviewed_on: "2026-07-29",
+    max_files: 16,
+    reviewed_on: "2026-08-01",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including first-lock workspace scope, prior semantic assurance, selected-design Fact closure and the independent non-UI semantic input→Fact→proof→current-result closure; the added fifteenth file strengthens false-completion rejection without replacing prior behavioral coverage.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, now including the explicit mixed V1/V2 Rule-method/certificate current-snapshot closure in addition to prior selected-design and non-UI semantic rejection paths.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 22,
-    reviewed_on: "2026-07-29",
+    max_files: 23,
+    reviewed_on: "2026-08-01",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, design, semantic-drift, prior semantic assurance, direct-Draft authoring, workspace-scope and execution-preview coverage; the added non-UI semantic Fact file closes an independent input/universe/proof/result false-completion family without removing prior coverage.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, semantic and selected-design closure, including one direct mixed V1/V2 Contract and current-evidence regression without removing prior coverage.",
   }),
   delivery_contract_focused: Object.freeze({
     max_files: 12,
@@ -100,6 +100,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-semantic-drift-closure.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves that selected-design method evidence must conserve the exact manifest-backed atomic Fact and property-required proof set for every target/condition, freeze each Fact's expected locator/comparator/tolerance/mask/Oracle/environment/sensitivity authority, and return one attributable passing current-snapshot result per Fact, so artifact or aggregate-pass presence cannot hide omission, substitution, stale authority, unsafe sensitive evidence, or a failed design Fact.",
+  ),
+  criticalSentinel(
+    "symbolic-mixed-representation-closure",
+    "long-task-symbolic-mixed-representation-closure.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves one Contract can bind V1 ground Facts and explicitly opted-in V2 Rules together while exact Rule-method-region and freshly recomputed certificate evidence cannot cross-substitute or bypass the existing current-snapshot Final Gate.",
   ),
   criticalSentinel(
     "non-ui-semantic-fact-closure",
@@ -190,6 +196,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
     "long-task-semantic-fact-closure.test.mjs",
+    "long-task-symbolic-mixed-representation-closure.test.mjs",
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
     "source-plan-authoring-skill.test.mjs",
@@ -248,6 +255,7 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
 
 export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-authoring-claims.test.mjs",
+  "long-task-symbolic-mixed-representation-closure.test.mjs",
   "long-task-authority-adversarial.test.mjs",
   "long-task-authority-authoring-fields.test.mjs",
   "long-task-authority-progress-retry.test.mjs",
@@ -518,11 +526,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 12 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 42 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 43 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 12/42/11 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 12/43/11 population; review the new file explicitly instead of parallelizing it by default.",
     );
 }
 

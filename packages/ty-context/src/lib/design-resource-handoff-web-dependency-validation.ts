@@ -1,5 +1,4 @@
 import path from "node:path";
-import type { ParsedDesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import {
   htmlAttributes,
   isTextResource,
@@ -8,7 +7,7 @@ import {
 import { invalidDesignResourceHandoff } from "./design-resource-handoff-validation-primitives.js";
 
 export function validateDesignResourceImplementationDependencyClosure(
-  target: ParsedDesignResourceHandoffV1["handoff"]["targets"][number],
+  target: { key: string; resource_refs: string[] },
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {

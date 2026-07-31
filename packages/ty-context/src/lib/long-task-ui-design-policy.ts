@@ -48,6 +48,7 @@ function validateDesignTargets({
 }: UiDesignBindingContext): void {
   for (const target of binding.design_targets) {
     const label = `${outcome.key}:${binding.key}:${target.key}`;
+    const symbolic = target.fact_model === "symbolic_rules_v2";
     if (designTargetKeys.has(target.key))
       issue(report, "ui_design_target_key_duplicate", label);
     designTargetKeys.add(target.key);
@@ -56,19 +57,37 @@ function validateDesignTargets({
       issue(report, "ui_design_target_assertion_duplicate", label);
     designAssertionRefs.add(assertionIdentity);
     unique(
-      target.verification_method_bindings.map((item) => item.method),
+      (symbolic
+        ? (target.symbolic_method_bindings ?? [])
+        : target.verification_method_bindings
+      ).map((item) => item.method),
       "ui_design_target_verification_method_duplicate",
       label,
       report,
     );
     unique(
-      target.verification_method_bindings.map((item) => item.assertion_ref),
+      (symbolic
+        ? (target.symbolic_method_bindings ?? [])
+        : target.verification_method_bindings
+      ).map((item) => item.assertion_ref),
       "ui_design_target_verification_assertion_duplicate",
       label,
       report,
     );
-    if (!target.verification_method_bindings.length)
+    if (
+      !(
+        symbolic
+          ? (target.symbolic_method_bindings ?? [])
+          : target.verification_method_bindings
+      ).length
+    )
       issue(report, "ui_design_target_verification_methods_required", label);
+    if (
+      symbolic &&
+      (target.condition_keys.length ||
+        target.verification_method_bindings.length)
+    )
+      issue(report, "ui_design_symbolic_ground_fields_forbidden", label);
     const methodArtifactPaths = new Set<string>();
     const methodFactObligations = new Set<string>();
     for (const [name, values] of [
@@ -77,7 +96,7 @@ function validateDesignTargets({
       ["claim_refs", target.claim_refs],
     ] as const) {
       unique(values, `ui_design_target_${name}_duplicate`, label, report);
-      if (!values.length)
+      if (!values.length && !(symbolic && name === "condition_keys"))
         issue(report, `ui_design_target_${name}_required`, label);
     }
     for (const claimRef of target.claim_refs) {
@@ -107,6 +126,17 @@ function validateDesignTargets({
     validateRootJourney(binding, check, label, report);
     validateCarrierInputs(check, carriers, label, report);
     validateDesignAssertion(target, check, label, report);
+    if (symbolic) {
+      validateSymbolicDesignBindings(
+        target,
+        check,
+        label,
+        methodArtifactPaths,
+        report,
+      );
+      validateDesignFiles(target, check, label, report);
+      continue;
+    }
     for (const methodBinding of target.verification_method_bindings) {
       const identity = `${target.conformance_check_ref}\0${methodBinding.assertion_ref}`;
       if (
@@ -210,6 +240,131 @@ function validateDesignTargets({
     }
     validateDesignFiles(target, check, label, report);
   }
+}
+
+function validateSymbolicDesignBindings(
+  target: DeliveryOutcomeV2["product"]["surface_bindings"][number]["design_targets"][number],
+  check: DeliveryCheckV2,
+  label: string,
+  artifactPaths: Set<string>,
+  report?: Reporter,
+): void {
+  const obligationRefs = new Set<string>();
+  for (const binding of target.symbolic_method_bindings ?? []) {
+    const assertion = check.positive_assertions.find(
+      (item) => item.key === binding.assertion_ref,
+    );
+    if (!assertion)
+      issue(
+        report,
+        "ui_design_symbolic_method_assertion_unknown",
+        `${label}:${binding.method}:${binding.assertion_ref}`,
+      );
+    else if (!assertion.evidence_capabilities.includes("design_method"))
+      issue(
+        report,
+        "ui_design_symbolic_method_capability_required",
+        `${label}:${binding.method}`,
+      );
+    if (!binding.rule_expectations.length)
+      issue(
+        report,
+        "ui_design_symbolic_rule_expectations_required",
+        `${label}:${binding.method}`,
+      );
+    unique(
+      binding.rule_expectations.map((item) => item.obligation_ref),
+      "ui_design_symbolic_obligation_duplicate",
+      `${label}:${binding.method}`,
+      report,
+    );
+    for (const expectation of binding.rule_expectations) {
+      if (obligationRefs.has(expectation.obligation_ref))
+        issue(
+          report,
+          "ui_design_symbolic_obligation_reused",
+          `${label}:${expectation.obligation_ref}`,
+        );
+      obligationRefs.add(expectation.obligation_ref);
+    }
+    for (const artifactPath of [
+      binding.artifact_path,
+      binding.observation_path,
+    ])
+      validateSymbolicArtifactPath(
+        artifactPath,
+        target,
+        check,
+        label,
+        artifactPaths,
+        report,
+      );
+  }
+  const certificate = target.symbolic_certificate_binding;
+  if (!certificate) {
+    issue(report, "ui_design_symbolic_certificate_binding_required", label);
+    return;
+  }
+  const assertion = check.positive_assertions.find(
+    (item) => item.key === certificate.assertion_ref,
+  );
+  if (!assertion)
+    issue(
+      report,
+      "ui_design_symbolic_certificate_assertion_unknown",
+      `${label}:${certificate.assertion_ref}`,
+    );
+  else if (
+    !assertion.evidence_capabilities.includes("design_symbolic_certificate")
+  )
+    issue(report, "ui_design_symbolic_certificate_capability_required", label);
+  if (!certificate.expectations.length)
+    issue(
+      report,
+      "ui_design_symbolic_certificate_expectations_required",
+      label,
+    );
+  unique(
+    certificate.expectations.map((item) => item.certificate_ref),
+    "ui_design_symbolic_certificate_duplicate",
+    label,
+    report,
+  );
+  validateSymbolicArtifactPath(
+    certificate.artifact_path,
+    target,
+    check,
+    label,
+    artifactPaths,
+    report,
+  );
+}
+
+function validateSymbolicArtifactPath(
+  artifactPath: string,
+  _target: DeliveryOutcomeV2["product"]["surface_bindings"][number]["design_targets"][number],
+  check: DeliveryCheckV2,
+  label: string,
+  artifactPaths: Set<string>,
+  report?: Reporter,
+): void {
+  if (artifactPaths.has(artifactPath))
+    issue(
+      report,
+      "ui_design_symbolic_evidence_artifact_reused",
+      `${label}:${artifactPath}`,
+    );
+  artifactPaths.add(artifactPath);
+  if (
+    !check.artifact_globs.some((pattern) =>
+      matchesRepoPattern(artifactPath, pattern),
+    )
+  )
+    issue(
+      report,
+      "ui_design_symbolic_evidence_artifact_glob_missing",
+      `${label}:${artifactPath}`,
+    );
 }
 
 function sameSet(left: string[], right: string[]): boolean {

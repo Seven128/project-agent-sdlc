@@ -31,3 +31,23 @@ export type {
   DesignResourceHandoffBundleOptions,
   DesignResourceHandoffBundleResult,
 } from "./lib/design-resource-handoff-bundle.js";
+export type {
+  DesignResourceHandoffPreflightV1,
+  DesignResourceHandoffV1,
+} from "./lib/design-resource-handoff-types.js";
+export type {
+  DesignResourceHandoffPreflightV2,
+  DesignResourceHandoffV2,
+  DesignResourceObservableRuleManifestV2,
+  DesignResourceSymbolicFactRuleV2,
+  DesignResourceSymbolicNoninterferenceCertificateV2,
+  DesignResourceSymbolicProofObligationV2,
+} from "./lib/design-resource-symbolic-fact-types.js";
+export type {
+  CompiledSymbolicDenotationV1,
+  SymbolicDenotationAxisDomain,
+  SymbolicDenotationComplexityLimits,
+  SymbolicDenotationPredicate,
+  SymbolicExtensionalPointV1,
+  SymbolicPointDenotationV1,
+} from "./lib/symbolic-denotation-types.js";

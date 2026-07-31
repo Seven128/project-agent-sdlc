@@ -41,10 +41,22 @@ export async function designResource(args: string[]): Promise<void> {
   console.log(
     `Targets: ${result.handoff.targets.map((item) => item.key).join(", ")}`,
   );
-  console.log(
-    `Coverage: ${result.counts.subjects} subjects x 8 dimensions (${result.counts.coverage} grouped rows)`,
-  );
-  console.log(`Acceptance blockers: ${result.counts.acceptance_blockers}`);
+  if ("metrics" in result) {
+    console.log(
+      `Coverage: ${result.manifest.subjects.length} subjects x ${result.manifest.properties.length} atomic properties (${result.rule_projections.length} symbolic Rules)`,
+    );
+    console.log(
+      `Symbolic: ${result.metrics.semantic_obligations} semantic obligations, ${result.metrics.certificate_obligations} certificates, ${result.metrics.canonical_dag_nodes} DAG nodes, ${result.metrics.canonical_bytes} bytes`,
+    );
+    console.log(
+      `Acceptance blockers: ${result.manifest.acceptance_blockers.length}`,
+    );
+  } else {
+    console.log(
+      `Coverage: ${result.counts.subjects} subjects x 8 dimensions (${result.counts.coverage} grouped rows)`,
+    );
+    console.log(`Acceptance blockers: ${result.counts.acceptance_blockers}`);
+  }
 }
 
 async function bundle(args: string[]): Promise<void> {

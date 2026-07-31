@@ -25,6 +25,7 @@ export function evidenceRecordsForPlaywrightCases(
       ...baseEvidenceRecords(check, item, assertion),
       ...designConformanceRecords(check, item, assertion),
       ...designMethodRecords(check, item, assertion),
+      ...symbolicDesignEvidenceRecords(check, item, assertion),
       ...semanticFactRecords(check, item, assertion),
     );
   }
@@ -74,6 +75,9 @@ function designConformanceRecords(
         candidate.conformance_assertion_ref === assertion.key ||
         candidate.verification_method_bindings.some(
           (binding) => binding.assertion_ref === assertion.key,
+        ) ||
+        (candidate.symbolic_method_bindings ?? []).some(
+          (binding) => binding.assertion_ref === assertion.key,
         ),
     )
     .map((target) => ({
@@ -99,6 +103,7 @@ function designMethodRecords(
     return [];
   const records: EvidenceCapabilityRecordV2[] = [];
   for (const target of check.design_conformance_targets ?? []) {
+    if (target.fact_model === "symbolic_rules_v2") continue;
     const binding = target.verification_method_bindings.find(
       (candidate) => candidate.assertion_ref === assertion.key,
     );
@@ -155,6 +160,102 @@ function designMethodRecords(
     });
   }
   return records;
+}
+
+function symbolicDesignEvidenceRecords(
+  check: CompiledCheckV2,
+  item: PlaywrightCase,
+  assertion: CheckAssertion,
+): EvidenceCapabilityRecordV2[] {
+  if (!item.executed) return [];
+  const records: EvidenceCapabilityRecordV2[] = [];
+  for (const target of check.design_conformance_targets ?? []) {
+    if (target.fact_model !== "symbolic_rules_v2") continue;
+    records.push(...symbolicMethodEvidenceRecords(target, item, assertion));
+    const certificate = symbolicCertificateEvidenceRecord(
+      target,
+      item,
+      assertion,
+    );
+    if (certificate) records.push(certificate);
+  }
+  return records;
+}
+
+type CompiledDesignTarget = NonNullable<
+  CompiledCheckV2["design_conformance_targets"]
+>[number];
+
+function symbolicMethodEvidenceRecords(
+  target: CompiledDesignTarget,
+  item: PlaywrightCase,
+  assertion: CheckAssertion,
+): EvidenceCapabilityRecordV2[] {
+  if (!assertion.evidence_capabilities.includes("design_method")) return [];
+  const records: EvidenceCapabilityRecordV2[] = [];
+  for (const binding of target.symbolic_method_bindings ?? []) {
+    if (binding.assertion_ref !== assertion.key) continue;
+    const attachmentName = symbolicDesignMethodAttachmentName(
+      target.key,
+      binding.method,
+    );
+    if (!item.attachment_names.includes(attachmentName)) continue;
+    const record = typedEvidenceAttachment(
+      item.attachment_payloads[attachmentName],
+      "design_method",
+    );
+    if (
+      record?.capability === "design_method" &&
+      "fact_model" in record &&
+      record.assertion_key === assertion.key &&
+      record.design_target_ref === target.key &&
+      record.method === binding.method
+    )
+      records.push(record);
+  }
+  return records;
+}
+
+function symbolicCertificateEvidenceRecord(
+  target: CompiledDesignTarget,
+  item: PlaywrightCase,
+  assertion: CheckAssertion,
+): EvidenceCapabilityRecordV2 | null {
+  const binding = target.symbolic_certificate_binding;
+  if (
+    binding?.assertion_ref !== assertion.key ||
+    !assertion.evidence_capabilities.includes("design_symbolic_certificate")
+  )
+    return null;
+  const attachmentName = symbolicDesignCertificateAttachmentName(target.key);
+  if (!item.attachment_names.includes(attachmentName)) return null;
+  const record = typedEvidenceAttachment(
+    item.attachment_payloads[attachmentName],
+    "design_symbolic_certificate",
+  );
+  return record?.capability === "design_symbolic_certificate" &&
+    record.assertion_key === assertion.key &&
+    record.design_target_ref === target.key
+    ? record
+    : null;
+}
+
+function typedEvidenceAttachment<
+  T extends EvidenceCapabilityRecordV2["capability"],
+>(
+  payload: string | undefined,
+  capability: T,
+): Extract<EvidenceCapabilityRecordV2, { capability: T }> | null {
+  if (!payload) return null;
+  try {
+    const records = decodeEvidenceCapabilityRecords([JSON.parse(payload)]);
+    const record = records[0];
+    return records.length === 1 && record.capability === capability
+      ? (record as Extract<EvidenceCapabilityRecordV2, { capability: T }>)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function semanticFactRecords(
@@ -230,4 +331,17 @@ export function designMethodAttachmentName(
   kind: "record" | "observation",
 ): string {
   return `ty-context-design-method:${target}:${method}:${condition}:${kind}`;
+}
+
+export function symbolicDesignMethodAttachmentName(
+  target: string,
+  method: string,
+): string {
+  return `ty-context-design-symbolic-method:${target}:${method}:record`;
+}
+
+export function symbolicDesignCertificateAttachmentName(
+  target: string,
+): string {
+  return `ty-context-design-symbolic-certificate:${target}:record`;
 }

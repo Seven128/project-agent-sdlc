@@ -159,6 +159,10 @@ A real temporary Git repository must prove:
 
 ## Evidence Rules
 
+UI symbolic V2 is explicit opt-in; V1 remains the default. Focused verification must cover exhaustive finite V1/V2 denotation comparison with an independent test-only expander, canonical rewrite identity and complexity fuses, Rule-region mutual exclusion/coverage, full property applicability, V1 early capacity rejection, mixed V1/V2 Contract/current evidence, set-valued certificate recomputation and ground-cardinality-independent DAG/obligation/byte metrics. The mixed-representation current-snapshot rejection path is a Trust sentinel; focused results still do not replace the complete package suite or sole Final Gate.
+
+Purpose-fulfillment efficiency non-degradation is package admission evidence and not AcceptedDeliveryTerminal. Any runtime claim records workload, metric, baseline/budget, environment, comparator and tolerance. Non-UI and Provider/P0 changes require separate evidence-backed admission and are not inferred from UI V2 tests.
+
 - Tests/Context validators prove only their named property. They do not prove product completeness.
 - Guidance/parity tests prove that architecture obligations are distributed and indexed; they do not prove that an individual Agent chose the best architecture. Repository-native checks prove only their declared observable invariants.
 - Static/unit tests may prove instruction distribution, canonical-source parity, core-runtime identity and known semantic invariants. For prompt, Context or Skill-packaging changes, they do not by themselves prove Agent-level recall/adherence or end-to-end behavioral non-degradation; a full Agent-behavior equivalence conclusion requires conclusion-grade independent paired A/B runs under the mechanism benchmark. This narrow evidence rule does not replace deterministic mechanism proof for machine-runtime changes.

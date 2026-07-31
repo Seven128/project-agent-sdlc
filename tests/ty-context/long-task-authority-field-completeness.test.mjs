@@ -92,6 +92,7 @@ test("every Delivery Contract authority structure has a complete field policy re
     },
     design_target: {
       key: "settings-default",
+      fact_model: "symbolic_rules_v2",
       interpretation: "exact_target",
       source_paths: ["design/settings.png"],
       condition_keys: ["default"],
@@ -116,6 +117,30 @@ test("every Delivery Contract authority structure has a complete field policy re
           ],
         },
       ],
+      symbolic_method_bindings: [
+        {
+          method: "layout_geometry",
+          assertion_ref: "settings-layout",
+          artifact_path: "artifacts/settings-symbolic-layout.json",
+          observation_path: "artifacts/settings-symbolic-layout-observation.json",
+          rule_expectations: [],
+        },
+      ],
+      symbolic_certificate_binding: {
+        assertion_ref: "settings-symbolic-certificate",
+        artifact_path: "artifacts/settings-symbolic-certificate.json",
+        expectations: [],
+        metrics: {
+          semantic_obligations: 0,
+          certificate_obligations: 0,
+          certificate_covered_omitted_axes: 0,
+          certificate_covered_dependency_edges: 0,
+          canonical_dag_nodes: 0,
+          canonical_partition_edges: 0,
+          canonical_bytes: 0,
+          theoretical_ground_cardinality: "0",
+        },
+      },
       actual_artifact_path: "artifacts/settings-actual.png",
       comparison_artifact_path: "artifacts/settings-diff.json",
     },

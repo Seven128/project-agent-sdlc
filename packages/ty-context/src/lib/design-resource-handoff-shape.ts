@@ -2,6 +2,8 @@ import type {
   DesignResourceHandoffInputV1,
   DesignResourceHandoffManifestBackedV1,
 } from "./design-resource-handoff-input-types.js";
+import type { DesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
+import { parseDesignResourceSymbolicHandoffShape } from "./design-resource-symbolic-fact-shape.js";
 import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import {
   parseDesignResourceAssetBindings,
@@ -53,6 +55,20 @@ export function parseDesignResourceHandoffInputShape(
   )
     return parseManifestBackedDesignResourceHandoffShape(value);
   return parseDesignResourceHandoffShape(value);
+}
+
+export function parseAnyDesignResourceHandoffInputShape(
+  value: unknown,
+): DesignResourceHandoffInput {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).schema_version ===
+      "design-resource-handoff-v2"
+  )
+    return parseDesignResourceSymbolicHandoffShape(value);
+  return parseDesignResourceHandoffInputShape(value);
 }
 
 export function parseDesignResourceHandoffShape(

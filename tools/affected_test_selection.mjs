@@ -23,6 +23,54 @@ const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "tools/verify_semantic_fact_completeness_delivery.mjs",
 ]);
 
+const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
+  "packages/ty-context/src/lib/symbolic-denotation-",
+  "packages/ty-context/src/lib/design-resource-symbolic-",
+]);
+
+const SYMBOLIC_DESIGN_HANDOFF_PATHS = new Set([
+  "packages/ty-context/src/commands/design-resource.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-input-types.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-parser.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-shape.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-snapshot.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-validation.ts",
+  "packages/ty-context/src/lib/design-resource-handoff-web-dependency-validation.ts",
+  "packages/ty-context/src/lib/long-task-source-item-parser.ts",
+]);
+
+const SYMBOLIC_LONG_TASK_PATHS = new Set([
+  "packages/ty-context/src/lib/long-task-authority-policy.ts",
+  "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
+  "packages/ty-context/src/lib/long-task-design-resource-method-binding.ts",
+  "packages/ty-context/src/lib/long-task-evidence-capability-codec.ts",
+  "packages/ty-context/src/lib/long-task-evidence-capability-policy.ts",
+  "packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts",
+  "packages/ty-context/src/lib/long-task-evidence-capability-types.ts",
+  "packages/ty-context/src/lib/long-task-playwright-capability-records.ts",
+  "packages/ty-context/src/lib/long-task-semantic-contract-types.ts",
+  "packages/ty-context/src/lib/long-task-shape-primitives.ts",
+  "packages/ty-context/src/lib/long-task-ui-design-policy.ts",
+  "packages/ty-context/src/lib/long-task-ui-surface-shape.ts",
+  "packages/ty-context/src/lib/long-task-ui-surface-types.ts",
+  "packages/ty-context/src/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
+]);
+
+const SYMBOLIC_GUIDANCE_PATHS = new Set([
+  "AGENTS.md",
+  "PROJECT_SPEC.md",
+  "README.md",
+  "packages/ty-context/README.md",
+  "packages/ty-context/src/index.ts",
+  "packages/ty-context/src/public-types.ts",
+  "project_context/context.toml",
+  "project_context/areas/harness-package/contracts/design-resource-handoff.md",
+  "project_context/areas/harness-package/implementation-index.md",
+  "project_context/areas/harness-package/verification.md",
+  "tools/symbolic_denotation_efficiency_delivery_catalog.mjs",
+  "tools/verify_symbolic_denotation_efficiency_delivery.mjs",
+]);
+
 const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/commands/design-resource.ts",
@@ -734,12 +782,19 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
+    const symbolicTests = symbolicAffectedTests(file);
+    for (const symbolicTest of symbolicTests) tests.add(testPath(symbolicTest));
+    if (symbolicTests.length > 0)
+      reasons.push(`${file}:symbolic_design_denotation`);
+
     const hotspot = HOTSPOT_TESTS.get(file);
     if (hotspot) {
       hotspot.map(testPath).forEach((test) => tests.add(test));
       reasons.push(`${file}:mapped_hotspot`);
       continue;
     }
+
+    if (symbolicTests.length > 0 && !isSymbolicGuidancePath(file)) continue;
 
     if (
       file === "tools/package_build_fingerprint.mjs" ||
@@ -886,6 +941,52 @@ export function selectAffectedTests(changedPaths, options = {}) {
   const requiresBuild =
     mode !== "selected" || selected.some((test) => !STATIC_TESTS.has(test));
   return plan(mode, selected, requiresBuild, reasons);
+}
+
+function symbolicAffectedTests(file) {
+  const selected = new Set();
+  if (
+    SYMBOLIC_DESIGN_ENGINE_PREFIXES.some((prefix) => file.startsWith(prefix))
+  ) {
+    selected.add("symbolic-denotation-equivalence.test.mjs");
+    selected.add("symbolic-denotation-extensional-equivalence.test.mjs");
+    selected.add("symbolic-denotation-ui-v2.test.mjs");
+    selected.add("symbolic-denotation-efficiency-antidegradation.test.mjs");
+  }
+  if (
+    file.startsWith(
+      "packages/ty-context/src/lib/design-resource-v1-capacity",
+    )
+  ) {
+    selected.add("design-resource-v1-capacity-guard.test.mjs");
+    selected.add("symbolic-denotation-efficiency-antidegradation.test.mjs");
+  }
+  if (SYMBOLIC_DESIGN_HANDOFF_PATHS.has(file)) {
+    selected.add("design-resource-v1-capacity-guard.test.mjs");
+    selected.add("symbolic-denotation-ui-v2.test.mjs");
+    selected.add("symbolic-denotation-long-task-v2.test.mjs");
+  }
+  if (SYMBOLIC_LONG_TASK_PATHS.has(file)) {
+    selected.add("symbolic-denotation-long-task-v2.test.mjs");
+    selected.add("long-task-schema-parser-parity.test.mjs");
+  }
+  if (isSymbolicGuidancePath(file))
+    selected.add("symbolic-denotation-efficiency-guidance.test.mjs");
+  return [...selected];
+}
+
+function isSymbolicGuidancePath(file) {
+  return (
+    SYMBOLIC_GUIDANCE_PATHS.has(file) ||
+    file.startsWith(".codex/ty-context-managed/agents/") ||
+    file.startsWith("packages/ty-context/assets/agents/") ||
+    file.startsWith(".codex/ty-context-managed/skills/long-task-workflow/") ||
+    file.startsWith(".codex/skills/long-task-workflow/") ||
+    file.startsWith("packages/ty-context/assets/skills/long-task-workflow/") ||
+    file.endsWith(
+      "design-resource-authoring/references/downstream-handoff.md",
+    )
+  );
 }
 
 function plan(mode, tests, requiresBuild, reasons) {

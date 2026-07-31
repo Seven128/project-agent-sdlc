@@ -373,6 +373,7 @@ function createFixtureBundle() {
   };
   const manifest = {
     schema_version: "design-resource-observable-fact-manifest-v1",
+    generation: generationFor(generationCollections),
     scope_key: "main-surface",
     target_key: DESIGN_TARGET_KEY,
     inspector: {
@@ -400,7 +401,6 @@ function createFixtureBundle() {
         (item) => item.key === "resource.tokens",
       ).sha256,
     },
-    generation: generationFor(generationCollections),
     axis_dispositions: axisDispositions,
     condition_exclusions: [],
     conditions,

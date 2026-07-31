@@ -104,7 +104,7 @@ export interface TargetRuntimeEvidenceV2 extends EvidenceRecordBaseV2 {
   cold_start: boolean;
 }
 
-export interface DesignMethodEvidenceV2 extends EvidenceRecordBaseV2 {
+export interface DesignGroundMethodEvidenceV2 extends EvidenceRecordBaseV2 {
   capability: "design_method";
   design_target_ref: string;
   target_ref: string;
@@ -167,6 +167,81 @@ export interface DesignFactResultV2 {
     identity: string;
     definition: DesignResourceLocatedDigestV1;
   };
+}
+
+export interface DesignSymbolicMethodEvidenceV2 extends EvidenceRecordBaseV2 {
+  capability: "design_method";
+  fact_model: "symbolic_rules_v2";
+  design_target_ref: string;
+  target_ref: string;
+  method: DesignResourceVerificationMethod;
+  artifact_path: string;
+  observation_artifact_path: string;
+  rule_results: DesignSymbolicRuleResultV2[];
+}
+
+export interface DesignSymbolicRuleResultV2 {
+  obligation_ref: string;
+  fact_rule_ref: string;
+  region_sha256: string;
+  subject_or_relation_ref: string;
+  property_ref: string;
+  population_ref: string | null;
+  quantifier: {
+    kind:
+      | "one"
+      | "all"
+      | "any"
+      | "none"
+      | "exactly"
+      | "at_least"
+      | "at_most"
+      | "range";
+    minimum: number | null;
+    maximum: number | null;
+  };
+  actual_observation: DesignFactResultV2["actual_observation"];
+  actual_environment: DesignFactResultV2["actual_environment"];
+  observation_sensitivity: "plain" | "protected";
+  expected: DesignResourceLocatedDigestV1;
+  proof_surface: string;
+  observation_boundary: string;
+  comparison: DesignFactResultV2["comparison"];
+  verdict: "passed" | "failed";
+  oracle: DesignFactResultV2["oracle"];
+  environment: DesignFactResultV2["environment"];
+  protected_value_policy: string;
+  completion_effect: string;
+}
+
+export type DesignMethodEvidenceV2 =
+  DesignGroundMethodEvidenceV2 | DesignSymbolicMethodEvidenceV2;
+
+export interface DesignSymbolicCertificateEvidenceV2 extends EvidenceRecordBaseV2 {
+  capability: "design_symbolic_certificate";
+  design_target_ref: string;
+  target_ref: string;
+  artifact_path: string;
+  artifact_sha256: string;
+  metrics: {
+    semantic_obligations: number;
+    certificate_obligations: number;
+    certificate_covered_omitted_axes: number;
+    certificate_covered_dependency_edges: number;
+    canonical_dag_nodes: number;
+    canonical_partition_edges: number;
+    canonical_bytes: number;
+    theoretical_ground_cardinality: string;
+  };
+  certificate_results: Array<{
+    certificate_ref: string;
+    fact_rule_refs: string[];
+    omitted_axis_refs: string[];
+    dependency_edge_refs: string[];
+    canonical_rule_dag_sha256: string;
+    recomputed: true;
+    verdict: "passed" | "failed";
+  }>;
 }
 
 export interface SemanticFactEvidenceV2 extends EvidenceRecordBaseV2 {
@@ -243,6 +318,7 @@ export type EvidenceCapabilityRecordV2 =
   | VisualRenderEvidenceV2
   | DesignConformanceEvidenceV2
   | DesignMethodEvidenceV2
+  | DesignSymbolicCertificateEvidenceV2
   | SemanticFactEvidenceV2
   | TargetRuntimeEvidenceV2
   | InputVariationEvidenceV2;

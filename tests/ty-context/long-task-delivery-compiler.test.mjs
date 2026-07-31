@@ -901,6 +901,17 @@ function attachSecondaryDesignTarget(contract, secondary, mapping) {
 }
 
 function replaceExactStringMap(value, mapping) {
+  if (value instanceof Set) {
+    const entries = [...value];
+    value.clear();
+    for (const entry of entries)
+      value.add(
+        typeof entry === "string" && mapping.has(entry)
+          ? mapping.get(entry)
+          : entry,
+      );
+    return;
+  }
   if (Array.isArray(value)) {
     for (let index = 0; index < value.length; index += 1) {
       if (typeof value[index] === "string" && mapping.has(value[index]))

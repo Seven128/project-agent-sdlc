@@ -225,63 +225,11 @@ function decodeRecord(
         cold_start: row.cold_start,
       };
     case "design_method":
-      exact(row, label, [
-        "assertion_key",
-        "capability",
-        "design_target_ref",
-        "target_ref",
-        "method",
-        "cells",
-      ]);
-      return {
-        ...base,
-        capability,
-        design_target_ref: key(
-          row.design_target_ref,
-          `${label}.design_target_ref`,
-        ),
-        target_ref: key(row.target_ref, `${label}.target_ref`),
-        method: literal(
-          row.method,
-          DESIGN_RESOURCE_VERIFICATION_METHODS,
-          `${label}.method`,
-        ),
-        cells: array(row.cells, `${label}.cells`).map((item, cellIndex) => {
-          const cellLabel = `${label}.cells[${cellIndex}]`;
-          const cell = record(item, cellLabel);
-          exact(cell, cellLabel, [
-            "condition_key",
-            "artifact_path",
-            "observation_artifact_path",
-            "fact_refs",
-            "fact_results",
-          ]);
-          return {
-            condition_key: key(
-              cell.condition_key,
-              `${cellLabel}.condition_key`,
-            ),
-            artifact_path: nonEmpty(
-              cell.artifact_path,
-              `${cellLabel}.artifact_path`,
-            ),
-            observation_artifact_path: nonEmpty(
-              cell.observation_artifact_path,
-              `${cellLabel}.observation_artifact_path`,
-            ),
-            fact_refs: designFactRefs(cell.fact_refs, `${cellLabel}.fact_refs`),
-            fact_results: array(
-              cell.fact_results,
-              `${cellLabel}.fact_results`,
-            ).map((result, resultIndex) =>
-              decodeDesignFactResult(
-                result,
-                `${cellLabel}.fact_results[${resultIndex}]`,
-              ),
-            ),
-          };
-        }),
-      };
+      return Object.hasOwn(row, "fact_model")
+        ? decodeSymbolicDesignMethodEvidence(row, label, base)
+        : decodeGroundDesignMethodEvidence(row, label, base);
+    case "design_symbolic_certificate":
+      return decodeDesignSymbolicCertificateEvidence(row, label, base);
     case "semantic_fact":
       return decodeSemanticFactEvidence(row, label, base);
     case "input_variation":
@@ -289,6 +237,331 @@ function decodeRecord(
     default:
       throw invalidRecord(`${label}.capability_unsupported:${capability}`);
   }
+}
+
+function decodeGroundDesignMethodEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "design_method" }> & {
+  cells: unknown[];
+} {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "design_target_ref",
+    "target_ref",
+    "method",
+    "cells",
+  ]);
+  return {
+    ...base,
+    capability: "design_method",
+    design_target_ref: key(row.design_target_ref, `${label}.design_target_ref`),
+    target_ref: key(row.target_ref, `${label}.target_ref`),
+    method: literal(
+      row.method,
+      DESIGN_RESOURCE_VERIFICATION_METHODS,
+      `${label}.method`,
+    ),
+    cells: array(row.cells, `${label}.cells`).map((item, cellIndex) => {
+      const cellLabel = `${label}.cells[${cellIndex}]`;
+      const cell = record(item, cellLabel);
+      exact(cell, cellLabel, [
+        "condition_key",
+        "artifact_path",
+        "observation_artifact_path",
+        "fact_refs",
+        "fact_results",
+      ]);
+      return {
+        condition_key: key(cell.condition_key, `${cellLabel}.condition_key`),
+        artifact_path: nonEmpty(
+          cell.artifact_path,
+          `${cellLabel}.artifact_path`,
+        ),
+        observation_artifact_path: nonEmpty(
+          cell.observation_artifact_path,
+          `${cellLabel}.observation_artifact_path`,
+        ),
+        fact_refs: designFactRefs(cell.fact_refs, `${cellLabel}.fact_refs`),
+        fact_results: array(cell.fact_results, `${cellLabel}.fact_results`).map(
+          (result, resultIndex) =>
+            decodeDesignFactResult(
+              result,
+              `${cellLabel}.fact_results[${resultIndex}]`,
+            ),
+        ),
+      };
+    }),
+  };
+}
+
+function decodeSymbolicDesignMethodEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "design_method" }> & {
+  fact_model: "symbolic_rules_v2";
+} {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "fact_model",
+    "design_target_ref",
+    "target_ref",
+    "method",
+    "artifact_path",
+    "observation_artifact_path",
+    "rule_results",
+  ]);
+  return {
+    ...base,
+    capability: "design_method",
+    fact_model: literal(
+      row.fact_model,
+      ["symbolic_rules_v2"] as const,
+      `${label}.fact_model`,
+    ),
+    design_target_ref: key(row.design_target_ref, `${label}.design_target_ref`),
+    target_ref: key(row.target_ref, `${label}.target_ref`),
+    method: literal(
+      row.method,
+      DESIGN_RESOURCE_VERIFICATION_METHODS,
+      `${label}.method`,
+    ),
+    artifact_path: nonEmpty(row.artifact_path, `${label}.artifact_path`),
+    observation_artifact_path: nonEmpty(
+      row.observation_artifact_path,
+      `${label}.observation_artifact_path`,
+    ),
+    rule_results: array(row.rule_results, `${label}.rule_results`).map(
+      (item, index) =>
+        decodeDesignSymbolicRuleResult(item, `${label}.rule_results[${index}]`),
+    ),
+  };
+}
+
+function decodeDesignSymbolicRuleResult(value: unknown, label: string) {
+  const row = record(value, label);
+  exact(row, label, [
+    "obligation_ref",
+    "fact_rule_ref",
+    "region_sha256",
+    "subject_or_relation_ref",
+    "property_ref",
+    "population_ref",
+    "quantifier",
+    "actual_observation",
+    "actual_environment",
+    "observation_sensitivity",
+    "expected",
+    "proof_surface",
+    "observation_boundary",
+    "comparison",
+    "verdict",
+    "oracle",
+    "environment",
+    "protected_value_policy",
+    "completion_effect",
+  ]);
+  const decoded = decodeDesignFactResult(
+    {
+      fact_ref: row.fact_rule_ref,
+      subject_ref: row.subject_or_relation_ref,
+      variation_ref: "symbolic",
+      property_ref: row.property_ref,
+      actual_observation: row.actual_observation,
+      actual_environment: row.actual_environment,
+      expected: row.expected,
+      comparison: row.comparison,
+      verdict: row.verdict,
+      oracle: row.oracle,
+      environment: row.environment,
+    },
+    label,
+  );
+  const quantifier = record(row.quantifier, `${label}.quantifier`);
+  exact(quantifier, `${label}.quantifier`, ["kind", "minimum", "maximum"]);
+  return {
+    obligation_ref: designFactRef(
+      row.obligation_ref,
+      `${label}.obligation_ref`,
+    ),
+    fact_rule_ref: decoded.fact_ref,
+    region_sha256: sha(row.region_sha256, `${label}.region_sha256`),
+    subject_or_relation_ref: decoded.subject_ref,
+    property_ref: decoded.property_ref,
+    population_ref: nullable(row.population_ref, (item) =>
+      designFactRef(item, `${label}.population_ref`),
+    ),
+    quantifier: {
+      kind: literal(
+        quantifier.kind,
+        [
+          "one",
+          "all",
+          "any",
+          "none",
+          "exactly",
+          "at_least",
+          "at_most",
+          "range",
+        ] as const,
+        `${label}.quantifier.kind`,
+      ),
+      minimum: nullable(quantifier.minimum, (item) =>
+        nonnegativeInteger(item, `${label}.quantifier.minimum`),
+      ),
+      maximum: nullable(quantifier.maximum, (item) =>
+        nonnegativeInteger(item, `${label}.quantifier.maximum`),
+      ),
+    },
+    actual_observation: decoded.actual_observation,
+    actual_environment: decoded.actual_environment,
+    observation_sensitivity: literal(
+      row.observation_sensitivity,
+      ["plain", "protected"] as const,
+      `${label}.observation_sensitivity`,
+    ),
+    expected: decoded.expected,
+    proof_surface: nonEmpty(row.proof_surface, `${label}.proof_surface`),
+    observation_boundary: nonEmpty(
+      row.observation_boundary,
+      `${label}.observation_boundary`,
+    ),
+    comparison: decoded.comparison,
+    verdict: decoded.verdict,
+    oracle: decoded.oracle,
+    environment: decoded.environment,
+    protected_value_policy: nonEmpty(
+      row.protected_value_policy,
+      `${label}.protected_value_policy`,
+    ),
+    completion_effect: nonEmpty(
+      row.completion_effect,
+      `${label}.completion_effect`,
+    ),
+  };
+}
+
+function decodeDesignSymbolicCertificateEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<
+  EvidenceCapabilityRecordV2,
+  { capability: "design_symbolic_certificate" }
+> {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "design_target_ref",
+    "target_ref",
+    "artifact_path",
+    "artifact_sha256",
+    "metrics",
+    "certificate_results",
+  ]);
+  const metrics = record(row.metrics, `${label}.metrics`);
+  exact(metrics, `${label}.metrics`, [
+    "semantic_obligations",
+    "certificate_obligations",
+    "certificate_covered_omitted_axes",
+    "certificate_covered_dependency_edges",
+    "canonical_dag_nodes",
+    "canonical_partition_edges",
+    "canonical_bytes",
+    "theoretical_ground_cardinality",
+  ]);
+  return {
+    ...base,
+    capability: "design_symbolic_certificate",
+    design_target_ref: key(row.design_target_ref, `${label}.design_target_ref`),
+    target_ref: key(row.target_ref, `${label}.target_ref`),
+    artifact_path: nonEmpty(row.artifact_path, `${label}.artifact_path`),
+    artifact_sha256: sha(row.artifact_sha256, `${label}.artifact_sha256`),
+    metrics: {
+      semantic_obligations: nonnegativeInteger(
+        metrics.semantic_obligations,
+        `${label}.metrics.semantic_obligations`,
+      ),
+      certificate_obligations: nonnegativeInteger(
+        metrics.certificate_obligations,
+        `${label}.metrics.certificate_obligations`,
+      ),
+      certificate_covered_omitted_axes: nonnegativeInteger(
+        metrics.certificate_covered_omitted_axes,
+        `${label}.metrics.certificate_covered_omitted_axes`,
+      ),
+      certificate_covered_dependency_edges: nonnegativeInteger(
+        metrics.certificate_covered_dependency_edges,
+        `${label}.metrics.certificate_covered_dependency_edges`,
+      ),
+      canonical_dag_nodes: nonnegativeInteger(
+        metrics.canonical_dag_nodes,
+        `${label}.metrics.canonical_dag_nodes`,
+      ),
+      canonical_partition_edges: nonnegativeInteger(
+        metrics.canonical_partition_edges,
+        `${label}.metrics.canonical_partition_edges`,
+      ),
+      canonical_bytes: nonnegativeInteger(
+        metrics.canonical_bytes,
+        `${label}.metrics.canonical_bytes`,
+      ),
+      theoretical_ground_cardinality: decimalCardinality(
+        metrics.theoretical_ground_cardinality,
+        `${label}.metrics.theoretical_ground_cardinality`,
+      ),
+    },
+    certificate_results: array(
+      row.certificate_results,
+      `${label}.certificate_results`,
+    ).map((item, index) => {
+      const itemLabel = `${label}.certificate_results[${index}]`;
+      const result = record(item, itemLabel);
+      exact(result, itemLabel, [
+        "certificate_ref",
+        "fact_rule_refs",
+        "omitted_axis_refs",
+        "dependency_edge_refs",
+        "canonical_rule_dag_sha256",
+        "recomputed",
+        "verdict",
+      ]);
+      if (result.recomputed !== true)
+        throw invalidRecord(`${itemLabel}.recomputed`);
+      return {
+        certificate_ref: designFactRef(
+          result.certificate_ref,
+          `${itemLabel}.certificate_ref`,
+        ),
+        fact_rule_refs: designFactRefs(
+          result.fact_rule_refs,
+          `${itemLabel}.fact_rule_refs`,
+        ),
+        omitted_axis_refs: designFactRefs(
+          result.omitted_axis_refs,
+          `${itemLabel}.omitted_axis_refs`,
+        ),
+        dependency_edge_refs: designFactRefs(
+          result.dependency_edge_refs,
+          `${itemLabel}.dependency_edge_refs`,
+        ),
+        canonical_rule_dag_sha256: sha(
+          result.canonical_rule_dag_sha256,
+          `${itemLabel}.canonical_rule_dag_sha256`,
+        ),
+        recomputed: true,
+        verdict: literal(
+          result.verdict,
+          ["passed", "failed"] as const,
+          `${itemLabel}.verdict`,
+        ),
+      };
+    }),
+  };
 }
 
 function decodeInputVariationEvidence(
@@ -916,6 +1189,18 @@ function array(value: unknown, label: string): unknown[] {
 function nonEmpty(value: unknown, label: string): string {
   if (typeof value !== "string" || !value.trim()) throw invalidRecord(label);
   return value;
+}
+
+function nonnegativeInteger(value: unknown, label: string): number {
+  if (!Number.isSafeInteger(value) || (value as number) < 0)
+    throw invalidRecord(label);
+  return value as number;
+}
+
+function decimalCardinality(value: unknown, label: string): string {
+  const result = nonEmpty(value, label);
+  if (!/^(0|[1-9][0-9]*)$/u.test(result)) throw invalidRecord(label);
+  return result;
 }
 
 function key(value: unknown, label: string): string {

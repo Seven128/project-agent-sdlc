@@ -973,8 +973,35 @@
         "actual_artifact_path",
         "comparison_artifact_path"
       ],
+      "oneOf": [
+        {
+          "not": {
+            "anyOf": [
+              { "required": ["fact_model"] },
+              { "required": ["symbolic_method_bindings"] },
+              { "required": ["symbolic_certificate_binding"] }
+            ]
+          },
+          "properties": {
+            "verification_method_bindings": { "minItems": 1 }
+          }
+        },
+        {
+          "required": [
+            "fact_model",
+            "symbolic_method_bindings",
+            "symbolic_certificate_binding"
+          ],
+          "properties": {
+            "fact_model": { "const": "symbolic_rules_v2" },
+            "verification_method_bindings": { "maxItems": 0 },
+            "symbolic_method_bindings": { "minItems": 1 }
+          }
+        }
+      ],
       "properties": {
         "key": { "$ref": "#/$defs/key" },
+        "fact_model": { "const": "symbolic_rules_v2" },
         "interpretation": { "enum": ["exact_target", "constraint"] },
         "source_paths": { "$ref": "#/$defs/nonEmptyStrings" },
         "condition_keys": { "$ref": "#/$defs/keys" },
@@ -983,7 +1010,6 @@
         "conformance_assertion_ref": { "$ref": "#/$defs/key" },
         "verification_method_bindings": {
           "type": "array",
-          "minItems": 1,
           "uniqueItems": true,
           "items": {
             "type": "object",
@@ -1020,6 +1046,14 @@
               }
             }
           }
+        },
+        "symbolic_method_bindings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/designSymbolicVerificationBinding" }
+        },
+        "symbolic_certificate_binding": {
+          "$ref": "#/$defs/designSymbolicCertificateBinding"
         },
         "actual_artifact_path": { "$ref": "#/$defs/nonEmpty" },
         "comparison_artifact_path": { "$ref": "#/$defs/nonEmpty" }
@@ -1128,6 +1162,180 @@
             "key": { "$ref": "#/$defs/designFactKey" },
             "identity": { "$ref": "#/$defs/nonEmpty" },
             "definition": { "$ref": "#/$defs/designLocatedDigest" }
+          }
+        }
+      }
+    },
+    "designQuantifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "minimum", "maximum"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "one",
+            "all",
+            "any",
+            "none",
+            "exactly",
+            "at_least",
+            "at_most",
+            "range"
+          ]
+        },
+        "minimum": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0 }
+          ]
+        },
+        "maximum": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "integer", "minimum": 0 }
+          ]
+        }
+      }
+    },
+    "designSymbolicRuleExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_ref",
+        "fact_rule_ref",
+        "region_sha256",
+        "subject_or_relation_ref",
+        "property_ref",
+        "population_ref",
+        "quantifier",
+        "observation_sensitivity",
+        "expected",
+        "proof_surface",
+        "observation_boundary",
+        "comparison",
+        "oracle",
+        "environment",
+        "protected_value_policy",
+        "completion_effect"
+      ],
+      "properties": {
+        "obligation_ref": { "$ref": "#/$defs/designFactKey" },
+        "fact_rule_ref": { "$ref": "#/$defs/designFactKey" },
+        "region_sha256": { "$ref": "#/$defs/sha256" },
+        "subject_or_relation_ref": { "$ref": "#/$defs/designFactKey" },
+        "property_ref": { "$ref": "#/$defs/designFactKey" },
+        "population_ref": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/designFactKey" }
+          ]
+        },
+        "quantifier": { "$ref": "#/$defs/designQuantifier" },
+        "observation_sensitivity": { "enum": ["plain", "protected"] },
+        "expected": { "$ref": "#/$defs/designLocatedDigest" },
+        "proof_surface": { "$ref": "#/$defs/nonEmpty" },
+        "observation_boundary": { "$ref": "#/$defs/nonEmpty" },
+        "comparison": {
+          "$ref": "#/$defs/designFactExpectation/properties/comparison"
+        },
+        "oracle": {
+          "$ref": "#/$defs/designFactExpectation/properties/oracle"
+        },
+        "environment": {
+          "$ref": "#/$defs/designFactExpectation/properties/environment"
+        },
+        "protected_value_policy": { "$ref": "#/$defs/nonEmpty" },
+        "completion_effect": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "designSymbolicVerificationBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "assertion_ref",
+        "artifact_path",
+        "observation_path",
+        "rule_expectations"
+      ],
+      "properties": {
+        "method": { "$ref": "#/$defs/designVerificationMethod" },
+        "assertion_ref": { "$ref": "#/$defs/key" },
+        "artifact_path": { "$ref": "#/$defs/nonEmpty" },
+        "observation_path": { "$ref": "#/$defs/nonEmpty" },
+        "rule_expectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/designSymbolicRuleExpectation" }
+        }
+      }
+    },
+    "designSymbolicCertificateExpectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "certificate_ref",
+        "fact_rule_refs",
+        "omitted_axis_refs",
+        "dependency_edge_refs",
+        "canonical_rule_dag_sha256"
+      ],
+      "properties": {
+        "certificate_ref": { "$ref": "#/$defs/designFactKey" },
+        "fact_rule_refs": { "$ref": "#/$defs/designFactRefs" },
+        "omitted_axis_refs": { "$ref": "#/$defs/designFactRefs" },
+        "dependency_edge_refs": { "$ref": "#/$defs/designFactRefs" },
+        "canonical_rule_dag_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "designSymbolicCertificateBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assertion_ref", "artifact_path", "expectations", "metrics"],
+      "properties": {
+        "assertion_ref": { "$ref": "#/$defs/key" },
+        "artifact_path": { "$ref": "#/$defs/nonEmpty" },
+        "expectations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/designSymbolicCertificateExpectation"
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "semantic_obligations",
+            "certificate_obligations",
+            "certificate_covered_omitted_axes",
+            "certificate_covered_dependency_edges",
+            "canonical_dag_nodes",
+            "canonical_partition_edges",
+            "canonical_bytes",
+            "theoretical_ground_cardinality"
+          ],
+          "properties": {
+            "semantic_obligations": { "type": "integer", "minimum": 0 },
+            "certificate_obligations": { "type": "integer", "minimum": 0 },
+            "certificate_covered_omitted_axes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "certificate_covered_dependency_edges": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "canonical_dag_nodes": { "type": "integer", "minimum": 0 },
+            "canonical_partition_edges": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "canonical_bytes": { "type": "integer", "minimum": 0 },
+            "theoretical_ground_cardinality": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
           }
         }
       }
@@ -1541,6 +1749,7 @@
         "visual_render",
         "design_conformance",
         "design_method",
+        "design_symbolic_certificate",
         "semantic_fact",
         "target_runtime",
         "input_variation"

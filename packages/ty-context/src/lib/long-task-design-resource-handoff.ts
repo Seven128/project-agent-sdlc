@@ -9,12 +9,16 @@ import type {
   DesignResourceHandoffPreflightV1,
   DesignResourceHandoffTargetV1,
 } from "./design-resource-handoff-types.js";
-import { preflightParsedDesignResourceHandoff } from "./design-resource-handoff-validation.js";
+import type { DesignResourceHandoffPreflightV2 } from "./design-resource-symbolic-fact-types.js";
+import { preflightParsedDesignResourceHandoffAny } from "./design-resource-handoff-validation.js";
 import {
   assertSameSet,
   designSourceItemClaims,
   invalid,
   validateTargetIdentity,
+  validateSymbolicTargetIdentity,
+  validateSymbolicVerificationMethodBindings,
+  type IndexedSymbolicHandoffTarget,
   validateVerificationMethodBindings,
 } from "./long-task-design-resource-method-binding.js";
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
@@ -33,7 +37,10 @@ export interface IndexedHandoffTarget {
 }
 
 export interface LongTaskDesignHandoffConsumer {
-  consume(preflight: DesignResourceHandoffPreflightV1): void;
+  consume(
+    preflight:
+      DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2,
+  ): void;
   finish(): void;
 }
 
@@ -52,7 +59,7 @@ export async function validateLongTaskDesignResourceHandoffs(
     const content = await readFile(file, "utf8");
     if (!containsDesignResourceHandoff(content)) continue;
     consumer.consume(
-      await preflightParsedDesignResourceHandoff(
+      await preflightParsedDesignResourceHandoffAny(
         repository,
         parseDesignResourceHandoffMarkdown(sourcePath, content),
       ),
@@ -82,9 +89,34 @@ export function createLongTaskDesignHandoffConsumer(
   let duplicate: string | null = null;
   const unbound: string[] = [];
   const handoffSetIntegrity = createDesignResourceHandoffSetIntegrity(invalid);
+  const allSourceItems = new Set<string>();
+  const resourcePaths = new Map<string, string>();
+  let crossVersionIssue: { code: string; detail: string } | null = null;
+  const recordCrossVersionIssue = (code: string, detail: string): void => {
+    crossVersionIssue ??= { code, detail };
+  };
   return {
     consume(preflight) {
-      handoffSetIntegrity.consume(preflight);
+      for (const sourceItem of preflight.source_item_keys) {
+        if (allSourceItems.has(sourceItem))
+          recordCrossVersionIssue(
+            "handoff_set_source_item_duplicate",
+            sourceItem,
+          );
+        else allSourceItems.add(sourceItem);
+      }
+      for (const resource of preflight.handoff.resources) {
+        const identity = JSON.stringify(resource);
+        const previous = resourcePaths.get(resource.path);
+        if (previous && previous !== identity)
+          recordCrossVersionIssue(
+            "handoff_set_resource_path_conflict",
+            resource.path,
+          );
+        else resourcePaths.set(resource.path, identity);
+      }
+      if (!("preflight_schema_version" in preflight))
+        handoffSetIntegrity.consume(preflight);
       for (const target of preflight.handoff.targets) {
         if (indexedTargetKeys.has(target.key)) {
           duplicate ??= target.key;
@@ -96,17 +128,34 @@ export function createLongTaskDesignHandoffConsumer(
           unbound.push(target.key);
           continue;
         }
-        const indexedTarget = { preflight, target };
         consumed.add(target.key);
         try {
-          validateTargetIdentity(contractTarget, indexedTarget);
-          validateLongTaskDesignTargetCapabilities(
-            contract,
-            contractTarget,
-            indexedTarget,
-          );
-          validateCoverageClaims(contract, contractTarget, indexedTarget);
-          validateBlockerBindings(contract, contractTarget, indexedTarget);
+          if ("preflight_schema_version" in preflight) {
+            const indexedTarget: IndexedSymbolicHandoffTarget = {
+              preflight,
+              target,
+            };
+            validateSymbolicTargetIdentity(contractTarget, indexedTarget);
+            validateSymbolicCoverageClaims(
+              contract,
+              contractTarget,
+              indexedTarget,
+            );
+            validateBlockerBindings(contract, contractTarget, indexedTarget);
+          } else {
+            const indexedTarget: IndexedHandoffTarget = {
+              preflight,
+              target: target as DesignResourceHandoffTargetV1,
+            };
+            validateTargetIdentity(contractTarget, indexedTarget);
+            validateLongTaskDesignTargetCapabilities(
+              contract,
+              contractTarget,
+              indexedTarget,
+            );
+            validateCoverageClaims(contract, contractTarget, indexedTarget);
+            validateBlockerBindings(contract, contractTarget, indexedTarget);
+          }
         } catch (error) {
           validationErrors.set(target.key, error);
         }
@@ -115,6 +164,8 @@ export function createLongTaskDesignHandoffConsumer(
     finish() {
       if (duplicate) invalid("handoff_target_duplicate", duplicate);
       handoffSetIntegrity.finish();
+      if (crossVersionIssue)
+        invalid(crossVersionIssue.code, crossVersionIssue.detail);
       for (const contractTarget of contractTargets) {
         if (!consumed.has(contractTarget.target.key))
           invalid("target_handoff_missing", contractTarget.target.key);
@@ -124,6 +175,50 @@ export function createLongTaskDesignHandoffConsumer(
       if (unbound.length) invalid("handoff_target_unbound", unbound[0]);
     },
   };
+}
+
+function validateSymbolicCoverageClaims(
+  contract: DeliveryContractV2,
+  contractTarget: ContractDesignTarget,
+  indexed: IndexedSymbolicHandoffTarget,
+): void {
+  const claims = new Map(
+    contract.source_claims.map((item) => [item.key, item]),
+  );
+  const rows = indexed.preflight.handoff.coverage.filter(
+    (row) => row.target_ref === contractTarget.target.key,
+  );
+  if (!rows.length)
+    invalid("v2_target_covered_claims_required", contractTarget.target.key);
+  const sourceItemRefs = [
+    ...new Set([
+      ...rows.flatMap((row) => row.source_item_refs),
+      ...indexed.preflight.manifest.fact_rules.flatMap(
+        (rule) => rule.source_item_refs,
+      ),
+      ...indexed.preflight.manifest.disposition_regions.flatMap(
+        (region) => region.source_item_refs,
+      ),
+    ]),
+  ];
+  const claimsBySourceItem = new Map<string, string[]>();
+  for (const sourceItemRef of sourceItemRefs)
+    claimsBySourceItem.set(
+      sourceItemRef,
+      designSourceItemClaims(
+        contract,
+        contractTarget,
+        indexed,
+        sourceItemRef,
+        claims,
+      ),
+    );
+  validateSymbolicVerificationMethodBindings(
+    contract,
+    contractTarget,
+    indexed,
+    claimsBySourceItem,
+  );
 }
 
 function validateCoverageClaims(
@@ -178,7 +273,7 @@ function validateCoverageClaims(
 function validateBlockerBindings(
   contract: DeliveryContractV2,
   contractTarget: ContractDesignTarget,
-  indexed: IndexedHandoffTarget,
+  indexed: IndexedHandoffTarget | IndexedSymbolicHandoffTarget,
 ): void {
   const bound = new Map(
     contractTarget.binding.acceptance_blockers.map((item) => [item.key, item]),
@@ -193,11 +288,16 @@ function validateBlockerBindings(
     ]),
   );
   const availableMethods = new Set(
-    contractTarget.target.verification_method_bindings.map(
-      (item) => item.method,
-    ),
+    [
+      ...contractTarget.target.verification_method_bindings,
+      ...(contractTarget.target.symbolic_method_bindings ?? []),
+    ].map((item) => item.method),
   );
-  for (const blocker of indexed.preflight.handoff.acceptance_blockers) {
+  const blockers =
+    "preflight_schema_version" in indexed.preflight
+      ? indexed.preflight.manifest.acceptance_blockers
+      : indexed.preflight.handoff.acceptance_blockers;
+  for (const blocker of blockers) {
     if (!blocker.target_refs.includes(contractTarget.target.key)) continue;
     const contractBlocker = bound.get(blocker.key);
     if (!contractBlocker)

@@ -1,6 +1,7 @@
 import type { CompiledSourceItemV2 } from "./long-task-delivery-types.js";
 import { parseDesignResourceHandoffInputShape } from "./design-resource-handoff-shape.js";
-import type { DesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
+import type { DesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
+import { parseDesignResourceSymbolicHandoffShape } from "./design-resource-symbolic-fact-shape.js";
 import { parseSemanticFactManifestShape } from "./semantic-fact-manifest-shape.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import {
@@ -15,13 +16,16 @@ import { formalBlockBody, forEachSourceLine } from "./source-line-scanner.js";
 import { parseStrictYaml } from "./strict-codec.js";
 
 const DESIGN_RESOURCE_START =
-  /^\s*```yaml[ \t]+design-resource-handoff-v1[ \t]*$/u;
+  /^\s*```yaml[ \t]+design-resource-handoff-(v1|v2)[ \t]*$/u;
 const SEMANTIC_FACT_START =
   /^\s*```yaml[ \t]+semantic-fact-manifest-v1[ \t]*$/u;
 const FORMAL_BLOCK_END = /^\s*```[ \t]*$/u;
 
 interface OpenFormalBlock {
-  owner: "design-resource-handoff-v1" | "semantic-fact-manifest-v1";
+  owner:
+    | "design-resource-handoff-v1"
+    | "design-resource-handoff-v2"
+    | "semantic-fact-manifest-v1";
   bodyStartOffset: number;
   line: number;
 }
@@ -31,13 +35,13 @@ interface SourceParseState extends OwnedSourceParseState {
   formalBlock: OpenFormalBlock | null;
   designResourceBlocks: number;
   semanticFactBlocks: number;
-  designResourceHandoff: DesignResourceHandoffInputV1 | null;
+  designResourceHandoff: DesignResourceHandoffInput | null;
   semanticFactManifest: SemanticFactManifestV1 | null;
 }
 
 export interface ParsedSourceDocument {
   items: CompiledSourceItemV2[];
-  designResourceHandoff: DesignResourceHandoffInputV1 | null;
+  designResourceHandoff: DesignResourceHandoffInput | null;
   semanticFactManifest: SemanticFactManifestV1 | null;
 }
 
@@ -113,11 +117,14 @@ function consumeOpenFormalBlock(
         state.content,
         state.formalBlock.bodyStartOffset,
         startOffset,
-        state.formalBlock.owner === "design-resource-handoff-v1",
+        state.formalBlock.owner.startsWith("design-resource-handoff-"),
       ),
     );
     if (state.formalBlock.owner === "design-resource-handoff-v1")
       state.designResourceHandoff = parseDesignResourceHandoffInputShape(value);
+    else if (state.formalBlock.owner === "design-resource-handoff-v2")
+      state.designResourceHandoff =
+        parseDesignResourceSymbolicHandoffShape(value);
     else state.semanticFactManifest = parseSemanticFactManifestShape(value);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -135,18 +142,21 @@ function startFormalBlock(
   lineNumber: number,
   nextOffset: number,
 ): boolean {
-  const owner = DESIGN_RESOURCE_START.test(line)
-    ? "design-resource-handoff-v1"
+  const designMatch = DESIGN_RESOURCE_START.exec(line);
+  const owner = designMatch
+    ? designMatch[1] === "v2"
+      ? "design-resource-handoff-v2"
+      : "design-resource-handoff-v1"
     : SEMANTIC_FACT_START.test(line)
       ? "semantic-fact-manifest-v1"
       : null;
   if (!owner) return false;
   assertNoOpenOwnedSection(state, lineNumber);
-  if (owner === "design-resource-handoff-v1") {
+  if (owner.startsWith("design-resource-handoff-")) {
     state.designResourceBlocks += 1;
     if (state.designResourceBlocks > 1)
       throw new Error(
-        `source_formal_block_duplicate:${state.sourcePath}:design-resource-handoff-v1`,
+        `source_formal_block_duplicate:${state.sourcePath}:design-resource-handoff`,
       );
   } else {
     state.semanticFactBlocks += 1;

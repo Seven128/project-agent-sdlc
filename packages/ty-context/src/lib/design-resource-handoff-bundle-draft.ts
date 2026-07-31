@@ -40,7 +40,11 @@ export async function stageDesignResourceHandoffDraft(
   await writeFile(stagedFile, bytes, { flag: "wx" });
   const stagedPath = repoRelative(repository, stagedFile);
   const parsed = parseDesignResourceHandoffMarkdown(stagedPath, content);
-  if (!("representation" in parsed.handoff))
+  if (
+    parsed.handoff.schema_version !== "design-resource-handoff-v1" ||
+    !("representation" in parsed.handoff) ||
+    parsed.handoff.representation !== "manifest_backed"
+  )
     fail("manifest_backed_representation_required", entryName);
   if (parsed.handoff.targets.length !== 1)
     fail(
@@ -55,7 +59,7 @@ export async function stageDesignResourceHandoffDraft(
   if (!manifestResource) fail("target_manifest_resource_missing", target.key);
   return {
     bytes,
-    parsed,
+    parsed: parsed as ParsedDesignResourceHandoffInputV1,
     target,
     manifest_resource: manifestResource,
   };

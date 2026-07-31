@@ -1,4 +1,8 @@
 import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
+import type {
+  DesignResourceHandoffV2,
+  ParsedDesignResourceHandoffV2,
+} from "./design-resource-symbolic-fact-types.js";
 
 export type DesignResourceHandoffManifestBackedV1 = Pick<
   DesignResourceHandoffV1,
@@ -24,3 +28,9 @@ export interface ParsedDesignResourceHandoffInputV1 {
   source_item_keys: string[];
   source_item_kinds: Record<string, string>;
 }
+
+export type DesignResourceHandoffInput =
+  DesignResourceHandoffInputV1 | DesignResourceHandoffV2;
+
+export type ParsedDesignResourceHandoffInput =
+  ParsedDesignResourceHandoffInputV1 | ParsedDesignResourceHandoffV2;

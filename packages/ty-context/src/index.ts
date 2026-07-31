@@ -11,6 +11,7 @@ export {
 export { evaluateContractBoundary } from "./lib/long-task-boundary-check.js";
 export { publishDesignResourceHandoffBundle } from "./lib/design-resource-handoff-bundle.js";
 export { preflightDesignResourceHandoff } from "./lib/design-resource-handoff-validation.js";
+export { symbolicDenotation } from "./lib/symbolic-denotation-public.js";
 export {
   classifyLongTaskRisk,
   validateRiskProof,
@@ -37,6 +38,20 @@ export type {
   CompiledDeliveryContractV2,
   DesignResourceHandoffBundleOptions,
   DesignResourceHandoffBundleResult,
+  DesignResourceHandoffPreflightV1,
+  DesignResourceHandoffPreflightV2,
+  DesignResourceHandoffV1,
+  DesignResourceHandoffV2,
+  DesignResourceObservableRuleManifestV2,
+  DesignResourceSymbolicFactRuleV2,
+  DesignResourceSymbolicNoninterferenceCertificateV2,
+  DesignResourceSymbolicProofObligationV2,
+  CompiledSymbolicDenotationV1,
+  SymbolicDenotationAxisDomain,
+  SymbolicDenotationComplexityLimits,
+  SymbolicDenotationPredicate,
+  SymbolicExtensionalPointV1,
+  SymbolicPointDenotationV1,
   DeliveryAssertionV2,
   DeliveryCheckV2,
   DeliveryContractV2,

@@ -1,9 +1,9 @@
-import type { ParsedDesignResourceHandoffInputV1 } from "./design-resource-handoff-input-types.js";
+import type { ParsedDesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
 import { parseSourceDocument } from "./long-task-source-item-parser.js";
 import { forEachSourceLine } from "./source-line-scanner.js";
 
 const DESIGN_RESOURCE_START =
-  /^```yaml[ \t]+design-resource-handoff-v1[ \t]*$/u;
+  /^```yaml[ \t]+design-resource-handoff-(?:v1|v2)[ \t]*$/u;
 const FORMAL_BLOCK_END = /^```[ \t]*$/u;
 
 export interface DesignResourceHandoffBlockSpan {
@@ -38,7 +38,7 @@ export function scanDesignResourceHandoffBlocks(
 export function parseDesignResourceHandoffMarkdown(
   handoffPath: string,
   content: string,
-): ParsedDesignResourceHandoffInputV1 {
+): ParsedDesignResourceHandoffInput {
   const blocks = scanDesignResourceHandoffBlocks(content);
   if (blocks.length !== 1)
     throw new Error(
@@ -48,7 +48,7 @@ export function parseDesignResourceHandoffMarkdown(
     const parsedSource = parseSourceDocument(handoffPath, content);
     const handoff = parsedSource.designResourceHandoff;
     if (!handoff)
-      throw new Error("design-resource-handoff-v1 block was not decoded");
+      throw new Error("design-resource-handoff block was not decoded");
     return {
       handoff_path: handoffPath,
       handoff,
@@ -56,7 +56,7 @@ export function parseDesignResourceHandoffMarkdown(
       source_item_kinds: Object.fromEntries(
         parsedSource.items.map((item) => [item.key, item.kind]),
       ),
-    };
+    } as ParsedDesignResourceHandoffInput;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.startsWith("design_resource_handoff_invalid:")) throw error;

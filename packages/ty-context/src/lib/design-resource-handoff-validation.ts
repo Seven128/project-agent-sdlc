@@ -18,6 +18,10 @@ import type {
   DesignResourceHandoffPreflightV1,
   ParsedDesignResourceHandoffV1,
 } from "./design-resource-handoff-types.js";
+import type { DesignResourceHandoffPreflightV2 } from "./design-resource-symbolic-fact-types.js";
+import type { ParsedDesignResourceHandoffV2 } from "./design-resource-symbolic-fact-types.js";
+import type { ParsedDesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
+import { preflightParsedDesignResourceSymbolicHandoff } from "./design-resource-symbolic-fact-validation.js";
 import {
   validateDesignResourceBlockers,
   validateDesignResourceCoverage,
@@ -38,21 +42,45 @@ import {
   validateDesignResourceTargets,
 } from "./design-resource-handoff-validation-structure.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
+import { assertDesignResourceV1HandoffCapacity } from "./design-resource-v1-capacity.js";
 
 export async function preflightDesignResourceHandoff(
   repository: string,
   handoffPath: string,
-): Promise<DesignResourceHandoffPreflightV1> {
+): Promise<
+  DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2
+> {
   const handoffFile = await assertProtectedRepositoryFile(
     repository,
     path.resolve(repository, ...handoffPath.split("/")),
     "design_resource_handoff",
   );
+  await assertDesignResourceV1HandoffCapacity(handoffFile);
   const parsed = parseDesignResourceHandoffMarkdown(
     handoffPath,
     await readFile(handoffFile, "utf8"),
   );
-  return preflightParsedDesignResourceHandoff(repository, parsed);
+  return preflightParsedDesignResourceHandoffAny(repository, parsed);
+}
+
+export async function preflightParsedDesignResourceHandoffAny(
+  repository: string,
+  parsed: ParsedDesignResourceHandoffInput,
+): Promise<
+  DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2
+> {
+  if (isParsedSymbolicHandoff(parsed))
+    return preflightParsedDesignResourceSymbolicHandoff(repository, parsed);
+  return preflightParsedDesignResourceHandoff(
+    repository,
+    parsed as ParsedDesignResourceHandoffInputV1,
+  );
+}
+
+function isParsedSymbolicHandoff(
+  parsed: ParsedDesignResourceHandoffInput,
+): parsed is ParsedDesignResourceHandoffV2 {
+  return parsed.handoff.schema_version === "design-resource-handoff-v2";
 }
 
 export async function preflightParsedDesignResourceHandoff(

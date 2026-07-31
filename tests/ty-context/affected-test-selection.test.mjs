@@ -137,8 +137,10 @@ test("control-level UI authority changes select parser, Claim and revision cover
   assert.equal(policy.mode, "selected");
   assert.deepEqual(policy.tests, [
     "tests/ty-context/long-task-authority-field-completeness.test.mjs",
+    "tests/ty-context/long-task-schema-parser-parity.test.mjs",
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
+    "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
   ]);
 });
 
@@ -363,6 +365,7 @@ test("guidance-only changes select static consistency checks", () => {
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
     "tests/ty-context/source-plan-authoring-skill.test.mjs",
+    "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
     "tests/ty-context/visual-delivery-guidance.test.mjs",
     "tests/ty-context/workflow-contract-routing.test.mjs",
   ]);
@@ -427,6 +430,8 @@ test("design authoring profile and provider changes select focused coverage", ()
     "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
     "tests/ty-context/design-resource-handoff.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-schema-parser-parity.test.mjs",
+    "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
   ]);
 
   const splitManifest = selectAffectedTests([
@@ -435,7 +440,11 @@ test("design authoring profile and provider changes select focused coverage", ()
     "packages/ty-context/src/lib/long-task-design-target-capabilities.ts",
   ]);
   assert.equal(splitManifest.mode, "selected");
-  assert.deepEqual(splitManifest.tests, adapter.tests);
+  assert.deepEqual(splitManifest.tests, [
+    "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
+    "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+  ]);
 
   const splitPlaywright = selectAffectedTests([
     "packages/ty-context/src/lib/long-task-playwright-case-primitives.ts",
