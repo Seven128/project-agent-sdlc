@@ -3,6 +3,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import {
+  symbolicDeliveryItems,
+  symbolicSemanticAssertionKeys,
+} from "../../tools/symbolic_denotation_efficiency_delivery_catalog.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const rolloutMarker =
@@ -123,6 +127,24 @@ test("public schema, exports and changed-path routing include symbolic V2", asyn
       "symbolic-mixed-representation-closure",
     ),
     "Trust routing is missing the mixed V1/V2 false-completion sentinel",
+  );
+});
+
+test("semantic Fact materialization remains the sole runtime carrier for semantic assertions", () => {
+  const materializedSemanticAssertions = new Set(
+    symbolicDeliveryItems.map((item) => `semantic-${item.key}`),
+  );
+  assert.equal(
+    symbolicSemanticAssertionKeys.some((key) =>
+      materializedSemanticAssertions.has(key),
+    ),
+    false,
+    "semantic assertions would receive duplicate target_runtime records",
+  );
+  assert.equal(
+    new Set(symbolicSemanticAssertionKeys).size,
+    symbolicSemanticAssertionKeys.length,
+    "ordinary target_runtime assertion keys must also remain unique",
   );
 });
 

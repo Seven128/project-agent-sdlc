@@ -88,7 +88,6 @@ export const symbolicSemanticAssertionKeys = [
           ? "inventory-is-not-completion"
           : item.key,
     ),
-  ...symbolicDeliveryItems.map((item) => `semantic-${item.key}`),
   "relations-na",
   "symbolic-liveness",
 ];
