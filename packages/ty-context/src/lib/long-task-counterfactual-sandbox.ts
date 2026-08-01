@@ -17,7 +17,10 @@ import type {
   GlobalCounterfactualControlV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
-import { matchesRepoPattern } from "./long-task-paths.js";
+import {
+  matchesRepoPattern,
+  normalizeRepositoryFile,
+} from "./long-task-paths.js";
 
 export interface CounterfactualSandboxV2 {
   root: string;
@@ -47,6 +50,7 @@ export async function createCounterfactualSandbox(
   control: CounterfactualControlV2 | GlobalCounterfactualControlV2,
   bindingCarrierPaths: string[],
   manifest?: WorkspaceManifestV2,
+  protectedAuthorityPaths: readonly string[] = [],
 ): Promise<CounterfactualSandboxV2> {
   const root = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-counterfactual-"),
@@ -82,13 +86,20 @@ export async function createCounterfactualSandbox(
     if (requirement.kind === "directory")
       patterns.push(`${requirement.target}/**`);
   }
-  const selected = manifest.files
-    .map((file) => file.path)
-    .filter(
-      (relative) =>
-        exactPaths.has(relative) ||
-        patterns.some((pattern) => matchesRepoPattern(relative, pattern)),
-    );
+  const candidates = new Set([
+    ...manifest.files.map((file) => file.path),
+    ...protectedAuthorityPaths.map((file, index) =>
+      normalizeRepositoryFile(
+        file,
+        `counterfactual.protected_authority_paths[${index}]`,
+      ),
+    ),
+  ]);
+  const selected = [...candidates].filter(
+    (relative) =>
+      exactPaths.has(relative) ||
+      patterns.some((pattern) => matchesRepoPattern(relative, pattern)),
+  );
   await copyInBatches(snapshotRoot, root, selected);
   await mkdir(path.join(root, check.runner.resolved_cwd), { recursive: true });
   await linkDependencyRoots(snapshotRoot, root, check.runner.resolved_cwd);

@@ -187,6 +187,7 @@ export async function evaluateOutcomeCounterfactuals(
   outcome: CompiledOutcomeV2,
   snapshotRoot: string,
   manifest?: WorkspaceManifestV2,
+  protectedAuthorityPaths: readonly string[] = [],
 ): Promise<LongTaskFindingV2[]> {
   return evaluateCounterfactualSet(
     outcome.acceptance.counterfactual_controls.map((control) => ({
@@ -201,6 +202,7 @@ export async function evaluateOutcomeCounterfactuals(
     })),
     snapshotRoot,
     manifest,
+    protectedAuthorityPaths,
   );
 }
 
@@ -232,6 +234,7 @@ export async function evaluateGlobalCounterfactuals(
       }),
     snapshotRoot,
     manifest,
+    compiled.context_snapshot.files,
   );
 }
 
@@ -248,6 +251,7 @@ async function evaluateCounterfactualSet(
   entries: RuntimeCounterfactual[],
   snapshotRoot: string,
   manifest?: WorkspaceManifestV2,
+  protectedAuthorityPaths: readonly string[] = [],
 ): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
   for (const entry of entries) {
@@ -262,6 +266,7 @@ async function evaluateCounterfactualSet(
       control,
       owningBinding?.carrier_paths ?? [],
       manifest,
+      protectedAuthorityPaths,
     );
     const root = sandbox.root;
     try {

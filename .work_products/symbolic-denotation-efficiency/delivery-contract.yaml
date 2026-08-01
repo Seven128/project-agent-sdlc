@@ -927,6 +927,9 @@ outcomes:
           - packages/ty-context/src/lib/symbolic-denotation-*.ts
           - packages/ty-context/src/lib/long-task-design-resource-*.ts
           - packages/ty-context/src/lib/long-task-ui-*.ts
+          - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
+          - packages/ty-context/src/lib/long-task-evidence-v2.ts
+          - packages/ty-context/src/lib/long-task-verifier-v2.ts
           - packages/ty-context/src/lib/long-task-authority-policy.ts
           - packages/ty-context/src/lib/long-task-authority-material*.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
@@ -1574,6 +1577,9 @@ outcomes:
         - packages/ty-context/src/lib/symbolic-denotation-*.ts
         - packages/ty-context/src/lib/long-task-design-resource-*.ts
         - packages/ty-context/src/lib/long-task-ui-*.ts
+        - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
+        - packages/ty-context/src/lib/long-task-evidence-v2.ts
+        - packages/ty-context/src/lib/long-task-verifier-v2.ts
         - packages/ty-context/src/lib/long-task-authority-policy.ts
         - packages/ty-context/src/lib/long-task-authority-material*.ts
         - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
@@ -1753,9 +1759,14 @@ outcomes:
           verification_inputs:
             - tools/verify_symbolic_denotation_efficiency_delivery.mjs
             - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
             - tools/semantic_fact_delivery_evidence.mjs
             - tools/semantic_fact_delivery_verifier_support.mjs
             - tools/npm_command_spec.mjs
+            - tools/package_build_fingerprint.mjs
             - package.json
             - package-lock.json
             - packages/ty-context/package.json
@@ -1768,6 +1779,10 @@ outcomes:
             - docs/symbolic-denotation-efficiency.md
             - docs/design-fact-completeness.md
             - docs/long-task-workflow-efficiency.md
+            - project_context/areas/harness-package/contracts/design-resource-handoff.md
+            - project_context/areas/harness-package/implementation-index.md
+            - project_context/areas/harness-package/verification.md
+            - packages/ty-context/src/**
             - packages/ty-context/src/commands/design-resource.ts
             - packages/ty-context/src/lib/design-resource-fact-*.ts
             - packages/ty-context/src/lib/design-resource-handoff-*.ts
@@ -1785,11 +1800,14 @@ outcomes:
             - packages/ty-context/assets/agents/AGENTS_CORE.md
             - packages/ty-context/assets/skills/long-task-workflow/**
             - packages/ty-context/assets/skills/source-plan-authoring/**
+            - packages/ty-context/assets/skills/design-resource-authoring/**
             - .codex/ty-context-managed/agents/AGENTS_CORE.md
             - .codex/ty-context-managed/skills/long-task-workflow/**
             - .codex/ty-context-managed/skills/source-plan-authoring/**
+            - .codex/ty-context-managed/skills/design-resource-authoring/**
             - .codex/skills/long-task-workflow/**
             - .codex/skills/source-plan-authoring/**
+            - .codex/skills/design-resource-authoring/**
             - tests/ty-context/design-resource-handoff-*.mjs
             - tests/ty-context/design-resource-handoff.test.mjs
             - tests/ty-context/design-resource-authoring-skill.test.mjs
@@ -1800,6 +1818,9 @@ outcomes:
             - tools/test_suite_policy.mjs
             - tools/verify_design_fact_completeness_delivery.mjs
           expected_output_paths:
+            - project_context/areas/harness-package/contracts/design-resource-handoff.md
+            - project_context/areas/harness-package/implementation-index.md
+            - project_context/areas/harness-package/verification.md
             - packages/ty-context/src/lib/design-resource-symbolic-*.ts
             - packages/ty-context/src/lib/symbolic-denotation-*.ts
             - tests/ty-context/design-resource-symbolic-*.mjs
@@ -4189,9 +4210,14 @@ outcomes:
           verification_inputs:
             - tools/verify_symbolic_denotation_efficiency_delivery.mjs
             - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
             - tools/semantic_fact_delivery_evidence.mjs
             - tools/semantic_fact_delivery_verifier_support.mjs
             - tools/npm_command_spec.mjs
+            - tools/package_build_fingerprint.mjs
             - package.json
             - package-lock.json
             - packages/ty-context/package.json
@@ -4204,6 +4230,7 @@ outcomes:
             - docs/symbolic-denotation-efficiency.md
             - docs/design-fact-completeness.md
             - docs/long-task-workflow-efficiency.md
+            - packages/ty-context/src/**
             - packages/ty-context/src/commands/design-resource.ts
             - packages/ty-context/src/lib/design-resource-fact-*.ts
             - packages/ty-context/src/lib/design-resource-handoff-*.ts
@@ -4291,9 +4318,14 @@ outcomes:
           verification_inputs:
             - tools/verify_symbolic_denotation_efficiency_delivery.mjs
             - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
+            - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
             - tools/semantic_fact_delivery_evidence.mjs
             - tools/semantic_fact_delivery_verifier_support.mjs
             - tools/npm_command_spec.mjs
+            - tools/package_build_fingerprint.mjs
             - package.json
             - package-lock.json
             - packages/ty-context/package.json

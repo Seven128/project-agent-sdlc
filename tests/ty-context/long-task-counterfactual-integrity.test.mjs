@@ -6,7 +6,11 @@ import {
   evaluateOutcomeCounterfactuals,
   isValidCounterfactualCheckResult,
 } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
-import { removeCounterfactualSandboxRoot } from "../../packages/ty-context/dist/lib/long-task-counterfactual-sandbox.js";
+import {
+  createCounterfactualSandbox,
+  removeCounterfactualSandboxRoot,
+} from "../../packages/ty-context/dist/lib/long-task-counterfactual-sandbox.js";
+import { captureWorkspaceManifest } from "../../packages/ty-context/dist/lib/long-task-workspace.js";
 import {
   createDeliveryFixture,
   runCli,
@@ -212,6 +216,57 @@ test("Counterfactual cannot delete the runner or a declared helper", async () =>
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
     }
+  }
+});
+
+test("Counterfactual sparse sandbox includes only declared frozen Context inputs", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const compiled = JSON.parse(
+      await readFile(
+        path.join(fixture.workdir, ".ty-context/compiled-contract.json"),
+        "utf8",
+      ),
+    );
+    const outcome = compiled.outcomes[0];
+    const check = outcome.acceptance.checks[0];
+    const control = outcome.acceptance.counterfactual_controls[0];
+    const binding = outcome.technical.bindings.find(
+      (item) => item.key === control.binding_key,
+    );
+    const declaredContext = "project_context/global.md";
+    const undeclaredContext = "project_context/architecture.md";
+    check.input_paths.push(declaredContext);
+    const manifest = await captureWorkspaceManifest(
+      fixture.root,
+      fixture.workdir,
+    );
+    assert.ok(!manifest.files.some((file) => file.path === declaredContext));
+
+    const sandbox = await createCounterfactualSandbox(
+      fixture.root,
+      check,
+      control,
+      binding.carrier_paths,
+      manifest,
+      compiled.context_snapshot.files,
+    );
+    try {
+      assert.equal(
+        await readFile(path.join(sandbox.root, declaredContext), "utf8"),
+        await readFile(path.join(fixture.root, declaredContext), "utf8"),
+      );
+      await assert.rejects(
+        readFile(path.join(sandbox.root, undeclaredContext), "utf8"),
+        (error) => error?.code === "ENOENT",
+      );
+    } finally {
+      await sandbox.dispose();
+    }
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
   }
 });
 

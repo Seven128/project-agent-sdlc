@@ -229,6 +229,7 @@ export async function runDeliveryChecks(
           },
           snapshot.root,
           snapshot.manifest,
+          compiled.context_snapshot.files,
         )),
       );
     }
