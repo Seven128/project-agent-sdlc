@@ -930,6 +930,8 @@ outcomes:
           - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
           - packages/ty-context/src/lib/long-task-evidence-v2.ts
           - packages/ty-context/src/lib/long-task-verifier-v2.ts
+          - packages/ty-context/src/lib/long-task-activation-validation.ts
+          - packages/ty-context/src/lib/long-task-runner-freeze.ts
           - packages/ty-context/src/lib/long-task-authority-policy.ts
           - packages/ty-context/src/lib/long-task-authority-material*.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
@@ -1580,6 +1582,8 @@ outcomes:
         - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
         - packages/ty-context/src/lib/long-task-evidence-v2.ts
         - packages/ty-context/src/lib/long-task-verifier-v2.ts
+        - packages/ty-context/src/lib/long-task-activation-validation.ts
+        - packages/ty-context/src/lib/long-task-runner-freeze.ts
         - packages/ty-context/src/lib/long-task-authority-policy.ts
         - packages/ty-context/src/lib/long-task-authority-material*.ts
         - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
@@ -1818,9 +1822,6 @@ outcomes:
             - tools/test_suite_policy.mjs
             - tools/verify_design_fact_completeness_delivery.mjs
           expected_output_paths:
-            - project_context/areas/harness-package/contracts/design-resource-handoff.md
-            - project_context/areas/harness-package/implementation-index.md
-            - project_context/areas/harness-package/verification.md
             - packages/ty-context/src/lib/design-resource-symbolic-*.ts
             - packages/ty-context/src/lib/symbolic-denotation-*.ts
             - tests/ty-context/design-resource-symbolic-*.mjs

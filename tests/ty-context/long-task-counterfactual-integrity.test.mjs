@@ -222,6 +222,12 @@ test("Counterfactual cannot delete the runner or a declared helper", async () =>
 test("Counterfactual sparse sandbox includes only declared frozen Context inputs", async () => {
   const fixture = await createDeliveryFixture();
   try {
+    const declaredContext = "project_context/global.md";
+    const undeclaredContext = "project_context/architecture.md";
+    fixture.contract.outcomes[0].acceptance.checks[0].input_paths.push(
+      declaredContext,
+    );
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = JSON.parse(
@@ -236,9 +242,6 @@ test("Counterfactual sparse sandbox includes only declared frozen Context inputs
     const binding = outcome.technical.bindings.find(
       (item) => item.key === control.binding_key,
     );
-    const declaredContext = "project_context/global.md";
-    const undeclaredContext = "project_context/architecture.md";
-    check.input_paths.push(declaredContext);
     const manifest = await captureWorkspaceManifest(
       fixture.root,
       fixture.workdir,

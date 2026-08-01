@@ -14,6 +14,7 @@ import {
   assertRepositoryPattern,
   classifyRepositoryPatternOverlap,
   matchesRepoPattern,
+  normalizeRepositoryFile,
 } from "./long-task-paths.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import {
@@ -41,6 +42,7 @@ export async function freezeDeliveryCheck(
   knownExecutionTargets: ExecutionTargetV2[],
   designConformanceTargets: CompiledDesignTargetV2[],
   semanticFactExpectations: SemanticFactExpectationV2[],
+  protectedAuthorityPaths: readonly string[] = [],
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
   const expectedOutputs = check.expected_output_paths.map((pattern, index) =>
@@ -48,6 +50,12 @@ export async function freezeDeliveryCheck(
       repository,
       pattern,
       `${check.key}.expected_output_paths[${index}]`,
+    ),
+  );
+  const protectedAuthorityFiles = protectedAuthorityPaths.map((file, index) =>
+    normalizeRepositoryFile(
+      file,
+      `${check.key}.protected_authority_paths[${index}]`,
     ),
   );
   for (const [index, pattern] of check.input_paths.entries()) {
@@ -59,6 +67,9 @@ export async function freezeDeliveryCheck(
     if (
       !baseline.files.some((file) =>
         matchesRepoPattern(file.path, normalized),
+      ) &&
+      !protectedAuthorityFiles.some((file) =>
+        matchesRepoPattern(file, normalized),
       ) &&
       !expectedOutputs.some(
         (output) =>
