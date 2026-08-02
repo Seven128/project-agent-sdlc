@@ -4,20 +4,27 @@ import type { DesignResource } from "./design-resource-handoff-file-primitives.j
 import { validateSymbolicDispositions } from "./design-resource-symbolic-disposition-validation.js";
 import {
   validateSymbolicCertificates,
-  validateSymbolicExactTargetMethods,
   validateSymbolicObligations,
 } from "./design-resource-symbolic-proof-validation.js";
 import {
   aggregateSymbolicCanonicalMetrics,
   validateSymbolicApplicabilityClosure,
   validateSymbolicPopulationAndQuantifier,
-  validateSymbolicQuantifier,
   validateSymbolicRegionWithinReachable,
 } from "./design-resource-symbolic-region-validation.js";
 import {
   validateSymbolicInspectorAndResources,
   validateSymbolicPropertyCatalog,
 } from "./design-resource-symbolic-resource-validation.js";
+import {
+  assertNoUnprovedOmittedAxes,
+  validateSymbolicExactTargetCoverage,
+  validateSymbolicReadinessClosure,
+} from "./design-resource-symbolic-safety-validation.js";
+import {
+  validateSymbolicCensusClosure,
+  validateSymbolicSubjectPopulationClosure,
+} from "./design-resource-symbolic-structural-closure-validation.js";
 import type {
   DesignResourceHandoffPreflightV2,
   DesignResourceObservableRuleManifestV2,
@@ -43,6 +50,7 @@ export function validateDesignResourceSymbolicManifest(
   metrics: DesignResourceHandoffPreflightV2["metrics"];
 } {
   validateManifestIdentities(manifest);
+  validateSymbolicReadinessClosure(manifest);
   const target = parsed.handoff.targets[0];
   if (!manifest.subjects.length || !manifest.properties.length)
     invalid("v2_subject_property_universe_required", target.key);
@@ -55,15 +63,21 @@ export function validateDesignResourceSymbolicManifest(
   validateSymbolicInspectorAndResources(manifest, target, resources, contents);
   validateSymbolicPropertyCatalog(manifest.properties);
   const indexes = buildManifestIndexes(manifest, parsed);
-  validateSubjects(manifest, target.key, indexes);
-  validatePopulations(manifest, indexes, resources, contents);
-  const ruleProjections = validateRules(
+  validateSymbolicSubjectPopulationClosure(
     manifest,
-    target.key,
+    target,
     indexes,
     resources,
     contents,
   );
+  const ruleProjections = validateRules(
+    manifest,
+    target,
+    indexes,
+    resources,
+    contents,
+  );
+  validateSymbolicCensusClosure(manifest, indexes);
   validateSymbolicDispositions(manifest, target.key, indexes);
   validateSymbolicApplicabilityClosure(manifest, reachable);
   validateSymbolicObligations(
@@ -72,6 +86,7 @@ export function validateDesignResourceSymbolicManifest(
     indexes.properties,
     indexes.oracles,
     indexes.environments,
+    target,
     resources,
     contents,
   );
@@ -79,10 +94,11 @@ export function validateDesignResourceSymbolicManifest(
     manifest,
     ruleProjections,
   );
-  validateSymbolicExactTargetMethods(
+  validateSymbolicExactTargetCoverage(
     target.interpretation,
     manifest,
-    indexes.properties,
+    ruleProjections,
+    reachable,
   );
   const dagMetrics = aggregateSymbolicCanonicalMetrics(ruleProjections);
   return {
@@ -126,6 +142,10 @@ function validateManifestIdentities(
     ],
     ["oracle", manifest.oracles.map((item) => item.key)],
     ["environment", manifest.environments.map((item) => item.key)],
+    [
+      "acceptance_blocker",
+      manifest.acceptance_blockers.map((item) => item.key),
+    ],
   ] as const)
     unique(keys, `v2_${label}_key_duplicate`);
 }
@@ -150,65 +170,9 @@ function buildManifestIndexes(
 
 export type SymbolicManifestIndexes = ReturnType<typeof buildManifestIndexes>;
 
-function validateSubjects(
-  manifest: DesignResourceObservableRuleManifestV2,
-  targetKey: string,
-  indexes: SymbolicManifestIndexes,
-): void {
-  for (const subject of manifest.subjects) {
-    if (!subject.target_refs.includes(targetKey))
-      invalid("v2_subject_target_mismatch", subject.key);
-    requireKnownRefs(
-      subject.census_refs,
-      indexes.census,
-      "v2_subject_census_unknown",
-    );
-    if (
-      subject.population_ref &&
-      !indexes.populations.has(subject.population_ref)
-    )
-      invalid("v2_subject_population_unknown", subject.key);
-    for (const endpoint of subject.relation_endpoints)
-      if (!indexes.subjects.has(endpoint.subject_ref))
-        invalid(
-          "v2_relation_endpoint_subject_unknown",
-          `${subject.key}:${endpoint.subject_ref}`,
-        );
-    if (subject.kind === "relation" && subject.relation_endpoints.length < 2)
-      invalid("v2_relation_endpoints_incomplete", subject.key);
-  }
-}
-
-function validatePopulations(
-  manifest: DesignResourceObservableRuleManifestV2,
-  indexes: SymbolicManifestIndexes,
-  resources: Map<string, DesignResource>,
-  contents: Map<string, Buffer>,
-): void {
-  for (const population of manifest.populations) {
-    requireKnownRefs(
-      population.member_subject_refs,
-      indexes.subjects,
-      "v2_population_subject_unknown",
-    );
-    validateDesignResourceLocatedDigest(
-      population.universe,
-      resources,
-      contents,
-      `population.${population.key}.universe`,
-    );
-    validateSymbolicQuantifier(population.quantifier, population.key);
-    for (const exclusion of population.exclusions) {
-      if (!exclusion.basis_refs.length)
-        invalid("v2_population_exclusion_basis_required", exclusion.key);
-      compileSymbolicDenotation(manifest.axis_domains, exclusion.region);
-    }
-  }
-}
-
 function validateRules(
   manifest: DesignResourceObservableRuleManifestV2,
-  targetKey: string,
+  target: ParsedDesignResourceHandoffV2["handoff"]["targets"][number],
   indexes: SymbolicManifestIndexes,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
@@ -218,6 +182,7 @@ function validateRules(
       manifest.axis_domains,
       rule.region,
     );
+    assertNoUnprovedOmittedAxes(compiled, rule.key);
     validateSymbolicRegionWithinReachable(
       manifest.axis_domains,
       rule.region,
@@ -228,10 +193,16 @@ function validateRules(
     const property = indexes.properties.get(rule.property_ref);
     if (!subject) invalid("v2_rule_subject_unknown", rule.key);
     if (!property) invalid("v2_rule_property_unknown", rule.key);
-    if (rule.target_ref !== targetKey)
+    if (rule.target_ref !== target.key)
       invalid("v2_rule_target_mismatch", rule.key);
     validateRuleAuthority(rule, subject.population_ref, property, indexes);
-    validateRuleValues(rule, compiled.canonical_sha256, resources, contents);
+    validateRuleValues(
+      rule,
+      compiled.canonical_sha256,
+      new Set(target.resource_refs),
+      resources,
+      contents,
+    );
     return { rule, compiled_region: compiled };
   });
 }
@@ -260,6 +231,10 @@ function validateRuleAuthority(
   );
   if (!property.census_refs.length)
     invalid("v2_rule_property_census_required", rule.key);
+  const subject = indexes.subjects.get(rule.subject_or_relation_ref)!;
+  for (const ref of [...subject.census_refs, ...property.census_refs])
+    if (!rule.census_refs.includes(ref))
+      invalid("v2_rule_required_census_ref_missing", `${rule.key}:${ref}`);
   for (const capability of property.inspector_capability_refs)
     if (!indexes.inspectorCapabilities.has(capability))
       invalid(
@@ -273,6 +248,7 @@ function validateRuleAuthority(
 function validateRuleValues(
   rule: DesignResourceObservableRuleManifestV2["fact_rules"][number],
   regionSha256: string,
+  targetResources: Set<string>,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {
@@ -288,6 +264,15 @@ function validateRuleValues(
     contents,
     `rule.${rule.key}.lineage.resolved_value`,
   );
+  for (const located of [rule.expected, rule.lineage.resolved_value])
+    if (
+      targetResources.size &&
+      !targetResources.has(located.locator.resource_ref)
+    )
+      invalid(
+        "v2_rule_resource_outside_target",
+        `${rule.key}:${located.locator.resource_ref}`,
+      );
   if (stableJson(rule.expected) !== stableJson(rule.lineage.resolved_value))
     invalid("v2_rule_expected_lineage_mismatch", rule.key);
   const expectedKey = designResourceSymbolicRuleKey(

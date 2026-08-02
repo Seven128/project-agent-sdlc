@@ -27,7 +27,10 @@ import {
   makeSymbolicTarget,
 } from "./symbolic-denotation-long-task-v2-targets.mjs";
 
-export async function prepareMixedSymbolicLongTaskFixture(fixture) {
+export async function prepareMixedSymbolicLongTaskFixture(
+  fixture,
+  { mutateDesignRecords } = {},
+) {
   const { handoff: v1Handoff } = await writeDesignResourceHandoffFixture(
     fixture.root,
   );
@@ -126,11 +129,9 @@ export async function prepareMixedSymbolicLongTaskFixture(fixture) {
     v1Target,
     v2Target,
   );
-  execFileSync(
-    "git",
-    ["add", "-f", "--", "artifacts/v1-*", "artifacts/v2-*"],
-    { cwd: fixture.root },
-  );
+  execFileSync("git", ["add", "-f", "--", "artifacts/v1-*", "artifacts/v2-*"], {
+    cwd: fixture.root,
+  });
   check.verification_inputs.push("tests/base-oracle.mjs");
   const designRecords = designEvidenceRecords(
     check,
@@ -138,6 +139,7 @@ export async function prepareMixedSymbolicLongTaskFixture(fixture) {
     v2Target,
     artifactHashes,
   );
+  mutateDesignRecords?.(designRecords);
   const observationExpectations = Object.fromEntries(
     [...check.positive_assertions, ...check.negative_assertions]
       .filter(

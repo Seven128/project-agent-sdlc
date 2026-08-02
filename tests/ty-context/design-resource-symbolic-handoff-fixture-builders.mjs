@@ -18,7 +18,7 @@ export function buildFixtureObligations(rules, properties, parameters) {
         proof_surface: "ui_browser",
         observation_boundary: `symbolic-rule-region:${method}`,
         comparison: {
-          comparator: "exact_value",
+          comparator: method === "visual_pixel" ? "pixel_diff" : "exact_value",
           mode: "exact",
           parameters,
           tolerance: null,
@@ -45,6 +45,7 @@ export function fixtureRuleInput(
   valueKind,
   expected,
   censusRefs,
+  region,
 ) {
   return {
     subject_or_relation_ref: "surface.root",
@@ -52,11 +53,7 @@ export function fixtureRuleInput(
     property_ref: propertyRef,
     population_ref: null,
     quantifier: fixtureOneQuantifier(),
-    region: {
-      op: "in",
-      axis_ref: "condition.color-scheme",
-      values: ["light", "dark"],
-    },
+    region,
     expected,
     value_kind: valueKind,
     provenance_ref: "resource.values",
@@ -98,6 +95,7 @@ export function fixtureCensusRow(
     fact_cell_refs: [],
     source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
     basis_refs: ["fixture-inspector-census"],
-    rationale: "Frozen Inspector Census entry supporting exact Rule applicability.",
+    rationale:
+      "Frozen Inspector Census entry supporting exact Rule applicability.",
   };
 }

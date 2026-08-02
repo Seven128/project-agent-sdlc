@@ -1,5 +1,6 @@
 import type { DesignResourceObservableRuleManifestV2 } from "./design-resource-symbolic-fact-types.js";
 import type { SymbolicManifestIndexes } from "./design-resource-symbolic-manifest-validation.js";
+import { assertNoUnprovedOmittedAxes } from "./design-resource-symbolic-safety-validation.js";
 import {
   validateSymbolicPopulationAndQuantifier,
   validateSymbolicRegionWithinReachable,
@@ -8,6 +9,7 @@ import {
   invalid,
   requireKnownRefs,
 } from "./design-resource-symbolic-validation-support.js";
+import { compileSymbolicDenotation } from "./symbolic-denotation-engine.js";
 
 export function validateSymbolicDispositions(
   manifest: DesignResourceObservableRuleManifestV2,
@@ -44,5 +46,18 @@ export function validateSymbolicDispositions(
       manifest.reachable_region,
       disposition.key,
     );
+    assertNoUnprovedOmittedAxes(
+      compileSymbolicDenotation(manifest.axis_domains, disposition.region),
+      disposition.key,
+    );
+    if (
+      disposition.disposition === "decision_required" ||
+      disposition.disposition === "unavailable" ||
+      disposition.disposition === "blocking"
+    )
+      invalid(
+        "v2_unresolved_disposition",
+        `${disposition.key}:${disposition.disposition}`,
+      );
   }
 }
