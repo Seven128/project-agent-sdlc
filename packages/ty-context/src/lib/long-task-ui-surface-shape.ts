@@ -383,13 +383,21 @@ function parseSymbolicCertificateBinding(value: unknown, label: string) {
     expectations: array(row.expectations, `${label}.expectations`).map(
       (item, index) => {
         const itemLabel = `${label}.expectations[${index}]`;
-        const expectation = object(item, itemLabel, [
-          "certificate_ref",
-          "fact_rule_refs",
-          "omitted_axis_refs",
-          "dependency_edge_refs",
-          "canonical_rule_dag_sha256",
-        ]);
+        const expectation = object(
+          item,
+          itemLabel,
+          [
+            "certificate_ref",
+            "fact_rule_refs",
+            "omitted_axis_refs",
+            "dependency_edge_refs",
+            "canonical_rule_dag_sha256",
+          ],
+          [
+            "source_noninterference_proof_sha256",
+            "production_noninterference_proof_sha256",
+          ],
+        );
         return {
           certificate_ref: designFactRef(
             expectation.certificate_ref,
@@ -411,6 +419,22 @@ function parseSymbolicCertificateBinding(value: unknown, label: string) {
             expectation.canonical_rule_dag_sha256,
             `${itemLabel}.canonical_rule_dag_sha256`,
           ),
+          ...(expectation.source_noninterference_proof_sha256 === undefined
+            ? {}
+            : {
+                source_noninterference_proof_sha256: digest(
+                  expectation.source_noninterference_proof_sha256,
+                  `${itemLabel}.source_noninterference_proof_sha256`,
+                ),
+              }),
+          ...(expectation.production_noninterference_proof_sha256 === undefined
+            ? {}
+            : {
+                production_noninterference_proof_sha256: digest(
+                  expectation.production_noninterference_proof_sha256,
+                  `${itemLabel}.production_noninterference_proof_sha256`,
+                ),
+              }),
         };
       },
     ),

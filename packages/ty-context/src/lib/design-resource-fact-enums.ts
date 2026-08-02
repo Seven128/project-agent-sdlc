@@ -191,6 +191,26 @@ export const DESIGN_RESOURCE_INSPECTOR_CAPABILITIES = [
 export type DesignResourceInspectorCapability =
   (typeof DESIGN_RESOURCE_INSPECTOR_CAPABILITIES)[number];
 
+export const DESIGN_RESOURCE_SYMBOLIC_NONINTERFERENCE_ORACLE_CAPABILITIES = [
+  "symbolic_noninterference.source.closed_world_static_dependency_closure",
+  "symbolic_noninterference.source.restricted_ir_symbolic_equivalence",
+  "symbolic_noninterference.source.finite_complete_domain_exhaustive_equivalence",
+  "symbolic_noninterference.production.closed_world_static_dependency_closure",
+  "symbolic_noninterference.production.restricted_ir_symbolic_equivalence",
+  "symbolic_noninterference.production.finite_complete_domain_exhaustive_equivalence",
+] as const;
+
+export type DesignResourceSymbolicNoninterferenceOracleCapability =
+  (typeof DESIGN_RESOURCE_SYMBOLIC_NONINTERFERENCE_ORACLE_CAPABILITIES)[number];
+
+export const DESIGN_RESOURCE_ORACLE_CAPABILITIES = [
+  ...DESIGN_RESOURCE_INSPECTOR_CAPABILITIES,
+  ...DESIGN_RESOURCE_SYMBOLIC_NONINTERFERENCE_ORACLE_CAPABILITIES,
+] as const;
+
+export type DesignResourceOracleCapability =
+  (typeof DESIGN_RESOURCE_ORACLE_CAPABILITIES)[number];
+
 export const DESIGN_RESOURCE_CENSUS_KINDS = [
   "resource",
   "node",

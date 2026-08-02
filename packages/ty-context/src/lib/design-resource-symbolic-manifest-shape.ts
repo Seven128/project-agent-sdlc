@@ -17,6 +17,8 @@ import {
 } from "./design-resource-handoff-shape-primitives.js";
 import { parseDesignResourceHandoffSubjects } from "./design-resource-handoff-shape-structure.js";
 import type { DesignResourceObservableRuleManifestV2 } from "./design-resource-symbolic-fact-types.js";
+import { parseSymbolicStructuralApplicability } from "./design-resource-symbolic-applicability-shape.js";
+import { parseSymbolicNoninterferenceProof } from "./design-resource-symbolic-noninterference-shape.js";
 import {
   parseSymbolicAxisDomains,
   parseSymbolicPredicate,
@@ -54,26 +56,31 @@ export function parseDesignResourceObservableRuleManifestShape(
   value: unknown,
 ): DesignResourceObservableRuleManifestV2 {
   const label = "design_resource_symbolic_manifest";
-  const root = object(value, label, [
-    "schema_version",
-    "scope_key",
-    "target_key",
-    "inspector",
-    "design_system",
-    "axis_domains",
-    "reachable_region",
-    "subjects",
-    "populations",
-    "properties",
-    "fact_rules",
-    "disposition_regions",
-    "semantic_proof_obligations",
-    "dependency_edges",
-    "noninterference_certificates",
-    "oracles",
-    "environments",
-    "acceptance_blockers",
-  ]);
+  const root = object(
+    value,
+    label,
+    [
+      "schema_version",
+      "scope_key",
+      "target_key",
+      "inspector",
+      "design_system",
+      "axis_domains",
+      "reachable_region",
+      "subjects",
+      "populations",
+      "properties",
+      "fact_rules",
+      "disposition_regions",
+      "semantic_proof_obligations",
+      "dependency_edges",
+      "noninterference_certificates",
+      "oracles",
+      "environments",
+      "acceptance_blockers",
+    ],
+    ["structural_applicability"],
+  );
   return {
     schema_version: literal(
       root.schema_version,
@@ -134,6 +141,14 @@ export function parseDesignResourceObservableRuleManifestShape(
     acceptance_blockers: parseDesignResourceHandoffBlockers(
       root.acceptance_blockers,
     ),
+    ...(root.structural_applicability === undefined
+      ? {}
+      : {
+          structural_applicability: parseSymbolicStructuralApplicability(
+            root.structural_applicability,
+            `${label}.structural_applicability`,
+          ),
+        }),
   };
 }
 
@@ -221,13 +236,18 @@ function parseNoninterferenceCertificates(value: unknown, label: string) {
   return array(value, `${label}.noninterference_certificates`).map(
     (item, index) => {
       const itemLabel = `${label}.noninterference_certificates[${index}]`;
-      const row = object(item, itemLabel, [
-        "key",
-        "fact_rule_refs",
-        "omitted_axis_refs",
-        "dependency_edge_refs",
-        "canonical_rule_dag_sha256",
-      ]);
+      const row = object(
+        item,
+        itemLabel,
+        [
+          "key",
+          "fact_rule_refs",
+          "omitted_axis_refs",
+          "dependency_edge_refs",
+          "canonical_rule_dag_sha256",
+        ],
+        ["source_noninterference_proof", "production_noninterference_proof"],
+      );
       return {
         key: stableKey(row.key, `${itemLabel}.key`),
         fact_rule_refs: stableKeys(
@@ -246,6 +266,30 @@ function parseNoninterferenceCertificates(value: unknown, label: string) {
           row.canonical_rule_dag_sha256,
           `${itemLabel}.canonical_rule_dag_sha256`,
         ),
+        ...(row.source_noninterference_proof === undefined
+          ? {}
+          : {
+              source_noninterference_proof: nullable(
+                row.source_noninterference_proof,
+                (entry) =>
+                  parseSymbolicNoninterferenceProof(
+                    entry,
+                    `${itemLabel}.source_noninterference_proof`,
+                  ),
+              ),
+            }),
+        ...(row.production_noninterference_proof === undefined
+          ? {}
+          : {
+              production_noninterference_proof: nullable(
+                row.production_noninterference_proof,
+                (entry) =>
+                  parseSymbolicNoninterferenceProof(
+                    entry,
+                    `${itemLabel}.production_noninterference_proof`,
+                  ),
+              ),
+            }),
       };
     },
   );

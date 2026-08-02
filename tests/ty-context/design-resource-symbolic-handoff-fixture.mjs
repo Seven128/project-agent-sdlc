@@ -20,7 +20,7 @@ export {
 export async function writeDesignResourceSymbolicHandoffFixture(
   root,
   mutate,
-  { directory = "design" } = {},
+  { directory = "design", modelFactory = buildSymbolicFixtureModel } = {},
 ) {
   const handoffPath = `${directory}/symbolic-handoff.md`;
   const manifestPath = `${directory}/symbolic-rules.json`;
@@ -53,7 +53,7 @@ export async function writeDesignResourceSymbolicHandoffFixture(
       valuesContent,
     ),
   ];
-  const model = buildSymbolicFixtureModel(resourcesWithoutManifest, values);
+  const model = modelFactory(resourcesWithoutManifest, values);
   await mutate?.(model);
   const { manifest, rules, certificate, dependencyEdges } = model;
   const manifestContent = `${JSON.stringify(manifest, null, 2)}\n`;
@@ -86,6 +86,7 @@ ${YAML.stringify(handoff, { lineWidth: 0 }).trimEnd()}
     rules,
     certificate,
     dependencyEdges,
+    model,
     handoffPath,
     manifestPath,
   };

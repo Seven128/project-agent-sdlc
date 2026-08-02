@@ -8,6 +8,7 @@ import type {
   DesignResourceComparator,
   DesignResourceInspectorCapability,
   DesignResourceLineageNodeKind,
+  DesignResourceOracleCapability,
   DesignResourcePropertyFamily,
   DesignResourceStandardConditionAxis,
   DesignResourceSubjectKind,
@@ -161,7 +162,7 @@ export interface DesignResourceOracleV1 {
   identity: string;
   version: string;
   sha256: string | null;
-  capability_refs: DesignResourceInspectorCapability[];
+  capability_refs: DesignResourceOracleCapability[];
 }
 
 export interface DesignResourceEnvironmentV1 {

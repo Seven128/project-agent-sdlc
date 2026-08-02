@@ -11,6 +11,7 @@ import type {
 import type {
   DesignResourceComparator,
   DesignResourceInspectorCapability,
+  DesignResourceOracleCapability,
 } from "./design-resource-fact-manifest-types.js";
 
 export const DESIGN_RESOURCE_FACT_INVARIANTS = Object.freeze({
@@ -152,7 +153,7 @@ export function designFactComparatorSupportsMethod(
 
 export function designFactOracleSupportsMethod(
   method: DesignResourceVerificationMethod,
-  capabilities: readonly DesignResourceInspectorCapability[],
+  capabilities: readonly DesignResourceOracleCapability[],
 ): boolean {
   return ORACLE_CAPABILITIES_BY_METHOD[method].some((capability) =>
     capabilities.includes(capability),

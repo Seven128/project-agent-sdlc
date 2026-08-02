@@ -107,6 +107,82 @@ export interface DesignResourceSymbolicNoninterferenceCertificateV2 {
   omitted_axis_refs: string[];
   dependency_edge_refs: string[];
   canonical_rule_dag_sha256: string;
+  source_noninterference_proof?: DesignResourceSymbolicNoninterferenceProofV2 | null;
+  production_noninterference_proof?: DesignResourceSymbolicNoninterferenceProofV2 | null;
+}
+
+export type DesignResourceSymbolicNoninterferenceProofMethodV2 =
+  | "closed_world_static_dependency_closure"
+  | "restricted_ir_symbolic_equivalence"
+  | "finite_complete_domain_exhaustive_equivalence";
+
+export interface DesignResourceSymbolicNoninterferenceEquivalenceCaseV2 {
+  fact_rule_refs: string[];
+  side_predicate: SymbolicDenotationPredicate;
+  axis_erased_predicate: SymbolicDenotationPredicate;
+}
+
+export interface DesignResourceSymbolicStaticDependencyNodeV2 {
+  key: string;
+  axis_refs: string[];
+  dependency_refs: string[];
+  input_resource_refs: string[];
+}
+
+export interface DesignResourceSymbolicStaticDependencyRootV2 {
+  fact_rule_refs: string[] | null;
+  node_ref: string;
+}
+
+export interface DesignResourceSymbolicNoninterferenceProofV2 {
+  side: "source" | "production";
+  method: DesignResourceSymbolicNoninterferenceProofMethodV2;
+  input_resource_refs: string[];
+  oracle_ref: string;
+  environment_ref: string;
+  static_dependency_nodes: DesignResourceSymbolicStaticDependencyNodeV2[];
+  static_rule_roots: DesignResourceSymbolicStaticDependencyRootV2[];
+  equivalence_cases: DesignResourceSymbolicNoninterferenceEquivalenceCaseV2[];
+  dynamic_dependency_kinds: string[];
+  external_device_refs: string[];
+  complete_domain_cardinality: string | null;
+}
+
+export interface DesignResourceSymbolicSubjectProfileBindingV2 {
+  key: string;
+  subject_refs: string[];
+  profile_refs: string[];
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicCustomPropertyClosureV2 {
+  property_ref: string;
+  applicable_subject_refs: string[];
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicApplicabilityExceptionV2 {
+  key: string;
+  subject_ref: string;
+  property_ref: string;
+  disposition: "applicable" | "not_applicable";
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicStructuralApplicabilityV2 {
+  profile_catalog: "package-subject-property-applicability-v1";
+  subject_profile_bindings: DesignResourceSymbolicSubjectProfileBindingV2[];
+  inspector_custom_property_closure: DesignResourceSymbolicCustomPropertyClosureV2[];
+  instance_exceptions: DesignResourceSymbolicApplicabilityExceptionV2[];
 }
 
 export interface DesignResourceObservableRuleManifestV2 {
@@ -128,6 +204,7 @@ export interface DesignResourceObservableRuleManifestV2 {
   oracles: DesignResourceOracleV1[];
   environments: DesignResourceEnvironmentV1[];
   acceptance_blockers: DesignResourceHandoffBlockerV1[];
+  structural_applicability?: DesignResourceSymbolicStructuralApplicabilityV2;
 }
 
 export interface DesignResourceSymbolicHandoffTargetV2 {

@@ -29,14 +29,14 @@ import {
 
 export async function prepareMixedSymbolicLongTaskFixture(
   fixture,
-  { mutateDesignRecords } = {},
+  { mutateDesignRecords, mutateSymbolicModel } = {},
 ) {
   const { handoff: v1Handoff } = await writeDesignResourceHandoffFixture(
     fixture.root,
   );
   const symbolicFixture = await writeDesignResourceSymbolicHandoffFixture(
     fixture.root,
-    undefined,
+    mutateSymbolicModel,
     { directory: "design-symbolic" },
   );
   const v1 = await preflightDesignResourceHandoff(

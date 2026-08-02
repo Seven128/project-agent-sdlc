@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import {
-  compileSymbolicDenotation,
-} from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
+import { createSymbolicDenotationCompilationSession } from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
 
 const ACTIVE_DOMAIN = {
   key: "condition.enabled",
@@ -22,8 +20,7 @@ const PERFORMANCE_CONTRACT = Object.freeze({
     "compile two equal reduced Rules over one active enum axis plus 64 irrelevant billion-point bounded integer axes",
   metric: "median wall milliseconds per two-Rule production compilation",
   baseline: "the same two Rules over the active axis only",
-  budget:
-    "expanded median <= max(250 ms, baseline median * 100 + 25 ms)",
+  budget: "expanded median <= max(250 ms, baseline median * 100 + 25 ms)",
   environment: `${process.version}/${process.platform}/${process.arch}`,
   comparator: "less_than_or_equal",
   tolerance:
@@ -39,18 +36,22 @@ test("set-valued non-interference accounting stays ground-cardinality independen
   for (const fixture of fixtures) {
     assert.equal(fixture.semantic_obligations, SEMANTIC_OBLIGATIONS);
     assert.equal(fixture.certificate_obligations, 1);
-    assert.equal(
-      fixture.certificate.fact_rule_refs.length,
-      RULE_REFS.length,
-    );
+    assert.equal(fixture.certificate.fact_rule_refs.length, RULE_REFS.length);
     assert.equal(
       fixture.certificate.omitted_axis_refs.length,
       fixture.irrelevant_axis_count,
     );
     assert.equal(
       fixture.certificate.dependency_edge_refs.length,
-      fixture.irrelevant_axis_count * RULE_REFS.length,
+      0,
+      "set-valued certificates must not materialize Rule x omitted-axis edges",
     );
+    assert.deepEqual(fixture.compilation_statistics, {
+      axis_partition_builds: 1,
+      compile_requests: RULE_REFS.length,
+      compile_cache_hits: RULE_REFS.length - 1,
+      unique_compiled_predicates: 1,
+    });
     assert.equal(fixture.canonical_sha256, baseline.canonical_sha256);
     assert.equal(fixture.canonical_dag_nodes, baseline.canonical_dag_nodes);
     assert.equal(
@@ -68,8 +69,8 @@ test("set-valued non-interference accounting stays ground-cardinality independen
   );
   assert.ok(
     largest.certificate_bytes <=
-      baseline.certificate_bytes + largest.irrelevant_axis_count * 700,
-    "certificate set representation exceeded its declared linear axis/edge budget",
+      baseline.certificate_bytes + largest.irrelevant_axis_count * 350,
+    "certificate set representation exceeded its declared linear axis budget",
   );
 });
 
@@ -84,8 +85,8 @@ test("a stale exact certificate set is invalidated when dependency coverage chan
     before.certificate.omitted_axis_refs,
   );
   assert.notDeepEqual(
-    after.certificate.dependency_edge_refs,
-    before.certificate.dependency_edge_refs,
+    after.certificate.source_noninterference_proof,
+    before.certificate.source_noninterference_proof,
   );
   assert.notEqual(after.certificate.identity, before.certificate.identity);
   assert.equal(
@@ -138,17 +139,44 @@ function buildWorkload(irrelevantAxisCount, { relevantAxisRef = null } = {}) {
         ],
       }
     : ACTIVE_PREDICATE;
-  const compiledRules = RULE_REFS.map(() =>
-    compileSymbolicDenotation(domains, predicate),
+  const compilation = createSymbolicDenotationCompilationSession(
+    domains,
+    RULE_REFS.map(() => predicate),
   );
+  const compiledRules = RULE_REFS.map(() => compilation.compile(predicate));
   const omittedAxisRefs = compiledRules[0].omitted_axis_refs;
-  const dependencyEdgeRefs = RULE_REFS.flatMap((ruleRef) =>
-    omittedAxisRefs.map((axisRef) => `${axisRef}->${ruleRef}`),
-  ).sort();
+  const dependencyAxisRefs = compiledRules[0].referenced_axis_refs;
+  const buildNonInterferenceProof = (side) => ({
+    side,
+    method: "closed_world_static_dependency_closure",
+    input_resource_refs: domains.map((domain) => domain.key),
+    oracle_ref: "oracle.frozen-dependency-engine",
+    environment_ref: "environment.current-candidate",
+    static_dependency_nodes: [
+      {
+        key: `dependency.${side}.root`,
+        axis_refs: dependencyAxisRefs,
+        dependency_refs: [],
+        input_resource_refs: domains.map((domain) => domain.key),
+      },
+    ],
+    static_rule_roots: [
+      {
+        fact_rule_refs: null,
+        node_ref: `dependency.${side}.root`,
+      },
+    ],
+    equivalence_cases: [],
+    dynamic_dependency_kinds: [],
+    external_device_refs: [],
+    complete_domain_cardinality: null,
+  });
   const certificateBody = {
     fact_rule_refs: [...RULE_REFS],
     omitted_axis_refs: [...omittedAxisRefs],
-    dependency_edge_refs: dependencyEdgeRefs,
+    dependency_edge_refs: [],
+    source_noninterference_proof: buildNonInterferenceProof("source"),
+    production_noninterference_proof: buildNonInterferenceProof("production"),
     canonical_rule_dag_sha256: compiledRules
       .map((compiled) => compiled.canonical_sha256)
       .join(":"),
@@ -165,20 +193,12 @@ function buildWorkload(irrelevantAxisCount, { relevantAxisRef = null } = {}) {
     semantic_obligations: SEMANTIC_OBLIGATIONS,
     certificate_obligations: 1,
     certificate,
+    compilation_statistics: compilation.statistics(),
     certificate_bytes: Buffer.byteLength(stableJson(certificate), "utf8"),
     canonical_sha256: first.canonical_sha256,
-    canonical_dag_nodes: compiledRules.reduce(
-      (sum, item) => sum + item.metrics.canonical_dag_nodes,
-      0,
-    ),
-    canonical_partition_edges: compiledRules.reduce(
-      (sum, item) => sum + item.metrics.partition_edges,
-      0,
-    ),
-    canonical_bytes: compiledRules.reduce(
-      (sum, item) => sum + item.metrics.canonical_bytes,
-      0,
-    ),
+    canonical_dag_nodes: first.metrics.canonical_dag_nodes,
+    canonical_partition_edges: first.metrics.partition_edges,
+    canonical_bytes: first.metrics.canonical_bytes,
     theoretical_ground_cardinality: first.theoretical_ground_cardinality,
   };
 }
@@ -190,6 +210,10 @@ function certificateMatchesWorkload(certificate, workload) {
       stableJson(workload.certificate.omitted_axis_refs) &&
     stableJson(certificate.dependency_edge_refs) ===
       stableJson(workload.certificate.dependency_edge_refs) &&
+    stableJson(certificate.source_noninterference_proof) ===
+      stableJson(workload.certificate.source_noninterference_proof) &&
+    stableJson(certificate.production_noninterference_proof) ===
+      stableJson(workload.certificate.production_noninterference_proof) &&
     certificate.canonical_rule_dag_sha256 ===
       workload.certificate.canonical_rule_dag_sha256 &&
     certificate.identity === workload.certificate.identity

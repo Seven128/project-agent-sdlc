@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   compileSymbolicDenotation,
+  createSymbolicDenotationCompilationSession,
   evaluateCanonicalSymbolicDenotation,
 } from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
 import {
@@ -175,6 +176,75 @@ test("numeric theory partitions do not enumerate a billion-point domain", () => 
   assert.equal(compiled.metrics.canonical_dag_nodes, 1);
   assert.equal(compiled.metrics.partition_edges, 3);
   assert.ok(compiled.metrics.canonical_bytes < 1_024);
+});
+
+test("one manifest compilation session shares axis partitions, predicate memo and DAG hash-consing", () => {
+  const direct = {
+    op: "all",
+    predicates: [
+      { op: "eq", axis_ref: "condition.color", value: "dark" },
+      { op: "eq", axis_ref: "variation.state", value: "hover" },
+    ],
+  };
+  const rewritten = {
+    op: "all",
+    predicates: [
+      { op: "eq", axis_ref: "variation.state", value: "hover" },
+      { op: "eq", axis_ref: "condition.color", value: "dark" },
+      { op: "eq", axis_ref: "condition.color", value: "dark" },
+    ],
+  };
+  const session = createSymbolicDenotationCompilationSession(coreDomains, [
+    direct,
+    rewritten,
+  ]);
+  const first = session.compile(direct);
+  const cached = session.compile(structuredClone(direct));
+  const equivalent = session.compile(rewritten);
+  assert.equal(first.canonical_sha256, cached.canonical_sha256);
+  assert.equal(first.canonical_sha256, equivalent.canonical_sha256);
+  assert.deepEqual(session.statistics(), {
+    axis_partition_builds: 1,
+    compile_requests: 3,
+    compile_cache_hits: 1,
+    unique_compiled_predicates: 2,
+  });
+});
+
+test("unrelated shared numeric cuts do not revise an existing canonical Rule identity", () => {
+  const widthDomain = [
+    {
+      key: "condition.width",
+      kind: "bounded_number",
+      minimum: 320,
+      maximum: 1_920,
+      integer: true,
+    },
+  ];
+  const existing = {
+    op: "range",
+    axis_ref: "condition.width",
+    minimum: 480,
+    maximum: 1_024,
+    minimum_inclusive: true,
+    maximum_inclusive: false,
+  };
+  const unrelated = {
+    op: "range",
+    axis_ref: "condition.width",
+    minimum: 1_280,
+    maximum: 1_600,
+    minimum_inclusive: true,
+    maximum_inclusive: true,
+  };
+  const standalone = compileSymbolicDenotation(widthDomain, existing);
+  const shared = createSymbolicDenotationCompilationSession(widthDomain, [
+    existing,
+    unrelated,
+  ]).compile(existing);
+  assert.equal(shared.canonical_sha256, standalone.canonical_sha256);
+  assert.equal(shared.canonical_bytes, standalone.canonical_bytes);
+  assert.deepEqual(shared.canonical_dag, standalone.canonical_dag);
 });
 
 test("strict grammar and every complexity fuse fail closed", () => {

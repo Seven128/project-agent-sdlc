@@ -207,7 +207,7 @@ export const symbolicDeliveryItemsPart1 = [
     "architecture_ownership",
     "selected_design",
     "symbolic-engine",
-    "Production normalization uses one package-owned canonical ordered multi-valued decision DAG with deterministic axis order, theory-aware domain partitions, hash-consed nodes, memoized Boolean operations and shared subtrees.",
+    "Production normalization uses one manifest-level package-owned canonical ordered multi-valued decision DAG compilation session with shared axis partitions, predicate and Boolean memoization, hash-consed nodes, shared subtrees and tuple, profile, Rule, disposition and Census indexes; one logical point lookup scans only indexed local candidates.",
   ),
   row(
     "unreachable-branch-elimination",

@@ -3,6 +3,7 @@ import {
   DESIGN_TARGET_KEY,
 } from "./design-resource-handoff-fixture.mjs";
 import { SYMBOLIC_TARGET_KEY } from "./design-resource-symbolic-handoff-fixture.mjs";
+import { designResourceSymbolicNoninterferenceProofDigest } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
 
 export function makeGroundTarget(preflight) {
   const target = preflight.handoff.targets.find(
@@ -97,13 +98,32 @@ export function makeSymbolicTarget(preflight, handoffPath) {
       assertion_ref: "v2-symbolic-certificate",
       artifact_path: "artifacts/v2-symbolic-certificate.json",
       expectations: preflight.manifest.noninterference_certificates.map(
-        (item) => ({
-          certificate_ref: item.key,
-          fact_rule_refs: [...item.fact_rule_refs],
-          omitted_axis_refs: [...item.omitted_axis_refs],
-          dependency_edge_refs: [...item.dependency_edge_refs],
-          canonical_rule_dag_sha256: item.canonical_rule_dag_sha256,
-        }),
+        (item) => {
+          const sourceProofDigest =
+            designResourceSymbolicNoninterferenceProofDigest(
+              item.source_noninterference_proof,
+            );
+          const productionProofDigest =
+            designResourceSymbolicNoninterferenceProofDigest(
+              item.production_noninterference_proof,
+            );
+          return {
+            certificate_ref: item.key,
+            fact_rule_refs: [...item.fact_rule_refs],
+            omitted_axis_refs: [...item.omitted_axis_refs],
+            dependency_edge_refs: [...item.dependency_edge_refs],
+            canonical_rule_dag_sha256: item.canonical_rule_dag_sha256,
+            ...(sourceProofDigest
+              ? { source_noninterference_proof_sha256: sourceProofDigest }
+              : {}),
+            ...(productionProofDigest
+              ? {
+                  production_noninterference_proof_sha256:
+                    productionProofDigest,
+                }
+              : {}),
+          };
+        },
       ),
       metrics: structuredClone(preflight.metrics),
     },
@@ -114,11 +134,7 @@ export function makeSymbolicTarget(preflight, handoffPath) {
 
 export function addDesignAssertions(check, v1Target, v2Target) {
   const keys = new Set();
-  const add = (
-    key,
-    capabilities,
-    claims = ["requirement.design-handoff"],
-  ) => {
+  const add = (key, capabilities, claims = ["requirement.design-handoff"]) => {
     check.positive_assertions.push({
       key,
       criterion: `${key} is proven on the current candidate.`,

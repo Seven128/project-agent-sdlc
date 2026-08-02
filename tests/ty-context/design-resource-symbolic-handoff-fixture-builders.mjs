@@ -46,9 +46,10 @@ export function fixtureRuleInput(
   expected,
   censusRefs,
   region,
+  subjectRef = "surface.root",
 ) {
   return {
-    subject_or_relation_ref: "surface.root",
+    subject_or_relation_ref: subjectRef,
     target_ref: SYMBOLIC_TARGET_KEY,
     property_ref: propertyRef,
     population_ref: null,

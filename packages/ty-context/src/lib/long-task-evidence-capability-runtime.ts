@@ -515,6 +515,18 @@ function validateDesignSymbolicCertificate(
         omitted_axis_refs: result.omitted_axis_refs,
         dependency_edge_refs: result.dependency_edge_refs,
         canonical_rule_dag_sha256: result.canonical_rule_dag_sha256,
+        ...(result.source_noninterference_proof_sha256 === undefined
+          ? {}
+          : {
+              source_noninterference_proof_sha256:
+                result.source_noninterference_proof_sha256,
+            }),
+        ...(result.production_noninterference_proof_sha256 === undefined
+          ? {}
+          : {
+              production_noninterference_proof_sha256:
+                result.production_noninterference_proof_sha256,
+            }),
       }) !== canonicalJson(expectation)
     )
       return "design_symbolic_certificate_denotation_mismatch";

@@ -14,14 +14,53 @@ import {
 } from "./long-task-final-closure-mutation-fixtures.mjs";
 import { prepareMixedSymbolicLongTaskFixture } from "./symbolic-denotation-long-task-v2-setup.mjs";
 import { writeDesignResourceSymbolicHandoffFixture } from "./design-resource-symbolic-handoff-fixture.mjs";
+import {
+  enableCompactSymbolicApplicability,
+  enableFixtureTrustedNoninterference,
+  rekeySymbolicFixtureCertificate,
+} from "./design-resource-symbolic-handoff-fixture-model.mjs";
 
 export async function exerciseMixedSymbolicLongTaskClosure() {
+  return exerciseMixedSymbolicLongTaskClosureWithOptions({});
+}
+
+export async function exerciseCompactTrustedSymbolicLongTaskClosure() {
+  return exerciseMixedSymbolicLongTaskClosureWithOptions({
+    mutateSymbolicModel(model) {
+      enableCompactSymbolicApplicability(model);
+      enableFixtureTrustedNoninterference(model);
+    },
+    assertPrepared({ v2 }) {
+      assert.equal(v2.manifest.disposition_regions.length, 0);
+      assert.equal(v2.manifest.dependency_edges.length, 0);
+      assert.equal(v2.manifest.fact_rules.length, 2);
+      assert.equal(v2.metrics.certificate_covered_omitted_axes, 2);
+      const certificate = v2.manifest.noninterference_certificates[0];
+      assert.equal(
+        certificate.source_noninterference_proof.method,
+        "closed_world_static_dependency_closure",
+      );
+      assert.equal(
+        certificate.production_noninterference_proof.method,
+        "closed_world_static_dependency_closure",
+      );
+    },
+  });
+}
+
+async function exerciseMixedSymbolicLongTaskClosureWithOptions({
+  mutateSymbolicModel,
+  assertPrepared,
+}) {
   const fixture = await createDeliveryFixture();
   const fakePlaywrightBin = await createFakePlaywrightBin();
   const env = withPath(fakePlaywrightBin);
   try {
-    const prepared = await prepareMixedSymbolicLongTaskFixture(fixture);
+    const prepared = await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel,
+    });
     const { v2, artifactHashes, designRecords } = prepared;
+    assertPrepared?.(prepared);
     const oracleProbe = JSON.parse(
       execFileSync(process.execPath, ["tests/oracle.mjs", "first"], {
         cwd: fixture.root,
@@ -74,6 +113,38 @@ export async function exerciseMixedSymbolicLongTaskClosure() {
   }
 }
 
+export async function exerciseSymbolicCompileRejectsUntrustedDynamicDependency() {
+  const fixture = await createDeliveryFixture();
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+    });
+    await writeDesignResourceSymbolicHandoffFixture(
+      fixture.root,
+      (model) => {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+        model.certificate.source_noninterference_proof.dynamic_dependency_kinds.push(
+          "reflection",
+        );
+        rekeySymbolicFixtureCertificate(model);
+      },
+      { directory: "design-symbolic" },
+    );
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /v2_noninterference_dynamic_dependency_unproved/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
 export async function exerciseSymbolicCompileRejectsUnresolvedDisposition() {
   const fixture = await createDeliveryFixture();
   try {
@@ -102,11 +173,16 @@ export async function exerciseSymbolicFinalGateRejectsCounterexample() {
   const env = withPath(fakePlaywrightBin);
   try {
     await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
       mutateDesignRecords(records) {
         const certificate = records.find(
           (item) => item.capability === "design_symbolic_certificate",
         );
-        certificate.certificate_results[0].fact_rule_refs.pop();
+        certificate.certificate_results[0].production_noninterference_proof_sha256 =
+          "0".repeat(64);
       },
     });
     await runCli(fixture.root, ["enable", "long-task"], { env });
@@ -182,6 +258,22 @@ function validateSymbolicEvidenceMutations(
     ),
     "design_symbolic_certificate_denotation_mismatch",
   );
+  if (
+    symbolicCertificate.certificate_results[0]
+      .production_noninterference_proof_sha256
+  ) {
+    const mutatedProductionProof = structuredClone(symbolicCertificate);
+    mutatedProductionProof.certificate_results[0].production_noninterference_proof_sha256 =
+      "0".repeat(64);
+    assert.equal(
+      validateRuntimeEvidenceRecord(
+        compiledCheck,
+        decodeEvidenceCapabilityRecords([mutatedProductionProof])[0],
+        artifactHashes,
+      ),
+      "design_symbolic_certificate_denotation_mismatch",
+    );
+  }
 }
 
 async function runFinalGate(fixture, env) {

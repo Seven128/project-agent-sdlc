@@ -529,6 +529,10 @@ function decodeDesignSymbolicCertificateEvidence(
         "canonical_rule_dag_sha256",
         "recomputed",
         "verdict",
+        ...[
+          "source_noninterference_proof_sha256",
+          "production_noninterference_proof_sha256",
+        ].filter((field) => Object.hasOwn(result, field)),
       ]);
       if (result.recomputed !== true)
         throw invalidRecord(`${itemLabel}.recomputed`);
@@ -553,6 +557,22 @@ function decodeDesignSymbolicCertificateEvidence(
           result.canonical_rule_dag_sha256,
           `${itemLabel}.canonical_rule_dag_sha256`,
         ),
+        ...(result.source_noninterference_proof_sha256 === undefined
+          ? {}
+          : {
+              source_noninterference_proof_sha256: sha(
+                result.source_noninterference_proof_sha256,
+                `${itemLabel}.source_noninterference_proof_sha256`,
+              ),
+            }),
+        ...(result.production_noninterference_proof_sha256 === undefined
+          ? {}
+          : {
+              production_noninterference_proof_sha256: sha(
+                result.production_noninterference_proof_sha256,
+                `${itemLabel}.production_noninterference_proof_sha256`,
+              ),
+            }),
         recomputed: true,
         verdict: literal(
           result.verdict,

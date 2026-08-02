@@ -47,7 +47,7 @@ export const symbolicDeliveryItemsPart4 = [
     "performance_capacity_cost",
     "workload_model",
     "verification",
-    "Parameter tests add irrelevant axes, values and dependency edges and assert exact denotation stability plus bounded obligation count, certificate coverage representation, canonical DAG nodes and bytes while theoretical ground cardinality grows.",
+    "Parameter tests add irrelevant axes, values and dependency proofs and assert exact denotation stability plus bounded obligation count, certificate coverage representation, canonical DAG nodes and bytes while theoretical ground cardinality grows; a deterministic package fixture measures 639 subjects, 217 properties, 53 axes and 5,245 variations, preserves all 138,663 logical subject-property points, avoids 137,385 physical N/A rows and budgets authoring, preflight, bytes and RSS.",
   ),
   row(
     "distribution-context-parity",
@@ -63,7 +63,7 @@ export const symbolicDeliveryItemsPart4 = [
     "architecture_ownership",
     "selected_design",
     "architecture",
-    "Architecture Deliberation: owners are design-resource handoff parsing and fact policy, the shared symbolic-denotation engine, Long-Task UI projection and evidence runtime, package distribution and owning Context; current extension points are V1 fact-manifest projection and Long-Task fact_expectations/fact_results. The selected design is a versioned opt-in UI V2 with restricted predicates, canonical shared DAGs, mutually exclusive regions, constant located expected values, complete package-policy plus Inspector-Census applicability, separately typed semantic and certificate obligations, V1 preparse capacity guards and mixed V1/V2 Final-Gate closure. Dependencies flow from canonical resources through handoff validation into Contract bindings and current evidence, never backward into value authority; state remains Contract and current-run owned and adds no lifecycle. Rejected alternatives are mutating V1, DNF or full expansion, post-expansion deduplication, arbitrary value functions, precedence, sampling, ungrounded N/A, historical proof reuse, non-UI bundling and Provider/P0 expansion. A future new predicate theory or non-UI consumer must extend the shared engine through a separately admitted domain policy without weakening canonical identity. Existing Cartesian memory risk is paid down through V1 early guards and V2 symbolic normalization; unrelated Provider debt is left out with an evidence re-entry condition. Project-owned equivalence, adversarial, capacity, mixed-version, distribution, complete-suite, Context and Final-Gate checks prove the declared design. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; security/privacy are preserved through strict grammar, bounded parsing and protected-value semantics.",
+    "Architecture Deliberation: owners are design-resource handoff parsing and fact policy, package-owned applicability profiles and indexes, the shared symbolic-denotation compilation engine, Source-side and production-side non-interference proof validation, Long-Task UI projection and evidence runtime, package distribution and owning Context; current extension points are V1 fact-manifest projection and Long-Task fact_expectations/fact_results. The selected design is a versioned opt-in UI V2 with restricted predicates, one manifest-level compilation session, canonical shared DAGs and indexed point lookup, profile-derived logical applicability with explicit exceptions, mutually exclusive regions, constant located expected values, dual-side trusted non-interference proof, separately typed semantic and certificate obligations, V1 preparse capacity guards and mixed V1/V2 Final-Gate closure. Dependencies flow from canonical resources through frozen Inspector and Oracle TCBs, handoff validation, Contract bindings and current evidence, never backward into value authority; state remains Contract and current-run owned and adds no lifecycle. Rejected alternatives are mutating V1, DNF or full expansion, post-expansion deduplication, physical N/A or Rule-by-axis matrices, per-tuple full-array scans, arbitrary value functions, precedence, sampling, representative-point proof, ungrounded N/A, historical proof reuse, non-UI bundling and Provider/P0 expansion. A future new predicate theory, dynamic dependency source or non-UI consumer must extend the shared engine through a separately admitted decidable policy without weakening canonical identity or the frozen TCB boundary. Existing Cartesian memory and repeated-scan risk are paid down through V1 early guards, V2 profiles, shared compilation and indexes; unrelated Provider debt is left out with an evidence re-entry condition. Project-owned equivalence, adversarial proof, real-scale capacity, mixed-version, distribution, complete-suite, Context and Final-Gate checks prove the declared design. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; security/privacy/safety are preserved through strict grammar, bounded parsing, exact Oracle capabilities, fail-closed dependency handling and protected-value semantics.",
   ),
   row(
     "no-sampling",
@@ -155,7 +155,10 @@ export const symbolicDeliveryItemsPart4 = [
     "acceptance_meaning",
     "verification",
     "Given fixtures with increasing irrelevant axes, values and dependency edges, theoretical ground cardinality grows while denotation stays equal and obligation counts, exact set-valued certificate coverage, canonical DAG nodes and bytes remain within declared ground-independent budgets; adding a relevant dependency invalidates the certificate.",
-    { acceptanceClaim: "requirement.complexity-independent-of-ground-cardinality" },
+    {
+      acceptanceClaim:
+        "requirement.complexity-independent-of-ground-cardinality",
+    },
   ),
   row(
     "v1-capacity-guard-ac",
@@ -182,7 +185,10 @@ export const symbolicDeliveryItemsPart4 = [
     "acceptance_meaning",
     "distribution",
     "Given the final candidate, focused equivalence, canonicalization, applicability, capacity, mixed-version, evidence, complexity and guidance tests plus the complete package suite, source parity, Context validation, Harness validation and sole Final Gate all pass from one committed snapshot without forbidden shortcuts or scope escape.",
-    { acceptanceClaim: "requirement.complete-extensional-universe", complete: true },
+    {
+      acceptanceClaim: "requirement.complete-extensional-universe",
+      complete: true,
+    },
   ),
   row(
     "inventory-is-not-completion",
@@ -218,4 +224,5 @@ export const symbolicDeliveryItemsPart4 = [
     "verification",
     "The Harness can prove declared canonicalization, denotation equality, certificate recomputation and current result closure, but semantic soundness of the frozen Inspector and independent test Oracle remains a named trusted-computing boundary requiring counterexamples and honest blocking.",
     { riskFact: "weak_observability" },
-  ),];
+  ),
+];

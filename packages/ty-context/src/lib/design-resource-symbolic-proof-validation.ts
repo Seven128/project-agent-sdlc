@@ -4,22 +4,24 @@ import {
   validateSymbolicObligationPolicy,
   validateSymbolicProofAuthorities,
 } from "./design-resource-symbolic-proof-authority-validation.js";
+import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
 import type {
   DesignResourceHandoffPreflightV2,
   DesignResourceObservableRuleManifestV2,
-  DesignResourceSymbolicDependencyEdgeV2,
   DesignResourceSymbolicHandoffTargetV2,
 } from "./design-resource-symbolic-fact-types.js";
+import type { SymbolicManifestIndexes } from "./design-resource-symbolic-indexes.js";
+import { validateTrustedSymbolicNoninterference } from "./design-resource-symbolic-noninterference-validation.js";
 import {
   assertCanonicalSet,
   assertSameSet,
   compareText,
   designResourceSymbolicCertificateKey,
   designResourceSymbolicCombinedRuleDigest,
-  designResourceSymbolicDependencyEdge,
   designResourceSymbolicObligationKey,
   invalid,
   omitKey,
+  unique,
 } from "./design-resource-symbolic-validation-support.js";
 
 export function validateSymbolicObligations(
@@ -156,12 +158,13 @@ function validateObligation(
 export function validateSymbolicCertificates(
   manifest: DesignResourceObservableRuleManifestV2,
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
+  indexes: SymbolicManifestIndexes,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): { coveredOmittedAxes: number; coveredDependencyEdges: number } {
   const byRule = new Map(projections.map((item) => [item.rule.key, item]));
-  const expectedEdges = expectedDependencyEdges(projections);
   assertCanonicalSet(
     manifest.dependency_edges,
-    [...expectedEdges.values()],
+    [],
     "v2_dependency_edge_set_mismatch",
   );
   const coveredRules: string[] = [];
@@ -176,56 +179,51 @@ export function validateSymbolicCertificates(
         invalid("v2_certificate_rule_unknown", `${certificate.key}:${ref}`);
       return projection;
     });
-    validateCertificate(certificate, local);
+    validateCertificate(manifest, certificate, local, indexes, compilation);
     coveredRules.push(...certificate.fact_rule_refs);
     certificate.omitted_axis_refs.forEach((ref) => coveredAxes.add(ref));
     certificate.dependency_edge_refs.forEach((ref) => coveredEdges.add(ref));
   }
-  assertCertificateCoverage(
-    manifest,
-    projections,
-    expectedEdges,
-    coveredRules,
-    coveredEdges,
-  );
+  assertCertificateCoverage(manifest, projections, coveredRules, coveredEdges);
   return {
     coveredOmittedAxes: coveredAxes.size,
     coveredDependencyEdges: coveredEdges.size,
   };
 }
 
-function expectedDependencyEdges(
-  projections: DesignResourceHandoffPreflightV2["rule_projections"],
-): Map<string, DesignResourceSymbolicDependencyEdgeV2> {
-  const expected = new Map<string, DesignResourceSymbolicDependencyEdgeV2>();
-  for (const projection of projections)
-    for (const axisRef of projection.compiled_region.omitted_axis_refs) {
-      const edge = designResourceSymbolicDependencyEdge(
-        axisRef,
-        projection.rule.key,
-      );
-      expected.set(edge.key, edge);
-    }
-  return expected;
-}
-
 function validateCertificate(
+  manifest: DesignResourceObservableRuleManifestV2,
   certificate: DesignResourceObservableRuleManifestV2["noninterference_certificates"][number],
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
+  indexes: SymbolicManifestIndexes,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
+  unique(
+    certificate.fact_rule_refs,
+    `v2_certificate_rule_ref_duplicate:${certificate.key}`,
+  );
+  unique(
+    certificate.omitted_axis_refs,
+    `v2_certificate_omitted_axis_duplicate:${certificate.key}`,
+  );
+  unique(
+    certificate.dependency_edge_refs,
+    `v2_certificate_dependency_edge_duplicate:${certificate.key}`,
+  );
   const expectedAxes = [
     ...new Set(
       projections.flatMap((item) => item.compiled_region.omitted_axis_refs),
     ),
   ].sort(compareText);
-  const expectedEdgeRefs = projections
-    .flatMap((item) =>
-      item.compiled_region.omitted_axis_refs.map(
-        (axisRef) =>
-          designResourceSymbolicDependencyEdge(axisRef, item.rule.key).key,
-      ),
-    )
-    .sort(compareText);
+  if (
+    expectedAxes.length &&
+    (!certificate.source_noninterference_proof ||
+      !certificate.production_noninterference_proof)
+  )
+    invalid(
+      "v2_noninterference_proof_unavailable",
+      `${certificate.key}:${expectedAxes.join(",")}`,
+    );
   assertSameSet(
     certificate.omitted_axis_refs,
     expectedAxes,
@@ -234,7 +232,7 @@ function validateCertificate(
   );
   assertSameSet(
     certificate.dependency_edge_refs,
-    expectedEdgeRefs,
+    [],
     "v2_certificate_dependency_edges_mismatch",
     certificate.key,
   );
@@ -251,12 +249,18 @@ function validateCertificate(
       "v2_certificate_identity_mismatch",
       `${certificate.key}:${expectedKey}`,
     );
+  validateTrustedSymbolicNoninterference(
+    manifest,
+    certificate,
+    projections,
+    indexes,
+    compilation,
+  );
 }
 
 function assertCertificateCoverage(
   manifest: DesignResourceObservableRuleManifestV2,
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
-  expectedEdges: Map<string, DesignResourceSymbolicDependencyEdgeV2>,
   coveredRules: string[],
   coveredEdges: Set<string>,
 ): void {
@@ -268,7 +272,7 @@ function assertCertificateCoverage(
   );
   assertSameSet(
     [...coveredEdges],
-    [...expectedEdges.keys()],
+    [],
     "v2_certificate_edge_coverage_mismatch",
     manifest.target_key,
   );
