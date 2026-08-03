@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -8,10 +8,7 @@ import {
   applyCompactAuthoringSelectors,
   compactAuthoringTable,
 } from "../../packages/ty-context/dist/lib/compact-authoring-support.js";
-import {
-  parseDeliveryContractBundle,
-  parseDeliveryContractText,
-} from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { createSemanticFactCompactCarrier } from "../../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
 import { parseSemanticFactCompactCarrierShape } from "../../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
 import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
@@ -25,13 +22,13 @@ import {
   assertSyntheticCompactFixtureCompiles,
   compactRevisionPairSet,
 } from "./long-task-compact-semantic-test-support.mjs";
+import { projectSyntheticCompactContract } from "./long-task-compact-semantic-fixture.mjs";
+import { createDeliveryFixture } from "./long-task-delivery-fixtures.mjs";
 
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const sourceRelative = "docs/symbolic-denotation-efficiency.md";
-const contractRelative =
-  ".work_products/symbolic-denotation-efficiency/delivery-contract.yaml";
 
-test("[critical:compact-carrier-exact-closure] migrated compact Authorities preserve all 113 Facts and obligations without expanded shadows", async () => {
+test("[critical:compact-carrier-exact-closure] current compact Source and package Contract projection preserve all 113 Facts and obligations without expanded shadows", async () => {
   const attributes = await readFile(
     path.join(repository, ".gitattributes"),
     "utf8",
@@ -62,68 +59,113 @@ test("[critical:compact-carrier-exact-closure] migrated compact Authorities pres
         input.key,
       );
 
-  const parsedContract = await parseDeliveryContractBundle(
-    path.join(repository, ".work_products", "symbolic-denotation-efficiency"),
-    repository,
-  );
-  const facts = parsedContract.contract.outcomes.flatMap(
-    (outcome) => outcome.semantic_fact_bindings.facts,
-  );
-  const obligations = parsedContract.contract.outcomes.flatMap(
-    (outcome) => outcome.semantic_fact_bindings.proofs,
-  );
-  assert.equal(facts.length, 113);
-  assert.equal(obligations.length, 113);
-  assert.deepEqual(
-    compactRevisionPairSet(facts, "fact_ref", "fact_revision_digest"),
-    compactRevisionPairSet(
-      parsedSource.fact_revisions,
-      "key",
-      "revision_digest",
-    ),
-  );
-  assert.deepEqual(
-    compactRevisionPairSet(
-      obligations,
-      "proof_ref",
-      "obligation_revision_digest",
-    ),
-    compactRevisionPairSet(
-      parsedSource.obligation_revisions,
-      "key",
-      "revision_digest",
-    ),
-  );
-  const contractText = await readFile(
-    path.join(repository, contractRelative),
-    "utf8",
-  );
-  assert.equal(/^source_claims:/mu.test(contractText), false);
-  assert.ok(Buffer.byteLength(contractText) < 230_000);
-
-  const regeneratedSource = parseSemanticFactCompactCarrierShape(
-    createSemanticFactCompactCarrier(parsedSource.manifest),
-  );
+  const compactSource = createSemanticFactCompactCarrier(parsedSource.manifest);
+  const regeneratedSource = parseSemanticFactCompactCarrierShape(compactSource);
   assert.equal(
     canonicalValueJson(regeneratedSource.manifest),
     canonicalValueJson(parsedSource.manifest),
   );
-  const regeneratedContract = createLongTaskCompactContract(
-    parsedContract.contract,
-    parsedSource.fact_revisions,
-    parsedSource.obligation_revisions,
-  );
-  assert.deepEqual(
-    parseDeliveryContractText(JSON.stringify(regeneratedContract)),
-    parsedContract.contract,
-  );
-  assert.ok(regeneratedContract.compact_semantic_carrier.exceptions.length > 0);
-  const missingException = structuredClone(regeneratedContract);
-  missingException.compact_semantic_carrier.exceptions.pop();
-  assert.throws(
-    () => parseDeliveryContractText(JSON.stringify(missingException)),
-    /projection target set mismatch/u,
-  );
+  const fixture = await createDeliveryFixture();
+  try {
+    const counterfactualRef =
+      parsedSource.manifest.proof_obligations[0]?.counterfactual.refs[0];
+    const [counterfactual] =
+      fixture.contract.outcomes[0].acceptance.counterfactual_controls;
+    assert.ok(counterfactualRef);
+    assert.ok(counterfactual);
+    counterfactual.key = counterfactualRef;
+    const projection = projectSyntheticCompactContract(
+      structuredClone(fixture.contract),
+      parsedSource.manifest,
+    );
+    projection.semantic_fact_manifest = {
+      ...projection.semantic_fact_manifest,
+      key: parsedSource.manifest.key,
+      source_path: sourceRelative,
+      sha256: sha256Hex(canonicalValueJson(compactSource)),
+    };
+    const outcome = projection.outcomes[0];
+    outcome.product.requirements[0].required_proof_surfaces = [
+      "runtime_behavior",
+      "api_contract",
+    ];
+    const apiCheck = structuredClone(outcome.acceptance.checks[0]);
+    apiCheck.key = "first-api-check";
+    apiCheck.proof_surface = "api_contract";
+    apiCheck.positive_assertions = [
+      {
+        key: "first-api-requirement",
+        criterion: "first satisfies its observable API requirement.",
+        claims: ["requirement.observe-first"],
+        applicability_ref: "first-root-success",
+        observation: "api_requirement_result",
+        evidence_capabilities: ["target_runtime", "state_delta"],
+        operator: "equals",
+        expected: true,
+      },
+    ];
+    apiCheck.negative_assertions = [];
+    outcome.acceptance.checks.push(apiCheck);
+
+    const compactContract = createLongTaskCompactContract(
+      projection,
+      parsedSource.fact_revisions,
+      parsedSource.obligation_revisions,
+    );
+    assert.equal(Object.hasOwn(compactContract, "source_claims"), false);
+    assert.ok(Buffer.byteLength(JSON.stringify(compactContract)) < 230_000);
+    const parsedContract = parseDeliveryContractText(
+      JSON.stringify(compactContract),
+    );
+    const facts = parsedContract.outcomes.flatMap(
+      (item) => item.semantic_fact_bindings.facts,
+    );
+    const obligations = parsedContract.outcomes.flatMap(
+      (item) => item.semantic_fact_bindings.proofs,
+    );
+    assert.equal(facts.length, 113);
+    assert.equal(obligations.length, 113);
+    assert.deepEqual(
+      compactRevisionPairSet(facts, "fact_ref", "fact_revision_digest"),
+      compactRevisionPairSet(
+        parsedSource.fact_revisions,
+        "key",
+        "revision_digest",
+      ),
+    );
+    assert.deepEqual(
+      compactRevisionPairSet(
+        obligations,
+        "proof_ref",
+        "obligation_revision_digest",
+      ),
+      compactRevisionPairSet(
+        parsedSource.obligation_revisions,
+        "key",
+        "revision_digest",
+      ),
+    );
+    const regeneratedContract = createLongTaskCompactContract(
+      parsedContract,
+      parsedSource.fact_revisions,
+      parsedSource.obligation_revisions,
+    );
+    assert.deepEqual(
+      parseDeliveryContractText(JSON.stringify(regeneratedContract)),
+      parsedContract,
+    );
+    assert.ok(
+      regeneratedContract.compact_semantic_carrier.exceptions.length > 0,
+    );
+    const missingException = structuredClone(regeneratedContract);
+    missingException.compact_semantic_carrier.exceptions.pop();
+    assert.throws(
+      () => parseDeliveryContractText(JSON.stringify(missingException)),
+      /projection target set mismatch/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
 });
 
 test("compact tables fail closed on sparse cells and selectors preserve row structure", () => {
