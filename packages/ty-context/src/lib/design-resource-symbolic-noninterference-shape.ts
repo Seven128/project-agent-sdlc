@@ -1,4 +1,6 @@
 import {
+  nonnegativeInteger,
+  sha256,
   stableKey,
   stableKeys,
 } from "./design-resource-handoff-shape-primitives.js";
@@ -28,6 +30,17 @@ export function parseSymbolicNoninterferenceProof(
     "dynamic_dependency_kinds",
     "external_device_refs",
     "complete_domain_cardinality",
+    "oracle_version",
+    "oracle_implementation_sha256",
+    "environment_sha256",
+    "input_snapshot_sha256",
+    "target_snapshot_sha256",
+    "omitted_axis_refs",
+    "method_result_sha256",
+    "artifact_resource_ref",
+    "artifact_path",
+    "artifact_sha256",
+    "failure_witness",
   ]);
   return {
     side: literal(row.side, ["source", "production"] as const, `${label}.side`),
@@ -99,6 +112,69 @@ export function parseSymbolicNoninterferenceProof(
       (entry) =>
         decimalCardinality(entry, `${label}.complete_domain_cardinality`),
     ),
+    oracle_version: string(row.oracle_version, `${label}.oracle_version`),
+    oracle_implementation_sha256: sha256(
+      row.oracle_implementation_sha256,
+      `${label}.oracle_implementation_sha256`,
+    ),
+    environment_sha256: sha256(
+      row.environment_sha256,
+      `${label}.environment_sha256`,
+    ),
+    input_snapshot_sha256: sha256(
+      row.input_snapshot_sha256,
+      `${label}.input_snapshot_sha256`,
+    ),
+    target_snapshot_sha256: sha256(
+      row.target_snapshot_sha256,
+      `${label}.target_snapshot_sha256`,
+    ),
+    omitted_axis_refs: stableKeys(
+      row.omitted_axis_refs,
+      `${label}.omitted_axis_refs`,
+    ),
+    method_result_sha256: sha256(
+      row.method_result_sha256,
+      `${label}.method_result_sha256`,
+    ),
+    artifact_resource_ref: stableKey(
+      row.artifact_resource_ref,
+      `${label}.artifact_resource_ref`,
+    ),
+    artifact_path: string(row.artifact_path, `${label}.artifact_path`),
+    artifact_sha256: sha256(row.artifact_sha256, `${label}.artifact_sha256`),
+    failure_witness: nullable(row.failure_witness, (entry) =>
+      parseFailureWitness(entry, `${label}.failure_witness`),
+    ),
+  };
+}
+
+function parseFailureWitness(value: unknown, label: string) {
+  const row = object(value, label, [
+    "kind",
+    "axis_ref",
+    "resource_ref",
+    "path",
+    "byte_offset",
+    "detail",
+  ]);
+  return {
+    kind: literal(
+      row.kind,
+      ["omitted_axis_dependency", "unsupported_dependency"] as const,
+      `${label}.kind`,
+    ),
+    axis_ref: nullable(row.axis_ref, (entry) =>
+      stableKey(entry, `${label}.axis_ref`),
+    ),
+    resource_ref: nullable(row.resource_ref, (entry) =>
+      stableKey(entry, `${label}.resource_ref`),
+    ),
+    path: nullable(row.path, (entry) => string(entry, `${label}.path`)),
+    byte_offset: nullable(row.byte_offset, (entry) =>
+      nonnegativeInteger(entry, `${label}.byte_offset`),
+    ),
+    detail: string(row.detail, `${label}.detail`),
   };
 }
 

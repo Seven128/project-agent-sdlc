@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -18,6 +18,7 @@ import {
   refreshSymbolicFixtureDerivedIdentities,
   rekeySymbolicFixtureCertificate,
 } from "./design-resource-symbolic-handoff-fixture-model.mjs";
+import { fixtureSha } from "./design-resource-symbolic-handoff-fixture-support.mjs";
 
 test("opt-in UI V2 preflight closes Rules, obligations, applicability and one set-valued certificate", async () => {
   await withFixture(async (root) => {
@@ -251,7 +252,7 @@ test("Inspector custom-property closure and instance exceptions preserve unique 
         disposition: "not_applicable",
         census_refs: ["census.subject.root"],
         source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-        basis_refs: ["fixture-inspector.instance-exception"],
+        basis_refs: ["census.subject.root"],
         rationale:
           "The frozen Inspector records that this exact surface instance has no text content.",
       });
@@ -291,7 +292,7 @@ test("Inspector custom-property closure and instance exceptions preserve unique 
           applicable_subject_refs: ["surface.root"],
           census_refs: ["census.property.custom-fixture-width"],
           source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-          basis_refs: ["fixture-inspector.custom-property-closure"],
+          basis_refs: ["census.property.custom-fixture-width"],
           rationale:
             "The frozen Inspector completely enumerates the one custom property and its applicable subject.",
         },
@@ -355,7 +356,7 @@ test("compact applicability rejects incomplete custom closure and ambiguous exce
           disposition: "not_applicable",
           census_refs: ["census.property.width"],
           source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-          basis_refs: ["fixture-inspector.instance-exception"],
+          basis_refs: ["census.property.width"],
           rationale: "An exception with the wrong Census authority.",
         });
       },
@@ -370,7 +371,7 @@ test("compact applicability rejects incomplete custom closure and ambiguous exce
           disposition: "not_applicable",
           census_refs: ["census.subject.root"],
           source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-          basis_refs: ["fixture-inspector.instance-exception"],
+          basis_refs: ["census.subject.root"],
           rationale: "Exact instance exception.",
         };
         model.manifest.structural_applicability.instance_exceptions.push(
@@ -389,7 +390,7 @@ test("compact applicability rejects incomplete custom closure and ambiguous exce
           disposition: "applicable",
           census_refs: ["census.subject.root", "census.property.width"],
           source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-          basis_refs: ["fixture-inspector.instance-exception"],
+          basis_refs: ["census.subject.root"],
           rationale: "This does not actually override the profile.",
         });
       },
@@ -433,6 +434,216 @@ test("only the three trusted source and production non-interference proofs can c
       assert.equal(result.metrics.certificate_covered_dependency_edges, 0);
       assert.equal(result.manifest.dependency_edges.length, 0);
     });
+});
+
+test("current production input defeats an internally self-consistent omitted-axis graph with an attributable witness", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      {
+        pageSuffix:
+          '<script>globalThis.__currentAxis = "variation.state";</script>',
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      (error) => {
+        assert.match(
+          String(error),
+          /v2_noninterference_current_input_counterexample/u,
+        );
+        assert.match(String(error), /variation\.state/u);
+        assert.match(String(error), /resource\.page/u);
+        return true;
+      },
+    );
+  });
+});
+
+test("current production executable, style, template, interactive and unsupported dependencies fail closed", async () => {
+  for (const pageSuffix of [
+    "<script>fetch(globalThis.dynamicUrl)</script>",
+    "<script>Reflect.get(globalThis, 'mode')</script>",
+    "<script>getComputedStyle(document.body)</script>",
+    "<script>void navigator.mediaDevices</script>",
+    "<script>const key = ['variation', 'state'].join('.'); globalThis[key] = true</script>",
+    "<script>globalThis.constant = true</script>",
+    "<style>main { color: red }</style>",
+    '<main onclick="void 0">eventful</main>',
+    "<template><main>deferred</main></template>",
+    '<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">',
+    "<x-runtime-widget>custom</x-runtime-widget>",
+  ])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(
+        root,
+        (model) => enableFixtureTrustedNoninterference(model),
+        { pageSuffix },
+      );
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        /v2_noninterference_current_input_counterexample.*unsupported_dependency/u,
+      );
+    });
+});
+
+test("proof artifacts bind Oracle, environment, input, target, method result and canonical current bytes", async () => {
+  for (const [mutate, pattern] of [
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.oracle_version =
+          "forged-version";
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.oracle_implementation_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.environment_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.manifest.environments[0].identity =
+          "fixture-browser-environment.changed";
+      },
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    ],
+    [
+      async ({ root, directory, model, inputResources }) => {
+        const content =
+          '<!doctype html><main id="root">Current safe snapshot</main>\n';
+        await writeFile(path.join(root, directory, "page.html"), content);
+        const resource = inputResources.find(
+          (item) => item.key === "resource.page",
+        );
+        resource.sha256 = fixtureSha(content);
+        model.manifest.inspector.input_resources.find(
+          (item) => item.resource_ref === resource.key,
+        ).sha256 = resource.sha256;
+      },
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.input_snapshot_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.production_noninterference_proof.target_snapshot_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.production_noninterference_proof.method_result_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.artifact_path =
+          "design/not-the-artifact.json";
+      },
+      /v2_noninterference_artifact_resource_mismatch/u,
+    ],
+    [
+      async ({ root, model, artifactResources }) => {
+        const proof = model.certificate.production_noninterference_proof;
+        const resource = artifactResources.find(
+          (item) => item.key === proof.artifact_resource_ref,
+        );
+        const content = '{"tampered":true}\n';
+        await writeFile(path.join(root, resource.path), content);
+        resource.sha256 = fixtureSha(content);
+        proof.artifact_sha256 = resource.sha256;
+      },
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    ],
+  ])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(
+        root,
+        (model) => enableFixtureTrustedNoninterference(model),
+        { afterProofArtifacts: mutate },
+      );
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        pattern,
+      );
+    });
+
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(root, (model) => {
+      enableFixtureTrustedNoninterference(model);
+      model.manifest.oracles[0].sha256 = "0".repeat(64);
+    });
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_package_oracle_identity_mismatch/u,
+    );
+  });
+});
+
+test("package-derived applicability rejects narrowed text, control, asset and single-property profiles plus free-form basis", async () => {
+  for (const mutate of [
+    (model) => {
+      model.manifest.subjects[0].kind = "text";
+      model.manifest.structural_applicability.subject_profile_bindings[0].basis_refs[0] =
+        "package-policy.subject-kind.text.v1";
+    },
+    (model) => {
+      model.manifest.subjects[0].kind = "control";
+      model.manifest.structural_applicability.subject_profile_bindings[0].basis_refs[0] =
+        "package-policy.subject-kind.control.v1";
+    },
+    (model) => {
+      model.manifest.subjects[0].kind = "asset";
+      model.manifest.structural_applicability.subject_profile_bindings[0].basis_refs[0] =
+        "package-policy.subject-kind.asset.v1";
+    },
+    (model) => {
+      model.manifest.structural_applicability.subject_profile_bindings[0].profile_refs =
+        ["profile.property.geometry.width"];
+    },
+  ])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(root, (model) => {
+        enableCompactSymbolicApplicability(model);
+        mutate(model);
+      });
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        /v2_applicability_package_derived_set_mismatch/u,
+      );
+    });
+
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(root, (model) => {
+      enableCompactSymbolicApplicability(model);
+      model.manifest.structural_applicability.subject_profile_bindings[0].basis_refs.push(
+        "author.free-form-basis",
+      );
+    });
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_applicability_basis_authority_unknown/u,
+    );
+  });
 });
 
 test("untrusted, dynamic, external, incomplete and sampled proofs fail closed", async () => {

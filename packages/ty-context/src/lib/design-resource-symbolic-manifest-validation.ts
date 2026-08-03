@@ -89,6 +89,9 @@ export function validateDesignResourceSymbolicManifest(
     ruleProjections,
     indexes,
     compilation,
+    target,
+    resources,
+    contents,
   );
   validateSymbolicApplicabilityClosure(
     manifest,

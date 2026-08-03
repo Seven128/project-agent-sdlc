@@ -23,6 +23,18 @@ import type {
   SymbolicDenotationPredicate,
   SymbolicExtensionalPointV1,
 } from "./symbolic-denotation-types.js";
+import type { DesignResourceSymbolicNoninterferenceCertificateV2 } from "./design-resource-symbolic-noninterference-types.js";
+
+export type {
+  DesignResourceSymbolicNoninterferenceArtifactV1,
+  DesignResourceSymbolicNoninterferenceCertificateV2,
+  DesignResourceSymbolicNoninterferenceEquivalenceCaseV2,
+  DesignResourceSymbolicNoninterferenceFailureWitnessV1,
+  DesignResourceSymbolicNoninterferenceProofMethodV2,
+  DesignResourceSymbolicNoninterferenceProofV2,
+  DesignResourceSymbolicStaticDependencyNodeV2,
+  DesignResourceSymbolicStaticDependencyRootV2,
+} from "./design-resource-symbolic-noninterference-types.js";
 
 export interface DesignResourceSymbolicPopulationV2 {
   key: string;
@@ -99,53 +111,6 @@ export interface DesignResourceSymbolicDependencyEdgeV2 {
   axis_ref: string;
   fact_rule_ref: string;
   effects: Array<"disposition" | "expected_semantics" | "proof_denotation">;
-}
-
-export interface DesignResourceSymbolicNoninterferenceCertificateV2 {
-  key: string;
-  fact_rule_refs: string[];
-  omitted_axis_refs: string[];
-  dependency_edge_refs: string[];
-  canonical_rule_dag_sha256: string;
-  source_noninterference_proof?: DesignResourceSymbolicNoninterferenceProofV2 | null;
-  production_noninterference_proof?: DesignResourceSymbolicNoninterferenceProofV2 | null;
-}
-
-export type DesignResourceSymbolicNoninterferenceProofMethodV2 =
-  | "closed_world_static_dependency_closure"
-  | "restricted_ir_symbolic_equivalence"
-  | "finite_complete_domain_exhaustive_equivalence";
-
-export interface DesignResourceSymbolicNoninterferenceEquivalenceCaseV2 {
-  fact_rule_refs: string[];
-  side_predicate: SymbolicDenotationPredicate;
-  axis_erased_predicate: SymbolicDenotationPredicate;
-}
-
-export interface DesignResourceSymbolicStaticDependencyNodeV2 {
-  key: string;
-  axis_refs: string[];
-  dependency_refs: string[];
-  input_resource_refs: string[];
-}
-
-export interface DesignResourceSymbolicStaticDependencyRootV2 {
-  fact_rule_refs: string[] | null;
-  node_ref: string;
-}
-
-export interface DesignResourceSymbolicNoninterferenceProofV2 {
-  side: "source" | "production";
-  method: DesignResourceSymbolicNoninterferenceProofMethodV2;
-  input_resource_refs: string[];
-  oracle_ref: string;
-  environment_ref: string;
-  static_dependency_nodes: DesignResourceSymbolicStaticDependencyNodeV2[];
-  static_rule_roots: DesignResourceSymbolicStaticDependencyRootV2[];
-  equivalence_cases: DesignResourceSymbolicNoninterferenceEquivalenceCaseV2[];
-  dynamic_dependency_kinds: string[];
-  external_device_refs: string[];
-  complete_domain_cardinality: string | null;
 }
 
 export interface DesignResourceSymbolicSubjectProfileBindingV2 {

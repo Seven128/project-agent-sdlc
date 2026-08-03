@@ -2,6 +2,8 @@ import {
   DESIGN_RESOURCE_SYMBOLIC_APPLICABILITY_PROFILE_CATALOG,
   resolveSymbolicApplicabilityProfiles,
 } from "./design-resource-symbolic-applicability-profiles.js";
+import { deriveRequiredSymbolicStandardApplicability } from "./design-resource-symbolic-applicability-policy.js";
+import { validateSymbolicApplicabilityAuthorityRefs as validateAuthorityRefs } from "./design-resource-symbolic-applicability-authority.js";
 import type { DesignResourceObservableRuleManifestV2 } from "./design-resource-symbolic-fact-types.js";
 import type { SymbolicManifestIndexes } from "./design-resource-symbolic-indexes.js";
 import {
@@ -34,13 +36,46 @@ export function buildSymbolicApplicabilityIndex(
       "v2_applicability_profile_catalog_unknown",
       compact.profile_catalog,
     );
-  const applicableBySubject = validateProfileBindings(manifest, indexes);
-  validateCustomPropertyClosure(manifest, indexes, applicableBySubject);
-  validateInstanceExceptions(manifest, indexes, applicableBySubject);
+  const artifactRefs = new Set(
+    manifest.noninterference_certificates.flatMap((certificate) =>
+      [
+        certificate.source_noninterference_proof,
+        certificate.production_noninterference_proof,
+      ]
+        .filter((proof) => proof != null)
+        .map((proof) => proof.artifact_resource_ref),
+    ),
+  );
+  const { effective, expected } = validateProfileBindings(
+    manifest,
+    indexes,
+    artifactRefs,
+  );
+  validateCustomPropertyClosure(
+    manifest,
+    indexes,
+    effective,
+    expected,
+    artifactRefs,
+  );
+  validateInstanceExceptions(
+    manifest,
+    indexes,
+    effective,
+    expected,
+    artifactRefs,
+  );
+  for (const subjectRef of indexes.subjects.keys())
+    assertSameSet(
+      [...(effective.get(subjectRef) ?? [])],
+      [...(expected.get(subjectRef) ?? [])],
+      "v2_applicability_package_derived_set_mismatch",
+      subjectRef,
+    );
   return {
     mode: "package_profiles",
     isApplicable(subjectRef, propertyRef) {
-      const properties = applicableBySubject.get(subjectRef);
+      const properties = effective.get(subjectRef);
       if (!properties) invalid("v2_applicability_subject_unknown", subjectRef);
       if (!indexes.properties.has(propertyRef))
         invalid("v2_applicability_property_unknown", propertyRef);
@@ -52,7 +87,11 @@ export function buildSymbolicApplicabilityIndex(
 function validateProfileBindings(
   manifest: DesignResourceObservableRuleManifestV2,
   indexes: SymbolicManifestIndexes,
-): Map<string, Set<string>> {
+  artifactRefs: ReadonlySet<string>,
+): {
+  effective: Map<string, Set<string>>;
+  expected: Map<string, Set<string>>;
+} {
   const bindings = manifest.structural_applicability!.subject_profile_bindings;
   unique(
     bindings.map((binding) => binding.key),
@@ -66,11 +105,12 @@ function validateProfileBindings(
     "v2_applicability_subject_profile_set_mismatch",
     manifest.target_key,
   );
-  const result = new Map<string, Set<string>>();
+  const effective = new Map<string, Set<string>>();
+  const expected = new Map<string, Set<string>>();
   for (const binding of bindings) {
     if (!binding.subject_refs.length || !binding.profile_refs.length)
       invalid("v2_applicability_profile_binding_empty", binding.key);
-    validateAuthorityRefs(binding, indexes, binding.key);
+    validateAuthorityRefs(binding, indexes, artifactRefs, binding.key);
     unique(
       binding.profile_refs,
       `v2_applicability_profile_ref_duplicate:${binding.key}`,
@@ -95,16 +135,29 @@ function validateProfileBindings(
       const subject = indexes.subjects.get(subjectRef);
       if (!subject)
         invalid("v2_applicability_profile_subject_unknown", subjectRef);
-      result.set(subjectRef, new Set(properties));
+      const derived = deriveRequiredSymbolicStandardApplicability(
+        subject,
+        indexes.census,
+      );
+      for (const basisRef of derived.policy_basis_refs)
+        if (!binding.basis_refs.includes(basisRef))
+          invalid(
+            "v2_applicability_package_policy_basis_missing",
+            `${binding.key}:${subjectRef}:${basisRef}`,
+          );
+      effective.set(subjectRef, new Set(properties));
+      expected.set(subjectRef, new Set(derived.property_refs));
     }
   }
-  return result;
+  return { effective, expected };
 }
 
 function validateCustomPropertyClosure(
   manifest: DesignResourceObservableRuleManifestV2,
   indexes: SymbolicManifestIndexes,
-  applicableBySubject: Map<string, Set<string>>,
+  effective: Map<string, Set<string>>,
+  expected: Map<string, Set<string>>,
+  artifactRefs: ReadonlySet<string>,
 ): void {
   const rows =
     manifest.structural_applicability!.inspector_custom_property_closure;
@@ -125,7 +178,7 @@ function validateCustomPropertyClosure(
     const property = indexes.properties.get(row.property_ref);
     if (!property || property.standard)
       invalid("v2_custom_property_closure_property_unknown", row.property_ref);
-    validateAuthorityRefs(row, indexes, row.property_ref);
+    validateAuthorityRefs(row, indexes, artifactRefs, row.property_ref);
     requireKnownRefs(
       row.applicable_subject_refs,
       indexes.subjects,
@@ -153,7 +206,8 @@ function validateCustomPropertyClosure(
         );
     }
     for (const subjectRef of row.applicable_subject_refs)
-      applicableBySubject.get(subjectRef)!.add(row.property_ref);
+      for (const index of [effective, expected])
+        index.get(subjectRef)!.add(row.property_ref);
   }
   assertSameSet(
     rows.flatMap((row) => row.census_refs),
@@ -168,7 +222,9 @@ function validateCustomPropertyClosure(
 function validateInstanceExceptions(
   manifest: DesignResourceObservableRuleManifestV2,
   indexes: SymbolicManifestIndexes,
-  applicableBySubject: Map<string, Set<string>>,
+  effective: Map<string, Set<string>>,
+  expected: Map<string, Set<string>>,
+  artifactRefs: ReadonlySet<string>,
 ): void {
   const exceptions = manifest.structural_applicability!.instance_exceptions;
   unique(
@@ -186,54 +242,23 @@ function validateInstanceExceptions(
     const property = indexes.properties.get(exception.property_ref);
     if (!property)
       invalid("v2_applicability_exception_property_unknown", exception.key);
-    validateAuthorityRefs(exception, indexes, exception.key);
+    validateAuthorityRefs(exception, indexes, artifactRefs, exception.key);
     assertSameSet(
       exception.census_refs,
       [...subject.census_refs, ...property.census_refs],
       "v2_applicability_exception_census_set_mismatch",
       exception.key,
     );
-    const properties = applicableBySubject.get(exception.subject_ref)!;
+    const properties = effective.get(exception.subject_ref)!;
     const requestedApplicability = exception.disposition === "applicable";
     if (properties.has(exception.property_ref) === requestedApplicability)
       invalid("v2_applicability_exception_noop", exception.key);
     if (exception.disposition === "applicable")
       properties.add(exception.property_ref);
     else properties.delete(exception.property_ref);
+    const expectedProperties = expected.get(exception.subject_ref)!;
+    if (exception.disposition === "applicable")
+      expectedProperties.add(exception.property_ref);
+    else expectedProperties.delete(exception.property_ref);
   }
-}
-
-function validateAuthorityRefs(
-  row: {
-    census_refs: string[];
-    source_item_refs: string[];
-    basis_refs: string[];
-    rationale: string;
-  },
-  indexes: SymbolicManifestIndexes,
-  label: string,
-): void {
-  if (
-    !row.census_refs.length ||
-    !row.source_item_refs.length ||
-    !row.basis_refs.length ||
-    !row.rationale.trim()
-  )
-    invalid("v2_applicability_authority_incomplete", label);
-  unique(row.census_refs, `v2_applicability_census_duplicate:${label}`);
-  unique(
-    row.source_item_refs,
-    `v2_applicability_source_item_duplicate:${label}`,
-  );
-  unique(row.basis_refs, `v2_applicability_basis_duplicate:${label}`);
-  requireKnownRefs(
-    row.census_refs,
-    indexes.census,
-    "v2_applicability_census_unknown",
-  );
-  requireKnownRefs(
-    row.source_item_refs,
-    indexes.sourceItems,
-    "v2_applicability_source_item_unknown",
-  );
 }

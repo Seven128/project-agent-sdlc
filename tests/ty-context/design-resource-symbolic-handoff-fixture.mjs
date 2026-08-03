@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
+import { designResourceSymbolicCertificateKey } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
+import { createSymbolicNoninterferenceArtifactBinding } from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-artifact.js";
 import {
   SYMBOLIC_HANDOFF_PATH,
   SYMBOLIC_MANIFEST_PATH,
@@ -20,14 +22,19 @@ export {
 export async function writeDesignResourceSymbolicHandoffFixture(
   root,
   mutate,
-  { directory = "design", modelFactory = buildSymbolicFixtureModel } = {},
+  {
+    directory = "design",
+    modelFactory = buildSymbolicFixtureModel,
+    pageSuffix = "",
+    afterProofArtifacts,
+  } = {},
 ) {
   const handoffPath = `${directory}/symbolic-handoff.md`;
   const manifestPath = `${directory}/symbolic-rules.json`;
   const pagePath = `${directory}/page.html`;
   const valuesPath = `${directory}/values.json`;
   await mkdir(path.join(root, directory), { recursive: true });
-  const page = '<!doctype html><main id="root">Symbolic target</main>\n';
+  const page = `<!doctype html><main id="root">Symbolic target</main>${pageSuffix}\n`;
   const values = {
     width: "100px",
     background: "#ffffff",
@@ -55,8 +62,27 @@ export async function writeDesignResourceSymbolicHandoffFixture(
   ];
   const model = modelFactory(resourcesWithoutManifest, values);
   await mutate?.(model);
+  const proofArtifactResources = await writeProofArtifacts(
+    root,
+    directory,
+    model,
+    resourcesWithoutManifest,
+    new Map([
+      ["resource.page", Buffer.from(page)],
+      ["resource.values", Buffer.from(valuesContent)],
+    ]),
+  );
+  await afterProofArtifacts?.({
+    root,
+    directory,
+    model,
+    inputResources: resourcesWithoutManifest,
+    artifactResources: proofArtifactResources,
+  });
+  if (proofArtifactResources.length && afterProofArtifacts)
+    rekeyFixtureCertificate(model);
   const { manifest, rules, certificate, dependencyEdges } = model;
-  const manifestContent = `${JSON.stringify(manifest, null, 2)}\n`;
+  const manifestContent = `${JSON.stringify(manifest)}\n`;
   await writeFile(path.join(root, manifestPath), manifestContent);
   const manifestResource = fixtureResource(
     "resource.symbolic-manifest",
@@ -66,7 +92,7 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     manifestContent,
   );
   const handoff = buildSymbolicHandoff(
-    resourcesWithoutManifest,
+    [...resourcesWithoutManifest, ...proofArtifactResources],
     manifestResource,
     manifest,
     certificate,
@@ -90,6 +116,88 @@ ${YAML.stringify(handoff, { lineWidth: 0 }).trimEnd()}
     handoffPath,
     manifestPath,
   };
+}
+
+async function writeProofArtifacts(
+  root,
+  directory,
+  model,
+  inputResources,
+  inputContents,
+) {
+  const certificate = model.manifest.noninterference_certificates[0];
+  const proofs = [
+    certificate?.source_noninterference_proof,
+    certificate?.production_noninterference_proof,
+  ].filter(Boolean);
+  if (!proofs.length) return [];
+  const artifactRefs = proofs.map(
+    (proof) => `resource.noninterference.${proof.side}`,
+  );
+  const artifactPaths = proofs.map(
+    (proof) => `${directory}/noninterference-${proof.side}.json`,
+  );
+  const target = {
+    key: SYMBOLIC_TARGET_KEY,
+    interpretation: "exact_target",
+    resource_refs: [
+      ...inputResources.map((item) => item.key),
+      ...artifactRefs,
+      "resource.symbolic-manifest",
+    ],
+    source_profile: {
+      kind: "implementation_web",
+      entry_resource_ref: "resource.page",
+      dependency_resource_refs: [
+        ...inputResources
+          .map((item) => item.key)
+          .filter((ref) => ref !== "resource.page"),
+        ...artifactRefs,
+        "resource.symbolic-manifest",
+      ],
+      fact_manifest_resource_ref: "resource.symbolic-manifest",
+      acquisition: "complete",
+    },
+    selection_basis: "Selected exact symbolic fixture target.",
+  };
+  const resourceMap = new Map(inputResources.map((item) => [item.key, item]));
+  const result = [];
+  for (const [index, proof] of proofs.entries()) {
+    const created = createSymbolicNoninterferenceArtifactBinding(
+      model.manifest,
+      certificate,
+      proof,
+      target,
+      resourceMap,
+      inputContents,
+      artifactRefs[index],
+      artifactPaths[index],
+    );
+    Object.assign(proof, created.binding);
+    await writeFile(path.join(root, artifactPaths[index]), created.text);
+    const resource = fixtureResource(
+      artifactRefs[index],
+      "supporting",
+      artifactPaths[index],
+      "application/json",
+      created.text,
+    );
+    resourceMap.set(resource.key, resource);
+    inputContents.set(resource.key, Buffer.from(created.text));
+    result.push(resource);
+  }
+  const { key: _key, ...certificateInput } = certificate;
+  certificate.key = designResourceSymbolicCertificateKey(certificateInput);
+  model.certificate = certificate;
+  return result;
+}
+
+function rekeyFixtureCertificate(model) {
+  const certificate = model.manifest.noninterference_certificates[0];
+  if (!certificate) return;
+  const { key: _key, ...certificateInput } = certificate;
+  certificate.key = designResourceSymbolicCertificateKey(certificateInput);
+  model.certificate = certificate;
 }
 
 function buildSymbolicHandoff(
@@ -124,18 +232,16 @@ function buildSymbolicHandoff(
       {
         key: SYMBOLIC_TARGET_KEY,
         interpretation: "exact_target",
-        resource_refs: [
-          "resource.page",
-          "resource.values",
-          "resource.symbolic-manifest",
-        ],
+        resource_refs: resourcesWithoutManifest
+          .map((item) => item.key)
+          .concat("resource.symbolic-manifest"),
         source_profile: {
           kind: "implementation_web",
           entry_resource_ref: "resource.page",
-          dependency_resource_refs: [
-            "resource.values",
-            "resource.symbolic-manifest",
-          ],
+          dependency_resource_refs: resourcesWithoutManifest
+            .map((item) => item.key)
+            .filter((ref) => ref !== "resource.page")
+            .concat("resource.symbolic-manifest"),
           fact_manifest_resource_ref: "resource.symbolic-manifest",
           acquisition: "complete",
         },

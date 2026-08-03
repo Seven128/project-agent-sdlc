@@ -1,4 +1,5 @@
 import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
+import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
 import {
   DESIGN_RESOURCE_SYMBOLIC_NONINTERFERENCE_ORACLE_CAPABILITIES,
   type DesignResourceSymbolicNoninterferenceOracleCapability,
@@ -11,6 +12,7 @@ import type {
 } from "./design-resource-symbolic-fact-types.js";
 import type { SymbolicManifestIndexes } from "./design-resource-symbolic-indexes.js";
 import { validateStaticDependencyClosure } from "./design-resource-symbolic-static-dependency-validation.js";
+import { validateSymbolicNoninterferenceArtifact } from "./design-resource-symbolic-noninterference-artifact.js";
 import {
   assertSameSet,
   invalid,
@@ -31,6 +33,9 @@ export function validateTrustedSymbolicNoninterference(
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   indexes: SymbolicManifestIndexes,
   compilation: DesignResourceSymbolicCompilationSession,
+  target: DesignResourceHandoffPreflightV2["handoff"]["targets"][number],
+  resources: ReadonlyMap<string, DesignResource>,
+  contents: ReadonlyMap<string, Buffer>,
 ): void {
   if (!certificate.omitted_axis_refs.length) {
     if (
@@ -58,6 +63,9 @@ export function validateTrustedSymbolicNoninterference(
       projections,
       indexes,
       compilation,
+      target,
+      resources,
+      contents,
     );
   }
 }
@@ -70,6 +78,9 @@ function validateProof(
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   indexes: SymbolicManifestIndexes,
   compilation: DesignResourceSymbolicCompilationSession,
+  target: DesignResourceHandoffPreflightV2["handoff"]["targets"][number],
+  resources: ReadonlyMap<string, DesignResource>,
+  contents: ReadonlyMap<string, Buffer>,
 ): void {
   if (proof.side !== expectedSide)
     invalid(
@@ -122,16 +133,29 @@ function validateProof(
     proof.external_device_refs,
     `v2_noninterference_external_device_duplicate:${certificate.key}:${expectedSide}`,
   );
+  assertSameSet(
+    proof.omitted_axis_refs,
+    certificate.omitted_axis_refs,
+    "v2_noninterference_artifact_omitted_axis_mismatch",
+    `${certificate.key}:${expectedSide}`,
+  );
   if (proof.method === "closed_world_static_dependency_closure") {
     validateStaticDependencyClosure(proof, certificate, projections, manifest);
-    return;
-  }
-  validateEquivalenceProof(
-    proof,
+  } else
+    validateEquivalenceProof(
+      proof,
+      manifest,
+      certificate,
+      projections,
+      compilation,
+    );
+  validateSymbolicNoninterferenceArtifact(
     manifest,
     certificate,
-    projections,
-    compilation,
+    proof,
+    target,
+    resources,
+    contents,
   );
 }
 

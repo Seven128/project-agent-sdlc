@@ -1,5 +1,10 @@
 import { createSymbolicDenotationCompilationSession } from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
 import {
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+} from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-artifact.js";
+import {
   designResourceSymbolicCertificateKey,
   designResourceSymbolicCombinedRuleDigest,
   designResourceSymbolicRuleKey,
@@ -203,9 +208,9 @@ export function buildSymbolicScaleFixtureModel(
       {
         key: "oracle.fixture",
         trust: "frozen_executable",
-        identity: "fixture-symbolic-oracle",
-        version: "1.0.0",
-        sha256: fixtureSha("fixture-symbolic-noninterference-oracle-v1"),
+        identity: SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY,
+        version: SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+        sha256: SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
         capability_refs: [
           ...allCapabilities,
           "symbolic_noninterference.production.closed_world_static_dependency_closure",
@@ -233,7 +238,10 @@ export function buildSymbolicScaleFixtureModel(
           ],
           census_refs: ["census.subject.scale"],
           source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-          basis_refs: ["fixture-inspector.scale-component-profile"],
+          basis_refs: [
+            "package-policy.subject-kind.component_instance.v1",
+            "census.subject.scale",
+          ],
           rationale:
             "One frozen Inspector classification shares the two package-owned property profiles across the complete deterministic subject set.",
         },

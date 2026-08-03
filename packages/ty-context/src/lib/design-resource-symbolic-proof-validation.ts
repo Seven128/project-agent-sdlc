@@ -160,6 +160,9 @@ export function validateSymbolicCertificates(
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   indexes: SymbolicManifestIndexes,
   compilation: DesignResourceSymbolicCompilationSession,
+  target: DesignResourceSymbolicHandoffTargetV2,
+  resources: Map<string, DesignResource>,
+  contents: Map<string, Buffer>,
 ): { coveredOmittedAxes: number; coveredDependencyEdges: number } {
   const byRule = new Map(projections.map((item) => [item.rule.key, item]));
   assertCanonicalSet(
@@ -179,7 +182,16 @@ export function validateSymbolicCertificates(
         invalid("v2_certificate_rule_unknown", `${certificate.key}:${ref}`);
       return projection;
     });
-    validateCertificate(manifest, certificate, local, indexes, compilation);
+    validateCertificate(
+      manifest,
+      certificate,
+      local,
+      indexes,
+      compilation,
+      target,
+      resources,
+      contents,
+    );
     coveredRules.push(...certificate.fact_rule_refs);
     certificate.omitted_axis_refs.forEach((ref) => coveredAxes.add(ref));
     certificate.dependency_edge_refs.forEach((ref) => coveredEdges.add(ref));
@@ -197,6 +209,9 @@ function validateCertificate(
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   indexes: SymbolicManifestIndexes,
   compilation: DesignResourceSymbolicCompilationSession,
+  target: DesignResourceSymbolicHandoffTargetV2,
+  resources: Map<string, DesignResource>,
+  contents: Map<string, Buffer>,
 ): void {
   unique(
     certificate.fact_rule_refs,
@@ -255,6 +270,9 @@ function validateCertificate(
     projections,
     indexes,
     compilation,
+    target,
+    resources,
+    contents,
   );
 }
 

@@ -3,8 +3,12 @@ import {
   exerciseCompactTrustedSymbolicLongTaskClosure,
   exerciseMixedSymbolicLongTaskClosure,
   exerciseSymbolicCompileRejectsUntrustedDynamicDependency,
+  exerciseSymbolicCompileRejectsCurrentProductionDependency,
+  exerciseSymbolicCompileRejectsNarrowApplicability,
   exerciseSymbolicCompileRejectsUnresolvedDisposition,
   exerciseSymbolicFinalGateRejectsCounterexample,
+  exerciseSymbolicFinalGateRejectsCurrentProductionDependency,
+  exerciseSymbolicFinalGateRejectsNarrowApplicability,
 } from "./symbolic-denotation-long-task-v2-exercise.mjs";
 
 export { exerciseMixedSymbolicLongTaskClosure };
@@ -25,6 +29,16 @@ test(
 );
 
 test(
+  "Long-Task compile rejects an internally self-consistent proof when current production reads an omitted axis",
+  exerciseSymbolicCompileRejectsCurrentProductionDependency,
+);
+
+test(
+  "Long-Task compile rejects narrowed text, control, asset and single-property applicability",
+  exerciseSymbolicCompileRejectsNarrowApplicability,
+);
+
+test(
   "Long-Task compile rejects an unresolved symbolic disposition through preflight",
   exerciseSymbolicCompileRejectsUnresolvedDisposition,
 );
@@ -32,4 +46,14 @@ test(
 test(
   "the sole Final Gate rejects a current production non-interference proof counterexample",
   exerciseSymbolicFinalGateRejectsCounterexample,
+);
+
+test(
+  "the sole Final Gate source recompile rejects a current production omitted-axis dependency",
+  exerciseSymbolicFinalGateRejectsCurrentProductionDependency,
+);
+
+test(
+  "the sole Final Gate source recompile rejects narrowed text, control, asset and single-property applicability",
+  exerciseSymbolicFinalGateRejectsNarrowApplicability,
 );

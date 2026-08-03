@@ -145,6 +145,46 @@ export async function exerciseSymbolicCompileRejectsUntrustedDynamicDependency()
   }
 }
 
+export async function exerciseSymbolicCompileRejectsCurrentProductionDependency() {
+  const fixture = await createDeliveryFixture();
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+    });
+    await writeCurrentProductionDependencyFixture(fixture);
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /v2_noninterference_current_input_counterexample.*variation\.state/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+export async function exerciseSymbolicCompileRejectsNarrowApplicability() {
+  const fixture = await createDeliveryFixture();
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture);
+    for (const attack of applicabilityAttacks()) {
+      await writeNarrowApplicabilityFixture(fixture, attack.mutate);
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        /v2_applicability_package_derived_set_mismatch/u,
+        attack.name,
+      );
+    }
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
 export async function exerciseSymbolicCompileRejectsUnresolvedDisposition() {
   const fixture = await createDeliveryFixture();
   try {
@@ -201,6 +241,119 @@ export async function exerciseSymbolicFinalGateRejectsCounterexample() {
       rm(fakePlaywrightBin, { recursive: true, force: true }),
     ]);
   }
+}
+
+export async function exerciseSymbolicFinalGateRejectsCurrentProductionDependency() {
+  const fixture = await createDeliveryFixture();
+  const fakePlaywrightBin = await createFakePlaywrightBin();
+  const env = withPath(fakePlaywrightBin);
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+    });
+    await runCli(fixture.root, ["enable", "long-task"], { env });
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+      env,
+    });
+    await writeCurrentProductionDependencyFixture(fixture);
+    const failure = await runFinalGateFailureText(fixture, env);
+    assert.match(failure, /final_gate_protected_input_stale/u);
+    assert.match(failure, /design-symbolic\/page\.html/u);
+    assert.match(failure, /design-symbolic\/noninterference-production\.json/u);
+  } finally {
+    await Promise.all([
+      rm(fixture.root, { recursive: true, force: true }),
+      rm(fakePlaywrightBin, { recursive: true, force: true }),
+    ]);
+  }
+}
+
+export async function exerciseSymbolicFinalGateRejectsNarrowApplicability() {
+  for (const attack of applicabilityAttacks()) {
+    const fixture = await createDeliveryFixture();
+    const fakePlaywrightBin = await createFakePlaywrightBin();
+    const env = withPath(fakePlaywrightBin);
+    try {
+      await prepareMixedSymbolicLongTaskFixture(fixture);
+      await runCli(fixture.root, ["enable", "long-task"], { env });
+      await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+        env,
+      });
+      await writeNarrowApplicabilityFixture(fixture, attack.mutate);
+      const failure = await runFinalGateFailureText(fixture, env);
+      assert.match(failure, /final_gate_protected_input_stale/u, attack.name);
+      assert.match(failure, /design-symbolic\/symbolic-rules\.json/u);
+    } finally {
+      await Promise.all([
+        rm(fixture.root, { recursive: true, force: true }),
+        rm(fakePlaywrightBin, { recursive: true, force: true }),
+      ]);
+    }
+  }
+}
+
+async function writeCurrentProductionDependencyFixture(fixture) {
+  await writeDesignResourceSymbolicHandoffFixture(
+    fixture.root,
+    (model) => {
+      enableCompactSymbolicApplicability(model);
+      enableFixtureTrustedNoninterference(model);
+    },
+    {
+      directory: "design-symbolic",
+      pageSuffix:
+        '<script>globalThis.__currentAxis = "variation.state";</script>',
+    },
+  );
+}
+
+async function writeNarrowApplicabilityFixture(fixture, mutate) {
+  await writeDesignResourceSymbolicHandoffFixture(
+    fixture.root,
+    (model) => {
+      enableCompactSymbolicApplicability(model);
+      mutate(model);
+    },
+    { directory: "design-symbolic" },
+  );
+}
+
+function applicabilityAttacks() {
+  return [
+    {
+      name: "text-bearing subject",
+      mutate(model) {
+        setSubjectKind(model, "text");
+      },
+    },
+    {
+      name: "interactive control",
+      mutate(model) {
+        setSubjectKind(model, "control");
+      },
+    },
+    {
+      name: "asset-bearing subject",
+      mutate(model) {
+        setSubjectKind(model, "asset");
+      },
+    },
+    {
+      name: "single-property profile",
+      mutate(model) {
+        model.manifest.structural_applicability.subject_profile_bindings[0].profile_refs =
+          ["profile.property.geometry.width"];
+      },
+    },
+  ];
+}
+
+function setSubjectKind(model, kind) {
+  model.manifest.subjects[0].kind = kind;
+  model.manifest.structural_applicability.subject_profile_bindings[0].basis_refs[0] = `package-policy.subject-kind.${kind}.v1`;
 }
 
 function validateSymbolicEvidenceMutations(
@@ -286,5 +439,19 @@ async function runFinalGate(fixture, env) {
   } catch (error) {
     if (!error.stdout) throw error;
     return JSON.parse(error.stdout);
+  }
+}
+
+async function runFinalGateFailureText(fixture, env) {
+  try {
+    const receipt = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env },
+    );
+    assert.notEqual(receipt.workflow_status, "machine_accepted");
+    return JSON.stringify(receipt);
+  } catch (error) {
+    return [error.message, error.stdout ?? "", error.stderr ?? ""].join("\n");
   }
 }

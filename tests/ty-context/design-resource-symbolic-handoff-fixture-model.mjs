@@ -6,6 +6,11 @@ import {
   designResourceSymbolicRuleKey,
 } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
 import {
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+} from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-artifact.js";
+import {
   buildFixtureObligations,
   fixtureCensusRow,
   fixtureOneQuantifier,
@@ -341,7 +346,10 @@ export function enableCompactSymbolicApplicability(model) {
         ],
         census_refs: ["census.subject.root"],
         source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
-        basis_refs: ["fixture-inspector.subject-capability-profile"],
+        basis_refs: [
+          "package-policy.subject-kind.surface.v1",
+          "census.subject.root",
+        ],
         rationale:
           "The frozen Inspector classifies the fixture surface with exactly the two package-owned property capabilities used by this target.",
       },
@@ -366,9 +374,10 @@ export function enableFixtureTrustedNoninterference(
     projection.rule.region = structuredClone(model.manifest.reachable_region);
   refreshSymbolicFixtureDerivedIdentities(model);
   model.manifest.oracles[0].trust = "frozen_executable";
-  model.manifest.oracles[0].sha256 = fixtureSha(
-    "fixture-symbolic-noninterference-oracle-v1",
-  );
+  model.manifest.oracles[0].identity = SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY;
+  model.manifest.oracles[0].version = SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION;
+  model.manifest.oracles[0].sha256 =
+    SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256;
   model.manifest.oracles[0].capability_refs = [
     ...new Set([
       ...model.manifest.oracles[0].capability_refs,
@@ -436,6 +445,18 @@ export function enableFixtureTrustedNoninterference(
         method === "finite_complete_domain_exhaustive_equivalence"
           ? model.rules[0].compiled.theoretical_ground_cardinality
           : null,
+      oracle_version: SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+      oracle_implementation_sha256:
+        SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+      environment_sha256: "0".repeat(64),
+      input_snapshot_sha256: "0".repeat(64),
+      target_snapshot_sha256: "0".repeat(64),
+      omitted_axis_refs: [...model.certificate.omitted_axis_refs],
+      method_result_sha256: "0".repeat(64),
+      artifact_resource_ref: `resource.noninterference.${side}`,
+      artifact_path: `design/noninterference-${side}.json`,
+      artifact_sha256: "0".repeat(64),
+      failure_witness: null,
     };
   };
   const certificateInput = {
