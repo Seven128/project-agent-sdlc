@@ -442,7 +442,6 @@ outcomes:
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
       expected_output_paths:
-      - packages/ty-context/dist/**
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
       - tests/ty-context/design-resource-symbolic-*.mjs
@@ -450,6 +449,7 @@ outcomes:
       - tests/ty-context/symbolic-denotation-*.mjs
       artifact_globs:
       - artifacts/semantic-fact-results.json
+      - packages/ty-context/dist/lib/semantic-fact-source-parser.js
       positive_assertions:
       - key: symbolic-liveness
         criterion: The declared Harness verification runtime remains live under semantic mutation.
@@ -632,13 +632,13 @@ outcomes:
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
       expected_output_paths:
-      - packages/ty-context/dist/**
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
       - tests/ty-context/design-resource-symbolic-*.mjs
       - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
       - tests/ty-context/symbolic-denotation-*.mjs
-      artifact_globs: []
+      artifact_globs:
+      - packages/ty-context/dist/lib/semantic-fact-source-parser.js
       positive_assertions:
       - key: api-contract-parity
         criterion: The versioned UI V2 manifest, handoff, Contract parser, compiled authority and typed evidence payload expose one strict aligned API contract while preserving V1.
@@ -740,13 +740,13 @@ outcomes:
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
       expected_output_paths:
-      - packages/ty-context/dist/**
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
       - tests/ty-context/design-resource-symbolic-*.mjs
       - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
       - tests/ty-context/symbolic-denotation-*.mjs
-      artifact_globs: []
+      artifact_globs:
+      - packages/ty-context/dist/lib/semantic-fact-source-parser.js
       positive_assertions:
       - key: complete-liveness
         criterion: The complete repository verification runtime remains live.
@@ -1263,7 +1263,7 @@ compact_semantic_carrier:
       facts: 113
       obligations: 113
       assertions: 215
-      canonical_bytes: 317040
+      canonical_bytes: 317134
     maximum:
       claims: 128
       claim_projections: 128
