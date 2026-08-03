@@ -1139,7 +1139,7 @@ catalogs:
     - - input.source.canonical-shared-decision-dag
       - source_item
       - canonical-shared-decision-dag
-      - 723d74067b214d99c17442382707930e26f9955fac8423a8a1b7c05d82bdb3b1
+      - a8cdba49a913689c7683ccbecb10bb3e1f0ac4414361e64760d3d49de91cc745
       - - fact.canonical-shared-decision-dag
       - - canonical-shared-decision-dag
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1188,7 +1188,7 @@ catalogs:
     - - input.source.deterministic-canonical-identity
       - source_item
       - deterministic-canonical-identity
-      - 7ec91c188834b8f4b1963a9d734b7a6349ea020c42c6d0b9abe8a83e42310bb7
+      - 3d9eb0a3bf7638d2bc5576c12240b524e973119342fa465dee5e962cdd567f9a
       - - fact.deterministic-canonical-identity
       - - deterministic-canonical-identity
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1209,21 +1209,21 @@ catalogs:
     - - input.source.package-policy-property-catalog
       - source_item
       - package-policy-property-catalog
-      - 54ec88b336125ae9720106644a4c8e34f01e0fef2ef624a393aaaff0b0dfd231
+      - 6148fa81945940f5775dd344e4a9417e0ee7acf1c79ed5d54c80371bafef5d19
       - - fact.package-policy-property-catalog
       - - package-policy-property-catalog
       - This atomic marked Source item contributes exactly one delivery Fact.
     - - input.source.inspector-census-applicability
       - source_item
       - inspector-census-applicability
-      - 6816498e49281177872bd0bd85210cbbd83a886e3f0d332d4bb37061626fddcc
+      - 194e51e5b28e5ef8e72e788ae2e0da25d757aad6f7cc70ad7db4c576c8561114
       - - fact.inspector-census-applicability
       - - inspector-census-applicability
       - This atomic marked Source item contributes exactly one delivery Fact.
     - - input.source.basis-backed-property-remainder
       - source_item
       - basis-backed-property-remainder
-      - 9efa207cca5e3ae5f788fd2c11439feb2ff135430feacfa5311d9e9a0c3beb9b
+      - 552186c08b26c502e432beffb7b746d84fe29303c959b7f173a6eb80027f0d23
       - - fact.basis-backed-property-remainder
       - - basis-backed-property-remainder
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1300,21 +1300,21 @@ catalogs:
     - - input.source.set-valued-noninterference-certificates
       - source_item
       - set-valued-noninterference-certificates
-      - 1bea35607189801a3c44f6bb4d1f6cc4936055aaf3c9c85f4f9c490b924f350d
+      - 928b7c3699adfa9f281d45b2b901681b806932d21797ab53144fc4881f57e746
       - - fact.set-valued-noninterference-certificates
       - - set-valued-noninterference-certificates
       - This atomic marked Source item contributes exactly one delivery Fact.
     - - input.source.certificate-omitted-axis-coverage
       - source_item
       - certificate-omitted-axis-coverage
-      - ea743222b3cb3d4ae017f7778a0216e67856ec3fab51865f51a6b9ff11a81e17
+      - 99ac18184ff6caeac680bee74590ac1e923a3ec4ba4d89369bc414fe1c37c895
       - - fact.certificate-omitted-axis-coverage
       - - certificate-omitted-axis-coverage
       - This atomic marked Source item contributes exactly one delivery Fact.
     - - input.source.certificate-dependency-edge-coverage
       - source_item
       - certificate-dependency-edge-coverage
-      - 9eb79a1c5cdf186360edc2c3bdd66e5391c8f2502193eeb7ec20c29764204b5f
+      - eff40e55256b6da6629fd8679fef609346823b9d438ece2cebbc9122321126b1
       - - fact.certificate-dependency-edge-coverage
       - - certificate-dependency-edge-coverage
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1349,7 +1349,7 @@ catalogs:
     - - input.source.certificate-package-recomputation
       - source_item
       - certificate-package-recomputation
-      - 60331a9a0feeef3069f9ef01d1ac604ca67459af422030a77d877d58acfecd59
+      - 2fe8b820fe18f953a6659c55457c0c935dc33813cc81972a468d339211582969
       - - fact.certificate-package-recomputation
       - - certificate-package-recomputation
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1608,7 +1608,7 @@ catalogs:
     - - input.source.complexity-parameter-verification
       - source_item
       - complexity-parameter-verification
-      - f1a9e66a7f44cae9b25d815d29be2792be6e100a498d9b436bb17eaf529025ff
+      - 5122a8f18a989f0a9cc7ba2a7616c886409133af6824224bf36f875b24099bb9
       - - fact.complexity-parameter-verification
       - - complexity-parameter-verification
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1622,7 +1622,7 @@ catalogs:
     - - input.source.architecture-deliberation
       - source_item
       - architecture-deliberation
-      - 5f3add386c7c2954270e5671db1a21ec886e691918c44a1a4b0cd1c3f80b9e45
+      - d20a12330b7a578ee80fbec601e4cb7383db7f0f6d3bd924153d32067f71bcf3
       - - fact.architecture-deliberation
       - - architecture-deliberation
       - This atomic marked Source item contributes exactly one delivery Fact.
@@ -1769,14 +1769,14 @@ catalogs:
     - - input.context.project-context-areas-harness-package-md
       - context
       - project_context/areas/harness-package.md
-      - a5c5bdd07118edd1d63e1ccbb1d84485b02c30e06e169bacf87e81e8f0fb4261
+      - 0ad1af8b2708e8cd5170fa30667b8ecd46b73fb9ae9b96d85d04428244a34842
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
       - context
       - project_context/areas/harness-package/contracts/design-resource-handoff.md
-      - 495cca67e5c35e620cb4237bcd3ed97e441207b59d49d019239251ad0f6250e5
+      - 3de267327c8e863b92acea83a88fed6b7d588f55a67fe909d6607cdee7fc542a
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -1790,7 +1790,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
       - context
       - project_context/areas/harness-package/contracts/workflow-contract.md
-      - c2cb4ec158ce0f94bdb6588cbc3c672d4295adda6113b394077e7bbecf279706
+      - 9a1f8ff9d72d251003ca847b4ab6424ad8b675b75ce88fe84357e5e5d495d6c1
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -1804,7 +1804,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
       - context
       - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
-      - 652f1d635c73798e657e9c88fd78f70952c4a081cf404878c6e2fd46e4ece42b
+      - bc36f236291c40e06168275f07c0d2935c94e43618945e3399cd2af9fb7606f7
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -1825,35 +1825,35 @@ catalogs:
     - - input.context.project-context-areas-harness-package-implementation-index-md
       - context
       - project_context/areas/harness-package/implementation-index.md
-      - 7d3f2a9f0ff88124542eb1e65dd904fb6e626f31e3c09cb83514679d14943110
+      - 03ad668b7fb59f8e9fef848bc5b8dcb3ce45fb9ac25bbfd87d28b19ca4f7fe16
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-verification-md
       - context
       - project_context/areas/harness-package/verification.md
-      - 14d94b1c275433fa3b27c40da8ab6b80ccedf4f3f6c615da66f55e3caa9da3f8
+      - ea40ddc435f4ae92c770023791bd8037428fff79d2b8b187f897b0ab7a04f74f
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-context-toml
       - context
       - project_context/context.toml
-      - 96c11f9bc44b59d576a56b522c69fbadb4d4278299af9fa1e914c7047af3c0ee
+      - 62420ea715f2daa29c3956e9f9b43f440d63eb0fa010eda0d9dfff2f0e0b81a3
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-global-md
       - context
       - project_context/global.md
-      - 04f9f755cb7c91e9b30265dc0dd75bd6b346140906673799da19558ae04d71a5
+      - affa6e4851309ff9ffbd7cc7031d622dc44548192706e2664f6d216ab2e3dc3d
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.repository.project-spec-md
       - canonical_spec
       - PROJECT_SPEC.md
-      - 989f073265eede773d09d657c8380a4c3c2f57dde66fc3ea5b5e09ff8d5c0331
+      - cf49179a10aed5e07b51fdb4dcef3dd6038b0806ed61f7aaf43cd26519f3a68b
       - - fact.symbolic-denotation-efficiency-result
         - fact.original-attachment-provenance
         - fact.audited-source-supersession
@@ -2055,7 +2055,7 @@ catalogs:
     - - input.repository.docs-long-task-workflow-efficiency-md
       - canonical_spec
       - docs/long-task-workflow-efficiency.md
-      - eba6ecb05d14f0175f40ffa63bb00358483ee08001c9cb0e7038c99ad16ae660
+      - 192c0be74807d4973589934940282ef85183aad7a84627bea3d677c3b1b975f2
       - - fact.symbolic-denotation-efficiency-result
         - fact.original-attachment-provenance
         - fact.audited-source-supersession
@@ -2153,7 +2153,7 @@ catalogs:
     - - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       - repository_preservation
       - packages/ty-context/src/lib/design-resource-fact-policy.ts
-      - 12f8c74dc0272eb8e900c3d77349bfebba1e4772f9b3432a85ef4741dd03d755
+      - 77a779f4d435a40924990955134e751357ee5a37db1afde7e81d2e3a12c6cd78
       - - fact.original-attachment-provenance
         - fact.audited-source-supersession
         - fact.complete-material-input-index
@@ -8493,7 +8493,7 @@ fact_sets:
   - provenance
   - source_item_refs
   rows:
-  - - 9a4187c29dae2be2e549d3891d9f9c0d8f421480b48cc459ee9c02063ca51436
+  - - 950f9a8b17e2af740d9a07de966da1fc3bc142badece25f402faccfe393598bb
     - fact.symbolic-denotation-efficiency-result
     - cell.symbolic-denotation-efficiency-result
     - subject.symbolic-denotation-efficiency-result
@@ -8529,7 +8529,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - symbolic-denotation-efficiency-result
-  - - 586662673e64b4e5de6d797904ee5f3455cc4f6237a8963f5f5468f794584d40
+  - - 17f545a963f69a83655a12ed8004d7c0279547816cc1dba5902df2ca31c9209f
     - fact.original-attachment-provenance
     - cell.original-attachment-provenance
     - subject.original-attachment-provenance
@@ -8566,7 +8566,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - original-attachment-provenance
-  - - 44923605e8fb38ad70c86c8047c4407ebdb52ea2e17151b3ea04a7758de14c82
+  - - 9ecb51131f362af8e640275a27fd5ba76a76fb5b1612d44e6a4e4ecb2937fbcf
     - fact.audited-source-supersession
     - cell.audited-source-supersession
     - subject.audited-source-supersession
@@ -8603,7 +8603,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - audited-source-supersession
-  - - f9eaab942908dbcb204676da4bd3cb19747f61672eefb7ddc11586ef940fa83f
+  - - 2b0018e9e01d5be6fb8cc8cbbace0aca5ada18fa11141a6502dfd93d63cad6cf
     - fact.complete-material-input-index
     - cell.complete-material-input-index
     - subject.complete-material-input-index
@@ -8640,7 +8640,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - complete-material-input-index
-  - - 30af06df58a11f1c832d3ea5603309d87bfdf99f26c72a76b122a5621a4fb80d
+  - - 5de8589a2ce80d65c0100b9a3aa8f714aeb5ee2f40eb24e1e933a03499f30768
     - fact.complete-extensional-universe
     - cell.complete-extensional-universe
     - subject.complete-extensional-universe
@@ -8664,7 +8664,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - complete-extensional-universe
-  - - 5b3014a5738807c1c298ab09a88735377a18c06cd91b38f04d789c27ef7c7949
+  - - 6eb79d9ce2667c79ee77f53222315c2ed6ba78e2d13ed0a6b2b184eb634fe8ae
     - fact.subject-relation-universe-axis
     - cell.subject-relation-universe-axis
     - subject.subject-relation-universe-axis
@@ -8688,7 +8688,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - subject-relation-universe-axis
-  - - 68c4bc3f788ed78d275cbc1f92ae7d8c1f3a65e5ea48fa73fa8c02e4a464bcad
+  - - 39d60bb14a808fa20aca7783d93b10f4058634e139de99eee19f1caaf02098ab
     - fact.target-universe-axis
     - cell.target-universe-axis
     - subject.target-universe-axis
@@ -8712,7 +8712,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - target-universe-axis
-  - - 96a843f2171578158eaa37f6215a15bd8e624601bf744d26596452906da6bb3e
+  - - 32a2f5861585622715fc73c1187bda83e6b72ff78e7341d76f7ef902665473a6
     - fact.reachable-condition-variation-universe-axis
     - cell.reachable-condition-variation-universe-axis
     - subject.reachable-condition-variation-universe-axis
@@ -8736,7 +8736,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - reachable-condition-variation-universe-axis
-  - - 8c1f1965506f54db467f1a9ca204d602e72a653a91c692fcb6451bd8858be423
+  - - c2f0e6f23e82bbe14df9606994030eb6ce4938558f25ab7caa808d643ca05c2a
     - fact.applicable-atomic-property-universe-axis
     - cell.applicable-atomic-property-universe-axis
     - subject.applicable-atomic-property-universe-axis
@@ -8760,7 +8760,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - applicable-atomic-property-universe-axis
-  - - f1f1775753eb8e1f89032bf36aa95e44f09e019161dabb1e3751d001c3b32ddd
+  - - 330a2f07790f166dbee996a181127cba878f1f3c1ee7f865e522b2fecf0bfab1
     - fact.population-quantifier-universe-axis
     - cell.population-quantifier-universe-axis
     - subject.population-quantifier-universe-axis
@@ -8784,7 +8784,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - population-quantifier-universe-axis
-  - - 9f9a25719cc86c5875d9486e4879f65c18a8d4469bd30d6d2b930003b1c898d7
+  - - fa1f7df4b08c15bffe07c6d4fbfe4f351d6a24160e4d4142399f086e02446145
     - fact.pointwise-disposition-equivalence
     - cell.pointwise-disposition-equivalence
     - subject.pointwise-disposition-equivalence
@@ -8808,7 +8808,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - pointwise-disposition-equivalence
-  - - 105551bc7ffc06b377a63bf53359a380691973c15e50f75ad181cdee3e900e99
+  - - 3912a3108dd4bea47d9d2422b318de56410e7a4d959071470cf6e5997c9b341d
     - fact.pointwise-expected-semantics-equivalence
     - cell.pointwise-expected-semantics-equivalence
     - subject.pointwise-expected-semantics-equivalence
@@ -8832,7 +8832,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - pointwise-expected-semantics-equivalence
-  - - 0a235d5ff7e499f4581f03c60df12d1b76918d4ad207b43a350ddc1caf306643
+  - - cc23a33d72896e7c296c6a7ab6c4770cbbb2a34701e8835cd561426c3cf651a3
     - fact.pointwise-proof-denotation-equivalence
     - cell.pointwise-proof-denotation-equivalence
     - subject.pointwise-proof-denotation-equivalence
@@ -8856,7 +8856,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - pointwise-proof-denotation-equivalence
-  - - 475374bd476b473e8dc839fb835151da521646a52ed0a9fd5ef3c75a7d16e18c
+  - - 388bcdaee3f8ba3536870557a1262f12773aade624560bda403fad60a10ff5f5
     - fact.v1-ground-row-identity-not-required
     - cell.v1-ground-row-identity-not-required
     - subject.v1-ground-row-identity-not-required
@@ -8880,7 +8880,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - v1-ground-row-identity-not-required
-  - - 41d906ec45510c92f06a19a87bb2b3f8974c7232c3d8a2bc8460e333bd77c93f
+  - - a0d613c8b12af58e3b93e524ddac119dd78102f9e27b82f78adfd0bb0c565d5d
     - fact.fact-identity-proof-obligation-separation
     - cell.fact-identity-proof-obligation-separation
     - subject.fact-identity-proof-obligation-separation
@@ -8904,7 +8904,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - fact-identity-proof-obligation-separation
-  - - 4189d6e22f58f9dcdad6dbcb00a68e8e9d2ba6d6eafb5d8390f4cbc67799447d
+  - - 282ff6b5599234d229b0eb5a0363fc3b82f365f463dcfbd095516cf19f929631
     - fact.required-method-denotation-preservation
     - cell.required-method-denotation-preservation
     - subject.required-method-denotation-preservation
@@ -8928,7 +8928,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - required-method-denotation-preservation
-  - - 1bbf723ccefcb29d365caaf845fcf2b5a749959c24727b5162ffe200060080b9
+  - - 0d0db425efbfa8b059e146b34099c4eaa98e51fbc57b85995dd04eb6e8b10693
     - fact.comparison-oracle-environment-preservation
     - cell.comparison-oracle-environment-preservation
     - subject.comparison-oracle-environment-preservation
@@ -8952,7 +8952,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - comparison-oracle-environment-preservation
-  - - e6b2beb41106881543f8a0711ec2196992b818a87059808b8b45a84126406727
+  - - b0deab9f599d7c7b5edbfefd6e39a49141dbfa1171382177c29e38c78edd1885
     - fact.protected-observation-preservation
     - cell.protected-observation-preservation
     - subject.protected-observation-preservation
@@ -8976,7 +8976,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - protected-observation-preservation
-  - - 3fa26c3f1bbe24e9549a556a940fa0a026077c4b13e95cdd4f3e8450244d4da0
+  - - 9fc2cdaa84217d98c1d6434f1ae4c1ff569cc4df9680189f597e2f78a85a8673
     - fact.exact-target-layout-pixel-preservation
     - cell.exact-target-layout-pixel-preservation
     - subject.exact-target-layout-pixel-preservation
@@ -9000,7 +9000,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - exact-target-layout-pixel-preservation
-  - - e1d3b5c9f3d88fe7adfa08ab23fbf81d550cfb4cdeb9f5378b98e2dd3e3df9ad
+  - - f6181fce5dde20bf75662edbe95fc4652a20d869aa0c6042fe546433e14d2966
     - fact.canonical-resource-value-authority
     - cell.canonical-resource-value-authority
     - subject.canonical-resource-value-authority
@@ -9037,7 +9037,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - canonical-resource-value-authority
-  - - 8615f29a09fbc19ca755dffedc8f14744e4e6400b8a89dc0c4b22b781f932ad5
+  - - cfac5950f0e0369154220171f65b3de5beb70374c4a432cf85affab01db28f48
     - fact.versioned-ui-symbolic-v2
     - cell.versioned-ui-symbolic-v2
     - subject.versioned-ui-symbolic-v2
@@ -9059,7 +9059,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - versioned-ui-symbolic-v2
-  - - 16ae6a8cd538d45fd0355c68a93e57c25bd9b5f9ddabce64a752494aa8bf3564
+  - - 1a79512036b93bbfbb02f64a87a94196e7f7924139e2c8554bba8f57f5ed4e90
     - fact.ui-v2-explicit-opt-in
     - cell.ui-v2-explicit-opt-in
     - subject.ui-v2-explicit-opt-in
@@ -9081,7 +9081,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - ui-v2-explicit-opt-in
-  - - 91541f5ba184dc9c460fd068fda164fc9cc51b0978a32986b4e00166b9af08a3
+  - - c3aef1e2e704cd40ff69e27004e07fd34a551c223e2e83eff3ef378b88ab78fa
     - fact.mixed-v1-v2-targets-one-contract
     - cell.mixed-v1-v2-targets-one-contract
     - subject.mixed-v1-v2-targets-one-contract
@@ -9104,7 +9104,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - mixed-v1-v2-targets-one-contract
-  - - 9f7aeb7dc0597a692912f5c88414a87cf177d604282d736d7e8540879b9da8c9
+  - - a14ebc1da35eb03b4f7c6b7ba1caaef2b80d0b4b3b218b4b6eab01bfd7848d83
     - fact.restricted-symbolic-predicate-dsl
     - cell.restricted-symbolic-predicate-dsl
     - subject.restricted-symbolic-predicate-dsl
@@ -9126,7 +9126,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - restricted-symbolic-predicate-dsl
-  - - 62bed54a3eafe5ae67b2fd8a81c3e2c11482c1b9a708984051cd970d12d273fd
+  - - 33d2185c9e97376b6ec5e66d14a8ac9b938c94e2a5f857cb5adc9d11551f9e93
     - fact.finite-enum-and-bounded-numeric-domains
     - cell.finite-enum-and-bounded-numeric-domains
     - subject.finite-enum-and-bounded-numeric-domains
@@ -9148,7 +9148,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - finite-enum-and-bounded-numeric-domains
-  - - 0254ab5cbf117380771c70c64a774233bb7fb6723f7379698426e8b397adf95e
+  - - f7f0a5a9634d3ab409a68f77254680831c439f5ee48be289ef742c9eb987ef2d
     - fact.canonical-shared-decision-dag
     - cell.canonical-shared-decision-dag
     - subject.canonical-shared-decision-dag
@@ -9170,7 +9170,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - canonical-shared-decision-dag
-  - - fbf709bfcf07bfdb0fc2ca369b86f463651ea78ae3468a20906d2afa84289fef
+  - - b3e94ea5e51d27d5fbcaa44bad4b0646b036cebf0d1189fac8187e3a00006a34
     - fact.unreachable-branch-elimination
     - cell.unreachable-branch-elimination
     - subject.unreachable-branch-elimination
@@ -9192,7 +9192,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - unreachable-branch-elimination
-  - - c60612690e33da169d4c413c80100ff4ef7543929107e6f3204292a615b2fd0a
+  - - 7ae05b43265d10d2cc2e0cfaae6752187649b7ea0624906d63eb312f97996fbc
     - fact.no-production-ground-materialization
     - cell.no-production-ground-materialization
     - subject.no-production-ground-materialization
@@ -9214,7 +9214,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - no-production-ground-materialization
-  - - d3431fab4feb56f8689366b356730c285fd08387c167c6d285a0f60ea4515747
+  - - 302194c53cd1d37f463b06d9f465bbb1deb29ac1f9534b3d4a8ebc3cd42e4d2a
     - fact.mutually-exclusive-effective-regions
     - cell.mutually-exclusive-effective-regions
     - subject.mutually-exclusive-effective-regions
@@ -9236,7 +9236,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - mutually-exclusive-effective-regions
-  - - 5a3225359d71f5b35fbcb5c92a3c76243ba684842cad28e57c76c093df0843f7
+  - - c8c014723f8c23d9928fd8a9a8810adc7141ca2dd33704974a32a3fbd4111986
     - fact.exact-region-coverage-no-gaps
     - cell.exact-region-coverage-no-gaps
     - subject.exact-region-coverage-no-gaps
@@ -9258,7 +9258,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - exact-region-coverage-no-gaps
-  - - fb2e45b86332580e65ce9f40572a36d26f220e48f857d4c66f6fa16eb16f70d5
+  - - 7f813ef75e857da531f156a2983e89dc0cd794ec859a53ed46c65e3643c8ede4
     - fact.constant-located-expected-rule-values
     - cell.constant-located-expected-rule-values
     - subject.constant-located-expected-rule-values
@@ -9280,7 +9280,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - constant-located-expected-rule-values
-  - - 0c6d25fd05b2d81d3ea9560bbd327755a9ee4e241dfbea81ee61efae23d23b72
+  - - 8fc867d4cda82dc397a79c3e6175a771fd56a5ea59f2b7625dabc91467b96d25
     - fact.no-rule-precedence-or-value-function
     - cell.no-rule-precedence-or-value-function
     - subject.no-rule-precedence-or-value-function
@@ -9302,7 +9302,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - no-rule-precedence-or-value-function
-  - - 8bdd836ebefbcb4ac5e49f1274f5efcbde714ca1d7fb682e15c5408763bea675
+  - - 092b612792a2605eef329bd35cbadc2caace2637ff63569d7b8ddad19c627742
     - fact.deterministic-canonical-identity
     - cell.deterministic-canonical-identity
     - subject.deterministic-canonical-identity
@@ -9324,7 +9324,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - deterministic-canonical-identity
-  - - d4121f58cc87e9f0f5b8bb8d5869829ea22b4cd69b1f5142d9c0b1423917ece8
+  - - 57ffde7d3300de17b5d6dcfcb67f7f4e4187d9a4939ab40db3903a03a562c968
     - fact.symbolic-complexity-fuse
     - cell.symbolic-complexity-fuse
     - subject.symbolic-complexity-fuse
@@ -9346,7 +9346,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - symbolic-complexity-fuse
-  - - 58d21488a0b35e415208fdab56fab85d67dc2dd7741df30f1da97f14a378991e
+  - - ff9fac3a0a234cd5dbf40926c7316f699e6c315b0d3aac4c21066e6f6842d9b1
     - fact.ground-cardinality-diagnostic-only
     - cell.ground-cardinality-diagnostic-only
     - subject.ground-cardinality-diagnostic-only
@@ -9368,7 +9368,7 @@ fact_sets:
       - input.repository.docs-design-fact-completeness-md
       derivation: null
     - - ground-cardinality-diagnostic-only
-  - - d495ee1f0cbf64e1d132b686c52c3f133b1710f620942a4bb124a93c2334ccef
+  - - 83a0c3e0e4c7a8bdbcff8775456fe9e3b82a92375ef4085690f468b925934121
     - fact.package-policy-property-catalog
     - cell.package-policy-property-catalog
     - subject.package-policy-property-catalog
@@ -9391,7 +9391,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - package-policy-property-catalog
-  - - e8eae2d84df605428e72cd5b71703abbf9b1884fea8861fee578cee8ea649570
+  - - a6d936fdf07f5d6f61ed266b10cd63ecb66e0fd2a0eb9859df524b72b294a791
     - fact.inspector-census-applicability
     - cell.inspector-census-applicability
     - subject.inspector-census-applicability
@@ -9414,7 +9414,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - inspector-census-applicability
-  - - 3053e75bd9b8c98fddd1482dd9d9f41a1ba6ea3b59d19152b1174888b14ce8c7
+  - - bd2ce4e78afc79804348cf2406a9aec34e78692146197c093198e084998086c4
     - fact.basis-backed-property-remainder
     - cell.basis-backed-property-remainder
     - subject.basis-backed-property-remainder
@@ -9437,7 +9437,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - basis-backed-property-remainder
-  - - ac47d7c713b454a16eb1c35dfc7e7ac25ceb25705d7b9d7918cf2aa8d804049b
+  - - f973a476f151d86aaf5f6e04418c039b2a0199dfe7190ab9149569044492937a
     - fact.unknown-applicability-blocks
     - cell.unknown-applicability-blocks
     - subject.unknown-applicability-blocks
@@ -9460,7 +9460,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - unknown-applicability-blocks
-  - - cac06eda2dca7cc327d51bf2406c9de644fd4f4ceca40a3e4205b16418b6d251
+  - - 3374348f6386bea525a8dccfbf2c418c96f6a3d5819260f6dee802824d3b2619
     - fact.relation-population-first-class-model
     - cell.relation-population-first-class-model
     - subject.relation-population-first-class-model
@@ -9483,7 +9483,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - relation-population-first-class-model
-  - - e8af715684e674a28803e4d4872c345675951d09025de73f4ee2690f7a7454ab
+  - - 333528d26b8f31cba01d59accb9018865102b007850ac8932f04051fcc0232a1
     - fact.population-quantifier-denotation
     - cell.population-quantifier-denotation
     - subject.population-quantifier-denotation
@@ -9506,7 +9506,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - population-quantifier-denotation
-  - - 92101990f8b79f89a6f1b503ec458be60550d52e4b44da4af2607b13e2c85d8b
+  - - 9aac8e3060293277e49ba66f452c33cc14775fe6ec75d1a24bbb8bebb50a26dc
     - fact.v2-rule-method-region-projection
     - cell.v2-rule-method-region-projection
     - subject.v2-rule-method-region-projection
@@ -9529,7 +9529,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - v2-rule-method-region-projection
-  - - 7daa17ea006a44adfd96204634410d4062eac8ca84b4d2f536eaa8b394f6daf1
+  - - d7e90b60130c728e97be0aba05b98ef60295aeb1c839af5dea1eac4a6d71689e
     - fact.stable-symbolic-fact-rule-identity
     - cell.stable-symbolic-fact-rule-identity
     - subject.stable-symbolic-fact-rule-identity
@@ -9552,7 +9552,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - stable-symbolic-fact-rule-identity
-  - - 152e7f267623dc315899b0490123d0eb5344b8a7b81c23ad62fd892075b2c753
+  - - c5f201da6d799a0855789eab63510f46625c24600d0d7b0e5bb6241ca675a1e4
     - fact.per-method-region-obligations
     - cell.per-method-region-obligations
     - subject.per-method-region-obligations
@@ -9575,7 +9575,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - per-method-region-obligations
-  - - 7e74f30e8d23298e5406d9600e5e445793963f6970d6a08a1b11dc040c51d215
+  - - 4b529ad437c0f076ee6134f507a02707fad190dbf527006a84b60f6f35fe0ba0
     - fact.typed-v2-rule-results
     - cell.typed-v2-rule-results
     - subject.typed-v2-rule-results
@@ -9598,7 +9598,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - typed-v2-rule-results
-  - - a6fb51eadd7d7a76225d18bfca746b91e46398da5c4b83825e320233af8b9a27
+  - - 49102f16f907362254c82e3833f9a6138f50d34ffe63813bdb068ca083bd8cb4
     - fact.typed-certificate-results
     - cell.typed-certificate-results
     - subject.typed-certificate-results
@@ -9621,7 +9621,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - typed-certificate-results
-  - - a9cb181b523e48c49438896dce4cb05ce4ea65f996c81923e350d2ddcbbee5f8
+  - - d2aaacd0543f1cad027e3e1570c5ac8a3943b5c726c2f46078e69f6c27f73147
     - fact.current-snapshot-evidence-only
     - cell.current-snapshot-evidence-only
     - subject.current-snapshot-evidence-only
@@ -9644,7 +9644,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - current-snapshot-evidence-only
-  - - 08fef4385f688ded7bcab75a6a2f8b9b1bd3dee40dedb3639dfce0709310a595
+  - - 87fcb9ec1af03110b90fcd5611a162f7e82164a96bddd8f510a179457ca2b985
     - fact.mixed-target-one-final-gate
     - cell.mixed-target-one-final-gate
     - subject.mixed-target-one-final-gate
@@ -9667,7 +9667,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - mixed-target-one-final-gate
-  - - 0ea026b2cd810055e07abf441e5cb4983801d98b3fe1adebdd81ba8dd51b6838
+  - - ef48c1d454cc6e768756d15435eea8cc2709773899eca4b36a3495bef618433b
     - fact.set-valued-noninterference-certificates
     - cell.set-valued-noninterference-certificates
     - subject.set-valued-noninterference-certificates
@@ -9690,7 +9690,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - set-valued-noninterference-certificates
-  - - 808037db4141906a449cb193d283a4e2c2258d1164a2aec8a476d2c4dfc8e5aa
+  - - ffe08fea66b778f2775ffaa0b42c8adead60a7b7f228c50c90f85369e6ab40a1
     - fact.certificate-omitted-axis-coverage
     - cell.certificate-omitted-axis-coverage
     - subject.certificate-omitted-axis-coverage
@@ -9713,7 +9713,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - certificate-omitted-axis-coverage
-  - - 9de963ccd24215844b6ad84ed47972d1eda34b429805c3ff2ff4ef9db6b8fff5
+  - - a3099f53a7d907215b2764b4b3337d0c976a5d5605a94ed7abd0f063dd2dbec4
     - fact.certificate-dependency-edge-coverage
     - cell.certificate-dependency-edge-coverage
     - subject.certificate-dependency-edge-coverage
@@ -9736,7 +9736,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - certificate-dependency-edge-coverage
-  - - 835e76c8da780e97b03a96ba49bd73dc3d50460c2f7bf1d91197aa3d2718a0b0
+  - - 56ba19148b04084fc121e8a5301a43595a30517988ea92d4c168ed5a6fffecdd
     - fact.noninterference-obligation-count-metric
     - cell.noninterference-obligation-count-metric
     - subject.noninterference-obligation-count-metric
@@ -9759,7 +9759,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - noninterference-obligation-count-metric
-  - - d4ec9931b7b1dd49d9c6f20a655e605c4fe675bd85505a7a4f4d961bf78e8491
+  - - 1119c5d0dd056c92a3146c7f4035209179e3a414d68c1dfef13826e94bc2e187
     - fact.noninterference-dag-node-count-metric
     - cell.noninterference-dag-node-count-metric
     - subject.noninterference-dag-node-count-metric
@@ -9782,7 +9782,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - noninterference-dag-node-count-metric
-  - - e9c731389ab7f59fe6f8472a70585163b067de2909f1c362ec51e66152f9cb02
+  - - ba704ac07b4bbfe6450ce644226628ab63fb6cc886c9a6efee512e79360c149f
     - fact.noninterference-byte-count-metric
     - cell.noninterference-byte-count-metric
     - subject.noninterference-byte-count-metric
@@ -9805,7 +9805,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - noninterference-byte-count-metric
-  - - 56f2c2fafb6c6d0b4942d02f69ce6daa44595ef9b7f2ede81faf8fe5271f0979
+  - - 9bea63dfb6e8cf633d828d66cdc71f875351bf1778ae215b8806d5180cd09a1c
     - fact.complexity-independent-of-ground-cardinality
     - cell.complexity-independent-of-ground-cardinality
     - subject.complexity-independent-of-ground-cardinality
@@ -9828,7 +9828,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - complexity-independent-of-ground-cardinality
-  - - 6e6cf894b26a77c88d25c20ae74401f1c0b53649dac2533abcfe36b12940296c
+  - - 860bed172ddde5f1eec00a7b9b1fe1c011d84523dc3f65dabab6faa79a703475
     - fact.certificate-package-recomputation
     - cell.certificate-package-recomputation
     - subject.certificate-package-recomputation
@@ -9851,7 +9851,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - certificate-package-recomputation
-  - - df2b727ec69d10777409784092d514c3beff0b788b0320c2883c0c5bbc8192c8
+  - - ad6b230bf4ac759321e80456737fbe10e128d59aa14d88d99ceae870b1de3323
     - fact.certificate-not-semantic-proof-substitute
     - cell.certificate-not-semantic-proof-substitute
     - subject.certificate-not-semantic-proof-substitute
@@ -9874,7 +9874,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - certificate-not-semantic-proof-substitute
-  - - f1cece23432a8440a3630ca5ed084697cd9fc5d296cbc7ecbf1d1be885880bd3
+  - - 7d2c8ae2ffd49bb6fa0c95512b66d22155c9799c936f5bf927cdee2b268a67e9
     - fact.no-obligation-per-irrelevant-axis-rule
     - cell.no-obligation-per-irrelevant-axis-rule
     - subject.no-obligation-per-irrelevant-axis-rule
@@ -9897,7 +9897,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - no-obligation-per-irrelevant-axis-rule
-  - - 1d9bf828ea954ec5082955d2ce339a615ecf2d220867c9cd7b43acb5c53dcc16
+  - - 142d03bb686d9550882ea5c4cc6da8605d28738d3ef812cf19b9d1b65138f4be
     - fact.v1-stat-before-read
     - cell.v1-stat-before-read
     - subject.v1-stat-before-read
@@ -9920,7 +9920,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-stat-before-read
-  - - a1a8ae3d76a0031aef23944ca052c0b9e2021a81566233d992200bb4e5d87100
+  - - 8ae0df1df76e7a9c24a0a618e262344e7906c484d89c405b20c5318034057e03
     - fact.v1-bounded-prefix-stream-parse
     - cell.v1-bounded-prefix-stream-parse
     - subject.v1-bounded-prefix-stream-parse
@@ -9943,7 +9943,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-bounded-prefix-stream-parse
-  - - c25dcd6e34523b2eb2c039ec1d09d6741847dd431a38d6423fa3de439c58a364
+  - - 9ba9771f81f03fcdcc65d3dfe93122d085f5691f42d3a0b2f82f1a81cd02d036
     - fact.v1-capacity-header-order
     - cell.v1-capacity-header-order
     - subject.v1-capacity-header-order
@@ -9966,7 +9966,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-capacity-header-order
-  - - f1a1b35e58e3cee350f8cb05026321d6bbc484254ca08b6c28719db8fea93dd6
+  - - 38ade903ce5f112c4fd1bc9eb4b67d42e305239cfaaf76c71cc0aca8a4a8487c
     - fact.v1-embedded-handoff-byte-limit
     - cell.v1-embedded-handoff-byte-limit
     - subject.v1-embedded-handoff-byte-limit
@@ -9989,7 +9989,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-embedded-handoff-byte-limit
-  - - 4984013f86ac874e6096844cb556f4d755823917d262517b448e462e8902cf00
+  - - 4f9b91cd41d163ec97f10c9993256a9b653c53606612c4e97b084af107861478
     - fact.v1-manifest-byte-limit
     - cell.v1-manifest-byte-limit
     - subject.v1-manifest-byte-limit
@@ -10012,7 +10012,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-manifest-byte-limit
-  - - 6ba1ab5416fbd6f1c44989e7cc67a0797788bccec9830466b2afe984935169d6
+  - - ca6e05ac206f3f6e184fe638bac82775c5103677df98194178d72d0bec2267b7
     - fact.v1-ground-cell-limit
     - cell.v1-ground-cell-limit
     - subject.v1-ground-cell-limit
@@ -10035,7 +10035,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-ground-cell-limit
-  - - 9ea894fafe89fa91c7ee66bde33936b9c82d34155ed4e116629ae1b0fbd72f2e
+  - - 01f4635e906768c550b58eb9668f00229ee014e15b2b02b42f6a36b42abb841f
     - fact.v1-capacity-prefix-limit
     - cell.v1-capacity-prefix-limit
     - subject.v1-capacity-prefix-limit
@@ -10058,7 +10058,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-capacity-prefix-limit
-  - - a49024de34d7553d358044c8e3a778558f26baea2d4772adc72bee54d2505bf0
+  - - 5a8eda5f13092282ce5b3cd90d599873196c02f7473b7d7cc9a77c06fd64dd28
     - fact.v1-reject-before-hydration
     - cell.v1-reject-before-hydration
     - subject.v1-reject-before-hydration
@@ -10081,7 +10081,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-reject-before-hydration
-  - - 999d27b114f0107f95544b1baa8624c26f37dc5eb02c5cd6d7bb15aacb6c9fd5
+  - - ab85c1f108661456ca72c264d683fb6d9610e64e7be1758c7fa60ca68f114e6b
     - fact.v1-threshold-measurement-basis
     - cell.v1-threshold-measurement-basis
     - subject.v1-threshold-measurement-basis
@@ -10104,7 +10104,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-threshold-measurement-basis
-  - - 16573c682aae2b3c2ec2ad448f9651fdfbba40741612b721f79e635bf77a9efd
+  - - 7c3f831e6ae0b523ac15c674d0e76b0aff386d507d3abbb3930972019913afd8
     - fact.v1-capacity-actionable-diagnostics
     - cell.v1-capacity-actionable-diagnostics
     - subject.v1-capacity-actionable-diagnostics
@@ -10127,7 +10127,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - v1-capacity-actionable-diagnostics
-  - - 84e24eabcda77d879ccdf8fbdc0782bfcbbe80aba0621eea3c2960039e85cc16
+  - - 76191d9088846214359a5f91ea2c49d8448ed32500a1913f48da041ddad45fb7
     - fact.capacity-fail-closed-no-truncation
     - cell.capacity-fail-closed-no-truncation
     - subject.capacity-fail-closed-no-truncation
@@ -10150,7 +10150,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - capacity-fail-closed-no-truncation
-  - - c7ed3af5c4fbba4268f20ed5bc7900b5e57591daad914f6c608061272df20af9
+  - - d4a18c3afeaef00d58217e0cc08498187d201714d139bb968bbbe6101e6cebf1
     - fact.efficiency-admission-property-only
     - cell.efficiency-admission-property-only
     - subject.efficiency-admission-property-only
@@ -10172,7 +10172,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - efficiency-admission-property-only
-  - - 8db3161ebf3ed06e390aab8138abf4f44a675c1248ef1662b1042b3aa57677ac
+  - - acb0f11775eb85a251f2554e1c943efe1b296706da95bc3258cd92d795780f7a
     - fact.efficiency-not-terminal-safety-theorem
     - cell.efficiency-not-terminal-safety-theorem
     - subject.efficiency-not-terminal-safety-theorem
@@ -10194,7 +10194,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - efficiency-not-terminal-safety-theorem
-  - - de55f9b4e0fec23a2fdcb56d46525e876f3bfa24123dff1051e34d8c1c04f2fa
+  - - 13b9ee491dc05b2b55fe8255d5b12cd6e41726f5b6fec08542ece5196a9de748
     - fact.no-second-authority
     - cell.no-second-authority
     - subject.no-second-authority
@@ -10216,7 +10216,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - no-second-authority
-  - - 2a89dbe8358b89893c2a38de0ca219838dbd86bea2ce395407ca9b6ca43bcae1
+  - - 664eeb2b2101fe8f2f0cca9a54b73afad31f3e95a5e598f6a9089f08af8e99fd
     - fact.no-second-final-gate
     - cell.no-second-final-gate
     - subject.no-second-final-gate
@@ -10238,7 +10238,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - no-second-final-gate
-  - - a41f6792c369ea808b2e10e579fb5273e2f6d19067e71a2df5d797821e93bf63
+  - - aeffccf360db6cefcb5f762269b78d3aa17969b92b344fc80529d7c2881c6d79
     - fact.no-delivery-deadline-condition
     - cell.no-delivery-deadline-condition
     - subject.no-delivery-deadline-condition
@@ -10260,7 +10260,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - no-delivery-deadline-condition
-  - - fd8e2818fdc93c02029b09010d881cc8a3978d46f4c5b4a64fdb8126ba5b5ffd
+  - - 732342c2c7b46a077f30a2d0c10150556747f5a4132664788c2b22271ba2964f
     - fact.no-fixed-execution-flow
     - cell.no-fixed-execution-flow
     - subject.no-fixed-execution-flow
@@ -10282,7 +10282,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - no-fixed-execution-flow
-  - - 585cff156a45cd3fda0aa503b2e8bb61b1102e33f6e46fc5e7a5642dc8f25bb2
+  - - c1c5762aa55850d7230715d1d03de715e1258e6bec2e332a157be573b5ed844e
     - fact.performance-claim-measurement-contract
     - cell.performance-claim-measurement-contract
     - subject.performance-claim-measurement-contract
@@ -10304,7 +10304,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - performance-claim-measurement-contract
-  - - 1f677638aca406eaf92f6b99d424842f99ef6886b2f036def556dc6eb34a36f1
+  - - 92a91064415566581d8d294c14196edb3e52ab93625ea1277d5abe60fd3739e9
     - fact.non-ui-v2-separate-admission
     - cell.non-ui-v2-separate-admission
     - subject.non-ui-v2-separate-admission
@@ -10326,7 +10326,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - non-ui-v2-separate-admission
-  - - 066de1c0782da3959b52c21d0c052ef22fa3067d434e1dfe332f940c1e4c44e5
+  - - 03498fb3dacad647f918cf3143bd66bcd02c16c54ea68c4396dafe25773d7d50
     - fact.provider-p0-excluded
     - cell.provider-p0-excluded
     - subject.provider-p0-excluded
@@ -10348,7 +10348,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - provider-p0-excluded
-  - - c29605ce4cf3d8f300a1c11a970267c3ec05dd9600273f907b53952836a87430
+  - - 45586fc18ed1923de3e6fe1d405807660aacec0d3b4419425da788c331000ff4
     - fact.provider-reentry-evidence-required
     - cell.provider-reentry-evidence-required
     - subject.provider-reentry-evidence-required
@@ -10370,7 +10370,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - provider-reentry-evidence-required
-  - - 0116e579c95d2fbf6a2575acaea6595dd7fed2a8288ba60abb7d53a6ac87edae
+  - - b8fbec3f3514c5cc15ca0d4660266c6aeaa169095a13df9d86041de27c9089e8
     - fact.shared-engine-future-boundary
     - cell.shared-engine-future-boundary
     - subject.shared-engine-future-boundary
@@ -10392,7 +10392,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - shared-engine-future-boundary
-  - - 05d20d569837a20590dbb2f74dfa88b804aea59df02eebb32aadef3e1c162349
+  - - d32a50d8d1ce56b12e50e0b8f450db1bf8d553c73bded8a5561aa1a6b2194bc3
     - fact.rollout-1-v1-capacity
     - cell.rollout-1-v1-capacity
     - subject.rollout-1-v1-capacity
@@ -10414,7 +10414,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-1-v1-capacity
-  - - 5dc6320b765915613db412b0016026b22fb6663b32ed1250d39d0e4fbd2fc5c6
+  - - 6fa05113eca1554cc4c391e01b90cfd4ceb95433715f67111a23314c16ff82d9
     - fact.rollout-2-formal-denotation
     - cell.rollout-2-formal-denotation
     - subject.rollout-2-formal-denotation
@@ -10436,7 +10436,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-2-formal-denotation
-  - - fffed1f10976906c3d624f02679b96ad638f4612f8efe6bcfcb668d0c1a522ef
+  - - df9fbe61b206e18b179ba90b7900bbaae2dbaa54091c2611a2f84e412856b049
     - fact.rollout-3-engine-independent-oracle
     - cell.rollout-3-engine-independent-oracle
     - subject.rollout-3-engine-independent-oracle
@@ -10458,7 +10458,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-3-engine-independent-oracle
-  - - 84384198e5a119ff366bb3264b8750f27f527e2a530096f5d7daae99030657ab
+  - - 3d59570a4d063753b9b8e09528a38424e7a6dbe4e47f1f0632d0c8a9764fd16d
     - fact.rollout-4-ui-v2-opt-in
     - cell.rollout-4-ui-v2-opt-in
     - subject.rollout-4-ui-v2-opt-in
@@ -10480,7 +10480,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-4-ui-v2-opt-in
-  - - 19ddecf648cb854260ef76429ff6f65f4e5fc0db557911e48a78d21a12ca14b3
+  - - 0ebe2138c6afc25ed4a6ca624aa8ed371974cc9171d0a7408812a82c8c92d17e
     - fact.rollout-5-mixed-downstream
     - cell.rollout-5-mixed-downstream
     - subject.rollout-5-mixed-downstream
@@ -10502,7 +10502,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-5-mixed-downstream
-  - - 0219ddf3744a8d8d723d305f0501c45116cee2f0914ada2808694445523c621d
+  - - ca2afbbd82bccbadd06513d764c2a7ebbd4d712657aa1c1bf4cb1b8f3eb90bd7
     - fact.rollout-6-default-after-proof
     - cell.rollout-6-default-after-proof
     - subject.rollout-6-default-after-proof
@@ -10524,7 +10524,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-6-default-after-proof
-  - - 354cd8ac51c3dbe3624373bee773d2bf7ea3f2f0ba76246eaacc180e4246e5c1
+  - - 8c33c71203c6089e2ccd3ee52217d7830f0cc2dfea11e0f9b5bc500fb6028034
     - fact.rollout-7-non-ui-provider-separate
     - cell.rollout-7-non-ui-provider-separate
     - subject.rollout-7-non-ui-provider-separate
@@ -10546,7 +10546,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - rollout-7-non-ui-provider-separate
-  - - e671afdf38b1ae57e99c5252a20289a5a71a2d406f2ecea3794499a8b5e18f68
+  - - 07f244baeaf1e269b5719d3632a7b465fe5c1abf7a722bba5d893a0de2f9ed0d
     - fact.independent-full-finite-test-expander
     - cell.independent-full-finite-test-expander
     - subject.independent-full-finite-test-expander
@@ -10569,7 +10569,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - independent-full-finite-test-expander
-  - - e680aec52be8a65ac66a2ac1ddda7333ac594dd82d19c3b5d3a2dddc78fba362
+  - - f52ebac8ab7e8d9c2bb1762e8836bc12541bb7d0deb2a64b1e8461fe350bcfe2
     - fact.exhaustive-pointwise-equivalence-tests
     - cell.exhaustive-pointwise-equivalence-tests
     - subject.exhaustive-pointwise-equivalence-tests
@@ -10592,7 +10592,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - exhaustive-pointwise-equivalence-tests
-  - - ece0fee41d7492ae76dcd760c5d396a1423ee1026b47c1724eb42b2370bcae27
+  - - 037acf011d0bcd1672677b675cc5c4055911d69498db548c393498b5ec2a13bf
     - fact.adversarial-false-completion-counterexamples
     - cell.adversarial-false-completion-counterexamples
     - subject.adversarial-false-completion-counterexamples
@@ -10615,7 +10615,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - adversarial-false-completion-counterexamples
-  - - d9796a08123907e41b2b5d59a57441c24edddf6f4824ed913b27b2d7237155e6
+  - - a18a4ef12d4ef2ff719731b4895c72a4bfae88ba3a008d19f2e54d0b56b50a9f
     - fact.mixed-contract-verification
     - cell.mixed-contract-verification
     - subject.mixed-contract-verification
@@ -10638,7 +10638,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - mixed-contract-verification
-  - - 9c52acb5035b7912d795c2db78604e839f31ca1e6131054eb66ac561edb247d1
+  - - 48e8ad3d61481db468b5cef2a31b6febcede910b194cb14236e183c3bbf1dcc8
     - fact.capacity-early-rejection-verification
     - cell.capacity-early-rejection-verification
     - subject.capacity-early-rejection-verification
@@ -10661,7 +10661,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - capacity-early-rejection-verification
-  - - efd432c01fddcf25417506fe388ab79bf9f89577bc093065ddcf8b087e0e6fbd
+  - - 863d1db2a45f8cc1e3b44a42611752f33bd36747f1001bd19b693d0229e792eb
     - fact.complexity-parameter-verification
     - cell.complexity-parameter-verification
     - subject.complexity-parameter-verification
@@ -10684,7 +10684,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - complexity-parameter-verification
-  - - ce63b7ea4e5911cf82ebbc558e515c1c0eca143c5726ded6bffc338b8f5b1e45
+  - - c5a5cb17ba3bc5322bada3fa4cafdf9e9765d0bcb434cbfd534ca6c956995b2d
     - fact.distribution-context-parity
     - cell.distribution-context-parity
     - subject.distribution-context-parity
@@ -10720,7 +10720,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - distribution-context-parity
-  - - 4b7b02c4ee1860769f20926af96b82886c41bc72ad4beaa22d5c8b60f71b9e41
+  - - ff4fa230826e8bd2dddccc1ba021c361ecb6961577d9b15199fbb742b037ee02
     - fact.architecture-deliberation
     - cell.architecture-deliberation
     - subject.architecture-deliberation
@@ -10757,7 +10757,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - architecture-deliberation
-  - - b3a79d439ed66ad58c7826c9e77315a6a813f501268f319be67ba8bb06646f59
+  - - 25750aee5bd379eb9b7faa5fd83ae3096ad61ff56c4d40555c533eae6c9cea80
     - fact.no-sampling
     - cell.no-sampling
     - subject.no-sampling
@@ -10780,7 +10780,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-sampling
-  - - afae14365804f874f603ed551a212c4cdc27184beb5e06d7aaa8eafe162e18c9
+  - - 472fcff7ef4cba7fa018a445cf0358851eba605d988cb11032e053b777314467
     - fact.no-granularity-reduction
     - cell.no-granularity-reduction
     - subject.no-granularity-reduction
@@ -10803,7 +10803,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-granularity-reduction
-  - - 3f0ba0da03e6988a8e0e8df5a2f75896f65a2bd54045084a83dadfdbfc5327e9
+  - - a8a460abb45fca001e47276d62caaa5680b60d96c3e18b425b46261bcdb5d500
     - fact.no-expand-then-deduplicate
     - cell.no-expand-then-deduplicate
     - subject.no-expand-then-deduplicate
@@ -10826,7 +10826,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-expand-then-deduplicate
-  - - 13572dd323696d3a1d1a62867428fed12de72e3c913af0af58d81661b341249e
+  - - d3d888e1f234cc3feb617c13cd9a2091fbf1ae8d083a64d5798b8864c033f20d
     - fact.no-historical-proof-reuse
     - cell.no-historical-proof-reuse
     - subject.no-historical-proof-reuse
@@ -10849,7 +10849,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-historical-proof-reuse
-  - - a52d6e4d703c1d5f0102c87775a986e42cbefe2e6a993be8bd6a9ef117ab9d6e
+  - - 13aefb007316aa4337011af55c91172753a40dda3dc28b04dcbab5fba762a9a5
     - fact.no-authority-gate-proliferation
     - cell.no-authority-gate-proliferation
     - subject.no-authority-gate-proliferation
@@ -10872,7 +10872,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-authority-gate-proliferation
-  - - 4e0b48b383739af0668b59ceef500b7de45f76971f2b19de4f0217f15d3f3f43
+  - - 6622cb8451412c86c8eee81eee59411a929cd2f2d5fb575fd057e92363aa92e9
     - fact.no-arbitrary-symbolic-execution
     - cell.no-arbitrary-symbolic-execution
     - subject.no-arbitrary-symbolic-execution
@@ -10895,7 +10895,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-arbitrary-symbolic-execution
-  - - d553dfb0727d2d8ce98b257ea366366947127a22ee9493180d9a979531b04f37
+  - - 8ed035ab98e983225b297a61894437bea72cc965208077865fbcbc6bb809ff93
     - fact.no-ungrounded-applicability-omission
     - cell.no-ungrounded-applicability-omission
     - subject.no-ungrounded-applicability-omission
@@ -10918,7 +10918,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - no-ungrounded-applicability-omission
-  - - d077c3c06418cb02e89f8021d76cf16f34ec0f8bea402a8cfce05fe9e1cfb38a
+  - - 6f6956e4ee00816525b831d21d3647abcf7c90c6619f80a633c994a2c577d9bf
     - fact.v1-v2-denotation-equivalence-ac
     - cell.v1-v2-denotation-equivalence-ac
     - subject.v1-v2-denotation-equivalence-ac
@@ -10941,7 +10941,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - v1-v2-denotation-equivalence-ac
-  - - c9a0ebc0c7f140d1f9509e7fe029cbb5a7a326011782acfa3029b29d614e46cb
+  - - 5721f942bf357d3e86ff10c5dd458d6970006374c98076610913ddfe2e0cddb6
     - fact.canonical-region-and-applicability-ac
     - cell.canonical-region-and-applicability-ac
     - subject.canonical-region-and-applicability-ac
@@ -10964,7 +10964,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - canonical-region-and-applicability-ac
-  - - d913d4bf6a70fd7829f3856e55fc4a7966fbcc9bf7161095f32aa113e6d9efc6
+  - - b351e2f0e411b7d41afc818051e9e3fd05e146821801532f2650ef921e40dbc3
     - fact.mixed-contract-current-evidence-ac
     - cell.mixed-contract-current-evidence-ac
     - subject.mixed-contract-current-evidence-ac
@@ -10987,7 +10987,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - mixed-contract-current-evidence-ac
-  - - 3b77c7eb43c81a57f93dce56adbc6b0ce8057855508ae6135753f6eb0696d605
+  - - 2ccbc8139d770b7807e50e29eac5c014ec2d7796ac561fe93da002d5a0c02281
     - fact.noninterference-complexity-ac
     - cell.noninterference-complexity-ac
     - subject.noninterference-complexity-ac
@@ -11010,7 +11010,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - noninterference-complexity-ac
-  - - c52526f0a171df96e5774d914ffad286c33a8bc966db141272a9571302b56955
+  - - 0c5a74868d253835cedfaec3002be9fd3c46344579eaddbae4e10a3c03b3a304
     - fact.v1-capacity-guard-ac
     - cell.v1-capacity-guard-ac
     - subject.v1-capacity-guard-ac
@@ -11033,7 +11033,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - v1-capacity-guard-ac
-  - - ca7df2b30fb6224921c2db45a8e76ee6887a6102567c87a2d18b042952674b42
+  - - e555707cf2a60ca9452c561548b69c16f85d35b2d01f3b03673711c98f1cb7af
     - fact.scope-and-rollout-ac
     - cell.scope-and-rollout-ac
     - subject.scope-and-rollout-ac
@@ -11056,7 +11056,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - scope-and-rollout-ac
-  - - 456436e3cd4b6ad240e22fae28c07a094215528638b2a61c3ed463b9b142aaf2
+  - - 93ca38a16119c9f668e9fa165689bb65751198dec4f00a35e580d22ffcd96511
     - fact.package-antidegradation-and-parity-ac
     - cell.package-antidegradation-and-parity-ac
     - subject.package-antidegradation-and-parity-ac
@@ -11092,7 +11092,7 @@ fact_sets:
       - input.repository.docs-long-task-workflow-efficiency-md
       derivation: null
     - - package-antidegradation-and-parity-ac
-  - - 915a43f08bc8d414df7c73c0b8a8c6a582d815fa93614a165262e74a4fa47dc9
+  - - 0424b655fe59e1cd83bacee76f259332bae47753362df0de6afe2f330d266584
     - fact.inventory-is-not-completion
     - cell.inventory-is-not-completion
     - subject.inventory-is-not-completion
@@ -11115,7 +11115,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - inventory-is-not-completion
-  - - b7ad0ed4bb2506ac1571cdd87d217a448050373e17e1ef0a538e5ff0bdcc8ac8
+  - - 3f2d70b498db6fe6b0da7ca3be0dec51bb115e629fbd48e53d42ef746dc34f3a
     - fact.public-schema-change-risk
     - cell.public-schema-change-risk
     - subject.public-schema-change-risk
@@ -11152,7 +11152,7 @@ fact_sets:
       - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
       derivation: null
     - - public-schema-change-risk
-  - - dd03fa76311e3c16391ff8ca77e81ba45fe079abe1753d30ff68fccafb8b66d3
+  - - 1f0a74d4265a62d66fa8919b06cfe111c79e510bb44f2efe3748002995c4a42f
     - fact.false-completion-critical-path-risk
     - cell.false-completion-critical-path-risk
     - subject.false-completion-critical-path-risk
@@ -11175,7 +11175,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - false-completion-critical-path-risk
-  - - 0b854061335c5b180b9d7856794b68aeae1e2d5dc23cdc483a0d5b2f6826fdfa
+  - - 714eac6f5001ef09bab3432a532488ecd571a697810c9bbaced6607acc69313e
     - fact.symbolic-oracle-observability-risk
     - cell.symbolic-oracle-observability-risk
     - subject.symbolic-oracle-observability-risk
@@ -11220,7 +11220,7 @@ obligations:
   - overrides
   rows:
   - - proof.symbolic-denotation-efficiency-result.exact
-    - 22f531bce1d90f338636a1b37fdad84cfc811cf037c52ff159603b0edcf3c0f2
+    - 6f4eead800c3cdc122b8dc9f3943f60938c277aa32fff5a497da1b011f134457
     - fact.symbolic-denotation-efficiency-result
     - comparison:
         comparator: exact_value
@@ -11245,7 +11245,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.original-attachment-provenance.exact
-    - fa23cf85acbb3cc1f27b340d4db70daee9b5a044edbea7fa4ef8d1568a97b012
+    - be49bb8a634c928261eea8635664a45a5a72fdb6ae581711654101251eaed162
     - fact.original-attachment-provenance
     - comparison:
         comparator: exact_value
@@ -11270,7 +11270,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.audited-source-supersession.exact
-    - eef1b1914468c105b05856aa62c6d112976c63bc095af8f4a3f2f8171f40b7db
+    - 08f0c26d4036120bf498ffb29a3751a35da3f749a097b2093614ce0a7170fcdc
     - fact.audited-source-supersession
     - comparison:
         comparator: exact_value
@@ -11295,7 +11295,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.complete-material-input-index.exact
-    - 70cf944c29062c9d0d68279e6eb138b297ad83c90c2b1b345aa6974ec4112fda
+    - 987f6e9b374af056613ea1f4cb5d88feaf99c81ebb72bf111e0f2bb9604b50e5
     - fact.complete-material-input-index
     - comparison:
         comparator: exact_value
@@ -11320,7 +11320,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.complete-extensional-universe.exact
-    - 41d9ac260ba610471239d7c03ade940d8953a0b12ff1833341eb5e94bb1103a6
+    - d44485a228db074a511924977d918d1d82f146e0d2451a4735e1effcf83c2c69
     - fact.complete-extensional-universe
     - comparison:
         comparator: exact_value
@@ -11345,7 +11345,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.subject-relation-universe-axis.exact
-    - 16a8abab65284fe4581cbc64cf5cf88acf47ebd9928d29977b1f29354d983dfe
+    - f6b080b3cf755e1ad964a6a9f2ad07f66cd9013c839ea2562a5139678a7d0ea6
     - fact.subject-relation-universe-axis
     - comparison:
         comparator: exact_value
@@ -11370,7 +11370,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.target-universe-axis.exact
-    - f3842dbad522e352426306df340374aafe1ab190dd4520d0292aa6b922bcc5d4
+    - 1b2f945c346b98724200ee4a753722290145aa8c173a3a4747bdd965cd60f7b9
     - fact.target-universe-axis
     - comparison:
         comparator: exact_value
@@ -11395,7 +11395,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.reachable-condition-variation-universe-axis.exact
-    - 2cae9c16b5dd0751b2c13cf838fcd42eb2cf526efd648a839116a055539e5ec3
+    - 339ce0aa3f54d83c1308f12859b8c07de994c79d4f6368f265ff0fb96bc8705b
     - fact.reachable-condition-variation-universe-axis
     - comparison:
         comparator: exact_value
@@ -11420,7 +11420,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.applicable-atomic-property-universe-axis.exact
-    - 58a73f87c56c1164eb7cf70665809b77e0f1da3489f978ffa6a869bc0f26b039
+    - 14dafca1cbb0ce472c534ef5e72c932b6c0168615d12babe0afea79a04af2e27
     - fact.applicable-atomic-property-universe-axis
     - comparison:
         comparator: exact_value
@@ -11445,7 +11445,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.population-quantifier-universe-axis.exact
-    - f456fe27ad68ed0f3939fb6e634b395089f41af38063bff781b9639127de874e
+    - 14df93f44f082fbcc94df04752369969312723a22b480b296d1e1515e12c7761
     - fact.population-quantifier-universe-axis
     - comparison:
         comparator: exact_value
@@ -11470,7 +11470,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.pointwise-disposition-equivalence.exact
-    - 3b6809d823a583fbae15ef89b69fac1aa947ec019fccf0550fc31b98a7cd4baf
+    - cb369aa7ed6298717159be7c3e16bc1373dc10b931657265d34e6e58d999ebbb
     - fact.pointwise-disposition-equivalence
     - comparison:
         comparator: exact_value
@@ -11495,7 +11495,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.pointwise-expected-semantics-equivalence.exact
-    - efbec6818479c4e290b2c0b8680c40b2c801f752480d776df481b3a3be674a83
+    - 9cc264c477496a718497b05638b17805062276e99bafd18ebe0e27d20304b7f5
     - fact.pointwise-expected-semantics-equivalence
     - comparison:
         comparator: exact_value
@@ -11520,7 +11520,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.pointwise-proof-denotation-equivalence.exact
-    - 2f765047ffb7db30749e7cfd456b72e767f2de0a6f0c7167821fd5a1cc13536e
+    - 8c4af9c776c094118682291001fccc21ed3808ee0d744657933009d20e6cd75b
     - fact.pointwise-proof-denotation-equivalence
     - comparison:
         comparator: exact_value
@@ -11545,7 +11545,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-ground-row-identity-not-required.exact
-    - 20685a1cb4e581eb5dae3de7d3659a43c02080a3582526d3d2aac3b8c02ce174
+    - 79dbcb3a2b08acbf66de87e2276fe5531483e46049a81eca087adc482fdf76ee
     - fact.v1-ground-row-identity-not-required
     - comparison:
         comparator: exact_value
@@ -11570,7 +11570,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.fact-identity-proof-obligation-separation.exact
-    - f609769d28eace18f809110b6283ed3255c9e7f6ecd7a00a0bdca87f9ca29e06
+    - 9691cb15f02c8531712d8a6c13babd9a206790a0a6f5e57d35e06facaa3a254b
     - fact.fact-identity-proof-obligation-separation
     - comparison:
         comparator: exact_value
@@ -11595,7 +11595,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.required-method-denotation-preservation.exact
-    - f45c06e8afb8e385f10ba87c302fc733e11536fbe5972f6b84da90c2587f0f23
+    - ac51aec76d1941a0273284f6d1505c0bfdbcac48b994f91a45ad8a1b5dbe61fe
     - fact.required-method-denotation-preservation
     - comparison:
         comparator: exact_value
@@ -11620,7 +11620,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.comparison-oracle-environment-preservation.exact
-    - fbe6f24a767b075177a0a520167319de032116220e7c6b4f9b6a7f2bad8386fc
+    - 6c27c63ae3a58be8c697ed54f20faad6586e1aed10c4b9accf06fa1890b7c619
     - fact.comparison-oracle-environment-preservation
     - comparison:
         comparator: exact_value
@@ -11645,7 +11645,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.protected-observation-preservation.exact
-    - 5457efb5898ac98cb81281624871e7a6120ef87dc96acff4581f7c1c8b1a04d8
+    - 97fc4995bce90438e22e237db552de23c24d90bf9e6974fe64d7283321a72671
     - fact.protected-observation-preservation
     - comparison:
         comparator: exact_value
@@ -11670,7 +11670,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.exact-target-layout-pixel-preservation.exact
-    - c663d2b7b49531e2fbc996e222093f8f06ef09f848ca9ff4e4e0fcdfbfe44d17
+    - 60e7301a4ea7696b6ff44df79449a2122f0681a042959cc3f80961f3b3f047f7
     - fact.exact-target-layout-pixel-preservation
     - comparison:
         comparator: exact_value
@@ -11695,7 +11695,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.canonical-resource-value-authority.exact
-    - 1d0fb98f92c62875a365820846e2980bf513f12a03fb9d778453c0dff873da90
+    - f8293737693a2f9c917750fce432ec12ed28a8f47659a59698f0e34bfd835864
     - fact.canonical-resource-value-authority
     - comparison:
         comparator: exact_value
@@ -11720,7 +11720,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.versioned-ui-symbolic-v2.exact
-    - 80bfe3bc91f1ca83e02555ad1fa4b40d2515d00f5b071e073cf5687121a8dbe3
+    - ef8245aa56706f7dd5237b86c809a66c024f7544cc6e634e50c42df3ad9e714a
     - fact.versioned-ui-symbolic-v2
     - comparison:
         comparator: exact_value
@@ -11745,7 +11745,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.ui-v2-explicit-opt-in.exact
-    - 8d124727e56bfe7fd70c1e1d6a9c9f534485e47f4b7ce492c67a5740275db436
+    - 5f062fa00626ba90575af03160464e2a3e7cf2a304c5b7f9cb34fd3c2149a09b
     - fact.ui-v2-explicit-opt-in
     - comparison:
         comparator: exact_value
@@ -11770,7 +11770,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.mixed-v1-v2-targets-one-contract.exact
-    - ba27f2ca073128bc7546cad822aed00862f22e61418e8166f0594bd348fd4b45
+    - 8bd7c196294cec2e192c015c64308b5fda52bfafd1942ab1cceb85564301d5c9
     - fact.mixed-v1-v2-targets-one-contract
     - comparison:
         comparator: exact_value
@@ -11795,7 +11795,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.restricted-symbolic-predicate-dsl.exact
-    - fe8b7fb0e4c25775c1988c84a963b26b8e5f1b26b86c7862d4782f12345ea217
+    - 748519d75a685de92a502c9054ce39a0311707c3e1917d7733cf254e2f198370
     - fact.restricted-symbolic-predicate-dsl
     - comparison:
         comparator: exact_value
@@ -11820,7 +11820,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.finite-enum-and-bounded-numeric-domains.exact
-    - 83129383535db95c6abcc1566443009f617d78cec40ba02813bc6a9fe2d13091
+    - b37136877cb54e16b42fba1ac22d0437decb37528a82fb7a792dc5ad18fcab5b
     - fact.finite-enum-and-bounded-numeric-domains
     - comparison:
         comparator: exact_value
@@ -11845,7 +11845,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.canonical-shared-decision-dag.exact
-    - d4411308f473ee47bbe57c124e2104fa063b38a5bbf2c14665b263e4d5c79b24
+    - 64a10f536b9b702386b624fbd80420734f8252d6fe608e6584b64019c40c4c67
     - fact.canonical-shared-decision-dag
     - comparison:
         comparator: exact_value
@@ -11870,7 +11870,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.unreachable-branch-elimination.exact
-    - 0e09f720ec1f95a87cf6b6c8d5e8528cb894901302ac3d16ce9291f51660d3a5
+    - d0ae9ad3ed5dc1ef90445b29c1c3ed00e385dea81ad73f309ea8ddf5e258fa7c
     - fact.unreachable-branch-elimination
     - comparison:
         comparator: exact_value
@@ -11895,7 +11895,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-production-ground-materialization.exact
-    - 720254835fcde0baa37c1d8faddad2c17adf2ea01ab526b91b0c999a3913aaaf
+    - 4249d93079b82f124e5b2af39b3ef8ee0103f500aad7f9b688507ccd34519cee
     - fact.no-production-ground-materialization
     - comparison:
         comparator: exact_value
@@ -11920,7 +11920,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.mutually-exclusive-effective-regions.exact
-    - 93c495492beb9e8912cd2a0cae102908dac337025b3e976de875d9098c9fe25b
+    - 979532b66199e12e64e27d6a49c3cb38d7d5b9eee43d36e845623b56335d0226
     - fact.mutually-exclusive-effective-regions
     - comparison:
         comparator: exact_value
@@ -11945,7 +11945,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.exact-region-coverage-no-gaps.exact
-    - b05534a41c78df32c080b014b92f20676430a37d33f90d71e54a43eba1f8f874
+    - 153ebe48bbd86c0778264573931606758d3ca31c91187b1fa470caa7e09ac48b
     - fact.exact-region-coverage-no-gaps
     - comparison:
         comparator: exact_value
@@ -11970,7 +11970,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.constant-located-expected-rule-values.exact
-    - a34e021b82702dacdd15f5dbafe2cc729eb30aac8702575d05e3b6ae6d42e3d4
+    - d4f6380021cb2d6be0d2fcce4fff958b6d216a109a5c448816c7512dfd963e01
     - fact.constant-located-expected-rule-values
     - comparison:
         comparator: exact_value
@@ -11995,7 +11995,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-rule-precedence-or-value-function.exact
-    - 952bce6d82d6374005b41bca9dbeb84771fe298ec7b7647ee44a00ddff166e22
+    - 4ab78c8c34312c556e273c9f308f517905d7ec367fc7287254934decdcaf3289
     - fact.no-rule-precedence-or-value-function
     - comparison:
         comparator: exact_value
@@ -12020,7 +12020,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.deterministic-canonical-identity.exact
-    - f68d730fecdc66fd64a1cf10bd180c2cd73e10dc5002a0597c9d8d29de4c26d5
+    - eea7f01ab9204add97b0797aa5f1a70149763263e62556f344e909944beb86ef
     - fact.deterministic-canonical-identity
     - comparison:
         comparator: exact_value
@@ -12045,7 +12045,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.symbolic-complexity-fuse.exact
-    - 23eb5590f6bb21350e7183a2d404fa9ba177c2b05e828351112e1643c6566355
+    - 0f176ca6196a95a9817b314353eda80a663bc34c8749234fd82c644e35e009a9
     - fact.symbolic-complexity-fuse
     - comparison:
         comparator: exact_value
@@ -12070,7 +12070,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.ground-cardinality-diagnostic-only.exact
-    - 187c18ca217fcb3902b5221d4942e02ffc2eec563e3f2df9e01b7b286d743632
+    - ac877c8eb018bc1f5ba03e05d1dcfc818dd17e038a60b812f83fb19f628675b0
     - fact.ground-cardinality-diagnostic-only
     - comparison:
         comparator: exact_value
@@ -12095,7 +12095,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.package-policy-property-catalog.exact
-    - f48b637ce893a9892f08a1c7734ab7d91df2394897af4daa6bed0af384921dbc
+    - 641b5748eea8996b28d926bd04d01a0dcb1588cef2a331b9001bbd1c0b9140dd
     - fact.package-policy-property-catalog
     - comparison:
         comparator: exact_value
@@ -12120,7 +12120,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.inspector-census-applicability.exact
-    - b6cc1a12a88c2accb0e0f5dca637b7c61fd6562298cb74793efc8cc203f0d389
+    - 3ca1d2b30d81db582072a850833c16a4a9d982e552cf31d41fd968335e830772
     - fact.inspector-census-applicability
     - comparison:
         comparator: exact_value
@@ -12145,7 +12145,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.basis-backed-property-remainder.exact
-    - a017b2c4a505eac4e7395428603923c0e085d743076433ca7f3e1432597b8cee
+    - ea2ccc4cc37ea7cd8801432af82cc7eadb7cc11bd9dc0bbe9c09630cf8ade5f1
     - fact.basis-backed-property-remainder
     - comparison:
         comparator: exact_value
@@ -12170,7 +12170,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.unknown-applicability-blocks.exact
-    - 2c9fe603b702161d804550657cc5dd3ca6fee0ae77ea950dd69546a264680521
+    - 8a8066fbfe1081e95a8c4297feffc0c1f69cb8df36120f3fc3cd342be36957c1
     - fact.unknown-applicability-blocks
     - comparison:
         comparator: exact_value
@@ -12195,7 +12195,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.relation-population-first-class-model.exact
-    - 24f03d8db854ab8231d0fa64727388bc2319c27ef13b07f7a7edd23e3bdb281e
+    - ec530e611145abc34c490cbb8fb2969ef3e23df79b10f7913be029c0ae8c5647
     - fact.relation-population-first-class-model
     - comparison:
         comparator: exact_value
@@ -12220,7 +12220,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.population-quantifier-denotation.exact
-    - ef9a891937f445d074e45bae0be76b69a9bd3e91d1c430dc89bbb6f11abb2cc9
+    - f32888638abbb8b9fe26f6af32748c9ebfe468b3bab1dc6149e409b818ea2dbd
     - fact.population-quantifier-denotation
     - comparison:
         comparator: exact_value
@@ -12245,7 +12245,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v2-rule-method-region-projection.exact
-    - 86e56141a2106c92ba8233bf96a9be705eb69417788632ee81be20db2318af3f
+    - d2c1a8585d95694d7deb7c9ee2f51b8ec72eb8eb11c151a85319d3afa0c16ec7
     - fact.v2-rule-method-region-projection
     - comparison:
         comparator: exact_value
@@ -12270,7 +12270,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.stable-symbolic-fact-rule-identity.exact
-    - 684b6a84b915be44d2d7a90b39ab8b5831910659aad71826cad72229991d1bd2
+    - cbda1b63b68a65a337da8d6d1f1a207c59ce77efd074166fa3f27fe44548bc94
     - fact.stable-symbolic-fact-rule-identity
     - comparison:
         comparator: exact_value
@@ -12295,7 +12295,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.per-method-region-obligations.exact
-    - 55559e81d8aed319378e42fd135f2ee16df3767696c8916840248419d7aa2928
+    - 2a9672d7add638d61d7a157e79bb6632a66317648cf138bc9f39cc0c5401bb29
     - fact.per-method-region-obligations
     - comparison:
         comparator: exact_value
@@ -12320,7 +12320,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.typed-v2-rule-results.exact
-    - b3a379308e144719bdf4225641c7120b6fbf60df4880675304600d7948749e56
+    - d73cfd76c524bb7070b7f62219f87e50dea8f81c4c10a80a9a9ac416601ccacb
     - fact.typed-v2-rule-results
     - comparison:
         comparator: exact_value
@@ -12345,7 +12345,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.typed-certificate-results.exact
-    - afa0b4ede037cd04788067c6e50f911085907e7c85fa3a9ba53a94b220bb2f22
+    - b4400168f5fcb005d1c6676bf3ccc3d056c8a56da6a618fea564cbb89410edd3
     - fact.typed-certificate-results
     - comparison:
         comparator: exact_value
@@ -12370,7 +12370,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.current-snapshot-evidence-only.exact
-    - d5c1d4d43033cc8442846a8de9dd1d9f00a3b0d958a586e2023a8be11176a2ca
+    - 5098bf10f9d389bd3d59a1bf3f6e450d0af0698b149f4f9cc22f338fabb86e70
     - fact.current-snapshot-evidence-only
     - comparison:
         comparator: exact_value
@@ -12395,7 +12395,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.mixed-target-one-final-gate.exact
-    - 1ea35ea72a086617ab197226aa93d6f5bff3b07c3905ae4300da2d1cb963efc9
+    - 84a176bac7e07d04bbbc10580a3989c9f7733687b8ee0add48a0dd4f2cad2dfc
     - fact.mixed-target-one-final-gate
     - comparison:
         comparator: exact_value
@@ -12420,7 +12420,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.set-valued-noninterference-certificates.exact
-    - 6a66e5ca08e00f412582575bd3aebf15fa14815353a42daeb9a10be1d47f0ea9
+    - 24611fc5a1a73ae9cc8425668a586d2ae8708387826d0fd69eb6f065d104d692
     - fact.set-valued-noninterference-certificates
     - comparison:
         comparator: exact_value
@@ -12445,7 +12445,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.certificate-omitted-axis-coverage.exact
-    - 560d72e1525a3bd0b0a3dcc96b3b160a5938b3598aaf3ae6261e17a2f5a6ffd9
+    - 633cc0ca0f9ead6f11acff05dfe60eba168048692e22ec8dcce70b9a299fe46a
     - fact.certificate-omitted-axis-coverage
     - comparison:
         comparator: exact_value
@@ -12470,7 +12470,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.certificate-dependency-edge-coverage.exact
-    - d927448eeed7a8e06179bb2d58b5076d428807924f9bc7fb6277b59ea750de1d
+    - 658482747c9459830c81cce7f1d5caf0a595f5a4996488941c92ce43f5890664
     - fact.certificate-dependency-edge-coverage
     - comparison:
         comparator: exact_value
@@ -12495,7 +12495,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.noninterference-obligation-count-metric.exact
-    - 4041ea6176bd796ce8790c66422bfa3b15cc0491baa36293e86abdba5626fea6
+    - 37dd4cc4b32f6fd09eef9c5488b31d5d17109ef72a4e52569d81013f699772a6
     - fact.noninterference-obligation-count-metric
     - comparison:
         comparator: exact_value
@@ -12520,7 +12520,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.noninterference-dag-node-count-metric.exact
-    - 59f274f3d5dd6806725e21407a3154bdee53d78d5f8ec4b6142ea449a08ba649
+    - e5346999cfcf7f9d108cf9c5e9b199acf7255e3785d3244ffb719b069b79bd6b
     - fact.noninterference-dag-node-count-metric
     - comparison:
         comparator: exact_value
@@ -12545,7 +12545,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.noninterference-byte-count-metric.exact
-    - 6e68b440a2b785508aa0ac3ce55dcb7152354c99fd0ec1096d1cc33f9d855bc7
+    - 293d7280411011f3678d9154cf3ac53e8a4869b29d47f66cd9f2666284471875
     - fact.noninterference-byte-count-metric
     - comparison:
         comparator: exact_value
@@ -12570,7 +12570,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.complexity-independent-of-ground-cardinality.exact
-    - 6d172036ef89c30e368438711c5fad41385a38fa347414059dbd0ce0d6cf32bf
+    - 557f913427dd2d5d36ef26b21ca40775fe74e557895732f2ad47e4fbf880a07b
     - fact.complexity-independent-of-ground-cardinality
     - comparison:
         comparator: exact_value
@@ -12595,7 +12595,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.certificate-package-recomputation.exact
-    - 1f240b7e6a58ad83e28b3a6e4c9fc75e43ea5fcfb42fbaac415603ad64cf08e8
+    - dced27657455ba92c3d7640cc6fde2b4e7cc6a2f4923dc4b49cc6693b1e7eba5
     - fact.certificate-package-recomputation
     - comparison:
         comparator: exact_value
@@ -12620,7 +12620,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.certificate-not-semantic-proof-substitute.exact
-    - 3c3089a7614cb19b910691a6af43fc8310ff2ab4864858ba7874dd4ec3675147
+    - 6fab1925887632f3c7b6b7436dba2de9c923726f6f76b72a2a288d15cd99da61
     - fact.certificate-not-semantic-proof-substitute
     - comparison:
         comparator: exact_value
@@ -12645,7 +12645,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-obligation-per-irrelevant-axis-rule.exact
-    - 069dfd525aea4b4d072e83c44233e97bbf71f844381bde71e2cd6102fb363df2
+    - 7a951f626aa17fd3095064586bf1a0d22e06ee37735ad4615b90d2067e3dcf35
     - fact.no-obligation-per-irrelevant-axis-rule
     - comparison:
         comparator: exact_value
@@ -12670,7 +12670,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-stat-before-read.exact
-    - 6cf267ae359ff86a1751b2453a2eff57665e2a5656b8837419ead17b4dfd6c0d
+    - 72d83470f085a1e72a71bae71d47de8ec40d569407afb096c405cfe13de10dc0
     - fact.v1-stat-before-read
     - comparison:
         comparator: exact_value
@@ -12695,7 +12695,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-bounded-prefix-stream-parse.exact
-    - c4b669964f5d4a51669137a89942c444067a159c448d2554101252ab8a2065e0
+    - cf0f7360db94588c74178866ae0c0362466e4d265e561716afefdc58d590d76c
     - fact.v1-bounded-prefix-stream-parse
     - comparison:
         comparator: exact_value
@@ -12720,7 +12720,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-capacity-header-order.exact
-    - 5e7060004e225335ac031420c733573cda772ca19fef6b0655751e17d6e3014a
+    - 2fb2051a490b7ef25c00a7dd3cec036cd915004fd2a2eaa477a1b2d1c2d64921
     - fact.v1-capacity-header-order
     - comparison:
         comparator: exact_value
@@ -12745,7 +12745,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-embedded-handoff-byte-limit.exact
-    - 2eb093b5a3115f5f0ca06165476edee805222ec1fb8b69efa6c46c4a81e47d66
+    - d6e3c2d4f343ed65f4a7454ee302ed46ad01659d1cb405d9919bd19a815ad330
     - fact.v1-embedded-handoff-byte-limit
     - comparison:
         comparator: exact_value
@@ -12770,7 +12770,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-manifest-byte-limit.exact
-    - 5f92d3930149782136a41206791c8e08a70d05f0843ced424b237fdaa89d3c70
+    - b5816583fb8b9aec13a72249cc6b8841f9bebd602a1c5436f8293f20349a0dd1
     - fact.v1-manifest-byte-limit
     - comparison:
         comparator: exact_value
@@ -12795,7 +12795,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-ground-cell-limit.exact
-    - b36d67c0592493e503a6485654a043d3fcea43e49abd0b418c0f6172a3bfd1af
+    - f880c3af2aefd4783b7410190bd9f5403caad0c396f88e104a8cde09410068cb
     - fact.v1-ground-cell-limit
     - comparison:
         comparator: exact_value
@@ -12820,7 +12820,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-capacity-prefix-limit.exact
-    - caa3c80c5d8bea86f983eb05f455303f3b8a927c95dccd4501c269b15ac17f8e
+    - 3f271a3c3745b932d8b7ebcd7ee35400b7c54fe3babd999c27a95dae8f0d3721
     - fact.v1-capacity-prefix-limit
     - comparison:
         comparator: exact_value
@@ -12845,7 +12845,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-reject-before-hydration.exact
-    - 398f54bb1246b3a24e924f3343c56f3f7064bbd4774c71ac1550cde7fbb70c1d
+    - cad2ebc22b71cbc92f6a0336e01803081c5d28953a3340e724ac0bd82efe7df3
     - fact.v1-reject-before-hydration
     - comparison:
         comparator: exact_value
@@ -12870,7 +12870,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-threshold-measurement-basis.exact
-    - e952b6a37c246bf885c640413aab150ec56fba19abaa3a730df32cbb9847305c
+    - fa47572cc89a3817403e5dbe4429ef1e6579642dadb0c4ed398299c6a8931ac2
     - fact.v1-threshold-measurement-basis
     - comparison:
         comparator: exact_value
@@ -12895,7 +12895,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-capacity-actionable-diagnostics.exact
-    - 130c62e65742b5406ccaaefa28957041a96422f8466ec344619a768ecb1d0327
+    - 20bccdf955608f52a0ee1c0b34680555a1ada36427ffacc1a572ff1c33a331b4
     - fact.v1-capacity-actionable-diagnostics
     - comparison:
         comparator: exact_value
@@ -12920,7 +12920,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.capacity-fail-closed-no-truncation.exact
-    - a3948297a15ba34b1121b7a067a1940efef80f1b8da2f388d816c7f925f88b0f
+    - afdd96361ba5260d8aca410997afe9fcf30c5df9d5af502f4b5fb0c69d8f6b3d
     - fact.capacity-fail-closed-no-truncation
     - comparison:
         comparator: exact_value
@@ -12945,7 +12945,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.efficiency-admission-property-only.exact
-    - 1718db5da83ff99c6c50d3cdb1ab198278b109961ecf7bf242765332c91d39a6
+    - 1b3b6c1b695a9d4dbd7cef44f7ee9e7387ea199fb27402957bdebe2f6a1b20f9
     - fact.efficiency-admission-property-only
     - comparison:
         comparator: exact_value
@@ -12970,7 +12970,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.efficiency-not-terminal-safety-theorem.exact
-    - ef9833e04658ecac3bb06259b3e59259650cdd72caa3be262c17f09d4855d185
+    - 2bb677cfd015080ec140416c919b6a9b4bbb8e83f5e0fc71251ca5653bf19510
     - fact.efficiency-not-terminal-safety-theorem
     - comparison:
         comparator: exact_value
@@ -12995,7 +12995,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-second-authority.exact
-    - 5d1858c734d4ded0c6dbe09327605f8f34fbf76a823855ef787f425339184882
+    - 57e1ef172dfd404ffdfd5059b7e8699bae86c2daf94de17a9e9fbca5172088ac
     - fact.no-second-authority
     - comparison:
         comparator: exact_value
@@ -13020,7 +13020,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-second-final-gate.exact
-    - d97df6b0ec49384e0b01ae8270e013cc39608020909181372212f229c1338386
+    - 9ea3e8e386ea696693cc167d701aec1f4eb749ea35b1d2f0eecd195792dd1754
     - fact.no-second-final-gate
     - comparison:
         comparator: exact_value
@@ -13045,7 +13045,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-delivery-deadline-condition.exact
-    - aeb6a15f739777b8020d856dadc4a8cb3177baf0bf3d1784fd819f638de667db
+    - bd589cfb5e4aa9a026adb0e113741c004767e911201cf83298fd45e8bacbd5b5
     - fact.no-delivery-deadline-condition
     - comparison:
         comparator: exact_value
@@ -13070,7 +13070,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-fixed-execution-flow.exact
-    - 6e43a56f9379457009f8d8c906a443c2ce1977bd85937382de703e3e21b34bb4
+    - dc95bf008094a430a40de0f84d85653a4e7e8210ccfc1670e957dfd99dcdda24
     - fact.no-fixed-execution-flow
     - comparison:
         comparator: exact_value
@@ -13095,7 +13095,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.performance-claim-measurement-contract.exact
-    - 6921e9a26bfa7c0763568b5d8829d47d34593c9ba3dfeae1686556cec90d7176
+    - d23b1d4b3dadc3612563a1d6b0ae4d9d98301d686c3dbaad942b2a5b20c904de
     - fact.performance-claim-measurement-contract
     - comparison:
         comparator: exact_value
@@ -13120,7 +13120,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.non-ui-v2-separate-admission.exact
-    - 6b7df0781aad65fbcc498c3306720afd2213fcadc85bda149c2d7a816514b0e4
+    - ed15c72ef257de7decbf8aa2cd3ebef1291a7386444aa133877a561b47ee7bd4
     - fact.non-ui-v2-separate-admission
     - comparison:
         comparator: exact_value
@@ -13145,7 +13145,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.provider-p0-excluded.exact
-    - 9674e1a517d2bcb62279d438dafcb8627daf42fe07a4049e7a1888cefe42847e
+    - f6071f39e5ef1ff63f7898c34dd606f27e89622450531ff9d995b6d0098f83eb
     - fact.provider-p0-excluded
     - comparison:
         comparator: exact_value
@@ -13170,7 +13170,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.provider-reentry-evidence-required.exact
-    - 5081dfe39c566af4fbf4439d082820d750b7d30a329e3ef28d007aec9ac4e3d7
+    - e46779e279fc437d3dbb6907cde22379ed603fa7acbe3c46d4e81b697ad18c9f
     - fact.provider-reentry-evidence-required
     - comparison:
         comparator: exact_value
@@ -13195,7 +13195,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.shared-engine-future-boundary.exact
-    - 5ba134caff4751476bb4cded3fca4f169d0ac7c3a71f4d8fd3450df7712fe3b2
+    - e1b843730eef5a1ab6d8fd9e30afa371c887640664458f4b449e53e927d4b076
     - fact.shared-engine-future-boundary
     - comparison:
         comparator: exact_value
@@ -13220,7 +13220,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-1-v1-capacity.exact
-    - 98fca32e240166e3cfb7996687fefbe8c155bf23d0ac0148713f2cea25ad69ad
+    - 3b6f0eae07580338ea2eebcad590f33ba64253c4bf9e8ecdd066a14487bcca2c
     - fact.rollout-1-v1-capacity
     - comparison:
         comparator: exact_value
@@ -13245,7 +13245,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-2-formal-denotation.exact
-    - 1fa7efe8a8ec75df830e47fa363371b250755dc41705d3456d48058e13f4b78e
+    - 06da8db31f6e6f99029b34e6b127b9aff629a8e932cb8f5db2649786667a26d4
     - fact.rollout-2-formal-denotation
     - comparison:
         comparator: exact_value
@@ -13270,7 +13270,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-3-engine-independent-oracle.exact
-    - edf82e47ac262001cfe897ef769e87044f49198c9ced90922ac61e76701074c5
+    - 1a164d6aa07bc0b78fd9360f3fee32cbd9f54d7499a0932ae762d408be85e89e
     - fact.rollout-3-engine-independent-oracle
     - comparison:
         comparator: exact_value
@@ -13295,7 +13295,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-4-ui-v2-opt-in.exact
-    - ee416de1b078ab37eda27d8e739b312ded6eb7ca4c1d28c048c9917bceda733c
+    - 3ac7a423d07b6b14d02af1006846c2f6327d92ed21a0ea49e9021c8a0bd0218a
     - fact.rollout-4-ui-v2-opt-in
     - comparison:
         comparator: exact_value
@@ -13320,7 +13320,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-5-mixed-downstream.exact
-    - 051a02ad18554fc6976e08eedcedaddc265e72ad1c9f0ef3200612ddddc82350
+    - 8b457e5e1bbbc2b0a60fd814245dac80c4eb1f7ba537cf2a8784761899f12808
     - fact.rollout-5-mixed-downstream
     - comparison:
         comparator: exact_value
@@ -13345,7 +13345,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-6-default-after-proof.exact
-    - 446d9265102849ddcd2432688cb65c518d5b45c6dd45527eb1e67b0a936851df
+    - 4c8ba9f84a5e2fe8e127c34f6a2c8fbb91284d6002460d1c5145346730701320
     - fact.rollout-6-default-after-proof
     - comparison:
         comparator: exact_value
@@ -13370,7 +13370,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.rollout-7-non-ui-provider-separate.exact
-    - 4859447255e45697e0912f1f519fbda81f0823144ad9369d51dade6564d14a2f
+    - 9914b3798cf8f423df73df82644b7e04aefbef2c072605089aa57b9921bfac42
     - fact.rollout-7-non-ui-provider-separate
     - comparison:
         comparator: exact_value
@@ -13395,7 +13395,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.independent-full-finite-test-expander.exact
-    - d91e074c13144740eca6d3194166832ab802be1633cc9583e09433f6ab150ed3
+    - 4227af918458faab767e688bb86db51f8ee9397cf563af2b3f8dde29019f3366
     - fact.independent-full-finite-test-expander
     - comparison:
         comparator: exact_value
@@ -13420,7 +13420,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.exhaustive-pointwise-equivalence-tests.exact
-    - e69d81eb1ef8b1f6e1c82ed2b03bb3ccc5e725374f217b8aa87ef8d93288dcaf
+    - 5f8eca42f6cb1014be9bf1758306be8e738ce7061803adba11a2e5ebb45a9824
     - fact.exhaustive-pointwise-equivalence-tests
     - comparison:
         comparator: exact_value
@@ -13445,7 +13445,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.adversarial-false-completion-counterexamples.exact
-    - c2151e4dc2679d26502f2cce68127764b29291dd2ebd0529534eebcab993b4fa
+    - f5fb3baf6789b5470fe220748fea23fadbeac99991595b45cdf55c916ad651e7
     - fact.adversarial-false-completion-counterexamples
     - comparison:
         comparator: exact_value
@@ -13470,7 +13470,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.mixed-contract-verification.exact
-    - 1c8ed05ed38ef7b7331cc5eb71a4a363086032cc450d05aa724b63df477596c3
+    - 3c0d693b8d78e29933fd801e234f94440e6015e6970bca606d7ac08263651fbd
     - fact.mixed-contract-verification
     - comparison:
         comparator: exact_value
@@ -13495,7 +13495,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.capacity-early-rejection-verification.exact
-    - bdcadee6dd14651004b7ce12c1e6e5a0b231a8d4cb6d48a8bab734c8008045ad
+    - 5c191a74ed002d29642d31630c9c339484bacc880bf4dce710d11f34e24216ea
     - fact.capacity-early-rejection-verification
     - comparison:
         comparator: exact_value
@@ -13520,7 +13520,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.complexity-parameter-verification.exact
-    - 8bef56895e2b848923ab61191db56977bc1caaf9471ee602a096764661f00754
+    - 411fca71117d5e1a6feb57f908d70354b1470fa452d10d6715f1d268f07d524f
     - fact.complexity-parameter-verification
     - comparison:
         comparator: exact_value
@@ -13545,7 +13545,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.distribution-context-parity.exact
-    - f5b93dc25724519b5a44241b92e84432f50720a4d9a2c90c1e55b2070ff61480
+    - dccec74dd185b7f65fa0cb3b06ebc7d2dc4ca92e1b2590d5a0f1cd4fd687f4bb
     - fact.distribution-context-parity
     - comparison:
         comparator: exact_value
@@ -13570,7 +13570,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.architecture-deliberation.exact
-    - 0535d229670b2c527df2813b99452c26f4773dda7fba8aada7970f23df04a93e
+    - 1740d66782852e13299b4c3ee16766288270e3d2511ee6ec7af37cfd9c9add43
     - fact.architecture-deliberation
     - comparison:
         comparator: exact_value
@@ -13595,7 +13595,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-sampling.exact
-    - 1ea9d6b615a95f6b50549a5dd945193954c92f9b20784057b66bbd4b6a4c18fd
+    - 0e01cab358af773e9f33c56102ddf3850fc8922bc837cdbc08e690d3367e556a
     - fact.no-sampling
     - comparison:
         comparator: exact_value
@@ -13620,7 +13620,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-granularity-reduction.exact
-    - 798bfc414332fd1fde18db0e4d86c901a5917695d7f3978181c0781d7ec253fe
+    - 3b154c376a06087119bc574d4dc157e5f74c3912bf27b3065f0c906a4a39b00d
     - fact.no-granularity-reduction
     - comparison:
         comparator: exact_value
@@ -13645,7 +13645,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-expand-then-deduplicate.exact
-    - 3ad4b86e8125855d3cd7e2b08e7707abc7b79f935cfb18de3c1194683dba2e92
+    - 897352e97633e9e5f9460d9ffd10063c6b5c5433caace015120770bcfd98ed51
     - fact.no-expand-then-deduplicate
     - comparison:
         comparator: exact_value
@@ -13670,7 +13670,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-historical-proof-reuse.exact
-    - 42a51d044e5f1bfd87d5d6c6f60791d5c240785dff028ab46b0278c209f8b87f
+    - 7a22269d739fd7a4492889ebd87882477e5900aaed623786ae336fb29d99b676
     - fact.no-historical-proof-reuse
     - comparison:
         comparator: exact_value
@@ -13695,7 +13695,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-authority-gate-proliferation.exact
-    - 9ff3a2a2efa1eef0ddf3177b734dd6ef258b94f82b8aec13bddc2ece40a527fc
+    - dedf5bc270b048d6ce592d605dfa593444591a82ae1cfae5a7e27b4a3229ebe5
     - fact.no-authority-gate-proliferation
     - comparison:
         comparator: exact_value
@@ -13720,7 +13720,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-arbitrary-symbolic-execution.exact
-    - 4e0ac5bf7fe54a17d0183f7e9a73a1b7f411558490063e7352b03596736e02bd
+    - 850ba017dccb1bdabacfe35327540ac8758aea26d9cc3a50d2e1f7819c2e578f
     - fact.no-arbitrary-symbolic-execution
     - comparison:
         comparator: exact_value
@@ -13745,7 +13745,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.no-ungrounded-applicability-omission.exact
-    - bb7e2b2a8a70547090ce4044bde147576cb0bab37b3371ce3b17f736e9d3ee06
+    - 3fdbc87e55e328be975c4a2e923edb8c148db2676a6a67435e9a9ccd2ad6eceb
     - fact.no-ungrounded-applicability-omission
     - comparison:
         comparator: exact_value
@@ -13770,7 +13770,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-v2-denotation-equivalence-ac.exact
-    - 781a96b11b10c30e09b3e9d0fdb7d0b98055f58cad53935b5133dee097253676
+    - 8d882bf3f1421468ab2e8fe915904761f4a3b632e242a6251d27e57e7670739c
     - fact.v1-v2-denotation-equivalence-ac
     - comparison:
         comparator: exact_value
@@ -13795,7 +13795,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.canonical-region-and-applicability-ac.exact
-    - d0786868816a9561bf947643ce90ed32697db08aa98498071391e20134fd504e
+    - 23bdcfcc86e7775d0eca79b57b51b00e320497f9449fbf460e22fbb154b9da7e
     - fact.canonical-region-and-applicability-ac
     - comparison:
         comparator: exact_value
@@ -13820,7 +13820,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.mixed-contract-current-evidence-ac.exact
-    - 369a9ce4d5cf3cc54bf847363c8a342a941e7f42d327ab36d0b65d732a316653
+    - bfccb68b1d2b4b52b50e3c1d6a4904a029d552341d76a8f03d9f74dccb72c1f3
     - fact.mixed-contract-current-evidence-ac
     - comparison:
         comparator: exact_value
@@ -13845,7 +13845,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.noninterference-complexity-ac.exact
-    - ded42574818aa2097d164b599e1738dcb91602a502ef08f0bcc7eb2d09bb03e6
+    - 401a615031046a6a59b891e7f033744d0a34e204ea7f7edaafa09489c0af801a
     - fact.noninterference-complexity-ac
     - comparison:
         comparator: exact_value
@@ -13870,7 +13870,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.v1-capacity-guard-ac.exact
-    - 6680a8d4dec2034df1b60553423934d8a66e2f479f2b266d94350dc5e53b9664
+    - e693cac8973c66f58102a43dadeb03e36c37f2f48c2e42aa537f70d1bd3d2e12
     - fact.v1-capacity-guard-ac
     - comparison:
         comparator: exact_value
@@ -13895,7 +13895,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.scope-and-rollout-ac.exact
-    - f19dc53c112e63aa03a5c614540da7173043eead18d10fd7c67039dbb01d22e8
+    - 14b9f2eb9b5c52d7700a50f195e0c1677fa5632bd508dae2eb23795e1a7643e6
     - fact.scope-and-rollout-ac
     - comparison:
         comparator: exact_value
@@ -13920,7 +13920,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.package-antidegradation-and-parity-ac.exact
-    - 44b8e982b1bf34d857be70b3053101db2e0758bac2662d5e57ab6a6ffc99e699
+    - d07f86858621cc7c1f4343f951f24dda5e405ace81c4100dd7c943b53b062866
     - fact.package-antidegradation-and-parity-ac
     - comparison:
         comparator: exact_value
@@ -13945,7 +13945,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.inventory-is-not-completion.exact
-    - cbed58f01b43b7c36d9d05204c0913fbaf96eef8726e242206306cb53e60f940
+    - a5fb99a84abf77e258eee12d65ae5ece528764d18fbfccd4909ec22e862a04aa
     - fact.inventory-is-not-completion
     - comparison:
         comparator: exact_value
@@ -13970,7 +13970,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.public-schema-change-risk.exact
-    - 237c2252c2b7e95885fcd46adef6e8beb2b529db4ddb92b3e8d7185ad87fd0a1
+    - 2994bfe8bea598b4fde3581e5af88d86712cd5431a6c9a77e9458a13482ca8b2
     - fact.public-schema-change-risk
     - comparison:
         comparator: exact_value
@@ -13995,7 +13995,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.false-completion-critical-path-risk.exact
-    - 94daf0489aab7ca04ca21cc8f82c8742a8cb051b23be12831a2ade945e5ade6a
+    - 250995c597d42b989334a0af02ca38d01182b3f74f197ae10ed337729cb7f2ee
     - fact.false-completion-critical-path-risk
     - comparison:
         comparator: exact_value
@@ -14020,7 +14020,7 @@ obligations:
         - architecture-deliberation
         rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
   - - proof.symbolic-oracle-observability-risk.exact
-    - b090612c5c120dcd6f314faf79cda9a63fe613f1b311d5a6bc02b05be45abc44
+    - caf93a60c65a8172dc380522bd3c3e581c7aa97e53c8e8e8310e52708f93f3e4
     - fact.symbolic-oracle-observability-risk
     - comparison:
         comparator: exact_value

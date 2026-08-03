@@ -38,10 +38,12 @@ export function materializeLongTaskCompactCarrier(
   rootInput: Record<string, unknown>,
 ): MaterializedLongTaskCompactCarrierV1 {
   const label = "compact_semantic_carrier";
-  if (!Object.hasOwn(rootInput, label))
-    compactFail(label, "missing carrier");
+  if (!Object.hasOwn(rootInput, label)) compactFail(label, "missing carrier");
   if (Object.hasOwn(rootInput, "source_claims"))
-    compactFail(label, "expanded source_claims cannot coexist with compact carrier");
+    compactFail(
+      label,
+      "expanded source_claims cannot coexist with compact carrier",
+    );
   if (!Object.hasOwn(rootInput, "outcomes"))
     compactFail(label, "v1 compact carrier requires inline outcomes");
   const carrier = compactStrictObject(rootInput[label], label, [

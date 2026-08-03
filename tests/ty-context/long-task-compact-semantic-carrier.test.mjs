@@ -54,6 +54,17 @@ test("[critical:compact-carrier-exact-closure] migrated compact Authorities pres
   assert.ok(Buffer.byteLength(source) < 600_000);
   assert.ok(source.split(/\r?\n/u).length < 15_000);
   validateSemanticFactManifestPolicy(parsedSource.manifest);
+  for (const input of parsedSource.manifest.inputs)
+    if (
+      ["context", "canonical_spec", "repository_preservation"].includes(
+        input.kind,
+      )
+    )
+      assert.equal(
+        input.sha256,
+        sha256Hex(await readFile(path.join(repository, input.source_ref))),
+        input.key,
+      );
 
   const parsedContract = await parseDeliveryContractBundle(
     path.join(repository, ".work_products", "symbolic-denotation-efficiency"),
@@ -152,6 +163,35 @@ test("compact Source fails closed on revision and capacity drift", async () => {
   assert.throws(
     () => parseSemanticFactCompactCarrierShape(changedDigest),
     /revision digest mismatch/u,
+  );
+  const lineageManifest = structuredClone(parsed.manifest);
+  const lineageInput = lineageManifest.inputs.find(
+    (item) => item.fact_refs.length > 0,
+  );
+  assert.ok(lineageInput);
+  const factRef = lineageInput.fact_refs[0];
+  const proofRef = lineageManifest.proof_obligations.find(
+    (item) => item.fact_ref === factRef,
+  )?.key;
+  assert.ok(proofRef);
+  lineageInput.sha256 =
+    lineageInput.sha256 === "f".repeat(64)
+      ? "e".repeat(64)
+      : "f".repeat(64);
+  const lineageChanged = parseSemanticFactCompactCarrierShape(
+    createSemanticFactCompactCarrier(lineageManifest),
+  );
+  assert.notEqual(
+    lineageChanged.fact_revisions.find((item) => item.key === factRef)
+      ?.revision_digest,
+    parsed.fact_revisions.find((item) => item.key === factRef)
+      ?.revision_digest,
+  );
+  assert.notEqual(
+    lineageChanged.obligation_revisions.find((item) => item.key === proofRef)
+      ?.revision_digest,
+    parsed.obligation_revisions.find((item) => item.key === proofRef)
+      ?.revision_digest,
   );
   const exceeded = structuredClone(compact);
   exceeded.capacity.maximum.facts = 1;

@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import {
+  indexSemanticFactRevisionInputs,
   semanticFactRevisionDigest,
   semanticObligationRevisionDigest,
 } from "./semantic-fact-compact-carrier.js";
@@ -19,6 +20,18 @@ export function createSemanticFactCompactCarrier(
   manifestInput: SemanticFactManifestV1,
 ): Record<string, unknown> {
   const manifest = normalizedMaterializedManifest(manifestInput);
+  const inputRevisionsByFact = indexSemanticFactRevisionInputs(
+    manifest.inputs as unknown as Record<string, unknown>[],
+  );
+  const factRevisionByKey = new Map(
+    manifest.facts.map((fact) => [
+      fact.key,
+      semanticFactRevisionDigest(
+        fact as unknown as Record<string, unknown>,
+        inputRevisionsByFact,
+      ),
+    ]),
+  );
   const proofDefaults = commonFields(
     manifest.proof_obligations as unknown as Record<string, unknown>[],
     ["key", "fact_ref"],
@@ -61,6 +74,7 @@ export function createSemanticFactCompactCarrier(
           manifest.facts.map((fact) => ({
             fact_revision_digest: semanticFactRevisionDigest(
               fact as unknown as Record<string, unknown>,
+              inputRevisionsByFact,
             ),
             ...(fact as unknown as Record<string, unknown>),
           })),
@@ -79,13 +93,15 @@ export function createSemanticFactCompactCarrier(
         obligation_key: proof.key,
         obligation_revision_digest: semanticObligationRevisionDigest(
           proof as unknown as Record<string, unknown>,
+          requiredFactRevision(factRevisionByKey, proof.fact_ref),
         ),
         fact_key: proof.fact_ref,
         template_ref: "proof-template.shared",
-        overrides: withoutFields(
-          proof as unknown as Record<string, unknown>,
-          ["key", "fact_ref", ...Object.keys(proofDefaults)],
-        ),
+        overrides: withoutFields(proof as unknown as Record<string, unknown>, [
+          "key",
+          "fact_ref",
+          ...Object.keys(proofDefaults),
+        ]),
       })),
     ),
     exceptions: [],
@@ -129,6 +145,18 @@ export function createSemanticFactCompactCarrier(
     ),
   };
   return compact;
+}
+
+function requiredFactRevision(
+  revisions: ReadonlyMap<string, string>,
+  factRef: string,
+): string {
+  const revision = revisions.get(factRef);
+  if (!revision)
+    throw new Error(
+      `semantic_fact_compact_authoring_fact_revision_missing:${factRef}`,
+    );
+  return revision;
 }
 
 function normalizedMaterializedManifest(

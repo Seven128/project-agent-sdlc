@@ -56,7 +56,9 @@ export function parseLongTaskCompactProofTemplates(
       compactResolveSelectors(row.binding, selectors, `${itemLabel}.binding`),
       `${itemLabel}.binding`,
     );
-    if (["proof_ref", "fact_ref"].some((field) => Object.hasOwn(binding, field)))
+    if (
+      ["proof_ref", "fact_ref"].some((field) => Object.hasOwn(binding, field))
+    )
       compactFail(`${itemLabel}.binding`, "identity fields belong to rows");
     result.set(key, binding);
   }
@@ -76,7 +78,10 @@ export function parseLongTaskCompactCapacity(
     "maximum",
   ]);
   if (row.theoretical_ground_universe !== "not_materialized")
-    compactFail(`${label}.theoretical_ground_universe`, "must be not_materialized");
+    compactFail(
+      `${label}.theoretical_ground_universe`,
+      "must be not_materialized",
+    );
   return {
     measured: capacityCounts(row.measured, `${label}.measured`),
     maximum: capacityCounts(row.maximum, `${label}.maximum`),
@@ -121,17 +126,18 @@ export function parseLongTaskCompactTable(
   selectors: Map<string, string[]>,
   label: string,
 ): Record<string, unknown>[] {
-  const table = compactStrictObject(value, label, ["defaults", "columns", "rows"]);
+  const table = compactStrictObject(value, label, [
+    "defaults",
+    "columns",
+    "rows",
+  ]);
   const defaults = compactPlainObject(
     compactResolveSelectors(table.defaults, selectors, `${label}.defaults`),
     `${label}.defaults`,
   );
   const columns = compactArray(table.columns, `${label}.columns`).map(
     (item, index) => {
-      const column = compactNonemptyString(
-        item,
-        `${label}.columns[${index}]`,
-      );
+      const column = compactNonemptyString(item, `${label}.columns[${index}]`);
       if (!/^[a-z][a-z0-9_]*$/u.test(column))
         compactFail(`${label}.columns[${index}]`, "invalid column name");
       return column;

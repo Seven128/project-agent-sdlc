@@ -75,7 +75,10 @@ export function buildSemanticFactInspectorCensus(
   return [...expectedCensusRows(manifest, factsFor).entries()].map(
     ([identity, expectation]) => {
       const separator = identity.indexOf(":");
-      const kind = identity.slice(0, separator) as SemanticFactManifestV1["inspector"]["census"][number]["kind"];
+      const kind = identity.slice(
+        0,
+        separator,
+      ) as SemanticFactManifestV1["inspector"]["census"][number]["kind"];
       const key = identity.slice(separator + 1);
       const basisRefs = censusBasisRefs(
         kind,

@@ -16,8 +16,6 @@ import {
   type SemanticCompactCatalogs,
   plainSemanticCompactObject,
   resolveSemanticCompactSelectors,
-  semanticFactRevisionDigest,
-  semanticObligationRevisionDigest,
 } from "./semantic-fact-compact-support.js";
 
 export function parseSemanticCompactCapacity(
@@ -43,8 +41,13 @@ export function parseSemanticCompactCapacity(
   };
 }
 
-function parseCapacityCounts(value: unknown, label: string): SemanticCompactCapacityCounts {
-  const row = semanticObject(value, label, [...SEMANTIC_COMPACT_CAPACITY_FIELDS]);
+function parseCapacityCounts(
+  value: unknown,
+  label: string,
+): SemanticCompactCapacityCounts {
+  const row = semanticObject(value, label, [
+    ...SEMANTIC_COMPACT_CAPACITY_FIELDS,
+  ]);
   return Object.fromEntries(
     SEMANTIC_COMPACT_CAPACITY_FIELDS.map((field) => [
       field,
@@ -129,12 +132,6 @@ export function parseSemanticCompactFactSets(
         digestValue,
         `${rowLabel}.fact_revision_digest`,
       );
-      const actualDigest = semanticFactRevisionDigest(fact);
-      if (revisionDigest !== actualDigest)
-        semanticFail(
-          `${rowLabel}.fact_revision_digest`,
-          `revision digest mismatch: ${revisionDigest}:${actualDigest}`,
-        );
       result.push({ fact, revision_digest: revisionDigest });
     }
   }
@@ -152,7 +149,11 @@ export function parseSemanticCompactProofTemplates(
     const row = semanticObject(item, itemLabel, ["key", "proof"]);
     const key = semanticStableRef(row.key, `${itemLabel}.key`);
     const proof = plainSemanticCompactObject(
-      resolveSemanticCompactSelectors(row.proof, selectors, `${itemLabel}.proof`),
+      resolveSemanticCompactSelectors(
+        row.proof,
+        selectors,
+        `${itemLabel}.proof`,
+      ),
       `${itemLabel}.proof`,
     );
     if (Object.hasOwn(proof, "key") || Object.hasOwn(proof, "fact_ref"))
@@ -192,7 +193,10 @@ export function parseSemanticCompactObligations(
     );
     const template = templates.get(templateRef);
     if (!template)
-      semanticFail(`${itemLabel}.template_ref`, `unknown template: ${templateRef}`);
+      semanticFail(
+        `${itemLabel}.template_ref`,
+        `unknown template: ${templateRef}`,
+      );
     const overrides = plainSemanticCompactObject(
       resolveSemanticCompactSelectors(
         row.overrides,
@@ -216,12 +220,6 @@ export function parseSemanticCompactObligations(
       row.obligation_revision_digest,
       `${itemLabel}.obligation_revision_digest`,
     );
-    const actualDigest = semanticObligationRevisionDigest(proof);
-    if (revisionDigest !== actualDigest)
-      semanticFail(
-        `${itemLabel}.obligation_revision_digest`,
-        `revision digest mismatch: ${revisionDigest}:${actualDigest}`,
-      );
     return { proof, revision_digest: revisionDigest };
   });
 }
@@ -233,7 +231,11 @@ function parseCompactTable(
 ): Record<string, unknown>[] {
   const table = semanticObject(value, label, ["defaults", "columns", "rows"]);
   const defaults = plainSemanticCompactObject(
-    resolveSemanticCompactSelectors(table.defaults, selectors, `${label}.defaults`),
+    resolveSemanticCompactSelectors(
+      table.defaults,
+      selectors,
+      `${label}.defaults`,
+    ),
     `${label}.defaults`,
   );
   const columns = semanticArray(table.columns, `${label}.columns`).map(

@@ -23,6 +23,11 @@ import {
   type SemanticCompactCapacityCounts,
   assertUniqueSemanticCompactKeys,
   emptySemanticCompactCollectionRows,
+  indexSemanticFactRevisionInputs,
+  legacySemanticFactRevisionDigest,
+  legacySemanticObligationRevisionDigest,
+  semanticFactRevisionDigest,
+  semanticObligationRevisionDigest,
   semanticCompactCollectionRows,
   semanticCompactGeneration,
   resolveSemanticCompactSelectors,
@@ -31,6 +36,7 @@ import {
 } from "./semantic-fact-compact-support.js";
 
 export {
+  indexSemanticFactRevisionInputs,
   semanticFactRevisionDigest,
   semanticObligationRevisionDigest,
 } from "./semantic-fact-compact-support.js";
@@ -52,6 +58,19 @@ export interface MaterializedSemanticFactCompactCarrierV1 {
 
 export function parseSemanticFactCompactCarrierShape(
   value: unknown,
+): MaterializedSemanticFactCompactCarrierV1 {
+  return parseSemanticFactCompactCarrier(value, false);
+}
+
+export function parseSemanticFactCompactCarrierForMigration(
+  value: unknown,
+): MaterializedSemanticFactCompactCarrierV1 {
+  return parseSemanticFactCompactCarrier(value, true);
+}
+
+function parseSemanticFactCompactCarrier(
+  value: unknown,
+  allowLegacyRevisionIdentity: boolean,
 ): MaterializedSemanticFactCompactCarrierV1 {
   const label = "semantic_fact_compact_carrier";
   const root = semanticObject(value, label, [
@@ -149,6 +168,59 @@ export function parseSemanticFactCompactCarrierShape(
     semanticCompactCollectionRows(preliminary),
   );
   const manifest = parseSemanticFactManifestShape(preliminary);
+  const inputRevisionsByFact = indexSemanticFactRevisionInputs(
+    manifest.inputs as unknown as Record<string, unknown>[],
+  );
+  const currentFactRevisions = new Map(
+    manifest.facts.map((fact) => [
+      fact.key,
+      semanticFactRevisionDigest(
+        fact as unknown as Record<string, unknown>,
+        inputRevisionsByFact,
+      ),
+    ]),
+  );
+  for (const row of factRows) {
+    const key = semanticStableRef(row.fact.key, `${label}.fact_revision.key`);
+    const current = currentFactRevisions.get(key)!;
+    const legacy = legacySemanticFactRevisionDigest(row.fact);
+    if (
+      row.revision_digest !== current &&
+      (!allowLegacyRevisionIdentity || row.revision_digest !== legacy)
+    )
+      semanticFail(
+        `${label}.fact_revision.${key}`,
+        `revision digest mismatch: ${row.revision_digest}:${current}`,
+      );
+  }
+  const currentObligationRevisions = new Map<string, string>();
+  for (const row of obligationRows) {
+    const key = semanticStableRef(
+      row.proof.key,
+      `${label}.obligation_revision.key`,
+    );
+    const factRef = semanticStableRef(
+      row.proof.fact_ref,
+      `${label}.obligation_revision.fact_ref`,
+    );
+    const factRevision = currentFactRevisions.get(factRef);
+    if (!factRevision)
+      semanticFail(
+        `${label}.obligation_revision.${key}`,
+        `unknown fact revision: ${factRef}`,
+      );
+    const current = semanticObligationRevisionDigest(row.proof, factRevision);
+    const legacy = legacySemanticObligationRevisionDigest(row.proof);
+    if (
+      row.revision_digest !== current &&
+      (!allowLegacyRevisionIdentity || row.revision_digest !== legacy)
+    )
+      semanticFail(
+        `${label}.obligation_revision.${key}`,
+        `revision digest mismatch: ${row.revision_digest}:${current}`,
+      );
+    currentObligationRevisions.set(key, current);
+  }
   const measured: SemanticCompactCapacityCounts = {
     inputs: manifest.inputs.length,
     catalog_rows: SEMANTIC_COMPACT_CATALOG_COLLECTIONS.reduce(
@@ -169,14 +241,14 @@ export function parseSemanticFactCompactCarrierShape(
     manifest,
     fact_revisions: factRows.map((item) => ({
       key: semanticStableRef(item.fact.key, `${label}.fact_revision.key`),
-      revision_digest: item.revision_digest,
+      revision_digest: currentFactRevisions.get(String(item.fact.key))!,
     })),
     obligation_revisions: obligationRows.map((item) => ({
       key: semanticStableRef(
         item.proof.key,
         `${label}.obligation_revision.key`,
       ),
-      revision_digest: item.revision_digest,
+      revision_digest: currentObligationRevisions.get(String(item.proof.key))!,
     })),
     measured,
   };

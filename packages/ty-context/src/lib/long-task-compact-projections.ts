@@ -19,13 +19,22 @@ export function prepareLongTaskCompactOutcomeTargets(
     if (Object.hasOwn(outcome, "semantic_fact_bindings"))
       compactFail(label, "expanded semantic_fact_bindings cannot coexist");
     const product = compactPlainObject(outcome.product, `${label}.product`);
-    const technical = compactPlainObject(outcome.technical, `${label}.technical`);
+    const technical = compactPlainObject(
+      outcome.technical,
+      `${label}.technical`,
+    );
     for (const field of ["requirements", "non_completing_outcomes"])
       if (Object.hasOwn(product, field))
-        compactFail(`${label}.product.${field}`, "expanded projection cannot coexist");
+        compactFail(
+          `${label}.product.${field}`,
+          "expanded projection cannot coexist",
+        );
     for (const field of ["obligations", "forbidden_shortcuts"])
       if (Object.hasOwn(technical, field))
-        compactFail(`${label}.technical.${field}`, "expanded projection cannot coexist");
+        compactFail(
+          `${label}.technical.${field}`,
+          "expanded projection cannot coexist",
+        );
     product.requirements = [];
     product.non_completing_outcomes = [];
     technical.obligations = [];
@@ -45,7 +54,11 @@ export function materializeLongTaskCompactClaimProjections(
 ): void {
   for (const [index, projection] of projections.entries()) {
     const label = `compact_semantic_carrier.claim_projections.rows[${index}]`;
-    const outcome = compactRequiredOutcome(projection.outcome_ref, outcomes, label);
+    const outcome = compactRequiredOutcome(
+      projection.outcome_ref,
+      outcomes,
+      label,
+    );
     const claimKey =
       projection.claim_key === null
         ? null
@@ -71,7 +84,10 @@ export function materializeLongTaskCompactClaimProjections(
       `${label}.projection_kind`,
     );
     const product = compactPlainObject(outcome.product, `${label}.product`);
-    const technical = compactPlainObject(outcome.technical, `${label}.technical`);
+    const technical = compactPlainObject(
+      outcome.technical,
+      `${label}.technical`,
+    );
     const base = {
       key: compactStableRef(
         projection.projection_key ?? projection.claim_key,
@@ -86,8 +102,7 @@ export function materializeLongTaskCompactClaimProjections(
         `${label}.required_proof_surfaces`,
       );
       const row = { ...base, required_proof_surfaces: requiredProofSurfaces };
-      if (kind === "requirement")
-        (product.requirements as unknown[]).push(row);
+      if (kind === "requirement") (product.requirements as unknown[]).push(row);
       else (technical.obligations as unknown[]).push(row);
     } else {
       if (projection.required_proof_surfaces !== null)
@@ -138,7 +153,11 @@ export function materializeLongTaskCompactFactBindings(
   }
   for (const [index, obligation] of obligations.entries()) {
     const label = `compact_semantic_carrier.obligations.rows[${index}]`;
-    const outcome = compactRequiredOutcome(obligation.outcome_ref, outcomes, label);
+    const outcome = compactRequiredOutcome(
+      obligation.outcome_ref,
+      outcomes,
+      label,
+    );
     const factKey = compactStableRef(obligation.fact_key, `${label}.fact_key`);
     if (!factByKey.has(factKey))
       compactFail(`${label}.fact_key`, `unknown fact: ${factKey}`);
@@ -187,12 +206,19 @@ export function materializeLongTaskCompactAssertions(
 ): void {
   for (const [index, projection] of assertions.entries()) {
     const label = `compact_semantic_carrier.assertion_projections.rows[${index}]`;
-    const outcome = compactRequiredOutcome(projection.outcome_ref, outcomes, label);
+    const outcome = compactRequiredOutcome(
+      projection.outcome_ref,
+      outcomes,
+      label,
+    );
     const acceptance = compactPlainObject(
       outcome.acceptance,
       `${label}.acceptance`,
     );
-    const checkRef = compactStableRef(projection.check_ref, `${label}.check_ref`);
+    const checkRef = compactStableRef(
+      projection.check_ref,
+      `${label}.check_ref`,
+    );
     const check = compactArray(acceptance.checks, `${label}.checks`)
       .map((item, checkIndex) =>
         compactPlainObject(item, `${label}.checks[${checkIndex}]`),
@@ -235,10 +261,7 @@ export function materializeLongTaskCompactAssertions(
         projection.evidence_capabilities,
         `${label}.evidence_capabilities`,
       ),
-      operator: compactNonemptyString(
-        projection.operator,
-        `${label}.operator`,
-      ),
+      operator: compactNonemptyString(projection.operator, `${label}.operator`),
       expected: projection.expected,
     };
     const positive = compactArray(

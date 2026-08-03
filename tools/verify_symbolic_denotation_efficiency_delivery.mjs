@@ -13,7 +13,6 @@ import {
 } from "./symbolic_denotation_efficiency_delivery_catalog.mjs";
 import { emitSemanticDeliveryResult } from "./semantic_fact_delivery_evidence.mjs";
 import { resolveSemanticFactResults } from "./semantic_fact_delivery_verifier_support.mjs";
-import { parseSemanticFactManifestBlocks } from "../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -248,6 +247,7 @@ async function completeVerification() {
 }
 
 async function loadSemanticManifest() {
+  const { parseSemanticFactManifestBlocks } = await import("../packages/ty-context/dist/lib/semantic-fact-source-parser.js");
   const source = await readText(sourcePath);
   const rows = parseSemanticFactManifestBlocks(sourcePath, source);
   if (rows.length !== 1)

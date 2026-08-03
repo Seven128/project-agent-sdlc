@@ -78,7 +78,8 @@ export function createLongTaskCompactContract(
     delete (outcome.product as unknown as Record<string, unknown>).requirements;
     delete (outcome.product as unknown as Record<string, unknown>)
       .non_completing_outcomes;
-    delete (outcome.technical as unknown as Record<string, unknown>).obligations;
+    delete (outcome.technical as unknown as Record<string, unknown>)
+      .obligations;
     delete (outcome.technical as unknown as Record<string, unknown>)
       .forbidden_shortcuts;
 
@@ -108,10 +109,11 @@ export function createLongTaskCompactContract(
         obligation_key: binding.proof_ref,
         obligation_revision_digest: revision,
         fact_key: binding.fact_ref,
-        ...withoutFields(
-          binding as unknown as Record<string, unknown>,
-          ["proof_ref", "fact_ref"],
-        ),
+        ...withoutFields(binding as unknown as Record<string, unknown>, [
+          "proof_ref",
+          "fact_ref",
+          "obligation_revision_digest",
+        ]),
       });
     }
     delete (outcome as unknown as Record<string, unknown>)

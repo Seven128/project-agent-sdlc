@@ -59,9 +59,7 @@ export function compactAuthoringTable<T extends object>(
   };
 }
 
-export function applyCompactAuthoringSelectors(
-  base: Record<string, unknown>,
-): {
+export function applyCompactAuthoringSelectors(base: Record<string, unknown>): {
   value: Record<string, unknown>;
   selectors: Array<{ key: string; members: string[] }>;
 } {
@@ -138,7 +136,8 @@ function replaceSharedSelectors(
       }
       return [...candidate];
     }
-    if (Array.isArray(item)) return item.map((child) => replace(child, parentKey));
+    if (Array.isArray(item))
+      return item.map((child) => replace(child, parentKey));
     if (item && typeof item === "object")
       return Object.fromEntries(
         Object.entries(item).map(([key, child]) => [key, replace(child, key)]),

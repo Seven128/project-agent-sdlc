@@ -49,7 +49,8 @@ export function compactResolveSelectors(
   if (Object.keys(row).length === 1 && Object.hasOwn(row, "selector_ref")) {
     const ref = compactStableRef(row.selector_ref, `${label}.selector_ref`);
     const members = selectors.get(ref);
-    if (!members) compactFail(`${label}.selector_ref`, `unknown selector: ${ref}`);
+    if (!members)
+      compactFail(`${label}.selector_ref`, `unknown selector: ${ref}`);
     return [...members];
   }
   if (Object.hasOwn(row, "selector_ref"))
@@ -108,7 +109,10 @@ export function compactUniqueRows(
 ): void {
   const seen = new Set<string>();
   for (const [index, row] of rows.entries()) {
-    const value = compactStableRef(row[field], `${label}.rows[${index}].${field}`);
+    const value = compactStableRef(
+      row[field],
+      `${label}.rows[${index}].${field}`,
+    );
     if (seen.has(value)) compactFail(label, `duplicate ${field}: ${value}`);
     seen.add(value);
   }
@@ -144,7 +148,8 @@ export function compactArray(value: unknown, label: string): unknown[] {
 
 export function compactStableRef(value: unknown, label: string): string {
   const result = compactNonemptyString(value, label);
-  if (!STABLE_REF.test(result)) compactFail(label, "must be a stable reference");
+  if (!STABLE_REF.test(result))
+    compactFail(label, "must be a stable reference");
   return result;
 }
 
@@ -156,8 +161,7 @@ export function compactStableRefs(value: unknown, label: string): string[] {
 
 export function compactSha256(value: unknown, label: string): string {
   const result = compactNonemptyString(value, label);
-  if (!SHA256.test(result))
-    compactFail(label, "must be a lowercase SHA-256");
+  if (!SHA256.test(result)) compactFail(label, "must be a lowercase SHA-256");
   return result;
 }
 
