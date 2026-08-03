@@ -2,6 +2,7 @@ import type { CompiledSourceItemV2 } from "./long-task-delivery-types.js";
 import { parseDesignResourceHandoffInputShape } from "./design-resource-handoff-shape.js";
 import type { DesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
 import { parseDesignResourceSymbolicHandoffShape } from "./design-resource-symbolic-fact-shape.js";
+import { parseSemanticFactCompactCarrierShape } from "./semantic-fact-compact-carrier.js";
 import { parseSemanticFactManifestShape } from "./semantic-fact-manifest-shape.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import {
@@ -18,14 +19,15 @@ import { parseStrictYaml } from "./strict-codec.js";
 const DESIGN_RESOURCE_START =
   /^\s*```yaml[ \t]+design-resource-handoff-(v1|v2)[ \t]*$/u;
 const SEMANTIC_FACT_START =
-  /^\s*```yaml[ \t]+semantic-fact-manifest-v1[ \t]*$/u;
+  /^\s*```yaml[ \t]+(semantic-fact-manifest-v1|semantic-fact-compact-carrier-v1)[ \t]*$/u;
 const FORMAL_BLOCK_END = /^\s*```[ \t]*$/u;
 
 interface OpenFormalBlock {
   owner:
     | "design-resource-handoff-v1"
     | "design-resource-handoff-v2"
-    | "semantic-fact-manifest-v1";
+    | "semantic-fact-manifest-v1"
+    | "semantic-fact-compact-carrier-v1";
   bodyStartOffset: number;
   line: number;
 }
@@ -125,6 +127,9 @@ function consumeOpenFormalBlock(
     else if (state.formalBlock.owner === "design-resource-handoff-v2")
       state.designResourceHandoff =
         parseDesignResourceSymbolicHandoffShape(value);
+    else if (state.formalBlock.owner === "semantic-fact-compact-carrier-v1")
+      state.semanticFactManifest =
+        parseSemanticFactCompactCarrierShape(value).manifest;
     else state.semanticFactManifest = parseSemanticFactManifestShape(value);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -143,13 +148,14 @@ function startFormalBlock(
   nextOffset: number,
 ): boolean {
   const designMatch = DESIGN_RESOURCE_START.exec(line);
-  const owner = designMatch
+  const owner: OpenFormalBlock["owner"] | null = designMatch
     ? designMatch[1] === "v2"
       ? "design-resource-handoff-v2"
       : "design-resource-handoff-v1"
-    : SEMANTIC_FACT_START.test(line)
-      ? "semantic-fact-manifest-v1"
-      : null;
+    : ((SEMANTIC_FACT_START.exec(line)?.[1] as
+        | "semantic-fact-manifest-v1"
+        | "semantic-fact-compact-carrier-v1"
+        | undefined) ?? null);
   if (!owner) return false;
   assertNoOpenOwnedSection(state, lineNumber);
   if (owner.startsWith("design-resource-handoff-")) {
@@ -162,7 +168,7 @@ function startFormalBlock(
     state.semanticFactBlocks += 1;
     if (state.semanticFactBlocks > 1)
       throw new Error(
-        `source_formal_block_duplicate:${state.sourcePath}:semantic-fact-manifest-v1`,
+        `source_formal_block_duplicate:${state.sourcePath}:semantic-fact-manifest`,
       );
   }
   state.formalBlock = {

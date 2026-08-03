@@ -17,8 +17,11 @@ export {
 } from "./test_suite_policy.mjs";
 
 const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
+  "packages/ty-context/src/lib/compact-authoring-support.ts",
   "packages/ty-context/src/lib/semantic-fact-",
+  "packages/ty-context/src/lib/long-task-compact-",
   "packages/ty-context/src/lib/long-task-semantic-fact-",
+  "tools/migrate_long_task_compact_carrier.mjs",
   "tools/semantic_fact_delivery_",
   "tools/verify_semantic_fact_completeness_delivery.mjs",
 ]);

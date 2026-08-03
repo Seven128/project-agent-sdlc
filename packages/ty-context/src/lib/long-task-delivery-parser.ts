@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { materializeLongTaskCompactCarrier } from "./long-task-compact-carrier.js";
 import { parseStrictYaml, sha256Hex } from "./strict-codec.js";
 import { validateDeliveryContractStructure } from "./long-task-delivery-validation.js";
 import {
@@ -64,7 +65,11 @@ export async function parseDeliveryContractBundle(
     await assertProtectedRepositoryFile(repository, file, "delivery_contract"),
     "utf8",
   );
-  const root = parseRoot(raw, true);
+  let root = parseRoot(raw, true);
+  if (Object.hasOwn(root, "compact_semantic_carrier")) {
+    root = materializeLongTaskCompactCarrier(root).root;
+    assertNoSemanticDriftMigration(semanticDriftMigrationFields(root));
+  }
   const hasInline = Object.hasOwn(root, "outcomes");
   const hasFiles = Object.hasOwn(root, "outcome_files");
   if (hasInline === hasFiles)
@@ -120,7 +125,11 @@ export async function parseDeliveryContractBundle(
 }
 
 export function parseDeliveryContractText(raw: string): DeliveryContractV2 {
-  const root = parseRoot(raw, false);
+  let root = parseRoot(raw, false);
+  if (Object.hasOwn(root, "compact_semantic_carrier")) {
+    root = materializeLongTaskCompactCarrier(root).root;
+    assertNoSemanticDriftMigration(semanticDriftMigrationFields(root));
+  }
   const contract = parseContractRoot(
     root,
     array(root.outcomes, "outcomes").map((item, index) =>
@@ -141,21 +150,40 @@ function parseRoot(raw: string, bundle: boolean): Record<string, unknown> {
       "long-task-delivery-v1"
   )
     throw new Error("long_task_delivery_v1_retired_use_v2");
-  assertNoSemanticDriftMigration(semanticDriftMigrationFields(decoded));
-  return object(
+  if (
+    !decoded ||
+    typeof decoded !== "object" ||
+    Array.isArray(decoded) ||
+    !Object.hasOwn(decoded, "compact_semantic_carrier")
+  )
+    assertNoSemanticDriftMigration(semanticDriftMigrationFields(decoded));
+  const root = object(
     decoded,
     "$",
     [
       "schema_version",
       "semantic_fact_manifest",
       "task",
-      "source_claims",
       "stages",
       "risk",
       "global",
     ],
-    bundle ? ["outcomes", "outcome_files"] : ["outcomes"],
+    bundle
+      ? [
+          "source_claims",
+          "compact_semantic_carrier",
+          "outcomes",
+          "outcome_files",
+        ]
+      : ["source_claims", "compact_semantic_carrier", "outcomes"],
   );
+  const hasExpanded = Object.hasOwn(root, "source_claims");
+  const hasCompact = Object.hasOwn(root, "compact_semantic_carrier");
+  if (hasExpanded === hasCompact)
+    throw new Error(
+      "delivery_contract_invalid:$:exactly one of source_claims or compact_semantic_carrier is required",
+    );
+  return root;
 }
 
 function parseContractRoot(

@@ -17,6 +17,7 @@ export interface SemanticFactManifestRefV2 {
 
 export interface SemanticFactBindingV2 {
   fact_ref: string;
+  fact_revision_digest?: string;
   claim_ref: string;
   applicability_ref: string;
 }
@@ -24,6 +25,7 @@ export interface SemanticFactBindingV2 {
 export type SemanticFactProofBindingV2 =
   | {
       proof_ref: string;
+      obligation_revision_digest?: string;
       fact_ref: string;
       method: string;
       proof_surface: ProofSurface;
@@ -34,6 +36,7 @@ export type SemanticFactProofBindingV2 =
     }
   | {
       proof_ref: string;
+      obligation_revision_digest?: string;
       fact_ref: string;
       method: string;
       proof_surface: ProofSurface;
@@ -51,6 +54,11 @@ export interface SemanticFactOutcomeBindingsV2 {
 export interface SemanticFactExpectationV2 {
   manifest_ref: string;
   manifest_sha256: string;
+  fact_key: string;
+  fact_revision_digest: string;
+  obligation_key: string;
+  obligation_revision_digest: string;
+  revision_identity_required: boolean;
   fact_ref: string;
   proof_ref: string;
   method: string;

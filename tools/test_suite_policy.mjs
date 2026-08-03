@@ -9,22 +9,22 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 16,
-    reviewed_on: "2026-08-01",
+    max_files: 17,
+    reviewed_on: "2026-08-03",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, now including the explicit mixed V1/V2 Rule-method/certificate current-snapshot closure in addition to prior selected-design and non-UI semantic rejection paths.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, including compact stable-key plus revision-digest Fact/obligation closure and the prior symbolic, selected-design and non-UI semantic rejection paths.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 23,
-    reviewed_on: "2026-08-01",
+    max_files: 24,
+    reviewed_on: "2026-08-03",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, semantic and selected-design closure, including one direct mixed V1/V2 Contract and current-evidence regression without removing prior coverage.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, semantic, selected-design and compact-carrier exact-closure coverage without removing prior regressions.",
   }),
   delivery_contract_focused: Object.freeze({
-    max_files: 12,
-    reviewed_on: "2026-07-29",
+    max_files: 13,
+    reviewed_on: "2026-08-03",
     rationale:
-      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, prior semantic assurance, Source-authority, first-lock workspace-scope and the independent non-UI semantic manifest/Contract projection sentinel.",
+      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, Source-authority, first-lock scope and compact plus expanded non-UI semantic projection sentinels.",
   }),
   hotspot_fanout: Object.freeze({
     max_tests_per_path: 10,
@@ -114,6 +114,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "Proves complete standard/custom non-UI semantic input, family, unit, condition, property, Fact and proof universes; exact Source→Fact→Contract binding; and one attributable current result per Fact×method, rejecting aggregate, supporting-only, omission, stale authority and evidence reuse bypasses.",
   ),
   criticalSentinel(
+    "compact-carrier-exact-closure",
+    "long-task-compact-semantic-carrier.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves compact Source and Contract preserve separate exact Fact and obligation sets through stable keys plus current revision digests, support one Fact with multiple obligations, reject revision/capacity drift before first lock, and leave no expanded Authority shadow.",
+  ),
+  criticalSentinel(
     "semantic-assurance-closure",
     "long-task-semantic-assurance-closure.test.mjs",
     ["long-task", "long-task-trust"],
@@ -186,6 +192,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-authority-revision-diagnosis.test.mjs",
     "long-task-authority-revision-replay.test.mjs",
     "long-task-closure-invariants.test.mjs",
+    "long-task-compact-semantic-carrier.test.mjs",
     "long-task-context-authority-topology.test.mjs",
     "long-task-context-evolution.test.mjs",
     "long-task-design-context.test.mjs",
@@ -210,6 +217,7 @@ export const DELIVERY_CONTRACT_FOCUSED_TESTS = Object.freeze(
     "long-task-authoring-claims.test.mjs",
     "long-task-authoring-preflight.test.mjs",
     "long-task-claim-coverage.test.mjs",
+    "long-task-compact-semantic-carrier.test.mjs",
     "long-task-delivery-compiler.test.mjs",
     "long-task-delivery-parser.test.mjs",
     "long-task-delivery-risk.test.mjs",
@@ -264,6 +272,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-capacity-boundary.test.mjs",
   "long-task-closure-invariants.test.mjs",
   "long-task-compact-authoring.test.mjs",
+  "long-task-compact-semantic-carrier.test.mjs",
   "long-task-context-evolution.test.mjs",
   "long-task-corrupt-state-abandon.test.mjs",
   "long-task-counterfactual-integrity.test.mjs",
@@ -526,11 +535,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 12 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 43 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 44 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 12/43/11 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 12/44/11 population; review the new file explicitly instead of parallelizing it by default.",
     );
 }
 

@@ -29,6 +29,10 @@ export function refreshComparisonIdentity(record, expected, targetRef) {
   return semanticFactComparisonResultIdentity({
     fact_ref: record.fact_ref,
     proof_ref: record.proof_ref,
+    fact_key: record.fact_key,
+    fact_revision_digest: record.fact_revision_digest,
+    obligation_key: record.obligation_key,
+    obligation_revision_digest: record.obligation_revision_digest,
     target_ref: targetRef,
     actual_value_sha256:
       targetRef === record.target_ref

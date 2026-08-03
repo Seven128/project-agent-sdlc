@@ -618,7 +618,7 @@ function decodeSemanticFactEvidence(
   label: string,
   base: { assertion_key: string },
 ): Extract<EvidenceCapabilityRecordV2, { capability: "semantic_fact" }> {
-  exact(row, label, [
+  exactOptional(row, label, [
     "assertion_key",
     "capability",
     "manifest_ref",
@@ -639,7 +639,25 @@ function decodeSemanticFactEvidence(
     "oracle",
     "environment",
     "observer_results",
-  ]);
+    ],
+    [
+      "fact_key",
+      "fact_revision_digest",
+      "obligation_key",
+      "obligation_revision_digest",
+    ],
+  );
+  const revisionFields = [
+    "fact_key",
+    "fact_revision_digest",
+    "obligation_key",
+    "obligation_revision_digest",
+  ];
+  const revisionFieldCount = revisionFields.filter((field) =>
+    Object.hasOwn(row, field),
+  ).length;
+  if (revisionFieldCount !== 0 && revisionFieldCount !== revisionFields.length)
+    throw invalidRecord(`${label}.revision_identity.shape`);
   const actual = record(row.actual_observation, `${label}.actual_observation`);
   exact(actual, `${label}.actual_observation`, [
     "artifact_path",
@@ -692,6 +710,23 @@ function decodeSemanticFactEvidence(
     manifest_sha256: sha(row.manifest_sha256, `${label}.manifest_sha256`),
     outcome_ref: semanticFactRef(row.outcome_ref, `${label}.outcome_ref`),
     target_ref: key(row.target_ref, `${label}.target_ref`),
+    ...(revisionFieldCount
+      ? {
+          fact_key: semanticFactRef(row.fact_key, `${label}.fact_key`),
+          fact_revision_digest: sha(
+            row.fact_revision_digest,
+            `${label}.fact_revision_digest`,
+          ),
+          obligation_key: semanticFactRef(
+            row.obligation_key,
+            `${label}.obligation_key`,
+          ),
+          obligation_revision_digest: sha(
+            row.obligation_revision_digest,
+            `${label}.obligation_revision_digest`,
+          ),
+        }
+      : {}),
     fact_ref: semanticFactRef(row.fact_ref, `${label}.fact_ref`),
     proof_ref: semanticFactRef(row.proof_ref, `${label}.proof_ref`),
     method: semanticFactRef(row.method, `${label}.method`),
@@ -1196,6 +1231,20 @@ function exact(
   const allowed = new Set(fields);
   if (
     fields.some((field) => !Object.hasOwn(row, field)) ||
+    Object.keys(row).some((field) => !allowed.has(field))
+  )
+    throw invalidRecord(`${label}.shape`);
+}
+
+function exactOptional(
+  row: Record<string, unknown>,
+  label: string,
+  required: string[],
+  optional: string[],
+): void {
+  const allowed = new Set([...required, ...optional]);
+  if (
+    required.some((field) => !Object.hasOwn(row, field)) ||
     Object.keys(row).some((field) => !allowed.has(field))
   )
     throw invalidRecord(`${label}.shape`);

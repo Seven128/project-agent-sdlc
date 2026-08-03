@@ -146,6 +146,8 @@ test("control-level UI authority changes select parser, Claim and revision cover
 
 test("shared non-UI semantic Fact runtime changes widen to the complete Long-Task suite", () => {
   for (const file of [
+    "packages/ty-context/src/lib/compact-authoring-support.ts",
+    "packages/ty-context/src/lib/long-task-compact-carrier.ts",
     "packages/ty-context/src/lib/semantic-fact-policy.ts",
     "packages/ty-context/src/lib/semantic-fact-policy-authority.ts",
     "packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts",
@@ -154,6 +156,7 @@ test("shared non-UI semantic Fact runtime changes widen to the complete Long-Tas
     "tools/semantic_fact_delivery_evidence.mjs",
     "tools/semantic_fact_delivery_observations.mjs",
     "tools/semantic_fact_delivery_verifier_support.mjs",
+    "tools/migrate_long_task_compact_carrier.mjs",
     "tools/verify_semantic_fact_completeness_delivery.mjs",
   ]) {
     const selection = selectAffectedTests([file]);

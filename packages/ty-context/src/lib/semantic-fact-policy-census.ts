@@ -66,6 +66,68 @@ export function validateSemanticFactInspectorCensus(
   );
 }
 
+export function buildSemanticFactInspectorCensus(
+  manifest: SemanticFactManifestV1,
+): SemanticFactManifestV1["inspector"]["census"] {
+  const factsFor = (
+    predicate: (fact: SemanticFactManifestV1["facts"][number]) => boolean,
+  ) => manifest.facts.filter(predicate).map((item) => item.key);
+  return [...expectedCensusRows(manifest, factsFor).entries()].map(
+    ([identity, expectation]) => {
+      const separator = identity.indexOf(":");
+      const kind = identity.slice(0, separator) as SemanticFactManifestV1["inspector"]["census"][number]["kind"];
+      const key = identity.slice(separator + 1);
+      const basisRefs = censusBasisRefs(
+        kind,
+        expectation.row,
+        expectation.fact_refs,
+        manifest,
+      );
+      return {
+        key,
+        kind,
+        locator: {
+          material_ref: manifest.key,
+          kind: "manifest_pointer" as const,
+          value: expectation.pointer,
+        },
+        identity_sha256: sha256Hex(canonicalValueJson(expectation.row)),
+        disposition: expectation.fact_refs.length
+          ? ("material_with_facts" as const)
+          : ("supporting_only" as const),
+        fact_refs: expectation.fact_refs,
+        basis_refs: basisRefs,
+        rationale: expectation.fact_refs.length
+          ? "This census identity contributes to an exact semantic Fact."
+          : "This identity is explicitly inventoried as supporting or inapplicable.",
+      };
+    },
+  );
+}
+
+function censusBasisRefs(
+  kind: SemanticFactManifestV1["inspector"]["census"][number]["kind"],
+  row: unknown,
+  factRefs: string[],
+  manifest: SemanticFactManifestV1,
+): string[] {
+  if (row && typeof row === "object" && !Array.isArray(row)) {
+    const record = row as Record<string, unknown>;
+    for (const field of ["basis_refs", "source_item_refs"])
+      if (
+        Array.isArray(record[field]) &&
+        record[field].every((item) => typeof item === "string") &&
+        record[field].length
+      )
+        return [...(record[field] as string[])];
+  }
+  if (kind === "proof_obligation" && factRefs.length) {
+    const fact = manifest.facts.find((item) => item.key === factRefs[0]);
+    if (fact?.source_item_refs.length) return [...fact.source_item_refs];
+  }
+  return [manifest.scope.source_item_refs[0]];
+}
+
 function expectedCensusRows(
   manifest: SemanticFactManifestV1,
   factsFor: (

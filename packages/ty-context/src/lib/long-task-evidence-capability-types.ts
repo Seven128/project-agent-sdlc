@@ -252,6 +252,10 @@ export interface SemanticFactEvidenceV2 extends EvidenceRecordBaseV2 {
   manifest_sha256: string;
   outcome_ref: string;
   target_ref: string;
+  fact_key?: string;
+  fact_revision_digest?: string;
+  obligation_key?: string;
+  obligation_revision_digest?: string;
   fact_ref: string;
   proof_ref: string;
   method: string;

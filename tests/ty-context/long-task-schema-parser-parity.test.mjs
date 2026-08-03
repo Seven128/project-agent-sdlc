@@ -324,6 +324,26 @@ test("Source authority cardinality and retired dispositions stay aligned across 
   const schema = await deliverySchema();
   assert.equal(schema.properties.task.properties.source_paths.minItems, 1);
   assert.equal(schema.properties.source_claims.minItems, 1);
+  assert.equal(schema.required.includes("source_claims"), false);
+  assert.equal(
+    schema.properties.compact_semantic_carrier.$ref,
+    "#/$defs/longTaskCompactCarrier",
+  );
+  assert.equal(
+    schema.$defs.longTaskCompactCarrier.properties.schema_version.const,
+    "long-task-compact-carrier-v1",
+  );
+  assert.equal(
+    schema.$defs.semanticFactBindings.properties.facts.items.properties
+      .fact_revision_digest.$ref,
+    "#/$defs/sha256",
+  );
+  assert.equal(
+    schema.$defs.semanticFactBindings.properties.proofs.items.oneOf.every(
+      (item) => item.properties.obligation_revision_digest.$ref === "#/$defs/sha256",
+    ),
+    true,
+  );
   assert.equal(
     Object.hasOwn(schema.properties.source_claims, "default"),
     false,

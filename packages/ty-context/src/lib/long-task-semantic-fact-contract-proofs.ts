@@ -22,6 +22,9 @@ export function validateSemanticFactProofBindings(
   targetByRef: Map<string, ExecutionTargetV2>,
   expectations: Map<string, SemanticFactExpectationV2[]>,
   allProofBindings: string[],
+  factRevisions: Map<string, string>,
+  obligationRevisions: Map<string, string>,
+  revisionsRequired: boolean,
 ): void {
   for (const binding of outcome.semantic_fact_bindings.proofs) {
     const proof = index.proof_by_ref.get(binding.proof_ref)!;
@@ -32,6 +35,15 @@ export function validateSemanticFactProofBindings(
       semanticFactClosureInvalid(
         "contract_proof_fact_binding_missing",
         `${outcome.key}:${binding.proof_ref}:${binding.fact_ref}`,
+      );
+    if (
+      revisionsRequired &&
+      binding.obligation_revision_digest !==
+        obligationRevisions.get(binding.proof_ref)
+    )
+      semanticFactClosureInvalid(
+        "contract_obligation_revision_mismatch",
+        `${outcome.key}:${binding.proof_ref}:${binding.obligation_revision_digest ?? "missing"}:${obligationRevisions.get(binding.proof_ref) ?? "missing"}`,
       );
     validateProofIdentity(outcome, proof, binding);
     validateObserverTargets(proof, binding, targetByRef);
@@ -52,6 +64,9 @@ export function validateSemanticFactProofBindings(
         proof,
         factBinding,
         expectations,
+        factRevisions,
+        obligationRevisions,
+        revisionsRequired,
       );
     allProofBindings.push(binding.proof_ref);
   }
@@ -130,6 +145,9 @@ function validateMachineProofProjection(
   proof: SemanticFactManifestV1["proof_obligations"][number],
   factBinding: SemanticFactBindingV2,
   expectations: Map<string, SemanticFactExpectationV2[]>,
+  factRevisions: Map<string, string>,
+  obligationRevisions: Map<string, string>,
+  revisionsRequired: boolean,
 ): void {
   const check = outcome.acceptance.checks.find(
     (item) => item.key === binding.check_ref,
@@ -185,6 +203,11 @@ function validateMachineProofProjection(
   rows.push({
     manifest_ref: manifest.key,
     manifest_sha256: contract.semantic_fact_manifest.sha256,
+    fact_key: fact.key,
+    fact_revision_digest: factRevisions.get(fact.key)!,
+    obligation_key: proof.key,
+    obligation_revision_digest: obligationRevisions.get(proof.key)!,
+    revision_identity_required: revisionsRequired,
     fact_ref: fact.key,
     proof_ref: proof.key,
     method: proof.method,

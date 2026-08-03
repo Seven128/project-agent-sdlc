@@ -13,6 +13,7 @@ import {
 } from "./symbolic_denotation_efficiency_delivery_catalog.mjs";
 import { emitSemanticDeliveryResult } from "./semantic_fact_delivery_evidence.mjs";
 import { resolveSemanticFactResults } from "./semantic_fact_delivery_verifier_support.mjs";
+import { parseSemanticFactManifestBlocks } from "../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -105,7 +106,8 @@ async function semanticVerification() {
   observations.group_results = groupPass;
   observations.policy_markers = markerState;
 
-  const semanticManifest = await loadSemanticManifest();
+  const semanticSource = await loadSemanticManifest();
+  const semanticManifest = semanticSource.manifest;
   const semanticFactResults = resolveSemanticFactResults(
     semanticManifest,
     symbolicFactObservationRefs,
@@ -125,6 +127,25 @@ async function semanticVerification() {
     kind: "symbolic-denotation-efficiency",
     semanticManifest,
     semanticFactResults,
+    semanticManifestSha256: semanticSource.sha256,
+    semanticFactRevisions:
+      semanticSource.carrier === "compact_v1"
+        ? new Map(
+            semanticSource.fact_revisions.map((item) => [
+              item.key,
+              item.revision_digest,
+            ]),
+          )
+        : null,
+    semanticObligationRevisions:
+      semanticSource.carrier === "compact_v1"
+        ? new Map(
+            semanticSource.obligation_revisions.map((item) => [
+              item.key,
+              item.revision_digest,
+            ]),
+          )
+        : null,
   });
 }
 
@@ -228,11 +249,10 @@ async function completeVerification() {
 
 async function loadSemanticManifest() {
   const source = await readText(sourcePath);
-  const match = source.match(
-    /```yaml semantic-fact-manifest-v1\r?\n([\s\S]*?)\r?\n```/u,
-  );
-  if (!match) throw new Error("symbolic_semantic_manifest_missing");
-  return JSON.parse(match[1]);
+  const rows = parseSemanticFactManifestBlocks(sourcePath, source);
+  if (rows.length !== 1)
+    throw new Error(`symbolic_semantic_manifest_count:${rows.length}`);
+  return rows[0];
 }
 
 async function readText(relativePath) {

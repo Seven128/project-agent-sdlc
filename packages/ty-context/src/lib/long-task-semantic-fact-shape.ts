@@ -34,13 +34,22 @@ export function parseSemanticFactOutcomeBindings(
     manifest_ref: semanticRef(row.manifest_ref, `${label}.manifest_ref`),
     facts: array(row.facts, `${label}.facts`).map((item, index) => {
       const itemLabel = `${label}.facts[${index}]`;
-      const entry = object(item, itemLabel, [
-        "fact_ref",
-        "claim_ref",
-        "applicability_ref",
-      ]);
+      const entry = object(
+        item,
+        itemLabel,
+        ["fact_ref", "claim_ref", "applicability_ref"],
+        ["fact_revision_digest"],
+      );
       return {
         fact_ref: semanticRef(entry.fact_ref, `${itemLabel}.fact_ref`),
+        ...(Object.hasOwn(entry, "fact_revision_digest")
+          ? {
+              fact_revision_digest: sha256(
+                entry.fact_revision_digest,
+                `${itemLabel}.fact_revision_digest`,
+              ),
+            }
+          : {}),
         claim_ref: semanticRef(entry.claim_ref, `${itemLabel}.claim_ref`),
         applicability_ref: semanticRef(
           entry.applicability_ref,
@@ -61,7 +70,12 @@ export function parseSemanticFactOutcomeBindings(
           "evidence_capabilities",
           "authority",
         ],
-        ["check_ref", "assertion_ref", "confirmation_ref"],
+        [
+          "obligation_revision_digest",
+          "check_ref",
+          "assertion_ref",
+          "confirmation_ref",
+        ],
       );
       const authority = literal(
         preliminary.authority,
@@ -77,6 +91,14 @@ export function parseSemanticFactOutcomeBindings(
       }
       const base = {
         proof_ref: semanticRef(preliminary.proof_ref, `${itemLabel}.proof_ref`),
+        ...(Object.hasOwn(preliminary, "obligation_revision_digest")
+          ? {
+              obligation_revision_digest: sha256(
+                preliminary.obligation_revision_digest,
+                `${itemLabel}.obligation_revision_digest`,
+              ),
+            }
+          : {}),
         fact_ref: semanticRef(preliminary.fact_ref, `${itemLabel}.fact_ref`),
         method: semanticRef(preliminary.method, `${itemLabel}.method`),
         proof_surface: literal(
