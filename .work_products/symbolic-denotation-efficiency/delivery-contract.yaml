@@ -2,7 +2,7 @@ schema_version: long-task-delivery-v2
 semantic_fact_manifest:
   key: symbolic-denotation-efficiency-manifest
   source_path: docs/symbolic-denotation-efficiency.md
-  sha256: cb01883d712076f98d59853f2dc21e881a70d528aef9b64f5de7abe7d2423718
+  sha256: a33992f6e5aab1b314b19bca687eac8583c4bb59a11c0f6ec566cba4e54652bc
 task:
   id: symbolic-denotation-efficiency
   title: Semantic-equivalent symbolic design facts with efficiency anti-degradation
@@ -185,6 +185,7 @@ outcomes:
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
       - tools/migrate_long_task_compact_carrier.mjs
+      - tools/migrate_long_task_compact_carrier_authority.mjs
     owner_surfaces: []
     controls: []
     control_relation_closure:
@@ -273,6 +274,7 @@ outcomes:
     - tools/test_suite_policy.mjs
     - tools/verify_design_fact_completeness_delivery.mjs
     - tools/migrate_long_task_compact_carrier.mjs
+    - tools/migrate_long_task_compact_carrier_authority.mjs
     allowed_support_paths: []
     forbidden_paths:
     - docs/non-ui-semantic-fact-completeness.md
@@ -447,6 +449,8 @@ outcomes:
       - tools/affected_test_selection.mjs
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
+      - tools/migrate_long_task_compact_carrier.mjs
+      - tools/migrate_long_task_compact_carrier_authority.mjs
       expected_output_paths:
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
@@ -638,6 +642,8 @@ outcomes:
       - tools/affected_test_selection.mjs
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
+      - tools/migrate_long_task_compact_carrier.mjs
+      - tools/migrate_long_task_compact_carrier_authority.mjs
       expected_output_paths:
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
@@ -747,6 +753,8 @@ outcomes:
       - tools/affected_test_selection.mjs
       - tools/test_suite_policy.mjs
       - tools/verify_design_fact_completeness_delivery.mjs
+      - tools/migrate_long_task_compact_carrier.mjs
+      - tools/migrate_long_task_compact_carrier_authority.mjs
       expected_output_paths:
       - packages/ty-context/src/lib/design-resource-symbolic-*.ts
       - packages/ty-context/src/lib/symbolic-denotation-*.ts
@@ -1271,7 +1279,7 @@ compact_semantic_carrier:
       facts: 113
       obligations: 113
       assertions: 215
-      canonical_bytes: 319516
+      canonical_bytes: 319433
     maximum:
       claims: 128
       claim_projections: 128
@@ -1759,7 +1767,7 @@ compact_semantic_carrier:
         refs:
         - symbolic-denotation-efficiency.obligation.distribution-context-parity
     - - architecture-deliberation
-      - "Architecture Deliberation: owners are design-resource handoff parsing and fact policy, package-owned applicability profiles and indexes, the shared symbolic-denotation compilation engine, Source-side and production-side non-interference proof validation, Long-Task UI projection and evidence runtime, package distribution, root Git text-byte policy and owning Context; current extension points are V1 fact-manifest projection, Long-Task fact_expectations/fact_results and root `.gitattributes`. The selected design is a versioned opt-in UI V2 with restricted predicates, one manifest-level compilation session, canonical shared DAGs and indexed point lookup, profile-derived logical applicability with explicit exceptions, mutually exclusive regions, constant located expected values, dual-side trusted non-interference proof, separately typed semantic and certificate obligations, V1 preparse capacity guards, mixed V1/V2 Final-Gate closure and checkout-invariant LF bytes for Git-classified text. Dependencies flow from canonical resources through frozen Inspector and Oracle TCBs, handoff validation, Contract bindings and current evidence, never backward into value authority; repository-backed input SHA-256 remains a strict raw-byte identity and state remains Contract and current-run owned with no added lifecycle. Rejected alternatives are mutating V1, DNF or full expansion, post-expansion deduplication, physical N/A or Rule-by-axis matrices, per-tuple full-array scans, arbitrary value functions, precedence, sampling, representative-point proof, ungrounded N/A, historical proof reuse, non-UI bundling, Provider/P0 expansion, digest-layer EOL normalization, dual LF/CRLF acceptance and a path list limited to current inputs. A future new predicate theory, dynamic dependency source or non-UI consumer must extend the shared engine through a separately admitted decidable policy without weakening canonical identity or the frozen TCB boundary; a future file that genuinely requires CRLF needs a narrow explicit Git attribute override and corresponding Authority revision. Existing Cartesian memory and repeated-scan risk are paid down through V1 early guards, V2 profiles, shared compilation and indexes; the missing repository EOL policy is removed through `text=auto eol=lf`, while unrelated Provider debt is left out with an evidence re-entry condition. Project-owned equivalence, adversarial proof, real-scale capacity, mixed-version, cross-platform raw-digest parity, distribution, complete-suite, Context and Final-Gate checks prove the declared design; accepting equivalent line endings, a CI-only skip, a second digest or an expanded shadow Authority is forbidden. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; security/privacy/safety are preserved through strict grammar, bounded parsing, exact Oracle capabilities, fail-closed dependency handling and protected-value semantics."
+      - "Architecture Deliberation: owners are design-resource handoff/fact policy, package-owned applicability/index and compact-revision modules, the shared symbolic-denotation compiler, dual-side non-interference validation, Long-Task UI/evidence, compact migration Authority sync, package distribution, root Git byte policy and owning Context; extension points are V1 projection, Long-Task fact_expectations/fact_results, the revision and migration helpers, and `.gitattributes`. Selected design: opt-in UI V2 uses restricted predicates, one manifest compilation session, canonical shared DAGs, indexed lookup, profile applicability plus explicit exceptions, exclusive regions, constant located values, dual-side trusted proof, separate semantic/certificate obligations, V1 preparse guards, mixed V1/V2 Final-Gate closure and LF Git text. Digest logic, fixture bodies and Authority sync are extracted behind existing callers; test declarations and the critical sentinel stay in their reviewed suite. Dependencies run from canonical resources through frozen Inspector/Oracle TCBs, handoff validation, Contract bindings and current evidence, never backward into value Authority; repository input SHA-256 is strict raw-byte identity and state stays Contract/current-run owned. Rejected: V1 mutation, DNF/full expansion, post-expansion deduplication, physical N/A or Rule-axis matrices, full-array tuple scans, arbitrary value functions, precedence, sampling/representative proof, ungrounded N/A, historical proof reuse, non-UI or Provider/P0 bundling, digest EOL normalization, dual LF/CRLF acceptance, current-input-only path lists, modularity waivers, line compression, or relocated critical test identity. A new predicate theory, dynamic dependency or non-UI consumer requires separate decidable admission without weakening identity/TCB; genuine CRLF requires a narrow Git override and Authority revision; new digest, fixture or Authority mapping changes through its bounded owner. V1 guards, V2 profiles/shared compilation/indexes, `text=auto eol=lf` and responsibility-preserving extraction pay down Cartesian/repeated-scan, EOL and three over-budget-module debt; unrelated Provider debt stays out pending evidence. Project-owned equivalence, adversarial, real-scale capacity, mixed-version, cross-platform raw-digest, distribution, exact test-identity, modularity, full-suite, Context and Final-Gate checks prove the design. Equivalent-line-ending acceptance, CI-only skip, second digest, waiver or expanded shadow Authority is forbidden. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; strict grammar, bounded parsing, exact Oracle capabilities, fail-closed dependencies and protected-value semantics preserve security/privacy/safety."
       - type: claim
         refs:
         - symbolic-denotation-efficiency.obligation.architecture-deliberation
@@ -2568,7 +2576,7 @@ compact_semantic_carrier:
       - 318580525d6a5ad5bf8e6a91e22cb970917952042188da3fca0b3f865d6e8174
       - semantic_fact.fact.distribution-context-parity
     - - fact.architecture-deliberation
-      - 7919dd0c11ca79aadf649e5ccd0348fced44df47578b94d39f9975dffaf87a55
+      - 63528ac21df445261e7f4e494cc94d933862eb6163e44c08aea9caef1141aad5
       - semantic_fact.fact.architecture-deliberation
     - - fact.no-sampling
       - de5323eda2288f6a035f8b9fc1413da0471fc9bea94f5a172cdc415e385bd005
@@ -3021,7 +3029,7 @@ compact_semantic_carrier:
       - fact.distribution-context-parity
       - assertion_ref: semantic-distribution-context-parity
     - - proof.architecture-deliberation.exact
-      - cfc43928a620b92a53e1e809f9a24c85cb32c696c49c7131e2de13e612a03602
+      - 08b2132636038d8e7f09a97d1660c1caaace9cccbc899d2092bf0c6da6b01dfb
       - fact.architecture-deliberation
       - assertion_ref: semantic-architecture-deliberation
     - - proof.no-sampling.exact

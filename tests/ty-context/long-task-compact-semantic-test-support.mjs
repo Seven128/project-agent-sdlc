@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
+import { rm, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { decodeEvidenceCapabilityRecords } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-codec.js";
-import { validateSemanticFactEvidence } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-evidence.js";
+import {
+  validateDistinctSemanticFactEvidence,
+  validateSemanticFactEvidence,
+} from "../../packages/ty-context/dist/lib/long-task-semantic-fact-evidence.js";
+import { parseSemanticFactCompactCarrierShape } from "../../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
+import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
+import { materializeSemanticFactEvidence } from "../../tools/semantic_fact_delivery_evidence.mjs";
+import { writeSyntheticCompactFixture } from "./long-task-compact-semantic-fixture.mjs";
+import { createDeliveryFixture } from "./long-task-delivery-fixtures.mjs";
 import { refreshComparisonIdentity } from "./long-task-semantic-fact-test-support.mjs";
 
 export function assertCompactEvidenceIdentity(check, expectation) {
@@ -80,7 +95,107 @@ export function assertCompactEvidenceIdentity(check, expectation) {
 }
 
 export function compactRevisionPairSet(rows, keyField, digestField) {
-  return rows
-    .map((row) => `${row[keyField]}\0${row[digestField]}`)
-    .sort();
+  return rows.map((row) => `${row[keyField]}\0${row[digestField]}`).sort();
+}
+
+export async function assertSyntheticCompactFixtureCompiles() {
+  const fixture = await createDeliveryFixture();
+  try {
+    const synthetic = await writeSyntheticCompactFixture(fixture, 64);
+    validateSemanticFactManifestPolicy(synthetic.manifest);
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    const check = compiled.outcomes[0].acceptance.checks[0];
+    const expectations = check.semantic_fact_expectations;
+    assert.equal(synthetic.manifest.facts.length, 64);
+    assert.equal(synthetic.manifest.proof_obligations.length, 128);
+    assert.equal(expectations.length, 128);
+    assert.equal(
+      expectations.filter(
+        (item) => item.fact_key === synthetic.manifest.facts[0].key,
+      ).length,
+      2,
+    );
+    assert.ok(expectations.every((item) => item.revision_identity_required));
+    assert.equal(
+      new Set(expectations.map((item) => item.obligation_key)).size,
+      128,
+    );
+    const compactIdentity = parseSemanticFactCompactCarrierShape(
+      synthetic.compactSource,
+    );
+    const evidenceRecords = await materializeSemanticFactEvidence({
+      repositoryRoot: fixture.root,
+      targetRef: check.execution_target.target_ref,
+      rootEntrypoint: "tools/verify-synthetic-compact.mjs",
+      manifest: synthetic.manifest,
+      manifestSha256: sha256Hex(canonicalValueJson(synthetic.compactSource)),
+      passedByFact: new Map(
+        synthetic.manifest.facts.map((fact) => [fact.key, true]),
+      ),
+      factRevisions: new Map(
+        compactIdentity.fact_revisions.map((item) => [
+          item.key,
+          item.revision_digest,
+        ]),
+      ),
+      obligationRevisions: new Map(
+        compactIdentity.obligation_revisions.map((item) => [
+          item.key,
+          item.revision_digest,
+        ]),
+      ),
+      assertionByObligation: new Map(
+        expectations.map((item) => [item.obligation_key, item.assertion_ref]),
+      ),
+      sessionId: "synthetic-compact",
+    });
+    const semanticEvidence = decodeEvidenceCapabilityRecords(
+      evidenceRecords,
+    ).filter((item) => item.capability === "semantic_fact");
+    assert.equal(semanticEvidence.length, 128);
+    assert.equal(validateDistinctSemanticFactEvidence(semanticEvidence), null);
+    const artifactHashes = Object.fromEntries(
+      semanticEvidence.map((record) => [
+        record.actual_observation.artifact_path,
+        record.actual_observation.artifact_sha256,
+      ]),
+    );
+    for (const record of semanticEvidence)
+      assert.equal(
+        validateSemanticFactEvidence(check, record, artifactHashes),
+        null,
+        record.obligation_key,
+      );
+    assertCompactEvidenceIdentity(check, expectations[0]);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+export async function assertContractRevisionMismatchRejected() {
+  const fixture = await createDeliveryFixture();
+  try {
+    const { compactContract } = await writeSyntheticCompactFixture(fixture, 8);
+    const changed = structuredClone(compactContract);
+    const table = changed.compact_semantic_carrier.fact_sets[0];
+    const digestColumn = table.columns.indexOf("fact_revision_digest");
+    table.rows[0][digestColumn] = "f".repeat(64);
+    await writeFile(
+      path.join(fixture.workdir, "delivery-contract.yaml"),
+      JSON.stringify(changed),
+      "utf8",
+    );
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /contract_fact_revision_set|contract_fact_revision_mismatch/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
 }
