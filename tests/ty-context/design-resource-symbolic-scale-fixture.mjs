@@ -259,5 +259,8 @@ export function buildSymbolicScaleFixtureModel(
     properties,
     census,
     compilationStatistics: compilation.statistics(),
+    sourceNoninterferencePredicates: ruleRegions.map((region) =>
+      structuredClone(region),
+    ),
   };
 }

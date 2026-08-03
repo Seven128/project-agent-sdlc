@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
 import { designResourceSymbolicObligationKey } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
 import { denoteDesignResourceSymbolicPoint } from "../../packages/ty-context/dist/lib/design-resource-symbolic-denotation.js";
+import { canonicalJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   SYMBOLIC_HANDOFF_PATH,
   SYMBOLIC_SOURCE_ITEM_KEY,
@@ -19,6 +20,11 @@ import {
   rekeySymbolicFixtureCertificate,
 } from "./design-resource-symbolic-handoff-fixture-model.mjs";
 import { fixtureSha } from "./design-resource-symbolic-handoff-fixture-support.mjs";
+import {
+  forgePassedSourceArtifact,
+  readSourceArtifact,
+  sourceIrReadsOmittedAxis,
+} from "./design-resource-symbolic-source-attack-fixture.mjs";
 
 test("opt-in UI V2 preflight closes Rules, obligations, applicability and one set-valued certificate", async () => {
   await withFixture(async (root) => {
@@ -461,6 +467,188 @@ test("current production input defeats an internally self-consistent omitted-axi
   });
 });
 
+test("current Source IR defeats a forged internally closed dependency graph after every submitted digest is refreshed", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      {
+        mutateSourceIr: sourceIrReadsOmittedAxis,
+        afterProofArtifacts: async (context) =>
+          forgePassedSourceArtifact(
+            context,
+            "closed_world_static_dependency_closure",
+          ),
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    );
+  });
+});
+
+test("current Source IR defeats forged Rule-equal predicates instead of trusting their hashes", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) =>
+        enableFixtureTrustedNoninterference(
+          model,
+          "restricted_ir_symbolic_equivalence",
+        ),
+      {
+        mutateSourceIr: sourceIrReadsOmittedAxis,
+        afterProofArtifacts: async (context) =>
+          forgePassedSourceArtifact(
+            context,
+            "restricted_ir_symbolic_equivalence",
+          ),
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    );
+  });
+});
+
+test("finite Source Oracle enumerates the complete domain and records a concrete omitted-axis assignment", async () => {
+  await withFixture(async (root) => {
+    let recomputedWitness;
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) =>
+        enableFixtureTrustedNoninterference(
+          model,
+          "finite_complete_domain_exhaustive_equivalence",
+        ),
+      {
+        mutateSourceIr: sourceIrReadsOmittedAxis,
+        afterProofArtifacts: async (context) => {
+          const artifact = await readSourceArtifact(context);
+          recomputedWitness = artifact.failure_witness;
+          await forgePassedSourceArtifact(
+            context,
+            "finite_complete_domain_exhaustive_equivalence",
+          );
+        },
+      },
+    );
+    assert.equal(recomputedWitness.kind, "complete_domain_counterexample");
+    assert.equal(recomputedWitness.side, "source");
+    assert.equal(recomputedWitness.axis_ref, "variation.state");
+    assert.equal(recomputedWitness.path, "design/symbolic-source-ir.json");
+    assert.ok(recomputedWitness.assignment);
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    );
+  });
+});
+
+test("a legal Source artifact becomes stale when current Source bytes change even after declared resource digests are synchronized", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      {
+        afterProofArtifacts: async (context) => {
+          const sourceResource = context.inputResources.find(
+            (resource) => resource.key === "resource.symbolic-source-ir",
+          );
+          const sourcePath = path.join(root, sourceResource.path);
+          const sourceIr = JSON.parse(await readFile(sourcePath, "utf8"));
+          sourceIrReadsOmittedAxis(sourceIr);
+          const content = canonicalJson(sourceIr);
+          const digest = fixtureSha(content);
+          await writeFile(sourcePath, content);
+          sourceResource.sha256 = digest;
+          context.model.manifest.inspector.input_resources.find(
+            (input) => input.resource_ref === sourceResource.key,
+          ).sha256 = digest;
+        },
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_artifact_current_input_mismatch/u,
+    );
+  });
+});
+
+test("unsupported executable Source fails closed with a Source-side resource witness", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      { pageSuffix: "<script>void Reflect.get(globalThis, 'state')</script>" },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      (error) => {
+        const message = String(error);
+        assert.match(
+          message,
+          /v2_noninterference_current_input_counterexample/u,
+        );
+        assert.match(message, /"side":"source"/u);
+        assert.match(message, /resource\.page/u);
+        assert.match(message, /unsupported_source/u);
+        return true;
+      },
+    );
+  });
+});
+
+test("the restricted Source IR rejects author verdict fields and proof artifacts cannot self-enter the semantic input closure", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      {
+        mutateSourceIr(sourceIr) {
+          sourceIr.author_verdict = "passed";
+        },
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_current_input_counterexample.*invalid_symbolic_source_ir/u,
+    );
+  });
+
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(
+      root,
+      (model) => enableFixtureTrustedNoninterference(model),
+      {
+        afterProofArtifacts({ model, artifactResources }) {
+          const artifact = artifactResources.find(
+            (item) => item.key === "resource.noninterference.source",
+          );
+          model.manifest.inspector.input_resources.push({
+            resource_ref: artifact.key,
+            path: artifact.path,
+            sha256: artifact.sha256,
+          });
+          for (const proof of [
+            model.certificate.source_noninterference_proof,
+            model.certificate.production_noninterference_proof,
+          ])
+            proof.input_resource_refs = [
+              ...new Set([...proof.input_resource_refs, artifact.key]),
+            ].sort();
+        },
+      },
+    );
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_inspector_input_resource_set_mismatch/u,
+    );
+  });
+});
+
 test("current production executable, style, template, interactive and unsupported dependencies fail closed", async () => {
   for (const pageSuffix of [
     "<script>fetch(globalThis.dynamicUrl)</script>",
@@ -506,6 +694,13 @@ test("proof artifacts bind Oracle, environment, input, target, method result and
     ],
     [
       ({ model }) => {
+        model.certificate.source_noninterference_proof.oracle_capability =
+          "symbolic_noninterference.source.forged";
+      },
+      /v2_noninterference_oracle_capability_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
         model.certificate.source_noninterference_proof.environment_sha256 =
           "0".repeat(64);
       },
@@ -542,6 +737,27 @@ test("proof artifacts bind Oracle, environment, input, target, method result and
     ],
     [
       ({ model }) => {
+        model.certificate.source_noninterference_proof.source_manifest_snapshot_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.certificate_scope_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.rule_scope_sha256 =
+          "0".repeat(64);
+      },
+      /v2_noninterference_artifact_binding_mismatch/u,
+    ],
+    [
+      ({ model }) => {
         model.certificate.production_noninterference_proof.target_snapshot_sha256 =
           "0".repeat(64);
       },
@@ -560,6 +776,13 @@ test("proof artifacts bind Oracle, environment, input, target, method result and
           "design/not-the-artifact.json";
       },
       /v2_noninterference_artifact_resource_mismatch/u,
+    ],
+    [
+      ({ model }) => {
+        model.certificate.source_noninterference_proof.static_dependency_nodes =
+          [];
+      },
+      /v2_source_noninterference_proof_cache_mismatch/u,
     ],
     [
       async ({ root, model, artifactResources }) => {
@@ -693,7 +916,7 @@ test("untrusted, dynamic, external, incomplete and sampled proofs fail closed", 
     [
       "closed_world_static_dependency_closure",
       (certificate) =>
-        certificate.source_noninterference_proof.static_dependency_nodes[0].input_resource_refs.pop(),
+        certificate.production_noninterference_proof.static_dependency_nodes[0].input_resource_refs.pop(),
       /v2_static_dependency_input_graph_mismatch/u,
     ],
     [
@@ -709,12 +932,14 @@ test("untrusted, dynamic, external, incomplete and sampled proofs fail closed", 
     [
       "closed_world_static_dependency_closure",
       (certificate) =>
-        certificate.source_noninterference_proof.static_dependency_nodes.push({
-          key: "dependency.source.unreachable",
-          axis_refs: [],
-          dependency_refs: [],
-          input_resource_refs: [],
-        }),
+        certificate.production_noninterference_proof.static_dependency_nodes.push(
+          {
+            key: "dependency.production.unreachable",
+            axis_refs: [],
+            dependency_refs: [],
+            input_resource_refs: [],
+          },
+        ),
       /v2_static_dependency_unreachable_node/u,
     ],
     [
@@ -747,7 +972,7 @@ test("untrusted, dynamic, external, incomplete and sampled proofs fail closed", 
     [
       "restricted_ir_symbolic_equivalence",
       (certificate) => {
-        certificate.source_noninterference_proof.equivalence_cases[0].axis_erased_predicate =
+        certificate.production_noninterference_proof.equivalence_cases[0].axis_erased_predicate =
           {
             op: "eq",
             axis_ref: "variation.state",

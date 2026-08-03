@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { rm } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { decodeEvidenceCapabilityRecords } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-codec.js";
 import { validateRuntimeEvidenceRecord } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-runtime.js";
@@ -19,6 +20,12 @@ import {
   enableFixtureTrustedNoninterference,
   rekeySymbolicFixtureCertificate,
 } from "./design-resource-symbolic-handoff-fixture-model.mjs";
+import { canonicalJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import { fixtureSha } from "./design-resource-symbolic-handoff-fixture-support.mjs";
+import {
+  forgePassedSourceArtifact,
+  sourceIrReadsOmittedAxis,
+} from "./design-resource-symbolic-source-attack-fixture.mjs";
 
 export async function exerciseMixedSymbolicLongTaskClosure() {
   return exerciseMixedSymbolicLongTaskClosureWithOptions({});
@@ -46,6 +53,34 @@ export async function exerciseCompactTrustedSymbolicLongTaskClosure() {
       );
     },
   });
+}
+
+export async function exerciseSymbolicCompileAcceptsAllCurrentSourceMethods() {
+  for (const method of trustedSourceMethods()) {
+    const fixture = await createDeliveryFixture();
+    try {
+      await prepareMixedSymbolicLongTaskFixture(fixture, {
+        mutateSymbolicModel(model) {
+          enableCompactSymbolicApplicability(model);
+          enableFixtureTrustedNoninterference(model, method);
+        },
+      });
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
+      );
+      assert.equal(
+        compiled.outcomes[0].acceptance.checks[0].design_conformance_targets[1]
+          .symbolic_certificate_binding.expectations[0]
+          .source_noninterference_proof_sha256.length,
+        64,
+        method,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
 }
 
 async function exerciseMixedSymbolicLongTaskClosureWithOptions({
@@ -166,6 +201,73 @@ export async function exerciseSymbolicCompileRejectsCurrentProductionDependency(
   }
 }
 
+export async function exerciseSymbolicCompileRejectsForgedCurrentSourceDependency() {
+  for (const method of trustedSourceMethods()) {
+    const fixture = await createDeliveryFixture();
+    try {
+      await prepareMixedSymbolicLongTaskFixture(fixture, {
+        mutateSymbolicModel(model) {
+          enableCompactSymbolicApplicability(model);
+          enableFixtureTrustedNoninterference(model, method);
+        },
+      });
+      await writeDesignResourceSymbolicHandoffFixture(
+        fixture.root,
+        (model) => {
+          enableCompactSymbolicApplicability(model);
+          enableFixtureTrustedNoninterference(model, method);
+        },
+        {
+          directory: "design-symbolic",
+          mutateSourceIr: sourceIrReadsOmittedAxis,
+          afterProofArtifacts: async (context) =>
+            forgePassedSourceArtifact(context, method),
+        },
+      );
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        /v2_noninterference_artifact_current_input_mismatch/u,
+        method,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+}
+
+export async function exerciseSymbolicCompileRejectsUnsupportedCurrentSource() {
+  const fixture = await createDeliveryFixture();
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+    });
+    await writeDesignResourceSymbolicHandoffFixture(
+      fixture.root,
+      (model) => {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+      {
+        directory: "design-symbolic",
+        pageSuffix: "<style>main { color: red }</style>",
+      },
+    );
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /v2_noninterference_current_input_counterexample:.*unsupported_source.*"side":"source"/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
 export async function exerciseSymbolicCompileRejectsNarrowApplicability() {
   const fixture = await createDeliveryFixture();
   try {
@@ -271,6 +373,92 @@ export async function exerciseSymbolicFinalGateRejectsCurrentProductionDependenc
   }
 }
 
+export async function exerciseSymbolicFinalGateRejectsCurrentSourceDependency() {
+  const fakePlaywrightBin = await createFakePlaywrightBin();
+  const env = withPath(fakePlaywrightBin);
+  try {
+    for (const method of trustedSourceMethods()) {
+      const fixture = await createDeliveryFixture();
+      try {
+        await prepareMixedSymbolicLongTaskFixture(fixture, {
+          mutateSymbolicModel(model) {
+            enableCompactSymbolicApplicability(model);
+            enableFixtureTrustedNoninterference(model, method);
+          },
+        });
+        const sourceArtifactPath = path.join(
+          fixture.root,
+          "design-symbolic/noninterference-source.json",
+        );
+        const historicalArtifactSha256 = fixtureSha(
+          await readFile(sourceArtifactPath),
+        );
+        await runCli(fixture.root, ["enable", "long-task"], { env });
+        await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+          env,
+        });
+        await writeCurrentSourceDependencyFixture(fixture, method);
+        assert.equal(
+          fixtureSha(await readFile(sourceArtifactPath)),
+          historicalArtifactSha256,
+          `the historical ${method} Source artifact must remain present and byte-identical`,
+        );
+        const failure = await runFinalGateFailureText(fixture, env);
+        assert.match(failure, /final_gate_protected_input_stale/u, method);
+        assert.match(
+          failure,
+          /design-symbolic\/symbolic-source-ir\.json/u,
+          method,
+        );
+      } finally {
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    }
+  } finally {
+    await rm(fakePlaywrightBin, { recursive: true, force: true });
+  }
+}
+
+export async function exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource() {
+  const fixture = await createDeliveryFixture();
+  const fakePlaywrightBin = await createFakePlaywrightBin();
+  const env = withPath(fakePlaywrightBin);
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateSymbolicModel(model) {
+        enableCompactSymbolicApplicability(model);
+        enableFixtureTrustedNoninterference(model);
+      },
+    });
+    const sourceArtifactPath = path.join(
+      fixture.root,
+      "design-symbolic/noninterference-source.json",
+    );
+    await runCli(fixture.root, ["enable", "long-task"], { env });
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+      env,
+    });
+    await writeUnsupportedCurrentSourceFixture(fixture);
+    const currentArtifact = JSON.parse(
+      await readFile(sourceArtifactPath, "utf8"),
+    );
+    assert.equal(
+      currentArtifact.schema_version,
+      "design-resource-symbolic-noninterference-artifact-v2",
+    );
+    assert.equal(currentArtifact.verdict, "failed");
+    assert.equal(currentArtifact.failure_witness.side, "source");
+    const failure = await runFinalGateFailureText(fixture, env);
+    assert.match(failure, /final_gate_protected_input_stale/u);
+    assert.match(failure, /design-symbolic\/page\.html/u);
+  } finally {
+    await Promise.all([
+      rm(fixture.root, { recursive: true, force: true }),
+      rm(fakePlaywrightBin, { recursive: true, force: true }),
+    ]);
+  }
+}
+
 export async function exerciseSymbolicFinalGateRejectsNarrowApplicability() {
   for (const attack of applicabilityAttacks()) {
     const fixture = await createDeliveryFixture();
@@ -308,6 +496,56 @@ async function writeCurrentProductionDependencyFixture(fixture) {
         '<script>globalThis.__currentAxis = "variation.state";</script>',
     },
   );
+}
+
+async function writeCurrentSourceDependencyFixture(fixture, method) {
+  await writeDesignResourceSymbolicHandoffFixture(
+    fixture.root,
+    (model) => {
+      enableCompactSymbolicApplicability(model);
+      enableFixtureTrustedNoninterference(model, method);
+    },
+    {
+      directory: "design-symbolic",
+      afterProofArtifacts: async (context) => {
+        const sourceResource = context.inputResources.find(
+          (resource) => resource.key === "resource.symbolic-source-ir",
+        );
+        const sourcePath = path.join(fixture.root, sourceResource.path);
+        const sourceIr = JSON.parse(await readFile(sourcePath, "utf8"));
+        sourceIrReadsOmittedAxis(sourceIr);
+        const content = canonicalJson(sourceIr);
+        const digest = fixtureSha(content);
+        await writeFile(sourcePath, content);
+        sourceResource.sha256 = digest;
+        context.model.manifest.inspector.input_resources.find(
+          (input) => input.resource_ref === sourceResource.key,
+        ).sha256 = digest;
+      },
+    },
+  );
+}
+
+async function writeUnsupportedCurrentSourceFixture(fixture) {
+  await writeDesignResourceSymbolicHandoffFixture(
+    fixture.root,
+    (model) => {
+      enableCompactSymbolicApplicability(model);
+      enableFixtureTrustedNoninterference(model);
+    },
+    {
+      directory: "design-symbolic",
+      pageSuffix: "<style>main { color: red }</style>",
+    },
+  );
+}
+
+function trustedSourceMethods() {
+  return [
+    "closed_world_static_dependency_closure",
+    "restricted_ir_symbolic_equivalence",
+    "finite_complete_domain_exhaustive_equivalence",
+  ];
 }
 
 async function writeNarrowApplicabilityFixture(fixture, mutate) {

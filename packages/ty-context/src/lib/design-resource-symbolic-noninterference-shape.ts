@@ -32,9 +32,13 @@ export function parseSymbolicNoninterferenceProof(
     "complete_domain_cardinality",
     "oracle_version",
     "oracle_implementation_sha256",
+    "oracle_capability",
     "environment_sha256",
     "input_snapshot_sha256",
+    "source_manifest_snapshot_sha256",
     "target_snapshot_sha256",
+    "certificate_scope_sha256",
+    "rule_scope_sha256",
     "omitted_axis_refs",
     "method_result_sha256",
     "artifact_resource_ref",
@@ -117,6 +121,10 @@ export function parseSymbolicNoninterferenceProof(
       row.oracle_implementation_sha256,
       `${label}.oracle_implementation_sha256`,
     ),
+    oracle_capability: string(
+      row.oracle_capability,
+      `${label}.oracle_capability`,
+    ),
     environment_sha256: sha256(
       row.environment_sha256,
       `${label}.environment_sha256`,
@@ -125,9 +133,21 @@ export function parseSymbolicNoninterferenceProof(
       row.input_snapshot_sha256,
       `${label}.input_snapshot_sha256`,
     ),
+    source_manifest_snapshot_sha256: nullable(
+      row.source_manifest_snapshot_sha256,
+      (entry) => sha256(entry, `${label}.source_manifest_snapshot_sha256`),
+    ),
     target_snapshot_sha256: sha256(
       row.target_snapshot_sha256,
       `${label}.target_snapshot_sha256`,
+    ),
+    certificate_scope_sha256: sha256(
+      row.certificate_scope_sha256,
+      `${label}.certificate_scope_sha256`,
+    ),
+    rule_scope_sha256: sha256(
+      row.rule_scope_sha256,
+      `${label}.rule_scope_sha256`,
     ),
     omitted_axis_refs: stableKeys(
       row.omitted_axis_refs,
@@ -152,30 +172,74 @@ export function parseSymbolicNoninterferenceProof(
 function parseFailureWitness(value: unknown, label: string) {
   const row = object(value, label, [
     "kind",
+    "side",
+    "certificate_scope_sha256",
     "axis_ref",
+    "fact_rule_ref",
     "resource_ref",
     "path",
+    "locator",
+    "node_ref",
     "byte_offset",
+    "assignment",
     "detail",
   ]);
   return {
     kind: literal(
       row.kind,
-      ["omitted_axis_dependency", "unsupported_dependency"] as const,
+      [
+        "omitted_axis_dependency",
+        "unsupported_dependency",
+        "source_rule_denotation_mismatch",
+        "complete_domain_counterexample",
+      ] as const,
       `${label}.kind`,
+    ),
+    side: literal(row.side, ["source", "production"] as const, `${label}.side`),
+    certificate_scope_sha256: sha256(
+      row.certificate_scope_sha256,
+      `${label}.certificate_scope_sha256`,
     ),
     axis_ref: nullable(row.axis_ref, (entry) =>
       stableKey(entry, `${label}.axis_ref`),
+    ),
+    fact_rule_ref: nullable(row.fact_rule_ref, (entry) =>
+      stableKey(entry, `${label}.fact_rule_ref`),
     ),
     resource_ref: nullable(row.resource_ref, (entry) =>
       stableKey(entry, `${label}.resource_ref`),
     ),
     path: nullable(row.path, (entry) => string(entry, `${label}.path`)),
+    locator: nullable(row.locator, (entry) =>
+      string(entry, `${label}.locator`),
+    ),
+    node_ref: nullable(row.node_ref, (entry) =>
+      stableKey(entry, `${label}.node_ref`),
+    ),
     byte_offset: nullable(row.byte_offset, (entry) =>
       nonnegativeInteger(entry, `${label}.byte_offset`),
     ),
+    assignment: nullable(row.assignment, (entry) =>
+      parseAssignment(entry, `${label}.assignment`),
+    ),
     detail: string(row.detail, `${label}.detail`),
   };
+}
+
+function parseAssignment(value: unknown, label: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error(`${label}: must be an object`);
+  const result: Record<string, string | number> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    stableKey(key, `${label}.key`);
+    if (
+      (typeof entry !== "string" && typeof entry !== "number") ||
+      (typeof entry === "number" && !Number.isFinite(entry))
+    )
+      throw new Error(`${label}.${key}: must be a finite scalar`);
+    result[key] = entry;
+  }
+  return result;
 }
 
 function parseStaticDependencyNode(value: unknown, label: string) {

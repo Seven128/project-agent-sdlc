@@ -4,6 +4,16 @@ import YAML from "yaml";
 import { designResourceSymbolicCertificateKey } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
 import { createSymbolicNoninterferenceArtifactBinding } from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-artifact.js";
 import {
+  symbolicNoninterferenceCertificateScopeSha256,
+  symbolicNoninterferenceRuleScopeSha256,
+} from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-scope.js";
+import {
+  DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_MEDIA_TYPE,
+  DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_SCHEMA_VERSION,
+} from "../../packages/ty-context/dist/lib/design-resource-symbolic-source-ir-types.js";
+import { compileSymbolicDenotation } from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
+import { canonicalJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import {
   SYMBOLIC_HANDOFF_PATH,
   SYMBOLIC_MANIFEST_PATH,
   SYMBOLIC_SOURCE_ITEM_KEY,
@@ -26,6 +36,7 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     directory = "design",
     modelFactory = buildSymbolicFixtureModel,
     pageSuffix = "",
+    mutateSourceIr,
     afterProofArtifacts,
   } = {},
 ) {
@@ -62,15 +73,36 @@ export async function writeDesignResourceSymbolicHandoffFixture(
   ];
   const model = modelFactory(resourcesWithoutManifest, values);
   await mutate?.(model);
+  const sourceIrResource = await writeSourceIr(
+    root,
+    directory,
+    model,
+    mutateSourceIr,
+  );
+  if (sourceIrResource) {
+    resourcesWithoutManifest.push(sourceIrResource.resource);
+    model.manifest.inspector.input_resources.push({
+      resource_ref: sourceIrResource.resource.key,
+      path: sourceIrResource.resource.path,
+      sha256: sourceIrResource.resource.sha256,
+    });
+  }
+  synchronizeProofInputCaches(model);
+  const inputContents = new Map([
+    ["resource.page", Buffer.from(page)],
+    ["resource.values", Buffer.from(valuesContent)],
+  ]);
+  if (sourceIrResource)
+    inputContents.set(
+      sourceIrResource.resource.key,
+      Buffer.from(sourceIrResource.content),
+    );
   const proofArtifactResources = await writeProofArtifacts(
     root,
     directory,
     model,
     resourcesWithoutManifest,
-    new Map([
-      ["resource.page", Buffer.from(page)],
-      ["resource.values", Buffer.from(valuesContent)],
-    ]),
+    inputContents,
   );
   await afterProofArtifacts?.({
     root,
@@ -115,6 +147,94 @@ ${YAML.stringify(handoff, { lineWidth: 0 }).trimEnd()}
     model,
     handoffPath,
     manifestPath,
+    sourceIrPath: sourceIrResource?.resource.path ?? null,
+  };
+}
+
+function synchronizeProofInputCaches(model) {
+  const inputRefs = model.manifest.inspector.input_resources
+    .map((input) => input.resource_ref)
+    .filter((ref) => ref === "resource.symbolic-source-ir");
+  const certificate = model.manifest.noninterference_certificates[0];
+  for (const proof of [
+    certificate?.source_noninterference_proof,
+    certificate?.production_noninterference_proof,
+  ].filter(Boolean)) {
+    proof.input_resource_refs.push(
+      ...inputRefs.filter((ref) => !proof.input_resource_refs.includes(ref)),
+    );
+    proof.input_resource_refs.sort((left, right) =>
+      left.localeCompare(right, "en"),
+    );
+    if (proof.side !== "production" || !proof.static_dependency_nodes.length)
+      continue;
+    const carrier =
+      proof.static_dependency_nodes.find(
+        (node) => node.input_resource_refs.length > 0,
+      ) ?? proof.static_dependency_nodes[0];
+    const existing = new Set(
+      proof.static_dependency_nodes.flatMap(
+        (node) => node.input_resource_refs,
+      ),
+    );
+    carrier.input_resource_refs.push(
+      ...inputRefs.filter((ref) => !existing.has(ref)),
+    );
+    carrier.input_resource_refs.sort((left, right) =>
+      left.localeCompare(right, "en"),
+    );
+  }
+}
+
+async function writeSourceIr(root, directory, model, mutateSourceIr) {
+  const certificate = model.manifest.noninterference_certificates[0];
+  if (!certificate?.source_noninterference_proof) return null;
+  if (!model.sourceNoninterferencePredicates?.length)
+    throw new Error("trusted Source non-interference fixture predicates required");
+  const regions = new Map();
+  for (const predicate of model.sourceNoninterferencePredicates) {
+    const compiled = compileSymbolicDenotation(
+      model.manifest.axis_domains,
+      predicate,
+    );
+    regions.set(compiled.canonical_sha256, {
+      rule_region_sha256: compiled.canonical_sha256,
+      predicate: structuredClone(predicate),
+    });
+  }
+  const sourceIr = {
+    schema_version: DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_SCHEMA_VERSION,
+    target_ref: SYMBOLIC_TARGET_KEY,
+    certificate_scopes: [
+      {
+        certificate_scope_sha256:
+          symbolicNoninterferenceCertificateScopeSha256(certificate),
+        rule_scope_sha256: symbolicNoninterferenceRuleScopeSha256(
+          model.manifest,
+          certificate,
+        ),
+        regions: [...regions.values()].sort((left, right) =>
+          left.rule_region_sha256.localeCompare(
+            right.rule_region_sha256,
+            "en",
+          ),
+        ),
+      },
+    ],
+  };
+  await mutateSourceIr?.(sourceIr, model);
+  const content = canonicalJson(sourceIr);
+  const sourceIrPath = `${directory}/symbolic-source-ir.json`;
+  await writeFile(path.join(root, sourceIrPath), content);
+  return {
+    content,
+    resource: fixtureResource(
+      "resource.symbolic-source-ir",
+      "supporting",
+      sourceIrPath,
+      DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_MEDIA_TYPE,
+      content,
+    ),
   };
 }
 

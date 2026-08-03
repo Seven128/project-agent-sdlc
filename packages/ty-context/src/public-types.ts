@@ -41,10 +41,18 @@ export type {
   DesignResourceObservableRuleManifestV2,
   DesignResourceSymbolicFactRuleV2,
   DesignResourceSymbolicNoninterferenceCertificateV2,
-  DesignResourceSymbolicNoninterferenceArtifactV1,
+  DesignResourceSymbolicNoninterferenceArtifactV2,
+  DesignResourceSymbolicNoninterferenceDerivedResultV2,
+  DesignResourceSymbolicNoninterferenceFailureWitnessV1,
+  DesignResourceSymbolicNoninterferenceInputBindingV2,
   DesignResourceSymbolicNoninterferenceProofV2,
   DesignResourceSymbolicProofObligationV2,
 } from "./lib/design-resource-symbolic-fact-types.js";
+export type {
+  DesignResourceSymbolicSourceIrCertificateScopeV1,
+  DesignResourceSymbolicSourceIrRegionV1,
+  DesignResourceSymbolicSourceIrV1,
+} from "./lib/design-resource-symbolic-source-ir-types.js";
 export type {
   CompiledSymbolicDenotationV1,
   SymbolicDenotationAxisDomain,

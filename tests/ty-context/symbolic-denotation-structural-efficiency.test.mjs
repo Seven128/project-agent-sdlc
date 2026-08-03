@@ -181,7 +181,6 @@ test("static dependency closure accepts and reuses an exact shared DAG subgraph"
     await writeDesignResourceSymbolicHandoffFixture(root, (model) => {
       enableFixtureTrustedNoninterference(model);
       for (const proof of [
-        model.certificate.source_noninterference_proof,
         model.certificate.production_noninterference_proof,
       ]) {
         const original = proof.static_dependency_nodes[0];
@@ -223,6 +222,22 @@ test("static dependency closure accepts and reuses an exact shared DAG subgraph"
       SYMBOLIC_HANDOFF_PATH,
     );
     assert.equal(preflight.status, "ready");
+    const sourceProof =
+      preflight.manifest.noninterference_certificates[0]
+        .source_noninterference_proof;
+    const sourceInputNode = sourceProof.static_dependency_nodes.find(
+      (node) => node.key === "source.input.complete",
+    );
+    const sourceRegionNodes = sourceProof.static_dependency_nodes.filter(
+      (node) => node.key.startsWith("source.region."),
+    );
+    assert.ok(sourceInputNode);
+    assert.ok(sourceRegionNodes.length > 0);
+    assert.ok(
+      sourceRegionNodes.every((node) =>
+        node.dependency_refs.includes(sourceInputNode.key),
+      ),
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

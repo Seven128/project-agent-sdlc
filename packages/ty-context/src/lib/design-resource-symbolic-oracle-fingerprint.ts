@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const LOCAL_MODULE_IMPORT = /(?:\bfrom\s*|\bimport\s*)["'](\.[^"']+\.js)["']/gu;
 const DYNAMIC_MODULE_IMPORT = /\bimport\s*\(/gu;
+const HIDDEN_LOCAL_LOADER = /\b(?:createRequire|require)\s*\(/gu;
 
 export function fingerprintExecutableModuleClosure(
   entryUrls: readonly string[],
@@ -21,6 +22,11 @@ export function fingerprintExecutableModuleClosure(
         `symbolic Oracle implementation uses dynamic import: ${url}`,
       );
     DYNAMIC_MODULE_IMPORT.lastIndex = 0;
+    if (HIDDEN_LOCAL_LOADER.test(source))
+      throw new Error(
+        `symbolic Oracle implementation uses a hidden local loader: ${url}`,
+      );
+    HIDDEN_LOCAL_LOADER.lastIndex = 0;
     seen.set(url, bytes);
     for (const specifier of localModuleImports(source)) {
       const dependencyUrl = new URL(specifier, url).href;

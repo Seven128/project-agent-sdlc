@@ -26,10 +26,12 @@ import type {
 import type { DesignResourceSymbolicNoninterferenceCertificateV2 } from "./design-resource-symbolic-noninterference-types.js";
 
 export type {
-  DesignResourceSymbolicNoninterferenceArtifactV1,
+  DesignResourceSymbolicNoninterferenceArtifactV2,
   DesignResourceSymbolicNoninterferenceCertificateV2,
+  DesignResourceSymbolicNoninterferenceDerivedResultV2,
   DesignResourceSymbolicNoninterferenceEquivalenceCaseV2,
   DesignResourceSymbolicNoninterferenceFailureWitnessV1,
+  DesignResourceSymbolicNoninterferenceInputBindingV2,
   DesignResourceSymbolicNoninterferenceProofMethodV2,
   DesignResourceSymbolicNoninterferenceProofV2,
   DesignResourceSymbolicStaticDependencyNodeV2,

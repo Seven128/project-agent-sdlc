@@ -164,15 +164,38 @@ test("public schema, exports and changed-path routing include symbolic V2", asyn
       "design_symbolic_certificate",
     ),
   );
+  const sourceIrSchema = JSON.parse(
+    await text(
+      "packages/ty-context/src/schemas/design-resource-symbolic-source-ir-v1.schema.json",
+    ),
+  );
+  assert.equal(
+    sourceIrSchema.properties.schema_version.const,
+    "design-resource-symbolic-source-ir-v1",
+  );
+  const artifactSchema = JSON.parse(
+    await text(
+      "packages/ty-context/src/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
+    ),
+  );
+  assert.equal(
+    artifactSchema.properties.schema_version.const,
+    "design-resource-symbolic-noninterference-artifact-v2",
+  );
 
   const publicApi = `${await text("packages/ty-context/src/index.ts")}\n${await text(
     "packages/ty-context/src/public-types.ts",
+  )}\n${await text(
+    "packages/ty-context/src/lib/symbolic-denotation-public.ts",
   )}`;
   for (const name of [
     "symbolicDenotation",
     "DesignResourceHandoffV2",
     "DesignResourceHandoffPreflightV2",
     "DesignResourceObservableRuleManifestV2",
+    "DesignResourceSymbolicNoninterferenceArtifactV2",
+    "DesignResourceSymbolicSourceIrV1",
+    "DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_SCHEMA_VERSION",
   ])
     assert.ok(publicApi.includes(name), `public export missing: ${name}`);
 

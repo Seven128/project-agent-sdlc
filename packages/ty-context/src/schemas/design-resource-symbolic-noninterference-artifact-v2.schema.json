@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Seven128/project-tiny-context-harness/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
+  "title": "Project Tiny Context Symbolic Non-Interference Artifact v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "side",
+    "method",
+    "oracle_identity",
+    "oracle_version",
+    "oracle_implementation_sha256",
+    "oracle_capability",
+    "environment_sha256",
+    "input_resources",
+    "input_snapshot_sha256",
+    "source_manifest_snapshot_sha256",
+    "target_snapshot_sha256",
+    "certificate_scope_sha256",
+    "rule_scope_sha256",
+    "omitted_axis_refs",
+    "derived_result",
+    "method_result_sha256",
+    "verdict",
+    "failure_witness"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "design-resource-symbolic-noninterference-artifact-v2"
+    },
+    "side": { "enum": ["source", "production"] },
+    "method": { "$ref": "#/$defs/method" },
+    "oracle_identity": { "$ref": "#/$defs/nonemptyString" },
+    "oracle_version": { "$ref": "#/$defs/nonemptyString" },
+    "oracle_implementation_sha256": { "$ref": "#/$defs/sha256" },
+    "oracle_capability": { "$ref": "#/$defs/nonemptyString" },
+    "environment_sha256": { "$ref": "#/$defs/sha256" },
+    "input_resources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/inputBinding" }
+    },
+    "input_snapshot_sha256": { "$ref": "#/$defs/sha256" },
+    "source_manifest_snapshot_sha256": {
+      "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+    },
+    "target_snapshot_sha256": { "$ref": "#/$defs/sha256" },
+    "certificate_scope_sha256": { "$ref": "#/$defs/sha256" },
+    "rule_scope_sha256": { "$ref": "#/$defs/sha256" },
+    "omitted_axis_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/stableKey" }
+    },
+    "derived_result": { "$ref": "#/$defs/derivedResult" },
+    "method_result_sha256": { "$ref": "#/$defs/sha256" },
+    "verdict": { "enum": ["passed", "failed"] },
+    "failure_witness": {
+      "oneOf": [{ "$ref": "#/$defs/failureWitness" }, { "type": "null" }]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "side": { "const": "source" } },
+        "required": ["side"]
+      },
+      "then": {
+        "properties": {
+          "source_manifest_snapshot_sha256": { "$ref": "#/$defs/sha256" }
+        }
+      },
+      "else": {
+        "properties": {
+          "source_manifest_snapshot_sha256": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "verdict": { "const": "passed" } },
+        "required": ["verdict"]
+      },
+      "then": { "properties": { "failure_witness": { "type": "null" } } },
+      "else": {
+        "properties": {
+          "failure_witness": { "$ref": "#/$defs/failureWitness" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "nonemptyString": { "type": "string", "minLength": 1 },
+    "stableKey": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "method": {
+      "enum": [
+        "closed_world_static_dependency_closure",
+        "restricted_ir_symbolic_equivalence",
+        "finite_complete_domain_exhaustive_equivalence"
+      ]
+    },
+    "scalar": {
+      "oneOf": [{ "type": "string" }, { "type": "number" }]
+    },
+    "inputBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resource_ref", "path", "declared_sha256", "current_sha256"],
+      "properties": {
+        "resource_ref": { "$ref": "#/$defs/stableKey" },
+        "path": { "$ref": "#/$defs/nonemptyString" },
+        "declared_sha256": { "$ref": "#/$defs/sha256" },
+        "current_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "dependencyNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "axis_refs",
+        "dependency_refs",
+        "input_resource_refs"
+      ],
+      "properties": {
+        "key": { "$ref": "#/$defs/stableKey" },
+        "axis_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/stableKey" }
+        },
+        "dependency_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/stableKey" }
+        },
+        "input_resource_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/stableKey" }
+        }
+      }
+    },
+    "dependencyRoot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact_rule_refs", "node_ref"],
+      "properties": {
+        "fact_rule_refs": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/stableKey" }
+            },
+            { "type": "null" }
+          ]
+        },
+        "node_ref": { "$ref": "#/$defs/stableKey" }
+      }
+    },
+    "equivalenceCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact_rule_refs", "side_predicate", "axis_erased_predicate"],
+      "properties": {
+        "fact_rule_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/stableKey" }
+        },
+        "side_predicate": {
+          "$ref": "design-resource-symbolic-source-ir-v1.schema.json#/$defs/predicate"
+        },
+        "axis_erased_predicate": {
+          "$ref": "design-resource-symbolic-source-ir-v1.schema.json#/$defs/predicate"
+        }
+      }
+    },
+    "derivedResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_ir_resource_ref",
+        "static_dependency_nodes",
+        "static_rule_roots",
+        "equivalence_cases",
+        "complete_domain_cardinality",
+        "exhaustive_evaluation_sha256"
+      ],
+      "properties": {
+        "source_ir_resource_ref": {
+          "oneOf": [{ "$ref": "#/$defs/stableKey" }, { "type": "null" }]
+        },
+        "static_dependency_nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dependencyNode" }
+        },
+        "static_rule_roots": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/dependencyRoot" }
+        },
+        "equivalence_cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/equivalenceCase" }
+        },
+        "complete_domain_cardinality": {
+          "oneOf": [
+            { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)$" },
+            { "type": "null" }
+          ]
+        },
+        "exhaustive_evaluation_sha256": {
+          "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        }
+      }
+    },
+    "failureWitness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "side",
+        "certificate_scope_sha256",
+        "axis_ref",
+        "fact_rule_ref",
+        "resource_ref",
+        "path",
+        "locator",
+        "node_ref",
+        "byte_offset",
+        "assignment",
+        "detail"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "omitted_axis_dependency",
+            "unsupported_dependency",
+            "source_rule_denotation_mismatch",
+            "complete_domain_counterexample"
+          ]
+        },
+        "side": { "enum": ["source", "production"] },
+        "certificate_scope_sha256": { "$ref": "#/$defs/sha256" },
+        "axis_ref": {
+          "oneOf": [{ "$ref": "#/$defs/stableKey" }, { "type": "null" }]
+        },
+        "fact_rule_ref": {
+          "oneOf": [{ "$ref": "#/$defs/stableKey" }, { "type": "null" }]
+        },
+        "resource_ref": {
+          "oneOf": [{ "$ref": "#/$defs/stableKey" }, { "type": "null" }]
+        },
+        "path": {
+          "oneOf": [{ "$ref": "#/$defs/nonemptyString" }, { "type": "null" }]
+        },
+        "locator": {
+          "oneOf": [{ "$ref": "#/$defs/nonemptyString" }, { "type": "null" }]
+        },
+        "node_ref": {
+          "oneOf": [{ "$ref": "#/$defs/stableKey" }, { "type": "null" }]
+        },
+        "byte_offset": {
+          "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }]
+        },
+        "assignment": {
+          "oneOf": [
+            {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/stableKey" },
+              "additionalProperties": { "$ref": "#/$defs/scalar" }
+            },
+            { "type": "null" }
+          ]
+        },
+        "detail": { "$ref": "#/$defs/nonemptyString" }
+      }
+    }
+  }
+}

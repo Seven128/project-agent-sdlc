@@ -406,6 +406,7 @@ export function enableFixtureTrustedNoninterference(
       oracle_ref: "oracle.fixture",
       environment_ref: "environment.fixture",
       static_dependency_nodes:
+        side === "production" &&
         method === "closed_world_static_dependency_closure"
           ? [
               {
@@ -417,6 +418,7 @@ export function enableFixtureTrustedNoninterference(
             ]
           : [],
       static_rule_roots:
+        side === "production" &&
         method === "closed_world_static_dependency_closure"
           ? [
               {
@@ -426,6 +428,7 @@ export function enableFixtureTrustedNoninterference(
             ]
           : [],
       equivalence_cases:
+        side === "source" ||
         method === "closed_world_static_dependency_closure"
           ? []
           : [
@@ -448,9 +451,13 @@ export function enableFixtureTrustedNoninterference(
       oracle_version: SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
       oracle_implementation_sha256:
         SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+      oracle_capability: `symbolic_noninterference.${side}.${method}`,
       environment_sha256: "0".repeat(64),
       input_snapshot_sha256: "0".repeat(64),
+      source_manifest_snapshot_sha256: null,
       target_snapshot_sha256: "0".repeat(64),
+      certificate_scope_sha256: "0".repeat(64),
+      rule_scope_sha256: "0".repeat(64),
       omitted_axis_refs: [...model.certificate.omitted_axis_refs],
       method_result_sha256: "0".repeat(64),
       artifact_resource_ref: `resource.noninterference.${side}`,
@@ -477,6 +484,9 @@ export function enableFixtureTrustedNoninterference(
     ...certificateInput,
   };
   model.manifest.noninterference_certificates = [model.certificate];
+  model.sourceNoninterferencePredicates = [
+    structuredClone(model.manifest.reachable_region),
+  ];
   return model;
 }
 

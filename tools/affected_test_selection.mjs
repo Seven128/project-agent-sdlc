@@ -955,6 +955,15 @@ function symbolicAffectedTests(file) {
     selected.add("symbolic-denotation-structural-efficiency.test.mjs");
   }
   if (
+    file.startsWith(
+      "packages/ty-context/src/lib/design-resource-symbolic-noninterference-",
+    ) ||
+    file.startsWith(
+      "packages/ty-context/src/lib/design-resource-symbolic-source-ir-",
+    )
+  )
+    selected.add("symbolic-denotation-long-task-v2.test.mjs");
+  if (
     file.startsWith("packages/ty-context/src/lib/design-resource-v1-capacity")
   ) {
     selected.add("design-resource-v1-capacity-guard.test.mjs");

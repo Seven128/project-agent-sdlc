@@ -12,10 +12,7 @@ export function createDesignResourceSymbolicCompilationSession(
       population.exclusions.map((exclusion) => exclusion.region),
     ),
     ...manifest.noninterference_certificates.flatMap((certificate) =>
-      [
-        certificate.source_noninterference_proof,
-        certificate.production_noninterference_proof,
-      ].flatMap(
+      [certificate.production_noninterference_proof].flatMap(
         (proof) =>
           proof?.equivalence_cases.flatMap((item) => [
             item.side_predicate,

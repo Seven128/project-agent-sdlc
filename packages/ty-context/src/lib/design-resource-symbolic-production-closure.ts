@@ -5,6 +5,9 @@ import type {
   DesignResourceSymbolicNoninterferenceCertificateV2,
   DesignResourceSymbolicNoninterferenceFailureWitnessV1,
 } from "./design-resource-symbolic-fact-types.js";
+import { symbolicNoninterferenceCertificateScopeSha256 } from "./design-resource-symbolic-noninterference-scope.js";
+import { DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_MEDIA_TYPE } from "./design-resource-symbolic-source-ir-types.js";
+import { canonicalJson } from "./strict-codec.js";
 
 const SAFE_STATIC_HTML_TAGS = new Set([
   "article",
@@ -68,7 +71,10 @@ export function productionClosureFailure(
         );
       continue;
     }
-    if (resource.media_type !== "application/json")
+    if (
+      resource.media_type !== "application/json" &&
+      resource.media_type !== DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_MEDIA_TYPE
+    )
       return witness(
         certificate,
         resource,
@@ -76,7 +82,17 @@ export function productionClosureFailure(
         `unsupported_dependency_media:${resource.media_type}`,
       );
     try {
-      JSON.parse(bytes.toString("utf8"));
+      const parsed = JSON.parse(bytes.toString("utf8"));
+      if (
+        resource.media_type === DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_MEDIA_TYPE &&
+        canonicalJson(parsed) !== bytes.toString("utf8")
+      )
+        return witness(
+          certificate,
+          resource,
+          null,
+          "noncanonical_symbolic_source_ir",
+        );
     } catch {
       return witness(certificate, resource, null, "invalid_inert_json");
     }
@@ -163,13 +179,20 @@ function witness(
   );
   return {
     kind: axisRef ? "omitted_axis_dependency" : "unsupported_dependency",
+    side: "production",
+    certificate_scope_sha256:
+      symbolicNoninterferenceCertificateScopeSha256(certificate),
     axis_ref: axisRef ?? null,
+    fact_rule_ref: null,
     resource_ref: resource.key,
     path: resource.path,
+    locator: null,
+    node_ref: null,
     byte_offset:
       byteOffset === null
         ? null
         : Buffer.byteLength(source.slice(0, byteOffset)),
+    assignment: null,
     detail,
   };
 }

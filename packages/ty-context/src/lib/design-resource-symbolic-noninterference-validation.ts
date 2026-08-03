@@ -109,6 +109,11 @@ function validateProof(
       "v2_noninterference_oracle_capability_missing",
       `${proof.oracle_ref}:${requiredCapability}`,
     );
+  if (proof.oracle_capability !== requiredCapability)
+    invalid(
+      "v2_noninterference_oracle_capability_binding_mismatch",
+      `${certificate.key}:${proof.oracle_capability}:${requiredCapability}`,
+    );
   if (!indexes.environments.has(proof.environment_ref))
     invalid("v2_noninterference_environment_unknown", proof.environment_ref);
   if (proof.dynamic_dependency_kinds.length)
@@ -139,6 +144,17 @@ function validateProof(
     "v2_noninterference_artifact_omitted_axis_mismatch",
     `${certificate.key}:${expectedSide}`,
   );
+  if (expectedSide === "source") {
+    validateSymbolicNoninterferenceArtifact(
+      manifest,
+      certificate,
+      proof,
+      target,
+      resources,
+      contents,
+    );
+    return;
+  }
   if (proof.method === "closed_world_static_dependency_closure") {
     validateStaticDependencyClosure(proof, certificate, projections, manifest);
   } else
