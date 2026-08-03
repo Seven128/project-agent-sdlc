@@ -44,6 +44,11 @@ const contractRelative =
   ".work_products/symbolic-denotation-efficiency/delivery-contract.yaml";
 
 test("[critical:compact-carrier-exact-closure] migrated compact Authorities preserve all 113 Facts and obligations without expanded shadows", async () => {
+  const attributes = await readFile(
+    path.join(repository, ".gitattributes"),
+    "utf8",
+  );
+  assert.match(attributes, /^\* text=auto eol=lf$/mu);
   const source = await readFile(path.join(repository, sourceRelative), "utf8");
   const [parsedSource] = parseSemanticFactManifestBlocks(sourceRelative, source);
   assert.equal(parsedSource.carrier, "compact_v1");
