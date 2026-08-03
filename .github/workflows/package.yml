@@ -129,7 +129,19 @@ jobs:
       - name: Validate Context and touched-source modularity
         run: make validate-harness
       - name: Validate changed-source modularity and waiver lifecycle
-        run: node packages/ty-context/dist/cli.js check-modularity --base "origin/${{ github.base_ref }}" --fail-on-warning
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            modularity_base="origin/$PR_BASE_REF"
+          elif git cat-file -e "${PUSH_BASE_SHA}^{commit}" 2>/dev/null; then
+            modularity_base="$PUSH_BASE_SHA"
+          else
+            modularity_base="$(git merge-base HEAD origin/main)"
+          fi
+          node packages/ty-context/dist/cli.js check-modularity --base "$modularity_base" --fail-on-warning
       - name: Quickstart smoke
         run: node tools/quickstart_smoke.mjs
 
