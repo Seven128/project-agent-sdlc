@@ -68,8 +68,6 @@ global:
     forbidden_paths:
     - key: no-non-ui-v2-doc
       path: docs/non-ui-semantic-fact-completeness.md
-    - key: no-ci-scope
-      path: .github/**
     - key: no-example-scope
       path: examples/**
     forbidden_shortcuts: []
@@ -108,7 +106,7 @@ outcomes:
       - project_context/areas/harness-package/implementation-index.md
       - project_context/areas/harness-package/verification.md
       path_globs:
-        structure_ref: structure.991fb6010b983bc1ff8c6e1f
+        structure_ref: structure.76c842e4c379a5a0fe29124a
         arguments: []
     owner_surfaces: []
     controls: []
@@ -121,12 +119,11 @@ outcomes:
     surface_bindings: []
   technical:
     expected_change_paths:
-      structure_ref: structure.991fb6010b983bc1ff8c6e1f
+      structure_ref: structure.76c842e4c379a5a0fe29124a
       arguments: []
     allowed_support_paths: []
     forbidden_paths:
     - docs/non-ui-semantic-fact-completeness.md
-    - .github/**
     - examples/**
     bindings:
     - key: symbolic-policy-carrier
@@ -988,7 +985,7 @@ compact_semantic_carrier:
       facts: 113
       obligations: 113
       assertions: 215
-      canonical_bytes: 319462
+      canonical_bytes: 320137
     maximum:
       claims: 128
       claim_projections: 128
@@ -1088,8 +1085,8 @@ compact_semantic_carrier:
       path: packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts
       replacement: "symbolic_denotation_efficiency_delivery: false"
       type: replace_text
-  - key: structure.991fb6010b983bc1ff8c6e1f
-    digest: 991fb6010b983bc1ff8c6e1fcf713c08bba9a93a33416816f53c6edc41224a66
+  - key: structure.76c842e4c379a5a0fe29124a
+    digest: 76c842e4c379a5a0fe29124af7bd79fe4cc8dff2ffb39fe6f2c1ea7a48fd112a
     boundary: contract.path-set
     parameter_count: 0
     template:
@@ -1171,6 +1168,13 @@ compact_semantic_carrier:
     - tools/verify_design_fact_completeness_delivery.mjs
     - tools/migrate_long_task_compact_carrier.mjs
     - tools/migrate_long_task_compact_carrier_authority.mjs
+    - .github/workflows/package.yml
+    - packages/ty-context/src/lib/long-task-delivery-parser.ts
+    - packages/ty-context/src/lib/compact-shared-structure*.ts
+    - packages/ty-context/src/lib/structural-closure-cost.ts
+    - tests/ty-context/workflow-test-entrypoints.test.mjs
+    - tests/ty-context/fixtures/structural-closure-cost-baseline.json
+    - tools/structural_closure_cost_*.mjs
   - key: structure.b058b4dec808bcfe9f254776
     digest: b058b4dec808bcfe9f254776329ceaf6e472df214520b7267a4c35424aa02f46
     boundary: contract.check.output-paths
