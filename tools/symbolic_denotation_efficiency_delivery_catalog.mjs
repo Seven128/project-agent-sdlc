@@ -32,13 +32,13 @@ export const symbolicDeliveryGroups = {
     ],
   },
   downstream: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   noninterference: {
     tests: [
       "tests/ty-context/symbolic-denotation-efficiency-antidegradation.test.mjs",
       "tests/ty-context/symbolic-denotation-ui-v2.test.mjs",
-      "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
+      "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
     ],
   },
   capacity: {
@@ -51,10 +51,10 @@ export const symbolicDeliveryGroups = {
     ],
   },
   scope: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   rollout: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   verification: {
     tests: [

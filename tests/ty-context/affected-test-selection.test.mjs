@@ -140,7 +140,7 @@ test("control-level UI authority changes select parser, Claim and revision cover
     "tests/ty-context/long-task-schema-parser-parity.test.mjs",
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
-    "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
+    "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ]);
 });
 
@@ -431,7 +431,7 @@ test("design authoring profile and provider changes select focused coverage", ()
     "tests/ty-context/design-resource-handoff.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
     "tests/ty-context/long-task-schema-parser-parity.test.mjs",
-    "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
+    "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ]);
 
   const splitManifest = selectAffectedTests([

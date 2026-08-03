@@ -19,7 +19,7 @@ import {
 export { exerciseMixedSymbolicLongTaskClosure };
 
 test(
-  "one Contract compiles and reaches one Final Gate with mixed V1 and opt-in UI V2 targets",
+  "[critical:symbolic-mixed-representation-closure] one Contract compiles and reaches one Final Gate with mixed V1 and opt-in UI V2 targets",
   exerciseMixedSymbolicLongTaskClosure,
 );
 

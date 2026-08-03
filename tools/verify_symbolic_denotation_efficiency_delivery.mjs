@@ -47,7 +47,9 @@ async function semanticVerification() {
   ]);
   const build = await run(buildSpec.command, buildSpec.args);
   const uniqueTests = [
-    ...new Set(Object.values(symbolicDeliveryGroups).flatMap((group) => group.tests)),
+    ...new Set(
+      Object.values(symbolicDeliveryGroups).flatMap((group) => group.tests),
+    ),
   ];
   const testResults = new Map();
   for (const testPath of uniqueTests) {
@@ -72,7 +74,9 @@ async function semanticVerification() {
         group,
         markerState.delivery &&
           build.code === 0 &&
-          definition.tests.every((testPath) => testResults.get(testPath)?.code === 0),
+          definition.tests.every(
+            (testPath) => testResults.get(testPath)?.code === 0,
+          ),
       ]),
   );
   groupPass.outcome =
@@ -128,7 +132,7 @@ async function apiContractVerification() {
   const policy = await readText(policyPath);
   const requiredTests = [
     "tests/ty-context/symbolic-denotation-equivalence.test.mjs",
-    "tests/ty-context/symbolic-denotation-long-task-v2.test.mjs",
+    "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ];
   const buildSpec = npmCommandSpec([
     "run",

@@ -203,7 +203,7 @@ test("public schema, exports and changed-path routing include symbolic V2", asyn
   for (const testFile of [
     "symbolic-denotation-equivalence.test.mjs",
     "symbolic-denotation-ui-v2.test.mjs",
-    "symbolic-denotation-long-task-v2.test.mjs",
+    "long-task-symbolic-denotation-v2.test.mjs",
     "symbolic-denotation-efficiency-antidegradation.test.mjs",
     "symbolic-denotation-structural-efficiency.test.mjs",
     "design-resource-v1-capacity-guard.test.mjs",
