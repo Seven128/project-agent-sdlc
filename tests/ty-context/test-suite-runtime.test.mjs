@@ -156,6 +156,63 @@ test("workspace snapshots preserve clean tracked LF bytes with autocrlf enabled"
   }
 });
 
+test("workspace snapshots honor inherited autocrlf when preserving tracked LF bytes", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-snapshot-inherited-eol-"),
+  );
+  const workdir = path.join(root, ".work_products", "task");
+  const inheritedConfig = {
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "core.autocrlf",
+    GIT_CONFIG_VALUE_0: "true",
+  };
+  const previousConfig = Object.fromEntries(
+    Object.keys(inheritedConfig).map((key) => [key, process.env[key]]),
+  );
+  let snapshot = null;
+  try {
+    Object.assign(process.env, inheritedConfig);
+    await mkdir(path.join(root, "design"), { recursive: true });
+    await mkdir(workdir, { recursive: true });
+    const resource = path.join(root, "design", "handoff.md");
+    const expected = Buffer.from(
+      "# Frozen resource\n\nInherited config input.\n",
+      "utf8",
+    );
+    await writeFile(resource, expected);
+    await git(root, ["init"]);
+    await git(root, ["config", "user.email", "fixture@example.test"]);
+    await git(root, ["config", "user.name", "Fixture"]);
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "fixture"]);
+
+    assert.equal(await git(root, ["config", "--get", "core.autocrlf"]), "true");
+    assert.deepEqual(await readFile(resource), expected);
+    assert.match(
+      await git(root, ["ls-files", "--eol", "design/handoff.md"]),
+      /w\/lf/u,
+    );
+
+    snapshot = await createWorkspaceSnapshot(
+      root,
+      workdir,
+      "inherited-eol-fixture",
+    );
+
+    assert.deepEqual(
+      await readFile(path.join(snapshot.root, "design", "handoff.md")),
+      expected,
+    );
+  } finally {
+    if (snapshot) await snapshot.dispose();
+    for (const [key, value] of Object.entries(previousConfig)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test(
   "workspace manifest serializes index-writing Git before parallel reads",
   assertWorkspaceGitOrdering,
