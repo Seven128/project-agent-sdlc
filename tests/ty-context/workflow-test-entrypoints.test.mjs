@@ -23,8 +23,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(packageWorkflow, /package check-source/);
   assert.match(packageWorkflow, /make validate-harness/);
   assert.match(pullRequestJob, /PR_BASE_REF: \$\{\{ github\.base_ref \}\}/);
-  assert.match(pullRequestJob, /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/);
-  assert.match(pullRequestJob, /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/);
+  assert.match(
+    pullRequestJob,
+    /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/,
+  );
+  assert.match(
+    pullRequestJob,
+    /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/,
+  );
   assert.match(pullRequestJob, /git merge-base HEAD origin\/main/);
   assert.match(pullRequestJob, /--base "\$modularity_base"/);
   assert.match(pullRequestJob, /Trust boundary package tests/);
@@ -103,9 +109,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
     packageJson.scripts["test:long-task-performance"],
     "npm run build && node ../../tests/ty-context/long-task-performance.mjs",
   );
-  const performanceProbe = read(
-    "tests/ty-context/long-task-performance.mjs",
-  );
+  const performanceProbe = read("tests/ty-context/long-task-performance.mjs");
   assert.match(
     performanceProbe,
     /addGlobalClaim\(target, \{ counterfactual: true \}\)/u,
@@ -281,6 +285,7 @@ test("affected-test launcher stays portable and has a Windows gate", () => {
   assert.doesNotMatch(affectedRunner, /npm\.cmd/);
   assert.match(npmCommandSpec, /ComSpec/);
   assert.match(npmCommandSpec, /cmd\.exe/);
+  assert.match(npmCommandSpec, /"call", "npm"/);
 });
 
 function read(relativePath) {

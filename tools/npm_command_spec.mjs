@@ -5,7 +5,7 @@ export function npmCommandSpec(
   if (platform === "win32") {
     return {
       command: environment.ComSpec || environment.COMSPEC || "cmd.exe",
-      args: ["/d", "/s", "/c", "npm", ...args],
+      args: ["/d", "/s", "/c", "call", "npm", ...args],
     };
   }
   return { command: "npm", args: [...args] };
