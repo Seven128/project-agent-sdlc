@@ -149,6 +149,7 @@ outcomes:
       - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
       - packages/ty-context/src/lib/long-task-shape-primitives.ts
       - packages/ty-context/src/lib/long-task-source-item-parser.ts
+      - packages/ty-context/src/lib/long-task-workspace.ts
       - packages/ty-context/src/lib/compact-authoring-support.ts
       - packages/ty-context/src/lib/long-task-compact-*.ts
       - packages/ty-context/src/lib/semantic-fact-compact-*.ts
@@ -235,6 +236,7 @@ outcomes:
     - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
     - packages/ty-context/src/lib/long-task-shape-primitives.ts
     - packages/ty-context/src/lib/long-task-source-item-parser.ts
+    - packages/ty-context/src/lib/long-task-workspace.ts
     - packages/ty-context/src/lib/compact-authoring-support.ts
     - packages/ty-context/src/lib/long-task-compact-*.ts
     - packages/ty-context/src/lib/semantic-fact-compact-*.ts
@@ -1263,7 +1265,7 @@ compact_semantic_carrier:
       facts: 113
       obligations: 113
       assertions: 215
-      canonical_bytes: 317134
+      canonical_bytes: 317240
     maximum:
       claims: 128
       claim_projections: 128
