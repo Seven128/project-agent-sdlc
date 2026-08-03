@@ -12,9 +12,11 @@ import {
   applyCompactAuthoringSelectors,
   compactAuthoringTable,
   compactCapacityBudget,
-  compactCommonFields as commonFields,
+  compactDeterministicTemplates,
   compactWithoutFields as withoutFields,
 } from "./compact-authoring-support.js";
+import { applyCompactSharedStructures } from "./compact-shared-structure-authoring.js";
+import { semanticCompactSharedStructureTargets } from "./semantic-fact-compact-support.js";
 
 export function createSemanticFactCompactCarrier(
   manifestInput: SemanticFactManifestV1,
@@ -32,9 +34,17 @@ export function createSemanticFactCompactCarrier(
       ),
     ]),
   );
-  const proofDefaults = commonFields(
-    manifest.proof_obligations as unknown as Record<string, unknown>[],
-    ["key", "fact_ref"],
+  const proofRecords = manifest.proof_obligations as unknown as Record<
+    string,
+    unknown
+  >[];
+  const proofFamilies = compactDeterministicTemplates(
+    proofRecords,
+    ["key", "fact_ref", "comparison", "counterfactual"],
+    "proof-template",
+  );
+  const proofFamilyByKey = new Map(
+    proofFamilies.templates.map((template) => [template.key, template.value]),
   );
   const base: Record<string, unknown> = {
     schema_version: "semantic-fact-compact-carrier-v1",
@@ -51,6 +61,7 @@ export function createSemanticFactCompactCarrier(
       dynamic_discovery: manifest.inspector.dynamic_discovery,
     },
     selectors: [],
+    shared_structures: [],
     catalogs: {
       inputs: compactTable(manifest.inputs),
       family_dispositions: compactTable(manifest.family_dispositions),
@@ -82,25 +93,25 @@ export function createSemanticFactCompactCarrier(
         ),
       },
     ],
-    proof_templates: [
-      {
-        key: "proof-template.shared",
-        proof: proofDefaults,
-      },
-    ],
+    proof_templates: proofFamilies.templates.map((template) => ({
+      key: template.key,
+      proof: template.value,
+    })),
     obligations: compactTable(
-      manifest.proof_obligations.map((proof) => ({
+      manifest.proof_obligations.map((proof, index) => ({
         obligation_key: proof.key,
         obligation_revision_digest: semanticObligationRevisionDigest(
           proof as unknown as Record<string, unknown>,
           requiredFactRevision(factRevisionByKey, proof.fact_ref),
         ),
         fact_key: proof.fact_ref,
-        template_ref: "proof-template.shared",
+        template_ref: proofFamilies.template_refs[index],
         overrides: withoutFields(proof as unknown as Record<string, unknown>, [
           "key",
           "fact_ref",
-          ...Object.keys(proofDefaults),
+          ...Object.keys(
+            proofFamilyByKey.get(proofFamilies.template_refs[index])!,
+          ),
         ]),
       })),
     ),
@@ -108,6 +119,10 @@ export function createSemanticFactCompactCarrier(
   };
   const { value: compact, selectors } = applyCompactAuthoringSelectors(base);
   compact.selectors = selectors;
+  const structures = applyCompactSharedStructures(
+    semanticCompactSharedStructureTargets(compact),
+  );
+  compact.shared_structures = structures.catalog;
   const measured = {
     inputs: manifest.inputs.length,
     catalog_rows:
@@ -129,6 +144,9 @@ export function createSemanticFactCompactCarrier(
       (sum, selector) => sum + selector.members.length,
       0,
     ),
+    structure_families: structures.statistics.emitted_family_count,
+    structure_references: structures.statistics.reference_count,
+    structure_arguments: structures.statistics.argument_count,
     facts: manifest.facts.length,
     obligations: manifest.proof_obligations.length,
     census: manifest.inspector.census.length,

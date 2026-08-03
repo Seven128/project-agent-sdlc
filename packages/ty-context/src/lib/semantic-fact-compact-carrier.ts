@@ -9,6 +9,7 @@ import {
   semanticStableRef,
 } from "./semantic-fact-shape-primitives.js";
 import { canonicalValueJson } from "./strict-codec.js";
+import { materializeCanonicalCompactSharedStructures } from "./compact-shared-structure-validation.js";
 import {
   parseSemanticCompactCapacity,
   parseSemanticCompactCatalogs,
@@ -30,6 +31,7 @@ import {
   semanticObligationRevisionDigest,
   semanticCompactCollectionRows,
   semanticCompactGeneration,
+  semanticCompactSharedStructureTargets,
   resolveSemanticCompactSelectors,
   validateSemanticCompactCapacity,
   validateSemanticCompactDeclaredMaximum,
@@ -73,13 +75,24 @@ function parseSemanticFactCompactCarrier(
   allowLegacyRevisionIdentity: boolean,
 ): MaterializedSemanticFactCompactCarrierV1 {
   const label = "semantic_fact_compact_carrier";
-  const root = semanticObject(value, label, [
+  const working = structuredClone(value) as Record<string, unknown>;
+  const hadSharedStructures = Boolean(
+    working &&
+    typeof working === "object" &&
+    Object.hasOwn(working, "shared_structures"),
+  );
+  if (allowLegacyRevisionIdentity && !hadSharedStructures) {
+    working.shared_structures = [];
+    addLegacyStructureCapacityFields(working.capacity);
+  }
+  const root = semanticObject(working, label, [
     "schema_version",
     "key",
     "capacity",
     "scope",
     "inspector",
     "selectors",
+    "shared_structures",
     "catalogs",
     "fact_sets",
     "proof_templates",
@@ -97,6 +110,17 @@ function parseSemanticFactCompactCarrier(
     `${label}.capacity`,
   );
   validateSemanticCompactDeclaredMaximum(capacity.maximum, label);
+  const structureStatistics = hadSharedStructures
+    ? materializeCanonicalCompactSharedStructures(
+        semanticCompactSharedStructureTargets(root),
+        root.shared_structures,
+        label,
+      )
+    : {
+        emitted_family_count: 0,
+        reference_count: 0,
+        argument_count: 0,
+      };
   const selectors = parseSemanticCompactSelectors(
     root.selectors,
     `${label}.selectors`,
@@ -231,6 +255,9 @@ function parseSemanticFactCompactCarrier(
       (sum, members) => sum + members.length,
       0,
     ),
+    structure_families: structureStatistics.emitted_family_count,
+    structure_references: structureStatistics.reference_count,
+    structure_arguments: structureStatistics.argument_count,
     facts: manifest.facts.length,
     obligations: manifest.proof_obligations.length,
     census: manifest.inspector.census.length,
@@ -252,4 +279,18 @@ function parseSemanticFactCompactCarrier(
     })),
     measured,
   };
+}
+
+function addLegacyStructureCapacityFields(value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const capacity = value as Record<string, unknown>;
+  for (const field of ["measured", "maximum"]) {
+    const counts = capacity[field];
+    if (!counts || typeof counts !== "object" || Array.isArray(counts))
+      continue;
+    const row = counts as Record<string, unknown>;
+    row.structure_families = 0;
+    row.structure_references = 0;
+    row.structure_arguments = 0;
+  }
 }

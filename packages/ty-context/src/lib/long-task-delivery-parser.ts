@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { materializeLongTaskCompactCarrier } from "./long-task-compact-carrier.js";
+import {
+  materializeLongTaskCompactCarrier,
+  materializeLongTaskCompactCarrierForMigration,
+} from "./long-task-compact-carrier.js";
 import { parseStrictYaml, sha256Hex } from "./strict-codec.js";
 import { validateDeliveryContractStructure } from "./long-task-delivery-validation.js";
 import {
@@ -125,9 +128,26 @@ export async function parseDeliveryContractBundle(
 }
 
 export function parseDeliveryContractText(raw: string): DeliveryContractV2 {
+  return parseDeliveryContractTextInternal(raw, false);
+}
+
+export function parseDeliveryContractTextForMigration(
+  raw: string,
+): DeliveryContractV2 {
+  return parseDeliveryContractTextInternal(raw, true);
+}
+
+function parseDeliveryContractTextInternal(
+  raw: string,
+  allowLegacyCarrier: boolean,
+): DeliveryContractV2 {
   let root = parseRoot(raw, false);
   if (Object.hasOwn(root, "compact_semantic_carrier")) {
-    root = materializeLongTaskCompactCarrier(root).root;
+    root = (
+      allowLegacyCarrier
+        ? materializeLongTaskCompactCarrierForMigration(root)
+        : materializeLongTaskCompactCarrier(root)
+    ).root;
     assertNoSemanticDriftMigration(semanticDriftMigrationFields(root));
   }
   const contract = parseContractRoot(

@@ -3,10 +3,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { createLongTaskCompactContract } from "../packages/ty-context/dist/lib/long-task-compact-authoring.js";
+import { materializeCanonicalCompactSharedStructures } from "../packages/ty-context/dist/lib/compact-shared-structure-validation.js";
 import { materializeLongTaskCompactCarrier } from "../packages/ty-context/dist/lib/long-task-compact-carrier.js";
-import { parseDeliveryContractText } from "../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { longTaskCompactSharedStructureTargets } from "../packages/ty-context/dist/lib/long-task-compact-primitives.js";
+import {
+  parseDeliveryContractText,
+  parseDeliveryContractTextForMigration,
+} from "../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { createSemanticFactCompactCarrier } from "../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
 import { parseSemanticFactCompactCarrierShape } from "../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
+import { semanticCompactSharedStructureTargets } from "../packages/ty-context/dist/lib/semantic-fact-compact-support.js";
 import { validateSemanticFactManifestPolicy } from "../packages/ty-context/dist/lib/semantic-fact-policy.js";
 import {
   parseSemanticFactManifestBlocks,
@@ -34,7 +40,7 @@ if (sourceRows.length !== 1)
   );
 const sourceRow = sourceRows[0];
 const manifest = structuredClone(sourceRow.manifest);
-const contract = parseDeliveryContractText(contractBefore);
+const contract = parseDeliveryContractTextForMigration(contractBefore);
 const sourceForItemParsing = options.syncSourceAuthority
   ? replaceSemanticManifestBlock(
       sourceBefore,
@@ -57,6 +63,11 @@ const sourceAuthoritySync = options.syncSourceAuthority
       acceptance_assertions_updated: 0,
     };
 const compactSource = createSemanticFactCompactCarrier(manifest);
+const sourceDuplicateStatistics = compactStructureStatistics(
+  compactSource,
+  (root) => semanticCompactSharedStructureTargets(root),
+  "source",
+);
 const sourceBody = serializeCompactSource(compactSource);
 const sourceAfter = replaceSemanticManifestBlock(sourceBefore, sourceBody);
 const compactManifestSha256 = sha256Hex(canonicalValueJson(compactSource));
@@ -68,6 +79,15 @@ const compactContract = createLongTaskCompactContract(
   contract,
   currentSourceIdentity.fact_revisions,
   currentSourceIdentity.obligation_revisions,
+);
+const contractDuplicateStatistics = compactStructureStatistics(
+  compactContract,
+  (root) =>
+    longTaskCompactSharedStructureTargets(
+      root,
+      root.compact_semantic_carrier,
+    ),
+  "contract",
 );
 const contractAfter = preserveEol(
   YAML.stringify(JSON.parse(JSON.stringify(compactContract)), {
@@ -120,6 +140,10 @@ process.stdout.write(
       source_authority_sync: sourceAuthoritySync,
       source_capacity: compactSource.capacity,
       contract_capacity: compactContract.compact_semantic_carrier.capacity,
+      duplicate_blocks: {
+        source: sourceDuplicateStatistics,
+        contract: contractDuplicateStatistics,
+      },
     },
     null,
     2,
@@ -199,4 +223,17 @@ function measurement(before, after) {
     before_lines: before.split(/\r?\n/u).length,
     after_lines: after.split(/\r?\n/u).length,
   };
+}
+
+function compactStructureStatistics(value, targets, label) {
+  const clone = structuredClone(value);
+  const catalog =
+    label === "source"
+      ? clone.shared_structures
+      : clone.compact_semantic_carrier.shared_structures;
+  return materializeCanonicalCompactSharedStructures(
+    targets(clone),
+    catalog,
+    label,
+  );
 }

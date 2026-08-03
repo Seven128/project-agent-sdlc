@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { createLongTaskCompactContract } from "../../packages/ty-context/dist/lib/long-task-compact-authoring.js";
+import { materializeCanonicalCompactSharedStructures } from "../../packages/ty-context/dist/lib/compact-shared-structure-validation.js";
 import {
   applyCompactAuthoringSelectors,
   compactAuthoringTable,
@@ -11,6 +12,7 @@ import {
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { createSemanticFactCompactCarrier } from "../../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
 import { parseSemanticFactCompactCarrierShape } from "../../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
+import { semanticCompactSharedStructureTargets } from "../../packages/ty-context/dist/lib/semantic-fact-compact-support.js";
 import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
 import { parseSemanticFactManifestBlocks } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import {
@@ -44,8 +46,8 @@ test("[critical:compact-carrier-exact-closure] current compact Source and packag
   assert.equal(parsedSource.manifest.proof_obligations.length, 113);
   assert.equal(parsedSource.manifest.inputs.length, 132);
   assert.equal(source.includes("```yaml semantic-fact-manifest-v1"), false);
-  assert.ok(Buffer.byteLength(source) < 600_000);
-  assert.ok(source.split(/\r?\n/u).length < 15_000);
+  assert.ok(Buffer.byteLength(source) < 500_000);
+  assert.ok(source.split(/\r?\n/u).length < 12_000);
   validateSemanticFactManifestPolicy(parsedSource.manifest);
   for (const input of parsedSource.manifest.inputs)
     if (
@@ -113,7 +115,7 @@ test("[critical:compact-carrier-exact-closure] current compact Source and packag
       parsedSource.obligation_revisions,
     );
     assert.equal(Object.hasOwn(compactContract, "source_claims"), false);
-    assert.ok(Buffer.byteLength(JSON.stringify(compactContract)) < 230_000);
+    assert.ok(Buffer.byteLength(JSON.stringify(compactContract)) < 210_000);
     const parsedContract = parseDeliveryContractText(
       JSON.stringify(compactContract),
     );
@@ -237,6 +239,40 @@ test("compact Source fails closed on revision and capacity drift", async () => {
   assert.throws(
     () => parseSemanticFactCompactCarrierShape(exceeded),
     /capacity exceeded/u,
+  );
+  const noncanonical = structuredClone(compact);
+  const statistics = materializeCanonicalCompactSharedStructures(
+    semanticCompactSharedStructureTargets(noncanonical),
+    noncanonical.shared_structures,
+    "test-source",
+  );
+  assert.equal(statistics.remaining_beneficial_candidates, 0);
+  assert.ok(statistics.parameterized_family_count > 0);
+  assert.ok(
+    statistics.families.some(
+      (item) => item.boundary === "source.obligation.overrides",
+    ),
+  );
+  assert.ok(
+    statistics.families.some(
+      (item) => item.boundary === "source.fact.expected",
+    ),
+  );
+  assert.throws(
+    () => parseSemanticFactCompactCarrierShape(noncanonical),
+    /shared structure catalog is not canonical/u,
+  );
+  const invalidCatalogDigest = structuredClone(compact);
+  invalidCatalogDigest.shared_structures[0].digest = "0".repeat(64);
+  assert.throws(
+    () => parseSemanticFactCompactCarrierShape(invalidCatalogDigest),
+    /digest mismatch/u,
+  );
+  const unsortedCatalog = structuredClone(compact);
+  unsortedCatalog.shared_structures.reverse();
+  assert.throws(
+    () => parseSemanticFactCompactCarrierShape(unsortedCatalog),
+    /shared structure catalog is not canonical/u,
   );
 });
 

@@ -463,6 +463,9 @@ capacity:
     inputs: 132
     catalog_rows: 789
     selector_members: 263
+    structure_families: 11
+    structure_references: 335
+    structure_arguments: 557
     facts: 113
     obligations: 113
     census: 1015
@@ -471,6 +474,9 @@ capacity:
     inputs: 256
     catalog_rows: 1024
     selector_members: 512
+    structure_families: 16
+    structure_references: 512
+    structure_arguments: 1024
     facts: 128
     obligations: 128
     census: 1024
@@ -948,6 +954,200 @@ selectors:
   members:
   - typed-v2-rule-results
   - typed-certificate-results
+shared_structures:
+- key: structure.0ba9d15149695943696e7c6b
+  digest: 0ba9d15149695943696e7c6bbe7ad4a320595040622b9e0bb002539d1628d4be
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-design-fact-completeness-md
+    - input.repository.docs-non-ui-semantic-fact-completeness-md
+    - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
+    derivation: null
+    kind: direct
+- key: structure.2eb8e4e86ba7b61a8dbb6c28
+  digest: 2eb8e4e86ba7b61a8dbb6c289e9e51f0b41198a0e2492a47c8c1c4c82771151c
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-design-fact-completeness-md
+    - input.repository.docs-non-ui-semantic-fact-completeness-md
+    derivation: null
+    kind: direct
+- key: structure.3ba54c8a9b74c97b988304f2
+  digest: 3ba54c8a9b74c97b988304f27a32f2bb277676313ab9d607263222efb6510637
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-non-ui-semantic-fact-completeness-md
+    - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
+    derivation: null
+    kind: direct
+- key: structure.8ddce2ec3bc4f5e2aeed8b9c
+  digest: 8ddce2ec3bc4f5e2aeed8b9cb77aef0da285f359d3b68ad451e812a821647d5a
+  boundary: source.obligation.overrides
+  parameter_count: 2
+  template:
+    comparison:
+      comparator: exact_value
+      mask: null
+      mode: exact
+      parameters:
+        locator:
+          kind: manifest_pointer
+          material_ref: symbolic-denotation-efficiency-manifest
+          value:
+            parameter_index: 0
+        representation: inline
+        sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
+        value:
+          comparator: exact_value
+      tolerance: null
+    counterfactual:
+      basis_refs:
+      - parameter_index: 1
+      - architecture-deliberation
+      disposition: required
+      rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+      refs:
+      - symbolic-policy-sensitivity
+- key: structure.aedb2097aae634f7e7a64f98
+  digest: aedb2097aae634f7e7a64f98f55a6dc3c4654a70b08275c55829e0a4ca3328dc
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-design-fact-completeness-md
+    derivation: null
+    kind: direct
+- key: structure.be0a7d2e71933ec3573fe306
+  digest: be0a7d2e71933ec3573fe30660268766501f11fcfffadbf3696913c784e9bcba
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-design-fact-completeness-md
+    - input.repository.docs-long-task-workflow-efficiency-md
+    derivation: null
+    kind: direct
+- key: structure.c5c65b3c760a2d6dc8aa99f2
+  digest: c5c65b3c760a2d6dc8aa99f293c7f8c003844db05096f24b73e29cf934f198f2
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.context.project-context-architecture-md
+    - input.context.project-context-areas-delivery-benchmark-md
+    - input.context.project-context-areas-harness-package-md
+    - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
+    - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
+    - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
+    - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
+    - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
+    - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
+    - input.context.project-context-areas-harness-package-foundation-context-model-md
+    - input.context.project-context-areas-harness-package-implementation-index-md
+    - input.context.project-context-areas-harness-package-verification-md
+    - input.context.project-context-context-toml
+    - input.context.project-context-global-md
+    - input.repository.project-spec-md
+    - input.repository.docs-long-task-workflow-efficiency-md
+    derivation: null
+    kind: direct
+- key: structure.cd52ad34ba67678e97199335
+  digest: cd52ad34ba67678e971993355a44d3d8c63384bd1e94708e1197d9d1a17eda5e
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.context.project-context-architecture-md
+    - input.context.project-context-areas-delivery-benchmark-md
+    - input.context.project-context-areas-harness-package-md
+    - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
+    - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
+    - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
+    - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
+    - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
+    - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
+    - input.context.project-context-areas-harness-package-foundation-context-model-md
+    - input.context.project-context-areas-harness-package-implementation-index-md
+    - input.context.project-context-areas-harness-package-verification-md
+    - input.context.project-context-context-toml
+    - input.context.project-context-global-md
+    - input.repository.project-spec-md
+    - input.repository.docs-long-task-workflow-efficiency-md
+    - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
+    derivation: null
+    kind: direct
+- key: structure.cee6519934b6a9f6b29becdb
+  digest: cee6519934b6a9f6b29becdb6753aca6faba68fb55137bf3a3c94c96956a07d7
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-design-fact-completeness-md
+    - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
+    derivation: null
+    kind: direct
+- key: structure.d70dedc6f6b7d4fc6c2fb5ed
+  digest: d70dedc6f6b7d4fc6c2fb5ed1fc8282bfa4908ebba4363e238121c6722db948e
+  boundary: source.fact.expected
+  parameter_count: 1
+  template:
+    locator:
+      kind: manifest_pointer
+      material_ref: symbolic-denotation-efficiency-manifest
+      value:
+        parameter_index: 0
+    representation: inline
+    sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
+    value: true
+- key: structure.efe892596b6a123fda2c02fb
+  digest: efe892596b6a123fda2c02fb8c71a07529f81227890bd2559449fb3d5663eae7
+  boundary: source.fact.provenance
+  parameter_count: 2
+  template:
+    authority_ref:
+      parameter_index: 0
+    basis_refs:
+    - parameter_index: 1
+    - input.repository.project-spec-md
+    - input.repository.docs-long-task-workflow-efficiency-md
+    derivation: null
+    kind: direct
 catalogs:
   inputs:
     defaults:
@@ -1776,7 +1976,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
       - context
       - project_context/areas/harness-package/contracts/design-resource-handoff.md
-      - 15667eb7bafbfbc7a00e7e6b746d34d0c855c46da84d552edd2c4adfe4f7b48d
+      - c5e5a65c855d15729146b854a6b65ac482b8f91582abbe814d3a0ebdafe484fb
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -1804,7 +2004,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
       - context
       - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
-      - ca019047618d01d806b3a0eb576d642dabc6125a465a828de77354e494ad1ffd
+      - df1f01b7c162a2a9e2590d6f6acc26192d50a9171377a9cfea7f8466636771ad
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -1825,14 +2025,14 @@ catalogs:
     - - input.context.project-context-areas-harness-package-implementation-index-md
       - context
       - project_context/areas/harness-package/implementation-index.md
-      - 5ecc8bc66bfae0b7e46e1074971efc095ddfa726da6a4d4c39d87fcf829f1557
+      - d676ecdaf204f8b7d6a9fc3cccec036944be094842b7481e456699318cf6ff66
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-verification-md
       - context
       - project_context/areas/harness-package/verification.md
-      - be1c27666aaa1d79559459f2445f6c10bd32bc4b85d290b71ee8de16988fd51f
+      - 24c1ad3312b0775422560f498f0b25b121d2cf5a2fa3c7cb607c9e3df62735e1
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -8493,152 +8693,65 @@ fact_sets:
   - provenance
   - source_item_refs
   rows:
-  - - ad14d16b458fd3dd545964a1d72fe129780e5cd33f60ec5b92932c8f2172a2a5
+  - - a52898c8db2feb50b50fca6b55e901e087ca526d4308f67e17c529d957e09adb
     - fact.symbolic-denotation-efficiency-result
     - cell.symbolic-denotation-efficiency-result
     - subject.symbolic-denotation-efficiency-result
     - family.goal-scope-glossary
     - property.goal-scope-glossary.observable-outcome
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/0/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: symbolic-denotation-efficiency-result
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/0/expected/value
+    - structure_ref: structure.c5c65b3c760a2d6dc8aa99f2
+      arguments:
       - symbolic-denotation-efficiency-result
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - symbolic-denotation-efficiency-result
     - - symbolic-denotation-efficiency-result
-  - - d336c4b4c796b000f7afdc2460ace60dfc2ef09a33b6ca5a127b57fbf5a88d3d
+  - - 970656157caa01b86ca06c85029ae74c6cd41c59e97c57b6a96994981b905e50
     - fact.original-attachment-provenance
     - cell.original-attachment-provenance
     - subject.original-attachment-provenance
     - family.goal-scope-glossary
     - property.goal-scope-glossary.scope
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/1/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: original-attachment-provenance
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/1/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - original-attachment-provenance
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - original-attachment-provenance
     - - original-attachment-provenance
-  - - e8165788dbae123eacfea79f5f2d3193a6640e470bcbb32ad23c76d4aa458cea
+  - - d2df478c98d691bc3e04ac3e2e4566745529b2764f7f3534213bac01efa7548f
     - fact.audited-source-supersession
     - cell.audited-source-supersession
     - subject.audited-source-supersession
     - family.goal-scope-glossary
     - property.goal-scope-glossary.normative-status
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/2/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: audited-source-supersession
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/2/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - audited-source-supersession
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - audited-source-supersession
     - - audited-source-supersession
-  - - c9129ef7a74ea611bbe04639a78b9cb460a468407aced3f8ddd5817835187f99
+  - - 2e1130eb82296f197baea203ef0a302f5a46b1734f5bd49f970834814b4756b1
     - fact.complete-material-input-index
     - cell.complete-material-input-index
     - subject.complete-material-input-index
     - family.architecture-ownership
     - property.architecture-ownership.source-of-truth
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/3/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: complete-material-input-index
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/3/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - complete-material-input-index
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - complete-material-input-index
     - - complete-material-input-index
   - - 78585a26c8217f8dc266065c864da4ff594fdf78768cfa58742b6339fe7b5b00
     - fact.complete-extensional-universe
@@ -8647,22 +8760,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.invariant
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/4/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: complete-extensional-universe
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/4/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - complete-extensional-universe
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - complete-extensional-universe
     - - complete-extensional-universe
   - - d10c99200a344f63933a925ecd476d49995cd79bce878d1b7b64335b8283338c
     - fact.subject-relation-universe-axis
@@ -8671,22 +8775,13 @@ fact_sets:
     - family.data-model
     - property.data-model.identity
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/5/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: subject-relation-universe-axis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/5/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - subject-relation-universe-axis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - subject-relation-universe-axis
     - - subject-relation-universe-axis
   - - 92b43073e1cc1e8d768df5fe44e041f513b0e1c5f1a99a3336d076651e17f267
     - fact.target-universe-axis
@@ -8695,22 +8790,13 @@ fact_sets:
     - family.deployment-topology
     - property.deployment-topology.environment
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/6/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: target-universe-axis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/6/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - target-universe-axis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - target-universe-axis
     - - target-universe-axis
   - - 451717790fba2f33b0de8621a5d4996c0f14219b24d0418196bc587304748230
     - fact.reachable-condition-variation-universe-axis
@@ -8719,22 +8805,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.predicate
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/7/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: reachable-condition-variation-universe-axis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/7/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - reachable-condition-variation-universe-axis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - reachable-condition-variation-universe-axis
     - - reachable-condition-variation-universe-axis
   - - 8dbca32d62fe63ac8f2ad1c826965066638ccafd8e5c17c51161ade8d967d2c7
     - fact.applicable-atomic-property-universe-axis
@@ -8743,22 +8820,13 @@ fact_sets:
     - family.data-model
     - property.data-model.schema
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/8/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: applicable-atomic-property-universe-axis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/8/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - applicable-atomic-property-universe-axis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - applicable-atomic-property-universe-axis
     - - applicable-atomic-property-universe-axis
   - - 4a7a3447b5815a2181181312e4210cc4e7f158a16cc2fef6439a7210cd1b3ea4
     - fact.population-quantifier-universe-axis
@@ -8767,22 +8835,13 @@ fact_sets:
     - family.data-model
     - property.data-model.cardinality
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/9/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: population-quantifier-universe-axis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/9/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - population-quantifier-universe-axis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - population-quantifier-universe-axis
     - - population-quantifier-universe-axis
   - - 166442be48f17c8cb09786f6eb49ae9b9d58131f4e76a3c8c61159a2d0324dfb
     - fact.pointwise-disposition-equivalence
@@ -8791,22 +8850,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.output
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/10/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: pointwise-disposition-equivalence
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/10/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - pointwise-disposition-equivalence
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - pointwise-disposition-equivalence
     - - pointwise-disposition-equivalence
   - - 414fefa88588e30a997c957188db5ec85f893dd851253b95fda63a90f5b85dbd
     - fact.pointwise-expected-semantics-equivalence
@@ -8815,22 +8865,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.output
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/11/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: pointwise-expected-semantics-equivalence
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/11/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - pointwise-expected-semantics-equivalence
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - pointwise-expected-semantics-equivalence
     - - pointwise-expected-semantics-equivalence
   - - 8c0cd0f66e17f199ca52b55ab51dd423b2908b4d15fd3750f4d9305a6228fb98
     - fact.pointwise-proof-denotation-equivalence
@@ -8839,22 +8880,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.output-boundary
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/12/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: pointwise-proof-denotation-equivalence
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/12/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - pointwise-proof-denotation-equivalence
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - pointwise-proof-denotation-equivalence
     - - pointwise-proof-denotation-equivalence
   - - 9f0bb5776ca75054e18bfb8a7a5f52cfff60767f4eee3591f6dca8efe5572ea7
     - fact.v1-ground-row-identity-not-required
@@ -8863,22 +8895,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.backward-compatibility
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/13/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-ground-row-identity-not-required
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/13/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - v1-ground-row-identity-not-required
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - v1-ground-row-identity-not-required
     - - v1-ground-row-identity-not-required
   - - 325288be65290cc8d7c6428120880116276cbd8e08cb88d3f6968f17207cca4a
     - fact.fact-identity-proof-obligation-separation
@@ -8887,22 +8910,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.interface
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/14/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: fact-identity-proof-obligation-separation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/14/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - fact-identity-proof-obligation-separation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - fact-identity-proof-obligation-separation
     - - fact-identity-proof-obligation-separation
   - - 994c532d027b7427b3d6ad6f66c35d7315beb700091afa59b94c4f25bbf9e3ef
     - fact.required-method-denotation-preservation
@@ -8911,22 +8925,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.interface
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/15/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: required-method-denotation-preservation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/15/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - required-method-denotation-preservation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - required-method-denotation-preservation
     - - required-method-denotation-preservation
   - - f1f4bd93345456465c57db2bff4f17a485fbd4f006bd8706eae92a148d85b790
     - fact.comparison-oracle-environment-preservation
@@ -8935,22 +8940,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.input-boundary
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/16/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: comparison-oracle-environment-preservation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/16/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - comparison-oracle-environment-preservation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - comparison-oracle-environment-preservation
     - - comparison-oracle-environment-preservation
   - - 540b2a31f9b7e8aae14bbf1094bb7cfe56f9388b4a550b91fac6adc8565b674e
     - fact.protected-observation-preservation
@@ -8959,22 +8955,13 @@ fact_sets:
     - family.privacy
     - property.privacy.redaction
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/17/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: protected-observation-preservation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/17/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - protected-observation-preservation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - protected-observation-preservation
     - - protected-observation-preservation
   - - 7bf175e5d2ac8435223e9e85d8a6e723876a518b51bc491d3220a336a7e3b45f
     - fact.exact-target-layout-pixel-preservation
@@ -8983,59 +8970,28 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.invariant
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/18/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: exact-target-layout-pixel-preservation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/18/expected/value
+    - structure_ref: structure.0ba9d15149695943696e7c6b
+      arguments:
       - exact-target-layout-pixel-preservation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - exact-target-layout-pixel-preservation
     - - exact-target-layout-pixel-preservation
-  - - 40113a796e47a805e58e7a375390c500fd9ec26fb3ff984af469e9a279b3aa81
+  - - 39cec446981e861a513eb2c0f919ca4d9145d1beb739f6e31c58bd1c61df4c21
     - fact.canonical-resource-value-authority
     - cell.canonical-resource-value-authority
     - subject.canonical-resource-value-authority
     - family.architecture-ownership
     - property.architecture-ownership.source-of-truth
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/19/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: canonical-resource-value-authority
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/19/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - canonical-resource-value-authority
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - canonical-resource-value-authority
     - - canonical-resource-value-authority
   - - 898e403c451284331f2bfebafcf1ff24c358d363451be070278f6c181aba654b
     - fact.versioned-ui-symbolic-v2
@@ -9044,20 +9000,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.supported-version
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/20/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: versioned-ui-symbolic-v2
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/20/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - versioned-ui-symbolic-v2
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - versioned-ui-symbolic-v2
     - - versioned-ui-symbolic-v2
   - - ce3b68cfdd78ac5c4b8612ad914194388c1e7ec80ca4e52d0825ec5947685f51
     - fact.ui-v2-explicit-opt-in
@@ -9066,20 +9015,13 @@ fact_sets:
     - family.configuration-feature-flag-secret
     - property.configuration-feature-flag-secret.rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/21/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: ui-v2-explicit-opt-in
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/21/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - ui-v2-explicit-opt-in
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - ui-v2-explicit-opt-in
     - - ui-v2-explicit-opt-in
   - - a365552ca36bf113013d7277b9250aaec95c05381d6d80b5661ce01a4fb02353
     - fact.mixed-v1-v2-targets-one-contract
@@ -9088,21 +9030,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.mixed-version
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/22/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: mixed-v1-v2-targets-one-contract
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/22/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - mixed-v1-v2-targets-one-contract
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - mixed-v1-v2-targets-one-contract
     - - mixed-v1-v2-targets-one-contract
   - - 45f73e9c3c7424bce38b761145b0bde4859757e61b394e3456c067433aee3869
     - fact.restricted-symbolic-predicate-dsl
@@ -9111,20 +9045,13 @@ fact_sets:
     - family.input-validation
     - property.input-validation.grammar
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/23/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: restricted-symbolic-predicate-dsl
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/23/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - restricted-symbolic-predicate-dsl
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - restricted-symbolic-predicate-dsl
     - - restricted-symbolic-predicate-dsl
   - - 3f312acb88ffafa47a694772f9289570fe87bbbd465ba97510f87c40611f21d2
     - fact.finite-enum-and-bounded-numeric-domains
@@ -9133,20 +9060,13 @@ fact_sets:
     - family.data-model
     - property.data-model.enum-domain
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/24/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: finite-enum-and-bounded-numeric-domains
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/24/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - finite-enum-and-bounded-numeric-domains
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - finite-enum-and-bounded-numeric-domains
     - - finite-enum-and-bounded-numeric-domains
   - - cfd93c8d320ce9cbc7b05ffe28c789b1da9f24d63244b4874f591370e4c96ec2
     - fact.canonical-shared-decision-dag
@@ -9155,20 +9075,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.selected-design
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/25/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: canonical-shared-decision-dag
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/25/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - canonical-shared-decision-dag
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - canonical-shared-decision-dag
     - - canonical-shared-decision-dag
   - - a9a33c0968073e0b839e561386a82036826c8e0f07271b9ce53688676baf3c6e
     - fact.unreachable-branch-elimination
@@ -9177,20 +9090,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.decision-branch
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/26/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: unreachable-branch-elimination
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/26/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - unreachable-branch-elimination
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - unreachable-branch-elimination
     - - unreachable-branch-elimination
   - - bdf2299604d217215d3b76b8998bda978d57c607818342f20831f51feff49f6f
     - fact.no-production-ground-materialization
@@ -9199,20 +9105,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.scaling
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/27/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-production-ground-materialization
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/27/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - no-production-ground-materialization
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - no-production-ground-materialization
     - - no-production-ground-materialization
   - - 722743f987af4a852a2f26bd3c9bb2f4d87683b55d4af2fabbd1edb5490c3b80
     - fact.mutually-exclusive-effective-regions
@@ -9221,20 +9120,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.overlap-handling
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/28/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: mutually-exclusive-effective-regions
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/28/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - mutually-exclusive-effective-regions
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - mutually-exclusive-effective-regions
     - - mutually-exclusive-effective-regions
   - - 05adce0ef558a8f8007b5aac358c9e9ffbe4d9e1ebe03421def61a65511a4d6e
     - fact.exact-region-coverage-no-gaps
@@ -9243,20 +9135,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.gap-handling
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/29/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: exact-region-coverage-no-gaps
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/29/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - exact-region-coverage-no-gaps
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - exact-region-coverage-no-gaps
     - - exact-region-coverage-no-gaps
   - - 8f018d2118bf66ba1f22ba9efa289f411f5b3e31dc45f8631530b41321075712
     - fact.constant-located-expected-rule-values
@@ -9265,20 +9150,13 @@ fact_sets:
     - family.data-model
     - property.data-model.provenance
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/30/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: constant-located-expected-rule-values
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/30/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - constant-located-expected-rule-values
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - constant-located-expected-rule-values
     - - constant-located-expected-rule-values
   - - 38a1f54637e0e225d17b4a81f1a6ee2fbe8e0692c2e51fa59ad54a77618a357e
     - fact.no-rule-precedence-or-value-function
@@ -9287,20 +9165,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.rejected-alternative
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/31/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-rule-precedence-or-value-function
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/31/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - no-rule-precedence-or-value-function
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - no-rule-precedence-or-value-function
     - - no-rule-precedence-or-value-function
   - - 2d6c565dde0fc075ad21f0924c3ab07f8867775a7834047028f33412bd823d8a
     - fact.deterministic-canonical-identity
@@ -9309,20 +9180,13 @@ fact_sets:
     - family.data-model
     - property.data-model.identity
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/32/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: deterministic-canonical-identity
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/32/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - deterministic-canonical-identity
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - deterministic-canonical-identity
     - - deterministic-canonical-identity
   - - 8fb5b52fce2f64ca67b3d73073bb3cbc1ef12c34222c8c6573859f096beeca93
     - fact.symbolic-complexity-fuse
@@ -9331,20 +9195,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.resource-budget
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/33/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: symbolic-complexity-fuse
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/33/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - symbolic-complexity-fuse
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - symbolic-complexity-fuse
     - - symbolic-complexity-fuse
   - - 96dc0bb3ef2f6e5b606ecdddd799f5dec7022b95f93bc32f6be32c14e3b7bbee
     - fact.ground-cardinality-diagnostic-only
@@ -9353,20 +9210,13 @@ fact_sets:
     - family.observability
     - property.observability.metric
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/34/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: ground-cardinality-diagnostic-only
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/34/expected/value
+    - structure_ref: structure.aedb2097aae634f7e7a64f98
+      arguments:
       - ground-cardinality-diagnostic-only
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      derivation: null
+      - ground-cardinality-diagnostic-only
     - - ground-cardinality-diagnostic-only
   - - f8faa23c2b22250baf18f37706b18926ee651dc1629a479c85d2fc53cb922fa7
     - fact.package-policy-property-catalog
@@ -9375,21 +9225,13 @@ fact_sets:
     - family.data-model
     - property.data-model.schema
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/35/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: package-policy-property-catalog
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/35/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - package-policy-property-catalog
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - package-policy-property-catalog
     - - package-policy-property-catalog
   - - 2e3d2bb9ee4e9839ca2c4af61a0b27fdfaf3f8791082b8952a2c8cdcd4f57ae4
     - fact.inspector-census-applicability
@@ -9398,21 +9240,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.input-boundary
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/36/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: inspector-census-applicability
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/36/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - inspector-census-applicability
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - inspector-census-applicability
     - - inspector-census-applicability
   - - 0a1ae56401c600309cc3205f0bcc1a768920302bc775b392abe8a08dc2a7d920
     - fact.basis-backed-property-remainder
@@ -9421,21 +9255,13 @@ fact_sets:
     - family.business-rule-calculation
     - property.business-rule-calculation.exception
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/37/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: basis-backed-property-remainder
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/37/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - basis-backed-property-remainder
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - basis-backed-property-remainder
     - - basis-backed-property-remainder
   - - 36d35c9dc4219d78ddb7169963afe9ccee5a15f80b3f71f99fadb3f739bac6d5
     - fact.unknown-applicability-blocks
@@ -9444,21 +9270,13 @@ fact_sets:
     - family.fault-degradation-recovery
     - property.fault-degradation-recovery.detection
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/38/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: unknown-applicability-blocks
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/38/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - unknown-applicability-blocks
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - unknown-applicability-blocks
     - - unknown-applicability-blocks
   - - 2bc7a0c924bc0f090cccbbc36b4c9bf121d9fb317bb1018ba83105748da3dc9c
     - fact.relation-population-first-class-model
@@ -9467,21 +9285,13 @@ fact_sets:
     - family.data-model
     - property.data-model.cardinality
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/39/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: relation-population-first-class-model
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/39/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - relation-population-first-class-model
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - relation-population-first-class-model
     - - relation-population-first-class-model
   - - b7be6bc2c648e74bdc597f900f47db5d6597233fb5576e8e3361a2a8e1e8c5e0
     - fact.population-quantifier-denotation
@@ -9490,21 +9300,13 @@ fact_sets:
     - family.data-model
     - property.data-model.absence-semantics
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/40/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: population-quantifier-denotation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/40/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - population-quantifier-denotation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - population-quantifier-denotation
     - - population-quantifier-denotation
   - - a06094f3dc0368d9f24185aef2635ab45b6c639cae86821f64ef1912aeac28a4
     - fact.v2-rule-method-region-projection
@@ -9513,21 +9315,13 @@ fact_sets:
     - family.operation-workflow
     - property.operation-workflow.output
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/41/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v2-rule-method-region-projection
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/41/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - v2-rule-method-region-projection
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - v2-rule-method-region-projection
     - - v2-rule-method-region-projection
   - - 21d16e4d0edbb66ccd3f16d468224ec13f55071e369644319735bafb40b8f454
     - fact.stable-symbolic-fact-rule-identity
@@ -9536,21 +9330,13 @@ fact_sets:
     - family.data-model
     - property.data-model.identity
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/42/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: stable-symbolic-fact-rule-identity
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/42/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - stable-symbolic-fact-rule-identity
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - stable-symbolic-fact-rule-identity
     - - stable-symbolic-fact-rule-identity
   - - d123ff21402e96efcf9b688fadefa727fe9764430191544576b4e4a876657b0f
     - fact.per-method-region-obligations
@@ -9559,21 +9345,13 @@ fact_sets:
     - family.operation-workflow
     - property.operation-workflow.postcondition
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/43/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: per-method-region-obligations
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/43/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - per-method-region-obligations
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - per-method-region-obligations
     - - per-method-region-obligations
   - - 9b954a10bdb8c8e42c0eb0f59ea1398914480af743ac62b6e3c2e660198261c0
     - fact.typed-v2-rule-results
@@ -9582,21 +9360,13 @@ fact_sets:
     - family.output-error
     - property.output-error.schema
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/44/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: typed-v2-rule-results
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/44/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - typed-v2-rule-results
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - typed-v2-rule-results
     - - typed-v2-rule-results
   - - 3666d8e89a562d90642131d51ad923f2a9bff4b178041b993e60da85be3d7a69
     - fact.typed-certificate-results
@@ -9605,21 +9375,13 @@ fact_sets:
     - family.output-error
     - property.output-error.schema
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/45/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: typed-certificate-results
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/45/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - typed-certificate-results
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - typed-certificate-results
     - - typed-certificate-results
   - - 6a06f1f83dc5bd268f7a0e3fdad06e5023021b651932d8e6a4a3f6feab0124e6
     - fact.current-snapshot-evidence-only
@@ -9628,21 +9390,13 @@ fact_sets:
     - family.reliability-slo
     - property.reliability-slo.freshness
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/46/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: current-snapshot-evidence-only
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/46/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - current-snapshot-evidence-only
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - current-snapshot-evidence-only
     - - current-snapshot-evidence-only
   - - 0bbcf0f3781fdbcebcbee2a7e6cccdc82816c20d48416062888acea48855ecbb
     - fact.mixed-target-one-final-gate
@@ -9651,21 +9405,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.mixed-version
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/47/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: mixed-target-one-final-gate
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/47/expected/value
+    - structure_ref: structure.cee6519934b6a9f6b29becdb
+      arguments:
       - mixed-target-one-final-gate
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - mixed-target-one-final-gate
     - - mixed-target-one-final-gate
   - - 3cce4fc6f8aafd65ef18184747d7b778e5daaa0b2cbae85566ac80776f399147
     - fact.set-valued-noninterference-certificates
@@ -9674,21 +9420,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.interface
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/48/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: set-valued-noninterference-certificates
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/48/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - set-valued-noninterference-certificates
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - set-valued-noninterference-certificates
     - - set-valued-noninterference-certificates
   - - 4bfc5646b69e87c3360a5c528b27942b288d7a10828adc7abd648a3e036bead1
     - fact.certificate-omitted-axis-coverage
@@ -9697,21 +9435,13 @@ fact_sets:
     - family.observability
     - property.observability.dimension
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/49/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: certificate-omitted-axis-coverage
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/49/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - certificate-omitted-axis-coverage
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - certificate-omitted-axis-coverage
     - - certificate-omitted-axis-coverage
   - - 33011aa285a180ae1db7d9a20dbf7441437e61441cd5c56d26b8c42f2460fc1f
     - fact.certificate-dependency-edge-coverage
@@ -9720,21 +9450,13 @@ fact_sets:
     - family.observability
     - property.observability.causation
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/50/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: certificate-dependency-edge-coverage
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/50/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - certificate-dependency-edge-coverage
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - certificate-dependency-edge-coverage
     - - certificate-dependency-edge-coverage
   - - 1a5643573387970bb3d9c397fd5c162a63000c7ddbbb50ba5177e72e5c27f28d
     - fact.noninterference-obligation-count-metric
@@ -9743,21 +9465,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.workload-model
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/51/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: noninterference-obligation-count-metric
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/51/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - noninterference-obligation-count-metric
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - noninterference-obligation-count-metric
     - - noninterference-obligation-count-metric
   - - 06fb1ef5996c97ca43cdc4beaf9b877a1b0cec08eecc0f7fe67c029bc5cab05f
     - fact.noninterference-dag-node-count-metric
@@ -9766,21 +9480,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.dataset-cardinality
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/52/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: noninterference-dag-node-count-metric
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/52/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - noninterference-dag-node-count-metric
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - noninterference-dag-node-count-metric
     - - noninterference-dag-node-count-metric
   - - d78f6c821791078c897a8bc9dfc02c90ddd94e257a94e91d217913d181af7b8f
     - fact.noninterference-byte-count-metric
@@ -9789,21 +9495,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.payload
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/53/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: noninterference-byte-count-metric
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/53/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - noninterference-byte-count-metric
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - noninterference-byte-count-metric
     - - noninterference-byte-count-metric
   - - 2ae890bd724e444e6d1a50d8440acdd601f633d663f8724705ee24be20ec5c33
     - fact.complexity-independent-of-ground-cardinality
@@ -9812,21 +9510,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.scaling
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/54/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: complexity-independent-of-ground-cardinality
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/54/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - complexity-independent-of-ground-cardinality
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - complexity-independent-of-ground-cardinality
     - - complexity-independent-of-ground-cardinality
   - - 0bc24887aa90e84fa76addcbdd4dc88d1f3462a9b15ada1ce30aa886d6ac2e65
     - fact.certificate-package-recomputation
@@ -9835,21 +9525,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.validation
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/55/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: certificate-package-recomputation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/55/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - certificate-package-recomputation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - certificate-package-recomputation
     - - certificate-package-recomputation
   - - e2e6395bfb2b68cf7ba735697a47f7bcd47e3d3fc1e3626c3d6a1db5eb9ddef2
     - fact.certificate-not-semantic-proof-substitute
@@ -9858,21 +9540,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/56/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: certificate-not-semantic-proof-substitute
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/56/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - certificate-not-semantic-proof-substitute
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - certificate-not-semantic-proof-substitute
     - - certificate-not-semantic-proof-substitute
   - - 8e03b2db275cb95b611c6a25354ed85afdaf6947e8d64494fd5dd7a51bd9faed
     - fact.no-obligation-per-irrelevant-axis-rule
@@ -9881,21 +9555,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.cost-boundary
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/57/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-obligation-per-irrelevant-axis-rule
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/57/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - no-obligation-per-irrelevant-axis-rule
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - no-obligation-per-irrelevant-axis-rule
     - - no-obligation-per-irrelevant-axis-rule
   - - e03dd3360e06bd15f7d52a2756d1bb502a2321d49b0f97fc7ebc86a34f9c4a8f
     - fact.v1-stat-before-read
@@ -9904,21 +9570,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.resource-budget
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/58/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-stat-before-read
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/58/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-stat-before-read
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-stat-before-read
     - - v1-stat-before-read
   - - c8452eacfc3836cea4e5a75d2aad6dbe0247544522474650678ad98d02802bf2
     - fact.v1-bounded-prefix-stream-parse
@@ -9927,21 +9585,13 @@ fact_sets:
     - family.input-validation
     - property.input-validation.size-limit
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/59/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-bounded-prefix-stream-parse
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/59/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-bounded-prefix-stream-parse
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-bounded-prefix-stream-parse
     - - v1-bounded-prefix-stream-parse
   - - 8faa6252449a2f1f7d150ece8f201cec8490e726bde64cbe5538a0d1e63b6578
     - fact.v1-capacity-header-order
@@ -9950,21 +9600,13 @@ fact_sets:
     - family.api-protocol
     - property.api-protocol.serialization
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/60/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-capacity-header-order
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/60/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-capacity-header-order
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-capacity-header-order
     - - v1-capacity-header-order
   - - a735f0ab02a61ad3e9c50cfa7a5e8ab7ab2232dc90544c8479d69ca4b434aeea
     - fact.v1-embedded-handoff-byte-limit
@@ -9973,21 +9615,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.payload
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/61/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-embedded-handoff-byte-limit
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/61/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-embedded-handoff-byte-limit
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-embedded-handoff-byte-limit
     - - v1-embedded-handoff-byte-limit
   - - d9315e523fa415c3b0e199722e775cdd8592e4dddc037977f6da5ce66efbef8e
     - fact.v1-manifest-byte-limit
@@ -9996,21 +9630,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.payload
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/62/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-manifest-byte-limit
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/62/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-manifest-byte-limit
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-manifest-byte-limit
     - - v1-manifest-byte-limit
   - - b1213a4e40d989741e3f890086cf7ce701a611123c50c7b128d87f2a75a17f7a
     - fact.v1-ground-cell-limit
@@ -10019,21 +9645,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.dataset-cardinality
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/63/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-ground-cell-limit
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/63/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-ground-cell-limit
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-ground-cell-limit
     - - v1-ground-cell-limit
   - - c48949b6ae53bc87772482f9ed7a0055d13f96ace63ac425dd34ea37a03dd0fc
     - fact.v1-capacity-prefix-limit
@@ -10042,21 +9660,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.resource-budget
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/64/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-capacity-prefix-limit
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/64/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-capacity-prefix-limit
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-capacity-prefix-limit
     - - v1-capacity-prefix-limit
   - - 7c42797833f0635c339b673e3cf21612b2a8e436b94105e30c485e658cb16645
     - fact.v1-reject-before-hydration
@@ -10065,21 +9675,13 @@ fact_sets:
     - family.fault-degradation-recovery
     - property.fault-degradation-recovery.detection
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/65/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-reject-before-hydration
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/65/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-reject-before-hydration
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-reject-before-hydration
     - - v1-reject-before-hydration
   - - 38264b49a61e63c980cfcb6e019cc1720da780b57b8750552f49495660d6378e
     - fact.v1-threshold-measurement-basis
@@ -10088,21 +9690,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.benchmark-environment
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/66/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-threshold-measurement-basis
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/66/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-threshold-measurement-basis
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-threshold-measurement-basis
     - - v1-threshold-measurement-basis
   - - 5fc4b89ee1417c978a7034c2cf5a4f76a7ee7bcd4fad1bb0cc3bb741a336d576
     - fact.v1-capacity-actionable-diagnostics
@@ -10111,21 +9705,13 @@ fact_sets:
     - family.observability
     - property.observability.runbook-mitigation
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/67/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-capacity-actionable-diagnostics
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/67/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - v1-capacity-actionable-diagnostics
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - v1-capacity-actionable-diagnostics
     - - v1-capacity-actionable-diagnostics
   - - 254c0e62a1f523f9685f233b07902e6234b429e52d810919a2ef0c7841de0cf6
     - fact.capacity-fail-closed-no-truncation
@@ -10134,21 +9720,13 @@ fact_sets:
     - family.fault-degradation-recovery
     - property.fault-degradation-recovery.degraded-result
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/68/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: capacity-fail-closed-no-truncation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/68/expected/value
+    - structure_ref: structure.be0a7d2e71933ec3573fe306
+      arguments:
       - capacity-fail-closed-no-truncation
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - capacity-fail-closed-no-truncation
     - - capacity-fail-closed-no-truncation
   - - cd5fa7d177af841ebf4556a1ce9ae0cbfaa35a0606a484cc53388ddfb6da64fd
     - fact.efficiency-admission-property-only
@@ -10157,20 +9735,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.lifecycle-boundary
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/69/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: efficiency-admission-property-only
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/69/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - efficiency-admission-property-only
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - efficiency-admission-property-only
     - - efficiency-admission-property-only
   - - 67fce0baac1ef89681030d5febc40f2136ec0f61b5132351898557321460be78
     - fact.efficiency-not-terminal-safety-theorem
@@ -10179,20 +9750,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.non-goal
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/70/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: efficiency-not-terminal-safety-theorem
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/70/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - efficiency-not-terminal-safety-theorem
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - efficiency-not-terminal-safety-theorem
     - - efficiency-not-terminal-safety-theorem
   - - 5ccef4f18dd32ce0b45d178d0c1cb40f491a7819480cf4e270dac815172c9e65
     - fact.no-second-authority
@@ -10201,20 +9765,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.owner
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/71/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-second-authority
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/71/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - no-second-authority
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - no-second-authority
     - - no-second-authority
   - - c7aec3df68973cc0e5f674811981fe0e1ac97a02bd51490c85734c151c47bb48
     - fact.no-second-final-gate
@@ -10223,20 +9780,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.lifecycle-boundary
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/72/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-second-final-gate
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/72/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - no-second-final-gate
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - no-second-final-gate
     - - no-second-final-gate
   - - 6b8a655ce679b206ad0c99c5b54053f96a8fb4e2c721a6ba9ffa5b30f76d4e2f
     - fact.no-delivery-deadline-condition
@@ -10245,20 +9795,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.non-goal
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/73/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-delivery-deadline-condition
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/73/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - no-delivery-deadline-condition
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - no-delivery-deadline-condition
     - - no-delivery-deadline-condition
   - - 9b5da29ad62a3a2572c6617869c14e78f3a42ea18405fa7f8ba22b1e7ff488b7
     - fact.no-fixed-execution-flow
@@ -10267,20 +9810,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.non-goal
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/74/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-fixed-execution-flow
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/74/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - no-fixed-execution-flow
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - no-fixed-execution-flow
     - - no-fixed-execution-flow
   - - 94e28f97e89d5c1ffac98f2a3f11c1d7937df8562cf8537b920335d5a81c6559
     - fact.performance-claim-measurement-contract
@@ -10289,20 +9825,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.statistical-method
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/75/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: performance-claim-measurement-contract
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/75/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - performance-claim-measurement-contract
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - performance-claim-measurement-contract
     - - performance-claim-measurement-contract
   - - e3a5524497a716862d540394a8dbe2575a1479a8b4e03a1df2884904dcf9bc3f
     - fact.non-ui-v2-separate-admission
@@ -10311,13 +9840,9 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/76/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/76/expected/value
     - kind: direct
       authority_ref: non-ui-v2-separate-admission
       basis_refs:
@@ -10333,13 +9858,9 @@ fact_sets:
     - family.external-integration
     - property.external-integration.external-confirmation
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/77/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/77/expected/value
     - kind: direct
       authority_ref: provider-p0-excluded
       basis_refs:
@@ -10355,13 +9876,9 @@ fact_sets:
     - family.external-integration
     - property.external-integration.side-effect-observation
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/78/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/78/expected/value
     - kind: direct
       authority_ref: provider-reentry-evidence-required
       basis_refs:
@@ -10377,13 +9894,9 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.extension-point
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/79/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/79/expected/value
     - kind: direct
       authority_ref: shared-engine-future-boundary
       basis_refs:
@@ -10399,20 +9912,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/80/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-1-v1-capacity
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/80/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-1-v1-capacity
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-1-v1-capacity
     - - rollout-1-v1-capacity
   - - debb71a70e646d023b904893fe0f2cdde43088ea74ed68e6840f5ccf059011ca
     - fact.rollout-2-formal-denotation
@@ -10421,20 +9927,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/81/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-2-formal-denotation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/81/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-2-formal-denotation
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-2-formal-denotation
     - - rollout-2-formal-denotation
   - - 6514ef78cec38f619994faacea72fd079204c3126d8114408335c565a803480b
     - fact.rollout-3-engine-independent-oracle
@@ -10443,20 +9942,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/82/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-3-engine-independent-oracle
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/82/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-3-engine-independent-oracle
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-3-engine-independent-oracle
     - - rollout-3-engine-independent-oracle
   - - 799be2c0fdc7b1de68d9a37b83f47aee491bfe4bec5811efe1b2389c22d483c7
     - fact.rollout-4-ui-v2-opt-in
@@ -10465,20 +9957,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/83/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-4-ui-v2-opt-in
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/83/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-4-ui-v2-opt-in
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-4-ui-v2-opt-in
     - - rollout-4-ui-v2-opt-in
   - - c172c4687a519c92af9c88f248ec849f9b95f61d233cf66a7bff3594c1c08ba8
     - fact.rollout-5-mixed-downstream
@@ -10487,20 +9972,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/84/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-5-mixed-downstream
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/84/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-5-mixed-downstream
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-5-mixed-downstream
     - - rollout-5-mixed-downstream
   - - 708833e56cf6d2d96b0d61e1414901feeeba6e8c7384f49f3a7fcfe6068f4573
     - fact.rollout-6-default-after-proof
@@ -10509,20 +9987,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/85/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-6-default-after-proof
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/85/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-6-default-after-proof
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-6-default-after-proof
     - - rollout-6-default-after-proof
   - - deb15622ed158d1d216cfd057cbcdb08c087ebde62e778e6bb37a81d06eca424
     - fact.rollout-7-non-ui-provider-separate
@@ -10531,20 +10002,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.phased-rollout
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/86/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: rollout-7-non-ui-provider-separate
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/86/expected/value
+    - structure_ref: structure.efe892596b6a123fda2c02fb
+      arguments:
       - rollout-7-non-ui-provider-separate
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - rollout-7-non-ui-provider-separate
     - - rollout-7-non-ui-provider-separate
   - - 1da38743056521888cf8561b83208ed3e6fff86e535cd227d380ff8e7358ea16
     - fact.independent-full-finite-test-expander
@@ -10553,21 +10017,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.conformance-check
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/87/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: independent-full-finite-test-expander
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/87/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - independent-full-finite-test-expander
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - independent-full-finite-test-expander
     - - independent-full-finite-test-expander
   - - 6aa7278164ee2a3acab3d42481b3325285004b075148b6f3c98c0e3c27eba5dc
     - fact.exhaustive-pointwise-equivalence-tests
@@ -10576,21 +10032,13 @@ fact_sets:
     - family.reliability-slo
     - property.reliability-slo.correctness
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/88/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: exhaustive-pointwise-equivalence-tests
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/88/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - exhaustive-pointwise-equivalence-tests
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - exhaustive-pointwise-equivalence-tests
     - - exhaustive-pointwise-equivalence-tests
   - - 75defc11025cd20287dc0f8f8b09ed892c98f0c2f50fe70c212b0cc9a2ff4a62
     - fact.adversarial-false-completion-counterexamples
@@ -10599,21 +10047,13 @@ fact_sets:
     - family.fault-degradation-recovery
     - property.fault-degradation-recovery.fault-class
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/89/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: adversarial-false-completion-counterexamples
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/89/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - adversarial-false-completion-counterexamples
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - adversarial-false-completion-counterexamples
     - - adversarial-false-completion-counterexamples
   - - 0dfbc5ed4b6a5fc5b0ae96bef9d1decf590140e90e141d85560834b41bf3f8c5
     - fact.mixed-contract-verification
@@ -10622,21 +10062,13 @@ fact_sets:
     - family.compatibility-migration-rollout
     - property.compatibility-migration-rollout.validation
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/90/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: mixed-contract-verification
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/90/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - mixed-contract-verification
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - mixed-contract-verification
     - - mixed-contract-verification
   - - 1fe5658510f9e9c4deb95b8e8b6c86d714e6bf98490fc60a3948cc5f3aa26716
     - fact.capacity-early-rejection-verification
@@ -10645,21 +10077,13 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.measurement-window
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/91/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: capacity-early-rejection-verification
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/91/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - capacity-early-rejection-verification
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - capacity-early-rejection-verification
     - - capacity-early-rejection-verification
   - - 115d91e64456d528373a2576bb2298d15d07b7e96daedafcf19eba555703c544
     - fact.complexity-parameter-verification
@@ -10668,94 +10092,43 @@ fact_sets:
     - family.performance-capacity-cost
     - property.performance-capacity-cost.workload-model
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/92/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: complexity-parameter-verification
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/92/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - complexity-parameter-verification
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - complexity-parameter-verification
     - - complexity-parameter-verification
-  - - 318580525d6a5ad5bf8e6a91e22cb970917952042188da3fca0b3f865d6e8174
+  - - a82d4d7063a9535f5a22005f05e36f2472059400df017da402b6e4d9357e76d6
     - fact.distribution-context-parity
     - cell.distribution-context-parity
     - subject.distribution-context-parity
     - family.deployment-topology
     - property.deployment-topology.artifact-identity
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/93/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: distribution-context-parity
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/93/expected/value
+    - structure_ref: structure.c5c65b3c760a2d6dc8aa99f2
+      arguments:
       - distribution-context-parity
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - distribution-context-parity
     - - distribution-context-parity
-  - - 63528ac21df445261e7f4e494cc94d933862eb6163e44c08aea9caef1141aad5
+  - - 640d00f3633986b3c9f10ffd5b0aed418f6a0a808c1d448a2774b8cd35d61b16
     - fact.architecture-deliberation
     - cell.architecture-deliberation
     - subject.architecture-deliberation
     - family.architecture-ownership
     - property.architecture-ownership.selected-design
     - implementation_structure
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/94/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: architecture-deliberation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/94/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - architecture-deliberation
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - architecture-deliberation
     - - architecture-deliberation
   - - de5323eda2288f6a035f8b9fc1413da0471fc9bea94f5a172cdc415e385bd005
     - fact.no-sampling
@@ -10764,21 +10137,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/95/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-sampling
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/95/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-sampling
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-sampling
     - - no-sampling
   - - 1da61da25b59e6ae0d15525b87a3c20fdece4d16f3980e7576a18a2b759e0ab9
     - fact.no-granularity-reduction
@@ -10787,21 +10152,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/96/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-granularity-reduction
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/96/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-granularity-reduction
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-granularity-reduction
     - - no-granularity-reduction
   - - 913d87186abf0b4b99312fddb81b3796794924dc68b2ae6b26f1c32c0101b060
     - fact.no-expand-then-deduplicate
@@ -10810,21 +10167,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/97/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-expand-then-deduplicate
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/97/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-expand-then-deduplicate
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-expand-then-deduplicate
     - - no-expand-then-deduplicate
   - - 128322ba51e7e8cc557966157298dd6080a5b1d1109ebcba555babde8b563fa1
     - fact.no-historical-proof-reuse
@@ -10833,21 +10182,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/98/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-historical-proof-reuse
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/98/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-historical-proof-reuse
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-historical-proof-reuse
     - - no-historical-proof-reuse
   - - 2575bd40a7e436cfb89d37c6bc13d61f137642e1034582348ddc1b13d9de80c0
     - fact.no-authority-gate-proliferation
@@ -10856,21 +10197,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/99/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-authority-gate-proliferation
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/99/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-authority-gate-proliferation
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-authority-gate-proliferation
     - - no-authority-gate-proliferation
   - - 3a355dcdab658c96807e2621656ca919aaad0df3111335e2566c8e505fd8f6b5
     - fact.no-arbitrary-symbolic-execution
@@ -10879,21 +10212,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/100/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-arbitrary-symbolic-execution
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/100/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-arbitrary-symbolic-execution
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-arbitrary-symbolic-execution
     - - no-arbitrary-symbolic-execution
   - - 839788a4e18e60f3a9f850cab54d3f766a6d97f246feac42b8c745bca025be79
     - fact.no-ungrounded-applicability-omission
@@ -10902,21 +10227,13 @@ fact_sets:
     - family.architecture-ownership
     - property.architecture-ownership.forbidden-bypass
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/101/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: no-ungrounded-applicability-omission
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/101/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - no-ungrounded-applicability-omission
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - no-ungrounded-applicability-omission
     - - no-ungrounded-applicability-omission
   - - 1f6b343e07b5c17b603d8647ebfaf270ffc537cf42bb5de2a283a49ab0f237f3
     - fact.v1-v2-denotation-equivalence-ac
@@ -10925,21 +10242,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/102/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-v2-denotation-equivalence-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/102/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - v1-v2-denotation-equivalence-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - v1-v2-denotation-equivalence-ac
     - - v1-v2-denotation-equivalence-ac
   - - 21c72db22c5cbbb300c592758eed48c04f04e8a8dc49b98301a8f1718941527f
     - fact.canonical-region-and-applicability-ac
@@ -10948,21 +10257,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/103/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: canonical-region-and-applicability-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/103/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - canonical-region-and-applicability-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - canonical-region-and-applicability-ac
     - - canonical-region-and-applicability-ac
   - - cf0d889acc1b75894b85e8e8acabda680f3d8e4e5c74655962a180d56c977ac5
     - fact.mixed-contract-current-evidence-ac
@@ -10971,21 +10272,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/104/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: mixed-contract-current-evidence-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/104/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - mixed-contract-current-evidence-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - mixed-contract-current-evidence-ac
     - - mixed-contract-current-evidence-ac
   - - 491ca6ad44b4fc16cd031bd6a8af33646cd715391c1c784da98584d00bb8a1a0
     - fact.noninterference-complexity-ac
@@ -10994,21 +10287,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/105/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: noninterference-complexity-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/105/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - noninterference-complexity-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - noninterference-complexity-ac
     - - noninterference-complexity-ac
   - - 61499f284ff096c080e8e4995e60f155a95bb3e572490dbda18e060aee607781
     - fact.v1-capacity-guard-ac
@@ -11017,21 +10302,13 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/106/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: v1-capacity-guard-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/106/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - v1-capacity-guard-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - v1-capacity-guard-ac
     - - v1-capacity-guard-ac
   - - d72d8699be98ec43d714b0450ae9b6b5f83ffa49f05802ff606f6e229a8858ee
     - fact.scope-and-rollout-ac
@@ -11040,57 +10317,28 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/107/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: scope-and-rollout-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/107/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - scope-and-rollout-ac
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - scope-and-rollout-ac
     - - scope-and-rollout-ac
-  - - de2c8a917ce5c619da4e269e4e4026dd5c4145ec39a70a70cd7050725379bff6
+  - - 121ba62b4161e4b0442b293c2de5c5a80aae3b272b36b71d05f0235c2637760b
     - fact.package-antidegradation-and-parity-ac
     - cell.package-antidegradation-and-parity-ac
     - subject.package-antidegradation-and-parity-ac
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/108/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: package-antidegradation-and-parity-ac
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/108/expected/value
+    - structure_ref: structure.c5c65b3c760a2d6dc8aa99f2
+      arguments:
       - package-antidegradation-and-parity-ac
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      derivation: null
+      - package-antidegradation-and-parity-ac
     - - package-antidegradation-and-parity-ac
   - - ea217b0292da5ad104bcebf01c1222e1f2aad16780a9bdc52ab1b7f650f086dd
     - fact.inventory-is-not-completion
@@ -11099,58 +10347,28 @@ fact_sets:
     - family.goal-scope-glossary
     - property.goal-scope-glossary.acceptance-meaning
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/109/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: inventory-is-not-completion
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/109/expected/value
+    - structure_ref: structure.3ba54c8a9b74c97b988304f2
+      arguments:
       - inventory-is-not-completion
-      - input.repository.project-spec-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - inventory-is-not-completion
     - - inventory-is-not-completion
-  - - af67577a14713ac1dda47902b7af5c1f898f2f1eebcf74b2c21e7cdfe4dc6a4b
+  - - 91a2ce0beb6bb85465c5e706f964f60ef4b80059819e7c9bb897ae326a963679
     - fact.public-schema-change-risk
     - cell.public-schema-change-risk
     - subject.public-schema-change-risk
     - family.architecture-ownership
     - property.architecture-ownership.interface
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/110/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: public-schema-change-risk
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/110/expected/value
+    - structure_ref: structure.cd52ad34ba67678e97199335
+      arguments:
       - public-schema-change-risk
-      - input.context.project-context-architecture-md
-      - input.context.project-context-areas-delivery-benchmark-md
-      - input.context.project-context-areas-harness-package-md
-      - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
-      - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
-      - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
-      - input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md
-      - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
-      - input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md
-      - input.context.project-context-areas-harness-package-foundation-context-model-md
-      - input.context.project-context-areas-harness-package-implementation-index-md
-      - input.context.project-context-areas-harness-package-verification-md
-      - input.context.project-context-context-toml
-      - input.context.project-context-global-md
-      - input.repository.project-spec-md
-      - input.repository.docs-long-task-workflow-efficiency-md
-      - input.repository.packages-ty-context-src-lib-design-resource-fact-policy-ts
-      derivation: null
+      - public-schema-change-risk
     - - public-schema-change-risk
   - - ba0a2d5f3ca3541b5c2b4061e2e08298f36c3778cf9178b0e870f92f1abb2ed3
     - fact.false-completion-critical-path-risk
@@ -11159,21 +10377,13 @@ fact_sets:
     - family.reliability-slo
     - property.reliability-slo.correctness
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/111/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: false-completion-critical-path-risk
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/111/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - false-completion-critical-path-risk
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - false-completion-critical-path-risk
     - - false-completion-critical-path-risk
   - - 92ecf7a8c6dfadfbc8f0e282cf6776e7fb0a3e8bf051e014fc9ca1a7f8a4e3d7
     - fact.symbolic-oracle-observability-risk
@@ -11182,24 +10392,16 @@ fact_sets:
     - family.reliability-slo
     - property.reliability-slo.measurement-point
     - product_boundary
-    - representation: inline
-      locator:
-        material_ref: symbolic-denotation-efficiency-manifest
-        kind: manifest_pointer
-        value: /facts/112/expected/value
-      sha256: b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b
-      value: true
-    - kind: direct
-      authority_ref: symbolic-oracle-observability-risk
-      basis_refs:
+    - structure_ref: structure.d70dedc6f6b7d4fc6c2fb5ed
+      arguments:
+      - /facts/112/expected/value
+    - structure_ref: structure.2eb8e4e86ba7b61a8dbb6c28
+      arguments:
       - symbolic-oracle-observability-risk
-      - input.repository.project-spec-md
-      - input.repository.docs-design-fact-completeness-md
-      - input.repository.docs-non-ui-semantic-fact-completeness-md
-      derivation: null
+      - symbolic-oracle-observability-risk
     - - symbolic-oracle-observability-risk
 proof_templates:
-- key: proof-template.shared
+- key: proof-template.2894d6a37b3235bf4734
   proof:
     method: exact_value
     authority: machine
@@ -11212,7 +10414,7 @@ proof_templates:
     observer_refs: []
 obligations:
   defaults:
-    template_ref: proof-template.shared
+    template_ref: proof-template.2894d6a37b3235bf4734
   columns:
   - obligation_key
   - obligation_revision_digest
@@ -11220,2829 +10422,795 @@ obligations:
   - overrides
   rows:
   - - proof.symbolic-denotation-efficiency-result.exact
-    - 8cbdead47bca45dd6225c91fdac9b2e0edd0c819f5eb32b6e458ea5ab03e4ea2
+    - 9b0f43775bd914ba6e5c54b9a8215a1e7c38d656a25f0b4238b9ae4a760c563c
     - fact.symbolic-denotation-efficiency-result
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/0/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - symbolic-denotation-efficiency-result
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/0/comparison/parameters/value
+      - symbolic-denotation-efficiency-result
   - - proof.original-attachment-provenance.exact
-    - e99f0edda42f6fc1127ebd8d87eb658a1d3d35afc2ad712c5644c5c17bab7edb
+    - 75d23da163f647ee74f035e235bd288c6337560c48d4b92444ed033343759ecd
     - fact.original-attachment-provenance
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/1/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - original-attachment-provenance
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/1/comparison/parameters/value
+      - original-attachment-provenance
   - - proof.audited-source-supersession.exact
-    - 5ffdc7029ec513662ed740a6a2eea1f0f9dcbaa1ec53f379e9674a4bcf0f8a5d
+    - 19d95dff29086c49e5b2a32afb59f39589b25e38e8386bb695b41e5ceee57215
     - fact.audited-source-supersession
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/2/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - audited-source-supersession
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/2/comparison/parameters/value
+      - audited-source-supersession
   - - proof.complete-material-input-index.exact
-    - daaeb3c0623ab27f9c6effbd70ca25f9bc8ecc2ef9bdef6995303210578bab36
+    - 15f18b297ea8d74ac736039411210c69ba080a0489b0a0f012996b018271dce3
     - fact.complete-material-input-index
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/3/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - complete-material-input-index
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/3/comparison/parameters/value
+      - complete-material-input-index
   - - proof.complete-extensional-universe.exact
     - e2ee020c9fbb4f4d4c99a4dff196365386edc8b9059485ad7aadb9121248d092
     - fact.complete-extensional-universe
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/4/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - complete-extensional-universe
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/4/comparison/parameters/value
+      - complete-extensional-universe
   - - proof.subject-relation-universe-axis.exact
     - 0d82df38b815baaae0ac47d8c8e28bce305954ba7f895063f5be1b092b918d34
     - fact.subject-relation-universe-axis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/5/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - subject-relation-universe-axis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/5/comparison/parameters/value
+      - subject-relation-universe-axis
   - - proof.target-universe-axis.exact
     - bebc86bbd4ef40e3f034b7c0cc7fa8e591cd49de4253e18fb521c60d9ec62577
     - fact.target-universe-axis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/6/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - target-universe-axis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/6/comparison/parameters/value
+      - target-universe-axis
   - - proof.reachable-condition-variation-universe-axis.exact
     - 47f123134763851730a78c030db43eca7610b4ac09f2157b6e392bd957606a3a
     - fact.reachable-condition-variation-universe-axis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/7/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - reachable-condition-variation-universe-axis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/7/comparison/parameters/value
+      - reachable-condition-variation-universe-axis
   - - proof.applicable-atomic-property-universe-axis.exact
     - f98ab1d1332af22710a0fbd822fa12fe1d8877441d60b2b76831c6b9e109cf85
     - fact.applicable-atomic-property-universe-axis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/8/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - applicable-atomic-property-universe-axis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/8/comparison/parameters/value
+      - applicable-atomic-property-universe-axis
   - - proof.population-quantifier-universe-axis.exact
     - bb677bb9a407ada16bb6cec05f6ad474c27269815a2cb25cedcd7bc487ea09ad
     - fact.population-quantifier-universe-axis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/9/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - population-quantifier-universe-axis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/9/comparison/parameters/value
+      - population-quantifier-universe-axis
   - - proof.pointwise-disposition-equivalence.exact
     - ff5f998aba59648a7f33668f407d44cb8975746c19b5c229bcb63474dca21fbe
     - fact.pointwise-disposition-equivalence
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/10/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - pointwise-disposition-equivalence
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/10/comparison/parameters/value
+      - pointwise-disposition-equivalence
   - - proof.pointwise-expected-semantics-equivalence.exact
     - e047d821189643dce787d250fa9fcef75f2771f3bbe5eab8b4d220ebbc16fdf1
     - fact.pointwise-expected-semantics-equivalence
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/11/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - pointwise-expected-semantics-equivalence
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/11/comparison/parameters/value
+      - pointwise-expected-semantics-equivalence
   - - proof.pointwise-proof-denotation-equivalence.exact
     - 3f8a56a3d965467a7a75e00d89fb681fe4e539e3508c425ef737b14018f0bb7b
     - fact.pointwise-proof-denotation-equivalence
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/12/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - pointwise-proof-denotation-equivalence
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/12/comparison/parameters/value
+      - pointwise-proof-denotation-equivalence
   - - proof.v1-ground-row-identity-not-required.exact
     - 972b1f6a93bd63b0e54443ec59c0b673ffd484cbfef16529dab5bc1ae3ca34e4
     - fact.v1-ground-row-identity-not-required
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/13/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-ground-row-identity-not-required
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/13/comparison/parameters/value
+      - v1-ground-row-identity-not-required
   - - proof.fact-identity-proof-obligation-separation.exact
     - 8daa6e03ad73c3b76182c78a30ee3c6ed174e09e2f52da757c00d61debc2e1b0
     - fact.fact-identity-proof-obligation-separation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/14/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - fact-identity-proof-obligation-separation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/14/comparison/parameters/value
+      - fact-identity-proof-obligation-separation
   - - proof.required-method-denotation-preservation.exact
     - 580a1e45e5e6ff5dd21ef56762fff80614dab92c88ad1d5d0fcb5269b0414413
     - fact.required-method-denotation-preservation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/15/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - required-method-denotation-preservation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/15/comparison/parameters/value
+      - required-method-denotation-preservation
   - - proof.comparison-oracle-environment-preservation.exact
     - 896828c6734d93c7932a440f031357a4792d0be1ec0272fe5ea64c682cf297ce
     - fact.comparison-oracle-environment-preservation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/16/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - comparison-oracle-environment-preservation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/16/comparison/parameters/value
+      - comparison-oracle-environment-preservation
   - - proof.protected-observation-preservation.exact
     - 3ad53fe181b26195c89fa2538f2c8f3a5e80d88cbe960db3ce99f50c438626d0
     - fact.protected-observation-preservation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/17/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - protected-observation-preservation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/17/comparison/parameters/value
+      - protected-observation-preservation
   - - proof.exact-target-layout-pixel-preservation.exact
     - c84c54b7992671cc33286819fb57bd3947faec103ba0e26953a91b1e96274468
     - fact.exact-target-layout-pixel-preservation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/18/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - exact-target-layout-pixel-preservation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/18/comparison/parameters/value
+      - exact-target-layout-pixel-preservation
   - - proof.canonical-resource-value-authority.exact
-    - f8d7bbecc20eabd055a3c9dd303641eb4b39aa314cef98a551114e9ef00cbe78
+    - 81819793515b8ce0bad19bc8e09e5c7687d8816c73bff4ab43d68f81012dc08b
     - fact.canonical-resource-value-authority
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/19/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - canonical-resource-value-authority
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/19/comparison/parameters/value
+      - canonical-resource-value-authority
   - - proof.versioned-ui-symbolic-v2.exact
     - 0af5e22f6c01123911fb407860e480ce9554f7fe9fe2548f9deb9af9b6b50d9f
     - fact.versioned-ui-symbolic-v2
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/20/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - versioned-ui-symbolic-v2
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/20/comparison/parameters/value
+      - versioned-ui-symbolic-v2
   - - proof.ui-v2-explicit-opt-in.exact
     - f03d7a39848cb4f25a41344f6628677c01587af3291f88607e526f52eff3e05c
     - fact.ui-v2-explicit-opt-in
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/21/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - ui-v2-explicit-opt-in
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/21/comparison/parameters/value
+      - ui-v2-explicit-opt-in
   - - proof.mixed-v1-v2-targets-one-contract.exact
     - e56dd9ef2a1e16eb2c9b268eea5d4ae3ed200a1b7e342471bc76579d04eb056f
     - fact.mixed-v1-v2-targets-one-contract
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/22/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - mixed-v1-v2-targets-one-contract
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/22/comparison/parameters/value
+      - mixed-v1-v2-targets-one-contract
   - - proof.restricted-symbolic-predicate-dsl.exact
     - a821f0d31315cf80efdf71dff2c598a7aa3cf5c7cc65ef42ee1560fea827e05e
     - fact.restricted-symbolic-predicate-dsl
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/23/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - restricted-symbolic-predicate-dsl
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/23/comparison/parameters/value
+      - restricted-symbolic-predicate-dsl
   - - proof.finite-enum-and-bounded-numeric-domains.exact
     - e6a197ff88c4521c68cc5524ecd0ea5ecf1fbc35424e067654c7a1b282b260fa
     - fact.finite-enum-and-bounded-numeric-domains
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/24/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - finite-enum-and-bounded-numeric-domains
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/24/comparison/parameters/value
+      - finite-enum-and-bounded-numeric-domains
   - - proof.canonical-shared-decision-dag.exact
     - 3863029d2b40ba17c225532ac006d15f01ac6526510d6d605fa9c3de58d1fee7
     - fact.canonical-shared-decision-dag
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/25/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - canonical-shared-decision-dag
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/25/comparison/parameters/value
+      - canonical-shared-decision-dag
   - - proof.unreachable-branch-elimination.exact
     - 442e01eb94ab387a99bb83161bf0c71a1bc95ff79859d619fdfed81a7c3335c4
     - fact.unreachable-branch-elimination
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/26/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - unreachable-branch-elimination
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/26/comparison/parameters/value
+      - unreachable-branch-elimination
   - - proof.no-production-ground-materialization.exact
     - 7a5b21b29890a080d5f65ff6ff0a8894dfbdd578fc91e90502b47334b6fdf807
     - fact.no-production-ground-materialization
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/27/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-production-ground-materialization
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/27/comparison/parameters/value
+      - no-production-ground-materialization
   - - proof.mutually-exclusive-effective-regions.exact
     - 789aed1d4435166b4f0f6211dde509a4af7a1a7ee5a51a97ef7421ef4696d2a7
     - fact.mutually-exclusive-effective-regions
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/28/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - mutually-exclusive-effective-regions
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/28/comparison/parameters/value
+      - mutually-exclusive-effective-regions
   - - proof.exact-region-coverage-no-gaps.exact
     - 9f1169e1b52228bce3b49202af2fe49fd1ce6bf76fd7ab78ac111066179f2e8e
     - fact.exact-region-coverage-no-gaps
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/29/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - exact-region-coverage-no-gaps
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/29/comparison/parameters/value
+      - exact-region-coverage-no-gaps
   - - proof.constant-located-expected-rule-values.exact
     - 6db0b4500f9cc5201a8acb294d4207671bbe2f9d0f0cbc373d3fe91a28fb370f
     - fact.constant-located-expected-rule-values
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/30/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - constant-located-expected-rule-values
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/30/comparison/parameters/value
+      - constant-located-expected-rule-values
   - - proof.no-rule-precedence-or-value-function.exact
     - 850fc1e3b1849316839c1b3b54a30c4d7cd6b0b00f2357928e64bdddb2e08b24
     - fact.no-rule-precedence-or-value-function
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/31/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-rule-precedence-or-value-function
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/31/comparison/parameters/value
+      - no-rule-precedence-or-value-function
   - - proof.deterministic-canonical-identity.exact
     - 0ec5e166a484eab2b5fba04ac4b524203885eb570b6df819488381a9b6881e4a
     - fact.deterministic-canonical-identity
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/32/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - deterministic-canonical-identity
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/32/comparison/parameters/value
+      - deterministic-canonical-identity
   - - proof.symbolic-complexity-fuse.exact
     - 57c79f6f559fc9ec6a743a5a2842cf5957c9a6a71d9f1f68ded49084403a06de
     - fact.symbolic-complexity-fuse
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/33/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - symbolic-complexity-fuse
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/33/comparison/parameters/value
+      - symbolic-complexity-fuse
   - - proof.ground-cardinality-diagnostic-only.exact
     - 0e38023a7acf22aac7feddb9ddbc6b008a5e3cebf258b4f2048a34f9aed7f8bf
     - fact.ground-cardinality-diagnostic-only
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/34/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - ground-cardinality-diagnostic-only
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/34/comparison/parameters/value
+      - ground-cardinality-diagnostic-only
   - - proof.package-policy-property-catalog.exact
     - 2ae9d0bacdfae1d6dba96c46e8af27ffb7440ca7efe255c4af49d6277606db1c
     - fact.package-policy-property-catalog
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/35/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - package-policy-property-catalog
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/35/comparison/parameters/value
+      - package-policy-property-catalog
   - - proof.inspector-census-applicability.exact
     - bb3c6a2561528241839ded0d862c4462f4b3d69771401f020555a4a5b6317d99
     - fact.inspector-census-applicability
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/36/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - inspector-census-applicability
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/36/comparison/parameters/value
+      - inspector-census-applicability
   - - proof.basis-backed-property-remainder.exact
     - 7b194e7f746da4985cddf8623a0d3aed47c8f491a1fd15132f16d0f63b86f2aa
     - fact.basis-backed-property-remainder
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/37/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - basis-backed-property-remainder
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/37/comparison/parameters/value
+      - basis-backed-property-remainder
   - - proof.unknown-applicability-blocks.exact
     - 3a04914994ec5da0b793361c2f9f1170862ea311daa1f8256e34114df17f23a1
     - fact.unknown-applicability-blocks
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/38/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - unknown-applicability-blocks
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/38/comparison/parameters/value
+      - unknown-applicability-blocks
   - - proof.relation-population-first-class-model.exact
     - 139947696678c99c0f8c0bb9824a7582424126eae9186acc1075774a889cff25
     - fact.relation-population-first-class-model
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/39/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - relation-population-first-class-model
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/39/comparison/parameters/value
+      - relation-population-first-class-model
   - - proof.population-quantifier-denotation.exact
     - ab0b0ed638e3c0575171bf88c2e02aa7f6b2c80adcbb44e53c8612d53f762324
     - fact.population-quantifier-denotation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/40/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - population-quantifier-denotation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/40/comparison/parameters/value
+      - population-quantifier-denotation
   - - proof.v2-rule-method-region-projection.exact
     - 8896980ed8b48838514c8136f60184b719bfba59dcc9e17d8ab9b180aa91027f
     - fact.v2-rule-method-region-projection
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/41/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v2-rule-method-region-projection
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/41/comparison/parameters/value
+      - v2-rule-method-region-projection
   - - proof.stable-symbolic-fact-rule-identity.exact
     - ef1f998b86da630295491444c5da06216e28e1611793446471d5464d772dcd3b
     - fact.stable-symbolic-fact-rule-identity
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/42/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - stable-symbolic-fact-rule-identity
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/42/comparison/parameters/value
+      - stable-symbolic-fact-rule-identity
   - - proof.per-method-region-obligations.exact
     - 6ac99dcd02206ae4c78fe3956719057d854d7387e398299cc78bbf2f5e1e96c9
     - fact.per-method-region-obligations
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/43/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - per-method-region-obligations
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/43/comparison/parameters/value
+      - per-method-region-obligations
   - - proof.typed-v2-rule-results.exact
     - c288db5e0b11ee0dd9df32b88b56e6ae686f87b3a373e281f28b20b64ef2efdf
     - fact.typed-v2-rule-results
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/44/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - typed-v2-rule-results
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/44/comparison/parameters/value
+      - typed-v2-rule-results
   - - proof.typed-certificate-results.exact
     - 78d75280e69b8d293ca5fb71e4b0392cb53f25d6f23fc9f74a80513a48aa366c
     - fact.typed-certificate-results
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/45/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - typed-certificate-results
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/45/comparison/parameters/value
+      - typed-certificate-results
   - - proof.current-snapshot-evidence-only.exact
     - 2cfc24bf08ab90f9b0fc7392d7a62f440529aff248d14891e51119ec24b0a6f3
     - fact.current-snapshot-evidence-only
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/46/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - current-snapshot-evidence-only
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/46/comparison/parameters/value
+      - current-snapshot-evidence-only
   - - proof.mixed-target-one-final-gate.exact
     - a3d2368d5295fc16bbb6a9836ce206a1fd0727716464373624fd4aba70eb713d
     - fact.mixed-target-one-final-gate
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/47/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - mixed-target-one-final-gate
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/47/comparison/parameters/value
+      - mixed-target-one-final-gate
   - - proof.set-valued-noninterference-certificates.exact
     - 877408b4a0560ef2e1aa21a45b7dfdce0df33d4b1280ab2ab7462842531c0b6b
     - fact.set-valued-noninterference-certificates
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/48/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - set-valued-noninterference-certificates
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/48/comparison/parameters/value
+      - set-valued-noninterference-certificates
   - - proof.certificate-omitted-axis-coverage.exact
     - bfc7063235c6522cbe07e62c4ba648f3b8d179ab51692f3ac4e2a82c1877b106
     - fact.certificate-omitted-axis-coverage
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/49/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - certificate-omitted-axis-coverage
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/49/comparison/parameters/value
+      - certificate-omitted-axis-coverage
   - - proof.certificate-dependency-edge-coverage.exact
     - b47f04ed7062abcb16c0d371089c56f57d764a5785319a19239357d06ad5a0f4
     - fact.certificate-dependency-edge-coverage
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/50/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - certificate-dependency-edge-coverage
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/50/comparison/parameters/value
+      - certificate-dependency-edge-coverage
   - - proof.noninterference-obligation-count-metric.exact
     - 1b5b89cdec8c87be9c4d849195c49de32c14eb090ed8b98054c1ed4a3ced56d3
     - fact.noninterference-obligation-count-metric
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/51/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - noninterference-obligation-count-metric
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/51/comparison/parameters/value
+      - noninterference-obligation-count-metric
   - - proof.noninterference-dag-node-count-metric.exact
     - 7fe5cf10cae842925af37cc2749e70cc1bd47745794d4a582639458625703a43
     - fact.noninterference-dag-node-count-metric
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/52/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - noninterference-dag-node-count-metric
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/52/comparison/parameters/value
+      - noninterference-dag-node-count-metric
   - - proof.noninterference-byte-count-metric.exact
     - 064f31a72dcf1d14091ffd38805af002ee38b42d245f09309dfb7b811e544453
     - fact.noninterference-byte-count-metric
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/53/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - noninterference-byte-count-metric
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/53/comparison/parameters/value
+      - noninterference-byte-count-metric
   - - proof.complexity-independent-of-ground-cardinality.exact
     - 1b56c3b4ce43637b78d32e9ab0d2ccb874043d8e23c60c6f52d87c1c939508b3
     - fact.complexity-independent-of-ground-cardinality
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/54/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - complexity-independent-of-ground-cardinality
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/54/comparison/parameters/value
+      - complexity-independent-of-ground-cardinality
   - - proof.certificate-package-recomputation.exact
     - ff16fe6c11c97afedc05753d2d58d6d185fd8ea179281e3b773e7d6917bd295a
     - fact.certificate-package-recomputation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/55/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - certificate-package-recomputation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/55/comparison/parameters/value
+      - certificate-package-recomputation
   - - proof.certificate-not-semantic-proof-substitute.exact
     - 56c865f13fa491da12894a24097dfe0a292804c4a52ef670b70d68a37fe33c74
     - fact.certificate-not-semantic-proof-substitute
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/56/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - certificate-not-semantic-proof-substitute
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/56/comparison/parameters/value
+      - certificate-not-semantic-proof-substitute
   - - proof.no-obligation-per-irrelevant-axis-rule.exact
     - 531b9e6ca7f0ddd92ab096289efdf64dcbd88ae03b2a5c933a61946374006af2
     - fact.no-obligation-per-irrelevant-axis-rule
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/57/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-obligation-per-irrelevant-axis-rule
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/57/comparison/parameters/value
+      - no-obligation-per-irrelevant-axis-rule
   - - proof.v1-stat-before-read.exact
     - e8f921a6441efe89439e99b27321275246dae393653c88fa50598edd56efc4fc
     - fact.v1-stat-before-read
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/58/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-stat-before-read
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/58/comparison/parameters/value
+      - v1-stat-before-read
   - - proof.v1-bounded-prefix-stream-parse.exact
     - e4ce3e40243b63405ebdef5cd77b2b6ace1c4d39324481247a170f44ce2e0802
     - fact.v1-bounded-prefix-stream-parse
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/59/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-bounded-prefix-stream-parse
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/59/comparison/parameters/value
+      - v1-bounded-prefix-stream-parse
   - - proof.v1-capacity-header-order.exact
     - 77e894392e0c8f3b2c07e3749d1e8c71dc7a5e0504fa0788a6eb4815001cd12d
     - fact.v1-capacity-header-order
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/60/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-capacity-header-order
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/60/comparison/parameters/value
+      - v1-capacity-header-order
   - - proof.v1-embedded-handoff-byte-limit.exact
     - a8c999afbded062ece8f5dd92b67e41138610de3da0fcd0c7e8e86e307d4232b
     - fact.v1-embedded-handoff-byte-limit
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/61/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-embedded-handoff-byte-limit
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/61/comparison/parameters/value
+      - v1-embedded-handoff-byte-limit
   - - proof.v1-manifest-byte-limit.exact
     - f171ff3da7b70f4e517f1d8fd8d493af50f83f6cb0531f9452711d0fba9289e3
     - fact.v1-manifest-byte-limit
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/62/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-manifest-byte-limit
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/62/comparison/parameters/value
+      - v1-manifest-byte-limit
   - - proof.v1-ground-cell-limit.exact
     - cf2dfa034f7f374a4bcd3ceb4c4ba21b5da5e4c7a71ca4b171020432e41d86b2
     - fact.v1-ground-cell-limit
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/63/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-ground-cell-limit
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/63/comparison/parameters/value
+      - v1-ground-cell-limit
   - - proof.v1-capacity-prefix-limit.exact
     - d9dbd65b226fa8c911f7c84bd6fe78aa268a6084960dee635475b335e903c866
     - fact.v1-capacity-prefix-limit
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/64/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-capacity-prefix-limit
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/64/comparison/parameters/value
+      - v1-capacity-prefix-limit
   - - proof.v1-reject-before-hydration.exact
     - 91fcbb9fc9ff145f910a0b3a8cd7a4680a5130db3d7e4fe3f3d5da4d25a5056a
     - fact.v1-reject-before-hydration
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/65/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-reject-before-hydration
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/65/comparison/parameters/value
+      - v1-reject-before-hydration
   - - proof.v1-threshold-measurement-basis.exact
     - d5fe97448e059ff0f225005e279739b8a51a54c4d95c584932b28dc42e53e444
     - fact.v1-threshold-measurement-basis
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/66/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-threshold-measurement-basis
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/66/comparison/parameters/value
+      - v1-threshold-measurement-basis
   - - proof.v1-capacity-actionable-diagnostics.exact
     - 67ca907af536512fd6126ca908056b3953c6d0e6a98e3e328f2c19a297727691
     - fact.v1-capacity-actionable-diagnostics
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/67/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-capacity-actionable-diagnostics
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/67/comparison/parameters/value
+      - v1-capacity-actionable-diagnostics
   - - proof.capacity-fail-closed-no-truncation.exact
     - 800b8cdba9fbe92a19b4afe3423b5dcd89cd49bbaf808974191deaf8dc180cb6
     - fact.capacity-fail-closed-no-truncation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/68/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - capacity-fail-closed-no-truncation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/68/comparison/parameters/value
+      - capacity-fail-closed-no-truncation
   - - proof.efficiency-admission-property-only.exact
     - 7aa5354753332950fe9a14b2674020fe07ba55e0900a2d1c98fb9f8a5716fb9a
     - fact.efficiency-admission-property-only
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/69/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - efficiency-admission-property-only
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/69/comparison/parameters/value
+      - efficiency-admission-property-only
   - - proof.efficiency-not-terminal-safety-theorem.exact
     - f1bc850981b16d8583123ba8098fe89b418f25dbcfe22445eb5d554c9b498021
     - fact.efficiency-not-terminal-safety-theorem
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/70/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - efficiency-not-terminal-safety-theorem
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/70/comparison/parameters/value
+      - efficiency-not-terminal-safety-theorem
   - - proof.no-second-authority.exact
     - 13c3cdea9435bacf9517c4bd16ac19111776ab5ed8439577ab7330392d5938ec
     - fact.no-second-authority
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/71/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-second-authority
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/71/comparison/parameters/value
+      - no-second-authority
   - - proof.no-second-final-gate.exact
     - 93eb89bbf24b5299624cc2f57a13476b773aab34eaf44002764bbc8afed75139
     - fact.no-second-final-gate
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/72/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-second-final-gate
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/72/comparison/parameters/value
+      - no-second-final-gate
   - - proof.no-delivery-deadline-condition.exact
     - 09810fa2579092afaaf749a7b283c4fd124f52d0727f90eb2fbd27a798f95d31
     - fact.no-delivery-deadline-condition
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/73/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-delivery-deadline-condition
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/73/comparison/parameters/value
+      - no-delivery-deadline-condition
   - - proof.no-fixed-execution-flow.exact
     - 08b43483bfa21a058da44e9df05daa30cd5ea5485c8aea29b0ae97d8cb3fd405
     - fact.no-fixed-execution-flow
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/74/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-fixed-execution-flow
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/74/comparison/parameters/value
+      - no-fixed-execution-flow
   - - proof.performance-claim-measurement-contract.exact
     - 13f3dbb336e917bcb491ed9ddb6ea758dd521c0759a03a37306065bbd8a6e57f
     - fact.performance-claim-measurement-contract
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/75/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - performance-claim-measurement-contract
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/75/comparison/parameters/value
+      - performance-claim-measurement-contract
   - - proof.non-ui-v2-separate-admission.exact
     - c7b38a109a2d31778ba40a3ee49adc0862ebfbdc7fe1534a6837573475bd4f87
     - fact.non-ui-v2-separate-admission
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/76/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - non-ui-v2-separate-admission
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/76/comparison/parameters/value
+      - non-ui-v2-separate-admission
   - - proof.provider-p0-excluded.exact
     - 310247ab505db0d7439c6364469dd0e2abd72fbde2a25c009b25b7327b89a9ad
     - fact.provider-p0-excluded
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/77/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - provider-p0-excluded
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/77/comparison/parameters/value
+      - provider-p0-excluded
   - - proof.provider-reentry-evidence-required.exact
     - 6bc8ff01c602188a65a727199e7323eb3a04ec7421b455e8cda553ea5e439f9d
     - fact.provider-reentry-evidence-required
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/78/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - provider-reentry-evidence-required
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/78/comparison/parameters/value
+      - provider-reentry-evidence-required
   - - proof.shared-engine-future-boundary.exact
     - b7c0dce8f2cdf4dbc65aff857d0983a9fb3d2ba8375115a9306537f0097c0506
     - fact.shared-engine-future-boundary
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/79/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - shared-engine-future-boundary
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/79/comparison/parameters/value
+      - shared-engine-future-boundary
   - - proof.rollout-1-v1-capacity.exact
     - ce4e20a620fc1049104e2e08f3cc4ec83d7b69ad321f281b1e7f2754f784835d
     - fact.rollout-1-v1-capacity
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/80/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-1-v1-capacity
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/80/comparison/parameters/value
+      - rollout-1-v1-capacity
   - - proof.rollout-2-formal-denotation.exact
     - 51d32727600cc8b157821d7a6ea9d6f265371080772db12936e874aba3ea07d8
     - fact.rollout-2-formal-denotation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/81/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-2-formal-denotation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/81/comparison/parameters/value
+      - rollout-2-formal-denotation
   - - proof.rollout-3-engine-independent-oracle.exact
     - ff9f08fdcef2cd7c72f3f638d63edff10561a9f5bd688ee28935e0de35aedeb9
     - fact.rollout-3-engine-independent-oracle
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/82/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-3-engine-independent-oracle
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/82/comparison/parameters/value
+      - rollout-3-engine-independent-oracle
   - - proof.rollout-4-ui-v2-opt-in.exact
     - 1baf181719efbd41d1f6f6bf91b46272a31c5c26888f234e2b91c4d164b8bd66
     - fact.rollout-4-ui-v2-opt-in
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/83/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-4-ui-v2-opt-in
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/83/comparison/parameters/value
+      - rollout-4-ui-v2-opt-in
   - - proof.rollout-5-mixed-downstream.exact
     - 1a280b0c128cf0689eda8a5dad6852f613a1371586425c620e86f5df75622e1c
     - fact.rollout-5-mixed-downstream
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/84/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-5-mixed-downstream
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/84/comparison/parameters/value
+      - rollout-5-mixed-downstream
   - - proof.rollout-6-default-after-proof.exact
     - 160aa0c0152b6bfde2a8836c5cb29427e88131024cb8361a00f62a4278d0f652
     - fact.rollout-6-default-after-proof
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/85/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-6-default-after-proof
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/85/comparison/parameters/value
+      - rollout-6-default-after-proof
   - - proof.rollout-7-non-ui-provider-separate.exact
     - f900fa51c5a3ff98fc74b9b712fbb584aca26749708e96d5fe549168e8a53aa5
     - fact.rollout-7-non-ui-provider-separate
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/86/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - rollout-7-non-ui-provider-separate
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/86/comparison/parameters/value
+      - rollout-7-non-ui-provider-separate
   - - proof.independent-full-finite-test-expander.exact
     - 95ff3a3ebcf6fba8a01ff8e6e1267594b8cac38b637fa5c7683796ec154718ca
     - fact.independent-full-finite-test-expander
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/87/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - independent-full-finite-test-expander
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/87/comparison/parameters/value
+      - independent-full-finite-test-expander
   - - proof.exhaustive-pointwise-equivalence-tests.exact
     - a650f4f629ec8aeaf5f4c3108680f193f2f86a18035bf0fd6a3b3d98655a5946
     - fact.exhaustive-pointwise-equivalence-tests
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/88/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - exhaustive-pointwise-equivalence-tests
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/88/comparison/parameters/value
+      - exhaustive-pointwise-equivalence-tests
   - - proof.adversarial-false-completion-counterexamples.exact
     - d9867ee3e6682972b4e5fb9aa7da0669751a88eb52b756074bb9c01bb11bccb8
     - fact.adversarial-false-completion-counterexamples
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/89/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - adversarial-false-completion-counterexamples
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/89/comparison/parameters/value
+      - adversarial-false-completion-counterexamples
   - - proof.mixed-contract-verification.exact
     - 8503380a60b099870d3df0cb278afa6ec2905a80ae7a12d85d5697f467eb20e1
     - fact.mixed-contract-verification
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/90/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - mixed-contract-verification
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/90/comparison/parameters/value
+      - mixed-contract-verification
   - - proof.capacity-early-rejection-verification.exact
     - b27cf2916916cd91d87ccc6b94fdd3da8125c183c7043403f7cc510a8f06d762
     - fact.capacity-early-rejection-verification
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/91/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - capacity-early-rejection-verification
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/91/comparison/parameters/value
+      - capacity-early-rejection-verification
   - - proof.complexity-parameter-verification.exact
     - 2c98781ab65128f44603096d28f1623fc66e7b5ad1640a85ffc73c660532981c
     - fact.complexity-parameter-verification
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/92/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - complexity-parameter-verification
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/92/comparison/parameters/value
+      - complexity-parameter-verification
   - - proof.distribution-context-parity.exact
-    - a971bcc9bc2ce373e7aab6aa3e7952211408cff7ef826f862869d71fe57bad68
+    - c13c92ff94dd8fc013495718c2c0be8c4d785689b5f7a00faed46dde774bb252
     - fact.distribution-context-parity
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/93/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - distribution-context-parity
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/93/comparison/parameters/value
+      - distribution-context-parity
   - - proof.architecture-deliberation.exact
-    - 08b2132636038d8e7f09a97d1660c1caaace9cccbc899d2092bf0c6da6b01dfb
+    - 33840e26c67a7cad422a9cb426eee31e5517ef0fc3e35a7d43fdb7ed80d7e89a
     - fact.architecture-deliberation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/94/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - architecture-deliberation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/94/comparison/parameters/value
+      - architecture-deliberation
   - - proof.no-sampling.exact
     - 3bde66235baf4c71e92c02a0d3dcf84bdf4d33428453040fcdb82c4e3bad2f10
     - fact.no-sampling
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/95/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-sampling
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/95/comparison/parameters/value
+      - no-sampling
   - - proof.no-granularity-reduction.exact
     - f34deed5c82c36c8b21d99e3fb322d6caa89ec02f73268699ea3dc365453ad67
     - fact.no-granularity-reduction
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/96/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-granularity-reduction
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/96/comparison/parameters/value
+      - no-granularity-reduction
   - - proof.no-expand-then-deduplicate.exact
     - 05c77b866a1b8b62cc427b207c7844b977841f448fb74a727fff16dd9d832363
     - fact.no-expand-then-deduplicate
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/97/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-expand-then-deduplicate
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/97/comparison/parameters/value
+      - no-expand-then-deduplicate
   - - proof.no-historical-proof-reuse.exact
     - 86a63900b52c058dbf5c527de48d3abfc630569bce158113dac42627a89b203c
     - fact.no-historical-proof-reuse
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/98/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-historical-proof-reuse
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/98/comparison/parameters/value
+      - no-historical-proof-reuse
   - - proof.no-authority-gate-proliferation.exact
     - 0a99065e9802175db2ce757d68e36d4e5c05e8f5ca88b595c8b838d03e1fca3a
     - fact.no-authority-gate-proliferation
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/99/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-authority-gate-proliferation
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/99/comparison/parameters/value
+      - no-authority-gate-proliferation
   - - proof.no-arbitrary-symbolic-execution.exact
     - d69d35d238f7b45770fb1445355193a60ed0ae7f58d0ea116dc2959ba183a6fe
     - fact.no-arbitrary-symbolic-execution
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/100/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-arbitrary-symbolic-execution
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/100/comparison/parameters/value
+      - no-arbitrary-symbolic-execution
   - - proof.no-ungrounded-applicability-omission.exact
     - a4e0a5f1c6459f702a4a844ed4df88b628a8a864b3284d930642e561890f9dff
     - fact.no-ungrounded-applicability-omission
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/101/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - no-ungrounded-applicability-omission
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/101/comparison/parameters/value
+      - no-ungrounded-applicability-omission
   - - proof.v1-v2-denotation-equivalence-ac.exact
     - ffe81ffd84a11ff6852a9f06f1651be3f5feb5bc773ac4c3bd939eaa47bd581e
     - fact.v1-v2-denotation-equivalence-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/102/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-v2-denotation-equivalence-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/102/comparison/parameters/value
+      - v1-v2-denotation-equivalence-ac
   - - proof.canonical-region-and-applicability-ac.exact
     - 872f3a2c06c741b4d509ad94dc4b30af920ecb4df1d1880ccb37177f50c13644
     - fact.canonical-region-and-applicability-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/103/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - canonical-region-and-applicability-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/103/comparison/parameters/value
+      - canonical-region-and-applicability-ac
   - - proof.mixed-contract-current-evidence-ac.exact
     - b013f767a156dca706bdbab6c94b2ff0359a91b7f6fa0ea43663aee1abf368e4
     - fact.mixed-contract-current-evidence-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/104/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - mixed-contract-current-evidence-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/104/comparison/parameters/value
+      - mixed-contract-current-evidence-ac
   - - proof.noninterference-complexity-ac.exact
     - a127a3d3e192ef904bfd3a3f59f2f8dbdff8c43afe1a4c46c19884b2170e30d2
     - fact.noninterference-complexity-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/105/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - noninterference-complexity-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/105/comparison/parameters/value
+      - noninterference-complexity-ac
   - - proof.v1-capacity-guard-ac.exact
     - 3a1a8f9c15f02586aeeec15d0d5bf12af40053caee91cab197364a76f3365a62
     - fact.v1-capacity-guard-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/106/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - v1-capacity-guard-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/106/comparison/parameters/value
+      - v1-capacity-guard-ac
   - - proof.scope-and-rollout-ac.exact
     - df773b6f556eaaf59cfb15af78a0b3c278a5c538ec28d11e218e647b3ef406b8
     - fact.scope-and-rollout-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/107/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - scope-and-rollout-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/107/comparison/parameters/value
+      - scope-and-rollout-ac
   - - proof.package-antidegradation-and-parity-ac.exact
-    - 14b5dafdcf9d7ba007aea1189f97603a1df31ace472946f0d270a09ac5b7e24c
+    - 0880a5c09a6132b742f92b0e4ac4a7fe2284dbec64e3e91574557559d57b9e89
     - fact.package-antidegradation-and-parity-ac
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/108/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - package-antidegradation-and-parity-ac
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/108/comparison/parameters/value
+      - package-antidegradation-and-parity-ac
   - - proof.inventory-is-not-completion.exact
     - 8633eaf70853c1455704e35ef05cd32bfc5765a8adb7fc8564adaf614a6834f4
     - fact.inventory-is-not-completion
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/109/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - inventory-is-not-completion
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/109/comparison/parameters/value
+      - inventory-is-not-completion
   - - proof.public-schema-change-risk.exact
-    - 9bf8c752a4c5fc8f6cb261e85f5e11d8c73f702e0ac33c37e38b3ae6054cc135
+    - eca0b2b0331752ae232d546af33ff1e75498aeb7379fb530fa8933ca036163a2
     - fact.public-schema-change-risk
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/110/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - public-schema-change-risk
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/110/comparison/parameters/value
+      - public-schema-change-risk
   - - proof.false-completion-critical-path-risk.exact
     - 9c06c3c1aacea292740908dd13b4b608ca21e372b076adfa79af907823c73d07
     - fact.false-completion-critical-path-risk
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/111/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - false-completion-critical-path-risk
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/111/comparison/parameters/value
+      - false-completion-critical-path-risk
   - - proof.symbolic-oracle-observability-risk.exact
     - 93746beacf51a029044869cc73216ef8b764160178922d5f56b4a839c856688a
     - fact.symbolic-oracle-observability-risk
-    - comparison:
-        comparator: exact_value
-        mode: exact
-        parameters:
-          representation: inline
-          locator:
-            material_ref: symbolic-denotation-efficiency-manifest
-            kind: manifest_pointer
-            value: /proof_obligations/112/comparison/parameters/value
-          sha256: a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820
-          value:
-            comparator: exact_value
-        tolerance: null
-        mask: null
-      counterfactual:
-        disposition: required
-        refs:
-        - symbolic-policy-sensitivity
-        basis_refs:
-        - symbolic-oracle-observability-risk
-        - architecture-deliberation
-        rationale: Disabling the narrow package policy carrier must fail this exact Fact assertion while target liveness remains.
+    - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
+      arguments:
+      - /proof_obligations/112/comparison/parameters/value
+      - symbolic-oracle-observability-risk
 exceptions: []
 ```

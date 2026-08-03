@@ -15,16 +15,16 @@ export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
       "One canonical file per reviewed high-impact trust-boundary invariant family, including compact stable-key plus revision-digest Fact/obligation closure and the prior symbolic, selected-design and non-UI semantic rejection paths.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 24,
+    max_files: 25,
     reviewed_on: "2026-08-03",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, semantic, selected-design and compact-carrier exact-closure coverage without removing prior regressions.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, semantic, selected-design, compact-carrier exact-closure and fixed structural-cost coverage without removing prior regressions.",
   }),
   delivery_contract_focused: Object.freeze({
-    max_files: 13,
+    max_files: 14,
     reviewed_on: "2026-08-03",
     rationale:
-      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, Source-authority, first-lock scope and compact plus expanded non-UI semantic projection sentinels.",
+      "Bound Contract-authoring feedback while retaining parser, compiler, coverage, risk, semantic-drift, Source-authority, first-lock scope, fixed structural-cost and compact plus expanded non-UI semantic projection sentinels.",
   }),
   hotspot_fanout: Object.freeze({
     max_tests_per_path: 10,
@@ -204,6 +204,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-drift-lifecycle.test.mjs",
     "long-task-semantic-fact-closure.test.mjs",
     "long-task-symbolic-denotation-v2.test.mjs",
+    "long-task-structural-closure-cost.test.mjs",
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
     "source-plan-authoring-skill.test.mjs",
@@ -226,6 +227,7 @@ export const DELIVERY_CONTRACT_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-drift-lifecycle.test.mjs",
     "long-task-semantic-fact-closure.test.mjs",
     "long-task-source-authority-closure.test.mjs",
+    "long-task-structural-closure-cost.test.mjs",
     "long-task-workspace-scope.test.mjs",
   ].map(testPath),
 );
@@ -259,6 +261,7 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
   "long-task-execution-input-policy.test.mjs",
   "long-task-playwright-ac-evidence.test.mjs",
   "long-task-semantic-drift-closure.test.mjs",
+  "long-task-structural-closure-cost.test.mjs",
 ]);
 
 export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
@@ -534,12 +537,12 @@ function assertIsolationPolicy() {
   if (new Set(classified).size !== classified.length)
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
-    LONG_TASK_PURE_TEST_FILES.length !== 12 ||
+    LONG_TASK_PURE_TEST_FILES.length !== 13 ||
     LONG_TASK_ISOLATED_TEST_FILES.length !== 44 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 12/44/11 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 13/44/11 population; review the new file explicitly instead of parallelizing it by default.",
     );
 }
 

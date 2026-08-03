@@ -2,7 +2,7 @@ schema_version: long-task-delivery-v2
 semantic_fact_manifest:
   key: symbolic-denotation-efficiency-manifest
   source_path: docs/symbolic-denotation-efficiency.md
-  sha256: a33992f6e5aab1b314b19bca687eac8583c4bb59a11c0f6ec566cba4e54652bc
+  sha256: d09dd9e87d489f763faf82e03151ed7c14f75a4cbe68eb16a91727249a74fc1c
 task:
   id: symbolic-denotation-efficiency
   title: Semantic-equivalent symbolic design facts with efficiency anti-degradation
@@ -108,84 +108,8 @@ outcomes:
       - project_context/areas/harness-package/implementation-index.md
       - project_context/areas/harness-package/verification.md
       path_globs:
-      - .gitattributes
-      - PROJECT_SPEC.md
-      - README.md
-      - README.zh-CN.md
-      - AGENTS.md
-      - docs/symbolic-denotation-efficiency.md
-      - docs/design-fact-completeness.md
-      - docs/long-task-workflow-efficiency.md
-      - project_context/global.md
-      - project_context/architecture.md
-      - project_context/areas/harness-package.md
-      - project_context/areas/harness-package/contracts/design-resource-handoff.md
-      - project_context/areas/harness-package/contracts/workflow-contract.md
-      - project_context/areas/harness-package/contracts/package-managed-surfaces.md
-      - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
-      - project_context/areas/harness-package/decision-rationale/architecture-quality.md
-      - project_context/areas/harness-package/foundation/context-model.md
-      - project_context/areas/harness-package/implementation-index.md
-      - project_context/areas/harness-package/verification.md
-      - packages/ty-context/src/commands/design-resource.ts
-      - packages/ty-context/src/index.ts
-      - packages/ty-context/src/public-types.ts
-      - packages/ty-context/src/lib/design-resource-fact-*.ts
-      - packages/ty-context/src/lib/design-resource-handoff-*.ts
-      - packages/ty-context/src/lib/design-resource-symbolic-*.ts
-      - packages/ty-context/src/lib/design-resource-v1-capacity*.ts
-      - packages/ty-context/src/lib/symbolic-denotation-*.ts
-      - packages/ty-context/src/lib/long-task-design-resource-*.ts
-      - packages/ty-context/src/lib/long-task-ui-*.ts
-      - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
-      - packages/ty-context/src/lib/long-task-evidence-v2.ts
-      - packages/ty-context/src/lib/long-task-verifier-v2.ts
-      - packages/ty-context/src/lib/long-task-activation-validation.ts
-      - packages/ty-context/src/lib/long-task-runner-freeze.ts
-      - packages/ty-context/src/lib/long-task-authority-policy.ts
-      - packages/ty-context/src/lib/long-task-authority-material*.ts
-      - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
-      - packages/ty-context/src/lib/long-task-playwright-*.ts
-      - packages/ty-context/src/lib/long-task-semantic-contract-types.ts
-      - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
-      - packages/ty-context/src/lib/long-task-shape-primitives.ts
-      - packages/ty-context/src/lib/long-task-source-item-parser.ts
-      - packages/ty-context/src/lib/long-task-workspace.ts
-      - packages/ty-context/src/lib/compact-authoring-support.ts
-      - packages/ty-context/src/lib/long-task-compact-*.ts
-      - packages/ty-context/src/lib/semantic-fact-compact-*.ts
-      - packages/ty-context/src/lib/semantic-fact-policy-census.ts
-      - packages/ty-context/src/lib/semantic-fact-source-parser.ts
-      - packages/ty-context/src/lib/execution-target-capabilities.ts
-      - packages/ty-context/src/schemas/**
-      - packages/ty-context/README.md
-      - packages/ty-context/assets/README.md
-      - packages/ty-context/assets/README.zh-CN.md
-      - packages/ty-context/assets/agents/AGENTS_CORE.md
-      - packages/ty-context/assets/skills/long-task-workflow/**
-      - packages/ty-context/assets/skills/design-resource-authoring/references/downstream-handoff.md
-      - packages/ty-context/assets/skills/source-plan-authoring/**
-      - .codex/ty-context-managed/agents/AGENTS_CORE.md
-      - .codex/ty-context-managed/skills/long-task-workflow/**
-      - .codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md
-      - .codex/ty-context-managed/skills/source-plan-authoring/**
-      - .codex/skills/long-task-workflow/**
-      - .codex/skills/design-resource-authoring/references/downstream-handoff.md
-      - .codex/skills/source-plan-authoring/**
-      - tests/ty-context/design-resource-handoff-*.mjs
-      - tests/ty-context/design-resource-handoff.test.mjs
-      - tests/ty-context/design-resource-authoring-skill.test.mjs
-      - tests/ty-context/design-resource-symbolic-*.mjs
-      - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
-      - tests/ty-context/long-task-*.mjs
-      - tests/ty-context/symbolic-denotation-*.mjs
-      - tests/ty-context/affected-test-selection.test.mjs
-      - tests/ty-context/test-suite-runtime.test.mjs
-      - tools/affected_test_selection.mjs
-      - tools/test_suite_policy.mjs
-      - tools/verify_design_fact_completeness_delivery.mjs
-      - tools/migrate_long_task_compact_carrier.mjs
-      - tools/migrate_long_task_compact_carrier_authority.mjs
+        structure_ref: structure.991fb6010b983bc1ff8c6e1f
+        arguments: []
     owner_surfaces: []
     controls: []
     control_relation_closure:
@@ -197,84 +121,8 @@ outcomes:
     surface_bindings: []
   technical:
     expected_change_paths:
-    - .gitattributes
-    - PROJECT_SPEC.md
-    - README.md
-    - README.zh-CN.md
-    - AGENTS.md
-    - docs/symbolic-denotation-efficiency.md
-    - docs/design-fact-completeness.md
-    - docs/long-task-workflow-efficiency.md
-    - project_context/global.md
-    - project_context/architecture.md
-    - project_context/areas/harness-package.md
-    - project_context/areas/harness-package/contracts/design-resource-handoff.md
-    - project_context/areas/harness-package/contracts/workflow-contract.md
-    - project_context/areas/harness-package/contracts/package-managed-surfaces.md
-    - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
-    - project_context/areas/harness-package/decision-rationale/architecture-quality.md
-    - project_context/areas/harness-package/foundation/context-model.md
-    - project_context/areas/harness-package/implementation-index.md
-    - project_context/areas/harness-package/verification.md
-    - packages/ty-context/src/commands/design-resource.ts
-    - packages/ty-context/src/index.ts
-    - packages/ty-context/src/public-types.ts
-    - packages/ty-context/src/lib/design-resource-fact-*.ts
-    - packages/ty-context/src/lib/design-resource-handoff-*.ts
-    - packages/ty-context/src/lib/design-resource-symbolic-*.ts
-    - packages/ty-context/src/lib/design-resource-v1-capacity*.ts
-    - packages/ty-context/src/lib/symbolic-denotation-*.ts
-    - packages/ty-context/src/lib/long-task-design-resource-*.ts
-    - packages/ty-context/src/lib/long-task-ui-*.ts
-    - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
-    - packages/ty-context/src/lib/long-task-evidence-v2.ts
-    - packages/ty-context/src/lib/long-task-verifier-v2.ts
-    - packages/ty-context/src/lib/long-task-activation-validation.ts
-    - packages/ty-context/src/lib/long-task-runner-freeze.ts
-    - packages/ty-context/src/lib/long-task-authority-policy.ts
-    - packages/ty-context/src/lib/long-task-authority-material*.ts
-    - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
-    - packages/ty-context/src/lib/long-task-playwright-*.ts
-    - packages/ty-context/src/lib/long-task-semantic-contract-types.ts
-    - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
-    - packages/ty-context/src/lib/long-task-shape-primitives.ts
-    - packages/ty-context/src/lib/long-task-source-item-parser.ts
-    - packages/ty-context/src/lib/long-task-workspace.ts
-    - packages/ty-context/src/lib/compact-authoring-support.ts
-    - packages/ty-context/src/lib/long-task-compact-*.ts
-    - packages/ty-context/src/lib/semantic-fact-compact-*.ts
-    - packages/ty-context/src/lib/semantic-fact-policy-census.ts
-    - packages/ty-context/src/lib/semantic-fact-source-parser.ts
-    - packages/ty-context/src/lib/execution-target-capabilities.ts
-    - packages/ty-context/src/schemas/**
-    - packages/ty-context/README.md
-    - packages/ty-context/assets/README.md
-    - packages/ty-context/assets/README.zh-CN.md
-    - packages/ty-context/assets/agents/AGENTS_CORE.md
-    - packages/ty-context/assets/skills/long-task-workflow/**
-    - packages/ty-context/assets/skills/design-resource-authoring/references/downstream-handoff.md
-    - packages/ty-context/assets/skills/source-plan-authoring/**
-    - .codex/ty-context-managed/agents/AGENTS_CORE.md
-    - .codex/ty-context-managed/skills/long-task-workflow/**
-    - .codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md
-    - .codex/ty-context-managed/skills/source-plan-authoring/**
-    - .codex/skills/long-task-workflow/**
-    - .codex/skills/design-resource-authoring/references/downstream-handoff.md
-    - .codex/skills/source-plan-authoring/**
-    - tests/ty-context/design-resource-handoff-*.mjs
-    - tests/ty-context/design-resource-handoff.test.mjs
-    - tests/ty-context/design-resource-authoring-skill.test.mjs
-    - tests/ty-context/design-resource-symbolic-*.mjs
-    - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
-    - tests/ty-context/long-task-*.mjs
-    - tests/ty-context/symbolic-denotation-*.mjs
-    - tests/ty-context/affected-test-selection.test.mjs
-    - tests/ty-context/test-suite-runtime.test.mjs
-    - tools/affected_test_selection.mjs
-    - tools/test_suite_policy.mjs
-    - tools/verify_design_fact_completeness_delivery.mjs
-    - tools/migrate_long_task_compact_carrier.mjs
-    - tools/migrate_long_task_compact_carrier_authority.mjs
+      structure_ref: structure.991fb6010b983bc1ff8c6e1f
+      arguments: []
     allowed_support_paths: []
     forbidden_paths:
     - docs/non-ui-semantic-fact-completeness.md
@@ -370,12 +218,8 @@ outcomes:
         target_ref: harness-package-runtime
         entrypoint: root
       scenario:
-        given:
-        - key: source-authority-ready
-          statement: The audited symbolic-denotation Source and complete controlling Context are available.
-        when:
-        - key: inspect-symbolic-delivery
-          statement: Inspect V1 capacity, UI V2 denotation, Contract projection, evidence, scope and package parity through the repository-owned runtime.
+        structure_ref: structure.48baa944ec011e9004a28d60
+        arguments: []
       proof_surface: runtime_behavior
       runner:
         type: node_oracle
@@ -388,20 +232,8 @@ outcomes:
         retry_policy: none
         idempotent: true
       verification_inputs:
-      - tools/verify_symbolic_denotation_efficiency_delivery.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
-      - tools/semantic_fact_delivery_evidence.mjs
-      - tools/semantic_fact_delivery_verifier_support.mjs
-      - tools/npm_command_spec.mjs
-      - tools/package_build_fingerprint.mjs
-      - package.json
-      - package-lock.json
-      - packages/ty-context/package.json
-      - packages/ty-context/tsconfig.json
+        structure_ref: structure.5f2892b0b7f3182170c01e4a
+        arguments: []
       input_paths:
       - .gitattributes
       - PROJECT_SPEC.md
@@ -452,11 +284,8 @@ outcomes:
       - tools/migrate_long_task_compact_carrier.mjs
       - tools/migrate_long_task_compact_carrier_authority.mjs
       expected_output_paths:
-      - packages/ty-context/src/lib/design-resource-symbolic-*.ts
-      - packages/ty-context/src/lib/symbolic-denotation-*.ts
-      - tests/ty-context/design-resource-symbolic-*.mjs
-      - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
-      - tests/ty-context/symbolic-denotation-*.mjs
+        structure_ref: structure.b058b4dec808bcfe9f254776
+        arguments: []
       artifact_globs:
       - artifacts/semantic-fact-results.json
       - packages/ty-context/dist/lib/semantic-fact-source-parser.js
@@ -569,12 +398,8 @@ outcomes:
         target_ref: harness-package-runtime
         entrypoint: root
       scenario:
-        given:
-        - key: source-authority-ready
-          statement: The audited symbolic-denotation Source and complete controlling Context are available.
-        when:
-        - key: inspect-symbolic-delivery
-          statement: Inspect V1 capacity, UI V2 denotation, Contract projection, evidence, scope and package parity through the repository-owned runtime.
+        structure_ref: structure.48baa944ec011e9004a28d60
+        arguments: []
       proof_surface: api_contract
       runner:
         type: node_oracle
@@ -587,69 +412,14 @@ outcomes:
         retry_policy: none
         idempotent: true
       verification_inputs:
-      - tools/verify_symbolic_denotation_efficiency_delivery.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
-      - tools/semantic_fact_delivery_evidence.mjs
-      - tools/semantic_fact_delivery_verifier_support.mjs
-      - tools/npm_command_spec.mjs
-      - tools/package_build_fingerprint.mjs
-      - package.json
-      - package-lock.json
-      - packages/ty-context/package.json
-      - packages/ty-context/tsconfig.json
+        structure_ref: structure.5f2892b0b7f3182170c01e4a
+        arguments: []
       input_paths:
-      - .gitattributes
-      - PROJECT_SPEC.md
-      - README.md
-      - README.zh-CN.md
-      - AGENTS.md
-      - docs/symbolic-denotation-efficiency.md
-      - docs/design-fact-completeness.md
-      - docs/long-task-workflow-efficiency.md
-      - packages/ty-context/src/**
-      - packages/ty-context/src/commands/design-resource.ts
-      - packages/ty-context/src/lib/design-resource-fact-*.ts
-      - packages/ty-context/src/lib/design-resource-handoff-*.ts
-      - packages/ty-context/src/lib/long-task-design-resource-*.ts
-      - packages/ty-context/src/lib/long-task-ui-*.ts
-      - packages/ty-context/src/lib/long-task-authority-material*.ts
-      - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
-      - packages/ty-context/src/lib/long-task-playwright-*.ts
-      - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
-      - packages/ty-context/src/lib/execution-target-capabilities.ts
-      - packages/ty-context/src/schemas/**
-      - packages/ty-context/README.md
-      - packages/ty-context/assets/README.md
-      - packages/ty-context/assets/README.zh-CN.md
-      - packages/ty-context/assets/agents/AGENTS_CORE.md
-      - packages/ty-context/assets/skills/long-task-workflow/**
-      - packages/ty-context/assets/skills/source-plan-authoring/**
-      - .codex/ty-context-managed/agents/AGENTS_CORE.md
-      - .codex/ty-context-managed/skills/long-task-workflow/**
-      - .codex/ty-context-managed/skills/source-plan-authoring/**
-      - .codex/skills/long-task-workflow/**
-      - .codex/skills/source-plan-authoring/**
-      - tests/ty-context/design-resource-handoff-*.mjs
-      - tests/ty-context/design-resource-handoff.test.mjs
-      - tests/ty-context/design-resource-authoring-skill.test.mjs
-      - tests/ty-context/long-task-*.mjs
-      - tests/ty-context/affected-test-selection.test.mjs
-      - tests/ty-context/test-suite-runtime.test.mjs
-      - tools/affected_test_selection.mjs
-      - tools/test_suite_policy.mjs
-      - tools/verify_design_fact_completeness_delivery.mjs
-      - tools/migrate_long_task_compact_carrier.mjs
-      - tools/migrate_long_task_compact_carrier_authority.mjs
+        structure_ref: structure.71ab91aa83cb34cca93ef512
+        arguments: []
       expected_output_paths:
-      - packages/ty-context/src/lib/design-resource-symbolic-*.ts
-      - packages/ty-context/src/lib/symbolic-denotation-*.ts
-      - tests/ty-context/design-resource-symbolic-*.mjs
-      - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
-      - tests/ty-context/symbolic-denotation-*.mjs
+        structure_ref: structure.b058b4dec808bcfe9f254776
+        arguments: []
       artifact_globs:
       - packages/ty-context/dist/lib/semantic-fact-source-parser.js
       positive_assertions:
@@ -681,12 +451,8 @@ outcomes:
         target_ref: harness-package-runtime
         entrypoint: root
       scenario:
-        given:
-        - key: source-authority-ready
-          statement: The audited symbolic-denotation Source and complete controlling Context are available.
-        when:
-        - key: inspect-symbolic-delivery
-          statement: Inspect V1 capacity, UI V2 denotation, Contract projection, evidence, scope and package parity through the repository-owned runtime.
+        structure_ref: structure.48baa944ec011e9004a28d60
+        arguments: []
       proof_surface: runtime_behavior
       runner:
         type: node_oracle
@@ -699,69 +465,14 @@ outcomes:
         retry_policy: none
         idempotent: true
       verification_inputs:
-      - tools/verify_symbolic_denotation_efficiency_delivery.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
-      - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
-      - tools/semantic_fact_delivery_evidence.mjs
-      - tools/semantic_fact_delivery_verifier_support.mjs
-      - tools/npm_command_spec.mjs
-      - tools/package_build_fingerprint.mjs
-      - package.json
-      - package-lock.json
-      - packages/ty-context/package.json
-      - packages/ty-context/tsconfig.json
+        structure_ref: structure.5f2892b0b7f3182170c01e4a
+        arguments: []
       input_paths:
-      - .gitattributes
-      - PROJECT_SPEC.md
-      - README.md
-      - README.zh-CN.md
-      - AGENTS.md
-      - docs/symbolic-denotation-efficiency.md
-      - docs/design-fact-completeness.md
-      - docs/long-task-workflow-efficiency.md
-      - packages/ty-context/src/**
-      - packages/ty-context/src/commands/design-resource.ts
-      - packages/ty-context/src/lib/design-resource-fact-*.ts
-      - packages/ty-context/src/lib/design-resource-handoff-*.ts
-      - packages/ty-context/src/lib/long-task-design-resource-*.ts
-      - packages/ty-context/src/lib/long-task-ui-*.ts
-      - packages/ty-context/src/lib/long-task-authority-material*.ts
-      - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
-      - packages/ty-context/src/lib/long-task-playwright-*.ts
-      - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
-      - packages/ty-context/src/lib/execution-target-capabilities.ts
-      - packages/ty-context/src/schemas/**
-      - packages/ty-context/README.md
-      - packages/ty-context/assets/README.md
-      - packages/ty-context/assets/README.zh-CN.md
-      - packages/ty-context/assets/agents/AGENTS_CORE.md
-      - packages/ty-context/assets/skills/long-task-workflow/**
-      - packages/ty-context/assets/skills/source-plan-authoring/**
-      - .codex/ty-context-managed/agents/AGENTS_CORE.md
-      - .codex/ty-context-managed/skills/long-task-workflow/**
-      - .codex/ty-context-managed/skills/source-plan-authoring/**
-      - .codex/skills/long-task-workflow/**
-      - .codex/skills/source-plan-authoring/**
-      - tests/ty-context/design-resource-handoff-*.mjs
-      - tests/ty-context/design-resource-handoff.test.mjs
-      - tests/ty-context/design-resource-authoring-skill.test.mjs
-      - tests/ty-context/long-task-*.mjs
-      - tests/ty-context/affected-test-selection.test.mjs
-      - tests/ty-context/test-suite-runtime.test.mjs
-      - tools/affected_test_selection.mjs
-      - tools/test_suite_policy.mjs
-      - tools/verify_design_fact_completeness_delivery.mjs
-      - tools/migrate_long_task_compact_carrier.mjs
-      - tools/migrate_long_task_compact_carrier_authority.mjs
+        structure_ref: structure.71ab91aa83cb34cca93ef512
+        arguments: []
       expected_output_paths:
-      - packages/ty-context/src/lib/design-resource-symbolic-*.ts
-      - packages/ty-context/src/lib/symbolic-denotation-*.ts
-      - tests/ty-context/design-resource-symbolic-*.mjs
-      - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
-      - tests/ty-context/symbolic-denotation-*.mjs
+        structure_ref: structure.b058b4dec808bcfe9f254776
+        arguments: []
       artifact_globs:
       - packages/ty-context/dist/lib/semantic-fact-source-parser.js
       positive_assertions:
@@ -998,10 +709,8 @@ outcomes:
       - semantic_fact.fact.symbolic-oracle-observability-risk
       check_key: semantic-check
       mutation:
-        type: replace_text
-        path: packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts
-        match: "symbolic_denotation_efficiency_delivery: true"
-        replacement: "symbolic_denotation_efficiency_delivery: false"
+        structure_ref: structure.73eee18b1e96f8bf96463fbd
+        arguments: []
       expected_assertion_failures:
       - result
       - original-attachment-provenance
@@ -1247,10 +956,8 @@ outcomes:
       - obligation.versioned-ui-symbolic-v2
       check_key: api-contract-check
       mutation:
-        type: replace_text
-        path: packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts
-        match: "symbolic_denotation_efficiency_delivery: true"
-        replacement: "symbolic_denotation_efficiency_delivery: false"
+        structure_ref: structure.73eee18b1e96f8bf96463fbd
+        arguments: []
       expected_assertion_failures:
       - api-contract-parity
       preserved_assertions:
@@ -1261,10 +968,8 @@ outcomes:
       - requirement.complete-extensional-universe
       check_key: complete-check
       mutation:
-        type: replace_text
-        path: packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts
-        match: "symbolic_denotation_efficiency_delivery: true"
-        replacement: "symbolic_denotation_efficiency_delivery: false"
+        structure_ref: structure.73eee18b1e96f8bf96463fbd
+        arguments: []
       expected_assertion_failures:
       - package-antidegradation-and-parity-ac
       preserved_assertions:
@@ -1277,6 +982,9 @@ compact_semantic_carrier:
       claims: 113
       claim_projections: 102
       selector_members: 0
+      structure_families: 6
+      structure_references: 16
+      structure_arguments: 0
       facts: 113
       obligations: 113
       assertions: 215
@@ -1285,11 +993,194 @@ compact_semantic_carrier:
       claims: 128
       claim_projections: 128
       selector_members: 16
+      structure_families: 16
+      structure_references: 16
+      structure_arguments: 16
       facts: 128
       obligations: 128
       assertions: 256
       canonical_bytes: 1048576
   selectors: []
+  shared_structures:
+  - key: structure.48baa944ec011e9004a28d60
+    digest: 48baa944ec011e9004a28d60fabe0c26ce179fe0c694ca2aab22e76f93529ffe
+    boundary: contract.check.scenario
+    parameter_count: 0
+    template:
+      given:
+      - key: source-authority-ready
+        statement: The audited symbolic-denotation Source and complete controlling Context are available.
+      when:
+      - key: inspect-symbolic-delivery
+        statement: Inspect V1 capacity, UI V2 denotation, Contract projection, evidence, scope and package parity through the repository-owned runtime.
+  - key: structure.5f2892b0b7f3182170c01e4a
+    digest: 5f2892b0b7f3182170c01e4afc2d5b33d822ded478c9d67453fae1a8d3f89113
+    boundary: contract.check.verification-inputs
+    parameter_count: 0
+    template:
+    - tools/verify_symbolic_denotation_efficiency_delivery.mjs
+    - tools/symbolic_denotation_efficiency_delivery_catalog.mjs
+    - tools/symbolic_denotation_efficiency_delivery_catalog_part1.mjs
+    - tools/symbolic_denotation_efficiency_delivery_catalog_part2.mjs
+    - tools/symbolic_denotation_efficiency_delivery_catalog_part3.mjs
+    - tools/symbolic_denotation_efficiency_delivery_catalog_part4.mjs
+    - tools/semantic_fact_delivery_evidence.mjs
+    - tools/semantic_fact_delivery_verifier_support.mjs
+    - tools/npm_command_spec.mjs
+    - tools/package_build_fingerprint.mjs
+    - package.json
+    - package-lock.json
+    - packages/ty-context/package.json
+    - packages/ty-context/tsconfig.json
+  - key: structure.71ab91aa83cb34cca93ef512
+    digest: 71ab91aa83cb34cca93ef512edb851f172e861cbe877406e8d74f1f1f517414c
+    boundary: contract.check.input-paths
+    parameter_count: 0
+    template:
+    - .gitattributes
+    - PROJECT_SPEC.md
+    - README.md
+    - README.zh-CN.md
+    - AGENTS.md
+    - docs/symbolic-denotation-efficiency.md
+    - docs/design-fact-completeness.md
+    - docs/long-task-workflow-efficiency.md
+    - packages/ty-context/src/**
+    - packages/ty-context/src/commands/design-resource.ts
+    - packages/ty-context/src/lib/design-resource-fact-*.ts
+    - packages/ty-context/src/lib/design-resource-handoff-*.ts
+    - packages/ty-context/src/lib/long-task-design-resource-*.ts
+    - packages/ty-context/src/lib/long-task-ui-*.ts
+    - packages/ty-context/src/lib/long-task-authority-material*.ts
+    - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
+    - packages/ty-context/src/lib/long-task-playwright-*.ts
+    - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
+    - packages/ty-context/src/lib/execution-target-capabilities.ts
+    - packages/ty-context/src/schemas/**
+    - packages/ty-context/README.md
+    - packages/ty-context/assets/README.md
+    - packages/ty-context/assets/README.zh-CN.md
+    - packages/ty-context/assets/agents/AGENTS_CORE.md
+    - packages/ty-context/assets/skills/long-task-workflow/**
+    - packages/ty-context/assets/skills/source-plan-authoring/**
+    - .codex/ty-context-managed/agents/AGENTS_CORE.md
+    - .codex/ty-context-managed/skills/long-task-workflow/**
+    - .codex/ty-context-managed/skills/source-plan-authoring/**
+    - .codex/skills/long-task-workflow/**
+    - .codex/skills/source-plan-authoring/**
+    - tests/ty-context/design-resource-handoff-*.mjs
+    - tests/ty-context/design-resource-handoff.test.mjs
+    - tests/ty-context/design-resource-authoring-skill.test.mjs
+    - tests/ty-context/long-task-*.mjs
+    - tests/ty-context/affected-test-selection.test.mjs
+    - tests/ty-context/test-suite-runtime.test.mjs
+    - tools/affected_test_selection.mjs
+    - tools/test_suite_policy.mjs
+    - tools/verify_design_fact_completeness_delivery.mjs
+    - tools/migrate_long_task_compact_carrier.mjs
+    - tools/migrate_long_task_compact_carrier_authority.mjs
+  - key: structure.73eee18b1e96f8bf96463fbd
+    digest: 73eee18b1e96f8bf96463fbd6d68751d08c7ee2f8654cf26736b862be5137029
+    boundary: contract.counterfactual.mutation
+    parameter_count: 0
+    template:
+      match: "symbolic_denotation_efficiency_delivery: true"
+      path: packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts
+      replacement: "symbolic_denotation_efficiency_delivery: false"
+      type: replace_text
+  - key: structure.991fb6010b983bc1ff8c6e1f
+    digest: 991fb6010b983bc1ff8c6e1fcf713c08bba9a93a33416816f53c6edc41224a66
+    boundary: contract.path-set
+    parameter_count: 0
+    template:
+    - .gitattributes
+    - PROJECT_SPEC.md
+    - README.md
+    - README.zh-CN.md
+    - AGENTS.md
+    - docs/symbolic-denotation-efficiency.md
+    - docs/design-fact-completeness.md
+    - docs/long-task-workflow-efficiency.md
+    - project_context/global.md
+    - project_context/architecture.md
+    - project_context/areas/harness-package.md
+    - project_context/areas/harness-package/contracts/design-resource-handoff.md
+    - project_context/areas/harness-package/contracts/workflow-contract.md
+    - project_context/areas/harness-package/contracts/package-managed-surfaces.md
+    - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+    - project_context/areas/harness-package/decision-rationale/architecture-quality.md
+    - project_context/areas/harness-package/foundation/context-model.md
+    - project_context/areas/harness-package/implementation-index.md
+    - project_context/areas/harness-package/verification.md
+    - packages/ty-context/src/commands/design-resource.ts
+    - packages/ty-context/src/index.ts
+    - packages/ty-context/src/public-types.ts
+    - packages/ty-context/src/lib/design-resource-fact-*.ts
+    - packages/ty-context/src/lib/design-resource-handoff-*.ts
+    - packages/ty-context/src/lib/design-resource-symbolic-*.ts
+    - packages/ty-context/src/lib/design-resource-v1-capacity*.ts
+    - packages/ty-context/src/lib/symbolic-denotation-*.ts
+    - packages/ty-context/src/lib/long-task-design-resource-*.ts
+    - packages/ty-context/src/lib/long-task-ui-*.ts
+    - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
+    - packages/ty-context/src/lib/long-task-evidence-v2.ts
+    - packages/ty-context/src/lib/long-task-verifier-v2.ts
+    - packages/ty-context/src/lib/long-task-activation-validation.ts
+    - packages/ty-context/src/lib/long-task-runner-freeze.ts
+    - packages/ty-context/src/lib/long-task-authority-policy.ts
+    - packages/ty-context/src/lib/long-task-authority-material*.ts
+    - packages/ty-context/src/lib/long-task-evidence-capability-*.ts
+    - packages/ty-context/src/lib/long-task-playwright-*.ts
+    - packages/ty-context/src/lib/long-task-semantic-contract-types.ts
+    - packages/ty-context/src/lib/long-task-semantic-drift-migration.ts
+    - packages/ty-context/src/lib/long-task-shape-primitives.ts
+    - packages/ty-context/src/lib/long-task-source-item-parser.ts
+    - packages/ty-context/src/lib/long-task-workspace.ts
+    - packages/ty-context/src/lib/compact-authoring-support.ts
+    - packages/ty-context/src/lib/long-task-compact-*.ts
+    - packages/ty-context/src/lib/semantic-fact-compact-*.ts
+    - packages/ty-context/src/lib/semantic-fact-policy-census.ts
+    - packages/ty-context/src/lib/semantic-fact-source-parser.ts
+    - packages/ty-context/src/lib/execution-target-capabilities.ts
+    - packages/ty-context/src/schemas/**
+    - packages/ty-context/README.md
+    - packages/ty-context/assets/README.md
+    - packages/ty-context/assets/README.zh-CN.md
+    - packages/ty-context/assets/agents/AGENTS_CORE.md
+    - packages/ty-context/assets/skills/long-task-workflow/**
+    - packages/ty-context/assets/skills/design-resource-authoring/references/downstream-handoff.md
+    - packages/ty-context/assets/skills/source-plan-authoring/**
+    - .codex/ty-context-managed/agents/AGENTS_CORE.md
+    - .codex/ty-context-managed/skills/long-task-workflow/**
+    - .codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md
+    - .codex/ty-context-managed/skills/source-plan-authoring/**
+    - .codex/skills/long-task-workflow/**
+    - .codex/skills/design-resource-authoring/references/downstream-handoff.md
+    - .codex/skills/source-plan-authoring/**
+    - tests/ty-context/design-resource-handoff-*.mjs
+    - tests/ty-context/design-resource-handoff.test.mjs
+    - tests/ty-context/design-resource-authoring-skill.test.mjs
+    - tests/ty-context/design-resource-symbolic-*.mjs
+    - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
+    - tests/ty-context/long-task-*.mjs
+    - tests/ty-context/symbolic-denotation-*.mjs
+    - tests/ty-context/affected-test-selection.test.mjs
+    - tests/ty-context/test-suite-runtime.test.mjs
+    - tools/affected_test_selection.mjs
+    - tools/test_suite_policy.mjs
+    - tools/verify_design_fact_completeness_delivery.mjs
+    - tools/migrate_long_task_compact_carrier.mjs
+    - tools/migrate_long_task_compact_carrier_authority.mjs
+  - key: structure.b058b4dec808bcfe9f254776
+    digest: b058b4dec808bcfe9f254776329ceaf6e472df214520b7267a4c35424aa02f46
+    boundary: contract.check.output-paths
+    parameter_count: 0
+    template:
+    - packages/ty-context/src/lib/design-resource-symbolic-*.ts
+    - packages/ty-context/src/lib/symbolic-denotation-*.ts
+    - tests/ty-context/design-resource-symbolic-*.mjs
+    - tests/ty-context/design-resource-v1-capacity-guard.test.mjs
+    - tests/ty-context/symbolic-denotation-*.mjs
   claim_catalog:
     defaults:
       source_ref: docs/symbolic-denotation-efficiency.md
@@ -2295,16 +2186,16 @@ compact_semantic_carrier:
     - claim_ref
     rows:
     - - fact.symbolic-denotation-efficiency-result
-      - ad14d16b458fd3dd545964a1d72fe129780e5cd33f60ec5b92932c8f2172a2a5
+      - a52898c8db2feb50b50fca6b55e901e087ca526d4308f67e17c529d957e09adb
       - semantic_fact.fact.symbolic-denotation-efficiency-result
     - - fact.original-attachment-provenance
-      - d336c4b4c796b000f7afdc2460ace60dfc2ef09a33b6ca5a127b57fbf5a88d3d
+      - 970656157caa01b86ca06c85029ae74c6cd41c59e97c57b6a96994981b905e50
       - semantic_fact.fact.original-attachment-provenance
     - - fact.audited-source-supersession
-      - e8165788dbae123eacfea79f5f2d3193a6640e470bcbb32ad23c76d4aa458cea
+      - d2df478c98d691bc3e04ac3e2e4566745529b2764f7f3534213bac01efa7548f
       - semantic_fact.fact.audited-source-supersession
     - - fact.complete-material-input-index
-      - c9129ef7a74ea611bbe04639a78b9cb460a468407aced3f8ddd5817835187f99
+      - 2e1130eb82296f197baea203ef0a302f5a46b1734f5bd49f970834814b4756b1
       - semantic_fact.fact.complete-material-input-index
     - - fact.complete-extensional-universe
       - 78585a26c8217f8dc266065c864da4ff594fdf78768cfa58742b6339fe7b5b00
@@ -2352,7 +2243,7 @@ compact_semantic_carrier:
       - 7bf175e5d2ac8435223e9e85d8a6e723876a518b51bc491d3220a336a7e3b45f
       - semantic_fact.fact.exact-target-layout-pixel-preservation
     - - fact.canonical-resource-value-authority
-      - 40113a796e47a805e58e7a375390c500fd9ec26fb3ff984af469e9a279b3aa81
+      - 39cec446981e861a513eb2c0f919ca4d9145d1beb739f6e31c58bd1c61df4c21
       - semantic_fact.fact.canonical-resource-value-authority
     - - fact.versioned-ui-symbolic-v2
       - 898e403c451284331f2bfebafcf1ff24c358d363451be070278f6c181aba654b
@@ -2574,10 +2465,10 @@ compact_semantic_carrier:
       - 115d91e64456d528373a2576bb2298d15d07b7e96daedafcf19eba555703c544
       - semantic_fact.fact.complexity-parameter-verification
     - - fact.distribution-context-parity
-      - 318580525d6a5ad5bf8e6a91e22cb970917952042188da3fca0b3f865d6e8174
+      - a82d4d7063a9535f5a22005f05e36f2472059400df017da402b6e4d9357e76d6
       - semantic_fact.fact.distribution-context-parity
     - - fact.architecture-deliberation
-      - 63528ac21df445261e7f4e494cc94d933862eb6163e44c08aea9caef1141aad5
+      - 640d00f3633986b3c9f10ffd5b0aed418f6a0a808c1d448a2774b8cd35d61b16
       - semantic_fact.fact.architecture-deliberation
     - - fact.no-sampling
       - de5323eda2288f6a035f8b9fc1413da0471fc9bea94f5a172cdc415e385bd005
@@ -2619,13 +2510,13 @@ compact_semantic_carrier:
       - d72d8699be98ec43d714b0450ae9b6b5f83ffa49f05802ff606f6e229a8858ee
       - semantic_fact.fact.scope-and-rollout-ac
     - - fact.package-antidegradation-and-parity-ac
-      - de2c8a917ce5c619da4e269e4e4026dd5c4145ec39a70a70cd7050725379bff6
+      - 121ba62b4161e4b0442b293c2de5c5a80aae3b272b36b71d05f0235c2637760b
       - semantic_fact.fact.package-antidegradation-and-parity-ac
     - - fact.inventory-is-not-completion
       - ea217b0292da5ad104bcebf01c1222e1f2aad16780a9bdc52ab1b7f650f086dd
       - semantic_fact.fact.inventory-is-not-completion
     - - fact.public-schema-change-risk
-      - af67577a14713ac1dda47902b7af5c1f898f2f1eebcf74b2c21e7cdfe4dc6a4b
+      - 91a2ce0beb6bb85465c5e706f964f60ef4b80059819e7c9bb897ae326a963679
       - semantic_fact.fact.public-schema-change-risk
     - - fact.false-completion-critical-path-risk
       - ba0a2d5f3ca3541b5c2b4061e2e08298f36c3778cf9178b0e870f92f1abb2ed3
@@ -2634,7 +2525,7 @@ compact_semantic_carrier:
       - 92ecf7a8c6dfadfbc8f0e282cf6776e7fb0a3e8bf051e014fc9ca1a7f8a4e3d7
       - semantic_fact.fact.symbolic-oracle-observability-risk
   proof_templates:
-  - key: proof-template.shared
+  - key: proof-template.f817c817a614fa188f04
     binding:
       method: exact_value
       proof_surface: runtime_behavior
@@ -2646,7 +2537,7 @@ compact_semantic_carrier:
   obligations:
     defaults:
       outcome_ref: symbolic-denotation-efficiency
-      template_ref: proof-template.shared
+      template_ref: proof-template.f817c817a614fa188f04
     columns:
     - obligation_key
     - obligation_revision_digest
@@ -2654,19 +2545,19 @@ compact_semantic_carrier:
     - overrides
     rows:
     - - proof.symbolic-denotation-efficiency-result.exact
-      - 8cbdead47bca45dd6225c91fdac9b2e0edd0c819f5eb32b6e458ea5ab03e4ea2
+      - 9b0f43775bd914ba6e5c54b9a8215a1e7c38d656a25f0b4238b9ae4a760c563c
       - fact.symbolic-denotation-efficiency-result
       - assertion_ref: semantic-symbolic-denotation-efficiency-result
     - - proof.original-attachment-provenance.exact
-      - e99f0edda42f6fc1127ebd8d87eb658a1d3d35afc2ad712c5644c5c17bab7edb
+      - 75d23da163f647ee74f035e235bd288c6337560c48d4b92444ed033343759ecd
       - fact.original-attachment-provenance
       - assertion_ref: semantic-original-attachment-provenance
     - - proof.audited-source-supersession.exact
-      - 5ffdc7029ec513662ed740a6a2eea1f0f9dcbaa1ec53f379e9674a4bcf0f8a5d
+      - 19d95dff29086c49e5b2a32afb59f39589b25e38e8386bb695b41e5ceee57215
       - fact.audited-source-supersession
       - assertion_ref: semantic-audited-source-supersession
     - - proof.complete-material-input-index.exact
-      - daaeb3c0623ab27f9c6effbd70ca25f9bc8ecc2ef9bdef6995303210578bab36
+      - 15f18b297ea8d74ac736039411210c69ba080a0489b0a0f012996b018271dce3
       - fact.complete-material-input-index
       - assertion_ref: semantic-complete-material-input-index
     - - proof.complete-extensional-universe.exact
@@ -2730,7 +2621,7 @@ compact_semantic_carrier:
       - fact.exact-target-layout-pixel-preservation
       - assertion_ref: semantic-exact-target-layout-pixel-preservation
     - - proof.canonical-resource-value-authority.exact
-      - f8d7bbecc20eabd055a3c9dd303641eb4b39aa314cef98a551114e9ef00cbe78
+      - 81819793515b8ce0bad19bc8e09e5c7687d8816c73bff4ab43d68f81012dc08b
       - fact.canonical-resource-value-authority
       - assertion_ref: semantic-canonical-resource-value-authority
     - - proof.versioned-ui-symbolic-v2.exact
@@ -3026,11 +2917,11 @@ compact_semantic_carrier:
       - fact.complexity-parameter-verification
       - assertion_ref: semantic-complexity-parameter-verification
     - - proof.distribution-context-parity.exact
-      - a971bcc9bc2ce373e7aab6aa3e7952211408cff7ef826f862869d71fe57bad68
+      - c13c92ff94dd8fc013495718c2c0be8c4d785689b5f7a00faed46dde774bb252
       - fact.distribution-context-parity
       - assertion_ref: semantic-distribution-context-parity
     - - proof.architecture-deliberation.exact
-      - 08b2132636038d8e7f09a97d1660c1caaace9cccbc899d2092bf0c6da6b01dfb
+      - 33840e26c67a7cad422a9cb426eee31e5517ef0fc3e35a7d43fdb7ed80d7e89a
       - fact.architecture-deliberation
       - assertion_ref: semantic-architecture-deliberation
     - - proof.no-sampling.exact
@@ -3086,7 +2977,7 @@ compact_semantic_carrier:
       - fact.scope-and-rollout-ac
       - assertion_ref: semantic-scope-and-rollout-ac
     - - proof.package-antidegradation-and-parity-ac.exact
-      - 14b5dafdcf9d7ba007aea1189f97603a1df31ace472946f0d270a09ac5b7e24c
+      - 0880a5c09a6132b742f92b0e4ac4a7fe2284dbec64e3e91574557559d57b9e89
       - fact.package-antidegradation-and-parity-ac
       - assertion_ref: semantic-package-antidegradation-and-parity-ac
     - - proof.inventory-is-not-completion.exact
@@ -3094,7 +2985,7 @@ compact_semantic_carrier:
       - fact.inventory-is-not-completion
       - assertion_ref: semantic-inventory-is-not-completion
     - - proof.public-schema-change-risk.exact
-      - 9bf8c752a4c5fc8f6cb261e85f5e11d8c73f702e0ac33c37e38b3ae6054cc135
+      - eca0b2b0331752ae232d546af33ff1e75498aeb7379fb530fa8933ca036163a2
       - fact.public-schema-change-risk
       - assertion_ref: semantic-public-schema-change-risk
     - - proof.false-completion-critical-path-risk.exact

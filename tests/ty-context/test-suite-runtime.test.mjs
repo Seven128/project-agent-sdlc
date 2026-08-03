@@ -333,7 +333,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   ];
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
-  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 12);
+  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 13);
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 44);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   for (const restoredFile of [

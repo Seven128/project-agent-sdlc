@@ -8,6 +8,7 @@ import {
   semanticFail,
   semanticStableRef,
 } from "./semantic-fact-shape-primitives.js";
+import type { CompactSharedStructureTarget } from "./compact-shared-structures.js";
 
 export {
   indexSemanticFactRevisionInputs,
@@ -39,6 +40,9 @@ export const SEMANTIC_COMPACT_CAPACITY_FIELDS = [
   "inputs",
   "catalog_rows",
   "selector_members",
+  "structure_families",
+  "structure_references",
+  "structure_arguments",
   "facts",
   "obligations",
   "census",
@@ -56,6 +60,9 @@ const PACKAGE_MAXIMUM: SemanticCompactCapacityCounts = {
   inputs: 100_000,
   catalog_rows: 2_000_000,
   selector_members: 5_000_000,
+  structure_families: 1_000_000,
+  structure_references: 10_000_000,
+  structure_arguments: 50_000_000,
   facts: 1_000_000,
   obligations: 2_000_000,
   census: 10_000_000,
@@ -216,4 +223,82 @@ export function validateSemanticCompactDeclaredMaximum(
         `${label}.capacity.maximum.${field}`,
         `exceeds package maximum ${PACKAGE_MAXIMUM[field]}`,
       );
+}
+
+export function semanticCompactSharedStructureTargets(
+  root: Record<string, unknown>,
+): CompactSharedStructureTarget[] {
+  const targets: CompactSharedStructureTarget[] = [];
+  addObjectFieldTargets(targets, root.scope, "source.scope");
+  addObjectFieldTargets(targets, root.inspector, "source.inspector");
+  const catalogs = plainRecord(root.catalogs);
+  for (const name of SEMANTIC_COMPACT_CATALOG_COLLECTIONS)
+    addCompactTableTargets(targets, catalogs?.[name], `source.catalog.${name}`);
+  if (Array.isArray(root.fact_sets))
+    for (const factSet of root.fact_sets)
+      addCompactTableTargets(targets, factSet, "source.fact");
+  if (Array.isArray(root.proof_templates))
+    for (const template of root.proof_templates) {
+      const row = plainRecord(template);
+      if (row && Object.hasOwn(row, "proof"))
+        addTarget(targets, row, "proof", "source.proof.policy");
+    }
+  addCompactTableTargets(targets, root.obligations, "source.obligation");
+  return targets;
+}
+
+function addCompactTableTargets(
+  targets: CompactSharedStructureTarget[],
+  value: unknown,
+  boundary: string,
+): void {
+  const table = plainRecord(value);
+  if (!table || !Array.isArray(table.columns) || !Array.isArray(table.rows))
+    return;
+  const columns = table.columns.map(String);
+  addObjectFieldTargets(targets, table.defaults, `${boundary}.default`);
+  for (const rowValue of table.rows) {
+    if (!Array.isArray(rowValue) || rowValue.length !== columns.length)
+      continue;
+    for (const [index, column] of columns.entries())
+      if (isComposite(rowValue[index]))
+        addTarget(targets, rowValue, index, `${boundary}.${column}`);
+  }
+}
+
+function addObjectFieldTargets(
+  targets: CompactSharedStructureTarget[],
+  value: unknown,
+  boundary: string,
+): void {
+  const row = plainRecord(value);
+  if (!row) return;
+  for (const key of Object.keys(row))
+    if (isComposite(row[key]))
+      addTarget(targets, row, key, `${boundary}.${key}`);
+}
+
+function addTarget(
+  targets: CompactSharedStructureTarget[],
+  parent: Record<string, unknown> | unknown[],
+  key: string | number,
+  boundary: string,
+): void {
+  targets.push({
+    boundary,
+    read: () => parent[key as never],
+    write: (value) => {
+      parent[key as never] = value as never;
+    },
+  });
+}
+
+function plainRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function isComposite(value: unknown): boolean {
+  return Boolean(value && typeof value === "object");
 }

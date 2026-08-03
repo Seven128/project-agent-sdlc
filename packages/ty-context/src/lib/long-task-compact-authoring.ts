@@ -4,9 +4,11 @@ import {
   applyCompactAuthoringSelectors,
   compactAuthoringTable,
   compactCapacityBudget,
-  compactCommonFields as commonFields,
+  compactDeterministicTemplates,
   compactWithoutFields as withoutFields,
 } from "./compact-authoring-support.js";
+import { applyCompactSharedStructures } from "./compact-shared-structure-authoring.js";
+import { longTaskCompactSharedStructureTargets } from "./long-task-compact-primitives.js";
 import type { SemanticFactRevisionIdentityV1 } from "./semantic-fact-compact-carrier.js";
 import { canonicalValueJson } from "./strict-codec.js";
 import {
@@ -148,25 +150,34 @@ export function createLongTaskCompactContract(
     "obligation_set",
   );
 
-  const proofDefaults = commonFields(proofBindings, [
+  const proofTemplateExcludedFields = [
     "outcome_ref",
     "obligation_key",
     "obligation_revision_digest",
     "fact_key",
     "assertion_ref",
-  ]);
-  const obligationRows = proofBindings.map((proof) => ({
+    "confirmation_ref",
+  ];
+  const proofFamilies = compactDeterministicTemplates(
+    proofBindings,
+    proofTemplateExcludedFields,
+    "proof-template",
+  );
+  const proofFamilyByKey = new Map(
+    proofFamilies.templates.map((template) => [template.key, template.value]),
+  );
+  const obligationRows = proofBindings.map((proof, index) => ({
     outcome_ref: proof.outcome_ref,
     obligation_key: proof.obligation_key,
     obligation_revision_digest: proof.obligation_revision_digest,
     fact_key: proof.fact_key,
-    template_ref: "proof-template.shared",
+    template_ref: proofFamilies.template_refs[index],
     overrides: withoutFields(proof, [
       "outcome_ref",
       "obligation_key",
       "obligation_revision_digest",
       "fact_key",
-      ...Object.keys(proofDefaults),
+      ...Object.keys(proofFamilyByKey.get(proofFamilies.template_refs[index])!),
     ]),
   }));
   const exceptions = claimProjections
@@ -186,6 +197,7 @@ export function createLongTaskCompactContract(
     schema_version: "long-task-compact-carrier-v1",
     capacity: {},
     selectors: [],
+    shared_structures: [],
     claim_catalog: compactAuthoringTable(sourceClaims),
     claim_projections: compactAuthoringTable(claimProjections),
     fact_sets: [
@@ -194,12 +206,10 @@ export function createLongTaskCompactContract(
         ...compactAuthoringTable(facts),
       },
     ],
-    proof_templates: [
-      {
-        key: "proof-template.shared",
-        binding: proofDefaults,
-      },
-    ],
+    proof_templates: proofFamilies.templates.map((template) => ({
+      key: template.key,
+      binding: template.value,
+    })),
     obligations: compactAuthoringTable(obligationRows),
     assertion_projections: compactAuthoringTable(assertionProjections),
     exceptions,
@@ -207,6 +217,10 @@ export function createLongTaskCompactContract(
   const { value, selectors } = applyCompactAuthoringSelectors(base);
   const carrier = value.compact_semantic_carrier as Record<string, unknown>;
   carrier.selectors = selectors;
+  const structures = applyCompactSharedStructures(
+    longTaskCompactSharedStructureTargets(value, carrier),
+  );
+  carrier.shared_structures = structures.catalog;
   const measured = {
     claims: sourceClaims.length,
     claim_projections: claimProjections.length,
@@ -214,6 +228,9 @@ export function createLongTaskCompactContract(
       (sum, selector) => sum + selector.members.length,
       0,
     ),
+    structure_families: structures.statistics.emitted_family_count,
+    structure_references: structures.statistics.reference_count,
+    structure_arguments: structures.statistics.argument_count,
     facts: facts.length,
     obligations: obligationRows.length,
     assertions: assertionProjections.length,

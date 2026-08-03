@@ -1,0 +1,38 @@
+{
+  "schema_version": "structural-closure-cost-baseline-v1",
+  "workload": "fixed real 113-Fact compact authority, deterministic 639/217/53/5245 symbolic formula, and disposable one-Fact Long-Task phase probe",
+  "exact": {
+    "K_fact": 113,
+    "K_rule": 2556,
+    "M_value": 113,
+    "M_total": 2670
+  },
+  "maximum": {
+    "N_dag": 32,
+    "source_bytes": 500000,
+    "contract_bytes": 225000,
+    "evidence_bytes": 1000000,
+    "default_context_bytes": 70000,
+    "revision_changed_files": 2,
+    "revision_changed_lines": 128,
+    "revision_changed_bytes": 32768
+  },
+  "minimum": {
+    "source_duplicate_saved_bytes": 80000,
+    "contract_duplicate_saved_bytes": 6000
+  },
+  "profiles": {
+    "default-v1": {
+      "compile_ms": 3000,
+      "preflight_ms": 3000,
+      "final_gate_ms": 30000,
+      "peak_rss_bytes": 1500000000
+    },
+    "windows-v1": {
+      "compile_ms": 5000,
+      "preflight_ms": 5000,
+      "final_gate_ms": 60000,
+      "peak_rss_bytes": 1500000000
+    }
+  }
+}

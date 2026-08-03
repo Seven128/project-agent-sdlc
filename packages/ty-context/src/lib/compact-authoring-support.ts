@@ -153,6 +153,35 @@ export function compactCapacityBudget(name: string, measured: number): number {
   return Math.max(16, roundPowerOfTwo(measured));
 }
 
+export function compactDeterministicTemplates(
+  records: Record<string, unknown>[],
+  excludedFields: string[],
+  keyPrefix: string,
+): {
+  templates: Array<{ key: string; value: Record<string, unknown> }>;
+  template_refs: string[];
+} {
+  const templateByIdentity = new Map<
+    string,
+    { key: string; value: Record<string, unknown> }
+  >();
+  const templateRefs = records.map((record) => {
+    const value = compactWithoutFields(record, excludedFields);
+    const identity = canonicalValueJson(value);
+    const current = templateByIdentity.get(identity);
+    if (current) return current.key;
+    const key = `${keyPrefix}.${sha256Hex(identity).slice(0, 20)}`;
+    templateByIdentity.set(identity, { key, value });
+    return key;
+  });
+  return {
+    templates: [...templateByIdentity.values()].sort((left, right) =>
+      left.key.localeCompare(right.key),
+    ),
+    template_refs: templateRefs,
+  };
+}
+
 function roundPowerOfTwo(value: number): number {
   if (value <= 1) return 1;
   return 2 ** Math.ceil(Math.log2(value));

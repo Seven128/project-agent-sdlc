@@ -102,6 +102,12 @@ export async function assertSyntheticCompactFixtureCompiles() {
   const fixture = await createDeliveryFixture();
   try {
     const synthetic = await writeSyntheticCompactFixture(fixture, 64);
+    assert.equal(synthetic.compactSource.proof_templates.length, 2);
+    assert.equal(
+      synthetic.compactContract.compact_semantic_carrier.proof_templates
+        .length,
+      2,
+    );
     validateSemanticFactManifestPolicy(synthetic.manifest);
     const compiled = await compileDeliveryContract(
       fixture.workdir,

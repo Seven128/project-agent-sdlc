@@ -159,6 +159,9 @@
         "claims",
         "claim_projections",
         "selector_members",
+        "structure_families",
+        "structure_references",
+        "structure_arguments",
         "facts",
         "obligations",
         "assertions",
@@ -168,6 +171,9 @@
         "claims": { "type": "integer", "minimum": 0, "maximum": 1000000 },
         "claim_projections": { "type": "integer", "minimum": 0, "maximum": 2000000 },
         "selector_members": { "type": "integer", "minimum": 0, "maximum": 5000000 },
+        "structure_families": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "structure_references": { "type": "integer", "minimum": 0, "maximum": 10000000 },
+        "structure_arguments": { "type": "integer", "minimum": 0, "maximum": 50000000 },
         "facts": { "type": "integer", "minimum": 0, "maximum": 1000000 },
         "obligations": { "type": "integer", "minimum": 0, "maximum": 2000000 },
         "assertions": { "type": "integer", "minimum": 0, "maximum": 5000000 },
@@ -181,6 +187,7 @@
         "schema_version",
         "capacity",
         "selectors",
+        "shared_structures",
         "claim_catalog",
         "claim_projections",
         "fact_sets",
@@ -214,6 +221,21 @@
                 "uniqueItems": true,
                 "items": { "$ref": "#/$defs/semanticRef" }
               }
+            }
+          }
+        },
+        "shared_structures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "digest", "boundary", "parameter_count", "template"],
+            "properties": {
+              "key": { "type": "string", "pattern": "^structure\\.[a-f0-9]{24}$" },
+              "digest": { "$ref": "#/$defs/sha256" },
+              "boundary": { "$ref": "#/$defs/semanticRef" },
+              "parameter_count": { "type": "integer", "minimum": 0 },
+              "template": {}
             }
           }
         },

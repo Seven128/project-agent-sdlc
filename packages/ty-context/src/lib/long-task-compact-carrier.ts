@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { canonicalValueJson } from "./strict-codec.js";
+import { materializeCanonicalCompactSharedStructures } from "./compact-shared-structure-validation.js";
 import {
   parseLongTaskCompactCapacity,
   parseLongTaskCompactExceptions,
@@ -23,6 +24,7 @@ import {
   compactStableRef,
   compactStrictObject,
   compactUniqueRows,
+  longTaskCompactSharedStructureTargets,
   validateLongTaskCompactCapacity,
   validateLongTaskCompactDeclaredMaximum,
 } from "./long-task-compact-primitives.js";
@@ -37,6 +39,19 @@ export interface MaterializedLongTaskCompactCarrierV1 {
 export function materializeLongTaskCompactCarrier(
   rootInput: Record<string, unknown>,
 ): MaterializedLongTaskCompactCarrierV1 {
+  return materializeLongTaskCompactCarrierInternal(rootInput, false);
+}
+
+export function materializeLongTaskCompactCarrierForMigration(
+  rootInput: Record<string, unknown>,
+): MaterializedLongTaskCompactCarrierV1 {
+  return materializeLongTaskCompactCarrierInternal(rootInput, true);
+}
+
+function materializeLongTaskCompactCarrierInternal(
+  rootInput: Record<string, unknown>,
+  allowLegacyCarrier: boolean,
+): MaterializedLongTaskCompactCarrierV1 {
   const label = "compact_semantic_carrier";
   if (!Object.hasOwn(rootInput, label)) compactFail(label, "missing carrier");
   if (Object.hasOwn(rootInput, "source_claims"))
@@ -46,10 +61,20 @@ export function materializeLongTaskCompactCarrier(
     );
   if (!Object.hasOwn(rootInput, "outcomes"))
     compactFail(label, "v1 compact carrier requires inline outcomes");
-  const carrier = compactStrictObject(rootInput[label], label, [
+  const working = structuredClone(rootInput);
+  const carrierInput = compactPlainObject(working[label], label);
+  const hadSharedStructures = Object.hasOwn(carrierInput, "shared_structures");
+  if (!hadSharedStructures) {
+    if (!allowLegacyCarrier)
+      compactFail(`${label}.shared_structures`, "missing canonical catalog");
+    carrierInput.shared_structures = [];
+    addLegacyStructureCapacityFields(carrierInput.capacity);
+  }
+  const carrier = compactStrictObject(carrierInput, label, [
     "schema_version",
     "capacity",
     "selectors",
+    "shared_structures",
     "claim_catalog",
     "claim_projections",
     "fact_sets",
@@ -65,6 +90,17 @@ export function materializeLongTaskCompactCarrier(
     `${label}.capacity`,
   );
   validateLongTaskCompactDeclaredMaximum(capacity.maximum, label);
+  const structureStatistics = hadSharedStructures
+    ? materializeCanonicalCompactSharedStructures(
+        longTaskCompactSharedStructureTargets(working, carrier),
+        carrier.shared_structures,
+        label,
+      )
+    : {
+        emitted_family_count: 0,
+        reference_count: 0,
+        argument_count: 0,
+      };
   const selectors = parseLongTaskCompactSelectors(
     carrier.selectors,
     `${label}.selectors`,
@@ -124,7 +160,7 @@ export function materializeLongTaskCompactCarrier(
     `${label}.exceptions`,
   );
 
-  const { compact_semantic_carrier: _carrier, ...base } = rootInput;
+  const { compact_semantic_carrier: _carrier, ...base } = working;
   const expanded = compactPlainObject(
     compactResolveSelectors(structuredClone(base), selectors, "$"),
     "$",
@@ -167,6 +203,9 @@ export function materializeLongTaskCompactCarrier(
       (sum, members) => sum + members.length,
       0,
     ),
+    structure_families: structureStatistics.emitted_family_count,
+    structure_references: structureStatistics.reference_count,
+    structure_arguments: structureStatistics.argument_count,
     facts: facts.length,
     obligations: obligations.length,
     assertions: assertions.length,
@@ -174,6 +213,20 @@ export function materializeLongTaskCompactCarrier(
   };
   validateLongTaskCompactCapacity(capacity, measured, label);
   return { root: expanded, measured };
+}
+
+function addLegacyStructureCapacityFields(value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const capacity = value as Record<string, unknown>;
+  for (const field of ["measured", "maximum"]) {
+    const counts = capacity[field];
+    if (!counts || typeof counts !== "object" || Array.isArray(counts))
+      continue;
+    const row = counts as Record<string, unknown>;
+    row.structure_families = 0;
+    row.structure_references = 0;
+    row.structure_arguments = 0;
+  }
 }
 
 function validateCompactProjectionExceptions(
