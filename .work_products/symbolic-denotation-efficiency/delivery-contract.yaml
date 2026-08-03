@@ -722,6 +722,7 @@ outcomes:
       - docs/symbolic-denotation-efficiency.md
       - docs/design-fact-completeness.md
       - docs/long-task-workflow-efficiency.md
+      - packages/ty-context/src/**
       - packages/ty-context/src/commands/design-resource.ts
       - packages/ty-context/src/lib/design-resource-fact-*.ts
       - packages/ty-context/src/lib/design-resource-handoff-*.ts
@@ -1279,7 +1280,7 @@ compact_semantic_carrier:
       facts: 113
       obligations: 113
       assertions: 215
-      canonical_bytes: 319433
+      canonical_bytes: 319462
     maximum:
       claims: 128
       claim_projections: 128
