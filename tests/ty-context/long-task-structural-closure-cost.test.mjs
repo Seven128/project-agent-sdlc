@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import { materializeCanonicalCompactSharedStructures } from "../../packages/ty-context/dist/lib/compact-shared-structure-validation.js";
 import { createLongTaskCompactContract } from "../../packages/ty-context/dist/lib/long-task-compact-authoring.js";
 import { longTaskCompactSharedStructureTargets } from "../../packages/ty-context/dist/lib/long-task-compact-primitives.js";
-import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { createSemanticFactCompactCarrier } from "../../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
 import { parseSemanticFactCompactCarrierShape } from "../../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
 import { semanticCompactSharedStructureTargets } from "../../packages/ty-context/dist/lib/semantic-fact-compact-support.js";
@@ -16,11 +15,10 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import { structuralContractFixture } from "./long-task-structural-closure-cost-fixture.mjs";
 
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const sourceRelative = "docs/symbolic-denotation-efficiency.md";
-const contractRelative =
-  ".work_products/symbolic-denotation-efficiency/delivery-contract.yaml";
 
 test("fixed structural baseline cannot rise from the measured candidate", async () => {
   const baseline = JSON.parse(
@@ -44,11 +42,9 @@ test("fixed structural baseline cannot rise from the measured candidate", async 
   );
   observation.bytes.source = baseline.maximum.source_bytes + 1;
   assert.match(
-    evaluateStructuralClosureCost(
-      observation,
-      baseline,
-      "default-v1",
-    ).join("\n"),
+    evaluateStructuralClosureCost(observation, baseline, "default-v1").join(
+      "\n",
+    ),
     /maximum_exceeded:source_bytes/u,
   );
 });
@@ -180,11 +176,12 @@ test("canonical duplicate audit reports no known cheaper same-boundary block", a
 });
 
 async function currentAuthority() {
-  const sourceText = await readFile(path.join(repository, sourceRelative), "utf8");
-  const [source] = parseSemanticFactManifestBlocks(sourceRelative, sourceText);
-  const contract = parseDeliveryContractText(
-    await readFile(path.join(repository, contractRelative), "utf8"),
+  const sourceText = await readFile(
+    path.join(repository, sourceRelative),
+    "utf8",
   );
+  const [source] = parseSemanticFactManifestBlocks(sourceRelative, sourceText);
+  const contract = structuralContractFixture(source.manifest);
   return { source, contract };
 }
 
