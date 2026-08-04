@@ -119,6 +119,27 @@ test("[critical:first-lock-workspace-scope] first-lock Preflight and direct Comp
     await rm(path.join(fixture.root, ".codex", "user-note.md"));
     await rm(path.join(fixture.root, "tools", "user-note.md"));
 
+    await mkdir(path.join(fixture.root, ".codex", "agents"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(fixture.root, ".codex", "agents", "user-worker.toml"),
+      'name = "user_worker"\n',
+    );
+    const agentSibling = await preflightDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    assert.deepEqual(
+      agentSibling.diagnostics
+        .filter((item) => item.code === "workspace_path_unclassified")
+        .flatMap((item) => item.refs),
+      [".codex/agents/user-worker.toml"],
+    );
+    await rm(
+      path.join(fixture.root, ".codex", "agents", "user-worker.toml"),
+    );
+
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await writeFile(

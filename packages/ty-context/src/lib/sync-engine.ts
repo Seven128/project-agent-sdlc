@@ -28,6 +28,7 @@ import {
   installLongTaskHooks,
   uninstallLongTaskHooks,
 } from "./long-task-hook-install.js";
+import { syncLongTaskCodexAgentProfile } from "./long-task-codex-agent-profile.js";
 import { enabledManagedSkillNames, isProfileEnabled } from "./profiles.js";
 import type { HarnessConfig } from "./types.js";
 
@@ -59,7 +60,9 @@ export async function runSync(projectRoot: string): Promise<SyncReport> {
   for (const managedFile of config.managed_files) {
     await syncManagedFile(projectRoot, root, managedFile, report, config);
   }
-  if (isProfileEnabled(config, "long-task")) {
+  const longTaskEnabled = isProfileEnabled(config, "long-task");
+  await syncLongTaskCodexAgentProfile(projectRoot, longTaskEnabled, report);
+  if (longTaskEnabled) {
     await installLongTaskHooks(projectRoot, report);
   } else {
     await uninstallLongTaskHooks(projectRoot, report);

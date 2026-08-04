@@ -16,6 +16,8 @@ The first successful `ty-context long-task compile <workdir>` is Authority Lock 
 
 Its JSON result includes `execution_model_checkpoint.required: true`, `turn_boundary: end_current_turn`, the blocked implementation actions and explicit-choice semantics. Unless the user already stated an explicit task-specific current-model or switch-and-resume strategy, do no product implementation, file edit, build or test after that result; end the turn and ask for the choice. Generic continue/resume/finish/continue-goal language does not satisfy the checkpoint. Later Compile revisions return `required: false`; no checkpoint file, acknowledgement state, model route or automatic model switch is created.
 
+The optional Codex `long_task_implementation` custom agent is available only as a post-checkpoint rolling implementation affordance. Its fixed `gpt-5.6-luna` / `max` configuration is not a third checkpoint option and cannot acknowledge, satisfy or replace the parent Goal's user choice. It writes no workflow state and owns no Source, Contract, Authority, Progress, Evidence, Receipt or Final Gate; if the profile or Codex custom-agent support is unavailable, the parent Goal continues directly and formal acceptance is unchanged.
+
 ## Protected Revision
 
 After Authority Lock, every candidate compares against active authority. `authority_changed` does not by itself mean `user_decision_required`:
@@ -47,7 +49,7 @@ A selected design target, its exact/constraint interpretation, an authored token
 
 ## Targeted Verification And Recovery
 
-Implementation remains Goal-owned throughout rolling execution. The Goal may use one agent or multiple platform-native agents/subagents when their expected benefit exceeds coordination cost, but Harness allocates and records none of them. Delegated reports are not Progress or proof, and every proof-bearing result must converge into the selected verification workspace. Stage/Outcome readiness, `progress_stale` and targeted feedback never become agent allocation, edit permission, a method Gate or a scheduler.
+Implementation remains Goal-owned throughout rolling execution. The Goal may use one agent or multiple platform-native agents/subagents when their expected benefit exceeds coordination cost, including the optional fixed Codex `long_task_implementation` profile after the checkpoint, but Harness allocates and records none of them. That profile never selects another model, retries itself or spawns/schedules more agents. Delegated reports are not Progress or proof, and every proof-bearing result must converge into the selected verification workspace. Stage/Outcome readiness, `progress_stale` and targeted feedback never become agent allocation, edit permission, a method Gate or a scheduler.
 
 `verify --explain [--outcome/--check]` is a read-only execution preview. It groups declared Main Raw Executions, lists applicable Counterfactual runner invocations and bounded declared retry-attempt counts, but runs no command, writes no Progress, predicts no duration/internal subprocess count and creates no proof.
 

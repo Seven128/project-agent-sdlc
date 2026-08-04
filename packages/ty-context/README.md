@@ -64,7 +64,7 @@ No-install preview:
 
 `project_context/**` preserves small durable facts across sessions. Both implementation routes share one risk-proportional Architecture Deliberation with applicable-quality routing before implementation, Goal-owned boundary-preserving implementation guardrails, and one current-candidate Engineering Quality Conformance that includes Architecture Conformance. The default model-led route applies at any complexity, reads graph-relevant Context, supplements that route with one bounded Context search before `Context Delta`, uses project-native current-candidate evidence and reports its verification boundary. When machine completion authority, recoverability or auditability is explicitly required, `long-task-delivery-v2` adds one complete Contract authority, fail-closed Source ownership, Control/applicability closure, semantic Counterfactuals, a one-time user model choice after Authority Lock, scoped progress and a protected-input-recompiled Live Final Gate.
 
-Tiny Context does not invoke or switch models, create agents, branches or worktrees, merge, push, create PRs, deploy, or replace project tests and human acceptance.
+Tiny Context does not invoke or switch models, create agent sessions, branches or worktrees, merge, push, create PRs, deploy, or replace project tests and human acceptance.
 
 ## Capability Model
 
@@ -100,7 +100,7 @@ Default profiles are `core-portable` and `workflow-default`; the base managed se
 ty-context enable long-task
 ```
 
-Enabling Long-Task additionally installs `long-task-workflow`, the retired `source-plan-authoring` compatibility pointer and the completion Hook. Disable only those Long-Task-owned surfaces with `ty-context disable long-task`; both base design Skills remain. Tiny Context does not install Open Design or another design-generation runtime.
+Enabling Long-Task additionally installs `long-task-workflow`, the retired `source-plan-authoring` compatibility pointer, the completion Hook and one optional project-scoped Codex custom agent named `long_task_implementation`. The static profile is fixed to `gpt-5.6-luna` with `model_reasoning_effort = "max"` and is usable only for bounded rolling implementation/repair after the parent Goal satisfies the first-Authority-Lock model checkpoint. It is not a Skill, runtime, model router, scheduler, Authority or proof carrier; missing custom-agent support or a preserved same-path user customization falls back to parent execution and never changes acceptance. Disable only package-marked Long-Task surfaces with `ty-context disable long-task`; both base design Skills and user entries remain. Tiny Context does not install Open Design or another design-generation runtime.
 
 ## Recommended Usage
 
@@ -114,7 +114,7 @@ Use this route when an implementation delivery both genuinely needs new style-be
 2. If Design Authority is absent and the scope is style-bearing, explicitly select `$design-system-authoring` to generate, select and adopt the canonical `DESIGN.md`, token source and provider binding. Skip it when Design Authority is already configured.
 3. Prepare a writable project-native initial proposal at a concrete path such as `docs/initial-proposal.md`. It may come from the user, an external service or an explicitly requested applicable proposal capability; `design-resource-authoring` does not author it, and no Source Plan stage is required.
 4. Select `$design-resource-authoring` with that path plus the exact development scope and targets. Keep its reconciled proposal, validated residual `design-resource-handoff-v1`, and selected immutable canonical resources, manifest and dependencies.
-5. Select `$long-task-workflow` with the exact paths to all of those inputs. It authors the Source-bound Contract Draft, and the first Compile/Authority Lock presents the one-time current-model or switch-and-resume choice before implementation.
+5. Select `$long-task-workflow` with the exact paths to all of those inputs. It authors the Source-bound Contract Draft, and the first Compile/Authority Lock presents the one-time current-model or switch-and-resume choice before implementation. After that parent choice, Codex may optionally delegate a bounded implementation slice to `long_task_implementation`; the parent still owns authority, integration and formal verification.
 
 ```text
 $design-system-authoring Generate, select and adopt the project design system for this style-bearing scope. Skip this request when DESIGN.md is already configured.

@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import {
   access,
   mkdir,
+  readdir,
   readFile,
   rm,
   writeFile,
@@ -34,6 +35,12 @@ try {
   fixture.contract.outcomes[0].acceptance.checks[0].expected_output_paths = [
     "artifacts/proof.json",
   ];
+  fixture.contract.outcomes[0].technical.allowed_support_paths.push(
+    "artifacts/proof.json",
+  );
+  fixture.contract.outcomes[0].product.owner.path_globs.push(
+    "artifacts/proof.json",
+  );
   await writeContract(fixture.workdir, fixture.contract);
   await runCli(fixture.root, ["enable", "long-task"]);
   const compiled = await runCli(fixture.root, [
@@ -145,8 +152,19 @@ try {
     })
   ).stdout.match(/^worktree /gmu);
   assert.equal(worktrees?.length ?? 0, 1);
+  const agentFiles = await readdir(path.join(fixture.root, ".codex/agents"));
+  assert.deepEqual(agentFiles, ["long-task-implementation.toml"]);
+  const agentProfile = await readFile(
+    path.join(
+      fixture.root,
+      ".codex/agents/long-task-implementation.toml",
+    ),
+    "utf8",
+  );
+  assert.match(agentProfile, /^name = "long_task_implementation"$/mu);
+  assert.match(agentProfile, /^model = "gpt-5\.6-luna"$/mu);
+  assert.match(agentProfile, /^model_reasoning_effort = "max"$/mu);
   for (const relative of [
-    ".codex/agents",
     ".codex/workers",
     ".codex/appserver",
     ".codex/campaigns",
@@ -164,6 +182,7 @@ try {
       branches: branches.length,
       worktrees: worktrees?.length ?? 0,
       model_retries: 0,
+      agent_profile: true,
       agent_runtime: false,
       worker_runtime: false,
       cache_authority: false,

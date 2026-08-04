@@ -12,7 +12,7 @@ Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层
 
 Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次实现前、风险比例化的 Architecture Deliberation 与适用质量路由，实施过程保留 Goal 自主但遵守边界型实现质量 guardrails，项目验证后只由一个 carrier 对当前候选执行包含 Architecture Conformance 的 Engineering Quality Conformance。
 
-它不会启动或切换模型，不会创建 Agent、分支或 worktree，不会 merge、push、创建 PR 或部署，也不会取代项目测试和人工产品验收。
+它不会启动或切换模型，不会创建 Agent 会话、分支或 worktree，不会 merge、push、创建 PR 或部署，也不会取代项目测试和人工产品验收。
 
 ## 三个机制如何配合
 
@@ -59,7 +59,7 @@ npx --yes project-tiny-context-harness ty-context sync
 ty-context enable long-task
 ```
 
-启用长程能力会额外安装 `long-task-workflow`、退役兼容指引 `source-plan-authoring` 与完成 Hook；`ty-context disable long-task` 只移除这些 Long-Task-owned surfaces，并保留两个基础设计 Skill。Tiny Context 不安装 Open Design、模型 Worker、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
+启用长程能力会额外安装 `long-task-workflow`、退役兼容指引 `source-plan-authoring`、完成 Hook，以及一个可选的项目级 Codex custom agent `long_task_implementation`。该静态 profile 固定使用 `gpt-5.6-luna` 与 `model_reasoning_effort = "max"`，只能在父 Goal 完成第一次 Authority Lock 的模型检查点后承担有界滚动实现/修复；它不是 Skill、runtime、模型路由器、调度器、Authority 或证明载体。Codex/custom profile 不可用或同路径已有用户自定义时，直接回退父 Goal 执行，Long-Task 接受路径不变。`ty-context disable long-task` 只移除带 package marker 的 Long-Task-owned surfaces，并保留用户文件和两个基础设计 Skill。Tiny Context 不安装 Open Design、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
 
 ## 推荐用法
 
@@ -73,7 +73,7 @@ ty-context enable long-task
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过 Source Plan 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
-5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 随后会在实现前给出一次性的“继续使用当前模型”或“切换模型后恢复”选择。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 随后会在实现前给出一次性的“继续使用当前模型”或“切换模型后恢复”选择。父 Goal 完成该选择后，Codex 可以把一个有界实现切片可选委托给 `long_task_implementation`；Authority、集成与正式验证仍由父 Goal 持有。
 
 一组可以直接改写使用的调用顺序如下：
 

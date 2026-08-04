@@ -112,13 +112,17 @@ This is the concrete `F` boundary. It does not remove Source/Contract scope, Arc
 
 ## Why One Model-Choice Checkpoint Exists
 
-The host and user own model selection, and Harness cannot switch the model of a running conversation or Goal. It therefore creates no model router, model worker, tier scheduler or acknowledgement state.
+The host and user own the parent Goal's model selection, and Harness cannot switch the model of a running conversation or Goal. It therefore creates no dynamic model router, tier scheduler, retry loop, persisted route or acknowledgement state.
 
 The first successful Compile is nevertheless a distinct cost boundary: Source, Contract, relevant Context, risk and acceptance evidence are now under Authority Lock. At that point the user can safely choose whether to keep the authoring model or switch to a lower-cost execution model, while the locked Contract, targeted repair and Final Gate continue to constrain completion.
 
 Compile emits `execution_model_checkpoint.required: true` only for the first Authority Lock. The Agent stops before product implementation and asks for `continue_current_model` or a model switch followed by resuming the active Long-Task. A model strategy already stated explicitly for the task satisfies the checkpoint. Later revisions return `required: false`; no repeated cost-only pause occurs.
 
 This checkpoint is an execution-cost optimization enabled by the workflow's drift protection, not acceptance evidence. Model choice never proves a Claim and does not weaken Final Gate requirements.
+
+The old implication treated any packaged model-specific worker surface as prohibited because it could become a second routing/control plane. The project owner now explicitly permits one narrower host adapter: `ty-context enable long-task` may install a fixed Codex-native `long_task_implementation` custom agent profile using `gpt-5.6-luna` with `model_reasoning_effort = "max"`. It is usable only for bounded rolling implementation/repair after the parent Goal's checkpoint is satisfied. The profile is static, stateless, optional and non-authoritative; it never becomes Source, Contract, Authority, Progress, Evidence, Receipt or Final Gate, and its absence or a preserved same-path user customization cannot change the formal acceptance path. It cannot select models dynamically, classify tasks into tiers, retry agents, schedule work or persist delegation/model state.
+
+> 禁止的是动态或持久化模型路由、模型调度和第二控制平面；允许的是一个固定、无状态、非 Authority、可缺席的 Codex 原生滚动实现 worker profile。
 
 ## Why Context Remains Mutable During Execution
 

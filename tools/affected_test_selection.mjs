@@ -240,6 +240,14 @@ const HOTSPOT_TESTS = new Map([
   ],
   ["packages/ty-context/src/lib/doctor.ts", ["sync-init-doctor.test.mjs"]],
   [
+    "packages/ty-context/src/lib/long-task-codex-agent-profile.ts",
+    [
+      "long-task-profile-hook.test.mjs",
+      "long-task-workspace-scope.test.mjs",
+      "sync-init-doctor.test.mjs",
+    ],
+  ],
+  [
     "packages/ty-context/src/lib/profiles.ts",
     [
       "design-system-authoring-skill.test.mjs",

@@ -302,6 +302,18 @@ test("workspace-scope and execution-preview owners select their focused regressi
   );
 });
 
+test("static Codex implementation profile owner selects sync, collision and scope coverage", () => {
+  const selection = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-codex-agent-profile.ts",
+  ]);
+  assert.equal(selection.mode, "selected");
+  assert.deepEqual(selection.tests, [
+    "tests/ty-context/long-task-profile-hook.test.mjs",
+    "tests/ty-context/long-task-workspace-scope.test.mjs",
+    "tests/ty-context/sync-init-doctor.test.mjs",
+  ]);
+});
+
 test("shared long-task runtime types use focused authority and recovery coverage", () => {
   const selection = selectAffectedTests([
     "packages/ty-context/src/lib/long-task-runtime-types.ts",

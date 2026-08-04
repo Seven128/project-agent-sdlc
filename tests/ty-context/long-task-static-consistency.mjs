@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
+import { parse as parseToml } from "smol-toml";
 
 export async function assertLongTaskStaticConsistency(repoRoot) {
   const packageJson = JSON.parse(
@@ -26,6 +27,24 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
     "utf8",
   );
   const gitignore = await readFile(path.join(repoRoot, ".gitignore"), "utf8");
+  const managedAgentProfile = await readFile(
+    path.join(
+      repoRoot,
+      ".codex/ty-context-managed/agents/long-task-implementation.toml",
+    ),
+    "utf8",
+  );
+  const installedAgentProfile = await readFile(
+    path.join(repoRoot, ".codex/agents/long-task-implementation.toml"),
+    "utf8",
+  );
+  const packagedAgentProfile = await readFile(
+    path.join(
+      repoRoot,
+      "packages/ty-context/assets/agents/long-task-implementation.toml",
+    ),
+    "utf8",
+  );
   const expectedVersion = publishWorkflow.match(
     /expected_version:[\s\S]*?default:\s*"([^"\r\n]+)"/u,
   )?.[1];
@@ -44,6 +63,26 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
     /machine_accepted_external_pending/u,
   );
   assert.match(gitignore, /^\.codex\/hooks\.json$/mu);
+  assert.equal(installedAgentProfile, managedAgentProfile);
+  assert.equal(packagedAgentProfile, managedAgentProfile);
+  assert.match(
+    managedAgentProfile,
+    /^# ty-context:managed:long-task-implementation-worker$/mu,
+  );
+  const profile = parseToml(managedAgentProfile);
+  assert.deepEqual(Object.keys(profile).sort(), [
+    "description",
+    "developer_instructions",
+    "model",
+    "model_reasoning_effort",
+    "name",
+  ]);
+  assert.equal(profile.name, "long_task_implementation");
+  assert.equal(profile.model, "gpt-5.6-luna");
+  assert.equal(profile.model_reasoning_effort, "max");
+  assert.match(profile.developer_instructions, /after .*checkpoint/iu);
+  assert.match(profile.developer_instructions, /Do not claim acceptance/iu);
+  assert.match(profile.developer_instructions, /Do not choose models/iu);
   if (await pathExists(path.join(repoRoot, ".git"))) {
     const tracked = await gitOutput(repoRoot, [
       "ls-files",

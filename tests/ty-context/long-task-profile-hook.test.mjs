@@ -79,6 +79,15 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
+      ),
+      true,
+    );
+    assert.equal(
+      await pathExists(
         path.join(fixture.root, ".codex/hooks/long-task-hook.mjs"),
       ),
       false,
@@ -115,6 +124,15 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      await pathExists(
         path.join(fixture.root, ".codex/skills/user-local/SKILL.md"),
       ),
       true,
@@ -140,6 +158,45 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     const retained = JSON.parse(await readFile(hooksFile, "utf8"));
     assertDisabledHookEvents(retained, hookFixture.userOnlyGroup);
     assert.equal(await pathExists(hooksFile), true);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("custom Codex agent collision is preserved and never enters formal acceptance", async () => {
+  const fixture = await createDeliveryFixture();
+  const agentFile = path.join(
+    fixture.root,
+    ".codex/agents/long-task-implementation.toml",
+  );
+  const customized = `name = "user_long_task_implementation"
+description = "User-owned same-path custom agent."
+developer_instructions = "Remain user owned."
+model = "gpt-5.6-terra"
+`;
+  try {
+    await mkdir(path.dirname(agentFile), { recursive: true });
+    await writeFile(agentFile, customized);
+    await commitCandidate(fixture.root);
+
+    await runCli(fixture.root, ["enable", "long-task"]);
+    assert.equal(await readFile(agentFile, "utf8"), customized);
+
+    const compiled = await runCli(fixture.root, [
+      "long-task",
+      "compile",
+      fixture.workdir,
+    ]);
+    assert.equal(compiled.execution_model_checkpoint.required, true);
+    const accepted = await runCli(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(accepted.workflow_status, "machine_accepted");
+
+    await runCli(fixture.root, ["disable", "long-task"]);
+    assert.equal(await readFile(agentFile, "utf8"), customized);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

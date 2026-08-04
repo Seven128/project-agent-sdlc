@@ -123,6 +123,11 @@ test("one-time model choice uses Authority Lock without creating model routing s
     rationale,
     efficiency,
     architecture,
+    managedAgentProfile,
+    installedAgentProfile,
+    packagedAgentProfile,
+    specification,
+    packageSurfaces,
   ] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
@@ -139,18 +144,34 @@ test("one-time model choice uses Authority Lock without creating model routing s
     ),
     read("docs/long-task-workflow-efficiency.md"),
     read("project_context/architecture.md"),
+    read(
+      ".codex/ty-context-managed/agents/long-task-implementation.toml",
+    ),
+    read(".codex/agents/long-task-implementation.toml"),
+    read(
+      "packages/ty-context/assets/agents/long-task-implementation.toml",
+    ),
+    read("PROJECT_SPEC.md"),
+    read(
+      "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+    ),
   ]);
 
   assert.equal(generated, skill);
   assert.equal(packaged, skill);
   assert.equal(lifecycleGenerated, lifecycleSource);
   assert.equal(lifecyclePackaged, lifecycleSource);
+  assert.equal(installedAgentProfile, managedAgentProfile);
+  assert.equal(packagedAgentProfile, managedAgentProfile);
   const combined = [
     skill,
     lifecycleSource,
     rationale,
     efficiency,
     architecture,
+    specification,
+    packageSurfaces,
+    managedAgentProfile,
   ].join("\n");
 
   for (const expected of [
@@ -173,11 +194,39 @@ test("one-time model choice uses Authority Lock without creating model routing s
   assert.match(combined, /no .*model route|creates no model route/iu);
   assert.match(combined, /does not switch|cannot switch/iu);
   assert.match(combined, /not proof|not acceptance evidence/iu);
+  assert.match(combined, /long_task_implementation/iu);
+  assert.match(combined, /gpt-5\.6-luna/iu);
+  assert.match(combined, /model_reasoning_effort = "max"/iu);
+  assert.match(
+    combined,
+    /after .*checkpoint|only after .*choice|post-checkpoint/iu,
+  );
+  assert.match(combined, /not a third checkpoint option/iu);
+  assert.match(
+    combined,
+    /absence.*acceptance|unavailable.*formal acceptance|cannot affect .*acceptance/iu,
+  );
+  assert.match(
+    combined,
+    /static, stateless, non-Authority|fixed, stateless, optional and non-authoritative/iu,
+  );
+  const ownerImplication =
+    "禁止的是动态或持久化模型路由、模型调度和第二控制平面；允许的是一个固定、无状态、非 Authority、可缺席的 Codex 原生滚动实现 worker profile。";
+  assert.ok(specification.includes(ownerImplication));
+  assert.ok(rationale.includes(ownerImplication));
+  assert.match(managedAgentProfile, /^name = "long_task_implementation"$/mu);
+  assert.match(managedAgentProfile, /^model = "gpt-5\.6-luna"$/mu);
+  assert.match(
+    managedAgentProfile,
+    /^model_reasoning_effort = "max"$/mu,
+  );
 
   const affirmativeModelRoutingClaims = combined
     .split(/\r?\n/u)
     .filter((line) =>
-      /model-tier scheduler.*active|persisted model route/iu.test(line),
+      /model-tier scheduler.*active|persisted model route|dynamic model route.*active/iu.test(
+        line,
+      ),
     )
     .filter(
       (line) =>

@@ -69,7 +69,7 @@ Coding agents need two different kinds of help:
 
 Tiny Context keeps those concerns narrow. `project_context/**` records durable ownership, architecture, contracts and repeatable verification. Both implementation routes share one visible, risk-proportional Architecture Deliberation with applicable-quality routing before implementation, Goal-owned boundary-preserving implementation guardrails, and one current-candidate Engineering Quality Conformance that includes Architecture Conformance after project verification. The default Workflow Contract combines manifest routing with one bounded Context search before `Context Delta`; the explicit Long-Task Workflow adds one machine-checked Delivery Contract, a one-time post-Authority-Lock model choice, rolling repair verification, a same-snapshot Final Gate and Stop freshness.
 
-It does not launch or switch models, spawn agents, create branches or worktrees, merge, push, open pull requests, deploy, or claim to replace project tests and human acceptance.
+It does not launch or switch models, spawn agent sessions, create branches or worktrees, merge, push, open pull requests, deploy, or claim to replace project tests and human acceptance.
 
 ## Capability Model
 
@@ -96,7 +96,7 @@ Default profiles are `core-portable` and `workflow-default`. Enable the opt-in p
 ty-context enable long-task
 ```
 
-This additionally installs `long-task-workflow`, the `source-plan-authoring` compatibility pointer and the completion Hook. `design-system-authoring` and `design-resource-authoring` are already in the base managed set. Tiny Context does not install Open Design, an agent runtime, model worker, scheduler, Git orchestration assets or another design-generation runtime.
+This additionally installs `long-task-workflow`, the `source-plan-authoring` compatibility pointer, the completion Hook and one optional project-scoped Codex custom agent named `long_task_implementation`. That static profile is fixed to `gpt-5.6-luna` with `model_reasoning_effort = "max"` and is usable only for bounded rolling implementation/repair after the parent Goal satisfies the first-Authority-Lock model checkpoint. It is not a Skill, runtime, model router, scheduler, Authority or proof carrier; Codex/custom-profile absence or a preserved same-path user customization falls back to parent execution and never changes Long-Task acceptance. `design-system-authoring` and `design-resource-authoring` are already in the base managed set. Tiny Context does not install Open Design, an agent runtime, scheduler, Git orchestration assets or another design-generation runtime.
 
 ## Recommended Usage
 
@@ -110,7 +110,7 @@ Use this route when an implementation delivery both genuinely needs new style-be
 2. **Establish Design Authority only when needed.** If the project has no adopted Design Authority and the work is style-bearing, explicitly select `$design-system-authoring` to generate, select and adopt the canonical `DESIGN.md`, token source and provider binding. Skip this step when the project already has a configured Design Authority.
 3. **Prepare a writable initial proposal.** Put the project-native product/technical proposal at a concrete path such as `docs/initial-proposal.md`. It may be authored by the user, an external service or an explicitly requested applicable proposal capability. `design-resource-authoring` does not author the initial proposal, and no Source Plan stage is required.
 4. **Generate and select design resources.** Select `$design-resource-authoring` with the proposal path plus the exact development scope and targets. It returns one reconciled proposal, the selected immutable canonical resources with their manifest and dependencies, and a validated residual `design-resource-handoff-v1`.
-5. **Start the Single-Goal delivery.** Select `$long-task-workflow` and give it the exact paths to the reconciled proposal, validated handoff and selected canonical resource set. The Skill authors the Source-bound Contract Draft; its first Compile/Authority Lock then presents the one-time current-model or switch-and-resume choice before implementation.
+5. **Start the Single-Goal delivery.** Select `$long-task-workflow` and give it the exact paths to the reconciled proposal, validated handoff and selected canonical resource set. The Skill authors the Source-bound Contract Draft; its first Compile/Authority Lock then presents the one-time current-model or switch-and-resume choice before implementation. After that parent choice, Codex may optionally delegate a bounded implementation slice to `long_task_implementation`; the parent still owns authority, integration and formal verification.
 
 One concrete invocation sequence is:
 

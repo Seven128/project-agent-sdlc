@@ -311,6 +311,7 @@ test("long_task_enable_installs_source_plan_and_workflow_Skills_with_Hooks", asy
     for (const file of [
       ".agent/skills/source-plan-authoring/SKILL.md",
       ".agent/skills/long-task-workflow/SKILL.md",
+      ".codex/agents/long-task-implementation.toml",
       ".codex/hooks.json",
     ]) {
       await stat(path.join(root, file));
@@ -402,6 +403,17 @@ test("long_task_disable_removes_only_owned_hooks_and_Skills", async () => {
       await exists(
         path.join(
           root,
+          ".codex",
+          "agents",
+          "long-task-implementation.toml",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      await exists(
+        path.join(
+          root,
           ".agent",
           "skills",
           "design-resource-authoring",
@@ -483,6 +495,17 @@ test("configured non-Codex harness root remains portable by default", async () =
       await exists(
         path.join(
           root,
+          ".codex",
+          "agents",
+          "long-task-implementation.toml",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      await exists(
+        path.join(
+          root,
           ".harness/skills/composite-long-task-workflow/SKILL.md",
         ),
       ),
@@ -536,6 +559,9 @@ test("CLI init keeps portable defaults and explicit enable activates long-task",
     assert.equal(enable.status, 0, `${enable.stdout}\n${enable.stderr}`);
     assert.match(enable.stdout, /enabled profile long-task/);
     await stat(path.join(root, ".codex/hooks.json"));
+    await stat(
+      path.join(root, ".codex/agents/long-task-implementation.toml"),
+    );
     await stat(
       path.join(root, ".codex/skills/design-resource-authoring/SKILL.md"),
     );

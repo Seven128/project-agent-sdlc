@@ -35,6 +35,14 @@ test("first Authority Lock emits one execution-model checkpoint and later Compil
       fixture.workdir,
     ]);
     assert.deepEqual(first.execution_model_checkpoint, expectedCheckpoint);
+    assert.deepEqual(first.execution_model_checkpoint.options, [
+      "continue_current_model",
+      "switch_model_then_resume",
+    ]);
+    assert.doesNotMatch(
+      JSON.stringify(first.execution_model_checkpoint),
+      /long_task_implementation|gpt-5\.6-luna/iu,
+    );
     assert.equal(first.lifecycle_event, "authority_locked");
     assert.equal(first.delivery_completed_by_this_event, false);
     assert.equal(first.native_goal_effect, "none");

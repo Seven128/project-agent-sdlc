@@ -6,8 +6,9 @@ import {
   matchesRepoPattern,
   normalizeRepositoryFile,
 } from "./long-task-paths.js";
+import { longTaskCodexAgentProfileBootstrapPaths } from "./long-task-codex-agent-profile.js";
 import { packageAssetPath } from "./paths.js";
-import { enabledManagedSkillNames } from "./profiles.js";
+import { enabledManagedSkillNames, isProfileEnabled } from "./profiles.js";
 import type { HarnessConfig, ManagedFile } from "./types.js";
 
 interface WorkspaceScopeAuthority {
@@ -101,6 +102,10 @@ export async function firstLockManagedWorkspacePaths(
     [
       await harnessConfigPath(repository),
       ".codex/hooks.json",
+      ...(await longTaskCodexAgentProfileBootstrapPaths(
+        repository,
+        isProfileEnabled(config, "long-task"),
+      )),
       ...(await packageManagedBootstrapFiles(root, config)),
     ].map(normalizeManagedRoot),
   );
