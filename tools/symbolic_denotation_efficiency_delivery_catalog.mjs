@@ -12,7 +12,9 @@ export const symbolicDeliveryItems = [
 
 export const symbolicDeliveryGroups = {
   architecture: {
-    tests: ["tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs"],
+    tests: [
+      "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
+    ],
   },
   denotation: {
     tests: [
@@ -24,14 +26,19 @@ export const symbolicDeliveryGroups = {
     tests: ["tests/ty-context/symbolic-denotation-equivalence.test.mjs"],
   },
   applicability: {
-    tests: ["tests/ty-context/symbolic-denotation-equivalence.test.mjs"],
+    tests: [
+      "tests/ty-context/symbolic-denotation-ui-v2.test.mjs",
+      "tests/ty-context/symbolic-denotation-structural-efficiency.test.mjs",
+    ],
   },
   downstream: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   noninterference: {
     tests: [
       "tests/ty-context/symbolic-denotation-efficiency-antidegradation.test.mjs",
+      "tests/ty-context/symbolic-denotation-ui-v2.test.mjs",
+      "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
     ],
   },
   capacity: {
@@ -40,23 +47,27 @@ export const symbolicDeliveryGroups = {
   efficiency: {
     tests: [
       "tests/ty-context/symbolic-denotation-efficiency-antidegradation.test.mjs",
+      "tests/ty-context/symbolic-denotation-structural-efficiency.test.mjs",
     ],
   },
   scope: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   rollout: {
-    tests: ["tests/ty-context/symbolic-denotation-long-task-v2.test.mjs"],
+    tests: ["tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"],
   },
   verification: {
     tests: [
       "tests/ty-context/symbolic-denotation-equivalence.test.mjs",
       "tests/ty-context/symbolic-denotation-extensional-equivalence.test.mjs",
       "tests/ty-context/symbolic-denotation-efficiency-antidegradation.test.mjs",
+      "tests/ty-context/symbolic-denotation-structural-efficiency.test.mjs",
     ],
   },
   distribution: {
-    tests: ["tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs"],
+    tests: [
+      "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
+    ],
   },
   safety: {
     tests: [
@@ -68,8 +79,7 @@ export const symbolicDeliveryGroups = {
   },
 };
 
-export const symbolicDeliveryObservation = (key) =>
-  key.replaceAll("-", "_");
+export const symbolicDeliveryObservation = (key) => key.replaceAll("-", "_");
 
 export const symbolicFactObservationRefs = Object.fromEntries(
   symbolicDeliveryItems.map((item) => [

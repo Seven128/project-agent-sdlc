@@ -4,10 +4,7 @@ import type {
   DesignResourceSymbolicFactRuleV2,
   ParsedDesignResourceHandoffV2,
 } from "./design-resource-symbolic-fact-types.js";
-import {
-  compileSymbolicDenotation,
-  DEFAULT_SYMBOLIC_DENOTATION_COMPLEXITY_LIMITS,
-} from "./symbolic-denotation-engine.js";
+import { DEFAULT_SYMBOLIC_DENOTATION_COMPLEXITY_LIMITS } from "./symbolic-denotation-engine.js";
 import type {
   CompiledSymbolicDenotationV1,
   SymbolicDenotationPredicate,
@@ -19,43 +16,54 @@ import {
   requireKnownRefs,
   stableJson,
 } from "./design-resource-symbolic-validation-support.js";
+import type { SymbolicApplicabilityIndex } from "./design-resource-symbolic-applicability-validation.js";
+import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
+import {
+  symbolicSubjectPropertyKey,
+  type SymbolicManifestIndexes,
+} from "./design-resource-symbolic-indexes.js";
 
 export function validateSymbolicApplicabilityClosure(
   manifest: DesignResourceObservableRuleManifestV2,
   reachable: CompiledSymbolicDenotationV1,
+  indexes: SymbolicManifestIndexes,
+  applicability: SymbolicApplicabilityIndex,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   for (const subject of manifest.subjects)
     for (const property of manifest.properties)
       validateSubjectPropertyPartition(
-        manifest,
         reachable,
         subject.key,
         property.key,
+        indexes,
+        applicability,
+        compilation,
       );
 }
 
 function validateSubjectPropertyPartition(
-  manifest: DesignResourceObservableRuleManifestV2,
   reachable: CompiledSymbolicDenotationV1,
   subjectRef: string,
   propertyRef: string,
+  indexes: SymbolicManifestIndexes,
+  applicability: SymbolicApplicabilityIndex,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
+  const tupleKey = symbolicSubjectPropertyKey(subjectRef, propertyRef);
   const regions: Array<{ key: string; region: SymbolicDenotationPredicate }> = [
-    ...manifest.fact_rules.filter(
-      (rule) =>
-        rule.subject_or_relation_ref === subjectRef &&
-        rule.property_ref === propertyRef,
-    ),
-    ...manifest.disposition_regions.filter(
-      (region) =>
-        region.subject_or_relation_ref === subjectRef &&
-        region.property_ref === propertyRef,
-    ),
+    ...(indexes.rulesBySubjectProperty.get(tupleKey) ?? []),
+    ...(indexes.dispositionsBySubjectProperty.get(tupleKey) ?? []),
   ];
   const label = `${subjectRef}:${propertyRef}`;
+  if (!applicability.isApplicable(subjectRef, propertyRef)) {
+    if (regions.length)
+      invalid("v2_structural_not_applicable_materialized", label);
+    return;
+  }
   if (!regions.length) invalid("v2_applicability_remainder_uncovered", label);
-  assertRegionsMutuallyExclusive(manifest, regions);
-  const union = compileSymbolicDenotation(manifest.axis_domains, {
+  assertRegionsMutuallyExclusive(regions, compilation);
+  const union = compilation.compile({
     op: "any",
     predicates: regions.map((region) => region.region),
   });
@@ -64,12 +72,12 @@ function validateSubjectPropertyPartition(
 }
 
 function assertRegionsMutuallyExclusive(
-  manifest: DesignResourceObservableRuleManifestV2,
   regions: Array<{ key: string; region: SymbolicDenotationPredicate }>,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   for (let left = 0; left < regions.length; left += 1)
     for (let right = left + 1; right < regions.length; right += 1) {
-      const overlap = compileSymbolicDenotation(manifest.axis_domains, {
+      const overlap = compilation.compile({
         op: "all",
         predicates: [regions[left].region, regions[right].region],
       });
@@ -132,12 +140,12 @@ function coverageSets(
 }
 
 export function validateSymbolicRegionWithinReachable(
-  domains: DesignResourceObservableRuleManifestV2["axis_domains"],
   region: SymbolicDenotationPredicate,
   reachable: SymbolicDenotationPredicate,
   label: string,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
-  const outside = compileSymbolicDenotation(domains, {
+  const outside = compilation.compile({
     op: "all",
     predicates: [region, { op: "not", predicate: reachable }],
   });

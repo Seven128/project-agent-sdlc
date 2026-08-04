@@ -30,7 +30,10 @@ test("public guidance and durable Context teach one opt-in V2 rollout", async ()
   ];
   for (const file of required) {
     const content = await text(file);
-    assert.ok(content.includes(rolloutMarker), `${file}: missing rollout marker`);
+    assert.ok(
+      content.includes(rolloutMarker),
+      `${file}: missing rollout marker`,
+    );
     assert.doesNotMatch(content, /no V2 marker is added/u, file);
   }
 
@@ -55,6 +58,59 @@ test("public guidance and durable Context teach one opt-in V2 rollout", async ()
       (await text(file)).includes(efficiencyMarker),
       `${file}: efficiency theorem drift`,
     );
+
+  for (const file of [
+    "README.md",
+    "packages/ty-context/README.md",
+    "PROJECT_SPEC.md",
+    "project_context/areas/harness-package/contracts/design-resource-handoff.md",
+    ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
+    ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
+  ]) {
+    const content = await text(file);
+    assert.match(
+      content,
+      /custom.property/u,
+      `${file}: custom-property closure drift`,
+    );
+    assert.match(
+      content,
+      /instance exceptions/u,
+      `${file}: instance exception drift`,
+    );
+    assert.match(content, /Source-side/u, `${file}: source proof side drift`);
+    assert.match(
+      content,
+      /production-side/u,
+      `${file}: production proof side drift`,
+    );
+    assert.match(
+      content,
+      /restricted-IR|restricted decidable IR|受限 IR/u,
+      `${file}: trusted IR proof drift`,
+    );
+    assert.match(
+      content,
+      /frozen executable|frozen_executable/u,
+      `${file}: frozen proof Oracle drift`,
+    );
+    assert.match(
+      content,
+      /symbolic_noninterference\.<side>\.<method>/u,
+      `${file}: proof Oracle capability drift`,
+    );
+    assert.match(
+      content,
+      /dependency DAG/u,
+      `${file}: static proof graph drift`,
+    );
+    assert.match(content, /memoiz/u, `${file}: shared proof DAG drift`);
+    assert.match(
+      content,
+      /proof digest/u,
+      `${file}: Final-Gate proof binding drift`,
+    );
+  }
 });
 
 test("managed source, installed workspace copies and package assets are exact", async () => {
@@ -71,14 +127,21 @@ test("managed source, installed workspace copies and package assets are exact", 
     ],
   ]) {
     const expected = await text(source);
-    assert.equal(await text(installed), expected, `${installed}: managed drift`);
+    assert.equal(
+      await text(installed),
+      expected,
+      `${installed}: managed drift`,
+    );
     assert.equal(await text(packaged), expected, `${packaged}: package drift`);
   }
   assert.equal(
     await text("packages/ty-context/assets/agents/AGENTS_CORE.md"),
     await text(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
   );
-  assert.equal(await text("packages/ty-context/assets/README.md"), await text("README.md"));
+  assert.equal(
+    await text("packages/ty-context/assets/README.md"),
+    await text("README.md"),
+  );
   assert.ok((await text("AGENTS.md")).includes(rolloutMarker));
 });
 
@@ -101,15 +164,38 @@ test("public schema, exports and changed-path routing include symbolic V2", asyn
       "design_symbolic_certificate",
     ),
   );
+  const sourceIrSchema = JSON.parse(
+    await text(
+      "packages/ty-context/src/schemas/design-resource-symbolic-source-ir-v1.schema.json",
+    ),
+  );
+  assert.equal(
+    sourceIrSchema.properties.schema_version.const,
+    "design-resource-symbolic-source-ir-v1",
+  );
+  const artifactSchema = JSON.parse(
+    await text(
+      "packages/ty-context/src/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
+    ),
+  );
+  assert.equal(
+    artifactSchema.properties.schema_version.const,
+    "design-resource-symbolic-noninterference-artifact-v2",
+  );
 
   const publicApi = `${await text("packages/ty-context/src/index.ts")}\n${await text(
     "packages/ty-context/src/public-types.ts",
+  )}\n${await text(
+    "packages/ty-context/src/lib/symbolic-denotation-public.ts",
   )}`;
   for (const name of [
     "symbolicDenotation",
     "DesignResourceHandoffV2",
     "DesignResourceHandoffPreflightV2",
     "DesignResourceObservableRuleManifestV2",
+    "DesignResourceSymbolicNoninterferenceArtifactV2",
+    "DesignResourceSymbolicSourceIrV1",
+    "DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_SCHEMA_VERSION",
   ])
     assert.ok(publicApi.includes(name), `public export missing: ${name}`);
 
@@ -117,17 +203,78 @@ test("public schema, exports and changed-path routing include symbolic V2", asyn
   for (const testFile of [
     "symbolic-denotation-equivalence.test.mjs",
     "symbolic-denotation-ui-v2.test.mjs",
-    "symbolic-denotation-long-task-v2.test.mjs",
+    "long-task-symbolic-denotation-v2.test.mjs",
     "symbolic-denotation-efficiency-antidegradation.test.mjs",
+    "symbolic-denotation-structural-efficiency.test.mjs",
     "design-resource-v1-capacity-guard.test.mjs",
   ])
-    assert.ok(affected.includes(testFile), `affected routing missing: ${testFile}`);
+    assert.ok(
+      affected.includes(testFile),
+      `affected routing missing: ${testFile}`,
+    );
   assert.ok(
     (await text("tools/test_suite_policy.mjs")).includes(
       "symbolic-mixed-representation-closure",
     ),
     "Trust routing is missing the mixed V1/V2 false-completion sentinel",
   );
+
+  for (const module of [
+    "design-resource-symbolic-applicability-profiles.ts",
+    "design-resource-symbolic-applicability-validation.ts",
+    "design-resource-symbolic-compilation.ts",
+    "design-resource-symbolic-indexes.ts",
+    "design-resource-symbolic-noninterference-validation.ts",
+  ])
+    assert.match(
+      await text(`packages/ty-context/src/lib/${module}`),
+      /export /u,
+      `implementation owner missing: ${module}`,
+    );
+
+  assert.equal(
+    symbolicDeliveryItems.length,
+    113,
+    "Candidate B must revise the reproducible 113-Fact baseline rather than create an unbound fourth catalog",
+  );
+  const candidateBSource = new Map(
+    symbolicDeliveryItems.map((item) => [item.key, item.statement]),
+  );
+  for (const [factKey, expected] of [
+    [
+      "canonical-shared-decision-dag",
+      /manifest-level[\s\S]*axis partitions[\s\S]*memoization[\s\S]*indexes/iu,
+    ],
+    [
+      "deterministic-canonical-identity",
+      /unrelated numeric partition cut[\s\S]*DAG[\s\S]*digest[\s\S]*byte/iu,
+    ],
+    [
+      "package-policy-property-catalog",
+      /profiles[\s\S]*physical[\s\S]*logical subject-property point/iu,
+    ],
+    [
+      "inspector-census-applicability",
+      /custom-property set[\s\S]*instance exception[\s\S]*non-empty rationale/iu,
+    ],
+    [
+      "certificate-dependency-edge-coverage",
+      /exactly empty[\s\S]*memoized[\s\S]*unreachable nodes/iu,
+    ],
+    [
+      "certificate-package-recomputation",
+      /Source-side[\s\S]*production-side[\s\S]*static dependency closure[\s\S]*restricted decidable IR[\s\S]*finite complete domain[\s\S]*symbolic_noninterference/iu,
+    ],
+    [
+      "complexity-parameter-verification",
+      /639 subjects[\s\S]*217 properties[\s\S]*53 axes[\s\S]*5,245 variations[\s\S]*138,663[\s\S]*137,385/iu,
+    ],
+  ])
+    assert.match(
+      candidateBSource.get(factKey) ?? "",
+      expected,
+      `Candidate B semantic revision missing: ${factKey}`,
+    );
 });
 
 test("semantic Fact materialization remains the sole runtime carrier for semantic assertions", () => {

@@ -1,5 +1,5 @@
 import {
-  DESIGN_RESOURCE_INSPECTOR_CAPABILITIES,
+  DESIGN_RESOURCE_ORACLE_CAPABILITIES,
   type DesignResourceAssetBindingV1,
   type DesignResourceEnvironmentV1,
   type DesignResourceOracleV1,
@@ -51,7 +51,7 @@ export function parseDesignResourceOracles(
       ).map((capability, capabilityIndex) =>
         literal(
           capability,
-          DESIGN_RESOURCE_INSPECTOR_CAPABILITIES,
+          DESIGN_RESOURCE_ORACLE_CAPABILITIES,
           `${itemLabel}.capability_refs[${capabilityIndex}]`,
         ),
       ),

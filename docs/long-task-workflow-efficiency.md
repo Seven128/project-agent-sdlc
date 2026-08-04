@@ -4,7 +4,7 @@
 
 The Long-Task Workflow exists to prevent false completion inside declared authority. Its acceptable machine result is binary in substance: either fresh evidence on the complete current final snapshot proves every declared Plan Item and AC, or the delivery remains explicitly unfinished or qualified.
 
-Efficiency is subordinate to that objective. The preferred design is the lowest practical total workflow cost that preserves the same false-completion interception, or stronger interception at the same cost.
+Its mechanism-design objective is the efficient attainment of the complete fine-grained effect: preserve the Source/Contract Authority, Authority Lock/Revision, drift observation/localization, repair/revalidation and one current-snapshot Final Gate chain; preserve every independently decidable non-UI Fact and every full-granularity UI/UX Fact/proof obligation; then minimize the total cost of attaining that unchanged effect. Efficiency is subordinate to those hard constraints and is not a terminal-delivery predicate. The preferred design is the lowest practical total workflow cost that preserves the same false-completion interception and granularity, or stronger interception at the same cost.
 
 Apply two gates in order:
 

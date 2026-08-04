@@ -1,6 +1,8 @@
 import { validateDesignResourceLocatedDigest } from "./design-resource-fact-locator-validation.js";
 import type { DesignResourcePropertyDefinitionV1 } from "./design-resource-fact-types.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
+import { buildSymbolicApplicabilityIndex } from "./design-resource-symbolic-applicability-validation.js";
+import { createDesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
 import { validateSymbolicDispositions } from "./design-resource-symbolic-disposition-validation.js";
 import {
   validateSymbolicCertificates,
@@ -17,7 +19,6 @@ import {
   validateSymbolicPropertyCatalog,
 } from "./design-resource-symbolic-resource-validation.js";
 import {
-  assertNoUnprovedOmittedAxes,
   validateSymbolicExactTargetCoverage,
   validateSymbolicReadinessClosure,
 } from "./design-resource-symbolic-safety-validation.js";
@@ -31,6 +32,10 @@ import type {
   ParsedDesignResourceHandoffV2,
 } from "./design-resource-symbolic-fact-types.js";
 import {
+  buildSymbolicManifestIndexes,
+  type SymbolicManifestIndexes,
+} from "./design-resource-symbolic-indexes.js";
+import {
   designResourceSymbolicRuleKey,
   invalid,
   omitRuleIdentityFields,
@@ -38,7 +43,6 @@ import {
   stableJson,
   unique,
 } from "./design-resource-symbolic-validation-support.js";
-import { compileSymbolicDenotation } from "./symbolic-denotation-engine.js";
 
 export function validateDesignResourceSymbolicManifest(
   manifest: DesignResourceObservableRuleManifestV2,
@@ -54,32 +58,48 @@ export function validateDesignResourceSymbolicManifest(
   const target = parsed.handoff.targets[0];
   if (!manifest.subjects.length || !manifest.properties.length)
     invalid("v2_subject_property_universe_required", target.key);
-  const reachable = compileSymbolicDenotation(
-    manifest.axis_domains,
-    manifest.reachable_region,
-  );
+  const compilation = createDesignResourceSymbolicCompilationSession(manifest);
+  const reachable = compilation.compile(manifest.reachable_region);
   if (reachable.canonical_dag.root_ref === "terminal.false")
     invalid("v2_reachable_region_empty", target.key);
   validateSymbolicInspectorAndResources(manifest, target, resources, contents);
   validateSymbolicPropertyCatalog(manifest.properties);
-  const indexes = buildManifestIndexes(manifest, parsed);
+  const indexes = buildSymbolicManifestIndexes(manifest, parsed);
   validateSymbolicSubjectPopulationClosure(
     manifest,
     target,
     indexes,
     resources,
     contents,
+    compilation,
   );
+  const applicability = buildSymbolicApplicabilityIndex(manifest, indexes);
   const ruleProjections = validateRules(
     manifest,
     target,
     indexes,
     resources,
     contents,
+    compilation,
   );
   validateSymbolicCensusClosure(manifest, indexes);
-  validateSymbolicDispositions(manifest, target.key, indexes);
-  validateSymbolicApplicabilityClosure(manifest, reachable);
+  validateSymbolicDispositions(manifest, target.key, indexes, compilation);
+  const certificateMetrics = validateSymbolicCertificates(
+    manifest,
+    ruleProjections,
+    indexes,
+    compilation,
+    target,
+    resources,
+    contents,
+  );
+  validateSymbolicApplicabilityClosure(
+    manifest,
+    reachable,
+    indexes,
+    applicability,
+    compilation,
+  );
   validateSymbolicObligations(
     manifest,
     ruleProjections,
@@ -90,15 +110,12 @@ export function validateDesignResourceSymbolicManifest(
     resources,
     contents,
   );
-  const certificateMetrics = validateSymbolicCertificates(
-    manifest,
-    ruleProjections,
-  );
   validateSymbolicExactTargetCoverage(
     target.interpretation,
     manifest,
     ruleProjections,
     reachable,
+    compilation,
   );
   const dagMetrics = aggregateSymbolicCanonicalMetrics(ruleProjections);
   return {
@@ -150,45 +167,28 @@ function validateManifestIdentities(
     unique(keys, `v2_${label}_key_duplicate`);
 }
 
-function buildManifestIndexes(
-  manifest: DesignResourceObservableRuleManifestV2,
-  parsed: ParsedDesignResourceHandoffV2,
-) {
-  return {
-    sourceItems: new Set(parsed.source_item_keys),
-    census: new Set(manifest.inspector.census.map((item) => item.key)),
-    subjects: new Map(manifest.subjects.map((item) => [item.key, item])),
-    populations: new Map(manifest.populations.map((item) => [item.key, item])),
-    properties: new Map(manifest.properties.map((item) => [item.key, item])),
-    oracles: new Map(manifest.oracles.map((item) => [item.key, item])),
-    environments: new Map(
-      manifest.environments.map((item) => [item.key, item]),
-    ),
-    inspectorCapabilities: new Set(manifest.inspector.capability_refs),
-  };
-}
-
-export type SymbolicManifestIndexes = ReturnType<typeof buildManifestIndexes>;
-
 function validateRules(
   manifest: DesignResourceObservableRuleManifestV2,
   target: ParsedDesignResourceHandoffV2["handoff"]["targets"][number],
   indexes: SymbolicManifestIndexes,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
+  compilation: ReturnType<
+    typeof createDesignResourceSymbolicCompilationSession
+  >,
 ): DesignResourceHandoffPreflightV2["rule_projections"] {
+  const reachableRegionDigests = new Set<string>();
   return manifest.fact_rules.map((rule) => {
-    const compiled = compileSymbolicDenotation(
-      manifest.axis_domains,
-      rule.region,
-    );
-    assertNoUnprovedOmittedAxes(compiled, rule.key);
-    validateSymbolicRegionWithinReachable(
-      manifest.axis_domains,
-      rule.region,
-      manifest.reachable_region,
-      rule.key,
-    );
+    const compiled = compilation.compile(rule.region);
+    if (!reachableRegionDigests.has(compiled.canonical_sha256)) {
+      validateSymbolicRegionWithinReachable(
+        rule.region,
+        manifest.reachable_region,
+        rule.key,
+        compilation,
+      );
+      reachableRegionDigests.add(compiled.canonical_sha256);
+    }
     const subject = indexes.subjects.get(rule.subject_or_relation_ref);
     const property = indexes.properties.get(rule.property_ref);
     if (!subject) invalid("v2_rule_subject_unknown", rule.key);
@@ -213,6 +213,15 @@ function validateRuleAuthority(
   property: DesignResourcePropertyDefinitionV1,
   indexes: SymbolicManifestIndexes,
 ): void {
+  unique(rule.census_refs, `v2_rule_census_ref_duplicate:${rule.key}`);
+  unique(
+    rule.source_item_refs,
+    `v2_rule_source_item_ref_duplicate:${rule.key}`,
+  );
+  unique(
+    rule.semantic_obligation_refs,
+    `v2_rule_obligation_ref_duplicate:${rule.key}`,
+  );
   validateSymbolicPopulationAndQuantifier(
     rule,
     subjectPopulationRef,

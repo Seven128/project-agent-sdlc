@@ -103,7 +103,7 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
   ),
   criticalSentinel(
     "symbolic-mixed-representation-closure",
-    "long-task-symbolic-mixed-representation-closure.test.mjs",
+    "long-task-symbolic-denotation-v2.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves one Contract can bind V1 ground Facts and explicitly opted-in V2 Rules together while exact Rule-method-region and freshly recomputed certificate evidence cannot cross-substitute or bypass the existing current-snapshot Final Gate.",
   ),
@@ -196,7 +196,7 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-semantic-drift-closure.test.mjs",
     "long-task-semantic-drift-lifecycle.test.mjs",
     "long-task-semantic-fact-closure.test.mjs",
-    "long-task-symbolic-mixed-representation-closure.test.mjs",
+    "long-task-symbolic-denotation-v2.test.mjs",
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
     "source-plan-authoring-skill.test.mjs",
@@ -255,7 +255,7 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
 
 export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-authoring-claims.test.mjs",
-  "long-task-symbolic-mixed-representation-closure.test.mjs",
+  "long-task-symbolic-denotation-v2.test.mjs",
   "long-task-authority-adversarial.test.mjs",
   "long-task-authority-authoring-fields.test.mjs",
   "long-task-authority-progress-retry.test.mjs",

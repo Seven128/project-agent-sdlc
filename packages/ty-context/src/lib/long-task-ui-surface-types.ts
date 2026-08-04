@@ -81,6 +81,8 @@ export interface DeliveryDesignSymbolicCertificateExpectationV2 {
   omitted_axis_refs: string[];
   dependency_edge_refs: string[];
   canonical_rule_dag_sha256: string;
+  source_noninterference_proof_sha256?: string;
+  production_noninterference_proof_sha256?: string;
 }
 
 export interface DeliveryDesignSymbolicCertificateBindingV2 {

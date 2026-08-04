@@ -31,7 +31,7 @@ export const symbolicDeliveryItemsPart2 = [
     "data_model",
     "identity",
     "symbolic-engine",
-    "Equivalent symbolic inputs normalize to the same canonical DAG serialization and digest independent of declaration ordering, redundant predicates or chunk boundaries.",
+    "Equivalent symbolic inputs normalize to the same canonical DAG serialization and digest independent of declaration ordering, redundant predicates or chunk boundaries; adding an unrelated numeric partition cut cannot change an existing Rule's canonical DAG, digest or canonical byte count.",
   ),
   row(
     "symbolic-complexity-fuse",
@@ -55,7 +55,7 @@ export const symbolicDeliveryItemsPart2 = [
     "data_model",
     "schema",
     "applicability",
-    "Property applicability starts from the complete package-owned standard property catalog plus validated custom properties; the Inspector cannot silently narrow that candidate catalog.",
+    "Property applicability starts from the complete package-owned standard property catalog plus validated custom properties; package-owned capability and property profiles may remove physical subject-by-property N/A rows only while every logical subject-property point resolves to one unique disposition, and the Inspector cannot silently narrow that candidate catalog.",
   ),
   row(
     "inspector-census-applicability",
@@ -63,7 +63,7 @@ export const symbolicDeliveryItemsPart2 = [
     "architecture_ownership",
     "input_boundary",
     "applicability",
-    "Every property region reported applicable must be supported by the frozen Inspector Census, capability declaration, inspected input closure and exact subject or relation identity.",
+    "Every property region reported applicable and the exact custom-property set must be supported by the frozen Inspector Census, capability declaration, inspected input closure and exact subject or relation identity; every instance exception carries exact Census, Source and basis authority plus a non-empty rationale and must change its profile-derived disposition.",
   ),
   row(
     "basis-backed-property-remainder",
@@ -71,7 +71,7 @@ export const symbolicDeliveryItemsPart2 = [
     "business_rule_calculation",
     "exception",
     "applicability",
-    "For every package-catalog property not applicable in a reachable region, the complete remainder is covered by an exact basis-backed not-applicable, excluded, decision-required or unavailable disposition.",
+    "For every logical package-catalog or validated custom property point not applicable in a reachable region, including points with no physical matrix row, the complete remainder is covered by an exact basis-backed not-applicable, excluded, decision-required or unavailable disposition.",
   ),
   row(
     "unknown-applicability-blocks",
@@ -159,7 +159,7 @@ export const symbolicDeliveryItemsPart2 = [
     "architecture_ownership",
     "interface",
     "noninterference",
-    "One set-valued non-interference certificate may cover multiple Rule identities, omitted axes and dependency edges when the package independently proves that exact covered set.",
+    "One set-valued non-interference certificate may cover multiple Rule identities and omitted axes when package preflight validates that exact set against trusted Source-side and production-side proofs; physical Rule-by-axis dependency edges are not certificate rows.",
   ),
   row(
     "certificate-omitted-axis-coverage",
@@ -167,7 +167,7 @@ export const symbolicDeliveryItemsPart2 = [
     "observability",
     "dimension",
     "noninterference",
-    "Non-interference accounting reports the exact set and count of omitted axes covered by each certificate and rejects unknown, reachable-but-uncovered or semantically relevant omissions.",
+    "Non-interference accounting reports the exact set and count of omitted axes covered by each certificate and rejects duplicate Rule or axis references, unknown axes, reachable-but-uncovered omissions and semantically relevant omissions.",
   ),
   row(
     "certificate-dependency-edge-coverage",
@@ -175,7 +175,7 @@ export const symbolicDeliveryItemsPart2 = [
     "observability",
     "causation",
     "noninterference",
-    "Non-interference accounting reports the exact set and count of dependency edges covered by each certificate and rejects an omitted edge that can affect disposition, expected semantics or proof denotation.",
+    "The physical certificate dependency-edge set and count are exactly empty; dependency causation belongs to memoized frozen Source-side and production-side proof DAGs whose complete input closure, cycles, dangling or unreachable nodes, Rule-root axes and bounded node, edge and depth capacity are validated before a causally relevant omitted axis is rejected.",
   ),
   row(
     "noninterference-obligation-count-metric",
@@ -215,7 +215,7 @@ export const symbolicDeliveryItemsPart2 = [
     "compatibility_migration_rollout",
     "validation",
     "noninterference",
-    "The package recomputes certificate coverage, variable dependence, region equivalence and canonical identities from frozen symbolic inputs; provider or author complete booleans are not trusted.",
+    "For every omitted axis the package requires both Source-side and production-side proof by complete static dependency closure over frozen closed-world inputs, exact equivalence in the restricted decidable IR or genuine exhaustive equivalence over a finite complete domain; each proof binds a digest-identified frozen executable Oracle with the exact symbolic_noninterference side-and-method capability, while dynamic loading, reflection, unfrozen implicit dependencies, external devices, sampling and provider or author complete booleans block closure.",
   ),
   row(
     "certificate-not-semantic-proof-substitute",

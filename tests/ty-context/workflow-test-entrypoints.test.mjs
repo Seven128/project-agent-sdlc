@@ -22,6 +22,11 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   );
   assert.match(packageWorkflow, /package check-source/);
   assert.match(packageWorkflow, /make validate-harness/);
+  assert.match(pullRequestJob, /PR_BASE_REF: \$\{\{ github\.base_ref \}\}/);
+  assert.match(pullRequestJob, /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/);
+  assert.match(pullRequestJob, /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/);
+  assert.match(pullRequestJob, /git merge-base HEAD origin\/main/);
+  assert.match(pullRequestJob, /--base "\$modularity_base"/);
   assert.match(pullRequestJob, /Trust boundary package tests/);
   assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(

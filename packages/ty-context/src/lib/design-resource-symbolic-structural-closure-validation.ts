@@ -1,6 +1,7 @@
 import { validateDesignResourceLocatedDigest } from "./design-resource-fact-locator-validation.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
-import type { SymbolicManifestIndexes } from "./design-resource-symbolic-manifest-validation.js";
+import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
+import type { SymbolicManifestIndexes } from "./design-resource-symbolic-indexes.js";
 import type {
   DesignResourceObservableRuleManifestV2,
   DesignResourceSymbolicHandoffTargetV2,
@@ -16,7 +17,6 @@ import {
   requireKnownRefs,
   unique,
 } from "./design-resource-symbolic-validation-support.js";
-import { compileSymbolicDenotation } from "./symbolic-denotation-engine.js";
 
 export function validateSymbolicSubjectPopulationClosure(
   manifest: DesignResourceObservableRuleManifestV2,
@@ -24,9 +24,17 @@ export function validateSymbolicSubjectPopulationClosure(
   indexes: SymbolicManifestIndexes,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   validateSubjects(manifest, target.key, indexes);
-  validatePopulations(manifest, target, indexes, resources, contents);
+  validatePopulations(
+    manifest,
+    target,
+    indexes,
+    resources,
+    contents,
+    compilation,
+  );
 }
 
 export function validateSymbolicCensusClosure(
@@ -99,6 +107,7 @@ function validatePopulations(
   indexes: SymbolicManifestIndexes,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   const targetResources = new Set(target.resource_refs);
   for (const population of manifest.populations) {
@@ -137,16 +146,13 @@ function validatePopulations(
     for (const exclusion of population.exclusions) {
       if (!exclusion.basis_refs.length)
         invalid("v2_population_exclusion_basis_required", exclusion.key);
-      const compiled = compileSymbolicDenotation(
-        manifest.axis_domains,
-        exclusion.region,
-      );
+      const compiled = compilation.compile(exclusion.region);
       assertNoUnprovedOmittedAxes(compiled, exclusion.key);
       validateSymbolicRegionWithinReachable(
-        manifest.axis_domains,
         exclusion.region,
         manifest.reachable_region,
         exclusion.key,
+        compilation,
       );
     }
   }
@@ -169,9 +175,7 @@ function validateCensusClosure(
     unique(row.fact_refs, `v2_census_rule_ref_duplicate:${row.key}`);
     assertSameSet(
       row.fact_refs,
-      manifest.fact_rules
-        .filter((rule) => rule.census_refs.includes(row.key))
-        .map((rule) => rule.key),
+      (indexes.rulesByCensus.get(row.key) ?? []).map((rule) => rule.key),
       "v2_census_rule_set_mismatch",
       row.key,
     );

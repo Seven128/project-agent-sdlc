@@ -3,9 +3,13 @@ import { compileSymbolicDenotation } from "../../packages/ty-context/dist/lib/sy
 import {
   designResourceSymbolicCertificateKey,
   designResourceSymbolicCombinedRuleDigest,
-  designResourceSymbolicDependencyEdge,
   designResourceSymbolicRuleKey,
 } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
+import {
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+  SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+} from "../../packages/ty-context/dist/lib/design-resource-symbolic-noninterference-artifact.js";
 import {
   buildFixtureObligations,
   fixtureCensusRow,
@@ -108,11 +112,7 @@ export function buildSymbolicFixtureModel(resourcesWithoutManifest, values) {
       };
     });
   const obligations = buildFixtureObligations(rules, properties, parameters);
-  const dependencyEdges = rules.flatMap((projection) =>
-    projection.compiled.omitted_axis_refs.map((axisRef) =>
-      designResourceSymbolicDependencyEdge(axisRef, projection.rule.key),
-    ),
-  );
+  const dependencyEdges = [];
   const certificateInput = {
     fact_rule_refs: rules.map((item) => item.rule.key),
     omitted_axis_refs: [
@@ -303,11 +303,7 @@ export function refreshSymbolicFixtureDerivedIdentities(model) {
     model.properties,
     model.parameters,
   );
-  model.dependencyEdges = model.rules.flatMap((projection) =>
-    projection.compiled.omitted_axis_refs.map((axisRef) =>
-      designResourceSymbolicDependencyEdge(axisRef, projection.rule.key),
-    ),
-  );
+  model.dependencyEdges = [];
   model.manifest.dependency_edges = model.dependencyEdges;
   const certificateInput = {
     fact_rule_refs: model.rules.map((item) => item.rule.key),
@@ -334,5 +330,173 @@ export function refreshSymbolicFixtureDerivedIdentities(model) {
     row.fact_refs = model.rules
       .filter((item) => item.rule.census_refs.includes(row.key))
       .map((item) => item.rule.key);
+  return model;
+}
+
+export function enableCompactSymbolicApplicability(model) {
+  model.manifest.structural_applicability = {
+    profile_catalog: "package-subject-property-applicability-v1",
+    subject_profile_bindings: [
+      {
+        key: "profile-binding.fixture-surface",
+        subject_refs: ["surface.root"],
+        profile_refs: [
+          "profile.property.geometry.width",
+          "profile.property.color.background",
+        ],
+        census_refs: ["census.subject.root"],
+        source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
+        basis_refs: [
+          "package-policy.subject-kind.surface.v1",
+          "census.subject.root",
+        ],
+        rationale:
+          "The frozen Inspector classifies the fixture surface with exactly the two package-owned property capabilities used by this target.",
+      },
+    ],
+    inspector_custom_property_closure: [],
+    instance_exceptions: [],
+  };
+  model.manifest.disposition_regions = [];
+  return model;
+}
+
+export function enableFixtureTrustedNoninterference(
+  model,
+  method = "closed_world_static_dependency_closure",
+) {
+  const firstByProperty = new Map();
+  for (const projection of model.rules)
+    if (!firstByProperty.has(projection.rule.property_ref))
+      firstByProperty.set(projection.rule.property_ref, projection);
+  model.rules = [...firstByProperty.values()];
+  for (const projection of model.rules)
+    projection.rule.region = structuredClone(model.manifest.reachable_region);
+  refreshSymbolicFixtureDerivedIdentities(model);
+  model.manifest.oracles[0].trust = "frozen_executable";
+  model.manifest.oracles[0].identity = SYMBOLIC_NONINTERFERENCE_ORACLE_IDENTITY;
+  model.manifest.oracles[0].version = SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION;
+  model.manifest.oracles[0].sha256 =
+    SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256;
+  model.manifest.oracles[0].capability_refs = [
+    ...new Set([
+      ...model.manifest.oracles[0].capability_refs,
+      `symbolic_noninterference.source.${method}`,
+      `symbolic_noninterference.production.${method}`,
+    ]),
+  ].sort();
+  const projections = model.rules.map((item) => ({
+    rule: item.rule,
+    compiled_region: item.compiled,
+  }));
+  const buildProof = (side) => {
+    const inputResourceRefs = model.manifest.inspector.input_resources.map(
+      (item) => item.resource_ref,
+    );
+    const dependencyAxisRefs = [
+      ...new Set(
+        model.rules.flatMap((item) => item.compiled.referenced_axis_refs),
+      ),
+    ].sort();
+    const dependencyNodeRef = `dependency.${side}.fixture-root`;
+    return {
+      side,
+      method,
+      input_resource_refs: [...inputResourceRefs],
+      oracle_ref: "oracle.fixture",
+      environment_ref: "environment.fixture",
+      static_dependency_nodes:
+        side === "production" &&
+        method === "closed_world_static_dependency_closure"
+          ? [
+              {
+                key: dependencyNodeRef,
+                axis_refs: dependencyAxisRefs,
+                dependency_refs: [],
+                input_resource_refs: [...inputResourceRefs],
+              },
+            ]
+          : [],
+      static_rule_roots:
+        side === "production" &&
+        method === "closed_world_static_dependency_closure"
+          ? [
+              {
+                fact_rule_refs: null,
+                node_ref: dependencyNodeRef,
+              },
+            ]
+          : [],
+      equivalence_cases:
+        side === "source" ||
+        method === "closed_world_static_dependency_closure"
+          ? []
+          : [
+              {
+                fact_rule_refs: model.rules.map((item) => item.rule.key),
+                side_predicate: structuredClone(
+                  model.manifest.reachable_region,
+                ),
+                axis_erased_predicate: structuredClone(
+                  model.manifest.reachable_region,
+                ),
+              },
+            ],
+      dynamic_dependency_kinds: [],
+      external_device_refs: [],
+      complete_domain_cardinality:
+        method === "finite_complete_domain_exhaustive_equivalence"
+          ? model.rules[0].compiled.theoretical_ground_cardinality
+          : null,
+      oracle_version: SYMBOLIC_NONINTERFERENCE_ORACLE_VERSION,
+      oracle_implementation_sha256:
+        SYMBOLIC_NONINTERFERENCE_ORACLE_IMPLEMENTATION_SHA256,
+      oracle_capability: `symbolic_noninterference.${side}.${method}`,
+      environment_sha256: "0".repeat(64),
+      input_snapshot_sha256: "0".repeat(64),
+      source_manifest_snapshot_sha256: null,
+      target_snapshot_sha256: "0".repeat(64),
+      certificate_scope_sha256: "0".repeat(64),
+      rule_scope_sha256: "0".repeat(64),
+      omitted_axis_refs: [...model.certificate.omitted_axis_refs],
+      method_result_sha256: "0".repeat(64),
+      artifact_resource_ref: `resource.noninterference.${side}`,
+      artifact_path: `design/noninterference-${side}.json`,
+      artifact_sha256: "0".repeat(64),
+      failure_witness: null,
+    };
+  };
+  const certificateInput = {
+    fact_rule_refs: model.rules.map((item) => item.rule.key),
+    omitted_axis_refs: [
+      ...new Set(
+        model.rules.flatMap((item) => item.compiled.omitted_axis_refs),
+      ),
+    ].sort(),
+    dependency_edge_refs: [],
+    canonical_rule_dag_sha256:
+      designResourceSymbolicCombinedRuleDigest(projections),
+    source_noninterference_proof: buildProof("source"),
+    production_noninterference_proof: buildProof("production"),
+  };
+  model.certificate = {
+    key: designResourceSymbolicCertificateKey(certificateInput),
+    ...certificateInput,
+  };
+  model.manifest.noninterference_certificates = [model.certificate];
+  model.sourceNoninterferencePredicates = [
+    structuredClone(model.manifest.reachable_region),
+  ];
+  return model;
+}
+
+export function rekeySymbolicFixtureCertificate(model) {
+  const current = model.manifest.noninterference_certificates[0];
+  const { key: _key, ...input } = current;
+  model.certificate = {
+    key: designResourceSymbolicCertificateKey(input),
+    ...input,
+  };
+  model.manifest.noninterference_certificates = [model.certificate];
   return model;
 }

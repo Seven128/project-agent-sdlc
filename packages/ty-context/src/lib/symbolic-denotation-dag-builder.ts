@@ -30,6 +30,7 @@ export class SymbolicDecisionDagBuilder {
     { axis_index: -1, child_ids: [] },
   ];
   private readonly unique = new Map<string, number>();
+  private readonly predicateMemo = new Map<string, number>();
   private readonly applyMemo = new Map<string, number>();
   private readonly notMemo = new Map<number, number>();
   private constructedEdges = 0;
@@ -40,6 +41,18 @@ export class SymbolicDecisionDagBuilder {
   ) {}
 
   predicate(
+    predicate: SymbolicDenotationPredicate,
+    domainIndex: ReadonlyMap<string, number>,
+  ): number {
+    const memoKey = stableJson(predicate);
+    const cached = this.predicateMemo.get(memoKey);
+    if (cached !== undefined) return cached;
+    const result = this.compilePredicate(predicate, domainIndex);
+    this.predicateMemo.set(memoKey, result);
+    return result;
+  }
+
+  private compilePredicate(
     predicate: SymbolicDenotationPredicate,
     domainIndex: ReadonlyMap<string, number>,
   ): number {

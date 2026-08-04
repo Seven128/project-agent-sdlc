@@ -23,6 +23,20 @@ import type {
   SymbolicDenotationPredicate,
   SymbolicExtensionalPointV1,
 } from "./symbolic-denotation-types.js";
+import type { DesignResourceSymbolicNoninterferenceCertificateV2 } from "./design-resource-symbolic-noninterference-types.js";
+
+export type {
+  DesignResourceSymbolicNoninterferenceArtifactV2,
+  DesignResourceSymbolicNoninterferenceCertificateV2,
+  DesignResourceSymbolicNoninterferenceDerivedResultV2,
+  DesignResourceSymbolicNoninterferenceEquivalenceCaseV2,
+  DesignResourceSymbolicNoninterferenceFailureWitnessV1,
+  DesignResourceSymbolicNoninterferenceInputBindingV2,
+  DesignResourceSymbolicNoninterferenceProofMethodV2,
+  DesignResourceSymbolicNoninterferenceProofV2,
+  DesignResourceSymbolicStaticDependencyNodeV2,
+  DesignResourceSymbolicStaticDependencyRootV2,
+} from "./design-resource-symbolic-noninterference-types.js";
 
 export interface DesignResourceSymbolicPopulationV2 {
   key: string;
@@ -101,12 +115,41 @@ export interface DesignResourceSymbolicDependencyEdgeV2 {
   effects: Array<"disposition" | "expected_semantics" | "proof_denotation">;
 }
 
-export interface DesignResourceSymbolicNoninterferenceCertificateV2 {
+export interface DesignResourceSymbolicSubjectProfileBindingV2 {
   key: string;
-  fact_rule_refs: string[];
-  omitted_axis_refs: string[];
-  dependency_edge_refs: string[];
-  canonical_rule_dag_sha256: string;
+  subject_refs: string[];
+  profile_refs: string[];
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicCustomPropertyClosureV2 {
+  property_ref: string;
+  applicable_subject_refs: string[];
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicApplicabilityExceptionV2 {
+  key: string;
+  subject_ref: string;
+  property_ref: string;
+  disposition: "applicable" | "not_applicable";
+  census_refs: string[];
+  source_item_refs: string[];
+  basis_refs: string[];
+  rationale: string;
+}
+
+export interface DesignResourceSymbolicStructuralApplicabilityV2 {
+  profile_catalog: "package-subject-property-applicability-v1";
+  subject_profile_bindings: DesignResourceSymbolicSubjectProfileBindingV2[];
+  inspector_custom_property_closure: DesignResourceSymbolicCustomPropertyClosureV2[];
+  instance_exceptions: DesignResourceSymbolicApplicabilityExceptionV2[];
 }
 
 export interface DesignResourceObservableRuleManifestV2 {
@@ -128,6 +171,7 @@ export interface DesignResourceObservableRuleManifestV2 {
   oracles: DesignResourceOracleV1[];
   environments: DesignResourceEnvironmentV1[];
   acceptance_blockers: DesignResourceHandoffBlockerV1[];
+  structural_applicability?: DesignResourceSymbolicStructuralApplicabilityV2;
 }
 
 export interface DesignResourceSymbolicHandoffTargetV2 {

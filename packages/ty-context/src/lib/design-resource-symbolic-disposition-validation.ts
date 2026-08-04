@@ -1,5 +1,6 @@
 import type { DesignResourceObservableRuleManifestV2 } from "./design-resource-symbolic-fact-types.js";
-import type { SymbolicManifestIndexes } from "./design-resource-symbolic-manifest-validation.js";
+import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
+import type { SymbolicManifestIndexes } from "./design-resource-symbolic-indexes.js";
 import { assertNoUnprovedOmittedAxes } from "./design-resource-symbolic-safety-validation.js";
 import {
   validateSymbolicPopulationAndQuantifier,
@@ -8,13 +9,14 @@ import {
 import {
   invalid,
   requireKnownRefs,
+  unique,
 } from "./design-resource-symbolic-validation-support.js";
-import { compileSymbolicDenotation } from "./symbolic-denotation-engine.js";
 
 export function validateSymbolicDispositions(
   manifest: DesignResourceObservableRuleManifestV2,
   targetKey: string,
   indexes: SymbolicManifestIndexes,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   for (const disposition of manifest.disposition_regions) {
     const subject = indexes.subjects.get(disposition.subject_or_relation_ref);
@@ -30,6 +32,18 @@ export function validateSymbolicDispositions(
     );
     if (!disposition.basis_refs.length || !disposition.source_item_refs.length)
       invalid("v2_disposition_basis_source_required", disposition.key);
+    unique(
+      disposition.census_refs,
+      `v2_disposition_census_duplicate:${disposition.key}`,
+    );
+    unique(
+      disposition.source_item_refs,
+      `v2_disposition_source_item_duplicate:${disposition.key}`,
+    );
+    unique(
+      disposition.basis_refs,
+      `v2_disposition_basis_duplicate:${disposition.key}`,
+    );
     requireKnownRefs(
       disposition.census_refs,
       indexes.census,
@@ -41,13 +55,13 @@ export function validateSymbolicDispositions(
       "v2_disposition_source_item_unknown",
     );
     validateSymbolicRegionWithinReachable(
-      manifest.axis_domains,
       disposition.region,
       manifest.reachable_region,
       disposition.key,
+      compilation,
     );
     assertNoUnprovedOmittedAxes(
-      compileSymbolicDenotation(manifest.axis_domains, disposition.region),
+      compilation.compile(disposition.region),
       disposition.key,
     );
     if (

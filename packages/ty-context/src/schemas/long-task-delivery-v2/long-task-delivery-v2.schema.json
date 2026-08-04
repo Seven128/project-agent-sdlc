@@ -1184,16 +1184,10 @@
           ]
         },
         "minimum": {
-          "oneOf": [
-            { "type": "null" },
-            { "type": "integer", "minimum": 0 }
-          ]
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0 }]
         },
         "maximum": {
-          "oneOf": [
-            { "type": "null" },
-            { "type": "integer", "minimum": 0 }
-          ]
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0 }]
         }
       }
     },
@@ -1225,10 +1219,7 @@
         "subject_or_relation_ref": { "$ref": "#/$defs/designFactKey" },
         "property_ref": { "$ref": "#/$defs/designFactKey" },
         "population_ref": {
-          "oneOf": [
-            { "type": "null" },
-            { "$ref": "#/$defs/designFactKey" }
-          ]
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/designFactKey" }]
         },
         "quantifier": { "$ref": "#/$defs/designQuantifier" },
         "observation_sensitivity": { "enum": ["plain", "protected"] },
@@ -1285,7 +1276,9 @@
         "fact_rule_refs": { "$ref": "#/$defs/designFactRefs" },
         "omitted_axis_refs": { "$ref": "#/$defs/designFactRefs" },
         "dependency_edge_refs": { "$ref": "#/$defs/designFactRefs" },
-        "canonical_rule_dag_sha256": { "$ref": "#/$defs/sha256" }
+        "canonical_rule_dag_sha256": { "$ref": "#/$defs/sha256" },
+        "source_noninterference_proof_sha256": { "$ref": "#/$defs/sha256" },
+        "production_noninterference_proof_sha256": { "$ref": "#/$defs/sha256" }
       }
     },
     "designSymbolicCertificateBinding": {

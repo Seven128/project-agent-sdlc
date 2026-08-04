@@ -21,6 +21,7 @@ export {
   designResourceSymbolicCertificateKey,
   designResourceSymbolicCombinedRuleDigest,
   designResourceSymbolicDependencyEdge,
+  designResourceSymbolicNoninterferenceProofDigest,
   designResourceSymbolicObligationKey,
   designResourceSymbolicRuleKey,
 } from "./design-resource-symbolic-validation-support.js";

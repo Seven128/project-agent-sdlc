@@ -1,17 +1,22 @@
-import type {
-  DesignResourceHandoffPreflightV2,
-  DesignResourceSymbolicDispositionRegionV2,
-  DesignResourceSymbolicFactRuleV2,
-} from "./design-resource-symbolic-fact-types.js";
+import type { DesignResourceHandoffPreflightV2 } from "./design-resource-symbolic-fact-types.js";
+import { buildSymbolicApplicabilityIndex } from "./design-resource-symbolic-applicability-validation.js";
+import { createDesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
 import {
-  compileSymbolicDenotation,
-  evaluateCanonicalSymbolicDenotation,
-} from "./symbolic-denotation-engine.js";
+  buildSymbolicManifestIndexes,
+  symbolicSemanticTupleKey,
+  type SymbolicManifestIndexes,
+} from "./design-resource-symbolic-indexes.js";
+import { evaluateCanonicalSymbolicDenotation } from "./symbolic-denotation-engine.js";
 import type {
   SymbolicDenotationScalar,
   SymbolicExtensionalPointV1,
   SymbolicPointDenotationV1,
 } from "./symbolic-denotation-types.js";
+
+const queryIndexCache = new WeakMap<
+  DesignResourceHandoffPreflightV2,
+  ReturnType<typeof buildQueryIndex>
+>();
 
 export function denoteDesignResourceSymbolicPoint(
   preflight: DesignResourceHandoffPreflightV2,
@@ -23,32 +28,33 @@ export function denoteDesignResourceSymbolicPoint(
     ...point.variation_assignment,
   };
   validateCompleteAssignment(manifest.axis_domains, assignment);
-  const reachable = compileSymbolicDenotation(
-    manifest.axis_domains,
-    manifest.reachable_region,
-  );
+  const query = queryIndex(preflight);
+  validatePointTupleAuthority(preflight, query.indexes, point);
+  const reachable = query.reachable;
   if (!evaluateCanonicalSymbolicDenotation(reachable.canonical_dag, assignment))
     invalid("extensional_point_unreachable", pointIdentity(point));
-  const ruleProjections = new Map(
-    preflight.rule_projections.map((projection) => [
-      projection.rule.key,
-      projection,
-    ]),
+  if (
+    !query.applicability.isApplicable(
+      point.subject_or_relation_ref,
+      point.property_ref,
+    )
+  )
+    return {
+      disposition: "not_applicable",
+      expected_semantics: null,
+      proof_obligations: [],
+    };
+  const tupleKey = symbolicSemanticTupleKey(point);
+  const rules = (query.rulesByTuple.get(tupleKey) ?? []).filter((projection) =>
+    evaluateCanonicalSymbolicDenotation(
+      projection.compiled_region.canonical_dag,
+      assignment,
+    ),
   );
-  const rules = manifest.fact_rules.filter(
-    (rule) =>
-      sameSemanticTuple(rule, point) &&
+  const dispositions = (query.dispositionsByTuple.get(tupleKey) ?? []).filter(
+    (projection) =>
       evaluateCanonicalSymbolicDenotation(
-        ruleProjections.get(rule.key)!.compiled_region.canonical_dag,
-        assignment,
-      ),
-  );
-  const dispositions = manifest.disposition_regions.filter(
-    (region) =>
-      sameSemanticTuple(region, point) &&
-      evaluateCanonicalSymbolicDenotation(
-        compileSymbolicDenotation(manifest.axis_domains, region.region)
-          .canonical_dag,
+        projection.compiled.canonical_dag,
         assignment,
       ),
   );
@@ -59,22 +65,18 @@ export function denoteDesignResourceSymbolicPoint(
     );
   if (dispositions.length)
     return {
-      disposition: dispositions[0].disposition,
+      disposition: dispositions[0].row.disposition,
       expected_semantics: null,
       proof_obligations: [],
     };
-  const rule = rules[0];
+  const rule = rules[0].rule;
   const obligations = rule.semantic_obligation_refs
-    .map((ref) =>
-      manifest.semantic_proof_obligations.find((item) => item.key === ref),
-    )
+    .map((ref) => query.indexes.obligations.get(ref))
     .map((obligation) => {
       if (!obligation) invalid("semantic_obligation_unknown", rule.key);
-      const oracle = manifest.oracles.find(
-        (item) => item.key === obligation.oracle_ref,
-      );
-      const environment = manifest.environments.find(
-        (item) => item.key === obligation.environment_ref,
+      const oracle = query.indexes.oracles.get(obligation.oracle_ref);
+      const environment = query.indexes.environments.get(
+        obligation.environment_ref,
       );
       if (!oracle || !environment)
         invalid("semantic_obligation_authority_unknown", obligation.key);
@@ -105,19 +107,78 @@ export function denoteDesignResourceSymbolicPoint(
   };
 }
 
-function sameSemanticTuple(
-  row:
-    | DesignResourceSymbolicFactRuleV2
-    | DesignResourceSymbolicDispositionRegionV2,
+function validatePointTupleAuthority(
+  preflight: DesignResourceHandoffPreflightV2,
+  indexes: SymbolicManifestIndexes,
   point: SymbolicExtensionalPointV1,
-): boolean {
-  return (
-    row.subject_or_relation_ref === point.subject_or_relation_ref &&
-    row.target_ref === point.target_ref &&
-    row.property_ref === point.property_ref &&
-    row.population_ref === point.population_ref &&
-    canonicalJson(row.quantifier) === canonicalJson(point.quantifier)
+): void {
+  const manifest = preflight.manifest;
+  const subject = indexes.subjects.get(point.subject_or_relation_ref);
+  if (!subject || point.target_ref !== manifest.target_key)
+    invalid("extensional_point_subject_target_unknown", pointIdentity(point));
+  if (!indexes.properties.has(point.property_ref))
+    invalid("extensional_point_property_unknown", point.property_ref);
+  const expectedQuantifier = subject.population_ref
+    ? indexes.populations.get(subject.population_ref)?.quantifier
+    : { kind: "one" as const, minimum: 1, maximum: 1 };
+  if (
+    point.population_ref !== subject.population_ref ||
+    canonicalJson(point.quantifier) !== canonicalJson(expectedQuantifier)
+  )
+    invalid(
+      "extensional_point_population_quantifier_mismatch",
+      pointIdentity(point),
+    );
+}
+
+function queryIndex(preflight: DesignResourceHandoffPreflightV2) {
+  const cached = queryIndexCache.get(preflight);
+  if (cached) return cached;
+  const built = buildQueryIndex(preflight);
+  queryIndexCache.set(preflight, built);
+  return built;
+}
+
+function buildQueryIndex(preflight: DesignResourceHandoffPreflightV2) {
+  const indexes = buildSymbolicManifestIndexes(preflight.manifest, preflight);
+  const applicability = buildSymbolicApplicabilityIndex(
+    preflight.manifest,
+    indexes,
   );
+  const compilation = createDesignResourceSymbolicCompilationSession(
+    preflight.manifest,
+  );
+  const rulesByTuple = new Map<
+    string,
+    DesignResourceHandoffPreflightV2["rule_projections"]
+  >();
+  for (const projection of preflight.rule_projections) {
+    const key = symbolicSemanticTupleKey(projection.rule);
+    const values = rulesByTuple.get(key);
+    if (values) values.push(projection);
+    else rulesByTuple.set(key, [projection]);
+  }
+  const dispositionsByTuple = new Map<
+    string,
+    Array<{
+      row: DesignResourceHandoffPreflightV2["manifest"]["disposition_regions"][number];
+      compiled: ReturnType<typeof compilation.compile>;
+    }>
+  >();
+  for (const row of preflight.manifest.disposition_regions) {
+    const key = symbolicSemanticTupleKey(row);
+    const projection = { row, compiled: compilation.compile(row.region) };
+    const values = dispositionsByTuple.get(key);
+    if (values) values.push(projection);
+    else dispositionsByTuple.set(key, [projection]);
+  }
+  return {
+    indexes,
+    applicability,
+    rulesByTuple,
+    dispositionsByTuple,
+    reachable: compilation.compile(preflight.manifest.reachable_region),
+  };
 }
 
 function validateCompleteAssignment(

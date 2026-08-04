@@ -103,7 +103,7 @@ Every symbolic axis has an explicitly finite enum domain or a bounded numeric do
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=canonical-shared-decision-dag kind=technical_obligation -->
-Production normalization uses one package-owned canonical ordered multi-valued decision DAG with deterministic axis order, theory-aware domain partitions, hash-consed nodes, memoized Boolean operations and shared subtrees.
+Production normalization uses one manifest-level package-owned canonical ordered multi-valued decision DAG compilation session with shared axis partitions, predicate and Boolean memoization, hash-consed nodes, shared subtrees and tuple, profile, Rule, disposition and Census indexes; one logical point lookup scans only indexed local candidates.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=unreachable-branch-elimination kind=technical_obligation -->
@@ -131,7 +131,7 @@ The first V2 rejects ordered override precedence, computed expected-value functi
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=deterministic-canonical-identity kind=technical_obligation -->
-Equivalent symbolic inputs normalize to the same canonical DAG serialization and digest independent of declaration ordering, redundant predicates or chunk boundaries.
+Equivalent symbolic inputs normalize to the same canonical DAG serialization and digest independent of declaration ordering, redundant predicates or chunk boundaries; adding an unrelated numeric partition cut cannot change an existing Rule's canonical DAG, digest or canonical byte count.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=symbolic-complexity-fuse kind=technical_obligation -->
@@ -143,15 +143,15 @@ Theoretical ground cardinality is computed with overflow-safe integer arithmetic
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=package-policy-property-catalog kind=requirement -->
-Property applicability starts from the complete package-owned standard property catalog plus validated custom properties; the Inspector cannot silently narrow that candidate catalog.
+Property applicability starts from the complete package-owned standard property catalog plus validated custom properties; package-owned capability and property profiles may remove physical subject-by-property N/A rows only while every logical subject-property point resolves to one unique disposition, and the Inspector cannot silently narrow that candidate catalog.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=inspector-census-applicability kind=requirement -->
-Every property region reported applicable must be supported by the frozen Inspector Census, capability declaration, inspected input closure and exact subject or relation identity.
+Every property region reported applicable and the exact custom-property set must be supported by the frozen Inspector Census, capability declaration, inspected input closure and exact subject or relation identity; every instance exception carries exact Census, Source and basis authority plus a non-empty rationale and must change its profile-derived disposition.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=basis-backed-property-remainder kind=requirement -->
-For every package-catalog property not applicable in a reachable region, the complete remainder is covered by an exact basis-backed not-applicable, excluded, decision-required or unavailable disposition.
+For every logical package-catalog or validated custom property point not applicable in a reachable region, including points with no physical matrix row, the complete remainder is covered by an exact basis-backed not-applicable, excluded, decision-required or unavailable disposition.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=unknown-applicability-blocks kind=requirement -->
@@ -195,15 +195,15 @@ The existing Long-Task Final Gate evaluates mixed V1 and V2 target expectations 
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=set-valued-noninterference-certificates kind=requirement -->
-One set-valued non-interference certificate may cover multiple Rule identities, omitted axes and dependency edges when the package independently proves that exact covered set.
+One set-valued non-interference certificate may cover multiple Rule identities and omitted axes when package preflight validates that exact set against trusted Source-side and production-side proofs; physical Rule-by-axis dependency edges are not certificate rows.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=certificate-omitted-axis-coverage kind=requirement -->
-Non-interference accounting reports the exact set and count of omitted axes covered by each certificate and rejects unknown, reachable-but-uncovered or semantically relevant omissions.
+Non-interference accounting reports the exact set and count of omitted axes covered by each certificate and rejects duplicate Rule or axis references, unknown axes, reachable-but-uncovered omissions and semantically relevant omissions.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=certificate-dependency-edge-coverage kind=requirement -->
-Non-interference accounting reports the exact set and count of dependency edges covered by each certificate and rejects an omitted edge that can affect disposition, expected semantics or proof denotation.
+The physical certificate dependency-edge set and count are exactly empty; dependency causation belongs to memoized frozen Source-side and production-side proof DAGs whose complete input closure, cycles, dangling or unreachable nodes, Rule-root axes and bounded node, edge and depth capacity are validated before a causally relevant omitted axis is rejected.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=noninterference-obligation-count-metric kind=requirement -->
@@ -223,7 +223,7 @@ For fixtures that add semantically irrelevant axes or domain values while holdin
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=certificate-package-recomputation kind=technical_obligation -->
-The package recomputes certificate coverage, variable dependence, region equivalence and canonical identities from frozen symbolic inputs; provider or author complete booleans are not trusted.
+For every omitted axis the package requires both Source-side and production-side proof by complete static dependency closure over frozen closed-world inputs, exact equivalence in the restricted decidable IR or genuine exhaustive equivalence over a finite complete domain; each proof binds a digest-identified frozen executable Oracle with the exact symbolic_noninterference side-and-method capability, while dynamic loading, reflection, unfrozen implicit dependencies, external devices, sampling and provider or author complete booleans block closure.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=certificate-not-semantic-proof-substitute kind=technical_obligation -->
@@ -371,7 +371,7 @@ Tests instrument read, parse, hydrate and expansion boundaries to prove oversize
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=complexity-parameter-verification kind=technical_obligation -->
-Parameter tests add irrelevant axes, values and dependency edges and assert exact denotation stability plus bounded obligation count, certificate coverage representation, canonical DAG nodes and bytes while theoretical ground cardinality grows.
+Parameter tests add irrelevant axes, values and dependency proofs and assert exact denotation stability plus bounded obligation count, certificate coverage representation, canonical DAG nodes and bytes while theoretical ground cardinality grows; a deterministic package fixture measures 639 subjects, 217 properties, 53 axes and 5,245 variations, preserves all 138,663 logical subject-property points, avoids 137,385 physical N/A rows and budgets authoring, preflight, bytes and RSS.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=distribution-context-parity kind=technical_obligation -->
@@ -379,7 +379,7 @@ Implementation, strict schemas, CLI, public types, package assets, managed works
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=architecture-deliberation kind=technical_obligation aspect=architecture -->
-Architecture Deliberation: owners are design-resource handoff parsing and fact policy, the shared symbolic-denotation engine, Long-Task UI projection and evidence runtime, package distribution and owning Context; current extension points are V1 fact-manifest projection and Long-Task fact_expectations/fact_results. The selected design is a versioned opt-in UI V2 with restricted predicates, canonical shared DAGs, mutually exclusive regions, constant located expected values, complete package-policy plus Inspector-Census applicability, separately typed semantic and certificate obligations, V1 preparse capacity guards and mixed V1/V2 Final-Gate closure. Dependencies flow from canonical resources through handoff validation into Contract bindings and current evidence, never backward into value authority; state remains Contract and current-run owned and adds no lifecycle. Rejected alternatives are mutating V1, DNF or full expansion, post-expansion deduplication, arbitrary value functions, precedence, sampling, ungrounded N/A, historical proof reuse, non-UI bundling and Provider/P0 expansion. A future new predicate theory or non-UI consumer must extend the shared engine through a separately admitted domain policy without weakening canonical identity. Existing Cartesian memory risk is paid down through V1 early guards and V2 symbolic normalization; unrelated Provider debt is left out with an evidence re-entry condition. Project-owned equivalence, adversarial, capacity, mixed-version, distribution, complete-suite, Context and Final-Gate checks prove the declared design. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; security/privacy are preserved through strict grammar, bounded parsing and protected-value semantics.
+Architecture Deliberation: owners are design-resource handoff parsing and fact policy, package-owned applicability profiles and indexes, the shared symbolic-denotation compilation engine, Source-side and production-side non-interference proof validation, Long-Task UI projection and evidence runtime, package distribution and owning Context; current extension points are V1 fact-manifest projection and Long-Task fact_expectations/fact_results. The selected design is a versioned opt-in UI V2 with restricted predicates, one manifest-level compilation session, canonical shared DAGs and indexed point lookup, profile-derived logical applicability with explicit exceptions, mutually exclusive regions, constant located expected values, dual-side trusted non-interference proof, separately typed semantic and certificate obligations, V1 preparse capacity guards and mixed V1/V2 Final-Gate closure. Dependencies flow from canonical resources through frozen Inspector and Oracle TCBs, handoff validation, Contract bindings and current evidence, never backward into value authority; state remains Contract and current-run owned and adds no lifecycle. Rejected alternatives are mutating V1, DNF or full expansion, post-expansion deduplication, physical N/A or Rule-by-axis matrices, per-tuple full-array scans, arbitrary value functions, precedence, sampling, representative-point proof, ungrounded N/A, historical proof reuse, non-UI bundling and Provider/P0 expansion. A future new predicate theory, dynamic dependency source or non-UI consumer must extend the shared engine through a separately admitted decidable policy without weakening canonical identity or the frozen TCB boundary. Existing Cartesian memory and repeated-scan risk are paid down through V1 early guards, V2 profiles, shared compilation and indexes; unrelated Provider debt is left out with an evidence re-entry condition. Project-owned equivalence, adversarial proof, real-scale capacity, mixed-version, distribution, complete-suite, Context and Final-Gate checks prove the declared design. Correctness, maintainability, compatibility, performance/capacity, reliability, operability and testability are triggered; security/privacy/safety are preserved through strict grammar, bounded parsing, exact Oracle capabilities, fail-closed dependency handling and protected-value semantics.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=no-sampling kind=forbidden_shortcut -->

@@ -38,9 +38,7 @@ export function validateSymbolicInspectorAndResources(
     invalid("v2_inspector_entry_mismatch", target.key);
   assertSameSet(
     manifest.inspector.input_resources.map((item) => item.resource_ref),
-    target.resource_refs.filter(
-      (ref) => ref !== target.source_profile.fact_manifest_resource_ref,
-    ),
+    inspectorInputResourceRefs(manifest, target),
     "v2_inspector_input_resource_set_mismatch",
     target.key,
   );
@@ -82,6 +80,27 @@ export function validateSymbolicInspectorAndResources(
     if (!resource || resource.sha256 !== manifest.design_system.sha256)
       invalid("v2_design_system_resource_mismatch", target.key);
   }
+}
+
+function inspectorInputResourceRefs(
+  manifest: DesignResourceObservableRuleManifestV2,
+  target: ParsedDesignResourceHandoffV2["handoff"]["targets"][number],
+): string[] {
+  const proofArtifactRefs = new Set(
+    manifest.noninterference_certificates.flatMap((certificate) =>
+      [
+        certificate.source_noninterference_proof,
+        certificate.production_noninterference_proof,
+      ]
+        .filter((proof) => proof != null)
+        .map((proof) => proof.artifact_resource_ref),
+    ),
+  );
+  return target.resource_refs.filter(
+    (ref) =>
+      ref !== target.source_profile.fact_manifest_resource_ref &&
+      !proofArtifactRefs.has(ref),
+  );
 }
 
 export function validateSymbolicPropertyCatalog(

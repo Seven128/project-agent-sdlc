@@ -6,6 +6,7 @@ import type {
   DesignResourceHandoffPreflightV2,
   DesignResourceSymbolicHandoffTargetV2,
 } from "./design-resource-symbolic-fact-types.js";
+import { designResourceSymbolicNoninterferenceProofDigest } from "./design-resource-symbolic-validation-support.js";
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
 import type {
   ContractDesignTarget,
@@ -213,13 +214,29 @@ function validateSymbolicCertificateBinding(
       `${target.key}:${certificateBinding.assertion_ref}`,
     );
   const expectedCertificates =
-    preflight.manifest.noninterference_certificates.map((certificate) => ({
-      certificate_ref: certificate.key,
-      fact_rule_refs: [...certificate.fact_rule_refs],
-      omitted_axis_refs: [...certificate.omitted_axis_refs],
-      dependency_edge_refs: [...certificate.dependency_edge_refs],
-      canonical_rule_dag_sha256: certificate.canonical_rule_dag_sha256,
-    }));
+    preflight.manifest.noninterference_certificates.map((certificate) => {
+      const sourceProofDigest =
+        designResourceSymbolicNoninterferenceProofDigest(
+          certificate.source_noninterference_proof,
+        );
+      const productionProofDigest =
+        designResourceSymbolicNoninterferenceProofDigest(
+          certificate.production_noninterference_proof,
+        );
+      return {
+        certificate_ref: certificate.key,
+        fact_rule_refs: [...certificate.fact_rule_refs],
+        omitted_axis_refs: [...certificate.omitted_axis_refs],
+        dependency_edge_refs: [...certificate.dependency_edge_refs],
+        canonical_rule_dag_sha256: certificate.canonical_rule_dag_sha256,
+        ...(sourceProofDigest
+          ? { source_noninterference_proof_sha256: sourceProofDigest }
+          : {}),
+        ...(productionProofDigest
+          ? { production_noninterference_proof_sha256: productionProofDigest }
+          : {}),
+      };
+    });
   assertCanonicalRowsByKey(
     certificateBinding.expectations,
     expectedCertificates,

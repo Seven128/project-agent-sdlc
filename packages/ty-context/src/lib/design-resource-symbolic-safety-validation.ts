@@ -3,8 +3,8 @@ import type {
   DesignResourceHandoffPreflightV2,
   DesignResourceObservableRuleManifestV2,
 } from "./design-resource-symbolic-fact-types.js";
+import type { DesignResourceSymbolicCompilationSession } from "./design-resource-symbolic-compilation.js";
 import { invalid } from "./design-resource-symbolic-validation-support.js";
-import { compileSymbolicDenotation } from "./symbolic-denotation-engine.js";
 import type { CompiledSymbolicDenotationV1 } from "./symbolic-denotation-types.js";
 
 export function validateSymbolicReadinessClosure(
@@ -33,6 +33,7 @@ export function validateSymbolicExactTargetCoverage(
   manifest: DesignResourceObservableRuleManifestV2,
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   reachable: CompiledSymbolicDenotationV1,
+  compilation: DesignResourceSymbolicCompilationSession,
 ): void {
   if (interpretation !== "exact_target") return;
   const obligations = new Map(
@@ -50,7 +51,7 @@ export function validateSymbolicExactTargetCoverage(
       .map(({ rule }) => rule.region);
     if (!regions.length)
       invalid("v2_exact_target_full_target_method_missing", method);
-    const covered = compileSymbolicDenotation(manifest.axis_domains, {
+    const covered = compilation.compile({
       op: "any",
       predicates: regions,
     });

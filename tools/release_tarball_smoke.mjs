@@ -111,6 +111,8 @@ async function assertTarballContents(directory) {
       throw new Error(`tarball contains retired runtime asset: ${found}`);
   }
   for (const required of [
+    "dist/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
+    "dist/schemas/design-resource-symbolic-source-ir-v1.schema.json",
     "dist/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
     "dist/lib/long-task-delivery-compiler.js",
     "dist/lib/long-task-claims.js",

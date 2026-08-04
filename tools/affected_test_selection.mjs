@@ -952,11 +952,19 @@ function symbolicAffectedTests(file) {
     selected.add("symbolic-denotation-extensional-equivalence.test.mjs");
     selected.add("symbolic-denotation-ui-v2.test.mjs");
     selected.add("symbolic-denotation-efficiency-antidegradation.test.mjs");
+    selected.add("symbolic-denotation-structural-efficiency.test.mjs");
   }
   if (
     file.startsWith(
-      "packages/ty-context/src/lib/design-resource-v1-capacity",
+      "packages/ty-context/src/lib/design-resource-symbolic-noninterference-",
+    ) ||
+    file.startsWith(
+      "packages/ty-context/src/lib/design-resource-symbolic-source-ir-",
     )
+  )
+    selected.add("long-task-symbolic-denotation-v2.test.mjs");
+  if (
+    file.startsWith("packages/ty-context/src/lib/design-resource-v1-capacity")
   ) {
     selected.add("design-resource-v1-capacity-guard.test.mjs");
     selected.add("symbolic-denotation-efficiency-antidegradation.test.mjs");
@@ -964,10 +972,11 @@ function symbolicAffectedTests(file) {
   if (SYMBOLIC_DESIGN_HANDOFF_PATHS.has(file)) {
     selected.add("design-resource-v1-capacity-guard.test.mjs");
     selected.add("symbolic-denotation-ui-v2.test.mjs");
-    selected.add("symbolic-denotation-long-task-v2.test.mjs");
+    selected.add("long-task-symbolic-denotation-v2.test.mjs");
+    selected.add("symbolic-denotation-structural-efficiency.test.mjs");
   }
   if (SYMBOLIC_LONG_TASK_PATHS.has(file)) {
-    selected.add("symbolic-denotation-long-task-v2.test.mjs");
+    selected.add("long-task-symbolic-denotation-v2.test.mjs");
     selected.add("long-task-schema-parser-parity.test.mjs");
   }
   if (isSymbolicGuidancePath(file))
@@ -983,9 +992,7 @@ function isSymbolicGuidancePath(file) {
     file.startsWith(".codex/ty-context-managed/skills/long-task-workflow/") ||
     file.startsWith(".codex/skills/long-task-workflow/") ||
     file.startsWith("packages/ty-context/assets/skills/long-task-workflow/") ||
-    file.endsWith(
-      "design-resource-authoring/references/downstream-handoff.md",
-    )
+    file.endsWith("design-resource-authoring/references/downstream-handoff.md")
   );
 }
 

@@ -77,6 +77,12 @@ export function designResourceSymbolicCertificateKey(
   )}`;
 }
 
+export function designResourceSymbolicNoninterferenceProofDigest(
+  proof: DesignResourceSymbolicNoninterferenceCertificateV2["source_noninterference_proof"],
+): string | null {
+  return proof ? sha256(stableJson(proof)) : null;
+}
+
 export function designResourceSymbolicCombinedRuleDigest(
   ruleProjections: Array<{
     rule: { key: string };
