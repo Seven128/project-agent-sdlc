@@ -64,7 +64,7 @@ test("public guidance and durable Context teach one opt-in V2 rollout", async ()
     "packages/ty-context/README.md",
     "PROJECT_SPEC.md",
     "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-    ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
+    ".codex/ty-context-managed/skills/design-resource-authoring/references/formal-selected-web-app-handoff.md",
   ].map(async (file) => [file, await text(file)]));
   detailedSurfaces.push([
     "long-task-workflow progressive references",

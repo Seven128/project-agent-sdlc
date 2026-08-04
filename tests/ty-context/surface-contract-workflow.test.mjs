@@ -112,19 +112,23 @@ for (const content of [sourceTemplate, packagedTemplate]) {
   assert.doesNotMatch(content, /screenshot observations.*test logs.*implementation summaries.*secret values/s);
 }
 
-for (const content of [sourceProductSkill, sourceUiuxSkill, sourceDevelopmentSkill]) {
-  assert.match(content, /Product Surface/);
-  assert.match(content, /Surface Contract/);
-  assert.match(content, /context_surface_contract/);
-  assert.match(content, /main allows\/forbids/);
-  assert.match(content, /long-task state/i);
-  assert.match(content, /外部来源.*内部分类/s);
-  assert.match(content, /Contract Conformance/);
-  assert.match(content, /Context Delta: required/);
-  assert.match(content, /exact-target.*constraint/isu);
-  assert.match(content, /(?:immutable|不可变).*locator\/digest/isu);
-  assert.match(content, /editable upstream.*update route/isu);
-}
+assert.match(sourceProductSkill, /Own product meaning/iu);
+assert.match(sourceProductSkill, /main-versus-drilldown responsibility/iu);
+assert.match(sourceProductSkill, /to `context_surface_contract`/iu);
+assert.match(sourceProductSkill, /does not own Product Surface placement/iu);
+assert.match(sourceProductSkill, /Context Delta: none\|required/u);
+
+assert.match(sourceUiuxSkill, /Own durable Design Authority only/iu);
+assert.match(sourceUiuxSkill, /context_surface_contract/iu);
+assert.match(sourceUiuxSkill, /does not own product goals/iu);
+assert.match(sourceUiuxSkill, /exact-target.*constraint.*inspiration/isu);
+assert.match(sourceUiuxSkill, /immutable path\/URI and digest/iu);
+assert.match(sourceUiuxSkill, /editable upstream owner\/locator\/update route/iu);
+
+assert.match(sourceDevelopmentSkill, /Durable main\/drilldown\/surface/iu);
+assert.match(sourceDevelopmentSkill, /context_surface_contract/iu);
+assert.match(sourceDevelopmentSkill, /not the default implementation workflow/iu);
+assert.match(sourceDevelopmentSkill, /Context Delta: none\|required/u);
 
 for (const content of [rootReadme, packageReadme, spec]) {
   assert.match(content, /Product Surface Contract/i);

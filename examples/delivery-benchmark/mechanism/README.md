@@ -6,7 +6,7 @@ This module prepares controlled Codex Agent experiments for mechanism decisions 
 c030d02eee315d2860c6a2ff01c22887690f3684
 ```
 
-That baseline is the Long-Task Compact Carrier baseline. It includes bounded Context search, the default route's exact ephemeral non-UI and selected-design accounting, Compact V2 authoring, conservative Preflight repair ordering, Context retrieval/Authority projection separation, the one-time post-Authority-Lock model choice and the selected-design fact-closure boundary. Any benchmark-listed resolver, workflow replacement or Authoring candidate still requires the formal paired evidence below before a measured mechanism claim.
+That baseline is the Long-Task Compact Carrier baseline. It includes bounded Context search, the default route's exact ephemeral non-UI and selected-design accounting, Compact V2 authoring, conservative Preflight repair ordering, Context retrieval/Authority projection separation, the unconditional post-Authority-Lock host-change continuation checkpoint and the selected-design fact-closure boundary. Any benchmark-listed resolver, workflow replacement or Authoring candidate still requires the formal paired evidence below before a measured mechanism claim.
 
 No benchmark result is committed here. A prepared run, calibration run, or single pair is not evidence that a mechanism has positive ROI.
 

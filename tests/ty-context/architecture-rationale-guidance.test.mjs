@@ -7,14 +7,18 @@ import { fileURLToPath } from "node:url";
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 
 test("shared engineering quality is visible while routing questions stay internal", () => {
-  const sources = [
-    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-    read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
-    read(".codex/ty-context-managed/skills/context_development_engineer/SKILL.md"),
-    read("packages/ty-context/assets/skills/context_development_engineer/SKILL.md")
-  ];
+  const agents = read(".codex/ty-context-managed/agents/AGENTS_CORE.md");
+  const packagedAgents = read("packages/ty-context/assets/agents/AGENTS_CORE.md");
+  const developmentSkill = read(
+    ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+  );
+  const packagedDevelopment = read(
+    "packages/ty-context/assets/skills/context_development_engineer/SKILL.md",
+  );
+  assert.equal(packagedAgents, agents);
+  assert.equal(packagedDevelopment, developmentSkill);
 
-  for (const content of sources) {
+  for (const content of [agents, packagedAgents]) {
     assert.match(content, /Architecture Deliberation/);
     assert.match(content, /Architecture Conformance/);
     assert.match(content, /Engineering Quality Conformance/);
@@ -27,28 +31,24 @@ test("shared engineering quality is visible while routing questions stay interna
     assert.doesNotMatch(content, /Rationale Delta/);
   }
 
-  const developmentSkill = sources[2];
-  assert.match(developmentSkill, /durable architecture boundary/);
-  assert.match(developmentSkill, /API \/ Schema \/ data contract/);
-  assert.match(developmentSkill, /state \/ runtime semantics/);
+  assert.match(developmentSkill, /Architecture Deliberation/);
+  assert.match(developmentSkill, /Architecture Conformance/);
+  assert.match(developmentSkill, /Engineering\/Architecture Conformance/);
+  assert.match(developmentSkill, /Context Delta: none\|required/);
+  assert.match(developmentSkill, /source of truth and extension point/);
+  assert.match(developmentSkill, /API\/schema\/data/);
+  assert.match(developmentSkill, /state and lifecycle/);
   assert.match(developmentSkill, /dependency direction/);
-  assert.match(developmentSkill, /verification \/ deployment semantics/);
-  assert.match(developmentSkill, /durable rationale \/ tradeoff/);
-  assert.match(
-    developmentSkill,
-    /每个实现需求都执行一次[\s\S]*small code task[\s\S]*保持现有架构[\s\S]*不能用“无需架构考虑”跳过/,
-  );
-  assert.match(developmentSkill, /不输出私有思维链/);
-  assert.match(developmentSkill, /新增或加重技术债默认阻塞交付/);
-  assert.match(developmentSkill, /Implementation Quality Discipline/);
+  assert.match(developmentSkill, /verification(?: entries|\/deployment)/);
+  assert.match(developmentSkill, /material alternatives/);
+  assert.match(developmentSkill, /future-change/);
+  assert.match(developmentSkill, /technical debt/);
+  assert.match(developmentSkill, /forbidden shortcuts/);
+  assert.match(developmentSkill, /project-owned type\/lint\/AST\/dependency\/contract\/behavior\/benchmark\/probe checks/);
   assert.match(developmentSkill, /performance\/capacity\/cost/);
-  assert.match(developmentSkill, /workload.*metric.*environment.*comparator\/tolerance/s);
-  assert.match(developmentSkill, /功能 pass.*聚合代替/s);
-  assert.match(developmentSkill, /capability-aware/);
-  assert.match(developmentSkill, /不支持的指标为 `n\/a`/);
-  assert.match(developmentSkill, /普通 `sync` 不做迁移/);
-  assert.match(developmentSkill, /lifecycle-complete waiver/);
-  assert.match(developmentSkill, /不要创建 `plan\.md`、Task Contract 文件或 Markdown 映射表/);
+  assert.match(developmentSkill, /workload, metric, baseline\/budget, environment, comparator\/tolerance/);
+  assert.match(developmentSkill, /Do not create a required `plan\.md`, Task Contract/);
+  assert.doesNotMatch(developmentSkill, /Architecture Context Hit|Modularity Check:/);
 });
 
 test("templates keep rationale durable, optional and evidence-free", () => {

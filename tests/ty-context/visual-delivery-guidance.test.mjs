@@ -59,9 +59,13 @@ test("page-level UI authority Source Plan is indexed without becoming Context", 
 });
 
 test("visual design and implementation guidance reaches every managed copy", async () => {
-  const [uiuxCopies, developmentCopies] = await Promise.all([
+  const [uiuxCopies, developmentCopies, agents, formalHandoff] = await Promise.all([
     skillCopies("context_uiux_design"),
     skillCopies("context_development_engineer"),
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read(
+      ".codex/ty-context-managed/skills/design-resource-authoring/references/formal-selected-web-app-handoff.md",
+    ),
   ]);
 
   for (const copies of [uiuxCopies, developmentCopies]) {
@@ -70,175 +74,38 @@ test("visual design and implementation guidance reaches every managed copy", asy
   }
 
   const uiux = uiuxCopies[0];
-  assert.match(uiux, /^## Design Context Depth \/ 设计上下文深度$/mu);
-  assert.match(uiux, /^## Design Source Projection \/ 设计资源事实投影$/mu);
-  for (const dimension of [
-    "surface_flow",
-    "visual_content",
-    "component_control",
-    "state_interaction",
-    "motion",
-    "adaptation_input",
-    "accessibility",
-    "assets",
-  ])
-    assert.match(uiux, new RegExp(dimension, "u"));
-  assert.match(
-    uiux,
-    /每个 adopted target 只能有一个 canonical adoption record/iu,
-  );
-  assert.match(
-    uiux,
-    /项目级、系统级或 component-family target[\s\S]*owning Screen Contract/iu,
-  );
-  assert.match(uiux, /handoff 的变化型 coverage index 不复制进 Context/iu);
-  assert.match(
-    uiux,
-    /^## External Design Resource Consumption \/ 外部设计资源消费$/mu,
-  );
+  assert.match(uiux, /^## Ownership$/mu);
+  assert.match(uiux, /^## UI Authority Closure$/mu);
+  assert.match(uiux, /^## Selected-design alignment$/mu);
+  assert.match(uiux, /Own durable Design Authority only/iu);
+  assert.match(uiux, /root `DESIGN\.md`/u);
+  assert.match(uiux, /exact-value token source\/generation direction/iu);
+  assert.match(uiux, /exactly one canonical adoption record per adopted target/iu);
+  assert.match(uiux, /project\/system\/component-family targets[\s\S]*owning Screen Contract/iu);
   assert.match(uiux, /design-resource-authoring/iu);
   assert.match(uiux, /ty-context design-resource preflight <handoff\.md>/u);
-  assert.match(
-    uiux,
-    /八个 UI\/UX dimension 是 roll-up[\s\S]*不是 UI Fact 粒度上限/u,
-  );
-  assert.match(
-    uiux,
-    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts/iu,
-  );
-  assert.match(uiux, /subject × target × condition × variation × property/iu);
-  assert.match(
-    uiux,
-    /Control 是产品交互语义单位[\s\S]*都不是 UI Fact 粒度上限/iu,
-  );
-  assert.match(uiux, /完整 Fact Cell\/Fact\/proof\/resource closure/iu);
-  assert.match(uiux, /Inspector Census/iu);
-  assert.match(uiux, /设计系统 effective-value\/conflict lineage/iu);
-  assert.match(uiux, /整目标 layout 与 pixel (?:事实|Facts)/iu);
-  assert.match(uiux, /不复制 provider.*提示词\/模板/isu);
-  assert.match(
-    uiux,
-    /不改 `project_context\/\*\*`、`DESIGN\.md` 或 production code/u,
-  );
-  assert.match(uiux, /只有进入默认开发流程或 Long-Task、需要采纳稳定结论时/u);
-  assert.match(uiux, /UI Authority Closure/iu);
-  assert.match(uiux, /stable surface\/control\/target key/iu);
-  assert.match(
-    uiux,
-    /主动打开每个受影响的 selected `exact-target`\/`constraint`/u,
-  );
-  assert.match(
-    uiux,
-    /不可变 adopted locator\/digest[\s\S]*editable upstream owner\/locator\/update route/iu,
-  );
-  assert.match(uiux, /new immutable version|新 immutable version/iu);
-  assert.match(uiux, /^## Design Authority Readiness \/ 设计权威就绪$/mu);
-  assert.match(
-    uiux,
-    /material production UI lacks sufficient or consistent Design Authority/iu,
-  );
+  assert.match(uiux, /every affected selected `exact-target` or `constraint`/iu);
   assert.match(uiux, /`exact-target`, `constraint` or `inspiration`/iu);
-  assert.match(uiux, /Design authority status: `unconfigured`/iu);
-  assert.match(
-    uiux,
-    /implementation's own generated screenshot or diff as the target/iu,
-  );
-  assert.match(uiux, /^## Visual Delivery Coverage \/ 视觉交付覆盖$/mu);
-  assert.match(uiux, /task-local \*\*Visual Coverage Set\*\*/u);
-  assert.match(
-    uiux,
-    /surface\/route\/component[\s\S]*viewport[\s\S]*theme or product mode[\s\S]*interaction\/state[\s\S]*content stress[\s\S]*accessibility\/motion/iu,
-  );
-  assert.match(
-    uiux,
-    /not a required file, matrix, Context role, workflow artifact/iu,
-  );
-  assert.match(
-    uiux,
-    /one authored exact-value token source and one generation direction/iu,
-  );
-  assert.match(uiux, /production components or real product routes/iu);
-  assert.match(uiux, /never claim an unchecked combination/iu);
-  assert.match(
-    uiux,
-    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
-  );
-  assert.match(
-    uiux,
-    /first useful runnable production slice[\s\S]{0,180}not a prerequisite/iu,
-  );
-  assert.match(uiux, /configured.*not.*implementation-ready/iu);
+  assert.match(uiux, /immutable path\/URI and digest[\s\S]*editable upstream owner\/locator\/update route/iu);
+  assert.match(uiux, /Never overwrite an adopted baseline[\s\S]*new immutable version/iu);
+  assert.match(uiux, /real production route\/component and affected cold-start journey after the final change/iu);
+  assert.match(uiux, /resource integrity\/preflight is not production conformance/iu);
+  assert.match(uiux, /Do not create a UI lifecycle[\s\S]*second Authority\/Gate/iu);
+  assert.ok(Buffer.byteLength(uiux, "utf8") < 8_000, "compact authority owner");
 
   const development = developmentCopies[0];
-  assert.match(
-    development,
-    /^## Visual Delivery Implementation \/ 视觉交付实现$/mu,
-  );
-  assert.match(
-    development,
-    /production token source, its generation direction/iu,
-  );
-  assert.match(development, /first confirm Design Authority readiness/iu);
-  assert.match(
-    development,
-    /ty-context design-resource preflight <handoff\.md>/u,
-  );
-  assert.match(
-    development,
-    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts[\s\S]*On the default route[\s\S]*affected targets\/conditions[\s\S]*project checks[\s\S]*do not rebuild a task-local Fact Cell\/Fact\/proof ledger/iu,
-  );
-  assert.match(development, /`exact-target`, `constraint` or `inspiration`/iu);
-  assert.match(
-    development,
-    /open the immutable adopted locator\/digest before deciding or coding/iu,
-  );
-  assert.match(
-    development,
-    /editable upstream owner\/locator\/update route[\s\S]*manual\/external boundary/iu,
-  );
-  assert.match(development, /Never overwrite an adopted baseline/iu);
-  assert.match(development, /production components and real product routes/iu);
-  assert.match(development, /cold-start real-user entry journey/iu);
-  assert.match(development, /first useful runnable vertical slice/iu);
-  assert.match(
-    development,
-    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
-  );
-  assert.match(development, /not an implementation gate/iu);
-  assert.match(development, /final candidate/iu);
-  assert.match(
-    development,
-    /resource integrity[\s\S]*implementation-conformance proof/iu,
-  );
-  assert.match(
-    development,
-    /undeclared raw color, spacing, typography or motion values/iu,
-  );
-  assert.match(development, /report only the combinations actually checked/iu);
-  assert.match(development, /Do not introduce a second visual plan/iu);
-  assert.match(development, /Product `surface_bindings`/u);
-  assert.match(development, /typed `design_conformance`/u);
-  assert.match(
-    development,
-    /region\/location.*type\/label.*validation.*recovery.*accessibility/isu,
-  );
-  assert.match(
-    development,
-    /planned target cannot unlock fidelity implementation/iu,
-  );
-  assert.match(
-    development,
-    /final-current-candidate Contract Conformance[\s\S]*Report every condition or claim those checks did not establish[\s\S]*failed checks or stale evidence blocks an unqualified selected-design claim/iu,
-  );
-  assert.match(development, /exact `fact_refs`/iu);
-  assert.match(development, /canonical `fact_expectations`/iu);
-  assert.match(
-    development,
-    /set-equal per-Fact `fact_results`[\s\S]*actual observation\/environment\/comparison\/verdict/iu,
-  );
-  assert.match(development, /full-target layout\/pixel authority/iu);
-  assert.match(development, /do not run the preceding default handling as another closure/iu);
-  assert.match(development, /Final Gate is the sole Long-Task carrier/iu);
+  assert.match(development, /Design Authority[\s\S]*belong to `context_uiux_design`/iu);
+  assert.match(development, /design-resource generation\/handoff belongs to `design-resource-authoring`/iu);
+  assert.match(development, /surface information\/action\/feedback responsibility belongs to `context_surface_contract`/iu);
+  assert.match(development, /exact selected UI values remain owned by selected-design closure/iu);
+  assert.doesNotMatch(development, /^## Visual Delivery Implementation/mu);
+
+  const distributed = `${agents}\n${uiux}\n${formalHandoff}`;
+  assert.match(distributed, /Expected Fact Universe[\s\S]*Canonical Resource Facts[\s\S]*Handoff Indexed Facts/iu);
+  assert.match(distributed, /subject × target × condition × variation × atomic property/iu);
+  assert.match(distributed, /frozen Inspector[\s\S]*Census/iu);
+  assert.match(distributed, /full_target[\s\S]*layout_geometry[\s\S]*visual_pixel/iu);
+  assert.match(distributed, /Final Gate/iu);
 });
 
 test("Long-Task visual guidance reuses existing authoring and evidence mechanisms", async () => {

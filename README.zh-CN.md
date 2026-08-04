@@ -59,7 +59,7 @@ npx --yes project-tiny-context-harness ty-context sync
 ty-context enable long-task
 ```
 
-启用长程能力会额外安装 `long-task-workflow`、退役兼容指引 `source-plan-authoring`、完成 Hook，以及一个可选的项目级 Codex custom agent `long_task_implementation`。该静态 profile 固定使用 `gpt-5.6-luna` 与 `model_reasoning_effort = "max"`，只能在父 Goal 完成第一次 Authority Lock 的模型检查点后承担有界滚动实现/修复；它不是 Skill、runtime、模型路由器、调度器、Authority 或证明载体。Codex/custom profile 不可用或同路径已有用户自定义时，直接回退父 Goal 执行，Long-Task 接受路径不变。`ty-context disable long-task` 只移除带 package marker 的 Long-Task-owned surfaces，并保留用户文件和两个基础设计 Skill。Tiny Context 不安装 Open Design、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
+启用长程能力会额外安装 `long-task-workflow`、完成 Hook，以及仅当解析后的 harness root 恰好为 `.codex` 时安装一个可选的项目级 Codex custom agent `long_task_implementation`。该固定、无状态 profile 使用 `gpt-5.6-luna`、`model_reasoning_effort = "max"`，并禁用其 child-agent 工具；它只能在第一次 Authority Lock 的终止当前回合检查点之后承担有界滚动实现/修复。它不是 Skill、runtime、模型路由器、调度器、Authority 或证明载体。缺失或无效的 package asset 会被跳过；符号链接或不含 package marker 的同路径用户内容会被保留；带精确 marker 的普通 package-owned profile 可以安全刷新或移除。profile 缺席时回退父 Goal 执行，Long-Task 接受路径不变，并保留用户文件和两个基础设计 Skill。Tiny Context 不安装 Open Design、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
 
 ## 推荐用法
 
@@ -73,7 +73,7 @@ ty-context enable long-task
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过 Source Plan 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
-5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 随后会在实现前给出一次性的“继续使用当前模型”或“切换模型后恢复”选择。父 Goal 完成该选择后，Codex 可以把一个有界实现切片可选委托给 `long_task_implementation`；Authority、集成与正式验证仍由父 Goal 持有。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换之后，请发送【继续】。`。此前任何模型策略文字都不能跳过该边界，Harness 也不能观察模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；当独立有界工作收益大于协调成本时，主动使用 `long_task_implementation`，而 Authority、架构、Context、集成、当前候选检查与正式验证仍由父 Goal 持有。
 
 一组可以直接改写使用的调用顺序如下：
 
@@ -263,7 +263,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 ### 退役 Source Plan 兼容入口
 
-`source-plan-authoring` 仅作为 long-task profile 的兼容指引保留。`long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有 Source Plan 仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
+`source-plan-authoring` 不再安装或由 package 管理。升级迁移只删除字节完全等于原 package 指引的副本；同名但已修改的内容保留并要求人工处理，普通 sync 不维护 tombstone 或盲删规则。`long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有 Source Plan 文档仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
 
 ## Single-Goal Rolling Delivery
 
@@ -273,7 +273,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 - 一个用户选定的仓库与最终验证/收敛 worktree；
 - 一次完整选定交付、一个 Contract、一个 Final Gate；
 - Outcome 依赖只表示验收与中间证明就绪关系，不限制实现顺序，也不表示 Worker 调度；
-- 第一次 Authority Lock 后、正式实现前有一次用户模型选择；
+- 第一次 Authority Lock 后、正式实现前有一次无条件的宿主模型更换检查点；Agent 结束当前回合，用户处理后发送普通“继续”，Harness 不观察或验证模型是否改变；
 - 当前 Goal 自主选择实现顺序、局部计划、工具，并可按 ROI 选择单 agent 或多开平台原生 agent/subagent；Harness 不负责分配、调度、重试或恢复，agent 报告不是 Progress 或证明，所有结果必须汇入同一验证 worktree；Frontier 只提供验收/验证建议；
 - targeted verify 是可选反馈与修复证据，永远不能 accepted，也不构成继续实现或进入 Final Gate 的门禁；
 - scope-only revision 可先做无状态候选诊断，机械边界内的修复自动采用；只有稳定且确需用户决策的候选才至多询问一次精确 identity；
@@ -293,15 +293,19 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
   "execution_model_checkpoint": {
     "required": true,
     "phase": "post_authority_lock_pre_implementation",
-    "options": ["continue_current_model", "switch_model_then_resume"],
+    "action": "change_model_in_host_then_continue",
+    "resume_token": "continue",
     "turn_boundary": "end_current_turn",
-    "explicit_task_specific_choice_required": true,
-    "generic_continue_satisfies": false
+    "blocked_until_resume": ["product_implementation", "file_edits", "build", "test_execution"],
+    "model_change_owner": "host_or_user",
+    "model_change_observable_by_harness": false,
+    "generic_continue_satisfies": true,
+    "message": "处理好模型更换之后，请发送【继续】。"
   }
 }
 ```
 
-这是严格的终止当前回合边界。除非用户此前已明确给出本任务的“当前模型继续”或“切换后恢复”策略，Agent 在该结果后不得继续产品实现、文件编辑、构建或测试，必须结束当前回合并询问选择。“继续”“恢复”“完成”“继续 Goal”等泛化表达不能满足卡点。后续 `compile --revise` 返回 `required: false`，不会重复暂停。Harness 不会自动切换模型，也不持久化 acknowledgement、model route 或 checkpoint state；模型选择不是验收证据。
+这是无条件的终止当前回合边界。Agent 在该结果后不得继续产品实现、文件编辑、构建或测试，必须输出 `处理好模型更换之后，请发送【继续】。` 并结束当前回合；用户此前写过任何模型策略都不能跳过。之后用户发送普通“继续”即可恢复，Harness 不观察、不验证宿主模型是否改变。后续 `compile --revise` 返回 `required: false`，不会重复暂停。Harness 不会自动切换模型，也不持久化 acknowledgement、model route 或 checkpoint state；该检查点不是验收证据。
 
 锁定后的修订把“Authority 有变化”和“需要用户决策”分开：单调增强、锁定 Claims/targets/proof obligations 不变的 Source/Context snapshot 更新、Runner/input 实装修复、repo-bound scope 扩展、风险增强，以及 carrier、mutation、Check 相同且 Claim/预期失败断言覆盖不减少的等价 Counterfactual 覆盖可自动采用；产品/Source Claim/target/external-confirmation 变化，丢失 scenario/Claim/Evidence Capability/失败拦截，移除 forbidden/owner Context，runner type/effect、verifier kernel 或未知 reason 则只预览并等待精确 identity，风险降级直接拒绝。`diagnose-revision` 无副作用，撤回/替换候选只在同一 `delivery-contract.yaml` 合并，不产生询问。最终 pending brief 先解释 Authority Revision 是什么，再区分 `user_decision_reasons` 与机械边界变化。必须先展示 brief；若当前任务已有明确指令精确覆盖全部决策 reason，可机械转录而不二次询问，泛化“继续”、一揽子批准、建议或 Agent 推断不算。每次采用都保留 exact identity、旧 Authority 连续性、证据失效和完整 Final Gate，并返回滚动实现，绝不表示完成。
 
@@ -345,7 +349,7 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 
 - `init` 创建单文件 inline Outcome 的 Compact Contract 模板。
 - `preflight` 应用 Compact 默认值并一次输出 Source 非空文本归属、REQ、CTRL 字段/关系闭包、OBL/AC、applicability、Stage closure、required-target/root/runner、scenario/journey、capability、external impact、Product Conformance、Context、风险、路径/Binding、Runner/Input、语义 witness/liveness、Proof 与 workspace-scope 诊断。首次 Authority Lock 前，它把每个 HEAD-relative 当前变化路径分类为 protected、expected change、allowed support、forbidden 或 unclassified；后两类中的 forbidden/unclassified 都阻塞。它完全只读，不创建 Authority Lock、marker、cache、progress、Receipt、pending revision、状态锁，也不运行项目 Check。
-- `compile` 重复同一 fail-closed workspace 分类和 activation validator，因此直接 Compile 不能绕过 Preflight，再按精确 applicability 生成 Global 与 Outcome Result/Requirement/Control-field/Control-relation/Non-completing/Technical Claim，拒绝未覆盖单元，并让第一次正式成功 Compile 成为 Authority Lock。首次 enable 仅保护配置的 managed destination 中当前 package asset tree 实际存在的精确文件，以及精确的 config/hook 文件；managed 目录根和宽泛 `.codex/**` 均不豁免。每次结果都包含 lifecycle event、`delivery_completed_by_this_event: false`、`native_goal_effect: none` 和 next action。第一次结果附带 `execution_model_checkpoint.required: true` 及 terminal-turn/explicit-choice 契约，后续 Compile 返回 `false`；这些字段不进入 Authority state。
+- `compile` 重复同一 fail-closed workspace 分类和 activation validator，因此直接 Compile 不能绕过 Preflight，再按精确 applicability 生成 Global 与 Outcome Result/Requirement/Control-field/Control-relation/Non-completing/Technical Claim，拒绝未覆盖单元，并让第一次正式成功 Compile 成为 Authority Lock。首次 enable 仅保护配置的 managed destination 中当前 package asset tree 实际存在的精确文件，以及精确的 config/hook 文件；managed 目录根和宽泛 `.codex/**` 均不豁免。每次结果都包含 lifecycle event、`delivery_completed_by_this_event: false`、`native_goal_effect: none` 和 next action。第一次结果附带无条件的 `execution_model_checkpoint.required: true` 终止当前回合契约，后续 Compile 返回 `false`；Harness 不把 acknowledgement 或 model route 写入 Authority state。
 - `diagnose-revision` 只做无副作用候选 Compile；仅 scope-only 候选能运行 Active Authority 已有且未更换的 Check，输出固定为非验收、非 Progress、非 pending。
 - `compile --revise` 自动采用单调或机械边界内的修订；需要用户决策时返回 `authority_revision_pending`、精确 id、确定性 material 摘要、`user_decision_reasons` 和自包含 `decision_brief`。先展示 brief；只有已明确且精确覆盖全部 reason 的当前任务指令可直接承载该 id。候选再变会生成新 id 并使旧批准失效。采用后证据失效、输出 `authority_revision_adopted` 并回到滚动执行，不表示交付完成。
 - `verify` 在重查 active task/revision/compiled/worktree identity 并依据 immutable baseline 应用同一 workspace 分类后写 scoped Progress；targeted verify 始终只是可选反馈/修复证据。`verify --explain` 只读地合并 Main Raw Execution、列出适用 Counterfactual 调用与声明的重试次数上界，不执行命令、不写 Progress，也不预测耗时或 runner 内部子进程。

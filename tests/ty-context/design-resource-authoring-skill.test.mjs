@@ -24,6 +24,7 @@ test("design-resource-authoring has one exact managed/generated/package source",
     "references/resource-selection.md",
     "references/open-design-provider.md",
     "references/downstream-handoff.md",
+    "references/formal-selected-web-app-handoff.md",
   ]) {
     const values = await copies(relative);
     assert.equal(values[1], values[0], `${relative}: generated drift`);
@@ -37,7 +38,7 @@ test("design-resource-authoring has one exact managed/generated/package source",
   assert.equal(metadata.name, "design-resource-authoring");
   assert.match(metadata.description, /generate.*design resources/iu);
   assert.match(metadata.description, /Open Design/iu);
-  assert.match(metadata.description, /explicitly named development scope/iu);
+  assert.match(metadata.description, /implementation handoff/iu);
   assert.match(metadata.description, /生成设计资源/u);
 });
 
@@ -47,12 +48,12 @@ test("resource selection preserves the smallest sufficient scoped commission", a
     copies("references/resource-selection.md").then((items) => items[0]),
   ]);
   const combined = `${skill}\n${selection}`;
-  assert.match(combined, /scope as the hard ceiling|hard scope ceiling/iu);
+  assert.match(combined, /scope (?:as|is) (?:the |a )?hard ceiling|hard scope ceiling/iu);
   assert.match(combined, /necessary surrounding context/iu);
   assert.match(combined, /smallest sufficient/iu);
   assert.match(
     combined,
-    /(?:artifact count|artifact\/file set)[\s\S]*never information granularity/iu,
+    /(?:artifact count|artifact\/file set)[\s\S]*never (?:material )?information granularity/iu,
   );
   assert.match(
     combined,
@@ -97,12 +98,12 @@ test("only style-bearing commissions gate on configured Design Authority", async
   assert.match(combined, /`non-fidelity`/u);
   assert.match(
     combined,
-    /high-fidelity.*brand.*typography\/color\/density.*production-style prototype/isu,
+    /high.?fidelity.*brand.*typography\/color\/density.*production-style prototype/isu,
   );
   assert.match(combined, /low-fidelity.*IA\/flow topology.*semantics-only/isu);
   assert.match(
     combined,
-    /`DESIGN\.md` is missing.*unconfigured.*starter.*lacks one authored exact-value token source/isu,
+    /(?:`DESIGN\.md` is missing|missing `DESIGN\.md`).*unconfigured.*(?:starter|style-only).*exact-value token source/isu,
   );
   assert.match(
     combined,
@@ -113,8 +114,9 @@ test("only style-bearing commissions gate on configured Design Authority", async
   assert.match(combined, /combined explicit request authorizes/iu);
   assert.match(
     combined,
-    /configured system-level authority does not by itself prove surface-level implementation readiness/iu,
+    /Candidates[\s\S]*do not[\s\S]*prove implementation acceptance/iu,
   );
+  assert.match(combined, /does not itself adopt Design Authority/iu);
 });
 
 test("style-bearing Open Design projects bind and verify the adopted design system", async () => {
@@ -138,15 +140,17 @@ test("style-bearing Open Design projects bind and verify the adopted design syst
 });
 
 test("implementation output uses complete canonical source plus residual handoff", async () => {
-  const [skill, provider, handoff] = await Promise.all([
+  const [skill, provider, downstream, formal] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
     copies("references/open-design-provider.md").then((items) => items[0]),
     copies("references/downstream-handoff.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
   ]);
+  const handoff = `${downstream}\n${formal}`;
   const combined = `${skill}\n${provider}\n${handoff}`;
   assert.match(
-    skill,
-    /complete canonical source|canonical implementation source/iu,
+    combined,
+    /machine-readable canonical entry|canonical implementation source/iu,
   );
   assert.match(provider, /Implementation-level output profile/iu);
   assert.match(provider, /canonical machine-readable entry/iu);
@@ -166,19 +170,25 @@ test("implementation output uses complete canonical source plus residual handoff
     provider,
     /stable IDs\/data attributes.*Markdown anchors.*JSON Pointers.*HTML\/CSS\/JS\/SVG selectors.*declarations.*attributes/isu,
   );
-  assert.match(handoff, /residual semantic and binding layer/iu);
   assert.match(
     handoff,
-    /typed located digests|typed, locally resolvable .* locators/iu,
+    /residual (?:semantic and binding layer|scope\/provenance)/iu,
   );
   assert.match(
     handoff,
-    /subject × target × condition × variation × property/iu,
+    /typed (?:located digests|value[\s\S]*located digest|locally resolvable .* locators)/iu,
+  );
+  assert.match(
+    handoff,
+    /subject × target × condition × variation × (?:atomic )?property/iu,
   );
   assert.match(combined, /Expected Fact Universe/iu);
-  assert.match(handoff, /Product Controls.*do not cap fact granularity/iu);
-  assert.match(handoff, /one atomic Fact for every covered cell/iu);
-  assert.match(handoff, /resource_fact_closure/u);
+  assert.match(handoff, /Product Controls[\s\S]*not the Fact ceiling/iu);
+  assert.match(
+    handoff,
+    /one atomic Fact for every covered cell|every covered cell becomes one atomic Fact/iu,
+  );
+  assert.match(handoff, /resource[_-]fact closure|resource_fact_closure/iu);
   assert.match(handoff, /`fact_refs`/u);
   assert.match(handoff, /full_target.*layout_geometry/isu);
   assert.match(handoff, /full_target.*visual_pixel/isu);
@@ -188,21 +198,23 @@ test("implementation output uses complete canonical source plus residual handoff
   );
   assert.match(
     handoff,
-    /verification method[\s\S]*independently failing Assertion[\s\S]*blocker[\s\S]*Source-item\/method\/required-capability lineage/isu,
+    /Fact × (?:property-)?required(?: verification)? method[\s\S]*Source-item\/method\/required-capability lineage[\s\S]*machine Claim or target-blocking External Confirmation/isu,
   );
   assert.match(
     handoff,
-    /sole complete index[\s\S]*residual semantic and binding layer/iu,
+    /sole complete collection index[\s\S]*residual scope\/provenance/iu,
   );
 });
 
 test("formal Web/App authoring closes the complete atomic Fact universe before handoff", async () => {
-  const [skill, provider, handoff, selection] = await Promise.all([
+  const [skill, provider, downstream, selection, formal] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
     copies("references/open-design-provider.md").then((items) => items[0]),
     copies("references/downstream-handoff.md").then((items) => items[0]),
     copies("references/resource-selection.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
   ]);
+  const handoff = `${downstream}\n${formal}`;
   const combined = `${skill}\n${provider}\n${handoff}\n${selection}`;
 
   assert.match(
@@ -215,7 +227,7 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
   );
   assert.match(
     combined,
-    /subject × target × condition × variation × property/iu,
+    /subject × target × condition × variation × (?:atomic )?property/iu,
   );
   assert.match(combined, /all 33 standard target-condition axes/iu);
   for (const axis of [
@@ -232,7 +244,7 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
     assert.match(combined, new RegExp(axis, "iu"));
   assert.match(
     combined,
-    /`variant`.*`state`.*`interaction_phase`.*`presence_phase`.*`instance_case`/isu,
+    /`?variant(?:`| ×).*state.*interaction_phase.*presence_phase.*instance_case/isu,
   );
   assert.match(
     combined,
@@ -268,14 +280,17 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
   assert.match(combined, /complete_enumeration/iu);
   assert.match(combined, /sampling: forbidden/iu);
   assert.match(combined, /truncation: forbidden/iu);
+  assert.match(combined, /all-states[\s\S]*atomic identities/iu);
   assert.match(
     combined,
-    /all-21-state-catalog.*cannot impersonate 21 atomic states/iu,
+    /exact universe is every applicable[\s\S]*Fact Cell/iu,
   );
-  assert.match(combined, /one explicit Fact Cell for every applicable/iu);
-  assert.match(combined, /one atomic Fact for every covered cell/iu);
+  assert.match(
+    combined,
+    /one atomic Fact for every covered cell|every covered cell becomes one atomic Fact/iu,
+  );
   assert.match(combined, /typed value locators\/digests/iu);
-  assert.match(combined, /effective design-system lineage/iu);
+  assert.match(combined, /(?:effective )?design-system (?:identity and )?lineage/iu);
   assert.match(combined, /dynamic\/lazy\/virtualized\/portal population/iu);
   assert.match(combined, /separate `proof_obligations` for every Fact/iu);
   assert.match(
@@ -284,7 +299,7 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
   );
   assert.match(
     combined,
-    /hydration from the declared manifest bytes[\s\S]*cannot restate or certify a narrower universe/iu,
+    /Preflight hydrates omitted collections directly from the declared manifest bytes[\s\S]*same full semantic validator/iu,
   );
   assert.match(combined, /complete_explicit/iu);
   assert.match(combined, /count plus identity digest/iu);
@@ -309,21 +324,21 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
   );
   assert.match(
     combined,
-    /explicit human selection or explicit delegated selection/iu,
+    /explicit (?:human )?selection or explicit(?:ly)? delegated selection/iu,
   );
-  assert.match(combined, /one consolidated.*reconciliation/isu);
+  assert.match(combined, /one consolidated.*reconciliation|consolidate[\s\S]*once/isu);
   assert.match(
     combined,
     /writable initial-proposal file|authorized writable path/iu,
   );
   assert.match(
     combined,
-    /exists only in conversation.*complete revised proposal/isu,
+    /exists only in conversation.*complete revised proposal|complete revised proposal.*exists only in conversation/isu,
   );
   assert.match(combined, /idempotent/iu);
   assert.match(
     combined,
-    /exclude rejected and unresolved|rejected and unresolved choices.*exclude/isu,
+    /exclude rejected(?: and|\/)unresolved|rejected(?: and|\/)unresolved choices.*exclude/isu,
   );
   assert.match(
     combined,
@@ -331,51 +346,55 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
   );
   assert.match(
     combined,
-    /Never mutate a Source Plan, `project_context\/\*\*`, `DESIGN\.md`, Delivery Contract, production code or tests/iu,
+    /Never mutate a Source Plan,[\s\S]{0,100}(?:`project_context\/\*\*`|Context)[\s\S]{0,100}`DESIGN\.md`[\s\S]{0,100}Contract[\s\S]{0,100}production code or tests/iu,
   );
 });
 
 test("handoff preserves immutable resource identity and direct downstream routing", async () => {
-  const handoff = (await copies("references/downstream-handoff.md"))[0];
-  assert.match(handoff, /Candidate, selection and authority are separate/iu);
+  const [downstream, formal] = await Promise.all([
+    copies("references/downstream-handoff.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
+  ]);
+  const handoff = `${downstream}\n${formal}`;
+  assert.match(handoff, /Candidate, selection and (?:authority|adoption)/iu);
   assert.match(
     handoff,
-    /stable resource and exactly one target identity/iu,
+    /for each target|per-target/iu,
   );
   assert.match(handoff, /provider\/project\/run\/entry/iu);
-  assert.match(handoff, /immutable digest\/snapshot/iu);
+  assert.match(handoff, /immutable[\s\S]{0,120}digest\/snapshot/iu);
   assert.match(
     handoff,
     /editable upstream owner, locator and update\/export method/iu,
   );
   assert.match(handoff, /all 33 standard target-condition axes/iu);
-  assert.match(handoff, /exactly one:[\s\S]*design-resource-handoff-v1/iu);
+  assert.match(handoff, /exactly one fenced[\s\S]*design-resource-handoff-v1/iu);
   assert.match(handoff, /representation: manifest_backed/u);
   assert.match(
     handoff,
-    /canonical per-target observable-Fact manifest is the sole complete index/iu,
+    /canonical manifest as the sole complete collection index/iu,
   );
   assert.match(
     handoff,
-    /explicit canonical manifest path set[\s\S]*file SHA-256[\s\S]*collection counts\/identity digests/iu,
+    /explicit manifest path set[\s\S]*SHA-256[\s\S]*collection counts\/identity digests/iu,
   );
-  assert.match(handoff, /truthful UTF-8 ceiling/iu);
+  assert.match(handoff, /truthful UTF-8 (?:byte )?ceiling/iu);
   assert.match(
     handoff,
     /ty-context design-resource bundle <draft-dir> <new-output-dir>/u,
   );
-  assert.match(
-    handoff,
-    /rejects any embedded\/full-array or multi-target draft/iu,
-  );
+  assert.match(handoff, /rejects? (?:any )?embedded\/full-array or multi-target drafts?/iu);
   assert.match(handoff, /atomically renames the complete set/iu);
-  assert.match(handoff, /not a post-hoc split/iu);
-  assert.match(handoff, /a semantic target is never divided/iu);
+  assert.match(handoff, /never post-hoc splits?|not a post-hoc split/iu);
   assert.match(
     handoff,
-    /File size, parser capacity, model output or memory pressure never permits sampling, truncation, Fact coarsening/iu,
+    /a semantic target is never divided|never post-hoc splits? a semantic target/iu,
   );
-  assert.match(handoff, /older embedded V1 read compatibility/iu);
+  assert.match(
+    handoff,
+    /File\/model\/parser\/memory limits cannot weaken the universe/iu,
+  );
+  assert.match(handoff, /older embedded-?V1 read compatibility/iu);
   for (const dimension of [
     "surface_flow",
     "visual_content",
@@ -390,7 +409,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
   assert.match(handoff, /ty-context design-resource preflight <handoff\.md>/u);
   assert.match(
     handoff,
-    /referenced canonical manifest plus this residual block normalize to the complete handoff/iu,
+    /Preflight hydrates omitted collections directly from the declared manifest bytes[\s\S]*same full semantic validator/iu,
   );
   assert.match(
     handoff,
@@ -398,25 +417,24 @@ test("handoff preserves immutable resource identity and direct downstream routin
   );
   assert.match(
     handoff,
-    /static frame[\s\S]*cannot cover unseen interaction, motion, adaptation\/input or accessibility/iu,
+    /static\/default frame covers only what it actually shows/iu,
   );
   assert.match(handoff, /blocking `decision_required`\/`unavailable`/iu);
   assert.match(
     handoff,
-    /unresolved rows remain visible and make preflight fail/iu,
+    /unresolved rows[\s\S]*fail closed/iu,
   );
   assert.match(
     handoff,
-    /selected immutable resources[\s\S]*reconciled initial proposal/iu,
-  );
-  assert.match(handoff, /long-task-workflow.*current native Goal/isu);
-  assert.match(
-    handoff,
-    /`source-plan-authoring` is not an intermediate stage/iu,
+    /initial proposal[\s\S]*selected immutable(?:\/editable)? identities/iu,
   );
   assert.match(
     handoff,
-    /Every marked handoff is in `task\.source_paths`[\s\S]*Check `verification_inputs`/iu,
+    /active Long-Task[\s\S]*one Source\/Contract\/Authority\/Final Gate lifecycle/iu,
+  );
+  assert.match(
+    handoff,
+    /Every marked handoff(?:\/resource\/manifest)? (?:is|belongs) in `task\.source_paths`[\s\S]*Check `verification_inputs`/iu,
   );
   assert.match(
     handoff,
@@ -428,16 +446,16 @@ test("handoff preserves immutable resource identity and direct downstream routin
   );
   assert.match(
     handoff,
-    /creates no Contract Draft, Outcome, Receipt, Check result or Gate/iu,
+    /creates no Contract Draft[\s\S]{0,120}Outcome[\s\S]{0,120}Receipt[\s\S]{0,120}Check result or Gate/iu,
   );
   assert.match(handoff, /Context-reachable through existing owners/iu);
   assert.match(
     handoff,
-    /opens affected exact\/constraint resources before deciding/iu,
+    /default Workflow opens (?:every affected selected `exact-target` or `constraint`|actual resources and conditions)/iu,
   );
   assert.match(
     handoff,
-    /new immutable version rather than overwriting the adopted baseline/iu,
+    /never overwrites an accepted baseline[\s\S]*new immutable version/iu,
   );
 });
 
@@ -578,7 +596,7 @@ test("Source, specification, Context and public docs expose the new resource con
     assert.match(content, /\$long-task-workflow/u);
     assert.match(
       content,
-      /one-time current-model or switch-and-resume choice|一次性的“继续使用当前模型”或“切换模型后恢复”选择/iu,
+      /After handling the model change, send \[continue\]\.|处理好模型更换之后，请发送【继续】。/iu,
     );
   }
   assert.match(profile, /"design-resource-authoring"/u);
@@ -591,22 +609,41 @@ test("Source, specification, Context and public docs expose the new resource con
 });
 
 test("authoring overlay keeps design rationale information-complete and causally rigorous", async () => {
-  const authoring = await read(
+  const main = await read(
     ".codex/skills/authoring/harness_package_design/SKILL.md",
   );
+  const referencePaths = [
+    "package-surface-and-sync.md",
+    "default-skill-governance.md",
+    "long-task-mechanism-admission.md",
+    "migration-and-release.md",
+    "test-and-benchmark-governance.md",
+  ];
+  const linked = [...main.matchAll(/\(references\/([^\)]+\.md)\)/gu)].map(
+    (match) => match[1],
+  );
+  assert.deepEqual(linked, referencePaths);
+  assert.ok(Buffer.byteLength(main, "utf8") < 7_000, "compact main Skill");
+
+  const references = await Promise.all(
+    referencePaths.map((name) =>
+      read(`.codex/skills/authoring/harness_package_design/references/${name}`),
+    ),
+  );
+  const authoring = `${main}\n${references.join("\n")}`;
   for (const term of [
-    "design purpose",
-    "design thinking",
-    "information-complete",
-    "causally rigorous",
-    "problem and purpose",
-    "inputs and transformation",
-    "authority",
-    "downstream consumption",
-    "proof",
+    "managed source",
+    "generated/install surface",
+    "current implementation truth",
+    "intended product truth",
+    "trigger discipline",
+    "Coverage_new",
+    "FalseNegative_new",
     "fail-closed",
-    "alternatives",
-    "indexed surfaces",
+    "Final Gate",
+    "migration",
+    "source parity",
+    "current-candidate",
   ])
     assert.match(authoring, new RegExp(term, "iu"));
 });

@@ -83,6 +83,9 @@ async function verifyNoop(): Promise<void> {
 const REMOVED_NORMAL_LONG_TASK_SKILL = "normal-long-task";
 const REMOVED_NORMAL_LONG_TASK_SKILL_SHA256 =
   "7a4f755da9a32e07f258d6c7fc5e5c70395257c72efb8a9ad4995cddcc4c73ba";
+const REMOVED_SOURCE_PLAN_SKILL = "source-plan-authoring";
+const REMOVED_SOURCE_PLAN_SKILL_SHA256 =
+  "902de1cca912a8c4a0f26461d0271f5fb87b970316b58efe1c06418f4531f10f";
 
 export const migrations: Migration[] = [
   legacySdlcHarnessMigration,
@@ -111,6 +114,19 @@ export const migrations: Migration[] = [
     detect: detectRemovedNormalLongTaskSkill,
     apply: migrateRemovedNormalLongTaskSkill,
     verify: verifyRemovedNormalLongTaskSkill,
+  },
+  {
+    id: "remove-source-plan-authoring-skill",
+    introducedIn: "0.8.11",
+    description:
+      "Remove the retired source-plan-authoring compatibility pointer; long-task-workflow owns machine-assurance Source authoring and legacy Source Plans remain ordinary Source.",
+    scope: "<harnessRoot>/skills/source-plan-authoring",
+    risk: "safe",
+    manualMessage:
+      "The same-name directory differs from the former package-owned compatibility pointer. Preserve the user-authored Skill or move its content explicitly; Tiny Context will not delete it.",
+    detect: detectRemovedSourcePlanSkill,
+    apply: migrateRemovedSourcePlanSkill,
+    verify: verifyRemovedSourcePlanSkill,
   },
   {
     id: "long-task-v1-retirement",
@@ -298,6 +314,78 @@ async function verifyRemovedNormalLongTaskSkill(
       "remove-normal-long-task-skill migration verification failed",
     );
   }
+}
+
+async function detectRemovedSourcePlanSkill(
+  projectRoot: string,
+  root: string,
+  migration: string,
+): Promise<UpgradePlanItem[]> {
+  const skill = removedSourcePlanSkillPath(projectRoot, root);
+  const state = await removedSourcePlanSkillState(skill);
+  if (state === "absent") return [];
+  const relative = path.relative(projectRoot, skill).split(path.sep).join("/");
+  return [
+    item(
+      migration,
+      state === "package-owned" ? "safe_pending" : "manual_required",
+      relative,
+      state === "package-owned"
+        ? "Remove the exact retired package-owned Source Plan compatibility pointer."
+        : "The retired same-name Skill contains modified or additional content; preserve it and resolve removal manually.",
+    ),
+  ];
+}
+
+async function migrateRemovedSourcePlanSkill(
+  projectRoot: string,
+  root: string,
+  report: MigrationReport,
+): Promise<void> {
+  const skill = removedSourcePlanSkillPath(projectRoot, root);
+  const state = await removedSourcePlanSkillState(skill);
+  const relative = path.relative(projectRoot, skill).split(path.sep).join("/");
+  if (state === "absent") {
+    report.skipped.push("remove-source-plan-authoring-skill");
+    return;
+  }
+  if (state !== "package-owned")
+    throw new Error(
+      `${relative} changed after upgrade planning; rerun upgrade and resolve the manual_required item`,
+    );
+  await fs.rm(skill, { recursive: true, force: true });
+  report.changed.push(relative);
+}
+
+async function verifyRemovedSourcePlanSkill(
+  projectRoot: string,
+  root: string,
+): Promise<void> {
+  if (await pathExists(removedSourcePlanSkillPath(projectRoot, root)))
+    throw new Error(
+      "remove-source-plan-authoring-skill migration verification failed",
+    );
+}
+
+function removedSourcePlanSkillPath(projectRoot: string, root: string): string {
+  return path.join(projectRoot, root, "skills", REMOVED_SOURCE_PLAN_SKILL);
+}
+
+async function removedSourcePlanSkillState(
+  skill: string,
+): Promise<"absent" | "package-owned" | "modified"> {
+  if (!(await pathExists(skill))) return "absent";
+  const files = await listFiles(skill);
+  if (
+    files.length !== 1 ||
+    path.relative(skill, files[0]).split(path.sep).join("/") !== "SKILL.md"
+  )
+    return "modified";
+  const normalized = (await readText(files[0])).replace(/\r\n/g, "\n");
+  const digest = createHash("sha256").update(normalized).digest("hex");
+  return digest === REMOVED_SOURCE_PLAN_SKILL_SHA256
+    ? "package-owned"
+    : "modified";
 }
 
 function removedNormalLongTaskSkillPath(

@@ -213,6 +213,12 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   assert.match(tarballSmoke, /"long-task", "final-gate"/);
   assert.match(tarballSmoke, /tarball contains retired runtime asset/);
   assert.match(
+    tarballSmoke,
+    /for \(const forbidden[\s\S]*source-plan-authoring[\s\S]*for \(const required/,
+  );
+  assert.match(tarballSmoke, /assets\/agents\/long-task-implementation\.toml/);
+  assert.match(tarballSmoke, /formal-selected-web-app-handoff\.md/);
+  assert.match(
     publishRunbook,
     /complete default and Long-Task Workflow test suites/,
   );

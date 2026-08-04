@@ -105,6 +105,7 @@ async function assertTarballContents(directory) {
     /^dist\/schemas\/long-task-delivery-set-/u,
     /^dist\/schemas\/long-task-delivery-v1\//u,
     /^assets\/hooks\/long-task-hook\.mjs$/u,
+    /^assets\/skills\/source-plan-authoring\//u,
   ]) {
     const found = files.find((file) => forbidden.test(file));
     if (found)
@@ -122,7 +123,8 @@ async function assertTarballContents(directory) {
     "assets/skills/design-resource-authoring/references/resource-selection.md",
     "assets/skills/design-resource-authoring/references/open-design-provider.md",
     "assets/skills/design-resource-authoring/references/downstream-handoff.md",
-    "assets/skills/source-plan-authoring/SKILL.md",
+    "assets/skills/design-resource-authoring/references/formal-selected-web-app-handoff.md",
+    "assets/agents/long-task-implementation.toml",
     "assets/skills/long-task-workflow/SKILL.md",
   ]) {
     if (!files.includes(required))

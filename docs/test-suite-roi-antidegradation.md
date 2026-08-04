@@ -43,8 +43,9 @@ The user explicitly requires a material rather than marginal return on roughly f
 hours already invested, asks that future feature/test changes remain protected, and
 authorizes implementation without preference clarification when repository evidence
 supports a safe choice. The current Goal still obeys the mandatory first-Authority-Lock
-model checkpoint; `continue_current_model` and blanket approvals given for the prior
-Goal do not approve this Goal's checkpoint or any future exact protected revision.
+terminal-turn checkpoint: it ends that turn regardless of prior model wording, then a
+later ordinary `continue` resumes execution. Blanket approvals given for the prior Goal
+do not approve any future exact protected revision.
 
 After machine acceptance, the user explicitly authorizes an intentional commit,
 push of the current development branch, merge into `main`, and push of remote `main`.

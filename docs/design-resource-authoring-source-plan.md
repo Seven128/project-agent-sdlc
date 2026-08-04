@@ -65,7 +65,7 @@ For an implementation handoff, sufficiency is development-corresponding rather t
 
 The resource-generation Skill never updates `project_context/**`, `DESIGN.md` or production code merely because generation succeeded. It never promotes a candidate to `exact-target`, creates Contract authority or claims product acceptance. The separate explicit-only `design-system-authoring` Skill may adopt one selected system into canonical project authority.
 
-`source-plan-authoring` is no longer a recommended next step and remains only a compatibility pointer. A raw initial proposal enters a bounded design loop directly. During iteration the Skill buffers decision effects task-locally; after explicit or delegated final selection it performs one consolidated idempotent reconciliation of accepted decisions into that proposal. The revised proposal plus selected immutable resources then goes directly to the current native Goal or enters `long-task-workflow`'s Source-bound Contract Draft loop immediately, where Source completeness and Contract mapping converge without semantic flattening.
+`source-plan-authoring` is no longer installed or package-managed. A raw initial proposal enters a bounded design loop directly. During iteration the Skill buffers decision effects task-locally; after explicit or delegated final selection it performs one consolidated idempotent reconciliation of accepted decisions into that proposal. The revised proposal plus selected immutable resources then goes directly to the current native Goal or enters `long-task-workflow`'s Source-bound Contract Draft loop immediately, where Source completeness and Contract mapping converge without semantic flattening. Legacy Source Plan documents remain ordinary Source.
 
 ## 2026-07-22 Workflow And Provider Amendment
 
@@ -77,7 +77,7 @@ This amendment supersedes older statements below that assigned proposal revision
 - Candidate generation, explicit/delegated selection, provider revision acceptance and project authority adoption are distinct. Project `DESIGN.md`, one authored exact-value token source/generation direction and owning Context remain canonical; provider ID/revision/digest/project binding are synchronization provenance.
 - `design-resource-authoring` gates only style-bearing work. High-fidelity/branded/visual-treatment/prod-style resources require configured Design Authority and a matching `get_project.designSystemId`; low-fidelity structure, IA/flow and semantics-only state studies remain allowed. Missing authority stops and points to explicit `$design-system-authoring` without invoking it.
 - Proposal effects remain task-local during iteration. Final selection triggers exactly one consolidated, idempotent writeback of accepted decisions to the initial proposal; rejected/unresolved choices are excluded. No Source Plan, Context, `DESIGN.md`, code or Contract is mutated.
-- Source-quality synthesis/refinement is integrated into `long-task-workflow`. The recommended inputs are the revised proposal plus selected immutable resources. `/source-plan-authoring` is a retired compatibility pointer; legacy Source Plans remain valid ordinary Source.
+- Source-quality synthesis/refinement is integrated into `long-task-workflow`. The recommended inputs are the revised proposal plus selected immutable resources. `/source-plan-authoring` is a retired, uninstalled name; legacy Source Plan documents remain valid ordinary Source.
 
 ## 2026-07-24 Shared Development-Input Adapter Amendment
 

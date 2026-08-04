@@ -83,11 +83,11 @@ read_policy: on-demand
 - Outcome dependencies describe acceptance and intermediate-proof readiness, not implementation scheduling. The rolling Frontier localizes verification and repair but never gates edits, so the current native Goal can adapt file/function/test order and targeted-feedback cadence to current code without freezing a speculative technical DAG.
 - One selected verification workspace removes branch/worktree/integration recovery and combined-gate machinery from the core. Users or the platform may explicitly use native delegation/Git parallelism as implementation means, but Harness does not create or recover it, and all accepted output converges into that workspace.
 
-## Why One Model-Choice Checkpoint Returns
+## Why One Host Model-Change Checkpoint Returns
 
 - The host and user still own model selection; Harness cannot switch models. However, the first Authority Lock creates a useful economic boundary: Source, Contract, Context, risk and executable acceptance are now frozen, so the execution model can be chosen with materially lower drift risk than during authoring.
-- Compile therefore emits one explicit pre-implementation choice: continue with the current model or switch models and resume the same active Long-Task. A task-specific model choice already stated by the user satisfies the checkpoint.
-- The checkpoint occurs only once, after the first Authority Lock. Later revisions do not repeat it, and no acknowledgement file, model route, scheduler or checkpoint state is persisted. This preserves the cost benefit without recreating model orchestration.
+- Compile therefore emits one unconditional pre-implementation terminal-turn boundary. The Agent asks the user to handle the model change in the host and send `【继续】`/`[continue]`; an earlier task-specific model statement cannot skip it, and Harness neither observes nor verifies whether a change occurred.
+- The checkpoint occurs only once, after the first Authority Lock. Later revisions do not repeat it, ordinary continuation resumes execution, and no acknowledgement file, model route, scheduler or checkpoint state is persisted. This preserves the cost benefit without recreating model orchestration.
 
 ## Why One Delivery Contract
 

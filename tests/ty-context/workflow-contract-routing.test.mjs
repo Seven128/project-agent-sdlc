@@ -71,7 +71,7 @@ test("default Context routing combines manifest candidates with bounded search",
     rootAgents,
     /bounded text search over `project_context\/\*\*`/iu,
   );
-  for (const content of [managed, development]) {
+  for (const content of [managed]) {
     assert.match(content, /graph\/trigger candidates|triggers\/read policy/iu);
     assert.match(content, /bounded text search/iu);
     assert.match(content, /project_context\/\*\*/u);
@@ -93,6 +93,9 @@ test("default Context routing combines manifest candidates with bounded search",
       /no index, cache, state or second authority|不创建索引、缓存或第二权威/iu,
     );
   }
+  assert.match(development, /bounded high-signal Context search/iu);
+  assert.match(development, /Before `Context Delta`/iu);
+  assert.match(development, /semantic ownership/iu);
   assert.match(
     managed,
     /For material UI, reconcile affected stable surface\/control\/target keys/iu,
@@ -234,15 +237,10 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     workflow,
     /active Long-Task keeps its existing scope classifier and `scope_escape` owner/iu,
   );
-  assert.match(development, /读取什么.*intended workspace/iu);
-  assert.match(development, /没 Context 的 workspace 不建空目录/iu);
-  assert.match(development, /跨 workspace.*顶层 `project_context\/areas/iu);
-  assert.match(development, /default Area.*仓库公共.*workspace-local Context 默认 `on-demand`/iu);
-  assert.match(development, /不能仅凭 default Area、最近修改/iu);
-  assert.match(
-    development,
-    /根 `DESIGN\.md` 仍是当前共享项目 Design Authority[\s\S]*单 Area\/非 monorepo 不增加 schema、迁移、状态或行为成本/iu,
-  );
+  assert.match(development, /expandable read scope/iu);
+  assert.match(development, /intended\/supporting workspaces/iu);
+  assert.match(development, /rather than edit authorization or read ACLs/iu);
+  assert.match(development, /workspace registries, topology scans or empty Context mirrors/iu);
   assert.match(manifestTemplate, /project_context\/workspaces\/<workspace-id>/iu);
   assert.match(manifestTemplate, /maps one code root/iu);
   assert.match(manifestTemplate, /do not create empty/iu);
@@ -441,7 +439,9 @@ test("shared engineering quality is observable, risk-proportional, and single-ca
     read(
       ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
     ),
-    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(
+      ".codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md",
+    ),
     read(
       "project_context/areas/harness-package/contracts/workflow-contract.md",
     ),
@@ -463,9 +463,9 @@ test("shared engineering quality is observable, risk-proportional, and single-ca
     );
     assert.match(
       guidance,
-      /before the first implementation edit|第一处实现编辑前/iu,
+      /before (?:the first )?(?:implementation edits?|product implementation)|第一处实现编辑前/iu,
     );
-    assert.match(guidance, /risk-proportional|风险.*深度/iu);
+    assert.match(guidance, /risk-proportional|Risk changes depth|风险.*深度/iu);
     assert.match(guidance, /owner|所有者/iu);
     assert.match(guidance, /extension point/iu);
     assert.match(guidance, /source of truth/iu);
@@ -500,10 +500,10 @@ test("shared engineering quality is observable, risk-proportional, and single-ca
     workflow,
     /no quality artifact\/matrix, second `Context Delta`, Contract, Source aspect, Claim\/risk kind, Authority, Gate, state, scheduler, broad quality Boolean or language-generic analyzer/iu,
   );
-  assert.match(
-    authoring,
-    /decision-rationale\/architecture-quality\.md[\s\S]*每个实现需求[\s\S]*Goal 拥有[\s\S]*整体代码质量[\s\S]*unsupported metric[\s\S]*普通 sync 不迁移/iu,
-  );
+  assert.match(authoring, /^## Engineering-quality carrier$/mu);
+  assert.match(authoring, /Architecture Deliberation remains universal and risk-proportional/iu);
+  assert.match(authoring, /Default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers/iu);
+  assert.match(authoring, /Unsupported modularity metrics remain `null`\/`n\/a`/iu);
 });
 
 test("CLI and managed guidance route only explicit or active work to long-task", async () => {
@@ -512,7 +512,7 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     "help",
   ]);
   assert.match(stdout, /long-task <subcommand>/);
-  assert.match(stdout, /Install Long-Task Skill, Source Plan pointer/);
+  assert.match(stdout, /Install Long-Task Skill, lifecycle Hooks, templates and optional Codex worker/);
   assert.doesNotMatch(
     stdout,
     /validate-plan-contract|validate-plan-acceptance/,
@@ -533,19 +533,20 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     guidance,
     /After the first Authority Lock,[\s\S]*terminal-turn boundary/iu,
   );
-  assert.match(guidance, /continue_current_model[\s\S]*switch models/iu);
+  assert.match(guidance, /处理好模型更换之后，请发送【继续】。/u);
   assert.match(
     guidance,
-    /Generic continue\/resume\/finish\/continue-goal language does not satisfy/iu,
+    /After handling the model change, send \[continue\]\./iu,
   );
   assert.match(
     guidance,
-    /no model route or checkpoint acknowledgement state/iu,
+    /no acknowledgement, model route or checkpoint state/iu,
   );
   assert.match(
     guidance,
-    /`ty-context enable long-task` installs the Long-Task Workflow Skill, the retired Source Plan compatibility pointer and package-owned completion Hook/iu,
+    /`ty-context enable long-task` installs the sole Long-Task Workflow Skill and package-owned lifecycle Hooks/iu,
   );
+  assert.match(guidance, /retired Source Plan pointer is not installed/iu);
   assert.match(guidance, /`design-system-authoring` is explicit-only/iu);
 });
 
@@ -579,7 +580,7 @@ test("complexity, workflow assurance, and Long-Task proof floor remain orthogona
   }
   assert.match(chineseReadme, /复杂度决定执行与验证深度/u);
   assert.match(chineseReadme, /完成权威与恢复能力决定工作流路线/u);
-  assert.match(development, /任意复杂度/u);
+  assert.match(development, /not the default implementation workflow/iu);
   assert.match(managed, /Route by required assurance, not task size/iu);
   assert.match(managed, /A small consequential rule may use it and a complex cross-module change may remain default/iu);
   assert.match(rationale, /removes the former L0 eligibility barrier only/iu);
@@ -589,7 +590,7 @@ test("complexity, workflow assurance, and Long-Task proof floor remain orthogona
 
   const defaultManaged = /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(managed)?.[0] ?? "";
   assert.doesNotMatch(defaultManaged, /Expected Semantic Facts\s*=|Fact × required-method obligations|stable Fact Key|Obligation Key|revision digest|Final Gate|machine accepted/iu);
-  assert.match(development, /默认 Workflow 不构造完整 Expected Semantic Fact Universe、稳定 Fact\/Obligation Key、精确集合等式/iu);
+  assert.match(development, /Exact non-UI semantic facts remain owned by Source\/Context/iu);
   assert.match(managed, /After the last relevant code, configuration, Source or controlling-Context change, rerun every affected check/iu);
   assert.match(managed, /localize it to the requirement\/owner\/module\/check, repair it and rerun affected checks/iu);
   assert.match(managed, /Report `Implemented`, `Verified`, `Unverified`, `Blocked \/ decision required`/iu);
@@ -605,7 +606,7 @@ test("Goal ownership, active recovery, and explicit Codex invocation stay indepe
   ]);
 
   for (const content of [agents, workflow, skill]) {
-    assert.match(content, /selected and owned by the host\/user/iu);
+    assert.match(content, /selected and owned by the host\/user|host\/user-selected/iu);
     assert.match(
       content,
       /does not create, persist or reconnect (?:a |that )?(?:native )?Goal identifier/iu,
@@ -616,7 +617,7 @@ test("Goal ownership, active recovery, and explicit Codex invocation stay indepe
     );
     assert.match(
       content,
-      /resume[\s\S]*directly load[\s\S]*installed package-managed `long-task-workflow` Skill[\s\S]*does not depend on implicit invocation/iu,
+      /resume[\s\S]*(?:directly )?load[\s\S]*installed[\s\S]*`long-task-workflow` Skill[\s\S]*(?:does not depend on|needs no) implicit invocation/iu,
     );
   }
   assert.match(workflow, /\$long-task-workflow[\s\S]*\/skills/);
@@ -651,7 +652,7 @@ test("real-entry feedback stays advisory while final-candidate cold-start proof 
   for (const content of [agents, workflow, spec, verification]) {
     assert.match(
       content,
-      /always rerun(?:s)?[\s\S]{0,120}affected cold-start journey[\s\S]{0,100}final candidate/iu,
+      /always rerun(?:s)?[\s\S]{0,120}affected cold-start journey[\s\S]{0,100}final candidate|affected cold-start journey[\s\S]{0,100}always rerun[\s\S]{0,100}final candidate|affected cold-start journey is always rerun on the final candidate/iu,
     );
     assert.doesNotMatch(
       content,
@@ -701,7 +702,7 @@ test("Workflow Contract names the complete Source-bound-Draft-to-qualified-resul
     "inventory/provenance/refinement/markers/mapping",
     "Preflight",
     "Authority Lock",
-    "one-time model choice",
+    "one-time unconditional host model-change checkpoint",
     "Goal-owned adaptive implementation",
     "acceptance/verification Frontier",
     "source-recompiled one-snapshot Final Gate",
@@ -846,21 +847,24 @@ test("long-task Skill is the only active long-task workflow", async () => {
     /Outcome decomposes execution and diagnosis, not completion authority/iu,
   );
   assert.match(active, /execution_model_checkpoint\.required: true/iu);
-  assert.match(active, /continue_current_model/iu);
-  assert.match(active, /Later revisions return `required: false`/iu);
+  assert.match(active, /处理好模型更换之后，请发送【继续】。/u);
+  assert.match(active, /Later Compile returns `required: false`/iu);
   assert.match(
     active,
-    /no checkpoint file.*model route.*automatic model switch/is,
+    /neither switches nor verifies[\s\S]*persists checkpoint\/acknowledgement\/route state[\s\S]*nor creates[\s\S]*automatic switch/iu,
   );
   assert.match(active, /second Contract plan/);
   assert.match(
     active,
-    /may (?:implement, inspect or repair|work across)[\s\S]{0,180}(?:any in-scope Outcome|Outcome or Stage boundaries)/iu,
+    /Each worker receives only its bounded packet/iu,
   );
+  assert.match(active, /parent reviews and integrates every report/iu);
   assert.match(
     active,
-    /platform-native agents\/subagents[\s\S]{0,300}(?:non-authoritative|not Progress|not proof)[\s\S]{0,180}converge/iu,
+    /Delegation Suitability/iu,
   );
+  assert.match(active, /reports are not Progress, Evidence or proof/iu);
+  assert.match(active, /converge into the selected verification workspace/iu);
   assert.ok(
     Buffer.byteLength(active, "utf8") <= 16_000,
     "main Long-Task Skill must remain a compact objective/boundary/router surface",
@@ -914,9 +918,8 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
 });
 
-test("retired Source Plan entry points to the Source-bound Contract Draft loop", async () => {
-  const [sourcePlan, sourceAuthoring, workflowContext] = await Promise.all([
-    read(".codex/ty-context-managed/skills/source-plan-authoring/SKILL.md"),
+test("retired Source Plans stay ordinary Source without an installed entry", async () => {
+  const [sourceAuthoring, workflowContext] = await Promise.all([
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
     ),
@@ -924,16 +927,14 @@ test("retired Source Plan entry points to the Source-bound Contract Draft loop",
       "project_context/areas/harness-package/contracts/workflow-contract.md",
     ),
   ]);
-  assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
-  assert.match(
-    sourcePlan,
-    /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu,
-  );
-  assert.match(sourcePlan, /Do not rewrite it merely for compatibility/iu);
-  assert.match(sourcePlan, /create a new Source Plan artifact/iu);
-  assert.doesNotMatch(
-    sourcePlan,
-    /ty-context long-task (?:init|preflight|compile)/,
+  assert.equal(
+    await missing(
+      path.join(
+        repo,
+        ".codex/ty-context-managed/skills/source-plan-authoring/SKILL.md",
+      ),
+    ),
+    true,
   );
   assert.match(
     sourceAuthoring,

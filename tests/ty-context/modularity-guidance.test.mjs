@@ -19,22 +19,21 @@ test("managed guidance includes Modularity Check workflow contract hints", () =>
     assert.match(agents, /internal plan|internal routing and maintenance questions/);
     assert.doesNotMatch(agents, /requires? a Task Contract file/i);
   }
-  for (const skill of [managedSkill, packagedSkill]) {
-    assert.match(skill, /Modularity Check: none\|required\|exception/);
-    assert.match(skill, /validate-code-modularity/);
-    assert.match(skill, /lifecycle-complete waiver/);
-    assert.match(skill, /<harnessRoot>\/config\.yaml/);
-    assert.match(skill, /service \/ facade/);
-    assert.match(skill, /verification helper/);
-    assert.match(skill, /capability-aware/);
-    assert.match(skill, /JS\/TS family/);
-    assert.match(skill, /Python/);
-    assert.match(skill, /line-only/);
-    assert.match(skill, /不支持的指标为 `n\/a`/);
-    assert.match(skill, /不是完整跨语言 static analysis/);
-    assert.match(skill, /普通 `sync` 不做迁移/);
-    assert.match(skill, /owner.*introduced_at.*tracking_issue.*expiry_condition/s);
-  }
+  assert.equal(packagedSkill, managedSkill);
+  assert.match(managedSkill, /source of truth and extension point/);
+  assert.match(managedSkill, /existing owner\/facade\/adapter/);
+  assert.match(managedSkill, /abstraction only for an evidenced change axis/);
+  assert.match(managedSkill, /without duplicate truth or reverse dependency/);
+  assert.match(
+    managedSkill,
+    /project-owned type\/lint\/AST\/dependency\/contract\/behavior\/benchmark\/probe checks/,
+  );
+  assert.match(managedSkill, /bounded project-owned exception/);
+  assert.ok(
+    Buffer.byteLength(managedSkill, "utf8") < 9_000,
+    "engineering-design Skill stays a compact role adapter",
+  );
+  assert.doesNotMatch(managedSkill, /validate-code-modularity|JS\/TS family|line-only/);
   for (const makefile of [managedMake, packagedMake]) {
     assert.match(makefile, /ty-context-check-modularity/);
     assert.match(makefile, /validate-code-modularity/);

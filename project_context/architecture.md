@@ -65,11 +65,11 @@ Default:
 
 Long-Task:
 
-`proposal/resources + minimum Context -> one Source-bound Contract Draft loop -> Preflight -> Compile / Authority Lock -> one-time model choice -> Goal-owned adaptive implementation -> optional targeted repair evidence -> protected revision when needed -> source-recompiled same-snapshot Final Gate`
+`proposal/resources + minimum Context -> one Source-bound Contract Draft loop -> Preflight -> Compile / Authority Lock -> one-time unconditional host model-change checkpoint -> Goal-owned adaptive implementation -> optional targeted repair evidence -> protected revision when needed -> source-recompiled same-snapshot Final Gate`
 
 - Product, Technical Boundary and Acceptance remain distinct logical authorities inside one Contract.
 - A Draft Outcome is the pre-lock lifecycle of an Outcome, not another runtime type or authority. Dependencies express acceptance/intermediate-proof readiness and never implementation permission.
-- Preflight is read-only and non-authoritative; Compile creates Authority Lock and the one-time explicit model-choice boundary.
+- Preflight is read-only and non-authoritative; Compile creates Authority Lock and the one-time unconditional host model-change boundary.
 - Targeted verification localizes repair and may store scoped Progress, but only Final Gate can create Long-Task machine acceptance.
 - One native Goal means the currently selected host execution Goal, not a Harness-created or persisted Goal identifier. Compaction may continue in that Goal; a later physical Goal/session restores semantic state through `resume`.
 - Revision adoption invalidates affected evidence and returns to rolling implementation; it never completes delivery or mutates the host Goal.
@@ -90,7 +90,7 @@ Long-Task:
 - Intended-workspace resolution is conditional. A non-monorepo repository or an already explicit/unambiguous target pays no schema, state, migration or clarification ceremony.
 - The default Workflow Contract is soft/prompt-level. Project checks prove behavior; it deliberately has no validator, Receipt, persisted phase state or machine acceptance.
 - Route selection is assurance-driven rather than size-driven: complexity changes execution and verification depth; required completion authority, recovery and auditability determine whether Long-Task's durable Contract/Authority/Final-Gate cost is justified; Long-Task's existing internal risk floor then selects standard or strict proof.
-- The first successful Long-Task Compile creates Authority Lock and a terminal model-choice turn unless an explicit task-specific choice already exists; Harness stores no acknowledgement or model route.
+- The first successful Long-Task Compile creates Authority Lock and always ends the current turn at the host model-change checkpoint before implementation; earlier model wording cannot skip it, continuation is not proof that the model changed, and Harness stores no acknowledgement or model route.
 - One selected delivery has one Contract, selected verification workspace and Final Gate. Harness owns no delegation, branch/worktree or process fan-out.
 - Selected-design preflight/integrity never substitutes for production conformance. The default route performs risk-proportional project-native checks and reports unchecked declared conditions without an exact Fact ledger; Long-Task compiled proof remains the sole exact machine carrier.
 - Quality attributes are constraints and tradeoffs, not automatic maximization targets. Performance claims require attributable workload/budget/environment/measurement; preservation-only work uses the cheapest existing evidence and makes no unsupported improvement claim.
@@ -103,7 +103,7 @@ Long-Task:
 - Default-footprint tests prove deterministic selection, exact-duplicate reporting and advisory budgets, not compliance with an absolute byte ceiling.
 - Workflow tests prove manifest routing plus bounded search, prompt-level default semantics, explicit/bound Long-Task routing and absence of added index/state/authority.
 - Sparse-workspace tests prove the default set remains a starting set, represented Context workspaces map through existing fields, unrepresented code workspaces need no Context directory, ambiguous-target/change-scope guidance reaches managed/generated/public surfaces, and non-monorepo initialization remains unchanged. Static guidance tests do not prove Agent adherence; an effectiveness claim requires fixed independent fresh-Agent runs.
-- Long-Task tests prove Source/Contract/Authority continuity, one-time model choice, protected revision, exact evidence sensitivity, current-snapshot Final Gate and declared-machine/native-Goal separation.
+- Long-Task tests prove Source/Contract/Authority continuity, the unconditional one-time host checkpoint, protected revision, exact evidence sensitivity, current-snapshot Final Gate and declared-machine/native-Goal separation.
 - The `implementation-freedom-boundary` critical sentinel protects Goal-owned order/method/feedback/delegation choices without weakening final proof.
 - Affected/focused and Trust tests are feedback/package regression evidence only. Unknown or shared changes widen fail safe; complete selection supersedes a redundant Trust invocation.
 - Managed source, generated workspace copies and package assets remain byte-aligned through source sync and `package check-source`.
