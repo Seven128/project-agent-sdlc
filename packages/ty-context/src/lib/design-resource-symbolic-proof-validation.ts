@@ -1,10 +1,14 @@
-import { validateDesignResourceLocatedDigest } from "./design-resource-fact-locator-validation.js";
 import type { DesignResourcePropertyDefinitionV1 } from "./design-resource-fact-types.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
+import {
+  validateSymbolicObligationPolicy,
+  validateSymbolicProofAuthorities,
+} from "./design-resource-symbolic-proof-authority-validation.js";
 import type {
   DesignResourceHandoffPreflightV2,
   DesignResourceObservableRuleManifestV2,
   DesignResourceSymbolicDependencyEdgeV2,
+  DesignResourceSymbolicHandoffTargetV2,
 } from "./design-resource-symbolic-fact-types.js";
 import {
   assertCanonicalSet,
@@ -22,11 +26,19 @@ export function validateSymbolicObligations(
   manifest: DesignResourceObservableRuleManifestV2,
   projections: DesignResourceHandoffPreflightV2["rule_projections"],
   properties: Map<string, DesignResourcePropertyDefinitionV1>,
-  oracles: Map<string, unknown>,
-  environments: Map<string, unknown>,
+  oracles: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["oracles"][number]
+  >,
+  environments: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["environments"][number]
+  >,
+  target: DesignResourceSymbolicHandoffTargetV2,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {
+  validateSymbolicProofAuthorities(manifest, target, resources, contents);
   const obligations = new Map(
     manifest.semantic_proof_obligations.map((item) => [item.key, item]),
   );
@@ -37,6 +49,7 @@ export function validateSymbolicObligations(
       properties,
       oracles,
       environments,
+      target,
       resources,
       contents,
     );
@@ -57,8 +70,15 @@ function validateRuleObligations(
     DesignResourceObservableRuleManifestV2["semantic_proof_obligations"][number]
   >,
   properties: Map<string, DesignResourcePropertyDefinitionV1>,
-  oracles: Map<string, unknown>,
-  environments: Map<string, unknown>,
+  oracles: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["oracles"][number]
+  >,
+  environments: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["environments"][number]
+  >,
+  target: DesignResourceSymbolicHandoffTargetV2,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {
@@ -80,8 +100,10 @@ function validateRuleObligations(
     validateObligation(
       obligation,
       projection,
+      property,
       oracles,
       environments,
+      target,
       resources,
       contents,
     );
@@ -90,8 +112,16 @@ function validateRuleObligations(
 function validateObligation(
   obligation: DesignResourceObservableRuleManifestV2["semantic_proof_obligations"][number],
   projection: DesignResourceHandoffPreflightV2["rule_projections"][number],
-  oracles: Map<string, unknown>,
-  environments: Map<string, unknown>,
+  property: DesignResourcePropertyDefinitionV1,
+  oracles: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["oracles"][number]
+  >,
+  environments: Map<
+    string,
+    DesignResourceObservableRuleManifestV2["environments"][number]
+  >,
+  target: DesignResourceSymbolicHandoffTargetV2,
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {
@@ -106,22 +136,21 @@ function validateObligation(
       "v2_obligation_identity_mismatch",
       `${obligation.key}:${expectedKey}`,
     );
-  if (!oracles.has(obligation.oracle_ref))
-    invalid("v2_obligation_oracle_unknown", obligation.key);
-  if (!environments.has(obligation.environment_ref))
+  const oracle = oracles.get(obligation.oracle_ref);
+  if (!oracle) invalid("v2_obligation_oracle_unknown", obligation.key);
+  const environment = environments.get(obligation.environment_ref);
+  if (!environment)
     invalid("v2_obligation_environment_unknown", obligation.key);
-  for (const [name, located] of [
-    ["parameters", obligation.comparison.parameters],
-    ["tolerance", obligation.comparison.tolerance],
-    ["mask", obligation.comparison.mask],
-  ] as const)
-    if (located)
-      validateDesignResourceLocatedDigest(
-        located,
-        resources,
-        contents,
-        `obligation.${obligation.key}.${name}`,
-      );
+  validateSymbolicObligationPolicy(
+    obligation,
+    projection.rule,
+    property,
+    oracle,
+    environment,
+    target,
+    resources,
+    contents,
+  );
 }
 
 export function validateSymbolicCertificates(
@@ -243,20 +272,4 @@ function assertCertificateCoverage(
     "v2_certificate_edge_coverage_mismatch",
     manifest.target_key,
   );
-}
-
-export function validateSymbolicExactTargetMethods(
-  interpretation: "exact_target" | "constraint",
-  manifest: DesignResourceObservableRuleManifestV2,
-  properties: Map<string, DesignResourcePropertyDefinitionV1>,
-): void {
-  if (interpretation !== "exact_target") return;
-  const methods = new Set(
-    manifest.fact_rules
-      .filter((rule) => rule.observation_scope === "full_target")
-      .flatMap((rule) => properties.get(rule.property_ref)!.required_methods),
-  );
-  for (const method of ["layout_geometry", "visual_pixel"])
-    if (!methods.has(method as never))
-      invalid("v2_exact_target_full_target_method_missing", method);
 }

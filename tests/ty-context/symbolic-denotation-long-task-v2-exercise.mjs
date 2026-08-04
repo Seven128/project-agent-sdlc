@@ -13,6 +13,7 @@ import {
   withPath,
 } from "./long-task-final-closure-mutation-fixtures.mjs";
 import { prepareMixedSymbolicLongTaskFixture } from "./symbolic-denotation-long-task-v2-setup.mjs";
+import { writeDesignResourceSymbolicHandoffFixture } from "./design-resource-symbolic-handoff-fixture.mjs";
 
 export async function exerciseMixedSymbolicLongTaskClosure() {
   const fixture = await createDeliveryFixture();
@@ -20,11 +21,7 @@ export async function exerciseMixedSymbolicLongTaskClosure() {
   const env = withPath(fakePlaywrightBin);
   try {
     const prepared = await prepareMixedSymbolicLongTaskFixture(fixture);
-    const {
-      v2,
-      artifactHashes,
-      designRecords,
-    } = prepared;
+    const { v2, artifactHashes, designRecords } = prepared;
     const oracleProbe = JSON.parse(
       execFileSync(process.execPath, ["tests/oracle.mjs", "first"], {
         cwd: fixture.root,
@@ -54,11 +51,9 @@ export async function exerciseMixedSymbolicLongTaskClosure() {
       artifactHashes,
     );
     await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(
-      fixture.root,
-      ["long-task", "compile", fixture.workdir],
-      { env },
-    );
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+      env,
+    });
     await runCli(fixture.root, ["long-task", "verify", fixture.workdir], {
       env,
     });
@@ -70,6 +65,59 @@ export async function exerciseMixedSymbolicLongTaskClosure() {
         stage_results: receipt.stage_results,
         findings: receipt.findings,
       }),
+    );
+  } finally {
+    await Promise.all([
+      rm(fixture.root, { recursive: true, force: true }),
+      rm(fakePlaywrightBin, { recursive: true, force: true }),
+    ]);
+  }
+}
+
+export async function exerciseSymbolicCompileRejectsUnresolvedDisposition() {
+  const fixture = await createDeliveryFixture();
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture);
+    await writeDesignResourceSymbolicHandoffFixture(
+      fixture.root,
+      ({ manifest }) => {
+        manifest.disposition_regions[0].disposition = "decision_required";
+      },
+      { directory: "design-symbolic" },
+    );
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /v2_unresolved_disposition/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
+
+export async function exerciseSymbolicFinalGateRejectsCounterexample() {
+  const fixture = await createDeliveryFixture();
+  const fakePlaywrightBin = await createFakePlaywrightBin();
+  const env = withPath(fakePlaywrightBin);
+  try {
+    await prepareMixedSymbolicLongTaskFixture(fixture, {
+      mutateDesignRecords(records) {
+        const certificate = records.find(
+          (item) => item.capability === "design_symbolic_certificate",
+        );
+        certificate.certificate_results[0].fact_rule_refs.pop();
+      },
+    });
+    await runCli(fixture.root, ["enable", "long-task"], { env });
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+      env,
+    });
+    const receipt = await runFinalGate(fixture, env);
+    assert.notEqual(receipt.workflow_status, "machine_accepted");
+    assert.match(
+      JSON.stringify(receipt),
+      /design_symbolic_certificate_denotation_mismatch/u,
     );
   } finally {
     await Promise.all([
@@ -125,7 +173,7 @@ function validateSymbolicEvidenceMutations(
     "design_symbolic_method_identity_mismatch",
   );
   const mutatedCertificate = structuredClone(symbolicCertificate);
-  mutatedCertificate.certificate_results[0].omitted_axis_refs = [];
+  mutatedCertificate.certificate_results[0].fact_rule_refs.pop();
   assert.equal(
     validateRuntimeEvidenceRecord(
       compiledCheck,

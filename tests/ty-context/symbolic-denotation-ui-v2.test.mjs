@@ -4,10 +4,13 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
+import { designResourceSymbolicObligationKey } from "../../packages/ty-context/dist/lib/design-resource-symbolic-fact-validation.js";
 import {
   SYMBOLIC_HANDOFF_PATH,
+  SYMBOLIC_SOURCE_ITEM_KEY,
   writeDesignResourceSymbolicHandoffFixture,
 } from "./design-resource-symbolic-handoff-fixture.mjs";
+import { refreshSymbolicFixtureDerivedIdentities } from "./design-resource-symbolic-handoff-fixture-model.mjs";
 
 test("opt-in UI V2 preflight closes Rules, obligations, applicability and one set-valued certificate", async () => {
   await withFixture(async (root) => {
@@ -16,18 +19,21 @@ test("opt-in UI V2 preflight closes Rules, obligations, applicability and one se
       root,
       SYMBOLIC_HANDOFF_PATH,
     );
-    assert.equal(result.preflight_schema_version, "design-resource-handoff-preflight-v2");
+    assert.equal(
+      result.preflight_schema_version,
+      "design-resource-handoff-preflight-v2",
+    );
     assert.equal(result.handoff.representation, "symbolic_rules_v2");
-    assert.equal(result.rule_projections.length, 2);
-    assert.equal(result.metrics.semantic_obligations, 2);
+    assert.equal(result.rule_projections.length, 8);
+    assert.equal(result.metrics.semantic_obligations, 8);
     assert.equal(result.metrics.certificate_obligations, 1);
-    assert.equal(result.metrics.certificate_covered_omitted_axes, 2);
-    assert.equal(result.metrics.certificate_covered_dependency_edges, 4);
-    assert.equal(result.metrics.canonical_dag_nodes, 0);
+    assert.equal(result.metrics.certificate_covered_omitted_axes, 0);
+    assert.equal(result.metrics.certificate_covered_dependency_edges, 0);
+    assert.ok(result.metrics.canonical_dag_nodes > 0);
     assert.ok(result.metrics.canonical_bytes > 0);
     assert.equal(result.metrics.theoretical_ground_cardinality, "4");
-    assert.equal(fixture.certificate.fact_rule_refs.length, 2);
-    assert.equal(fixture.certificate.omitted_axis_refs.length, 2);
+    assert.equal(fixture.certificate.fact_rule_refs.length, 8);
+    assert.equal(fixture.certificate.omitted_axis_refs.length, 0);
   });
 });
 
@@ -54,11 +60,9 @@ test("a symbolic applicability gap fails with the exact subject-property tuple",
     await writeDesignResourceSymbolicHandoffFixture(root, ({ manifest }) => {
       const row = manifest.disposition_regions[0];
       expected = `surface.root:${row.property_ref}`;
-      row.region = {
-        op: "eq",
-        axis_ref: "condition.color-scheme",
-        value: "light",
-      };
+      manifest.disposition_regions = manifest.disposition_regions.filter(
+        (item) => item.key !== row.key,
+      );
     });
     await assert.rejects(
       preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
@@ -90,20 +94,19 @@ test("Fact Rule, semantic obligation and certificate identities cannot substitut
   ])
     await withFixture(async (root) => {
       await writeDesignResourceSymbolicHandoffFixture(root, (fixture) => {
-        if (field === "rule") fixture.manifest.fact_rules[0].key = "rule.invalid";
-        if (field === "obligation")
-          {
-            const previous = fixture.manifest.semantic_proof_obligations[0].key;
-            fixture.manifest.semantic_proof_obligations[0].key =
-              "obligation.invalid";
-            const rule = fixture.manifest.fact_rules.find((item) =>
-              item.semantic_obligation_refs.includes(previous),
-            );
-            rule.semantic_obligation_refs = rule.semantic_obligation_refs.map(
-              (item) =>
-                item === previous ? "obligation.invalid" : item,
-            );
-          }
+        if (field === "rule")
+          fixture.manifest.fact_rules[0].key = "rule.invalid";
+        if (field === "obligation") {
+          const previous = fixture.manifest.semantic_proof_obligations[0].key;
+          fixture.manifest.semantic_proof_obligations[0].key =
+            "obligation.invalid";
+          const rule = fixture.manifest.fact_rules.find((item) =>
+            item.semantic_obligation_refs.includes(previous),
+          );
+          rule.semantic_obligation_refs = rule.semantic_obligation_refs.map(
+            (item) => (item === previous ? "obligation.invalid" : item),
+          );
+        }
         if (field === "certificate")
           fixture.manifest.noninterference_certificates[0].key =
             "certificate.invalid";
@@ -119,13 +122,218 @@ test("Fact Rule, semantic obligation and certificate identities cannot substitut
 test("certificate coverage is recomputed and rejects a newly relevant or omitted dependency", async () => {
   await withFixture(async (root) => {
     await writeDesignResourceSymbolicHandoffFixture(root, ({ manifest }) => {
-      manifest.noninterference_certificates[0].omitted_axis_refs.pop();
+      manifest.noninterference_certificates[0].fact_rule_refs.pop();
     });
     await assert.rejects(
       preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
-      /v2_certificate_omitted_axes_mismatch/u,
+      /v2_certificate_rule_digest_mismatch/u,
     );
   });
+});
+
+test("unresolved dispositions and acceptance blockers never become ready", async () => {
+  for (const disposition of ["decision_required", "unavailable", "blocking"])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(root, ({ manifest }) => {
+        manifest.disposition_regions[0].disposition = disposition;
+      });
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        new RegExp(`v2_unresolved_disposition:.*:${disposition}`, "u"),
+      );
+    });
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(root, ({ manifest }) => {
+      manifest.acceptance_blockers.push({
+        key: "unresolved-symbolic-proof",
+        target_refs: [manifest.target_key],
+        subject_refs: [manifest.subjects[0].key],
+        dimensions: ["visual_content"],
+        fact_cell_refs: [],
+        fact_refs: [],
+        proof_obligation_refs: [],
+        source_item_refs: [SYMBOLIC_SOURCE_ITEM_KEY],
+        verification_methods: ["visual_pixel"],
+        required_capabilities: ["browser-runtime"],
+        description: "The symbolic proof remains unresolved.",
+      });
+    });
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /acceptance_blockers_unresolved:unresolved-symbolic-proof/u,
+    );
+  });
+});
+
+test("an omitted axis fails closed until a trusted non-interference proof exists", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(root, ({ manifest }) => {
+      manifest.fact_rules[0].region = structuredClone(
+        manifest.reachable_region,
+      );
+    });
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_noninterference_proof_unavailable:.*variation\.state/u,
+    );
+  });
+});
+
+test("exact targets require separate full-domain layout and pixel proof coverage", async () => {
+  await withFixture(async (root) => {
+    await writeDesignResourceSymbolicHandoffFixture(root, (model) => {
+      model.rules.find(
+        (item) => item.rule.property_ref === "color.background",
+      ).rule.observation_scope = "subject";
+      refreshSymbolicFixtureDerivedIdentities(model);
+    });
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      /v2_exact_target_full_target_region_gap:visual_pixel/u,
+    );
+  });
+});
+
+test("V2 reuses V1 Oracle, comparator, exactness and protected-value proof policy", async () => {
+  for (const [mutate, pattern] of [
+    [
+      ({ manifest }) => {
+        manifest.oracles[0].trust = "frozen_executable";
+      },
+      /v2_oracle_digest_required/u,
+    ],
+    [
+      (model) => {
+        const baseProperty = model.properties.find(
+          (item) => item.key === "geometry.width",
+        );
+        model.properties.push({
+          ...structuredClone(baseProperty),
+          key: "custom.incompatible-method",
+          standard: false,
+          required_methods: ["visual_pixel"],
+          census_refs: ["census.property.custom-incompatible"],
+        });
+        model.census.push({
+          ...structuredClone(
+            model.census.find((item) => item.key === "census.property.width"),
+          ),
+          key: "census.property.custom-incompatible",
+          fact_refs: [],
+        });
+        for (const projection of model.rules.filter(
+          (item) => item.rule.property_ref === "geometry.width",
+        )) {
+          const clone = structuredClone(projection);
+          clone.rule.property_ref = "custom.incompatible-method";
+          clone.rule.census_refs = [
+            "census.subject.root",
+            "census.property.custom-incompatible",
+          ];
+          model.rules.push(clone);
+        }
+        refreshSymbolicFixtureDerivedIdentities(model);
+      },
+      /v2_proof_method_incompatible/u,
+    ],
+    [
+      ({ manifest }) => {
+        manifest.oracles[0].capability_refs =
+          manifest.oracles[0].capability_refs.filter(
+            (item) => item !== "render_capture",
+          );
+      },
+      /v2_proof_oracle_capability_missing/u,
+    ],
+    [
+      ({ manifest }) => {
+        const obligation = manifest.semantic_proof_obligations.find(
+          (item) => item.method === "visual_pixel",
+        );
+        obligation.comparison.comparator = "exact_value";
+        rekeyObligation(manifest, obligation);
+      },
+      /v2_proof_comparator_method_incompatible/u,
+    ],
+    [
+      ({ manifest }) => {
+        const obligation = manifest.semantic_proof_obligations[0];
+        obligation.comparison.tolerance = structuredClone(
+          obligation.comparison.parameters,
+        );
+        rekeyObligation(manifest, obligation);
+      },
+      /v2_exact_proof_tolerance_forbidden/u,
+    ],
+    [
+      ({ manifest }) => {
+        const obligation = manifest.semantic_proof_obligations[0];
+        obligation.protected_value_policy = "policy.redacted";
+        rekeyObligation(manifest, obligation);
+      },
+      /v2_protected_value_policy_mismatch/u,
+    ],
+    [
+      ({ manifest }) => {
+        const obligation = manifest.semantic_proof_obligations[0];
+        obligation.proof_surface = "proxy_only";
+        rekeyObligation(manifest, obligation);
+      },
+      /v2_obligation_proxy_only_forbidden/u,
+    ],
+  ])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(root, mutate);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        pattern,
+      );
+    });
+});
+
+test("Inspector Census, population and located-resource closure fail closed", async () => {
+  for (const [mutate, pattern] of [
+    [
+      ({ manifest }) => {
+        manifest.inspector.implementation_sha256 = "0".repeat(64);
+      },
+      /v2_inspector_trust_digest_mismatch/u,
+    ],
+    [
+      ({ manifest }) => {
+        manifest.inspector.census[0].fact_refs.pop();
+      },
+      /v2_census_rule_set_mismatch/u,
+    ],
+    [
+      ({ manifest }) => {
+        manifest.environments[0].definition.sha256 = "f".repeat(64);
+      },
+      /located_value_digest_mismatch/u,
+    ],
+    [
+      ({ manifest }) => {
+        manifest.subjects[0].population_ref = "population.fixture";
+        manifest.populations.push({
+          key: "population.fixture",
+          kind: "static",
+          member_subject_refs: [],
+          universe: structuredClone(manifest.environments[0].definition),
+          enumeration: "complete",
+          exclusions: [],
+          quantifier: { kind: "all", minimum: null, maximum: null },
+        });
+      },
+      /v2_population_member_set_mismatch/u,
+    ],
+  ])
+    await withFixture(async (root) => {
+      await writeDesignResourceSymbolicHandoffFixture(root, mutate);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+        pattern,
+      );
+    });
 });
 
 test("V2 is explicit while an absent discriminator continues to parse the V1 fixture", async () => {
@@ -151,4 +359,16 @@ async function withFixture(run) {
 
 function escape(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function rekeyObligation(manifest, obligation) {
+  const previous = obligation.key;
+  const { key: _key, ...input } = obligation;
+  obligation.key = designResourceSymbolicObligationKey(input);
+  const rule = manifest.fact_rules.find(
+    (item) => item.key === obligation.fact_rule_ref,
+  );
+  rule.semantic_obligation_refs = rule.semantic_obligation_refs.map((item) =>
+    item === previous ? obligation.key : item,
+  );
 }

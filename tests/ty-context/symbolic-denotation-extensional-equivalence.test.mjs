@@ -43,19 +43,18 @@ test("complete V1 ground denotation and symbolic V2 are pointwise equal without 
         }
     assert.equal(compared, DESIGN_RESOURCE_STANDARD_PROPERTIES.length * 4);
     assert.equal(specified, 8);
-    const reference = independentV1GroundDenotation(
-      DESIGN_RESOURCE_STANDARD_PROPERTIES.find(
-        (property) => property.key === "geometry.width",
-      ),
-    );
     for (const mutate of [
-      (value) => (value.disposition = "unavailable"),
-      (value) => (value.expected_semantics.expected.sha256 = "f".repeat(64)),
-      (value) => (value.proof_obligations[0].proof_surface = "proxy_only"),
+      ({ manifest }) =>
+        (manifest.disposition_regions[0].disposition = "unavailable"),
+      ({ manifest }) =>
+        (manifest.fact_rules[0].expected.sha256 = "f".repeat(64)),
+      ({ manifest }) =>
+        (manifest.semantic_proof_obligations[0].proof_surface = "proxy_only"),
     ]) {
-      const counterexample = structuredClone(reference);
-      mutate(counterexample);
-      assert.notDeepEqual(counterexample, reference);
+      await writeDesignResourceSymbolicHandoffFixture(root, mutate);
+      await assert.rejects(
+        preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
+      );
     }
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -83,14 +82,15 @@ function independentV1GroundDenotation(property) {
     sha256: digest(selected.value),
   };
   const capabilities = [
-    ...new Set(
-      ["geometry.width", "color.background"].flatMap(
+    ...new Set([
+      "render_capture",
+      ...["geometry.width", "color.background"].flatMap(
         (key) =>
           DESIGN_RESOURCE_STANDARD_PROPERTIES.find(
             (candidate) => candidate.key === key,
           ).inspector_capability_refs,
       ),
-    ),
+    ]),
   ].sort();
   const oracle = {
     key: "oracle.fixture",
@@ -135,7 +135,7 @@ function independentV1GroundDenotation(property) {
       proof_surface: "ui_browser",
       observation_boundary: `symbolic-rule-region:${method}`,
       comparison: {
-        comparator: "exact_value",
+        comparator: method === "visual_pixel" ? "pixel_diff" : "exact_value",
         mode: "exact",
         parameters: {
           locator: {
@@ -166,7 +166,9 @@ function stableOracleJson(value) {
   if (value && typeof value === "object")
     return `{${Object.entries(value)
       .sort(([left], [right]) => left.localeCompare(right))
-      .map(([key, entry]) => `${JSON.stringify(key)}:${stableOracleJson(entry)}`)
+      .map(
+        ([key, entry]) => `${JSON.stringify(key)}:${stableOracleJson(entry)}`,
+      )
       .join(",")}}`;
   return JSON.stringify(value);
 }

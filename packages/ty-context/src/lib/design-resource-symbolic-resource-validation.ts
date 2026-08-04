@@ -1,4 +1,5 @@
 import { DESIGN_RESOURCE_STANDARD_PROPERTIES } from "./design-resource-fact-manifest-catalog.js";
+import { resolveDesignResourceLocatorValue } from "./design-resource-fact-locator-validation.js";
 import type { DesignResourcePropertyDefinitionV1 } from "./design-resource-fact-types.js";
 import type { DesignResource } from "./design-resource-handoff-file-primitives.js";
 import type {
@@ -18,6 +19,13 @@ export function validateSymbolicInspectorAndResources(
   resources: Map<string, DesignResource>,
   contents: Map<string, Buffer>,
 ): void {
+  if (
+    (manifest.inspector.trust === "frozen_executable" &&
+      manifest.inspector.implementation_sha256 === null) ||
+    (manifest.inspector.trust === "named_external_tcb" &&
+      manifest.inspector.implementation_sha256 !== null)
+  )
+    invalid("v2_inspector_trust_digest_mismatch", target.key);
   if (
     manifest.inspector.traversal !== "complete_enumeration" ||
     manifest.inspector.dynamic_discovery !== "fully_enumerated"
@@ -47,10 +55,27 @@ export function validateSymbolicInspectorAndResources(
       invalid("v2_inspector_input_resource_mismatch", input.resource_ref);
   }
   for (const row of manifest.inspector.census) {
-    if (!resources.has(row.resource_ref))
-      invalid("v2_census_resource_unknown", row.key);
+    const resource = resources.get(row.resource_ref);
+    const bytes = contents.get(row.resource_ref);
+    if (!resource || !bytes) invalid("v2_census_resource_unknown", row.key);
+    if (
+      !manifest.inspector.input_resources.some(
+        (input) => input.resource_ref === row.resource_ref,
+      )
+    )
+      invalid("v2_census_resource_outside_inspector_inputs", row.key);
+    resolveDesignResourceLocatorValue(
+      { resource_ref: row.resource_ref, ...row.locator },
+      resource,
+      bytes,
+      `v2.inspector.census.${row.key}`,
+    );
     if (row.disposition === "covered" && !row.fact_refs.length)
       invalid("v2_census_rule_refs_required", row.key);
+    if (row.disposition === "non_material" && row.fact_refs.length)
+      invalid("v2_non_material_census_rule_refs_forbidden", row.key);
+    if (row.fact_cell_refs.length)
+      invalid("v2_census_ground_fact_cell_refs_forbidden", row.key);
   }
   if (manifest.design_system.disposition === "used") {
     const resource = resources.get(manifest.design_system.resource_ref);
