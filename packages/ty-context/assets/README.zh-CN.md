@@ -59,7 +59,9 @@ npx --yes project-tiny-context-harness ty-context sync
 ty-context enable long-task
 ```
 
-启用长程能力会额外安装 `long-task-workflow`、完成 Hook，以及仅当解析后的 harness root 恰好为 `.codex` 时安装一个可选的项目级 Codex custom agent `long_task_implementation`。该固定、无状态 profile 使用 `gpt-5.6-luna`、`model_reasoning_effort = "max"`，并禁用其 child-agent 工具；它只能在第一次 Authority Lock 的终止当前回合检查点之后承担有界滚动实现/修复。它不是 Skill、runtime、模型路由器、调度器、Authority 或证明载体。缺失或无效的 package asset 会被跳过；符号链接或不含 package marker 的同路径用户内容会被保留；带精确 marker 的普通 package-owned profile 可以安全刷新或移除。profile 缺席时回退父 Goal 执行，Long-Task 接受路径不变，并保留用户文件和两个基础设计 Skill。Tiny Context 不安装 Open Design、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
+启用长程能力会额外安装 `long-task-workflow`、package-owned lifecycle Hooks，以及仅当解析后的 harness root 恰好为 `.codex` 时安装一个可选的项目级 Codex custom agent `long_task_implementation`。该固定、无状态、package-owned profile 禁用 child-agent 工具，只能在第一次 Authority Lock 的终止当前回合检查点之后承担有界滚动实现/修复。受支持的 Codex 宿主必须显式选择这个精确 custom agent；generic/built-in worker、task name、prompt 模拟或仅指定模型都不等于该 profile。宿主不能精确选择，或宿主拒绝 profile 必需的 leaf-agent 配置时，不得为了兼容删除该边界，也不得启动 generic 替代项；父 Goal 直接实现。静态安装本身不证明宿主已发现或实际使用 profile。它不是 Skill、runtime、模型路由器、调度器、Authority 或证明载体；缺失、无效或保留同路径用户文件都不改变 Long-Task 接受路径。Tiny Context 不安装 Open Design、Agent runtime、调度器、Git 编排资产或其他设计生成 runtime。
+
+当 sync 首次安装或更新 `.codex/hooks.json` 中的 Tiny Context Hook 时，会报告：`Codex Hook review required: open /hooks and trust the current Tiny Context project Hook before relying on PreToolUse, SubagentStart, SessionStart or Stop behavior. Tiny Context cannot observe or persist Codex Hook trust.` 请在 `/hooks` 审核当前项目 Hook；信任由 Codex 宿主和用户控制，Hook 改变后可能需要重新审核。安装不等于已信任或 runtime guard 已生效，普通路径不使用 trust bypass 参数。
 
 ## 推荐用法
 
@@ -73,7 +75,7 @@ ty-context enable long-task
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过 Source Plan 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
-5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换之后，请发送【继续】。`。此前任何模型策略文字都不能跳过该边界，Harness 也不能观察模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；当独立有界工作收益大于协调成本时，主动使用 `long_task_implementation`，而 Authority、架构、Context、集成、当前候选检查与正式验证仍由父 Goal 持有。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换之后，请发送【继续】。`。此前任何模型策略文字都不能跳过该边界，Harness 也不能观察模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；只有宿主显式选择精确 `long_task_implementation` 时才把独立有界工作交给它，否则不启动 generic 替代项而由父 Goal 执行。Authority、架构、Context、集成、当前候选检查与正式验证始终由父 Goal 持有。
 
 一组可以直接改写使用的调用顺序如下：
 

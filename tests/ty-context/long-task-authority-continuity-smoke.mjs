@@ -162,8 +162,8 @@ try {
     "utf8",
   );
   assert.match(agentProfile, /^name = "long_task_implementation"$/mu);
-  assert.match(agentProfile, /^model = "gpt-5\.6-luna"$/mu);
-  assert.match(agentProfile, /^model_reasoning_effort = "max"$/mu);
+  assert.match(agentProfile, /^model = "[^"\r\n]+"$/mu);
+  assert.match(agentProfile, /^model_reasoning_effort = "[^"\r\n]+"$/mu);
   for (const relative of [
     ".codex/workers",
     ".codex/appserver",

@@ -14,5 +14,6 @@ export async function enable(args: string[]): Promise<void> {
   console.log(
     `sync changed=${sync.changed.length} skipped=${sync.skipped.length} blocked=${sync.blocked.length}`,
   );
+  for (const notice of sync.notices ?? []) console.log(notice);
   if (sync.blocked.length) throw new Error(sync.blocked.join("\n"));
 }

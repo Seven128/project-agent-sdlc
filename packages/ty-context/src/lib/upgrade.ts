@@ -70,6 +70,7 @@ export async function runUpgradeReport(
   )) {
     lines.push(`sync skipped: ${skipped}`);
   }
+  lines.push(...(syncReport.notices ?? []));
 
   const doctor = await runDoctor(projectRoot);
   lines.push(

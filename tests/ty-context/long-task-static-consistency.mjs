@@ -34,6 +34,22 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
     ),
     "utf8",
   );
+  const rootReadme = await readFile(path.join(repoRoot, "README.md"), "utf8");
+  const rootReadmeZh = await readFile(
+    path.join(repoRoot, "README.zh-CN.md"),
+    "utf8",
+  );
+  const packageReadme = await readFile(
+    path.join(repoRoot, "packages/ty-context/README.md"),
+    "utf8",
+  );
+  const longTaskSkill = await readFile(
+    path.join(
+      repoRoot,
+      ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
+    ),
+    "utf8",
+  );
   const installedAgentProfile = await readFile(
     path.join(repoRoot, ".codex/agents/long-task-implementation.toml"),
     "utf8",
@@ -74,10 +90,28 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
   );
   assert.equal(validation.valid, true, JSON.stringify(validation));
   const profile = validation.profile;
+  const canonicalModel = managedAgentProfile.match(
+    /^model = "([^"\r\n]+)"$/mu,
+  )?.[1];
+  const canonicalEffort = managedAgentProfile.match(
+    /^model_reasoning_effort = "([^"\r\n]+)"$/mu,
+  )?.[1];
+  assert.ok(canonicalModel);
+  assert.ok(canonicalEffort);
   assert.equal(profile.name, "long_task_implementation");
-  assert.equal(profile.model, "gpt-5.6-luna");
-  assert.equal(profile.model_reasoning_effort, "max");
+  assert.equal(profile.model, canonicalModel);
+  assert.equal(profile.model_reasoning_effort, canonicalEffort);
   assert.equal(profile.agents.enabled, false);
+  assert.ok(packageReadme.includes(canonicalModel));
+  assert.ok(packageReadme.includes(`model_reasoning_effort = "${canonicalEffort}"`));
+  for (const content of [
+    rootReadme,
+    rootReadmeZh,
+    projectSpec,
+    workflowContext,
+    longTaskSkill,
+  ])
+    assert.equal(content.includes(canonicalModel), false);
   assert.match(profile.developer_instructions, /after .*checkpoint/iu);
   assert.match(profile.developer_instructions, /Source, Contract, Authority, or Context writeback/iu);
   assert.match(profile.developer_instructions, /Progress, Evidence, Receipt, or Final Gate/iu);

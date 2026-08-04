@@ -5,7 +5,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 ## System Boundary
 
 - The repository owns the `project-tiny-context-harness` npm package, `ty-context` CLI, managed Minimal Context/default Workflow assets, validators, source sync, explicit Long-Task capability, release automation and delivery benchmark.
-- Consumer projects receive portable core/default assets. `ty-context enable long-task` adds the Long-Task Skill, retired Source Plan pointer and package-owned Stop Hook.
+- Consumer projects receive portable core/default assets. `ty-context enable long-task` adds the sole Long-Task Skill, package-owned lifecycle Hooks and, for an exact `.codex` root, one optional fixed Codex worker profile. The retired Source Plan pointer is not installed.
 - Harness owns durable Context and declared workflow authority, not product quality. Project tests, CI, runtime observation and human acceptance remain evidence authorities.
 - Harness does not own host Goal/Turn lifecycle, models, agents, process trees, network isolation, Git collaboration, CI/deployment or external-confirmation execution.
 

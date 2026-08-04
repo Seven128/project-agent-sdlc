@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 import { readActiveLongTaskBinding } from "./lib/long-task-state.js";
 import { stopCheckDeliveryTask } from "./lib/long-task-status-v2.js";
+import {
+  LONG_TASK_IMPLEMENTATION_AGENT,
+  selectedAgentType,
+} from "./lib/long-task-worker-selection.js";
 import { repositoryRoot } from "./lib/long-task-workspace.js";
 
 interface HookInput {
   cwd?: string;
   hook_event_name?: string;
   last_assistant_message?: string;
+  tool_name?: string;
+  tool_input?: unknown;
   agent_type?: string;
   agent_id?: string;
 }
 
-const LONG_TASK_IMPLEMENTATION_AGENT = "long_task_implementation";
 const LONG_TASK_IMPLEMENTATION_BOUNDARY = [
   "This is a delegated rolling implementation worker, not the parent Long-Task Goal.",
   "Follow only the bounded packet from the parent.",
@@ -19,12 +24,29 @@ const LONG_TASK_IMPLEMENTATION_BOUNDARY = [
   "The parent Goal owns Source, Contract, Authority, Context writeback, integration and formal acceptance.",
   "Your report is advisory and is not Progress, Evidence or acceptance.",
 ].join("\n");
+const AGENT_SPAWN_TOOLS = new Set(["spawn_agent", "Agent"]);
+const EXACT_WORKER_REQUIRED =
+  "Active Tiny Context Long-Task permits delegation only to the exact custom agent long_task_implementation. The current host request does not explicitly select it. Do not substitute a generic worker; complete this packet in the parent Goal.";
 
 const input = await readStdin();
 try {
   const root = await repositoryRoot(input.cwd || process.cwd());
   const active = await readActiveLongTaskBinding(root);
   if (!active) output({});
+  if (input.hook_event_name === "PreToolUse") {
+    if (!input.tool_name || !AGENT_SPAWN_TOOLS.has(input.tool_name)) output({});
+    output(
+      selectedAgentType(input.tool_input) === LONG_TASK_IMPLEMENTATION_AGENT
+        ? {}
+        : {
+            hookSpecificOutput: {
+              hookEventName: "PreToolUse",
+              permissionDecision: "deny",
+              permissionDecisionReason: EXACT_WORKER_REQUIRED,
+            },
+          },
+    );
+  }
   if (input.hook_event_name === "SubagentStart")
     output(
       input.agent_type === LONG_TASK_IMPLEMENTATION_AGENT

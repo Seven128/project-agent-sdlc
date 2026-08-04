@@ -16,6 +16,7 @@ import { resolveAgentHarnessFolderName } from "../../packages/ty-context/dist/co
 import { runDoctor } from "../../packages/ty-context/dist/lib/doctor.js";
 import { runInit } from "../../packages/ty-context/dist/lib/init.js";
 import { captureContextGraphSnapshot } from "../../packages/ty-context/dist/lib/context-graph-snapshot.js";
+import { LONG_TASK_HOOK_TRUST_REVIEW_NOTICE } from "../../packages/ty-context/dist/lib/long-task-hook-install.js";
 import {
   disableHarnessProfile,
   enableHarnessProfile,
@@ -308,6 +309,7 @@ test("long_task_enable_on_portable_root_installs_only workflow Skill and Hooks",
 
     const sync = await runSync(root);
     assert.deepEqual(sync.blocked, []);
+    assert.deepEqual(sync.notices, [LONG_TASK_HOOK_TRUST_REVIEW_NOTICE]);
     for (const file of [
       ".agent/skills/long-task-workflow/SKILL.md",
       ".codex/hooks.json",
@@ -341,10 +343,13 @@ test("long_task_enable_on_portable_root_installs_only workflow Skill and Hooks",
     assert.equal((hooks.match(/"PostCompact"/g) ?? []).length, 1);
     assert.equal((hooks.match(/"Stop"/g) ?? []).length, 1);
     assert.equal((hooks.match(/"SubagentStart"/g) ?? []).length, 1);
+    assert.equal((hooks.match(/"PreToolUse"/g) ?? []).length, 1);
     assert.match(hooks, /\^long_task_implementation\$/u);
+    assert.match(hooks, /\^\(spawn_agent\|Agent\)\$/u);
 
     const second = await runSync(root);
     assert.deepEqual(second.blocked, []);
+    assert.equal(second.notices, undefined);
     assert.ok(second.skipped.length > 0);
   });
 });

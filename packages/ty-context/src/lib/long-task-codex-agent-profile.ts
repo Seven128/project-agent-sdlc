@@ -25,8 +25,8 @@ export interface LongTaskCodexAgentProfile {
   name: "long_task_implementation";
   description: string;
   developer_instructions: string;
-  model: "gpt-5.6-luna";
-  model_reasoning_effort: "max";
+  model: string;
+  model_reasoning_effort: string;
   agents: { enabled: false };
 }
 
@@ -85,9 +85,9 @@ export function parseAndValidateLongTaskCodexAgentProfile(
   if (!nonEmptyString(root.description)) errors.push("description_required");
   if (!nonEmptyString(root.developer_instructions))
     errors.push("developer_instructions_required");
-  if (root.model !== "gpt-5.6-luna") errors.push("model_must_be_gpt_5_6_luna");
-  if (root.model_reasoning_effort !== "max")
-    errors.push("model_reasoning_effort_must_be_max");
+  if (!staticString(root.model)) errors.push("model_must_be_static_nonempty");
+  if (!staticString(root.model_reasoning_effort))
+    errors.push("model_reasoning_effort_must_be_static_nonempty");
 
   const agents = record(root.agents);
   if (!agents) errors.push("agents_table_required");
@@ -104,8 +104,8 @@ export function parseAndValidateLongTaskCodexAgentProfile(
       name: "long_task_implementation",
       description: root.description as string,
       developer_instructions: root.developer_instructions as string,
-      model: "gpt-5.6-luna",
-      model_reasoning_effort: "max",
+      model: root.model as string,
+      model_reasoning_effort: root.model_reasoning_effort as string,
       agents: { enabled: false },
     },
   };
@@ -378,6 +378,14 @@ function record(value: unknown): Record<string, unknown> | null {
 
 function nonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function staticString(value: unknown): value is string {
+  return (
+    nonEmptyString(value) &&
+    value === value.trim() &&
+    !/[\r\n$%{}]/u.test(value)
+  );
 }
 
 function hasManagedMarker(content: string): boolean {

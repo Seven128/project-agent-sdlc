@@ -200,8 +200,6 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   assert.match(combined, /does not switch|cannot switch/iu);
   assert.match(combined, /not proof|not acceptance evidence/iu);
   assert.match(combined, /long_task_implementation/iu);
-  assert.match(combined, /gpt-5\.6-luna/iu);
-  assert.match(combined, /model_reasoning_effort = "max"/iu);
   assert.match(
     combined,
     /after .*checkpoint|after .*resume|post-checkpoint/iu,
@@ -223,11 +221,8 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   assert.ok(specification.includes(ownerImplication));
   assert.ok(rationale.includes(ownerImplication));
   assert.match(managedAgentProfile, /^name = "long_task_implementation"$/mu);
-  assert.match(managedAgentProfile, /^model = "gpt-5\.6-luna"$/mu);
-  assert.match(
-    managedAgentProfile,
-    /^model_reasoning_effort = "max"$/mu,
-  );
+  assert.match(managedAgentProfile, /^model = "[^"\r\n]+"$/mu);
+  assert.match(managedAgentProfile, /^model_reasoning_effort = "[^"\r\n]+"$/mu);
   assert.match(managedAgentProfile, /^\[agents\]$/mu);
   assert.match(managedAgentProfile, /^enabled = false$/mu);
   assert.doesNotMatch(

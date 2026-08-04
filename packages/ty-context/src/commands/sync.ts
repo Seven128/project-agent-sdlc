@@ -10,6 +10,7 @@ export async function sync(): Promise<void> {
   )) {
     console.log(`skipped: ${skipped}`);
   }
+  for (const notice of report.notices ?? []) console.log(notice);
   for (const blocked of report.blocked) {
     console.error(`blocked: ${blocked}`);
   }

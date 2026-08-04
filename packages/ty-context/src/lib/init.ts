@@ -48,6 +48,7 @@ export async function runInit(
   report.push(
     `sync changed=${syncReport.changed.length} skipped=${syncReport.skipped.length} blocked=${syncReport.blocked.length}`,
   );
+  report.push(...(syncReport.notices ?? []));
   report.push(options.adopt ? "adopt mode complete" : "init complete");
   return report;
 }

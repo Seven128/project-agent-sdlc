@@ -36,6 +36,7 @@ export interface SyncReport {
   changed: string[];
   skipped: string[];
   blocked: string[];
+  notices?: string[];
 }
 
 export function emptySyncReport(): SyncReport {

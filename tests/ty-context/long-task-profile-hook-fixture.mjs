@@ -23,7 +23,13 @@ export function mixedHookConfig(packageHook) {
     userOnlyGroup,
     config: {
       hooks: Object.fromEntries(
-        ["SessionStart", "PostCompact", "Stop", "SubagentStart"].map((event) => [
+        [
+          "PreToolUse",
+          "SessionStart",
+          "PostCompact",
+          "Stop",
+          "SubagentStart",
+        ].map((event) => [
           event,
           [
             {
@@ -62,6 +68,9 @@ export function mixedHookConfig(packageHook) {
               ],
             },
             userOnlyGroup,
+            ...(event === "SubagentStart"
+              ? [{ hooks: [] }, { hooks: [] }]
+              : []),
           ],
         ]),
       ),
@@ -70,7 +79,13 @@ export function mixedHookConfig(packageHook) {
 }
 
 export function assertEnabledHookEvents(hooks, userOnlyGroup) {
-  for (const event of ["SessionStart", "PostCompact", "Stop", "SubagentStart"]) {
+  for (const event of [
+    "PreToolUse",
+    "SessionStart",
+    "PostCompact",
+    "Stop",
+    "SubagentStart",
+  ]) {
     const all = hooks.hooks[event].flatMap((group) => group.hooks);
     const managed = all.filter((hook) =>
       String(hook.command ?? hook.commandWindows).includes(
@@ -88,7 +103,9 @@ export function assertEnabledHookEvents(hooks, userOnlyGroup) {
     const managedGroup = hooks.hooks[event].find((group) =>
       group.hooks.some((hook) => hook === managed[0]),
     );
-    if (event === "SubagentStart")
+    if (event === "PreToolUse")
+      assert.equal(managedGroup.matcher, "^(spawn_agent|Agent)$");
+    else if (event === "SubagentStart")
       assert.equal(managedGroup.matcher, "^long_task_implementation$");
     else assert.equal(Object.hasOwn(managedGroup, "matcher"), false);
     assert.equal(all.filter((hook) => hook.user).length, 3);
@@ -122,7 +139,13 @@ export function assertEnabledHookEvents(hooks, userOnlyGroup) {
 }
 
 export function assertDisabledHookEvents(hooks, userOnlyGroup) {
-  for (const event of ["SessionStart", "PostCompact", "Stop", "SubagentStart"]) {
+  for (const event of [
+    "PreToolUse",
+    "SessionStart",
+    "PostCompact",
+    "Stop",
+    "SubagentStart",
+  ]) {
     const groups = hooks.hooks[event];
     const all = groups.flatMap((group) => group.hooks);
     assert.equal(all.filter((hook) => hook.user).length, 3);
