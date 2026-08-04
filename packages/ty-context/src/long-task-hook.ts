@@ -7,13 +7,35 @@ interface HookInput {
   cwd?: string;
   hook_event_name?: string;
   last_assistant_message?: string;
+  agent_type?: string;
+  agent_id?: string;
 }
+
+const LONG_TASK_IMPLEMENTATION_AGENT = "long_task_implementation";
+const LONG_TASK_IMPLEMENTATION_BOUNDARY = [
+  "This is a delegated rolling implementation worker, not the parent Long-Task Goal.",
+  "Follow only the bounded packet from the parent.",
+  "Do not run long-task resume, Preflight, Compile, Authority Revision, verify as formal Progress, Final Gate, Stop/close, abandon, or completion.",
+  "The parent Goal owns Source, Contract, Authority, Context writeback, integration and formal acceptance.",
+  "Your report is advisory and is not Progress, Evidence or acceptance.",
+].join("\n");
 
 const input = await readStdin();
 try {
   const root = await repositoryRoot(input.cwd || process.cwd());
   const active = await readActiveLongTaskBinding(root);
   if (!active) output({});
+  if (input.hook_event_name === "SubagentStart")
+    output(
+      input.agent_type === LONG_TASK_IMPLEMENTATION_AGENT
+        ? {
+            hookSpecificOutput: {
+              hookEventName: "SubagentStart",
+              additionalContext: LONG_TASK_IMPLEMENTATION_BOUNDARY,
+            },
+          }
+        : {},
+    );
   if (
     input.hook_event_name === "SessionStart" ||
     input.hook_event_name === "PostCompact"

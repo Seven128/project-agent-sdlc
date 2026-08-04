@@ -1,6 +1,6 @@
 interface:
   display_name: "Long-Task Workflow"
   short_description: "Run one Delivery Contract in the current native Goal"
-  default_prompt: "Use $long-task-workflow to prepare, execute, resume, verify, or close one Canonical Delivery Contract in the current workspace."
+  default_prompt: "Use $long-task-workflow for one Canonical Delivery Contract. After the first-Authority-Lock model checkpoint is satisfied, actively use long_task_implementation for independent bounded implementation or repair work when delegation benefit exceeds coordination cost; multiple instances may be used for disjoint workstreams. Keep Source, Contract, Authority, Context, integration and formal verification in the parent Goal."
 policy:
   allow_implicit_invocation: false

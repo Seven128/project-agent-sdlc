@@ -299,7 +299,7 @@ test("non_codex_sync_does_not_install_codex_hooks", async () => {
   });
 });
 
-test("long_task_enable_installs_source_plan_and_workflow_Skills_with_Hooks", async () => {
+test("long_task_enable_on_portable_root_installs_only workflow Skill and Hooks", async () => {
   await withTemp("ty-context-long-task-", async (root) => {
     await runInit(root, { adopt: false, force: false });
     const enabled = await enableHarnessProfile(root, "long-task");
@@ -309,13 +309,23 @@ test("long_task_enable_installs_source_plan_and_workflow_Skills_with_Hooks", asy
     const sync = await runSync(root);
     assert.deepEqual(sync.blocked, []);
     for (const file of [
-      ".agent/skills/source-plan-authoring/SKILL.md",
       ".agent/skills/long-task-workflow/SKILL.md",
-      ".codex/agents/long-task-implementation.toml",
       ".codex/hooks.json",
     ]) {
       await stat(path.join(root, file));
     }
+    assert.equal(
+      await exists(
+        path.join(root, ".agent/skills/source-plan-authoring/SKILL.md"),
+      ),
+      false,
+    );
+    assert.equal(
+      await exists(
+        path.join(root, ".codex/agents/long-task-implementation.toml"),
+      ),
+      false,
+    );
     assert.equal(
       await exists(path.join(root, ".codex/hooks/long-task-hook.mjs")),
       false,
@@ -330,6 +340,8 @@ test("long_task_enable_installs_source_plan_and_workflow_Skills_with_Hooks", asy
     assert.equal((hooks.match(/"SessionStart"/g) ?? []).length, 1);
     assert.equal((hooks.match(/"PostCompact"/g) ?? []).length, 1);
     assert.equal((hooks.match(/"Stop"/g) ?? []).length, 1);
+    assert.equal((hooks.match(/"SubagentStart"/g) ?? []).length, 1);
+    assert.match(hooks, /\^long_task_implementation\$/u);
 
     const second = await runSync(root);
     assert.deepEqual(second.blocked, []);
@@ -560,13 +572,32 @@ test("CLI init keeps portable defaults and explicit enable activates long-task",
     assert.match(enable.stdout, /enabled profile long-task/);
     await stat(path.join(root, ".codex/hooks.json"));
     await stat(
-      path.join(root, ".codex/agents/long-task-implementation.toml"),
-    );
-    await stat(
       path.join(root, ".codex/skills/design-resource-authoring/SKILL.md"),
     );
     await stat(path.join(root, ".codex/skills/long-task-workflow/SKILL.md"));
-    await stat(path.join(root, ".codex/skills/source-plan-authoring/SKILL.md"));
+    const installedWorkerProfile = path.join(
+      root,
+      ".codex/agents/long-task-implementation.toml",
+    );
+    assert.equal(await exists(installedWorkerProfile), true);
+    assert.equal(
+      await readFile(installedWorkerProfile, "utf8"),
+      await readFile(
+        fileURLToPath(
+          new URL(
+            "../../packages/ty-context/assets/agents/long-task-implementation.toml",
+            import.meta.url,
+          ),
+        ),
+        "utf8",
+      ),
+    );
+    assert.equal(
+      await exists(
+        path.join(root, ".codex/skills/source-plan-authoring/SKILL.md"),
+      ),
+      false,
+    );
 
     const longTaskAfterEnable = spawnSync(
       process.execPath,

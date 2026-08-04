@@ -112,7 +112,7 @@ test("bounded Context discovery reduces trigger-only recall risk without a retri
   assert.deepEqual(affirmativeInfrastructureClaims, []);
 });
 
-test("one-time model choice uses Authority Lock without creating model routing state", async () => {
+test("first-lock host checkpoint creates no model routing state", async () => {
   const [
     skill,
     generated,
@@ -123,6 +123,7 @@ test("one-time model choice uses Authority Lock without creating model routing s
     rationale,
     efficiency,
     architecture,
+    workflowContract,
     managedAgentProfile,
     installedAgentProfile,
     packagedAgentProfile,
@@ -144,6 +145,9 @@ test("one-time model choice uses Authority Lock without creating model routing s
     ),
     read("docs/long-task-workflow-efficiency.md"),
     read("project_context/architecture.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read(
       ".codex/ty-context-managed/agents/long-task-implementation.toml",
     ),
@@ -169,6 +173,7 @@ test("one-time model choice uses Authority Lock without creating model routing s
     rationale,
     efficiency,
     architecture,
+    workflowContract,
     specification,
     packageSurfaces,
     managedAgentProfile,
@@ -176,17 +181,17 @@ test("one-time model choice uses Authority Lock without creating model routing s
 
   for (const expected of [
     "execution_model_checkpoint",
-    "continue_current_model",
+    "change_model_in_host_then_continue",
+    "resume_token: continue",
     "required: false",
     "first Authority Lock",
   ])
     assert.match(combined, new RegExp(expected, "iu"), expected);
-  assert.match(
-    combined,
-    /switch_model_then_resume|switch models[\s\S]{0,80}resume/iu,
-  );
-  assert.match(combined, /stop once|one-time/iu);
-  assert.match(combined, /prior explicit|already stated explicitly/iu);
+  assert.match(combined, /After handling the model change, send \[continue\]\./u);
+  assert.match(combined, /unconditionally|always ends? the current turn/iu);
+  assert.match(combined, /prior[\s\S]{0,120}(?:never skips|cannot skip)/iu);
+  assert.match(combined, /generic_continue_satisfies"?\s*:\s*true/iu);
+  assert.match(combined, /model_change_observable_by_harness"?\s*:\s*false/iu);
   assert.match(
     combined,
     /no checkpoint file|no acknowledgement file|no acknowledgement state/iu,
@@ -199,9 +204,12 @@ test("one-time model choice uses Authority Lock without creating model routing s
   assert.match(combined, /model_reasoning_effort = "max"/iu);
   assert.match(
     combined,
-    /after .*checkpoint|only after .*choice|post-checkpoint/iu,
+    /after .*checkpoint|after .*resume|post-checkpoint/iu,
   );
-  assert.match(combined, /not a third checkpoint option/iu);
+  assert.match(combined, /Delegation Suitability/iu);
+  assert.match(combined, /benefit[\s\S]{0,120}coordination cost/iu);
+  assert.match(combined, /multiple disjoint/iu);
+  assert.match(combined, /parent[\s\S]{0,200}(?:Source|Authority)[\s\S]{0,240}Final Gate/iu);
   assert.match(
     combined,
     /absence.*acceptance|unavailable.*formal acceptance|cannot affect .*acceptance/iu,
@@ -220,6 +228,12 @@ test("one-time model choice uses Authority Lock without creating model routing s
     managedAgentProfile,
     /^model_reasoning_effort = "max"$/mu,
   );
+  assert.match(managedAgentProfile, /^\[agents\]$/mu);
+  assert.match(managedAgentProfile, /^enabled = false$/mu);
+  assert.doesNotMatch(
+    combined,
+    /continue_current_model|switch_model_then_resume|generic_continue_satisfies:\s*false/iu,
+  );
 
   const affirmativeModelRoutingClaims = combined
     .split(/\r?\n/u)
@@ -230,7 +244,7 @@ test("one-time model choice uses Authority Lock without creating model routing s
     )
     .filter(
       (line) =>
-        !/\bno\b|does not|without|never|not persisted|不创建|不持久化/iu.test(
+        !/\bno\b|does not|without|never|not[\s\S]*persisted model route|不创建|不持久化/iu.test(
           line,
         ),
     );
@@ -315,11 +329,15 @@ test("implementation freedom removes method gates without weakening declared pro
   );
   assert.match(
     combined,
-    /never prune a declared\/applicable combination[\s\S]{0,180}(?:pairwise|equivalence)/iu,
+    /(?:no declared applicable combination may be pruned|Never replace declared combinations)[\s\S]{0,180}(?:pairwise|equivalence)/iu,
   );
   assert.match(combined, /execution_model_checkpoint\.required: true/iu);
-  assert.match(combined, /continue_current_model/iu);
-  assert.match(combined, /switch_model_then_resume/iu);
+  assert.match(combined, /change_model_in_host_then_continue/iu);
+  assert.match(combined, /generic_continue_satisfies"?\s*:\s*true/iu);
+  assert.doesNotMatch(
+    combined,
+    /continue_current_model|switch_model_then_resume/iu,
+  );
 
   for (const obsolete of [
     /stage-constrained rolling technical implementation/iu,
@@ -411,7 +429,9 @@ test("aggregate rerun policy removes only redundant local complete runs", async 
       read("docs/test-suite-roi-redesign.md"),
       read("docs/long-task-workflow-efficiency.md"),
       read("PROJECT_SPEC.md"),
-      read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+      read(
+        ".codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md",
+      ),
     ]);
   assert.match(
     verification,
@@ -431,6 +451,6 @@ test("aggregate rerun policy removes only redundant local complete runs", async 
   );
   assert.match(
     authoring,
-    /TS-RERUN[\s\S]*不得把失败后的局部复验拼接[\s\S]*tracked verification inputs[\s\S]*environment-only[\s\S]*否则最终证明必须重新取得一次完整通过/iu,
+    /TS-RERUN[\s\S]*local green fragments cannot be concatenated[\s\S]*tracked verification inputs did not change[\s\S]*environment-only[\s\S]*Otherwise obtain one fresh complete pass/iu,
   );
 });

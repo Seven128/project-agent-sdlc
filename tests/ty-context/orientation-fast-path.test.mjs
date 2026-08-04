@@ -121,39 +121,37 @@ test("managed guidance and package assets share current routing", async () => {
   }
 });
 
-test("role Skills preserve Context-first semantics without fixed workflow artifacts", async () => {
-  const paths = [
+test("role Skills preserve distinct owners without fixed workflow artifacts", async () => {
+  const names = [
     "context_product_plan",
+    "context_surface_contract",
     "context_uiux_design",
     "context_development_engineer",
   ];
-  for (const name of paths) {
+  const skills = {};
+  for (const name of names) {
     const [managed, packaged] = await Promise.all([
       read(`.codex/ty-context-managed/skills/${name}/SKILL.md`),
       read(`packages/ty-context/assets/skills/${name}/SKILL.md`),
     ]);
     assert.equal(packaged, managed, `${name} package drift`);
-    assert.match(managed, /Context Delta: none\|required/);
-    assert.match(managed, /Agent 内部计划/);
-    assert.match(managed, /Contract Conformance/);
-    assert.match(managed, /不要求或验证固定 `plan\.md`/);
-    assert.match(managed, /外部来源.*内部分类/s);
-    assert.match(managed, /small code task/);
     assert.doesNotMatch(managed, /new_context_required|under_scoped/);
+    assert.doesNotMatch(managed, /required `plan\.md`.*must create/iu);
+    skills[name] = managed;
   }
 
-  const engineering = await read(
-    ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-  );
-  assert.match(engineering, /Architecture Context Hit/);
-  assert.match(engineering, /Decision Rationale Hit: existing\|required\|none/);
-  assert.match(engineering, /Modularity Check: none\|required\|exception/);
-  assert.match(engineering, /capability-aware/iu);
-  assert.match(engineering, /不支持的指标为 `n\/a`/);
-  assert.match(
-    engineering,
-    /owner.*introduced_at.*reason.*tracking_issue.*expiry_condition/s,
-  );
+  assert.match(skills.context_product_plan, /Own product meaning/iu);
+  assert.match(skills.context_product_plan, /routes? .* to `context_surface_contract`/iu);
+  assert.match(skills.context_product_plan, /Context Delta: none\|required/u);
+  assert.match(skills.context_surface_contract, /sole package-managed owner/iu);
+  assert.match(skills.context_surface_contract, /main\/drilldown/iu);
+  assert.match(skills.context_uiux_design, /Own durable Design Authority only/iu);
+  assert.match(skills.context_uiux_design, /exactly one canonical adoption record/iu);
+  assert.match(skills.context_uiux_design, /design-resource-authoring/iu);
+  assert.match(skills.context_development_engineer, /not the default implementation workflow/iu);
+  assert.match(skills.context_development_engineer, /Architecture Deliberation/iu);
+  assert.match(skills.context_development_engineer, /Context Delta: none\|required/u);
+  assert.match(skills.context_development_engineer, /full-population operation/iu);
 });
 
 test("Product Surface Contract uses existing roles and internal Conformance", async () => {

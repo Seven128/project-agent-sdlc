@@ -23,17 +23,18 @@ type ExecutionModelCheckpoint =
   | {
       required: true;
       phase: "post_authority_lock_pre_implementation";
-      options: ["continue_current_model", "switch_model_then_resume"];
+      action: "change_model_in_host_then_continue";
+      resume_token: "continue";
       turn_boundary: "end_current_turn";
-      blocked_until_explicit_choice: [
+      blocked_until_resume: [
         "product_implementation",
         "file_edits",
         "build",
         "test_execution",
       ];
-      explicit_task_specific_choice_required: true;
-      prior_explicit_task_specific_choice_satisfies: true;
-      generic_continue_satisfies: false;
+      model_change_owner: "host_or_user";
+      model_change_observable_by_harness: false;
+      generic_continue_satisfies: true;
       message: string;
     }
   | { required: false };
@@ -142,7 +143,7 @@ function printCompileResult(
         ? projectAuthorityRevisionDecision(revisionProposal)
         : null,
       next_action: firstAuthorityLock
-        ? "End this turn now and ask the user to choose continue_current_model or switch_model_then_resume. Do not implement, edit files, build, or test until an explicit task-specific model strategy is received; generic continue or resume language does not satisfy this checkpoint."
+        ? "End this turn now. Do not implement, edit files, build, or test. After the user handles the model change in the host, wait for [continue]. Harness cannot observe or verify the model change."
         : authorityChanged
           ? "Run status or resume, then continue rolling implementation or repair under the adopted Authority Revision."
           : "Continue rolling implementation or repair under the active Authority.",
@@ -228,19 +229,20 @@ function executionModelCheckpoint(
   return {
     required: true,
     phase: "post_authority_lock_pre_implementation",
-    options: ["continue_current_model", "switch_model_then_resume"],
+    action: "change_model_in_host_then_continue",
+    resume_token: "continue",
     turn_boundary: "end_current_turn",
-    blocked_until_explicit_choice: [
+    blocked_until_resume: [
       "product_implementation",
       "file_edits",
       "build",
       "test_execution",
     ],
-    explicit_task_specific_choice_required: true,
-    prior_explicit_task_specific_choice_satisfies: true,
-    generic_continue_satisfies: false,
+    model_change_owner: "host_or_user",
+    model_change_observable_by_harness: false,
+    generic_continue_satisfies: true,
     message:
-      "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. Ask the user to explicitly choose continue_current_model or switch_model_then_resume. Generic continue, resume, finish, or continue-goal language does not satisfy this checkpoint.",
+      "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. After handling the model change, send [continue]. Harness cannot observe or verify the model change.",
   };
 }
 

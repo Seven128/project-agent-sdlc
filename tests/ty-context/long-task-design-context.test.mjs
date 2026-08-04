@@ -48,7 +48,9 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
       "project_context/areas/harness-package/contracts/design-resource-handoff.md",
     ),
     read("packages/ty-context/src/lib/design-resource-fact-policy.ts"),
-    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(
+      ".codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md",
+    ),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read("README.md"),
@@ -278,7 +280,9 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     read("project_context/areas/harness-package/implementation-index.md"),
     read("project_context/areas/harness-package/verification.md"),
     read("project_context/context.toml"),
-    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(
+      ".codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md",
+    ),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(
@@ -567,10 +571,9 @@ test("target-runtime feedback stays live, rolling, and state-free", async () => 
 });
 
 test("Source repair and Contract mapping converge in one Source-bound Draft loop", async () => {
-  const [spec, sourcePlan, sourceAuthoring, longTask, agents, publicReadmes] =
+  const [spec, sourceAuthoring, longTask, agents, publicReadmes] =
     await Promise.all([
       read("PROJECT_SPEC.md"),
-      read(".codex/ty-context-managed/skills/source-plan-authoring/SKILL.md"),
       read(
         ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
       ),
@@ -583,17 +586,12 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
       ]).then((contents) => contents.join("\n")),
     ]);
 
-  assert.match(sourcePlan, /Retired: Source Plan Authoring/iu);
-  assert.match(sourcePlan, /no longer defines a separate handoff/iu);
-  assert.match(
-    sourcePlan,
-    /select `\$long-task-workflow`[\s\S]*host's Skill selector/iu,
+  assert.equal(
+    await missing(
+      ".codex/ty-context-managed/skills/source-plan-authoring/SKILL.md",
+    ),
+    true,
   );
-  assert.match(
-    sourcePlan,
-    /pre-existing Source Plan remains valid Source/iu,
-  );
-  assert.match(sourcePlan, /Do not rewrite it merely for compatibility/iu);
   assert.match(
     sourceAuthoring,
     /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
@@ -635,15 +633,14 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
     /real Source understandable[\s\S]*before Preflight\/Compile/iu,
   );
   assert.match(agents, /loaded Skill[\s\S]*own Source\/Contract authoring/iu);
-  assert.match(publicReadmes, /compatibility pointer/iu);
+  assert.match(
+    publicReadmes,
+    /(?:legacy|existing) Source Plan(?:s| documents)? remain.*ordinary Source/iu,
+  );
   assert.match(publicReadmes, /initial proposal[\s\S]*Web GPT/iu);
   assert.match(
     publicReadmes,
     /revised proposal plus selected immutable resources/iu,
-  );
-  assert.doesNotMatch(
-    sourcePlan,
-    /ty-context long-task (?:init|preflight|compile)/u,
   );
 
   for (const root of [
@@ -1078,33 +1075,40 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
 });
 
 test("Harness Authoring Skill routes Long-Task changes through mechanism admission", async () => {
-  const skill = await read(
-    ".codex/skills/authoring/harness_package_design/SKILL.md",
+  const [main, admission] = await Promise.all([
+    read(".codex/skills/authoring/harness_package_design/SKILL.md"),
+    read(
+      ".codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md",
+    ),
+  ]);
+  assert.match(
+    main,
+    /\[long-task-mechanism-admission\.md\]\(references\/long-task-mechanism-admission\.md\)/u,
   );
-  assert.match(skill, /Long-Task Workflow Controlling Objective/iu);
+  const skill = `${main}\n${admission}`;
+  assert.match(skill, /Long-Task (?:Workflow )?Controlling Objective/iu);
   assert.match(skill, /Authority Scope And Trusted Results/iu);
   assert.match(skill, /Mechanism Admission Rule/iu);
   assert.match(skill, /decision-rationale\/long-task-workflow\.md/iu);
   for (const concept of [
-    "false-completion/delivery-drift path",
+    "false-completion path",
     "invariant",
     "overlap",
     "cost",
-    "fail closed",
+    "fail-closed",
     "second Authority",
     "second plan",
-    "scheduling plane",
+    "scheduler",
   ]) {
     assert.match(skill, new RegExp(concept, "iu"));
   }
-  assert.match(skill, /任何 Long-Task Workflow 改动[\s\S]*既定设计目的/iu);
   assert.match(
     skill,
-    /引入和迁移成本[\s\S]*增量设计目的收益大于全部增量成本/iu,
+    /total authoring, runtime, state, recovery, maintenance, test, process, adoption and migration cost/iu,
   );
   assert.match(
     skill,
-    /不涉及机制的，只修改对应 owner 点，不把局部问题升级成新机制/iu,
+    /Implement runtime\/invariant changes in the mechanism owner/iu,
   );
   assert.match(
     skill,
@@ -1112,20 +1116,19 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   );
   assert.match(
     skill,
-    /增量设计目的收益大于全部增量成本[\s\S]*正 ROI[\s\S]*考虑集[\s\S]*不自动采用/iu,
+    /positive net ROI admits consideration, never automatic adoption/iu,
   );
   assert.match(
     skill,
-    /优先使用数据、benchmark 或实际证据[\s\S]*没有数据时[\s\S]*用户或项目 owner[\s\S]*严密的因果论证[\s\S]*边界明确的验证/iu,
+    /Use measured data when available[\s\S]*rigorous causal argument plus a small bounded validation[\s\S]*user\/project owner/iu,
   );
   assert.match(
     skill,
-    /成本相差不大，优先优化达到机制目的的效果[\s\S]*效果相近，优先优化实现成本/iu,
+    /equivalent cost[\s\S]*stronger purpose fulfillment[\s\S]*equivalent effect[\s\S]*lower total cost/iu,
   );
-  assert.match(skill, /不生成 Mechanism Matrix、Receipt、Registry/iu);
   assert.match(
     skill,
-    /(?:不生成|未创建) matrix、Receipt、Registry 或 runtime state/iu,
+    /Add no Mechanism Matrix, Receipt, registry or state/iu,
   );
 });
 

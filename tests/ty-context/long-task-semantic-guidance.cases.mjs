@@ -23,7 +23,6 @@ test("non-UI semantic completeness guidance is source, workflow, engineering and
     ".codex/ty-context-managed/agents/AGENTS_CORE.md",
     ".codex/ty-context-managed/skills/context_product_plan/SKILL.md",
     ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-    ".codex/ty-context-managed/skills/source-plan-authoring/SKILL.md",
     ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
     ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
     ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
@@ -32,7 +31,6 @@ test("non-UI semantic completeness guidance is source, workflow, engineering and
     "packages/ty-context/assets/agents/AGENTS_CORE.md",
     "packages/ty-context/assets/skills/context_product_plan/SKILL.md",
     "packages/ty-context/assets/skills/context_development_engineer/SKILL.md",
-    "packages/ty-context/assets/skills/source-plan-authoring/SKILL.md",
     "packages/ty-context/assets/skills/long-task-workflow/SKILL.md",
   ];
   const documents = await Promise.all(paths.map(readRepositoryFile));

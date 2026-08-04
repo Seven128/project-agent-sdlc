@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { parse as parseToml } from "smol-toml";
+import { parseAndValidateLongTaskCodexAgentProfile } from "../../packages/ty-context/dist/lib/long-task-codex-agent-profile.js";
 
 export async function assertLongTaskStaticConsistency(repoRoot) {
   const packageJson = JSON.parse(
@@ -69,20 +69,22 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
     managedAgentProfile,
     /^# ty-context:managed:long-task-implementation-worker$/mu,
   );
-  const profile = parseToml(managedAgentProfile);
-  assert.deepEqual(Object.keys(profile).sort(), [
-    "description",
-    "developer_instructions",
-    "model",
-    "model_reasoning_effort",
-    "name",
-  ]);
+  const validation = parseAndValidateLongTaskCodexAgentProfile(
+    managedAgentProfile,
+  );
+  assert.equal(validation.valid, true, JSON.stringify(validation));
+  const profile = validation.profile;
   assert.equal(profile.name, "long_task_implementation");
   assert.equal(profile.model, "gpt-5.6-luna");
   assert.equal(profile.model_reasoning_effort, "max");
+  assert.equal(profile.agents.enabled, false);
   assert.match(profile.developer_instructions, /after .*checkpoint/iu);
-  assert.match(profile.developer_instructions, /Do not claim acceptance/iu);
+  assert.match(profile.developer_instructions, /Source, Contract, Authority, or Context writeback/iu);
+  assert.match(profile.developer_instructions, /Progress, Evidence, Receipt, or Final Gate/iu);
+  assert.match(profile.developer_instructions, /Do not claim acceptance or completion authority/iu);
   assert.match(profile.developer_instructions, /Do not choose models/iu);
+  assert.match(profile.developer_instructions, /Do not create or switch branches or worktrees/iu);
+  assert.match(profile.developer_instructions, /queue, registry, or Worker DAG/iu);
   if (await pathExists(path.join(repoRoot, ".git"))) {
     const tracked = await gitOutput(repoRoot, [
       "ls-files",

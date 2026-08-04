@@ -5,6 +5,13 @@ import { pathExists } from "./fs.js";
 import type { SyncReport } from "./sync-engine.js";
 
 const MANAGED_STATUS = "Tiny Context long-task live authority gate";
+const LONG_TASK_IMPLEMENTATION_AGENT_MATCHER = "^long_task_implementation$";
+const MANAGED_HOOK_EVENTS = [
+  "SessionStart",
+  "PostCompact",
+  "Stop",
+  "SubagentStart",
+] as const;
 const LEGACY_MANAGED_STATUSES = new Set([
   "Tiny Context long-task live authority gate",
   "Tiny Context long-task authority gate",
@@ -56,10 +63,13 @@ export async function installLongTaskHooks(
   }
   const hooks = object(root.hooks);
   root.hooks = hooks;
-  for (const event of ["SessionStart", "PostCompact", "Stop"]) {
+  for (const event of MANAGED_HOOK_EVENTS) {
     const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
     const cleaned = removeManagedHookEntries(groups, command);
     cleaned.groups.push({
+      ...(event === "SubagentStart"
+        ? { matcher: LONG_TASK_IMPLEMENTATION_AGENT_MATCHER }
+        : {}),
       hooks: [
         {
           type: "command",
@@ -109,7 +119,7 @@ export async function uninstallLongTaskHooks(
   }
   const hooks = object(root.hooks);
   let changed = false;
-  for (const event of ["SessionStart", "PostCompact", "Stop"]) {
+  for (const event of MANAGED_HOOK_EVENTS) {
     if (!Array.isArray(hooks[event])) continue;
     const cleaned = removeManagedHookEntries(hooks[event], command);
     if (cleaned.removed === 0) continue;
@@ -141,6 +151,7 @@ export function removeManagedHookEntries(
       retained.push(groupValue);
       continue;
     }
+    const removedBeforeGroup = removed;
     const hooks = groupValue.hooks.filter((entry) => {
       if (!isManagedHookEntry(entry, currentPackageCommand)) return true;
       removed += 1;
@@ -150,6 +161,14 @@ export function removeManagedHookEntries(
       retained.push({ ...groupValue, hooks });
       continue;
     }
+    if (
+      removed > removedBeforeGroup &&
+      groupValue.matcher === LONG_TASK_IMPLEMENTATION_AGENT_MATCHER &&
+      Object.keys(groupValue).every(
+        (key) => key === "matcher" || key === "hooks",
+      )
+    )
+      continue;
     if (Object.keys(groupValue).some((key) => key !== "hooks"))
       retained.push({ ...groupValue, hooks });
   }

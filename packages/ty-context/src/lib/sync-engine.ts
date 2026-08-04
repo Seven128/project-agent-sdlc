@@ -61,7 +61,12 @@ export async function runSync(projectRoot: string): Promise<SyncReport> {
     await syncManagedFile(projectRoot, root, managedFile, report, config);
   }
   const longTaskEnabled = isProfileEnabled(config, "long-task");
-  await syncLongTaskCodexAgentProfile(projectRoot, longTaskEnabled, report);
+  await syncLongTaskCodexAgentProfile(
+    projectRoot,
+    root,
+    longTaskEnabled,
+    report,
+  );
   if (longTaskEnabled) {
     await installLongTaskHooks(projectRoot, report);
   } else {

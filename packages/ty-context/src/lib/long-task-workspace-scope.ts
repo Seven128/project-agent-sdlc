@@ -104,6 +104,7 @@ export async function firstLockManagedWorkspacePaths(
       ".codex/hooks.json",
       ...(await longTaskCodexAgentProfileBootstrapPaths(
         repository,
+        root,
         isProfileEnabled(config, "long-task"),
       )),
       ...(await packageManagedBootstrapFiles(root, config)),

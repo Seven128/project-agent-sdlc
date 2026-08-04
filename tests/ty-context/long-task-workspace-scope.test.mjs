@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
   classifyWorkspaceScope,
+  firstLockManagedWorkspacePaths,
   workspaceScopeErrors,
 } from "../../packages/ty-context/dist/lib/long-task-workspace-scope.js";
 import {
@@ -57,6 +58,54 @@ test("workspace scope classifies every changed path with forbidden precedence", 
     "workspace_path_forbidden:secrets/token.txt",
     "workspace_path_unclassified:notes.txt",
   ]);
+});
+
+test("first-lock bootstrap admits only a validated regular exact Codex worker profile", async () => {
+  const fixture = await createDeliveryFixture();
+  const profile = ".codex/agents/long-task-implementation.toml";
+  const profileFile = path.join(fixture.root, profile);
+  const sibling = ".codex/agents/user-worker.toml";
+  const external = path.join(
+    path.dirname(fixture.root),
+    `${path.basename(fixture.root)}-worker-target.toml`,
+  );
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    assert.deepEqual(
+      await firstLockManagedWorkspacePaths(fixture.root, [profile, sibling]),
+      [profile],
+    );
+
+    const valid = await readFile(profileFile, "utf8");
+    await writeFile(
+      profileFile,
+      valid.replace("enabled = false", "enabled = true"),
+    );
+    assert.deepEqual(
+      await firstLockManagedWorkspacePaths(fixture.root, [profile]),
+      [],
+    );
+
+    await writeFile(
+      profileFile,
+      "# ty-context:managed:long-task-implementation-worker\nname = \"long_task_implementation\"\n",
+    );
+    assert.deepEqual(
+      await firstLockManagedWorkspacePaths(fixture.root, [profile]),
+      [],
+    );
+
+    await rm(profileFile, { force: true });
+    await writeFile(external, valid);
+    await symlink(external, profileFile, "file");
+    assert.deepEqual(
+      await firstLockManagedWorkspacePaths(fixture.root, [profile]),
+      [],
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+    await rm(external, { force: true });
+  }
 });
 
 test("[critical:first-lock-workspace-scope] first-lock Preflight and direct Compile reject an unclassified dirty path", async () => {

@@ -23,7 +23,7 @@ export function mixedHookConfig(packageHook) {
     userOnlyGroup,
     config: {
       hooks: Object.fromEntries(
-        ["SessionStart", "PostCompact", "Stop"].map((event) => [
+        ["SessionStart", "PostCompact", "Stop", "SubagentStart"].map((event) => [
           event,
           [
             {
@@ -70,7 +70,7 @@ export function mixedHookConfig(packageHook) {
 }
 
 export function assertEnabledHookEvents(hooks, userOnlyGroup) {
-  for (const event of ["SessionStart", "PostCompact", "Stop"]) {
+  for (const event of ["SessionStart", "PostCompact", "Stop", "SubagentStart"]) {
     const all = hooks.hooks[event].flatMap((group) => group.hooks);
     const managed = all.filter((hook) =>
       String(hook.command ?? hook.commandWindows).includes(
@@ -85,6 +85,12 @@ export function assertEnabledHookEvents(hooks, userOnlyGroup) {
     assert.equal(managed[0].commandWindows, managed[0].command);
     assert.doesNotMatch(managed[0].command, /\.codex[\\/]hooks/u);
     assert.equal(managed[0].timeout, event === "Stop" ? 3600 : 10);
+    const managedGroup = hooks.hooks[event].find((group) =>
+      group.hooks.some((hook) => hook === managed[0]),
+    );
+    if (event === "SubagentStart")
+      assert.equal(managedGroup.matcher, "^long_task_implementation$");
+    else assert.equal(Object.hasOwn(managedGroup, "matcher"), false);
     assert.equal(all.filter((hook) => hook.user).length, 3);
     assert.ok(
       all.some((hook) => hook.command === "node composite-report.mjs"),
@@ -116,7 +122,7 @@ export function assertEnabledHookEvents(hooks, userOnlyGroup) {
 }
 
 export function assertDisabledHookEvents(hooks, userOnlyGroup) {
-  for (const event of ["SessionStart", "PostCompact", "Stop"]) {
+  for (const event of ["SessionStart", "PostCompact", "Stop", "SubagentStart"]) {
     const groups = hooks.hooks[event];
     const all = groups.flatMap((group) => group.hooks);
     assert.equal(all.filter((hook) => hook.user).length, 3);
