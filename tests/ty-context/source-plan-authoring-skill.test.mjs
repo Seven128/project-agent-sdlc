@@ -84,9 +84,9 @@ test("long-task-workflow owns the former Source-quality authoring semantics", as
   ]) assert.match(source, expected);
 
   assert.match(longTask, /references\/source-authoring\.md/iu);
-  assert.match(longTask, /external initial proposal, selected design resources/iu);
+  assert.match(longTask, /external initial proposal.*selected design resource/iu);
   assert.match(longTask, /Conversation-only material becomes exactly one project-native Markdown Source/iu);
-  assert.match(longTask, /Every input enters.*Draft immediately/iu);
+  assert.match(longTask, /Every .*material input enters.*Draft immediately/iu);
   assert.match(longTask, /Do not create a Source-authoring phase/iu);
   assert.match(contract, /apply `source-authoring\.md` alongside mapping/iu);
   assert.match(contract, /revised initial proposal and selected design resources are parallel Source inputs/iu);

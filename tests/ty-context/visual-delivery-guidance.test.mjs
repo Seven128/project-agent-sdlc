@@ -411,6 +411,7 @@ test("selected-design Source authority is shared while formal proof levels remai
     chineseReadme,
     packageReadme,
     sourcePlan,
+    longTaskDetail,
   ] = await Promise.all([
     read("PROJECT_SPEC.md"),
     read("project_context/global.md"),
@@ -425,11 +426,24 @@ test("selected-design Source authority is shared while formal proof levels remai
     read("README.zh-CN.md"),
     read("packages/ty-context/README.md"),
     read("docs/design-resource-authoring-source-plan.md"),
+    Promise.all([
+      read(
+        ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+      ),
+      read(
+        ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+      ),
+    ]).then((contents) => contents.join("\n")),
   ]);
 
   assert.equal(longTaskCopies[1], longTaskCopies[0]);
   assert.equal(longTaskCopies[2], longTaskCopies[0]);
-  for (const content of [spec, rationale, handoffContract, longTaskCopies[0]]) {
+  for (const content of [
+    spec,
+    rationale,
+    handoffContract,
+    `${longTaskCopies[0]}\n${longTaskDetail}`,
+  ]) {
     assert.match(
       content,
       /Agent implementation, acceptance and testing fully conform|full implementation\/acceptance\/test conformance/iu,
@@ -455,7 +469,7 @@ test("selected-design Source authority is shared while formal proof levels remai
   for (const content of [
     spec,
     handoffContract,
-    longTaskCopies[0],
+    `${longTaskCopies[0]}\n${longTaskDetail}`,
     rootReadme,
     packageReadme,
   ]) {

@@ -59,15 +59,22 @@ test("public guidance and durable Context teach one opt-in V2 rollout", async ()
       `${file}: efficiency theorem drift`,
     );
 
-  for (const file of [
+  const detailedSurfaces = await Promise.all([
     "README.md",
     "packages/ty-context/README.md",
     "PROJECT_SPEC.md",
     "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-    ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
     ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
-  ]) {
-    const content = await text(file);
+  ].map(async (file) => [file, await text(file)]));
+  detailedSurfaces.push([
+    "long-task-workflow progressive references",
+    `${await text(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    )}\n${await text(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+    )}`,
+  ]);
+  for (const [file, content] of detailedSurfaces) {
     assert.match(
       content,
       /custom.property/u,

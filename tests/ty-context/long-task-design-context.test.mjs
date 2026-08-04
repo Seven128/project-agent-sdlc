@@ -520,7 +520,7 @@ test("target-runtime feedback stays live, rolling, and state-free", async () => 
   assert.match(combined, /coalesc/iu);
   assert.match(
     combined,
-    /recommended[\s\S]{0,180}(?:not mandatory|advisory|Goal owns|Goal-owned)/iu,
+    /recommended[\s\S]{0,220}(?:not mandatory|advisory|Goal owns|Goal-owned|does not gate implementation order)/iu,
   );
   assert.match(
     combined,
@@ -625,10 +625,14 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
     spec,
     /writable initial proposal[\s\S]*revised as the real Source/iu,
   );
-  assert.match(longTask, /Every input enters.*Draft immediately/iu);
+  assert.match(longTask, /Every .*material input enters.*Draft immediately/iu);
   assert.match(
-    longTask,
-    /Source completeness is a Preflight\/Compile convergence requirement, not an earlier internal stage/iu,
+    sourceAuthoring,
+    /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
+  );
+  assert.match(
+    sourceAuthoring,
+    /real Source understandable[\s\S]*before Preflight\/Compile/iu,
   );
   assert.match(agents, /loaded Skill[\s\S]*own Source\/Contract authoring/iu);
   assert.match(publicReadmes, /compatibility pointer/iu);
@@ -849,12 +853,12 @@ test("revision diagnosis stays one-Contract and non-authoritative while decision
     /explicit current-task instruction[\s\S]*exactly covers every listed decision reason[\s\S]*(?:generic|blanket)/iu,
   );
   assert.match(
-    skill,
-    /machine-proven monotonic strengthening[\s\S]*mechanically bounded repair/iu,
+    lifecycle,
+    /(?:machine-proven monotonic|proven monotonic evidence) strengthening[\s\S]*mechanically bounded repair/iu,
   );
   assert.match(
-    skill,
-    /Product\/Source Claim\/target\/external-confirmation change[\s\S]*exact user-decision identity/iu,
+    lifecycle,
+    /Product\/Source Claim\/target\/external-confirmation change[\s\S]*exact (?:user-decision|revision) identity/iu,
   );
   assert.doesNotMatch(
     skill,
@@ -879,8 +883,12 @@ test("revision diagnosis stays one-Contract and non-authoritative while decision
 });
 
 test("blocker revisions use causal evidence without adding completion state", async () => {
-  const [skill, evidence, contract, rationale] = await Promise.all([
+  const [skill, contractAuthoring, evidence, contract, rationale] =
+    await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
     ),
@@ -890,11 +898,17 @@ test("blocker revisions use causal evidence without adding completion state", as
     read(
       "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
     ),
-  ]);
-  const combined = [skill, evidence, contract, rationale].join("\n");
+    ]);
+  const combined = [
+    skill,
+    contractAuthoring,
+    evidence,
+    contract,
+    rationale,
+  ].join("\n");
   assert.match(
     combined,
-    /difficulty or delay[\s\S]*never reclassifies machine-verifiable scope as external/iu,
+    /(?:difficulty or delay[\s\S]*never reclassifies machine-verifiable scope as external|work is difficult, delayed[\s\S]*Reclassify or remove machine-verifiable scope only through an explicit marked Source change)/iu,
   );
   assert.match(
     combined,
@@ -964,7 +978,7 @@ test("Long-Task carries shared engineering quality once through Final Gate", asy
   );
   assert.match(
     skill,
-    /Do not also run the default Workflow's Contract Conformance closure/iu,
+    /no separate default Contract Conformance closure/iu,
   );
   assert.match(
     workflow,

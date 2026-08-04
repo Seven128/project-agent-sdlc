@@ -16,6 +16,7 @@ This contract defines source-only, managed, packaged and human-facing surfaces f
 - Managed Context templates include cross-surface `product-surface-contract.md` and optional on-demand `screen-contract.md`. They teach ownership/structure only and never generate consumer product facts.
 - `packages/ty-context/assets/**` is packaged canonical output produced by source mappings.
 - `.codex/skills/**` exposes generated/default Skills. The base set includes `design-system-authoring` and `design-resource-authoring`; `long-task` owns `long-task-workflow` plus the retired `source-plan-authoring` pointer. No alternate normal long-task Skill is installed. Copies are sync-overwritten.
+- The Long-Task main `SKILL.md` is the compact objective, boundary, activity router and lifecycle summary. Its existing one-level Source-authoring, Contract-authoring, Evidence-design and Authority-lifecycle references are the sole detailed instruction owners; atomic rule blocks are not duplicated back into the main Skill or another Skill/reference/stage. Managed source, installed workspace and package-asset copies remain byte-identical.
 - `.codex/skills/authoring/**` is source-workspace-only and never packaged.
 - `README.md`, `README.zh-CN.md`, `packages/ty-context/README.md`, npm metadata and release docs are human-facing public surfaces and must match behavior.
 - `PROJECT_SPEC.md` is the full source-workspace workflow design specification, not a consumer asset.

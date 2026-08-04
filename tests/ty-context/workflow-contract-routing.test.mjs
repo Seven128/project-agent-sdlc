@@ -725,6 +725,10 @@ test("long-task Skill is the only active long-task workflow", async () => {
     codexMetadata,
     generatedMetadata,
     packagedMetadata,
+    sourceAuthoring,
+    contractAuthoring,
+    evidenceDesign,
+    authorityLifecycle,
   ] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
@@ -735,6 +739,18 @@ test("long-task Skill is the only active long-task workflow", async () => {
     read(".codex/skills/long-task-workflow/agents/openai.yaml"),
     read(
       "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
     ),
   ]);
   assert.equal(generated, active, "source-workspace long-task Skill drift");
@@ -765,45 +781,49 @@ test("long-task Skill is the only active long-task workflow", async () => {
     YAML.parse(codexMetadata).policy.allow_implicit_invocation,
     false,
   );
+  const detailedAuthoring = `${sourceAuthoring}\n${contractAuthoring}`;
   assert.match(
-    active,
-    /ordinary prose proposal, legacy Source Plan or externally authored design resource/is,
+    detailedAuthoring,
+    /pre-existing Source Plan is simply one possible input[\s\S]*External design resources authorize fidelity only when they become a selected exact target/is,
   );
-  assert.match(active, /does not need to match a recommended structure/is);
-  assert.match(active, /stable semantic keys and Markdown anchors/is);
+  assert.match(detailedAuthoring, /ordinary prose is the Source/is);
   assert.match(
-    active,
-    /one recommendation is then defensible.*record it in real Source.*instead of pausing for approval/is,
-  );
-  assert.match(
-    active,
-    /Before comparative research or a material product, technical, architecture or provider selection.*quality versus cost.*stop before that research or selection and ask one concise targeted clarification/is,
+    detailedAuthoring,
+    /stable semantic (?:lowercase-kebab )?keys and Markdown anchors/is,
   );
   assert.match(
-    active,
-    /Do not impose a questionnaire, re-ask known preferences or interrupt minor reversible choices/is,
+    detailedAuthoring,
+    /one defensible recommendation exists.*record.*exact added meaning in real Source/is,
   );
   assert.match(
-    active,
-    /Once the material preference envelope is clear, decide what research is needed.*current authoritative or primary evidence/is,
+    detailedAuthoring,
+    /Before comparative research or a material product, technical, architecture or provider selection.*fidelity versus cost.*unknown preference.*ask one concise targeted clarification/is,
   );
   assert.match(
-    active,
-    /Return only when authoritative requirements conflict.*user explicitly reserves.*no defensible recommendation.*no falsifiable acceptance standard/is,
-  );
-  assert.match(active, /meaning-preserving structural decomposition/is);
-  assert.match(active, /evidence-backed repository binding/is);
-  assert.match(
-    active,
-    /Never place a new product rule.*only in Contract YAML/is,
+    detailedAuthoring,
+    /Do not impose a questionnaire, re-ask known preferences or pause for minor reversible choices/is,
   );
   assert.match(
-    active,
+    detailedAuthoring,
+    /Once the material preference envelope is clear, use current authoritative or primary evidence/is,
+  );
+  assert.match(
+    detailedAuthoring,
+    /Conflicting authority, an explicitly user-reserved choice, a missing material preference or the absence of a defensible recommendation remains `decision_required`/is,
+  );
+  assert.match(detailedAuthoring, /Draft decomposition and repository binding/is);
+  assert.match(detailedAuthoring, /evidence-backed repository facts/is);
+  assert.match(
+    detailedAuthoring,
+    /Contract YAML cannot become the sole owner[\s\S]*never place the choice only in Contract YAML/is,
+  );
+  assert.match(
+    detailedAuthoring,
     /payment.*contracting.*production deployment.*destructive production mutation.*external confirmations/is,
   );
   assert.match(
-    active,
-    /conflicting, user-reserved, missing-preference or unsupported semantic remains `decision_required`/is,
+    detailedAuthoring,
+    /conflicting authority[\s\S]*user-reserved choice[\s\S]*missing material preference[\s\S]*`decision_required`/is,
   );
   assert.match(active, /^## Controlling Objective$/mu);
   assert.match(active, /^## Contract Draft And Outcome Decomposition$/mu);
@@ -815,11 +835,11 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
   assert.match(
     active,
-    /`depends_on` means acceptance(?: and intermediate-proof)? readiness/iu,
+    /`depends_on` and Stage gates express acceptance and intermediate-proof readiness/iu,
   );
   assert.match(
     active,
-    /(?:must not|Do not) persist[\s\S]{0,120}(?:scheduler[\s\S]{0,120}Worker queue|Worker queue[\s\S]{0,120}scheduler)/iu,
+    /no development phase\/method Gate[\s\S]{0,180}agent allocator\/scheduler[\s\S]{0,120}persistent delegation state/iu,
   );
   assert.match(
     active,
@@ -839,8 +859,30 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
   assert.match(
     active,
-    /platform-native internal delegation[\s\S]{0,240}(?:no subagent dispatch|not Progress|not proof|converge)/iu,
+    /platform-native agents\/subagents[\s\S]{0,300}(?:non-authoritative|not Progress|not proof)[\s\S]{0,180}converge/iu,
   );
+  assert.ok(
+    Buffer.byteLength(active, "utf8") <= 16_000,
+    "main Long-Task Skill must remain a compact objective/boundary/router surface",
+  );
+  assert.deepEqual(
+    [...active.matchAll(/\]\(references\/([^\)]+)\)/gu)].map(
+      (match) => match[1],
+    ),
+    [
+      "source-authoring.md",
+      "contract-authoring.md",
+      "evidence-design.md",
+      "authority-lifecycle.md",
+    ],
+  );
+  assert.doesNotMatch(
+    active,
+    /^## (?:Entry And Authoring Loop|Visual Delivery Authoring|Symbolic Selected-Design Authoring|Non-UI Semantic Fact Evidence|Live Final Authority)$/mu,
+  );
+  assert.match(contractAuthoring, /^## Symbolic Selected-Design Authoring$/mu);
+  assert.match(evidenceDesign, /^## Symbolic Noninterference Evidence$/mu);
+  assert.match(authorityLifecycle, /^## Final Gate And Terminal Paths$/mu);
   assert.doesNotMatch(
     active,
     /Do not create a second plan, Authoring Skill product/,
