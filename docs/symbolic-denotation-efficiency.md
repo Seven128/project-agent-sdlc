@@ -1976,7 +1976,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
       - context
       - project_context/areas/harness-package/contracts/design-resource-handoff.md
-      - ab5ada968afc8370cd0ce91b9b6a7885a283be25dbd9e4598e29e8dd8480d2d5
+      - 444348a0648bf57a18be80553c8bbdba9252e1cf4dd87c382c3e48c1112af766
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -8693,7 +8693,7 @@ fact_sets:
   - provenance
   - source_item_refs
   rows:
-  - - cb71cca7817abe8895a4111ea5d4d397be7b04c2bace5c0e42d9eb5852069ed6
+  - - eea45a0b78ca647e8d175afdf243d6d17846f205787d53abdc9d076d9ee37b54
     - fact.symbolic-denotation-efficiency-result
     - cell.symbolic-denotation-efficiency-result
     - subject.symbolic-denotation-efficiency-result
@@ -8708,7 +8708,7 @@ fact_sets:
       - symbolic-denotation-efficiency-result
       - symbolic-denotation-efficiency-result
     - - symbolic-denotation-efficiency-result
-  - - c3f71ad3f44f0854338da4ffdf9f53040823660046a68f859a323e74d8907144
+  - - 80c2c4add4d8ed02c0a26886b92cfac5a371426ff704c9e57680f94d102d6196
     - fact.original-attachment-provenance
     - cell.original-attachment-provenance
     - subject.original-attachment-provenance
@@ -8723,7 +8723,7 @@ fact_sets:
       - original-attachment-provenance
       - original-attachment-provenance
     - - original-attachment-provenance
-  - - 7365a5401cfec8419c143a28673d9308c30c71a4d42b81a6429d0dcbe7e20bea
+  - - 694d48c8899e2c7ac40fb4e74875991c7b2a286b6377c1c5cf3e873119eec0cc
     - fact.audited-source-supersession
     - cell.audited-source-supersession
     - subject.audited-source-supersession
@@ -8738,7 +8738,7 @@ fact_sets:
       - audited-source-supersession
       - audited-source-supersession
     - - audited-source-supersession
-  - - 5ef4d888193210f1032a9dc61164031dbc7527f9c17e17833098d8c6c537d43c
+  - - 4923b5454c7dec8ebd2685ba666b57e0052d545a8286c5c95c27f56e38b53f4c
     - fact.complete-material-input-index
     - cell.complete-material-input-index
     - subject.complete-material-input-index
@@ -8978,7 +8978,7 @@ fact_sets:
       - exact-target-layout-pixel-preservation
       - exact-target-layout-pixel-preservation
     - - exact-target-layout-pixel-preservation
-  - - 19d12767a7a16a4382028e268e578ae531b396d4e4ce5c49d41711294e748b70
+  - - b73ba2b48bfe3266f6aae265c7f5b3436593658682248f70726980995f039e28
     - fact.canonical-resource-value-authority
     - cell.canonical-resource-value-authority
     - subject.canonical-resource-value-authority
@@ -10100,7 +10100,7 @@ fact_sets:
       - complexity-parameter-verification
       - complexity-parameter-verification
     - - complexity-parameter-verification
-  - - e226794a3eb6f515fc41e79c5582cd764af67fe42b009750e79b49b380d43a1b
+  - - 22f75954b410ed8cedd43e31dc6457a9f5821563b0f8c41edaefbe1b588c39a0
     - fact.distribution-context-parity
     - cell.distribution-context-parity
     - subject.distribution-context-parity
@@ -10115,7 +10115,7 @@ fact_sets:
       - distribution-context-parity
       - distribution-context-parity
     - - distribution-context-parity
-  - - bb876dd28028041a0ff9f2c40f1dd79967dcd0c0861bf9730a50b82f5dca030b
+  - - 3007edf634079400ecf1cae9e5883c29e89d0e4d89fb37dbf145ee41ca621a9d
     - fact.architecture-deliberation
     - cell.architecture-deliberation
     - subject.architecture-deliberation
@@ -10325,7 +10325,7 @@ fact_sets:
       - scope-and-rollout-ac
       - scope-and-rollout-ac
     - - scope-and-rollout-ac
-  - - 9f92a979bcfbc71fa1aed5ffbc9b940bbffce03e433cba81160e4b2359a48943
+  - - a7ac4055cf2d893ecadf4d0825302b4d0f712ade7529ae77d76a227bbbbc0bfe
     - fact.package-antidegradation-and-parity-ac
     - cell.package-antidegradation-and-parity-ac
     - subject.package-antidegradation-and-parity-ac
@@ -10355,7 +10355,7 @@ fact_sets:
       - inventory-is-not-completion
       - inventory-is-not-completion
     - - inventory-is-not-completion
-  - - d4fd2b82eaaa4a9fa75379cb218a2297adbde2ba98fe42784676e9a1e61685cf
+  - - afdfb158bb645b1bdc2c4ed972b50b6562a9f27656d9522e4529718b6d1e4ae6
     - fact.public-schema-change-risk
     - cell.public-schema-change-risk
     - subject.public-schema-change-risk
@@ -10422,28 +10422,28 @@ obligations:
   - overrides
   rows:
   - - proof.symbolic-denotation-efficiency-result.exact
-    - 7318aed0b1b3eb6efdd3590c846d262c8f56b936d35d13741ebd943ee2b68df6
+    - 84c943f49e4964027bd9ff9325e894c943ee0439c2d9b4dd4050516c6034b4a0
     - fact.symbolic-denotation-efficiency-result
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/0/comparison/parameters/value
       - symbolic-denotation-efficiency-result
   - - proof.original-attachment-provenance.exact
-    - 1863216979334e6c1ae161f7c3205f59a1c626c7754b617a1d30c26296b4ebc8
+    - 643554a3d672a7eace2c456ed5aef50df71aec30599323d5282533b6ff3160fd
     - fact.original-attachment-provenance
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/1/comparison/parameters/value
       - original-attachment-provenance
   - - proof.audited-source-supersession.exact
-    - de53cde5fba6242ef49f718bef39da4fd7708a3382969539fb7a8d8574f956fa
+    - 81cc322b26b5aceebc4500594ed2e40a74c54f1cbeb32a1f67506d1fcefe7595
     - fact.audited-source-supersession
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/2/comparison/parameters/value
       - audited-source-supersession
   - - proof.complete-material-input-index.exact
-    - 82a7830932625757a6362ed5a6576107c5da6fc31cb13f989ce0fef949f08270
+    - a51598a5fba81410187b68be986660823ee27db839511e9f2f6f48a982ccbb1b
     - fact.complete-material-input-index
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -10555,7 +10555,7 @@ obligations:
       - /proof_obligations/18/comparison/parameters/value
       - exact-target-layout-pixel-preservation
   - - proof.canonical-resource-value-authority.exact
-    - b58fafe63e1459b86033b6ab5e557a6d9999ed7854db02e4f6b6f4466fb6902d
+    - d558eda8565d019984ab0c40ce45259de1bf8bb0aa9a6a775e9211c919563a2d
     - fact.canonical-resource-value-authority
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11073,14 +11073,14 @@ obligations:
       - /proof_obligations/92/comparison/parameters/value
       - complexity-parameter-verification
   - - proof.distribution-context-parity.exact
-    - aefc95b1df30da8b81c6440640bd62b5f46fdc1df34e0c7a4bd8bab887e30ca2
+    - 4d6eb6e61483ed3f1e9b8eb84a1fc46a7f30dcab71c972778f43ab03bee07ffc
     - fact.distribution-context-parity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/93/comparison/parameters/value
       - distribution-context-parity
   - - proof.architecture-deliberation.exact
-    - 9d7c494e941f4efc0912444d09c3aa4f96878681e20220ae4d0b493f52ff96c3
+    - 3f4d86317a92392397a21e142fd75b158510cdeaeb0d12b2ec19618989480fe9
     - fact.architecture-deliberation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11178,7 +11178,7 @@ obligations:
       - /proof_obligations/107/comparison/parameters/value
       - scope-and-rollout-ac
   - - proof.package-antidegradation-and-parity-ac.exact
-    - e9de3dabc04f48f0ba041393bfb467d7ae3e2cdb03530a3eaae4e6cd512488c3
+    - a420cc75a2bd63bbec9adb3039b37bb27417769084411ff54c745472f5ff8c7d
     - fact.package-antidegradation-and-parity-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11192,7 +11192,7 @@ obligations:
       - /proof_obligations/109/comparison/parameters/value
       - inventory-is-not-completion
   - - proof.public-schema-change-risk.exact
-    - 1e01eda4d348a9aa5ea980346e743c621f068fce57e43c3c3889693750f37640
+    - 24d9b3192c817d899f47af2432c2f6307561df5460f866a6ed09b3c08972f904
     - fact.public-schema-change-risk
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
