@@ -8,7 +8,6 @@
     "schema_version",
     "semantic_fact_manifest",
     "task",
-    "source_claims",
     "stages",
     "risk",
     "global"
@@ -54,6 +53,9 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/sourceClaim" }
     },
+    "compact_semantic_carrier": {
+      "$ref": "#/$defs/longTaskCompactCarrier"
+    },
     "stages": {
       "type": "array",
       "minItems": 1,
@@ -68,9 +70,30 @@
     },
     "outcome_files": { "$ref": "#/$defs/nonEmptyStrings" }
   },
-  "oneOf": [
-    { "required": ["outcomes"], "not": { "required": ["outcome_files"] } },
-    { "required": ["outcome_files"], "not": { "required": ["outcomes"] } }
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "required": ["source_claims"],
+          "not": { "required": ["compact_semantic_carrier"] }
+        },
+        {
+          "required": ["compact_semantic_carrier", "outcomes"],
+          "not": {
+            "anyOf": [
+              { "required": ["source_claims"] },
+              { "required": ["outcome_files"] }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "oneOf": [
+        { "required": ["outcomes"], "not": { "required": ["outcome_files"] } },
+        { "required": ["outcome_files"], "not": { "required": ["outcomes"] } }
+      ]
+    }
   ],
   "$defs": {
     "key": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
@@ -94,6 +117,163 @@
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     },
+    "compactTable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaults", "columns", "rows"],
+      "properties": {
+        "defaults": { "type": "object" },
+        "columns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "rows": {
+          "type": "array",
+          "items": { "type": "array" }
+        }
+      }
+    },
+    "compactFactSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "defaults", "columns", "rows"],
+      "properties": {
+        "key": { "$ref": "#/$defs/semanticRef" },
+        "defaults": { "type": "object" },
+        "columns": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "rows": {
+          "type": "array",
+          "items": { "type": "array" }
+        }
+      }
+    },
+    "longTaskCompactCapacityCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claims",
+        "claim_projections",
+        "selector_members",
+        "structure_families",
+        "structure_references",
+        "structure_arguments",
+        "facts",
+        "obligations",
+        "assertions",
+        "canonical_bytes"
+      ],
+      "properties": {
+        "claims": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "claim_projections": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+        "selector_members": { "type": "integer", "minimum": 0, "maximum": 5000000 },
+        "structure_families": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "structure_references": { "type": "integer", "minimum": 0, "maximum": 10000000 },
+        "structure_arguments": { "type": "integer", "minimum": 0, "maximum": 50000000 },
+        "facts": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "obligations": { "type": "integer", "minimum": 0, "maximum": 2000000 },
+        "assertions": { "type": "integer", "minimum": 0, "maximum": 5000000 },
+        "canonical_bytes": { "type": "integer", "minimum": 0, "maximum": 268435456 }
+      }
+    },
+    "longTaskCompactCarrier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "capacity",
+        "selectors",
+        "shared_structures",
+        "claim_catalog",
+        "claim_projections",
+        "fact_sets",
+        "proof_templates",
+        "obligations",
+        "assertion_projections",
+        "exceptions"
+      ],
+      "properties": {
+        "schema_version": { "const": "long-task-compact-carrier-v1" },
+        "capacity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["theoretical_ground_universe", "measured", "maximum"],
+          "properties": {
+            "theoretical_ground_universe": { "const": "not_materialized" },
+            "measured": { "$ref": "#/$defs/longTaskCompactCapacityCounts" },
+            "maximum": { "$ref": "#/$defs/longTaskCompactCapacityCounts" }
+          }
+        },
+        "selectors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "members"],
+            "properties": {
+              "key": { "$ref": "#/$defs/semanticRef" },
+              "members": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/semanticRef" }
+              }
+            }
+          }
+        },
+        "shared_structures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "digest", "boundary", "parameter_count", "template"],
+            "properties": {
+              "key": { "type": "string", "pattern": "^structure\\.[a-f0-9]{24}$" },
+              "digest": { "$ref": "#/$defs/sha256" },
+              "boundary": { "$ref": "#/$defs/semanticRef" },
+              "parameter_count": { "type": "integer", "minimum": 0 },
+              "template": {}
+            }
+          }
+        },
+        "claim_catalog": { "$ref": "#/$defs/compactTable" },
+        "claim_projections": { "$ref": "#/$defs/compactTable" },
+        "fact_sets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/compactFactSet" }
+        },
+        "proof_templates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "binding"],
+            "properties": {
+              "key": { "$ref": "#/$defs/semanticRef" },
+              "binding": { "type": "object" }
+            }
+          }
+        },
+        "obligations": { "$ref": "#/$defs/compactTable" },
+        "assertion_projections": { "$ref": "#/$defs/compactTable" },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "target_ref", "rationale"],
+            "properties": {
+              "key": { "$ref": "#/$defs/semanticRef" },
+              "target_ref": { "$ref": "#/$defs/semanticRef" },
+              "rationale": { "$ref": "#/$defs/nonEmpty" }
+            }
+          }
+        }
+      }
+    },
     "semanticFactBindings": {
       "type": "object",
       "additionalProperties": false,
@@ -109,6 +289,7 @@
             "required": ["fact_ref", "claim_ref", "applicability_ref"],
             "properties": {
               "fact_ref": { "$ref": "#/$defs/semanticRef" },
+              "fact_revision_digest": { "$ref": "#/$defs/sha256" },
               "claim_ref": { "$ref": "#/$defs/semanticRef" },
               "applicability_ref": { "$ref": "#/$defs/semanticRef" }
             }
@@ -134,6 +315,7 @@
                 ],
                 "properties": {
                   "proof_ref": { "$ref": "#/$defs/semanticRef" },
+                  "obligation_revision_digest": { "$ref": "#/$defs/sha256" },
                   "fact_ref": { "$ref": "#/$defs/semanticRef" },
                   "method": { "$ref": "#/$defs/semanticRef" },
                   "proof_surface": { "$ref": "#/$defs/proofSurface" },
@@ -162,6 +344,7 @@
                 ],
                 "properties": {
                   "proof_ref": { "$ref": "#/$defs/semanticRef" },
+                  "obligation_revision_digest": { "$ref": "#/$defs/sha256" },
                   "fact_ref": { "$ref": "#/$defs/semanticRef" },
                   "method": { "$ref": "#/$defs/semanticRef" },
                   "proof_surface": { "$ref": "#/$defs/proofSurface" },

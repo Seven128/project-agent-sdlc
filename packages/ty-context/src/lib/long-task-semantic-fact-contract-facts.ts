@@ -11,6 +11,8 @@ export function validateSemanticFactOutcomeBindings(
   manifest: SemanticFactManifestV1,
   index: SemanticFactManifestIndexV1,
   allFactBindings: string[],
+  factRevisions: Map<string, string>,
+  revisionsRequired: boolean,
 ): void {
   uniqueSemanticFactClosureValues(
     outcome.semantic_fact_bindings.facts.map((item) => item.claim_ref),
@@ -22,6 +24,14 @@ export function validateSemanticFactOutcomeBindings(
   for (const binding of outcome.semantic_fact_bindings.facts) {
     const fact = index.fact_by_ref.get(binding.fact_ref)!;
     const expectedClaim = `semantic_fact.${binding.fact_ref}`;
+    if (
+      revisionsRequired &&
+      binding.fact_revision_digest !== factRevisions.get(binding.fact_ref)
+    )
+      semanticFactClosureInvalid(
+        "contract_fact_revision_mismatch",
+        `${outcome.key}:${binding.fact_ref}:${binding.fact_revision_digest ?? "missing"}:${factRevisions.get(binding.fact_ref) ?? "missing"}`,
+      );
     if (binding.claim_ref !== expectedClaim)
       semanticFactClosureInvalid(
         "contract_fact_claim_identity_mismatch",

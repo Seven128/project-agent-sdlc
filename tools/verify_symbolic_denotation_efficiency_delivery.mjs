@@ -25,6 +25,12 @@ const rootEntrypoint =
 const policyPath =
   "packages/ty-context/src/lib/design-resource-symbolic-fact-policy.ts";
 const sourcePath = "docs/symbolic-denotation-efficiency.md";
+const packageBuildSpec = npmCommandSpec([
+  "run",
+  "build",
+  "--workspace",
+  "project-tiny-context-harness",
+]);
 
 if (mode === "--semantic") await semanticVerification();
 else if (mode === "--api-contract") await apiContractVerification();
@@ -39,13 +45,7 @@ async function semanticVerification() {
     shortcuts: policy.includes(symbolicPolicyMarkers.shortcuts),
     nonCompletion: policy.includes(symbolicPolicyMarkers.nonCompletion),
   };
-  const buildSpec = npmCommandSpec([
-    "run",
-    "build",
-    "--workspace",
-    "project-tiny-context-harness",
-  ]);
-  const build = await run(buildSpec.command, buildSpec.args);
+  const build = await run(packageBuildSpec.command, packageBuildSpec.args);
   const uniqueTests = [
     ...new Set(
       Object.values(symbolicDeliveryGroups).flatMap((group) => group.tests),
@@ -105,7 +105,8 @@ async function semanticVerification() {
   observations.group_results = groupPass;
   observations.policy_markers = markerState;
 
-  const semanticManifest = await loadSemanticManifest();
+  const semanticSource = await loadSemanticManifest();
+  const semanticManifest = semanticSource.manifest;
   const semanticFactResults = resolveSemanticFactResults(
     semanticManifest,
     symbolicFactObservationRefs,
@@ -125,6 +126,25 @@ async function semanticVerification() {
     kind: "symbolic-denotation-efficiency",
     semanticManifest,
     semanticFactResults,
+    semanticManifestSha256: semanticSource.sha256,
+    semanticFactRevisions:
+      semanticSource.carrier === "compact_v1"
+        ? new Map(
+            semanticSource.fact_revisions.map((item) => [
+              item.key,
+              item.revision_digest,
+            ]),
+          )
+        : null,
+    semanticObligationRevisions:
+      semanticSource.carrier === "compact_v1"
+        ? new Map(
+            semanticSource.obligation_revisions.map((item) => [
+              item.key,
+              item.revision_digest,
+            ]),
+          )
+        : null,
   });
 }
 
@@ -134,13 +154,7 @@ async function apiContractVerification() {
     "tests/ty-context/symbolic-denotation-equivalence.test.mjs",
     "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ];
-  const buildSpec = npmCommandSpec([
-    "run",
-    "build",
-    "--workspace",
-    "project-tiny-context-harness",
-  ]);
-  const build = await run(buildSpec.command, buildSpec.args);
+  const build = await run(packageBuildSpec.command, packageBuildSpec.args);
   const results = [build];
   for (const testPath of requiredTests)
     results.push(
@@ -173,6 +187,7 @@ async function apiContractVerification() {
 async function completeVerification() {
   const policy = await readText(policyPath);
   if (!policy.includes(symbolicPolicyMarkers.delivery)) {
+    const build = await run(packageBuildSpec.command, packageBuildSpec.args);
     await emitSemanticDeliveryResult({
       repositoryRoot,
       targetRef,
@@ -180,7 +195,7 @@ async function completeVerification() {
       observations: {
         package_antidegradation_and_parity_ac: false,
         target_live: true,
-        command_results: [],
+        command_results: [build],
       },
       assertionKeys: [
         "package-antidegradation-and-parity-ac",
@@ -227,12 +242,13 @@ async function completeVerification() {
 }
 
 async function loadSemanticManifest() {
+  const { parseSemanticFactManifestBlocks } =
+    await import("../packages/ty-context/dist/lib/semantic-fact-source-parser.js");
   const source = await readText(sourcePath);
-  const match = source.match(
-    /```yaml semantic-fact-manifest-v1\r?\n([\s\S]*?)\r?\n```/u,
-  );
-  if (!match) throw new Error("symbolic_semantic_manifest_missing");
-  return JSON.parse(match[1]);
+  const rows = parseSemanticFactManifestBlocks(sourcePath, source);
+  if (rows.length !== 1)
+    throw new Error(`symbolic_semantic_manifest_count:${rows.length}`);
+  return rows[0];
 }
 
 async function readText(relativePath) {

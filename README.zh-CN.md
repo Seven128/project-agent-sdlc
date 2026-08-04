@@ -311,6 +311,8 @@ Contract 声明一个有界 target profile、非空 required product target refs
 
 工作流机制变更按字典序准入：Safety/Coverage → Semantic Granularity → Proof Strength/TCB 与不可绕过 Authority/fail-closed/当前最终快照证明 → Structural Closure Cost Non-Degradation → Total-cost ROI。其效率目标是 **Fine-Grained Semantic Purpose-Fulfillment Efficiency**：完整达到细粒度语义与证明效果，同时在声明机制边界内消除与独立语义单元、必要证明、可信边界或适配器无关的成本。逻辑 Fact/obligation 粒度可以细于持久化粒度；无关笛卡尔轴、可推导重复与共享元数据复制不是合法的长期成本来源。等价效果下，Source/Contract/evidence bytes、DAG、Compile/Preflight/Final Gate、峰值 RSS、默认 Context 读取量和单 Fact revision blast radius 不得因这类结构原因增长。任何成本下降都不能补偿粒度、证明或漂移识别能力下降；正净 ROI 只使候选进入考虑集，不代表自动采用，也不新增 Authority、Gate、状态或固定执行流程。
 
+package-owned 的非 UI Compact Carrier 在不新增 Authority、状态或 Gate 的前提下实现“逻辑粒度细于持久化粒度”。共享 catalogs、selectors、Fact sets、proof templates、projections 和显式 exceptions 物化后继续进入既有 validator 与唯一 Final Gate。Fact 与 obligation 分别保持独立 exact-set 闭包；typed result 先绑定稳定 `obligation_key + obligation_revision_digest`，再投影到稳定 `fact_key + fact_revision_digest`。Fact revision 覆盖规范化 Fact 语义及其全部显式关联的当前输入 revision，obligation revision 覆盖规范化证明语义及当前 Fact revision，因而 Source 语义不能藏在不变的 identity pair 后。实现只可用有界数组和 `Map` 索引物化已测量集合，不能构造理论 ground universe。expanded 输入仍可兼容读取，但每份已采用的 Source/Contract 只能持久化一种表示，迁移会删除等价机械展开而不保留影子 Authority。
+
 只有 `weak_observability` 同时遇到多 Stage 或多个 required product runtime family 时，才额外要求一个只读 Global Product Conformance Check。它从 required root product target 启动，使用独立 Raw Execution，并在既有 Final Gate 内运行。单 Stage、单 family 继续使用原有 same-Check sensitivity，不支付额外 conformance 执行成本。
 
 平台负责物理 Goal/会话生命周期。新会话通过 `resume` 恢复语义状态；Tiny Context 不会重建此前的物理 Turn。机器接受只覆盖 `declared_machine_authority`，并报告 `native_goal_effect: none`。完成平台原生 Goal 前，Agent 只做一次否决型核对：当前 Goal/用户语义是否全部进入 accepted marked Source，且没有 pending revision、未解 blocker 或遗漏；它只能阻止并触发修复，不能增加验收证据。

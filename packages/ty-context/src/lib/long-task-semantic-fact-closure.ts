@@ -61,6 +61,16 @@ export async function validateLongTaskSemanticFactClosure(
     contract,
     manifest,
     index,
+    new Map(
+      parsed.fact_revisions.map((item) => [item.key, item.revision_digest]),
+    ),
+    new Map(
+      parsed.obligation_revisions.map((item) => [
+        item.key,
+        item.revision_digest,
+      ]),
+    ),
+    parsed.carrier === "compact_v1",
   );
   return {
     manifest,

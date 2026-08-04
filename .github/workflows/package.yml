@@ -124,6 +124,17 @@ jobs:
           path: .artifacts/test-timing/pull-request/*.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Structural closure cost non-degradation gate
+        if: always()
+        run: node tools/structural_closure_cost_gate.mjs --artifact .artifacts/structural-closure-cost/report.json
+      - name: Upload structural closure cost metrics
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: structural-closure-cost-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/structural-closure-cost/report.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Check package canonical source drift
         run: node packages/ty-context/dist/cli.js package check-source
       - name: Validate Context and touched-source modularity
@@ -187,6 +198,17 @@ jobs:
           path: .artifacts/test-timing/main/*.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Structural closure cost non-degradation gate
+        if: always()
+        run: node tools/structural_closure_cost_gate.mjs --artifact .artifacts/structural-closure-cost/report.json
+      - name: Upload structural closure cost metrics
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: structural-closure-cost-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/structural-closure-cost/report.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Check package canonical source drift
         run: node packages/ty-context/dist/cli.js package check-source
       - name: Validate Context and touched-source modularity

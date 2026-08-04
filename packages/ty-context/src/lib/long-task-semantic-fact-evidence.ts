@@ -82,6 +82,10 @@ function validateSemanticFactEvidenceAuthority(
     semanticFactComparisonResultIdentity({
       fact_ref: record.fact_ref,
       proof_ref: record.proof_ref,
+      fact_key: record.fact_key,
+      fact_revision_digest: record.fact_revision_digest,
+      obligation_key: record.obligation_key,
+      obligation_revision_digest: record.obligation_revision_digest,
       target_ref: record.target_ref,
       actual_value_sha256: record.actual_observation.value_sha256,
       expected_value_sha256: expected.expected.sha256,
@@ -121,7 +125,28 @@ function sameSemanticFactIdentity(
     record.method === expected.method &&
     record.subject_ref === expected.subject_ref &&
     record.condition_ref === expected.condition_ref &&
-    record.property_ref === expected.property_ref
+    record.property_ref === expected.property_ref &&
+    sameSemanticFactRevisionIdentity(record, expected)
+  );
+}
+
+function sameSemanticFactRevisionIdentity(
+  record: SemanticRecord,
+  expected: SemanticExpectation,
+): boolean {
+  const present =
+    record.fact_key !== undefined ||
+    record.fact_revision_digest !== undefined ||
+    record.obligation_key !== undefined ||
+    record.obligation_revision_digest !== undefined;
+  if (!expected.revision_identity_required && !present) return true;
+  return (
+    record.fact_key === expected.fact_key &&
+    record.fact_key === record.fact_ref &&
+    record.fact_revision_digest === expected.fact_revision_digest &&
+    record.obligation_key === expected.obligation_key &&
+    record.obligation_key === record.proof_ref &&
+    record.obligation_revision_digest === expected.obligation_revision_digest
   );
 }
 
@@ -211,6 +236,10 @@ function validateSemanticFactObservers(
       semanticFactComparisonResultIdentity({
         fact_ref: record.fact_ref,
         proof_ref: record.proof_ref,
+        fact_key: record.fact_key,
+        fact_revision_digest: record.fact_revision_digest,
+        obligation_key: record.obligation_key,
+        obligation_revision_digest: record.obligation_revision_digest,
         target_ref: observer.target_ref,
         actual_value_sha256: observer.value_sha256,
         expected_value_sha256: expected.expected.sha256,
@@ -230,6 +259,10 @@ function validateSemanticFactObservers(
 export function semanticFactComparisonResultIdentity(value: {
   fact_ref: string;
   proof_ref: string;
+  fact_key?: string;
+  fact_revision_digest?: string;
+  obligation_key?: string;
+  obligation_revision_digest?: string;
   target_ref: string;
   actual_value_sha256: string;
   expected_value_sha256: string;
@@ -240,7 +273,30 @@ export function semanticFactComparisonResultIdentity(value: {
   mask_sha256: string | null;
   passed: boolean;
 }): string {
-  return sha256Hex(canonicalValueJson(value));
+  const revisionIdentityPresent =
+    value.fact_key !== undefined ||
+    value.fact_revision_digest !== undefined ||
+    value.obligation_key !== undefined ||
+    value.obligation_revision_digest !== undefined;
+  return sha256Hex(
+    canonicalValueJson(
+      revisionIdentityPresent
+        ? value
+        : {
+            fact_ref: value.fact_ref,
+            proof_ref: value.proof_ref,
+            target_ref: value.target_ref,
+            actual_value_sha256: value.actual_value_sha256,
+            expected_value_sha256: value.expected_value_sha256,
+            comparator: value.comparator,
+            mode: value.mode,
+            parameters_sha256: value.parameters_sha256,
+            tolerance_sha256: value.tolerance_sha256,
+            mask_sha256: value.mask_sha256,
+            passed: value.passed,
+          },
+    ),
+  );
 }
 
 export function validateDistinctSemanticFactEvidence(
@@ -251,7 +307,9 @@ export function validateDistinctSemanticFactEvidence(
   const identities = new Set<string>();
   for (const record of records) {
     if (record.capability !== "semantic_fact") continue;
-    const identity = `${record.fact_ref}\0${record.proof_ref}`;
+    const identity = record.obligation_key
+      ? `${record.obligation_key}\0${record.obligation_revision_digest}\0${record.fact_key}\0${record.fact_revision_digest}`
+      : `${record.fact_ref}\0${record.proof_ref}`;
     if (identities.has(identity)) return "semantic_fact_result_duplicate";
     identities.add(identity);
     const observation = `${record.actual_observation.artifact_path}\0${canonicalValueJson(record.actual_observation.locator)}`;
@@ -274,4 +332,4 @@ function sameSet(left: string[], right: string[]): boolean {
 }
 
 export const typed_semantic_fact_runtime_evidence =
-  "fact_ref+actual+comparison+verdict+oracle+environment";
+  "obligation_key+obligation_revision_digest->fact_key+fact_revision_digest+actual+comparison+verdict+oracle+environment";

@@ -15,6 +15,9 @@ export function validateSemanticFactContractProjection(
   contract: DeliveryContractV2,
   manifest: SemanticFactManifestV1,
   index: SemanticFactManifestIndexV1,
+  factRevisions: Map<string, string>,
+  obligationRevisions: Map<string, string>,
+  sourceRequiresRevisions: boolean,
 ): Map<string, SemanticFactExpectationV2[]> {
   const expectations = new Map<string, SemanticFactExpectationV2[]>();
   const allFactBindings: string[] = [];
@@ -30,11 +33,53 @@ export function validateSemanticFactContractProjection(
       facts.some((fact) => fact.key === proof.fact_ref),
     );
     const bindings = outcome.semantic_fact_bindings;
+    const revisionsRequired =
+      sourceRequiresRevisions ||
+      bindings.facts.some((item) => item.fact_revision_digest !== undefined) ||
+      bindings.proofs.some(
+        (item) => item.obligation_revision_digest !== undefined,
+      );
     assertSameSemanticFactClosureSet(
       bindings.facts.map((item) => item.fact_ref),
       facts.map((item) => item.key),
       `contract_fact_set:${outcome.key}`,
     );
+    if (revisionsRequired) {
+      assertSameSemanticFactClosureSet(
+        bindings.facts.map((item) =>
+          revisionPair(
+            item.fact_ref,
+            item.fact_revision_digest,
+            `contract_fact_revision:${outcome.key}`,
+          ),
+        ),
+        facts.map((item) =>
+          revisionPair(
+            item.key,
+            factRevisions.get(item.key),
+            `source_fact_revision:${outcome.key}`,
+          ),
+        ),
+        `contract_fact_revision_set:${outcome.key}`,
+      );
+      assertSameSemanticFactClosureSet(
+        bindings.proofs.map((item) =>
+          revisionPair(
+            item.proof_ref,
+            item.obligation_revision_digest,
+            `contract_obligation_revision:${outcome.key}`,
+          ),
+        ),
+        proofs.map((item) =>
+          revisionPair(
+            item.key,
+            obligationRevisions.get(item.key),
+            `source_obligation_revision:${outcome.key}`,
+          ),
+        ),
+        `contract_obligation_revision_set:${outcome.key}`,
+      );
+    }
     assertSameSemanticFactClosureSet(
       bindings.proofs.map((item) => item.proof_ref),
       proofs.map((item) => item.key),
@@ -53,6 +98,8 @@ export function validateSemanticFactContractProjection(
       manifest,
       index,
       allFactBindings,
+      factRevisions,
+      revisionsRequired,
     );
     validateSemanticFactProofBindings(
       contract,
@@ -62,6 +109,9 @@ export function validateSemanticFactContractProjection(
       targetByRef,
       expectations,
       allProofBindings,
+      factRevisions,
+      obligationRevisions,
+      revisionsRequired,
     );
   }
   assertSameSemanticFactClosureSet(
@@ -75,4 +125,14 @@ export function validateSemanticFactContractProjection(
     "contract_all_proof_set",
   );
   return expectations;
+}
+
+function revisionPair(
+  key: string,
+  digest: string | undefined,
+  label: string,
+): string {
+  if (!digest)
+    throw new Error(`semantic_fact_closure_invalid:${label}:${key}:missing`);
+  return `${key}\0${digest}`;
 }

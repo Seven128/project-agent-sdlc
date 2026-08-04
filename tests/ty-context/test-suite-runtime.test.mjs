@@ -156,6 +156,63 @@ test("workspace snapshots preserve clean tracked LF bytes with autocrlf enabled"
   }
 });
 
+test("workspace snapshots honor inherited autocrlf when preserving tracked LF bytes", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-snapshot-inherited-eol-"),
+  );
+  const workdir = path.join(root, ".work_products", "task");
+  const inheritedConfig = {
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "core.autocrlf",
+    GIT_CONFIG_VALUE_0: "true",
+  };
+  const previousConfig = Object.fromEntries(
+    Object.keys(inheritedConfig).map((key) => [key, process.env[key]]),
+  );
+  let snapshot = null;
+  try {
+    Object.assign(process.env, inheritedConfig);
+    await mkdir(path.join(root, "design"), { recursive: true });
+    await mkdir(workdir, { recursive: true });
+    const resource = path.join(root, "design", "handoff.md");
+    const expected = Buffer.from(
+      "# Frozen resource\n\nInherited config input.\n",
+      "utf8",
+    );
+    await writeFile(resource, expected);
+    await git(root, ["init"]);
+    await git(root, ["config", "user.email", "fixture@example.test"]);
+    await git(root, ["config", "user.name", "Fixture"]);
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "fixture"]);
+
+    assert.equal(await git(root, ["config", "--get", "core.autocrlf"]), "true");
+    assert.deepEqual(await readFile(resource), expected);
+    assert.match(
+      await git(root, ["ls-files", "--eol", "design/handoff.md"]),
+      /w\/lf/u,
+    );
+
+    snapshot = await createWorkspaceSnapshot(
+      root,
+      workdir,
+      "inherited-eol-fixture",
+    );
+
+    assert.deepEqual(
+      await readFile(path.join(snapshot.root, "design", "handoff.md")),
+      expected,
+    );
+  } finally {
+    if (snapshot) await snapshot.dispose();
+    for (const [key, value] of Object.entries(previousConfig)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test(
   "workspace manifest serializes index-writing Git before parallel reads",
   assertWorkspaceGitOrdering,
@@ -276,8 +333,8 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   ];
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
-  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 12);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 43);
+  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 13);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 44);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   for (const restoredFile of [
     "long-task-authority-progress-retry.test.mjs",
@@ -287,6 +344,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     "long-task-verification-preview.test.mjs",
     "long-task-workspace-scope.test.mjs",
     "long-task-semantic-assurance-closure.test.mjs",
+    "long-task-compact-semantic-carrier.test.mjs",
   ]) {
     assert.equal(LONG_TASK_ISOLATED_TEST_FILES.includes(restoredFile), true);
     assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.includes(restoredFile), false);
@@ -378,7 +436,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     (entry) => entry.id === "critical-policy-continuity",
   );
   assert.ok(sentinel);
-  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 21);
+  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 22);
   const expectedFile = path.join(
     repositoryRoot,
     "tests",

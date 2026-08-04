@@ -455,7 +455,7 @@ async function overlayTrackedEolDifferences(
 ): Promise<void> {
   const [raw, autocrlf] = await Promise.all([
     gitBuffer(sourceRoot, ["ls-files", "--eol", "-z"]),
-    gitConfigGet(sourceRoot, "core.autocrlf"),
+    gitEffectiveConfigGet(sourceRoot, "core.autocrlf"),
   ]);
   for (const record of splitZero(raw)) {
     const tab = record.indexOf("\t");
@@ -473,6 +473,18 @@ async function overlayTrackedEolDifferences(
     if (!info?.isFile()) continue;
     await mkdir(path.dirname(target), { recursive: true });
     await copyFile(source, target);
+  }
+}
+
+async function gitEffectiveConfigGet(
+  root: string,
+  name: string,
+): Promise<string | null> {
+  try {
+    return await gitOutput(root, ["config", "--get", name]);
+  } catch (error) {
+    if (message(error).includes("git_exit:1")) return null;
+    throw error;
   }
 }
 

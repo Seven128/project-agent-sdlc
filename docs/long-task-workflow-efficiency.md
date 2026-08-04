@@ -4,12 +4,15 @@
 
 The Long-Task Workflow exists to prevent false completion inside declared authority. Its acceptable machine result is binary in substance: either fresh evidence on the complete current final snapshot proves every declared Plan Item and AC, or the delivery remains explicitly unfinished or qualified.
 
-Its mechanism-design objective is the efficient attainment of the complete fine-grained effect: preserve the Source/Contract Authority, Authority Lock/Revision, drift observation/localization, repair/revalidation and one current-snapshot Final Gate chain; preserve every independently decidable non-UI Fact and every full-granularity UI/UX Fact/proof obligation; then minimize the total cost of attaining that unchanged effect. Efficiency is subordinate to those hard constraints and is not a terminal-delivery predicate. The preferred design is the lowest practical total workflow cost that preserves the same false-completion interception and granularity, or stronger interception at the same cost.
+Its mechanism-design objective is **Fine-Grained Semantic Purpose-Fulfillment Efficiency**: preserve the Source/Contract Authority, Authority Lock/Revision, drift observation/localization, repair/revalidation and one current-snapshot Final Gate chain; preserve every independently decidable non-UI Fact and every full-granularity UI/UX Fact/proof obligation; then attain that unchanged complete effect at the lowest practical total workflow cost. Safety, semantic granularity and proof strength are hard constraints rather than costs that may be traded away, and efficiency is a mechanism-admission property rather than a terminal-delivery predicate. Logical Fact and proof-obligation granularity may be finer than physical persistence; unrelated Cartesian axes, derivable repetition and copied shared metadata are not valid long-term cost drivers. The preferred design preserves the same false-completion interception and granularity at lower total cost, or strengthens interception without increasing cost.
 
-Apply two gates in order:
+Apply the admission order lexicographically:
 
-1. prove `Coverage_new ⊇ Coverage_old`, `FalseNegative_new ⊆ FalseNegative_old`, and that Authority, fail-closed behavior and complete-current-final-snapshot proof remain non-bypassable; cost reduction cannot compensate for weaker drift detection, and if non-degradation cannot be proved the current formal acceptance path is preserved while experiments stay outside it;
-2. then compare every incremental Authoring, Runtime, State, Recovery, maintenance, test, process, introduction and migration cost with the incremental purpose-fulfillment benefit.
+1. prove Safety and `Coverage_new ⊇ Coverage_old`;
+2. preserve the finest independently decidable semantic granularity;
+3. prove `FalseNegative_new ⊆ FalseNegative_old`, preserve or strengthen the proof/TCB boundary, and keep Authority, fail-closed behavior and complete-current-final-snapshot proof non-bypassable;
+4. enforce Structural Closure Cost Non-Degradation for equivalent-effect workloads across Source/Contract/evidence bytes, DAG work, Compile/Preflight/Final Gate, peak memory, default Context reads and one-Fact revision blast radius;
+5. then compare every incremental Authoring, Runtime, State, Recovery, maintenance, test, process, introduction and migration cost with the incremental purpose-fulfillment benefit.
 
 ROI is positive when that incremental benefit exceeds all incremental costs. Positive ROI admits a non-degrading candidate to the consideration set; it does not adopt the candidate automatically.
 
@@ -20,6 +23,12 @@ Every Long-Task change starts from the controlling design purpose and accounts f
 Prefer measured data, benchmarks or operational evidence for the ROI judgment. When none exists, discuss the decision with the user or project owner; rigorous causal reasoning plus simple, bounded validation is sufficient. The Long-Task Workflow itself was admitted on that basis before mature longitudinal data existed. Unsupported intuition alone is insufficient.
 
 Keep the design purpose fixed and require positive ROI after the non-degradation gate. At comparable total cost, optimize how effectively the mechanism fulfills its purpose; at comparable purpose fulfillment, optimize implementation and operating cost.
+
+## Compact Non-UI Semantic Carrier
+
+The package-owned Compact Carrier separates logical closure from physical persistence without adding an Authority, workflow state or Gate. Source uses shared catalogs, selectors, Fact sets, proof templates and explicit exceptions; Contract uses shared Claim/proof catalogs and projections. Both materialize into the existing validators, compiler, Authority Lock/Revision, drift/repair and sole Final Gate path.
+
+Fact closure and obligation closure remain independent exact sets. A current result is attributed first to stable `obligation_key` plus its current `obligation_revision_digest`, then projected to stable `fact_key` plus its current `fact_revision_digest`. The Fact revision covers normalized Fact meaning and every explicitly linked current input revision; the obligation revision covers normalized proof meaning and that current Fact revision. Content or DAG hashes authenticate revisions and derived structures but do not replace stable identities. The implementation may materialize explicitly measured and bounded Fact, obligation and result collections with arrays and `Map` indexes, but never the theoretical ground universe. Legacy expanded input remains readable; one adopted Source or Contract persists exactly one representation, so migration removes the equivalent mechanical expansion instead of keeping a shadow Authority.
 
 ## Current Closure Hardening
 
