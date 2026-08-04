@@ -41,7 +41,7 @@ test("source-plan-authoring is a byte-identical retired compatibility pointer", 
   assert.match(match[2], /enter the same `delivery-contract\.yaml` Draft immediately/iu);
   assert.match(match[2], /Contract mapping converge in one Goal/iu);
   assert.match(match[2], /current native Goal.*default Workflow Contract/isu);
-  assert.match(match[2], /pre-existing Source Plan remains valid ordinary Source/iu);
+  assert.match(match[2], /pre-existing Source Plan remains valid Source/iu);
   assert.match(match[2], /Do not.*create a new Source Plan artifact/isu);
   assert.match(match[2], /second plan, Contract Draft, Preflight, Compile, Receipt, Authority or state/iu);
   assert.doesNotMatch(match[2], /## Intake Modes|## Authoring Workflow|## Completeness Check/iu);

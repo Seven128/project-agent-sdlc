@@ -141,15 +141,15 @@ initial proposal
      + complete canonical implementation resources
      + reconciled initial proposal
   -> validated manifest-backed design-resource-handoff-v1 target file(s)
-  -> long-task-workflow (explicit long delivery)
-     OR current native Goal + default Workflow Contract (non-long delivery)
+  -> long-task-workflow (explicit machine-assurance/recovery/audit route)
+     OR current native Goal + default Workflow Contract (automatic route at any complexity)
 ```
 
-`source-plan-authoring` is not an intermediate stage. A legacy Source Plan remains valid ordinary Source if supplied, but design-resource authoring never creates or edits one.
+`source-plan-authoring` is not an intermediate stage. A legacy Source Plan remains valid Source if supplied, but design-resource authoring never creates or edits one.
 
 ### Default Workflow consumption
 
-The consuming Goal brings the revised proposal, selected resources and every residual handoff file as ordinary Source. It reruns shared preflight per file, proves the exact target set before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It keeps one ephemeral exact accounting of every Fact Cell, Fact and Fact × method obligation; routes each through the production owner and real-entry check; compares the current candidate with the frozen expected locator/digest using the declared comparator/tolerance/mask, Oracle and environment; and retains an attributable per-Fact actual observation and pass/fail verdict. Any unread, unsupported, unmapped, unimplemented, unverified, stale, failed or indistinguishable applicable Fact blocks the complete claim. A later update creates a new immutable version rather than overwriting the adopted baseline.
+The consuming Goal brings the revised proposal, selected resources and every residual handoff file as Source. It reruns shared preflight per file, proves the exact target set before UI Authority Closure, opens affected exact/constraint resources before deciding, classifies coverage, decides `Context Delta`, and makes every adopted decision-relevant target Context-reachable through existing owners. It identifies declared target conditions, production owners, real-entry journeys and applicable project-native checks without reconstructing the complete production Fact×method ledger. On the final candidate it runs the affected visual, interaction, accessibility or runtime checks, repairs failures and reports any condition or claim those checks did not establish. Any unread, stale or conflicting authority, unresolved blocker, unsupported capability, failed check or stale evidence blocks an unqualified claim. A later update creates a new immutable version rather than overwriting the adopted baseline.
 
 ### Long-Task consumption
 

@@ -1,6 +1,6 @@
 # Project Tiny Context Harness
 
-Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层，也是一套由 npm 包管理的上下文与交付 Harness。它为仓库提供耐久项目记忆、轻量默认工作流，以及显式启用的 Single-Goal Rolling Delivery（单目标滚动交付）长程工作流；它不是 Agent 调度器，也不接管 Git 编排。
+Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层，也是一套由 npm 包管理的上下文与交付 Harness。它为仓库提供耐久项目记忆、自动适用的通用轻量工作流，以及显式启用的机器可信 Single-Goal Rolling Delivery；它不是 Agent 调度器，也不接管 Git 编排。
 
 [English](README.md)
 
@@ -8,7 +8,7 @@ Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层
 
 ## 为什么存在
 
-编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及长任务经历多轮修改或上下文压缩后仍可信的完成检查。
+编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及在交付确实需要时可恢复、可审计、可机器复验的完成检查。
 
 Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次实现前、风险比例化的 Architecture Deliberation 与适用质量路由，实施过程保留 Goal 自主但遵守边界型实现质量 guardrails，项目验证后只由一个 carrier 对当前候选执行包含 Architecture Conformance 的 Engineering Quality Conformance。
 
@@ -19,10 +19,15 @@ Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次�
 | 机制 | 何时、如何使用 | 负责什么 |
 |---|---|---|
 | **Minimal Context** | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。 | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。 |
-| **Workflow Contract** | `init` 后自动生效的 prompt-level 默认协议。普通任务直接交给当前 coding Goal；没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行轻量循环：Context 发现、带适用质量路由的 Architecture Deliberation、唯一 `Context Delta`、Goal-owned 实现、项目检查、承载 Engineering Quality Conformance 的 Contract Conformance 与 Context drift；不产生 validator 结果、Receipt、持久工作流状态或机器完成权威。 |
-| **Long-Task Workflow** | 先启用一次 `long-task` profile，再显式选择 `long-task-workflow` Skill；已有有效绑定时恢复。不能因为任务看起来很长就自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复的局部进度、受保护修订和当前快照 Live Final Gate。 |
+| **Workflow Contract** | `init` 后自动生效，适用于任何复杂度；只有显式选择或已有有效绑定时才不走此路线。没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行 model-led 轻量循环：Context 发现、风险比例化需求/架构判断、唯一 `Context Delta`、Goal-owned 实现、当前候选项目检查、失败返工、证据边界内 Contract Conformance 与 Context drift；不产生精确 Fact 账本、validator 结果、Receipt、持久状态或机器完成权威。 |
+| **Long-Task Workflow** | 先启用一次 `long-task` profile；需要机器完成权威、跨压缩/会话恢复或审计时显式选择 `long-task-workflow`，已有有效绑定时恢复。任务大小不会自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复局部进度、受保护修订、精确声明义务证据和当前快照 Live Final Gate。 |
 
-三者的关系是：每个任务都使用 Minimal Context；普通任务走默认 Workflow Contract；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。Long-Task 的 Final Gate 承载 Engineering Quality/Architecture Conformance 与选定设计闭环，不再重复默认 Contract Conformance。
+三者的关系是：每个任务都使用 Minimal Context；未显式选择且没有有效绑定时，默认 Workflow Contract 自动适用；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。复杂度决定执行与验证深度；所需完成权威与恢复能力决定工作流路线；Long-Task 内部风险决定证明强度。Long-Task 的 Final Gate 承载 Engineering Quality/Architecture Conformance 与选定设计闭环，不再重复默认 Contract Conformance。
+
+| 任务形态 | model-led、证据边界内交付足够 | 要求机器可信完整闭包 |
+|---|---|---|
+| 局部或简单 | 默认 Workflow Contract | 可显式使用 Long-Task |
+| 跨模块或复杂 | 默认 Workflow Contract 仍然有效 | 显式使用 Long-Task |
 
 `design-system-authoring` 与 `design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `long-task-workflow`。
 
@@ -60,9 +65,9 @@ ty-context enable long-task
 
 初始输入可以是简要产品意图，也可以是 Web GPT 等外部服务给出的详细初始方案。该输入本身不要求设计 authoring 或 Long-Task；应按交付需要选择执行路径，不要把“是否需要设计资源”和“是否需要 Long-Task”绑定在一起：
 
-### 设计优先的 Long-Task 工作流
+### 设计优先的机器保障工作流
 
-这条路径适合确实需要新 style-bearing 设计资源的长程实现交付。它组合已有能力，但不是所有 Long-Task 的前置流程：
+这条路径适合既确实需要新 style-bearing 设计资源，又要求 Long-Task 机器保障/恢复/审计边界的实现交付。它组合已有能力，但不是所有 Long-Task 的前置流程：
 
 1. **只启用一次 Long-Task。** 选择工作流 Skill 前先运行 `ty-context enable long-task`。
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
@@ -86,12 +91,12 @@ $long-task-workflow 将 docs/initial-proposal.md、<handoff.md> 以及选定的�
 
 其他有效路径仍然保留：
 
-- **普通交付、不需要新设计资源：** 直接把需求交给当前 coding Goal；默认 Workflow Contract 自动生效，不需要 Workflow Skill 或 Contract 文件。
-- **长程交付、不需要新设计资源：** 启用一次 Profile 后，直接用需求或初始方案选择 `long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
+- **默认 model-led 交付、不需要新设计资源：** 直接把需求交给当前 coding Goal；默认 Workflow Contract 在任何复杂度下自动生效，不需要 Workflow Skill 或 Contract 文件。
+- **机器保障/可恢复交付、不需要新设计资源：** 启用一次 Profile 后，显式用需求或初始方案选择 `long-task-workflow`；该 Skill 会建立 Source-bound Contract Draft，设计资源不是前置条件。
 - **交付前确实需要设计资源：** 按上面的设计优先顺序执行，再根据恢复与完成权威需求，把修订方案、已校验 handoff 和选定的不可变规范资源集合交给默认 Workflow Contract 或 `long-task-workflow`。
 - **只需要设计资源：** 在 `design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
-设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为普通输入，但不再是推荐中间服务。
+设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为 Source，但不再是推荐中间服务。
 
 ## Minimal Context 与默认工作流
 
@@ -141,19 +146,20 @@ Monorepo 应优先用一个小型顶层 Area 保存仓库公共的 default Conte
 
 产品编辑前，用用户、产品、路径和仓库事实解析本任务 intended workspace(s)。只有仍无法区分多个实质不同的同级目标时，才问一个精确问题；不能默认选择 default Area、最近改过的客户端或通用关键词命中。跨 workspace 任务列全目标和 supporting/shared scope。实现后，如果仓库已有 changed-path / target-scope verifier，就用本任务准确变更路径调用；否则在 Conformance 中按 durable owner 检查最终 diff。Tiny Context 不新增 `[[workspaces]]` schema、自动 package-manager 拓扑扫描、强制迁移、持久 target 状态、通用 import/path/runtime scanner 或第二套 Long-Task scope classifier。
 
-普通任务：
+默认 model-led 路线在任何复杂度下都保持轻量：
 
 1. 读取 core/default Context，收集 manifest 候选；
 2. 在 `project_context/**` 做一次 bounded Context search，并在依赖需要时继续扩读；
 3. 多目标仓库先解析本任务 intended workspace(s)，但不把 Context workspace 或 Area 变成读取/修改权限；
-4. 对用户可见地给出一次简洁、仓库事实绑定的 Architecture Deliberation，并说明触发的质量属性或具体 preservation basis；
-5. 决定 `Context Delta: none|required`，耐久语义改变时先更新 owner Context；
-6. 使用平台内部计划；
-7. 在 Goal-owned 边界型质量 guardrails 下实现并运行项目验证，包括仓库已有的 changed-path / target-scope check；
-8. 执行 Contract Conformance，其中包含当前候选快照的 Engineering Quality Conformance、其 Architecture Conformance 子集和最终 change-scope 审查；
-9. 单独执行 Context drift check 后交付。
+4. 按风险比例识别材料性要求、条件、owner、失败边界和验收入口，不建立精确 Fact/Obligation 账本；
+5. 对用户可见地给出一次简洁、仓库事实绑定的 Architecture Deliberation，并说明触发的质量属性或具体 preservation basis；
+6. 决定 `Context Delta: none|required`，耐久语义改变时先更新 owner Context；
+7. 使用平台内部计划，在 Goal-owned 边界型质量 guardrails 下实现；
+8. 对当前候选运行项目原生验证和已有 changed-path / target-scope check；定位、修复失败，并重跑被后续修改影响的检查；
+9. 执行证据边界内 Contract Conformance，其中包含 Engineering Quality Conformance 和 Architecture Conformance，再单独执行 Context drift check；
+10. 分别交付 `Implemented`、`Verified`、`Unverified`、`Blocked / decision required` 和 Context 状态。
 
-默认工作流不要求 `plan.md`、target declaration、matrix、verdict、evidence ledger、持久检索索引或第二份执行计划。任务时长、文件数和复杂度不会自动激活长程状态。
+默认工作流不要求 `plan.md`、target declaration、matrix、verdict、evidence ledger、持久检索索引或第二份执行计划。controlling Source 缺失、过期、不可读或冲突，观察边界不可信，或证据失败/过期时，受影响范围不能得到无保留完成结论。任务时长、文件数和复杂度不会自动激活 Long-Task。
 
 每次交接只报告一个 Context 结果：
 
@@ -169,7 +175,7 @@ Shared Engineering Quality 在不增加工作流的前提下扩展原有架构�
 
 实现顺序、方法和反馈节奏仍由 Goal 决定。轻量纪律只要求复用 owning service/facade/adapter 与唯一 source of truth，做最小而完整的变化，保留明确 failure/resource 语义，并仅为稳定概念或有证据的变化轴增加抽象。精确产品/技术谓词继续由 Semantic Facts 拥有，精确选定 UI/UX 值由 selected-design closure 拥有。
 
-实现和项目验证之后，`Engineering Quality Conformance` 包含 `Architecture Conformance`，对当前候选快照检查 scope/path escape、owner/dependency 违规或 bypass、重复 truth、未声明 boundary/lifecycle 变化、silent failure、适用 resource/concurrency/security/compatibility/operability 缺陷、无证据性能声称、缺失声明检查和新增/加重技术债。性能声称必须绑定 workload、metric、baseline 或 budget、environment、comparator/tolerance 和项目原生 benchmark/probe；静态形状不证明运行时性能。候选或 controlling input 再变化就使结果失效。普通任务把它放在 Contract Conformance 内；Long-Task 用已有 Source-backed obligation/constraint/forbidden shortcut、owner/path/Binding、executable Check，以及功能 pass 时仍可能独立失败的 Assertion 表达不变量。Final Gate 是唯一 Long-Task carrier，只证明该声明、可证伪、项目检查绑定的集合，不证明整体代码质量；同一候选不会执行两套 carrier。
+实现和项目验证之后，`Engineering Quality Conformance` 包含 `Architecture Conformance`，对当前候选快照检查 scope/path escape、owner/dependency 违规或 bypass、重复 truth、未声明 boundary/lifecycle 变化、silent failure、适用 resource/concurrency/security/compatibility/operability 缺陷、无证据性能声称、缺失声明检查和新增/加重技术债。性能声称必须绑定 workload、metric、baseline 或 budget、environment、comparator/tolerance 和项目原生 benchmark/probe；静态形状不证明运行时性能。候选或 controlling input 再变化就使结果失效。默认路线把它放在 Contract Conformance 内；Long-Task 用已有 Source-backed obligation/constraint/forbidden shortcut、owner/path/Binding、executable Check，以及功能 pass 时仍可能独立失败的 Assertion 表达不变量。Final Gate 是唯一 Long-Task carrier，只证明该声明、可证伪、项目检查绑定的集合，不证明整体代码质量；同一候选不会执行两套 carrier。
 
 Contract Conformance 主要检查当前 Source/Context 是否到达实现和验证；单独命名的 Context drift check 反向检查实现或新决策是否让耐久 Context 过时。新增或加重技术债默认阻塞，除非项目有带 owner、rationale、tracking 和 removal condition 的显式 bounded exception。无关 legacy debt 不自动扩张任务范围，但本次触达、依赖或加重的债不能隐藏。
 
@@ -187,21 +193,21 @@ material UI 在实现前执行 **UI Authority Closure**：每个稳定 surface/c
 
 ### 非 UI 语义完整性
 
-两条开发路径都把非 UI 需求的“完整、准确表达”定义为：在直接表达、逻辑必然、明确委托或权威仓库证据支持的范围内，下钻到最细、可独立判定的 semantic Fact。这既包括产品/业务语义，也包括技术、后端和架构语义；段落、Requirement、Product Control、宽泛状态目录和当前代码都不是粒度上限。
+两条开发路径都保留直接表达、逻辑必然、明确委托或权威仓库证据支持的全部非 UI 要求；这既包括产品/业务语义，也包括技术、后端和架构语义，当前代码不能静默重定义 Source。两者的证明等级不同：默认路线按风险比例理解材料性要求和条件并诚实报告证据边界；Long-Task 才把完整声明范围转化为精确机器义务。
 
-作者端必须完整索引 material 请求片段、附件、controlling Context unit、canonical specification、外部约束、需要保留的仓库事实和 delegated instruction。标准目录是强制下限：目标/scope/glossary；actor/role/tenant/entitlement；业务规则/计算；entity/field/relation；command/query/workflow/state/time；validation/output/error/API/protocol/event/job；persistence/cache/search/transaction/consistency/concurrency/idempotency；fault/retry/degradation/recovery/backup；configuration/flag/secret；compatibility/migration/rollout；performance/capacity/cost/reliability/SLO；security/privacy/safety/compliance；observability/deployment/operations；integration/notification/file/media/localization/commercial；hardware；AI/ML；architecture owner/boundary/debt。领域特有 family、property、condition axis 和 proof method 必须扩展这个下限。
+Long-Task Source authoring 必须完整索引 material 请求片段、附件、controlling Context unit、canonical specification、外部约束、需要保留的仓库事实和 delegated instruction。标准目录是强制下限：目标/scope/glossary；actor/role/tenant/entitlement；业务规则/计算；entity/field/relation；command/query/workflow/state/time；validation/output/error/API/protocol/event/job；persistence/cache/search/transaction/consistency/concurrency/idempotency；fault/retry/degradation/recovery/backup；configuration/flag/secret；compatibility/migration/rollout；performance/capacity/cost/reliability/SLO；security/privacy/safety/compliance；observability/deployment/operations；integration/notification/file/media/localization/commercial；hardware；AI/ML；architecture owner/boundary/debt。领域特有 family、property、condition axis 和 proof method 必须扩展这个下限。
 
-每个适用 subject、typed relation 和 static/dynamic population 都有稳定身份。actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/dependency/failure/migration/rollout/threat/custom condition 的每个适用值与精确组合都是一等原子项。每个 atomic property 要么明确 specified，要么有准确对象、basis 和 rationale 的 N/A/exclusion；unresolved、unavailable、conflict 或 unreadable 会阻断。`all-states` 等聚合字符串、默认路径、representative/pairwise sample 和无依据 N/A 都不能冒充原子 cell。
+在 Long-Task 中，每个适用 subject、typed relation 和 static/dynamic population 都有稳定身份。actor/role/tenant/version/environment/state/input/boundary/locale/time/concurrency/dependency/failure/migration/rollout/threat/custom condition 的每个适用值与精确组合都是一等原子项。每个 atomic property 要么明确 specified，要么有准确对象、basis 和 rationale 的 N/A/exclusion；unresolved、unavailable、conflict 或 unreadable 会阻断。`all-states` 等聚合字符串、默认路径、representative/pairwise sample 和无依据 N/A 都不能冒充原子 cell。
 
-一个 semantic Fact 绑定 `Outcome × subject/relation/population × exact condition × atomic property × typed expected predicate`，并保留 owner、Source locator/digest、provenance、quantifier、observation boundary 和 sensitivity。Fact identity 与 proof obligation 分离：每个 Fact 展开所有 required methods，并一直观察到最远可独立失败边界，同时冻结 comparator/parameters/tolerance/mask、Oracle capability/identity、environment 和 protected-value policy。精确值留在 Source 或 owning Context，下游只保存身份与比较权威，不复制成第二份语义数值源。
+一个 Long-Task semantic Fact 绑定 `Outcome × subject/relation/population × exact condition × atomic property × typed expected predicate`，并保留 owner、Source locator/digest、provenance、quantifier、observation boundary 和 sensitivity。Fact identity 与 proof obligation 分离：每个 Fact 展开所有 required methods，并一直观察到最远可独立失败边界，同时冻结 comparator/parameters/tolerance/mask、Oracle capability/identity、environment 和 protected-value policy。精确值留在 Source 或 owning Context，下游只保存身份与比较权威，不复制成第二份语义数值源。
 
-普通默认流程在任务内保持精确 accounting，要求 `Expected Semantic Facts = Source Indexed Facts = implementation/acceptance accounted Facts`，并为每个 `Fact × required-method` 保存当前候选可归因的 observation/environment/comparison/Oracle/verdict；它不创建 manifest、matrix、Claim set、state 或 Gate。显式 Long-Task 则在 Source 中持久化一个 `semantic-fact-manifest-v1`，要求 `Expected = Source Indexed = Contract Indexed Facts`，把每个机器义务映射到单 Fact Assertion 和 typed `semantic_fact` result（或命名 External Confirmation），并在现有唯一 Final Gate 中验证 expectation/result 精确相等。任何 missing、extra、duplicate、unresolved、unmapped、unimplemented、unexecuted、stale、failed、proxy-only、reused 或 indistinguishable row 都阻止完成。
+默认路线不创建 Expected Fact Universe、稳定 Fact/Obligation Key、精确集合等式、全条件 Cartesian 展开、冻结 Oracle graph 或逐 Fact 结果账本。它识别材料性要求、条件、owner、失败边界和验收入口，在最后一次相关修改后运行可归因的项目原生检查，失败后返工，并分别报告 `Implemented`、`Verified`、`Unverified`、`Blocked / decision required`。显式 Long-Task 则在 Source 中持久化一个 `semantic-fact-manifest-v1`，要求 `Expected = Source Indexed = Contract Indexed Facts`，把每个机器义务映射到单 Fact Assertion 和 typed `semantic_fact` result（或命名 External Confirmation），并在现有唯一 Final Gate 中验证 expectation/result 精确相等。任何 missing、extra、duplicate、unresolved、unmapped、unimplemented、unexecuted、stale、failed、proxy-only、reused 或 indistinguishable Long-Task row 都阻止机器接受。
 
 该机制不能发现用户从未表达的意图，也不能证明任意 Inspector/Oracle 的语义绝对正确。它只能补全必要推导与用户明确委托且可辩护的选择；真正的产品、法律、安全、商业、安全性或外部 owner 决策继续阻断。耐久含义仍进入既有 Context owner，代码仍是当前实现事实；不会新增第二 plan、registry、Authority、Gate 或固定实现顺序。
 
 ### 视觉交付指导
 
-两种开发路径共享一个条件式设计目的：当存在已选 implementation handoff 时，让 Agent 的开发、验收和测试在 UI/UX 方面完整遵循选定设计资源在声明范围与条件内明确表达的全部材料性信息。它不授权从静态图推断未表达的交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
+两种开发路径共享选定设计 Source 权威，但不共享形式化证明等级。正式 handoff 仍必须提供机器可读的完整输入并通过精确 preflight；默认路线随后打开受影响 target/condition，路由到生产 owner 和最终候选项目检查，并报告未被检查建立的条件；Long-Task 额外提供逐 Fact/Rule 的精确机器闭包。两者都不授权从静态图推断未表达交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
 
 provider-neutral handoff 是残余语义与绑定层，不是 CSS 文本副本、第二份数值权威或第二份完整 Fact 索引。正式 Web/App 生成前，`design-resource-authoring` 必须从明确 scope、已采纳 Design Authority 与冻结的 Inspector/Census 义务中先推导 Expected Fact Universe。原子单元是每个适用的 `subject × selected target × condition combination × variation combination × property` Fact Cell。subject 一等覆盖 surface、region、overlay、component family/instance、control、每个 anatomy part/slot/primitive、text、icon、media、asset 与 relation；condition 一等覆盖 33 个标准 condition axes，包括 platform/runtime/device/viewport/density/safe area/window/fold/display/color/localization/content/data/text scale/input/assistive 与无障碍偏好/system UI/IME/permission/capability/connectivity/lifecycle；variation 一等覆盖 5 个 variation axes：`variant`、`state`、`interaction_phase`、`presence_phase` 与 `instance_case`。property 使用 geometry、layout、scroll、typography、color、decoration、content、icon、media、interaction/navigation、motion/feedback、responsive、accessibility、asset、system、relation 共 217 个标准原子属性键，并允许显式声明 custom property。
 
@@ -213,13 +219,13 @@ provider-neutral handoff 是残余语义与绑定层，不是 CSS 文本副本�
 
 容量优化发生在生成表示上，不是生成后拆分。写 Markdown 前，DSA 冻结明确的 canonical manifest 路径集合、target/scope identity、文件 SHA-256 与每个 collection 的精确 count/identity digest，并声明实际 UTF-8 上限；随后直接生成一 target 一份的小型 manifest-backed draft，其中不再复制 axes/conditions/subjects/variations/properties/lineage/Fact Cells/Facts/evidence/proofs/Oracles/environments/assets/blockers。共享含义用唯一 key 的 target-attributed Source Fact 保留原 predicate 与 provenance。`ty-context design-resource bundle` 对完整 draft/manifest 集合逐 target 做单快照 preflight，拒绝嵌入式全量数组、多 target draft、超限 descriptor、target 缺失/多出/重复及任何 manifest/digest/语义漂移，再用同卷临时目录把整组原子发布到此前不存在的最终目录。失败只删除命令自己的临时目录，不覆盖、拆分或改写 draft/已采纳 handoff。字节检查只是防止生成器违约或后续突变，不是 post-hoc split；真实 residual 数据若无法满足所选上限，就判定该上限不兼容并 fail closed，绝不拆 target、抽样、截断、粗化 Fact 或扩大 exclusion。Long-Task 只在既有读取接缝逐 target 消费规范化对象，不改变 Contract、Authority、Outcome、Final Gate、状态恢复或完成判定。
 
-这些输入仍是普通 Source。默认 Workflow 对每个 Fact 及其 required proof obligation 做精确 task-local accounting，并从可归因的生产 owner、冷启动 final-candidate check 记录当前 actual observation/environment、comparison、tolerance、pass/fail 与 Oracle identity。任何 unread、unsupported、unresolved、unmapped、unimplemented、unexecuted、stale、复用或无法区分的适用 Fact 都阻止“完整遵循”并作为 gap 报告。Long-Task 把同一 universe 投影进已有 Claims/Assertions/Checks/Bindings：每个 method/condition cell 保存精确 `fact_refs`，每个 Fact/proof obligation 有一个 `fact_expectations` row，再由一个当前 `fact_results` row 保存同一 observation/comparison/authority 元组；Final Gate 要求 expectation/result 集合精确相等且同一当前快照上全部通过。受保护/敏感 observation 只可 redacted 或 digest-only，但不能丢失 comparison authority。两种证明载体互斥：active Long-Task 不再执行默认 closure。生成成功、截图、hash、Census 与 preflight 只证明输入完整性/完整性，不证明生产一致性。
+这些输入仍是 Source。默认 Workflow 打开受影响的 exact target/constraint 及其声明条件，把它们路由到生产 owner 和冷启动旅程，在最终候选运行适用的视觉、交互、无障碍或 runtime 检查，并报告检查未建立的条件；它不重建完整 UI Fact Cell universe 或逐 Fact×method 生产结果账本。Long-Task 把精确 universe 投影进已有 Claims/Assertions/Checks/Bindings：每个 method/condition cell 保存精确 `fact_refs`，每个 Fact/proof obligation 有一个 `fact_expectations` row，再由一个当前 `fact_results` row 保存同一 observation/comparison/authority 元组；Final Gate 要求 expectation/result 集合精确相等且同一当前快照上全部通过。受保护/敏感 observation 只可 redacted 或 digest-only，但不能丢失 comparison authority。两种 carrier 互斥。生成成功、截图、hash、Census 与 preflight 只证明输入完整性/完整性，不证明生产一致性。
 
-默认 Workflow 会在 material 产品、设计、实现或验收判断前执行 UI Authority Closure 和条件式 Design Authority Check。它沿稳定 key 到 exactly-one canonical adoption record，再主动打开每个受影响的 selected `exact-target`/`constraint`；只看到 registry 或 handoff index 不算已消费。项目/系统/component-family target 由 `DESIGN.md` canonical 记录，单 screen/interaction target 由 owning Screen Contract 记录；该 record 独占 interpretation、selection basis、immutable locator/digest、condition coverage 和 editable upstream/update route，其他层只保留 stable key、owner/anchor 和 local applicability。缺失、不可读、过期或冲突时 fail closed；更新必须产生新 immutable version，不能覆盖旧基线。未配置 starter、候选稿、只有风格文字或灵感图都不能授权 agent 发明生产布局。明确的设计系统采纳请求路由到 `design-system-authoring`，独立资源生成请求路由到 `design-resource-authoring`；已有充分权威的普通实现、局部样式修复和 throwaway prototype 仍保持轻量。
+默认 Workflow 会在 material 产品、设计、实现或验收判断前执行 UI Authority Closure 和条件式 Design Authority Check。它沿稳定 key 到 exactly-one canonical adoption record，再主动打开每个受影响的 selected `exact-target`/`constraint`；只看到 registry 或 handoff index 不算已消费。项目/系统/component-family target 由 `DESIGN.md` canonical 记录，单 screen/interaction target 由 owning Screen Contract 记录；该 record 独占 interpretation、selection basis、immutable locator/digest、condition coverage 和 editable upstream/update route，其他层只保留 stable key、owner/anchor 和 local applicability。缺失、不可读、过期或冲突时 fail closed；更新必须产生新 immutable version，不能覆盖旧基线。未配置 starter、候选稿、只有风格文字或灵感图都不能授权 agent 发明生产布局。明确的设计系统采纳请求路由到 `design-system-authoring`，独立资源生成请求路由到 `design-resource-authoring`；已有充分权威的实现、局部样式修复和 throwaway prototype 仍保持轻量。
 
 只要是已经选定、准备进入实现的设计资源，DSA 先用 `ty-context design-resource bundle` 发布精确 target 集；两种开发路径再对每个已发布 handoff 运行 `ty-context design-resource preflight <handoff.md>`。取得不完整、缺少或多出未声明依赖/target、target 重复、不安全路径、manifest/文件 digest 过期、虚构 locator、Census 未冻结/不完整、生成被抽样/截断、轴值被聚合、Expected/Canonical/Handoff Fact 集不相等、required method 缺失、comparator/Oracle/environment 绑定无效、design-system lineage 未解析、适用 cell 未覆盖、exact target 缺 full-target layout/pixel Fact、证据不受支持或含义未决都 fail closed。preflight 只证明设计输入语义完整且资源身份正确；开发流程仍必须打开真实资源，并从生产入口证明当前实现。
 
-对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个选定 target/condition 及 handoff 精确集合追踪到生产 route/component owner、冷启动真实用户旅程及可独立归因的渲染/交互检查。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。所有已声明/适用组合必须完整覆盖，不能用 risk-only 或 pairwise 抽样替代，除非权威 Source 明确收窄范围或项目自有证明建立等价性。只报告真正检查过的组合；资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
+对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个受影响的 selected target 和声明 condition 追踪到生产 route/component owner、冷启动真实用户旅程及适用的渲染/交互检查。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。Source 已明确要求的组合不能静默删减，但默认路线应报告未被证据建立的条件，而不是声称精确机器闭包。资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
 
 显式 Long-Task 是同一共享义务的强机器载体。它在 Compile 前解决缺失/冲突的 UI 权威，并用 `field_coverage` 闭合每个真实 Product Control 的全部 22 个 canonical 字段；这条产品语义投影与更细的 design Fact universe 相互独立，绝不构成粒度上限。选定 target 冻结 canonical manifest identity/digest，并把每个原子 Fact/required-method 对投影为一个 `fact_expectations` row，其中包含 subject/target/condition/variation/property identity、expected located-value digest、comparator/parameter/tolerance/mask、Oracle identity/capability、environment 和 sensitivity。当前 Check evidence 提供精确匹配的 `fact_results` row，包含 actual observation/environment、comparison 与 pass/fail；observation 重复/复用、result 缺失、authority 过期或任一失败都阻断 Final Gate。`design_conformance` 仍是 target-level actual/comparison artifact 的 typed 当前执行记录，`design_method` 则绑定可独立失败的 method/condition cell 及其逐 Fact rows；任何聚合记录都不能替代原子 Fact 证明。Product `surface_bindings`、Control Claims/relations 与 root-entry journey 继续承载产品语义，已有 Claim、Assertion、Check、Stage、Binding、revision 与 Final Gate 仍是唯一 Long-Task 生命周期和 closure。每个 blocker 保留精确 Source-item/method/capability lineage，不能在 Contract 内自行豁免；缩减范围必须修订 Source/Contract 权威。
 
@@ -373,13 +379,11 @@ V2 强制至少一个真实 `source_path` 与一个 `source_claim`，且每个�
 
 `context.toml` 中仅用于未来读取的 `triggers`、`read_when`、`read_policy`、default selection 与未选节点不再进入当前 delivery Authority；当前已选 area ownership、role/dependency 与 Context 内容仍受保护。最终 Git tree 变化后仍必须重新运行 Live Final Gate。
 
-## 确定性风险分级
+## 工作流路线与 Long-Task 内部证明强度
 
-- **L0**：局部、可逆、可直接测试的任务走默认工作流。
-- **L1 standard**：多个可观察 Outcome 或需要跨会话恢复，且有可靠可执行验证。
-- **L2 strict**：使用同一套 Long-Task 和 Outcome 结构，但对公共 API/schema、持久数据、迁移、安全/权限边界、不可逆外部影响、全量 population，或可观察性弱的关键主路径增加更严格的 proof；不支持多仓库交付。
+工作流选择不是风险等级。默认 model-led 路线适用于任何复杂度；只有需要稳定机器义务、当前快照机器完成权威、跨会话恢复或审计时才显式选择 Long-Task，任务时长、文件数和复杂度都不会自动启用。Long-Task 可以减少例行过程监督，但不能消除用户保留决策或 External Confirmation，也不保证比默认路线更快或更省 token。
 
-用户可以主动升级为 strict。显式 `standard` 低于计算出的最低级别会以 `risk_level_below_required` 失败。Strict 所需 negative、counterfactual、population、security、environment、rollback/recovery proof 由 Compiler 按风险强制。
+active Long-Task 内部原有 `risk.requested_level: auto | standard | strict` proof floor 保持不变。`auto` 计算最低强度，`standard` 请求标准 proof，`strict` 对受影响的公共 API/schema、持久数据、迁移、安全/权限边界、不可逆影响、全量 population 或弱可观察关键路径提高 proof；多仓库交付仍不支持。用户可以主动升级为 strict。显式 `standard` 低于计算出的最低级别会以 `risk_level_below_required` 失败；Strict 所需 negative、counterfactual、population、security、environment、rollback/recovery proof 继续由 Compiler 按风险强制。
 
 ## Evidence 与完成权威
 
@@ -422,6 +426,7 @@ make validate-harness
 
 - Harness 不创建或恢复平台物理 Goal/会话。
 - 它不能证明用户从未遗漏未声明需求。
+- 默认 Workflow 提供 model-led、证据边界内的符合性，不提供声明范围零漂移证明或机器完成权威；未验证和外部待确认范围必须显式保留。
 - bounded Context keyword search 仍可能漏掉同义词或间接依赖，只能补充语义判断。
 - Harness 不能切换 host 选择的模型，只能在第一次 Authority Lock 后要求一次用户选择。
 - Tiny Context 不提供并行 mutation/delegation runtime；平台 Goal 可使用自身 opaque implementation delegation，但 Harness 不持久化它，也不把它当证据。

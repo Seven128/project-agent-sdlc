@@ -4,6 +4,7 @@
 
 - Provide repo-local scenarios, runner tools and static reports that evaluate whether Harness improves same-quality lifecycle delivery efficiency.
 - Provide a separate mechanism-experiment layer for fixed Context routing, Workflow wording and Long-Task Authoring A/B decisions without turning experiment metadata into product authority.
+- Provide a frozen workflow-assurance experiment that compares the previous exact-ephemeral default guidance with the new assurance-split default guidance while leaving Long-Task internals untouched.
 - Provide an optional UI/UX recovery/conformance task that measures whether a fresh Agent reaches the owning Screen/visual authority, opens the selected immutable target and preserves its declared facts without adding default workflow state.
 
 ## User / System Contract
@@ -14,6 +15,7 @@
 - Workflow overhead ratio, artifact inventory / artifact count, gate true-product defect count versus hygiene issue count and AC progress visibility are diagnostic fields only; they explain process cost and evidence visibility but do not create new benchmark conclusions.
 - New Harness benchmark prompts should use Minimal Context, not the old stage workflow.
 - Mechanism experiments fix task, fixture, model, reasoning, pair identity and gold before Agent execution. Aggregation counts only distinct `pair_id` plus `replicate` runs with the same fixed identity. Context/Workflow read-cost conclusions require a normalized host trace; Authoring hard gates require fixed Source keys/kinds and cost comparisons remain unavailable until canonical compiled Authority is equal.
+- The workflow-assurance experiment additionally freezes before execution: hidden product quality, Context Delta correctness, native verification, selected-source recall when applicable, target/workspace correctness, whether unresolved or unverified scope is reported honestly, false-complete detection and instruction/tool/token/wall-time diagnostics. A passing static fixture never substitutes for fresh Agent evidence.
 - Static tests may validate the UI/UX benchmark fixture, hidden oracle and routing gold, but only fresh independent paired Agent runs may support a recovery or ROI conclusion.
 
 ## Core Data / API / State
@@ -34,6 +36,7 @@
 - Benchmark projects should be high-signal but not hacked: they may target Harness design goals, but must keep the same quality bar and independent fresh runs.
 - Do not publish workflow diagnostic fields as formal efficiency results unless the paired run also satisfies the same-quality, fresh-run and observer-evidence rules.
 - Do not treat resolver candidates, Agent self-report, YAML reduction or one paired run as mechanism ROI proof.
+- Do not interpret the assurance-split candidate as admitted merely because its instruction bytes are smaller. Quality, target ownership, fresh verification and false-complete performance must not regress; near-threshold, conflicting or high-variance evidence requires five eligible pairs.
 - Raw mechanism runs, gold, hidden probes and score files remain benchmark evidence under `.artifacts/**`; they are not Context, Contract Authority, Progress or completion proof.
 
 ## Code Entry Points

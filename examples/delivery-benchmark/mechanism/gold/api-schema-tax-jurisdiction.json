@@ -28,6 +28,16 @@
   "required_verification": [
     "npm test"
   ],
+  "expected_workflow_route": "default",
+  "allowed_change_paths": [
+    "README.md",
+    "src/billing/invoiceSchema.mjs",
+    "src/billing/invoiceService.mjs",
+    "src/ui/invoiceBoard.mjs",
+    "tests/base.test.mjs",
+    "tests/ui.test.mjs",
+    "project_context/areas/invoice-ops/contracts/invoice-schema.md"
+  ],
   "conformance_required": true,
   "required_context_terms": {
     "project_context/areas/invoice-ops/contracts/invoice-schema.md": {

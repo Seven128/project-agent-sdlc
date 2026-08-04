@@ -18,16 +18,170 @@ const mechanismRoot = path.join(repoRoot, "examples", "delivery-benchmark", "mec
 
 test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden boundaries", async () => {
   const experiments = JSON.parse(await readFile(path.join(mechanismRoot, "experiment-set.json"), "utf8"));
-  assert.equal(experiments.baseline_commit, "89b04869a2b29ae09944839370f1e373aa55085f");
-  assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "workflow-expression"]);
+  assert.equal(experiments.baseline_commit, "c030d02eee315d2860c6a2ff01c22887690f3684");
+  assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "workflow-assurance", "workflow-expression"]);
   const taskIds = [...new Set(Object.values(experiments.tracks).flatMap((track) => track.tasks))];
-  assert.equal(taskIds.length, 11);
+  assert.equal(taskIds.length, 12);
   for (const id of taskIds) {
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "tasks", `${id}.json`), "utf8"));
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "gold", `${id}.json`), "utf8"));
   }
   const serialized = JSON.stringify(experiments);
   assert.doesNotMatch(serialized, /benchmark-proven|completed result|speedup achieved/iu);
+  assert.deepEqual(experiments.tracks["workflow-assurance"].variants, ["workflow-exact-ephemeral-baseline", "workflow-assurance-split"]);
+  assert.equal(experiments.tracks["workflow-assurance"].pair_policy.minimum_pairs, 3);
+  assert.equal(experiments.tracks["workflow-assurance"].pair_policy.high_variance_or_near_threshold_pairs, 5);
+  assert.equal(experiments.tracks["workflow-assurance"].decision_thresholds.false_complete_free_rate, 1);
+});
+
+test("workflow assurance variants freeze the old exact default and the new model-led boundary", async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-assurance-guidance-"));
+  try {
+    const common = { task: "local-rounding-bug", pairId: "assurance-guidance", replicate: 1, model: "fixed-model", reasoning: "fixed-reasoning", force: true, skipHarnessInit: true };
+    const baselineDir = path.join(temp, "baseline");
+    const candidateDir = path.join(temp, "candidate");
+    await prepareMechanismRun({ ...common, variant: "workflow-exact-ephemeral-baseline", outDir: baselineDir });
+    await prepareMechanismRun({ ...common, variant: "workflow-assurance-split", outDir: candidateDir });
+    const baseline = await readFile(path.join(baselineDir, "AGENTS.md"), "utf8");
+    const candidate = await readFile(path.join(candidateDir, "AGENTS.md"), "utf8");
+    assert.match(baseline, /Expected Semantic Facts = Source Indexed Facts = implementation\/acceptance accounted Facts/u);
+    assert.match(baseline, /Fact × required-method obligations = attributable current-candidate result rows/u);
+    assert.doesNotMatch(candidate, /Expected Semantic Facts = Source Indexed Facts/u);
+    assert.match(candidate, /automatically at any complexity/u);
+    assert.match(candidate, /machine completion authority, recoverability or auditability selects Long-Task/u);
+    assert.match(candidate, /Report Implemented, Verified, Unverified, Blocked \/ decision required/u);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+test("small high-assurance work selects Long-Task without activating it", async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-assurance-route-"));
+  try {
+    const runDir = path.join(temp, "run");
+    await prepareMechanismRun({
+      task: "small-high-assurance-route",
+      variant: "workflow-assurance-split",
+      pairId: "assurance-route",
+      replicate: 1,
+      model: "fixed-model",
+      reasoning: "fixed-reasoning",
+      outDir: runDir,
+      force: true,
+      skipHarnessInit: true
+    });
+    const metadata = JSON.parse(await readFile(path.join(runDir, ".benchmark", "mechanism-run.json"), "utf8"));
+    const gold = JSON.parse(await readFile(path.join(mechanismRoot, "gold", "small-high-assurance-route.json"), "utf8"));
+    await writeFile(path.join(runDir, ".benchmark", "agent-result.json"), `${JSON.stringify({
+      task_id: metadata.task_id,
+      variant_id: metadata.variant_id,
+      context_delta: "none",
+      context_files_read: gold.controlling_context,
+      context_read_rounds: 1,
+      context_selection_source: "agent_reported",
+      source_files_read: [],
+      verification_commands: [],
+      conformance_completed: false,
+      selected_workflow_route: "long_task",
+      completion_status: "complete",
+      implemented_scope: ["workflow route decision"],
+      verified_scope: ["assurance criteria mapped to the explicit route"],
+      unverified_scope: [],
+      blocked_scope: [],
+      preflight_reports: [],
+      compile_report: null,
+      notes: "route only; Long-Task was not activated"
+    }, null, 2)}\n`);
+    await writeFile(path.join(runDir, ".benchmark", "observer-state.json"), `${JSON.stringify({ duration_ms: 1200 })}\n`);
+    const trace = path.join(temp, "trace.json");
+    await writeFile(trace, `${JSON.stringify({
+      schema_version: "tiny-context-host-trace-v1",
+      source: "host_tool_trace",
+      context_files_read: gold.controlling_context,
+      source_files_read: [],
+      context_read_rounds: 1,
+      total_tool_calls: 4,
+      pre_implementation_tool_calls: 4,
+      formal_enumeration_tool_calls: 0,
+      total_tokens: 1800
+    })}\n`);
+    const score = await scoreMechanismRun({ runDir, trace });
+    assert.equal(score.metrics.hard_gate_passed, true);
+    assert.equal(score.metrics.handoff.workflow_route_correct, true);
+    assert.equal(score.metrics.change_scope.correct, true);
+    assert.equal(score.metrics.execution_cost.confidence, "high_host_trace");
+    assert.equal(score.metrics.execution_cost.total_tool_calls, 4);
+    await assert.rejects(readFile(path.join(runDir, "delivery-contract.yaml"), "utf8"));
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
+});
+
+test("workflow assurance aggregation expands from three to five pairs only under the frozen cost rule", async () => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-assurance-pairs-"));
+  try {
+    const identity = {
+      model: "fixed-model",
+      reasoning: "fixed-reasoning",
+      baseline_commit: "c030d02eee315d2860c6a2ff01c22887690f3684",
+      fixture_sha256: "fixture",
+      experiment_set_sha256: "experiment",
+      baseline_source_checkout_commit: "source",
+      candidate_source_checkout_commit: "source"
+    };
+    const files = [];
+    for (let index = 1; index <= 3; index += 1) {
+      const comparison = {
+        track: "workflow-assurance",
+        task_id: "local-rounding-bug",
+        pair_id: `pair-${index}`,
+        replicate: index,
+        baseline_variant: "workflow-exact-ephemeral-baseline",
+        candidate_variant: "workflow-assurance-split",
+        run_identity: identity,
+        decision_eligible: true,
+        metrics: {
+          hidden_quality_equal: true,
+          context_update_equal: true,
+          candidate_context_recall: 1,
+          candidate_selected_source_recall: 1,
+          irrelevant_context_bytes_reduction: 0,
+          read_round_reduction: 0,
+          instruction_bytes_reduction: 0.3,
+          hard_gates_passed: true,
+          conformance_preserved: true,
+          workflow_route_correct: true,
+          owner_scope_conformance: true,
+          false_complete_free: true,
+          honest_handoff: true,
+          total_tool_call_reduction: 0.2,
+          pre_implementation_tool_call_reduction: 0.2,
+          formal_enumeration_tool_call_reduction: 0.5,
+          token_reduction: 0.2,
+          elapsed_reduction: 0.2
+        }
+      };
+      const file = path.join(temp, `pair-${index}.json`);
+      await writeFile(file, `${JSON.stringify(comparison)}\n`);
+      files.push(file);
+    }
+    const base = await aggregateComparisons({ scores: files });
+    assert.equal(base.minimum_recommended_pairs, 3);
+    assert.equal(base.decision_eligible, true);
+    assert.equal(base.pair_requirement_reason, "base_sufficient");
+
+    for (const file of files) {
+      const comparison = JSON.parse(await readFile(file, "utf8"));
+      comparison.metrics.total_tool_call_reduction = 0.03;
+      await writeFile(file, `${JSON.stringify(comparison)}\n`);
+    }
+    const expanded = await aggregateComparisons({ scores: files });
+    assert.equal(expanded.minimum_recommended_pairs, 5);
+    assert.equal(expanded.decision_eligible, false);
+    assert.match(expanded.pair_requirement_reason, /near:total_tool_call_reduction/u);
+  } finally {
+    await rm(temp, { recursive: true, force: true });
+  }
 });
 
 test("prompt, Context, and Skill packaging equivalence requires independent paired Agent evidence", async () => {
@@ -38,7 +192,7 @@ test("prompt, Context, and Skill packaging equivalence requires independent pair
 
   assert.match(
     verification,
-    /Static\/unit tests may prove instruction distribution, canonical-source parity, core-runtime identity and known semantic invariants/iu,
+    /Static\/unit tests may prove instruction distribution, canonical-source parity, core-runtime identity, route eligibility and known semantic invariants/iu,
   );
   assert.match(
     verification,
@@ -220,6 +374,12 @@ test("score and compare fail closed until quality, Context, and traced reads are
         context_selection_source: "agent_reported",
         verification_commands: [{ command: "npm test", status: "passed" }],
         conformance_completed: true,
+        selected_workflow_route: "default",
+        completion_status: "complete",
+        implemented_scope: ["rounding implementation and regression coverage"],
+        verified_scope: ["hidden behavior and npm test"],
+        unverified_scope: [],
+        blocked_scope: [],
         preflight_reports: [],
         compile_report: null,
         notes: "calibration"

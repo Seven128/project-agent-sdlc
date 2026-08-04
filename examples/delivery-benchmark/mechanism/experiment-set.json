@@ -1,7 +1,7 @@
 {
   "schema_version": "tiny-context-mechanism-benchmark-v1",
-  "baseline_commit": "89b04869a2b29ae09944839370f1e373aa55085f",
-  "purpose": "Compare mechanism variants under fixed product quality and canonical authority without publishing results from unpaired or non-agent calibration runs.",
+  "baseline_commit": "c030d02eee315d2860c6a2ff01c22887690f3684",
+  "purpose": "Compare mechanism variants under fixed product quality, completion honesty and canonical authority without publishing results from unpaired or non-agent calibration runs.",
   "tracks": {
     "context-routing": {
       "variants": ["context-current-main", "context-resolve-r0"],
@@ -37,6 +37,49 @@
         "native_verification_rate": 1,
         "conformance_rate": 1,
         "instruction_bytes_reduction": 0.2
+      }
+    },
+    "workflow-assurance": {
+      "variants": ["workflow-exact-ephemeral-baseline", "workflow-assurance-split"],
+      "tasks": [
+        "local-rounding-bug",
+        "cross-module-receipt-event",
+        "api-schema-tax-jurisdiction",
+        "verification-deployment-health",
+        "context-evolution-retry",
+        "uiux-selected-target-recovery",
+        "small-high-assurance-route"
+      ],
+      "pair_policy": {
+        "minimum_pairs": 3,
+        "high_variance_or_near_threshold_pairs": 5,
+        "near_threshold_margin": 0.05,
+        "near_threshold_metrics": [
+          "instruction_bytes_reduction",
+          "total_tool_call_reduction"
+        ],
+        "high_variance_range": 0.15,
+        "high_variance_metrics": [
+          "total_tool_call_reduction",
+          "pre_implementation_tool_call_reduction",
+          "formal_enumeration_tool_call_reduction",
+          "token_reduction",
+          "elapsed_reduction"
+        ]
+      },
+      "decision_thresholds": {
+        "hidden_quality_pass_rate": 1,
+        "context_update_correctness": 1,
+        "controlling_context_recall": 1,
+        "selected_source_recall": 1,
+        "native_verification_rate": 1,
+        "conformance_rate": 1,
+        "workflow_route_correctness": 1,
+        "owner_scope_conformance": 1,
+        "false_complete_free_rate": 1,
+        "honest_handoff_rate": 1,
+        "instruction_bytes_reduction": 0.2,
+        "total_tool_call_reduction": 0
       }
     },
     "long-task-authoring": {
@@ -82,6 +125,16 @@
       "track": "workflow-expression",
       "role": "candidate",
       "description": "Resolve -> Change -> Prove -> Reconcile expression with unchanged semantic obligations."
+    },
+    "workflow-exact-ephemeral-baseline": {
+      "track": "workflow-assurance",
+      "role": "baseline",
+      "description": "Frozen main@c030d02 default guidance with exact ephemeral non-UI and selected-design Fact/Obligation accounting."
+    },
+    "workflow-assurance-split": {
+      "track": "workflow-assurance",
+      "role": "candidate",
+      "description": "Frozen model-led default guidance with risk-proportional material understanding, current-candidate repair and evidence-bounded handoff; Long-Task exact closure remains separate."
     },
     "authoring-compact-v2": {
       "track": "long-task-authoring",

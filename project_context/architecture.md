@@ -42,7 +42,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 - Add bounded search because manifest triggers are cheap but wording recall is imperfect. Search supplements rather than replaces semantic reasoning.
 - Keep retrieval and mutation as separate questions: shared Context/code can be read for a client task without becoming a product target. Resolve task-local intended workspace(s) from explicit user/product/path/repository facts; only unresolved ambiguity among materially different siblings pauses product edits, while intentional cross-workspace work names every target and any supporting/shared scope.
 - Let consumer repositories own exact path-to-target rules and changed-path verification. Harness invokes or follows those project-native checks when present and otherwise uses final diff/owner Conformance; it does not infer a universal monorepo dependency or applicability graph.
-- Keep ordinary planning, architecture judgment and implementation order inside the current host Goal. Persist only durable facts and use project-native executable checks for objective boundaries.
+- Keep default-route planning, architecture judgment and implementation order inside the current host Goal regardless of task complexity. Persist only durable facts and use project-native executable checks for objective boundaries.
 - Make Architecture Deliberation and applicable engineering-risk conclusions externally observable and risk-proportional without creating an engineering plan/quality authority or claiming private-reasoning proof.
 - Keep Long-Task acceptance separate from implementation sequencing: one Contract and one Final Gate provide completion authority without a scheduler, second plan or Worker state.
 - Protect `F = Implementation Freedom Boundary`: within declared authority and architecture/safety/external-effect constraints, the Goal selects methods, feedback cadence and optional native delegation; delegated reports are never proof and all proof-bearing results converge into one workspace.
@@ -51,9 +51,9 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 - Every implementation delivery surfaces one repository-bound `Architecture Deliberation` before the first implementation edit. It includes triggered quality attributes or a concrete preservation basis, then Goal-owned implementation follows boundary/failure/abstraction guardrails without a new stage or method Gate.
 - Deliberation always identifies the concrete owner/source of truth/extension point, shortest reliable verification route and debt disposition. Material work also resolves dependency direction, interface/state/resource lifecycle, alternatives, a plausible future-change challenge, forbidden shortcuts, project-owned checks and applicable failure/load/threat scenarios.
-- Exact expected semantics remain with Non-UI Semantic Facts or selected-design Facts. Shared Engineering Quality owns implementation boundaries, risk treatment and proof method; it creates no duplicate quality values, manifest or matrix.
+- Exact expected semantics remain with authoritative Source/Context or selected-design resources. Long-Task may project them into Non-UI Semantic Facts or selected-design Facts; the default route does not build a parallel exact ledger. Shared Engineering Quality owns implementation boundaries, risk treatment and proof method and creates no duplicate quality values, manifest or matrix.
 - Durable conclusions update owning Context; local conclusions remain task-local. A material scope, owner, Context, selected-design, applicable-quality or debt-disposition change refreshes the deliberation.
-- Default work automatically follows the prompt-level Workflow Contract, uses platform-internal planning and carries Engineering Quality Conformance—including Architecture Conformance—inside Contract Conformance. It creates no workflow state or machine-completion result.
+- Work of any complexity automatically follows the prompt-level Workflow Contract unless Long-Task is explicitly selected or already bound. It uses platform-internal planning and carries Engineering Quality Conformance—including Architecture Conformance—inside Contract Conformance. It creates no workflow state or machine-completion result.
 - An explicitly selected or validly bound Long-Task loads the `long-task-workflow` Skill. Its Final Gate is the sole Engineering Quality/Architecture and selected-design closure carrier and proves only declared, falsifiable, project-check-bound invariants, not overall code quality.
 - Harness routes project-owned architecture/type/lint/behavior/benchmark checks but is not a language-generic analyzer. Its modularity command exposes JS/TS, Python and line-only capability honestly; unsupported metrics are unavailable rather than zero.
 
@@ -61,7 +61,7 @@ This is the minimum durable architecture map for the Harness source repository. 
 
 Default:
 
-`minimum Context + manifest candidates + bounded Context search + dependency-driven widening -> intended-workspace resolution when needed -> semantic/design obligations when applicable -> Architecture Deliberation + applicable-quality assessment -> Context Delta -> Goal-owned implementation discipline -> project verification / project-owned changed-path scope check -> Contract Conformance / Engineering Quality Conformance including Architecture Conformance -> Context drift check`
+`minimum Context + manifest candidates + bounded Context search + dependency-driven widening -> intended-workspace resolution when needed -> material requirement / selected-design authority understanding -> Architecture Deliberation + applicable-quality assessment -> Context Delta -> Goal-owned implementation discipline -> fresh project verification / project-owned changed-path scope check -> failure localization and affected repair -> current-candidate Contract Conformance / Engineering Quality Conformance including Architecture Conformance -> qualified handoff -> Context drift check`
 
 Long-Task:
 
@@ -77,22 +77,22 @@ Long-Task:
 
 ## Contract And Engineering Quality Closure
 
-- Default and Long-Task share one thin engineering-quality obligation but use mutually exclusive closure carriers. Any later candidate, declared check-input or authority change invalidates the owning closure.
+- Default and Long-Task share one thin engineering-quality obligation but use mutually exclusive closure carriers and different completion-authority levels. Any later candidate, declared check-input or authority change invalidates the owning closure.
 - Stable architecture and material engineering-quality requirements use existing Source-backed technical obligations/constraints/forbidden shortcuts, owner/path boundaries, Bindings and project-owned executable Checks.
 - Functional behavior and an engineering-quality invariant use independent Assertions when either can pass independently; one broad quality Boolean cannot prove several independently failing invariants.
 - Unsupported design preference, inferred product semantics or unverifiable “good design” remains durable Context, task-local judgment or `decision_required`, never false proof.
 - Scope escape, duplicate authority, owner/service bypass, wrong dependency direction, a second source of truth, missing triggered-quality proof or new/worsened debt blocks handoff when the declared invariant applies and no bounded project-owned exception closes it.
-- Default Contract Conformance distinguishes read dependencies, intended product targets, allowed supporting changes and actual changed paths. It uses a repository-owned scope verifier when available; unrelated pre-existing dirty paths are not attributed to the current task without task provenance.
+- Default Contract Conformance distinguishes read dependencies, intended product targets, allowed supporting changes and actual changed paths; verifies that explicit Source/Context reached the correct owner; uses only checks rerun after the last relevant change; and separates implemented, verified, unverified and decision/external-pending scope. It uses a repository-owned scope verifier when available; unrelated pre-existing dirty paths are not attributed to the current task without task provenance.
 
 ## Constraints And Tradeoffs
 
 - Smaller default Context trades automatic reading of every specialized rule for lower recurring attention cost; manifest routing plus bounded search reduces but cannot eliminate recall risk.
 - Intended-workspace resolution is conditional. A non-monorepo repository or an already explicit/unambiguous target pays no schema, state, migration or clarification ceremony.
 - The default Workflow Contract is soft/prompt-level. Project checks prove behavior; it deliberately has no validator, Receipt, persisted phase state or machine acceptance.
-- Long-Task is explicit or binding-driven and pays durable Contract/Authority/Final-Gate cost only where recovery and machine completion justify it.
+- Route selection is assurance-driven rather than size-driven: complexity changes execution and verification depth; required completion authority, recovery and auditability determine whether Long-Task's durable Contract/Authority/Final-Gate cost is justified; Long-Task's existing internal risk floor then selects standard or strict proof.
 - The first successful Long-Task Compile creates Authority Lock and a terminal model-choice turn unless an explicit task-specific choice already exists; Harness stores no acknowledgement or model route.
 - One selected delivery has one Contract, selected verification workspace and Final Gate. Harness owns no delegation, branch/worktree or process fan-out.
-- Selected-design preflight/integrity never substitutes for production conformance. Default ephemeral accounting and Long-Task compiled proof are mutually exclusive.
+- Selected-design preflight/integrity never substitutes for production conformance. The default route performs risk-proportional project-native checks and reports unchecked declared conditions without an exact Fact ledger; Long-Task compiled proof remains the sole exact machine carrier.
 - Quality attributes are constraints and tradeoffs, not automatic maximization targets. Performance claims require attributable workload/budget/environment/measurement; preservation-only work uses the cheapest existing evidence and makes no unsupported improvement claim.
 - Retrieval guidance, test timing and benchmark output remain non-authoritative. Formal mechanism adoption requires non-degradation first and positive total ROI second.
 - Package-managed asset changes require canonical-source edits, generated/package parity, idempotent sync and consumer-facing verification.

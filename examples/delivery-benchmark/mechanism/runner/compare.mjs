@@ -53,6 +53,7 @@ export async function aggregateComparisons(options) {
   const thresholds = experiments.tracks[first.track].decision_thresholds;
   const eligible = comparisons.filter((item) => item.decision_eligible);
   const summary = first.track === "long-task-authoring" ? aggregateAuthoring(eligible) : aggregateContextWorkflow(eligible);
+  const pairRequirement = requiredPairs(experiments.tracks[first.track], eligible, summary, thresholds);
   const report = {
     schema_version: "tiny-context-mechanism-aggregate-v1",
     aggregated_at: new Date().toISOString(),
@@ -62,11 +63,12 @@ export async function aggregateComparisons(options) {
     candidate_variant: first.candidate_variant,
     pair_count: comparisons.length,
     eligible_pair_count: eligible.length,
-    minimum_recommended_pairs: 3,
+    minimum_recommended_pairs: pairRequirement.minimum,
+    pair_requirement_reason: pairRequirement.reason,
     thresholds,
     summary,
-    decision_eligible: eligible.length >= 3,
-    decision: eligible.length < 3 ? "INSUFFICIENT_PAIRED_RUNS" : evaluateThresholds(first.track, summary, thresholds),
+    decision_eligible: eligible.length >= pairRequirement.minimum,
+    decision: eligible.length < pairRequirement.minimum ? "INSUFFICIENT_PAIRED_RUNS" : evaluateThresholds(first.track, summary, thresholds),
     comparisons
   };
   if (options.out) await writeJson(path.resolve(options.out), report);
@@ -87,16 +89,21 @@ function compareContextWorkflow(baseline, candidate) {
   const c = candidate.metrics;
   const hard = b.hard_gate_passed && c.hard_gate_passed;
   const selectionSufficient = [b.context_routing.selection_confidence, c.context_routing.selection_confidence].every((value) => value === "high");
+  const assuranceTrack = baseline.run.track === "workflow-assurance";
+  const costSufficient = !assuranceTrack
+    || [b.execution_cost.confidence, c.execution_cost.confidence].every((value) => value === "high_host_trace");
+  const elapsedSufficient = !assuranceTrack
+    || [baseline.elapsed.confidence, candidate.elapsed.confidence].every((value) => value === "high");
   return {
     hard_gates_passed: hard,
-    evidence_sufficient: selectionSufficient,
+    evidence_sufficient: selectionSufficient && costSufficient && elapsedSufficient,
     hidden_quality_equal: b.hidden_quality.decision === "PASS" && c.hidden_quality.decision === "PASS" && b.hidden_quality.passed === c.hidden_quality.passed && b.hidden_quality.total === c.hidden_quality.total,
     context_update_equal: b.context_update.correct && c.context_update.correct,
     baseline_context_recall: b.context_routing.controlling_context_recall,
     candidate_context_recall: c.context_routing.controlling_context_recall,
     context_recall_delta: difference(c.context_routing.controlling_context_recall, b.context_routing.controlling_context_recall),
-    baseline_selected_source_recall: b.context_routing.selected_source_recall,
-    candidate_selected_source_recall: c.context_routing.selected_source_recall,
+    baseline_selected_source_recall: b.context_routing.required_source_total === 0 ? 1 : b.context_routing.selected_source_recall,
+    candidate_selected_source_recall: c.context_routing.required_source_total === 0 ? 1 : c.context_routing.selected_source_recall,
     selected_source_recall_preserved: b.context_routing.required_source_total === 0
       || (b.context_routing.selected_source_recall === 1 && c.context_routing.selected_source_recall === 1),
     baseline_irrelevant_context_bytes: b.context_routing.irrelevant_context_bytes,
@@ -108,7 +115,27 @@ function compareContextWorkflow(baseline, candidate) {
     baseline_instruction_bytes: b.workflow_instruction_bytes,
     candidate_instruction_bytes: c.workflow_instruction_bytes,
     instruction_bytes_reduction: reduction(b.workflow_instruction_bytes, c.workflow_instruction_bytes),
-    conformance_preserved: b.conformance_completed === true && c.conformance_completed === true,
+    conformance_preserved: (!b.conformance_required || b.conformance_completed === true)
+      && (!c.conformance_required || c.conformance_completed === true),
+    workflow_route_correct: b.handoff.workflow_route_correct && c.handoff.workflow_route_correct,
+    owner_scope_conformance: b.change_scope.correct && c.change_scope.correct,
+    false_complete_free: b.handoff.false_complete_free && c.handoff.false_complete_free,
+    honest_handoff: b.handoff.honest_handoff && c.handoff.honest_handoff,
+    baseline_total_tool_calls: b.execution_cost.total_tool_calls,
+    candidate_total_tool_calls: c.execution_cost.total_tool_calls,
+    total_tool_call_reduction: reduction(b.execution_cost.total_tool_calls, c.execution_cost.total_tool_calls),
+    baseline_pre_implementation_tool_calls: b.execution_cost.pre_implementation_tool_calls,
+    candidate_pre_implementation_tool_calls: c.execution_cost.pre_implementation_tool_calls,
+    pre_implementation_tool_call_reduction: reduction(b.execution_cost.pre_implementation_tool_calls, c.execution_cost.pre_implementation_tool_calls),
+    baseline_formal_enumeration_tool_calls: b.execution_cost.formal_enumeration_tool_calls,
+    candidate_formal_enumeration_tool_calls: c.execution_cost.formal_enumeration_tool_calls,
+    formal_enumeration_tool_call_reduction: reduction(b.execution_cost.formal_enumeration_tool_calls, c.execution_cost.formal_enumeration_tool_calls),
+    baseline_total_tokens: b.execution_cost.total_tokens,
+    candidate_total_tokens: c.execution_cost.total_tokens,
+    token_reduction: reduction(b.execution_cost.total_tokens, c.execution_cost.total_tokens),
+    baseline_elapsed_ms: baseline.elapsed.duration_ms,
+    candidate_elapsed_ms: candidate.elapsed.duration_ms,
+    elapsed_reduction: reduction(baseline.elapsed.duration_ms, candidate.elapsed.duration_ms),
     selection_evidence: { baseline: b.context_routing.selection_source, candidate: c.context_routing.selection_source }
   };
 }
@@ -151,7 +178,16 @@ function aggregateContextWorkflow(items) {
     read_round_reduction: median(items.map((item) => item.metrics.read_round_reduction)),
     instruction_bytes_reduction: median(items.map((item) => item.metrics.instruction_bytes_reduction)),
     native_verification_rate: passRate(items, (item) => item.metrics.hard_gates_passed),
-    conformance_rate: passRate(items, (item) => item.metrics.conformance_preserved)
+    conformance_rate: passRate(items, (item) => item.metrics.conformance_preserved),
+    workflow_route_correctness: passRate(items, (item) => item.metrics.workflow_route_correct),
+    owner_scope_conformance: passRate(items, (item) => item.metrics.owner_scope_conformance),
+    false_complete_free_rate: passRate(items, (item) => item.metrics.false_complete_free),
+    honest_handoff_rate: passRate(items, (item) => item.metrics.honest_handoff),
+    total_tool_call_reduction: median(items.map((item) => item.metrics.total_tool_call_reduction)),
+    pre_implementation_tool_call_reduction: median(items.map((item) => item.metrics.pre_implementation_tool_call_reduction)),
+    formal_enumeration_tool_call_reduction: median(items.map((item) => item.metrics.formal_enumeration_tool_call_reduction)),
+    token_reduction: median(items.map((item) => item.metrics.token_reduction)),
+    elapsed_reduction: median(items.map((item) => item.metrics.elapsed_reduction))
   };
 }
 
@@ -173,6 +209,31 @@ function evaluateThresholds(track, summary, thresholds) {
     return !Number.isFinite(actual) || actual < value;
   });
   return failed.length ? `THRESHOLDS_NOT_MET:${failed.map(([key]) => key).join(",")}` : track === "long-task-authoring" ? "AUTHORING_CANDIDATE_ADMISSIBLE" : "CANDIDATE_ADMISSIBLE_FOR_REVIEW";
+}
+
+function requiredPairs(track, eligible, summary, thresholds) {
+  const policy = track.pair_policy;
+  if (!policy) return { minimum: 3, reason: "fixed_minimum" };
+  const base = policy.minimum_pairs;
+  const expanded = policy.high_variance_or_near_threshold_pairs;
+  if (eligible.length < base) return { minimum: base, reason: "base_minimum" };
+  const margin = policy.near_threshold_margin;
+  const near = (policy.near_threshold_metrics ?? []).filter((key) => {
+    const actual = summary[key];
+    const threshold = thresholds[key];
+    return Number.isFinite(actual) && Number.isFinite(threshold) && Math.abs(actual - threshold) <= margin;
+  });
+  const highVariance = (policy.high_variance_metrics ?? []).filter((key) => {
+    const values = eligible.map((item) => item.metrics[key]).filter(Number.isFinite);
+    return values.length >= base && Math.max(...values) - Math.min(...values) >= policy.high_variance_range;
+  });
+  if (near.length || highVariance.length) {
+    return {
+      minimum: expanded,
+      reason: `expanded:${[...near.map((key) => `near:${key}`), ...highVariance.map((key) => `variance:${key}`)].join(",")}`
+    };
+  }
+  return { minimum: base, reason: "base_sufficient" };
 }
 
 function interpretation(report) {

@@ -1,0 +1,22 @@
+{
+  "id": "small-high-assurance-route",
+  "expected_context_delta": "none",
+  "required_context_updates": [],
+  "controlling_context": [
+    "project_context/global.md",
+    "project_context/architecture.md",
+    "project_context/context.toml"
+  ],
+  "supporting_context": [
+    "project_context/areas/invoice-ops.md"
+  ],
+  "irrelevant_context": [
+    "project_context/areas/admin.md",
+    "project_context/areas/invoice-ops/archive/legacy-tax.md"
+  ],
+  "required_verification": [],
+  "expected_workflow_route": "long_task",
+  "allowed_change_paths": [],
+  "conformance_required": false,
+  "required_context_terms": {}
+}

@@ -123,20 +123,20 @@ test("default Context routing combines manifest candidates with bounded search",
   );
   assert.match(
     managed,
-    /Fact Cells, Facts, property-required proof methods, Source Items, blockers, targets and conditions[\s\S]*production owner, cold-start journey/iu,
-  );
-  assert.match(
-    managed,
     /Preflight proves input completeness\/integrity relative to the named Inspector\/Oracle TCB, never production conformance/iu,
   );
   assert.match(
     managed,
-    /one ephemeral exact accounting[\s\S]*unresolved, unmapped, unexecuted, stale, failed or indistinguishable/iu,
+    /Default work opens every affected selected `exact-target` or `constraint`[\s\S]*reports conditions those checks did not establish[\s\S]*does not rebuild the complete Fact Cell universe/iu,
   );
   assert.match(
     managed,
-    /active Long-Task projects (?:this|the) same obligation[\s\S]*never also runs the default closure/iu,
+    /active Long-Task instead projects the exact obligation[\s\S]*Final Gate[\s\S]*never also runs a default closure/iu,
   );
+  assert.match(managed, /Default work identifies material requirements[\s\S]*risk-proportional depth[\s\S]*reports anything not established/iu);
+  assert.match(managed, /does not maintain stable Fact\/Obligation identities, exact set equality[\s\S]*complete result ledger/iu);
+  const defaultSection = /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(managed)?.[0] ?? "";
+  assert.doesNotMatch(defaultSection, /Expected Semantic Facts\s*=|Fact × required-method obligations|per-Fact-by-method result rows|revision digest|machine accepted/iu);
   assert.match(managed, /low-frequency rules in this startup router/iu);
   assert.match(
     `${longTask}\n${contractAuthoring}`,
@@ -222,10 +222,7 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     /ask one concise target question before product edits/iu,
   );
   assert.match(managed, /Enumerate intentional multi-workspace targets/iu);
-  assert.match(
-    managed,
-    /Do not make the full Context graph the ordinary default/iu,
-  );
+  assert.match(managed, /Do not make the full Context graph the default/iu);
   assert.match(managed, /required Context directory for every package-manager workspace/iu);
   assert.match(managed, /automatic topology scan/iu);
   assert.match(managed, /duplicate Long-Task scope classifier/iu);
@@ -550,6 +547,52 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     /`ty-context enable long-task` installs the Long-Task Workflow Skill, the retired Source Plan compatibility pointer and package-owned completion Hook/iu,
   );
   assert.match(guidance, /`design-system-authoring` is explicit-only/iu);
+});
+
+test("complexity, workflow assurance, and Long-Task proof floor remain orthogonal", async () => {
+  const [
+    managed,
+    development,
+    workflow,
+    rationale,
+    specification,
+    readme,
+    chineseReadme,
+    packageReadme,
+    source,
+  ] = await Promise.all([
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read(".codex/ty-context-managed/skills/context_development_engineer/SKILL.md"),
+    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read("project_context/areas/harness-package/decision-rationale/long-task-workflow.md"),
+    read("PROJECT_SPEC.md"),
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
+    read("docs/workflow-assurance-boundary.md"),
+  ]);
+
+  for (const content of [managed, workflow, specification, readme, packageReadme, source]) {
+    assert.match(content, /any complexity|regardless of duration, complexity or file count/iu);
+    assert.match(content, /completion authority[\s\S]*recoverab/iu);
+    assert.match(content, /complexity[\s\S]*execution and verification depth/iu);
+  }
+  assert.match(chineseReadme, /复杂度决定执行与验证深度/u);
+  assert.match(chineseReadme, /完成权威与恢复能力决定工作流路线/u);
+  assert.match(development, /任意复杂度/u);
+  assert.match(managed, /Route by required assurance, not task size/iu);
+  assert.match(managed, /A small consequential rule may use it and a complex cross-module change may remain default/iu);
+  assert.match(rationale, /removes the former L0 eligibility barrier only/iu);
+  assert.match(rationale, /auto \| standard \| strict[\s\S]*remain unchanged/iu);
+  assert.match(specification, /This route keeps the existing Source, Contract, Authority Lock, protected Revision, Fact\/Obligation, Evidence Kernel, repair\/reverification, External Confirmation, Final Gate and no-drift logic unchanged/iu);
+  assert.match(source, /does not revise Long-Task's internal workflow, proof model, schema or runtime/iu);
+
+  const defaultManaged = /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(managed)?.[0] ?? "";
+  assert.doesNotMatch(defaultManaged, /Expected Semantic Facts\s*=|Fact × required-method obligations|stable Fact Key|Obligation Key|revision digest|Final Gate|machine accepted/iu);
+  assert.match(development, /默认 Workflow 不构造完整 Expected Semantic Fact Universe、稳定 Fact\/Obligation Key、精确集合等式/iu);
+  assert.match(managed, /After the last relevant code, configuration, Source or controlling-Context change, rerun every affected check/iu);
+  assert.match(managed, /localize it to the requirement\/owner\/module\/check, repair it and rerun affected checks/iu);
+  assert.match(managed, /Report `Implemented`, `Verified`, `Unverified`, `Blocked \/ decision required`/iu);
 });
 
 test("Goal ownership, active recovery, and explicit Codex invocation stay independent", async () => {

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 export const MECHANISM_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const REPO_ROOT = path.resolve(MECHANISM_ROOT, "../../..");
-export const BASELINE_COMMIT = "2ad71874a3e23a2221088ebb58238df64278b5c9";
+export const BASELINE_COMMIT = "c030d02eee315d2860c6a2ff01c22887690f3684";
 
 export async function readJson(file) {
   return JSON.parse(await readFile(file, "utf8"));

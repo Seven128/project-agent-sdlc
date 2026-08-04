@@ -10,7 +10,13 @@
     "context_files_read",
     "context_read_rounds",
     "verification_commands",
-    "conformance_completed"
+    "conformance_completed",
+    "selected_workflow_route",
+    "completion_status",
+    "implemented_scope",
+    "verified_scope",
+    "unverified_scope",
+    "blocked_scope"
   ],
   "properties": {
     "task_id": {
@@ -74,6 +80,45 @@
     },
     "conformance_completed": {
       "type": "boolean"
+    },
+    "selected_workflow_route": {
+      "enum": [
+        "unset",
+        "default",
+        "long_task"
+      ]
+    },
+    "completion_status": {
+      "enum": [
+        "unset",
+        "complete",
+        "qualified",
+        "blocked"
+      ]
+    },
+    "implemented_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verified_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unverified_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_scope": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "preflight_reports": {
       "type": "array"

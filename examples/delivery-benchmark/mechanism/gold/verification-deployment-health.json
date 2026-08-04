@@ -30,6 +30,14 @@
     "npm test",
     "npm run smoke:health"
   ],
+  "expected_workflow_route": "default",
+  "allowed_change_paths": [
+    "package.json",
+    "src/health.mjs",
+    "tests/base.test.mjs",
+    "project_context/areas/invoice-ops/verification.md",
+    "project_context/areas/invoice-ops/deployment.md"
+  ],
   "conformance_required": true,
   "required_context_terms": {
     "project_context/areas/invoice-ops/verification.md": {

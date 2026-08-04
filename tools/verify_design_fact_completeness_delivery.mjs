@@ -690,7 +690,7 @@ const semanticObservationRules = [
         "PROJECT_SPEC.md",
         "design-resource-fact-policy.ts",
         "selected-design construction",
-        "ordinary delivery pays no schema cost",
+        "default route pays no production-conformance schema cost",
       ],
     ],
   ],

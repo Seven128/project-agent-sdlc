@@ -591,7 +591,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   );
   assert.match(
     sourcePlan,
-    /pre-existing Source Plan remains valid ordinary Source/iu,
+    /pre-existing Source Plan remains valid Source/iu,
   );
   assert.match(sourcePlan, /Do not rewrite it merely for compatibility/iu);
   assert.match(
@@ -1006,7 +1006,7 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
     read("docs/long-task-workflow-efficiency.md"),
   ]);
   const section = spec.match(
-    /## Mechanism Admission Rule\r?\n([\s\S]*?)\r?\n## 3\. Workflow Levels/u,
+    /## Mechanism Admission Rule\r?\n([\s\S]*?)\r?\n## 3\. Workflow Route And Long-Task Proof Profiles/u,
   )?.[1];
   assert.ok(section, "Mechanism Admission Rule section must exist");
   assert.equal(section.match(/^\d+\.\s/gmu)?.length, 9);

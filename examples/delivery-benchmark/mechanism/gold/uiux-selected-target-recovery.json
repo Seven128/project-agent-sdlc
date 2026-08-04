@@ -36,6 +36,11 @@
     "node tools/ty-context.mjs design-resource preflight design/handoffs/invoice-board.md",
     "npm test"
   ],
+  "expected_workflow_route": "default",
+  "allowed_change_paths": [
+    "src/ui/invoiceBoard.mjs",
+    "tests/ui.test.mjs"
+  ],
   "conformance_required": true,
   "required_context_terms": {}
 }

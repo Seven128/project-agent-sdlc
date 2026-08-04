@@ -560,7 +560,7 @@ test("Source, specification, Context and public docs expose the new resource con
   for (const content of publicReadmes) {
     assert.match(
       content,
-      /^### (?:Design-First Long-Task Workflow|设计优先的 Long-Task 工作流)$/mu,
+      /^### (?:Design-First Machine-Assurance Workflow|设计优先的机器保障工作流)$/mu,
     );
     assert.match(content, /ty-context enable long-task/u);
     assert.match(content, /\$design-system-authoring/u);

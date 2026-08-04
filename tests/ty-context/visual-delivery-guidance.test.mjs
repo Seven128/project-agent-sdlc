@@ -185,7 +185,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts[\s\S]*Fact Cell\/Fact\/proof\/Source\/blocker\/target\/condition sets[\s\S]*project-owned check/iu,
+    /Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts[\s\S]*On the default route[\s\S]*affected targets\/conditions[\s\S]*project checks[\s\S]*do not rebuild a task-local Fact Cell\/Fact\/proof ledger/iu,
   );
   assert.match(development, /`exact-target`, `constraint` or `inspiration`/iu);
   assert.match(
@@ -228,7 +228,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
   );
   assert.match(
     development,
-    /final-current-candidate Contract Conformance[\s\S]*unread, unsupported, unresolved, unmapped, unimplemented, unexecuted, stale, failed or indistinguishable/iu,
+    /final-current-candidate Contract Conformance[\s\S]*Report every condition or claim those checks did not establish[\s\S]*failed checks or stale evidence blocks an unqualified selected-design claim/iu,
   );
   assert.match(development, /exact `fact_refs`/iu);
   assert.match(development, /canonical `fact_expectations`/iu);
@@ -236,8 +236,8 @@ test("visual design and implementation guidance reaches every managed copy", asy
     development,
     /set-equal per-Fact `fact_results`[\s\S]*actual observation\/environment\/comparison\/verdict/iu,
   );
-  assert.match(development, /full-target layout and pixel proof/iu);
-  assert.match(development, /do not run the preceding default closure/iu);
+  assert.match(development, /full-target layout\/pixel authority/iu);
+  assert.match(development, /do not run the preceding default handling as another closure/iu);
   assert.match(development, /Final Gate is the sole Long-Task carrier/iu);
 });
 
@@ -400,7 +400,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   );
 });
 
-test("complete selected-design conformance is shared through mutually exclusive carriers", async () => {
+test("selected-design Source authority is shared while formal proof levels remain distinct", async () => {
   const [
     spec,
     globalContext,
@@ -429,14 +429,7 @@ test("complete selected-design conformance is shared through mutually exclusive 
 
   assert.equal(longTaskCopies[1], longTaskCopies[0]);
   assert.equal(longTaskCopies[2], longTaskCopies[0]);
-  for (const content of [
-    spec,
-    rationale,
-    handoffContract,
-    longTaskCopies[0],
-    rootReadme,
-    packageReadme,
-  ]) {
+  for (const content of [spec, rationale, handoffContract, longTaskCopies[0]]) {
     assert.match(
       content,
       /Agent implementation, acceptance and testing fully conform|full implementation\/acceptance\/test conformance/iu,
@@ -450,6 +443,14 @@ test("complete selected-design conformance is shared through mutually exclusive 
     );
     assert.match(content, /immutable/iu);
     assert.match(content, /Final Gate/iu);
+  }
+  for (const content of [rootReadme, packageReadme]) {
+    assert.match(content, /Both development paths preserve selected design Source authority/iu);
+    assert.match(content, /do not share a formal proof level/iu);
+    assert.match(content, /default work[\s\S]*reports conditions not established[\s\S]*Long-Task additionally provides exact per-Fact\/Rule machine closure/iu);
+    assert.match(content, /canonical (?:machine-readable )?(?:entry|source)/iu);
+    assert.match(content, /typed locator/iu);
+    assert.match(content, /subject.*target.*condition.*variation.*property/isu);
   }
   for (const content of [
     spec,
@@ -465,7 +466,7 @@ test("complete selected-design conformance is shared through mutually exclusive 
   assert.match(handoffContract, /fact_refs/u);
   assert.match(
     globalContext,
-    /formal selected Web\/App handoff[\s\S]*Expected Fact Universe[\s\S]*per-Fact current-candidate production checks/iu,
+    /formal selected Web\/App handoff[\s\S]*Expected Fact Universe[\s\S]*default route[\s\S]*reports unchecked conditions[\s\S]*Long-Task alone projects the exact Fact\/method universe/iu,
   );
   assert.match(
     globalContext,
@@ -473,11 +474,11 @@ test("complete selected-design conformance is shared through mutually exclusive 
   );
   assert.match(
     globalContext,
-    /default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers/iu,
+    /sharing engineering-quality, architecture and selected-design obligations across mutually exclusive carriers/iu,
   );
   assert.match(
     chineseReadme,
-    /Agent 的开发、验收和测试在 UI\/UX 方面完整遵循选定设计资源/iu,
+    /两种开发路径共享选定设计 Source 权威，但不共享形式化证明等级/iu,
   );
   assert.match(
     chineseReadme,
@@ -550,7 +551,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   );
   assert.match(
     workflow,
-    /exact Fact Cell\/Fact\/proof\/Source\/blocker\/target\/condition accounting[\s\S]*real root-entry journey[\s\S]*per-Fact final-candidate check/iu,
+    /open every affected exact target\/constraint[\s\S]*production owner and cold-start real-user journey[\s\S]*report any condition those checks do not cover/iu,
   );
   assert.match(workflow, /^## UI Authority Closure$/mu);
   assert.match(workflow, /material production UI/iu);
@@ -577,7 +578,7 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(agents, /stable surface\/control\/target key/iu);
   assert.match(
     agents,
-    /production owner, cold-start journey[\s\S]*final-candidate project check/iu,
+    /real production owner and cold-start journey[\s\S]*project-native visual, interaction, accessibility or runtime checks on the final candidate/iu,
   );
   assert.match(
     agents,
@@ -599,11 +600,11 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(agents, /Never overwrite an adopted baseline/iu);
   assert.match(
     agents,
-    /unresolved, unmapped, unexecuted, stale, failed or indistinguishable item blocks a complete(?:-conformance)? claim/iu,
+    /reports conditions those checks did not establish[\s\S]*does not rebuild the complete Fact Cell universe/iu,
   );
   assert.match(
     agents,
-    /active Long-Task projects (?:this|the) same obligation[\s\S]*never also runs the default closure/iu,
+    /active Long-Task instead projects the exact obligation[\s\S]*never also runs a default closure/iu,
   );
   assert.match(managedSurface, /Context-reachable Source/iu);
   assert.match(
@@ -635,7 +636,7 @@ test("default workflow routes Design Authority readiness without adding a visual
     assert.match(content, /first useful runnable production slice/iu);
     assert.match(
       content,
-      /pairwise sampling[\s\S]{0,120}(?:scope narrowing|equivalence proof)/iu,
+      /representative\/pairwise samples[\s\S]{0,120}cannot stand for atomic cells/iu,
     );
     assert.match(
       content,
@@ -656,6 +657,6 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(chineseReadme, /Product `surface_bindings`/u);
   assert.match(chineseReadme, /`design_conformance`[\s\S]*当前执行记录/iu);
   assert.match(chineseReadme, /第一个有价值的可运行纵向切片/u);
-  assert.match(chineseReadme, /两种证明载体互斥/u);
+  assert.match(chineseReadme, /两种 carrier 互斥/u);
   assert.match(chineseReadme, /exactly-one canonical adoption record/iu);
 });

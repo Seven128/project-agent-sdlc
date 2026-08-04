@@ -28,7 +28,7 @@ read_policy: on-demand
 
 - Core/default files, manifest candidates and the bounded search optimize the first useful read, not a maximum permitted read. Shared backend rules, cross-client contracts, design authority or an indirect dependency may become relevant only after code inspection.
 - In a monorepo, the default Area should normally contain only repository-common basics at top-level `project_context/areas/**`; workspace-local Context stays `on-demand` unless genuinely near-universal. This prevents one client's facts from becoming every task's fixed startup cost.
-- Hard read isolation is not reliable in a prompt-level Harness and would reject legitimate cross-Area work. Making the full Context graph the global default has the opposite cost: every ordinary task pays all repository complexity even when only a small subset matters.
+- Hard read isolation is not reliable in a prompt-level Harness and would reject legitimate cross-Area work. Making the full Context graph the global default has the opposite cost: every default-route task pays all repository complexity even when only a small subset matters.
 - The selected design therefore keeps the existing adaptive path: start from the common minimum, read discovered relevant Context, and freely widen as dependencies emerge. `read_policy`, triggers and default selection are retrieval hints rather than access control. This cannot guarantee perfect Agent application, but it stores intended facts in recoverable owners without inventing enforcement that the mechanism does not possess.
 
 ## Why A Sparse Context Workspace Mirror
@@ -62,7 +62,7 @@ read_policy: on-demand
 
 - The change preserves the prior discovery floor: core/default Context, manifest/trigger candidates, one bounded search and semantic judgment remain required, and later reads are explicitly unconstrained. Workspace placement prioritizes candidates but never becomes an ACL, auto-read-all rule or maximum. No previously readable Context is removed and no full-graph read is imposed.
 - It adds one objective placement/target signal and one rejection path for a known false-negative class: unresolved sibling-product ambiguity can no longer silently select the default or nearest client, and final changed paths can be checked by an existing project oracle. Shared and multi-workspace work remains allowed through explicit targets/supporting scope.
-- Authority and proof boundaries do not weaken. Context still owns intended facts, project tests/review still prove ordinary work, and Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`.
+- Authority and proof boundaries do not weaken. Context still owns intended facts, project tests/review still prove default-route work only within their observed scope, and Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`.
 - Incremental cost is bounded to an optional directory convention, existing manifest entries, guidance and existing project verification. There is no required schema, empty-directory inventory, migration, persistent state, extra Gate or generic scanner; unambiguous and non-monorepo tasks pay no new behavior cost. Static routing/parity/fixture tests prove distribution and compatibility only. Any claim that Agents actually recall more Context or choose the correct target more often still requires fixed independent fresh-Agent paired runs.
 
 ## Why Retrieval Metadata Is Not Delivery Authority

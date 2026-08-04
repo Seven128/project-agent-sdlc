@@ -28,6 +28,12 @@
   "required_verification": [
     "npm test"
   ],
+  "expected_workflow_route": "default",
+  "allowed_change_paths": [
+    "src/worker/retryWorker.mjs",
+    "tests/base.test.mjs",
+    "project_context/areas/invoice-ops/contracts/retry-policy.md"
+  ],
   "conformance_required": true,
   "required_context_terms": {
     "project_context/areas/invoice-ops/contracts/retry-policy.md": {

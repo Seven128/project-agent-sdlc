@@ -26,6 +26,11 @@
   "required_verification": [
     "npm test"
   ],
+  "expected_workflow_route": "default",
+  "allowed_change_paths": [
+    "src/billing/money.mjs",
+    "tests/base.test.mjs"
+  ],
   "conformance_required": true,
   "required_context_terms": {}
 }

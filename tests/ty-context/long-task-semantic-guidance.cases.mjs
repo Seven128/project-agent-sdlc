@@ -43,7 +43,7 @@ test("non-UI semantic completeness guidance is source, workflow, engineering and
   ]))
     assert.match(
       content,
-      /semantic-fact-manifest-v1|非 UI 语义完整性|Non-UI Semantic Completeness|non-UI (?:semantic Fact|meaning)|semantic-fact granularity/iu,
+      /semantic-fact-manifest-v1|非 UI 语义完整性|Non-UI Semantic Completeness|Non-UI Source And Assurance Boundary|Non-UI Semantic Implementation|non-UI (?:semantic Fact|meaning)|semantic-fact granularity/iu,
       pathName,
     );
   assert.match(
@@ -64,7 +64,11 @@ test("non-UI semantic completeness guidance is source, workflow, engineering and
   );
   assert.match(
     combined,
-    /default[\s\S]*ephemeral[\s\S]*(?:no manifest|creates no manifest|不创建 manifest)/iu,
+    /default[\s\S]*(?:does not maintain|creates no|不维护|不创建)[\s\S]*(?:exact Fact|stable Fact|精确 Fact|稳定 Fact)[\s\S]*(?:ledger|set equality|账本|集合等式)/iu,
+  );
+  assert.match(
+    combined,
+    /Long-Task[\s\S]*semantic-fact-manifest-v1[\s\S]*(?:Final Gate|最终 Gate)/iu,
   );
   assert.match(
     combined,

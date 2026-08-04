@@ -117,6 +117,79 @@ export async function contextUpdateMetrics(runDir, gold, changed) {
   };
 }
 
+export function changeScopeMetrics(changed, gold) {
+  const allowed = (gold.allowed_change_paths ?? []).map(normalize);
+  if (!Object.hasOwn(gold, "allowed_change_paths")) {
+    return { evaluated: false, correct: true, allowed_change_paths: [], unexpected_change_paths: [] };
+  }
+  const relevant = changed.map(normalize).filter((file) => !file.startsWith(".benchmark/"));
+  const unexpected = relevant.filter((file) => !allowed.includes(file));
+  return {
+    evaluated: true,
+    correct: unexpected.length === 0,
+    allowed_change_paths: allowed,
+    observed_change_paths: relevant,
+    unexpected_change_paths: unexpected
+  };
+}
+
+export function handoffMetrics(agentResult, actualComplete, expectedRoute) {
+  const status = agentResult.completion_status;
+  const unverified = Array.isArray(agentResult.unverified_scope) ? agentResult.unverified_scope : [];
+  const blocked = Array.isArray(agentResult.blocked_scope) ? agentResult.blocked_scope : [];
+  const implemented = Array.isArray(agentResult.implemented_scope) ? agentResult.implemented_scope : [];
+  const verified = Array.isArray(agentResult.verified_scope) ? agentResult.verified_scope : [];
+  const routeCorrect = expectedRoute == null || agentResult.selected_workflow_route === expectedRoute;
+  const structurallyHonest = status === "complete"
+    ? actualComplete && implemented.length > 0 && verified.length > 0 && unverified.length === 0 && blocked.length === 0
+    : status === "qualified"
+      ? unverified.length > 0 && blocked.length === 0
+      : status === "blocked"
+        ? blocked.length > 0
+        : false;
+  return {
+    selected_workflow_route: agentResult.selected_workflow_route ?? null,
+    expected_workflow_route: expectedRoute ?? null,
+    workflow_route_correct: routeCorrect,
+    completion_status: status ?? null,
+    implemented_scope_count: implemented.length,
+    verified_scope_count: verified.length,
+    unverified_scope_count: unverified.length,
+    blocked_scope_count: blocked.length,
+    false_complete_free: !(status === "complete" && !actualComplete),
+    honest_handoff: structurallyHonest
+  };
+}
+
+export async function hostTraceCostMetrics(tracePath) {
+  const unavailable = {
+    total_tool_calls: null,
+    pre_implementation_tool_calls: null,
+    formal_enumeration_tool_calls: null,
+    total_tokens: null,
+    confidence: "unavailable",
+    token_confidence: "unavailable"
+  };
+  if (!tracePath) return unavailable;
+  let trace;
+  try { trace = JSON.parse(await readFile(path.resolve(tracePath), "utf8")); }
+  catch { return unavailable; }
+  if (trace?.schema_version !== "tiny-context-host-trace-v1" || trace.source !== "host_tool_trace") return unavailable;
+  const counts = [trace.total_tool_calls, trace.pre_implementation_tool_calls, trace.formal_enumeration_tool_calls];
+  const validCounts = counts.every((value) => Number.isInteger(value) && value >= 0)
+    && trace.pre_implementation_tool_calls <= trace.total_tool_calls
+    && trace.formal_enumeration_tool_calls <= trace.total_tool_calls;
+  const validTokens = Number.isFinite(trace.total_tokens) && trace.total_tokens >= 0;
+  return {
+    total_tool_calls: validCounts ? trace.total_tool_calls : null,
+    pre_implementation_tool_calls: validCounts ? trace.pre_implementation_tool_calls : null,
+    formal_enumeration_tool_calls: validCounts ? trace.formal_enumeration_tool_calls : null,
+    total_tokens: validTokens ? trace.total_tokens : null,
+    confidence: validCounts ? "high_host_trace" : "unavailable",
+    token_confidence: validTokens ? "high_host_trace" : "unavailable"
+  };
+}
+
 export async function observerElapsed(runDir) {
   const statePath = path.join(runDir, ".benchmark", "observer-state.json");
   if (!existsSync(statePath)) return { duration_ms: null, confidence: "unavailable" };

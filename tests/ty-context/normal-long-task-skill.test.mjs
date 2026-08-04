@@ -68,7 +68,7 @@ test("normal-long-task is absent and public guidance separates design authoring 
     );
     assert.match(
       content,
-      /only active long-task execution Skill|唯一活跃的长程执行 Skill|sole long-task execution and completion carrier/i,
+      /only active long-task execution Skill|唯一活跃的长程执行 Skill|Long-Task uses .* as its sole execution and completion carrier/is,
     );
     assert.doesNotMatch(content, /\/normal-long-task/);
   }

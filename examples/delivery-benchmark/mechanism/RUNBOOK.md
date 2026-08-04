@@ -10,6 +10,7 @@
 - Never expose `gold/**`, `hidden/**`, another run, or prior chat history to the measured Agent.
 - Do not use `--skip-harness-init` for a formal pair; comparisons reject calibration metadata even when hidden quality passes.
 - Do not publish numbers until at least three eligible paired runs support the same result.
+- For Workflow Assurance, freeze the pair policy before execution: three eligible pairs normally, five when a declared cost metric is near threshold or has the declared high-variance range.
 
 Context/Workflow prompt-only variants may be prepared from one baseline checkout. Long-Task candidate variants must be prepared from the checkout that actually implements the candidate parser/compiler behavior; the runner never emulates unsupported Contract syntax.
 
@@ -82,11 +83,17 @@ For a conclusion-grade Context/Workflow pair, transform host tool events into th
     "DESIGN.md",
     "design/handoffs/invoice-board.md",
     "design/invoice-board.html"
-  ]
+  ],
+  "total_tool_calls": 18,
+  "pre_implementation_tool_calls": 7,
+  "formal_enumeration_tool_calls": 2,
+  "total_tokens": 18420
 }
 ```
 
 Count a Context or Source file only when the Agent actually opened/read it. A search result that merely listed a filename is not an actual read. Group consecutive Context reads caused by one routing decision into one read round; document the normalization rule consistently across both paths. Include every gold-required `source_files_read` entry for the UI/UX recovery task; it remains optional elsewhere.
+
+For Workflow Assurance, count every host-recorded tool call once. `pre_implementation_tool_calls` ends immediately before the first edit that can affect the requested product behavior or owning durable Context. `formal_enumeration_tool_calls` counts calls whose principal purpose is building or maintaining the default route's Fact/condition/Obligation/result ledger; ordinary source reading, architecture reasoning and project verification do not count. `total_tokens` is optional and may be populated only from the same host's measured usage record. Use the same normalization rule for both variants and retain the underlying host trace for audit.
 
 Without this trace, the pair may still validate hidden quality, Git Context correctness, and deterministic resolver candidate recall, but it is calibration-only for actual read cost.
 
@@ -102,7 +109,12 @@ A Context/Workflow hard gate requires:
 - operator-run native verification passes;
 - Git Context update matches the fixed expected Delta;
 - Agent reports the correct Delta;
+- changed paths remain within the fixed task owner/supporting allow-list;
+- the selected workflow route matches the fixed assurance requirement;
+- a `complete` handoff requires non-empty implemented and verified scope, no unverified/blocked scope and a complete machine-observed task outcome; qualified/blocked handoffs must expose their gaps;
 - when gold declares `required_source_reads`, every required selected source is recalled; a conclusion-eligible pair must prove that recall through the normalized host trace.
+
+A Workflow Assurance pair also requires host-derived tool-call counts and observer elapsed time on both paths. These cost measurements are considered only after both variants pass all quality, Context, route, scope and completion-honesty gates.
 
 A Long-Task Authoring hard gate requires:
 
@@ -122,11 +134,13 @@ Important boundaries:
 - Context recall must remain `100%`.
 - Hidden quality and Context correctness must not regress.
 - Four-step wording must preserve verification and Conformance behavior.
+- The assurance split must preserve route correctness, owner/change scope, evidence-bounded handoff and a zero false-complete rate.
+- The small high-assurance task must select Long-Task without executing it; no Long-Task internal workflow behavior is changed or benchmarked by that task.
 - The UI/UX recovery task must preserve full controlling-Context and required selected-source recall, successful shared handoff preflight and hidden eight-dimension production behavior.
 - V3 or other Authoring changes are measured against current Compact V2, not expanded V2.
 - Final Gate parallelism is not tested here unless profiling first proves Final Gate runner time is a dominant cost.
 
-Near-threshold, high-variance, or conflicting results require five paired runs rather than three.
+For Workflow Assurance, "near threshold" is frozen as an absolute distance of at most `0.05` for `instruction_bytes_reduction` or `total_tool_call_reduction`. "High variance" is frozen as a pair range of at least `0.15` for total/pre-implementation/formal-enumeration tool-call reduction, token reduction or elapsed reduction. Either condition raises the required eligible-pair count to five. Other tracks retain their existing three-pair minimum unless their own frozen policy is revised before execution.
 
 ## 8. What the operator returns for analysis
 

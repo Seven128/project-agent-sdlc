@@ -1,0 +1,24 @@
+{
+  "id": "small-high-assurance-route",
+  "title": "Route a small billing rule that requires machine-traceable acceptance",
+  "category": "route_selection",
+  "benchmark_mode": "route_selection",
+  "prompt": "Choose the workflow route for this request and record the decision only. The product change would be a small, one-function billing proration rule, but the requester explicitly requires every declared condition to have stable machine-traceable obligations, independently rerunnable current-snapshot evidence, precise failure localization, recovery across later sessions, and a machine acceptance conclusion only after the complete declared set closes. Do not implement or activate the selected workflow. Task size must not decide the route, and no Long-Task internal proof-floor choice is requested.",
+  "paths": [
+    "src/billing/money.mjs"
+  ],
+  "terms": [
+    "billing",
+    "proration",
+    "machine acceptance",
+    "recoverable",
+    "audit"
+  ],
+  "facets": [
+    "contract",
+    "verification"
+  ],
+  "expected_context_delta": "none",
+  "probe": "small-high-assurance-route.mjs",
+  "track_family": "context-workflow"
+}

@@ -115,12 +115,12 @@ Preflight proves declared-universe completeness, addressability and immutable in
 The default Workflow:
 
 1. reruns preflight and opens every affected exact/constraint resource;
-2. reconciles stable subject/target/condition/variation/property keys through owning Surface/Screen/Control Context and `DESIGN.md`;
-3. constructs one ephemeral exact accounting of every Fact Cell, Fact, property-required proof, Source Item, blocker and target condition, then routes each item to the production owner and real root-entry journey;
-4. verifies every Fact independently under its declared method, expected located digest, comparator/tolerance/mask, Oracle and environment. Each result retains attributable actual observation/environment and pass/fail verdict; protected observations store only digest/redacted representation and policy, never raw sensitive values;
-5. on the final current candidate confirms every applicable row is mapped, implemented, resolved, executed and passing, then performs Contract Conformance plus Context drift checking.
+2. reconciles stable subject/target/condition/variation/property keys through owning Surface/Screen/Control Context and `DESIGN.md` without rebuilding the handoff's complete Fact universe as a task ledger;
+3. identifies the affected target conditions, material Source Items, blockers, production owners and cold-start real-entry journeys, widening when shared design or code ownership is uncertain;
+4. selects project-native page, interaction, visual, accessibility, runtime or other checks in proportion to the actual fidelity claim and risk, and reruns affected checks after the last relevant candidate/input change;
+5. on the final current candidate reports which declared conditions were implemented and verified, which remain unverified, and which are blocked by conflict, missing authority or external confirmation, then performs Contract Conformance plus Context drift checking.
 
-Resource presence, hash success, provider success, aggregate pass, screenshot or detached route cannot substitute for production checks. A selected target, Fact/proof universe, expected comparison authority, implementation or check-input change stales closure. Any unread, unsupported, unmapped, unimplemented, unresolved, unexecuted, stale, failed or indistinguishable applicable Fact blocks the complete claim. The accounting creates no persisted map, Claim set, readiness state or Gate.
+Resource presence, hash success, provider success, aggregate pass, screenshot or detached route cannot substitute for production checks. Unsupported, unreadable, stale or conflicting selected authority blocks the affected claim; an unchecked condition cannot be folded into a complete-design claim. The default route creates no per-Fact result rows, frozen comparator/Oracle/environment graph, exact-set equality, persisted map, Claim set, readiness state or Gate. When every declared Fact and method requires machine-traceable current results, explicitly select Long-Task.
 
 ## Long-Task Consumption
 

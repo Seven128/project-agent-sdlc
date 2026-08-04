@@ -1,5 +1,7 @@
+> Historical mechanism Source: this document remains controlling for formal design-resource authoring/preflight and Long-Task selected-design Fact/Obligation closure. [`workflow-assurance-boundary.md`](workflow-assurance-boundary.md) supersedes only the clauses that previously required the default Workflow Contract to reproduce exact per-Fact production-conformance accounting; shared design Source authority and every Long-Task rule below remain unchanged.
+
 <!-- ty-source-item:start key=design-fact-completeness-result kind=outcome_result -->
-Formal selected Web/App implementation resources default to complete observable-design-fact granularity: authoring derives the full material in-scope Expected Fact Universe, canonical resources express and independently inventory it, the residual handoff indexes the same exact facts, and Default or Long-Task preserves each Fact through its production owner and a per-Fact current-snapshot verdict; when an exact target carries a complete platform-specific pixel reference, pixel fidelity is mandatory rather than optional.
+Formal selected Web/App implementation resources default to complete observable-design-fact granularity: authoring derives the full material in-scope Expected Fact Universe, canonical resources express and independently inventory it, and the residual handoff indexes the same exact facts. Default work consumes affected targets and conditions through their production owners and evidence-bounded current-candidate checks; Long-Task additionally preserves every Fact through exact per-Fact current-snapshot results. When an exact target carries a complete platform-specific pixel reference, pixel fidelity remains a material Source requirement rather than an optional preference.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=default-observable-design-fact-granularity kind=requirement -->
@@ -15,7 +17,7 @@ Every selected `exact_target` must carry full-target layout-geometry and visual-
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=complete-fact-consumption kind=requirement -->
-The default Workflow and Long-Task Workflow must conserve the exact selected fact set without sampling or silent grouping: every covered fact is mapped to its production owner and real root-entry journey, every method and condition carries the exact fact references into an independently attributable current-execution observation, and any missing, duplicate, mismatched, unimplemented, unexecuted, stale, failed, or indistinguishable fact blocks a complete selected-design-conformance claim.
+Both routes must map selected design meaning to its production owner and real root-entry journey, use current-candidate observations, and avoid claiming conditions that were not established. Long-Task alone must conserve the exact selected Fact set without sampling or silent grouping, carry every method and condition through exact Fact references and independently attributable current-execution results, and block machine acceptance for any missing, duplicate, mismatched, unimplemented, unexecuted, stale, failed or indistinguishable Fact. Default work reports the corresponding unchecked or unresolved scope without rebuilding that exact result set.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=honest-expression-boundary kind=requirement -->
@@ -27,7 +29,7 @@ Non-UI requirements continue to close as atomic Requirements, Technical Obligati
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=public-guidance-and-authoring-default kind=requirement -->
-Package-managed authoring, UI/UX, engineering, Long-Task, default-workflow, English, Chinese, and package README guidance must all teach the same default: inspect all selected resources, produce complete fact/resource closure, require pixel proof when the target expresses it, preserve explicit limitations, and never describe handoff preflight or resource integrity as production conformance.
+Package-managed authoring, UI/UX, engineering, Long-Task, default-workflow, English, Chinese, and package README guidance must all teach the same Source boundary: inspect affected selected resources and conditions, preserve explicit limitations, treat expressed pixel fidelity as material, and never describe handoff preflight or resource integrity as production conformance. Formal authoring/preflight and Long-Task retain complete Fact/resource closure; default production work uses attributable project checks and reports what they did not establish.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=formal-authoring-design-obligation-universe kind=requirement -->
@@ -207,7 +209,7 @@ Given one Long-Task method × condition evidence cell containing multiple expect
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=downstream-finest-fact-conservation-ac kind=acceptance -->
-Given a ready formal handoff, when Default or Long-Task consumes it, then every manifest-backed atomic fact—including component-part geometry/style, platform/locale/text-scale/accessibility variants, gestures/motion/haptic behavior and asset identity—retains one production owner, target condition, subject variation, verification method and current-candidate observation; removal, substitution, grouping that loses attribution, unsupported target capability, stale comparison environment or a self-generated visual baseline blocks complete conformance without adding another Gate.
+Given a ready formal handoff, when Default consumes it, then every affected target and declared condition—including component-part geometry/style, platform/locale/text-scale/accessibility variants, gestures/motion/haptic behavior and asset identity—is routed to its production owner and applicable current-candidate project checks, while unchecked or unsupported conditions remain explicit and block an unqualified claim. When Long-Task consumes the same handoff, every manifest-backed atomic Fact additionally retains its exact target, variation, verification method and attributable current result; removal, substitution, grouping that loses attribution, stale comparison authority or a self-generated visual baseline blocks machine acceptance without adding another Gate.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=inspector-census-and-lineage-ac kind=acceptance -->

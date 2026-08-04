@@ -1,5 +1,7 @@
+> Historical mechanism Source: this document remains controlling for Long-Task non-UI semantic Fact/Obligation closure. [`workflow-assurance-boundary.md`](workflow-assurance-boundary.md) supersedes only the clauses that previously required the default Workflow Contract to reproduce that exact production-conformance accounting ephemerally; it does not weaken or revise any Long-Task Source, Contract, Authority, evidence or Final-Gate rule below.
+
 <!-- ty-source-item:start key=semantic-fact-completeness-result kind=outcome_result -->
-Formal Long-Task and default proposal-to-implementation workflows complete non-UI meaning at the finest independently decidable semantic Fact and applicable-condition granularity: all material Source meaning is inventoried, missing implementation decisions are completed within authority or blocked, exact Facts and proof obligations are conserved through Contract and one current Final Gate, and no developer must invent an important in-scope product, business, data, state, interface, quality, security, privacy or operational decision.
+Formal Long-Task completes non-UI meaning at the finest independently decidable semantic Fact and applicable-condition granularity: all material Source meaning is inventoried, missing implementation decisions are completed within authority or blocked, and exact Facts and proof obligations are conserved through Contract and one current Final Gate. The default Workflow preserves the same Source authority but uses model-led, risk-proportional requirement understanding and evidence-bounded reporting rather than that exact carrier; neither route may silently invent or omit an important in-scope product, business, data, state, interface, quality, security, privacy or operational decision.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=default-fine-grained-non-ui-authoring kind=requirement -->
@@ -199,11 +201,11 @@ Every not-applicable, excluded, equivalent, authority-only, external-confirmatio
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=default-workflow-and-long-task-projection kind=requirement -->
-The default Workflow must keep one ephemeral exact semantic Fact and proof accounting, while an explicitly selected Long-Task must project the same closure into its one Source, Contract, Claims, Assertions, typed evidence and Final Gate; the two carriers are mutually exclusive and neither creates a new workflow phase, result artifact or acceptance authority.
+The default Workflow must identify and implement every expressed material requirement at risk-proportional depth, use attributable current-candidate checks, repair failures and report unverified or unresolved scope without stable Fact/Obligation identities or exact set accounting. An explicitly selected Long-Task projects the complete exact closure into its one Source, Contract, Claims, Assertions, typed evidence and Final Gate. These proof carriers are mutually exclusive; the default route creates no result artifact or machine acceptance authority.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=source-authoring-product-and-engineering-guidance kind=requirement -->
-Package-managed Product Plan, Development Engineer, Long-Task, retired Source pointer, default Workflow and public guidance must teach the same non-UI default, domain family and condition closure, authority boundary, fact and proof equations, no-aggregate rule and fail-closed limits so proposal generation cannot remain coarser than downstream validation.
+Package-managed Product Plan, Development Engineer, Long-Task, retired Source pointer, default Workflow and public guidance must teach the same Source-authority and no-silent-omission boundary while distinguishing proof levels: only Long-Task teaches the complete domain-family/condition closure, Fact/proof equations and exact no-aggregate carrier; default guidance teaches risk-proportional material understanding, current-candidate checks, repair and evidence-bounded handoff.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=canonical-owner-context-projection kind=requirement -->

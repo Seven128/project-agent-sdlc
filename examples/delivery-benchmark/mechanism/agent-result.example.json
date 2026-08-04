@@ -8,6 +8,12 @@
   "source_files_read": [],
   "verification_commands": [],
   "conformance_completed": false,
+  "selected_workflow_route": "unset",
+  "completion_status": "unset",
+  "implemented_scope": [],
+  "verified_scope": [],
+  "unverified_scope": [],
+  "blocked_scope": [],
   "preflight_reports": [],
   "compile_report": null,
   "notes": ""
