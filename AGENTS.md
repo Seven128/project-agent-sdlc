@@ -5,7 +5,8 @@
 ## 本仓库 Authoring 例外
 
 - 本仓库维护 `project-tiny-context-harness` package、Minimal Context managed assets、source sync、validator 和 delivery benchmark。
-- 本仓库普通开发一律直接在 `main` 分支进行；除非用户明确要求，不创建、切换或保留 feature/Codex 开发分支或额外 worktree。显式选择 `long-task-workflow` 也始终复用当前选定工作区和当前原生 Goal，不创建编排分支、Worker 或 worktree。
+- 本仓库开发可由用户或当前 Goal 选择临时 task branch/worktree；提交可按可读性保留，开发噪声可在分支内 squash。显式 `long-task-workflow` 仍只复用用户选定的验证工作区，Harness 不创建编排分支、Worker 或 worktree。
+- 使用临时分支的交付最终必须回归干净且与 `origin/main` 同步的 `main`，并让最终分支 tip 通过 fast-forward 或 merge commit 成为 `origin/main` 的祖先或与其相等，再删除对应本地/远端分支。ahead、diverged、脏或未知 worktree 阻止清理；普通治理不用 `git branch -D`。日常收尾只清理本任务分支，清理全部非 `main` 分支必须是显式仓库级治理请求。
 - 修改 `packages/ty-context/**`、`.codex/ty-context-managed/**`、`tools/**` 或 `examples/delivery-benchmark/**` 时，先读 core Context、default area root 和由 `project_context/context.toml` 触发的相关 on-demand Context，并使用 `.codex/skills/authoring/harness_package_design/SKILL.md`。
 - 旧阶段式工作流只作为历史设计摘要保留在 `PROJECT_SPEC.md`；不要把 stage artifacts 恢复成默认 package 能力。
 - Karpathy 编码准则是本仓库 agent 的底层行为原则：先思考并暴露假设，优先简洁，精准修改，目标驱动验证；不要把长原则常驻在 AGENTS 启动路径。

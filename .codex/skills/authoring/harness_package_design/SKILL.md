@@ -98,6 +98,13 @@ benchmark 和 release automation 保持一致，避免旧阶段式工作流通�
 - 修改 managed source 后，先 build 当前 CLI，再运行 `package sync-source`、`package check-source` 和当前 workspace `sync`；确认 generated `.codex/skills/**` 与 `packages/ty-context/assets/**` 都包含预期结果。
 - 对只服务本仓库 authoring 的规则，优先写入 `.codex/skills/authoring/**` 或 `project_context/**`；不要放进会分发给 consumer 的 managed `AGENTS.md`，也不要设计“sync 后删除”的隐藏文本块。
 
+## 本仓库轻量分支治理
+
+- 临时 task branch/worktree 是用户或当前 Goal 的实现选择，不是 Harness 对外能力；普通任务只清理本任务拥有的分支，全仓分支清理必须由用户显式提出。
+- 有意义的提交可以保留；开发噪声可以先在当前分支 squash。已推送分支改写只用 `--force-with-lease`，不用无保护 force。
+- 完成时先让本地 `main` 与 `origin/main` 同步，再用 fast-forward 或 merge commit 把最终分支 tip 纳入 `main` ancestry，并在最终 `main` 候选上运行所需验证。平台 squash/rebase merge 若改写 tip identity，不满足这个 ancestry 清理条件。
+- `git fetch --prune` 后，用 `git merge-base --is-ancestor <branch-ref> origin/main` 检查目标本地/远端分支；只有返回成功或 tip 与 `origin/main` 相等，且相关 worktree 干净并已解除占用时，才用 `git branch -d` 和精确的远端删除清理。ahead、diverged、main/upstream 不一致或脏 worktree 一律停止并报告，不用 `git branch -D` 掩盖未收敛工作。
+
 ## 常用入口
 
 - `project_context/global.md`
@@ -128,6 +135,7 @@ benchmark 和 release automation 保持一致，避免旧阶段式工作流通�
 - [ ] README 和 package README 已覆盖 public CLI、sync、upgrade、validator 和 project-local Skill 行为。
 - [ ] `PROJECT_SPEC.md` 只记录稳定设计和精简历史，不承载操作 runbook。
 - [ ] 路径、脚本、Makefile、npx 和测试断言已按 Windows / macOS 双端兼容检查。
+- [ ] 若本次使用临时分支/worktree，最终 tip 已进入同步后的 `main` ancestry，最终验证在 `main` 候选完成，并仅清理了已证明安全的任务分支；未使用时此项不适用。
 - [ ] Legacy stage artifacts 只作为历史说明存在，不作为迁移输入、测试 fixture 或默认 package 能力。
 - [ ] Long-Task 任何改动先证明 Coverage/False Negative 非退化以及 Authority、fail-closed、完整当前最终快照证明不可绕过；再核算全部增量成本并留在正确 owner 点，机制变更才修改机制及验证。增量设计目的收益大于全部增量成本即可作为正 ROI 进入考虑集，但不自动采用；有数据时使用数据，没有时已与用户/项目 owner 讨论并以严密因果论证和简单 bounded validation 支持；成本相近时优化机制效果，效果相近时优化实现成本。
 - [ ] Long-Task Anti-Degradation Assurance 已分别检查当前因果链真实性、跨版本非退化与 `F = Implementation Freedom Boundary`：Context 的当前实现描述与 indexed code/runtime/proof owners 一致；设计目的、关键逻辑、两项职责、成立边界和 Goal-owned 实现自由未被隐式弱化；单 agent/多 agent 或 subagent 只是可选非权威实现手段并汇入同一验证工作区；若发生替换已有显式 project-owner 决策、old/new implication、非退化影响、兼容/迁移与 replacement proof；任何开发期约束已证明独立风险、无更轻替代和正净 ROI；防劣化建设未新增 Authority/Gate/state/matrix/registry/scheduler。
