@@ -49,7 +49,10 @@ export async function prepareMechanismRun(options) {
     await mkdir(path.join(outDir, "tools"), { recursive: true });
     await cp(path.join(MECHANISM_ROOT, "runner", "context-resolve-r0.mjs"), path.join(outDir, "tools", "context-resolve-r0.mjs"));
   }
-  const instructionBytes = await applyVariantGuidance(outDir, options.variant, task);
+  const guidance = await applyVariantGuidance(outDir, options.variant, task, {
+    variantConfig: variant,
+    calibration: options.skipHarnessInit === true
+  });
   const prompt = renderAgentPrompt(task, options.variant);
   await mkdir(path.join(outDir, ".benchmark"), { recursive: true });
   await writeFile(path.join(outDir, ".benchmark", "prompt.md"), prompt, "utf8");
@@ -74,7 +77,8 @@ export async function prepareMechanismRun(options) {
     source_checkout_commit: sourceCommit,
     fixture_sha256: fixtureSha,
     experiment_set_sha256: sha256(experiments),
-    workflow_instruction_bytes: instructionBytes,
+    workflow_instruction_bytes: guidance.workflow_instruction_bytes,
+    ...(guidance.workflow_guidance_source ? { workflow_guidance_source: guidance.workflow_guidance_source } : {}),
     harness_initialized: !options.skipHarnessInit,
     protocol_status: options.skipHarnessInit ? "calibration" : "formal",
     prepared_at: new Date().toISOString(),

@@ -16,7 +16,8 @@
 - New Harness benchmark prompts should use Minimal Context, not the old stage workflow.
 - Mechanism experiments fix task, fixture, model, reasoning, pair identity and gold before Agent execution. Aggregation counts only distinct `pair_id` plus `replicate` runs with the same fixed identity. Context/Workflow read-cost conclusions require a normalized host trace; Authoring hard gates require fixed Source keys/kinds and cost comparisons remain unavailable until canonical compiled Authority is equal.
 - The workflow-assurance experiment additionally freezes before execution: hidden product quality, Context Delta correctness, native verification, selected-source recall when applicable, target/workspace correctness, whether unresolved or unverified scope is reported honestly, false-complete detection and instruction/tool/token/wall-time diagnostics. A passing static fixture never substitutes for fresh Agent evidence.
-- Static tests may validate the UI/UX benchmark fixture, hidden oracle and routing gold, but only fresh independent paired Agent runs may support a recovery or ROI conclusion.
+- Each workflow-assurance variant binds the complete canonical managed `AGENTS_CORE.md` from its own frozen Git commit by blob oid, full-file SHA-256 and exact measured-section SHA-256. Prepare loads the Git object without shell or working-tree fallback, injects the whole managed protocol, records resolved provenance in run metadata and fails closed on a missing object, invalid UTF-8, marker/heading drift or digest mismatch. These benchmark snapshots are experiment inputs, not product Workflow Authority.
+- Static tests may validate the UI/UX benchmark fixture, hidden oracle and routing gold, but only fresh independent paired Agent runs may support a recovery or ROI conclusion; no Workflow Assurance paired Agent A/B has yet been executed for the assurance-split candidate.
 
 ## Core Data / API / State
 

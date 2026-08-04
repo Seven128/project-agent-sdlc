@@ -129,12 +129,38 @@
     "workflow-exact-ephemeral-baseline": {
       "track": "workflow-assurance",
       "role": "baseline",
-      "description": "Frozen main@c030d02 default guidance with exact ephemeral non-UI and selected-design Fact/Obligation accounting."
+      "description": "Frozen main@c030d02 default guidance with exact ephemeral non-UI and selected-design Fact/Obligation accounting.",
+      "guidance_source": {
+        "kind": "git_managed_protocol_v1",
+        "commit": "c030d02eee315d2860c6a2ff01c22887690f3684",
+        "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+        "git_blob_oid": "bac87c2fc2cc31f3dfab41a5965f931e35fde248",
+        "file_sha256": "9dd465c5c9e121dbefc64e7d4b871995f294ba2ab8d342480e47d429ac8fbb8c",
+        "injection_scope": "managed_protocol",
+        "measured_section": {
+          "start_heading": "## Default Workflow Contract",
+          "end_heading": "## Long-Task Routing",
+          "sha256": "73e62dd5c09f0a8e9664409bf5db62004f9c362b8593bc42307a13f58f6b8bdd"
+        }
+      }
     },
     "workflow-assurance-split": {
       "track": "workflow-assurance",
       "role": "candidate",
-      "description": "Frozen model-led default guidance with risk-proportional material understanding, current-candidate repair and evidence-bounded handoff; Long-Task exact closure remains separate."
+      "description": "Frozen model-led default guidance with risk-proportional material understanding, current-candidate repair and evidence-bounded handoff; Long-Task exact closure remains separate.",
+      "guidance_source": {
+        "kind": "git_managed_protocol_v1",
+        "commit": "c8a194cc91683b5fcbe8f0b946a18af502f5dd30",
+        "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+        "git_blob_oid": "84cb03f92d8570ebe1e761daf812c686749951de",
+        "file_sha256": "aeea1514442faa75884df253d5c133b52365961b521d53d2c5194dd09e2ef3a2",
+        "injection_scope": "managed_protocol",
+        "measured_section": {
+          "start_heading": "## Default Workflow Contract",
+          "end_heading": "## Long-Task Routing",
+          "sha256": "b1ea56a5287440d0f30eec9503399ae7e3a92786022c3afcb258e92745c932ff"
+        }
+      }
     },
     "authoring-compact-v2": {
       "track": "long-task-authoring",

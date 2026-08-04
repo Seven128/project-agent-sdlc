@@ -1,8 +1,30 @@
+import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
+import { REPO_ROOT } from "./shared.mjs";
 
-export async function applyVariantGuidance(runDir, variant, task) {
+const execFileAsync = promisify(execFile);
+const CANONICAL_MANAGED_PATH = ".codex/ty-context-managed/agents/AGENTS_CORE.md";
+const MANAGED_BEGIN = "<!-- ty-context:managed:begin -->";
+const MANAGED_END = "<!-- ty-context:managed:end -->";
+const WORKFLOW_ASSURANCE_VARIANTS = new Set([
+  "workflow-exact-ephemeral-baseline",
+  "workflow-assurance-split"
+]);
+
+export async function applyVariantGuidance(runDir, variant, task, options = {}) {
   const agentsPath = path.join(runDir, "AGENTS.md");
+  if (WORKFLOW_ASSURANCE_VARIANTS.has(variant)) {
+    return applyCanonicalWorkflowGuidance({
+      agentsPath,
+      variant,
+      variantConfig: options.variantConfig,
+      repoRoot: options.repoRoot ?? REPO_ROOT,
+      calibration: options.calibration === true
+    });
+  }
   let agents = await readFile(agentsPath, "utf8").catch(() => fallbackAgents());
   if (variant === "context-resolve-r0") {
     agents = insertBeforeManaged(agents, contextResolverOverride(task));
@@ -10,17 +32,11 @@ export async function applyVariantGuidance(runDir, variant, task) {
   if (variant === "workflow-four-step") {
     agents = replaceDefaultWorkflow(agents, fourStepWorkflow());
   }
-  if (variant === "workflow-exact-ephemeral-baseline") {
-    agents = replaceDefaultWorkflow(agents, exactEphemeralBaselineWorkflow());
-  }
-  if (variant === "workflow-assurance-split") {
-    agents = replaceDefaultWorkflow(agents, assuranceSplitWorkflow());
-  }
   if (variant.startsWith("authoring-")) {
     agents = insertBeforeManaged(agents, authoringVariantOverride(variant));
   }
   await writeFile(agentsPath, agents, "utf8");
-  return workflowInstructionBytes(agents);
+  return { workflow_instruction_bytes: workflowInstructionBytes(agents), workflow_guidance_source: null };
 }
 
 export function renderAgentPrompt(task, variant) {
@@ -56,14 +72,6 @@ function fourStepWorkflow() {
   return `## Default Workflow Contract\n\nUnless an active Long-Task binding exists, use this four-step expression. These are order-of-thought labels, not persisted phases or artifacts.\n\n1. **Resolve** — read core/default Context, collect manifest candidates, perform the bounded Context search, confirm goal/owner/boundaries/verification, and decide the initial \`Context Delta: none|required\`.\n2. **Change** — use the platform internal plan, update owning Context first when required, implement precisely, and re-evaluate Context Delta whenever implementation reveals a durable fact.\n3. **Prove** — run the project-owned lint, type, unit/integration, browser, API/Schema, smoke, or architecture checks proportionate to the task.\n4. **Reconcile** — perform Contract Conformance and Context drift checks, then report implementation, verification, Context status, and blockers.\n\nFor a selected implementation handoff, run shared design-resource preflight, open every selected exact/constraint resource and follow its exactly-one canonical adoption record. Keep exact task-local accounting of covered Source Items, declared methods, blockers, targets and conditions; route every item to the production owner, cold-start journey and an attributable final-candidate check. Any unresolved, unmapped, unexecuted, stale or indistinguishable item blocks a complete claim. An active Long-Task uses only its existing Claims/Assertions/bindings/Final Gate carrier.\n\nThe default workflow creates no plan file, matrix, verdict, evidence ledger, Claim set, lifecycle state, Gate or second authority.\n\n`;
 }
 
-function exactEphemeralBaselineWorkflow() {
-  return `## Default Workflow Contract\n\nUnless an active Long-Task binding exists, this prompt-level workflow applies. Read core/default Context, use manifest routing plus one bounded Context search, decide one \`Context Delta\`, use the platform internal plan, implement, run project checks, perform Contract Conformance and check Context drift.\n\nFor every material non-UI input, inventory every request/attachment/Context/specification, atomize the complete standard plus custom semantic universe, enumerate every applicable condition combination and keep exact task-local accounting:\n\n\`Expected Semantic Facts = Source Indexed Facts = implementation/acceptance accounted Facts\`\n\n\`Fact × required-method obligations = attributable current-candidate result rows\`\n\nEvery row retains stable Fact/obligation meaning, frozen comparator/tolerance/mask, Oracle, environment, actual observation and verdict. Missing, extra, unresolved, unexecuted, stale, proxy-only, reused or indistinguishable rows block completion. This accounting is ephemeral and creates no manifest or Gate.\n\nFor a selected implementation handoff, run preflight, open every exact/constraint resource and keep exact task-local Fact Cell, Fact, property-method, Source, blocker, target and condition accounting. Route every Fact through the production owner and cold-start check with attributable current observation/comparison/Oracle/verdict. An active Long-Task uses its existing exact carrier instead.\n\nSurface Architecture Deliberation before implementation. Preserve Goal-owned implementation order and run current project verification. The default workflow creates no plan artifact, matrix, Receipt, lifecycle state, Final Gate or machine completion authority.\n\n`;
-}
-
-function assuranceSplitWorkflow() {
-  return `## Default Workflow Contract\n\nUnless Long-Task is explicitly selected or a valid binding is active, this model-led protocol applies automatically at any complexity. Complexity changes implementation and verification depth; machine completion authority, recoverability or auditability selects Long-Task; Long-Task-internal risk selects its proof floor.\n\nRead core/default Context, combine manifest routing with one bounded Context search, separate read scope from intended/supporting change scope, and widen only when dependencies require it. Identify material Source requirements, conditions, owners, failure boundaries and acceptance entries at risk-proportional depth. Missing or conflicting authority remains decision-required; current code cannot redefine Source. Do not build an Expected Fact Universe, stable Fact/Obligation keys, exact set equality, universal Cartesian expansion, frozen Oracle graph or per-Fact result ledger.\n\nSurface Architecture Deliberation, decide one \`Context Delta\`, use the platform internal plan and implement under Goal-owned quality guardrails. Run project-native verification after the last relevant change. Localize a failure to the requirement/owner/module/check, repair it and rerun affected checks.\n\nFor selected design handoff input, run exact preflight, open affected exact targets/constraints and declared conditions, route them to production owners and real-entry checks, and report conditions not established; preflight is not production conformance.\n\nPerform evidence-bounded Contract Conformance plus Context drift. Report Implemented, Verified, Unverified, Blocked / decision required and Context status separately. Missing/stale/unreadable/conflicting Source, unsupported observations or stale/failed checks block an unqualified claim. This creates no Contract, exact ledger, Receipt, state, Final Gate or machine completion authority. Long-Task's existing exact internal carrier remains unchanged and is never nested.\n\n`;
-}
-
 function authoringVariantOverride(variant) {
   const text = {
     "authoring-compact-v2": "Use the current Compact V2 authoring surface and keep all currently required Source and Risk fields explicit.",
@@ -88,6 +96,182 @@ function insertBeforeManaged(agents, section) {
 function workflowInstructionBytes(agents) {
   const match = /## Default Workflow Contract[\s\S]*?(?=## Long-Task Routing|$)/u.exec(agents);
   return Buffer.byteLength(match?.[0] ?? agents, "utf8");
+}
+
+async function applyCanonicalWorkflowGuidance({ agentsPath, variant, variantConfig, repoRoot, calibration }) {
+  const source = variantConfig?.guidance_source;
+  const loaded = await loadCanonicalManagedProtocol(repoRoot, variant, source);
+  let agentsBytes;
+  try {
+    agentsBytes = await readFile(agentsPath);
+  } catch (error) {
+    if (!calibration) {
+      throw new Error(`Workflow Assurance prepare requires initialized AGENTS.md with one managed marker pair: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    agentsBytes = Buffer.alloc(0);
+  }
+  const injected = injectCanonicalManagedProtocol(agentsBytes, loaded.protocol_bytes, { calibration, variant });
+  const injectedSection = extractMeasuredSection(injected.protocol_bytes, source.measured_section, variant);
+  const injectedSectionSha256 = sha256Bytes(injectedSection);
+  if (injectedSectionSha256 !== loaded.provenance.measured_section_sha256) {
+    throw new Error(`Workflow Assurance ${variant} injected measured section does not match its frozen Git object`);
+  }
+  await writeFile(agentsPath, injected.file_bytes);
+  return {
+    workflow_instruction_bytes: injectedSection.length,
+    workflow_guidance_source: loaded.provenance
+  };
+}
+
+async function loadCanonicalManagedProtocol(repoRoot, variant, source) {
+  validateGuidanceSource(variant, source);
+  const objectLabel = `${source.commit}:${source.path}`;
+  const blobOid = (await gitText(repoRoot, ["rev-parse", "--verify", objectLabel], objectLabel)).trim();
+  if (!/^[0-9a-f]{40}$/u.test(blobOid)) throw new Error(`Workflow Assurance ${variant} resolved an invalid Git blob oid: ${blobOid}`);
+  const objectType = (await gitText(repoRoot, ["cat-file", "-t", blobOid], objectLabel)).trim();
+  if (objectType !== "blob") throw new Error(`Workflow Assurance ${variant} expected a Git blob at ${objectLabel}, got ${objectType}`);
+  if (blobOid !== source.git_blob_oid) {
+    throw new Error(`Workflow Assurance ${variant} Git blob oid mismatch for ${objectLabel}: expected ${source.git_blob_oid}, got ${blobOid}`);
+  }
+  const protocolBytes = await gitBytes(repoRoot, ["show", objectLabel], objectLabel);
+  requireStrictUtf8(protocolBytes, variant);
+  if (protocolBytes.at(-1) !== 0x0a) throw new Error(`Workflow Assurance ${variant} canonical managed protocol must retain its trailing LF byte`);
+  const fileSha256 = sha256Bytes(protocolBytes);
+  if (fileSha256 !== source.file_sha256) {
+    throw new Error(`Workflow Assurance ${variant} full-file SHA-256 mismatch for ${objectLabel}: expected ${source.file_sha256}, got ${fileSha256}`);
+  }
+  const measuredSection = extractMeasuredSection(protocolBytes, source.measured_section, variant);
+  const measuredSectionSha256 = sha256Bytes(measuredSection);
+  if (measuredSectionSha256 !== source.measured_section.sha256) {
+    throw new Error(`Workflow Assurance ${variant} measured-section SHA-256 mismatch for ${objectLabel}: expected ${source.measured_section.sha256}, got ${measuredSectionSha256}`);
+  }
+  return {
+    protocol_bytes: protocolBytes,
+    provenance: {
+      kind: source.kind,
+      commit: source.commit,
+      path: source.path,
+      git_blob_oid: blobOid,
+      file_sha256: fileSha256,
+      measured_section_sha256: measuredSectionSha256
+    }
+  };
+}
+
+function validateGuidanceSource(variant, source) {
+  if (!source || typeof source !== "object") throw new Error(`Workflow Assurance ${variant} requires guidance_source in experiment-set.json`);
+  if (source.kind !== "git_managed_protocol_v1") throw new Error(`Workflow Assurance ${variant} requires guidance_source.kind git_managed_protocol_v1`);
+  if (!/^[0-9a-f]{40}$/u.test(source.commit ?? "")) throw new Error(`Workflow Assurance ${variant} guidance_source.commit must be a 40-character lowercase SHA`);
+  if (source.path !== CANONICAL_MANAGED_PATH) throw new Error(`Workflow Assurance ${variant} guidance_source.path must be ${CANONICAL_MANAGED_PATH}`);
+  if (!/^[0-9a-f]{40}$/u.test(source.git_blob_oid ?? "")) throw new Error(`Workflow Assurance ${variant} guidance_source.git_blob_oid must be a 40-character lowercase oid`);
+  if (!/^[0-9a-f]{64}$/u.test(source.file_sha256 ?? "")) throw new Error(`Workflow Assurance ${variant} guidance_source.file_sha256 must be lowercase SHA-256`);
+  if (source.injection_scope !== "managed_protocol") throw new Error(`Workflow Assurance ${variant} guidance_source.injection_scope must be managed_protocol`);
+  const section = source.measured_section;
+  if (!section || typeof section !== "object") throw new Error(`Workflow Assurance ${variant} requires guidance_source.measured_section`);
+  if (section.start_heading !== "## Default Workflow Contract" || section.end_heading !== "## Long-Task Routing") {
+    throw new Error(`Workflow Assurance ${variant} measured headings must bind Default Workflow Contract through the line before Long-Task Routing`);
+  }
+  if (!/^[0-9a-f]{64}$/u.test(section.sha256 ?? "")) throw new Error(`Workflow Assurance ${variant} measured_section.sha256 must be lowercase SHA-256`);
+}
+
+function injectCanonicalManagedProtocol(agentsBytes, protocolBytes, { calibration, variant }) {
+  const beginOffsets = allOffsets(agentsBytes, Buffer.from(MANAGED_BEGIN, "utf8"));
+  const endOffsets = allOffsets(agentsBytes, Buffer.from(MANAGED_END, "utf8"));
+  if (beginOffsets.length === 0 && endOffsets.length === 0) {
+    if (!calibration) throw new Error(`Workflow Assurance ${variant} formal prepare requires one ${MANAGED_BEGIN} / ${MANAGED_END} pair`);
+    const fileBytes = Buffer.from(protocolBytes);
+    return { file_bytes: fileBytes, protocol_bytes: fileBytes };
+  }
+  if (beginOffsets.length !== 1 || endOffsets.length !== 1 || beginOffsets[0] >= endOffsets[0]) {
+    throw new Error(`Workflow Assurance ${variant} AGENTS.md managed markers are missing, duplicated, or out of order`);
+  }
+  const begin = beginOffsets[0];
+  const end = endOffsets[0];
+  assertMarkerLine(agentsBytes, begin, MANAGED_BEGIN, variant);
+  assertMarkerLine(agentsBytes, end, MANAGED_END, variant);
+  const prefixEnd = markerLineEnd(agentsBytes, begin + Buffer.byteLength(MANAGED_BEGIN), variant);
+  const prefix = agentsBytes.subarray(0, prefixEnd);
+  const suffix = agentsBytes.subarray(end);
+  const fileBytes = Buffer.concat([prefix, protocolBytes, suffix]);
+  const protocolStart = prefix.length;
+  return {
+    file_bytes: fileBytes,
+    protocol_bytes: fileBytes.subarray(protocolStart, protocolStart + protocolBytes.length)
+  };
+}
+
+function extractMeasuredSection(protocolBytes, section, variant) {
+  const starts = lineOffsets(protocolBytes, section.start_heading);
+  const ends = lineOffsets(protocolBytes, section.end_heading);
+  if (starts.length !== 1 || ends.length !== 1 || starts[0] >= ends[0]) {
+    throw new Error(`Workflow Assurance ${variant} canonical managed protocol must contain one ordered ${section.start_heading} / ${section.end_heading} heading pair`);
+  }
+  return protocolBytes.subarray(starts[0], ends[0]);
+}
+
+async function gitBytes(repoRoot, args, objectLabel) {
+  try {
+    const { stdout } = await execFileAsync("git", args, {
+      cwd: repoRoot,
+      encoding: "buffer",
+      windowsHide: true,
+      maxBuffer: 64 * 1024 * 1024
+    });
+    return Buffer.isBuffer(stdout) ? stdout : Buffer.from(stdout);
+  } catch (error) {
+    const detail = error?.stderr ? String(error.stderr).trim() : error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to load frozen Workflow Assurance Git object ${objectLabel}. Fetch that commit/object (deepen a shallow checkout when necessary) and retry prepare. ${detail}`);
+  }
+}
+
+async function gitText(repoRoot, args, objectLabel) {
+  const bytes = await gitBytes(repoRoot, args, objectLabel);
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error(`Git metadata for frozen Workflow Assurance object ${objectLabel} is not valid UTF-8`);
+  }
+}
+
+function requireStrictUtf8(bytes, variant) {
+  try {
+    new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error(`Workflow Assurance ${variant} canonical managed protocol is not valid UTF-8`);
+  }
+}
+
+function lineOffsets(bytes, heading) {
+  const needle = Buffer.from(heading, "utf8");
+  return allOffsets(bytes, needle).filter((offset) => {
+    const beforeIsLineBoundary = offset === 0 || bytes[offset - 1] === 0x0a;
+    const after = offset + needle.length;
+    const afterIsLineBoundary = after === bytes.length || bytes[after] === 0x0a;
+    return beforeIsLineBoundary && afterIsLineBoundary;
+  });
+}
+
+function allOffsets(bytes, needle) {
+  const offsets = [];
+  for (let offset = bytes.indexOf(needle); offset >= 0; offset = bytes.indexOf(needle, offset + 1)) offsets.push(offset);
+  return offsets;
+}
+
+function assertMarkerLine(bytes, offset, marker, variant) {
+  const beforeIsLineBoundary = offset === 0 || bytes[offset - 1] === 0x0a;
+  const after = offset + Buffer.byteLength(marker);
+  const afterIsLineBoundary = after === bytes.length || bytes[after] === 0x0a || (bytes[after] === 0x0d && bytes[after + 1] === 0x0a);
+  if (!beforeIsLineBoundary || !afterIsLineBoundary) throw new Error(`Workflow Assurance ${variant} found a damaged managed marker line: ${marker}`);
+}
+
+function markerLineEnd(bytes, markerEnd, variant) {
+  if (bytes[markerEnd] === 0x0a) return markerEnd + 1;
+  if (bytes[markerEnd] === 0x0d && bytes[markerEnd + 1] === 0x0a) return markerEnd + 2;
+  throw new Error(`Workflow Assurance ${variant} managed begin marker must end with LF or CRLF`);
+}
+
+function sha256Bytes(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
 }
 
 function quote(value) { return JSON.stringify(String(value)); }

@@ -32,6 +32,26 @@ test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden bounda
   assert.equal(experiments.tracks["workflow-assurance"].pair_policy.minimum_pairs, 3);
   assert.equal(experiments.tracks["workflow-assurance"].pair_policy.high_variance_or_near_threshold_pairs, 5);
   assert.equal(experiments.tracks["workflow-assurance"].decision_thresholds.false_complete_free_rate, 1);
+  const assuranceSources = experiments.tracks["workflow-assurance"].variants.map((id) => experiments.variants[id].guidance_source);
+  assert.deepEqual(assuranceSources.map(({ commit, path }) => ({ commit, path })), [
+    {
+      commit: "c030d02eee315d2860c6a2ff01c22887690f3684",
+      path: ".codex/ty-context-managed/agents/AGENTS_CORE.md"
+    },
+    {
+      commit: "c8a194cc91683b5fcbe8f0b946a18af502f5dd30",
+      path: ".codex/ty-context-managed/agents/AGENTS_CORE.md"
+    }
+  ]);
+  for (const source of assuranceSources) {
+    assert.equal(source.kind, "git_managed_protocol_v1");
+    assert.equal(source.injection_scope, "managed_protocol");
+    assert.match(source.git_blob_oid, /^[0-9a-f]{40}$/u);
+    assert.match(source.file_sha256, /^[0-9a-f]{64}$/u);
+    assert.equal(source.measured_section.start_heading, "## Default Workflow Contract");
+    assert.equal(source.measured_section.end_heading, "## Long-Task Routing");
+    assert.match(source.measured_section.sha256, /^[0-9a-f]{64}$/u);
+  }
 });
 
 test("workflow assurance variants freeze the old exact default and the new model-led boundary", async () => {
@@ -44,12 +64,23 @@ test("workflow assurance variants freeze the old exact default and the new model
     await prepareMechanismRun({ ...common, variant: "workflow-assurance-split", outDir: candidateDir });
     const baseline = await readFile(path.join(baselineDir, "AGENTS.md"), "utf8");
     const candidate = await readFile(path.join(candidateDir, "AGENTS.md"), "utf8");
+    const baselineMetadata = JSON.parse(await readFile(path.join(baselineDir, ".benchmark", "mechanism-run.json"), "utf8"));
+    const candidateMetadata = JSON.parse(await readFile(path.join(candidateDir, ".benchmark", "mechanism-run.json"), "utf8"));
     assert.match(baseline, /Expected Semantic Facts = Source Indexed Facts = implementation\/acceptance accounted Facts/u);
     assert.match(baseline, /Fact × required-method obligations = attributable current-candidate result rows/u);
     assert.doesNotMatch(candidate, /Expected Semantic Facts = Source Indexed Facts/u);
-    assert.match(candidate, /automatically at any complexity/u);
-    assert.match(candidate, /machine completion authority, recoverability or auditability selects Long-Task/u);
-    assert.match(candidate, /Report Implemented, Verified, Unverified, Blocked \/ decision required/u);
+    assert.match(candidate, /model-led default Workflow Contract for work of any complexity/u);
+    assert.match(candidate, /Perform evidence-bounded Contract Conformance/u);
+    assert.match(candidate, /Report `Implemented`, `Verified`, `Unverified`, `Blocked \/ decision required`/u);
+    assert.equal(baselineMetadata.workflow_instruction_bytes, workflowInstructionBytes(baseline));
+    assert.equal(candidateMetadata.workflow_instruction_bytes, workflowInstructionBytes(candidate));
+    const experiments = JSON.parse(await readFile(path.join(mechanismRoot, "experiment-set.json"), "utf8"));
+    assert.deepEqual(baselineMetadata.workflow_guidance_source, expectedGuidanceProvenance(experiments.variants["workflow-exact-ephemeral-baseline"].guidance_source));
+    assert.deepEqual(candidateMetadata.workflow_guidance_source, expectedGuidanceProvenance(experiments.variants["workflow-assurance-split"].guidance_source));
+    assert.notEqual(baselineMetadata.workflow_guidance_source.commit, candidateMetadata.workflow_guidance_source.commit);
+    const guidance = await readFile(path.join(mechanismRoot, "runner", "guidance.mjs"), "utf8");
+    assert.doesNotMatch(guidance, /function exactEphemeralBaselineWorkflow/u);
+    assert.doesNotMatch(guidance, /function assuranceSplitWorkflow/u);
   } finally {
     await rm(temp, { recursive: true, force: true });
   }
@@ -58,6 +89,10 @@ test("workflow assurance variants freeze the old exact default and the new model
 test("small high-assurance work selects Long-Task without activating it", async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-assurance-route-"));
   try {
+    const task = JSON.parse(await readFile(path.join(mechanismRoot, "tasks", "small-high-assurance-route.json"), "utf8"));
+    assert.doesNotMatch(task.prompt, /Task size must not decide the route|proof-floor choice/iu);
+    assert.match(task.prompt, /recoverable in a later session/iu);
+    assert.match(task.prompt, /independently locatable and rerunnable acceptance check/iu);
     const runDir = path.join(temp, "run");
     await prepareMechanismRun({
       task: "small-high-assurance-route",
@@ -116,6 +151,26 @@ test("small high-assurance work selects Long-Task without activating it", async 
     await rm(temp, { recursive: true, force: true });
   }
 });
+
+function workflowInstructionBytes(agents) {
+  const start = agents.indexOf("## Default Workflow Contract");
+  const end = agents.indexOf("## Long-Task Routing");
+  assert.ok(start >= 0 && end > start);
+  assert.equal(agents.indexOf("## Default Workflow Contract", start + 1), -1);
+  assert.equal(agents.indexOf("## Long-Task Routing", end + 1), -1);
+  return Buffer.byteLength(agents.slice(start, end), "utf8");
+}
+
+function expectedGuidanceProvenance(source) {
+  return {
+    kind: source.kind,
+    commit: source.commit,
+    path: source.path,
+    git_blob_oid: source.git_blob_oid,
+    file_sha256: source.file_sha256,
+    measured_section_sha256: source.measured_section.sha256
+  };
+}
 
 test("workflow assurance aggregation expands from three to five pairs only under the frozen cost rule", async () => {
   const temp = await mkdtemp(path.join(os.tmpdir(), "mechanism-assurance-pairs-"));

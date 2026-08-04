@@ -11,8 +11,11 @@
 - Do not use `--skip-harness-init` for a formal pair; comparisons reject calibration metadata even when hidden quality passes.
 - Do not publish numbers until at least three eligible paired runs support the same result.
 - For Workflow Assurance, freeze the pair policy before execution: three eligible pairs normally, five when a declared cost metric is near threshold or has the declared high-variance range.
+- Before Workflow Assurance preparation, ensure both declared guidance commits are available in the source repository. The runner reads each commit's canonical managed `AGENTS_CORE.md` Git object, verifies its blob/full-file/measured-section identities and fails closed rather than falling back when a shallow checkout lacks the object.
 
 Context/Workflow prompt-only variants may be prepared from one baseline checkout. Long-Task candidate variants must be prepared from the checkout that actually implements the candidate parser/compiler behavior; the runner never emulates unsupported Contract syntax.
+
+The repository currently contains the frozen Workflow Assurance protocol and scoring rules, not a completed fresh paired Agent A/B result. Do not describe guidance provenance or a successful prepare as evidence of lower cost or positive ROI.
 
 ## 2. Prepare a randomized pair
 
@@ -32,6 +35,8 @@ baseline_commit
 
 The comparison command rejects a pair when any fixed identity differs.
 Aggregation also rejects mixed fixed identities and duplicate `pair_id` plus `replicate` inputs.
+
+The baseline and candidate intentionally have different `workflow_guidance_source.commit` values. Each prepared run must exactly match its own variant declaration; pair compatibility does not require those two guidance commits to be equal. Inspect `.benchmark/mechanism-run.json` for the prepare-derived kind, commit, path, blob oid, full-file SHA-256 and measured-section SHA-256. Formal preparation preserves marker-external fixture overlay and replaces the complete managed protocol; missing, duplicated or damaged markers fail closed.
 
 ## 3. Start external observation
 

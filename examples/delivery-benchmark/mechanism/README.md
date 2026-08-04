@@ -31,6 +31,8 @@ The four labels are prompt wording only. They must never become lifecycle state 
 - `workflow-exact-ephemeral-baseline`: frozen `main@c030d02` default guidance with exact ephemeral Fact/Obligation accounting.
 - `workflow-assurance-split`: default model-led guidance for any complexity, with risk-proportional material understanding, current-candidate repair and evidence-bounded handoff.
 
+Both variants load the complete canonical `.codex/ty-context-managed/agents/AGENTS_CORE.md` bytes from their declared frozen Git commit. `prepare` verifies the Git blob oid, full-file SHA-256, strict UTF-8 and the SHA-256 of the exact `## Default Workflow Contract` through pre-`## Long-Task Routing` byte range, then replaces the whole managed-marker interior while preserving the fixture overlay. It never uses a handwritten summary, current `HEAD`, the working tree, a package asset or the other variant as fallback. A missing Git object, invalid marker pair, heading drift or digest mismatch fails preparation; `.benchmark/mechanism-run.json` records the actually resolved guidance provenance. No fresh paired Agent A/B has yet been run for this Workflow Assurance candidate.
+
 This track holds Long-Task internals fixed. It tests only whether removing the default route's exact ephemeral production ledger lowers repeated execution cost without reducing hidden quality, Context and selected-source recall, project verification, owner/change-scope correctness, route correctness or completion honesty. A seventh small-but-high-assurance task checks that task size does not prevent selecting Long-Task; it selects a route only and never activates or executes Long-Task.
 
 ### Long-Task authoring
@@ -82,6 +84,7 @@ Conclusion-grade:
 - normalized selected design-source reads for the UI/UX recovery task.
 - Git-derived intended-owner/change-scope conformance;
 - trace-derived total, pre-implementation and formal-enumeration tool calls for Workflow Assurance;
+- prepare-derived frozen Git guidance provenance for each Workflow Assurance variant;
 - structured completion handoff checked against the machine-observed outcome.
 
 Diagnostic only:
@@ -96,7 +99,7 @@ A Context/Workflow pair remains calibration-only without a normalized host trace
 
 ## CLI
 
-Run from the Tiny Context source checkout after building the package with the repository-required Node version. Formal `prepare` initializes the fixed run with the checkout CLI and writes `tools/ty-context.mjs` so the measured Agent can invoke that exact implementation without inspecting the source checkout. `--skip-harness-init` is mechanical calibration only and can never produce a decision-eligible pair.
+Run from the Tiny Context source checkout after building the package with the repository-required Node version. Formal `prepare` initializes the fixed run with the checkout CLI and writes `tools/ty-context.mjs` so the measured Agent can invoke that exact implementation without inspecting the source checkout. Workflow Assurance preparation also requires both frozen guidance commits to exist locally; shallow checkouts must fetch/deepen those Git objects before retrying. `--skip-harness-init` may place the complete canonical protocol into an otherwise unmarked calibration fixture, but it remains mechanical calibration only and can never produce a decision-eligible pair.
 
 
 ```sh

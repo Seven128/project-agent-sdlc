@@ -3,7 +3,7 @@
 This Source records the approved correction to the relationship between the automatically applicable default Workflow Contract and the explicitly selected Long-Task Workflow. It supersedes only prior statements that classified the routes by task size or required the default route to maintain Long-Task-equivalent exact production Fact/Obligation accounting ephemerally. It does not revise Long-Task's internal workflow, proof model, schema or runtime.
 
 <!-- ty-source-item:start key=workflow-assurance-boundary-result kind=outcome_result -->
-Tiny Context offers two delivery-assurance levels rather than two task-size classes: the default Workflow Contract is a model-led lightweight engineering protocol for implementation work of any complexity, while Long-Task is the explicit machine-assurance route for stable, locatable, independently re-verifiable delivery obligations and current-snapshot machine acceptance.
+Tiny Context offers two mutually exclusive execution/completion assurance routes rather than two task-size classes: the default Workflow Contract is a model-led lightweight engineering protocol for implementation work of any complexity, while Long-Task is the explicit machine-assurance route for stable, locatable, independently re-verifiable delivery obligations and current-snapshot machine acceptance.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=three-orthogonal-workflow-dimensions kind=requirement -->
