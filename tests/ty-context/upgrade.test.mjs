@@ -36,6 +36,10 @@ const manualRoot = await mkdtemp(
 const blockedRoot = await mkdtemp(
   path.join(tmpdir(), "ty-context-upgrade-blocked-"),
 );
+const retiredSourcePlanSkill = path.join(
+  root,
+  ".harness/skills/source-plan-authoring/SKILL.md",
+);
 
 try {
   await writeFile(
@@ -44,6 +48,18 @@ try {
     "utf8",
   );
   await runInit(root, { adopt: true, force: false });
+  await mkdir(path.dirname(retiredSourcePlanSkill), { recursive: true });
+  await writeFile(
+    retiredSourcePlanSkill,
+    await readFile(
+      path.join(
+        repoRoot,
+        "tests/ty-context/fixtures/removed-source-plan-authoring-SKILL.md",
+      ),
+      "utf8",
+    ),
+    "utf8",
+  );
   await rm(path.join(root, "DESIGN.md"), { force: true });
   await rm(path.join(root, "project_context/context.toml"), { force: true });
   await rm(path.join(root, "project_context/global.md"), { force: true });
@@ -141,6 +157,11 @@ never_overwrite:
       (entry) => entry.id === "context-manifest-baseline",
     ),
   );
+  assert.ok(
+    checkBeforeJson.safe_pending.some(
+      (entry) => entry.id === "remove-source-plan-authoring-skill",
+    ),
+  );
   await stat(path.join(root, "project_context/modules/analytics/reporting.md"));
   const configBeforeUpgrade = await readFile(
     path.join(root, ".harness/config.yaml"),
@@ -155,6 +176,7 @@ never_overwrite:
   );
   assert.ok(report.some((line) => line.startsWith("sync changed=")));
   assert.ok(!report.some((line) => line.includes("migrate-context")));
+  await assert.rejects(stat(retiredSourcePlanSkill));
 
   await stat(path.join(root, "project_context/global.md"));
   await stat(path.join(root, "project_context/context.toml"));

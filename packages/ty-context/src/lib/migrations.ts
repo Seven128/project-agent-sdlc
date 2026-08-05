@@ -117,7 +117,7 @@ export const migrations: Migration[] = [
   },
   {
     id: "remove-source-plan-authoring-skill",
-    introducedIn: "0.8.11",
+    introducedIn: "0.8.12",
     description:
       "Remove the retired source-plan-authoring compatibility pointer; long-task-workflow owns machine-assurance Source authoring and legacy Source Plans remain ordinary Source.",
     scope: "<harnessRoot>/skills/source-plan-authoring",

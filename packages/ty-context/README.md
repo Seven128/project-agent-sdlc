@@ -189,7 +189,7 @@ npm ci
 npm run smoke:quickstart
 npm run preview:pack
 cd /path/to/your/test-repo
-npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.11.tgz
+npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.12.tgz
 npx --no-install ty-context init --adopt
 make validate-context
 ```
@@ -464,7 +464,7 @@ make validate-harness
 
 The modularity gate is the capability-aware `ty-context check-modularity`. Scoped waivers require `owner`, `introduced_at`, `reason`, `tracking_issue` and `expiry_condition`; unsupported metrics never appear as passing zeroes.
 
-The synchronized local preview tarball is named `project-tiny-context-harness-0.8.11.tgz`.
+The synchronized local preview tarball is named `project-tiny-context-harness-0.8.12.tgz`.
 
 ## Community And Further Reading
 
