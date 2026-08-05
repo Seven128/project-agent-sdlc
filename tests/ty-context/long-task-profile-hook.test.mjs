@@ -929,13 +929,14 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     assert.deepEqual(await invokeHook(fixture.root, "Stop"), {});
-    assert.deepEqual(
-      await invokeHook(fixture.root, "PreToolUse", {
-        tool_name: "spawn_agent",
-        tool_input: { agent_type: "worker" },
-      }),
-      {},
-    );
+    for (const agentType of ["worker", "long_task_implementation"])
+      assert.deepEqual(
+        await invokeHook(fixture.root, "PreToolUse", {
+          tool_name: "spawn_agent",
+          tool_input: { agent_type: agentType },
+        }),
+        {},
+      );
 
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const record = await activeRecordPath(fixture.root);
@@ -1050,6 +1051,55 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
     assert.match(accepted.systemMessage, /Declared machine Authority/iu);
     assert.equal(await pathExists(record), false);
     assert.deepEqual(await invokeHook(fixture.root, "Stop"), {});
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Agent spawn Hook fails closed on corrupt active state without gating unrelated tools", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const record = await activeRecordPath(fixture.root);
+    const validRecord = await readFile(record, "utf8");
+
+    await rm(record);
+    for (const agentType of ["worker", "long_task_implementation"])
+      assertCorruptSpawnDenied(
+        await invokeHook(fixture.root, "PreToolUse", {
+          tool_name: "spawn_agent",
+          tool_input: { agent_type: agentType },
+        }),
+      );
+    assert.equal(await pathExists(record), false);
+    assert.deepEqual(
+      await invokeHook(fixture.root, "PreToolUse", {
+        tool_name: "write_file",
+        tool_input: {},
+      }),
+      {},
+    );
+    assert.equal(await pathExists(record), false);
+
+    const invalidSnapshotHash = JSON.parse(validRecord);
+    invalidSnapshotHash.authority_snapshot_sha256 = "0".repeat(64);
+    const corruptRecord = `${JSON.stringify(invalidSnapshotHash)}\n`;
+    await writeFile(record, corruptRecord);
+    const deniedInvalidSnapshot = await invokeHook(
+      fixture.root,
+      "PreToolUse",
+      {
+        tool_name: "Agent",
+        tool_input: { agent_type: "worker" },
+      },
+    );
+    assertCorruptSpawnDenied(deniedInvalidSnapshot);
+    assert.match(
+      deniedInvalidSnapshot.hookSpecificOutput.permissionDecisionReason,
+      /snapshot_hash/iu,
+    );
+    assert.equal(await readFile(record, "utf8"), corruptRecord);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -1193,6 +1243,22 @@ test("V1 retirement migration removes the repo-local Hook and reports active V1 
 
 function freshSyncReport() {
   return { changed: [], skipped: [], blocked: [] };
+}
+
+function assertCorruptSpawnDenied(result) {
+  assert.deepEqual(Object.keys(result), ["hookSpecificOutput"]);
+  assert.equal(result.hookSpecificOutput.hookEventName, "PreToolUse");
+  assert.equal(result.hookSpecificOutput.permissionDecision, "deny");
+  assert.match(
+    result.hookSpecificOutput.permissionDecisionReason,
+    /failed closed/iu,
+  );
+  assert.match(
+    result.hookSpecificOutput.permissionDecisionReason,
+    /parent Goal/iu,
+  );
+  assert.equal(Object.hasOwn(result, "continue"), false);
+  assert.equal(Object.hasOwn(result, "stopReason"), false);
 }
 
 function assertEnabledHookEventsForDirectInstall(config) {

@@ -29,23 +29,19 @@ const EXACT_WORKER_REQUIRED =
   "Active Tiny Context Long-Task permits delegation only to the exact custom agent long_task_implementation. The current host request does not explicitly select it. Do not substitute a generic worker; complete this packet in the parent Goal.";
 
 const input = await readStdin();
+const isAgentSpawnPreToolUse =
+  input.hook_event_name === "PreToolUse" &&
+  AGENT_SPAWN_TOOLS.has(input.tool_name ?? "");
+if (input.hook_event_name === "PreToolUse" && !isAgentSpawnPreToolUse)
+  output({});
 try {
   const root = await repositoryRoot(input.cwd || process.cwd());
   const active = await readActiveLongTaskBinding(root);
   if (!active) output({});
-  if (input.hook_event_name === "PreToolUse") {
-    if (!input.tool_name || !AGENT_SPAWN_TOOLS.has(input.tool_name)) output({});
-    output(
-      selectedAgentType(input.tool_input) === LONG_TASK_IMPLEMENTATION_AGENT
-        ? {}
-        : {
-            hookSpecificOutput: {
-              hookEventName: "PreToolUse",
-              permissionDecision: "deny",
-              permissionDecisionReason: EXACT_WORKER_REQUIRED,
-            },
-          },
-    );
+  if (isAgentSpawnPreToolUse) {
+    if (selectedAgentType(input.tool_input) === LONG_TASK_IMPLEMENTATION_AGENT)
+      output({});
+    denyAgentSpawn(EXACT_WORKER_REQUIRED);
   }
   if (input.hook_event_name === "SubagentStart")
     output(
@@ -89,7 +85,11 @@ try {
       "The Live Final Gate did not accept the current candidate.",
   });
 } catch (error) {
-  const reason = `Long-task Live Final Gate failed closed: ${message(error)}`;
+  const reason = `Tiny Context Long-Task Hook failed closed: ${message(error)}`;
+  if (isAgentSpawnPreToolUse)
+    denyAgentSpawn(
+      `${reason} Do not spawn a substitute agent; complete the packet in the parent Goal.`,
+    );
   if (input.hook_event_name === "Stop") output({ decision: "block", reason });
   output({ continue: false, stopReason: reason });
 }
@@ -103,6 +103,16 @@ async function readStdin(): Promise<HookInput> {
 function output(value: unknown): never {
   process.stdout.write(`${JSON.stringify(value)}\n`);
   process.exit(0);
+}
+
+function denyAgentSpawn(reason: string): never {
+  output({
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: reason,
+    },
+  });
 }
 
 function message(error: unknown): string {
