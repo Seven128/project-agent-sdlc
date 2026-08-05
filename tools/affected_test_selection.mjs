@@ -778,7 +778,10 @@ export function selectAffectedTests(changedPaths, options = {}) {
         if (pathExists(file)) {
           tests.add(file);
           reasons.push(`${file}:direct_test`);
-        } else reasons.push(`${file}:deleted_direct_test`);
+        } else {
+          mode = widen(mode, "full-suite");
+          reasons.push(`${file}:deleted_direct_test_full_suite`);
+        }
       } else {
         const suite = path.basename(file).startsWith("long-task-")
           ? "long-task-suite"

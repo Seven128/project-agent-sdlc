@@ -973,12 +973,13 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
 });
 
-test("retired semantic census permits only isolated migration, tombstone, history, release, and test paths", async () => {
-  const testOrFixture = /^tests\/ty-context\/(?:affected-test-selection|long-task-authority-lifecycle-smoke|long-task-design-context|long-task-profile-hook|long-task-workflow-black-box|orientation-fast-path|retired-authoring-migration|retired-workflow-migration|sync-init-doctor|upgrade|workflow-contract-routing|workflow-test-entrypoints)\.(?:test\.)?mjs$|^tests\/ty-context\/fixtures\/removed-source-plan-authoring-SKILL\.md$/u;
-  const releaseHistory = /^docs\/launch\//u;
-  const policies = [
+const retiredTestOrFixture = /^tests\/ty-context\/(?:affected-test-selection|long-task-authority-lifecycle-smoke|long-task-design-context|long-task-profile-hook|long-task-workflow-black-box|orientation-fast-path|retired-authoring-migration|retired-workflow-migration|sync-init-doctor|upgrade|workflow-contract-routing|workflow-test-entrypoints)\.(?:test\.)?mjs$|^tests\/ty-context\/fixtures\/removed-source-plan-authoring-SKILL\.md$/u;
+const retiredReleaseHistory = /^docs\/launch\//u;
+const retiredSemanticPolicies = [
     {
-      term: "source-plan-authoring",
+      key: "source-plan-authoring",
+      search: "source-plan-authoring",
+      pattern: /source-plan-authoring/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
         /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
@@ -986,58 +987,70 @@ test("retired semantic census permits only isolated migration, tombstone, histor
         /^PROJECT_SPEC\.md$/u,
         /^\.work_products\/(?:design-fact-universe-closure|symbolic-denotation-efficiency)\/delivery-contract\.yaml$/u,
         /^tools\/(?:affected_test_selection|release_tarball_smoke|sync_release_version|test_suite_policy)\.mjs$/u,
-        releaseHistory,
-        testOrFixture,
+        retiredReleaseHistory,
+        retiredTestOrFixture,
       ],
     },
     {
-      term: "Source Plan",
+      key: "source-plan",
+      search: "source plan",
+      pattern: /\bsource plan\b/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
         /^packages\/ty-context\/(?:assets\/)?README(?:\.zh-CN)?\.md$/u,
         /^(?:README|PROJECT_SPEC)\.md$/u,
         /^docs\/(?:design-resource-authoring-implementation-source|page-level-uiux-authority-design-source)\.md$/u,
         /^tools\/(?:release_tarball_smoke|sync_release_version)\.mjs$/u,
-        releaseHistory,
-        testOrFixture,
+        retiredReleaseHistory,
+        retiredTestOrFixture,
       ],
     },
     {
-      term: "normal-long-task",
+      key: "normal-long-task",
+      search: "normal-long-task",
+      pattern: /normal-long-task/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
         /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
         /^PROJECT_SPEC\.md$/u,
-        releaseHistory,
-        testOrFixture,
+        retiredReleaseHistory,
+        retiredTestOrFixture,
       ],
     },
     {
-      term: "composite-codex",
+      key: "composite-codex",
+      search: "composite-codex",
+      pattern: /composite-codex/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        testOrFixture,
+        retiredTestOrFixture,
       ],
     },
     {
-      term: "prepare-composite-long-task",
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^tools\/release_tarball_smoke\.mjs$/u,
-        testOrFixture,
-      ],
-    },
-    {
-      term: "composite-long-task-workflow",
+      key: "prepare-composite-long-task",
+      search: "prepare-composite-long-task",
+      pattern: /prepare-composite-long-task/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
         /^tools\/release_tarball_smoke\.mjs$/u,
-        releaseHistory,
-        testOrFixture,
+        retiredTestOrFixture,
       ],
     },
     {
-      term: "long-task-delivery-v1",
+      key: "composite-long-task-workflow",
+      search: "composite-long-task-workflow",
+      pattern: /composite-long-task-workflow/iu,
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^tools\/release_tarball_smoke\.mjs$/u,
+        retiredReleaseHistory,
+        retiredTestOrFixture,
+      ],
+    },
+    {
+      key: "long-task-delivery-v1",
+      search: "long-task-delivery-v1",
+      pattern: /long-task-delivery-v1/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/long-task-delivery-parser\.ts$/u,
         /^tools\/release_tarball_smoke\.mjs$/u,
@@ -1045,49 +1058,73 @@ test("retired semantic census permits only isolated migration, tombstone, histor
       ],
     },
     {
-      term: "V1 repo-local Hook",
+      key: "v1-repo-local-hook",
+      search: "v1 repo-local hook",
+      pattern: /\bv1 repo-local hook\b/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        testOrFixture,
+        retiredTestOrFixture,
       ],
     },
     ...["delivery-set", "composite-long-task", "composite-campaign"].map(
-      (term) => ({
-        term,
+      (key) => ({
+        key,
+        search: key,
+        pattern: new RegExp(key, "iu"),
         allowed: [
           /^packages\/ty-context\/src\/commands\/(?:index|composite-long-task|composite-campaign)\.ts$/u,
           /^packages\/ty-context\/src\/lib\/(?:long-task-verifier-identity|migrations)\.ts$/u,
           /^(?:README|PROJECT_SPEC)\.md$/u,
           /^packages\/ty-context\/assets\/README\.md$/u,
           /^tools\/release_tarball_smoke\.mjs$/u,
-          releaseHistory,
-          testOrFixture,
+          retiredReleaseHistory,
+          retiredTestOrFixture,
         ],
       }),
     ),
     {
-      term: "Source Unit",
-      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+      key: "source-unit",
+      search: "source unit",
+      pattern: /\bsource unit (?:inventor(?:y|ies)|schema|artifact|workflow)\b/iu,
+      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
     },
     {
-      term: "multi-SFC",
-      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+      key: "multi-sfc",
+      search: "multi-sfc",
+      pattern: /multi-sfc/iu,
+      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
     },
     {
-      term: "Campaign runtime",
-      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+      key: "campaign-runtime",
+      search: "campaign runtime",
+      pattern: /\bcampaign runtime\b/iu,
+      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
     },
     {
-      term: "Packet chain",
-      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+      key: "packet-chain",
+      search: "packet chain",
+      pattern: /\bpacket chain\b/iu,
+      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
     },
   ];
+
+function unclassifiedRetiredSemanticKeys(file, content) {
+  return retiredSemanticPolicies
+    .filter(
+      ({ pattern, allowed }) =>
+        pattern.test(content) &&
+        !allowed.some((allowedPath) => allowedPath.test(file)),
+    )
+    .map(({ key }) => key);
+}
+
+test("retired semantic census permits only isolated migration, tombstone, history, release, and test paths", async () => {
   const { stdout } = await exec(
     "git",
     [
       "grep",
-      "-Il",
-      ...policies.flatMap(({ term }) => ["-e", term]),
+      "-Iil",
+      ...retiredSemanticPolicies.flatMap(({ search }) => ["-e", search]),
       "--",
       ".",
     ],
@@ -1103,16 +1140,12 @@ test("retired semantic census permits only isolated migration, tombstone, histor
     ),
   );
 
-  for (const { term, allowed } of policies) {
-    const paths = [...contents]
-      .filter(([, content]) => content.includes(term))
-      .map(([file]) => file);
-    for (const file of paths)
-      assert.ok(
-        allowed.some((pattern) => pattern.test(file)),
-        `${term}: unclassified active residue at ${file}`,
-      );
-  }
+  for (const [file, content] of contents)
+    assert.deepEqual(
+      unclassifiedRetiredSemanticKeys(file, content),
+      [],
+      `unclassified retired semantic residue at ${file}`,
+    );
 
   const activeSurfaces = [
     "AGENTS.md",
@@ -1128,8 +1161,8 @@ test("retired semantic census permits only isolated migration, tombstone, histor
     "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
   ];
   const active = (await Promise.all(activeSurfaces.map(read))).join("\n");
-  for (const { term } of policies)
-    assert.equal(active.includes(term), false, `${term}: active routing residue`);
+  for (const { key, pattern } of retiredSemanticPolicies)
+    assert.doesNotMatch(active, pattern, `${key}: active routing residue`);
 
   const historical = await read("docs/design-resource-authoring-implementation-source.md");
   assert.match(
@@ -1139,10 +1172,21 @@ test("retired semantic census permits only isolated migration, tombstone, histor
   const spec = await read("PROJECT_SPEC.md");
   const history = spec.indexOf("## 16. Historical Design Boundary");
   assert.ok(history >= 0);
-  for (const term of ["source-plan-authoring", "normal-long-task", "Source Unit", "multi-SFC"]) {
-    const occurrence = spec.indexOf(term);
-    if (occurrence >= 0)
-      assert.ok(occurrence >= history, `${term}: must remain inside explicit history`);
+  const activeSpec = spec.slice(0, history);
+  for (const key of [
+    "source-plan-authoring",
+    "source-plan",
+    "normal-long-task",
+    "source-unit",
+    "multi-sfc",
+  ]) {
+    const policy = retiredSemanticPolicies.find((entry) => entry.key === key);
+    assert.ok(policy, `${key}: missing retired semantic policy`);
+    assert.doesNotMatch(
+      activeSpec,
+      policy.pattern,
+      `${key}: must remain inside explicit history`,
+    );
   }
   for (const file of ["README.md", "packages/ty-context/README.md"]) {
     const content = await read(file);
@@ -1150,11 +1194,44 @@ test("retired semantic census permits only isolated migration, tombstone, histor
       /^## (?:Upgrade And Compatibility|Compatibility And Migration)$/mu,
     );
     assert.ok(compatibility >= 0);
-    assert.ok(
-      content.indexOf("Source Plan") >= compatibility,
-      `${file}: retired name must remain in explicit compatibility history`,
-    );
+    const matches = [...content.matchAll(/\bsource plan\b/giu)];
+    assert.ok(matches.length > 0, `${file}: missing compatibility history`);
+    for (const match of matches)
+      assert.ok(
+        match.index >= compatibility,
+        `${file}: retired name must remain in explicit compatibility history`,
+      );
   }
+});
+
+test("retired semantic patterns catch active case variants without banning current workflow vocabulary", () => {
+  const activePath = "project_context/context.toml";
+  for (const [content, key] of [
+    ["source plan retirement", "source-plan"],
+    ["SOURCE PLAN RETIREMENT", "source-plan"],
+    ["Source Plan stage", "source-plan"],
+    ["source-plan-authoring", "source-plan-authoring"],
+  ])
+    assert.deepEqual(
+      unclassifiedRetiredSemanticKeys(activePath, content),
+      [key],
+      content,
+    );
+
+  assert.deepEqual(
+    unclassifiedRetiredSemanticKeys(
+      activePath,
+      "Stage Gate\ncurrent Stage\nphase measurement",
+    ),
+    [],
+  );
+  assert.deepEqual(
+    unclassifiedRetiredSemanticKeys(
+      "packages/ty-context/src/lib/migrations.ts",
+      "SOURCE PLAN RETIREMENT\nsource-plan-authoring",
+    ),
+    [],
+  );
 });
 
 test("retired planning documents stay ordinary Source without an installed entry", async () => {

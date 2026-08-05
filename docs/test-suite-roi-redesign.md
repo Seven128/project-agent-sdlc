@@ -205,6 +205,7 @@ Fail-safe widening remains required:
 | --- | --- |
 | Known isolated implementation hot spot | Mapped developer tests |
 | Contract/Context/guidance-only change | Relevant static, parity, and Context gates |
+| Deleted direct `tests/ty-context/*.test.mjs`, including a delete-plus-add rename | Complete release regression |
 | Unmapped Long-Task runtime or authority change | Trust Boundary Gate or complete Long-Task suite |
 | Shared package entry point, dependency, build, or unknown package change | Complete release regression |
 | Release/publish workflow change | Complete release regression plus pack/release gates |

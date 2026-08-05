@@ -579,7 +579,7 @@ test("pull-request template changes select workflow policy coverage", () => {
   ]);
 });
 
-test("direct test edits run that test while shared fixture edits widen safely", () => {
+test("direct test edits stay selected while deleted direct tests fail safe to the full suite", () => {
   const direct = selectAffectedTests([
     "tests/ty-context/long-task-context-evolution.test.mjs",
   ]);
@@ -587,6 +587,23 @@ test("direct test edits run that test while shared fixture edits widen safely", 
   assert.deepEqual(direct.tests, [
     "tests/ty-context/long-task-context-evolution.test.mjs",
   ]);
+
+  for (const file of [
+    "tests/ty-context/removed-name.test.mjs",
+    "tests/ty-context/long-task-removed-name.test.mjs",
+  ]) {
+    const deleted = selectAffectedTests([file], {
+      pathExists: () => false,
+    });
+    assert.equal(deleted.mode, "full-suite", file);
+    assert.deepEqual(deleted.tests, [], file);
+    assert.equal(deleted.requires_build, true, file);
+    assert.deepEqual(
+      deleted.reasons,
+      [`${file}:deleted_direct_test_full_suite`],
+      file,
+    );
+  }
 
   const renamed = selectAffectedTests(
     [
@@ -597,14 +614,16 @@ test("direct test edits run that test while shared fixture edits widen safely", 
       pathExists: (file) => !file.endsWith("removed-name.test.mjs"),
     },
   );
-  assert.deepEqual(renamed.tests, [
-    "tests/ty-context/retired-authoring-migration.test.mjs",
-  ]);
+  assert.equal(renamed.mode, "full-suite");
+  assert.equal(renamed.requires_build, true);
+  assert.deepEqual(renamed.tests, []);
   assert.deepEqual(renamed.reasons, [
-    "tests/ty-context/removed-name.test.mjs:deleted_direct_test",
+    "tests/ty-context/removed-name.test.mjs:deleted_direct_test_full_suite",
     "tests/ty-context/retired-authoring-migration.test.mjs:direct_test",
   ]);
+});
 
+test("shared fixture edits retain their existing fail-safe suite routing", () => {
   for (const file of [
     "tests/ty-context/long-task-delivery-fixtures.mjs",
     "tests/ty-context/long-task-semantic-sync-fixture.mjs",
