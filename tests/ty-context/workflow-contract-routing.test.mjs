@@ -982,7 +982,6 @@ const retiredSemanticPolicies = [
       pattern: /source-plan-authoring/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
         /^docs\/design-resource-authoring-implementation-source\.md$/u,
         /^PROJECT_SPEC\.md$/u,
         /^\.work_products\/(?:design-fact-universe-closure|symbolic-denotation-efficiency)\/delivery-contract\.yaml$/u,
@@ -997,8 +996,9 @@ const retiredSemanticPolicies = [
       pattern: /\bsource plan\b/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^packages\/ty-context\/(?:assets\/)?README(?:\.zh-CN)?\.md$/u,
-        /^(?:README|PROJECT_SPEC)\.md$/u,
+        /^README\.md$/u,
+        /^PROJECT_SPEC\.md$/u,
+        /^packages\/ty-context\/(?:assets\/)?README\.md$/u,
         /^docs\/(?:design-resource-authoring-implementation-source|page-level-uiux-authority-design-source)\.md$/u,
         /^tools\/(?:release_tarball_smoke|sync_release_version)\.mjs$/u,
         retiredReleaseHistory,
@@ -1011,7 +1011,6 @@ const retiredSemanticPolicies = [
       pattern: /normal-long-task/iu,
       allowed: [
         /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
         /^PROJECT_SPEC\.md$/u,
         retiredReleaseHistory,
         retiredTestOrFixture,
@@ -1156,6 +1155,7 @@ test("retired semantic census permits only isolated migration, tombstone, histor
     "project_context/architecture.md",
     "project_context/context.toml",
     "project_context/areas/harness-package.md",
+    "project_context/areas/harness-package/implementation-index.md",
     "project_context/areas/harness-package/contracts/workflow-contract.md",
     "project_context/areas/harness-package/decision-rationale/minimal-context.md",
     "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
@@ -1188,7 +1188,11 @@ test("retired semantic census permits only isolated migration, tombstone, histor
       `${key}: must remain inside explicit history`,
     );
   }
-  for (const file of ["README.md", "packages/ty-context/README.md"]) {
+  for (const file of [
+    "README.md",
+    "packages/ty-context/README.md",
+    "packages/ty-context/assets/README.md",
+  ]) {
     const content = await read(file);
     const compatibility = content.search(
       /^## (?:Upgrade And Compatibility|Compatibility And Migration)$/mu,
@@ -1205,22 +1209,26 @@ test("retired semantic census permits only isolated migration, tombstone, histor
 });
 
 test("retired semantic patterns catch active case variants without banning current workflow vocabulary", () => {
-  const activePath = "project_context/context.toml";
-  for (const [content, key] of [
-    ["source plan retirement", "source-plan"],
-    ["SOURCE PLAN RETIREMENT", "source-plan"],
-    ["Source Plan stage", "source-plan"],
-    ["source-plan-authoring", "source-plan-authoring"],
+  for (const activePath of [
+    "project_context/context.toml",
+    "project_context/areas/harness-package/implementation-index.md",
   ])
-    assert.deepEqual(
-      unclassifiedRetiredSemanticKeys(activePath, content),
-      [key],
-      content,
-    );
+    for (const [content, key] of [
+      ["source plan retirement", "source-plan"],
+      ["SOURCE PLAN RETIREMENT", "source-plan"],
+      ["Source Plan stage", "source-plan"],
+      ["source-plan-authoring", "source-plan-authoring"],
+      ["normal-long-task", "normal-long-task"],
+    ])
+      assert.deepEqual(
+        unclassifiedRetiredSemanticKeys(activePath, content),
+        [key],
+        `${activePath}: ${content}`,
+      );
 
   assert.deepEqual(
     unclassifiedRetiredSemanticKeys(
-      activePath,
+      "project_context/context.toml",
       "Stage Gate\ncurrent Stage\nphase measurement",
     ),
     [],
