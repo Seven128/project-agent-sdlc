@@ -42,7 +42,7 @@ Preserve each supplied item's actual role:
 - `current-implementation-evidence`: evidence of current behavior, not desired behavior by default;
 - `background`: product/technical context that informs but does not expand generation scope.
 
-An optional Source Plan is one possible input. Raw notes or an initial proposal are equally valid. Never require one merely to make the other usable.
+An optional pre-existing planning document is one possible input. Raw notes or an initial proposal are equally valid. Never require a special intermediary format merely to make another input usable.
 
 ## 4. Derive development-corresponding coverage
 
@@ -164,7 +164,7 @@ This is an explanatory shape, not a required file or schema. Never paste or para
 - For exploration, stop as soon as the requested decision is supported.
 - For a final-selected formal Web/App implementation handoff, apply the dedicated formal reference's exact stop conditions. Honest `decision_required`, `unavailable` or capability gaps remain blocking; they cannot be called ready or authorize fidelity work.
 
-During iteration, keep accepted, rejected and unresolved implications in a task-local delta buffer. Do not require or emit an interim delta after every iteration and never continuously synchronize the initial proposal. After explicit human selection or explicitly delegated selection, consolidate the buffer once and reconcile only accepted decisions into the initial proposal. If it is a writable file, update it in place while preserving original intent/provenance; otherwise return one complete revised proposal. The operation must be idempotent, name selected artifact locators/hashes and affected stable keys, and exclude rejected/unresolved choices. Never write a Source Plan, Context, `DESIGN.md`, code, tests or Contract.
+During iteration, keep accepted, rejected and unresolved implications in a task-local delta buffer. Do not require or emit an interim delta after every iteration and never continuously synchronize the initial proposal. After explicit human selection or explicitly delegated selection, consolidate the buffer once and reconcile only accepted decisions into the initial proposal. If it is a writable file, update it in place while preserving original intent/provenance; otherwise return one complete revised proposal. The operation must be idempotent, name selected artifact locators/hashes and affected stable keys, and exclude rejected/unresolved choices. Never create another intermediary planning document or mutate Context, `DESIGN.md`, code, tests or Contract.
 
 ## Worked scope examples
 

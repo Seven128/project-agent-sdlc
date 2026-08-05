@@ -73,7 +73,7 @@ ty-context enable long-task
 
 1. **只启用一次 Long-Task。** 选择工作流 Skill 前先运行 `ty-context enable long-task`。
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
-3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过 Source Plan 阶段。
+3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过独立的中间 authoring 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
 5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换之后，请发送【继续】。`。此前任何模型策略文字都不能跳过该边界，Harness 也不能观察模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；只有宿主显式选择精确 `long_task_implementation` 时才把独立有界工作交给它，否则不启动 generic 替代项而由父 Goal 执行。Authority、架构、Context、集成、当前候选检查与正式验证始终由父 Goal 持有。
 
@@ -98,7 +98,7 @@ $long-task-workflow 将 docs/initial-proposal.md、<handoff.md> 以及选定的�
 - **交付前确实需要设计资源：** 按上面的设计优先顺序执行，再根据恢复与完成权威需求，把修订方案、已校验 handoff 和选定的不可变规范资源集合交给默认 Workflow Contract 或 `long-task-workflow`。
 - **只需要设计资源：** 在 `design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
-设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。旧 Source Plan 仍可作为 Source，但不再是推荐中间服务。
+设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。已有计划或提案文档仍是普通 Source，但不再是推荐中间服务。
 
 ## Minimal Context 与默认工作流
 
@@ -245,9 +245,11 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 ### 可选 Design Resource Authoring
 
-只有在用户明确要求生成、迭代、准备独立设计资源、为一段明确开发内容准备设计资源或使用 Open Design 时，才使用 `design-resource-authoring`。输入可以是零散笔记或初始方案、产品/技术方案、专门视觉 brief、截图、已有资源或历史 Source Plan。独立 Source Plan 不是前置项，也不再是推荐中间步骤。
+只有在用户明确要求生成、迭代、准备独立设计资源、为一段明确开发内容准备设计资源或使用 Open Design 时，才使用 `design-resource-authoring`。输入可以是零散笔记或初始方案、产品/技术方案、专门视觉 brief、截图、已有资源或其他已有计划文档。独立的中间 authoring 文档不是前置项，也不再是推荐步骤。
 
 Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
+
+正式首次生成、重大设计修订和关键重新生成使用实时发现后满足工具、视觉/上下文能力、认证与数据边界的最高能力模型，以及该模型实际支持的最高 reasoning effort。排序只能依据 provider 明确的能力等级、推荐替换关系或唯一且有版本依据的 provider-local fallback；不得从价格、模型名、发布时间或列表顺序猜测。多个 eligible model 无法排序时以 `highest_performance_unverified` fail closed；provider 不可控制或不能回报实际 model/effort 时也必须保留同一限定，不能声称已执行最高档。该策略不创建 model registry、scheduler 或持久 routing state。
 
 正式 Web/App implementation output 中，“完整”默认就是上文的范围内最细可观察 Fact 粒度。Skill 在委托生成前先构造 Expected Fact Universe 与冻结 Inspector/Census 义务，把它们连同已采纳 design-system identity 一起传给 Open Design，并要求返回的 canonical source/manifest 表达每个适用 cell；不能等下游实现时才发现或自行补设计 anatomy-part、状态、响应式/平台/text-scale、动效、无障碍或资产事实。
 
@@ -257,15 +259,15 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 面向 Web/App 实现时，Skill 必须取得上文所述完整 canonical entry/dependency set 与可寻址事实。Figma 适合已经存在的设计团队权威，需要原生 Components/Variables/Variants、共享库、Dev Mode 或 Code Connect 的场景；Penpot 适合明确需要开放、自托管多人设计基础设施的场景；OpenPencil 可作为本地静态布局 sidecar，但当前 prototype/motion 模型仍不完整。把完整 Open Design Source 默认转换为另一种表示会增加同步和运维成本，却不会关闭新的 enforcement gap，因此三者都不是默认依赖。
 
-探索模式只做最小完整性检查并尽快展示指定候选，不需要 handoff schema。明确或受托最终选择且资源将进入实现时，Skill 只做一次合并、幂等的初始方案回改，并在任意获准的项目路径按 target 写 provider-neutral、带 Source marker、且只含一个严格 manifest-backed `design-resource-handoff-v1` block 的 Markdown。canonical manifest 保留完整 Inspector/Census/Fact/proof universe；小 YAML 只记录其不可变 resource/target 绑定及 residual 产品/coverage/Source/proposal 含义。共享 preflight 还原同一个完整校验对象，不能把取得不完整、不可寻址、`decision_required`、`unavailable`、证据不成立或过期的输入称为 ready。这里没有固定目录、provider pack 或逐控件一份稿；适配器只是普通 Source，不是 Design Authority 或验收结果。Skill 不会修改 Source Plan、`project_context/**`、`DESIGN.md`、生产代码或 Delivery Contract。
+探索模式只做最小完整性检查并尽快展示指定候选，不需要 handoff schema。明确或受托最终选择且资源将进入实现时，Skill 只做一次合并、幂等的初始方案回改，并在任意获准的项目路径按 target 写 provider-neutral、带 Source marker、且只含一个严格 manifest-backed `design-resource-handoff-v1` block 的 Markdown。canonical manifest 保留完整 Inspector/Census/Fact/proof universe；小 YAML 只记录其不可变 resource/target 绑定及 residual 产品/coverage/Source/proposal 含义。共享 preflight 还原同一个完整校验对象，不能把取得不完整、不可寻址、`decision_required`、`unavailable`、证据不成立或过期的输入称为 ready。这里没有固定目录、provider pack 或逐控件一份稿；适配器只是普通 Source，不是 Design Authority 或验收结果。Skill 不会修改调用方已有计划/提案 Source、`project_context/**`、`DESIGN.md`、生产代码或 Delivery Contract。
 
 实际生成仍由已配置的 Open Design/Product Design、Figma、图片生成、原型工具或人工设计流程负责。这些输出以普通 external Source 进入默认 Workflow 或 Long-Task。candidate 与 inspiration 不授权 fidelity；adopted exact target/constraint 作为 Context-reachable Source，由 owning Context/`DESIGN.md` 把稳定 key 连接到覆盖条件、不可变身份/digest 和 editable upstream owner/locator/update route。`context_uiux_design` 在下游执行 UI Authority Closure，只把耐久事实采纳到 Context/`DESIGN.md`；实现截图与 diff 仍是证据 artifact，不能自我授权为目标。
 
 维护者可以设置 `TY_CONTEXT_OPEN_DESIGN_MCP_COMMAND` 与可选 `TY_CONTEXT_OPEN_DESIGN_MCP_ARGS_JSON`，运行 `npm run smoke:open-design` 做显式启用、只读的 discovery smoke。正常测试使用本地 mock MCP，不依赖 Open Design、登录、付费能力或不确定的设计输出。
 
-### 退役 Source Plan 兼容入口
+### 退役独立 Authoring 兼容
 
-`source-plan-authoring` 不再安装或由 package 管理。升级迁移只删除字节完全等于原 package 指引的副本；同名但已修改的内容保留并要求人工处理，普通 sync 不维护 tombstone 或盲删规则。`long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有 Source Plan 文档仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
+退役的独立 authoring 指针不再安装或由 package 管理。升级迁移只删除字节完全等于原 package 内容的副本；同名但已修改的内容保留并要求人工处理，普通 sync 不维护 tombstone 或盲删规则。`long-task-workflow` 从入口立即打开非权威 Contract Draft，并让完整 input inventory、混合输入综合/细化、稳定 Key、Product Control 级语义、偏好/调研/委托溯源、Source marker/provenance、acceptance/risk 与 Contract 映射在同一循环中收敛。这里的 Control 语义投影不限制另一条选定资源“完整可观察设计事实”清单的粒度。已有计划或提案文档仍是有效普通 Source，但不再创建独立或内部 Source-authoring 阶段、handoff、Schema、Gate、State 或第二份计划。
 
 ## Single-Goal Rolling Delivery
 
@@ -284,7 +286,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 它的证明命题有明确前提：Source 在声明观察粒度下完整且准确，Source→Contract 投影保持语义，所有实际适用单元被展开，且具名项目 Oracle 与 verifier/runtime 可信边界语义正确；在这些前提下，只有 fresh `machine_accepted` 且没有任何待定 External Confirmation 的 `AcceptedDeliveryTerminal` 才严格推出完整声明可观察漂移为空。`machine_accepted_external_pending` 只能推出机器可验证范围内的声明漂移为空，完整交付仍是带限定的未完成状态，Harness 不完成原生 Goal。Harness 会机械强制并冻结其中许多前提，但无法发现未声明要求，也无法自动证明任意项目 Oracle 对现实语义忠实。
 
-原始/修订方案、选定设计资源和混合附件会立即进入一个 Source-bound Contract Draft 循环；完整 input inventory、稳定 Key、Product Control 级含义、选定资源设计事实、acceptance/risk、direct/derived/delegated/evidence-backed 溯源、Source 归属与 Contract 映射一起收敛。声明为 Source 的 Markdown 中，每一行非空文本都必须属于一个 Material `ty-source-item` 块、唯一且通过 schema 校验的 `design-resource-handoff-v1` formal block，或满足封闭语法的 background：`markdown-structure` 只能包含不承载自然语言的锚点/分隔线，`provenance` 只能包含固定 `input`、`mode`、条件式 `source` 与可选 `sha256` 字段的 `ty-source-provenance` 注释；有文字的标题或自由说明字段可能表达权威含义，因此不能放进 background。任意背景说明文字和其他未分类文本都 fail closed。每次交付至少有一个标注 `aspect=architecture` 的 technical obligation Source Item，并映射到可独立证明的架构 obligation。若未知偏好会实质改变调研或选型，Preflight/Compile 成功前必须先询问；标准明确后，有依据的推荐才写入真实 Source，不能只藏在 YAML。方案委托不授权真实高危外部动作；输入冲突、用户保留、偏好缺失或无可靠推荐仍为 `decision_required`。旧 Source Plan 结构本身不构成阻塞。
+原始/修订方案、选定设计资源和混合附件会立即进入一个 Source-bound Contract Draft 循环；完整 input inventory、稳定 Key、Product Control 级含义、选定资源设计事实、acceptance/risk、direct/derived/delegated/evidence-backed 溯源、Source 归属与 Contract 映射一起收敛。声明为 Source 的 Markdown 中，每一行非空文本都必须属于一个 Material `ty-source-item` 块、唯一且通过 schema 校验的 `design-resource-handoff-v1` formal block，或满足封闭语法的 background：`markdown-structure` 只能包含不承载自然语言的锚点/分隔线，`provenance` 只能包含固定 `input`、`mode`、条件式 `source` 与可选 `sha256` 字段的 `ty-source-provenance` 注释；有文字的标题或自由说明字段可能表达权威含义，因此不能放进 background。任意背景说明文字和其他未分类文本都 fail closed。每次交付至少有一个标注 `aspect=architecture` 的 technical obligation Source Item，并映射到可独立证明的架构 obligation。若未知偏好会实质改变调研或选型，Preflight/Compile 成功前必须先询问；标准明确后，有依据的推荐才写入真实 Source，不能只藏在 YAML。方案委托不授权真实高危外部动作；输入冲突、用户保留、偏好缺失或无可靠推荐仍为 `decision_required`。已有计划文档的旧结构本身不构成阻塞。
 
 第一次正式 Compile 成功前，`delivery-contract.yaml` 是同一份非权威 Contract Draft。`long-task-workflow` 从入口开始，跨 Source 细化、仓库/Context 读取、映射和 Preflight 修复持续修改它，不要求一次响应生成完整 Contract。Source 完备性是 Preflight/Compile 的收敛条件，不是前置阶段。不存在单独 Contract Draft Skill、Draft Receipt 或 Authoring State。
 

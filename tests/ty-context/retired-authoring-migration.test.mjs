@@ -28,18 +28,18 @@ const retiredPointerPaths = [
   "packages/ty-context/assets/skills/source-plan-authoring/SKILL.md",
 ];
 
-test("source-plan-authoring is absent while its useful semantics stay in one Draft loop", async () => {
+test("retired standalone authoring is absent while its useful semantics stay in one Draft loop", async () => {
   for (const relative of retiredPointerPaths)
     await assert.rejects(access(path.join(repo, relative)));
 
-  const [profile, sourceAuthoring, longTask, spec, context, readmes, cli] =
+  const [profile, sourceAuthoring, longTask, migrations, context, readmes, cli] =
     await Promise.all([
       read("packages/ty-context/src/lib/profiles.ts"),
       read(
         ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
       ),
       read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
-      read("PROJECT_SPEC.md"),
+      read("packages/ty-context/src/lib/migrations.ts"),
       read(
         "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
       ),
@@ -51,12 +51,12 @@ test("source-plan-authoring is absent while its useful semantics stay in one Dra
       read("packages/ty-context/src/commands/index.ts"),
     ]);
   assert.doesNotMatch(profile, /names\.add\("source-plan-authoring"\)/u);
-  assert.match(sourceAuthoring, /pre-existing Source Plan is simply one possible input/iu);
-  assert.match(sourceAuthoring, /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu);
-  assert.match(longTask, /legacy Source Plan.*same non-authoritative.*Draft/isu);
-  assert.match(spec, /source-plan-authoring.*retired from package management/iu);
+  assert.match(sourceAuthoring, /pre-existing planning or proposal document is simply one possible input/iu);
+  assert.match(sourceAuthoring, /neither an earlier Source-authoring phase nor a standalone intermediary planning stage/iu);
+  assert.match(longTask, /ordinary planning document.*same non-authoritative.*Draft/isu);
+  assert.match(migrations, /remove-source-plan-authoring-skill/iu);
   assert.match(context, /ordinary sync.*no deleted-Skill registry/iu);
-  assert.match(readmes, /legacy Source Plans?(?: documents)? remain.*ordinary Source/iu);
+  assert.match(readmes, /pre-existing planning or proposal document remains ordinary Source|Existing planning\/proposal documents remain ordinary Source/iu);
   assert.match(readmes, /machine.*assurance.*long-task-workflow/isu);
   assert.match(readmes, /default Workflow Contract/iu);
   assert.doesNotMatch(cli, /Install Long-Task Skill, Source Plan pointer/iu);

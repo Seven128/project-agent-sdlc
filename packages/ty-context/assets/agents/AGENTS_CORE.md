@@ -67,14 +67,14 @@ The `F = Implementation Freedom Boundary` keeps implementation order, methods an
 
 Long-Task Anti-Degradation Assurance requires mechanism changes to preserve or strengthen coverage, false-negative resistance, fail-closed Authority and final-snapshot proof before positive net ROI matters. Replacing the controlling purpose requires an explicit project-owner design-purpose decision plus replacement proof.
 
-Tiny Context does not create or restore platform Goals, invoke models, spawn agents, call an App Server, create branches/worktrees, merge, push, open PRs, deploy or manage process trees. `ty-context enable long-task` installs the sole Long-Task Workflow Skill and package-owned lifecycle Hooks; an exact `.codex` root may also receive the optional fixed Codex worker profile. The retired Source Plan pointer is not installed. `design-system-authoring` is explicit-only.
+Tiny Context does not create or restore platform Goals, invoke models, spawn agents, call an App Server, create branches/worktrees, merge, push, open PRs, deploy or manage process trees. `ty-context enable long-task` installs the sole Long-Task Workflow Skill and package-owned lifecycle Hooks; an exact `.codex` root may also receive the optional fixed Codex worker profile. Retired standalone authoring pointers are not installed. `design-system-authoring` is explicit-only.
 
 ## Durable Facts And Generated Surfaces
 
 - Context is intended ownership/boundary/contract truth; code is current implementation truth. Treat disagreement as drift, missing work or stale Context.
 - Long-term facts live only in `project_context/**` or `DESIGN.md`. Selected targets remain Context-reachable Source/verifier inputs; generated screenshots/diffs/logs/raw evidence/runtime state/Receipts do not become Context.
 - Managed `AGENTS.md` blocks, `<harnessRoot>/ty-context-managed/**` and package-managed Skills are generated and sync-overwritten.
-- Explicit upgrades use `context_harness_upgrade`; package sync never imports retired Campaign or development-period authority state.
+- Explicit upgrades use `context_harness_upgrade`; package sync never imports retired orchestration or development-period authority state.
 
 ## Verification
 

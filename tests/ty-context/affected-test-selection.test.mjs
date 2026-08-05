@@ -387,7 +387,7 @@ test("guidance-only changes select static consistency checks", () => {
     "tests/ty-context/long-task-efficiency-design.test.mjs",
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
-    "tests/ty-context/source-plan-authoring-skill.test.mjs",
+    "tests/ty-context/retired-authoring-migration.test.mjs",
     "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
     "tests/ty-context/visual-delivery-guidance.test.mjs",
     "tests/ty-context/workflow-contract-routing.test.mjs",
@@ -586,6 +586,23 @@ test("direct test edits run that test while shared fixture edits widen safely", 
   assert.equal(direct.mode, "selected");
   assert.deepEqual(direct.tests, [
     "tests/ty-context/long-task-context-evolution.test.mjs",
+  ]);
+
+  const renamed = selectAffectedTests(
+    [
+      "tests/ty-context/removed-name.test.mjs",
+      "tests/ty-context/retired-authoring-migration.test.mjs",
+    ],
+    {
+      pathExists: (file) => !file.endsWith("removed-name.test.mjs"),
+    },
+  );
+  assert.deepEqual(renamed.tests, [
+    "tests/ty-context/retired-authoring-migration.test.mjs",
+  ]);
+  assert.deepEqual(renamed.reasons, [
+    "tests/ty-context/removed-name.test.mjs:deleted_direct_test",
+    "tests/ty-context/retired-authoring-migration.test.mjs:direct_test",
   ]);
 
   for (const file of [

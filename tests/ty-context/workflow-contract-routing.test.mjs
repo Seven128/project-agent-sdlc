@@ -147,6 +147,49 @@ test("default Context routing combines manifest candidates with bounded search",
   );
 });
 
+test("default Contract Conformance is material and risk-proportional while Long-Task retains exact closure", async () => {
+  const [workflow, managed] = await Promise.all([
+    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+  ]);
+  const conformance =
+    /## Contract Conformance[\s\S]*?(?=\n## Non-Goals)/u.exec(workflow)?.[0] ?? "";
+  for (const boundary of [
+    /material Source\/Context requirement/iu,
+    /applicable conditions and edge cases/iu,
+    /owner\/source of truth/iu,
+    /failure and recovery boundary/iu,
+    /attributable current-candidate project checks/iu,
+    /checked versus unverified or decision-required scope/iu,
+  ])
+    assert.match(conformance, boundary);
+  assert.match(
+    conformance,
+    /without building a complete semantic-family Census or per-Fact observation\/comparison\/verdict ledger/iu,
+  );
+  assert.doesNotMatch(
+    conformance,
+    /(?:must|required to|requires?)\s+(?:close|enumerate|record|maintain)[^\n]*(?:standard\/custom|semantic-family Census|per-Fact)/iu,
+  );
+
+  const longTask =
+    /## Single-Goal Long-Task Workflow[\s\S]*?(?=\n## Contract Conformance)/u.exec(workflow)?.[0] ?? "";
+  assert.match(
+    longTask,
+    /Expected Semantic Facts[\s\S]*set-equal[\s\S]*current results/iu,
+  );
+  assert.match(longTask, /Authority Lock/iu);
+  assert.match(longTask, /source-recompiled one-snapshot Final Gate/iu);
+  assert.match(
+    managed,
+    /Default work identifies material requirements, conditions, owners and acceptance boundaries at risk-proportional depth/iu,
+  );
+  assert.match(
+    managed,
+    /Long-Task owns the exact non-UI semantic carrier[\s\S]*complete Source inventory\/Census[\s\S]*sole Final-Gate equality/iu,
+  );
+});
+
 test("sparse Context workspace guidance keeps reads expandable and change targets explicit", async () => {
   const [
     managed,
@@ -159,6 +202,7 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     verificationTemplate,
     workflow,
     rationale,
+    longTaskRationale,
     specification,
     readme,
     chineseReadme,
@@ -183,6 +227,9 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     read(
       "project_context/areas/harness-package/decision-rationale/minimal-context.md",
     ),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
     read("PROJECT_SPEC.md"),
     read("README.md"),
     read("README.zh-CN.md"),
@@ -193,7 +240,7 @@ test("sparse Context workspace guidance keeps reads expandable and change target
   ]);
 
   assert.equal(packaged, managed, "package AGENTS Core drift");
-  for (const guidance of [managed, workflow, rationale, specification]) {
+  for (const guidance of [managed, workflow, specification]) {
     assert.match(guidance, /project_context\/workspaces\/<workspace-id>/iu);
     assert.match(guidance, /sparse/iu);
     assert.match(
@@ -216,6 +263,13 @@ test("sparse Context workspace guidance keeps reads expandable and change target
       /task-attributable|paths attributable to the current task/iu,
     );
   }
+  assert.match(rationale, /project_context\/workspaces\/<workspace-id>/iu);
+  assert.match(rationale, /maps one code root through existing manifest fields/iu);
+  assert.match(rationale, /unrepresented code workspaces need no placeholder/iu);
+  assert.match(rationale, /starting set rather than a maximum readable set or access-control boundary/iu);
+  assert.match(rationale, /Read scope answers what must be understood/iu);
+  assert.match(rationale, /intended workspace\/change scope answers what the user authorized/iu);
+  assert.match(rationale, /adds no workspace schema, topology scanner, registry, migration/iu);
   assert.match(
     rootAgents,
     /separate the expandable read scope from the task-local intended workspace/iu,
@@ -230,9 +284,10 @@ test("sparse Context workspace guidance keeps reads expandable and change target
   assert.match(managed, /automatic topology scan/iu);
   assert.match(managed, /duplicate Long-Task scope classifier/iu);
   assert.match(
-    rationale,
-    /Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`/iu,
+    longTaskRationale,
+    /Authority freezes the complete `project_context\/\*\*` graph/iu,
   );
+  assert.match(longTaskRationale, /`F = Implementation Freedom Boundary`/iu);
   assert.match(
     workflow,
     /active Long-Task keeps its existing scope classifier and `scope_escape` owner/iu,
@@ -546,7 +601,7 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     guidance,
     /`ty-context enable long-task` installs the sole Long-Task Workflow Skill and package-owned lifecycle Hooks/iu,
   );
-  assert.match(guidance, /retired Source Plan pointer is not installed/iu);
+  assert.match(guidance, /Retired standalone authoring pointers are not installed/iu);
   assert.match(guidance, /`design-system-authoring` is explicit-only/iu);
 });
 
@@ -774,7 +829,7 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
   assert.match(active, /one complete Contract/);
   assert.match(active, /preflight/);
-  assert.match(active, /delivery-set.*retired and non-executing/is);
+  assert.doesNotMatch(active, /delivery-set/iu);
   assert.match(active, /Final Gate/i);
   assert.match(codexMetadata, /Use \$long-task-workflow/);
   assert.doesNotMatch(codexMetadata, /Use \/long-task-workflow/);
@@ -785,7 +840,7 @@ test("long-task Skill is the only active long-task workflow", async () => {
   const detailedAuthoring = `${sourceAuthoring}\n${contractAuthoring}`;
   assert.match(
     detailedAuthoring,
-    /pre-existing Source Plan is simply one possible input[\s\S]*External design resources authorize fidelity only when they become a selected exact target/is,
+    /pre-existing planning or proposal document is simply one possible input[\s\S]*External design resources authorize fidelity only when they become a selected exact target/is,
   );
   assert.match(detailedAuthoring, /ordinary prose is the Source/is);
   assert.match(
@@ -918,7 +973,191 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
 });
 
-test("retired Source Plans stay ordinary Source without an installed entry", async () => {
+test("retired semantic census permits only isolated migration, tombstone, history, release, and test paths", async () => {
+  const testOrFixture = /^tests\/ty-context\/(?:affected-test-selection|long-task-authority-lifecycle-smoke|long-task-design-context|long-task-profile-hook|long-task-workflow-black-box|orientation-fast-path|retired-authoring-migration|retired-workflow-migration|sync-init-doctor|upgrade|workflow-contract-routing|workflow-test-entrypoints)\.(?:test\.)?mjs$|^tests\/ty-context\/fixtures\/removed-source-plan-authoring-SKILL\.md$/u;
+  const releaseHistory = /^docs\/launch\//u;
+  const policies = [
+    {
+      term: "source-plan-authoring",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
+        /^docs\/design-resource-authoring-implementation-source\.md$/u,
+        /^PROJECT_SPEC\.md$/u,
+        /^\.work_products\/(?:design-fact-universe-closure|symbolic-denotation-efficiency)\/delivery-contract\.yaml$/u,
+        /^tools\/(?:affected_test_selection|release_tarball_smoke|sync_release_version|test_suite_policy)\.mjs$/u,
+        releaseHistory,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "Source Plan",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^packages\/ty-context\/(?:assets\/)?README(?:\.zh-CN)?\.md$/u,
+        /^(?:README|PROJECT_SPEC)\.md$/u,
+        /^docs\/(?:design-resource-authoring-implementation-source|page-level-uiux-authority-design-source)\.md$/u,
+        /^tools\/(?:release_tarball_smoke|sync_release_version)\.mjs$/u,
+        releaseHistory,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "normal-long-task",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^project_context\/areas\/harness-package\/implementation-index\.md$/u,
+        /^PROJECT_SPEC\.md$/u,
+        releaseHistory,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "composite-codex",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "prepare-composite-long-task",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^tools\/release_tarball_smoke\.mjs$/u,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "composite-long-task-workflow",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^tools\/release_tarball_smoke\.mjs$/u,
+        releaseHistory,
+        testOrFixture,
+      ],
+    },
+    {
+      term: "long-task-delivery-v1",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/long-task-delivery-parser\.ts$/u,
+        /^tools\/release_tarball_smoke\.mjs$/u,
+        /^tests\/ty-context\/(?:long-task-delivery-parser|workflow-contract-routing)\.test\.mjs$/u,
+      ],
+    },
+    {
+      term: "V1 repo-local Hook",
+      allowed: [
+        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        testOrFixture,
+      ],
+    },
+    ...["delivery-set", "composite-long-task", "composite-campaign"].map(
+      (term) => ({
+        term,
+        allowed: [
+          /^packages\/ty-context\/src\/commands\/(?:index|composite-long-task|composite-campaign)\.ts$/u,
+          /^packages\/ty-context\/src\/lib\/(?:long-task-verifier-identity|migrations)\.ts$/u,
+          /^(?:README|PROJECT_SPEC)\.md$/u,
+          /^packages\/ty-context\/assets\/README\.md$/u,
+          /^tools\/release_tarball_smoke\.mjs$/u,
+          releaseHistory,
+          testOrFixture,
+        ],
+      }),
+    ),
+    {
+      term: "Source Unit",
+      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+    },
+    {
+      term: "multi-SFC",
+      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+    },
+    {
+      term: "Campaign runtime",
+      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+    },
+    {
+      term: "Packet chain",
+      allowed: [/^PROJECT_SPEC\.md$/u, testOrFixture],
+    },
+  ];
+  const { stdout } = await exec(
+    "git",
+    [
+      "grep",
+      "-Il",
+      ...policies.flatMap(({ term }) => ["-e", term]),
+      "--",
+      ".",
+    ],
+    { cwd: repo, maxBuffer: 4 * 1024 * 1024 },
+  );
+  const matchingFiles = stdout
+    .split(/\r?\n/u)
+    .map((file) => file.trim().replace(/^\.\//u, ""))
+    .filter(Boolean);
+  const contents = new Map(
+    await Promise.all(
+      matchingFiles.map(async (file) => [file, await read(file)]),
+    ),
+  );
+
+  for (const { term, allowed } of policies) {
+    const paths = [...contents]
+      .filter(([, content]) => content.includes(term))
+      .map(([file]) => file);
+    for (const file of paths)
+      assert.ok(
+        allowed.some((pattern) => pattern.test(file)),
+        `${term}: unclassified active residue at ${file}`,
+      );
+  }
+
+  const activeSurfaces = [
+    "AGENTS.md",
+    ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+    ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+    ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
+    "project_context/global.md",
+    "project_context/architecture.md",
+    "project_context/context.toml",
+    "project_context/areas/harness-package.md",
+    "project_context/areas/harness-package/contracts/workflow-contract.md",
+    "project_context/areas/harness-package/decision-rationale/minimal-context.md",
+    "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+  ];
+  const active = (await Promise.all(activeSurfaces.map(read))).join("\n");
+  for (const { term } of policies)
+    assert.equal(active.includes(term), false, `${term}: active routing residue`);
+
+  const historical = await read("docs/design-resource-authoring-implementation-source.md");
+  assert.match(
+    historical.slice(0, 800),
+    /Status:.*dated ordinary Source.*provenance.*not an active Skill/isu,
+  );
+  const spec = await read("PROJECT_SPEC.md");
+  const history = spec.indexOf("## 16. Historical Design Boundary");
+  assert.ok(history >= 0);
+  for (const term of ["source-plan-authoring", "normal-long-task", "Source Unit", "multi-SFC"]) {
+    const occurrence = spec.indexOf(term);
+    if (occurrence >= 0)
+      assert.ok(occurrence >= history, `${term}: must remain inside explicit history`);
+  }
+  for (const file of ["README.md", "packages/ty-context/README.md"]) {
+    const content = await read(file);
+    const compatibility = content.search(
+      /^## (?:Upgrade And Compatibility|Compatibility And Migration)$/mu,
+    );
+    assert.ok(compatibility >= 0);
+    assert.ok(
+      content.indexOf("Source Plan") >= compatibility,
+      `${file}: retired name must remain in explicit compatibility history`,
+    );
+  }
+});
+
+test("retired planning documents stay ordinary Source without an installed entry", async () => {
   const [sourceAuthoring, workflowContext] = await Promise.all([
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/source-authoring.md",
@@ -938,11 +1177,11 @@ test("retired Source Plans stay ordinary Source without an installed entry", asy
   );
   assert.match(
     sourceAuthoring,
-    /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
+    /neither an earlier Source-authoring phase nor a standalone intermediary planning stage/iu,
   );
   assert.match(
     sourceAuthoring,
-    /Do not create a Source Plan schema, CLI, Preflight, Compile, Receipt, cache, authority, state or internal Source-authoring stage/iu,
+    /Do not create an intermediary planning schema, CLI, Preflight, Compile, Receipt, cache, authority, state or internal Source-authoring stage/iu,
   );
   assert.match(
     sourceAuthoring,
@@ -950,7 +1189,7 @@ test("retired Source Plans stay ordinary Source without an installed entry", asy
   );
   assert.match(
     workflowContext,
-    /research proposal, ordinary prose plan, legacy Source Plan or external design resource remains ordinary Source/is,
+    /research proposal, ordinary planning document or external design resource remains ordinary Source/is,
   );
   assert.match(
     workflowContext,

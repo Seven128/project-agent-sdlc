@@ -16,7 +16,7 @@ test("Context authority projection excludes retrieval-only friction without weak
       read("project_context/architecture.md"),
       read("project_context/areas/harness-package/foundation/context-model.md"),
       read(
-        "project_context/areas/harness-package/decision-rationale/minimal-context.md",
+        "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
       ),
       read("docs/long-task-workflow-efficiency.md"),
       read(
@@ -35,9 +35,9 @@ test("Context authority projection excludes retrieval-only friction without weak
     "triggers",
     "read_when",
     "read_policy",
-    "selected delivery-authority structure",
+    "selected delivery-authority projection",
     "selected area",
-    "selected role",
+    "role/dependency structure",
     "scoped Progress",
     "Live Final Gate",
   ])

@@ -25,6 +25,25 @@ Current structured tool names may include `list_agents`, `list_skills`, `list_pl
 
 Functional skills and rendering templates are different registries. Finding `frontend-design` does not prove that a `mobile-app` or `wireframe-mobile-flow` template is installed, and a remembered template ID is not live capability evidence.
 
+## Highest-performance generation selection
+
+Open Design quality takes precedence over model-call price for every formal first generation, every major revision and every final-candidate defect repair that requires material regeneration. A major revision changes the adopted visual direction or design system, cross-surface information architecture, primary interaction model, or enough of the selected canonical source/Fact manifest to invalidate the former candidate. Pure discovery, reads, resource enumeration, metadata queries and review of an already sufficient selected resource do not trigger this policy.
+
+The durable policy is `highest_available_capability + highest_supported_reasoning_effort`, not a permanent model name. Apply it immediately before each applicable run:
+
+1. Discover the live provider/tool schemas and returned agent/model metadata. Determine whether the actual run surface exposes model, reasoning-effort or service-tier inputs and which run/project/result fields can confirm their effective values. Never invent an input or result field that the provider does not expose.
+2. Filter to eligible models before ranking. Eligibility requires every tool, visual/multimodal capability, context capacity, authentication path and data-residency/disclosure boundary required by the commission. An ineligible model cannot win on nominal capability.
+3. Rank eligible models only by the provider's explicit capability order or documented recommended-replacement relation. If that is absent, the sole permitted fallback is one versioned, evidence-linked provider-local mapping owned in this reference; do not duplicate it in the main Skill, Context, README, tests or adapters. Price, model-name shape, publication date, apparent generation number and provider list order are not ranking evidence. This reference currently defines no fallback entries: when live provider evidence cannot order two or more eligible candidates, stop formal generation or major revision with `highest_performance_unverified` instead of guessing.
+4. For the selected model, use its actually declared ordered legal reasoning-effort values and select the highest supported value. Examples such as `max` or `xhigh` illustrate possible highest values; they are not a cross-provider ordering or permanent product vocabulary. If several advertised values cannot be authoritatively ordered, the highest effort is unverified and the applicable generation must fail closed.
+5. Keep service tier distinct from model capability and reasoning effort. Discover and report it when the provider exposes control or provenance, but never use price, latency tier or a service-tier label to rank model capability.
+6. When model selection is controllable, requesting anything below the proved highest eligible model is an invocation error. When reasoning is controllable, requesting anything below the proved highest supported effort is likewise an error. A missing remembered example model is not an error when live evidence selects a different actual highest model.
+7. Compare requested values with the effective model, reasoning effort and service tier reported by the completed run. A mismatch fails the run. If the provider accepts a request but does not expose effective provenance, keep the result `highest_performance_unverified`; do not claim the requested values were used.
+8. If the provider exposes reasoning control but no model control, request the proved highest effort and report that model selection could not be independently enforced. If it exposes neither control nor enough candidates to create an unresolved ranking choice, its current default generation path may be used, but the result remains `highest_performance_unverified`. If it explicitly exposes multiple eligible models and no authoritative order, rule 3 blocks the run.
+
+Capability discovery happens at call time so a provider's new highest model or effort can replace an older example without a Skill edit. This is a provider adapter policy, not a scheduler: create no persistent model registry, routing state, retry loop or cross-provider optimizer. Reduce cost by avoiding unnecessary generations, irrelevant resources and separable revisions, or by reusing a sufficient selected resource—never by lowering the generation model or effort.
+
+Repository tests can prove only that these branches remain distributed in the managed guidance. Only a normalized live provider trace that freezes provider/version, candidate and eligibility metadata, ranking authority, request fields and effective result provenance can prove the model and effort actually used. Without that trace, report the boundary as unverified.
+
 ### Rendering-template discovery compatibility
 
 Prefer, in order:
@@ -56,14 +75,14 @@ Never silently use the provider's default or a different system. A provider-side
 
 ## Structured commission sequence
 
-1. Record provider version, selected agent/model, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live.
+1. Record provider version, selected agent/model, reasoning effort and service tier when exposed, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
 2. Reuse an existing task-local project only when its scope, prior inputs and required design-system binding match; otherwise create a bounded project. For style-bearing work, pass `designSystem` and verify `get_project.designSystemId` before the run.
 3. Start a run with the product-specific commission envelope, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output.
 4. Poll with a bounded cadence. During a long run, report meaningful progress at least once per minute without flooding the user.
 5. Preserve run IDs and the latest provider diagnostic. Support cancellation when the user requests it and the provider exposes it.
 6. Resolve the actual entry explicitly, retrieve the artifact/source, inspect it according to intent and preserve its immutable identity before later iterations or handoff.
 
-Open Design may launch Codex CLI as its configured inner agent. That is provider execution, not recursive invocation of this outer Skill. Do not hardcode a model when the provider can report the current configured model.
+Open Design may launch Codex CLI as its configured inner agent. That is provider execution, not recursive invocation of this outer Skill. Do not hardcode a remembered model when live discovery and authoritative ranking can select the current highest eligible model.
 
 ## Separate three kinds of state
 

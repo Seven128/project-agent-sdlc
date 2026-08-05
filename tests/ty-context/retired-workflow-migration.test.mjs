@@ -38,7 +38,7 @@ Use \`/long-task-workflow\` for one Canonical Delivery Contract, the current pla
 Do not create a preserved-source/checklist pair, target-mode prompt, Local Audit, matrix, verdict or second plan from this compatibility invocation.
 `;
 
-test("normal-long-task is absent and public guidance separates design authoring from Long-Task", async () => {
+test("retired alternate workflow is absent and public guidance separates design authoring from Long-Task", async () => {
   for (const relative of [
     ".codex/ty-context-managed/skills/normal-long-task/SKILL.md",
     ".codex/skills/normal-long-task/SKILL.md",

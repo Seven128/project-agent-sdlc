@@ -1,4 +1,6 @@
-# Page-Level UI/UX Authority Upgrade — Source Plan
+# Page-Level UI/UX Authority Upgrade — Historical Design Source
+
+Status: dated ordinary Source/history. Current product and workflow authority lives in `PROJECT_SPEC.md` and owning `project_context/**`. Legacy mechanism terminology below is retained only as provenance for the completed design change; it is not an active Skill, workflow stage, plan type, Context owner or completion Authority.
 
 <a id="plan-meta"></a>
 ## Plan Metadata
@@ -8,7 +10,7 @@
 - Goal: close the gap between coarse product/UI intent and control-level implementation, acceptance and testing without adding a second product/design authority or a second Long-Task lifecycle.
 - Applies to: Project Tiny Context Harness package, managed Context/Skills/templates, Long-Task Contract semantics, diagnostics, public documentation and affected test suites.
 - Does not apply to: implementing or redesigning Starward itself. Starward is evidence for the problem and a future consumer/pilot, not a target workspace of this delivery.
-- Authority: this document is upstream Source guidance. It is not Context, a Delivery Contract, runtime state or completion proof and must not be registered in `project_context/context.toml`.
+- Boundary: this document is ordinary upstream Source/history. It is not Context, a Delivery Contract, runtime state, current workflow routing or completion proof and must not be registered in `project_context/context.toml`.
 
 <a id="plan-summary"></a>
 ## Executive Decision

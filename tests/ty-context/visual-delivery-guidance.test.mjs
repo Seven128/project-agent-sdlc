@@ -28,9 +28,9 @@ const referenceCopies = (name) =>
     ),
   ]);
 
-test("page-level UI authority Source Plan is indexed without becoming Context", async () => {
+test("page-level UI authority historical design Source is indexed without becoming Context", async () => {
   const [plan, spec, implementationIndex, manifest] = await Promise.all([
-    read("docs/page-level-uiux-authority-source-plan.md"),
+    read("docs/page-level-uiux-authority-design-source.md"),
     read("PROJECT_SPEC.md"),
     read("project_context/areas/harness-package/implementation-index.md"),
     read("project_context/context.toml"),
@@ -48,14 +48,15 @@ test("page-level UI authority Source Plan is indexed without becoming Context", 
   assert.match(plan, /AC-UIAUTH-015/);
   assert.match(
     plan,
-    /not Context, a Delivery Contract, runtime state or completion proof/iu,
+    /not Context, a Delivery Contract, runtime state, current workflow routing or completion proof/iu,
   );
-  assert.match(spec, /docs\/page-level-uiux-authority-source-plan\.md/);
+  assert.match(plan.slice(0, 700), /Status: dated ordinary Source\/history/iu);
+  assert.match(spec, /docs\/page-level-uiux-authority-design-source\.md/);
   assert.match(
     implementationIndex,
-    /docs\/page-level-uiux-authority-source-plan\.md/,
+    /docs\/page-level-uiux-authority-design-source\.md/,
   );
-  assert.doesNotMatch(manifest, /page-level-uiux-authority-source-plan/);
+  assert.doesNotMatch(manifest, /page-level-uiux-authority-design-source/);
 });
 
 test("visual design and implementation guidance reaches every managed copy", async () => {
@@ -277,7 +278,7 @@ test("selected-design Source authority is shared while formal proof levels remai
     rootReadme,
     chineseReadme,
     packageReadme,
-    sourcePlan,
+    designSource,
     longTaskDetail,
   ] = await Promise.all([
     read("PROJECT_SPEC.md"),
@@ -292,7 +293,7 @@ test("selected-design Source authority is shared while formal proof levels remai
     read("README.md"),
     read("README.zh-CN.md"),
     read("packages/ty-context/README.md"),
-    read("docs/design-resource-authoring-source-plan.md"),
+    read("docs/design-resource-authoring-implementation-source.md"),
     Promise.all([
       read(
         ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
@@ -347,15 +348,11 @@ test("selected-design Source authority is shared while formal proof levels remai
   assert.match(handoffContract, /fact_refs/u);
   assert.match(
     globalContext,
-    /formal selected Web\/App handoff[\s\S]*Expected Fact Universe[\s\S]*default route[\s\S]*reports unchecked conditions[\s\S]*Long-Task alone projects the exact Fact\/method universe/iu,
+    /Material selected design remains ordinary Source[\s\S]*Default work opens affected exact targets\/constraints[\s\S]*Long-Task alone projects exact selected-design Fact\/method closure/iu,
   );
-  assert.match(
+  assert.doesNotMatch(
     globalContext,
-    /Material UI follows stable surface\/control\/target keys[\s\S]*each adopted target has one canonical record/iu,
-  );
-  assert.match(
-    globalContext,
-    /sharing engineering-quality, architecture and selected-design obligations across mutually exclusive carriers/iu,
+    /Expected Fact Universe|frozen Inspector|Fact Cell universe/iu,
   );
   assert.match(
     chineseReadme,
@@ -372,16 +369,16 @@ test("selected-design Source authority is shared while formal proof levels remai
   );
   assert.match(chineseReadme, /pixel/iu);
   assert.match(
-    sourcePlan,
+    designSource,
     /Implementation-Source Closure And Provider Selection Amendment/iu,
   );
   assert.match(
-    sourcePlan,
+    designSource,
     /Shared Conformance And Durable UI\/UX Recovery Amendment/iu,
   );
-  assert.match(sourcePlan, /REQ-DRA-054/);
-  assert.match(sourcePlan, /AC-DRA-033/);
-  assert.match(sourcePlan, /Figma[\s\S]*Penpot[\s\S]*OpenPencil/iu);
+  assert.match(designSource, /REQ-DRA-054/);
+  assert.match(designSource, /AC-DRA-033/);
+  assert.match(designSource, /Figma[\s\S]*Penpot[\s\S]*OpenPencil/iu);
 });
 
 test("default workflow routes Design Authority readiness without adding a visual lifecycle", async () => {

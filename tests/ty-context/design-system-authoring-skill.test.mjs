@@ -97,14 +97,14 @@ test("design-system workflow separates provider output, selection, adoption and 
   assert.match(adoption, /Provider mismatch is a synchronization problem/iu);
 });
 
-test("base profile, public docs and Context expose the same design-system boundary", async () => {
-  const [profile, spec, readmes, globalContext, packageSurface, implementation, verification] = await Promise.all([
+test("base profile, public docs and owning Context expose the same design-system boundary", async () => {
+  const [profile, spec, readmes, contextModel, packageSurface, implementation, verification] = await Promise.all([
     read("packages/ty-context/src/lib/profiles.ts"),
     read("PROJECT_SPEC.md"),
     Promise.all([read("README.md"), read("README.zh-CN.md"), read("packages/ty-context/README.md")]).then(
       (items) => items.join("\n"),
     ),
-    read("project_context/global.md"),
+    read("project_context/areas/harness-package/foundation/context-model.md"),
     read("project_context/areas/harness-package/contracts/package-managed-surfaces.md"),
     read("project_context/areas/harness-package/implementation-index.md"),
     read("project_context/areas/harness-package/verification.md"),
@@ -114,8 +114,11 @@ test("base profile, public docs and Context expose the same design-system bounda
     assert.match(content, /design-system-authoring/u);
     assert.match(content, /Open Design/u);
   }
-  assert.match(globalContext, /Material UI[\s\S]*stable surface\/control\/target keys/iu);
-  assert.match(globalContext, /Each adopted target has one canonical record/iu);
+  assert.match(contextModel, /UI Authority Closure[\s\S]*stable surface\/control\/target keys/iu);
+  assert.match(
+    contextModel,
+    /adopted exact target or constraint[\s\S]*exactly one canonical adoption record/iu,
+  );
   assert.match(readmes, /^## Recommended Usage$/mu);
   assert.match(readmes, /^## 推荐用法$/mu);
   assert.match(readmes, /cold start.*never auto-runs/iu);

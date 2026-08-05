@@ -30,7 +30,7 @@ After final selection:
 6. make reruns idempotent by updating the existing decision/reference;
 7. edit the authorized writable initial-proposal file, or return one complete revised proposal when it exists only in conversation.
 
-Never mutate a Source Plan, Context, `DESIGN.md`, Contract, production code or tests. If no selection occurs, return candidates and the pending delta without changing the proposal.
+Never mutate other caller-owned Source, Context, `DESIGN.md`, Contract, production code or tests. If no selection occurs, return candidates and the pending delta without changing the proposal.
 
 Small requests may complete generation, selection and reconciliation in one turn; “once” describes the semantic writeback, not a required pause.
 

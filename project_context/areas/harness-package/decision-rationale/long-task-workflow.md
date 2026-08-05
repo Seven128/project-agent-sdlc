@@ -8,7 +8,7 @@ read_policy: on-demand
 
 Single-Goal Long-Task Workflow exists to prevent false completion inside one complete declared delivery authority. It uses one native Goal, one selected verification workspace, one continuously authored Contract, semantic Outcome boundaries, optional repair-only targeted verification and one current-snapshot Final Gate. It does not own agent, process, model or Git orchestration; a fixed optional Codex worker profile and its boundary Hook are host affordances, not a control plane.
 
-Source-quality rules and Contract Draft authoring form one Source-bound authoring loop, followed by Preflight repair, formal Compile, one terminal-turn host checkpoint, rolling implementation, verification and Final Gate in one `long-task-workflow` lifecycle. `source-plan-authoring` is retired from package management; legacy Source Plans remain ordinary Source.
+Source-quality rules and Contract Draft authoring form one Source-bound authoring loop, followed by Preflight repair, formal Compile, one terminal-turn host checkpoint, rolling implementation, verification and Final Gate in one `long-task-workflow` lifecycle. Pre-existing planning or proposal documents remain ordinary Source; no standalone authoring compatibility route participates in the lifecycle.
 
 The shared Architecture Deliberation and applicable-quality assessment occur during Source/Contract authoring before formal Compile and implementation. Long-Task Final Gate is the sole post-implementation Engineering Quality/Architecture Conformance carrier; no default-workflow closure is nested around it.
 
@@ -152,11 +152,11 @@ The platform-neutral form of this rationale belongs in `PROJECT_SPEC.md`. The We
 
 ## Why Source Authoring Merged Into Long-Task
 
-The earlier separate `source-plan-authoring` boundary existed so an external conversational service could prepare a high-fidelity proposal before Codex. Once external proposal generation moved to the initial-proposal boundary—and selected design resources had to join that proposal—the extra handoff no longer provided independent protection. It added manual intervention, duplicate context transfer and a place to lose design provenance while saving little token cost.
+The earlier separate authoring-service boundary existed so an external conversational service could prepare a high-fidelity proposal before Codex. Once external proposal generation moved to the initial-proposal boundary—and selected design resources had to join that proposal—the extra handoff no longer provided independent protection. It added manual intervention, duplicate context transfer and a place to lose design provenance while saving little token cost.
 
 The useful semantics remain: full mixed-input inventory, direct/derived/delegated/evidence-backed provenance, preference-sensitive research, stable keys, surface/control/state completeness, exact risk facts and falsifiable acceptance. They now live in `long-task-workflow/references/source-authoring.md` as on-demand rules within the same Source-bound Contract Draft loop. A writable initial proposal becomes the real Source; conversation-only input materializes one project-native Source. Draft mapping can begin immediately, while provenance, Source repair and markers converge before Preflight/Compile.
 
-This removes a service boundary without creating a Source schema, Authoring Authority, gate, Receipt, cache or state. Legacy Source Plans remain valid ordinary Source and are never rewritten merely for compatibility. The old Skill pointer is no longer installed: versioned migration removes only its exact former package bytes, preserves modified same-name content for manual review, and normal sync keeps no deleted-Skill registry or blind removal rule. Machine-assurance/recovery/audit requests route to `long-task-workflow`; otherwise the default Workflow Contract applies.
+This removes a service boundary without creating a Source schema, Authoring Authority, gate, Receipt, cache or state. Pre-existing user planning documents remain valid ordinary Source and are never rewritten merely for compatibility. Retired package pointers are no longer installed: versioned migration removes only exact former package bytes, preserves modified same-name content for manual review, and normal sync keeps no deleted-Skill registry or blind removal rule. Machine-assurance/recovery/audit requests route to `long-task-workflow`; otherwise the default Workflow Contract applies.
 
 Keeping Source Authority does not justify keeping Source Authoring as an internal phase. The Contract cannot become the sole owner of missing meaning, but forcing Source completion before opening the Draft adds a serial pass without independent protection. The fail-closed invariant is instead a convergence deadline: real Source, provenance, markers, repository bindings and complete mapping must all be ready before Preflight/Compile.
 
@@ -366,8 +366,8 @@ Progress, status, Receipts and compiled cache are audit/recovery projections. Ca
 - No automatic model switch, model-tier scheduler, model routing state, repeated model checkpoints or persisted checkpoint acknowledgement.
 - No open-ended `platform_impact` flags, manually maintained per-platform progress, or mandatory full runtime rebuild per Outcome/edit. The only target qualification is the Contract's bounded required-target/runtime-family/root binding plus `implementation_complete`, `target_profile_usable` or `production_release_ready` at terminal projection.
 - No persistent `authority_revision_in_progress`, native-Goal completion state, Goal restoration runtime or second semantic completion Gate.
-- No mandatory Source Plan format and no consumer platform-history guidance.
-- No restoration of SFC, Packet, Wave, Campaign, Delivery Set or model/process/Git orchestration.
+- No mandatory intermediary planning format and no consumer platform-history guidance.
+- No restoration of retired staged-orchestration artifacts or model/process/Git orchestration.
 
 ## Known Limits
 

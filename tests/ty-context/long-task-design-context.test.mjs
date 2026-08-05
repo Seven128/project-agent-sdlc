@@ -354,9 +354,6 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   );
 
   for (const surface of [
-    globalContext,
-    architecture,
-    areaRoot,
     workflow,
     rationale,
     authoringSkill,
@@ -366,6 +363,14 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     packageReadme,
   ])
     assert.match(surface, /Implementation Freedom Boundary/iu);
+  for (const summary of [globalContext, architecture, areaRoot])
+    assert.doesNotMatch(summary, /Implementation Freedom Boundary/iu);
+  assert.match(globalContext, /\[Long-Task rationale\]/iu);
+  assert.match(areaRoot, /\[Long-Task Workflow Rationale\]/iu);
+  assert.match(
+    architecture,
+    /Long-Task[\s\S]{0,220}one Contract, one workspace and one Final Gate/iu,
+  );
 
   const executionGuidance = [
     workflow,
@@ -594,7 +599,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   );
   assert.match(
     sourceAuthoring,
-    /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
+    /neither an earlier Source-authoring phase nor a standalone intermediary planning stage/iu,
   );
   assert.match(
     sourceAuthoring,
@@ -626,7 +631,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   assert.match(longTask, /Every .*material input enters.*Draft immediately/iu);
   assert.match(
     sourceAuthoring,
-    /neither an earlier Source-authoring phase nor a standalone Source Plan stage/iu,
+    /neither an earlier Source-authoring phase nor a standalone intermediary planning stage/iu,
   );
   assert.match(
     sourceAuthoring,
@@ -635,7 +640,7 @@ test("Source repair and Contract mapping converge in one Source-bound Draft loop
   assert.match(agents, /loaded Skill[\s\S]*own Source\/Contract authoring/iu);
   assert.match(
     publicReadmes,
-    /(?:legacy|existing) Source Plan(?:s| documents)? remain.*ordinary Source/iu,
+    /pre-existing planning or proposal document remains ordinary Source|Existing planning\/proposal documents remain ordinary Source/iu,
   );
   assert.match(publicReadmes, /initial proposal[\s\S]*Web GPT/iu);
   assert.match(
@@ -803,10 +808,9 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     /machine_accepted_external_pending[\s\S]*MachineVerifiableDeclaredDrift = empty[\s\S]*no full `DeclaredObservableDrift = empty` claim/iu,
   );
   assert.match(rationale, /atomic Claim × applicability × proof surface/iu);
-  assert.match(
-    globalContext,
-    /Preventing false completion[\s\S]*controlling objective[\s\S]*accepted-terminal-state safety/iu,
-  );
+  assert.doesNotMatch(globalContext, /accepted-terminal-state safety/iu);
+  assert.match(globalContext, /\[Long-Task rationale\]/iu);
+  assert.match(rationale, /prevent false completion[\s\S]*accepted-terminal-state safety/iu);
   assert.match(verification, /Long-Task design consistency/iu);
 });
 

@@ -7,7 +7,7 @@ description: Author, preflight, execute, resume, verify, or close one complete S
 
 ## Boundaries
 
-Use one currently selected host execution Goal, one repository, one selected verification workspace, one complete Contract and one Final Gate. This workflow never creates, invokes or manages a scheduler, agent runtime, App Server, branch/worktree fan-out, merge, push, PR, deployment, Campaign/SFC/Packet/Wave chain, matrix, verdict or second Contract plan. The parent Goal owns Source, Contract, Authority, architecture, Context writeback, integration, current-candidate checks, formal verification, Final Gate, close and completion. Harness never allocates, schedules, retries or recovers delegated workers; their reports are not Progress, Evidence or proof, and every result must converge into the selected verification workspace before verification counts. Never activate from task size alone.
+Use one currently selected host execution Goal, one repository, one selected verification workspace, one complete Contract and one Final Gate. This workflow never creates, invokes or manages a scheduler, agent runtime, App Server, branch/worktree fan-out, merge, push, PR, deployment, legacy orchestration chain, matrix, verdict or second Contract plan. The parent Goal owns Source, Contract, Authority, architecture, Context writeback, integration, current-candidate checks, formal verification, Final Gate, close and completion. Harness never allocates, schedules, retries or recovers delegated workers; their reports are not Progress, Evidence or proof, and every result must converge into the selected verification workspace before verification counts. Never activate from task size alone.
 
 That Goal is host/user-selected; Harness does not create, persist or reconnect a Goal identifier. Compaction may continue inside it; a later physical Goal/session restores semantic state through `resume`, not a prior Turn. With a valid binding, run `ty-context long-task resume <workdir>`, then directly load the installed `long-task-workflow` Skill; recovery needs no implicit invocation.
 
@@ -15,7 +15,7 @@ The host/user owns model selection. Exactly one unconditional terminal-turn chec
 
 A Codex-root `long-task` install may expose optional fixed package-owned `long_task_implementation` with child multi-agent disabled. It is static, stateless, non-Authority and post-checkpoint—not a checkpoint option, model route or runtime. Install proves no discovery or selection. If unavailable/invalid/colliding or not exactly selectable, the parent implements; never substitute a generic child or add dynamic tiers, retry or scheduling.
 
-`long-task-delivery-v2` is the only active Contract schema. `delivery-contract.yaml` is the one root authoring file. New authoring uses inline Outcomes; existing `outcome_files` are physical compatibility only. `delivery-set` is retired and non-executing.
+`long-task-delivery-v2` is the only active Contract schema. `delivery-contract.yaml` is the one root authoring file. New authoring uses inline Outcomes; existing `outcome_files` are physical compatibility only. Legacy split-delivery commands are non-executing.
 
 ## Controlling Objective
 
@@ -42,7 +42,7 @@ Do not copy reference detail into another Skill, plan or state file. The same `d
 
 ## Contract Draft And Outcome Decomposition
 
-Every external initial proposal, selected design resource, ordinary prose proposal, legacy Source Plan or other material input enters the same non-authoritative `delivery-contract.yaml` Draft immediately. Inventory, Source-quality synthesis/refinement, provenance, markers, repository binding and Contract mapping converge in one `long-task-workflow` lifecycle and need not be completed in one response. Conversation-only material becomes exactly one project-native Markdown Source. Do not create a Source-authoring phase, standalone Contract Draft Skill, Draft Receipt, Authoring State, draft schema/CLI/runtime state, handoff or second plan.
+Every external initial proposal, selected design resource, ordinary planning document or other material input enters the same non-authoritative `delivery-contract.yaml` Draft immediately. Inventory, Source-quality synthesis/refinement, provenance, markers, repository binding and Contract mapping converge in one `long-task-workflow` lifecycle and need not be completed in one response. Conversation-only material becomes exactly one project-native Markdown Source. Do not create a Source-authoring phase, standalone Contract Draft Skill, Draft Receipt, Authoring State, draft schema/CLI/runtime state, handoff or second plan.
 
 A Draft Outcome is an Outcome before Authority Lock, not a new schema field or runtime entity. Decompose only vertical, independently observable, decidable and target-verifiable results whose dependencies and owner boundary can be stated. `depends_on` and Stage gates express acceptance and intermediate-proof readiness, never implementation permission. Do not split for response/YAML/file length, implementation layer, module/file count, Agent capacity, Worker assignment or desired parallelism.
 

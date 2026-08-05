@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveAffectedChanges } from "./affected_change_discovery.mjs";
@@ -17,7 +18,10 @@ const changes = await resolveAffectedChanges({
   explicitPaths: options.paths,
 });
 const changedPaths = changes.paths;
-const selection = selectAffectedTests(changedPaths, { scope: options.scope });
+const selection = selectAffectedTests(changedPaths, {
+  scope: options.scope,
+  pathExists: (relative) => existsSync(path.join(repository, relative)),
+});
 
 console.log(
   JSON.stringify(

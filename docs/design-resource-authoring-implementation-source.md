@@ -1,4 +1,6 @@
-# Open Design–Backed Design Resource Authoring — Source Plan
+# Open Design–Backed Design Resource Authoring — Historical Implementation Source
+
+Status: dated ordinary Source/history. Current DRA behavior and provider policy live in the canonical package-managed Skill/reference, `PROJECT_SPEC.md` and owning `project_context/**`. Legacy mechanism terminology and provider observations below are retained only with their stated dates as provenance; they are not an active Skill route, workflow stage, plan type, model-selection authority or completion evidence.
 
 <a id="dra-plan-meta"></a>
 ## Plan Metadata
@@ -12,7 +14,7 @@
 - Input-adapter delivery: on 2026-07-24 the user required the selected implementation handoff to become a shared, machine-validatable input for both the default Workflow Contract and Long-Task so implementation, testing and acceptance can completely follow every declared design fact. This amendment owns the provider-neutral `design-resource-handoff-v1` adapter, CLI/Long-Task integration, Context/Skill/public guidance, deterministic tests and one real complex-single-page Open Design workflow smoke. It does not make exploration pay the handoff cost or turn the adapter into Design Authority/acceptance.
 - Implementation-source closure delivery: on 2026-07-24 a read-only audit found that the handoff could hash a resource while accepting fictional locators, broad coverage rows and unconsumed verification-method/blocker declarations. This amendment makes implementation-level source output, complete retrieval, typed locator addressability, applicable-cell coverage and downstream proof lineage fail-closed. It also records Figma/Penpot/OpenPencil as concise optional-provider selection background rather than default conversions.
 - Shared-conformance and durable-recovery delivery: on 2026-07-25 the user required the default lightweight Workflow to approach the same complete selected-design purpose without copying Long-Task cost, required project Context to recover UI/UX facts as accurately as other durable facts, and asked whether shared/default/Long-Task logic would duplicate. This amendment establishes one shared obligation with mutually exclusive carriers, exact ephemeral default accounting, deterministic Design Source Projection, exactly one canonical target adoption record and an optional fresh-agent recovery benchmark. It adds no Long-Task schema/runtime, default state, generic semantic validator or doctor gate.
-- Authority: this document is optional upstream Source/navigation. It is not Context, a Contract Draft, runtime state, Design Authority, selection approval or completion evidence.
+- Boundary: this document is optional ordinary upstream Source/history. It is not Context, a Contract Draft, runtime state, Design Authority, current model-selection policy, selection approval or completion evidence.
 - Research dates: Open Design 2026-07-22; Figma, Penpot and OpenPencil official/project guidance 2026-07-24.
 
 ### Navigation index
@@ -259,7 +261,7 @@ The history therefore shows real maintenance pressure: several default snapshots
 
 ### `IN-DRA-PLAN-001` — Existing page-level UI/UX authority Source Plan
 
-- Repository path: `docs/page-level-uiux-authority-source-plan.md`.
+- Repository path: `docs/page-level-uiux-authority-design-source.md`.
 - Role: approved upstream architecture Source for the already-implemented consumption boundary.
 - Controlling constraints:
   - external design resources remain ordinary Source until reconciled downstream;

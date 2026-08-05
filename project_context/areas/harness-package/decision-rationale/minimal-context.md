@@ -2,121 +2,102 @@
 context_role: decision-rationale
 read_policy: on-demand
 ---
-# Minimal Context And Single-Goal Rationale
+# Minimal Context Rationale
 
-## Decision
+## Decision And Design Purpose
 
-- Keep Minimal Context as the durable project-memory layer and use Single-Goal Rolling Delivery V2: one native Goal, one selected workspace, one complete Contract authority, compiled Source/REQ/CTRL/OBL/AC coverage and verifier-owned Live Final Gate completion.
+Minimal Context is the repository-owned durable project-memory layer. Its stable purpose is:
 
-## Reason
+> At the lowest practical repeated reading, search and maintenance cost, let a new Agent, a different Agent and an Agent continuing after context compaction accurately recover durable project facts that code cannot reliably explain, and let newly established durable facts reach their one correct owner. Context never replaces code, tests, CI, runtime evidence or human acceptance.
 
-- This preserves recovery and false-completion protection while removing scheduler, worker, worktree, persistent model-routing and duplicate-authority mechanisms that do not improve evidence for a single continuing Goal.
+## Rationale
 
-## Why Minimal Context
+The protected admission order is lexicographic:
 
-- Modern coding agents already handle compact requirements, local design, editing, focused tests and repair. Persisting that mutable reasoning as a mandatory document chain adds synchronization cost without proving behavior.
-- The durable value with the clearest return is project-owned intent: goals/non-goals, ownership, architecture/interface/state boundaries and repeatable verification/deployment paths that code alone cannot decide.
-- Context therefore remains the smallest durable fact surface; default execution uses platform-internal planning and project evidence.
+`Effect_new >= Effect_current` and `Effect_new >= DesignPurposeFloor` must hold before efficiency or ROI is compared. A known current gap is repaired rather than frozen as the legal baseline. Among designs that satisfy the purpose and high-quality effect floor, prefer the sufficient design with the lowest known total cost and highest total ROI.
 
-## Why Manifest Routing Uses A Bounded Search Fallback
+## Current Mechanism
 
-- `context.toml` area, role, trigger and read-policy metadata provides a cheap first-pass route, but natural-language task wording can omit or paraphrase the registered trigger. Relying on prompt routing alone can hide a relevant on-demand Context and produce a wrong `Context Delta` judgment.
-- The default Workflow therefore adds one bounded text search over `project_context/**` before `Context Delta`, using only a small set of high-signal task terms such as explicit area/module names and API/schema/state/security/verification/deployment language. Matching files are merged with manifest candidates and then filtered by semantic relevance.
-- The search is intentionally narrow: it does not scan the whole codebase, create a vector index, persist search state or automatically treat every keyword hit as authority. This adds low fixed cost while reducing the most direct trigger-miss path.
+The current recovery and writeback path is:
 
-## Why The Selected Read Set Is Expandable
+`AGENTS startup routing -> core/default Context -> context.toml Area/role/trigger candidates -> one bounded high-signal Context search -> Agent semantic filtering -> dependency-driven widening -> read scope separated from intended change scope -> Context Delta: none|required -> durable change updates one owner before implementation -> final Context drift check`
 
-- Core/default files, manifest candidates and the bounded search optimize the first useful read, not a maximum permitted read. Shared backend rules, cross-client contracts, design authority or an indirect dependency may become relevant only after code inspection.
-- In a monorepo, the default Area should normally contain only repository-common basics at top-level `project_context/areas/**`; workspace-local Context stays `on-demand` unless genuinely near-universal. This prevents one client's facts from becoming every task's fixed startup cost.
-- Hard read isolation is not reliable in a prompt-level Harness and would reject legitimate cross-Area work. Making the full Context graph the global default has the opposite cost: every default-route task pays all repository complexity even when only a small subset matters.
-- The selected design therefore keeps the existing adaptive path: start from the common minimum, read discovered relevant Context, and freely widen as dependencies emerge. `read_policy`, triggers and default selection are retrieval hints rather than access control. This cannot guarantee perfect Agent application, but it stores intended facts in recoverable owners without inventing enforcement that the mechanism does not possess.
+- Core/default files and the default Area are the near-universal starting set, not a complete graph or read ACL.
+- Manifest triggers are low-cost retrieval hints. The bounded search supplements trigger wording and never turns a keyword hit into Authority.
+- Later code or semantic discovery may widen the read set to any relevant Area, shared dependency, `DESIGN.md` or selected Source.
+- Read scope answers what must be understood. Intended workspace/change scope answers what the user authorized this task to modify. Directory placement, Area selection and `read_policy` grant neither permission nor prohibition.
+- Every task chooses exactly one `Context Delta: none|required`. Durable ownership, architecture, interface/API/schema/data, state/recovery, dependency, security, surface responsibility or repeatable verification/deployment change is `required`; a semantics-preserving local repair is `none`.
+- Context owns durable intended truth; code owns current implementation truth; project evidence proves behavior. Missing, unreadable or conflicting controlling Context blocks an unqualified conclusion for the affected scope.
 
-## Why A Sparse Context Workspace Mirror
+## Effect Non-Degradation
 
-- An implementation workspace is an objective code/build/change-target boundary already owned by repository paths and package-manager/build configuration. Durable product and technical Context cannot usefully live inside every code workspace without becoming scattered and harder to recover, so Context remains centralized under `project_context/**`.
-- A monorepo may mirror only Context-bearing implementation workspaces as `project_context/workspaces/<workspace-id>/**`. Each represented Context workspace maps exactly one repository-relative code root through existing `[[areas]].root` and `context`. Inside it, one or more Areas own distinct durable semantic responsibilities for that root.
-- The mapping is deliberately one-way and sparse. Every Context workspace has one code-root referent, but not every npm/Nx/Bazel/Cargo/Maven workspace needs Context. A tooling-only package with no durable non-code fact gets no empty directory, placeholder or manifest entry. Package-manager/build files remain the complete implementation-workspace inventory and Context does not copy that topology.
-- Genuinely cross-workspace, repository-wide, shared and governance meaning remains under top-level `project_context/areas/**`; it is not duplicated into every consuming workspace. A single-workspace or non-monorepo project keeps the existing top-level `areas/**` layout and initialization unchanged.
-- Inputs are existing repository ownership facts, code-root paths and durable semantic ownership. The transformation is only centralized directory placement plus the existing explicit `root -> context` manifest mapping. It adds no `[[workspaces]]`, `workspace`, `owner_area`, `applies_to` or `requires` field, auto-discovery, migration, registry or runtime state.
-- The design avoids an abstract scope layer, exhaustive empty mirrors, scattered Context and universal topology scanning because they add maintenance or a second mental model without improving the durable ownership truth.
+Every Context mechanism or placement change must preserve or strengthen all of these recovery properties:
 
-## Why Read Scope And Change Scope Are Separate
+- project goals and non-goals remain recoverable;
+- product, module, interface, state, verification and deployment owners remain recoverable;
+- relevant on-demand Context cannot silently disappear merely because task wording no longer matches one remembered trigger;
+- bounded search remains a discovery supplement and a keyword match never becomes automatic Authority;
+- the default set remains a starting set rather than a maximum readable set or access-control boundary;
+- reading another Area, workspace or shared dependency never silently authorizes its modification;
+- a multi-workspace task cannot silently choose the wrong sibling product when user/product/path facts remain ambiguous;
+- `Context Delta` distinguishes a durable fact change from a local implementation repair;
+- Context never stores task progress, test-pass claims, delivery completion, raw evidence or temporary state;
+- missing, conflicting, stale or unreadable controlling Context fails closed for the affected conclusion; and
+- a byte target never authorizes deletion, opaque compression or incorrect on-demand placement of a genuinely necessary recovery fact.
 
-- Reading Context answers “what must I understand?”; the intended workspace set answers “which implementation workspace(s) did the user ask to modify?”. Reading a sibling workspace/Area or shared backend is not edit authorization, and omitting it from the initial read set is not an edit prohibition.
-- The concrete failure to intercept is a legal but wrong-client change: a vague “homepage” request can be implemented in a sibling client while dependencies and tests remain valid. Dependency rules cannot detect that intent mismatch.
-- Default work therefore resolves task-local intended workspace(s) from explicit user/product/path/repository facts and fails closed only when those facts still leave more than one materially different sibling target. It asks one concise target question before product edits, never chooses from the default Area, recent edits or generic keyword collisions, and explicitly enumerates every intended workspace plus supporting/shared scope for cross-client work.
-- After implementation, a consumer-provided changed-path/target-scope verifier is the preferred objective extension point. It receives the exact paths attributable to the current task and the intended/supporting envelope; unrelated pre-existing dirty work is not silently charged to the task. Without such a checker, final diff/owner review remains part of Contract and Architecture Conformance. A supporting shared/backend change is allowed when attributable; reading alone never authorizes it. Long-Task already owns expected/supporting/forbidden/unclassified path classification and `scope_escape`, so the default route does not duplicate it.
+Concrete failure example: “modify the home page” may refer to both a mobile and a miniapp workspace. Reading both workspaces is legitimate understanding scope. Editing either one while the intended product remains unresolved is an effect regression even if that client builds and its tests pass. Default work asks one concise target question or relies on explicit product/path facts before product edits.
 
-## Why Design Authority Does Not Split Implicitly
+The Context application boundary stays honest. Repository guidance and static checks can make owners discoverable and detect known structural drift, but they cannot prove that every future Agent correctly understood or applied every fact. Project-native checks and review retain that behavioral boundary.
 
-- Root `DESIGN.md` remains the current shared project Design Authority in both monorepo and non-monorepo layouts. Context workspace placement changes durable fact ownership and discovery, not the canonical visual-system/token/authoring model.
-- A repository that truly needs independent workspace-local design systems also needs deliberate canonical-owner, doctor, authoring, token-source and update-route behavior. Treating a directory as enough would create hidden competing authorities. That capability is a separate future mechanism, not an implicit effect of this workspace mirror.
+## Efficiency Non-Degradation
 
-## Why The Generic Mechanism Stays Light
+After effect and the design-purpose floor are satisfied, protect recurring cost as follows:
 
-- Tiny Context does not add a persisted primary/supporting/forbidden target declaration, workspace registry/schema, automatic package-manager topology scanner, required applicability matrix, orphan/overlap doctor Gate or universal import/path/runtime dependency scanner. Those mechanisms would create new state or a second authority, mis-model consumer-specific semantics, or charge simple projects for a multi-target failure path.
-- Project-specific applicability remains a durable fact when it matters: place it in the owning Area/contract/architecture/`DESIGN.md`, and enforce objective path or dependency boundaries with project-owned checks. A future optional resolver can be considered only after multiple consumers demonstrate a common, low-state contract with stronger coverage and positive total ROI.
-- Single-Area and non-monorepo projects retain the same schema, top-level Area layout, initialization, default selection and validation. Their target-disambiguation check collapses to a no-op unless the repository itself exposes multiple materially different product targets.
+- keep the default file count and byte footprint from growing without a near-universal recovery need;
+- keep low-frequency Hook, worker, exact UI proof, migration and historical mechanism detail in existing on-demand owners;
+- give each durable fact one primary owner and use short summaries or pointers elsewhere;
+- do not copy the complete `PROJECT_SPEC.md` into default Context;
+- add no full-repository default read, vector index, cache, registry or persisted search state;
+- in a monorepo, create Context workspace directories only for code workspaces that actually own durable non-code facts; create no empty mirrors;
+- keep bounded search to a small set of high-signal task terms and widen only from discovered semantic dependencies;
+- require a new default fact to be genuinely near-universal, not merely “possibly useful”; and
+- when default Context exceeds its advisory budget, first remove duplication, wrong placement and retired/history residue rather than compressing away necessary facts.
 
-## Monorepo Anti-Degradation Argument
+Total cost includes default Context bytes, prompt/attention cost, Agent search/tool rounds, authoring, runtime and verification, persisted state, recovery/migration, code/module complexity, test runtime/maintenance, release/consumer adaptation and future change blast radius. Lower cost cannot compensate for reduced recovery, wrong-owner selection or weaker fail-closed behavior.
 
-- The change preserves the prior discovery floor: core/default Context, manifest/trigger candidates, one bounded search and semantic judgment remain required, and later reads are explicitly unconstrained. Workspace placement prioritizes candidates but never becomes an ACL, auto-read-all rule or maximum. No previously readable Context is removed and no full-graph read is imposed.
-- It adds one objective placement/target signal and one rejection path for a known false-negative class: unresolved sibling-product ambiguity can no longer silently select the default or nearest client, and final changed paths can be checked by an existing project oracle. Shared and multi-workspace work remains allowed through explicit targets/supporting scope.
-- Authority and proof boundaries do not weaken. Context still owns intended facts, project tests/review still prove default-route work only within their observed scope, and Long-Task retains its existing full-Context Authority, scope classifier, Final Gate and `F = Implementation Freedom Boundary`.
-- Incremental cost is bounded to an optional directory convention, existing manifest entries, guidance and existing project verification. There is no required schema, empty-directory inventory, migration, persistent state, extra Gate or generic scanner; unambiguous and non-monorepo tasks pay no new behavior cost. Static routing/parity/fixture tests prove distribution and compatibility only. Any claim that Agents actually recall more Context or choose the correct target more often still requires fixed independent fresh-Agent paired runs.
+The sparse Context workspace convention follows the same rule. Each represented `project_context/workspaces/<workspace-id>/**` maps one code root through existing manifest fields and may contain several workspace-local Areas. Cross-workspace/repository facts remain top-level; unrepresented code workspaces need no placeholder. This adds no workspace schema, topology scanner, registry, migration or implicit Design Authority.
 
-## Why Retrieval Metadata Is Not Delivery Authority
+## Admission Of Context Anti-Degradation Changes
 
-- `triggers`, `read_when`, `read_policy`, default selection and unselected manifest nodes change how a future Agent discovers Context; they do not change the meaning of the Context already selected for an active delivery. Freezing them as delivery Authority creates revision and Progress-invalidating work without closing a false-completion path.
-- Referenced Long-Task snapshots therefore hash a canonical projection of selected area ownership, selected role classification and selected dependency closure, plus the selected Context file contents. Those authority-bearing changes remain fail-closed.
-- Retrieval-only edits may preserve scoped Progress, but they do not preserve final acceptance across a changed Git tree. The Live Final Gate still recompiles the final selected authority and verifies the final committed snapshot.
+A new default-read rule, validator, test, benchmark or static sentinel must answer, in order:
 
-## Why A Long-Task Mechanism Still Exists
+1. Which concrete recovery, owner-selection or efficiency regression path does it prevent?
+2. Does an existing trigger, owner placement, bounded search, validator or project check already cover that path?
+3. Can a lighter owner-local change close it before adding a default rule or new execution entry?
+4. Is a new test file, tool or benchmark genuinely necessary, or can an existing table-driven consistency check carry the independent invariant?
+5. What fixed cost does it add to every task, CI run, consumer, migration and future change?
+6. Does its benefit exceed implementation, runtime, maintenance and migration cost?
+7. Among known effect-equivalent designs, is it the lowest-total-cost sufficient choice?
 
-- Long work is vulnerable to delivery drift across pauses, compaction and repair loops. Prompt discipline alone cannot stop a model from treating partial or stale evidence as complete.
-- The minimum high-value mechanism is one canonical intent/acceptance source plus verifier-owned same-snapshot completion and freshness. This catches cheap authoring errors before implementation and prevents historical proof splicing without externalizing the entire execution process.
-- Risk-proportional proof avoids making ordinary multi-file work pay security/migration/full-population ceremony while preventing risky work from silently choosing weak evidence.
+New validation must never turn Context into product-quality evidence. Static wording/string checks prove routing, distribution or structure only. Add or extend the existing fresh-Agent benchmark only when real Agent recall, intended owner/workspace selection, `Context Delta` behavior or total cost needs conclusion-grade evidence. Benchmark tasks, host/model/tools/settings, baseline/candidate identity, hidden oracle and repeated paired runs must be frozen before execution; without normalized traces, report only static continuity and boundaries.
 
-## Why Single Goal And Rolling Frontier
+These principles add no Anti-Degradation Matrix, registry, state, second `Context Delta`, Contract, Authority, Gate, workflow route or generic scanner.
 
-- Physical Goal/Turn lifecycle is a platform concern. Reimplementing it in Harness creates duplicate recovery authority and process orchestration that cannot improve product proof.
-- Outcome dependencies describe acceptance and intermediate-proof readiness, not implementation scheduling. The rolling Frontier localizes verification and repair but never gates edits, so the current native Goal can adapt file/function/test order and targeted-feedback cadence to current code without freezing a speculative technical DAG.
-- One selected verification workspace removes branch/worktree/integration recovery and combined-gate machinery from the core. Users or the platform may explicitly use native delegation/Git parallelism as implementation means, but Harness does not create or recover it, and all accepted output converges into that workspace.
+## Placement And Update Boundary
 
-## Why One Host Model-Change Checkpoint Returns
+- This file completely owns Minimal Context purpose, mechanism rationale, effect/efficiency non-degradation and change admission.
+- `foundation/context-model.md` owns normative vocabulary and current structure.
+- `project_context/architecture.md` owns the minimum component and data-flow map.
+- `project_context/global.md` and the default Area keep only near-universal recovery summaries and pointers.
+- `implementation-index.md` and `verification.md` own current code/test navigation.
+- Single-Goal, Authority, model-checkpoint, Final-Gate and retired Long-Task architecture rationale belongs only in `decision-rationale/long-task-workflow.md`.
 
-- The host and user still own model selection; Harness cannot switch models. However, the first Authority Lock creates a useful economic boundary: Source, Contract, Context, risk and executable acceptance are now frozen, so the execution model can be chosen with materially lower drift risk than during authoring.
-- Compile therefore emits one unconditional pre-implementation terminal-turn boundary. The Agent asks the user to handle the model change in the host and send `【继续】`/`[continue]`; an earlier task-specific model statement cannot skip it, and Harness neither observes nor verifies whether a change occurred.
-- The checkpoint occurs only once, after the first Authority Lock. Later revisions do not repeat it, ordinary continuation resumes execution, and no acknowledgement file, model route, scheduler or checkpoint state is persisted. This preserves the cost benefit without recreating model orchestration.
+Retrieval metadata is not delivery Authority. Trigger/read-policy edits may change future discovery without changing selected Context meaning. Long-Task owns its existing Context authority projection and full-current-snapshot proof; the default route does not duplicate it.
 
-## Why One Delivery Contract
+## Stable Anti-Goals And Evidence Limits
 
-- Product, stable Technical Boundary and Acceptance are distinct logical concerns but do not need separate files or a handwritten Requirement/PI/Obligation/Binding/AC/Proof/Spec namespace.
-- Nesting Outcomes and Checks lets the compiler generate deterministic ids and bottom-up graphs. The Contract stays readable, revisable through normal Git history and free of duplicate semantic projections.
-- A single coverage review can catch missing observable outcomes, control states, failure paths, non-completing results, technical boundaries and proof. No structural chain can prove the user omitted nothing; the workflow states that limitation honestly.
-
-## Why Targeted And Final Verification Differ
-
-- Targeted verify is fast feedback for the current Frontier, so it may cache current-snapshot status but cannot authorize completion.
-- Final Gate reruns every required global/Outcome Check on one fresh snapshot. Equal execution identity can deduplicate work inside that Gate, while history is never reused.
-- Stop and close close post-gate drift by recompiling source authority and executing the Live Final Gate; stored Receipts are audit-only.
-
-## Retired Architecture Rationale
-
-- The former multi-SFC campaign architecture externalized Source Unit inventory, Scope Fit, Packets, worker/model attempts, waves, worktrees, integration and finalization. Those mechanisms solved orchestration boundaries that the new core deliberately does not own.
-- Their marginal complexity exceeded the value required for one native Goal in one workspace. They are removed from active runtime rather than kept as speculative dead code.
-- Historical user files are preserved because deletion or automatic semantic migration cannot establish their new authority. Lightweight CLI tombstones give a safe English migration path without importing the retired runtime.
-
-## Stable Anti-Goals
-
-- Do not restore stages, thick plan/result documents, Source/SFC/Packet/Wave/Campaign state, agent/process/Git orchestration or persistent model routing as default or long-task runtime.
-
-## Why Bundle Remains And Delivery Set Is Retired
-
-- Physical authoring capacity does not create a product boundary, so a large atomic task uses Outcome fragments under one logical Contract.
-- A user-selected delivery is never split into top-level Contracts. Independently decidable results are Outcomes under the same Contract and one Final Gate; a later independent user delivery starts its own separate invocation rather than a Delivery Set or in-task split.
-- Authority Lock, immutable initial base and scoped progress close execution-side weakening, baseline washing and last-result-wins paths without introducing a scheduler or lifecycle.
-- Do not make Context-first order/internal planning a validator gate.
-- Do not let command exit, model prose, handwritten status, targeted passes or historical runs create accepted authority.
-- Do not claim hostile-host security, complete requirement discovery, platform Goal observation or token/model-call accounting.
-- Keep product quality with tests/CI/browser/runtime/data proof and human acceptance.
+- Do not restore thick plan/result documents, stage artifact chains, agent/process/Git orchestration or persistent model routing as Context behavior.
+- Do not make Context-first edit order, full-graph reading, a byte ceiling or an internal plan into a validator Gate.
+- Do not claim complete requirement discovery, hostile-host security, Agent adherence or product correctness from Context.
+- Do not store tests, runtime output, screenshots, receipts, logs, secrets or completion claims in Context.
+- Keep necessary durable facts readable even when an advisory footprint warning remains.

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { runOpenDesignMcpDiscoverySmoke } from "../../tools/open_design_live_smoke.mjs";
@@ -6,6 +7,58 @@ import { runOpenDesignMcpDiscoverySmoke } from "../../tools/open_design_live_smo
 const fixture = fileURLToPath(
   new URL("./fixtures/mock-open-design-mcp.mjs", import.meta.url),
 );
+const providerGuidance = fileURLToPath(
+  new URL(
+    "../../.codex/ty-context-managed/skills/design-resource-authoring/references/open-design-provider.md",
+    import.meta.url,
+  ),
+);
+
+test("highest-performance guidance distributes every selection boundary without claiming runtime proof", async () => {
+  const guidance = await readFile(providerGuidance, "utf8");
+  const cases = [
+    [
+      "eligible models are filtered before authoritative highest selection",
+      /Filter to eligible models before ranking[\s\S]*provider's explicit capability order or documented recommended-replacement relation/iu,
+    ],
+    [
+      "reasoning-only control selects the highest declared effort and qualifies model control",
+      /exposes reasoning control but no model control[\s\S]*request the proved highest effort[\s\S]*model selection could not be independently enforced/iu,
+    ],
+    [
+      "a missing remembered example yields to the real discovered highest model",
+      /missing remembered example model is not an error[\s\S]*different actual highest model/iu,
+    ],
+    [
+      "multiple eligible but unrankable models fail closed",
+      /cannot order two or more eligible candidates[\s\S]*highest_performance_unverified[\s\S]*instead of guessing/iu,
+    ],
+    [
+      "an uncontrollable or unobservable run stays explicitly unverified",
+      /exposes neither control[\s\S]*default generation path may be used[\s\S]*highest_performance_unverified/iu,
+    ],
+    [
+      "request-effective mismatch fails",
+      /Compare requested values with the effective model[\s\S]*A mismatch fails the run/iu,
+    ],
+    [
+      "ordinary reads do not trigger generation selection",
+      /Pure discovery, reads, resource enumeration, metadata queries[\s\S]*do not trigger this policy/iu,
+    ],
+  ];
+  for (const [name, pattern] of cases)
+    assert.match(guidance, pattern, name);
+
+  assert.match(
+    guidance,
+    /Price, model-name shape, publication date[\s\S]*provider list order are not ranking evidence/iu,
+  );
+  assert.match(guidance, /currently defines no fallback entries/iu);
+  assert.match(
+    guidance,
+    /Repository tests can prove only[\s\S]*Only a normalized live provider trace[\s\S]*prove the model and effort actually used/iu,
+  );
+});
 
 test("Open Design discovery transport verifies capabilities without provider mutations", async () => {
   const result = await runOpenDesignMcpDiscoverySmoke({

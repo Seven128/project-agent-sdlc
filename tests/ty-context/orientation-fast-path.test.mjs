@@ -10,7 +10,7 @@ const root = path.resolve(
 );
 const read = (relative) => readFile(path.join(root, relative), "utf8");
 
-test("orientation Context exposes Single-Goal Rolling Delivery authority", async () => {
+test("orientation Context exposes the three capabilities and routes detailed authority on demand", async () => {
   const [global, architecture, manifest, area, model, workflow, quality] =
     await Promise.all([
       read("project_context/global.md"),
@@ -30,18 +30,19 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
     global,
     /Minimal Context.*Workflow Contract.*Long-Task Workflow/s,
   );
-  assert.match(global, /default Workflow Contract[\s\S]{0,220}prompt-level/iu);
+  assert.match(global, /prompt-level[\s\S]{0,80}default Workflow Contract|default Workflow Contract[\s\S]{0,220}prompt-level/iu);
   assert.match(global, /Context Delta: none\|required/);
-  assert.match(global, /Single-Goal Rolling Delivery/);
-  assert.match(global, /one complete Contract authority/);
-  assert.match(global, /not a Harness-persisted Goal ID/iu);
+  assert.match(global, /Single-Goal Long-Task Workflow/);
+  assert.match(global, /one complete Contract/iu);
+  assert.match(global, /machine completion authority/iu);
+  assert.match(global, /Effect and the high-quality design-purpose floor precede cost/iu);
   assert.match(
     architecture,
-    /currently selected host execution Goal[\s\S]*later physical Goal\/session restores semantic state/iu,
+    /Harness does not own host Goal\/Turn lifecycle, model selection, general agent\/process scheduling/iu,
   );
-  assert.match(architecture, /Product, Technical Boundary and Acceptance/);
-  assert.match(architecture, /same-snapshot Live Final Gate/);
-  assert.match(architecture, /Evidence Kernel/);
+  assert.match(architecture, /one Source-bound Contract Draft/iu);
+  assert.match(architecture, /source-recompiled one-snapshot Final Gate/iu);
+  assert.match(architecture, /Detailed contracts, current implementation owners, proof routes and rationale are selected on demand/iu);
 
   assert.match(manifest, /id = "harness-package"/);
   assert.match(manifest, /role = "foundation"/);
@@ -55,6 +56,7 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
   assert.match(area, /Role Context Map/);
   assert.match(area, /Engineering Quality Rationale/);
   assert.match(global, /Engineering quality rationale/);
+  assert.match(area, /Low-frequency host adapters, exact proof machinery, migrations and history remain in existing on-demand Context/iu);
 
   assert.match(model, /`project_context\/\*\*` is authoritative/);
   assert.match(model, /Code is current implementation evidence/);
@@ -88,6 +90,44 @@ test("orientation Context exposes Single-Goal Rolling Delivery authority", async
     /Final Gate is the only Long-Task `Engineering Quality Conformance` and `Architecture Conformance` carrier/iu,
   );
   assert.doesNotMatch(workflow, /Plan Validator Boundary/);
+});
+
+test("Minimal Context owns complete effect-first anti-degradation while defaults stay summary-only", async () => {
+  const [minimal, global, architecture, area, longTask] = await Promise.all([
+    read("project_context/areas/harness-package/decision-rationale/minimal-context.md"),
+    read("project_context/global.md"),
+    read("project_context/architecture.md"),
+    read("project_context/areas/harness-package.md"),
+    read("project_context/areas/harness-package/decision-rationale/long-task-workflow.md"),
+  ]);
+  for (const heading of [
+    "Decision And Design Purpose",
+    "Current Mechanism",
+    "Effect Non-Degradation",
+    "Efficiency Non-Degradation",
+    "Admission Of Context Anti-Degradation Changes",
+  ])
+    assert.match(minimal, new RegExp(`^## ${heading}$`, "mu"));
+  assert.match(
+    minimal,
+    /Effect_new >= Effect_current[\s\S]*Effect_new >= DesignPurposeFloor/iu,
+  );
+  assert.match(
+    minimal,
+    /“modify the home page”[\s\S]*mobile and a miniapp workspace[\s\S]*Editing either one.*effect regression/isu,
+  );
+  assert.match(minimal, /Static wording\/string checks prove routing, distribution or structure only/iu);
+  assert.match(minimal, /fresh-Agent benchmark[\s\S]*normalized traces/iu);
+  assert.doesNotMatch(minimal, /^## .*Authority|^## .*Final Gate|^## .*Model Checkpoint/mu);
+  assert.match(longTask, /Authority/iu);
+  assert.match(longTask, /Final Gate/iu);
+  assert.match(longTask, /terminal-turn host checkpoint/iu);
+
+  for (const summary of [global, architecture, area]) {
+    assert.match(summary, /Minimal Context rationale/iu);
+    assert.doesNotMatch(summary, /symlink-safe|atomic rename|SubagentStart|PreToolUse/iu);
+    assert.doesNotMatch(summary, /symbolic_noninterference|Fact Rule|certificate result/iu);
+  }
 });
 
 test("managed guidance and package assets share current routing", async () => {

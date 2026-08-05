@@ -346,7 +346,11 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
   );
   assert.match(
     combined,
-    /Never mutate a Source Plan,[\s\S]{0,100}(?:`project_context\/\*\*`|Context)[\s\S]{0,100}`DESIGN\.md`[\s\S]{0,100}Contract[\s\S]{0,100}production code or tests/iu,
+    /never rewrite caller-owned Source except for the one explicitly selected proposal reconciliation/iu,
+  );
+  assert.match(
+    combined,
+    /Never mutate `project_context\/\*\*`, `DESIGN\.md`, a Delivery Contract, production code or tests/iu,
   );
 });
 
@@ -462,7 +466,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
 test("Source, specification, Context and public docs expose the new resource contract", async () => {
   const [plan, factCompleteness, spec, contexts, readmes, profile, manifest] =
     await Promise.all([
-      read("docs/design-resource-authoring-source-plan.md"),
+      read("docs/design-resource-authoring-implementation-source.md"),
       read("docs/design-fact-completeness.md"),
       read("PROJECT_SPEC.md"),
       Promise.all([
@@ -604,7 +608,7 @@ test("Source, specification, Context and public docs expose the new resource con
   assert.match(manifest, /proposal reconciliation/u);
   assert.doesNotMatch(
     manifest,
-    /docs\/design-resource-authoring-source-plan\.md/u,
+    /docs\/design-resource-authoring-implementation-source\.md/u,
   );
 });
 

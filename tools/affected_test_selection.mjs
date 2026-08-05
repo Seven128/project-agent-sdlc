@@ -737,6 +737,7 @@ assertHotspotTestFanoutBudget(HOTSPOT_TESTS);
 
 export function selectAffectedTests(changedPaths, options = {}) {
   const scope = options.scope ?? "auto";
+  const pathExists = options.pathExists ?? (() => true);
   if (scope === "all") return plan("full-suite", [], true, ["scope:all"]);
   if (scope === "trust")
     return plan("trust-boundary", [], true, ["scope:trust"]);
@@ -774,8 +775,10 @@ export function selectAffectedTests(changedPaths, options = {}) {
 
     if (file.startsWith(`${TEST_ROOT}/`)) {
       if (file.endsWith(".test.mjs")) {
-        tests.add(file);
-        reasons.push(`${file}:direct_test`);
+        if (pathExists(file)) {
+          tests.add(file);
+          reasons.push(`${file}:direct_test`);
+        } else reasons.push(`${file}:deleted_direct_test`);
       } else {
         const suite = path.basename(file).startsWith("long-task-")
           ? "long-task-suite"
@@ -877,7 +880,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
       tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("package-source.test.mjs"));
-      tests.add(testPath("source-plan-authoring-skill.test.mjs"));
+      tests.add(testPath("retired-authoring-migration.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
       tests.add(testPath("workflow-contract-routing.test.mjs"));
       reasons.push(`${file}:managed_guidance`);
@@ -890,7 +893,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
       tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
-      tests.add(testPath("source-plan-authoring-skill.test.mjs"));
+      tests.add(testPath("retired-authoring-migration.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
       tests.add(testPath("validators.test.mjs"));
       reasons.push(`${file}:project_context`);
@@ -908,7 +911,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
       tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("package-source.test.mjs"));
-      tests.add(testPath("source-plan-authoring-skill.test.mjs"));
+      tests.add(testPath("retired-authoring-migration.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
       reasons.push(`${file}:public_design_surface`);
       continue;
@@ -932,14 +935,14 @@ export function selectAffectedTests(changedPaths, options = {}) {
     }
 
     if (file.endsWith(".md") || file.startsWith("docs/")) {
-      if (file === "docs/design-resource-authoring-source-plan.md")
+      if (file === "docs/design-resource-authoring-implementation-source.md")
         tests.add(testPath("design-system-authoring-skill.test.mjs"));
-      if (file === "docs/design-resource-authoring-source-plan.md")
+      if (file === "docs/design-resource-authoring-implementation-source.md")
         tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
       tests.add(testPath("long-task-efficiency-design.test.mjs"));
       tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
-      tests.add(testPath("source-plan-authoring-skill.test.mjs"));
+      tests.add(testPath("retired-authoring-migration.test.mjs"));
       reasons.push(`${file}:documentation`);
       continue;
     }

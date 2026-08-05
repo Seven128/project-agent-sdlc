@@ -9,7 +9,7 @@ Commission the smallest sufficient resource set for the user's explicit output/d
 
 ## Hard boundaries
 
-- A raw proposal, plan, brief, screenshot or existing resource is valid input. Never require, create, invoke, regenerate or edit a Source Plan.
+- A raw proposal, plan, brief, screenshot or existing resource is valid input. Never require or create a special intermediary planning format, and never rewrite caller-owned Source except for the one explicitly selected proposal reconciliation.
 - The explicit output/development scope is a hard ceiling. Necessary surrounding context may orient the slice but cannot expand it.
 - Candidates are ordinary external Source. They do not select themselves, become `exact-target`, update `DESIGN.md`/Context or prove implementation acceptance.
 - Keep candidate effects in a task-local buffer. Only after explicit selection or explicitly delegated selection may accepted decisions be reconciled once and idempotently into the initial proposal; never write rejected/unresolved meaning as accepted.
@@ -32,8 +32,8 @@ Commission the smallest sufficient resource set for the user's explicit output/d
 3. Classify the commission `style-bearing` or `non-fidelity`. Style-bearing means high fidelity/brand/visual direction/typography/color/density/component treatment/production-style prototype. IA/flow topology, low-fidelity structure and semantics-only state studies are non-fidelity.
 4. For style-bearing work, read configured Design Authority and its exact-value token source. If unconfigured, stop before provider project/run creation and route the user to explicit `$design-system-authoring`; never invoke it automatically. Non-fidelity work remains allowed.
    A combined explicit request authorizes running `$design-system-authoring` first and then resuming this Skill.
-5. Discover only the live provider capabilities needed by the bounded commission. Give every considered resource one disposition—`selected`, `optional`, `not-needed`, `unavailable` or `decision-required`—with a reason. Ask only when a missing preference materially changes the result.
-6. Bind style-bearing provider work to the adopted design-system identity, send only the scoped product/resource commission and keep provider execution, artifact readiness, design suitability, final selection and authority adoption distinct.
+5. Discover only the live provider capabilities needed by the bounded commission. For a formal generation, major revision or critical regeneration, apply the provider reference's `highest_available_capability + highest_supported_reasoning_effort` policy and fail closed when eligible candidates cannot be authoritatively ranked; never infer rank from price, name, release date or list order, and never claim an effective model/effort the run cannot confirm. Give every considered resource one disposition—`selected`, `optional`, `not-needed`, `unavailable` or `decision-required`—with a reason. Ask only when a missing preference materially changes the result.
+6. Bind style-bearing provider work to the adopted design-system identity, send only the scoped product/resource commission and keep provider execution, model-selection verification, artifact readiness, design suitability, final selection and authority adoption distinct.
 7. Iterate within scope. Exploration returns a visible candidate after minimal sanity review. Do not burden it with handoff schema, hashes, complete Fact closure or downstream validation.
 8. After final selection, preserve immutable identity and editable-upstream provenance; reconcile accepted proposal effects once. If an implementation handoff was requested, use the applicable downstream reference—and the formal reference only for selected Web/App targets.
 

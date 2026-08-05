@@ -1,12 +1,12 @@
 # Source-Bound Draft Input Reference
 
-Read this alongside `contract-authoring.md` when raw, mixed, attachment-heavy or incomplete inputs need Source-quality repair while the same Contract Draft is being mapped. Inputs enter the Draft immediately; this reference is neither an earlier Source-authoring phase nor a standalone Source Plan stage or second lifecycle.
+Read this alongside `contract-authoring.md` when raw, mixed, attachment-heavy or incomplete inputs need Source-quality repair while the same Contract Draft is being mapped. Inputs enter the Draft immediately; this reference is neither an earlier Source-authoring phase nor a standalone intermediary planning stage or second lifecycle.
 
 ## Objective and boundary
 
 Preserve every material user, product, technical, visual and acceptance constraint from the initial/revised proposal and supplied resources. Add only traceable necessary derivations, defensible delegated choices and evidence-backed repository facts. Make the real Source understandable without the original conversation before Preflight/Compile, while allowing Draft decomposition and repository binding to proceed incrementally.
 
-Do not create a Source Plan schema, CLI, Preflight, Compile, Receipt, cache, authority, state or internal Source-authoring stage. Contract YAML cannot become the sole owner of a choice or missing semantic. Do not let current implementation silently redefine intent. A pre-existing Source Plan is simply one possible input.
+Do not create an intermediary planning schema, CLI, Preflight, Compile, Receipt, cache, authority, state or internal Source-authoring stage. Contract YAML cannot become the sole owner of a choice or missing semantic. Do not let current implementation silently redefine intent. A pre-existing planning or proposal document is simply one possible input.
 
 ## Input inventory
 
