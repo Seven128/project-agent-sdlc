@@ -54,6 +54,14 @@ const trustedPublishWorkflow = readFileSync(
   path.join(repoRoot, ".github/workflows/npm-publish.yml"),
   "utf8",
 );
+const trustedPublishPrepareJob = trustedPublishWorkflow.match(
+  /jobs:\s*\r?\n  prepare:[\s\S]*?\r?\n  publish:/u,
+)?.[0];
+assert.ok(trustedPublishPrepareJob, "trusted publish prepare job must exist");
+assert.match(
+  trustedPublishPrepareJob,
+  /actions\/checkout@[a-f0-9]{40}[\s\S]*?fetch-depth: 0/u,
+);
 assert.match(
   trustedPublishWorkflow,
   /npm test --workspace project-tiny-context-harness/u,
