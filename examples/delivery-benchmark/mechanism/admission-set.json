@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-fresh-agent-admission-v2",
-  "frozen_at": "2026-08-07T00:20:22+08:00",
+  "frozen_at": "2026-08-07T02:23:04+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
@@ -15,7 +15,7 @@
     "codex_cli": "codex-cli 0.144.5",
     "timeout_ms": 240000
   },
-  "pairing_method": "Fresh ephemeral sessions with no shared conversation or run directory. Odd quality replicates use baseline then candidate; even quality replicates reverse order. DRA simple-path order is the opposite of its quality order.",
+  "pairing_method": "Fresh ephemeral sessions with no shared conversation or run directory. Odd quality replicates use baseline then candidate; even quality replicates reverse order. DRA simple-path order is the opposite of its quality order. Raw pair ratios remain diagnostic; the controlling simple-path median compares baseline and candidate medians within invocation positions one and two, then takes the median of those two overheads. Both variants must appear in both positions.",
   "trace_identity_scheme": "sha256(config, track, pair_id, replicate, mode, variant, prompt)",
   "pair_policy": {
     "minimum_pairs": 3,
@@ -164,13 +164,13 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "27c676417e11e76a5f6b8baee591e83f7dca445c637ed88a8bb3bb5190cb0606",
+              "bundle_sha256": "fb42242a88dd85c305e1babb2319efdf36bb2b8b1646991200a0c0af2f781b9a",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d"
+                  "content_sha256": "cfc0d60b8fa0d6719cd4ac35f671002f275a6734a5499648cb8e4e511a28a62f"
                 },
                 {
                   "kind": "worktree",
@@ -182,18 +182,18 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "d6905482b9fbf3f9fed30c98312fe55814523ae57a0353ff9a0cc089b04a281f"
+                  "content_sha256": "0a2a3b0d72148f37721f7dca5c9f8bc64ef252d7ffd6e2cfab3b2ef939d557e1"
                 }
               ]
             },
             "simple": {
-              "bundle_sha256": "2c70c79d2973c0855ef4d41cf2649570c7c7c1c5bc177be1c33fd5632479c869",
+              "bundle_sha256": "fa4ef0a7f0eaa7bec37388a1d37c8fe26ee481aca47ad33bb499abf81fe192c5",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d"
+                  "content_sha256": "cfc0d60b8fa0d6719cd4ac35f671002f275a6734a5499648cb8e4e511a28a62f"
                 }
               ]
             }
@@ -403,7 +403,7 @@
     },
     {
       "path": "examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs",
-      "sha256": "40bdc2da10cbfc3b98f288bbf1efbc217891b102a2960c164c2accdeec9b7e7e"
+      "sha256": "a1e472e1bf7c13aaebfb304b23b4c277fd16e73763a8e34661eb02f673df53ad"
     },
     {
       "path": "examples/delivery-benchmark/mechanism/runner/admission-expansion.mjs",
@@ -411,7 +411,7 @@
     },
     {
       "path": "examples/delivery-benchmark/mechanism/runner/admission-execute.mjs",
-      "sha256": "cd64bf3dc0a46172fb800935b9d2ce9d111c607d05a852d7ad73a2e4f7e8371c"
+      "sha256": "40832da459bfb94e7d3ab6959e84dacf9fadaf2d6b10bd87f5e17887ac1adea9"
     },
     {
       "path": "examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs",
@@ -427,7 +427,7 @@
     },
     {
       "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-      "sha256": "3dd646d7a8a49aba2abc69cde7f46505219b63a1360dfdefdee94d7790867ecd"
+      "sha256": "8a23bd5460216796f969130cb43f67f222037bd6e9b2650fb1db3fd3baa0cce1"
     },
     {
       "path": "tests/ty-context/fresh-agent-admission-fixture.mjs",

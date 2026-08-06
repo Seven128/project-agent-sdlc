@@ -187,7 +187,7 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pa
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track build-reuse-buy --pair-id brb-01 --replicate 1 --artifact frozen-v1/brb/pair-01
 ```
 
-After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged freeze and aggregate all five. Never edit a generated score or a frozen input after candidate execution; a necessary controlling-input change invalidates every prior pair.
+After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged freeze and aggregate all five. DRA simple-path reports retain every raw pair ratio, while the admission median compares baseline and candidate medians separately at invocation position one and two before taking the median of those two overheads; this preserves the frozen AB/BA pairing without letting a 3/2 order imbalance masquerade as mechanism cost. Both variants must appear in both positions. Never edit a generated score or a frozen input after candidate execution; a necessary controlling-input change invalidates every prior pair.
 
 The trace distinguishes requested from effective model/reasoning/Provider. Unobservable or mismatched effective provenance is recorded as `unverified`/doubt and forces five pairs; it is never filled from the request. Once both aggregates exist on a clean committed `main`, create the sanitized exact-tree manifest:
 

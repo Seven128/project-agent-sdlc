@@ -33,12 +33,14 @@ export async function runAdmissionPair({
     fixture_identity: track.fixture_identity,
     environment_identity: config.environment.identity,
     candidate_git: currentExactMainCandidate(),
+    invocation_order: {},
     baseline: {},
     candidate: {},
   };
   const modes = Object.keys(track.modes);
   for (const mode of modes) {
     const order = variantOrder(replicate, mode);
+    pair.invocation_order[mode] = order;
     for (const variantId of order) {
       const invocationDirectory = path.join(
         artifactDirectory,

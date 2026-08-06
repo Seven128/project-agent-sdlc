@@ -48,7 +48,12 @@ export function compareAdmissionPair(track, pair, configSha) {
     ]),
   };
   if (track === "dra-semantic-recovery")
-    addSimplePath(report, pair.baseline.simple, pair.candidate.simple);
+    addSimplePath(
+      report,
+      pair.baseline.simple,
+      pair.candidate.simple,
+      pair.invocation_order?.simple,
+    );
   report.pairwise_win =
     qualityDelta > 0 &&
     criticalRegressions.length === 0 &&
@@ -162,8 +167,17 @@ export function aggregateAdmissionPairs(track, reports, config, deterministic) {
   };
 }
 
-function addSimplePath(report, baseline, candidate) {
+function addSimplePath(report, baseline, candidate, invocationOrder) {
+  if (
+    !Array.isArray(invocationOrder) ||
+    invocationOrder.length !== 2 ||
+    new Set(invocationOrder).size !== 2 ||
+    !invocationOrder.includes("baseline") ||
+    !invocationOrder.includes("candidate")
+  )
+    throw new Error("admission_pair_simple_invocation_order_invalid");
   report.simple_path = {
+    invocation_order: invocationOrder,
     baseline_hard_gate_passed: baseline.score.hard_gate_passed,
     candidate_hard_gate_passed: candidate.score.hard_gate_passed,
     baseline_tokens: baseline.trace.total_tokens,
@@ -188,17 +202,64 @@ function addSimplePath(report, baseline, candidate) {
 function aggregateSimplePath(reports) {
   const tokenOverheads = reports.map((item) => item.simple_path.token_overhead);
   const wallOverheads = reports.map((item) => item.simple_path.wall_overhead);
+  const positionStrata = [0, 1].map((position) =>
+    aggregatePositionStratum(reports, position),
+  );
   return {
     all_candidate_hard_gates_passed: reports.every(
       (item) => item.simple_path.candidate_hard_gate_passed,
     ),
-    median_token_overhead: median(tokenOverheads),
-    median_wall_overhead: median(wallOverheads),
+    median_token_overhead: median(
+      positionStrata.map((item) => item.token_overhead),
+    ),
+    median_wall_overhead: median(
+      positionStrata.map((item) => item.wall_overhead),
+    ),
+    raw_pair_median_token_overhead: median(tokenOverheads),
+    raw_pair_median_wall_overhead: median(wallOverheads),
     candidate_tool_calls: sum(
       reports.map((item) => item.simple_path.candidate_tool_calls),
     ),
+    position_strata: positionStrata,
     token_overheads: tokenOverheads,
     wall_overheads: wallOverheads,
+  };
+}
+
+function aggregatePositionStratum(reports, position) {
+  const metrics = {};
+  for (const variant of ["baseline", "candidate"]) {
+    const rows = reports.filter(
+      (item) => item.simple_path.invocation_order[position] === variant,
+    );
+    if (!rows.length)
+      throw new Error(
+        `admission_aggregate_simple_order_coverage_missing:${position}:${variant}`,
+      );
+    metrics[variant] = {
+      count: rows.length,
+      tokens: median(rows.map((item) => item.simple_path[`${variant}_tokens`])),
+      wall_ms: median(
+        rows.map((item) => item.simple_path[`${variant}_wall_ms`]),
+      ),
+    };
+  }
+  return {
+    position: position + 1,
+    baseline_count: metrics.baseline.count,
+    candidate_count: metrics.candidate.count,
+    baseline_median_tokens: metrics.baseline.tokens,
+    candidate_median_tokens: metrics.candidate.tokens,
+    token_overhead: ratioDelta(
+      metrics.candidate.tokens,
+      metrics.baseline.tokens,
+    ),
+    baseline_median_wall_ms: metrics.baseline.wall_ms,
+    candidate_median_wall_ms: metrics.candidate.wall_ms,
+    wall_overhead: ratioDelta(
+      metrics.candidate.wall_ms,
+      metrics.baseline.wall_ms,
+    ),
   };
 }
 
@@ -244,6 +305,8 @@ function assertPairSet(track, reports) {
   );
   if (new Set(identities).size !== identities.length)
     throw new Error("admission_aggregate_duplicate_pair");
+  if (new Set(reports.map((item) => item.replicate)).size !== reports.length)
+    throw new Error("admission_aggregate_duplicate_replicate");
   const first = fixedIdentity(reports[0]);
   for (const item of reports)
     if (fixedIdentity(item) !== first)

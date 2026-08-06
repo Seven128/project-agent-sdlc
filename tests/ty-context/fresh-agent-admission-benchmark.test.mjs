@@ -268,6 +268,62 @@ test("pair aggregation enforces 3-to-5 expansion, wins and per-category threshol
   ]);
 });
 
+test("DRA simple-path cost comparison stratifies AB/BA invocation position", async () => {
+  const { config } = await loadAdmissionConfig();
+  const track = config.tracks["dra-semantic-recovery"];
+  const reports = [1, 2, 3, 4, 5].map((replicate) => {
+    const pair = syntheticPair(replicate);
+    pair.track = "dra-semantic-recovery";
+    pair.environment_doubt = true;
+    pair.provenance_doubt_reasons = ["model:unverified"];
+    const invocationOrder =
+      replicate % 2 === 1
+        ? ["candidate", "baseline"]
+        : ["baseline", "candidate"];
+    const cost = (variant) =>
+      invocationOrder.indexOf(variant) === 0 ? 2000 : 1000;
+    pair.simple_path = {
+      invocation_order: invocationOrder,
+      baseline_hard_gate_passed: true,
+      candidate_hard_gate_passed: true,
+      baseline_tokens: cost("baseline"),
+      candidate_tokens: cost("candidate"),
+      token_overhead: cost("candidate") / cost("baseline") - 1,
+      baseline_wall_ms: cost("baseline"),
+      candidate_wall_ms: cost("candidate"),
+      wall_overhead: cost("candidate") / cost("baseline") - 1,
+      baseline_tool_calls: 0,
+      candidate_tool_calls: 0,
+    };
+    return pair;
+  });
+  const aggregate = aggregateAdmissionPairs(
+    "dra-semantic-recovery",
+    reports,
+    track,
+    { tracks: { "dra-semantic-recovery": { passed: true } } },
+  );
+  assert.equal(aggregate.required_pairs, 5);
+  assert.equal(aggregate.simple_path.raw_pair_median_token_overhead, 1);
+  assert.equal(aggregate.simple_path.median_token_overhead, 0);
+  assert.equal(aggregate.simple_path.median_wall_overhead, 0);
+  assert.deepEqual(
+    aggregate.simple_path.position_strata.map((row) => [
+      row.position,
+      row.baseline_count,
+      row.candidate_count,
+    ]),
+    [
+      [1, 2, 3],
+      [2, 3, 2],
+    ],
+  );
+  assert.equal(
+    aggregate.decision,
+    "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION",
+  );
+});
+
 test("execution provenance never copies requested values into effective observations", () => {
   const requested = {
     model: "gpt-5.6-terra",
