@@ -310,15 +310,23 @@ async function freezeVerificationInputs(
     if (file) automatic.add(repoRelative(repository, file));
   }
   if (check.runner.type === "playwright_test")
-    for (const name of [
-      "playwright.config.ts",
-      "playwright.config.js",
-      "playwright.config.mjs",
-      "playwright.config.cjs",
-    ]) {
-      const file = await nearestRunnerFile(cwd, repository, name);
-      if (file) automatic.add(repoRelative(repository, file));
-    }
+    if (playwrightConfigArgument(check.runner.argv)) {
+      const file = resolveInsideRepository(
+        cwd,
+        playwrightConfigArgument(check.runner.argv)!,
+        `${check.key}.playwright_config`,
+      );
+      automatic.add(repoRelative(repository, file));
+    } else
+      for (const name of [
+        "playwright.config.ts",
+        "playwright.config.js",
+        "playwright.config.mjs",
+        "playwright.config.cjs",
+      ]) {
+        const file = await nearestRunnerFile(cwd, repository, name);
+        if (file) automatic.add(repoRelative(repository, file));
+      }
   for (const relative of automatic) {
     const file = manifest.files.find(
       (candidate) => candidate.path === relative,
@@ -368,6 +376,29 @@ async function freezeVerificationInputs(
     ),
   );
   return sortRecord(result);
+}
+
+export function playwrightConfigArgument(
+  argv: readonly string[],
+): string | null {
+  const values: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const value = argv[index];
+    if (value === "--config") {
+      const next = argv[index + 1];
+      if (!next || next.startsWith("-"))
+        throw new Error("playwright_config_argument_missing");
+      values.push(next);
+      index += 1;
+    } else if (value.startsWith("--config=")) {
+      const config = value.slice("--config=".length);
+      if (!config) throw new Error("playwright_config_argument_missing");
+      values.push(config);
+    }
+  }
+  if (values.length > 1)
+    throw new Error("playwright_config_argument_ambiguous");
+  return values[0] ?? null;
 }
 
 function sortRecord<T>(value: Record<string, T>): Record<string, T> {

@@ -233,13 +233,17 @@ function localSpecifierBase(
     : path.posix.normalize(
         path.posix.join(path.posix.dirname(importer), specifier),
       );
-  return base === ".." || base.startsWith("../") ? null : base;
+  const canonicalBase = base.replace(/\/+$/u, "") || ".";
+  return canonicalBase === ".." || canonicalBase.startsWith("../")
+    ? null
+    : canonicalBase;
 }
 
 function runtimePatternOwns(base: string, pattern: string): boolean {
+  const directoryPattern = base === "." ? "**" : `${base}/**`;
   return (
-    matchesRepoPattern(base, pattern) ||
-    classifyRepositoryPatternOverlap(`${base}/**`, pattern).status ===
+    (base !== "." && matchesRepoPattern(base, pattern)) ||
+    classifyRepositoryPatternOverlap(directoryPattern, pattern).status ===
       "proven_overlap"
   );
 }
