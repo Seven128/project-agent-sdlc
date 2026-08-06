@@ -3,9 +3,9 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import {
-  aggregateAdmissionPairs,
-} from "../../examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs";
+import { aggregateAdmissionPairs } from "../../examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs";
+import { buildAdmissionAttestation } from "../../examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs";
+import { parseAdmissionEvents } from "../../examples/delivery-benchmark/mechanism/runner/admission-execute.mjs";
 import { scoreAdmissionInvocation } from "../../examples/delivery-benchmark/mechanism/runner/admission-score.mjs";
 import {
   loadAdmissionConfig,
@@ -18,8 +18,16 @@ import {
   syntheticPair,
 } from "./fresh-agent-admission-fixture.mjs";
 
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const mechanism = path.join(repo, "examples", "delivery-benchmark", "mechanism");
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+const mechanism = path.join(
+  repo,
+  "examples",
+  "delivery-benchmark",
+  "mechanism",
+);
 const readJson = async (relative) =>
   JSON.parse(await readFile(path.join(mechanism, relative), "utf8"));
 const trace = {
@@ -42,6 +50,7 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
   ]);
   assert.equal(config.model, "gpt-5.6-terra");
   assert.equal(config.reasoning_effort, "medium");
+  assert.equal(config.provider, "openai");
   assert.equal(config.pair_policy.minimum_pairs, 3);
   assert.equal(config.pair_policy.expanded_pairs, 5);
   assert.equal(config.pair_policy.cv_threshold, 0.2);
@@ -70,16 +79,23 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
 });
 
 test("hidden DRA probes score semantic replay, authority, CAS, audit and must-allow behavior by category", async () => {
-  const hidden = await readJson("hidden/dra-semantic-recovery-admission-v1.json");
-  const preWrite = hidden.expectations.find((row) => row.id === "balanced-writeback");
+  const hidden = await readJson(
+    "hidden/dra-semantic-recovery-admission-v1.json",
+  );
+  const preWrite = hidden.expectations.find(
+    (row) => row.id === "balanced-writeback",
+  );
   assert.equal(preWrite.exact.write_action, "apply");
   assert.equal(preWrite.exact.handoff_ready, false);
-  const casConflict = hidden.expectations.find((row) => row.id === "cas-third-digest");
+  const casConflict = hidden.expectations.find(
+    (row) => row.id === "cas-third-digest",
+  );
   assert.equal(casConflict.exact.write_action, "block");
   assert.equal("checkpoint" in casConflict.exact, false);
   assert.equal("checkpoint" in (casConflict.allowed ?? {}), false);
   assert.equal(
-    hidden.expectations.find((row) => row.id === "bounded-motion-delegation").exact.checkpoint,
+    hidden.expectations.find((row) => row.id === "bounded-motion-delegation")
+      .exact.checkpoint,
     "create",
   );
   assert.deepEqual(preWrite.allowed.checkpoint, ["create", "retain"]);
@@ -216,12 +232,8 @@ test("pair aggregation enforces 3-to-5 expansion, wins and per-category threshol
     pair.quality.targeted_defect_delta = 1;
   }
   assert.equal(
-    aggregateAdmissionPairs(
-      "build-reuse-buy",
-      near,
-      track,
-      deterministic,
-    ).required_pairs,
+    aggregateAdmissionPairs("build-reuse-buy", near, track, deterministic)
+      .required_pairs,
     5,
   );
 
@@ -235,4 +247,177 @@ test("pair aggregation enforces 3-to-5 expansion, wins and per-category threshol
   );
   assert.equal(expanded.required_pairs, 5);
   assert.match(expanded.expansion_reasons.join(" "), /trace-doubt/u);
+
+  const fiveDoubtful = structuredClone(completedExpansion);
+  fiveDoubtful[2].environment_doubt = true;
+  fiveDoubtful[2].provenance_doubt_reasons = ["reasoning_effort:unverified"];
+  const qualified = aggregateAdmissionPairs(
+    "build-reuse-buy",
+    fiveDoubtful,
+    track,
+    deterministic,
+  );
+  assert.equal(
+    qualified.decision,
+    "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION",
+  );
+  assert.equal(qualified.eligible_pair_count, 5);
+  assert.equal(qualified.provenance_qualification.status, "unverified");
+  assert.deepEqual(qualified.provenance_qualification.doubt_reasons, [
+    "reasoning_effort:unverified",
+  ]);
 });
+
+test("execution provenance never copies requested values into effective observations", () => {
+  const requested = {
+    model: "gpt-5.6-terra",
+    reasoning_effort: "medium",
+    provider: "openai",
+  };
+  const unverified = parseAdmissionEvents(eventTrace(), requested);
+  assert.equal(unverified.environment_doubt, true);
+  assert.equal(unverified.effective_execution.model.status, "unverified");
+  assert.equal(unverified.effective_execution.model.value, null);
+
+  const verified = parseAdmissionEvents(
+    eventTrace({
+      model: requested.model,
+      reasoning_effort: requested.reasoning_effort,
+      model_provider: requested.provider,
+    }),
+    requested,
+  );
+  assert.equal(verified.environment_doubt, false);
+  assert.equal(verified.effective_execution.model.status, "verified");
+  assert.equal(
+    verified.effective_execution.reasoning_effort.status,
+    "verified",
+  );
+  assert.equal(verified.effective_execution.provider.status, "verified");
+
+  const mismatch = parseAdmissionEvents(
+    eventTrace({ ...requested, model: "different-model" }),
+    requested,
+  );
+  assert.equal(mismatch.environment_doubt, true);
+  assert.equal(mismatch.effective_execution.model.status, "mismatch");
+});
+
+test("sanitized admission attestation binds the exact clean main tree and result digests", () => {
+  const candidate = {
+    branch: "main",
+    commit: "1".repeat(40),
+    tree: "2".repeat(40),
+    main_commit: "1".repeat(40),
+    working_tree_clean: true,
+  };
+  const aggregate = (track) => ({
+    path: `run/${track}/aggregate-report.json`,
+    sha256: track === "dra-semantic-recovery" ? "a".repeat(64) : "b".repeat(64),
+    value: {
+      config_sha256: "frozen",
+      candidate_git: candidate,
+      track,
+      decision: "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION",
+      pair_count: 5,
+      required_pairs: 5,
+      pairwise_wins: 5,
+      pairwise_wins_required: 3,
+      targeted_defect_reduction: 0.5,
+      critical_category_regressions: [],
+      candidate_must_allow_false_blocking: 0,
+      candidate_other_false_blocking: 0,
+      simple_path: track === "dra-semantic-recovery" ? {} : null,
+      provenance_qualification: {
+        status: "unverified",
+        doubtful_pair_count: 5,
+        doubt_reasons: ["model:unverified"],
+      },
+      reports: [
+        {
+          baseline: {
+            quality: { trace_identity: `${track}-baseline-quality` },
+            ...(track === "dra-semantic-recovery"
+              ? { simple: { trace_identity: `${track}-baseline-simple` } }
+              : {}),
+          },
+          candidate: {
+            quality: { trace_identity: `${track}-candidate-quality` },
+            ...(track === "dra-semantic-recovery"
+              ? { simple: { trace_identity: `${track}-candidate-simple` } }
+              : {}),
+          },
+        },
+      ],
+    },
+  });
+  const deterministic = {
+    path: "run/deterministic/deterministic-report.json",
+    sha256: "d".repeat(64),
+    value: {
+      config_sha256: "frozen",
+      candidate_git: candidate,
+      tracks: {
+        "dra-semantic-recovery": { passed: true },
+        "build-reuse-buy": { passed: true },
+      },
+    },
+  };
+  const manifest = buildAdmissionAttestation({
+    configSha: "frozen",
+    deterministic,
+    aggregates: [
+      aggregate("dra-semantic-recovery"),
+      aggregate("build-reuse-buy"),
+    ],
+    candidate,
+    expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+  });
+  assert.equal(manifest.sensitive_raw_content_included, false);
+  assert.equal(manifest.candidate_git.tree, "2".repeat(40));
+  assert.equal(manifest.tracks.length, 2);
+  assert.equal(Object.hasOwn(manifest, "prompts"), false);
+  assert.equal(Object.hasOwn(manifest, "model_output"), false);
+  assert.equal(Object.hasOwn(manifest, "raw_events"), false);
+  assert.throws(
+    () =>
+      buildAdmissionAttestation({
+        configSha: "frozen",
+        deterministic,
+        aggregates: [
+          aggregate("dra-semantic-recovery"),
+          aggregate("build-reuse-buy"),
+        ],
+        candidate: {
+          branch: "main",
+          commit: "1".repeat(40),
+          tree: "2".repeat(40),
+          main_commit: "1".repeat(40),
+          working_tree_clean: false,
+        },
+        expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+      }),
+    /exact_main_required/u,
+  );
+});
+
+function eventTrace(metadata = {}) {
+  return [
+    { type: "thread.started", thread_id: "thread", ...metadata },
+    {
+      type: "item.completed",
+      item: { id: "message", type: "agent_message", text: "{}" },
+    },
+    {
+      type: "turn.completed",
+      usage: {
+        input_tokens: 1,
+        cached_input_tokens: 0,
+        output_tokens: 1,
+        reasoning_output_tokens: 1,
+      },
+    },
+  ]
+    .map((event) => JSON.stringify(event))
+    .join("\n");
+}

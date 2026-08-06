@@ -188,3 +188,15 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pa
 ```
 
 After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged freeze and aggregate all five. Never edit a generated score or a frozen input after candidate execution; a necessary controlling-input change invalidates every prior pair.
+
+The trace distinguishes requested from effective model/reasoning/Provider. Unobservable or mismatched effective provenance is recorded as `unverified`/doubt and forces five pairs; it is never filled from the request. Once both aggregates exist on a clean committed `main`, create the sanitized exact-tree manifest:
+
+```sh
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs attest \
+  --deterministic frozen-v2/deterministic/deterministic-report.json \
+  --aggregate frozen-v2/dra/aggregate/aggregate-report.json \
+  --aggregate frozen-v2/brb/aggregate/aggregate-report.json \
+  --artifact frozen-v2/attestation
+```
+
+The manifest contains only frozen/result digests, bounded aggregate metrics, provenance qualification, trace-identity-set digests and the exact candidate Git commit/tree. It contains no prompt, model output, raw event/stderr or sensitive Source content and is not Source, Contract, Evidence, Receipt, Gate or acceptance.

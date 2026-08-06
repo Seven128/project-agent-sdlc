@@ -5,6 +5,7 @@ import {
 import { parseDesignResourceRecoveryCheckpoint } from "./design-resource-recovery-codec.js";
 import { validateDesignResourceRecoverySemantics } from "./design-resource-recovery-replay.js";
 import { decodeDesignResourceText } from "./design-resource-recovery-text.js";
+import { validateDesignResourceAuthoritySourceItems } from "./design-resource-recovery-source-authority.js";
 import type {
   DesignResourceAuthorityIdentity,
   DesignResourceRecoveryCheckpoint,
@@ -40,6 +41,7 @@ export async function loadCurrentDesignResourceRecoveryCheckpoint(
     repository,
     checkpoint.design_authority,
   );
+  await validateDesignResourceAuthoritySourceItems(repository, checkpoint);
   return {
     checkpoint,
     path: snapshot.relative,

@@ -5,18 +5,22 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import {
-  recoveryCheckpointRelativePath,
-} from "../../packages/ty-context/dist/lib/design-resource-recovery-files.js";
+import { recoveryCheckpointRelativePath } from "../../packages/ty-context/dist/lib/design-resource-recovery-files.js";
 import {
   applyDesignResourceRecoveryWriteback,
   createDesignResourceRecoveryCheckpoint,
   removeDesignResourceRecoveryCheckpoint,
 } from "../../packages/ty-context/dist/lib/design-resource-recovery.js";
-import { createRecoveryFixture, sha256 } from "./design-resource-recovery-fixture.mjs";
+import {
+  createRecoveryFixture,
+  sha256,
+} from "./design-resource-recovery-fixture.mjs";
 
 const exec = promisify(execFile);
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const cli = path.join(repo, "packages", "ty-context", "dist", "cli.js");
 
 test("writeback preserves supported encodings and uniform EOL", async () => {
@@ -61,7 +65,8 @@ test("mixed EOL and ambiguous patches fail before checkpoint publication", async
       const after = Buffer.from(content.replace("color: blue", "color: red"));
       await writeFile(path.join(fixture.root, "proposal.md"), before);
       fixture.input.writeback.pre_write_raw_byte_digest = sha256(before);
-      fixture.input.writeback.expected_post_write_raw_byte_digest = sha256(after);
+      fixture.input.writeback.expected_post_write_raw_byte_digest =
+        sha256(after);
       await assert.rejects(
         createDesignResourceRecoveryCheckpoint(fixture.root, fixture.input),
         /mixed_eol|patch_occurrence_mismatch/u,
@@ -125,7 +130,9 @@ test("path escape, symlink, hardlink and session collisions are blocked", async 
 });
 
 test("cleanup failure is explicit and never removes an unowned sibling", async () => {
-  const fixture = await createRecoveryFixture({ sessionId: "cleanup-collision" });
+  const fixture = await createRecoveryFixture({
+    sessionId: "cleanup-collision",
+  });
   try {
     const created = await createDesignResourceRecoveryCheckpoint(
       fixture.root,
@@ -137,21 +144,25 @@ test("cleanup failure is explicit and never removes an unowned sibling", async (
       "user.txt",
     );
     await writeFile(sibling, "preserve\n");
-    await assert.rejects(
-      removeDesignResourceRecoveryCheckpoint(
-        fixture.root,
-        fixture.input.session_id,
-        created.checkpoint_raw_byte_digest,
-      ),
-      /design_resource_recovery_cleanup_failed/u,
+    const result = await removeDesignResourceRecoveryCheckpoint(
+      fixture.root,
+      fixture.input.session_id,
+      created.checkpoint_raw_byte_digest,
     );
+    assert.equal(result.status, "partial");
+    assert.equal(result.reason, "unowned_entries");
+    assert.equal(result.checkpoint_removed, false);
+    assert.deepEqual(result.retained_entries, ["checkpoint.json", "user.txt"]);
     assert.equal(await readFile(sibling, "utf8"), "preserve\n");
+    assert.ok(
+      await readFile(path.join(fixture.root, created.checkpoint_path), "utf8"),
+    );
   } finally {
     await fixture.cleanup();
   }
 });
 
-test("nested CLI exposes explicit create/inspect/preview without implicit writes", async () => {
+test("nested CLI exposes explicit create/update/inspect/preview without implicit Proposal writes", async () => {
   const fixture = await createRecoveryFixture({ sessionId: "cli-session" });
   try {
     const created = await exec(
@@ -168,7 +179,31 @@ test("nested CLI exposes explicit create/inspect/preview without implicit writes
       ],
       { cwd: fixture.root, windowsHide: true },
     );
-    assert.equal(JSON.parse(created.stdout).status, "created");
+    const createdResult = JSON.parse(created.stdout);
+    assert.equal(createdResult.status, "created");
+    fixture.input.provider.run.immutable_identity = "run-revision-2";
+    await writeFile(
+      path.join(fixture.root, fixture.stateLocator),
+      `${JSON.stringify(fixture.input, null, 2)}\n`,
+      "utf8",
+    );
+    const updated = await exec(
+      process.execPath,
+      [
+        cli,
+        "design-resource",
+        "recovery",
+        "update",
+        fixture.input.session_id,
+        "--input",
+        fixture.stateLocator,
+        "--expected-sha256",
+        createdResult.checkpoint_raw_byte_digest,
+        "--json",
+      ],
+      { cwd: fixture.root, windowsHide: true },
+    );
+    assert.equal(JSON.parse(updated.stdout).status, "updated");
     const before = await readFile(path.join(fixture.root, "proposal.md"));
     for (const action of ["inspect", "preview"]) {
       const output = await exec(
@@ -178,7 +213,10 @@ test("nested CLI exposes explicit create/inspect/preview without implicit writes
       );
       assert.equal(JSON.parse(output.stdout).status, "recoverable");
     }
-    assert.deepEqual(await readFile(path.join(fixture.root, "proposal.md")), before);
+    assert.deepEqual(
+      await readFile(path.join(fixture.root, "proposal.md")),
+      before,
+    );
   } finally {
     await fixture.cleanup();
   }

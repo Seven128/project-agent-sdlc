@@ -22,7 +22,7 @@ export const ADMISSION_ARTIFACT_ROOT = path.join(
 export async function loadAdmissionConfig() {
   const bytes = await readFile(ADMISSION_CONFIG);
   const config = JSON.parse(bytes.toString("utf8"));
-  if (config.schema_version !== "tiny-context-fresh-agent-admission-v1")
+  if (config.schema_version !== "tiny-context-fresh-agent-admission-v2")
     throw new Error("admission_config_schema_unsupported");
   return { config, config_sha256: sha256(bytes) };
 }

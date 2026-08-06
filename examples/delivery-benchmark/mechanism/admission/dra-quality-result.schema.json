@@ -8,8 +8,8 @@
     "track": { "type": "string", "const": "dra-semantic-recovery" },
     "case_results": {
       "type": "array",
-      "minItems": 11,
-      "maxItems": 11,
+      "minItems": 20,
+      "maxItems": 20,
       "items": {
         "type": "object",
         "additionalProperties": false,

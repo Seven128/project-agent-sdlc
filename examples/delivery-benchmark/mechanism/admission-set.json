@@ -1,10 +1,11 @@
 {
-  "schema_version": "tiny-context-fresh-agent-admission-v1",
-  "frozen_at": "2026-08-06T18:48:00+08:00",
+  "schema_version": "tiny-context-fresh-agent-admission-v2",
+  "frozen_at": "2026-08-07T00:20:22+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
   "reasoning_effort": "medium",
+  "provider": "openai",
   "provider_fixture_identity": "codex-exec-ephemeral-openai-v1",
   "environment": {
     "identity": "windows-x64-node24-codex-0.144.5-v1",
@@ -34,7 +35,7 @@
   },
   "tracks": {
     "dra-semantic-recovery": {
-      "fixture_identity": "53bc923f1430bae0e8679300f4f0dba7c6b7c1f5188a90dfe2aae8761d8767d2",
+      "fixture_identity": "676566ca7a2b200c56d652f2bd5c9a749bd00ba39278b9c2427d50758afb4592",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -65,6 +66,11 @@
         "rejected or unresolved promotion",
         "stale Base or third-digest writeback",
         "corrupt/version/path/link/collision acceptance",
+        "fabricated or conversation-only authority Source",
+        "one-key authorization spread across a multi-key decision",
+        "rejected/unresolved supersession of accepted meaning",
+        "incomplete audit universe or illegal final owner",
+        "checkpoint-update CAS overwrite or unowned cleanup",
         "checkpointed live or completion conclusions",
         "simple-path persistence, pause, generation, handoff or write transaction"
       ],
@@ -73,7 +79,8 @@
         "must-allow and other false blocking",
         "pairwise wins",
         "simple-path token and wall overhead",
-        "simple-path observed tool calls and persisted actions"
+        "simple-path observed tool calls and persisted actions",
+        "requested-versus-effective model/reasoning/Provider provenance"
       ],
       "thresholds": {
         "critical_category_regression": 0,
@@ -85,14 +92,32 @@
       },
       "modes": {
         "quality": {
-          "task": { "path": "admission/dra-quality-cases.json", "sha256": "29a0b737f59beb74c618082ecbc611e6f9e4b76231013602f2443d8537cf516c" },
-          "hidden": { "path": "hidden/dra-semantic-recovery-admission-v1.json", "sha256": "5ffb6a29a360a809c4ecd4c4092f660586fcf85b18b5f96ce30f3c7d1e0d17f7" },
-          "schema": { "path": "admission/dra-quality-result.schema.json", "sha256": "645cdc851ec6671bfdc8f4dc198df4874c1fb4469ec848f7046fcab66a9399ad" }
+          "task": {
+            "path": "admission/dra-quality-cases.json",
+            "sha256": "e383f9f0f9bd9051f0765e3f875add8527ded1f132076e18b11b5d50e6b5edcb"
+          },
+          "hidden": {
+            "path": "hidden/dra-semantic-recovery-admission-v1.json",
+            "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+          },
+          "schema": {
+            "path": "admission/dra-quality-result.schema.json",
+            "sha256": "8fd6a18adfe9f89e2adaa36755ae5e470ed3690cb432aa3aef42024f2cfcc882"
+          }
         },
         "simple": {
-          "task": { "path": "admission/dra-simple-path.json", "sha256": "ce4f8ad1eccb99d699533c7be43fb32d2475cd3bbd18c454421348d91a06c2e3" },
-          "hidden": { "path": "hidden/dra-semantic-recovery-admission-v1.json", "sha256": "5ffb6a29a360a809c4ecd4c4092f660586fcf85b18b5f96ce30f3c7d1e0d17f7" },
-          "schema": { "path": "admission/dra-simple-result.schema.json", "sha256": "2a44d60adc9de689827bfbc5466c9edf7871ddcd0f14bcee332c9df576b84afd" }
+          "task": {
+            "path": "admission/dra-simple-path.json",
+            "sha256": "ce4f8ad1eccb99d699533c7be43fb32d2475cd3bbd18c454421348d91a06c2e3"
+          },
+          "hidden": {
+            "path": "hidden/dra-semantic-recovery-admission-v1.json",
+            "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+          },
+          "schema": {
+            "path": "admission/dra-simple-result.schema.json",
+            "sha256": "2a44d60adc9de689827bfbc5466c9edf7871ddcd0f14bcee332c9df576b84afd"
+          }
         }
       },
       "variants": {
@@ -102,14 +127,35 @@
             "quality": {
               "bundle_sha256": "b99df545cb5614df5cb106888901d3d1eeea83aacc141b16bfd6a8f22540c090",
               "sources": [
-                { "kind": "git", "label": "dra_skill_baseline", "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d", "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md", "git_blob_oid": "030c341d07554513dabfed03356ca03edf4e79e0", "content_sha256": "c4f35c11802b90c75e635d5a147b9658632ea47fa66b57ad0150ff1b478bb2a6" },
-                { "kind": "git", "label": "dra_down_baseline", "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d", "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md", "git_blob_oid": "4d57f415a9c2b7c8bd2c9318077d39e76153a9f1", "content_sha256": "ede372c775d86c108863be70e7d3ccf83edd439864b1b65ae4702f3cb807c951" }
+                {
+                  "kind": "git",
+                  "label": "dra_skill_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+                  "git_blob_oid": "030c341d07554513dabfed03356ca03edf4e79e0",
+                  "content_sha256": "c4f35c11802b90c75e635d5a147b9658632ea47fa66b57ad0150ff1b478bb2a6"
+                },
+                {
+                  "kind": "git",
+                  "label": "dra_down_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
+                  "git_blob_oid": "4d57f415a9c2b7c8bd2c9318077d39e76153a9f1",
+                  "content_sha256": "ede372c775d86c108863be70e7d3ccf83edd439864b1b65ae4702f3cb807c951"
+                }
               ]
             },
             "simple": {
               "bundle_sha256": "4a219e35b3a5ec203d6cc81f072913de8a57cdad600a2aaeb1725a3dddc8817e",
               "sources": [
-                { "kind": "git", "label": "dra_skill_baseline", "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d", "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md", "git_blob_oid": "030c341d07554513dabfed03356ca03edf4e79e0", "content_sha256": "c4f35c11802b90c75e635d5a147b9658632ea47fa66b57ad0150ff1b478bb2a6" }
+                {
+                  "kind": "git",
+                  "label": "dra_skill_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+                  "git_blob_oid": "030c341d07554513dabfed03356ca03edf4e79e0",
+                  "content_sha256": "c4f35c11802b90c75e635d5a147b9658632ea47fa66b57ad0150ff1b478bb2a6"
+                }
               ]
             }
           }
@@ -118,17 +164,37 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "83e8c9181e01388c48ba172b10e50d5af3999baec582c8d7a5cf395393cb30fa",
+              "bundle_sha256": "27c676417e11e76a5f6b8baee591e83f7dca445c637ed88a8bb3bb5190cb0606",
               "sources": [
-                { "kind": "worktree", "label": "dra_skill_candidate", "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md", "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d" },
-                { "kind": "worktree", "label": "dra_down_candidate", "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md", "content_sha256": "c8311abec3561223abfdb1f54b1531b74cba4aa4263746886e7cce8bcfa507a4" },
-                { "kind": "worktree", "label": "dra_recovery_candidate", "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md", "content_sha256": "0ef02cbc3e0ff57d0776eb0a7a1df22d525d2b2eb99d9d51c3cf9b9a96d54f0f" }
+                {
+                  "kind": "worktree",
+                  "label": "dra_skill_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+                  "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dra_down_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
+                  "content_sha256": "c8311abec3561223abfdb1f54b1531b74cba4aa4263746886e7cce8bcfa507a4"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dra_recovery_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
+                  "content_sha256": "d6905482b9fbf3f9fed30c98312fe55814523ae57a0353ff9a0cc089b04a281f"
+                }
               ]
             },
             "simple": {
               "bundle_sha256": "2c70c79d2973c0855ef4d41cf2649570c7c7c1c5bc177be1c33fd5632479c869",
               "sources": [
-                { "kind": "worktree", "label": "dra_skill_candidate", "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md", "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d" }
+                {
+                  "kind": "worktree",
+                  "label": "dra_skill_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
+                  "content_sha256": "4d6e2718b703449855318bb8a0dddcbee02ca25a6894e6a8c7c72f0c5fd7366d"
+                }
               ]
             }
           }
@@ -136,7 +202,7 @@
       }
     },
     "build-reuse-buy": {
-      "fixture_identity": "3e51255c6bd82a85a414d172c4c747b1dea0601f17926de3e02b900428323c2a",
+      "fixture_identity": "f2f2013487f484ef61676feecc6a6589e4c0fadf04eb1d895f590e022b9eaa91",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -167,7 +233,8 @@
         "unjustified heavy dependency",
         "incomplete security-sensitive reinvention",
         "license or platform incompatibility",
-        "forced abstraction over semantically different code"
+        "forced abstraction over semantically different code",
+        "mislabeling an unselected legal alternative as a prohibited failure"
       ],
       "metrics": [
         "critical and major defects by category",
@@ -183,9 +250,18 @@
       },
       "modes": {
         "quality": {
-          "task": { "path": "admission/build-reuse-buy-cases.json", "sha256": "3ae4c22f6026bf0ac82422bd0c95a14a560d643ea100f9a9c5a3a9292f0432de" },
-          "hidden": { "path": "hidden/build-reuse-buy-admission-v1.json", "sha256": "999c2db3d01e33a44239fd42d1ebc8a23bcd52682aab00da8618e5c7c098c993" },
-          "schema": { "path": "admission/build-reuse-buy-result.schema.json", "sha256": "716c3bf867d226635bf127e82ed7a44bb8c69719c26612b353c792bf58198bc6" }
+          "task": {
+            "path": "admission/build-reuse-buy-cases.json",
+            "sha256": "a4f9405cb908a624482f0188222192a6c8a283fb131c7f1d77036c575bc1aa8b"
+          },
+          "hidden": {
+            "path": "hidden/build-reuse-buy-admission-v1.json",
+            "sha256": "b88648ffb8deba931d3d5ad87d875cf85b76d7f20c1b80af55bb3986b2ca8050"
+          },
+          "schema": {
+            "path": "admission/build-reuse-buy-result.schema.json",
+            "sha256": "1ced6a19fde6c09daca4bfabb17d2c9c3067038115ebb9c296a25bafb313d1a7"
+          }
         }
       },
       "variants": {
@@ -195,8 +271,26 @@
             "quality": {
               "bundle_sha256": "ad583d2a93d6707348ffacad5a6f121e1d6c46a359503c19b4d222a08412fb3c",
               "sources": [
-                { "kind": "git", "label": "agents_quality_baseline", "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d", "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md", "git_blob_oid": "8f7b6f3de2d04a52e0da1161c369e37fc2e9720a", "content_sha256": "6f8f5fc7557f643987b527448619925f6085ca216e6a9e4b38b3f8a1edfb6243", "extract": { "start_heading": "## Shared Engineering Quality Obligation", "end_heading": "## Default Workflow Contract" } },
-                { "kind": "git", "label": "engineer_baseline", "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d", "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md", "git_blob_oid": "728d938300ca7fe989de22c6be668d3ad516147a", "content_sha256": "b778ffd007e2cc15013b67174f975c9454336f80ec643ad273dc37c8eff6bfab" }
+                {
+                  "kind": "git",
+                  "label": "agents_quality_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+                  "git_blob_oid": "8f7b6f3de2d04a52e0da1161c369e37fc2e9720a",
+                  "content_sha256": "6f8f5fc7557f643987b527448619925f6085ca216e6a9e4b38b3f8a1edfb6243",
+                  "extract": {
+                    "start_heading": "## Shared Engineering Quality Obligation",
+                    "end_heading": "## Default Workflow Contract"
+                  }
+                },
+                {
+                  "kind": "git",
+                  "label": "engineer_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+                  "git_blob_oid": "728d938300ca7fe989de22c6be668d3ad516147a",
+                  "content_sha256": "b778ffd007e2cc15013b67174f975c9454336f80ec643ad273dc37c8eff6bfab"
+                }
               ]
             }
           }
@@ -205,10 +299,24 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "2458baaf2fe4bc808f53ae99ab99cefe8eaa443d37284296796a1f9ffd12bc1e",
+              "bundle_sha256": "f9db4d2e7fc2c15f4eccc875e32aeea2ed3225e01301a680993639fcbc25bc4a",
               "sources": [
-                { "kind": "worktree", "label": "agents_quality_candidate", "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md", "content_sha256": "bd956dd02393d1f0fef9345074958667131db25dabbbd72923d8bfac12f17ef7", "extract": { "start_heading": "## Shared Engineering Quality Obligation", "end_heading": "## Default Workflow Contract" } },
-                { "kind": "worktree", "label": "engineer_candidate", "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md", "content_sha256": "093e3ff96eb2d16f1fd8c5a3025d24aafb4348134f1258a420d72355e2158ae6" }
+                {
+                  "kind": "worktree",
+                  "label": "agents_quality_candidate",
+                  "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+                  "content_sha256": "bd956dd02393d1f0fef9345074958667131db25dabbbd72923d8bfac12f17ef7",
+                  "extract": {
+                    "start_heading": "## Shared Engineering Quality Obligation",
+                    "end_heading": "## Default Workflow Contract"
+                  }
+                },
+                {
+                  "kind": "worktree",
+                  "label": "engineer_candidate",
+                  "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+                  "content_sha256": "79dbb6ebeb3a810f98e322c1a5fe63dd108a3d7be10acd342504d8e350f420fb"
+                }
               ]
             }
           }
@@ -218,30 +326,112 @@
   },
   "deterministic_checks": {
     "dra-semantic-recovery": [
-      { "id": "package-build", "command": "npm", "args": ["run", "build", "--workspace", "project-tiny-context-harness"], "timeout_ms": 120000 },
-      { "id": "dra-runtime-and-governance", "command": "node", "args": ["--test", "--test-concurrency=1", "tests/ty-context/design-resource-recovery.test.mjs", "tests/ty-context/design-resource-recovery-safety.test.mjs", "tests/ty-context/design-resource-authoring-skill.test.mjs", "tests/ty-context/temporary-content-governance.test.mjs"], "timeout_ms": 180000 }
+      {
+        "id": "package-build",
+        "command": "npm",
+        "args": ["run", "build", "--workspace", "project-tiny-context-harness"],
+        "timeout_ms": 120000
+      },
+      {
+        "id": "dra-runtime-and-governance",
+        "command": "node",
+        "args": [
+          "--test",
+          "--test-concurrency=1",
+          "tests/ty-context/design-resource-recovery.test.mjs",
+          "tests/ty-context/design-resource-recovery-safety.test.mjs",
+          "tests/ty-context/design-resource-authoring-skill.test.mjs",
+          "tests/ty-context/temporary-content-governance.test.mjs"
+        ],
+        "timeout_ms": 180000
+      }
     ],
     "build-reuse-buy": [
-      { "id": "build-reuse-buy-guidance", "command": "node", "args": ["--test", "--test-concurrency=1", "tests/ty-context/architecture-rationale-guidance.test.mjs", "tests/ty-context/fresh-agent-admission-benchmark.test.mjs"], "timeout_ms": 120000 }
+      {
+        "id": "build-reuse-buy-guidance",
+        "command": "node",
+        "args": [
+          "--test",
+          "--test-concurrency=1",
+          "tests/ty-context/architecture-rationale-guidance.test.mjs",
+          "tests/ty-context/fresh-agent-admission-benchmark.test.mjs"
+        ],
+        "timeout_ms": 120000
+      }
     ]
   },
   "frozen_files": [
-    { "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json", "sha256": "29a0b737f59beb74c618082ecbc611e6f9e4b76231013602f2443d8537cf516c" },
-    { "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-path.json", "sha256": "ce4f8ad1eccb99d699533c7be43fb32d2475cd3bbd18c454421348d91a06c2e3" },
-    { "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-cases.json", "sha256": "3ae4c22f6026bf0ac82422bd0c95a14a560d643ea100f9a9c5a3a9292f0432de" },
-    { "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json", "sha256": "645cdc851ec6671bfdc8f4dc198df4874c1fb4469ec848f7046fcab66a9399ad" },
-    { "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-result.schema.json", "sha256": "2a44d60adc9de689827bfbc5466c9edf7871ddcd0f14bcee332c9df576b84afd" },
-    { "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-result.schema.json", "sha256": "716c3bf867d226635bf127e82ed7a44bb8c69719c26612b353c792bf58198bc6" },
-    { "path": "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json", "sha256": "5ffb6a29a360a809c4ecd4c4092f660586fcf85b18b5f96ce30f3c7d1e0d17f7" },
-    { "path": "examples/delivery-benchmark/mechanism/hidden/build-reuse-buy-admission-v1.json", "sha256": "999c2db3d01e33a44239fd42d1ebc8a23bcd52682aab00da8618e5c7c098c993" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-shared.mjs", "sha256": "9ceb0fd748e4c2bc0e4cd318f9bce441d87e100bc15d8b4124f7ed70e8bee715" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-score.mjs", "sha256": "40a5d7b230f6355adffcea0aa7c61181a02a796dcebee42c6d0557c86ff46d0b" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs", "sha256": "5af5ff5ae42e8ae058297d0251c23d60ae09bee8201687fd47bc25ff35108068" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-expansion.mjs", "sha256": "1c656a23c0095c8511178b079270d8d36fa760138351ccd0346cb58cbe5f5ef9" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-execute.mjs", "sha256": "ffddef87f176737350d4f673df4d300eb26607d9cbb52eaed7658e491eb6297e" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs", "sha256": "f1f7aacd4e2d7b435e56612d9bb02bb56e34fcd019a242a64233ecf0e267c5a8" },
-    { "path": "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs", "sha256": "ad33310fe71096640ce7703dabfee79ec8b00de22c6098b3e3f2c6e763dd0718" },
-    { "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs", "sha256": "eadb7aabd4960362f8c282fb02343e3e89eea6a0e72b934db574f9dbcc4c2be2" },
-    { "path": "tests/ty-context/fresh-agent-admission-fixture.mjs", "sha256": "f8957152ca978c843ede6fbca9ee70ea2c232c08ed1396d2a9ecd36b54f8db3c" }
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
+      "sha256": "e383f9f0f9bd9051f0765e3f875add8527ded1f132076e18b11b5d50e6b5edcb"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-path.json",
+      "sha256": "ce4f8ad1eccb99d699533c7be43fb32d2475cd3bbd18c454421348d91a06c2e3"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-cases.json",
+      "sha256": "a4f9405cb908a624482f0188222192a6c8a283fb131c7f1d77036c575bc1aa8b"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json",
+      "sha256": "8fd6a18adfe9f89e2adaa36755ae5e470ed3690cb432aa3aef42024f2cfcc882"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-result.schema.json",
+      "sha256": "2a44d60adc9de689827bfbc5466c9edf7871ddcd0f14bcee332c9df576b84afd"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-result.schema.json",
+      "sha256": "1ced6a19fde6c09daca4bfabb17d2c9c3067038115ebb9c296a25bafb313d1a7"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
+      "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/hidden/build-reuse-buy-admission-v1.json",
+      "sha256": "b88648ffb8deba931d3d5ad87d875cf85b76d7f20c1b80af55bb3986b2ca8050"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-shared.mjs",
+      "sha256": "a456f4fb4c84bd7360ee17eb2173429eef3b0cef352c63f3b8bdd07bc43a54a6"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-score.mjs",
+      "sha256": "dd0d83a0fecb4e3255aefeee41739b1e043a14e55f2f8635b44e1956ccdf15e9"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs",
+      "sha256": "40bdc2da10cbfc3b98f288bbf1efbc217891b102a2960c164c2accdeec9b7e7e"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-expansion.mjs",
+      "sha256": "1c656a23c0095c8511178b079270d8d36fa760138351ccd0346cb58cbe5f5ef9"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-execute.mjs",
+      "sha256": "cd64bf3dc0a46172fb800935b9d2ce9d111c607d05a852d7ad73a2e4f7e8371c"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs",
+      "sha256": "04e688b403ba4dfa9390a92c0c7747cfe350b9686c13f48e9e4dd96fea89f26b"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs",
+      "sha256": "525763c1b922ff5e3042d378232ee5e2bd08fbf8e53b09883dac34c0964c6caa"
+    },
+    {
+      "path": "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
+      "sha256": "3d4e65adc50d425cb31c7a93df9e03a8ed0d3ae564e778e5ef7ec5661f405d2a"
+    },
+    {
+      "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
+      "sha256": "3dd646d7a8a49aba2abc69cde7f46505219b63a1360dfdefdee94d7790867ecd"
+    },
+    {
+      "path": "tests/ty-context/fresh-agent-admission-fixture.mjs",
+      "sha256": "5fc7ae22c9fa42d105b709effe402a835de5e6a7274e0f9cfbd37bb8f419064a"
+    }
   ]
 }

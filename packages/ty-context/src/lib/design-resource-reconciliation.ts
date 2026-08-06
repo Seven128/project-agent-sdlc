@@ -4,7 +4,10 @@ import type {
   DesignResourceReconciliationResult,
   DesignResourceRecoveryCheckpoint,
 } from "./design-resource-recovery-types.js";
-import { validateDesignResourceRecoverySemantics } from "./design-resource-recovery-replay.js";
+import {
+  activeAcceptedDesignResourceDeltas,
+  validateDesignResourceRecoverySemantics,
+} from "./design-resource-recovery-replay.js";
 import { canonicalValueJson } from "./strict-codec.js";
 
 export function reconcileDesignResourceWriteback(
@@ -54,7 +57,7 @@ export function reconcileDesignResourceWriteback(
     checkpoint.writeback.resource_identities,
   );
 
-  const activeAccepted = activeAcceptedDeltas(checkpoint.deltas);
+  const activeAccepted = activeAcceptedDesignResourceDeltas(checkpoint.deltas);
   const changed = new Set(
     activeAccepted.flatMap((delta) =>
       delta.operation === "preserve" ? [] : delta.target_keys,
@@ -112,7 +115,26 @@ function validateUnchanged(
     checkpoint.explicitly_unchanged_keys,
   );
   for (const row of audit.explicitly_unchanged)
-    if (!row.preserved) findings.push(`unchanged_not_preserved:${row.key}`);
+    validateUnchangedRow(checkpoint, row, findings);
+}
+
+function validateUnchangedRow(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  row: DesignResourceReconciliationAudit["explicitly_unchanged"][number],
+  findings: string[],
+): void {
+  if (row.verdict !== "preserved")
+    findings.push(`unchanged_${row.verdict}:${row.key}`);
+  const selected = new Set(checkpoint.selected_resource_keys);
+  for (const resource of row.resource_refs)
+    if (!selected.has(resource))
+      findings.push(`unchanged_resource_unselected:${row.key}:${resource}`);
+  const sources = new Set(
+    checkpoint.authority_sources.map((source) => source.source_ref),
+  );
+  for (const source of row.basis_source_refs)
+    if (!sources.has(source))
+      findings.push(`unchanged_basis_source_unresolved:${row.key}:${source}`);
 }
 
 function validateRequirements(
@@ -167,35 +189,187 @@ function validateResourceDecisions(
     audit.resource_to_requirements.map((row) => row.key),
     "resource_to_requirements",
   );
-  const selected = new Set(checkpoint.selected_resource_keys);
   compareSet(
     findings,
-    "resource_to_requirements_resources",
-    audit.resource_to_requirements.map((row) => row.resource_ref),
+    "resource_decision_keys",
+    audit.resource_to_requirements.map((row) => row.key),
+    checkpoint.resource_decision_keys,
+  );
+  const selected = new Set(checkpoint.selected_resource_keys);
+  const declaredResources = new Set(
+    checkpoint.provider.resources.map((resource) => resource.key),
+  );
+  const activeAcceptedById = new Map(
+    activeAccepted.map((delta) => [delta.delta_id, delta]),
+  );
+  const allDeltasById = new Map(
+    checkpoint.deltas.map((delta) => [delta.delta_id, delta]),
+  );
+  const acceptedResources = new Set<string>();
+  const acceptedBindings = new Set<string>();
+  const expectedRequirementBindings = new Set<string>();
+  for (const requirement of audit.requirements_to_resource)
+    for (const resourceRef of requirement.resource_refs)
+      for (const deltaId of requirement.delta_ids)
+        expectedRequirementBindings.add(
+          requirementBindingIdentity(resourceRef, requirement.key, deltaId),
+        );
+  compareSet(
+    findings,
+    "resource_to_requirements_selected_resources",
+    audit.resource_to_requirements
+      .filter((row) => row.status === "accepted")
+      .map((row) => row.resource_ref),
     [...selected],
   );
   for (const row of audit.resource_to_requirements) {
-    if (!selected.has(row.resource_ref))
+    if (!declaredResources.has(row.resource_ref))
       findings.push(
-        `resource_decision_unselected:${row.key}:${row.resource_ref}`,
+        `resource_decision_undeclared:${row.key}:${row.resource_ref}`,
       );
-    if (row.status !== "accepted" && row.written)
-      findings.push(`resource_decision_leaked:${row.key}:${row.status}`);
-    for (const key of row.requirement_keys)
-      if (!changed.has(key))
+    if (row.status === "accepted") {
+      acceptedResources.add(row.resource_ref);
+      if (!selected.has(row.resource_ref))
         findings.push(
-          `resource_decision_requirement_unknown:${row.key}:${key}`,
+          `resource_decision_accepted_unselected:${row.key}:${row.resource_ref}`,
         );
-    if (row.status !== "accepted") continue;
-    const authorityMatch = activeAccepted.some(
-      (delta) =>
-        delta.origin === row.origin &&
-        delta.decision_authority === row.decision_authority &&
-        row.requirement_keys.some((key) => delta.target_keys.includes(key)),
+    }
+    const bindingIdentities = row.requirement_bindings.map((binding) =>
+      requirementBindingIdentity(
+        row.resource_ref,
+        binding.requirement_key,
+        binding.delta_id,
+      ),
     );
-    if (!authorityMatch)
-      findings.push(`resource_decision_authority_unbound:${row.key}`);
+    uniqueRows(bindingIdentities, `resource_requirement_bindings:${row.key}`);
+    compareSet(
+      findings,
+      `resource_decision_delta_ids:${row.key}`,
+      row.delta_ids,
+      row.requirement_bindings.map((binding) => binding.delta_id),
+    );
+    for (const binding of row.requirement_bindings) {
+      validateResourceRequirementBinding(
+        row,
+        binding,
+        activeAcceptedById,
+        allDeltasById,
+        changed,
+        findings,
+      );
+      if (row.status === "accepted")
+        acceptedBindings.add(
+          requirementBindingIdentity(
+            row.resource_ref,
+            binding.requirement_key,
+            binding.delta_id,
+          ),
+        );
+    }
+    validateFinalDisposition(row, selected, findings);
   }
+  compareSet(
+    findings,
+    "accepted_resource_requirement_bindings",
+    [...acceptedBindings],
+    [...expectedRequirementBindings],
+  );
+  compareSet(
+    findings,
+    "accepted_resource_coverage",
+    [...acceptedResources],
+    [...selected],
+  );
+}
+
+function validateResourceRequirementBinding(
+  row: DesignResourceReconciliationAudit["resource_to_requirements"][number],
+  binding: DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number],
+  activeAcceptedById: Map<string, DesignResourceDelta>,
+  allDeltasById: Map<string, DesignResourceDelta>,
+  changed: Set<string>,
+  findings: string[],
+): void {
+  const delta = allDeltasById.get(binding.delta_id);
+  if (!delta) {
+    findings.push(
+      `resource_decision_delta_unknown:${row.key}:${binding.delta_id}`,
+    );
+    return;
+  }
+  if (delta.status !== row.status)
+    findings.push(
+      `resource_decision_status_mismatch:${row.key}:${binding.delta_id}`,
+    );
+  if (row.status === "accepted" && !activeAcceptedById.has(binding.delta_id))
+    findings.push(
+      `resource_decision_accepted_delta_inactive:${row.key}:${binding.delta_id}`,
+    );
+  if (!delta.target_keys.includes(binding.requirement_key))
+    findings.push(
+      `resource_decision_target_mismatch:${row.key}:${binding.requirement_key}:${binding.delta_id}`,
+    );
+  if (row.status === "accepted" && !changed.has(binding.requirement_key))
+    findings.push(
+      `resource_decision_requirement_unknown:${row.key}:${binding.requirement_key}`,
+    );
+  compareValue(
+    findings,
+    `resource_decision_semantic_kind:${row.key}:${binding.requirement_key}:${binding.delta_id}`,
+    row.semantic_kind,
+    delta.semantic_kind,
+  );
+  compareValue(
+    findings,
+    `resource_decision_origin:${row.key}:${binding.requirement_key}:${binding.delta_id}`,
+    binding.origin,
+    delta.origin,
+  );
+  compareValue(
+    findings,
+    `resource_decision_authority:${row.key}:${binding.requirement_key}:${binding.delta_id}`,
+    binding.decision_authority,
+    delta.decision_authority,
+  );
+  compareSet(
+    findings,
+    `resource_decision_sources:${row.key}:${binding.requirement_key}:${binding.delta_id}`,
+    binding.source_refs,
+    delta.source_refs,
+  );
+}
+
+function validateFinalDisposition(
+  row: DesignResourceReconciliationAudit["resource_to_requirements"][number],
+  selected: Set<string>,
+  findings: string[],
+): void {
+  const disposition = row.final_disposition;
+  if (row.status === "rejected") {
+    if (disposition.kind !== "not-adopted")
+      findings.push(`resource_decision_rejected_owner:${row.key}`);
+    return;
+  }
+  if (row.status === "unresolved") {
+    findings.push(`resource_decision_unresolved:${row.key}`);
+    if (disposition.kind !== "unresolved")
+      findings.push(`resource_decision_unresolved_owner:${row.key}`);
+    return;
+  }
+  if (
+    disposition.kind !== "proposal-written" &&
+    disposition.kind !== "resource-owned-exact-visual"
+  ) {
+    findings.push(`resource_decision_accepted_owner_missing:${row.key}`);
+    return;
+  }
+  if (disposition.kind === "proposal-written") return;
+  if (row.semantic_kind !== "exact-visual")
+    findings.push(`resource_owner_nonvisual_meaning:${row.key}`);
+  if (disposition.resource_ref !== row.resource_ref)
+    findings.push(`resource_owner_identity_mismatch:${row.key}`);
+  if (!selected.has(disposition.resource_ref))
+    findings.push(`resource_owner_unselected:${row.key}`);
 }
 
 function validateBlastAndLeakage(
@@ -207,9 +381,15 @@ function validateBlastAndLeakage(
     audit.unexpected_blast_radius.map((row) => row.key),
     "unexpected_blast_radius",
   );
+  compareSet(
+    findings,
+    "unexpected_blast_radius_keys",
+    audit.unexpected_blast_radius.map((row) => row.key),
+    checkpoint.blast_radius_keys,
+  );
   for (const row of audit.unexpected_blast_radius)
-    if (row.verdict === "unexpected")
-      findings.push(`unexpected_blast_radius:${row.key}`);
+    if (row.verdict !== "expected")
+      findings.push(`${row.verdict}_blast_radius:${row.key}`);
   uniqueRows(
     audit.rejected_or_unresolved_leakage.map((row) => row.delta_id),
     "rejected_or_unresolved_leakage",
@@ -226,15 +406,6 @@ function validateBlastAndLeakage(
   );
   for (const row of audit.rejected_or_unresolved_leakage)
     if (row.leaked) findings.push(`decision_leaked:${row.delta_id}`);
-}
-
-function activeAcceptedDeltas(
-  deltas: DesignResourceDelta[],
-): DesignResourceDelta[] {
-  const superseded = new Set(deltas.flatMap((delta) => delta.supersedes));
-  return deltas.filter(
-    (delta) => delta.status === "accepted" && !superseded.has(delta.delta_id),
-  );
 }
 
 function compareIdentitySet(
@@ -290,6 +461,14 @@ function uniqueRows(values: string[], label: string): void {
     throw new Error(
       `design_resource_recovery_invalid:audit_duplicate:${label}`,
     );
+}
+
+function requirementBindingIdentity(
+  resourceRef: string,
+  requirementKey: string,
+  deltaId: string,
+): string {
+  return `${resourceRef}\u0000${requirementKey}\u0000${deltaId}`;
 }
 
 function compareText(left: string, right: string): number {

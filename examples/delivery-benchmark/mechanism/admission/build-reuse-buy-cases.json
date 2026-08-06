@@ -75,6 +75,14 @@
         "A contained, non-sensitive manifest codec can be implemented with the standard library, an already-installed strict codec, or a 30-line exhaustively tested owner-local decoder.",
         "All three satisfy platform, license and maintenance constraints; no performance distinction is material."
       ]
+    },
+    {
+      "id": "unselected-legal-alternative",
+      "facts": [
+        "A standard-library codec and a mature compatible installed codec both fully satisfy the bounded non-sensitive format.",
+        "The implementation selects the standard-library codec because it is smaller for this owner.",
+        "The installed codec remains a supported legal alternative; neither option exhibits a prohibited failure mode."
+      ]
     }
   ]
 }

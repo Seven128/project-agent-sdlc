@@ -86,6 +86,32 @@ export async function createRecoveryCheckpointFile(
   return { path: relative, raw_byte_digest: result, changed: true };
 }
 
+export async function updateRecoveryCheckpointFile(
+  repository: string,
+  sessionId: string,
+  bytes: Uint8Array,
+  expectedCurrentDigest: string,
+): Promise<{ path: string; raw_byte_digest: string; changed: boolean }> {
+  const relative = recoveryCheckpointRelativePath(sessionId);
+  await assertRecoveryPathIgnored(repository, relative);
+  const existing = await readRecoveryCheckpointFile(repository, sessionId);
+  if (existing.raw_byte_digest !== expectedCurrentDigest)
+    invalid(
+      `checkpoint_update_cas_conflict:${expectedCurrentDigest}:${existing.raw_byte_digest}`,
+    );
+  const nextDigest = sha256Hex(bytes);
+  if (nextDigest === existing.raw_byte_digest)
+    return { path: relative, raw_byte_digest: nextDigest, changed: false };
+  const written = await atomicCasWrite(
+    repository,
+    relative,
+    bytes,
+    expectedCurrentDigest,
+    existing.mode,
+  );
+  return { path: relative, raw_byte_digest: written, changed: true };
+}
+
 export async function atomicCasWrite(
   repository: string,
   relativeInput: string,
@@ -155,23 +181,61 @@ export async function removeRecoveryCheckpointFile(
   repository: string,
   sessionId: string,
   expectedDigest: string,
-): Promise<{ path: string; removed: true }> {
+): Promise<
+  | {
+      status: "removed";
+      path: string;
+      checkpoint_removed: true;
+      session_directory_removed: true;
+      retained_entries: [];
+    }
+  | {
+      status: "partial";
+      path: string;
+      checkpoint_removed: boolean;
+      session_directory_removed: false;
+      retained_entries: string[];
+      reason: "unowned_entries" | "session_directory_cleanup_failed";
+    }
+> {
   const snapshot = await readRecoveryCheckpointFile(repository, sessionId);
   if (snapshot.raw_byte_digest !== expectedDigest)
     invalid(
       `checkpoint_remove_cas_conflict:${expectedDigest}:${snapshot.raw_byte_digest}`,
     );
-  await unlink(snapshot.absolute);
   const sessionDirectory = path.dirname(snapshot.absolute);
+  const before = (await readdir(sessionDirectory)).sort();
+  const unowned = before.filter((entry) => entry !== "checkpoint.json");
+  if (unowned.length)
+    return {
+      status: "partial",
+      path: snapshot.relative,
+      checkpoint_removed: false,
+      session_directory_removed: false,
+      retained_entries: before,
+      reason: "unowned_entries",
+    };
+  await unlink(snapshot.absolute);
   try {
     await rmdir(sessionDirectory);
-  } catch (error) {
-    throw new AggregateError(
-      [error],
-      "design_resource_recovery_cleanup_failed:session_directory_not_empty",
-    );
+  } catch {
+    const retained = await readdir(sessionDirectory).catch(() => []);
+    return {
+      status: "partial",
+      path: snapshot.relative,
+      checkpoint_removed: true,
+      session_directory_removed: false,
+      retained_entries: retained.sort(),
+      reason: "session_directory_cleanup_failed",
+    };
   }
-  return { path: snapshot.relative, removed: true };
+  return {
+    status: "removed",
+    path: snapshot.relative,
+    checkpoint_removed: true,
+    session_directory_removed: true,
+    retained_entries: [],
+  };
 }
 
 export function deriveDigestCasState(

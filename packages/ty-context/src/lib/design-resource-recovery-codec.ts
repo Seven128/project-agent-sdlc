@@ -17,6 +17,7 @@ import {
 } from "./design-resource-recovery-codec-primitives.js";
 import {
   parseAuthorityIdentity,
+  parseAuthoritySourceItem,
   parseDelegation,
   parseDelta,
   parseRecoveryBase,
@@ -32,10 +33,13 @@ const COMMON_FIELDS = [
   "session_id",
   "disclosure_review",
   "base",
+  "authority_sources",
   "delegations",
   "deltas",
   "decision_sets",
   "explicitly_unchanged_keys",
+  "blast_radius_keys",
+  "resource_decision_keys",
   "design_authority",
   "provider",
   "selected_resource_keys",
@@ -152,6 +156,11 @@ function parseCommon(
     base: complete
       ? parseRecoveryBase(root.base, "base")
       : parseRecoveryBaseInput(root.base, "base"),
+    authority_sources: optionalArrayOf(
+      root.authority_sources,
+      "authority_sources",
+      parseAuthoritySourceItem,
+    ),
     delegations: optionalArrayOf(
       root.delegations,
       "delegations",
@@ -178,6 +187,14 @@ function parseCommon(
     explicitly_unchanged_keys: stringSet(
       root.explicitly_unchanged_keys,
       "explicitly_unchanged_keys",
+      { allowEmpty: true },
+    ),
+    blast_radius_keys: stringSet(root.blast_radius_keys, "blast_radius_keys", {
+      allowEmpty: true,
+    }),
+    resource_decision_keys: stringSet(
+      root.resource_decision_keys,
+      "resource_decision_keys",
       { allowEmpty: true },
     ),
     design_authority: parseAuthorityIdentity(

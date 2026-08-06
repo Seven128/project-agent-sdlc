@@ -742,6 +742,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/design-resource-recovery-replay.ts",
     "packages/ty-context/src/lib/design-resource-recovery-schema.ts",
     "packages/ty-context/src/lib/design-resource-recovery-shape.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-source-authority.ts",
     "packages/ty-context/src/lib/design-resource-recovery-text.ts",
     "packages/ty-context/src/lib/design-resource-recovery-types.ts",
     "packages/ty-context/src/lib/design-resource-recovery-writeback-policy.ts",
@@ -880,6 +881,23 @@ export function selectAffectedTests(changedPaths, options = {}) {
         tests.add(testPath("test-suite-runtime.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);
+      continue;
+    }
+
+    if (
+      file === "examples/delivery-benchmark/mechanism/admission-set.json" ||
+      file.startsWith("examples/delivery-benchmark/mechanism/admission/") ||
+      file.startsWith("examples/delivery-benchmark/mechanism/hidden/") ||
+      file.startsWith(
+        "examples/delivery-benchmark/mechanism/runner/admission-",
+      ) ||
+      file ===
+        "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs" ||
+      file === "examples/delivery-benchmark/mechanism/RUNBOOK.md" ||
+      file === "examples/delivery-benchmark/mechanism/README.md"
+    ) {
+      tests.add(testPath("fresh-agent-admission-benchmark.test.mjs"));
+      reasons.push(`${file}:fresh_agent_admission`);
       continue;
     }
 

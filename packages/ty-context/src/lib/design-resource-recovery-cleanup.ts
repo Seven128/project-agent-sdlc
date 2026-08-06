@@ -9,7 +9,7 @@ export async function removeDesignResourceRecoveryCheckpoint(
   repository: string,
   sessionId: string,
   expectedDigest: string,
-): Promise<{ path: string; removed: true }> {
+): Promise<Awaited<ReturnType<typeof removeRecoveryCheckpointFile>>> {
   const snapshot = await readRecoveryCheckpointFile(repository, sessionId);
   const checkpoint = parseDesignResourceRecoveryCheckpoint(
     snapshot.bytes.toString("utf8"),

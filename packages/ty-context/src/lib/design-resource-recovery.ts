@@ -2,7 +2,9 @@ import {
   createRecoveryCheckpointFile,
   deriveDigestCasState,
   atomicCasWrite,
+  readRecoveryCheckpointFile,
   readRecoveryRepositoryFile,
+  updateRecoveryCheckpointFile,
 } from "./design-resource-recovery-files.js";
 import {
   loadCurrentDesignResourceRecoveryCheckpoint,
@@ -22,6 +24,7 @@ import {
   applyDesignResourceExactPatch,
   decodeDesignResourceText,
 } from "./design-resource-recovery-text.js";
+import { validateDesignResourceAuthoritySourceItems } from "./design-resource-recovery-source-authority.js";
 import { DESIGN_RESOURCE_RECOVERY_SCHEMA } from "./design-resource-recovery-schema.js";
 import {
   type DesignResourceReconciliationResult,
@@ -55,6 +58,85 @@ export async function createDesignResourceRecoveryCheckpoint(
   checkpoint_path: string;
   checkpoint_raw_byte_digest: string;
 }> {
+  const { encoded } = await prepareDesignResourceRecoveryCheckpoint(
+    repository,
+    input,
+  );
+  const written = await createRecoveryCheckpointFile(
+    repository,
+    input.session_id,
+    Buffer.from(encoded, "utf8"),
+  );
+  return {
+    status: written.changed ? "created" : "already-current",
+    checkpoint_path: written.path,
+    checkpoint_raw_byte_digest: written.raw_byte_digest,
+  };
+}
+
+export async function updateDesignResourceRecoveryCheckpoint(
+  repository: string,
+  input: DesignResourceRecoveryCreateInput,
+  expectedCurrentDigest: string,
+): Promise<{
+  status: "updated" | "already-current";
+  checkpoint_path: string;
+  checkpoint_raw_byte_digest: string;
+}> {
+  const current = await readRecoveryCheckpointFile(
+    repository,
+    input.session_id,
+  );
+  assertDigest(
+    "checkpoint_update",
+    current.raw_byte_digest,
+    expectedCurrentDigest,
+  );
+  const currentCheckpoint = parseDesignResourceRecoveryCheckpoint(
+    current.bytes.toString("utf8"),
+  );
+  if (currentCheckpoint.session_id !== input.session_id)
+    throw new Error(
+      "design_resource_recovery_invalid:update_session_identity_mismatch",
+    );
+  validateDesignResourceRecoverySemantics(currentCheckpoint);
+  const { encoded } = await prepareDesignResourceRecoveryCheckpoint(
+    repository,
+    input,
+  );
+  const written = await updateRecoveryCheckpointFile(
+    repository,
+    input.session_id,
+    Buffer.from(encoded, "utf8"),
+    expectedCurrentDigest,
+  );
+  const readback = await readRecoveryCheckpointFile(
+    repository,
+    input.session_id,
+  );
+  assertDigest(
+    "checkpoint_update_readback",
+    readback.raw_byte_digest,
+    written.raw_byte_digest,
+  );
+  const parsed = parseDesignResourceRecoveryCheckpoint(
+    readback.bytes.toString("utf8"),
+  );
+  validateDesignResourceRecoverySemantics(parsed);
+  return {
+    status: written.changed ? "updated" : "already-current",
+    checkpoint_path: written.path,
+    checkpoint_raw_byte_digest: written.raw_byte_digest,
+  };
+}
+
+async function prepareDesignResourceRecoveryCheckpoint(
+  repository: string,
+  input: DesignResourceRecoveryCreateInput,
+): Promise<{
+  checkpoint: DesignResourceRecoveryCheckpoint;
+  encoded: string;
+}> {
   validateDesignResourceRecoverySemantics(input);
   const baseSnapshot = await readRecoveryRepositoryFile(
     repository,
@@ -71,6 +153,7 @@ export async function createDesignResourceRecoveryCheckpoint(
     repository,
     input.design_authority,
   );
+  await validateDesignResourceAuthoritySourceItems(repository, input);
   let writeback: DesignResourceRecoveryCheckpoint["writeback"];
   if (input.writeback) {
     const target = await readRecoveryRepositoryFile(
@@ -119,15 +202,9 @@ export async function createDesignResourceRecoveryCheckpoint(
   const encoded = encodeDesignResourceRecoveryCheckpoint(checkpoint);
   const roundTrip = parseDesignResourceRecoveryCheckpoint(encoded);
   validateDesignResourceRecoverySemantics(roundTrip);
-  const written = await createRecoveryCheckpointFile(
-    repository,
-    input.session_id,
-    Buffer.from(encoded, "utf8"),
-  );
   return {
-    status: written.changed ? "created" : "already-current",
-    checkpoint_path: written.path,
-    checkpoint_raw_byte_digest: written.raw_byte_digest,
+    checkpoint: roundTrip,
+    encoded,
   };
 }
 

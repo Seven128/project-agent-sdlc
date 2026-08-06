@@ -1,5 +1,6 @@
 import {
   type DesignResourceAuthorityIdentity,
+  type DesignResourceAuthoritySourceItem,
   type DesignResourceDecisionAuthority,
   type DesignResourceDecisionOrigin,
   type DesignResourceDelegation,
@@ -29,6 +30,30 @@ const STATUSES = ["accepted", "rejected", "unresolved"] as const;
 const OPERATIONS = ["add", "replace", "remove", "preserve"] as const;
 const ENCODINGS = ["utf8", "utf8-bom", "utf16le", "utf16be"] as const;
 const EOLS = ["none", "lf", "crlf", "cr", "mixed"] as const;
+const SEMANTIC_KINDS = [
+  "exact-visual",
+  "product",
+  "business",
+  "permission",
+  "data",
+  "algorithm",
+  "commercial",
+  "safety-security",
+  "technical",
+] as const;
+const SOURCE_ITEM_KINDS = [
+  "outcome_result",
+  "requirement",
+  "control",
+  "acceptance",
+  "technical_obligation",
+  "non_completing",
+  "non_goal",
+  "forbidden_shortcut",
+  "risk_fact",
+  "external_confirmation",
+  "decision",
+] as const;
 
 export function parseRecoveryBaseInput(
   value: unknown,
@@ -139,12 +164,43 @@ export function parseDelegation(
   };
 }
 
+export function parseAuthoritySourceItem(
+  value: unknown,
+  label: string,
+): DesignResourceAuthoritySourceItem {
+  const row = object(value, label, [
+    "source_ref",
+    "locator",
+    "raw_byte_digest",
+    "source_item_key",
+    "source_item_kind",
+    "source_item_text_sha256",
+  ]);
+  return {
+    source_ref: text(row.source_ref, `${label}.source_ref`),
+    locator: text(row.locator, `${label}.locator`),
+    raw_byte_digest: digest(row.raw_byte_digest, `${label}.raw_byte_digest`),
+    source_item_key: text(row.source_item_key, `${label}.source_item_key`),
+    source_item_kind: oneOf(
+      row.source_item_kind,
+      SOURCE_ITEM_KINDS,
+      `${label}.source_item_kind`,
+    ),
+    source_item_text_sha256: digest(
+      row.source_item_text_sha256,
+      `${label}.source_item_text_sha256`,
+    ),
+  };
+}
+
 export function parseDelta(value: unknown, label: string): DesignResourceDelta {
   const row = object(value, label, [
     "delta_id",
     "sequence",
     "supersedes",
+    "proposes_replacement_of",
     "operation",
+    "semantic_kind",
     "target_keys",
     "before_semantics",
     "after_semantics",
@@ -161,7 +217,17 @@ export function parseDelta(value: unknown, label: string): DesignResourceDelta {
     supersedes: stringSet(row.supersedes, `${label}.supersedes`, {
       allowEmpty: true,
     }),
+    proposes_replacement_of: stringSet(
+      row.proposes_replacement_of,
+      `${label}.proposes_replacement_of`,
+      { allowEmpty: true },
+    ),
     operation: oneOf(row.operation, OPERATIONS, `${label}.operation`),
+    semantic_kind: oneOf(
+      row.semantic_kind,
+      SEMANTIC_KINDS,
+      `${label}.semantic_kind`,
+    ),
     target_keys: stringSet(row.target_keys, `${label}.target_keys`),
     before_semantics: unknownSemantics(row, "before_semantics", label),
     after_semantics: unknownSemantics(row, "after_semantics", label),

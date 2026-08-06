@@ -1,8 +1,6 @@
 import { spawnSync } from "node:child_process";
-import {
-  REPO_ROOT,
-  sha256,
-} from "./admission-shared.mjs";
+import { REPO_ROOT, sha256 } from "./admission-shared.mjs";
+import { currentExactMainCandidate } from "./admission-attestation.mjs";
 
 export function runDeterministicAdmissionChecks(config, configSha) {
   const tracks = {};
@@ -16,6 +14,7 @@ export function runDeterministicAdmissionChecks(config, configSha) {
   return {
     schema_version: "tiny-context-admission-deterministic-v1",
     config_sha256: configSha,
+    candidate_git: currentExactMainCandidate(),
     environment_identity: config.environment.identity,
     tracks,
   };

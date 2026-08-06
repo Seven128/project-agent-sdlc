@@ -37,7 +37,8 @@ function scoreRows(result, hidden, evaluator, trace) {
     });
   const failed = findings.filter((item) => !item.passed);
   return {
-    hard_gate_passed: failed.length === 0 && !trace.environment_doubt,
+    hard_gate_passed: failed.length === 0,
+    provenance_verified: !trace.environment_doubt,
     critical_defects: countSeverity(failed, "critical"),
     major_defects: countSeverity(failed, "major"),
     targeted_defects: failed.filter((item) =>
@@ -70,16 +71,27 @@ function scoreSimplePath(result, trace) {
     .filter(([key, value]) => result?.[key] !== value)
     .map(([key]) => key);
   if ((result?.scope_expansion ?? []).length) failures.push("scope_expansion");
-  if ((result?.tool_actions ?? []).length) failures.push("reported_tool_actions");
+  if ((result?.tool_actions ?? []).length)
+    failures.push("reported_tool_actions");
   if (trace.tool_calls !== 0) failures.push("observed_tool_calls");
-  return { hard_gate_passed: failures.length === 0, failures };
+  return {
+    hard_gate_passed: failures.length === 0,
+    provenance_verified: !trace.environment_doubt,
+    failures,
+  };
 }
 
 function evaluateDraExpectation(row, expected) {
   const failures = exactFailures(row, expected.exact);
   appendAllowedFailures(failures, row, expected.allowed);
   appendCollectionFailures(failures, row, expected.contains, "missing", false);
-  appendCollectionFailures(failures, row, expected.excludes, "unexpected", true);
+  appendCollectionFailures(
+    failures,
+    row,
+    expected.excludes,
+    "unexpected",
+    true,
+  );
   appendContainsAnyFailures(failures, row, expected.contains_any);
   appendAuthorityFailures(failures, row, expected.authority_rows);
   return failures;
@@ -114,7 +126,9 @@ function appendContainsAnyFailures(failures, row, rules = []) {
 
 function appendAuthorityFailures(failures, row, authorities = []) {
   for (const authority of authorities)
-    if (!(row.authority_rows ?? []).some((item) => allowedObject(item, authority)))
+    if (
+      !(row.authority_rows ?? []).some((item) => allowedObject(item, authority))
+    )
       failures.push(`authority_row_missing:${authority.key}`);
 }
 
@@ -138,6 +152,9 @@ function evaluateBuildExpectation(row, expected) {
   for (const pattern of expected.prohibited_patterns ?? [])
     if (!new RegExp(pattern, "iu").test(prohibited))
       failures.push(`prohibited_pattern_missing:${pattern}`);
+  for (const pattern of expected.prohibited_excludes ?? [])
+    if (new RegExp(pattern, "iu").test(prohibited))
+      failures.push(`legal_alternative_mislabeled:${pattern}`);
   return failures;
 }
 
@@ -148,7 +165,9 @@ function exactFailures(row, expected = {}) {
 }
 
 function exactObject(actual, expected) {
-  return Object.entries(expected).every(([key, value]) => actual[key] === value);
+  return Object.entries(expected).every(
+    ([key, value]) => actual[key] === value,
+  );
 }
 
 function allowedObject(actual, expected) {

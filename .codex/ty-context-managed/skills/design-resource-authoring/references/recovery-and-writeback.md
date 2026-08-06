@@ -30,7 +30,9 @@ Every Delta stores actual replay semantics, never only an ID:
 delta_id: stable-key
 sequence: 1
 supersedes: []
+proposes_replacement_of: []
 operation: add | replace | remove | preserve
+semantic_kind: exact-visual | product | business | permission | data | algorithm | commercial | safety-security | technical
 target_keys: []
 before_semantics: complete-value-or-null
 after_semantics: complete-value-or-null
@@ -42,7 +44,11 @@ explicitly_unchanged_keys: []
 status: accepted | rejected | unresolved
 ```
 
-Retain all statuses, exact ordering, one-way supersession and explicit unchanged keys. `delegated:<id>` names the stable task-local delegation row; that row carries its Source ref, bounded scope, allowed origins and allowed target keys, so do not substitute an incidental target path for the delegation identity. A selected resource is evidence and never authorizes itself. An accepted Provider suggestion requires explicit user authority or a delegation which actually covers its origin and every target. Product capability, business, permission, data, algorithm, commercial and safety/security meaning keeps authority independent of resource selection. Provider-added meaning lacking authority remains `unresolved` unless an authoritative decision explicitly rejects it. Rejected/unresolved meaning never enters accepted requirements or writeback.
+Retain all statuses, exact ordering, one-way supersession and explicit unchanged keys. Only an accepted Delta may supersede an earlier active accepted Delta, and it must replace the same target set, semantic kind and exact prior `after_semantics`; a rejected or unresolved Delta never deactivates accepted meaning. Use `proposes_replacement_of` for a rejected/unresolved proposal which may be decided later. Cross-target or semantic mismatch fails closed.
+
+Each `source_ref` resolves through `authority_sources` to one repository-contained Source document, its current raw-byte digest, one actual marked Source item, the item kind and item-text digest. An arbitrary string or conversation-only locator cannot create authority or enter deterministic recovery. `explicit-user` includes a digest-bound `decision` item. `delegated:<id>` names the stable task-local delegation row; that row carries a digest-bound decision Source ref, bounded scope, allowed origins and allowed target keys, and the accepted Delta binds the same delegation Source ref. Do not substitute an incidental target path for the delegation identity.
+
+A selected resource is evidence and never authorizes itself. An accepted Provider suggestion requires explicit user authority or a delegation which actually covers its origin and every target. Product capability, business, permission, data, algorithm, commercial and safety/security meaning additionally binds an independent authoritative meaning Source item; a specific explicit-user decision item may carry both meaning and acceptance, but a general bounded-delegation decision alone is not the meaning. Exact visual values may remain exclusively resource-owned, but their adoption authority remains independently Source-bound. Provider-added meaning lacking authority remains `unresolved` unless an authoritative decision explicitly rejects it. Rejected/unresolved meaning never enters accepted requirements or writeback.
 
 Reconstruct each round only from:
 
@@ -58,11 +64,19 @@ Never use a prior Agent summary or generated resource as the next Base. Missing 
 
 ## Conditional checkpoint and helper
 
-Prepare one disclosure-reviewed JSON input using schema `design-resource-recovery-input-v1`, including session identity, Base, delegations/Deltas, exact accepted/rejected/unresolved sets, global unchanged keys, current Design Authority identity, immutable Provider project/run/resource references, selected resource keys and optional writeback. Create/retain a checkpoint for a real interruption or pending CAS writeback; use `none` when neither exists, and `reject` for an existing invalid/unsupported checkpoint. Then explicitly create it when required:
+Prepare one disclosure-reviewed JSON input using schema `design-resource-recovery-input-v2`, including session identity, Base, `authority_sources`, delegations/Deltas, exact accepted/rejected/unresolved sets, global unchanged keys, frozen `blast_radius_keys` and `resource_decision_keys`, current Design Authority identity, immutable Provider project/run/resource references, selected resource keys and optional writeback. Create/retain a checkpoint for a real interruption or pending CAS writeback; use `none` when neither exists, and `reject` for an existing invalid/unsupported checkpoint. Then explicitly create it when required:
 
 ```text
 ty-context design-resource recovery create <session> --input <state.json>
 ```
+
+When a real recovered loop changes Delta, resource or pending writeback inputs, replace the existing checkpoint only through digest CAS:
+
+```text
+ty-context design-resource recovery update <session> --input <state.json> --expected-sha256 <current-checkpoint-sha256>
+```
+
+The helper writes the next canonical checkpoint to an exclusive same-directory temporary file, rechecks the current digest, atomically replaces and rereads it. A mismatch retains the old checkpoint and fails closed. Repeated identical input is an idempotent no-write. This creates no session registry.
 
 The helper writes only:
 
@@ -84,9 +98,9 @@ Unknown schema, corrupt JSON, stale Base/authority or unavailable semantics fail
 
 Before selection/writeback and after every material revision, re-read current resources and perform three upstream audits:
 
-1. **Requirements → Resource:** every active accepted changed key and explicit unchanged key has the right object/target/condition semantics; missing, distorted or falsely claimed coverage is explicit.
-2. **Resource → Requirements:** every material resource decision has an independent origin, decision authority, status and requirement/Proposal/resource-owned disposition. Provider success or a selected file cannot create authority.
-3. **Unexpected Blast Radius:** inspect out-of-scope pages, controls, copy, layout, tokens, states and any reappearance of rejected/unresolved meaning.
+1. **Requirements → Resource:** every frozen active accepted changed key has exact Delta, selected immutable resource and condition bindings. Every frozen explicit-unchanged key has its resource, condition and authority-basis Source bindings. Missing, extra, duplicate, unresolved, distorted or falsely claimed coverage fails closed.
+2. **Resource → Requirements:** freeze every material resource-decision key. Each row binds exact Delta IDs and a separate requirement-key/Delta/origin/decision-authority/Source tuple for every key; authorization of one key never covers another. Each accepted decision has exactly one final disposition: `proposal-written` or `resource-owned-exact-visual`. Resource ownership binds one selected immutable resource, exact conditions and downstream owner and is invalid for product/business/permission/data/algorithm/commercial/safety-security meaning. Rejected uses `not-adopted`; unresolved uses `unresolved` and blocks readiness. Provider success or a selected file cannot create authority.
+3. **Unexpected Blast Radius:** freeze the audit universe, including every explicit Base exclusion, then inspect every row for out-of-scope pages, controls, copy, layout, tokens, states and reappearance of rejected/unresolved meaning. Missing, extra, duplicate, unexpected or unresolved rows fail closed.
 
 Provider execution, Artifact readiness and Design suitability are independent. Provider success, complete fields or repeated values never prove suitability; a valid shared Token or inherited component variant must not be rejected merely because a value repeats. Block direct/Design-Authority conflict, wrong target/condition, missing material state, placeholder-final content, unsupported added meaning, unresolved promotion, stale identity and incomplete formal closure.
 
@@ -118,13 +132,13 @@ current == expected post digest   => already applied/idempotent
 otherwise                         => concurrent conflict; fail closed
 ```
 
-Produce a fresh `design-resource-reconciliation-audit-v1` bound to the same Base, Design Authority, Provider run, selected resource digests, expected target digest, current decision sets and changed/unchanged keys. Include Requirements→Resource, Resource→Requirements, blast-radius and rejected/unresolved-leakage rows. Then apply:
+Produce a fresh `design-resource-reconciliation-audit-v2` bound to the same Base, Design Authority, Provider run, selected resource digests, expected target digest, current decision sets and frozen changed/unchanged/resource-decision/blast-radius universes. Include Requirements→Resource, per-key Resource→Requirements, blast-radius and rejected/unresolved-leakage rows. Then apply:
 
 ```text
 ty-context design-resource recovery apply <session> --audit <audit.json>
 ```
 
-The helper first requires a balanced fresh audit, validates CAS, reapplies the exact patch in memory, preserves supported UTF-8/BOM or UTF-16 encoding and the existing non-mixed EOL policy, writes a same-directory exclusive temporary file, syncs it, rechecks the target, atomically renames, rereads expected bytes and reconciles again. An already-post state performs no write. `handoff-ready` is reported only after balanced reconciliation; missing/distorted/unsupported coverage, unbound resource authority, rejected/unresolved leakage, changed explicit-unchanged meaning, unexpected blast radius or any identity mismatch returns `blocked`.
+The helper first requires a balanced fresh audit, validates CAS, reapplies the exact patch in memory, preserves supported UTF-8/BOM or UTF-16 encoding and the existing non-mixed EOL policy, writes a same-directory exclusive temporary file, syncs it, rechecks the target, atomically renames, rereads expected bytes and reconciles again. An already-post state performs no write. `handoff-ready` is reported only after balanced reconciliation; missing/extra/duplicate/unresolved/distorted/unsupported coverage, per-key authority mismatch, ambiguous/illegal final ownership, rejected/unresolved leakage, changed explicit-unchanged meaning, unexpected blast radius or any identity mismatch returns `blocked`.
 
 Same-directory rename, filesystem durability and the remaining same-user pre-rename race are the named Windows/macOS filesystem TCB. This is not hostile-writer linearizability or crash-proof storage. Cleanup failure is explicit. The helper removes only an exact digest-matched valid checkpoint and its now-empty session directory:
 
@@ -132,7 +146,7 @@ Same-directory rename, filesystem durability and the remaining same-user pre-ren
 ty-context design-resource recovery remove <session> --expected-sha256 <sha256>
 ```
 
-It never scans or deletes unrelated `tmp`, `.work_products`, `artifacts` or reports.
+Before removal it inventories the session directory. It removes the checkpoint and directory only when the directory contains exactly the helper-owned digest-matched checkpoint. Any other entry returns an explicit `partial` result and preserves both the checkpoint and unowned content; a race after checkpoint removal also returns `partial` with the retained entries. It never scans or deletes unrelated `tmp`, `.work_products`, `artifacts` or reports.
 
 ## Downstream boundary
 

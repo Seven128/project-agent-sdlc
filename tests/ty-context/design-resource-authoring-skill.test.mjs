@@ -49,7 +49,10 @@ test("resource selection preserves the smallest sufficient scoped commission", a
     copies("references/resource-selection.md").then((items) => items[0]),
   ]);
   const combined = `${skill}\n${selection}`;
-  assert.match(combined, /scope (?:as|is) (?:the |a )?hard ceiling|hard scope ceiling/iu);
+  assert.match(
+    combined,
+    /scope (?:as|is) (?:the |a )?hard ceiling|hard scope ceiling/iu,
+  );
   assert.match(combined, /necessary surrounding context/iu);
   assert.match(combined, /smallest sufficient/iu);
   assert.match(
@@ -145,7 +148,9 @@ test("implementation output uses complete canonical source plus residual handoff
     copies("SKILL.md").then((items) => items[0]),
     copies("references/open-design-provider.md").then((items) => items[0]),
     copies("references/downstream-handoff.md").then((items) => items[0]),
-    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then(
+      (items) => items[0],
+    ),
   ]);
   const handoff = `${downstream}\n${formal}`;
   const combined = `${skill}\n${provider}\n${handoff}`;
@@ -213,7 +218,9 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
     copies("references/open-design-provider.md").then((items) => items[0]),
     copies("references/downstream-handoff.md").then((items) => items[0]),
     copies("references/resource-selection.md").then((items) => items[0]),
-    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then(
+      (items) => items[0],
+    ),
   ]);
   const handoff = `${downstream}\n${formal}`;
   const combined = `${skill}\n${provider}\n${handoff}\n${selection}`;
@@ -291,7 +298,10 @@ test("formal Web/App authoring closes the complete atomic Fact universe before h
     /one atomic Fact for every covered cell|every covered cell becomes one atomic Fact/iu,
   );
   assert.match(combined, /typed value locators\/digests/iu);
-  assert.match(combined, /(?:effective )?design-system (?:identity and )?lineage/iu);
+  assert.match(
+    combined,
+    /(?:effective )?design-system (?:identity and )?lineage/iu,
+  );
   assert.match(combined, /dynamic\/lazy\/virtualized\/portal population/iu);
   assert.match(combined, /separate `proof_obligations` for every Fact/iu);
   assert.match(
@@ -327,7 +337,10 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
     combined,
     /explicit (?:human )?selection or explicit(?:ly)? delegated selection/iu,
   );
-  assert.match(combined, /one consolidated.*reconciliation|consolidate[\s\S]*once/isu);
+  assert.match(
+    combined,
+    /one consolidated.*reconciliation|consolidate[\s\S]*once/isu,
+  );
   assert.match(
     combined,
     /writable initial-proposal file|authorized writable path/iu,
@@ -373,7 +386,9 @@ test("material DRA recovery preserves replay semantics, authority separation and
     "delta_id",
     "sequence",
     "supersedes",
+    "proposes_replacement_of",
     "operation",
+    "semantic_kind",
     "target_keys",
     "before_semantics",
     "after_semantics",
@@ -386,53 +401,102 @@ test("material DRA recovery preserves replay semantics, authority separation and
   ])
     assert.match(recovery, new RegExp(`\\b${field}\\b`, "u"));
 
-  assert.match(recovery, /user-direct.*necessary-derived.*repository-evidence-backed.*provider-suggested/isu);
-  assert.match(recovery, /explicit-user.*delegated:<bounded-scope-key>.*none/isu);
+  assert.match(
+    recovery,
+    /user-direct.*necessary-derived.*repository-evidence-backed.*provider-suggested/isu,
+  );
+  assert.match(
+    recovery,
+    /explicit-user.*delegated:<bounded-scope-key>.*none/isu,
+  );
   assert.match(recovery, /accepted.*rejected.*unresolved/isu);
-  assert.match(recovery, /selected resource is evidence and never authorizes itself/iu);
+  assert.match(
+    recovery,
+    /selected resource is evidence and never authorizes itself/iu,
+  );
   assert.match(
     recovery,
     /accepted Provider suggestion requires explicit user authority or a delegation.*covers its origin and every target/isu,
   );
-  assert.match(recovery, /rejected\/unresolved meaning never enters accepted requirements or writeback/iu);
+  assert.match(
+    recovery,
+    /rejected\/unresolved meaning never enters accepted requirements or writeback/iu,
+  );
   assert.match(recovery, /cross-session deterministic recovery unavailable/u);
-  assert.match(recovery, /Never use a prior Agent summary or generated resource as the next Base/iu);
+  assert.match(
+    recovery,
+    /Never use a prior Agent summary or generated resource as the next Base/iu,
+  );
 
   assert.match(
     recovery,
     /simple scoped preview creates zero recovery files and persisted recovery bytes.*no user pause or Provider generation.*no formal handoff\/preflight.*no Proposal writeback.*no helper write transaction/isu,
   );
-  assert.match(recovery, /only when interruption would otherwise lose material/iu);
-  assert.match(recovery, /not Source, Context, a Contract, Authority, Evidence, Receipt, Gate/iu);
-  assert.match(recovery, /stores no current activity, live Provider execution, Artifact readiness, Design suitability, next action, readiness\/completion or acceptance/iu);
+  assert.match(
+    recovery,
+    /only when interruption would otherwise lose material/iu,
+  );
+  assert.match(
+    recovery,
+    /not Source, Context, a Contract, Authority, Evidence, Receipt, Gate/iu,
+  );
+  assert.match(
+    recovery,
+    /stores no current activity, live Provider execution, Artifact readiness, Design suitability, next action, readiness\/completion or acceptance/iu,
+  );
 
-  for (const command of ["create", "inspect", "preview", "apply", "remove"])
+  for (const command of [
+    "create",
+    "update",
+    "inspect",
+    "preview",
+    "apply",
+    "remove",
+  ])
     assert.match(
       recovery,
       new RegExp(`ty-context design-resource recovery ${command}`, "u"),
     );
   assert.match(recovery, /current == pre-write digest.*unapplied/isu);
-  assert.match(recovery, /current == expected post digest.*already applied\/idempotent/isu);
+  assert.match(
+    recovery,
+    /current == expected post digest.*already applied\/idempotent/isu,
+  );
   assert.match(recovery, /otherwise.*concurrent conflict; fail closed/isu);
+  assert.match(
+    recovery,
+    /arbitrary string or conversation-only locator cannot create authority/iu,
+  );
+  assert.match(recovery, /authorization of one key never covers another/iu);
+  assert.match(recovery, /proposal-written.*resource-owned-exact-visual/isu);
+  assert.match(recovery, /explicit `partial` result/iu);
   assert.match(recovery, /Requirements → Resource/iu);
   assert.match(recovery, /Resource → Requirements/iu);
   assert.match(recovery, /Unexpected Blast Radius/iu);
-  assert.match(recovery, /handoff-ready.*only after balanced reconciliation/isu);
-  assert.match(recovery, /never replaces the Proposal, selected immutable resources, formal handoff/iu);
-  assert.match(recovery, /Final Gate cannot prove historical Provider execution/iu);
+  assert.match(
+    recovery,
+    /handoff-ready.*only after balanced reconciliation/isu,
+  );
+  assert.match(
+    recovery,
+    /never replaces the Proposal, selected immutable resources, formal handoff/iu,
+  );
+  assert.match(
+    recovery,
+    /Final Gate cannot prove historical Provider execution/iu,
+  );
 });
 
 test("handoff preserves immutable resource identity and direct downstream routing", async () => {
   const [downstream, formal] = await Promise.all([
     copies("references/downstream-handoff.md").then((items) => items[0]),
-    copies("references/formal-selected-web-app-handoff.md").then((items) => items[0]),
+    copies("references/formal-selected-web-app-handoff.md").then(
+      (items) => items[0],
+    ),
   ]);
   const handoff = `${downstream}\n${formal}`;
   assert.match(handoff, /Candidate, selection and (?:authority|adoption)/iu);
-  assert.match(
-    handoff,
-    /for each target|per-target/iu,
-  );
+  assert.match(handoff, /for each target|per-target/iu);
   assert.match(handoff, /provider\/project\/run\/entry/iu);
   assert.match(handoff, /immutable[\s\S]{0,120}digest\/snapshot/iu);
   assert.match(
@@ -440,7 +504,10 @@ test("handoff preserves immutable resource identity and direct downstream routin
     /editable upstream owner, locator and update\/export method/iu,
   );
   assert.match(handoff, /all 33 standard target-condition axes/iu);
-  assert.match(handoff, /exactly one fenced[\s\S]*design-resource-handoff-v1/iu);
+  assert.match(
+    handoff,
+    /exactly one fenced[\s\S]*design-resource-handoff-v1/iu,
+  );
   assert.match(handoff, /representation: manifest_backed/u);
   assert.match(
     handoff,
@@ -455,7 +522,10 @@ test("handoff preserves immutable resource identity and direct downstream routin
     handoff,
     /ty-context design-resource bundle <draft-dir> <new-output-dir>/u,
   );
-  assert.match(handoff, /rejects? (?:any )?embedded\/full-array or multi-target drafts?/iu);
+  assert.match(
+    handoff,
+    /rejects? (?:any )?embedded\/full-array or multi-target drafts?/iu,
+  );
   assert.match(handoff, /atomically renames the complete set/iu);
   assert.match(handoff, /never post-hoc splits?|not a post-hoc split/iu);
   assert.match(
@@ -492,10 +562,7 @@ test("handoff preserves immutable resource identity and direct downstream routin
     /static\/default frame covers only what it actually shows/iu,
   );
   assert.match(handoff, /blocking `decision_required`\/`unavailable`/iu);
-  assert.match(
-    handoff,
-    /unresolved rows[\s\S]*fail closed/iu,
-  );
+  assert.match(handoff, /unresolved rows[\s\S]*fail closed/iu);
   assert.match(
     handoff,
     /initial proposal[\s\S]*selected immutable(?:\/editable)? identities/iu,

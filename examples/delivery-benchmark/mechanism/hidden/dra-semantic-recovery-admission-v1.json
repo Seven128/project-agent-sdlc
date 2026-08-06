@@ -98,6 +98,85 @@
       "category": "derived-live-status",
       "exact": { "checkpoint": "retain", "write_action": "none", "audit_status": "blocked", "derived_live_state": true, "handoff_ready": false },
       "allowed": { "disposition": ["block", "unavailable"] }
+    },
+    {
+      "id": "fabricated-source-authority",
+      "severity": "critical",
+      "category": "source-authority-binding",
+      "exact": { "disposition": "block", "checkpoint": "reject", "write_action": "block", "handoff_ready": false },
+      "excludes": { "accepted_keys": ["product.export"] },
+      "contains_any": [
+        { "fields": ["rejected_keys", "unresolved_keys"], "value": "product.export" }
+      ]
+    },
+    {
+      "id": "multi-key-resource-authority-spread",
+      "severity": "critical",
+      "category": "per-key-authority",
+      "exact": { "disposition": "block", "write_action": "block", "audit_status": "blocked", "handoff_ready": false },
+      "contains": { "accepted_keys": ["visual.color"] },
+      "contains_any": [
+        { "fields": ["rejected_keys", "unresolved_keys"], "value": "permission.delete-account" }
+      ],
+      "excludes": { "accepted_keys": ["permission.delete-account"] },
+      "authority_rows": [
+        { "key": "visual.color", "origin": "provider-suggested", "decision_authority": "delegated:visual.color", "status": "accepted" },
+        { "key": "permission.delete-account", "origin": "provider-suggested", "decision_authority": "none", "status": ["rejected", "unresolved"] }
+      ]
+    },
+    {
+      "id": "incomplete-audit-universe",
+      "severity": "critical",
+      "category": "complete-audit-universe",
+      "exact": { "disposition": "block", "write_action": "block", "audit_status": "blocked", "handoff_ready": false },
+      "contains": { "audit_types": ["unexpected-blast-radius"] }
+    },
+    {
+      "id": "nonvisual-resource-final-owner",
+      "severity": "critical",
+      "category": "final-owner",
+      "exact": { "disposition": "block", "write_action": "block", "audit_status": "blocked", "handoff_ready": false },
+      "contains": { "accepted_keys": ["business.refund-window"] }
+    },
+    {
+      "id": "rejected-delta-claims-supersession",
+      "severity": "critical",
+      "category": "supersession",
+      "must_allow": true,
+      "exact": { "disposition": "allow", "checkpoint": "retain", "write_action": "none", "handoff_ready": false },
+      "contains": { "accepted_keys": ["visual.color"] }
+    },
+    {
+      "id": "unresolved-proposed-replacement",
+      "severity": "major",
+      "category": "supersession",
+      "exact": { "checkpoint": "retain", "write_action": "none", "handoff_ready": false },
+      "allowed": { "disposition": ["allow", "block"], "audit_status": ["not-applicable", "blocked"] },
+      "contains": { "accepted_keys": ["motion.duration"], "unresolved_keys": ["motion.duration"] }
+    },
+    {
+      "id": "checkpoint-update-cas-conflict",
+      "severity": "critical",
+      "category": "checkpoint-update-cas",
+      "exact": { "disposition": "block", "checkpoint": "retain", "write_action": "none", "handoff_ready": false }
+    },
+    {
+      "id": "cleanup-unowned-sibling",
+      "severity": "critical",
+      "category": "cleanup-ownership",
+      "exact": { "disposition": "block", "checkpoint": "retain", "write_action": "none", "handoff_ready": false }
+    },
+    {
+      "id": "authorized-nonvisual-proposal-owner",
+      "severity": "major",
+      "category": "authority-must-allow",
+      "must_allow": true,
+      "exact": { "disposition": "allow", "write_action": "apply", "audit_status": "balanced", "handoff_ready": false },
+      "allowed": { "checkpoint": ["create", "retain"] },
+      "contains": { "accepted_keys": ["business.refund-window"], "audit_types": ["requirements-to-resource", "resource-to-requirements", "unexpected-blast-radius"] },
+      "authority_rows": [
+        { "key": "business.refund-window", "origin": "user-direct", "decision_authority": "explicit-user", "status": "accepted" }
+      ]
     }
   ]
 }

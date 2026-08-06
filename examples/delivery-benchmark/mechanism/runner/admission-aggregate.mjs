@@ -10,15 +10,17 @@ export function compareAdmissionPair(track, pair, configSha) {
   const qualityDelta =
     baseline.score.targeted_defects - candidate.score.targeted_defects;
   const report = {
-    schema_version: "tiny-context-fresh-agent-pair-v1",
+    schema_version: "tiny-context-fresh-agent-pair-v2",
     config_sha256: configSha,
     track,
     pair_id: pair.pair_id,
     replicate: pair.replicate,
-    model: pair.model,
-    reasoning_effort: pair.reasoning_effort,
+    requested_model: pair.requested_model,
+    requested_reasoning_effort: pair.requested_reasoning_effort,
+    requested_provider: pair.requested_provider,
     fixture_identity: pair.fixture_identity,
     environment_identity: pair.environment_identity,
+    candidate_git: pair.candidate_git,
     baseline: summarizeVariant(pair.baseline),
     candidate: summarizeVariant(pair.candidate),
     quality: {
@@ -38,6 +40,12 @@ export function compareAdmissionPair(track, pair, configSha) {
     },
     environment_doubt:
       baseline.trace.environment_doubt || candidate.trace.environment_doubt,
+    provenance_doubt_reasons: union([
+      ...(baseline.trace.provenance_doubt_reasons ?? []),
+      ...(candidate.trace.provenance_doubt_reasons ?? []),
+      ...(pair.baseline.simple?.trace.provenance_doubt_reasons ?? []),
+      ...(pair.candidate.simple?.trace.provenance_doubt_reasons ?? []),
+    ]),
   };
   if (track === "dra-semantic-recovery")
     addSimplePath(report, pair.baseline.simple, pair.candidate.simple);
@@ -45,19 +53,15 @@ export function compareAdmissionPair(track, pair, configSha) {
     qualityDelta > 0 &&
     criticalRegressions.length === 0 &&
     candidate.score.must_allow_false_blocking === 0 &&
-    candidate.score.other_false_blocking <= baseline.score.other_false_blocking &&
+    candidate.score.other_false_blocking <=
+      baseline.score.other_false_blocking &&
     (report.simple_path?.candidate_hard_gate_passed ?? true);
   return report;
 }
 
-export function aggregateAdmissionPairs(
-  track,
-  reports,
-  config,
-  deterministic,
-) {
+export function aggregateAdmissionPairs(track, reports, config, deterministic) {
   assertPairSet(track, reports);
-  const eligible = reports.filter((item) => !item.environment_doubt);
+  const eligible = reports;
   const baselineDefects = sum(
     eligible.map((item) => item.quality.baseline_targeted_defects),
   );
@@ -69,14 +73,10 @@ export function aggregateAdmissionPairs(
       ? (baselineDefects - candidateDefects) / baselineDefects
       : null;
   const criticalRegressions = union(
-    eligible.flatMap(
-      (item) => item.quality.critical_category_regressions,
-    ),
+    eligible.flatMap((item) => item.quality.critical_category_regressions),
   );
   const mustAllow = sum(
-    eligible.map(
-      (item) => item.quality.candidate_must_allow_false_blocking,
-    ),
+    eligible.map((item) => item.quality.candidate_must_allow_false_blocking),
   );
   const baselineOther = sum(
     eligible.map((item) => item.quality.baseline_other_false_blocking),
@@ -86,9 +86,7 @@ export function aggregateAdmissionPairs(
   );
   const wins = eligible.filter((item) => item.pairwise_win).length;
   const simple =
-    track === "dra-semantic-recovery"
-      ? aggregateSimplePath(eligible)
-      : null;
+    track === "dra-semantic-recovery" ? aggregateSimplePath(eligible) : null;
   const expansion = pairExpansion(
     reports,
     reduction,
@@ -101,6 +99,7 @@ export function aggregateAdmissionPairs(
       ? config.pair_policy.expanded_wins
       : config.pair_policy.minimum_wins;
   const deterministicPassed = deterministic?.tracks?.[track]?.passed === true;
+  const doubtfulPairs = reports.filter((item) => item.environment_doubt);
   const zeroBaseline = baselineDefects === 0;
   const qualityPassed =
     !zeroBaseline &&
@@ -112,8 +111,10 @@ export function aggregateAdmissionPairs(
   const simplePassed =
     !simple ||
     (simple.all_candidate_hard_gates_passed &&
-      simple.median_token_overhead <= config.thresholds.simple_path_max_overhead &&
-      simple.median_wall_overhead <= config.thresholds.simple_path_max_overhead &&
+      simple.median_token_overhead <=
+        config.thresholds.simple_path_max_overhead &&
+      simple.median_wall_overhead <=
+        config.thresholds.simple_path_max_overhead &&
       simple.candidate_tool_calls === 0);
   let decision = "ADMISSION_THRESHOLDS_NOT_MET";
   if (eligible.length < requiredPairs) decision = "MORE_PAIRS_REQUIRED";
@@ -123,10 +124,14 @@ export function aggregateAdmissionPairs(
         ? "ZERO_DEFECT_BASELINE_HARDENING_ONLY"
         : "ZERO_DEFECT_BASELINE_NO_ADMISSION";
   else if (qualityPassed && simplePassed && deterministicPassed)
-    decision = "ADMISSION_THRESHOLDS_MET";
+    decision = doubtfulPairs.length
+      ? "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION"
+      : "ADMISSION_THRESHOLDS_MET";
   return {
-    schema_version: "tiny-context-fresh-agent-aggregate-v1",
+    schema_version: "tiny-context-fresh-agent-aggregate-v2",
+    config_sha256: reports[0].config_sha256,
     track,
+    candidate_git: reports[0].candidate_git,
     pair_count: reports.length,
     eligible_pair_count: eligible.length,
     required_pairs: requiredPairs,
@@ -142,6 +147,13 @@ export function aggregateAdmissionPairs(
     baseline_other_false_blocking: baselineOther,
     candidate_other_false_blocking: candidateOther,
     deterministic_hard_gates_passed: deterministicPassed,
+    provenance_qualification: {
+      status: doubtfulPairs.length ? "unverified" : "verified",
+      doubtful_pair_count: doubtfulPairs.length,
+      doubt_reasons: union(
+        doubtfulPairs.flatMap((item) => item.provenance_doubt_reasons ?? []),
+      ),
+    },
     simple_path: simple,
     quality_thresholds_passed: qualityPassed,
     simple_path_thresholds_passed: simplePassed,
@@ -156,10 +168,16 @@ function addSimplePath(report, baseline, candidate) {
     candidate_hard_gate_passed: candidate.score.hard_gate_passed,
     baseline_tokens: baseline.trace.total_tokens,
     candidate_tokens: candidate.trace.total_tokens,
-    token_overhead: ratioDelta(candidate.trace.total_tokens, baseline.trace.total_tokens),
+    token_overhead: ratioDelta(
+      candidate.trace.total_tokens,
+      baseline.trace.total_tokens,
+    ),
     baseline_wall_ms: baseline.trace.duration_ms,
     candidate_wall_ms: candidate.trace.duration_ms,
-    wall_overhead: ratioDelta(candidate.trace.duration_ms, baseline.trace.duration_ms),
+    wall_overhead: ratioDelta(
+      candidate.trace.duration_ms,
+      baseline.trace.duration_ms,
+    ),
     baseline_tool_calls: baseline.trace.tool_calls,
     candidate_tool_calls: candidate.trace.tool_calls,
   };
@@ -197,6 +215,9 @@ function summarizeInvocation(invocation) {
     tokens: invocation.trace.total_tokens,
     tool_calls: invocation.trace.tool_calls,
     trace_identity: invocation.trace.trace_identity,
+    requested_execution: invocation.trace.requested_execution,
+    effective_execution: invocation.trace.effective_execution,
+    provenance_doubt_reasons: invocation.trace.provenance_doubt_reasons,
   };
 }
 
@@ -206,7 +227,9 @@ function categoryRegressions(baseline, candidate) {
   );
 }
 
-function sum(values) { return values.reduce((total, value) => total + value, 0); }
+function sum(values) {
+  return values.reduce((total, value) => total + value, 0);
+}
 
 function union(values) {
   return [...new Set(values)].sort();
@@ -216,7 +239,9 @@ function assertPairSet(track, reports) {
   if (!reports.length) throw new Error("admission_aggregate_requires_pairs");
   if (reports.some((item) => item.track !== track))
     throw new Error("admission_aggregate_track_mismatch");
-  const identities = reports.map((item) => `${item.pair_id}\0${item.replicate}`);
+  const identities = reports.map(
+    (item) => `${item.pair_id}\0${item.replicate}`,
+  );
   if (new Set(identities).size !== identities.length)
     throw new Error("admission_aggregate_duplicate_pair");
   const first = fixedIdentity(reports[0]);
@@ -228,9 +253,11 @@ function assertPairSet(track, reports) {
 function fixedIdentity(report) {
   return JSON.stringify({
     config: report.config_sha256,
-    model: report.model,
-    reasoning: report.reasoning_effort,
+    model: report.requested_model,
+    reasoning: report.requested_reasoning_effort,
+    provider: report.requested_provider,
     fixture: report.fixture_identity,
     environment: report.environment_identity,
+    candidate_git: report.candidate_git,
   });
 }

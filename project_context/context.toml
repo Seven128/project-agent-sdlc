@@ -29,7 +29,7 @@ triggers = ["design resource handoff", "design-resource-handoff-v1", "design-res
 path = "project_context/areas/harness-package/contracts/design-resource-authoring.md"
 role = "contract"
 read_policy = "on-demand"
-triggers = ["design resource authoring", "DRA", "proposal reconciliation", "Base replay", "replayable Delta", "semantic fidelity", "delegated-choice validity", "decision authority", "resource to requirements", "requirements to resource", "unexpected blast radius", "DRA recovery", "recovery checkpoint", "Proposal writeback", "writeback CAS", "design-resource recovery", "设计资源生成", "方案回写", "双向审计", "中断恢复", "语义保真", "委托决策"]
+triggers = ["design resource authoring", "DRA", "proposal reconciliation", "Base replay", "replayable Delta", "semantic fidelity", "delegated-choice validity", "decision authority", "authority source item", "resource decision binding", "final disposition", "blast radius universe", "Delta supersession", "checkpoint update", "resource to requirements", "requirements to resource", "unexpected blast radius", "DRA recovery", "recovery checkpoint", "Proposal writeback", "writeback CAS", "design-resource recovery", "设计资源生成", "方案回写", "双向审计", "中断恢复", "语义保真", "委托决策"]
 
 [[context]]
 path = "project_context/areas/harness-package/contracts/temporary-content-governance.md"

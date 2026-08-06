@@ -4,6 +4,7 @@ import {
   DESIGN_RESOURCE_RECOVERY_INPUT_SCHEMA,
   DESIGN_RESOURCE_RECOVERY_SCHEMA,
 } from "./design-resource-recovery-schema.js";
+import type { SourceItemKind } from "./long-task-source-authority-types.js";
 
 export type DesignResourceDecisionOrigin =
   | "user-direct"
@@ -16,6 +17,17 @@ export type DesignResourceDecisionStatus =
 
 export type DesignResourceDecisionAuthority =
   "explicit-user" | "none" | `delegated:${string}`;
+
+export type DesignResourceSemanticKind =
+  | "exact-visual"
+  | "product"
+  | "business"
+  | "permission"
+  | "data"
+  | "algorithm"
+  | "commercial"
+  | "safety-security"
+  | "technical";
 
 export type DesignResourceTextEncoding =
   "utf8" | "utf8-bom" | "utf16le" | "utf16be";
@@ -45,11 +57,22 @@ export interface DesignResourceDelegation {
   allowed_target_keys: string[];
 }
 
+export interface DesignResourceAuthoritySourceItem {
+  source_ref: string;
+  locator: string;
+  raw_byte_digest: string;
+  source_item_key: string;
+  source_item_kind: SourceItemKind;
+  source_item_text_sha256: string;
+}
+
 export interface DesignResourceDelta {
   delta_id: string;
   sequence: number;
   supersedes: string[];
+  proposes_replacement_of: string[];
   operation: "add" | "replace" | "remove" | "preserve";
+  semantic_kind: DesignResourceSemanticKind;
   target_keys: string[];
   before_semantics: unknown;
   after_semantics: unknown;
@@ -121,6 +144,7 @@ export interface DesignResourceRecoveryCreateInput {
     contains_sensitive_raw_values: false;
   };
   base: DesignResourceRecoveryBaseInput;
+  authority_sources: DesignResourceAuthoritySourceItem[];
   delegations: DesignResourceDelegation[];
   deltas: DesignResourceDelta[];
   decision_sets: {
@@ -129,6 +153,8 @@ export interface DesignResourceRecoveryCreateInput {
     unresolved_delta_ids: string[];
   };
   explicitly_unchanged_keys: string[];
+  blast_radius_keys: string[];
+  resource_decision_keys: string[];
   design_authority: DesignResourceAuthorityIdentity;
   provider: DesignResourceProviderReferences;
   selected_resource_keys: string[];
@@ -157,25 +183,47 @@ export interface DesignResourceReconciliationAudit {
   rejected_delta_ids: string[];
   unresolved_delta_ids: string[];
   changed_keys: string[];
-  explicitly_unchanged: Array<{ key: string; preserved: boolean }>;
+  explicitly_unchanged: Array<{
+    key: string;
+    verdict: "preserved" | "changed" | "unresolved";
+    resource_refs: string[];
+    condition_refs: string[];
+    basis_source_refs: string[];
+  }>;
   requirements_to_resource: Array<{
     key: string;
-    verdict: "covered" | "missing" | "distorted" | "unsupported";
+    verdict: "covered" | "missing" | "distorted" | "unsupported" | "unresolved";
     delta_ids: string[];
     resource_refs: string[];
+    condition_refs: string[];
   }>;
   resource_to_requirements: Array<{
     key: string;
     resource_ref: string;
-    origin: DesignResourceDecisionOrigin;
-    decision_authority: DesignResourceDecisionAuthority;
     status: DesignResourceDecisionStatus;
-    written: boolean;
-    requirement_keys: string[];
+    semantic_kind: DesignResourceSemanticKind;
+    delta_ids: string[];
+    requirement_bindings: Array<{
+      requirement_key: string;
+      delta_id: string;
+      origin: DesignResourceDecisionOrigin;
+      decision_authority: DesignResourceDecisionAuthority;
+      source_refs: string[];
+    }>;
+    final_disposition:
+      | { kind: "proposal-written" }
+      | {
+          kind: "resource-owned-exact-visual";
+          resource_ref: string;
+          condition_refs: string[];
+          downstream_owner: string;
+        }
+      | { kind: "not-adopted" }
+      | { kind: "unresolved" };
   }>;
   unexpected_blast_radius: Array<{
     key: string;
-    verdict: "expected" | "unexpected";
+    verdict: "expected" | "unexpected" | "unresolved";
   }>;
   rejected_or_unresolved_leakage: Array<{
     delta_id: string;

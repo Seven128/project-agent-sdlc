@@ -10,6 +10,7 @@ import {
   writeJson,
 } from "./admission-shared.mjs";
 import { scoreAdmissionInvocation } from "./admission-score.mjs";
+import { currentExactMainCandidate } from "./admission-attestation.mjs";
 
 export async function runAdmissionPair({
   trackId,
@@ -26,10 +27,12 @@ export async function runAdmissionPair({
   const pair = {
     pair_id: pairId,
     replicate,
-    model: config.model,
-    reasoning_effort: config.reasoning_effort,
+    requested_model: config.model,
+    requested_reasoning_effort: config.reasoning_effort,
+    requested_provider: config.provider,
     fixture_identity: track.fixture_identity,
     environment_identity: config.environment.identity,
+    candidate_git: currentExactMainCandidate(),
     baseline: {},
     candidate: {},
   };
@@ -84,18 +87,20 @@ async function runInvocation(options) {
     schema,
     model: options.config.model,
     reasoning: options.config.reasoning_effort,
+    provider: options.config.provider,
     timeoutMs: options.config.environment.timeout_ms,
   });
   const trace = {
-    schema_version: "tiny-context-fresh-agent-trace-v1",
+    schema_version: "tiny-context-fresh-agent-trace-v2",
     trace_identity: traceIdentity,
     pair_id: options.pairId,
     replicate: options.replicate,
     track: options.trackId,
     mode: options.mode,
     variant: options.variantId,
-    model: options.config.model,
-    reasoning_effort: options.config.reasoning_effort,
+    requested_execution: execution.requested_execution,
+    effective_execution: execution.effective_execution,
+    provenance_doubt_reasons: execution.provenance_doubt_reasons,
     provider_fixture_identity: options.config.provider_fixture_identity,
     environment_identity: options.config.environment.identity,
     config_sha256: options.configSha,
@@ -125,7 +130,10 @@ async function runInvocation(options) {
     hidden,
   );
   await Promise.all([
-    writeJson(path.join(options.invocationDirectory, "result.json"), execution.result),
+    writeJson(
+      path.join(options.invocationDirectory, "result.json"),
+      execution.result,
+    ),
     writeJson(path.join(options.invocationDirectory, "trace.json"), trace),
     writeJson(path.join(options.invocationDirectory, "score.json"), score),
     writeFile(
@@ -142,7 +150,14 @@ async function runInvocation(options) {
   return { result: execution.result, trace, score };
 }
 
-async function executeCodex({ prompt, schema, model, reasoning, timeoutMs }) {
+async function executeCodex({
+  prompt,
+  schema,
+  model,
+  reasoning,
+  provider,
+  timeoutMs,
+}) {
   const temporary = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-admission-"),
   );
@@ -165,6 +180,8 @@ async function executeCodex({ prompt, schema, model, reasoning, timeoutMs }) {
         model,
         "-c",
         `model_reasoning_effort=\"${reasoning}\"`,
+        "-c",
+        `model_provider=\"${provider}\"`,
         "--output-schema",
         schema,
         "--json",
@@ -185,7 +202,11 @@ async function executeCodex({ prompt, schema, model, reasoning, timeoutMs }) {
       throw new Error(
         `fresh_agent_execution_failed:${run.status}:stdout=${run.stdout}:stderr=${run.stderr}`,
       );
-    const parsed = parseEvents(run.stdout);
+    const parsed = parseAdmissionEvents(run.stdout, {
+      model,
+      reasoning_effort: reasoning,
+      provider,
+    });
     return {
       result: parsed.result,
       usage: parsed.usage,
@@ -195,6 +216,9 @@ async function executeCodex({ prompt, schema, model, reasoning, timeoutMs }) {
       stderr: run.stderr ?? "",
       exit_status: run.status,
       environment_doubt: parsed.environment_doubt,
+      requested_execution: parsed.requested_execution,
+      effective_execution: parsed.effective_execution,
+      provenance_doubt_reasons: parsed.provenance_doubt_reasons,
     };
   } finally {
     try {
@@ -207,7 +231,7 @@ async function executeCodex({ prompt, schema, model, reasoning, timeoutMs }) {
   }
 }
 
-function parseEvents(stdout) {
+export function parseAdmissionEvents(stdout, requestedExecution) {
   const events = stdout
     .split(/\r?\n/u)
     .filter(Boolean)
@@ -243,11 +267,68 @@ function parseEvents(stdout) {
       )
       .map((event) => event.item.id),
   ).size;
+  const effectiveExecution = {
+    model: effectiveField(
+      events,
+      requestedExecution.model,
+      ["model", "model_id"],
+      "model",
+    ),
+    reasoning_effort: effectiveField(
+      events,
+      requestedExecution.reasoning_effort,
+      ["reasoning_effort", "model_reasoning_effort"],
+      "reasoning_effort",
+    ),
+    provider: effectiveField(
+      events,
+      requestedExecution.provider,
+      ["provider", "model_provider"],
+      "provider",
+    ),
+  };
+  const provenanceDoubtReasons = Object.entries(effectiveExecution)
+    .filter(([, observation]) => observation.status !== "verified")
+    .map(([field, observation]) => `${field}:${observation.status}`);
   return {
     result: JSON.parse(messages[0].item.text),
     usage,
     tool_calls: toolCalls,
-    environment_doubt: false,
+    requested_execution: requestedExecution,
+    effective_execution: effectiveExecution,
+    provenance_doubt_reasons: provenanceDoubtReasons,
+    environment_doubt: provenanceDoubtReasons.length > 0,
+  };
+}
+
+function effectiveField(events, requested, fieldNames, label) {
+  const observed = [];
+  for (const event of events) {
+    if (
+      ![
+        "execution.metadata",
+        "thread.started",
+        "turn.started",
+        "turn.completed",
+      ].includes(event.type)
+    )
+      continue;
+    for (const field of fieldNames) {
+      const value = event[field] ?? event.execution?.[field];
+      if (typeof value === "string" && value.trim())
+        observed.push({ value, event_type: event.type, field });
+    }
+  }
+  const values = [...new Set(observed.map((item) => item.value))];
+  if (!values.length)
+    return { status: "unverified", value: null, evidence: [] };
+  if (values.length !== 1 || values[0] !== requested)
+    return { status: "mismatch", value: values, evidence: observed };
+  return {
+    status: "verified",
+    value: values[0],
+    evidence: observed.map((item) => `${item.event_type}.${item.field}`),
+    label,
   };
 }
 
@@ -257,9 +338,7 @@ function buildPrompt(guidance, task) {
 
 function variantOrder(replicate, mode) {
   const baselineFirst = (replicate + (mode === "simple" ? 1 : 0)) % 2 === 1;
-  return baselineFirst
-    ? ["baseline", "candidate"]
-    : ["candidate", "baseline"];
+  return baselineFirst ? ["baseline", "candidate"] : ["candidate", "baseline"];
 }
 
 function assertPairIdentity(pairId, replicate) {

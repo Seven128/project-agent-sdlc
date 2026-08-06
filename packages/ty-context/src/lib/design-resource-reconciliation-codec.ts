@@ -27,6 +27,17 @@ const ORIGINS = [
   "provider-suggested",
 ] as const;
 const STATUSES = ["accepted", "rejected", "unresolved"] as const;
+const SEMANTIC_KINDS = [
+  "exact-visual",
+  "product",
+  "business",
+  "permission",
+  "data",
+  "algorithm",
+  "commercial",
+  "safety-security",
+  "technical",
+] as const;
 
 export function parseDesignResourceReconciliationAudit(
   content: string,
@@ -157,13 +168,28 @@ function parseResourceIdentity(
 function parseUnchanged(
   value: unknown,
   label: string,
-): { key: string; preserved: boolean } {
-  const row = object(value, label, ["key", "preserved"]);
-  if (typeof row.preserved !== "boolean")
-    throw new Error(
-      `design_resource_recovery_invalid:${label}.preserved:boolean_required`,
-    );
-  return { key: text(row.key, `${label}.key`), preserved: row.preserved };
+): DesignResourceReconciliationAudit["explicitly_unchanged"][number] {
+  const row = object(value, label, [
+    "key",
+    "verdict",
+    "resource_refs",
+    "condition_refs",
+    "basis_source_refs",
+  ]);
+  return {
+    key: text(row.key, `${label}.key`),
+    verdict: oneOf(
+      row.verdict,
+      ["preserved", "changed", "unresolved"] as const,
+      `${label}.verdict`,
+    ),
+    resource_refs: stringSet(row.resource_refs, `${label}.resource_refs`),
+    condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
+    basis_source_refs: stringSet(
+      row.basis_source_refs,
+      `${label}.basis_source_refs`,
+    ),
+  };
 }
 
 function parseRequirementFinding(
@@ -175,16 +201,18 @@ function parseRequirementFinding(
     "verdict",
     "delta_ids",
     "resource_refs",
+    "condition_refs",
   ]);
   return {
     key: text(row.key, `${label}.key`),
     verdict: oneOf(
       row.verdict,
-      ["covered", "missing", "distorted", "unsupported"] as const,
+      ["covered", "missing", "distorted", "unsupported", "unresolved"] as const,
       `${label}.verdict`,
     ),
     delta_ids: stringSet(row.delta_ids, `${label}.delta_ids`),
     resource_refs: stringSet(row.resource_refs, `${label}.resource_refs`),
+    condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
   };
 }
 
@@ -195,19 +223,48 @@ function parseResourceFinding(
   const row = object(value, label, [
     "key",
     "resource_ref",
-    "origin",
-    "decision_authority",
     "status",
-    "written",
-    "requirement_keys",
+    "semantic_kind",
+    "delta_ids",
+    "requirement_bindings",
+    "final_disposition",
   ]);
-  if (typeof row.written !== "boolean")
-    throw new Error(
-      `design_resource_recovery_invalid:${label}.written:boolean_required`,
-    );
   return {
     key: text(row.key, `${label}.key`),
     resource_ref: text(row.resource_ref, `${label}.resource_ref`),
+    status: oneOf(row.status, STATUSES, `${label}.status`),
+    semantic_kind: oneOf(
+      row.semantic_kind,
+      SEMANTIC_KINDS,
+      `${label}.semantic_kind`,
+    ),
+    delta_ids: stringSet(row.delta_ids, `${label}.delta_ids`),
+    requirement_bindings: arrayOf(
+      row.requirement_bindings,
+      `${label}.requirement_bindings`,
+      parseRequirementBinding,
+    ),
+    final_disposition: parseFinalDisposition(
+      row.final_disposition,
+      `${label}.final_disposition`,
+    ),
+  };
+}
+
+function parseRequirementBinding(
+  value: unknown,
+  label: string,
+): DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number] {
+  const row = object(value, label, [
+    "requirement_key",
+    "delta_id",
+    "origin",
+    "decision_authority",
+    "source_refs",
+  ]);
+  return {
+    requirement_key: text(row.requirement_key, `${label}.requirement_key`),
+    delta_id: text(row.delta_id, `${label}.delta_id`),
     origin: oneOf(
       row.origin,
       ORIGINS,
@@ -217,14 +274,48 @@ function parseResourceFinding(
       row.decision_authority,
       `${label}.decision_authority`,
     ),
-    status: oneOf(row.status, STATUSES, `${label}.status`),
-    written: row.written,
-    requirement_keys: stringSet(
-      row.requirement_keys,
-      `${label}.requirement_keys`,
-      { allowEmpty: true },
-    ),
+    source_refs: stringSet(row.source_refs, `${label}.source_refs`, {
+      allowEmpty: true,
+    }),
   };
+}
+
+function parseFinalDisposition(
+  value: unknown,
+  label: string,
+): DesignResourceReconciliationAudit["resource_to_requirements"][number]["final_disposition"] {
+  const first = object(
+    value,
+    label,
+    ["kind"],
+    ["resource_ref", "condition_refs", "downstream_owner"],
+  );
+  const kind = oneOf(
+    first.kind,
+    [
+      "proposal-written",
+      "resource-owned-exact-visual",
+      "not-adopted",
+      "unresolved",
+    ] as const,
+    `${label}.kind`,
+  );
+  if (kind === "resource-owned-exact-visual") {
+    const row = object(value, label, [
+      "kind",
+      "resource_ref",
+      "condition_refs",
+      "downstream_owner",
+    ]);
+    return {
+      kind,
+      resource_ref: text(row.resource_ref, `${label}.resource_ref`),
+      condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
+      downstream_owner: text(row.downstream_owner, `${label}.downstream_owner`),
+    };
+  }
+  object(value, label, ["kind"]);
+  return { kind };
 }
 
 function parseBlastFinding(
@@ -236,7 +327,7 @@ function parseBlastFinding(
     key: text(row.key, `${label}.key`),
     verdict: oneOf(
       row.verdict,
-      ["expected", "unexpected"] as const,
+      ["expected", "unexpected", "unresolved"] as const,
       `${label}.verdict`,
     ),
   };

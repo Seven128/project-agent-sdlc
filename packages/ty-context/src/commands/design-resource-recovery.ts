@@ -6,6 +6,7 @@ import {
   inspectDesignResourceRecovery,
   previewDesignResourceRecoveryWriteback,
   removeDesignResourceRecoveryCheckpoint,
+  updateDesignResourceRecoveryCheckpoint,
 } from "../lib/design-resource-recovery.js";
 import { canonicalJson } from "../lib/strict-codec.js";
 
@@ -15,12 +16,14 @@ export async function designResourceRecoveryCommand(
   const [action, sessionId, ...rest] = args;
   if (!action || !sessionId)
     throw new Error(
-      "usage: ty-context design-resource recovery <create|inspect|preview|apply|remove> <session> [options]",
+      "usage: ty-context design-resource recovery <create|update|inspect|preview|apply|remove> <session> [options]",
     );
   const options = recoveryOptions(rest);
   let result: unknown;
   if (action === "create")
     result = await create(process.cwd(), sessionId, options);
+  else if (action === "update")
+    result = await update(process.cwd(), sessionId, options);
   else if (action === "inspect") {
     assertNoValueOptions(options, action);
     result = await inspectDesignResourceRecovery(process.cwd(), sessionId);
@@ -42,6 +45,11 @@ export async function designResourceRecoveryCommand(
     (result as { status?: string }).status === "blocked"
   )
     process.exitCode = 2;
+  if (
+    action === "remove" &&
+    (result as { status?: string }).status === "partial"
+  )
+    process.exitCode = 2;
 }
 
 interface RecoveryOptions {
@@ -58,14 +66,7 @@ async function create(
 ): Promise<unknown> {
   if (!options.input || options.audit || options.expectedSha256)
     usage("create <session> --input <state.json>");
-  const inputSnapshot = await readRecoveryRepositoryFile(
-    repository,
-    options.input,
-    "design_resource_recovery_create_input",
-  );
-  const input = parseDesignResourceRecoveryCreateInput(
-    inputSnapshot.bytes.toString("utf8"),
-  );
+  const input = await readCreateInput(repository, options.input);
   if (input.session_id !== sessionId)
     throw new Error(
       "design_resource_recovery_invalid:create_session_identity_mismatch",
@@ -84,6 +85,25 @@ async function apply(
     repository,
     sessionId,
     options.audit,
+  );
+}
+
+async function update(
+  repository: string,
+  sessionId: string,
+  options: RecoveryOptions,
+): Promise<unknown> {
+  if (!options.input || !options.expectedSha256 || options.audit)
+    usage("update <session> --input <state.json> --expected-sha256 <sha256>");
+  const input = await readCreateInput(repository, options.input);
+  if (input.session_id !== sessionId)
+    throw new Error(
+      "design_resource_recovery_invalid:update_session_identity_mismatch",
+    );
+  return updateDesignResourceRecoveryCheckpoint(
+    repository,
+    input,
+    options.expectedSha256,
   );
 }
 
@@ -132,9 +152,20 @@ function usage(value: string): never {
   );
 }
 
+async function readCreateInput(repository: string, locator: string) {
+  const inputSnapshot = await readRecoveryRepositoryFile(
+    repository,
+    locator,
+    "design_resource_recovery_create_input",
+  );
+  return parseDesignResourceRecoveryCreateInput(
+    inputSnapshot.bytes.toString("utf8"),
+  );
+}
+
 function printRecoveryResult(action: string, result: unknown): void {
   const row = result as Record<string, unknown>;
-  if (action === "create") {
+  if (action === "create" || action === "update") {
     console.log(`DRA recovery checkpoint: ${row.status}`);
     console.log(`Path: ${row.checkpoint_path}`);
     console.log(`SHA-256: ${row.checkpoint_raw_byte_digest}`);
@@ -151,7 +182,10 @@ function printRecoveryResult(action: string, result: unknown): void {
     console.log(`Reconciliation: ${JSON.stringify(row.reconciliation)}`);
     return;
   }
-  console.log(`DRA recovery checkpoint removed: ${row.path}`);
+  console.log(`DRA recovery cleanup: ${row.status}`);
+  console.log(`Path: ${row.path}`);
+  if (row.status === "partial")
+    console.log(`Retained: ${JSON.stringify(row.retained_entries)}`);
 }
 
 function printInspection(row: Record<string, unknown>): void {

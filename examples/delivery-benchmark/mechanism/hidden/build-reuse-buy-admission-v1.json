@@ -91,7 +91,18 @@
       "must_allow": true,
       "decision": "allow",
       "allowed_contains": ["standard-library", "installed-dependency", "bounded-self-implementation"],
-      "selected_allowed": ["standard-library", "installed-dependency", "bounded-self-implementation"]
+      "selected_allowed": ["standard-library", "installed-dependency", "bounded-self-implementation"],
+      "prohibited_excludes": ["standard-library", "installed-dependency", "bounded-self-implementation"]
+    },
+    {
+      "id": "unselected-legal-alternative",
+      "severity": "major",
+      "category": "alternative-not-prohibited",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["standard-library", "installed-dependency"],
+      "selected_allowed": ["standard-library", "installed-dependency"],
+      "prohibited_excludes": ["standard-library", "installed-dependency"]
     }
   ]
 }

@@ -78,6 +78,11 @@ test("DRA recovery owners and shared path safety select their focused boundaries
     "tests/ty-context/temporary-content-governance.test.mjs",
   ]);
 
+  const sourceAuthority = selectAffectedTests([
+    "packages/ty-context/src/lib/design-resource-recovery-source-authority.ts",
+  ]);
+  assert.deepEqual(sourceAuthority.tests, recovery.tests);
+
   const pathSafety = selectAffectedTests([
     "packages/ty-context/src/lib/repository-path-safety.ts",
   ]);
@@ -88,6 +93,25 @@ test("DRA recovery owners and shared path safety select their focused boundaries
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/long-task-workspace-scope.test.mjs",
   ]);
+});
+
+test("fresh-Agent admission inputs, runners and runbook select the frozen protocol test", () => {
+  for (const source of [
+    "examples/delivery-benchmark/mechanism/admission-set.json",
+    "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
+    "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
+    "examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs",
+    "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
+    "examples/delivery-benchmark/mechanism/RUNBOOK.md",
+  ]) {
+    const selection = selectAffectedTests([source]);
+    assert.equal(selection.mode, "selected", source);
+    assert.deepEqual(
+      selection.tests,
+      ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
+      source,
+    );
+  }
 });
 
 test("shared Source line scanning selects handoff and both formal Source consumers", () => {
