@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
@@ -23,8 +23,6 @@ import {
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
-
-const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-main-root";
 
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
@@ -383,42 +381,6 @@ test("Long-Task consumes target handoffs in either order and rejects missing, ex
 });
 
 test("Long-Task Compile binds every declared design verification method to an independent Assertion", async () => {
-  const splitSourceClaims = await createDeliveryFixture();
-  try {
-    const handoff = await attachDesignResourceHandoff(splitSourceClaims);
-    for (const fact of handoff.facts)
-      fact.source_item_refs.push(DESIGN_ROOT_SOURCE_ITEM_KEY);
-    for (const row of handoff.coverage)
-      if (row.disposition === "covered")
-        row.source_item_refs.push(DESIGN_ROOT_SOURCE_ITEM_KEY);
-    await writeDesignResourceHandoff(splitSourceClaims.root, handoff);
-    await addDesignRootSourceMarker(splitSourceClaims.root);
-    splitSourceClaims.contract.source_claims.push({
-      key: DESIGN_ROOT_SOURCE_ITEM_KEY,
-      source_ref: `${DESIGN_HANDOFF_PATH}#main-design-root`,
-      statement: "main content",
-      disposition: {
-        type: "claim",
-        refs: ["first.control.main.location"],
-      },
-    });
-    await writeContract(splitSourceClaims.workdir, splitSourceClaims.contract);
-    await assert.doesNotReject(
-      compileDeliveryContract(
-        splitSourceClaims.workdir,
-        splitSourceClaims.root,
-        {
-          require_completion_gate: false,
-        },
-      ),
-    );
-    for (const assertion of splitSourceClaims.contract.outcomes[0].acceptance
-      .checks[0].positive_assertions)
-      assert.ok(assertion.claims.length <= 1, assertion.key);
-  } finally {
-    await rm(splitSourceClaims.root, { recursive: true, force: true });
-  }
-
   const missingMethod = await createDeliveryFixture();
   try {
     await attachDesignResourceHandoff(missingMethod);
@@ -519,27 +481,6 @@ test("Long-Task Compile binds every declared design verification method to an in
     await rm(bundledCondition.root, { recursive: true, force: true });
   }
 });
-
-async function addDesignRootSourceMarker(root) {
-  const handoffPath = path.join(root, DESIGN_HANDOFF_PATH);
-  const markdown = await readFile(handoffPath, "utf8");
-  const marker = `<!-- ty-source-background:start key=design-handoff-root-heading reason=markdown-structure -->
-<a id="main-design-root"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=${DESIGN_ROOT_SOURCE_ITEM_KEY} kind=control -->
-main content
-<!-- ty-source-item:end -->
-
-`;
-  await writeFile(
-    handoffPath,
-    markdown.replace(
-      "```yaml design-resource-handoff-v1",
-      `${marker}\`\`\`yaml design-resource-handoff-v1`,
-    ),
-  );
-}
 
 test("Long-Task Compile rejects every exact design-fact binding drift", async () => {
   const cases = [

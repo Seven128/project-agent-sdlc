@@ -122,11 +122,6 @@ export function validateSymbolicVerificationMethodBindings(
         "v2_verification_method_assertion_unknown",
         `${target.key}:${binding.method}:${binding.assertion_ref}`,
       );
-    const assertedClaims = claimsAssertedByRootOrMethod(
-      target,
-      check,
-      assertion.claims,
-    );
     for (const capability of requiredCapabilities(binding.method))
       if (!assertion.evidence_capabilities.includes(capability))
         invalid(
@@ -149,7 +144,7 @@ export function validateSymbolicVerificationMethodBindings(
       )!;
       for (const sourceItemRef of rule.source_item_refs)
         for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
-          if (!assertedClaims.has(claimRef))
+          if (!assertion.claims.includes(claimRef))
             invalid(
               "v2_verification_method_claim_not_asserted",
               `${target.key}:${binding.method}:${sourceItemRef}:${claimRef}`,
@@ -335,11 +330,6 @@ export function validateVerificationMethodBindings(
         "verification_method_assertion_unknown",
         `${target.key}:${binding.method}:${binding.assertion_ref}`,
       );
-    const assertedClaims = claimsAssertedByRootOrMethod(
-      target,
-      check,
-      assertion.claims,
-    );
     const sourceItems = new Set(
       facts
         .filter((fact) =>
@@ -352,7 +342,7 @@ export function validateVerificationMethodBindings(
     );
     for (const sourceItemRef of sourceItems)
       for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
-        if (!assertedClaims.has(claimRef))
+        if (!assertion.claims.includes(claimRef))
           invalid(
             "verification_method_claim_not_asserted",
             `${target.key}:${binding.method}:${sourceItemRef}:${claimRef}`,
@@ -419,17 +409,6 @@ export function validateVerificationMethodBindings(
     "design_method_fact_refs_mismatch",
     target.key,
   );
-}
-
-function claimsAssertedByRootOrMethod(
-  target: ContractDesignTarget["target"],
-  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
-  methodClaims: string[],
-): Set<string> {
-  const rootAssertion = check.positive_assertions.find(
-    (item) => item.key === target.conformance_assertion_ref,
-  );
-  return new Set([...(rootAssertion?.claims ?? []), ...methodClaims]);
 }
 
 function designFactExpectation(
