@@ -50,7 +50,7 @@
 - Managed source lives under `.codex/ty-context-managed/**`; package assets under `packages/ty-context/assets/**`; `packages/ty-context/source-mappings.yaml` is the copy authority. Generated/installed copies are not independent design owners.
 - Root `AGENTS.md` is startup routing and hard boundaries. `PROJECT_SPEC.md` owns the stable complete product explanation; role Context owns durable current facts; Skills own role procedures; READMEs own human usage; tests own executable proof.
 - `long-task-workflow` is the only active Long-Task Skill. Retired compatibility names are isolated to versioned migrations, explicit non-executing command tombstones, corresponding tests and clearly historical/release material; they do not participate in active triggers or recommendation paths.
-- Open Design is an optional upstream generator. Its authoring Skills create or select ordinary Source; they do not become Context, Design Authority, workflow state or acceptance.
+- Open Design is an optional upstream generator. Its resources and audit output remain ordinary Source or non-authoritative diagnostics, not Context, Design Authority or acceptance. `design-resource-authoring` has one explicit narrow exception to the former absolute no-state boundary: when real cross-interruption recovery is needed it may persist a versioned, task-local, ignored checkpoint containing replay inputs only; the simple path creates none and the checkpoint never enters Long-Task or completion authority.
 - `ty-context doctor` reports deterministic default Context footprint and Design Authority diagnostics as advisory maintenance information, never acceptance state or an absolute byte Gate.
 
 ## Verification Entry Points
@@ -74,7 +74,9 @@ Re-enter through the default Context set plus bounded search, select exactly one
 - [harness-package](areas/harness-package.md)
   - [Context model](areas/harness-package/foundation/context-model.md)
   - [Workflow Contract](areas/harness-package/contracts/workflow-contract.md)
+  - [Design Resource Authoring](areas/harness-package/contracts/design-resource-authoring.md)
   - [Package-managed surfaces](areas/harness-package/contracts/package-managed-surfaces.md)
+  - [Temporary content governance](areas/harness-package/contracts/temporary-content-governance.md)
   - [Minimal Context rationale](areas/harness-package/decision-rationale/minimal-context.md)
   - [Engineering quality rationale](areas/harness-package/decision-rationale/architecture-quality.md)
   - [Long-Task rationale](areas/harness-package/decision-rationale/long-task-workflow.md)

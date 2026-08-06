@@ -18,7 +18,7 @@ Design resources may show user-visible triggers, transitions, states, feedback a
 
 ## Reconcile the initial proposal once
 
-During iteration, keep a task-local buffer of selection basis, selected immutable/editable identities, accepted decisions, rejected alternatives, unresolved choices and affected product/surface/control/state/interaction/visual keys. This is reasoning, not a schema or required file.
+During a simple iteration, keep a task-local buffer of selection basis, selected immutable/editable identities, accepted decisions, rejected alternatives, unresolved choices and affected product/surface/control/state/interaction/visual keys. This is reasoning, not a schema or required file. If the loop is material enough to require replayable Delta, a file writeback or interruption recovery, stop and read [recovery-and-writeback.md](recovery-and-writeback.md); do not approximate safe recovery/CAS from this lightweight reference.
 
 After final selection:
 

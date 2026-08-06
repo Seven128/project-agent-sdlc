@@ -1,5 +1,6 @@
 import { publishDesignResourceHandoffBundle } from "../lib/design-resource-handoff-bundle.js";
 import { preflightDesignResourceHandoff } from "../lib/design-resource-handoff-validation.js";
+import { designResourceRecoveryCommand } from "./design-resource-recovery.js";
 import {
   normalizeRepositoryCwd,
   normalizeRepositoryFile,
@@ -14,6 +15,10 @@ export async function designResource(args: string[]): Promise<void> {
   }
   if (subcommand === "bundle") {
     await bundle(rest);
+    return;
+  }
+  if (subcommand === "recovery") {
+    await designResourceRecoveryCommand(rest);
     return;
   }
   if (subcommand !== "preflight")
@@ -132,5 +137,15 @@ function help(): void {
          --max-handoff-bytes <bytes> [--json]
                        Validate manifest-backed one-target handoffs and
                        atomically publish the complete target set; the
-                       output parent directory must already exist`);
+                       output parent directory must already exist
+  recovery create <session> --input <state.json> [--json]
+                       Create one explicit ignored task-local checkpoint
+  recovery inspect <session> [--json]
+                       Revalidate Base and derive replay/CAS state
+  recovery preview <session> [--json]
+                       Show the frozen exact writeback patch without writing
+  recovery apply <session> --audit <audit.json> [--json]
+                       CAS-apply and reread only after fresh balanced audit
+  recovery remove <session> --expected-sha256 <sha256> [--json]
+                       Remove only the digest-matched helper-owned checkpoint`);
 }

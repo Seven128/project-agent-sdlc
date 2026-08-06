@@ -157,3 +157,4 @@ Figma, Penpot, OpenPencil, image, video, 3D/WebGL and other providers are option
 - Re-discover capability after provider upgrades or registry mismatches.
 - If structured paths fail but a UI artifact exists, UI inspection may recover it while retaining the degraded-provider qualifier.
 - If the provider is unavailable and no justified fallback exists, return `unavailable` with the minimum setup needed rather than generating with an unrelated image tool and calling it equivalent.
+- Provider recovery and DRA semantic recovery are separate: this reference may re-read the current run/resource identity, while [recovery-and-writeback.md](recovery-and-writeback.md) alone owns Base/Delta replay, the conditional checkpoint and Proposal CAS. Never restore a live Provider state or suitability conclusion from that checkpoint.

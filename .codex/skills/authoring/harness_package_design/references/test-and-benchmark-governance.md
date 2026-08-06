@@ -16,6 +16,8 @@ Tests must prove real behavior through the owner rather than assert prose alone.
 
 Delivery Benchmark currently supplies only its maintained skeleton and scenarios. Historical stage-era output is not evidence for Minimal Context. Publish a new efficiency/quality conclusion only from a fresh baseline-versus-current comparison with high-confidence timing, quality and environment evidence. State workload, comparator, tolerance and uncertainty; do not turn one anecdotal run or static structure into a performance claim.
 
+Keep DRA semantic replay/recovery/writeback and Build/Reuse/Buy judgment in independent frozen tracks. Before candidate execution freeze cases/hidden probes, allowed solution sets, prohibited failure modes, metrics/thresholds, model/reasoning, Provider or fixture identity, environment, trace identity and pair method. Start with three independent eligible pairs and require `2/3` wins; expand to five and require `3/5` for coefficient of variation over 20%, inconsistent direction, a primary metric within five percentage points of threshold, or environment/Provider nondeterminism. Per track reject any critical-category regression, require at least 25% fewer targeted critical-plus-major defects, zero must-allow false blocking and no other false-blocking regression. DRA simple preview additionally has zero persisted/action side effects and at most 10% median token/wall overhead. If a mechanism closes no independent path or fails quality/cost admission, narrow, reuse a lighter owner or remove it rather than deferring a false completion claim.
+
 ## Current-candidate completion checklist
 
 - Minimal Context remains the default durable source; no stage document chain reappeared.

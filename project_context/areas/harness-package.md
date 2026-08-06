@@ -14,6 +14,7 @@
 - Long-Task retains one Source-bound Contract Draft, one Contract Authority, one selected verification workspace, Goal-owned implementation and one source-recompiled current-snapshot Final Gate. It alone owns exact declared semantic/design Fact and proof closure, Authority freshness and machine acceptance.
 - Context owns durable intended facts; task Source owns delivery-specific product/technical meaning; code owns current implementation; project tests/CI/runtime/human acceptance prove behavior.
 - External design authoring creates ordinary Source only. The Product Surface/Screen Contract workflow is prompt-level and project-owned: durable surface responsibility remains with Product Surface/Screen Context, durable visual-system/adoption meaning with `DESIGN.md`, and implementation/proof with the selected workflow; it must not add a surface-specific Context role.
+- `design-resource-authoring` may conditionally persist one versioned, task-local, ignored and non-authoritative recovery checkpoint when a real cross-interruption risk exists. It stores replay inputs rather than live status or acceptance, never enters Long-Task authority, and the simple preview path creates none. The full Base/Delta/decision-authority/writeback contract is on demand in [Design Resource Authoring](harness-package/contracts/design-resource-authoring.md).
 
 ## Context Loading Contract
 
@@ -36,6 +37,7 @@
 
 - Minimal Context and default Workflow changes preserve effect and their high-quality design-purpose floor before cost is compared. A current gap is fixed, not frozen as the legal baseline.
 - A new default rule, validator, test or benchmark must identify an independent real failure path, prove existing owners do not already close it, prefer the lightest owner-local mechanism and have positive total ROI without adding state, Authority, Gate or fixed cost unrelated to the triggering risk.
+- Risk-triggered Build/Reuse/Buy judgment evaluates an allowed solution set, prohibited failure modes and required rationale/evidence. It preserves reasonable standard-library, installed-dependency, external-library, small-self-implementation and intentional-non-abstraction choices while rejecting duplicated owner-held rules, extension-point bypass, unjustified dependencies and second sources of truth.
 - Default Context keeps only near-universal responsibility, boundaries and routes. Low-frequency host adapters, exact proof machinery, migrations and history remain in existing on-demand Context/code/tests.
 - Static wording/parity tests prove distribution and known structure only. Real Agent recall, target choice and ROI claims require the existing frozen fresh-Agent paired benchmark and normalized traces.
 - Long-Task mechanism changes additionally preserve coverage, false-negative resistance, semantic granularity, proof/TCB strength, non-bypassable Authority/fail-closed current-snapshot proof and implementation freedom before comparing structural cost and total ROI.
@@ -73,7 +75,9 @@ Exact implementation and test navigation belongs in [implementation index](harne
 
 - [Context Model](harness-package/foundation/context-model.md)
 - [Workflow Contract](harness-package/contracts/workflow-contract.md)
+- [Design Resource Authoring](harness-package/contracts/design-resource-authoring.md)
 - [Package-Managed Surface Contract](harness-package/contracts/package-managed-surfaces.md)
+- [Temporary Content Governance](harness-package/contracts/temporary-content-governance.md)
 - [Minimal Context Rationale](harness-package/decision-rationale/minimal-context.md)
 - [Engineering Quality Rationale](harness-package/decision-rationale/architecture-quality.md)
 - [Long-Task Workflow Rationale](harness-package/decision-rationale/long-task-workflow.md)

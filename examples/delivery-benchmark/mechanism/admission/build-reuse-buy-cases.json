@@ -1,0 +1,80 @@
+{
+  "schema_version": "build-reuse-buy-fresh-agent-cases-v1",
+  "track": "build-reuse-buy",
+  "instruction": "Apply only the supplied policy guidance. Do not invent project governance. For every case give an allowed solution set rather than a universal technology answer, identify prohibited failures, select one allowed choice when the facts support it, and preserve intentional implementation freedom.",
+  "cases": [
+    {
+      "id": "existing-atomic-owner",
+      "facts": [
+        "repository-path-safety plus atomic-file-owner already implements containment, no-follow parents and same-directory rename.",
+        "A new owner-local checkpoint needs exactly those primitives plus its own schema policy."
+      ]
+    },
+    {
+      "id": "stdlib-digest",
+      "facts": [
+        "A private tool needs SHA-256 over local bytes.",
+        "The runtime standard library provides the required digest and no repository owner exists.",
+        "A third-party crypto framework would add 8 MB and a transitive native dependency."
+      ]
+    },
+    {
+      "id": "jwt-verification",
+      "facts": [
+        "The package already installs and centrally wraps jose for JWT verification.",
+        "A proposed 20-line implementation only base64-decodes claims and does not verify signature, algorithm or issuer."
+      ]
+    },
+    {
+      "id": "shared-brand-token",
+      "facts": [
+        "Two components intentionally use the same semantic brand radius.",
+        "The adopted Design Authority already owns one exact shared token for that meaning.",
+        "The new component can reference that token without changing its semantics."
+      ]
+    },
+    {
+      "id": "similar-shape-different-semantics",
+      "facts": [
+        "Tax rounding and animation easing each contain a three-line clamp-shaped calculation.",
+        "They have different owners, change reasons, units and failure boundaries.",
+        "A generic clamp facade would couple their evolution."
+      ]
+    },
+    {
+      "id": "bounded-internal-parser",
+      "facts": [
+        "An internal file format has a closed four-token grammar, no escaping, no untrusted input and exhaustive fixtures.",
+        "No installed parser fits the grammar; an external parser package would be larger than the entire feature."
+      ]
+    },
+    {
+      "id": "heavy-dependency-for-one-call",
+      "facts": [
+        "A proposal adds a large utility suite only to perform one standard-library path normalization call.",
+        "There is no compatibility or maintenance evidence for the dependency."
+      ]
+    },
+    {
+      "id": "incompatible-license",
+      "facts": [
+        "A candidate library is GPL-only while this distributable package and its release policy require MIT-compatible dependencies.",
+        "A compatible installed library and a standard-library composition both satisfy the bounded requirement."
+      ]
+    },
+    {
+      "id": "second-business-truth",
+      "facts": [
+        "InvoiceService already owns the retry ceiling and exposes a facade.",
+        "A new worker-local constant would duplicate the same stable business rule and bypass the facade."
+      ]
+    },
+    {
+      "id": "multiple-valid-solutions",
+      "facts": [
+        "A contained, non-sensitive manifest codec can be implemented with the standard library, an already-installed strict codec, or a 30-line exhaustively tested owner-local decoder.",
+        "All three satisfy platform, license and maintenance constraints; no performance distinction is material."
+      ]
+    }
+  ]
+}

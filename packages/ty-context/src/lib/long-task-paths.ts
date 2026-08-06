@@ -515,7 +515,7 @@ function canonicalRepositoryPath(
       `non_canonical_repository_path_dot_segment:${label}:${value}`,
     );
   if (segments.includes("..")) throw new Error(`unsafe_path:${label}:${value}`);
-  if (kind !== "pattern" && /[*?\[\]{}()]/u.test(normalized))
+  if (kind !== "pattern" && /[*?\[\]{}]/u.test(normalized))
     throw new Error(`unsupported_repository_path_syntax:${label}:${value}`);
   return normalized;
 }

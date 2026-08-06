@@ -731,6 +731,57 @@ const HOTSPOT_TESTS = new Map([
       "long-task-state-resume.test.mjs",
     ],
   ],
+  ...[
+    "packages/ty-context/src/commands/design-resource-recovery.ts",
+    "packages/ty-context/src/lib/design-resource-reconciliation-codec.ts",
+    "packages/ty-context/src/lib/design-resource-reconciliation.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-codec-primitives.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-codec.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-current.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-files.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-replay.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-schema.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-shape.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-text.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-types.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-writeback-policy.ts",
+    "packages/ty-context/src/lib/design-resource-recovery-writeback-shape.ts",
+    "packages/ty-context/src/lib/design-resource-recovery.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "design-resource-recovery.test.mjs",
+      "design-resource-recovery-safety.test.mjs",
+      "temporary-content-governance.test.mjs",
+    ],
+  ]),
+  [
+    "packages/ty-context/src/lib/repository-path-safety.ts",
+    [
+      "design-resource-handoff.test.mjs",
+      "design-resource-recovery-safety.test.mjs",
+      "long-task-profile-hook.test.mjs",
+      "long-task-workspace-scope.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/commands/design-resource.ts",
+    [
+      "design-resource-handoff.test.mjs",
+      "design-resource-handoff-capacity-probe.test.mjs",
+      "design-resource-recovery.test.mjs",
+      "design-resource-recovery-safety.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/commands/index.ts",
+    [
+      "design-resource-handoff.test.mjs",
+      "design-resource-recovery-safety.test.mjs",
+      "workflow-test-entrypoints.test.mjs",
+    ],
+  ],
 ]);
 
 assertHotspotTestFanoutBudget(HOTSPOT_TESTS);
@@ -891,6 +942,14 @@ export function selectAffectedTests(changedPaths, options = {}) {
     }
 
     if (file.startsWith("project_context/")) {
+      if (
+        file.includes("design-resource-authoring") ||
+        file.includes("temporary-content-governance")
+      ) {
+        tests.add(testPath("design-resource-recovery.test.mjs"));
+        tests.add(testPath("design-resource-recovery-safety.test.mjs"));
+        tests.add(testPath("temporary-content-governance.test.mjs"));
+      }
       tests.add(testPath("design-system-authoring-skill.test.mjs"));
       tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));

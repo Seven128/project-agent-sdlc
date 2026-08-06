@@ -44,6 +44,14 @@ This track holds Long-Task internals fixed. It tests only whether removing the d
 
 Authoring comparisons are blocked unless both runs pass their fixed Source key/kind, Risk and proof gold and produce the same canonical Authority fingerprint. Cost fields remain unavailable until that fingerprint is equal; YAML reduction without Authority equivalence is not a win.
 
+### DRA and Build / Reuse / Buy admission
+
+`admission-set.json` is a separate frozen protocol for two independent Fresh-Agent tracks. `dra-semantic-recovery` tests replayable Base/Delta meaning, non-circular delegated choice, deterministic-recovery boundaries, CAS/idempotence, current bidirectional audit and the zero-write simple preview. `build-reuse-buy` scores an allowed solution set and prohibited failures; it deliberately treats repository reuse, standard/installed/mature external capabilities, bounded self-implementation and intentional non-abstraction as potentially valid instead of requiring one library.
+
+The freeze binds cases, hidden probes, result schemas, baseline Git blobs, candidate worktree guidance bytes, runner bytes, model/reasoning, Codex/Node/OS identity, fixture identities, trace identity, thresholds and pairing method before any candidate session. Hidden probes never enter the Agent prompt. Each invocation uses an independent `codex exec --ephemeral` read-only session in a helper-owned OS temporary directory; raw traces and scores stay ignored under `.artifacts/mechanism-admission/**` and are not Context, Authority or acceptance state.
+
+Both tracks start at three eligible pairs and require `2/3` wins. A primary-metric coefficient of variation above 20%, mixed pair direction, a result within five percentage points of threshold or environment/Provider trace doubt expands the frozen requirement to five pairs and `3/5` wins. No critical category may regress; targeted critical-plus-major defects must fall by at least 25%; must-allow false blocking is zero and other false blocking cannot exceed baseline. DRA additionally requires zero simple-path side effects/tool calls and no more than 10% median token or wall overhead. A zero-defect baseline produces no invented improvement claim.
+
 ## Fixed Assets
 
 ```text
@@ -53,6 +61,8 @@ tasks/*.json               prompts and fixed task inputs
 gold/*.json                operator-held Context/Authority expectations
 hidden/*.mjs               product probes, never copied into run repositories
 runner/**                  prepare, score, compare and aggregate tools
+admission-set.json         independently frozen DRA/Build-Reuse-Buy protocol
+admission/**               public cases and strict result schemas
 agent-result.schema.json   diagnostic Agent handoff shape
 ```
 
@@ -167,3 +177,14 @@ node examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs aggreg
 Aggregate inputs must share the same fixed model, reasoning, fixture, experiment, baseline and source checkout identities. Repeating the same `pair_id` plus `replicate` cannot satisfy the minimum paired-run count. Workflow Assurance expands the frozen requirement from three to five pairs when a declared cost metric is within `0.05` of its threshold or the pair range of a declared variable cost metric reaches `0.15`.
 
 Use [RUNBOOK.md](RUNBOOK.md) for the operator and Codex protocol.
+
+The independent admission runner is fully source-checkout driven:
+
+```sh
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs freeze-check
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs deterministic --artifact frozen-v1/deterministic
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track dra-semantic-recovery --pair-id dra-01 --replicate 1 --artifact frozen-v1/dra/pair-01
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track build-reuse-buy --pair-id brb-01 --replicate 1 --artifact frozen-v1/brb/pair-01
+```
+
+After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged freeze and aggregate all five. Never edit a generated score or a frozen input after candidate execution; a necessary controlling-input change invalidates every prior pair.

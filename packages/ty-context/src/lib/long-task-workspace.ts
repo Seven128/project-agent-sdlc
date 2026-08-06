@@ -11,6 +11,8 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { resolveInsideRepository } from "./repository-path-safety.js";
+export { resolveInsideRepository } from "./repository-path-safety.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import type {
   WorkspaceFileV2,
@@ -359,23 +361,6 @@ export async function gitConfigUnset(
   } catch (error) {
     if (!message(error).includes("git_exit:5")) throw error;
   }
-}
-
-export function resolveInsideRepository(
-  rootInput: string,
-  relativeInput: string,
-  label: string,
-): string {
-  if (!relativeInput || path.isAbsolute(relativeInput))
-    throw new Error(`unsafe_path:${label}:${relativeInput}`);
-  const normalized = relativeInput.replace(/\\/gu, "/");
-  if (normalized.split("/").includes(".."))
-    throw new Error(`unsafe_path:${label}:${relativeInput}`);
-  const root = path.resolve(rootInput);
-  const resolved = path.resolve(root, ...normalized.split("/"));
-  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`))
-    throw new Error(`unsafe_path:${label}:${relativeInput}`);
-  return resolved;
 }
 
 export function repoRelative(rootInput: string, fileInput: string): string {

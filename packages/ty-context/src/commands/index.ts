@@ -60,7 +60,7 @@ export function help(): void {
                        Enforce touched handwritten source file modularity
   validate-harness     Run validate-context and validate-code-modularity
   design-resource <subcommand>
-                       Validate a selected design-resource implementation handoff
+                       Validate handoffs or operate explicit DRA recovery
   long-task <subcommand>
                        Manage one Canonical Delivery Contract in the current workspace
   delivery-set <subcommand>

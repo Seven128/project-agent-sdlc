@@ -67,6 +67,29 @@ test("Design Authority scaffold and advisory changes select focused coverage", (
   ]);
 });
 
+test("DRA recovery owners and shared path safety select their focused boundaries", () => {
+  const recovery = selectAffectedTests([
+    "packages/ty-context/src/lib/design-resource-recovery-files.ts",
+  ]);
+  assert.equal(recovery.mode, "selected");
+  assert.deepEqual(recovery.tests, [
+    "tests/ty-context/design-resource-recovery-safety.test.mjs",
+    "tests/ty-context/design-resource-recovery.test.mjs",
+    "tests/ty-context/temporary-content-governance.test.mjs",
+  ]);
+
+  const pathSafety = selectAffectedTests([
+    "packages/ty-context/src/lib/repository-path-safety.ts",
+  ]);
+  assert.equal(pathSafety.mode, "selected");
+  assert.deepEqual(pathSafety.tests, [
+    "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/design-resource-recovery-safety.test.mjs",
+    "tests/ty-context/long-task-profile-hook.test.mjs",
+    "tests/ty-context/long-task-workspace-scope.test.mjs",
+  ]);
+});
+
 test("shared Source line scanning selects handoff and both formal Source consumers", () => {
   const selection = selectAffectedTests([
     "packages/ty-context/src/lib/source-line-scanner.ts",

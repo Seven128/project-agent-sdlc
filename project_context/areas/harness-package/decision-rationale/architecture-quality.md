@@ -72,6 +72,18 @@ Implementation order, method and feedback cadence remain Goal-owned. Within decl
 
 These are implementation guardrails, not a prescribed development sequence, per-edit mandate or machine claim that the code is globally “clean.”
 
+### Risk-Triggered Build / Reuse / Buy Judgment
+
+When work adds non-trivial foundational behavior, implements a mature protocol/format/security boundary, introduces a shared capability or dependency, or encounters an existing near owner/extension point, the deliberation evaluates an **allowed solution set**, **prohibited failure modes** and **required rationale/evidence**. It does not prescribe one answer.
+
+The allowed set may include the existing repository owner, language/platform standard library, an installed dependency, a mature external library or a small self-contained implementation. Intentional duplication or non-abstraction remains allowed when semantics, owner, lifecycle or expected change axis differ. A shared abstraction is favored only for one stable concept, common owner/invariants and synchronized change direction with positive total value.
+
+Disposition applies to the task's viable set, not to the fate of one proposed option. A nonempty, evidence-supported allowed set permits selection of any member; `block` means no supported member exists or material evidence is unavailable, while `decision-required` is reserved for a genuine external choice rather than equivalent implementation freedom.
+
+Prohibited failures are duplicating an owner-held rule or stable source of truth, bypassing the owning facade/adapter/extension point, adding a heavy or transitive dependency without evidence, writing a plainly incomplete custom implementation for mature security-sensitive behavior, accepting an incompatible license/platform/runtime boundary, or forcing one abstraction over merely shape-similar code. Required rationale is risk-proportional and uses repository evidence plus current primary sources when a current external choice is material; it compares semantic fit, dependency direction, maintenance/security/supply-chain/license/platform/resource/test/lock-in cost and the actual future change axis.
+
+This judgment adds no mandatory open-source preference, anti-“wheel” rule, DRY mandate, generic quality score, artifact, stage or Gate. Conformance asks only whether the selected member was allowed, avoided the prohibited failures and retained sufficient current evidence for its risk.
+
 ## Engineering Quality Conformance
 
 After implementation and project verification, check the final current candidate against the deliberated conclusions, controlling Context and every triggered falsifiable invariant. `Architecture Conformance` remains the architecture-specific subset. The closure looks for:

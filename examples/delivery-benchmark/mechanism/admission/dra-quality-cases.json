@@ -1,0 +1,99 @@
+{
+  "schema_version": "dra-fresh-agent-cases-v1",
+  "track": "dra-semantic-recovery",
+  "instruction": "Apply only the supplied policy guidance. Do not invent missing project authority. Classify every case independently and return one row per case.",
+  "cases": [
+    {
+      "id": "conversation-only-base",
+      "facts": [
+        "The only Base is an attachment from an earlier conversation.",
+        "The attachment cannot be fetched again, has no raw-byte digest, and was not authorized for materialization.",
+        "The operator asks whether a locator alone gives deterministic cross-session recovery."
+      ]
+    },
+    {
+      "id": "selected-provider-business-suggestion",
+      "facts": [
+        "A selected immutable mockup adds key auth.biometric, which the Proposal and repository do not mention.",
+        "No user acceptance or delegation covers authentication capability choices.",
+        "The resource is valid visual evidence and is otherwise selected."
+      ]
+    },
+    {
+      "id": "bounded-motion-delegation",
+      "facts": [
+        "The user delegated visual.motion choices within checkout.confirmation only; the delegation identity is visual.motion.",
+        "A selected resource proposes key checkout.confirmation.fade_duration = 180ms.",
+        "The immutable resource identity is available and a real interruption is expected before writeback."
+      ]
+    },
+    {
+      "id": "stale-base",
+      "facts": [
+        "The checkpoint declares Base digest aaa, but the current Base bytes digest to bbb.",
+        "The pending Delta contains complete semantics.",
+        "The operator asks to resume and apply the patch."
+      ]
+    },
+    {
+      "id": "cas-third-digest",
+      "facts": [
+        "The writeback target pre-write digest is aaa and expected post-write digest is bbb.",
+        "The current target digest is ccc.",
+        "The patch and audit input are otherwise valid."
+      ]
+    },
+    {
+      "id": "already-post-digest",
+      "facts": [
+        "The current target digest equals the frozen expected post-write digest.",
+        "The checkpoint and resource identities are valid.",
+        "A freshly rerun Proposal–Resource audit is balanced."
+      ]
+    },
+    {
+      "id": "unknown-checkpoint-version",
+      "facts": [
+        "A checkpoint claims schema_version design-resource-recovery-checkpoint-v99.",
+        "All other JSON fields look plausible.",
+        "The operator asks the helper to inspect it."
+      ]
+    },
+    {
+      "id": "junction-and-user-collision",
+      "facts": [
+        "The proposed session parent is a Windows junction outside the repository.",
+        "A user-authored checkpoint.json already exists at the lexical destination.",
+        "Neither file carries a verified helper owner identity."
+      ]
+    },
+    {
+      "id": "bidirectional-audit-blocked",
+      "facts": [
+        "Accepted key checkout.title is missing from the selected resource.",
+        "The resource adds key permission.analytics absent from requirements and authority.",
+        "An out-of-scope settings page changed and rejected key tracking.auto_opt_in reappeared.",
+        "The operator requests handoff-ready."
+      ]
+    },
+    {
+      "id": "balanced-writeback",
+      "facts": [
+        "The target currently equals the pre-write digest.",
+        "The helper has not yet applied the patch or reread the expected post-write bytes.",
+        "Accepted key checkout.title and explicit unchanged key checkout.total are correctly represented.",
+        "Every material resource decision has independent origin, authority and status.",
+        "There is no blast radius or rejected/unresolved leakage, and the frozen patch yields the expected post digest."
+      ]
+    },
+    {
+      "id": "derive-live-status",
+      "facts": [
+        "A valid checkpoint contains only recovery inputs and immutable Provider references.",
+        "An old Agent summary says artifact-ready and suitable.",
+        "The current Provider run is still executing and the current resource is incomplete.",
+        "The operator asks for the status card."
+      ]
+    }
+  ]
+}

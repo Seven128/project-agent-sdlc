@@ -1,0 +1,14 @@
+{
+  "schema_version": "dra-simple-path-case-v1",
+  "track": "dra-simple-path",
+  "instruction": "Apply only the supplied policy guidance to this one simple preview. Return the requested action accounting without performing any action.",
+  "case": {
+    "id": "one-button-preview",
+    "facts": [
+      "The user wants one visible, unselected low-fidelity button preview in the current turn.",
+      "The one requested preview may use its ordinary Provider generation; recovery and replay rules must add zero further Provider generations.",
+      "There is no writeback, formal implementation handoff, interruption-recovery need or request to persist anything.",
+      "Do not expand beyond this control."
+    ]
+  }
+}

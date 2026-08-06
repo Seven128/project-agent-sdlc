@@ -14,6 +14,7 @@ This is the minimum durable component, authority and data-flow map for the Harne
 - Context manifest/graph/validation/export/sync/doctor: `packages/ty-context/src/lib/context-*`, `validators.ts`, `sync-engine.ts`, `doctor.ts` and managed templates.
 - Managed-source owner: `.codex/ty-context-managed/**`; package output: `packages/ty-context/assets/**`; copy authority: `packages/ty-context/source-mappings.yaml`.
 - Design Authority and authoring adapters: `design-md.ts`, package-managed design Skills and project-owned `DESIGN.md`/Context. External resources remain Source, not a package registry or acceptance state.
+- DRA replay/recovery/writeback: the package-managed `design-resource-authoring` Skill plus `commands/design-resource.ts` and owner-local recovery modules. A conditional ignored checkpoint stores only replay inputs; live Provider/artifact/suitability/audit/writeback views are re-derived, and no DRA state enters Long-Task authority.
 - Long-Task: `packages/ty-context/src/schemas/long-task-delivery-v2/**` plus focused Source, Contract, evidence, authority, revision, recovery and Final-Gate modules under `packages/ty-context/src/lib/long-task-*`.
 - Test feedback/cost: `tools/affected_change_discovery.mjs`, `affected_test_selection.mjs`, `test_suite_policy.mjs`, package build fingerprinting and package-suite runners/reporters. They select regression evidence and never create delivery acceptance.
 - Release: `.github/workflows/npm-publish.yml` and release prepare/artifact verification/publish tools. Publication consumes one tested packed artifact and is outside Harness workflow authority.
@@ -66,7 +67,7 @@ Long-Task:
 - Context owns durable intended facts; Source owns task-specific product/technical meaning; code owns current implementation; project evidence proves behavior.
 - Managed sources are edited at their canonical owner and reach installed/package/public copies through source mappings and workspace sync. Generated copies never become independent semantic owners.
 - Migrations are versioned, deterministic and exact-ownership-aware. Ordinary sync does not run a tombstone registry or reinterpret user files.
-- External generators may produce Source, but cannot become Context, Design Authority, Contract, workflow state or acceptance.
+- External generators may produce Source but cannot become Context, Design Authority, Contract or acceptance. The only DRA workflow-state exception is the versioned task-local non-authoritative replay checkpoint defined by the owning authoring contract; it is neither Provider lifecycle nor Long-Task state.
 - Product-surface responsibility, visual Design Authority and engineering architecture stay with their existing non-overlapping Context/Skill owners.
 
 ## Constraints And Tradeoffs

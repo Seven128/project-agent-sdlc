@@ -6,6 +6,7 @@
 - Provide a separate mechanism-experiment layer for fixed Context routing, Workflow wording and Long-Task Authoring A/B decisions without turning experiment metadata into product authority.
 - Provide a frozen workflow-assurance experiment that compares the previous exact-ephemeral default guidance with the new assurance-split default guidance while leaving Long-Task internals untouched.
 - Provide an optional UI/UX recovery/conformance task that measures whether a fresh Agent reaches the owning Screen/visual authority, opens the selected immutable target and preserves its declared facts without adding default workflow state.
+- Provide two independent admission tracks for DRA semantic replay/recovery/writeback and Build / Reuse / Buy judgment. Their category results and ROI are never merged into one score.
 
 ## User / System Contract
 
@@ -18,6 +19,8 @@
 - The workflow-assurance experiment additionally freezes before execution: hidden product quality, Context Delta correctness, native verification, selected-source recall when applicable, target/workspace correctness, whether unresolved or unverified scope is reported honestly, false-complete detection and instruction/tool/token/wall-time diagnostics. A passing static fixture never substitutes for fresh Agent evidence.
 - Each workflow-assurance variant binds the complete canonical managed `AGENTS_CORE.md` from its own frozen Git commit by blob oid, full-file SHA-256 and exact measured-section SHA-256. Prepare loads the Git object without shell or working-tree fallback, injects the whole managed protocol, records resolved provenance in run metadata and fails closed on a missing object, invalid UTF-8, marker/heading drift or digest mismatch. These benchmark snapshots are experiment inputs, not product Workflow Authority.
 - Static tests may validate the UI/UX benchmark fixture, hidden oracle and routing gold, but only fresh independent paired Agent runs may support a recovery or ROI conclusion; no Workflow Assurance paired Agent A/B has yet been executed for the assurance-split candidate.
+- Before either new track runs a candidate, freeze cases/hidden probes, allowed solution sets, prohibited failure modes, metrics/thresholds, model/reasoning, Provider or fixture identity, environment, trace identity and pairing method. Count at least three eligible independent pairs and require `2/3` pairwise wins; expand to five and require `3/5` on coefficient of variation over 20%, inconsistent direction, a primary metric within five percentage points of threshold, or environment/Provider trace doubt.
+- Each track rejects any critical-category regression, requires at least 25% fewer targeted critical-plus-major defects, zero must-allow false blocking and no other false-blocking regression. The DRA simple path additionally budgets zero checkpoint/write/pause/provider/handoff side effects and at most 10% fresh-Agent median token/wall overhead.
 
 ## Core Data / API / State
 
@@ -38,6 +41,8 @@
 - Do not publish workflow diagnostic fields as formal efficiency results unless the paired run also satisfies the same-quality, fresh-run and observer-evidence rules.
 - Do not treat resolver candidates, Agent self-report, YAML reduction or one paired run as mechanism ROI proof.
 - Do not interpret the assurance-split candidate as admitted merely because its instruction bytes are smaller. Quality, target ownership, fresh verification and false-complete performance must not regress; near-threshold, conflicting or high-variance evidence requires five eligible pairs.
+- Every deterministic DRA/Build-Reuse-Buy hard fixture must pass. No-loss/no-distortion/no-unsupported-gain, rejected/unresolved isolation, stale Base/CAS/corrupt-version/path-link-collision failure, idempotence and balanced/blocked reconciliation are DRA gates; legal shared Tokens, reasonable self-implementation and reasonable non-abstraction are must-allow gates. A zero-defect baseline permits only independently demonstrated hardening with near-zero fixed cost, never invented improvement.
+- A mechanism which closes no independent path, misses quality, increases false blocking, breaks the simple path or has non-positive total ROI is narrowed, made conditional, moved to a lighter owner or removed before delivery.
 - Raw mechanism runs, gold, hidden probes and score files remain benchmark evidence under `.artifacts/**`; they are not Context, Contract Authority, Progress or completion proof.
 
 ## Code Entry Points

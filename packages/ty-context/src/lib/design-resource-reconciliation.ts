@@ -1,0 +1,297 @@
+import type {
+  DesignResourceDelta,
+  DesignResourceReconciliationAudit,
+  DesignResourceReconciliationResult,
+  DesignResourceRecoveryCheckpoint,
+} from "./design-resource-recovery-types.js";
+import { validateDesignResourceRecoverySemantics } from "./design-resource-recovery-replay.js";
+import { canonicalValueJson } from "./strict-codec.js";
+
+export function reconcileDesignResourceWriteback(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  audit: DesignResourceReconciliationAudit,
+): DesignResourceReconciliationResult {
+  validateDesignResourceRecoverySemantics(checkpoint);
+  if (!checkpoint.writeback)
+    throw new Error(
+      "design_resource_recovery_invalid:writeback_not_configured",
+    );
+  const findings: string[] = [];
+  compareValue(
+    findings,
+    "session_identity",
+    audit.session_id,
+    checkpoint.session_id,
+  );
+  compareValue(
+    findings,
+    "base_identity",
+    audit.base_raw_byte_digest,
+    checkpoint.base.raw_byte_digest,
+  );
+  compareValue(
+    findings,
+    "design_authority_identity",
+    canonicalValueJson(audit.design_authority),
+    canonicalValueJson(checkpoint.design_authority),
+  );
+  compareValue(
+    findings,
+    "provider_run_identity",
+    canonicalValueJson(audit.provider_run),
+    canonicalValueJson(checkpoint.provider.run),
+  );
+  compareValue(
+    findings,
+    "writeback_target_identity",
+    audit.writeback_target_raw_byte_digest,
+    checkpoint.writeback.expected_post_write_raw_byte_digest,
+  );
+  compareIdentitySet(
+    findings,
+    "resource_identity",
+    audit.resource_identities,
+    checkpoint.writeback.resource_identities,
+  );
+
+  const activeAccepted = activeAcceptedDeltas(checkpoint.deltas);
+  const changed = new Set(
+    activeAccepted.flatMap((delta) =>
+      delta.operation === "preserve" ? [] : delta.target_keys,
+    ),
+  );
+  compareSet(
+    findings,
+    "accepted_delta_ids",
+    audit.accepted_delta_ids,
+    activeAccepted.map((delta) => delta.delta_id),
+  );
+  compareSet(
+    findings,
+    "rejected_delta_ids",
+    audit.rejected_delta_ids,
+    checkpoint.decision_sets.rejected_delta_ids,
+  );
+  compareSet(
+    findings,
+    "unresolved_delta_ids",
+    audit.unresolved_delta_ids,
+    checkpoint.decision_sets.unresolved_delta_ids,
+  );
+  compareSet(findings, "changed_keys", audit.changed_keys, [...changed]);
+  validateUnchanged(checkpoint, audit, findings);
+  validateRequirements(checkpoint, audit, activeAccepted, changed, findings);
+  validateResourceDecisions(
+    checkpoint,
+    audit,
+    activeAccepted,
+    changed,
+    findings,
+  );
+  validateBlastAndLeakage(checkpoint, audit, findings);
+  const unique = [...new Set(findings)].sort(compareText);
+  return {
+    status: unique.length ? "blocked" : "balanced",
+    findings: unique,
+  };
+}
+
+function validateUnchanged(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  audit: DesignResourceReconciliationAudit,
+  findings: string[],
+): void {
+  uniqueRows(
+    audit.explicitly_unchanged.map((row) => row.key),
+    "unchanged",
+  );
+  compareSet(
+    findings,
+    "explicitly_unchanged_keys",
+    audit.explicitly_unchanged.map((row) => row.key),
+    checkpoint.explicitly_unchanged_keys,
+  );
+  for (const row of audit.explicitly_unchanged)
+    if (!row.preserved) findings.push(`unchanged_not_preserved:${row.key}`);
+}
+
+function validateRequirements(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  audit: DesignResourceReconciliationAudit,
+  activeAccepted: DesignResourceDelta[],
+  changed: Set<string>,
+  findings: string[],
+): void {
+  uniqueRows(
+    audit.requirements_to_resource.map((row) => row.key),
+    "requirements_to_resource",
+  );
+  compareSet(
+    findings,
+    "requirements_to_resource_keys",
+    audit.requirements_to_resource.map((row) => row.key),
+    [...changed],
+  );
+  const selected = new Set(checkpoint.selected_resource_keys);
+  for (const row of audit.requirements_to_resource) {
+    if (row.verdict !== "covered")
+      findings.push(`requirement_${row.verdict}:${row.key}`);
+    const expectedDeltas = activeAccepted
+      .filter(
+        (delta) =>
+          delta.operation !== "preserve" && delta.target_keys.includes(row.key),
+      )
+      .map((delta) => delta.delta_id);
+    compareSet(
+      findings,
+      `requirement_delta_ids:${row.key}`,
+      row.delta_ids,
+      expectedDeltas,
+    );
+    if (!row.resource_refs.length)
+      findings.push(`requirement_resource_missing:${row.key}`);
+    for (const resource of row.resource_refs)
+      if (!selected.has(resource))
+        findings.push(`requirement_resource_unselected:${row.key}:${resource}`);
+  }
+}
+
+function validateResourceDecisions(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  audit: DesignResourceReconciliationAudit,
+  activeAccepted: DesignResourceDelta[],
+  changed: Set<string>,
+  findings: string[],
+): void {
+  uniqueRows(
+    audit.resource_to_requirements.map((row) => row.key),
+    "resource_to_requirements",
+  );
+  const selected = new Set(checkpoint.selected_resource_keys);
+  compareSet(
+    findings,
+    "resource_to_requirements_resources",
+    audit.resource_to_requirements.map((row) => row.resource_ref),
+    [...selected],
+  );
+  for (const row of audit.resource_to_requirements) {
+    if (!selected.has(row.resource_ref))
+      findings.push(
+        `resource_decision_unselected:${row.key}:${row.resource_ref}`,
+      );
+    if (row.status !== "accepted" && row.written)
+      findings.push(`resource_decision_leaked:${row.key}:${row.status}`);
+    for (const key of row.requirement_keys)
+      if (!changed.has(key))
+        findings.push(
+          `resource_decision_requirement_unknown:${row.key}:${key}`,
+        );
+    if (row.status !== "accepted") continue;
+    const authorityMatch = activeAccepted.some(
+      (delta) =>
+        delta.origin === row.origin &&
+        delta.decision_authority === row.decision_authority &&
+        row.requirement_keys.some((key) => delta.target_keys.includes(key)),
+    );
+    if (!authorityMatch)
+      findings.push(`resource_decision_authority_unbound:${row.key}`);
+  }
+}
+
+function validateBlastAndLeakage(
+  checkpoint: DesignResourceRecoveryCheckpoint,
+  audit: DesignResourceReconciliationAudit,
+  findings: string[],
+): void {
+  uniqueRows(
+    audit.unexpected_blast_radius.map((row) => row.key),
+    "unexpected_blast_radius",
+  );
+  for (const row of audit.unexpected_blast_radius)
+    if (row.verdict === "unexpected")
+      findings.push(`unexpected_blast_radius:${row.key}`);
+  uniqueRows(
+    audit.rejected_or_unresolved_leakage.map((row) => row.delta_id),
+    "rejected_or_unresolved_leakage",
+  );
+  const expected = [
+    ...checkpoint.decision_sets.rejected_delta_ids,
+    ...checkpoint.decision_sets.unresolved_delta_ids,
+  ];
+  compareSet(
+    findings,
+    "rejected_or_unresolved_leakage_ids",
+    audit.rejected_or_unresolved_leakage.map((row) => row.delta_id),
+    expected,
+  );
+  for (const row of audit.rejected_or_unresolved_leakage)
+    if (row.leaked) findings.push(`decision_leaked:${row.delta_id}`);
+}
+
+function activeAcceptedDeltas(
+  deltas: DesignResourceDelta[],
+): DesignResourceDelta[] {
+  const superseded = new Set(deltas.flatMap((delta) => delta.supersedes));
+  return deltas.filter(
+    (delta) => delta.status === "accepted" && !superseded.has(delta.delta_id),
+  );
+}
+
+function compareIdentitySet(
+  findings: string[],
+  label: string,
+  actual: Array<{ key: string; raw_byte_digest: string }>,
+  expected: Array<{ key: string; raw_byte_digest: string }>,
+): void {
+  compareSet(
+    findings,
+    `${label}_keys`,
+    actual.map((row) => row.key),
+    expected.map((row) => row.key),
+  );
+  const expectedMap = new Map(
+    expected.map((row) => [row.key, row.raw_byte_digest]),
+  );
+  for (const row of actual)
+    compareValue(
+      findings,
+      `${label}:${row.key}`,
+      row.raw_byte_digest,
+      expectedMap.get(row.key) ?? "missing",
+    );
+}
+
+function compareSet(
+  findings: string[],
+  label: string,
+  actual: string[],
+  expected: string[],
+): void {
+  const left = [...new Set(actual)].sort(compareText);
+  const right = [...new Set(expected)].sort(compareText);
+  if (
+    left.length !== right.length ||
+    left.some((value, index) => value !== right[index])
+  )
+    findings.push(`set_mismatch:${label}`);
+}
+
+function compareValue(
+  findings: string[],
+  label: string,
+  actual: string,
+  expected: string,
+): void {
+  if (actual !== expected) findings.push(`identity_mismatch:${label}`);
+}
+
+function uniqueRows(values: string[], label: string): void {
+  if (new Set(values).size !== values.length)
+    throw new Error(
+      `design_resource_recovery_invalid:audit_duplicate:${label}`,
+    );
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}

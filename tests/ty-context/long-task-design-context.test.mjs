@@ -814,6 +814,44 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   assert.match(verification, /Long-Task design consistency/iu);
 });
 
+test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal authority", async () => {
+  const [spec, rationale, dra] = await Promise.all([
+    read("PROJECT_SPEC.md"),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
+    read(
+      "project_context/areas/harness-package/contracts/design-resource-authoring.md",
+    ),
+  ]);
+  const combined = `${spec}\n${rationale}\n${dra}`;
+
+  assert.match(combined, /protected Long-Task `P\/K\/R1\/R2\/B\/F\/E` model.*remain unchanged/isu);
+  for (const refinement of [
+    "Semantic Granularity",
+    "Semantic Fidelity",
+    "Delegated-Choice Validity",
+  ]) {
+    assert.match(combined, new RegExp(refinement, "u"));
+  }
+  assert.match(combined, /Granularity refines `K`.*`B`.*`R1`/isu);
+  assert.match(combined, /Fidelity refines `K`.*`B`.*`R1`/isu);
+  assert.match(combined, /Delegated-Choice Validity refines `K`.*`B`.*`R1`/isu);
+  assert.match(combined, /not replacement responsibilities or extra theorem premises/iu);
+  assert.match(
+    combined,
+    /`R2` remains exactly the Source\/Contract continuity, Authority, observer, repair-localization, freshness and sole current-snapshot Final-Gate responsibility/iu,
+  );
+  assert.match(
+    combined,
+    /AcceptedDeliveryTerminal\(current snapshot\).*DeclaredObservableDrift = empty/isu,
+  );
+  assert.match(combined, /Final Gate cannot prove Provider history/iu);
+  assert.match(combined, /checkpoints\/audits\/reconciliation are never completion evidence/iu);
+  assert.match(combined, /selected resource may uniquely own exact visual values/iu);
+  assert.match(combined, /selection cannot authorize the reason/iu);
+});
+
 test("revision diagnosis stays one-Contract and non-authoritative while decision revisions remain exact-bound", async () => {
   const [spec, globalContext, skill, lifecycle, publicReadmes] =
     await Promise.all([

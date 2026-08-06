@@ -18,7 +18,7 @@ When a valid Long-Task binding is active, `long-task-workflow` alone owns Source
 1. Read the core/default Context required by `AGENTS.md`, then the owners implicated by the proposed architecture. Before `Context Delta`, run the bounded high-signal Context search already required by the default Workflow; widen only when dependency or semantic ownership demands it.
 2. State the problem, success boundary and non-goals. Separate intended Source/Context requirements from current-code behavior; code cannot silently redefine missing authority.
 3. Identify the existing source of truth and extension point, affected owners, dependency direction, public/internal interfaces, state and lifecycle, failure/recovery boundaries, compatibility constraints and project-native verification entries.
-4. Compare the smallest material alternatives. Prefer the existing owner/facade/adapter when it carries the stable concept; introduce an abstraction only for an evidenced change axis or durable boundary with positive net value.
+4. Compare the smallest material alternatives. Prefer the existing owner/facade/adapter when it carries the stable concept; introduce an abstraction only for an evidenced change axis or durable boundary with positive net value. When foundational machinery, a mature protocol/security boundary, a dependency/shared abstraction or a nearby extension point makes sourcing material, add the risk-triggered Build / Reuse / Buy judgment below.
 5. Surface one externally observable, repository-bound `Architecture Deliberation` before implementation edits. Include the selected design, rejected material alternatives, one plausible future-change challenge, touched technical debt and disposition, forbidden shortcuts, checks and triggered quality attributes or concrete preservation basis.
 6. Decide exactly one `Context Delta: none|required`. Durable ownership, architecture, API/schema/data, state/recovery, dependency, compatibility, verification/deployment or rationale changes are `required` and update the smallest owning Context before code. A task-local design that preserves those facts is `none`.
 7. Hand the design to the current Goal for implementation under the existing Workflow Contract. After current-candidate project checks, include Engineering/Architecture Conformance in the default Contract Conformance and run the separate Context drift check. Do not add another gate or proof ledger.
@@ -44,6 +44,14 @@ Cover what is material:
 Correctness/invariants and maintainability/changeability always receive at least a preservation judgment. Reliability/resource lifecycle, concurrency/consistency, performance/capacity/cost, security/privacy/safety, compatibility/migration/rollout and operability/observability/testability activate only when the design makes them material. A performance claim additionally requires workload, metric, baseline/budget, environment, comparator/tolerance and a project-owned measurement; static shape is not runtime proof.
 
 Refresh the deliberation if scope, ownership, dependency direction, selected design, quality applicability or debt disposition materially changes.
+
+### Risk-triggered Build / Reuse / Buy
+
+Express the judgment as an `allowed solution set`, `prohibited failure modes` and `required rationale/evidence`, never a single required library or abstraction. Allowed choices may include the owning repository service/facade/adapter, standard library, installed dependency, mature compatible external library, a small bounded self-implementation or intentional non-abstraction.
+
+Judge whether the task has a supported allowed solution, not whether its initial proposal survives. When the allowed set is nonempty and current evidence supports at least one member, allow the task and select any supported member while recording the rejected option as a prohibited failure. Use `block` only when no supported member exists or required safety/compatibility evidence is unavailable; use `decision-required` only for a genuine user/product/external choice, never merely because several implementation-equivalent allowed members remain.
+
+Reject duplicate owner-held rules, extension-point bypass, an unjustified heavy dependency, plainly incomplete reinvention of mature security-sensitive behavior, incompatible license/platform support, forced abstraction over structurally similar but semantically different code and a second source of truth for one stable rule. Do not add a mandatory open-source preference, DRY rule, generic quality score, artifact, stage or Gate. Conformance asks only whether the selected choice is in the allowed set, avoids prohibited failures and has risk-proportional current evidence.
 
 ## Boundary routing
 

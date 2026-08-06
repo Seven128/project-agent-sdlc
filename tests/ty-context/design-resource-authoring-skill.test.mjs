@@ -24,6 +24,7 @@ test("design-resource-authoring has one exact managed/generated/package source",
     "references/resource-selection.md",
     "references/open-design-provider.md",
     "references/downstream-handoff.md",
+    "references/recovery-and-writeback.md",
     "references/formal-selected-web-app-handoff.md",
   ]) {
     const values = await copies(relative);
@@ -338,7 +339,7 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
   assert.match(combined, /idempotent/iu);
   assert.match(
     combined,
-    /exclude rejected(?: and|\/)unresolved|rejected(?: and|\/)unresolved choices.*exclude/isu,
+    /exclude rejected(?: and|\/)unresolved|rejected(?: and|\/)unresolved choices.*exclude|never write rejected\/unresolved meaning as accepted/isu,
   );
   assert.match(
     combined,
@@ -352,6 +353,73 @@ test("final selection performs one idempotent initial-proposal reconciliation", 
     combined,
     /Never mutate `project_context\/\*\*`, `DESIGN\.md`, a Delivery Contract, production code or tests/iu,
   );
+});
+
+test("material DRA recovery preserves replay semantics, authority separation and a zero-cost simple path", async () => {
+  const [skill, recovery] = await Promise.all([
+    copies("SKILL.md").then((items) => items[0]),
+    copies("references/recovery-and-writeback.md").then((items) => items[0]),
+  ]);
+  const combined = `${skill}\n${recovery}`;
+
+  for (const field of [
+    "locator",
+    "raw_byte_digest",
+    "encoding",
+    "eol_policy",
+    "scope_ceiling",
+    "in_scope_keys",
+    "explicitly_excluded_keys",
+    "delta_id",
+    "sequence",
+    "supersedes",
+    "operation",
+    "target_keys",
+    "before_semantics",
+    "after_semantics",
+    "origin",
+    "decision_authority",
+    "evidence_refs",
+    "source_refs",
+    "explicitly_unchanged_keys",
+    "status",
+  ])
+    assert.match(recovery, new RegExp(`\\b${field}\\b`, "u"));
+
+  assert.match(recovery, /user-direct.*necessary-derived.*repository-evidence-backed.*provider-suggested/isu);
+  assert.match(recovery, /explicit-user.*delegated:<bounded-scope-key>.*none/isu);
+  assert.match(recovery, /accepted.*rejected.*unresolved/isu);
+  assert.match(recovery, /selected resource is evidence and never authorizes itself/iu);
+  assert.match(
+    recovery,
+    /accepted Provider suggestion requires explicit user authority or a delegation.*covers its origin and every target/isu,
+  );
+  assert.match(recovery, /rejected\/unresolved meaning never enters accepted requirements or writeback/iu);
+  assert.match(recovery, /cross-session deterministic recovery unavailable/u);
+  assert.match(recovery, /Never use a prior Agent summary or generated resource as the next Base/iu);
+
+  assert.match(
+    recovery,
+    /simple scoped preview creates zero recovery files and persisted recovery bytes.*no user pause or Provider generation.*no formal handoff\/preflight.*no Proposal writeback.*no helper write transaction/isu,
+  );
+  assert.match(recovery, /only when interruption would otherwise lose material/iu);
+  assert.match(recovery, /not Source, Context, a Contract, Authority, Evidence, Receipt, Gate/iu);
+  assert.match(recovery, /stores no current activity, live Provider execution, Artifact readiness, Design suitability, next action, readiness\/completion or acceptance/iu);
+
+  for (const command of ["create", "inspect", "preview", "apply", "remove"])
+    assert.match(
+      recovery,
+      new RegExp(`ty-context design-resource recovery ${command}`, "u"),
+    );
+  assert.match(recovery, /current == pre-write digest.*unapplied/isu);
+  assert.match(recovery, /current == expected post digest.*already applied\/idempotent/isu);
+  assert.match(recovery, /otherwise.*concurrent conflict; fail closed/isu);
+  assert.match(recovery, /Requirements → Resource/iu);
+  assert.match(recovery, /Resource → Requirements/iu);
+  assert.match(recovery, /Unexpected Blast Radius/iu);
+  assert.match(recovery, /handoff-ready.*only after balanced reconciliation/isu);
+  assert.match(recovery, /never replaces the Proposal, selected immutable resources, formal handoff/iu);
+  assert.match(recovery, /Final Gate cannot prove historical Provider execution/iu);
 });
 
 test("handoff preserves immutable resource identity and direct downstream routing", async () => {

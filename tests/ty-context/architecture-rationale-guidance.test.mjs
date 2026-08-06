@@ -170,6 +170,41 @@ test("Long-Task reuses existing authority and limits its quality claim", () => {
   assert.match(sources[2], /performance claim.*workload.*metric.*environment.*benchmark\/probe/s);
 });
 
+test("risk-triggered Build Reuse Buy preserves an allowed set and implementation freedom", () => {
+  const sources = [
+    read("PROJECT_SPEC.md"),
+    read("project_context/areas/harness-package/decision-rationale/architecture-quality.md"),
+    read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
+    read("packages/ty-context/assets/agents/AGENTS_CORE.md"),
+    read(".codex/ty-context-managed/skills/context_development_engineer/SKILL.md"),
+    read("packages/ty-context/assets/skills/context_development_engineer/SKILL.md"),
+    read("README.md"),
+    read("README.zh-CN.md"),
+    read("packages/ty-context/README.md"),
+  ];
+  assert.equal(sources[2], sources[3], "managed Agent guidance drift");
+  assert.equal(sources[4], sources[5], "engineering Skill guidance drift");
+  const combined = sources.join("\n");
+
+  assert.match(combined, /Build \/ Reuse \/ Buy/iu);
+  assert.match(combined, /allowed solution set/iu);
+  assert.match(combined, /prohibited failure modes/iu);
+  assert.match(combined, /required rationale\/evidence/iu);
+  assert.match(combined, /standard (?:library|capabilities)/iu);
+  assert.match(combined, /installed dependenc/iu);
+  assert.match(combined, /mature compatible (?:external )?librar/iu);
+  assert.match(combined, /bounded self-implementation|small bounded self-implementation/iu);
+  assert.match(combined, /intentional non-abstraction/iu);
+  assert.match(combined, /duplicate owner/iu);
+  assert.match(combined, /extension-point bypass/iu);
+  assert.match(combined, /second source of truth/iu);
+  assert.match(combined, /nonempty.*allowed set|at least one supported allowed choice/isu);
+  assert.match(combined, /decision-required.*genuine (?:user\/product\/external|external) choice/isu);
+  assert.match(combined, /no mandatory open-source\/DRY rule/iu);
+  assert.match(combined, /no .*generic (?:quality )?score.*stage or Gate/isu);
+  assert.doesNotMatch(combined, /must use (?:an )?open-source library/iu);
+});
+
 function read(relativePath) {
   return readFileSync(path.join(repoRoot, relativePath), "utf8");
 }

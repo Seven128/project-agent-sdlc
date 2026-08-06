@@ -1,0 +1,103 @@
+{
+  "schema_version": "dra-hidden-admission-v1",
+  "track": "dra-semantic-recovery",
+  "expectations": [
+    {
+      "id": "conversation-only-base",
+      "severity": "critical",
+      "category": "deterministic-recovery-boundary",
+      "exact": { "disposition": "unavailable", "audit_status": "not-applicable", "derived_live_state": false, "handoff_ready": false },
+      "allowed": { "checkpoint": ["none", "reject"], "write_action": ["none", "block"] }
+    },
+    {
+      "id": "selected-provider-business-suggestion",
+      "severity": "critical",
+      "category": "delegated-choice-validity",
+      "exact": { "disposition": "block", "handoff_ready": false },
+      "allowed": { "checkpoint": ["none", "reject"], "write_action": ["none", "block"] },
+      "contains_any": [
+        { "fields": ["rejected_keys", "unresolved_keys"], "value": "auth.biometric" }
+      ],
+      "excludes": { "accepted_keys": ["auth.biometric"] },
+      "authority_rows": [
+        { "key": "auth.biometric", "origin": "provider-suggested", "decision_authority": "none", "status": ["rejected", "unresolved"] }
+      ]
+    },
+    {
+      "id": "bounded-motion-delegation",
+      "severity": "major",
+      "category": "delegated-choice-validity",
+      "must_allow": true,
+      "exact": { "disposition": "allow", "checkpoint": "create", "handoff_ready": false },
+      "allowed": { "write_action": ["none", "preview"] },
+      "contains": { "accepted_keys": ["checkout.confirmation.fade_duration"] },
+      "authority_rows": [
+        { "key": "checkout.confirmation.fade_duration", "origin": "provider-suggested", "decision_authority": "delegated:visual.motion", "status": "accepted" }
+      ]
+    },
+    {
+      "id": "stale-base",
+      "severity": "critical",
+      "category": "base-cas",
+      "exact": { "disposition": "block", "write_action": "block", "handoff_ready": false },
+      "allowed": { "checkpoint": ["retain", "reject"] }
+    },
+    {
+      "id": "cas-third-digest",
+      "severity": "critical",
+      "category": "writeback-cas",
+      "exact": { "disposition": "block", "write_action": "block", "handoff_ready": false }
+    },
+    {
+      "id": "already-post-digest",
+      "severity": "critical",
+      "category": "writeback-idempotence",
+      "must_allow": true,
+      "exact": { "disposition": "idempotent", "write_action": "idempotent-no-write", "audit_status": "balanced", "handoff_ready": true }
+    },
+    {
+      "id": "unknown-checkpoint-version",
+      "severity": "critical",
+      "category": "checkpoint-codec",
+      "exact": { "handoff_ready": false },
+      "allowed": { "disposition": ["block", "unavailable"], "write_action": ["none", "block"], "audit_status": ["not-applicable", "blocked"] }
+    },
+    {
+      "id": "junction-and-user-collision",
+      "severity": "critical",
+      "category": "path-and-collision",
+      "exact": { "disposition": "block", "handoff_ready": false },
+      "allowed": { "write_action": ["none", "block"], "audit_status": ["not-applicable", "blocked"] }
+    },
+    {
+      "id": "bidirectional-audit-blocked",
+      "severity": "critical",
+      "category": "bidirectional-audit",
+      "exact": { "disposition": "block", "write_action": "block", "audit_status": "blocked", "handoff_ready": false },
+      "contains": {
+        "rejected_keys": ["tracking.auto_opt_in"],
+        "unresolved_keys": ["permission.analytics"],
+        "audit_types": ["requirements-to-resource", "resource-to-requirements", "unexpected-blast-radius"]
+      }
+    },
+    {
+      "id": "balanced-writeback",
+      "severity": "critical",
+      "category": "balanced-writeback",
+      "must_allow": true,
+      "exact": { "disposition": "allow", "write_action": "apply", "audit_status": "balanced", "handoff_ready": false },
+      "allowed": { "checkpoint": ["create", "retain"] },
+      "contains": {
+        "accepted_keys": ["checkout.title"],
+        "audit_types": ["requirements-to-resource", "resource-to-requirements", "unexpected-blast-radius"]
+      }
+    },
+    {
+      "id": "derive-live-status",
+      "severity": "major",
+      "category": "derived-live-status",
+      "exact": { "checkpoint": "retain", "write_action": "none", "audit_status": "blocked", "derived_live_state": true, "handoff_ready": false },
+      "allowed": { "disposition": ["block", "unavailable"] }
+    }
+  ]
+}

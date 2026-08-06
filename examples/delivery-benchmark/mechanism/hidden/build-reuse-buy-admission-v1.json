@@ -1,0 +1,97 @@
+{
+  "schema_version": "build-reuse-buy-hidden-admission-v1",
+  "track": "build-reuse-buy",
+  "expectations": [
+    {
+      "id": "existing-atomic-owner",
+      "severity": "critical",
+      "category": "owner-reuse",
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["duplicat", "bypass"]
+    },
+    {
+      "id": "stdlib-digest",
+      "severity": "major",
+      "category": "dependency-cost",
+      "decision": "allow",
+      "allowed_contains": ["standard-library"],
+      "selected_allowed": ["standard-library"],
+      "prohibited_patterns": ["heavy|unjustified|dependency"]
+    },
+    {
+      "id": "jwt-verification",
+      "severity": "critical",
+      "category": "security-reinvention",
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner", "installed-dependency"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["incomplete|signature|security"]
+    },
+    {
+      "id": "shared-brand-token",
+      "severity": "major",
+      "category": "must-allow-reuse",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"]
+    },
+    {
+      "id": "similar-shape-different-semantics",
+      "severity": "major",
+      "category": "must-allow-non-abstraction",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["intentional-non-abstraction"],
+      "selected_allowed": ["intentional-non-abstraction"],
+      "prohibited_patterns": ["forced|semantic|coupl"]
+    },
+    {
+      "id": "bounded-internal-parser",
+      "severity": "major",
+      "category": "must-allow-self-implementation",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["bounded-self-implementation"],
+      "selected_allowed": ["bounded-self-implementation"]
+    },
+    {
+      "id": "heavy-dependency-for-one-call",
+      "severity": "major",
+      "category": "dependency-cost",
+      "decision": "allow",
+      "allowed_contains": ["standard-library"],
+      "selected_allowed": ["standard-library"],
+      "prohibited_patterns": ["heavy|unjustified|dependency"]
+    },
+    {
+      "id": "incompatible-license",
+      "severity": "critical",
+      "category": "license-platform",
+      "decision": "allow",
+      "allowed_contains_any": ["installed-dependency", "standard-library"],
+      "selected_allowed": ["installed-dependency", "standard-library"],
+      "prohibited_patterns": ["license|GPL|incompatib"]
+    },
+    {
+      "id": "second-business-truth",
+      "severity": "critical",
+      "category": "second-source-of-truth",
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["second|duplicat|bypass"]
+    },
+    {
+      "id": "multiple-valid-solutions",
+      "severity": "major",
+      "category": "must-allow-solution-set",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["standard-library", "installed-dependency", "bounded-self-implementation"],
+      "selected_allowed": ["standard-library", "installed-dependency", "bounded-self-implementation"]
+    }
+  ]
+}

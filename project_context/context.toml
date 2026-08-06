@@ -26,6 +26,18 @@ read_policy = "on-demand"
 triggers = ["design resource handoff", "design-resource-handoff-v1", "design-resource-handoff-v2", "symbolic rules v2", "symbolic denotation", "symbolic applicability profile", "custom property closure", "instance exception", "shared compilation session", "non-interference certificate", "static dependency closure", "restricted IR equivalence", "finite exhaustive equivalence", "V1 capacity guard", "mixed V1 V2 target", "design resource preflight", "complete UIUX conformance", "complete observable design fact", "design fact inventory", "resource fact closure", "supporting only resource", "fact refs", "exact fact conservation", "exact target pixel default", "shared selected-design obligation", "default design conformance", "carrier exclusivity", "implementation source profile", "source dependency closure", "typed locator", "locator addressability", "subject target condition dimension", "verification method binding", "design blocker lineage", "residual handoff", "Figma", "Penpot", "OpenPencil", "pixel fidelity", "motion design", "设计资源交接", "完全遵循设计资源", "完整可观察设计事实", "设计事实清单", "资源事实闭包", "像素级实现", "实现级设计源", "设计定位器"]
 
 [[context]]
+path = "project_context/areas/harness-package/contracts/design-resource-authoring.md"
+role = "contract"
+read_policy = "on-demand"
+triggers = ["design resource authoring", "DRA", "proposal reconciliation", "Base replay", "replayable Delta", "semantic fidelity", "delegated-choice validity", "decision authority", "resource to requirements", "requirements to resource", "unexpected blast radius", "DRA recovery", "recovery checkpoint", "Proposal writeback", "writeback CAS", "design-resource recovery", "设计资源生成", "方案回写", "双向审计", "中断恢复", "语义保真", "委托决策"]
+
+[[context]]
+path = "project_context/areas/harness-package/contracts/temporary-content-governance.md"
+role = "contract"
+read_policy = "on-demand"
+triggers = ["temporary content", "temporary artifact", "temp cleanup", "tmp", "work_products", "context exports", "source preview", "benchmark artifacts", "release artifacts", "test timing artifacts", "handoff draft", "recovery state", "symlink cleanup", "junction cleanup", "retention", "TTL", "临时内容", "临时文件", "清理", "保留周期"]
+
+[[context]]
 path = "project_context/areas/harness-package/contracts/package-managed-surfaces.md"
 role = "contract"
 read_policy = "on-demand"
