@@ -333,8 +333,8 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   ];
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
-  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 13);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 44);
+  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 14);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 45);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   for (const restoredFile of [
     "long-task-authority-progress-retry.test.mjs",
@@ -356,6 +356,14 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(
     classifyLongTaskTestFile("long-task-playwright-trust-boundary.test.mjs"),
     "exclusive",
+  );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-playwright-config-argument.test.mjs"),
+    "pure",
+  );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-verifier-root-directory.test.mjs"),
+    "isolated",
   );
   assert.equal(
     classifyLongTaskTestFile("long-task-authoring-preflight.test.mjs"),

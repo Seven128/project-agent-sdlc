@@ -260,6 +260,7 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
   "long-task-efficiency-design.test.mjs",
   "long-task-execution-input-policy.test.mjs",
   "long-task-playwright-ac-evidence.test.mjs",
+  "long-task-playwright-config-argument.test.mjs",
   "long-task-semantic-drift-closure.test.mjs",
   "long-task-structural-closure-cost.test.mjs",
 ]);
@@ -308,6 +309,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-source-risk-binding.test.mjs",
   "long-task-state-resume.test.mjs",
   "long-task-verification-preview.test.mjs",
+  "long-task-verifier-root-directory.test.mjs",
   "long-task-workspace-scope.test.mjs",
 ]);
 
@@ -537,8 +539,8 @@ function assertIsolationPolicy() {
   if (new Set(classified).size !== classified.length)
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
-    LONG_TASK_PURE_TEST_FILES.length !== 13 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 44 ||
+    LONG_TASK_PURE_TEST_FILES.length !== 14 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 45 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
