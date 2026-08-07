@@ -59,13 +59,14 @@ export function parsePatch(
       (item, itemLabel) => {
         const operation = object(item, itemLabel, [
           "operation_id",
-          "target_keys",
-          "delta_ids",
+          "operation",
+          "target_key",
+          "delta_id",
           "before_text",
           "after_text",
           "before_text_sha256",
           "after_text_sha256",
-          "semantic_bindings",
+          "semantic_binding",
           "expected_occurrences",
         ]);
         literal(
@@ -78,11 +79,13 @@ export function parsePatch(
             operation.operation_id,
             `${itemLabel}.operation_id`,
           ),
-          target_keys: stringSet(
-            operation.target_keys,
-            `${itemLabel}.target_keys`,
+          operation: oneOf(
+            operation.operation,
+            ["add", "replace", "remove"] as const,
+            `${itemLabel}.operation`,
           ),
-          delta_ids: stringSet(operation.delta_ids, `${itemLabel}.delta_ids`),
+          target_key: text(operation.target_key, `${itemLabel}.target_key`),
+          delta_id: text(operation.delta_id, `${itemLabel}.delta_id`),
           before_text: multilineText(
             operation.before_text,
             `${itemLabel}.before_text`,
@@ -90,6 +93,7 @@ export function parsePatch(
           after_text: multilineText(
             operation.after_text,
             `${itemLabel}.after_text`,
+            { allowEmpty: true },
           ),
           before_text_sha256: digest(
             operation.before_text_sha256,
@@ -99,10 +103,9 @@ export function parsePatch(
             operation.after_text_sha256,
             `${itemLabel}.after_text_sha256`,
           ),
-          semantic_bindings: arrayOf(
-            operation.semantic_bindings,
-            `${itemLabel}.semantic_bindings`,
-            parsePatchSemanticBinding,
+          semantic_binding: parsePatchSemanticBinding(
+            operation.semantic_binding,
+            `${itemLabel}.semantic_binding`,
           ),
           expected_occurrences: 1 as const,
         };
@@ -189,7 +192,7 @@ export function parseWritebackInput(
     "patch_identity",
     "expected_post_write_raw_byte_digest",
     "resource_identities",
-    "accepted_delta_ids",
+    "proposal_written_delta_ids",
   ];
   if (complete) fields.push("target_encoding", "target_eol_policy");
   const row = object(value, label, fields);
@@ -210,9 +213,9 @@ export function parseWritebackInput(
       `${label}.resource_identities`,
       parseResourceDigestIdentity,
     ),
-    accepted_delta_ids: stringSet(
-      row.accepted_delta_ids,
-      `${label}.accepted_delta_ids`,
+    proposal_written_delta_ids: stringSet(
+      row.proposal_written_delta_ids,
+      `${label}.proposal_written_delta_ids`,
       { allowEmpty: true },
     ),
   };

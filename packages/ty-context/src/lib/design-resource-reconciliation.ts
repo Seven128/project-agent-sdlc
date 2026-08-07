@@ -18,10 +18,6 @@ export function reconcileDesignResourceWriteback(
   audit: DesignResourceReconciliationAudit,
 ): DesignResourceReconciliationResult {
   validateDesignResourceRecoverySemantics(checkpoint);
-  if (!checkpoint.writeback)
-    throw new Error(
-      "design_resource_recovery_invalid:writeback_not_configured",
-    );
   const findings: string[] = [];
   compareValue(
     findings,
@@ -47,17 +43,26 @@ export function reconcileDesignResourceWriteback(
     canonicalValueJson(audit.provider_run),
     canonicalValueJson(checkpoint.provider.run),
   );
-  compareValue(
-    findings,
-    "writeback_target_identity",
-    audit.writeback_target_raw_byte_digest,
-    checkpoint.writeback.expected_post_write_raw_byte_digest,
-  );
+  if (checkpoint.writeback) {
+    if (!audit.writeback_target_raw_byte_digest)
+      findings.push("missing:writeback_target_identity");
+    else
+      compareValue(
+        findings,
+        "writeback_target_identity",
+        audit.writeback_target_raw_byte_digest,
+        checkpoint.writeback.expected_post_write_raw_byte_digest,
+      );
+  } else if (audit.writeback_target_raw_byte_digest)
+    findings.push("unexpected:writeback_target_identity");
   compareIdentityRows(
     findings,
     "resource_identity",
     audit.resource_identities,
-    checkpoint.writeback.resource_identities,
+    checkpoint.selected_resource_bindings.map((row) => ({
+      key: row.key,
+      raw_byte_digest: row.raw_byte_digest,
+    })),
   );
 
   const superseded = acceptedSupersededDeltaIds(checkpoint.deltas);
@@ -323,7 +328,7 @@ function validateResourceDecisions(
         row,
         binding,
         delta,
-        frozen.allowed_final_dispositions,
+        expectedBinding.final_disposition,
         activeIds,
         superseded,
         findings,
@@ -359,16 +364,18 @@ function validateFinalDisposition(
   row: DesignResourceReconciliationAudit["resource_to_requirements"][number],
   binding: DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number],
   delta: DesignResourceDelta,
-  allowed: string[],
+  frozen: DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number]["final_disposition"],
   activeIds: Set<string>,
   superseded: Set<string>,
   findings: string[],
 ): void {
   const disposition = binding.final_disposition;
-  if (!allowed.includes(disposition.kind))
-    findings.push(
-      `resource_decision_disposition_not_frozen:${binding.binding_id}`,
-    );
+  compareValue(
+    findings,
+    `resource_decision_frozen_disposition:${binding.binding_id}`,
+    canonicalValueJson(disposition),
+    canonicalValueJson(frozen),
+  );
   const active =
     activeIds.has(delta.delta_id) && !superseded.has(delta.delta_id);
   if (delta.status === "rejected" || (delta.status === "accepted" && !active)) {
@@ -395,11 +402,8 @@ function validateFinalDisposition(
     if (!operation)
       findings.push(`proposal_owner_operation_missing:${binding.binding_id}`);
     else if (
-      !operation.semantic_bindings.some(
-        (candidate) =>
-          candidate.delta_id === delta.delta_id &&
-          candidate.target_key === binding.requirement_key,
-      )
+      operation.semantic_binding.delta_id !== delta.delta_id ||
+      operation.semantic_binding.target_key !== binding.requirement_key
     )
       findings.push(
         `proposal_owner_operation_binding_mismatch:${binding.binding_id}`,
@@ -423,15 +427,7 @@ function validateFinalDisposition(
     row.condition_refs,
   );
   const owner = disposition.downstream_owner;
-  if (
-    owner.kind === "formal-handoff-target" &&
-    owner.target_key !== binding.requirement_key
-  )
-    findings.push(`resource_owner_target_mismatch:${binding.binding_id}`);
-  if (
-    owner.kind === "selected-source-record" &&
-    owner.resource_key !== disposition.resource_ref
-  )
+  if (owner.resource_key !== disposition.resource_ref)
     findings.push(`resource_owner_record_mismatch:${binding.binding_id}`);
 }
 

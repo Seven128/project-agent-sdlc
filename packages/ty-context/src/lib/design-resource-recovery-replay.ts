@@ -45,7 +45,7 @@ export function validateDesignResourceRecoverySemantics(
     superseded,
   );
   validateActiveAcceptedTargetUniqueness(activeAccepted);
-  const { changed } = validateDesignResourceRecoveryCatalog(
+  validateDesignResourceRecoveryCatalog(
     state,
     byId,
     activeAccepted,
@@ -57,7 +57,7 @@ export function validateDesignResourceRecoverySemantics(
     !state.audit_expectations.resource_decisions.length
   )
     invalid("resource_decision_universe_required");
-  validateRecoveryProviderAndWriteback(state, activeAccepted, changed);
+  validateRecoveryProviderAndWriteback(state, activeAccepted);
 }
 
 export function createDesignResourceReplayProjection(

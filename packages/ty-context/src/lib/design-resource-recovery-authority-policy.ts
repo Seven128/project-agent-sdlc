@@ -15,6 +15,12 @@ const AUTHORITATIVE_MEANING_SOURCE_KINDS = new Set([
   "risk_fact",
 ]);
 
+export function isDesignResourceAuthoritativeMeaningSourceKind(
+  kind: string,
+): boolean {
+  return AUTHORITATIVE_MEANING_SOURCE_KINDS.has(kind);
+}
+
 type RecoveryState =
   DesignResourceRecoveryCreateInput | DesignResourceRecoveryCheckpoint;
 
@@ -166,7 +172,7 @@ function validateNonvisualMeaningSource(
     if (sourceRef === delegation?.source_ref) return false;
     const kind = authoritySources.get(sourceRef)?.source_item_kind ?? "";
     return (
-      AUTHORITATIVE_MEANING_SOURCE_KINDS.has(kind) ||
+      isDesignResourceAuthoritativeMeaningSourceKind(kind) ||
       (delta.decision_authority === "explicit-user" && kind === "decision")
     );
   });

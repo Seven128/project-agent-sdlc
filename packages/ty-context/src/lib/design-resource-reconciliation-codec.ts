@@ -19,6 +19,7 @@ import {
   parseAuthorityIdentity,
   parseDecisionAuthority,
 } from "./design-resource-recovery-shape.js";
+import { parseDesignResourceFinalDisposition } from "./design-resource-recovery-final-disposition-shape.js";
 
 const ORIGINS = [
   "user-direct",
@@ -52,7 +53,6 @@ export function parseDesignResourceReconciliationAudit(
       "design_authority",
       "provider_run",
       "resource_identities",
-      "writeback_target_raw_byte_digest",
       "accepted_delta_ids",
       "rejected_delta_ids",
       "unresolved_delta_ids",
@@ -63,6 +63,7 @@ export function parseDesignResourceReconciliationAudit(
       "unexpected_blast_radius",
       "inactive_delta_leakage",
     ],
+    ["writeback_target_raw_byte_digest"],
   );
   literal(
     row.schema_version,
@@ -86,10 +87,14 @@ export function parseDesignResourceReconciliationAudit(
       "reconciliation_audit.resource_identities",
       parseResourceIdentity,
     ),
-    writeback_target_raw_byte_digest: digest(
-      row.writeback_target_raw_byte_digest,
-      "reconciliation_audit.writeback_target_raw_byte_digest",
-    ),
+    ...(row.writeback_target_raw_byte_digest === undefined
+      ? {}
+      : {
+          writeback_target_raw_byte_digest: digest(
+            row.writeback_target_raw_byte_digest,
+            "reconciliation_audit.writeback_target_raw_byte_digest",
+          ),
+        }),
     accepted_delta_ids: stringSet(
       row.accepted_delta_ids,
       "reconciliation_audit.accepted_delta_ids",
@@ -277,104 +282,10 @@ function parseRequirementBinding(
     source_refs: stringSet(row.source_refs, `${label}.source_refs`, {
       allowEmpty: true,
     }),
-    final_disposition: parseFinalDisposition(
+    final_disposition: parseDesignResourceFinalDisposition(
       row.final_disposition,
       `${label}.final_disposition`,
     ),
-  };
-}
-
-function parseFinalDisposition(
-  value: unknown,
-  label: string,
-): DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number]["final_disposition"] {
-  const first = object(
-    value,
-    label,
-    ["kind"],
-    ["operation_id", "resource_ref", "condition_refs", "downstream_owner"],
-  );
-  const kind = oneOf(
-    first.kind,
-    [
-      "proposal-written",
-      "resource-owned-exact-visual",
-      "not-adopted",
-      "unresolved",
-    ] as const,
-    `${label}.kind`,
-  );
-  if (kind === "resource-owned-exact-visual") {
-    const row = object(value, label, [
-      "kind",
-      "resource_ref",
-      "condition_refs",
-      "downstream_owner",
-    ]);
-    return {
-      kind,
-      resource_ref: text(row.resource_ref, `${label}.resource_ref`),
-      condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
-      downstream_owner: parseDownstreamOwner(
-        row.downstream_owner,
-        `${label}.downstream_owner`,
-      ),
-    };
-  }
-  if (kind === "proposal-written") {
-    const row = object(value, label, ["kind", "operation_id"]);
-    return {
-      kind,
-      operation_id: text(row.operation_id, `${label}.operation_id`),
-    };
-  }
-  object(value, label, ["kind"]);
-  return { kind };
-}
-
-function parseDownstreamOwner(
-  value: unknown,
-  label: string,
-): Extract<
-  DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number]["final_disposition"],
-  { kind: "resource-owned-exact-visual" }
->["downstream_owner"] {
-  const first = object(
-    value,
-    label,
-    ["kind", "locator", "raw_byte_digest"],
-    ["target_key", "resource_key"],
-  );
-  const kind = oneOf(
-    first.kind,
-    ["formal-handoff-target", "selected-source-record"] as const,
-    `${label}.kind`,
-  );
-  if (kind === "formal-handoff-target") {
-    const row = object(value, label, [
-      "kind",
-      "locator",
-      "raw_byte_digest",
-      "target_key",
-    ]);
-    return {
-      kind,
-      locator: text(row.locator, `${label}.locator`),
-      raw_byte_digest: digest(row.raw_byte_digest, `${label}.raw_byte_digest`),
-      target_key: text(row.target_key, `${label}.target_key`),
-    };
-  }
-  const row = object(value, label, [
-    "kind",
-    "locator",
-    "raw_byte_digest",
-    "resource_key",
-  ]);
-  return {
-    kind,
-    locator: text(row.locator, `${label}.locator`),
-    raw_byte_digest: digest(row.raw_byte_digest, `${label}.raw_byte_digest`),
-    resource_key: text(row.resource_key, `${label}.resource_key`),
   };
 }
 

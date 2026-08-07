@@ -221,3 +221,50 @@ test("nested CLI exposes explicit create/update/inspect/preview without implicit
     await fixture.cleanup();
   }
 });
+
+test("nested CLI reconcile is read-only for a resource-owned-only checkpoint", async () => {
+  const fixture = await createRecoveryFixture({
+    sessionId: "cli-reconcile",
+    resourceOwned: true,
+  });
+  try {
+    await exec(
+      process.execPath,
+      [
+        cli,
+        "design-resource",
+        "recovery",
+        "create",
+        fixture.input.session_id,
+        "--input",
+        fixture.stateLocator,
+        "--json",
+      ],
+      { cwd: fixture.root, windowsHide: true },
+    );
+    const before = await readFile(path.join(fixture.root, "proposal.md"));
+    const reconciled = await exec(
+      process.execPath,
+      [
+        cli,
+        "design-resource",
+        "recovery",
+        "reconcile",
+        fixture.input.session_id,
+        "--audit",
+        fixture.auditLocator,
+        "--json",
+      ],
+      { cwd: fixture.root, windowsHide: true },
+    );
+    const result = JSON.parse(reconciled.stdout);
+    assert.equal(result.status, "reconciliation-balanced");
+    assert.equal(result.write_transaction, false);
+    assert.deepEqual(
+      await readFile(path.join(fixture.root, "proposal.md")),
+      before,
+    );
+  } finally {
+    await fixture.cleanup();
+  }
+});

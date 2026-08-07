@@ -5,6 +5,7 @@ import {
   createDesignResourceRecoveryCheckpoint,
   inspectDesignResourceRecovery,
   previewDesignResourceRecoveryWriteback,
+  reconcileDesignResourceRecovery,
   removeDesignResourceRecoveryCheckpoint,
   updateDesignResourceRecoveryCheckpoint,
 } from "../lib/design-resource-recovery.js";
@@ -16,7 +17,7 @@ export async function designResourceRecoveryCommand(
   const [action, sessionId, ...rest] = args;
   if (!action || !sessionId)
     throw new Error(
-      "usage: ty-context design-resource recovery <create|update|inspect|preview|apply|remove> <session> [options]",
+      "usage: ty-context design-resource recovery <create|update|inspect|preview|apply|reconcile|remove> <session> [options]",
     );
   const options = recoveryOptions(rest);
   let result: unknown;
@@ -35,13 +36,15 @@ export async function designResourceRecoveryCommand(
     );
   } else if (action === "apply")
     result = await apply(process.cwd(), sessionId, options);
+  else if (action === "reconcile")
+    result = await reconcile(process.cwd(), sessionId, options);
   else if (action === "remove")
     result = await remove(process.cwd(), sessionId, options);
   else throw new Error(`Unknown design-resource recovery action: ${action}`);
   if (options.json) process.stdout.write(canonicalJson(result));
   else printRecoveryResult(action, result);
   if (
-    action === "apply" &&
+    (action === "apply" || action === "reconcile") &&
     (result as { status?: string }).status === "blocked"
   )
     process.exitCode = 2;
@@ -86,6 +89,16 @@ async function apply(
     sessionId,
     options.audit,
   );
+}
+
+async function reconcile(
+  repository: string,
+  sessionId: string,
+  options: RecoveryOptions,
+): Promise<unknown> {
+  if (!options.audit || options.input || options.expectedSha256)
+    usage("reconcile <session> --audit <audit.json>");
+  return reconcileDesignResourceRecovery(repository, sessionId, options.audit);
 }
 
 async function update(
@@ -182,6 +195,12 @@ function printRecoveryResult(action: string, result: unknown): void {
     console.log(`Reconciliation: ${JSON.stringify(row.reconciliation)}`);
     return;
   }
+  if (action === "reconcile") {
+    console.log(`DRA reconciliation: ${row.status}`);
+    console.log(`Write transaction: ${row.write_transaction}`);
+    console.log(`Reconciliation: ${JSON.stringify(row.reconciliation)}`);
+    return;
+  }
   console.log(`DRA recovery cleanup: ${row.status}`);
   console.log(`Path: ${row.path}`);
   if (row.status === "partial")
@@ -211,16 +230,14 @@ function printPatch(row: Record<string, unknown>): void {
     patch: {
       operations: Array<{
         operation_id: string;
-        target_keys: string[];
+        target_key: string;
         before_text: string;
         after_text: string;
       }>;
     };
   };
   for (const operation of patch.patch.operations) {
-    console.log(
-      `Patch ${operation.operation_id} [${operation.target_keys.join(", ")}]:`,
-    );
+    console.log(`Patch ${operation.operation_id} [${operation.target_key}]:`);
     console.log(`- ${operation.before_text}`);
     console.log(`+ ${operation.after_text}`);
   }

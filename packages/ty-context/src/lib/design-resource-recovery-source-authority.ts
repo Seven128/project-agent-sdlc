@@ -22,6 +22,7 @@ import {
   DESIGN_RESOURCE_SEMANTIC_KINDS,
 } from "./design-resource-recovery-shape.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
+import { isDesignResourceAuthoritativeMeaningSourceKind } from "./design-resource-recovery-authority-policy.js";
 
 type RecoveryState =
   DesignResourceRecoveryCreateInput | DesignResourceRecoveryCheckpoint;
@@ -143,9 +144,7 @@ function validateAcceptedDeltaProjections(
           projection.meaning_sha256 === meaningDigest &&
           projection.semantic_kinds.includes(delta.semantic_kind) &&
           projection.allowed_origins.includes(delta.origin) &&
-          delta.target_keys.every((key) =>
-            projection.target_keys.includes(key),
-          ),
+          sameStringSet(projection.target_keys, delta.target_keys),
       ),
     );
     if (delta.decision_authority === "explicit-user") {
@@ -179,7 +178,22 @@ function validateAcceptedDeltaProjections(
     const delegatedExactVisual =
       delta.semantic_kind === "exact-visual" &&
       delta.decision_authority.startsWith("delegated:");
-    if (!delegatedExactVisual && !matchingMeaning.length)
+    const delegatedNonvisual =
+      delta.semantic_kind !== "exact-visual" &&
+      delta.decision_authority.startsWith("delegated:");
+    if (delegatedNonvisual) {
+      const key = delta.decision_authority.slice("delegated:".length);
+      const delegation = delegations.get(key);
+      const independent = matchingMeaning.filter(
+        ({ sourceRef, kind }) =>
+          sourceRef !== delegation?.source_ref &&
+          isDesignResourceAuthoritativeMeaningSourceKind(kind),
+      );
+      if (!independent.length)
+        invalid(
+          `delegated_nonvisual_meaning_projection_required:${delta.delta_id}`,
+        );
+    } else if (!delegatedExactVisual && !matchingMeaning.length)
       invalid(`accepted_meaning_projection_required:${delta.delta_id}`);
   }
 }
@@ -377,6 +391,15 @@ function assertExactSet(
     left.some((value, index) => value !== right[index])
   )
     invalid(label);
+}
+
+function sameStringSet(left: string[], right: string[]): boolean {
+  const first = [...left].sort(compareText);
+  const second = [...right].sort(compareText);
+  return (
+    first.length === second.length &&
+    first.every((value, index) => value === second[index])
+  );
 }
 
 function compareText(left: string, right: string): number {

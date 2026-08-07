@@ -89,44 +89,43 @@ export async function createRecoveryFixture(options = {}) {
     writeFile(path.join(root, ...resourceLocator.split("/")), resourceBytes),
   ]);
   const patch = {
-    schema_version: "design-resource-exact-patch-v2",
+    schema_version: "design-resource-exact-patch-v3",
     operations: [
       {
         operation_id: "patch.visual.color",
-        target_keys: ["visual.color"],
-        delta_ids: ["delta.color"],
+        operation: "replace",
+        target_key: "visual.color",
+        delta_id: "delta.color",
         before_text: "color: blue",
         after_text: "color: red",
         before_text_sha256: sha256("color: blue"),
         after_text_sha256: sha256("color: red"),
-        semantic_bindings: [
-          {
-            delta_id: "delta.color",
-            target_key: "visual.color",
-            before_semantics_sha256: sha256Hex(
-              canonicalValueJson({ color: "blue" }),
-            ),
-            after_semantics_sha256: sha256Hex(
-              canonicalValueJson({ color: "red" }),
-            ),
-            before_text_projection: {
-              semantic_path: ["color"],
-              start_offset: 7,
-              end_offset: 11,
-            },
-            after_text_projection: {
-              semantic_path: ["color"],
-              start_offset: 7,
-              end_offset: 10,
-            },
+        semantic_binding: {
+          delta_id: "delta.color",
+          target_key: "visual.color",
+          before_semantics_sha256: sha256Hex(
+            canonicalValueJson({ color: "blue" }),
+          ),
+          after_semantics_sha256: sha256Hex(
+            canonicalValueJson({ color: "red" }),
+          ),
+          before_text_projection: {
+            semantic_path: ["color"],
+            start_offset: 7,
+            end_offset: 11,
           },
-        ],
+          after_text_projection: {
+            semantic_path: ["color"],
+            start_offset: 7,
+            end_offset: 10,
+          },
+        },
         expected_occurrences: 1,
       },
     ],
   };
   const input = {
-    schema_version: "design-resource-recovery-input-v3",
+    schema_version: "design-resource-recovery-input-v4",
     session_id: options.sessionId ?? "fixture-session",
     disclosure_review: {
       reviewed: true,
@@ -269,13 +268,13 @@ export async function createRecoveryFixture(options = {}) {
               binding_id: "binding.color",
               delta_id: "delta.color",
               target_key: "visual.color",
+              final_disposition: {
+                kind: "proposal-written",
+                operation_id: "patch.visual.color",
+              },
             },
           ],
           condition_refs: ["condition.default"],
-          allowed_final_dispositions: [
-            "proposal-written",
-            "resource-owned-exact-visual",
-          ],
         },
         {
           key: "resource-decision.admin",
@@ -286,10 +285,10 @@ export async function createRecoveryFixture(options = {}) {
               binding_id: "binding.admin",
               delta_id: "delta.admin",
               target_key: "product.admin",
+              final_disposition: { kind: "not-adopted" },
             },
           ],
           condition_refs: ["condition.default"],
-          allowed_final_dispositions: ["not-adopted"],
         },
       ],
       blast_radius: [{ key: "page.other" }],
@@ -338,7 +337,7 @@ export async function createRecoveryFixture(options = {}) {
       resource_identities: [
         { key: "resource.main", raw_byte_digest: sha256(resourceBytes) },
       ],
-      accepted_delta_ids: ["delta.color", "delta.layout-preserved"],
+      proposal_written_delta_ids: ["delta.color"],
     },
   };
   if (options.includeUnresolved) {
@@ -370,10 +369,10 @@ export async function createRecoveryFixture(options = {}) {
           binding_id: "binding.tagline",
           delta_id: "delta.tagline",
           target_key: "copy.tagline",
+          final_disposition: { kind: "unresolved" },
         },
       ],
       condition_refs: ["condition.default"],
-      allowed_final_dispositions: ["unresolved"],
     });
     input.audit_expectations.inactive_delta_leakage.push({
       delta_id: "delta.tagline",
@@ -381,7 +380,7 @@ export async function createRecoveryFixture(options = {}) {
     });
   }
   const audit = {
-    schema_version: "design-resource-reconciliation-audit-v3",
+    schema_version: "design-resource-reconciliation-audit-v4",
     session_id: input.session_id,
     base_raw_byte_digest: input.base.raw_byte_digest,
     design_authority: input.design_authority,
@@ -389,7 +388,7 @@ export async function createRecoveryFixture(options = {}) {
     resource_identities: input.writeback.resource_identities,
     writeback_target_raw_byte_digest:
       input.writeback.expected_post_write_raw_byte_digest,
-    accepted_delta_ids: input.writeback.accepted_delta_ids,
+    accepted_delta_ids: input.decision_sets.accepted_delta_ids,
     rejected_delta_ids: input.decision_sets.rejected_delta_ids,
     unresolved_delta_ids: input.decision_sets.unresolved_delta_ids,
     changed_keys: ["visual.color"],
@@ -488,6 +487,25 @@ export async function createRecoveryFixture(options = {}) {
       inactive_reason: "unresolved",
       leaked: false,
     });
+  }
+  if (options.resourceOwned) {
+    const finalDisposition = {
+      kind: "resource-owned-exact-visual",
+      resource_ref: "resource.main",
+      condition_refs: ["condition.default"],
+      downstream_owner: {
+        kind: "selected-source-record",
+        locator: resourceLocator,
+        raw_byte_digest: sha256(resourceBytes),
+        resource_key: "resource.main",
+      },
+    };
+    input.audit_expectations.resource_decisions[0].bindings[0].final_disposition =
+      structuredClone(finalDisposition);
+    audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
+      structuredClone(finalDisposition);
+    delete input.writeback;
+    delete audit.writeback_target_raw_byte_digest;
   }
   const stateLocator = "recovery-input.json";
   const auditLocator = "reconciliation-audit.json";

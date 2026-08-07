@@ -9,11 +9,13 @@ import {
 } from "../../packages/ty-context/dist/lib/design-resource-recovery-codec.js";
 import { readRecoveryCheckpointFile } from "../../packages/ty-context/dist/lib/design-resource-recovery-files.js";
 import { validateDesignResourceAuthoritySourceItems } from "../../packages/ty-context/dist/lib/design-resource-recovery-source-authority.js";
+import { verifyDesignResourceExactPatchReadback } from "../../packages/ty-context/dist/lib/design-resource-recovery-text.js";
 import {
   applyDesignResourceRecoveryWriteback,
   createDesignResourceRecoveryCheckpoint,
   inspectDesignResourceRecovery,
   previewDesignResourceRecoveryWriteback,
+  reconcileDesignResourceRecovery,
   removeDesignResourceRecoveryCheckpoint,
   updateDesignResourceRecoveryCheckpoint,
 } from "../../packages/ty-context/dist/lib/design-resource-recovery.js";
@@ -151,7 +153,7 @@ test("strict codecs reject corruption, unknown versions and unknown fields", asy
       () =>
         parseDesignResourceRecoveryCreateInput(
           valid.replace(
-            "design-resource-recovery-input-v3",
+            "design-resource-recovery-input-v4",
             "design-resource-recovery-input-v999",
           ),
         ),
@@ -309,8 +311,6 @@ test("decision authority resolves to raw-digest-bound actual Source items", asyn
     input.deltas[0].decision_authority = "explicit-user";
     input.deltas[0].source_refs = ["source.product-explicit-decision"];
     input.audit_expectations.resource_decisions[0].semantic_kind = "product";
-    input.audit_expectations.resource_decisions[0].allowed_final_dispositions =
-      ["proposal-written"];
     await assert.doesNotReject(
       createDesignResourceRecoveryCheckpoint(directDecisionMeaning.root, input),
     );
@@ -346,10 +346,10 @@ test("checkpoint update is multi-round CAS with old-state retention on conflict"
           binding_id: "binding.tagline",
           delta_id: "delta.tagline",
           target_key: "copy.tagline",
+          final_disposition: { kind: "unresolved" },
         },
       ],
       condition_refs: ["condition.default"],
-      allowed_final_dispositions: ["unresolved"],
     });
     roundTwo.audit_expectations.inactive_delta_leakage.push({
       delta_id: "delta.tagline",
@@ -377,7 +377,7 @@ test("checkpoint update is multi-round CAS with old-state retention on conflict"
     roundThree.decision_sets.unresolved_delta_ids = [];
     roundThree.audit_expectations.resource_decisions.find(
       (row) => row.key === "resource-decision.tagline",
-    ).allowed_final_dispositions = ["not-adopted"];
+    ).bindings[0].final_disposition = { kind: "not-adopted" };
     roundThree.audit_expectations.inactive_delta_leakage.find(
       (row) => row.delta_id === "delta.tagline",
     ).reason = "rejected";
@@ -582,10 +582,7 @@ test("only accepted same-target semantic supersession changes effective requirem
       input.deltas.push(delta);
       if (delta.status === "accepted") {
         input.decision_sets.accepted_delta_ids.push(delta.delta_id);
-        input.writeback.accepted_delta_ids = [
-          delta.delta_id,
-          "delta.layout-preserved",
-        ];
+        input.writeback.proposal_written_delta_ids = [delta.delta_id];
       } else if (delta.status === "rejected")
         input.decision_sets.rejected_delta_ids.push(delta.delta_id);
       else input.decision_sets.unresolved_delta_ids.push(delta.delta_id);
@@ -789,35 +786,161 @@ test("complete audit universes and per-key resource authority fail closed", asyn
   }
 });
 
-test("resource-owned exact visual is an allowed single final owner", async () => {
+test("resource-owned exact visual is frozen and never changes Proposal bytes", async () => {
   const fixture = await createRecoveryFixture({
     sessionId: "resource-owned-visual",
   });
   try {
-    await createDesignResourceRecoveryCheckpoint(fixture.root, fixture.input);
+    const input = clone(fixture.input);
     const audit = clone(fixture.audit);
-    audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
-      {
-        kind: "resource-owned-exact-visual",
-        resource_ref: "resource.main",
-        condition_refs: ["condition.default"],
-        downstream_owner: {
-          kind: "selected-source-record",
-          locator: "resources/main.json",
-          raw_byte_digest: audit.resource_identities[0].raw_byte_digest,
-          resource_key: "resource.main",
-        },
-      };
-    await writeFile(
-      path.join(fixture.root, fixture.auditLocator),
-      `${JSON.stringify(audit)}\n`,
-    );
-    const result = await applyDesignResourceRecoveryWriteback(
+    configureResourceOwnedColor(input, audit);
+    const proposalBefore = await readFile(path.join(fixture.root, "proposal.md"));
+    await createDesignResourceRecoveryCheckpoint(fixture.root, input);
+    await writeAudit(fixture, audit);
+    const result = await reconcileDesignResourceRecovery(
       fixture.root,
-      fixture.input.session_id,
+      input.session_id,
       fixture.auditLocator,
     );
-    assert.equal(result.status, "writeback-applied");
+    assert.equal(result.status, "reconciliation-balanced");
+    assert.equal(result.write_transaction, false);
+    assert.deepEqual(
+      await readFile(path.join(fixture.root, "proposal.md")),
+      proposalBefore,
+    );
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("audit cannot select or change the checkpoint-frozen final owner", async () => {
+  for (const direction of ["proposal-to-resource", "resource-to-proposal"]) {
+    const fixture = await createRecoveryFixture({
+      sessionId: `owner-freeze-${direction}`,
+    });
+    try {
+      const input = clone(fixture.input);
+      const audit = clone(fixture.audit);
+      const resourceFrozen = direction === "resource-to-proposal";
+      if (resourceFrozen) configureResourceOwnedColor(input, audit);
+      await createDesignResourceRecoveryCheckpoint(fixture.root, input);
+      audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
+        resourceFrozen
+          ? {
+              kind: "proposal-written",
+              operation_id: "patch.visual.color",
+            }
+          : resourceOwnedDisposition(input);
+      await writeAudit(fixture, audit);
+      const proposalBefore = await readFile(
+        path.join(fixture.root, "proposal.md"),
+      );
+      const result = resourceFrozen
+        ? await reconcileDesignResourceRecovery(
+            fixture.root,
+            input.session_id,
+            fixture.auditLocator,
+          )
+        : await applyDesignResourceRecoveryWriteback(
+            fixture.root,
+            input.session_id,
+            fixture.auditLocator,
+          );
+      assert.equal(result.status, "blocked");
+      assert.match(
+        result.reconciliation.findings.join("\n"),
+        /resource_decision_frozen_disposition:binding\.color/u,
+      );
+      assert.deepEqual(
+        await readFile(path.join(fixture.root, "proposal.md")),
+        proposalBefore,
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+
+  const dual = await createRecoveryFixture({ sessionId: "dual-owner-shape" });
+  try {
+    const input = clone(dual.input);
+    Object.assign(
+      input.audit_expectations.resource_decisions[0].bindings[0]
+        .final_disposition,
+      resourceOwnedDisposition(input),
+    );
+    assert.throws(
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(input)),
+      /final_disposition:unknown_field:(?:operation_id|resource_ref)/u,
+    );
+  } finally {
+    await dual.cleanup();
+  }
+});
+
+test("changing final owner succeeds only through checkpoint digest CAS update", async () => {
+  const fixture = await createRecoveryFixture({ sessionId: "owner-cas-update" });
+  try {
+    const created = await createDesignResourceRecoveryCheckpoint(
+      fixture.root,
+      fixture.input,
+    );
+    const input = clone(fixture.input);
+    const audit = clone(fixture.audit);
+    configureResourceOwnedColor(input, audit);
+    const updated = await updateDesignResourceRecoveryCheckpoint(
+      fixture.root,
+      input,
+      created.checkpoint_raw_byte_digest,
+    );
+    assert.equal(updated.status, "updated");
+    await writeAudit(fixture, audit);
+    const proposalBefore = await readFile(path.join(fixture.root, "proposal.md"));
+    const result = await reconcileDesignResourceRecovery(
+      fixture.root,
+      input.session_id,
+      fixture.auditLocator,
+    );
+    assert.equal(result.status, "reconciliation-balanced");
+    assert.deepEqual(
+      await readFile(path.join(fixture.root, "proposal.md")),
+      proposalBefore,
+    );
+  } finally {
+    await fixture.cleanup();
+  }
+});
+
+test("mixed owners write only the proposal-owned Delta subset", async () => {
+  const fixture = await createRecoveryFixture({ sessionId: "mixed-owners" });
+  try {
+    const input = clone(fixture.input);
+    const audit = clone(fixture.audit);
+    await addDelegatedResourceOwnedOpacity(fixture, input, audit);
+    await createDesignResourceRecoveryCheckpoint(fixture.root, input);
+    await writeAudit(fixture, audit);
+    const result = await applyDesignResourceRecoveryWriteback(
+      fixture.root,
+      input.session_id,
+      fixture.auditLocator,
+    );
+    assert.equal(
+      result.status,
+      "writeback-applied",
+      result.reconciliation.findings.join("\n"),
+    );
+    assert.deepEqual(input.writeback.proposal_written_delta_ids, [
+      "delta.color",
+    ]);
+    assert.deepEqual(
+      input.writeback.patch.operations.map((operation) => operation.delta_id),
+      ["delta.color"],
+    );
+    const proposal = await readFile(
+      path.join(fixture.root, "proposal.md"),
+      "utf8",
+    );
+    assert.match(proposal, /color: red/u);
+    assert.doesNotMatch(proposal, /opacity/u);
   } finally {
     await fixture.cleanup();
   }
@@ -856,6 +979,73 @@ test("Source-owned authority projection closes target, semantic kind and meaning
         validateDesignResourceAuthoritySourceItems(fixture.root, input),
         pattern,
       );
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+});
+
+test("explicit meaning targets are exact while delegated nonvisual meaning is independently sourced", async () => {
+  const exact = await createRecoveryFixture({ sessionId: "explicit-exact" });
+  try {
+    const input = clone(exact.input);
+    configureExplicitProductColor(input);
+    await assert.doesNotReject(
+      createDesignResourceRecoveryCheckpoint(exact.root, input),
+    );
+  } finally {
+    await exact.cleanup();
+  }
+
+  const superset = await createRecoveryFixture({
+    sessionId: "explicit-target-superset",
+  });
+  try {
+    const input = clone(superset.input);
+    configureExplicitProductColor(input);
+    await updateAuthorityProjection(
+      superset,
+      input,
+      "product-explicit-decision",
+      (projection) => {
+        projection.target_keys = ["layout.stable", "visual.color"];
+      },
+      (projection) => projection.mode === "explicit-user",
+    );
+    await assert.rejects(
+      createDesignResourceRecoveryCheckpoint(superset.root, input),
+      /explicit_user_projection_required/u,
+    );
+  } finally {
+    await superset.cleanup();
+  }
+
+  for (const [name, independent, expected] of [
+    ["delegation-only", "none", /nonvisual_meaning_source_required/u],
+    [
+      "unrelated-requirement",
+      "unrelated",
+      /delegated_nonvisual_meaning_projection_required/u,
+    ],
+    ["matching-requirement", "matching", null],
+  ]) {
+    const fixture = await createRecoveryFixture({ sessionId: name });
+    try {
+      const input = clone(fixture.input);
+      await configureDelegatedNonvisualColor(
+        fixture,
+        input,
+        independent,
+      );
+      if (expected)
+        await assert.rejects(
+          createDesignResourceRecoveryCheckpoint(fixture.root, input),
+          expected,
+        );
+      else
+        await assert.doesNotReject(
+          createDesignResourceRecoveryCheckpoint(fixture.root, input),
+        );
     } finally {
       await fixture.cleanup();
     }
@@ -1197,103 +1387,64 @@ test("catalog-exact resource, condition and unchanged basis bindings block drift
   }
 });
 
-test("downstream owner must be structured, readable and digest-current", async () => {
-  const arbitrary = await createRecoveryFixture({
-    sessionId: "arbitrary-owner",
-  });
+test("Proposal semantic projection is atomic and a source span cannot carry two meanings", async () => {
+  const multiLeaf = await createRecoveryFixture({ sessionId: "multi-leaf" });
   try {
-    await createDesignResourceRecoveryCheckpoint(
-      arbitrary.root,
-      arbitrary.input,
-    );
-    const audit = clone(arbitrary.audit);
-    audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
-      {
-        kind: "resource-owned-exact-visual",
-        resource_ref: "resource.main",
-        condition_refs: ["condition.default"],
-        downstream_owner: "some-text",
-      };
-    await writeAudit(arbitrary, audit);
+    const input = clone(multiLeaf.input);
+    input.deltas[0].after_semantics = { color: "red", opacity: 0.5 };
+    input.writeback.patch.operations[0].semantic_binding.after_semantics_sha256 =
+      sha256Hex(canonicalValueJson(input.deltas[0].after_semantics));
+    refreshPatchIdentity(input);
     await assert.rejects(
-      applyDesignResourceRecoveryWriteback(
-        arbitrary.root,
-        arbitrary.input.session_id,
-        arbitrary.auditLocator,
-      ),
-      /downstream_owner:object_required/u,
+      createDesignResourceRecoveryCheckpoint(multiLeaf.root, input),
+      /patch_after_semantic_leaf_count:patch\.visual\.color:2/u,
     );
   } finally {
-    await arbitrary.cleanup();
+    await multiLeaf.cleanup();
   }
 
-  for (const [name, configure, pattern] of [
-    [
-      "external-only",
-      (input, audit) => {
-        input.selected_resource_bindings[0].identity_kind =
-          "external-immutable";
-        input.selected_resource_bindings[0].locator =
-          "provider://resource/main";
-        audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
-          {
-            kind: "resource-owned-exact-visual",
-            resource_ref: "resource.main",
-            condition_refs: ["condition.default"],
-            downstream_owner: {
-              kind: "selected-source-record",
-              locator: "provider://resource/main",
-              raw_byte_digest: audit.resource_identities[0].raw_byte_digest,
-              resource_key: "resource.main",
-            },
-          };
-      },
-      /external_only_final_owner/u,
-    ],
-    [
-      "digest-drift",
-      (_input, audit) => {
-        audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
-          {
-            kind: "resource-owned-exact-visual",
-            resource_ref: "resource.main",
-            condition_refs: ["condition.default"],
-            downstream_owner: {
-              kind: "selected-source-record",
-              locator: "resources/main.json",
-              raw_byte_digest: "0".repeat(64),
-              resource_key: "resource.main",
-            },
-          };
-      },
-      /selected_source_owner_identity_mismatch/u,
-    ],
-    [
-      "formal-handoff-kind-mismatch",
-      (_input, audit) => {
-        audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
-          {
-            kind: "resource-owned-exact-visual",
-            resource_ref: "resource.main",
-            condition_refs: ["condition.default"],
-            downstream_owner: {
-              kind: "formal-handoff-target",
-              locator: "resources/main.json",
-              raw_byte_digest: audit.resource_identities[0].raw_byte_digest,
-              target_key: "visual.color",
-            },
-          };
-      },
-      /formal_handoff_owner_binding_mismatch/u,
-    ],
-  ]) {
+  const multiDelta = await createRecoveryFixture({ sessionId: "one-op-two-delta" });
+  try {
+    const input = clone(multiDelta.input);
+    input.writeback.patch.operations[0].delta_ids = [
+      "delta.color",
+      "delta.other",
+    ];
+    assert.throws(
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(input)),
+      /operations\[0\]:unknown_field:delta_ids/u,
+    );
+  } finally {
+    await multiDelta.cleanup();
+  }
+
+  const sharedSpan = await createRecoveryFixture({ sessionId: "shared-span" });
+  try {
+    const input = clone(sharedSpan.input);
+    await addDelegatedProposalAccent(sharedSpan, input);
+    await assert.rejects(
+      createDesignResourceRecoveryCheckpoint(sharedSpan.root, input),
+      /patch_source_span_duplicate/u,
+    );
+  } finally {
+    await sharedSpan.cleanup();
+  }
+});
+
+test("atomic replace, add and remove preserve exact operation semantics", async () => {
+  for (const operation of ["replace", "add", "remove"]) {
     const fixture = await createRecoveryFixture({
-      sessionId: `owner-${name}`,
+      sessionId: `atomic-${operation}`,
     });
     try {
       const input = clone(fixture.input);
       const audit = clone(fixture.audit);
-      configure(input, audit);
+      const expected = await configureAtomicColorOperation(
+        fixture,
+        input,
+        audit,
+        operation,
+      );
       await createDesignResourceRecoveryCheckpoint(fixture.root, input);
       await writeAudit(fixture, audit);
       const result = await applyDesignResourceRecoveryWriteback(
@@ -1301,26 +1452,193 @@ test("downstream owner must be structured, readable and digest-current", async (
         input.session_id,
         fixture.auditLocator,
       );
-      assert.equal(result.status, "blocked");
-      assert.match(result.reconciliation.findings.join("\n"), pattern);
+      assert.equal(result.status, "writeback-applied");
+      assert.deepEqual(
+        await readFile(path.join(fixture.root, "proposal.md")),
+        expected,
+      );
+      if (operation === "remove")
+        assert.doesNotMatch(expected.toString("utf8"), /color: blue/u);
     } finally {
       await fixture.cleanup();
     }
   }
+
+  const nestedNull = await createRecoveryFixture({
+    sessionId: "atomic-nested-null-scalar",
+  });
+  try {
+    const input = clone(nestedNull.input);
+    const operation = input.writeback.patch.operations[0];
+    input.deltas[0].after_semantics = { color: null };
+    operation.after_text = "color: null";
+    operation.after_text_sha256 = sha256(operation.after_text);
+    operation.semantic_binding.after_semantics_sha256 = sha256Hex(
+      canonicalValueJson(input.deltas[0].after_semantics),
+    );
+    operation.semantic_binding.after_text_projection = {
+      semantic_path: ["color"],
+      start_offset: 7,
+      end_offset: 11,
+    };
+    input.writeback.expected_post_write_raw_byte_digest = sha256(
+      Buffer.from(
+        fixtureText(nestedNull.beforeBytes).replace(
+          "color: blue",
+          "color: null",
+        ),
+        "utf8",
+      ),
+    );
+    refreshPatchIdentity(input);
+    await createDesignResourceRecoveryCheckpoint(nestedNull.root, input);
+  } finally {
+    await nestedNull.cleanup();
+  }
+
+  const disabled = await createRecoveryFixture({
+    sessionId: "remove-writes-disabled",
+  });
+  try {
+    const input = clone(disabled.input);
+    const audit = clone(disabled.audit);
+    await configureAtomicColorOperation(
+      disabled,
+      input,
+      audit,
+      "remove",
+    );
+    const patch = input.writeback.patch.operations[0];
+    patch.after_text = "disabled";
+    patch.after_text_sha256 = sha256("disabled");
+    refreshPatchIdentity(input);
+    await assert.rejects(
+      createDesignResourceRecoveryCheckpoint(disabled.root, input),
+      /patch_remove_shape/u,
+    );
+  } finally {
+    await disabled.cleanup();
+  }
+
+  const stale = await createRecoveryFixture({ sessionId: "remove-stale-readback" });
+  try {
+    const input = clone(stale.input);
+    const audit = clone(stale.audit);
+    await configureAtomicColorOperation(stale, input, audit, "remove");
+    assert.throws(
+      () =>
+        verifyDesignResourceExactPatchReadback(
+          stale.beforeBytes,
+          input.writeback.patch,
+        ),
+      /patch_remove_before_still_present/u,
+    );
+  } finally {
+    await stale.cleanup();
+  }
 });
 
-test("v2 recovery and audit state are never interpreted as v3", async () => {
-  const fixture = await createRecoveryFixture({ sessionId: "v2-fail-closed" });
+test("downstream owner is structured, digest-current and never a recovery formal-handoff label", async () => {
+  const arbitrary = await createRecoveryFixture({
+    sessionId: "arbitrary-owner",
+  });
   try {
-    const inputV2 = clone(fixture.input);
-    inputV2.schema_version = "design-resource-recovery-input-v2";
+    const input = clone(arbitrary.input);
+    const audit = clone(arbitrary.audit);
+    configureResourceOwnedColor(input, audit);
+    input.audit_expectations.resource_decisions[0].bindings[0].final_disposition.downstream_owner =
+      "some-text";
     assert.throws(
-      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(inputV2)),
-      /schema_version.*design-resource-recovery-input-v3/u,
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(input)),
+      /downstream_owner:object_required/u,
     );
-    const auditV2 = clone(fixture.audit);
-    auditV2.schema_version = "design-resource-reconciliation-audit-v2";
-    await writeAudit(fixture, auditV2);
+  } finally {
+    await arbitrary.cleanup();
+  }
+
+  const formal = await createRecoveryFixture({ sessionId: "formal-label" });
+  try {
+    const input = clone(formal.input);
+    const audit = clone(formal.audit);
+    configureResourceOwnedColor(input, audit);
+    input.audit_expectations.resource_decisions[0].bindings[0].final_disposition.downstream_owner =
+      {
+        kind: "formal-handoff-target",
+        locator: "resources/main.json",
+        raw_byte_digest: input.selected_resource_bindings[0].raw_byte_digest,
+        resource_key: "resource.main",
+      };
+    assert.throws(
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(input)),
+      /downstream_owner\.kind/u,
+    );
+  } finally {
+    await formal.cleanup();
+  }
+
+  const external = await createRecoveryFixture({ sessionId: "external-only" });
+  try {
+    const input = clone(external.input);
+    const audit = clone(external.audit);
+    configureResourceOwnedColor(input, audit, { external: true });
+    await createDesignResourceRecoveryCheckpoint(external.root, input);
+    await writeAudit(external, audit);
+    const result = await reconcileDesignResourceRecovery(
+      external.root,
+      input.session_id,
+      external.auditLocator,
+    );
+    assert.equal(result.status, "external-resource-revalidation-pending");
+    assert.equal(result.write_transaction, false);
+  } finally {
+    await external.cleanup();
+  }
+
+  const drift = await createRecoveryFixture({ sessionId: "owner-digest-drift" });
+  try {
+    const input = clone(drift.input);
+    const audit = clone(drift.audit);
+    configureResourceOwnedColor(input, audit);
+    await createDesignResourceRecoveryCheckpoint(drift.root, input);
+    await writeAudit(drift, audit);
+    await writeFile(
+      path.join(drift.root, "resources/main.json"),
+      '{"color":"purple"}\n',
+      "utf8",
+    );
+    const result = await reconcileDesignResourceRecovery(
+      drift.root,
+      input.session_id,
+      drift.auditLocator,
+    );
+    assert.equal(result.status, "blocked");
+    assert.match(
+      result.reconciliation.findings.join("\n"),
+      /selected_resource:resource\.main_digest_mismatch/u,
+    );
+  } finally {
+    await drift.cleanup();
+  }
+});
+
+test("v3 recovery and audit state are never interpreted as v4", async () => {
+  const fixture = await createRecoveryFixture({ sessionId: "v3-fail-closed" });
+  try {
+    const inputV3 = clone(fixture.input);
+    inputV3.schema_version = "design-resource-recovery-input-v3";
+    assert.throws(
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(inputV3)),
+      /schema_version.*design-resource-recovery-input-v4/u,
+    );
+    const patchV2 = clone(fixture.input);
+    patchV2.writeback.patch.schema_version = "design-resource-exact-patch-v2";
+    assert.throws(
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(patchV2)),
+      /schema_version.*design-resource-exact-patch-v3/u,
+    );
+    const auditV3 = clone(fixture.audit);
+    auditV3.schema_version = "design-resource-reconciliation-audit-v3";
+    await writeAudit(fixture, auditV3);
     await createDesignResourceRecoveryCheckpoint(fixture.root, fixture.input);
     await assert.rejects(
       applyDesignResourceRecoveryWriteback(
@@ -1328,7 +1646,22 @@ test("v2 recovery and audit state are never interpreted as v3", async () => {
         fixture.input.session_id,
         fixture.auditLocator,
       ),
-      /schema_version.*design-resource-reconciliation-audit-v3/u,
+      /schema_version.*design-resource-reconciliation-audit-v4/u,
+    );
+    const checkpoint = await readRecoveryCheckpointFile(
+      fixture.root,
+      fixture.input.session_id,
+    );
+    const checkpointV3 = JSON.parse(checkpoint.bytes.toString("utf8"));
+    checkpointV3.schema_version = "design-resource-recovery-checkpoint-v3";
+    await writeFile(
+      checkpoint.absolute,
+      `${JSON.stringify(checkpointV3)}\n`,
+      "utf8",
+    );
+    await assert.rejects(
+      inspectDesignResourceRecovery(fixture.root, fixture.input.session_id),
+      /schema_version.*design-resource-recovery-checkpoint-v4/u,
     );
   } finally {
     await fixture.cleanup();
@@ -1377,10 +1710,7 @@ function unresolvedTaglineDelta() {
 }
 
 function configureAcceptedColorSupersession(input, currentBytes, color) {
-  input.writeback.accepted_delta_ids = [
-    "delta.color.v2",
-    "delta.layout-preserved",
-  ];
+  input.writeback.proposal_written_delta_ids = ["delta.color.v2"];
   input.audit_expectations.changed[0].delta_ids = ["delta.color.v2"];
   const decision = input.audit_expectations.resource_decisions.find(
     (row) => row.key === "resource-decision.color",
@@ -1390,6 +1720,10 @@ function configureAcceptedColorSupersession(input, currentBytes, color) {
       binding_id: "binding.color.v2",
       delta_id: "delta.color.v2",
       target_key: "visual.color",
+      final_disposition: {
+        kind: "proposal-written",
+        operation_id: "patch.visual.color",
+      },
     },
   ];
   input.audit_expectations.inactive_delta_leakage.push({
@@ -1397,29 +1731,27 @@ function configureAcceptedColorSupersession(input, currentBytes, color) {
     reason: "superseded",
   });
   const operation = input.writeback.patch.operations[0];
-  operation.delta_ids = ["delta.color.v2"];
+  operation.delta_id = "delta.color.v2";
   operation.before_text = "color: red";
   operation.after_text = `color: ${color}`;
   operation.before_text_sha256 = sha256(operation.before_text);
   operation.after_text_sha256 = sha256(operation.after_text);
-  operation.semantic_bindings = [
-    {
-      delta_id: "delta.color.v2",
-      target_key: "visual.color",
-      before_semantics_sha256: sha256Hex(canonicalValueJson({ color: "red" })),
-      after_semantics_sha256: sha256Hex(canonicalValueJson({ color })),
-      before_text_projection: {
-        semantic_path: ["color"],
-        start_offset: 7,
-        end_offset: 10,
-      },
-      after_text_projection: {
-        semantic_path: ["color"],
-        start_offset: 7,
-        end_offset: 7 + color.length,
-      },
+  operation.semantic_binding = {
+    delta_id: "delta.color.v2",
+    target_key: "visual.color",
+    before_semantics_sha256: sha256Hex(canonicalValueJson({ color: "red" })),
+    after_semantics_sha256: sha256Hex(canonicalValueJson({ color })),
+    before_text_projection: {
+      semantic_path: ["color"],
+      start_offset: 7,
+      end_offset: 10,
     },
-  ];
+    after_text_projection: {
+      semantic_path: ["color"],
+      start_offset: 7,
+      end_offset: 7 + color.length,
+    },
+  };
   input.writeback.pre_write_raw_byte_digest = sha256(currentBytes);
   input.writeback.expected_post_write_raw_byte_digest = sha256(
     Buffer.from(
@@ -1433,7 +1765,7 @@ function configureAcceptedColorSupersession(input, currentBytes, color) {
 }
 
 function configureSupersessionAudit(audit, input) {
-  audit.accepted_delta_ids = clone(input.writeback.accepted_delta_ids);
+  audit.accepted_delta_ids = clone(input.decision_sets.accepted_delta_ids);
   audit.writeback_target_raw_byte_digest =
     input.writeback.expected_post_write_raw_byte_digest;
   audit.requirements_to_resource[0].delta_ids = ["delta.color.v2"];
@@ -1463,6 +1795,386 @@ async function writeAudit(fixture, audit) {
     path.join(fixture.root, fixture.auditLocator),
     `${JSON.stringify(audit, null, 2)}\n`,
     "utf8",
+  );
+}
+
+function configureResourceOwnedColor(input, audit, options = {}) {
+  const selected = input.selected_resource_bindings[0];
+  if (options.external) {
+    selected.identity_kind = "external-immutable";
+    selected.locator = "provider://resource/main";
+  }
+  const disposition = {
+    kind: "resource-owned-exact-visual",
+    resource_ref: "resource.main",
+    condition_refs: ["condition.default"],
+    downstream_owner: {
+      kind: options.external
+        ? "external-immutable"
+        : "selected-source-record",
+      locator: selected.locator,
+      raw_byte_digest: selected.raw_byte_digest,
+      resource_key: "resource.main",
+    },
+  };
+  input.audit_expectations.resource_decisions[0].bindings[0].final_disposition =
+    clone(disposition);
+  audit.resource_to_requirements[0].requirement_bindings[0].final_disposition =
+    clone(disposition);
+  delete input.writeback;
+  delete audit.writeback_target_raw_byte_digest;
+}
+
+function resourceOwnedDisposition(input, options = {}) {
+  const selected = input.selected_resource_bindings[0];
+  return {
+    kind: "resource-owned-exact-visual",
+    resource_ref: "resource.main",
+    condition_refs: ["condition.default"],
+    downstream_owner: {
+      kind: options.external
+        ? "external-immutable"
+        : "selected-source-record",
+      locator: selected.locator,
+      raw_byte_digest: selected.raw_byte_digest,
+      resource_key: "resource.main",
+    },
+  };
+}
+
+async function addDelegatedResourceOwnedOpacity(fixture, input, audit) {
+  await extendDelegationTarget(fixture, input, "visual.opacity");
+  audit.base_raw_byte_digest = input.base.raw_byte_digest;
+  input.base.in_scope_keys.push("visual.opacity");
+  input.deltas.push({
+    delta_id: "delta.opacity",
+    sequence: 4,
+    supersedes: [],
+    proposes_replacement_of: [],
+    operation: "replace",
+    semantic_kind: "exact-visual",
+    target_keys: ["visual.opacity"],
+    before_semantics: { opacity: 1 },
+    after_semantics: { opacity: 0.5 },
+    origin: "provider-suggested",
+    decision_authority: "delegated:visual-choice",
+    evidence_refs: ["resource.main"],
+    source_refs: ["source.visual-color-delegation"],
+    explicitly_unchanged_keys: [],
+    status: "accepted",
+  });
+  input.decision_sets.accepted_delta_ids.push("delta.opacity");
+  input.audit_expectations.changed.push({
+    key: "visual.opacity",
+    delta_ids: ["delta.opacity"],
+    resource_refs: ["resource.main"],
+    condition_refs: ["condition.default"],
+  });
+  const disposition = resourceOwnedDisposition(input);
+  input.audit_expectations.resource_decisions.push({
+    key: "resource-decision.opacity",
+    resource_ref: "resource.main",
+    semantic_kind: "exact-visual",
+    bindings: [
+      {
+        binding_id: "binding.opacity",
+        delta_id: "delta.opacity",
+        target_key: "visual.opacity",
+        final_disposition: clone(disposition),
+      },
+    ],
+    condition_refs: ["condition.default"],
+  });
+  audit.accepted_delta_ids.push("delta.opacity");
+  audit.changed_keys.push("visual.opacity");
+  audit.requirements_to_resource.push({
+    key: "visual.opacity",
+    verdict: "covered",
+    delta_ids: ["delta.opacity"],
+    resource_refs: ["resource.main"],
+    condition_refs: ["condition.default"],
+  });
+  audit.resource_to_requirements.push({
+    key: "resource-decision.opacity",
+    resource_ref: "resource.main",
+    status: "accepted",
+    semantic_kind: "exact-visual",
+    delta_ids: ["delta.opacity"],
+    condition_refs: ["condition.default"],
+    requirement_bindings: [
+      {
+        binding_id: "binding.opacity",
+        requirement_key: "visual.opacity",
+        delta_id: "delta.opacity",
+        origin: "provider-suggested",
+        decision_authority: "delegated:visual-choice",
+        source_refs: ["source.visual-color-delegation"],
+        final_disposition: clone(disposition),
+      },
+    ],
+  });
+}
+
+async function addDelegatedProposalAccent(fixture, input) {
+  await extendDelegationTarget(fixture, input, "visual.accent");
+  input.base.in_scope_keys.push("visual.accent");
+  input.deltas.push({
+    delta_id: "delta.accent",
+    sequence: 4,
+    supersedes: [],
+    proposes_replacement_of: [],
+    operation: "replace",
+    semantic_kind: "exact-visual",
+    target_keys: ["visual.accent"],
+    before_semantics: { accent: "blue" },
+    after_semantics: { accent: "red" },
+    origin: "provider-suggested",
+    decision_authority: "delegated:visual-choice",
+    evidence_refs: ["resource.main"],
+    source_refs: ["source.visual-color-delegation"],
+    explicitly_unchanged_keys: [],
+    status: "accepted",
+  });
+  input.decision_sets.accepted_delta_ids.push("delta.accent");
+  input.audit_expectations.changed.push({
+    key: "visual.accent",
+    delta_ids: ["delta.accent"],
+    resource_refs: ["resource.main"],
+    condition_refs: ["condition.default"],
+  });
+  input.audit_expectations.resource_decisions.push({
+    key: "resource-decision.accent",
+    resource_ref: "resource.main",
+    semantic_kind: "exact-visual",
+    bindings: [
+      {
+        binding_id: "binding.accent",
+        delta_id: "delta.accent",
+        target_key: "visual.accent",
+        final_disposition: {
+          kind: "proposal-written",
+          operation_id: "patch.visual.accent",
+        },
+      },
+    ],
+    condition_refs: ["condition.default"],
+  });
+  const operation = clone(input.writeback.patch.operations[0]);
+  operation.operation_id = "patch.visual.accent";
+  operation.target_key = "visual.accent";
+  operation.delta_id = "delta.accent";
+  operation.semantic_binding = {
+    ...operation.semantic_binding,
+    delta_id: "delta.accent",
+    target_key: "visual.accent",
+    before_semantics_sha256: sha256Hex(
+      canonicalValueJson({ accent: "blue" }),
+    ),
+    after_semantics_sha256: sha256Hex(
+      canonicalValueJson({ accent: "red" }),
+    ),
+    before_text_projection: {
+      ...operation.semantic_binding.before_text_projection,
+      semantic_path: ["accent"],
+    },
+    after_text_projection: {
+      ...operation.semantic_binding.after_text_projection,
+      semantic_path: ["accent"],
+    },
+  };
+  input.writeback.patch.operations.push(operation);
+  input.writeback.proposal_written_delta_ids.push("delta.accent");
+  refreshPatchIdentity(input);
+}
+
+async function configureAtomicColorOperation(
+  fixture,
+  input,
+  audit,
+  operation,
+) {
+  const newline = fixtureText(fixture.beforeBytes).includes("\r\n")
+    ? "\r\n"
+    : "\n";
+  const original = fixtureText(fixture.beforeBytes);
+  const delta = input.deltas[0];
+  const patch = input.writeback.patch.operations[0];
+  let before = original;
+  let expected = fixtureText(fixture.afterBytes);
+  patch.operation = operation;
+  if (operation === "add") {
+    before = original.replace(`color: blue${newline}`, "");
+    expected = before.replace(
+      `# Proposal${newline}`,
+      `# Proposal${newline}color: red${newline}`,
+    );
+    delta.operation = "add";
+    delta.before_semantics = null;
+    patch.before_text = `# Proposal${newline}`;
+    patch.after_text = `# Proposal${newline}color: red${newline}`;
+    patch.semantic_binding.before_text_projection = null;
+    patch.semantic_binding.after_text_projection = {
+      semantic_path: ["color"],
+      start_offset: patch.after_text.indexOf("red"),
+      end_offset: patch.after_text.indexOf("red") + 3,
+    };
+  } else if (operation === "remove") {
+    expected = original.replace(`color: blue${newline}`, "");
+    delta.operation = "remove";
+    delta.after_semantics = null;
+    patch.before_text = `color: blue${newline}`;
+    patch.after_text = "";
+    patch.semantic_binding.before_text_projection = {
+      semantic_path: ["color"],
+      start_offset: 7,
+      end_offset: 11,
+    };
+    patch.semantic_binding.after_text_projection = null;
+  }
+  patch.before_text_sha256 = sha256(patch.before_text);
+  patch.after_text_sha256 = sha256(patch.after_text);
+  patch.semantic_binding.before_semantics_sha256 = sha256Hex(
+    canonicalValueJson(delta.before_semantics),
+  );
+  patch.semantic_binding.after_semantics_sha256 = sha256Hex(
+    canonicalValueJson(delta.after_semantics),
+  );
+  const beforeBytes = Buffer.from(before, "utf8");
+  const expectedBytes = Buffer.from(expected, "utf8");
+  await writeFile(path.join(fixture.root, "proposal.md"), beforeBytes);
+  input.writeback.pre_write_raw_byte_digest = sha256(beforeBytes);
+  input.writeback.expected_post_write_raw_byte_digest = sha256(expectedBytes);
+  audit.writeback_target_raw_byte_digest =
+    input.writeback.expected_post_write_raw_byte_digest;
+  refreshPatchIdentity(input);
+  return expectedBytes;
+}
+
+function configureExplicitProductColor(input) {
+  input.deltas[0].semantic_kind = "product";
+  input.deltas[0].origin = "user-direct";
+  input.deltas[0].decision_authority = "explicit-user";
+  input.deltas[0].source_refs = ["source.product-explicit-decision"];
+  input.audit_expectations.resource_decisions[0].semantic_kind = "product";
+}
+
+async function configureDelegatedNonvisualColor(
+  fixture,
+  input,
+  independent,
+) {
+  input.deltas[0].semantic_kind = "product";
+  input.audit_expectations.resource_decisions[0].semantic_kind = "product";
+  input.delegations[0].allowed_semantic_kinds.push("product");
+  await updateAuthorityProjection(
+    fixture,
+    input,
+    "visual-color-delegation",
+    (projection) => projection.allowed_semantic_kinds.push("product"),
+    (projection) => projection.mode === "delegation",
+  );
+  const meaningProjection = {
+    schema_version: "ty-dra-authority-v1",
+    mode: "explicit-user",
+    target_keys: ["visual.color"],
+    semantic_kinds: ["product"],
+    allowed_origins: ["provider-suggested"],
+    meaning_sha256: sha256Hex(canonicalValueJson({ color: "red" })),
+  };
+  await appendAuthorityProjection(
+    fixture,
+    input,
+    "visual-color-delegation",
+    meaningProjection,
+  );
+  if (independent !== "none")
+    input.deltas[0].source_refs.push("source.layout-stable");
+  if (independent === "matching")
+    await appendAuthorityProjection(
+      fixture,
+      input,
+      "layout-stable",
+      meaningProjection,
+    );
+}
+
+async function extendDelegationTarget(fixture, input, target) {
+  input.delegations[0].allowed_target_keys.push(target);
+  await updateAuthorityProjection(
+    fixture,
+    input,
+    "visual-color-delegation",
+    (projection) => projection.allowed_target_keys.push(target),
+    (projection) => projection.mode === "delegation",
+  );
+}
+
+async function updateAuthorityProjection(
+  fixture,
+  input,
+  itemKey,
+  mutate,
+  predicate,
+) {
+  await mutateAuthorityItem(fixture, input, itemKey, (body) => {
+    let count = 0;
+    const lines = body.split("\n").map((line) => {
+      const match = /^<!-- ty-dra-authority-v1 (\{.*\}) -->$/u.exec(line);
+      if (!match) return line;
+      const projection = JSON.parse(match[1]);
+      if (!predicate(projection)) return line;
+      mutate(projection);
+      count += 1;
+      return `<!-- ty-dra-authority-v1 ${JSON.stringify(projection)} -->`;
+    });
+    assert.equal(count, 1);
+    return lines.join("\n");
+  });
+}
+
+async function appendAuthorityProjection(fixture, input, itemKey, projection) {
+  await mutateAuthorityItem(
+    fixture,
+    input,
+    itemKey,
+    (body) =>
+      `${body}\n<!-- ty-dra-authority-v1 ${JSON.stringify(projection)} -->`,
+  );
+}
+
+async function mutateAuthorityItem(fixture, input, itemKey, mutate) {
+  const absolute = path.join(fixture.root, ...input.base.locator.split("/"));
+  const current = await readFile(absolute, "utf8");
+  const newline = current.includes("\r\n") ? "\r\n" : "\n";
+  const marker = `<!-- ty-source-item:start key=${itemKey} kind=`;
+  const markerStart = current.indexOf(marker);
+  assert.notEqual(markerStart, -1);
+  const bodyStart = current.indexOf(newline, markerStart) + newline.length;
+  const bodyEnd = current.indexOf(
+    `${newline}<!-- ty-source-item:end -->`,
+    bodyStart,
+  );
+  assert.notEqual(bodyEnd, -1);
+  const body = current.slice(bodyStart, bodyEnd).replace(/\r\n?|\n/gu, "\n");
+  const nextBody = mutate(body);
+  const next = `${current.slice(0, bodyStart)}${nextBody.replace(/\n/gu, newline)}${current.slice(bodyEnd)}`;
+  const bytes = Buffer.from(next, "utf8");
+  await writeFile(absolute, bytes);
+  const rawDigest = sha256(bytes);
+  input.base.raw_byte_digest = rawDigest;
+  for (const source of input.authority_sources)
+    if (source.locator === input.base.locator)
+      source.raw_byte_digest = rawDigest;
+  const source = input.authority_sources.find(
+    (row) => row.source_item_key === itemKey,
+  );
+  assert.ok(source);
+  source.source_item_text_sha256 = sha256(nextBody);
+}
+
+function refreshPatchIdentity(input) {
+  input.writeback.patch_identity = sha256Hex(
+    canonicalValueJson(input.writeback.patch),
   );
 }
 

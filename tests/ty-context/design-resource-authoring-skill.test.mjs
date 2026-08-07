@@ -18,6 +18,55 @@ const roots = [
 const copies = (relative) =>
   Promise.all(roots.map((root) => read(`${root}/${relative}`)));
 
+test("DRA admission output cardinality is set-equal to the frozen case universe", async () => {
+  const task = JSON.parse(
+    await read(
+      "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
+    ),
+  );
+  const hidden = JSON.parse(
+    await read(
+      "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
+    ),
+  );
+  const schema = JSON.parse(
+    await read(
+      "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json",
+    ),
+  );
+  const resultShape = schema.properties.case_results;
+  assert.equal(resultShape.minItems, task.cases.length);
+  assert.equal(resultShape.maxItems, task.cases.length);
+  assert.deepEqual(
+    task.cases.map((row) => row.id),
+    hidden.expectations.map((row) => row.id),
+  );
+  assert.equal(new Set(task.cases.map((row) => row.id)).size, task.cases.length);
+  for (const id of [
+    "duplicate-resource-identities-mixed",
+    "wrong-requirement-condition",
+    "wrong-unchanged-resource",
+    "wrong-unchanged-basis",
+  ]) {
+    const item = task.cases.find((row) => row.id === id);
+    assert.match(item.facts.join(" "), /reconciliation.*writeback/iu);
+  }
+  const taskById = new Map(task.cases.map((row) => [row.id, row]));
+  for (const expectation of hidden.expectations) {
+    const facts = taskById.get(expectation.id).facts.join(" ");
+    for (const field of [
+      "accepted_keys",
+      "rejected_keys",
+      "unresolved_keys",
+    ]) {
+      for (const key of expectation.contains?.[field] ?? [])
+        assert.match(facts, new RegExp(key.replaceAll(".", "\\."), "u"));
+    }
+    if (expectation.exact?.write_action === "block")
+      assert.match(facts, /writeback|handoff-ready/iu);
+  }
+});
+
 test("design-resource-authoring has one exact managed/generated/package source", async () => {
   for (const relative of [
     "SKILL.md",
@@ -461,6 +510,7 @@ test("material DRA recovery preserves replay semantics, authority separation and
     "inspect",
     "preview",
     "apply",
+    "reconcile",
     "remove",
   ])
     assert.match(
@@ -486,12 +536,16 @@ test("material DRA recovery preserves replay semantics, authority separation and
     recovery,
     /inactive universe as rejected plus unresolved plus superseded accepted Delta IDs/iu,
   );
-  assert.match(recovery, /design-resource-recovery-input-v3/u);
-  assert.match(recovery, /design-resource-reconciliation-audit-v3/u);
-  assert.match(recovery, /design-resource-exact-patch-v2/u);
+  assert.match(recovery, /design-resource-recovery-input-v4/u);
+  assert.match(recovery, /design-resource-reconciliation-audit-v4/u);
+  assert.match(recovery, /design-resource-exact-patch-v3/u);
   assert.match(recovery, /audit_expectations/u);
   assert.match(recovery, /selected_resource_bindings/u);
   assert.match(recovery, /proposal-written.*resource-owned-exact-visual/isu);
+  assert.match(recovery, /Audit observes and verifies this owner; it never selects it/iu);
+  assert.match(recovery, /Every patch operation has one unique ID, exactly one Delta, one target and one semantic binding/iu);
+  assert.match(recovery, /`remove`.*requires empty `after_text`/isu);
+  assert.match(recovery, /does not accept a `formal-handoff-target` label/iu);
   assert.match(recovery, /structured downstream owner.*repository-readable/isu);
   assert.match(recovery, /explicit `partial` result/iu);
   assert.match(recovery, /Requirements → Resource/iu);

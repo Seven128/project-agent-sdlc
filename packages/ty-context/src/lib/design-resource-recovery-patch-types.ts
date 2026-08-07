@@ -21,13 +21,14 @@ export interface DesignResourcePatchSemanticBinding {
 
 export interface DesignResourceExactPatchOperation {
   operation_id: string;
-  target_keys: string[];
-  delta_ids: string[];
+  operation: "add" | "replace" | "remove";
+  target_key: string;
+  delta_id: string;
   before_text: string;
   after_text: string;
   before_text_sha256: string;
   after_text_sha256: string;
-  semantic_bindings: DesignResourcePatchSemanticBinding[];
+  semantic_binding: DesignResourcePatchSemanticBinding;
   expected_occurrences: 1;
 }
 
@@ -43,7 +44,7 @@ export interface DesignResourceWritebackInput {
   patch_identity: string;
   expected_post_write_raw_byte_digest: string;
   resource_identities: Array<{ key: string; raw_byte_digest: string }>;
-  accepted_delta_ids: string[];
+  proposal_written_delta_ids: string[];
 }
 
 export interface DesignResourceRecoveryWriteback extends DesignResourceWritebackInput {

@@ -3,7 +3,6 @@ import type {
   DesignResourceRecoveryCheckpoint,
   DesignResourceRecoveryCreateInput,
 } from "./design-resource-recovery-types.js";
-import type { DesignResourceReconciliationAudit } from "./design-resource-reconciliation-types.js";
 
 type RecoveryState =
   DesignResourceRecoveryCreateInput | DesignResourceRecoveryCheckpoint;
@@ -35,7 +34,6 @@ export async function validateSelectedResourceRepositoryBindings(
 export async function validateReconciliationDownstreamOwners(
   repository: string,
   checkpoint: DesignResourceRecoveryCheckpoint,
-  audit: DesignResourceReconciliationAudit,
 ): Promise<{ external_revalidation_required: boolean }> {
   const selected = new Map(
     checkpoint.selected_resource_bindings.map((row) => [row.key, row]),
@@ -44,38 +42,30 @@ export async function validateReconciliationDownstreamOwners(
     repository,
     checkpoint,
   );
-  for (const row of audit.resource_to_requirements)
-    for (const binding of row.requirement_bindings) {
+  for (const row of checkpoint.audit_expectations.resource_decisions)
+    for (const binding of row.bindings) {
       const disposition = binding.final_disposition;
       if (disposition.kind !== "resource-owned-exact-visual") continue;
       const selectedResource = selected.get(disposition.resource_ref);
       if (!selectedResource)
         invalid(`downstream_owner_resource_unselected:${binding.binding_id}`);
-      if (selectedResource.identity_kind === "external-immutable")
-        invalid(`external_only_final_owner:${binding.binding_id}`);
       const owner = disposition.downstream_owner;
-      if (owner.kind === "selected-source-record") {
-        if (
-          selectedResource.identity_kind !== "repository-snapshot" ||
-          owner.resource_key !== disposition.resource_ref ||
-          owner.locator !== selectedResource.locator ||
-          owner.raw_byte_digest !== selectedResource.raw_byte_digest
-        )
-          invalid(
-            `selected_source_owner_identity_mismatch:${binding.binding_id}`,
-          );
-      } else {
-        if (
-          selectedResource.identity_kind !== "formal-handoff-target" ||
-          owner.locator !== selectedResource.locator ||
-          owner.raw_byte_digest !== selectedResource.raw_byte_digest
-        )
-          invalid(
-            `formal_handoff_owner_binding_mismatch:${binding.binding_id}`,
-          );
-        if (owner.target_key !== binding.requirement_key)
-          invalid(`formal_handoff_owner_target_mismatch:${binding.binding_id}`);
+      if (
+        owner.resource_key !== disposition.resource_ref ||
+        owner.locator !== selectedResource.locator ||
+        owner.raw_byte_digest !== selectedResource.raw_byte_digest
+      )
+        invalid(
+          `selected_source_owner_identity_mismatch:${binding.binding_id}`,
+        );
+      if (selectedResource.identity_kind === "external-immutable") {
+        if (owner.kind !== "external-immutable")
+          invalid(`external_owner_kind_mismatch:${binding.binding_id}`);
+        current.external_revalidation_required = true;
+        continue;
       }
+      if (owner.kind !== "selected-source-record")
+        invalid(`selected_source_owner_kind_mismatch:${binding.binding_id}`);
       const snapshot = await readRecoveryRepositoryFile(
         repository,
         owner.locator,

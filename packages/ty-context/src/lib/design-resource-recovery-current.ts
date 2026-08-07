@@ -15,6 +15,7 @@ import type {
 export async function loadCurrentDesignResourceRecoveryCheckpoint(
   repository: string,
   sessionId: string,
+  options: { validateSelectedResources?: boolean } = {},
 ): Promise<{
   checkpoint: DesignResourceRecoveryCheckpoint;
   path: string;
@@ -43,7 +44,8 @@ export async function loadCurrentDesignResourceRecoveryCheckpoint(
     checkpoint.design_authority,
   );
   await validateDesignResourceAuthoritySourceItems(repository, checkpoint);
-  await validateSelectedResourceRepositoryBindings(repository, checkpoint);
+  if (options.validateSelectedResources !== false)
+    await validateSelectedResourceRepositoryBindings(repository, checkpoint);
   return {
     checkpoint,
     path: snapshot.relative,

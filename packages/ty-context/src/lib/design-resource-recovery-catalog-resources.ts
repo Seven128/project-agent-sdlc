@@ -55,14 +55,6 @@ export function validateDesignResourceDecisionCatalog(
       selectedResources,
       `resource_decision_expectation:${row.key}`,
     );
-    requireNonEmpty(
-      row.allowed_final_dispositions,
-      `resource_decision_allowed_dispositions:${row.key}`,
-    );
-    uniqueRows(
-      row.allowed_final_dispositions,
-      `resource_decision_allowed_disposition:${row.key}`,
-    );
     uniqueRows(
       row.bindings.map((binding) => binding.binding_id),
       `resource_decision_binding_id:${row.key}`,
@@ -93,11 +85,12 @@ export function validateDesignResourceDecisionCatalog(
         delta.status === "accepted" &&
         !superseded.has(delta.delta_id) &&
         delta.operation !== "preserve";
-      validateAllowedDispositions(
-        row.key,
+      validateFrozenDisposition(
+        row,
+        binding,
         delta,
         isActiveChanged,
-        row.allowed_final_dispositions,
+        selectedResources,
       );
       if (isActiveChanged) activeOwnerTuples.push(deltaTarget(binding));
     }
@@ -134,24 +127,53 @@ export function validateDesignResourceConditions(
   }
 }
 
-function validateAllowedDispositions(
-  rowKey: string,
+function validateFrozenDisposition(
+  row: RecoveryState["audit_expectations"]["resource_decisions"][number],
+  binding: RecoveryState["audit_expectations"]["resource_decisions"][number]["bindings"][number],
   delta: DesignResourceDelta,
   isActiveChanged: boolean,
-  allowed: string[],
+  selectedResources: Map<string, DesignResourceSelectedResourceBinding>,
 ): void {
-  const required = isActiveChanged
-    ? new Set(["proposal-written", "resource-owned-exact-visual"])
-    : delta.status === "unresolved"
-      ? new Set(["unresolved"])
-      : new Set(["not-adopted"]);
-  if (allowed.some((item) => !required.has(item)))
-    invalid(`resource_decision_disposition_not_allowed:${rowKey}`);
+  const disposition = binding.final_disposition;
+  if (!isActiveChanged) {
+    const required =
+      delta.status === "unresolved" ? "unresolved" : "not-adopted";
+    if (disposition.kind !== required)
+      invalid(
+        `resource_decision_inactive_disposition:${row.key}:${binding.binding_id}:${required}`,
+      );
+    return;
+  }
+  if (disposition.kind === "proposal-written") return;
+  if (disposition.kind !== "resource-owned-exact-visual")
+    invalid(
+      `resource_decision_active_disposition:${row.key}:${binding.binding_id}`,
+    );
+  if (delta.semantic_kind !== "exact-visual")
+    invalid(`resource_decision_nonvisual_resource_owner:${row.key}`);
+  if (disposition.resource_ref !== row.resource_ref)
+    invalid(`resource_decision_owner_resource:${binding.binding_id}`);
+  assertExactSet(
+    disposition.condition_refs,
+    row.condition_refs,
+    `resource_decision_owner_conditions:${binding.binding_id}`,
+  );
+  const selected = selectedResources.get(disposition.resource_ref);
+  if (!selected)
+    invalid(`resource_decision_owner_unselected:${binding.binding_id}`);
+  const owner = disposition.downstream_owner;
   if (
-    delta.semantic_kind !== "exact-visual" &&
-    allowed.includes("resource-owned-exact-visual")
+    owner.resource_key !== disposition.resource_ref ||
+    owner.locator !== selected.locator ||
+    owner.raw_byte_digest !== selected.raw_byte_digest
   )
-    invalid(`resource_decision_nonvisual_resource_owner:${rowKey}`);
+    invalid(`resource_decision_owner_identity:${binding.binding_id}`);
+  const requiredOwnerKind =
+    selected.identity_kind === "repository-snapshot"
+      ? "selected-source-record"
+      : "external-immutable";
+  if (owner.kind !== requiredOwnerKind)
+    invalid(`resource_decision_owner_kind:${binding.binding_id}`);
 }
 
 function deltaTarget(binding: {

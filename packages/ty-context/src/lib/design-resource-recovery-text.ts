@@ -112,10 +112,7 @@ export function verifyDesignResourceSupersededTextReadback(
 ): void {
   const text = decodeDesignResourceText(bytes).text;
   for (const operation of patch.operations) {
-    if (
-      !operation.delta_ids.some((deltaId) => supersedingDeltaIds.has(deltaId))
-    )
-      continue;
+    if (!supersedingDeltaIds.has(operation.delta_id)) continue;
     const count = occurrenceCount(text, operation.before_text);
     if (count !== 0)
       invalid(
@@ -152,10 +149,15 @@ function assertPatchAfterTextOccurrences(
   patch: DesignResourceExactPatch,
 ): void {
   for (const operation of patch.operations) {
-    const count = occurrenceCount(text, operation.after_text);
-    if (count !== operation.expected_occurrences)
+    const remove = operation.operation === "remove";
+    const count = occurrenceCount(
+      text,
+      remove ? operation.before_text : operation.after_text,
+    );
+    const expected = remove ? 0 : operation.expected_occurrences;
+    if (count !== expected)
       invalid(
-        `patch_after_occurrence_mismatch:${operation.operation_id}:${operation.expected_occurrences}:${count}`,
+        `${remove ? "patch_remove_before_still_present" : "patch_after_occurrence_mismatch"}:${operation.operation_id}:${expected}:${count}`,
       );
   }
 }

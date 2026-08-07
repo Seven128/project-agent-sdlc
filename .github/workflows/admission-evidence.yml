@@ -18,18 +18,45 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Validate and materialize sanitized exact-tree evidence
+      - name: Install exact-tree dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+
+      - name: Run current-tree deterministic admission lane
+        run: |
+          node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs \
+            deterministic \
+            --artifact ci-exact-tree
+
+      - name: Validate, rebind, and materialize sanitized exact-tree evidence
+        id: materialize
         env:
           ADMISSION_EVIDENCE_PAYLOAD: ${{ inputs.payload_base64 }}
           ADMISSION_EVIDENCE_OUTPUT: .artifacts/mechanism-admission-evidence
+          ADMISSION_CI_DETERMINISTIC_REPORT: .artifacts/mechanism-admission/ci-exact-tree/deterministic-report.json
         run: |
+          # ci_admission_evidence.mjs validates the input with runner/admission-evidence.mjs before rebinding.
           export ADMISSION_EXPECTED_TREE="$(git rev-parse 'HEAD^{tree}')"
-          node examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs
+          node tools/ci_admission_evidence.mjs > "$RUNNER_TEMP/admission-evidence-ci-output.json"
+          RESULT_PATH="$RUNNER_TEMP/admission-evidence-ci-output.json" node -e 'const fs=require("node:fs"); const row=JSON.parse(fs.readFileSync(process.env.RESULT_PATH,"utf8")); const keys=["input_payload_sha256","materialized_json_set_sha256","ci_deterministic_report_sha256","deterministic_runtime_passed","fresh_agent_evidence_internally_valid"]; fs.appendFileSync(process.env.GITHUB_OUTPUT,keys.map((key)=>`${key}=${row[key]}`).join("\n")+`\nprovenance_qualification=${row.fresh_agent_provenance_qualification.status}\n`);'
 
       - name: Upload sanitized mechanism admission evidence
+        id: upload_evidence
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: mechanism-admission-${{ github.sha }}-${{ github.run_id }}
           path: .artifacts/mechanism-admission-evidence/**/*.json
           if-no-files-found: error
           retention-days: 30
+
+      - name: Report distinct evidence digests and qualifications
+        run: |
+          {
+            echo "### Mechanism admission evidence"
+            echo "- deterministic runtime passed: ${{ steps.materialize.outputs.deterministic_runtime_passed }}"
+            echo "- Fresh-Agent evidence internally valid: ${{ steps.materialize.outputs.fresh_agent_evidence_internally_valid }}"
+            echo "- Fresh-Agent provenance qualification: ${{ steps.materialize.outputs.provenance_qualification }}"
+            echo "- input payload digest: ${{ steps.materialize.outputs.input_payload_sha256 }}"
+            echo "- materialized JSON-set digest: ${{ steps.materialize.outputs.materialized_json_set_sha256 }}"
+            echo "- CI deterministic report digest: ${{ steps.materialize.outputs.ci_deterministic_report_sha256 }}"
+            echo "- GitHub uploaded artifact digest: ${{ steps.upload_evidence.outputs.artifact-digest }}"
+          } >> "$GITHUB_STEP_SUMMARY"

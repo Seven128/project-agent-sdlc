@@ -37,9 +37,20 @@ export function text(value: unknown, label: string): string {
   return value;
 }
 
-export function multilineText(value: unknown, label: string): string {
-  if (typeof value !== "string" || !value.length || value.includes("\0"))
-    throw invalid(label, "non_empty_text_required");
+export function multilineText(
+  value: unknown,
+  label: string,
+  options: { allowEmpty?: boolean } = {},
+): string {
+  if (
+    typeof value !== "string" ||
+    (!options.allowEmpty && !value.length) ||
+    value.includes("\0")
+  )
+    throw invalid(
+      label,
+      options.allowEmpty ? "text_required" : "non_empty_text_required",
+    );
   return value;
 }
 

@@ -12,13 +12,7 @@ import {
   text,
 } from "./design-resource-recovery-codec-primitives.js";
 import { DESIGN_RESOURCE_SEMANTIC_KINDS } from "./design-resource-recovery-shape.js";
-
-const FINAL_DISPOSITIONS = [
-  "proposal-written",
-  "resource-owned-exact-visual",
-  "not-adopted",
-  "unresolved",
-] as const;
+import { parseDesignResourceFinalDisposition } from "./design-resource-recovery-final-disposition-shape.js";
 
 export function parseAuditExpectations(
   value: unknown,
@@ -71,11 +65,7 @@ export function parseSelectedResourceBinding(
     key: text(row.key, `${label}.key`),
     identity_kind: oneOf(
       row.identity_kind,
-      [
-        "repository-snapshot",
-        "formal-handoff-target",
-        "external-immutable",
-      ] as const,
+      ["repository-snapshot", "external-immutable"] as const,
       `${label}.identity_kind`,
     ),
     locator: text(row.locator, `${label}.locator`),
@@ -133,7 +123,6 @@ function parseResourceDecision(
     "semantic_kind",
     "bindings",
     "condition_refs",
-    "allowed_final_dispositions",
   ]);
   return {
     key: text(row.key, `${label}.key`),
@@ -145,16 +134,6 @@ function parseResourceDecision(
     ),
     bindings: arrayOf(row.bindings, `${label}.bindings`, parseBinding),
     condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
-    allowed_final_dispositions: stringSet(
-      row.allowed_final_dispositions,
-      `${label}.allowed_final_dispositions`,
-    ).map((item, index) =>
-      oneOf(
-        item,
-        FINAL_DISPOSITIONS,
-        `${label}.allowed_final_dispositions[${index}]`,
-      ),
-    ),
   };
 }
 
@@ -162,11 +141,20 @@ function parseBinding(
   value: unknown,
   label: string,
 ): DesignResourceAuditExpectations["resource_decisions"][number]["bindings"][number] {
-  const row = object(value, label, ["binding_id", "delta_id", "target_key"]);
+  const row = object(value, label, [
+    "binding_id",
+    "delta_id",
+    "target_key",
+    "final_disposition",
+  ]);
   return {
     binding_id: text(row.binding_id, `${label}.binding_id`),
     delta_id: text(row.delta_id, `${label}.delta_id`),
     target_key: text(row.target_key, `${label}.target_key`),
+    final_disposition: parseDesignResourceFinalDisposition(
+      row.final_disposition,
+      `${label}.final_disposition`,
+    ),
   };
 }
 

@@ -132,12 +132,36 @@ export interface DesignResourceProviderReferences {
 
 export interface DesignResourceSelectedResourceBinding {
   key: string;
-  identity_kind:
-    "repository-snapshot" | "formal-handoff-target" | "external-immutable";
+  identity_kind: "repository-snapshot" | "external-immutable";
   locator: string;
   raw_byte_digest: string;
   condition_refs: string[];
 }
+
+export type DesignResourceDownstreamOwner =
+  | {
+      kind: "selected-source-record";
+      locator: string;
+      raw_byte_digest: string;
+      resource_key: string;
+    }
+  | {
+      kind: "external-immutable";
+      locator: string;
+      raw_byte_digest: string;
+      resource_key: string;
+    };
+
+export type DesignResourceFinalDisposition =
+  | { kind: "proposal-written"; operation_id: string }
+  | {
+      kind: "resource-owned-exact-visual";
+      resource_ref: string;
+      condition_refs: string[];
+      downstream_owner: DesignResourceDownstreamOwner;
+    }
+  | { kind: "not-adopted" }
+  | { kind: "unresolved" };
 
 export interface DesignResourceAuditExpectations {
   changed: Array<{
@@ -160,14 +184,9 @@ export interface DesignResourceAuditExpectations {
       binding_id: string;
       delta_id: string;
       target_key: string;
+      final_disposition: DesignResourceFinalDisposition;
     }>;
     condition_refs: string[];
-    allowed_final_dispositions: Array<
-      | "proposal-written"
-      | "resource-owned-exact-visual"
-      | "not-adopted"
-      | "unresolved"
-    >;
   }>;
   blast_radius: Array<{ key: string }>;
   inactive_delta_leakage: Array<{

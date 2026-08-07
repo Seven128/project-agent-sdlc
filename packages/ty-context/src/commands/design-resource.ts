@@ -140,12 +140,16 @@ function help(): void {
                        output parent directory must already exist
   recovery create <session> --input <state.json> [--json]
                        Create one explicit ignored task-local checkpoint
+  recovery update <session> --input <state.json> --expected-sha256 <sha256> [--json]
+                       CAS-replace one existing task-local checkpoint
   recovery inspect <session> [--json]
                        Revalidate Base and derive replay/CAS state
   recovery preview <session> [--json]
                        Show the frozen exact writeback patch without writing
   recovery apply <session> --audit <audit.json> [--json]
                        CAS-apply and reread only after fresh balanced audit
+  recovery reconcile <session> --audit <audit.json> [--json]
+                       Read-only reconciliation for a no-writeback checkpoint
   recovery remove <session> --expected-sha256 <sha256> [--json]
                        Remove only the digest-matched helper-owned checkpoint`);
 }

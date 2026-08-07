@@ -1,7 +1,7 @@
 {
   "schema_version": "dra-fresh-agent-cases-v1",
   "track": "dra-semantic-recovery",
-  "instruction": "Apply only the supplied policy guidance. Do not invent missing project authority. Classify every case independently and return one row per case.",
+  "instruction": "Apply only the supplied policy guidance. Do not invent missing project authority. Classify every case independently and return exactly one row per listed case in the same order; never omit tail cases. Disposition classifies the stated claim or requested operation: block an unsafe or invariant-violating claim, use unavailable only when no unsafe claim is made and a required input cannot be obtained, use idempotent only for expected already-applied bytes, and otherwise allow. When requested deterministic recovery or writeback is policy-blocked, report the blocked write action rather than encoding it as no action. Preserve valid decision inventories and authority rows when a later audit, patch or final-owner defect blocks reconciliation.",
   "cases": [
     {
       "id": "conversation-only-base",
@@ -32,7 +32,7 @@
       "facts": [
         "The checkpoint declares Base digest aaa, but the current Base bytes digest to bbb.",
         "The pending Delta contains complete semantics.",
-        "The operator asks to resume and apply the patch."
+        "The operator asks to resume and apply the Proposal writeback patch."
       ]
     },
     {
@@ -101,7 +101,7 @@
       "facts": [
         "An accepted product.export Delta says decision_authority explicit-user and source_refs contains only the string user-said-so.",
         "No repository-readable raw-digest-bound Source document or actual marked Source item exists for that ref.",
-        "The operator asks to checkpoint and promote the Delta."
+        "The operator asks to checkpoint, promote and perform Proposal writeback for the Delta."
       ]
     },
     {
@@ -125,7 +125,8 @@
       "facts": [
         "Accepted business.refund-window is independently Source-authorized.",
         "The reconciliation gives its sole final disposition as resource-owned-exact-visual and does not write it to the Proposal or another authoritative Source.",
-        "The selected resource and conditions are immutable and otherwise valid."
+        "The selected resource and conditions are immutable and otherwise valid.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
@@ -172,7 +173,7 @@
       "id": "delta-red-patch-purple",
       "facts": [
         "An accepted visual.color Delta has canonical after_semantics red.",
-        "The pending exact patch writes color: purple while its declared semantic binding still names the red Delta digest.",
+        "The pending Proposal writeback patch writes color: purple while its declared semantic binding still names the red Delta digest.",
         "The operator asks to create or update the deterministic checkpoint."
       ]
     },
@@ -181,7 +182,8 @@
       "facts": [
         "Two accepted Deltas both actively own visual.color and neither legally supersedes the other.",
         "Both carry otherwise plausible Source and resource bindings.",
-        "No merge or composition mechanism exists for this semantic key."
+        "No merge or composition mechanism exists for this semantic key.",
+        "The operator requests deterministic checkpoint creation and Proposal writeback."
       ]
     },
     {
@@ -197,7 +199,7 @@
       "facts": [
         "Two differently keyed Resource Decision rows both carry the same tuple resource.main, visual.color, delta.color.",
         "Each row looks valid when inspected alone.",
-        "The reconciliation requests a balanced result."
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
@@ -205,55 +207,60 @@
       "facts": [
         "The same active delta.color × visual.color binding is marked proposal-written and resource-owned-exact-visual in two Resource Decision rows.",
         "Both candidate owners are otherwise immutable.",
-        "The operator requests a balanced result."
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "duplicate-resource-identities-mixed",
       "facts": [
-        "The audit contains two resource_identities rows for resource.main.",
-        "One digest is stale and the other digest is correct.",
-        "A last-write-wins map would hide the stale duplicate."
+      "The audit contains two resource_identities rows for resource.main.",
+      "One digest is stale and the other digest is correct.",
+      "A last-write-wins map would hide the stale duplicate.",
+      "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-requirement-condition",
       "facts": [
-        "The frozen changed expectation for visual.color binds resource.main under condition.default.",
-        "The Requirements → Resource row instead claims condition.hover, which is not declared by the selected resource.",
-        "Every other row is complete."
+      "The frozen changed expectation for visual.color binds resource.main under condition.default.",
+      "The Requirements → Resource row instead claims condition.hover, which is not declared by the selected resource.",
+      "Every other row is complete.",
+      "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-unchanged-resource",
       "facts": [
-        "The frozen unchanged expectation for layout.stable binds resource.main under condition.default.",
-        "The current unchanged row substitutes resource.unrelated while still saying preserved.",
-        "Both resource keys exist elsewhere in the task."
+      "The frozen unchanged expectation for layout.stable binds resource.main under condition.default.",
+      "The current unchanged row substitutes resource.unrelated while still saying preserved.",
+      "Both resource keys exist elsewhere in the task.",
+      "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-unchanged-basis",
       "facts": [
-        "The frozen unchanged expectation for layout.stable names source.layout-stable as its basis.",
-        "The current unchanged row substitutes an unrelated raw-digest-bound Source item.",
-        "The verdict still says preserved."
+      "The frozen unchanged expectation for layout.stable names source.layout-stable as its basis.",
+      "The current unchanged row substitutes an unrelated raw-digest-bound Source item.",
+      "The verdict still says preserved.",
+      "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "arbitrary-downstream-owner-string",
       "facts": [
-        "An accepted exact visual binding uses resource-owned-exact-visual.",
+        "An accepted exact visual.color binding uses resource-owned-exact-visual.",
         "Its downstream_owner is the free-form string some-text rather than a structured digest-bound owner.",
-        "The selected resource is otherwise valid."
+        "The selected resource is otherwise valid.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "external-only-final-owner",
       "facts": [
-        "An accepted exact visual binding is assigned to resource-owned-exact-visual.",
+        "An accepted exact visual.color binding is assigned to resource-owned-exact-visual.",
         "The only resource and downstream locator are external Provider locators which the helper cannot reread.",
-        "The operator asks for an unconditional durable final-owner and handoff-ready claim."
+        "The operator asks for an unconditional durable final-owner, Proposal writeback and handoff-ready claim."
       ]
     },
     {
@@ -261,7 +268,8 @@
       "facts": [
         "A raw-digest-bound Decision Source delegates only visual.color exact-visual provider choices.",
         "An accepted product.export Delta reuses that Source ref and delegation.",
-        "The Source projection does not cover the product target, semantic kind or meaning digest."
+        "The Source projection does not cover the product target, semantic kind or meaning digest.",
+        "The operator requests deterministic checkpoint creation and Proposal writeback."
       ]
     },
     {
@@ -286,6 +294,118 @@
         "Accepted delta.color.v2 legally supersedes accepted delta.color.v1 with matching target, semantic kind and before/after chain.",
         "Only v2 is active and owns visual.color; the inactive catalog and audit contain one superseded v1 row with leaked false.",
         "Neither the Proposal nor selected resource retains the v1 meaning."
+      ]
+    },
+    {
+      "id": "resource-owned-still-written-to-proposal",
+      "facts": [
+        "The checkpoint freezes visual.color as resource-owned-exact-visual with a readable immutable selected-source-record owner.",
+        "The pending Proposal patch nevertheless writes the resource-owned red value into Proposal text.",
+        "The operator asks to create the checkpoint and apply the writeback."
+      ]
+    },
+    {
+      "id": "audit-selects-final-owner",
+      "facts": [
+        "The current checkpoint freezes delta.color × visual.color as proposal-written through patch.visual.color.",
+        "The current audit changes that binding to resource-owned-exact-visual without a checkpoint CAS update.",
+        "The operator requests balanced reconciliation and writeback."
+      ]
+    },
+    {
+      "id": "multi-leaf-semantic-projection-loss",
+      "facts": [
+        "One proposal-written Delta has after_semantics {color:red, opacity:0.5} for a single target.",
+        "Its patch operation projects only the red color scalar and contains no opacity projection.",
+        "The operator asks to create the deterministic checkpoint and apply Proposal writeback."
+      ]
+    },
+    {
+      "id": "remove-null-writes-disabled",
+      "facts": [
+        "A proposal-written remove Delta has before_semantics {feature:enabled} and after_semantics null.",
+        "The patch replaces the old text with disabled instead of using an empty after_text.",
+        "The operator asks to create the checkpoint and apply Proposal writeback."
+      ]
+    },
+    {
+      "id": "shared-text-span-for-two-meanings",
+      "facts": [
+        "Two active accepted proposal-written Deltas own different target keys.",
+        "Their two patch operations both claim the same before_text span as the source projection for their independent meanings.",
+        "All digests are syntactically valid; checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "explicit-target-superset",
+      "facts": [
+        "One explicit-user Source projection binds target_keys [visual.color, visual.opacity] as a coupled decision.",
+        "An accepted Delta cites that projection but declares only target_keys [visual.color].",
+        "No separate exact visual.color projection exists; deterministic checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "delegated-nonvisual-meaning-source-split",
+      "facts": [
+        "A delegation Decision Item allows a provider-suggested product target and also contains a matching meaning projection.",
+        "The Delta additionally cites a separate requirement item, but that item projects an unrelated target and meaning digest.",
+        "The operator claims the separate requirement kind plus delegation projection closes deterministic nonvisual authority and requests checkpoint creation plus Proposal writeback."
+      ]
+    },
+    {
+      "id": "resource-owned-with-zero-proposal-write",
+      "facts": [
+        "A delegated exact visual.color Delta is frozen as resource-owned-exact-visual with a readable digest-bound repository snapshot.",
+        "The complete audit catalog is balanced and no active binding is proposal-written.",
+        "The checkpoint omits writeback and the operator requests read-only reconciliation."
+      ]
+    },
+    {
+      "id": "atomic-replace",
+      "facts": [
+        "A proposal-written replace Delta has exactly one scalar before leaf blue and one scalar after leaf red.",
+        "One patch operation binds exactly that Delta and target and projects both scalar leaves at their exact spans.",
+        "The balanced audit and target pre-write digest are current."
+      ]
+    },
+    {
+      "id": "atomic-add",
+      "facts": [
+        "A proposal-written add Delta has null before_semantics and exactly one scalar after leaf red.",
+        "One patch operation uses before_text only as a structural anchor and projects the after leaf exactly.",
+        "The balanced audit and target pre-write digest are current."
+      ]
+    },
+    {
+      "id": "atomic-remove",
+      "facts": [
+        "A proposal-written remove Delta has exactly one scalar before leaf enabled and null after_semantics.",
+        "One patch operation projects the before leaf, uses empty after_text, and the expected post bytes contain no old before_text.",
+        "The balanced audit and target pre-write digest are current."
+      ]
+    },
+    {
+      "id": "matching-explicit-target",
+      "facts": [
+        "A marked Decision Source projection and its accepted explicit-user product Delta both name exactly target_keys [product.export].",
+        "Semantic kind, origin and canonical after_semantics digest also match in the same Source Item.",
+        "One atomic Proposal operation and the complete audit catalog are balanced."
+      ]
+    },
+    {
+      "id": "independent-delegated-nonvisual-meaning-source",
+      "facts": [
+        "A Decision Item delegates the provider-suggested product.export choice within a bounded target and semantic-kind scope.",
+        "A separate requirement Source Item contains one projection which itself matches product.export, product, provider-suggested and the canonical after_semantics digest.",
+        "The accepted Delta binds both items, one atomic Proposal operation, and a balanced complete audit."
+      ]
+    },
+    {
+      "id": "mixed-proposal-and-resource-owners",
+      "facts": [
+        "The checkpoint freezes visual.color as proposal-written and visual.opacity as resource-owned-exact-visual with a readable immutable owner.",
+        "The patch universe contains only visual.color and proposal_written_delta_ids contains only its Delta.",
+        "The complete audit covers both accepted meanings and is balanced at the current pre-write digest."
       ]
     }
   ]

@@ -4,6 +4,7 @@ import type {
   DesignResourceDecisionAuthority,
   DesignResourceDecisionOrigin,
   DesignResourceDecisionStatus,
+  DesignResourceFinalDisposition,
   DesignResourceProviderIdentity,
   DesignResourceSemanticKind,
 } from "./design-resource-recovery-types.js";
@@ -15,7 +16,7 @@ export interface DesignResourceReconciliationAudit {
   design_authority: DesignResourceAuthorityIdentity;
   provider_run: DesignResourceProviderIdentity;
   resource_identities: Array<{ key: string; raw_byte_digest: string }>;
-  writeback_target_raw_byte_digest: string;
+  writeback_target_raw_byte_digest?: string;
   accepted_delta_ids: string[];
   rejected_delta_ids: string[];
   unresolved_delta_ids: string[];
@@ -61,31 +62,6 @@ export interface DesignResourceReconciliationAudit {
     leaked: boolean;
   }>;
 }
-
-export type DesignResourceDownstreamOwner =
-  | {
-      kind: "formal-handoff-target";
-      locator: string;
-      raw_byte_digest: string;
-      target_key: string;
-    }
-  | {
-      kind: "selected-source-record";
-      locator: string;
-      raw_byte_digest: string;
-      resource_key: string;
-    };
-
-export type DesignResourceFinalDisposition =
-  | { kind: "proposal-written"; operation_id: string }
-  | {
-      kind: "resource-owned-exact-visual";
-      resource_ref: string;
-      condition_refs: string[];
-      downstream_owner: DesignResourceDownstreamOwner;
-    }
-  | { kind: "not-adopted" }
-  | { kind: "unresolved" };
 
 export interface DesignResourceReconciliationResult {
   status: "reconciliation-balanced" | "blocked";

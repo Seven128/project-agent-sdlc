@@ -319,11 +319,7 @@ export async function applyDesignResourceRecoveryWriteback(
   if (preReconciliation.status === "reconciliation-balanced") {
     try {
       externalRevalidationRequired = (
-        await validateReconciliationDownstreamOwners(
-          repository,
-          checkpoint,
-          audit,
-        )
+        await validateReconciliationDownstreamOwners(repository, checkpoint)
       ).external_revalidation_required;
     } catch (error) {
       preReconciliation.status = "blocked";
@@ -391,6 +387,19 @@ export async function applyDesignResourceRecoveryWriteback(
     supersedingDeltaIds(checkpoint),
   );
   const reconciliation = reconcileDesignResourceWriteback(checkpoint, audit);
+  if (reconciliation.status === "reconciliation-balanced") {
+    try {
+      externalRevalidationRequired = (
+        await validateReconciliationDownstreamOwners(repository, checkpoint)
+      ).external_revalidation_required;
+    } catch (error) {
+      reconciliation.status = "blocked";
+      reconciliation.findings.push(
+        error instanceof Error ? error.message : String(error),
+      );
+      reconciliation.findings.sort();
+    }
+  }
   return {
     status:
       reconciliation.status === "blocked"
@@ -405,6 +414,60 @@ export async function applyDesignResourceRecoveryWriteback(
     reconciliation,
     target_raw_byte_digest: post.raw_byte_digest,
   };
+}
+
+export async function reconcileDesignResourceRecovery(
+  repository: string,
+  sessionId: string,
+  auditLocator: string,
+): Promise<{
+  status:
+    | "reconciliation-balanced"
+    | "external-resource-revalidation-pending"
+    | "blocked";
+  write_transaction: false;
+  reconciliation: DesignResourceReconciliationResult;
+}> {
+  const { checkpoint } = await loadCurrentDesignResourceRecoveryCheckpoint(
+    repository,
+    sessionId,
+    { validateSelectedResources: false },
+  );
+  if (checkpoint.writeback)
+    throw new Error(
+      "design_resource_recovery_invalid:read_only_reconcile_requires_no_writeback",
+    );
+  const auditSnapshot = await readRecoveryRepositoryFile(
+    repository,
+    auditLocator,
+    "design_resource_recovery_fresh_audit",
+  );
+  const audit = parseDesignResourceReconciliationAudit(
+    auditSnapshot.bytes.toString("utf8"),
+  );
+  const reconciliation = reconcileDesignResourceWriteback(checkpoint, audit);
+  if (reconciliation.status === "blocked")
+    return { status: "blocked", write_transaction: false, reconciliation };
+  try {
+    const current = await validateReconciliationDownstreamOwners(
+      repository,
+      checkpoint,
+    );
+    return {
+      status: current.external_revalidation_required
+        ? "external-resource-revalidation-pending"
+        : "reconciliation-balanced",
+      write_transaction: false,
+      reconciliation,
+    };
+  } catch (error) {
+    reconciliation.status = "blocked";
+    reconciliation.findings.push(
+      error instanceof Error ? error.message : String(error),
+    );
+    reconciliation.findings.sort();
+    return { status: "blocked", write_transaction: false, reconciliation };
+  }
 }
 
 export { removeDesignResourceRecoveryCheckpoint } from "./design-resource-recovery-cleanup.js";

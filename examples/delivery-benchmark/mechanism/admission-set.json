@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-fresh-agent-admission-v3",
-  "frozen_at": "2026-08-07T17:20:00+08:00",
+  "frozen_at": "2026-08-08T00:00:00+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
@@ -35,7 +35,7 @@
   },
   "tracks": {
     "dra-semantic-recovery": {
-      "fixture_identity": "2c0d215a4e368259ef778068dc6433083139d2d5fbf99da4bba4d9199223116a",
+      "fixture_identity": "fc69f749057e43e631267cfebdb21cff4310fe0b191124dd2741a61da4bbe2db",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -59,8 +59,8 @@
         "deterministic recovery unavailable report",
         "pre/post digest-derived CAS and idempotent no-write",
         "Source-owned structured authority projection for deterministic accepted recovery",
-        "v3 set-equal audit catalog with immutable resource conditions",
-        "exact patch-v2 semantic text projection and one final owner",
+        "v4 set-equal audit catalog with checkpoint-frozen final disposition and immutable resource conditions",
+        "proposal-only exact patch-v3 atomic scalar projection or resource-owned read-only reconciliation",
         "balanced current bidirectional audit before DRA derives handoff-ready"
       ],
       "prohibited_failure_modes": [
@@ -78,6 +78,9 @@
         "multiple active accepted owners for one semantic target",
         "superseded meaning leakage or duplicate cross-row binding",
         "Delta semantics and patch text projection mismatch",
+        "audit-selected final owner or resource-owned meaning copied into Proposal",
+        "multi-leaf, shared-span or non-empty remove projection",
+        "explicit meaning target superset or delegated nonvisual meaning without one independently matching Source Item",
         "wrong resource condition, unchanged resource or Source basis",
         "external-only or unstructured downstream final owner",
         "checkpointed live or completion conclusions",
@@ -103,15 +106,15 @@
         "quality": {
           "task": {
             "path": "admission/dra-quality-cases.json",
-            "sha256": "8c5c621ca4d044ff3a313a6a8bd24cbfedc25f027e36ffc895c4914a6b1636ed"
+            "sha256": "873be7e209d919eea09675ba03aab201411a4a310fbbb1bb9cae57a1db6f6a58"
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
+            "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
           },
           "schema": {
             "path": "admission/dra-quality-result.schema.json",
-            "sha256": "1c73c4f4daa6a8316d4176173014d95ffeb08e7082b6b7a9f38566bb398f7120"
+            "sha256": "87d8e30672d26fb24b8a0b1429504580f33845f05c78d314bf197d7be447b42d"
           }
         },
         "simple": {
@@ -121,7 +124,7 @@
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
+            "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
           },
           "schema": {
             "path": "admission/dra-simple-result.schema.json",
@@ -173,7 +176,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "f05a39d0c385c2e024c049cfbbec4f9292773ffd10c273080ed6831cbdaa9c82",
+              "bundle_sha256": "a8d61c9371037c622a7ac9520b640765fd82946049286029540123e86d5719ce",
               "sources": [
                 {
                   "kind": "worktree",
@@ -191,7 +194,7 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "d366a225d0b35f5afe7b1ab14ddf575441a0f6e0b1b9b517623ad185508c10b7"
+                  "content_sha256": "f05131dfc3e364c93928b77f73efae4787451cb1baf77b30dce5d10475dd4f87"
                 }
               ]
             },
@@ -353,6 +356,25 @@
           "tests/ty-context/temporary-content-governance.test.mjs"
         ],
         "timeout_ms": 180000
+      },
+      {
+        "id": "package-source-parity",
+        "command": "node",
+        "args": [
+          "packages/ty-context/dist/cli.js",
+          "package",
+          "check-source"
+        ],
+        "timeout_ms": 120000
+      },
+      {
+        "id": "admission-freeze",
+        "command": "node",
+        "args": [
+          "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
+          "freeze-check"
+        ],
+        "timeout_ms": 120000
       }
     ],
     "build-reuse-buy": [
@@ -373,7 +395,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
-      "sha256": "8c5c621ca4d044ff3a313a6a8bd24cbfedc25f027e36ffc895c4914a6b1636ed"
+      "sha256": "873be7e209d919eea09675ba03aab201411a4a310fbbb1bb9cae57a1db6f6a58"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -388,7 +410,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json",
-      "sha256": "1c73c4f4daa6a8316d4176173014d95ffeb08e7082b6b7a9f38566bb398f7120"
+      "sha256": "87d8e30672d26fb24b8a0b1429504580f33845f05c78d314bf197d7be447b42d"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -403,7 +425,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
-      "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
+      "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
     },
     {
       "scope": "track:build-reuse-buy",
