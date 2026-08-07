@@ -22,7 +22,7 @@
     {
       "id": "bounded-motion-delegation",
       "facts": [
-        "The user delegated visual.motion choices within checkout.confirmation only; the delegation identity is visual.motion.",
+        "A repository-bound user Decision Item contains a ty-dra-authority-v1 delegation projection with delegation_key visual.motion, allowed_target_keys [checkout.confirmation.fade_duration], allowed_semantic_kinds [exact-visual], and allowed_origins [provider-suggested].",
         "A selected resource proposes key checkout.confirmation.fade_duration = 180ms.",
         "The immutable resource identity is available and a real interruption is expected before writeback."
       ]

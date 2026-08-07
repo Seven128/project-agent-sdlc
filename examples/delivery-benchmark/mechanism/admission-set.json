@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-fresh-agent-admission-v3",
-  "frozen_at": "2026-08-07T03:32:40+08:00",
+  "frozen_at": "2026-08-07T16:54:00+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
@@ -35,7 +35,7 @@
   },
   "tracks": {
     "dra-semantic-recovery": {
-      "fixture_identity": "37bbe321107f1062660843c7fa10b2e2b34688931133f362146f43c3c8988464",
+      "fixture_identity": "172d4f04fd18c3eeca64f2c8e3e6b7c85eb8a3693422fe6e1f82992fc4512097",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -103,7 +103,7 @@
         "quality": {
           "task": {
             "path": "admission/dra-quality-cases.json",
-            "sha256": "5f2254d0cfa434c0974e0c808664c6a30981160e23d085a4deabbf71f9c00efb"
+            "sha256": "59b238089bca682081d3dcd911e287415927237350e339d31ef6514eff387c25"
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
@@ -373,7 +373,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
-      "sha256": "5f2254d0cfa434c0974e0c808664c6a30981160e23d085a4deabbf71f9c00efb"
+      "sha256": "59b238089bca682081d3dcd911e287415927237350e339d31ef6514eff387c25"
     },
     {
       "scope": "track:dra-semantic-recovery",
