@@ -634,6 +634,22 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
         track,
         pair_id: "pair-1",
         replicate: 1,
+        candidate_git: candidate,
+        baseline: {
+          quality: {
+            score: {
+              targeted_defects: 2,
+              findings: [{ id: "raw-detail", diagnostic: "not published" }],
+            },
+            trace_identity: "d".repeat(64),
+          },
+        },
+        candidate: {
+          quality: {
+            score: { targeted_defects: 1, findings: [] },
+            trace_identity: "e".repeat(64),
+          },
+        },
       },
       `${track}/pair-1.json`,
     ),
@@ -676,6 +692,7 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
         track: aggregate.value.track,
         track_config_sha256: aggregate.value.track_config_sha256,
         artifact_sha256: aggregate.sha256,
+        evidence_candidate_git: candidate,
       })),
     },
     "attestation.json",
@@ -710,6 +727,49 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
     assert.equal(manifest.retention_days, 30);
     assert.equal(manifest.authority, "none");
     assert.equal(manifest.acceptance_result, false);
+    const pair = JSON.parse(
+      await readFile(
+        path.join(
+          output,
+          "tracks",
+          "dra-semantic-recovery",
+          "pairs",
+          "pair-1.json",
+        ),
+        "utf8",
+      ),
+    );
+    assert.equal(
+      pair.schema_version,
+      "tiny-context-admission-sanitized-pair-v1",
+    );
+    assert.equal(pair.source_artifact_sha256, pairRecords[0].sha256);
+    assert.equal(pair.baseline.quality.score.targeted_defects, 2);
+    assert.equal("findings" in pair.baseline.quality.score, false);
+    const aggregate = JSON.parse(
+      await readFile(
+        path.join(
+          output,
+          "tracks",
+          "dra-semantic-recovery",
+          "aggregate-report.json",
+        ),
+        "utf8",
+      ),
+    );
+    assert.equal(
+      aggregate.schema_version,
+      "tiny-context-admission-sanitized-aggregate-v1",
+    );
+    assert.equal(aggregate.source_artifact_sha256, aggregateRecords[0].sha256);
+    assert.equal("reports" in aggregate, false);
+    assert.deepEqual(aggregate.pair_records, [
+      {
+        pair_id: "pair-1",
+        replicate: 1,
+        source_artifact_sha256: pairRecords[0].sha256,
+      },
+    ]);
     const workflow = await readFile(
       path.join(repo, ".github", "workflows", "admission-evidence.yml"),
       "utf8",

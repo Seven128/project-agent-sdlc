@@ -1,4 +1,5 @@
 import {
+  ADMISSION_EVIDENCE_AGGREGATE_SCHEMA,
   ADMISSION_EVIDENCE_MANIFEST_SCHEMA,
   ADMISSION_EVIDENCE_PAYLOAD_SCHEMA,
 } from "./admission-evidence-constants.mjs";
@@ -8,7 +9,7 @@ import {
   assertAdmissionEvidenceRecordSchema,
   assertAdmissionEvidenceSameCandidate,
   assertAdmissionEvidenceSanitizedJson,
-  assertAdmissionPairSetMatchesAggregate,
+  assertSanitizedAdmissionPairSetMatchesAggregate,
   groupAdmissionPairRecords,
   sameAdmissionEvidenceObject,
   sameAdmissionEvidenceSet,
@@ -202,10 +203,13 @@ function validateTrackRecords(tracks, attestation, payload) {
   for (const [track, aggregate] of tracks.aggregateByTrack) {
     assertAdmissionEvidenceRecordSchema(
       aggregate,
-      "tiny-context-fresh-agent-aggregate-v3",
+      ADMISSION_EVIDENCE_AGGREGATE_SCHEMA,
       `payload-aggregate:${track}`,
     );
     if (
+      aggregate.value.source_schema_version !==
+        "tiny-context-fresh-agent-aggregate-v3" ||
+      !/^[0-9a-f]{64}$/u.test(aggregate.value.source_artifact_sha256) ||
       aggregate.value.global_execution_envelope_sha256 !==
         payload.global_execution_envelope_sha256 ||
       aggregate.value.track_config_sha256 !== payload.track_config_sha256[track]
@@ -213,13 +217,18 @@ function validateTrackRecords(tracks, attestation, payload) {
       throw new Error(`admission_evidence_payload_aggregate_mismatch:${track}`);
     const attested = tracks.attestedTracks.get(track);
     if (
-      attested.artifact_sha256 !== aggregate.sha256 ||
+      attested.artifact_sha256 !== aggregate.value.source_artifact_sha256 ||
       attested.track_config_sha256 !== payload.track_config_sha256[track]
     )
       throw new Error(
         `admission_evidence_payload_attestation_mismatch:${track}`,
       );
-    assertAdmissionPairSetMatchesAggregate(
+    assertAdmissionEvidenceSameCandidate(
+      aggregate.value.evidence_candidate_git,
+      attested.evidence_candidate_git,
+      `aggregate:${track}`,
+    );
+    assertSanitizedAdmissionPairSetMatchesAggregate(
       track,
       tracks.pairByTrack.get(track) ?? [],
       aggregate.value,

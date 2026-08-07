@@ -1,4 +1,8 @@
 import { canonicalJson, sha256 } from "./admission-shared.mjs";
+import {
+  ADMISSION_EVIDENCE_AGGREGATE_SCHEMA,
+  ADMISSION_EVIDENCE_PAIR_SCHEMA,
+} from "./admission-evidence-constants.mjs";
 
 const FORBIDDEN_RAW_KEYS = new Set([
   "prompt",
@@ -49,6 +53,51 @@ export function assertAdmissionPairSetMatchesAggregate(
     byId.delete(key);
   }
   if (byId.size) throw new Error(`admission_evidence_pair_extra:${track}`);
+}
+
+export function assertSanitizedAdmissionPairSetMatchesAggregate(
+  track,
+  pairs,
+  aggregate,
+) {
+  if (pairs.length !== aggregate.pair_count)
+    throw new Error(`admission_evidence_pair_count_mismatch:${track}`);
+  const expectedCandidate = aggregate.evidence_candidate_git;
+  const byId = new Map();
+  for (const pair of pairs) {
+    assertAdmissionEvidenceRecordSchema(
+      pair,
+      ADMISSION_EVIDENCE_PAIR_SCHEMA,
+      `sanitized-pair:${track}`,
+    );
+    if (
+      pair.value.track !== track ||
+      pair.value.source_schema_version !== "tiny-context-fresh-agent-pair-v3" ||
+      !/^[0-9a-f]{64}$/u.test(pair.value.source_artifact_sha256) ||
+      pair.value.global_execution_envelope_sha256 !==
+        aggregate.global_execution_envelope_sha256 ||
+      pair.value.track_config_sha256 !== aggregate.track_config_sha256 ||
+      !sameAdmissionEvidenceObject(pair.value.candidate_git, expectedCandidate)
+    )
+      throw new Error(`admission_evidence_pair_identity_mismatch:${track}`);
+    const key = `${pair.value.pair_id}\0${pair.value.replicate}`;
+    if (byId.has(key))
+      throw new Error(`admission_evidence_pair_duplicate:${track}:${key}`);
+    byId.set(key, pair.value.source_artifact_sha256);
+  }
+  for (const record of aggregate.pair_records ?? []) {
+    const key = `${record.pair_id}\0${record.replicate}`;
+    if (byId.get(key) !== record.source_artifact_sha256)
+      throw new Error(
+        `admission_evidence_pair_aggregate_mismatch:${track}:${key}`,
+      );
+    byId.delete(key);
+  }
+  if (
+    (aggregate.pair_records ?? []).length !== aggregate.pair_count ||
+    byId.size
+  )
+    throw new Error(`admission_evidence_pair_extra:${track}`);
 }
 
 export function groupAdmissionPairRecords(records) {

@@ -111,7 +111,6 @@ A Context/Workflow pair remains calibration-only without a normalized host trace
 
 Run from the Tiny Context source checkout after building the package with the repository-required Node version. Formal `prepare` initializes the fixed run with the checkout CLI and writes `tools/ty-context.mjs` so the measured Agent can invoke that exact implementation without inspecting the source checkout. Workflow Assurance preparation also requires both frozen guidance commits to exist locally; shallow checkouts must fetch/deepen those Git objects before retrying. `--skip-harness-init` may place the complete canonical protocol into an otherwise unmarked calibration fixture, but it remains mechanical calibration only and can never produce a decision-eligible pair.
 
-
 ```sh
 node examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs list
 ```
@@ -213,4 +212,4 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs saniti
   --artifact frozen-v3/sanitized
 ```
 
-Dispatch `.github/workflows/admission-evidence.yml` on the exact attested `main` ref with the generated `workflow-payload-base64.txt`. It revalidates commit/tree, identities, file digests and forbidden raw fields, then uploads only sanitized JSON for 30 days. Invocation results, prompts, raw model answers, events, stderr and sensitive Source remain local and excluded.
+Dispatch `.github/workflows/admission-evidence.yml` on the exact attested `main` ref with the generated `workflow-payload-base64.txt`. The sanitizer first validates each complete local pair/aggregate and its attested digest, then emits compact source-digest-bound summary projections that retain candidate/config identities, trace identities, score/threshold summaries, provenance qualification and simple-path aggregates. The workflow revalidates commit/tree, identities, file/source digests and forbidden raw fields, then uploads only sanitized JSON for 30 days. Invocation results, finding-level diagnostics, prompts, raw model answers, events, stderr and sensitive Source remain local and excluded.
