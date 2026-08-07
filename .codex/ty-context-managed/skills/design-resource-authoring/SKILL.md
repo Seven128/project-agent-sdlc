@@ -25,6 +25,8 @@ Commission the smallest sufficient resource set for the user's explicit output/d
 3. Read [downstream-handoff.md](references/downstream-handoff.md) only when selection, proposal reconciliation or downstream handoff is material. A simple unselected preview may stop without it.
 4. Read [formal-selected-web-app-handoff.md](references/formal-selected-web-app-handoff.md) completely only for an explicitly final selected Web/App implementation handoff. Exploration, unselected previews, reference-only resources and non-Web/App commissions never load this reference.
 
+For simple-preview overhead accounting, the requested preview is neither additional Provider generation nor an added tool action.
+
 ## Workflow
 
 1. Name in-scope surfaces/flows/regions/component families/unique controls, conditions, necessary context, exclusions and intent: `exploration`, `handoff` or `selected-source-preparation`.
