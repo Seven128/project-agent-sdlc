@@ -17,21 +17,28 @@ import {
 import { parseDesignResourceReconciliationAudit } from "./design-resource-reconciliation-codec.js";
 import { reconcileDesignResourceWriteback } from "./design-resource-reconciliation.js";
 import {
+  activeAcceptedDesignResourceDeltas,
   createDesignResourceReplayProjection,
   validateDesignResourceRecoverySemantics,
 } from "./design-resource-recovery-replay.js";
 import {
   applyDesignResourceExactPatch,
   decodeDesignResourceText,
+  verifyDesignResourceExactPatchReadback,
+  verifyDesignResourceSupersededTextReadback,
 } from "./design-resource-recovery-text.js";
 import { validateDesignResourceAuthoritySourceItems } from "./design-resource-recovery-source-authority.js";
+import {
+  validateReconciliationDownstreamOwners,
+  validateSelectedResourceRepositoryBindings,
+} from "./design-resource-recovery-repository-bindings.js";
 import { DESIGN_RESOURCE_RECOVERY_SCHEMA } from "./design-resource-recovery-schema.js";
 import {
-  type DesignResourceReconciliationResult,
   type DesignResourceRecoveryCheckpoint,
   type DesignResourceRecoveryCreateInput,
   type DesignResourceReplayProjection,
 } from "./design-resource-recovery-types.js";
+import type { DesignResourceReconciliationResult } from "./design-resource-reconciliation-types.js";
 import { sha256Hex } from "./strict-codec.js";
 
 export interface DesignResourceRecoveryInspection {
@@ -154,6 +161,7 @@ async function prepareDesignResourceRecoveryCheckpoint(
     input.design_authority,
   );
   await validateDesignResourceAuthoritySourceItems(repository, input);
+  await validateSelectedResourceRepositoryBindings(repository, input);
   let writeback: DesignResourceRecoveryCheckpoint["writeback"];
   if (input.writeback) {
     const target = await readRecoveryRepositoryFile(
@@ -174,6 +182,11 @@ async function prepareDesignResourceRecoveryCheckpoint(
       "writeback_expected_post",
       sha256Hex(patched.bytes),
       input.writeback.expected_post_write_raw_byte_digest,
+    );
+    verifyDesignResourceSupersededTextReadback(
+      patched.bytes,
+      input.writeback.patch,
+      supersedingDeltaIds(input),
     );
     writeback = {
       ...input.writeback,
@@ -274,7 +287,11 @@ export async function applyDesignResourceRecoveryWriteback(
   sessionId: string,
   auditLocator: string,
 ): Promise<{
-  status: "handoff-ready" | "blocked";
+  status:
+    | "writeback-applied"
+    | "writeback-idempotent"
+    | "external-resource-revalidation-pending"
+    | "blocked";
   write_transaction: boolean;
   idempotent_replay: boolean;
   reconciliation: DesignResourceReconciliationResult;
@@ -298,6 +315,23 @@ export async function applyDesignResourceRecoveryWriteback(
     auditSnapshot.bytes.toString("utf8"),
   );
   const preReconciliation = reconcileDesignResourceWriteback(checkpoint, audit);
+  let externalRevalidationRequired = false;
+  if (preReconciliation.status === "reconciliation-balanced") {
+    try {
+      externalRevalidationRequired = (
+        await validateReconciliationDownstreamOwners(
+          repository,
+          checkpoint,
+          audit,
+        )
+      ).external_revalidation_required;
+    } catch (error) {
+      preReconciliation.status = "blocked";
+      preReconciliation.findings.push(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
   const target = await readRecoveryRepositoryFile(
     repository,
     writeback.target_locator,
@@ -350,9 +384,22 @@ export async function applyDesignResourceRecoveryWriteback(
     post.raw_byte_digest,
     writeback.expected_post_write_raw_byte_digest,
   );
+  verifyDesignResourceExactPatchReadback(post.bytes, writeback.patch);
+  verifyDesignResourceSupersededTextReadback(
+    post.bytes,
+    writeback.patch,
+    supersedingDeltaIds(checkpoint),
+  );
   const reconciliation = reconcileDesignResourceWriteback(checkpoint, audit);
   return {
-    status: reconciliation.status === "balanced" ? "handoff-ready" : "blocked",
+    status:
+      reconciliation.status === "blocked"
+        ? "blocked"
+        : externalRevalidationRequired
+          ? "external-resource-revalidation-pending"
+          : wrote
+            ? "writeback-applied"
+            : "writeback-idempotent",
     write_transaction: wrote,
     idempotent_replay: !wrote,
     reconciliation,
@@ -367,4 +414,14 @@ function assertDigest(label: string, actual: string, expected: string): void {
     throw new Error(
       `design_resource_recovery_invalid:${label}_digest_mismatch:${expected}:${actual}`,
     );
+}
+
+function supersedingDeltaIds(
+  state: DesignResourceRecoveryCreateInput | DesignResourceRecoveryCheckpoint,
+): Set<string> {
+  return new Set(
+    activeAcceptedDesignResourceDeltas(state.deltas)
+      .filter((delta) => delta.supersedes.length > 0)
+      .map((delta) => delta.delta_id),
+  );
 }

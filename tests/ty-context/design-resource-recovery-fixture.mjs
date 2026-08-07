@@ -13,7 +13,9 @@ import {
 const exec = promisify(execFile);
 
 export async function createRecoveryFixture(options = {}) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-dra-recovery-"));
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-dra-recovery-"),
+  );
   await exec("git", ["init", "--quiet"], { cwd: root, windowsHide: true });
   await writeFile(path.join(root, ".gitignore"), "tmp/\n", "utf8");
   await mkdir(path.join(root, "source"), { recursive: true });
@@ -27,13 +29,46 @@ export async function createRecoveryFixture(options = {}) {
   const delegationText =
     "The user delegates the exact visual-color choice for visual.color.";
   const layoutText = "Keep the compact layout semantics unchanged.";
+  const productDecisionText =
+    "The user explicitly accepts this product meaning for the scoped target.";
+  const delegationProjection = `<!-- ty-dra-authority-v1 ${JSON.stringify({
+    schema_version: "ty-dra-authority-v1",
+    mode: "delegation",
+    delegation_key: "visual-choice",
+    allowed_target_keys: ["visual.color"],
+    allowed_semantic_kinds: ["exact-visual"],
+    allowed_origins: ["provider-suggested"],
+  })} -->`;
+  const layoutProjection = `<!-- ty-dra-authority-v1 ${JSON.stringify({
+    schema_version: "ty-dra-authority-v1",
+    mode: "explicit-user",
+    target_keys: ["layout.stable"],
+    semantic_kinds: ["exact-visual"],
+    allowed_origins: ["necessary-derived"],
+    meaning_sha256: sha256Hex(canonicalValueJson({ density: "compact" })),
+  })} -->`;
+  const productDecisionProjection = `<!-- ty-dra-authority-v1 ${JSON.stringify({
+    schema_version: "ty-dra-authority-v1",
+    mode: "explicit-user",
+    target_keys: ["visual.color"],
+    semantic_kinds: ["product"],
+    allowed_origins: ["user-direct"],
+    meaning_sha256: sha256Hex(canonicalValueJson({ color: "red" })),
+  })} -->`;
   const base = [
     "<!-- ty-source-item:start key=visual-color-delegation kind=decision -->",
     delegationText,
+    delegationProjection,
     "<!-- ty-source-item:end -->",
     "",
     "<!-- ty-source-item:start key=layout-stable kind=requirement -->",
     layoutText,
+    layoutProjection,
+    "<!-- ty-source-item:end -->",
+    "",
+    "<!-- ty-source-item:start key=product-explicit-decision kind=decision -->",
+    productDecisionText,
+    productDecisionProjection,
     "<!-- ty-source-item:end -->",
     "",
   ].join(newline);
@@ -42,7 +77,10 @@ export async function createRecoveryFixture(options = {}) {
   const proposalLocator = "proposal.md";
   const designLocator = "DESIGN.md";
   const resourceLocator = "resources/main.json";
-  const designBytes = Buffer.from("# Design Authority\nstatus: adopted\n", "utf8");
+  const designBytes = Buffer.from(
+    "# Design Authority\nstatus: adopted\n",
+    "utf8",
+  );
   const resourceBytes = Buffer.from('{"color":"red"}\n', "utf8");
   await Promise.all([
     writeFile(path.join(root, ...baseLocator.split("/")), baseBytes),
@@ -51,19 +89,44 @@ export async function createRecoveryFixture(options = {}) {
     writeFile(path.join(root, ...resourceLocator.split("/")), resourceBytes),
   ]);
   const patch = {
-    schema_version: "design-resource-exact-patch-v1",
+    schema_version: "design-resource-exact-patch-v2",
     operations: [
       {
         operation_id: "patch.visual.color",
         target_keys: ["visual.color"],
+        delta_ids: ["delta.color"],
         before_text: "color: blue",
         after_text: "color: red",
+        before_text_sha256: sha256("color: blue"),
+        after_text_sha256: sha256("color: red"),
+        semantic_bindings: [
+          {
+            delta_id: "delta.color",
+            target_key: "visual.color",
+            before_semantics_sha256: sha256Hex(
+              canonicalValueJson({ color: "blue" }),
+            ),
+            after_semantics_sha256: sha256Hex(
+              canonicalValueJson({ color: "red" }),
+            ),
+            before_text_projection: {
+              semantic_path: ["color"],
+              start_offset: 7,
+              end_offset: 11,
+            },
+            after_text_projection: {
+              semantic_path: ["color"],
+              start_offset: 7,
+              end_offset: 10,
+            },
+          },
+        ],
         expected_occurrences: 1,
       },
     ],
   };
   const input = {
-    schema_version: "design-resource-recovery-input-v2",
+    schema_version: "design-resource-recovery-input-v3",
     session_id: options.sessionId ?? "fixture-session",
     disclosure_review: {
       reviewed: true,
@@ -89,7 +152,9 @@ export async function createRecoveryFixture(options = {}) {
         raw_byte_digest: sha256(baseBytes),
         source_item_key: "visual-color-delegation",
         source_item_kind: "decision",
-        source_item_text_sha256: sha256(delegationText),
+        source_item_text_sha256: sha256(
+          `${delegationText}\n${delegationProjection}`,
+        ),
       },
       {
         source_ref: "source.layout-stable",
@@ -97,7 +162,17 @@ export async function createRecoveryFixture(options = {}) {
         raw_byte_digest: sha256(baseBytes),
         source_item_key: "layout-stable",
         source_item_kind: "requirement",
-        source_item_text_sha256: sha256(layoutText),
+        source_item_text_sha256: sha256(`${layoutText}\n${layoutProjection}`),
+      },
+      {
+        source_ref: "source.product-explicit-decision",
+        locator: baseLocator,
+        raw_byte_digest: sha256(baseBytes),
+        source_item_key: "product-explicit-decision",
+        source_item_kind: "decision",
+        source_item_text_sha256: sha256(
+          `${productDecisionText}\n${productDecisionProjection}`,
+        ),
       },
     ],
     delegations: [
@@ -106,6 +181,7 @@ export async function createRecoveryFixture(options = {}) {
         source_ref: "source.visual-color-delegation",
         allowed_origins: ["provider-suggested"],
         allowed_target_keys: ["visual.color"],
+        allowed_semantic_kinds: ["exact-visual"],
       },
     ],
     deltas: [
@@ -166,12 +242,59 @@ export async function createRecoveryFixture(options = {}) {
       rejected_delta_ids: ["delta.admin"],
       unresolved_delta_ids: [],
     },
-    explicitly_unchanged_keys: ["layout.stable"],
-    blast_radius_keys: ["page.other"],
-    resource_decision_keys: [
-      "resource-decision.admin",
-      "resource-decision.color",
-    ],
+    audit_expectations: {
+      changed: [
+        {
+          key: "visual.color",
+          delta_ids: ["delta.color"],
+          resource_refs: ["resource.main"],
+          condition_refs: ["condition.default"],
+        },
+      ],
+      unchanged: [
+        {
+          key: "layout.stable",
+          resource_refs: ["resource.main"],
+          condition_refs: ["condition.default"],
+          basis_source_refs: ["source.layout-stable"],
+        },
+      ],
+      resource_decisions: [
+        {
+          key: "resource-decision.color",
+          resource_ref: "resource.main",
+          semantic_kind: "exact-visual",
+          bindings: [
+            {
+              binding_id: "binding.color",
+              delta_id: "delta.color",
+              target_key: "visual.color",
+            },
+          ],
+          condition_refs: ["condition.default"],
+          allowed_final_dispositions: [
+            "proposal-written",
+            "resource-owned-exact-visual",
+          ],
+        },
+        {
+          key: "resource-decision.admin",
+          resource_ref: "resource.main",
+          semantic_kind: "permission",
+          bindings: [
+            {
+              binding_id: "binding.admin",
+              delta_id: "delta.admin",
+              target_key: "product.admin",
+            },
+          ],
+          condition_refs: ["condition.default"],
+          allowed_final_dispositions: ["not-adopted"],
+        },
+      ],
+      blast_radius: [{ key: "page.other" }],
+      inactive_delta_leakage: [{ delta_id: "delta.admin", reason: "rejected" }],
+    },
     design_authority: {
       kind: "repository-file",
       locator: designLocator,
@@ -197,7 +320,15 @@ export async function createRecoveryFixture(options = {}) {
         },
       ],
     },
-    selected_resource_keys: ["resource.main"],
+    selected_resource_bindings: [
+      {
+        key: "resource.main",
+        identity_kind: "repository-snapshot",
+        locator: resourceLocator,
+        raw_byte_digest: sha256(resourceBytes),
+        condition_refs: ["condition.default"],
+      },
+    ],
     writeback: {
       target_locator: proposalLocator,
       pre_write_raw_byte_digest: sha256(beforeBytes),
@@ -230,10 +361,27 @@ export async function createRecoveryFixture(options = {}) {
     });
     input.deltas[3].sequence = 4;
     input.decision_sets.unresolved_delta_ids = ["delta.tagline"];
-    input.resource_decision_keys.push("resource-decision.tagline");
+    input.audit_expectations.resource_decisions.push({
+      key: "resource-decision.tagline",
+      resource_ref: "resource.main",
+      semantic_kind: "product",
+      bindings: [
+        {
+          binding_id: "binding.tagline",
+          delta_id: "delta.tagline",
+          target_key: "copy.tagline",
+        },
+      ],
+      condition_refs: ["condition.default"],
+      allowed_final_dispositions: ["unresolved"],
+    });
+    input.audit_expectations.inactive_delta_leakage.push({
+      delta_id: "delta.tagline",
+      reason: "unresolved",
+    });
   }
   const audit = {
-    schema_version: "design-resource-reconciliation-audit-v2",
+    schema_version: "design-resource-reconciliation-audit-v3",
     session_id: input.session_id,
     base_raw_byte_digest: input.base.raw_byte_digest,
     design_authority: input.design_authority,
@@ -270,16 +418,21 @@ export async function createRecoveryFixture(options = {}) {
         status: "accepted",
         semantic_kind: "exact-visual",
         delta_ids: ["delta.color"],
+        condition_refs: ["condition.default"],
         requirement_bindings: [
           {
+            binding_id: "binding.color",
             requirement_key: "visual.color",
             delta_id: "delta.color",
             origin: "provider-suggested",
             decision_authority: "delegated:visual-choice",
             source_refs: ["source.visual-color-delegation"],
+            final_disposition: {
+              kind: "proposal-written",
+              operation_id: "patch.visual.color",
+            },
           },
         ],
-        final_disposition: { kind: "proposal-written" },
       },
       {
         key: "resource-decision.admin",
@@ -287,23 +440,27 @@ export async function createRecoveryFixture(options = {}) {
         status: "rejected",
         semantic_kind: "permission",
         delta_ids: ["delta.admin"],
+        condition_refs: ["condition.default"],
         requirement_bindings: [
           {
+            binding_id: "binding.admin",
             requirement_key: "product.admin",
             delta_id: "delta.admin",
             origin: "provider-suggested",
             decision_authority: "none",
             source_refs: [],
+            final_disposition: { kind: "not-adopted" },
           },
         ],
-        final_disposition: { kind: "not-adopted" },
       },
     ],
-    unexpected_blast_radius: [
-      { key: "page.other", verdict: "expected" },
-    ],
-    rejected_or_unresolved_leakage: [
-      { delta_id: "delta.admin", leaked: false },
+    unexpected_blast_radius: [{ key: "page.other", verdict: "expected" }],
+    inactive_delta_leakage: [
+      {
+        delta_id: "delta.admin",
+        inactive_reason: "rejected",
+        leaked: false,
+      },
     ],
   };
   if (options.includeUnresolved) {
@@ -313,19 +470,22 @@ export async function createRecoveryFixture(options = {}) {
       status: "unresolved",
       semantic_kind: "product",
       delta_ids: ["delta.tagline"],
+      condition_refs: ["condition.default"],
       requirement_bindings: [
         {
+          binding_id: "binding.tagline",
           requirement_key: "copy.tagline",
           delta_id: "delta.tagline",
           origin: "provider-suggested",
           decision_authority: "none",
           source_refs: [],
+          final_disposition: { kind: "unresolved" },
         },
       ],
-      final_disposition: { kind: "unresolved" },
     });
-    audit.rejected_or_unresolved_leakage.push({
+    audit.inactive_delta_leakage.push({
       delta_id: "delta.tagline",
+      inactive_reason: "unresolved",
       leaked: false,
     });
   }

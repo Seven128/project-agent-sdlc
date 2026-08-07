@@ -20,7 +20,7 @@ import {
   unknownSemantics,
 } from "./design-resource-recovery-codec-primitives.js";
 
-const ORIGINS = [
+export const DESIGN_RESOURCE_ORIGINS = [
   "user-direct",
   "necessary-derived",
   "repository-evidence-backed",
@@ -30,7 +30,7 @@ const STATUSES = ["accepted", "rejected", "unresolved"] as const;
 const OPERATIONS = ["add", "replace", "remove", "preserve"] as const;
 const ENCODINGS = ["utf8", "utf8-bom", "utf16le", "utf16be"] as const;
 const EOLS = ["none", "lf", "crlf", "cr", "mixed"] as const;
-const SEMANTIC_KINDS = [
+export const DESIGN_RESOURCE_SEMANTIC_KINDS = [
   "exact-visual",
   "product",
   "business",
@@ -148,6 +148,7 @@ export function parseDelegation(
     "source_ref",
     "allowed_origins",
     "allowed_target_keys",
+    "allowed_semantic_kinds",
   ]);
   return {
     key: text(row.key, `${label}.key`),
@@ -155,11 +156,21 @@ export function parseDelegation(
     allowed_origins: arrayOf(
       row.allowed_origins,
       `${label}.allowed_origins`,
-      (item, itemLabel) => oneOf(item, ORIGINS, itemLabel),
+      (item, itemLabel) => oneOf(item, DESIGN_RESOURCE_ORIGINS, itemLabel),
     ) as DesignResourceDecisionOrigin[],
     allowed_target_keys: stringSet(
       row.allowed_target_keys,
       `${label}.allowed_target_keys`,
+    ),
+    allowed_semantic_kinds: stringSet(
+      row.allowed_semantic_kinds,
+      `${label}.allowed_semantic_kinds`,
+    ).map((value, index) =>
+      oneOf(
+        value,
+        DESIGN_RESOURCE_SEMANTIC_KINDS,
+        `${label}.allowed_semantic_kinds[${index}]`,
+      ),
     ),
   };
 }
@@ -225,13 +236,13 @@ export function parseDelta(value: unknown, label: string): DesignResourceDelta {
     operation: oneOf(row.operation, OPERATIONS, `${label}.operation`),
     semantic_kind: oneOf(
       row.semantic_kind,
-      SEMANTIC_KINDS,
+      DESIGN_RESOURCE_SEMANTIC_KINDS,
       `${label}.semantic_kind`,
     ),
     target_keys: stringSet(row.target_keys, `${label}.target_keys`),
     before_semantics: unknownSemantics(row, "before_semantics", label),
     after_semantics: unknownSemantics(row, "after_semantics", label),
-    origin: oneOf(row.origin, ORIGINS, `${label}.origin`),
+    origin: oneOf(row.origin, DESIGN_RESOURCE_ORIGINS, `${label}.origin`),
     decision_authority: parseDecisionAuthority(
       row.decision_authority,
       `${label}.decision_authority`,

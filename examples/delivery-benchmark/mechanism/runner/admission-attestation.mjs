@@ -2,15 +2,24 @@ import { spawnSync } from "node:child_process";
 import { REPO_ROOT, sha256 } from "./admission-shared.mjs";
 
 export function buildAdmissionAttestation({
-  configSha,
+  globalExecutionEnvelopeSha,
+  trackConfigSha,
   deterministic,
   aggregates,
   candidate,
   expectedTracks,
 }) {
   assertCandidate(candidate);
-  if (deterministic.value.config_sha256 !== configSha)
-    throw new Error("admission_attestation_deterministic_config_mismatch");
+  if (
+    deterministic.value.global_execution_envelope_sha256 !==
+    globalExecutionEnvelopeSha
+  )
+    throw new Error("admission_attestation_deterministic_global_mismatch");
+  assertTrackConfigSet(
+    deterministic.value.track_config_sha256,
+    trackConfigSha,
+    "deterministic",
+  );
   assertSameCandidate(
     deterministic.value.candidate_git,
     candidate,
@@ -19,15 +28,15 @@ export function buildAdmissionAttestation({
   const byTrack = new Map();
   for (const aggregate of aggregates) {
     const value = aggregate.value;
-    if (value.config_sha256 !== configSha)
+    if (value.global_execution_envelope_sha256 !== globalExecutionEnvelopeSha)
       throw new Error(
-        `admission_attestation_aggregate_config_mismatch:${value.track}`,
+        `admission_attestation_aggregate_global_mismatch:${value.track}`,
       );
-    assertSameCandidate(
-      value.candidate_git,
-      candidate,
-      `aggregate:${value.track}`,
-    );
+    if (value.track_config_sha256 !== trackConfigSha[value.track])
+      throw new Error(
+        `admission_attestation_aggregate_track_mismatch:${value.track}`,
+      );
+    assertCandidate(value.candidate_git);
     if (byTrack.has(value.track))
       throw new Error(`admission_attestation_duplicate_track:${value.track}`);
     byTrack.set(value.track, aggregate);
@@ -38,7 +47,7 @@ export function buildAdmissionAttestation({
   )
     throw new Error("admission_attestation_track_set_mismatch");
   return {
-    schema_version: "tiny-context-admission-attestation-v1",
+    schema_version: "tiny-context-admission-attestation-v2",
     sensitive_raw_content_included: false,
     excluded_content_classes: [
       "prompts",
@@ -47,7 +56,8 @@ export function buildAdmissionAttestation({
       "stderr",
       "sensitive-source-content",
     ],
-    frozen_config_sha256: configSha,
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
     candidate_git: candidate,
     deterministic: {
       artifact_path: deterministic.path,
@@ -61,6 +71,7 @@ export function buildAdmissionAttestation({
       const value = aggregate.value;
       return {
         track,
+        track_config_sha256: trackConfigSha[track],
         artifact_path: aggregate.path,
         artifact_sha256: aggregate.sha256,
         decision: value.decision,
@@ -75,6 +86,10 @@ export function buildAdmissionAttestation({
         candidate_other_false_blocking: value.candidate_other_false_blocking,
         simple_path: value.simple_path,
         provenance_qualification: value.provenance_qualification,
+        evidence_applicability: sameCandidate(value.candidate_git, candidate)
+          ? "current-candidate"
+          : "track-identity-reused",
+        evidence_candidate_git: value.candidate_git,
         trace_identity_set_sha256: sha256(
           value.reports
             .flatMap((report) => [
@@ -128,15 +143,30 @@ function assertCandidate(candidate) {
 }
 
 function assertSameCandidate(actual, expected, label) {
-  if (
-    !actual ||
-    actual.commit !== expected.commit ||
-    actual.tree !== expected.tree ||
-    actual.branch !== expected.branch ||
-    actual.main_commit !== expected.main_commit ||
-    actual.working_tree_clean !== true
-  )
+  if (!sameCandidate(actual, expected))
     throw new Error(`admission_attestation_candidate_mismatch:${label}`);
+}
+
+function sameCandidate(actual, expected) {
+  return (
+    actual?.commit === expected.commit &&
+    actual.tree === expected.tree &&
+    actual.branch === expected.branch &&
+    actual.main_commit === expected.main_commit &&
+    actual.working_tree_clean === true
+  );
+}
+
+function assertTrackConfigSet(actual, expected, label) {
+  if (
+    JSON.stringify(sortedObject(actual)) !==
+    JSON.stringify(sortedObject(expected))
+  )
+    throw new Error(`admission_attestation_track_config_mismatch:${label}`);
+}
+
+function sortedObject(value) {
+  return Object.fromEntries(Object.entries(value ?? {}).sort());
 }
 
 function gitValue(args) {

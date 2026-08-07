@@ -18,7 +18,8 @@ export async function runAdmissionPair({
   replicate,
   artifactDirectory,
   config,
-  configSha,
+  globalExecutionEnvelopeSha,
+  trackConfigSha,
 }) {
   const track = config.tracks[trackId];
   if (!track) throw new Error(`admission_track_unknown:${trackId}`);
@@ -32,6 +33,8 @@ export async function runAdmissionPair({
     requested_provider: config.provider,
     fixture_identity: track.fixture_identity,
     environment_identity: config.environment.identity,
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
     candidate_git: currentExactMainCandidate(),
     invocation_order: {},
     baseline: {},
@@ -56,7 +59,8 @@ export async function runAdmissionPair({
         replicate,
         invocationDirectory,
         config,
-        configSha,
+        globalExecutionEnvelopeSha,
+        trackConfigSha,
       });
       pair[variantId][mode] = invocation;
     }
@@ -74,7 +78,8 @@ async function runInvocation(options) {
   const promptSha = sha256(prompt);
   const traceIdentity = sha256(
     [
-      options.configSha,
+      options.globalExecutionEnvelopeSha,
+      options.trackConfigSha,
       options.trackId,
       options.pairId,
       options.replicate,
@@ -93,7 +98,7 @@ async function runInvocation(options) {
     timeoutMs: options.config.environment.timeout_ms,
   });
   const trace = {
-    schema_version: "tiny-context-fresh-agent-trace-v2",
+    schema_version: "tiny-context-fresh-agent-trace-v3",
     trace_identity: traceIdentity,
     pair_id: options.pairId,
     replicate: options.replicate,
@@ -105,7 +110,8 @@ async function runInvocation(options) {
     provenance_doubt_reasons: execution.provenance_doubt_reasons,
     provider_fixture_identity: options.config.provider_fixture_identity,
     environment_identity: options.config.environment.identity,
-    config_sha256: options.configSha,
+    global_execution_envelope_sha256: options.globalExecutionEnvelopeSha,
+    track_config_sha256: options.trackConfigSha,
     prompt_sha256: promptSha,
     guidance_bundle_sha256: variant.guidance[options.mode].bundle_sha256,
     task_sha256: modeConfig.task.sha256,

@@ -41,7 +41,7 @@ test("writeback preserves supported encodings and uniform EOL", async () => {
         fixture.input.session_id,
         fixture.auditLocator,
       );
-      assert.equal(result.status, "handoff-ready");
+      assert.equal(result.status, "writeback-applied");
       assert.deepEqual(
         await readFile(path.join(fixture.root, "proposal.md")),
         fixture.afterBytes,

@@ -1,15 +1,23 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { aggregateAdmissionPairs } from "../../examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs";
 import { buildAdmissionAttestation } from "../../examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs";
 import { parseAdmissionEvents } from "../../examples/delivery-benchmark/mechanism/runner/admission-execute.mjs";
+import {
+  buildAdmissionEvidencePayload,
+  encodeAdmissionEvidencePayload,
+  materializeAdmissionEvidencePayload,
+} from "../../examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs";
 import { scoreAdmissionInvocation } from "../../examples/delivery-benchmark/mechanism/runner/admission-score.mjs";
 import {
+  admissionConfigIdentities,
   loadAdmissionConfig,
   resolveArtifactFile,
+  sha256,
   verifyFrozenAdmission,
 } from "../../examples/delivery-benchmark/mechanism/runner/admission-shared.mjs";
 import {
@@ -38,7 +46,11 @@ const trace = {
 };
 
 test("fresh-Agent admission configuration freezes two independent tracks before execution", async () => {
-  const { config } = await loadAdmissionConfig();
+  const {
+    config,
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
+  } = await loadAdmissionConfig();
   await assert.doesNotReject(verifyFrozenAdmission(config));
   assert.equal(
     config.baseline_commit,
@@ -51,6 +63,11 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
   assert.equal(config.model, "gpt-5.6-terra");
   assert.equal(config.reasoning_effort, "medium");
   assert.equal(config.provider, "openai");
+  assert.match(globalExecutionEnvelopeSha, /^[0-9a-f]{64}$/u);
+  assert.deepEqual(Object.keys(trackConfigSha).sort(), [
+    "build-reuse-buy",
+    "dra-semantic-recovery",
+  ]);
   assert.equal(config.pair_policy.minimum_pairs, 3);
   assert.equal(config.pair_policy.expanded_pairs, 5);
   assert.equal(config.pair_policy.cv_threshold, 0.2);
@@ -75,6 +92,83 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
   assert.throws(
     () => resolveArtifactFile("../outside.json"),
     /unsafe_admission_artifact_path/u,
+  );
+});
+
+test("global and track-local identities invalidate only their owning admission scope", async () => {
+  const { config, ...identity } = await loadAdmissionConfig();
+  for (const mutate of [
+    (changed) => {
+      const digest = "a".repeat(64);
+      changed.tracks["dra-semantic-recovery"].modes.quality.task.sha256 =
+        digest;
+      changed.frozen_files.find((record) =>
+        record.path.endsWith("admission/dra-quality-cases.json"),
+      ).sha256 = digest;
+    },
+    (changed) => {
+      changed.tracks[
+        "dra-semantic-recovery"
+      ].variants.candidate.guidance.quality.bundle_sha256 = "b".repeat(64);
+    },
+    (changed) => {
+      changed.frozen_files.find((record) =>
+        record.path.endsWith("runner/admission-score-dra.mjs"),
+      ).sha256 = "c".repeat(64);
+    },
+  ]) {
+    const changed = structuredClone(config);
+    mutate(changed);
+    const changedIdentity = admissionConfigIdentities(changed);
+    assert.equal(
+      changedIdentity.global_execution_envelope_sha256,
+      identity.global_execution_envelope_sha256,
+    );
+    assert.notEqual(
+      changedIdentity.track_config_sha256["dra-semantic-recovery"],
+      identity.track_config_sha256["dra-semantic-recovery"],
+    );
+    assert.equal(
+      changedIdentity.track_config_sha256["build-reuse-buy"],
+      identity.track_config_sha256["build-reuse-buy"],
+    );
+  }
+
+  for (const mutate of [
+    (changed) => {
+      changed.tracks[
+        "build-reuse-buy"
+      ].variants.candidate.guidance.quality.bundle_sha256 = "d".repeat(64);
+    },
+    (changed) => {
+      changed.frozen_files.find((record) =>
+        record.path.endsWith("runner/admission-score-build-reuse-buy.mjs"),
+      ).sha256 = "e".repeat(64);
+    },
+  ]) {
+    const changed = structuredClone(config);
+    mutate(changed);
+    const changedIdentity = admissionConfigIdentities(changed);
+    assert.equal(
+      changedIdentity.track_config_sha256["dra-semantic-recovery"],
+      identity.track_config_sha256["dra-semantic-recovery"],
+    );
+    assert.notEqual(
+      changedIdentity.track_config_sha256["build-reuse-buy"],
+      identity.track_config_sha256["build-reuse-buy"],
+    );
+  }
+
+  const globalChanged = structuredClone(config);
+  globalChanged.model = `${config.model}-different`;
+  const globalIdentity = admissionConfigIdentities(globalChanged);
+  assert.notEqual(
+    globalIdentity.global_execution_envelope_sha256,
+    identity.global_execution_envelope_sha256,
+  );
+  assert.deepEqual(
+    globalIdentity.track_config_sha256,
+    identity.track_config_sha256,
   );
 });
 
@@ -186,6 +280,8 @@ test("pair aggregation enforces 3-to-5 expansion, wins and per-category threshol
   const { config } = await loadAdmissionConfig();
   const track = config.tracks["build-reuse-buy"];
   const deterministic = {
+    global_execution_envelope_sha256: "global-frozen",
+    track_config_sha256: { "build-reuse-buy": "track-frozen" },
     tracks: { "build-reuse-buy": { passed: true } },
   };
   const base = [1, 2, 3].map((replicate) => syntheticPair(replicate));
@@ -301,7 +397,11 @@ test("DRA simple-path cost comparison stratifies AB/BA invocation position", asy
     "dra-semantic-recovery",
     reports,
     track,
-    { tracks: { "dra-semantic-recovery": { passed: true } } },
+    {
+      global_execution_envelope_sha256: "global-frozen",
+      track_config_sha256: { "dra-semantic-recovery": "track-frozen" },
+      tracks: { "dra-semantic-recovery": { passed: true } },
+    },
   );
   assert.equal(aggregate.required_pairs, 5);
   assert.equal(aggregate.simple_path.raw_pair_median_token_overhead, 1);
@@ -371,7 +471,8 @@ test("sanitized admission attestation binds the exact clean main tree and result
     path: `run/${track}/aggregate-report.json`,
     sha256: track === "dra-semantic-recovery" ? "a".repeat(64) : "b".repeat(64),
     value: {
-      config_sha256: "frozen",
+      global_execution_envelope_sha256: "global-frozen",
+      track_config_sha256: `${track}-frozen`,
       candidate_git: candidate,
       track,
       decision: "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION",
@@ -411,7 +512,11 @@ test("sanitized admission attestation binds the exact clean main tree and result
     path: "run/deterministic/deterministic-report.json",
     sha256: "d".repeat(64),
     value: {
-      config_sha256: "frozen",
+      global_execution_envelope_sha256: "global-frozen",
+      track_config_sha256: {
+        "dra-semantic-recovery": "dra-semantic-recovery-frozen",
+        "build-reuse-buy": "build-reuse-buy-frozen",
+      },
       candidate_git: candidate,
       tracks: {
         "dra-semantic-recovery": { passed: true },
@@ -419,8 +524,13 @@ test("sanitized admission attestation binds the exact clean main tree and result
       },
     },
   };
+  const trackConfigSha = {
+    "dra-semantic-recovery": "dra-semantic-recovery-frozen",
+    "build-reuse-buy": "build-reuse-buy-frozen",
+  };
   const manifest = buildAdmissionAttestation({
-    configSha: "frozen",
+    globalExecutionEnvelopeSha: "global-frozen",
+    trackConfigSha,
     deterministic,
     aggregates: [
       aggregate("dra-semantic-recovery"),
@@ -432,13 +542,58 @@ test("sanitized admission attestation binds the exact clean main tree and result
   assert.equal(manifest.sensitive_raw_content_included, false);
   assert.equal(manifest.candidate_git.tree, "2".repeat(40));
   assert.equal(manifest.tracks.length, 2);
+  assert.equal(
+    manifest.tracks.every(
+      (track) => track.evidence_applicability === "current-candidate",
+    ),
+    true,
+  );
   assert.equal(Object.hasOwn(manifest, "prompts"), false);
   assert.equal(Object.hasOwn(manifest, "model_output"), false);
   assert.equal(Object.hasOwn(manifest, "raw_events"), false);
+
+  const reusedBuild = aggregate("build-reuse-buy");
+  reusedBuild.value.candidate_git = {
+    branch: "main",
+    commit: "3".repeat(40),
+    tree: "4".repeat(40),
+    main_commit: "3".repeat(40),
+    working_tree_clean: true,
+  };
+  const reused = buildAdmissionAttestation({
+    globalExecutionEnvelopeSha: "global-frozen",
+    trackConfigSha,
+    deterministic,
+    aggregates: [aggregate("dra-semantic-recovery"), reusedBuild],
+    candidate,
+    expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+  });
+  assert.equal(
+    reused.tracks.find((track) => track.track === "build-reuse-buy")
+      .evidence_applicability,
+    "track-identity-reused",
+  );
+
+  const mismatchedBuild = aggregate("build-reuse-buy");
+  mismatchedBuild.value.track_config_sha256 = "different";
   assert.throws(
     () =>
       buildAdmissionAttestation({
-        configSha: "frozen",
+        globalExecutionEnvelopeSha: "global-frozen",
+        trackConfigSha,
+        deterministic,
+        aggregates: [aggregate("dra-semantic-recovery"), mismatchedBuild],
+        candidate,
+        expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+      }),
+    /aggregate_track_mismatch/u,
+  );
+
+  assert.throws(
+    () =>
+      buildAdmissionAttestation({
+        globalExecutionEnvelopeSha: "global-frozen",
+        trackConfigSha,
         deterministic,
         aggregates: [
           aggregate("dra-semantic-recovery"),
@@ -455,6 +610,144 @@ test("sanitized admission attestation binds the exact clean main tree and result
       }),
     /exact_main_required/u,
   );
+});
+
+test("sanitized CI evidence materializes only exact-tree reports and rejects raw content", async () => {
+  const candidate = {
+    branch: "main",
+    commit: "1".repeat(40),
+    tree: "2".repeat(40),
+    main_commit: "1".repeat(40),
+    working_tree_clean: true,
+  };
+  const globalSha = "a".repeat(64);
+  const trackConfigSha = {
+    "dra-semantic-recovery": "b".repeat(64),
+    "build-reuse-buy": "c".repeat(64),
+  };
+  const pairRecords = Object.keys(trackConfigSha).map((track) =>
+    jsonRecord(
+      {
+        schema_version: "tiny-context-fresh-agent-pair-v3",
+        global_execution_envelope_sha256: globalSha,
+        track_config_sha256: trackConfigSha[track],
+        track,
+        pair_id: "pair-1",
+        replicate: 1,
+      },
+      `${track}/pair-1.json`,
+    ),
+  );
+  const aggregateRecords = pairRecords.map((pair) =>
+    jsonRecord(
+      {
+        schema_version: "tiny-context-fresh-agent-aggregate-v3",
+        global_execution_envelope_sha256: globalSha,
+        track_config_sha256: pair.value.track_config_sha256,
+        track: pair.value.track,
+        candidate_git: candidate,
+        pair_count: 1,
+        reports: [pair.value],
+      },
+      `${pair.value.track}/aggregate.json`,
+    ),
+  );
+  const deterministic = jsonRecord(
+    {
+      schema_version: "tiny-context-admission-deterministic-v2",
+      global_execution_envelope_sha256: globalSha,
+      track_config_sha256: trackConfigSha,
+      candidate_git: candidate,
+      tracks: Object.fromEntries(
+        Object.keys(trackConfigSha).map((track) => [track, { passed: true }]),
+      ),
+    },
+    "deterministic.json",
+  );
+  const attestation = jsonRecord(
+    {
+      schema_version: "tiny-context-admission-attestation-v2",
+      sensitive_raw_content_included: false,
+      global_execution_envelope_sha256: globalSha,
+      track_config_sha256: trackConfigSha,
+      candidate_git: candidate,
+      deterministic: { artifact_sha256: deterministic.sha256, passed: true },
+      tracks: aggregateRecords.map((aggregate) => ({
+        track: aggregate.value.track,
+        track_config_sha256: aggregate.value.track_config_sha256,
+        artifact_sha256: aggregate.sha256,
+      })),
+    },
+    "attestation.json",
+  );
+  const payload = buildAdmissionEvidencePayload({
+    deterministic,
+    pairs: pairRecords,
+    aggregates: aggregateRecords,
+    attestation,
+    candidate,
+  });
+  const encoded = encodeAdmissionEvidencePayload(payload);
+  assert.ok(encoded.length < 60_000);
+  const temporary = await mkdtemp(
+    path.join(os.tmpdir(), "admission-evidence-"),
+  );
+  try {
+    const output = path.join(temporary, "bundle");
+    const materialized = await materializeAdmissionEvidencePayload({
+      encoded,
+      outputDirectory: output,
+      expectedCommit: candidate.commit,
+      expectedTree: candidate.tree,
+    });
+    assert.equal(materialized.file_count, payload.files.length);
+    const manifest = JSON.parse(
+      await readFile(
+        path.join(output, "admission-evidence-manifest.json"),
+        "utf8",
+      ),
+    );
+    assert.equal(manifest.retention_days, 30);
+    assert.equal(manifest.authority, "none");
+    assert.equal(manifest.acceptance_result, false);
+    const workflow = await readFile(
+      path.join(repo, ".github", "workflows", "admission-evidence.yml"),
+      "utf8",
+    );
+    assert.match(workflow, /github\.ref == 'refs\/heads\/main'/u);
+    assert.match(workflow, /admission-evidence\.mjs/u);
+    assert.match(workflow, /retention-days:\s*30/u);
+    assert.match(workflow, /mechanism-admission-evidence\/\*\*\/\*\.json/u);
+    assert.doesNotMatch(workflow, /events\.jsonl|stderr\.txt|result\.json/u);
+
+    await assert.rejects(
+      materializeAdmissionEvidencePayload({
+        encoded,
+        outputDirectory: path.join(temporary, "wrong-tree"),
+        expectedCommit: candidate.commit,
+        expectedTree: "3".repeat(40),
+      }),
+      /exact_candidate_mismatch/u,
+    );
+
+    const rawPair = jsonRecord(
+      { ...pairRecords[0].value, prompt: "forbidden raw prompt" },
+      pairRecords[0].path,
+    );
+    assert.throws(
+      () =>
+        buildAdmissionEvidencePayload({
+          deterministic,
+          pairs: [rawPair, pairRecords[1]],
+          aggregates: aggregateRecords,
+          attestation,
+          candidate,
+        }),
+      /forbidden_raw_key|pair_aggregate_mismatch/u,
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 function eventTrace(metadata = {}) {
@@ -476,4 +769,14 @@ function eventTrace(metadata = {}) {
   ]
     .map((event) => JSON.stringify(event))
     .join("\n");
+}
+
+function jsonRecord(value, recordPath) {
+  const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8");
+  return {
+    path: recordPath,
+    bytes,
+    sha256: sha256(bytes),
+    value,
+  };
 }

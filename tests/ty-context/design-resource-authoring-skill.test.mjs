@@ -416,8 +416,18 @@ test("material DRA recovery preserves replay semantics, authority separation and
   );
   assert.match(
     recovery,
-    /accepted Provider suggestion requires explicit user authority or a delegation.*covers its origin and every target/isu,
+    /accepted Provider suggestion requires explicit user authority or a delegation.*covers its origin, semantic kind and every target/isu,
   );
+  assert.match(recovery, /ty-dra-authority-v1/u);
+  assert.match(
+    recovery,
+    /explicit projection.*exact target keys, semantic kinds, allowed origins.*canonical `after_semantics` SHA-256/isu,
+  );
+  assert.match(
+    recovery,
+    /delegation projection.*delegation key.*allowed target keys, semantic kinds and origins/isu,
+  );
+  assert.match(recovery, /free text.*Authoring TCB/isu);
   assert.match(
     recovery,
     /rejected\/unresolved meaning never enters accepted requirements or writeback/iu,
@@ -468,14 +478,29 @@ test("material DRA recovery preserves replay semantics, authority separation and
     /arbitrary string or conversation-only locator cannot create authority/iu,
   );
   assert.match(recovery, /authorization of one key never covers another/iu);
+  assert.match(
+    recovery,
+    /stable semantic target key has at most one active accepted Delta owner/iu,
+  );
+  assert.match(
+    recovery,
+    /inactive universe as rejected plus unresolved plus superseded accepted Delta IDs/iu,
+  );
+  assert.match(recovery, /design-resource-recovery-input-v3/u);
+  assert.match(recovery, /design-resource-reconciliation-audit-v3/u);
+  assert.match(recovery, /design-resource-exact-patch-v2/u);
+  assert.match(recovery, /audit_expectations/u);
+  assert.match(recovery, /selected_resource_bindings/u);
   assert.match(recovery, /proposal-written.*resource-owned-exact-visual/isu);
+  assert.match(recovery, /structured downstream owner.*repository-readable/isu);
   assert.match(recovery, /explicit `partial` result/iu);
   assert.match(recovery, /Requirements → Resource/iu);
   assert.match(recovery, /Resource → Requirements/iu);
   assert.match(recovery, /Unexpected Blast Radius/iu);
+  assert.match(recovery, /does not report `handoff-ready`/u);
   assert.match(
     recovery,
-    /handoff-ready.*only after balanced reconciliation/isu,
+    /Only the DRA Skill may derive final `handoff-ready`.*current Provider\/resource revalidation.*durable final owner.*formal handoff\/preflight.*no unresolved blocker/isu,
   );
   assert.match(
     recovery,

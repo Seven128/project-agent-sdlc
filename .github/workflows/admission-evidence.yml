@@ -1,0 +1,35 @@
+name: Mechanism Admission Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload_base64:
+        description: "Sanitized gzip/base64 evidence payload (maximum 60000 characters)."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Validate and materialize sanitized exact-tree evidence
+        env:
+          ADMISSION_EVIDENCE_PAYLOAD: ${{ inputs.payload_base64 }}
+          ADMISSION_EVIDENCE_OUTPUT: .artifacts/mechanism-admission-evidence
+        run: |
+          export ADMISSION_EXPECTED_TREE="$(git rev-parse 'HEAD^{tree}')"
+          node examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs
+
+      - name: Upload sanitized mechanism admission evidence
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: mechanism-admission-${{ github.sha }}-${{ github.run_id }}
+          path: .artifacts/mechanism-admission-evidence/**/*.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,4 +1,8 @@
 import {
+  parseAuditExpectations,
+  parseSelectedResourceBinding,
+} from "./design-resource-recovery-catalog-shape.js";
+import {
   DESIGN_RESOURCE_RECOVERY_INPUT_SCHEMA,
   DESIGN_RESOURCE_RECOVERY_SCHEMA,
 } from "./design-resource-recovery-schema.js";
@@ -37,12 +41,10 @@ const COMMON_FIELDS = [
   "delegations",
   "deltas",
   "decision_sets",
-  "explicitly_unchanged_keys",
-  "blast_radius_keys",
-  "resource_decision_keys",
+  "audit_expectations",
   "design_authority",
   "provider",
-  "selected_resource_keys",
+  "selected_resource_bindings",
 ] as const;
 
 export function parseDesignResourceRecoveryCreateInput(
@@ -184,28 +186,19 @@ function parseCommon(
         { allowEmpty: true },
       ),
     },
-    explicitly_unchanged_keys: stringSet(
-      root.explicitly_unchanged_keys,
-      "explicitly_unchanged_keys",
-      { allowEmpty: true },
-    ),
-    blast_radius_keys: stringSet(root.blast_radius_keys, "blast_radius_keys", {
-      allowEmpty: true,
-    }),
-    resource_decision_keys: stringSet(
-      root.resource_decision_keys,
-      "resource_decision_keys",
-      { allowEmpty: true },
+    audit_expectations: parseAuditExpectations(
+      root.audit_expectations,
+      "audit_expectations",
     ),
     design_authority: parseAuthorityIdentity(
       root.design_authority,
       "design_authority",
     ),
     provider: parseProviderReferences(root.provider, "provider"),
-    selected_resource_keys: stringSet(
-      root.selected_resource_keys,
-      "selected_resource_keys",
-      { allowEmpty: true },
+    selected_resource_bindings: optionalArrayOf(
+      root.selected_resource_bindings,
+      "selected_resource_bindings",
+      parseSelectedResourceBinding,
     ),
   };
 }

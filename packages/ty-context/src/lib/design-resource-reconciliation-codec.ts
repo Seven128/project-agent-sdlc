@@ -2,8 +2,8 @@ import { DESIGN_RESOURCE_RECOVERY_AUDIT_SCHEMA } from "./design-resource-recover
 import {
   type DesignResourceDecisionOrigin,
   type DesignResourceProviderIdentity,
-  type DesignResourceReconciliationAudit,
 } from "./design-resource-recovery-types.js";
+import type { DesignResourceReconciliationAudit } from "./design-resource-reconciliation-types.js";
 import {
   arrayOf,
   digest,
@@ -61,7 +61,7 @@ export function parseDesignResourceReconciliationAudit(
       "requirements_to_resource",
       "resource_to_requirements",
       "unexpected_blast_radius",
-      "rejected_or_unresolved_leakage",
+      "inactive_delta_leakage",
     ],
   );
   literal(
@@ -130,9 +130,9 @@ export function parseDesignResourceReconciliationAudit(
       "reconciliation_audit.unexpected_blast_radius",
       parseBlastFinding,
     ),
-    rejected_or_unresolved_leakage: optionalArrayOf(
-      row.rejected_or_unresolved_leakage,
-      "reconciliation_audit.rejected_or_unresolved_leakage",
+    inactive_delta_leakage: optionalArrayOf(
+      row.inactive_delta_leakage,
+      "reconciliation_audit.inactive_delta_leakage",
       parseLeakage,
     ),
   };
@@ -226,8 +226,8 @@ function parseResourceFinding(
     "status",
     "semantic_kind",
     "delta_ids",
+    "condition_refs",
     "requirement_bindings",
-    "final_disposition",
   ]);
   return {
     key: text(row.key, `${label}.key`),
@@ -239,14 +239,11 @@ function parseResourceFinding(
       `${label}.semantic_kind`,
     ),
     delta_ids: stringSet(row.delta_ids, `${label}.delta_ids`),
+    condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
     requirement_bindings: arrayOf(
       row.requirement_bindings,
       `${label}.requirement_bindings`,
       parseRequirementBinding,
-    ),
-    final_disposition: parseFinalDisposition(
-      row.final_disposition,
-      `${label}.final_disposition`,
     ),
   };
 }
@@ -256,13 +253,16 @@ function parseRequirementBinding(
   label: string,
 ): DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number] {
   const row = object(value, label, [
+    "binding_id",
     "requirement_key",
     "delta_id",
     "origin",
     "decision_authority",
     "source_refs",
+    "final_disposition",
   ]);
   return {
+    binding_id: text(row.binding_id, `${label}.binding_id`),
     requirement_key: text(row.requirement_key, `${label}.requirement_key`),
     delta_id: text(row.delta_id, `${label}.delta_id`),
     origin: oneOf(
@@ -277,18 +277,22 @@ function parseRequirementBinding(
     source_refs: stringSet(row.source_refs, `${label}.source_refs`, {
       allowEmpty: true,
     }),
+    final_disposition: parseFinalDisposition(
+      row.final_disposition,
+      `${label}.final_disposition`,
+    ),
   };
 }
 
 function parseFinalDisposition(
   value: unknown,
   label: string,
-): DesignResourceReconciliationAudit["resource_to_requirements"][number]["final_disposition"] {
+): DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number]["final_disposition"] {
   const first = object(
     value,
     label,
     ["kind"],
-    ["resource_ref", "condition_refs", "downstream_owner"],
+    ["operation_id", "resource_ref", "condition_refs", "downstream_owner"],
   );
   const kind = oneOf(
     first.kind,
@@ -311,11 +315,67 @@ function parseFinalDisposition(
       kind,
       resource_ref: text(row.resource_ref, `${label}.resource_ref`),
       condition_refs: stringSet(row.condition_refs, `${label}.condition_refs`),
-      downstream_owner: text(row.downstream_owner, `${label}.downstream_owner`),
+      downstream_owner: parseDownstreamOwner(
+        row.downstream_owner,
+        `${label}.downstream_owner`,
+      ),
+    };
+  }
+  if (kind === "proposal-written") {
+    const row = object(value, label, ["kind", "operation_id"]);
+    return {
+      kind,
+      operation_id: text(row.operation_id, `${label}.operation_id`),
     };
   }
   object(value, label, ["kind"]);
   return { kind };
+}
+
+function parseDownstreamOwner(
+  value: unknown,
+  label: string,
+): Extract<
+  DesignResourceReconciliationAudit["resource_to_requirements"][number]["requirement_bindings"][number]["final_disposition"],
+  { kind: "resource-owned-exact-visual" }
+>["downstream_owner"] {
+  const first = object(
+    value,
+    label,
+    ["kind", "locator", "raw_byte_digest"],
+    ["target_key", "resource_key"],
+  );
+  const kind = oneOf(
+    first.kind,
+    ["formal-handoff-target", "selected-source-record"] as const,
+    `${label}.kind`,
+  );
+  if (kind === "formal-handoff-target") {
+    const row = object(value, label, [
+      "kind",
+      "locator",
+      "raw_byte_digest",
+      "target_key",
+    ]);
+    return {
+      kind,
+      locator: text(row.locator, `${label}.locator`),
+      raw_byte_digest: digest(row.raw_byte_digest, `${label}.raw_byte_digest`),
+      target_key: text(row.target_key, `${label}.target_key`),
+    };
+  }
+  const row = object(value, label, [
+    "kind",
+    "locator",
+    "raw_byte_digest",
+    "resource_key",
+  ]);
+  return {
+    kind,
+    locator: text(row.locator, `${label}.locator`),
+    raw_byte_digest: digest(row.raw_byte_digest, `${label}.raw_byte_digest`),
+    resource_key: text(row.resource_key, `${label}.resource_key`),
+  };
 }
 
 function parseBlastFinding(
@@ -336,14 +396,19 @@ function parseBlastFinding(
 function parseLeakage(
   value: unknown,
   label: string,
-): DesignResourceReconciliationAudit["rejected_or_unresolved_leakage"][number] {
-  const row = object(value, label, ["delta_id", "leaked"]);
+): DesignResourceReconciliationAudit["inactive_delta_leakage"][number] {
+  const row = object(value, label, ["delta_id", "inactive_reason", "leaked"]);
   if (typeof row.leaked !== "boolean")
     throw new Error(
       `design_resource_recovery_invalid:${label}.leaked:boolean_required`,
     );
   return {
     delta_id: text(row.delta_id, `${label}.delta_id`),
+    inactive_reason: oneOf(
+      row.inactive_reason,
+      ["rejected", "unresolved", "superseded"] as const,
+      `${label}.inactive_reason`,
+    ),
     leaked: row.leaked,
   };
 }

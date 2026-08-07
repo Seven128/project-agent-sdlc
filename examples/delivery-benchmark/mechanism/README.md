@@ -46,9 +46,9 @@ Authoring comparisons are blocked unless both runs pass their fixed Source key/k
 
 ### DRA and Build / Reuse / Buy admission
 
-`admission-set.json` is a separate frozen protocol for two independent Fresh-Agent tracks. `dra-semantic-recovery` tests replayable Base/Delta meaning, non-circular delegated choice, deterministic-recovery boundaries, CAS/idempotence, current bidirectional audit and the zero-write simple preview. `build-reuse-buy` scores an allowed solution set and prohibited failures; it deliberately treats repository reuse, standard/installed/mature external capabilities, bounded self-implementation and intentional non-abstraction as potentially valid instead of requiring one library.
+`admission-set.json` is a separate frozen protocol for two independent Fresh-Agent tracks. `dra-semantic-recovery` tests replayable Base/Delta meaning, Source-owned scoped authority, non-circular delegated choice, active-owner/inactive-leakage closure, Delta-to-patch conservation, complete audit catalogs, deterministic-recovery boundaries, CAS/idempotence and the zero-write simple preview. `build-reuse-buy` scores an allowed solution set and prohibited failures; it deliberately treats repository reuse, standard/installed/mature external capabilities, bounded self-implementation and intentional non-abstraction as potentially valid instead of requiring one library.
 
-The freeze binds cases, hidden probes, result schemas, baseline Git blobs, candidate worktree guidance bytes, runner bytes, model/reasoning, Codex/Node/OS identity, fixture identities, trace identity, thresholds and pairing method before any candidate session. Hidden probes never enter the Agent prompt. Each invocation uses an independent `codex exec --ephemeral` read-only session in a helper-owned OS temporary directory; raw traces and scores stay ignored under `.artifacts/mechanism-admission/**` and are not Context, Authority or acceptance state.
+The freeze uses one global execution-envelope digest plus one track-local frozen-config digest. Model/reasoning, Provider, Codex/Node/OS environment, pairing and shared execution mechanics invalidate both tracks; DRA or Build / Reuse / Buy cases, hidden probes, result schemas, guidance, thresholds and track-specific scoring invalidate only their owning track. Hidden probes never enter the Agent prompt. Each invocation uses an independent `codex exec --ephemeral` read-only session in a helper-owned OS temporary directory; raw traces and scores stay ignored under `.artifacts/mechanism-admission/**` and are not Context, Authority or acceptance state.
 
 Both tracks start at three eligible pairs and require `2/3` wins. A primary-metric coefficient of variation above 20%, mixed pair direction, a result within five percentage points of threshold or environment/Provider trace doubt expands the frozen requirement to five pairs and `3/5` wins. No critical category may regress; targeted critical-plus-major defects must fall by at least 25%; must-allow false blocking is zero and other false blocking cannot exceed baseline. DRA additionally requires zero simple-path side effects/tool calls and no more than 10% median token or wall overhead. A zero-defect baseline produces no invented improvement claim.
 
@@ -187,16 +187,30 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pa
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track build-reuse-buy --pair-id brb-01 --replicate 1 --artifact frozen-v1/brb/pair-01
 ```
 
-After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged freeze and aggregate all five. DRA simple-path reports retain every raw pair ratio, while the admission median compares baseline and candidate medians separately at invocation position one and two before taking the median of those two overheads; this preserves the frozen AB/BA pairing without letting a 3/2 order imbalance masquerade as mechanism cost. Both variants must appear in both positions. Never edit a generated score or a frozen input after candidate execution; a necessary controlling-input change invalidates every prior pair.
+After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged identities and aggregate all five. DRA simple-path reports retain every raw pair ratio, while the admission median compares baseline and candidate medians separately at invocation position one and two before taking the median of those two overheads; this preserves the frozen AB/BA pairing without letting a 3/2 order imbalance masquerade as mechanism cost. Both variants must appear in both positions. Never edit a generated score or frozen input after candidate execution. A changed global identity invalidates both tracks; a changed track identity invalidates only that track. Do not infer a missing v3 track identity from v2 evidence.
 
 The trace distinguishes requested from effective model/reasoning/Provider. Unobservable or mismatched effective provenance is recorded as `unverified`/doubt and forces five pairs; it is never filled from the request. Once both aggregates exist on a clean committed `main`, create the sanitized exact-tree manifest:
 
 ```sh
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs attest \
-  --deterministic frozen-v2/deterministic/deterministic-report.json \
-  --aggregate frozen-v2/dra/aggregate/aggregate-report.json \
-  --aggregate frozen-v2/brb/aggregate/aggregate-report.json \
-  --artifact frozen-v2/attestation
+  --deterministic frozen-v3/deterministic/deterministic-report.json \
+  --aggregate frozen-v3/dra/aggregate/aggregate-report.json \
+  --aggregate frozen-v3/brb/aggregate/aggregate-report.json \
+  --artifact frozen-v3/attestation
 ```
 
 The manifest contains only frozen/result digests, bounded aggregate metrics, provenance qualification, trace-identity-set digests and the exact candidate Git commit/tree. It contains no prompt, model output, raw event/stderr or sensitive Source content and is not Source, Contract, Evidence, Receipt, Gate or acceptance.
+
+Materialize the CI-safe bundle and workflow payload only after attestation:
+
+```sh
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs sanitize-evidence \
+  --deterministic frozen-v3/deterministic/deterministic-report.json \
+  --pair <every-included-pair-report.json> \
+  --aggregate frozen-v3/dra/aggregate/aggregate-report.json \
+  --aggregate frozen-v3/brb/aggregate/aggregate-report.json \
+  --attestation frozen-v3/attestation/admission-attestation.json \
+  --artifact frozen-v3/sanitized
+```
+
+Dispatch `.github/workflows/admission-evidence.yml` on the exact attested `main` ref with the generated `workflow-payload-base64.txt`. It revalidates commit/tree, identities, file digests and forbidden raw fields, then uploads only sanitized JSON for 30 days. Invocation results, prompts, raw model answers, events, stderr and sensitive Source remain local and excluded.

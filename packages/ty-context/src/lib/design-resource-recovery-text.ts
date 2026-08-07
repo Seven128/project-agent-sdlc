@@ -1,8 +1,8 @@
 import type {
   DesignResourceEolPolicy,
-  DesignResourceExactPatch,
   DesignResourceTextEncoding,
 } from "./design-resource-recovery-types.js";
+import type { DesignResourceExactPatch } from "./design-resource-recovery-patch-types.js";
 
 export interface DesignResourceDecodedText {
   text: string;
@@ -86,6 +86,7 @@ export function applyDesignResourceExactPatch(
       );
     text = text.replace(operation.before_text, operation.after_text);
   }
+  assertPatchAfterTextOccurrences(text, patch);
   const postEol = detectEolPolicy(text);
   if (postEol !== decoded.eol_policy)
     invalid(`patch_changes_eol_policy:${decoded.eol_policy}:${postEol}`);
@@ -94,6 +95,33 @@ export function applyDesignResourceExactPatch(
     encoding: decoded.encoding,
     eol_policy: decoded.eol_policy,
   };
+}
+
+export function verifyDesignResourceExactPatchReadback(
+  bytes: Uint8Array,
+  patch: DesignResourceExactPatch,
+): void {
+  const decoded = decodeDesignResourceText(bytes);
+  assertPatchAfterTextOccurrences(decoded.text, patch);
+}
+
+export function verifyDesignResourceSupersededTextReadback(
+  bytes: Uint8Array,
+  patch: DesignResourceExactPatch,
+  supersedingDeltaIds: ReadonlySet<string>,
+): void {
+  const text = decodeDesignResourceText(bytes).text;
+  for (const operation of patch.operations) {
+    if (
+      !operation.delta_ids.some((deltaId) => supersedingDeltaIds.has(deltaId))
+    )
+      continue;
+    const count = occurrenceCount(text, operation.before_text);
+    if (count !== 0)
+      invalid(
+        `superseded_before_text_leakage:${operation.operation_id}:${count}`,
+      );
+  }
 }
 
 export function detectEolPolicy(text: string): DesignResourceEolPolicy {
@@ -116,6 +144,19 @@ function occurrenceCount(value: string, search: string): number {
     if (found < 0) return count;
     count += 1;
     offset = found + search.length;
+  }
+}
+
+function assertPatchAfterTextOccurrences(
+  text: string,
+  patch: DesignResourceExactPatch,
+): void {
+  for (const operation of patch.operations) {
+    const count = occurrenceCount(text, operation.after_text);
+    if (count !== operation.expected_occurrences)
+      invalid(
+        `patch_after_occurrence_mismatch:${operation.operation_id}:${operation.expected_occurrences}:${count}`,
+      );
   }
 }
 

@@ -2,18 +2,24 @@ import { spawnSync } from "node:child_process";
 import { REPO_ROOT, sha256 } from "./admission-shared.mjs";
 import { currentExactMainCandidate } from "./admission-attestation.mjs";
 
-export function runDeterministicAdmissionChecks(config, configSha) {
+export function runDeterministicAdmissionChecks(
+  config,
+  globalExecutionEnvelopeSha,
+  trackConfigSha,
+) {
   const tracks = {};
   for (const [trackId, checks] of Object.entries(config.deterministic_checks)) {
     const results = checks.map(runCheck);
     tracks[trackId] = {
+      track_config_sha256: trackConfigSha[trackId],
       passed: results.every((item) => item.status === 0),
       results,
     };
   }
   return {
-    schema_version: "tiny-context-admission-deterministic-v1",
-    config_sha256: configSha,
+    schema_version: "tiny-context-admission-deterministic-v2",
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
     candidate_git: currentExactMainCandidate(),
     environment_identity: config.environment.identity,
     tracks,

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -13,6 +13,12 @@ import {
 import { runDeterministicAdmissionChecks } from "./admission-deterministic.mjs";
 import { runAdmissionPair } from "./admission-execute.mjs";
 import {
+  buildAdmissionEvidencePayload,
+  encodeAdmissionEvidencePayload,
+  materializeAdmissionEvidencePayload,
+} from "./admission-evidence.mjs";
+import {
+  REPO_ROOT,
   createArtifactDirectory,
   loadAdmissionConfig,
   resolveArtifactFile,
@@ -31,14 +37,19 @@ export {
 async function main(argv = process.argv.slice(2)) {
   const options = parseArgs(argv);
   if (!options.command || options.help) return printHelp();
-  const { config, config_sha256: configSha } = await loadAdmissionConfig();
+  const {
+    config,
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
+  } = await loadAdmissionConfig();
   const freeze = await verifyFrozenAdmission(config);
   if (options.command === "freeze-check") {
     console.log(
       JSON.stringify(
         {
           schema_version: config.schema_version,
-          config_sha256: configSha,
+          global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+          track_config_sha256: trackConfigSha,
           ...freeze,
         },
         null,
@@ -51,7 +62,11 @@ async function main(argv = process.argv.slice(2)) {
     const directory = await createArtifactDirectory(
       required(options.artifact, "--artifact"),
     );
-    const report = runDeterministicAdmissionChecks(config, configSha);
+    const report = runDeterministicAdmissionChecks(
+      config,
+      globalExecutionEnvelopeSha,
+      trackConfigSha,
+    );
     await writeJson(path.join(directory, "deterministic-report.json"), report);
     console.log(JSON.stringify(report, null, 2));
     return;
@@ -67,9 +82,15 @@ async function main(argv = process.argv.slice(2)) {
       replicate: options.replicate,
       artifactDirectory: directory,
       config,
-      configSha,
+      globalExecutionEnvelopeSha,
+      trackConfigSha: trackConfigSha[track],
     });
-    const report = compareAdmissionPair(track, pair, configSha);
+    const report = compareAdmissionPair(
+      track,
+      pair,
+      globalExecutionEnvelopeSha,
+      trackConfigSha[track],
+    );
     await writeJson(path.join(directory, "pair-report.json"), report);
     console.log(JSON.stringify(report, null, 2));
     return;
@@ -85,8 +106,6 @@ async function main(argv = process.argv.slice(2)) {
     const deterministic = await readArtifactJson(
       required(options.deterministic, "--deterministic"),
     );
-    if (deterministic.config_sha256 !== configSha)
-      throw new Error("admission_deterministic_config_mismatch");
     const report = aggregateAdmissionPairs(
       track,
       reports,
@@ -108,7 +127,8 @@ async function main(argv = process.argv.slice(2)) {
       options.aggregates.map((file) => readArtifactRecord(file)),
     );
     const attestation = buildAdmissionAttestation({
-      configSha,
+      globalExecutionEnvelopeSha,
+      trackConfigSha,
       deterministic: deterministicArtifact,
       aggregates,
       candidate: currentExactMainCandidate(),
@@ -119,6 +139,60 @@ async function main(argv = process.argv.slice(2)) {
       attestation,
     );
     console.log(JSON.stringify(attestation, null, 2));
+    return;
+  }
+  if (options.command === "sanitize-evidence") {
+    const directory = await createArtifactDirectory(
+      required(options.artifact, "--artifact"),
+    );
+    const deterministic = await readArtifactRecord(
+      required(options.deterministic, "--deterministic"),
+    );
+    const pairs = await Promise.all(
+      options.pairs.map((file) => readArtifactRecord(file)),
+    );
+    const aggregates = await Promise.all(
+      options.aggregates.map((file) => readArtifactRecord(file)),
+    );
+    const attestation = await readArtifactRecord(
+      required(options.attestation, "--attestation"),
+    );
+    const candidate = currentExactMainCandidate();
+    const payload = buildAdmissionEvidencePayload({
+      deterministic,
+      pairs,
+      aggregates,
+      attestation,
+      candidate,
+    });
+    const encoded = encodeAdmissionEvidencePayload(payload);
+    const bundle = path.join(directory, "bundle");
+    const payloadFile = path.join(directory, "workflow-payload-base64.txt");
+    await materializeAdmissionEvidencePayload({
+      encoded,
+      outputDirectory: bundle,
+      expectedCommit: candidate.commit,
+      expectedTree: candidate.tree,
+    });
+    await writeFile(payloadFile, `${encoded}\n`, {
+      encoding: "utf8",
+      flag: "wx",
+    });
+    const report = {
+      schema_version: "tiny-context-admission-sanitized-evidence-v1",
+      candidate_git: candidate,
+      global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+      track_config_sha256: trackConfigSha,
+      payload_sha256: sha256(encoded),
+      workflow_input_characters: encoded.length,
+      bundle_path: path.relative(REPO_ROOT, bundle).replaceAll("\\", "/"),
+      payload_path: path.relative(REPO_ROOT, payloadFile).replaceAll("\\", "/"),
+    };
+    await writeJson(
+      path.join(directory, "sanitized-evidence-report.json"),
+      report,
+    );
+    console.log(JSON.stringify(report, null, 2));
     return;
   }
   throw new Error(`admission_command_unknown:${options.command}`);
@@ -135,6 +209,7 @@ function parseArgs(argv) {
     else if (flag === "--pair") options.pairs.push(argv[++index]);
     else if (flag === "--aggregate") options.aggregates.push(argv[++index]);
     else if (flag === "--deterministic") options.deterministic = argv[++index];
+    else if (flag === "--attestation") options.attestation = argv[++index];
     else if (flag === "--help" || flag === "-h") options.help = true;
     else throw new Error(`admission_argument_unknown:${flag}`);
   }
@@ -151,6 +226,7 @@ async function readArtifactRecord(relative) {
   return {
     path: relative,
     sha256: sha256(bytes),
+    bytes,
     value: JSON.parse(bytes.toString("utf8")),
   };
 }
@@ -168,7 +244,8 @@ Commands:
   deterministic --artifact <relative-output-directory>
   run-pair --track <dra-semantic-recovery|build-reuse-buy> --pair-id <id> --replicate <n> --artifact <relative-output-directory>
   aggregate --track <id> --deterministic <relative-report.json> --pair <relative-pair-report.json>... --artifact <relative-output-directory>
-  attest --deterministic <relative-report.json> --aggregate <relative-aggregate-report.json>... --artifact <relative-output-directory>`);
+  attest --deterministic <relative-report.json> --aggregate <relative-aggregate-report.json>... --artifact <relative-output-directory>
+  sanitize-evidence --deterministic <relative-report.json> --pair <relative-pair-report.json>... --aggregate <relative-aggregate-report.json>... --attestation <relative-attestation.json> --artifact <relative-output-directory>`);
 }
 
 if (

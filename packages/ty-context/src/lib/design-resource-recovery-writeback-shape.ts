@@ -1,15 +1,19 @@
 import { DESIGN_RESOURCE_PATCH_SCHEMA } from "./design-resource-recovery-schema.js";
 import {
   type DesignResourceExactPatch,
+  type DesignResourcePatchSemanticBinding,
+  type DesignResourceRecoveryWriteback,
+  type DesignResourceWritebackInput,
+} from "./design-resource-recovery-patch-types.js";
+import {
   type DesignResourceProviderIdentity,
   type DesignResourceProviderReferences,
   type DesignResourceProviderResourceIdentity,
-  type DesignResourceRecoveryWriteback,
-  type DesignResourceWritebackInput,
 } from "./design-resource-recovery-types.js";
 import {
   arrayOf,
   digest,
+  integer,
   literal,
   multilineText,
   object,
@@ -56,8 +60,12 @@ export function parsePatch(
         const operation = object(item, itemLabel, [
           "operation_id",
           "target_keys",
+          "delta_ids",
           "before_text",
           "after_text",
+          "before_text_sha256",
+          "after_text_sha256",
+          "semantic_bindings",
           "expected_occurrences",
         ]);
         literal(
@@ -74,6 +82,7 @@ export function parsePatch(
             operation.target_keys,
             `${itemLabel}.target_keys`,
           ),
+          delta_ids: stringSet(operation.delta_ids, `${itemLabel}.delta_ids`),
           before_text: multilineText(
             operation.before_text,
             `${itemLabel}.before_text`,
@@ -82,10 +91,79 @@ export function parsePatch(
             operation.after_text,
             `${itemLabel}.after_text`,
           ),
+          before_text_sha256: digest(
+            operation.before_text_sha256,
+            `${itemLabel}.before_text_sha256`,
+          ),
+          after_text_sha256: digest(
+            operation.after_text_sha256,
+            `${itemLabel}.after_text_sha256`,
+          ),
+          semantic_bindings: arrayOf(
+            operation.semantic_bindings,
+            `${itemLabel}.semantic_bindings`,
+            parsePatchSemanticBinding,
+          ),
           expected_occurrences: 1 as const,
         };
       },
     ),
+  };
+}
+
+function parsePatchSemanticBinding(
+  value: unknown,
+  label: string,
+): DesignResourcePatchSemanticBinding {
+  const row = object(value, label, [
+    "delta_id",
+    "target_key",
+    "before_semantics_sha256",
+    "after_semantics_sha256",
+    "before_text_projection",
+    "after_text_projection",
+  ]);
+  return {
+    delta_id: text(row.delta_id, `${label}.delta_id`),
+    target_key: text(row.target_key, `${label}.target_key`),
+    before_semantics_sha256: digest(
+      row.before_semantics_sha256,
+      `${label}.before_semantics_sha256`,
+    ),
+    after_semantics_sha256: digest(
+      row.after_semantics_sha256,
+      `${label}.after_semantics_sha256`,
+    ),
+    before_text_projection: parseTextProjection(
+      row.before_text_projection,
+      `${label}.before_text_projection`,
+    ),
+    after_text_projection: parseTextProjection(
+      row.after_text_projection,
+      `${label}.after_text_projection`,
+    ),
+  };
+}
+
+function parseTextProjection(
+  value: unknown,
+  label: string,
+): DesignResourcePatchSemanticBinding["before_text_projection"] {
+  if (value === null) return null;
+  const row = object(value, label, [
+    "semantic_path",
+    "start_offset",
+    "end_offset",
+  ]);
+  return {
+    semantic_path: arrayOf(
+      row.semantic_path,
+      `${label}.semantic_path`,
+      (item, itemLabel) => text(item, itemLabel),
+      { allowEmpty: true },
+    ),
+    start_offset: integer(row.start_offset, `${label}.start_offset`),
+    end_offset: integer(row.end_offset, `${label}.end_offset`),
   };
 }
 

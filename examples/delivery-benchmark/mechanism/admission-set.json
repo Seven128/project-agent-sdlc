@@ -1,5 +1,5 @@
 {
-  "schema_version": "tiny-context-fresh-agent-admission-v2",
+  "schema_version": "tiny-context-fresh-agent-admission-v3",
   "frozen_at": "2026-08-07T03:32:40+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
@@ -16,7 +16,7 @@
     "timeout_ms": 240000
   },
   "pairing_method": "Fresh ephemeral sessions with no shared conversation or run directory. Odd quality replicates use baseline then candidate; even quality replicates reverse order. DRA simple-path order is the opposite of its quality order. Raw pair ratios remain diagnostic; the controlling simple-path median compares baseline and candidate medians within invocation positions one and two, then takes the median of those two overheads. Both variants must appear in both positions.",
-  "trace_identity_scheme": "sha256(config, track, pair_id, replicate, mode, variant, prompt)",
+  "trace_identity_scheme": "sha256(global_execution_envelope, track_config, track, pair_id, replicate, mode, variant, prompt)",
   "pair_policy": {
     "minimum_pairs": 3,
     "minimum_wins": 2,
@@ -35,7 +35,7 @@
   },
   "tracks": {
     "dra-semantic-recovery": {
-      "fixture_identity": "676566ca7a2b200c56d652f2bd5c9a749bd00ba39278b9c2427d50758afb4592",
+      "fixture_identity": "37bbe321107f1062660843c7fa10b2e2b34688931133f362146f43c3c8988464",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -58,7 +58,10 @@
         "authorized project-native Source or disclosure-reviewed non-authoritative snapshot",
         "deterministic recovery unavailable report",
         "pre/post digest-derived CAS and idempotent no-write",
-        "balanced current bidirectional audit before handoff-ready"
+        "Source-owned structured authority projection for deterministic accepted recovery",
+        "v3 set-equal audit catalog with immutable resource conditions",
+        "exact patch-v2 semantic text projection and one final owner",
+        "balanced current bidirectional audit before DRA derives handoff-ready"
       ],
       "prohibited_failure_modes": [
         "semantic loss, distortion or unsupported gain",
@@ -71,6 +74,12 @@
         "rejected/unresolved supersession of accepted meaning",
         "incomplete audit universe or illegal final owner",
         "checkpoint-update CAS overwrite or unowned cleanup",
+        "authority target, semantic kind, origin or meaning-digest mismatch",
+        "multiple active accepted owners for one semantic target",
+        "superseded meaning leakage or duplicate cross-row binding",
+        "Delta semantics and patch text projection mismatch",
+        "wrong resource condition, unchanged resource or Source basis",
+        "external-only or unstructured downstream final owner",
         "checkpointed live or completion conclusions",
         "simple-path persistence, pause, generation, handoff or write transaction"
       ],
@@ -94,15 +103,15 @@
         "quality": {
           "task": {
             "path": "admission/dra-quality-cases.json",
-            "sha256": "e383f9f0f9bd9051f0765e3f875add8527ded1f132076e18b11b5d50e6b5edcb"
+            "sha256": "5f2254d0cfa434c0974e0c808664c6a30981160e23d085a4deabbf71f9c00efb"
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+            "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
           },
           "schema": {
             "path": "admission/dra-quality-result.schema.json",
-            "sha256": "8fd6a18adfe9f89e2adaa36755ae5e470ed3690cb432aa3aef42024f2cfcc882"
+            "sha256": "1c73c4f4daa6a8316d4176173014d95ffeb08e7082b6b7a9f38566bb398f7120"
           }
         },
         "simple": {
@@ -112,7 +121,7 @@
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+            "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
           },
           "schema": {
             "path": "admission/dra-simple-result.schema.json",
@@ -164,7 +173,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "6a9a7deacab97867b73983a51d846390e541fca40fb8d5e0ca37300107ff87c5",
+              "bundle_sha256": "61572ae0d8639070664823a5f1cea1135107a4757325706f4bedc50ddf4880ff",
               "sources": [
                 {
                   "kind": "worktree",
@@ -182,7 +191,7 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "0a2a3b0d72148f37721f7dca5c9f8bc64ef252d7ffd6e2cfab3b2ef939d557e1"
+                  "content_sha256": "5efcc39ea5c2ad4fd4ce299d4de5d6ed55786c8f678ce501ad55a0ed5c2d34f8"
                 }
               ]
             },
@@ -362,76 +371,129 @@
   },
   "frozen_files": [
     {
+      "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
-      "sha256": "e383f9f0f9bd9051f0765e3f875add8527ded1f132076e18b11b5d50e6b5edcb"
+      "sha256": "5f2254d0cfa434c0974e0c808664c6a30981160e23d085a4deabbf71f9c00efb"
     },
     {
+      "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-path.json",
       "sha256": "ce4f8ad1eccb99d699533c7be43fb32d2475cd3bbd18c454421348d91a06c2e3"
     },
     {
+      "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-cases.json",
       "sha256": "a4f9405cb908a624482f0188222192a6c8a283fb131c7f1d77036c575bc1aa8b"
     },
     {
+      "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json",
-      "sha256": "8fd6a18adfe9f89e2adaa36755ae5e470ed3690cb432aa3aef42024f2cfcc882"
+      "sha256": "1c73c4f4daa6a8316d4176173014d95ffeb08e7082b6b7a9f38566bb398f7120"
     },
     {
+      "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-simple-result.schema.json",
       "sha256": "2a44d60adc9de689827bfbc5466c9edf7871ddcd0f14bcee332c9df576b84afd"
     },
     {
+      "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-result.schema.json",
       "sha256": "1ced6a19fde6c09daca4bfabb17d2c9c3067038115ebb9c296a25bafb313d1a7"
     },
     {
+      "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
-      "sha256": "e9270abbe9bcf6a39f68a5025a957d0d3580ffeb39aac9661dd52144f49780db"
+      "sha256": "eb9c746ace0fa64e83521b4721060960ecb362a13b15bc480b546227413d34cd"
     },
     {
+      "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/hidden/build-reuse-buy-admission-v1.json",
       "sha256": "b88648ffb8deba931d3d5ad87d875cf85b76d7f20c1b80af55bb3986b2ca8050"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-shared.mjs",
-      "sha256": "a456f4fb4c84bd7360ee17eb2173429eef3b0cef352c63f3b8bdd07bc43a54a6"
+      "sha256": "93c79c47ae8eb3ea5e99f0b3ca6d47003896585b3cfc5383fef363f62c3a8d2e"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-score.mjs",
-      "sha256": "dd0d83a0fecb4e3255aefeee41739b1e043a14e55f2f8635b44e1956ccdf15e9"
+      "sha256": "5cadd30df4b714e97acd455a147ef7ff88e091b0126029940b3f8eb5a7d22b31"
     },
     {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-score-shared.mjs",
+      "sha256": "1144c24290da99b1bf88a1f364491b365ef42948b3503d1d541199d8740cb557"
+    },
+    {
+      "scope": "track:dra-semantic-recovery",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-score-dra.mjs",
+      "sha256": "15d6a15c7045e44d08c8ccbccf3d4c4e235f97aaaedb3d54bfbce8eb933fdda8"
+    },
+    {
+      "scope": "track:build-reuse-buy",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-score-build-reuse-buy.mjs",
+      "sha256": "06d37acfc7d79f3a23e5ee7fb674d046cdd9b62fbe3c45b6fc190905d0d9a310"
+    },
+    {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-aggregate.mjs",
-      "sha256": "a1e472e1bf7c13aaebfb304b23b4c277fd16e73763a8e34661eb02f673df53ad"
+      "sha256": "015c0aba20403d17ef449e26f2e7981530f71ea949b25a476d85c3b03fc82be8"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-expansion.mjs",
       "sha256": "1c656a23c0095c8511178b079270d8d36fa760138351ccd0346cb58cbe5f5ef9"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-execute.mjs",
-      "sha256": "40832da459bfb94e7d3ab6959e84dacf9fadaf2d6b10bd87f5e17887ac1adea9"
+      "sha256": "e59af0dce1fa1b2a08ef51aad48910e585a992ce0e98e2fcf3790f3287b24c3d"
     },
     {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence-constants.mjs",
+      "sha256": "adc80c93a6720ec9172e9b2cf461d467c150e18c82738978bb2587ae7ed3a402"
+    },
+    {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence-records.mjs",
+      "sha256": "363050deab234122d0806f7589b77b420fbca1bf3f93c13dc1e0869425660ae6"
+    },
+    {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence-validation.mjs",
+      "sha256": "58c757b60619c3f4e43656923606d0f16a29d47a54a1d6902942223a6e6bd364"
+    },
+    {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs",
+      "sha256": "f1c2456a2306de3d919ec31907d715028c75c1b36e97ebc2e9391cd017fe097f"
+    },
+    {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs",
-      "sha256": "04e688b403ba4dfa9390a92c0c7747cfe350b9686c13f48e9e4dd96fea89f26b"
+      "sha256": "a363cf49ffb7544a4d7d8fd05646dcd132992d854d2b0883b1199bacaf515413"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs",
-      "sha256": "525763c1b922ff5e3042d378232ee5e2bd08fbf8e53b09883dac34c0964c6caa"
+      "sha256": "15e37307183e09e27d07069a3df2efdca66f478c0039f764d038997be24f982d"
     },
     {
+      "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
-      "sha256": "3d4e65adc50d425cb31c7a93df9e03a8ed0d3ae564e778e5ef7ec5661f405d2a"
+      "sha256": "933d7cd4ad7f36817c3dc1d88f8af298272b44c164731050d12529d84517a539"
     },
     {
+      "scope": "global",
       "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-      "sha256": "8a23bd5460216796f969130cb43f67f222037bd6e9b2650fb1db3fd3baa0cce1"
+      "sha256": "da938d76d33d9cd873681074f784c6104fe018e99a04ca79f7be804f12c031e4"
     },
     {
+      "scope": "global",
       "path": "tests/ty-context/fresh-agent-admission-fixture.mjs",
-      "sha256": "5fc7ae22c9fa42d105b709effe402a835de5e6a7274e0f9cfbd37bb8f419064a"
+      "sha256": "56543c144dd6d5c02d1003a001aceed399df772cb42c7b5edf2e3ccdecdea53d"
     }
   ]
 }

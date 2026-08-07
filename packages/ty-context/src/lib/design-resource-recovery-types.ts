@@ -1,9 +1,12 @@
 import {
-  DESIGN_RESOURCE_PATCH_SCHEMA,
-  DESIGN_RESOURCE_RECOVERY_AUDIT_SCHEMA,
+  DESIGN_RESOURCE_AUTHORITY_PROJECTION_SCHEMA,
   DESIGN_RESOURCE_RECOVERY_INPUT_SCHEMA,
   DESIGN_RESOURCE_RECOVERY_SCHEMA,
 } from "./design-resource-recovery-schema.js";
+import type {
+  DesignResourceRecoveryWriteback,
+  DesignResourceWritebackInput,
+} from "./design-resource-recovery-patch-types.js";
 import type { SourceItemKind } from "./long-task-source-authority-types.js";
 
 export type DesignResourceDecisionOrigin =
@@ -55,7 +58,26 @@ export interface DesignResourceDelegation {
   source_ref: string;
   allowed_origins: DesignResourceDecisionOrigin[];
   allowed_target_keys: string[];
+  allowed_semantic_kinds: DesignResourceSemanticKind[];
 }
+
+export type DesignResourceAuthorityProjection =
+  | {
+      schema_version: typeof DESIGN_RESOURCE_AUTHORITY_PROJECTION_SCHEMA;
+      mode: "explicit-user";
+      target_keys: string[];
+      semantic_kinds: DesignResourceSemanticKind[];
+      allowed_origins: DesignResourceDecisionOrigin[];
+      meaning_sha256: string;
+    }
+  | {
+      schema_version: typeof DESIGN_RESOURCE_AUTHORITY_PROJECTION_SCHEMA;
+      mode: "delegation";
+      delegation_key: string;
+      allowed_target_keys: string[];
+      allowed_semantic_kinds: DesignResourceSemanticKind[];
+      allowed_origins: DesignResourceDecisionOrigin[];
+    };
 
 export interface DesignResourceAuthoritySourceItem {
   source_ref: string;
@@ -108,32 +130,50 @@ export interface DesignResourceProviderReferences {
   resources: DesignResourceProviderResourceIdentity[];
 }
 
-export interface DesignResourceExactPatchOperation {
-  operation_id: string;
-  target_keys: string[];
-  before_text: string;
-  after_text: string;
-  expected_occurrences: 1;
+export interface DesignResourceSelectedResourceBinding {
+  key: string;
+  identity_kind:
+    "repository-snapshot" | "formal-handoff-target" | "external-immutable";
+  locator: string;
+  raw_byte_digest: string;
+  condition_refs: string[];
 }
 
-export interface DesignResourceExactPatch {
-  schema_version: typeof DESIGN_RESOURCE_PATCH_SCHEMA;
-  operations: DesignResourceExactPatchOperation[];
-}
-
-export interface DesignResourceWritebackInput {
-  target_locator: string;
-  pre_write_raw_byte_digest: string;
-  patch: DesignResourceExactPatch;
-  patch_identity: string;
-  expected_post_write_raw_byte_digest: string;
-  resource_identities: Array<{ key: string; raw_byte_digest: string }>;
-  accepted_delta_ids: string[];
-}
-
-export interface DesignResourceRecoveryWriteback extends DesignResourceWritebackInput {
-  target_encoding: DesignResourceTextEncoding;
-  target_eol_policy: Exclude<DesignResourceEolPolicy, "mixed">;
+export interface DesignResourceAuditExpectations {
+  changed: Array<{
+    key: string;
+    delta_ids: string[];
+    resource_refs: string[];
+    condition_refs: string[];
+  }>;
+  unchanged: Array<{
+    key: string;
+    resource_refs: string[];
+    condition_refs: string[];
+    basis_source_refs: string[];
+  }>;
+  resource_decisions: Array<{
+    key: string;
+    resource_ref: string;
+    semantic_kind: DesignResourceSemanticKind;
+    bindings: Array<{
+      binding_id: string;
+      delta_id: string;
+      target_key: string;
+    }>;
+    condition_refs: string[];
+    allowed_final_dispositions: Array<
+      | "proposal-written"
+      | "resource-owned-exact-visual"
+      | "not-adopted"
+      | "unresolved"
+    >;
+  }>;
+  blast_radius: Array<{ key: string }>;
+  inactive_delta_leakage: Array<{
+    delta_id: string;
+    reason: "rejected" | "unresolved" | "superseded";
+  }>;
 }
 
 export interface DesignResourceRecoveryCreateInput {
@@ -152,12 +192,10 @@ export interface DesignResourceRecoveryCreateInput {
     rejected_delta_ids: string[];
     unresolved_delta_ids: string[];
   };
-  explicitly_unchanged_keys: string[];
-  blast_radius_keys: string[];
-  resource_decision_keys: string[];
+  audit_expectations: DesignResourceAuditExpectations;
   design_authority: DesignResourceAuthorityIdentity;
   provider: DesignResourceProviderReferences;
-  selected_resource_keys: string[];
+  selected_resource_bindings: DesignResourceSelectedResourceBinding[];
   writeback?: DesignResourceWritebackInput;
 }
 
@@ -171,66 +209,6 @@ export interface DesignResourceRecoveryCheckpoint extends Omit<
   writeback?: DesignResourceRecoveryWriteback;
 }
 
-export interface DesignResourceReconciliationAudit {
-  schema_version: typeof DESIGN_RESOURCE_RECOVERY_AUDIT_SCHEMA;
-  session_id: string;
-  base_raw_byte_digest: string;
-  design_authority: DesignResourceAuthorityIdentity;
-  provider_run: DesignResourceProviderIdentity;
-  resource_identities: Array<{ key: string; raw_byte_digest: string }>;
-  writeback_target_raw_byte_digest: string;
-  accepted_delta_ids: string[];
-  rejected_delta_ids: string[];
-  unresolved_delta_ids: string[];
-  changed_keys: string[];
-  explicitly_unchanged: Array<{
-    key: string;
-    verdict: "preserved" | "changed" | "unresolved";
-    resource_refs: string[];
-    condition_refs: string[];
-    basis_source_refs: string[];
-  }>;
-  requirements_to_resource: Array<{
-    key: string;
-    verdict: "covered" | "missing" | "distorted" | "unsupported" | "unresolved";
-    delta_ids: string[];
-    resource_refs: string[];
-    condition_refs: string[];
-  }>;
-  resource_to_requirements: Array<{
-    key: string;
-    resource_ref: string;
-    status: DesignResourceDecisionStatus;
-    semantic_kind: DesignResourceSemanticKind;
-    delta_ids: string[];
-    requirement_bindings: Array<{
-      requirement_key: string;
-      delta_id: string;
-      origin: DesignResourceDecisionOrigin;
-      decision_authority: DesignResourceDecisionAuthority;
-      source_refs: string[];
-    }>;
-    final_disposition:
-      | { kind: "proposal-written" }
-      | {
-          kind: "resource-owned-exact-visual";
-          resource_ref: string;
-          condition_refs: string[];
-          downstream_owner: string;
-        }
-      | { kind: "not-adopted" }
-      | { kind: "unresolved" };
-  }>;
-  unexpected_blast_radius: Array<{
-    key: string;
-    verdict: "expected" | "unexpected" | "unresolved";
-  }>;
-  rejected_or_unresolved_leakage: Array<{
-    delta_id: string;
-    leaked: boolean;
-  }>;
-}
-
 export interface DesignResourceReplayProjection {
   status: "replayable";
   base: DesignResourceRecoveryBase;
@@ -241,9 +219,4 @@ export interface DesignResourceReplayProjection {
   explicitly_unchanged_keys: string[];
   design_authority: DesignResourceAuthorityIdentity;
   external_revalidation_required: string[];
-}
-
-export interface DesignResourceReconciliationResult {
-  status: "balanced" | "blocked";
-  findings: string[];
 }

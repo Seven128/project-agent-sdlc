@@ -9,10 +9,7 @@ export const MECHANISM_ROOT = path.resolve(
   "..",
 );
 export const REPO_ROOT = path.resolve(MECHANISM_ROOT, "../../..");
-export const ADMISSION_CONFIG = path.join(
-  MECHANISM_ROOT,
-  "admission-set.json",
-);
+export const ADMISSION_CONFIG = path.join(MECHANISM_ROOT, "admission-set.json");
 export const ADMISSION_ARTIFACT_ROOT = path.join(
   REPO_ROOT,
   ".artifacts",
@@ -22,9 +19,47 @@ export const ADMISSION_ARTIFACT_ROOT = path.join(
 export async function loadAdmissionConfig() {
   const bytes = await readFile(ADMISSION_CONFIG);
   const config = JSON.parse(bytes.toString("utf8"));
-  if (config.schema_version !== "tiny-context-fresh-agent-admission-v2")
+  if (config.schema_version !== "tiny-context-fresh-agent-admission-v3")
     throw new Error("admission_config_schema_unsupported");
-  return { config, config_sha256: sha256(bytes) };
+  validateAdmissionConfigShape(config);
+  return { config, ...admissionConfigIdentities(config) };
+}
+
+export function admissionConfigIdentities(config) {
+  validateAdmissionConfigShape(config);
+  const globalFrozenFiles = frozenFilesForScope(config, "global");
+  const globalExecutionEnvelopeSha256 = sha256(
+    canonicalJson({
+      schema_version: "tiny-context-admission-global-execution-envelope-v1",
+      baseline_commit: config.baseline_commit,
+      model: config.model,
+      reasoning_effort: config.reasoning_effort,
+      provider: config.provider,
+      provider_fixture_identity: config.provider_fixture_identity,
+      environment: config.environment,
+      pairing_method: config.pairing_method,
+      trace_identity_scheme: config.trace_identity_scheme,
+      pair_policy: config.pair_policy,
+      frozen_files: globalFrozenFiles,
+    }),
+  );
+  const trackConfigSha256 = {};
+  for (const [trackId, track] of Object.entries(config.tracks)) {
+    const { pair_policy: _mirroredPairPolicy, ...trackLocal } = track;
+    trackConfigSha256[trackId] = sha256(
+      canonicalJson({
+        schema_version: "tiny-context-admission-track-config-v1",
+        track: trackId,
+        config: trackLocal,
+        deterministic_checks: config.deterministic_checks[trackId],
+        frozen_files: frozenFilesForScope(config, `track:${trackId}`),
+      }),
+    );
+  }
+  return {
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha256,
+    track_config_sha256: trackConfigSha256,
+  };
 }
 
 export async function verifyFrozenAdmission(config) {
@@ -34,6 +69,9 @@ export async function verifyFrozenAdmission(config) {
   for (const [trackId, track] of Object.entries(config.tracks)) {
     if (track.fixture_identity !== admissionFixtureIdentity(track.modes))
       failures.push(`fixture_identity:${trackId}`);
+    if (canonicalJson(track.pair_policy) !== canonicalJson(config.pair_policy))
+      failures.push(`pair_policy:${trackId}`);
+    verifyTrackFrozenInputs(config, trackId, track, failures);
     for (const variant of Object.values(track.variants)) {
       for (const mode of Object.values(variant.guidance))
         await verifyGuidanceBundle(mode, failures);
@@ -79,15 +117,21 @@ export async function sourceContent(source) {
   } else if (source.kind === "worktree") {
     content = await readFile(path.join(REPO_ROOT, source.path), "utf8");
   } else throw new Error(`guidance_source_kind_unsupported:${source.kind}`);
-  const selected = source.extract ? extractSection(content, source.extract) : content;
+  const selected = source.extract
+    ? extractSection(content, source.extract)
+    : content;
   const actual = sha256(selected);
   if (actual !== source.content_sha256)
-    throw new Error(`guidance_source_digest_mismatch:${source.label}:${actual}`);
+    throw new Error(
+      `guidance_source_digest_mismatch:${source.label}:${actual}`,
+    );
   return selected;
 }
 
 export async function readTrackedJson(relative) {
-  return JSON.parse(await readFile(path.join(MECHANISM_ROOT, relative), "utf8"));
+  return JSON.parse(
+    await readFile(path.join(MECHANISM_ROOT, relative), "utf8"),
+  );
 }
 
 export async function createArtifactDirectory(relative) {
@@ -127,6 +171,10 @@ export async function writeJson(file, value) {
 
 export function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function canonicalJson(value) {
+  return JSON.stringify(canonicalize(value));
 }
 
 export function admissionFixtureIdentity(modes) {
@@ -183,6 +231,72 @@ async function verifyFileRecord(record, failures) {
   } catch {
     failures.push(`missing:${record.path}`);
   }
+}
+
+function validateAdmissionConfigShape(config) {
+  const trackIds = Object.keys(config.tracks ?? {}).sort();
+  if (
+    trackIds.length === 0 ||
+    trackIds.some((trackId) => !/^[a-z0-9][a-z0-9-]*$/u.test(trackId))
+  )
+    throw new Error("admission_config_tracks_invalid");
+  if (
+    Object.keys(config.deterministic_checks ?? {})
+      .sort()
+      .join("\0") !== trackIds.join("\0")
+  )
+    throw new Error("admission_config_deterministic_track_set_mismatch");
+  const seenPaths = new Set();
+  for (const record of config.frozen_files ?? []) {
+    const validScopes = new Set([
+      "global",
+      ...trackIds.map((trackId) => `track:${trackId}`),
+    ]);
+    if (!validScopes.has(record.scope))
+      throw new Error(`admission_frozen_scope_invalid:${record.scope}`);
+    if (seenPaths.has(record.path))
+      throw new Error(`admission_frozen_path_duplicate:${record.path}`);
+    seenPaths.add(record.path);
+    if (!/^[0-9a-f]{64}$/u.test(record.sha256))
+      throw new Error(`admission_frozen_digest_invalid:${record.path}`);
+  }
+}
+
+function verifyTrackFrozenInputs(config, trackId, track, failures) {
+  const records = new Map(
+    frozenFilesForScope(config, `track:${trackId}`).map((record) => [
+      record.path,
+      record.sha256,
+    ]),
+  );
+  for (const mode of Object.values(track.modes))
+    for (const kind of ["task", "hidden", "schema"]) {
+      const item = mode[kind];
+      if (
+        records.get(
+          path.posix.join("examples/delivery-benchmark/mechanism", item.path),
+        ) !== item.sha256
+      )
+        failures.push(`track_frozen_input:${trackId}:${kind}:${item.path}`);
+    }
+}
+
+function frozenFilesForScope(config, scope) {
+  return config.frozen_files
+    .filter((record) => record.scope === scope)
+    .map((record) => ({ path: record.path, sha256: record.sha256 }))
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function canonicalize(value) {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonicalize(value[key])]),
+    );
+  return value;
 }
 
 async function verifyGuidanceBundle(bundle, failures) {

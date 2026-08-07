@@ -49,7 +49,8 @@ export function buildPassingRow(expected) {
 export function syntheticPair(replicate) {
   return {
     track: "build-reuse-buy",
-    config_sha256: "frozen",
+    global_execution_envelope_sha256: "global-frozen",
+    track_config_sha256: "track-frozen",
     pair_id: `pair-${replicate}`,
     replicate,
     requested_model: "gpt-5.6-terra",

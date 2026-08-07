@@ -1,6 +1,15 @@
 import { pairExpansion } from "./admission-expansion.mjs";
 import { median, ratioDelta } from "./admission-shared.mjs";
-export function compareAdmissionPair(track, pair, configSha) {
+export function compareAdmissionPair(
+  track,
+  pair,
+  globalExecutionEnvelopeSha,
+  trackConfigSha,
+) {
+  if (pair.global_execution_envelope_sha256 !== globalExecutionEnvelopeSha)
+    throw new Error("admission_pair_global_identity_mismatch");
+  if (pair.track_config_sha256 !== trackConfigSha)
+    throw new Error("admission_pair_track_identity_mismatch");
   const baseline = pair.baseline.quality;
   const candidate = pair.candidate.quality;
   const criticalRegressions = categoryRegressions(
@@ -10,8 +19,9 @@ export function compareAdmissionPair(track, pair, configSha) {
   const qualityDelta =
     baseline.score.targeted_defects - candidate.score.targeted_defects;
   const report = {
-    schema_version: "tiny-context-fresh-agent-pair-v2",
-    config_sha256: configSha,
+    schema_version: "tiny-context-fresh-agent-pair-v3",
+    global_execution_envelope_sha256: globalExecutionEnvelopeSha,
+    track_config_sha256: trackConfigSha,
     track,
     pair_id: pair.pair_id,
     replicate: pair.replicate,
@@ -66,6 +76,7 @@ export function compareAdmissionPair(track, pair, configSha) {
 
 export function aggregateAdmissionPairs(track, reports, config, deterministic) {
   assertPairSet(track, reports);
+  assertDeterministicIdentity(track, reports[0], deterministic);
   const eligible = reports;
   const baselineDefects = sum(
     eligible.map((item) => item.quality.baseline_targeted_defects),
@@ -133,8 +144,10 @@ export function aggregateAdmissionPairs(track, reports, config, deterministic) {
       ? "ADMISSION_THRESHOLDS_MET_WITH_PROVENANCE_QUALIFICATION"
       : "ADMISSION_THRESHOLDS_MET";
   return {
-    schema_version: "tiny-context-fresh-agent-aggregate-v2",
-    config_sha256: reports[0].config_sha256,
+    schema_version: "tiny-context-fresh-agent-aggregate-v3",
+    global_execution_envelope_sha256:
+      reports[0].global_execution_envelope_sha256,
+    track_config_sha256: reports[0].track_config_sha256,
     track,
     candidate_git: reports[0].candidate_git,
     pair_count: reports.length,
@@ -315,7 +328,8 @@ function assertPairSet(track, reports) {
 
 function fixedIdentity(report) {
   return JSON.stringify({
-    config: report.config_sha256,
+    global_execution_envelope: report.global_execution_envelope_sha256,
+    track_config: report.track_config_sha256,
     model: report.requested_model,
     reasoning: report.requested_reasoning_effort,
     provider: report.requested_provider,
@@ -323,4 +337,16 @@ function fixedIdentity(report) {
     environment: report.environment_identity,
     candidate_git: report.candidate_git,
   });
+}
+
+function assertDeterministicIdentity(track, report, deterministic) {
+  if (
+    deterministic?.global_execution_envelope_sha256 !==
+    report.global_execution_envelope_sha256
+  )
+    throw new Error("admission_aggregate_deterministic_global_mismatch");
+  if (
+    deterministic?.track_config_sha256?.[track] !== report.track_config_sha256
+  )
+    throw new Error("admission_aggregate_deterministic_track_mismatch");
 }

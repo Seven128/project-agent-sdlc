@@ -166,6 +166,126 @@
         "A separate raw-digest-bound decision Source item records explicit user acceptance, and the accepted Delta binds both Source refs.",
         "The final disposition is proposal-written; current bidirectional and blast-radius audits are complete and balanced, and the target equals the pre-write digest."
       ]
+    },
+    {
+      "id": "delta-red-patch-purple",
+      "facts": [
+        "An accepted visual.color Delta has canonical after_semantics red.",
+        "The pending exact patch writes color: purple while its declared semantic binding still names the red Delta digest.",
+        "The operator asks to create or update the deterministic checkpoint."
+      ]
+    },
+    {
+      "id": "active-target-owner-collision",
+      "facts": [
+        "Two accepted Deltas both actively own visual.color and neither legally supersedes the other.",
+        "Both carry otherwise plausible Source and resource bindings.",
+        "No merge or composition mechanism exists for this semantic key."
+      ]
+    },
+    {
+      "id": "superseded-meaning-leakage",
+      "facts": [
+        "Accepted delta.color.v2 legally supersedes accepted delta.color.v1 for visual.color.",
+        "The Proposal still contains the v1 blue meaning while the v2 active meaning is red.",
+        "The inactive-leakage audit omits the superseded v1 Delta and requests writeback."
+      ]
+    },
+    {
+      "id": "duplicate-cross-row-resource-binding",
+      "facts": [
+        "Two differently keyed Resource Decision rows both carry the same tuple resource.main, visual.color, delta.color.",
+        "Each row looks valid when inspected alone.",
+        "The reconciliation requests a balanced result."
+      ]
+    },
+    {
+      "id": "two-final-owners",
+      "facts": [
+        "The same active delta.color × visual.color binding is marked proposal-written and resource-owned-exact-visual in two Resource Decision rows.",
+        "Both candidate owners are otherwise immutable.",
+        "The operator requests a balanced result."
+      ]
+    },
+    {
+      "id": "duplicate-resource-identities-mixed",
+      "facts": [
+        "The audit contains two resource_identities rows for resource.main.",
+        "One digest is stale and the other digest is correct.",
+        "A last-write-wins map would hide the stale duplicate."
+      ]
+    },
+    {
+      "id": "wrong-requirement-condition",
+      "facts": [
+        "The frozen changed expectation for visual.color binds resource.main under condition.default.",
+        "The Requirements → Resource row instead claims condition.hover, which is not declared by the selected resource.",
+        "Every other row is complete."
+      ]
+    },
+    {
+      "id": "wrong-unchanged-resource",
+      "facts": [
+        "The frozen unchanged expectation for layout.stable binds resource.main under condition.default.",
+        "The current unchanged row substitutes resource.unrelated while still saying preserved.",
+        "Both resource keys exist elsewhere in the task."
+      ]
+    },
+    {
+      "id": "wrong-unchanged-basis",
+      "facts": [
+        "The frozen unchanged expectation for layout.stable names source.layout-stable as its basis.",
+        "The current unchanged row substitutes an unrelated raw-digest-bound Source item.",
+        "The verdict still says preserved."
+      ]
+    },
+    {
+      "id": "arbitrary-downstream-owner-string",
+      "facts": [
+        "An accepted exact visual binding uses resource-owned-exact-visual.",
+        "Its downstream_owner is the free-form string some-text rather than a structured digest-bound owner.",
+        "The selected resource is otherwise valid."
+      ]
+    },
+    {
+      "id": "external-only-final-owner",
+      "facts": [
+        "An accepted exact visual binding is assigned to resource-owned-exact-visual.",
+        "The only resource and downstream locator are external Provider locators which the helper cannot reread.",
+        "The operator asks for an unconditional durable final-owner and handoff-ready claim."
+      ]
+    },
+    {
+      "id": "visual-decision-bound-to-product",
+      "facts": [
+        "A raw-digest-bound Decision Source delegates only visual.color exact-visual provider choices.",
+        "An accepted product.export Delta reuses that Source ref and delegation.",
+        "The Source projection does not cover the product target, semantic kind or meaning digest."
+      ]
+    },
+    {
+      "id": "valid-explicit-product-projection",
+      "facts": [
+        "A marked Decision Source item contains a ty-dra-authority-v1 explicit-user projection for product.export, semantic kind product, origin user-direct and the exact canonical after_semantics digest.",
+        "The file, item text and Delta all match their raw digests and the final owner is proposal-written through one exact patch operation.",
+        "All audit catalog rows are complete and balanced."
+      ]
+    },
+    {
+      "id": "valid-repository-snapshot-visual-owner",
+      "facts": [
+        "A delegated exact visual.color choice is within its Source-owned target, semantic-kind and origin scope.",
+        "The selected resource and selected-source-record downstream owner are repository-readable, raw-digest-bound and declare condition.default.",
+        "The resource-owned-exact-visual binding is globally unique and every audit expectation matches."
+      ]
+    },
+    {
+      "id": "valid-supersession-no-leakage",
+      "facts": [
+        "Accepted delta.color.v2 legally supersedes accepted delta.color.v1 with matching target, semantic kind and before/after chain.",
+        "Only v2 is active and owns visual.color; the inactive catalog and audit contain one superseded v1 row with leaked false.",
+        "Neither the Proposal nor selected resource retains the v1 meaning."
+      ]
     }
   ]
 }
