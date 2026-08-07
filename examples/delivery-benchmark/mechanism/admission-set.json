@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-fresh-agent-admission-v3",
-  "frozen_at": "2026-08-07T17:00:50+08:00",
+  "frozen_at": "2026-08-07T17:20:00+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
@@ -173,7 +173,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "61572ae0d8639070664823a5f1cea1135107a4757325706f4bedc50ddf4880ff",
+              "bundle_sha256": "4a7d53dfbbfbf385309bb9a922df1a9ec80b34f8ace74b08a35cca02bacf26e9",
               "sources": [
                 {
                   "kind": "worktree",
@@ -191,7 +191,7 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "5efcc39ea5c2ad4fd4ce299d4de5d6ed55786c8f678ce501ad55a0ed5c2d34f8"
+                  "content_sha256": "a7696b28c289c422a1fd7eb684909677b0174b40e4d96f97c53b251bce0fe348"
                 }
               ]
             },
