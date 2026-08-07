@@ -308,7 +308,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "3bc0e9ca4fd9c82b3447b8d8b10d39960aedab4992fa9dd0598eddde63718b59",
+          "bundle_sha256": "ef3c131c8bd561406650e91f32bebda57ef7fd1924360e9694d1f7b1ba5c661f",
               "sources": [
                 {
                   "kind": "worktree",
@@ -324,7 +324,7 @@
                   "kind": "worktree",
                   "label": "engineer_candidate",
                   "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-                  "content_sha256": "2f18990f639d66132f32e62ed5b3a75a21853cb38c9f38e59df6a163702fa454"
+              "content_sha256": "e7cf5083b7b4db4011171fa2a3b49a6cc8e0fc99def38d3a08e9a1f5e861be40"
                 }
               ]
             }
