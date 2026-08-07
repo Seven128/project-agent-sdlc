@@ -320,6 +320,14 @@ test("risk-triggered Build Reuse Buy preserves an allowed set and implementation
   );
   assert.match(combined, /unselected but (?:still )?legal.*alternative/isu);
   assert.match(
+    sources[2],
+    /Enumerate every materially supported member before selection.*never removes another supported member from the allowed set/isu,
+  );
+  assert.match(
+    sources[4],
+    /Enumerate every materially supported member before selecting one.*never removes another supported member from the allowed set/isu,
+  );
+  assert.match(
     combined,
     /only a choice which actually exhibits a prohibited failure mode/iu,
   );

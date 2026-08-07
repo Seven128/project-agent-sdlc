@@ -308,13 +308,13 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "f9db4d2e7fc2c15f4eccc875e32aeea2ed3225e01301a680993639fcbc25bc4a",
+              "bundle_sha256": "3bc0e9ca4fd9c82b3447b8d8b10d39960aedab4992fa9dd0598eddde63718b59",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "agents_quality_candidate",
                   "path": ".codex/ty-context-managed/agents/AGENTS_CORE.md",
-                  "content_sha256": "bd956dd02393d1f0fef9345074958667131db25dabbbd72923d8bfac12f17ef7",
+                  "content_sha256": "e66fb9cad8aa1687bdc4edd5fea9257e5172681b5271363bec90ce91c6d7ce18",
                   "extract": {
                     "start_heading": "## Shared Engineering Quality Obligation",
                     "end_heading": "## Default Workflow Contract"
@@ -324,7 +324,7 @@
                   "kind": "worktree",
                   "label": "engineer_candidate",
                   "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-                  "content_sha256": "79dbb6ebeb3a810f98e322c1a5fe63dd108a3d7be10acd342504d8e350f420fb"
+                  "content_sha256": "2f18990f639d66132f32e62ed5b3a75a21853cb38c9f38e59df6a163702fa454"
                 }
               ]
             }
