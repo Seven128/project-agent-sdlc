@@ -48,7 +48,8 @@
       "facts": [
         "The current target digest equals the frozen expected post-write digest.",
         "The checkpoint and resource identities are valid.",
-        "A freshly rerun Proposal–Resource audit is balanced."
+        "A freshly rerun Proposal–Resource audit is balanced.",
+        "The current Provider and resource have been revalidated, the durable final owner is verified, every applicable formal handoff/preflight has passed, and no unresolved blocker remains."
       ]
     },
     {
