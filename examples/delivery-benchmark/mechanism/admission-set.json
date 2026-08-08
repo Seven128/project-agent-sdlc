@@ -180,7 +180,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "411411a5a3ccad82ced7297b6743ed355dec8af38b54e547f422667215e5bf1c",
+              "bundle_sha256": "958597367113a118e08020749bf8b4d2a92fb5b4cf115e2bc4a4e7f67096ebc7",
               "sources": [
                 {
                   "kind": "worktree",
@@ -198,7 +198,7 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "511e9f754edc51362113b99ff069599712c04f27191f8c79a915248432ad1f3f"
+                  "content_sha256": "ce1750f4631b28cb4a59a1e5f7d4876683799e9dcceac840c55490702f015d24"
                 }
               ]
             },
