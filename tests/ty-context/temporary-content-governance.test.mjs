@@ -249,6 +249,7 @@ test("CI evidence rebinds deterministic proof and reports three distinct digest 
       sha256(ciBytes),
     );
     const workflow = await read(".github/workflows/admission-evidence.yml");
+    assert.match(workflow, /fetch-depth:\s*0/u);
     assert.match(workflow, /npm ci --ignore-scripts/u);
     assert.match(workflow, /admission_benchmark\.mjs.*deterministic/su);
     assert.match(workflow, /ci_admission_evidence\.mjs/u);
