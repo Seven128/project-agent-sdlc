@@ -1,0 +1,3340 @@
+schema_version: long-task-delivery-v2
+semantic_fact_manifest:
+  key: long-task-real-capability-facts
+  source_path: docs/long-task-real-capability-closure.md
+  sha256: bcc5077f390bef1b8972d747817f9d557c0a2d9df45164a7ad3126f5f907244b
+task:
+  id: long-task-real-capability-closure
+  title: Long-Task real capability and anti-degradation closure
+  goal: Close selected-design exact false acceptance, validity-first anti-degradation, bounded route-B observer trust, current-snapshot proof, sanitized replay and ROI without adding a second authority or universal UI observer.
+  target_profile:
+    key: harness-package-current-candidate
+    description: The package source workspace rejects the frozen attack set and accepts valid controls through its existing Long-Task lifecycle.
+    required_state: target_profile_usable
+    required_target_refs:
+      - harness-package-runtime
+  execution_targets:
+    - key: harness-package-runtime
+      description: The current package build and project-owned Long-Task verification runtime.
+      role: product
+      runtime_family: process
+      root_entrypoint: tools/verify_long_task_real_capability_delivery.mjs
+      capabilities:
+        - process-runtime
+        - cold-start
+        - production-root
+  source_paths:
+    - docs/long-task-real-capability-closure.md
+  context_refs:
+    - project_context/areas/harness-package.md
+    - project_context/areas/harness-package/contracts/workflow-contract.md
+    - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+    - project_context/areas/harness-package/implementation-index.md
+    - project_context/areas/harness-package/verification.md
+    - project_context/areas/delivery-benchmark.md
+  context_snapshot_mode: full
+source_claims:
+  - key: real-capability-closure-result
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: Long-Task 的真实能力与防劣化闭环必须完成四个不可拆散的结果：立即关闭 selected-design `exact_value + exact` 的已知假阳性；同步让关键哨兵和能力声明治理能够证明其宣称防御的错误候选确实被拒绝；明确选择并落实把普通模型编写 verifier 的错误纳入威胁模型的 Observer/TCB 路线 B；最后用确定性攻击/控制组、当前候选 Trust/full/package 验证、受控脱敏真实项目回放和只用于遵循率/ROI 的 fresh-agent 证据完成准入。P0 完成只证明关闭一个确定漏洞，在可信观察闭环和真实回放完成前不得恢复“Long-Task 已高水准抵御模型自然漂移并保证最终无漂移交付”的宽泛声明。
+    disposition:
+      type: outcome_result
+      ref: proof-and-roi.result
+  - key: material-input-provenance
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 本 Source 是本 Goal 唯一的项目原生需求载体，完整归并三类输入：原方案附件 `pasted-text.txt`，其 SHA-256 为 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`；Codex 对该方案的仓库证据审计与修正；用户粘贴的 GPT Pro 最终裁决。附件中未被最终裁决推翻的要求继续有效；Codex 审计对绝对有效性、observer 文件年龄、challenge、通用 artifact 解析、重复设计 Fact 体系、generated carrier、Counterfactual、benchmark、v4 和能力措辞的修正优先；GPT Pro 明确批准的路线 B 和工作包 0–4 是最终用户 Authority。任何压缩或恢复都必须从本 Source、Contract、Active Authority 和 owning Context 重建，而不是依赖对话记忆。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.material-input-provenance
+  - key: declared-assurance-theorem
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 正式能力定理必须限制在完整、准确的声明范围、预期细粒度、机器索引的 Fact×条件×方法宇宙和已准入观察/TCB 内：任何仍存在于该宇宙且能由准入观察链发现的当前生产漂移，不得进入 `machine_accepted`；无法建立可信机器观察的 Fact 保持未完成或进入 External Confirmation。该定理不得扩张为自动发现未表达意图、证明任意 Oracle 语义正确，或抵御 TCB 外的一切模型与宿主行为。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.declared-assurance-theorem
+  - key: assurance-causal-chain
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 完成链必须保持单向：完整准确 Source Authority → 无遗漏保义的细粒度 Fact 投影 → Fact×适用条件×所需方法闭包 → 从当前生产目标采集 actual → Harness 或其直接调用的冻结 comparator 重算比较 → 每个 Fact 可独立归因且通过因果敏感性验证 → 同一当前快照的唯一 Final Gate → `machine_accepted`。代码、项目 verifier、自报结果、历史 Receipt 或 prose 不得反向成为 expected Authority。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.assurance-causal-chain
+  - key: known-selected-design-false-acceptance
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: '当前已知 critical false-acceptance 位于 selected-design evidence runtime：正向 fixture 的 expected digest 为 `"a".repeat(64)`、actual digest 为 `"f".repeat(64)`，但 comparison `passed: true` 和 verdict `passed` 仍被接受；ground 与 symbolic 路径只校验 identity、authority、artifact 与提交字段的一致性，没有执行 `actual == expected` 或重算 comparison result identity。非 UI `semantic_fact` 路径已经执行 exact 摘要比较并重算 identity，因此缺陷必须 owner-local 修复，不能笼统重写整个 Evidence Kernel。'
+    disposition:
+      type: risk_fact
+      refs:
+        - critical_user_path:p0-exact-recomputation
+  - key: p0-positive-fixture-correction
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 默认 selected-design 正向 fixture 必须使 `actual_observation.value_sha256 == expected.sha256`；任何 mismatch 必须由测试显式构造并断言失败，禁止正向 fixture 继续内含实际不一致却自报通过的 Fact。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.p0-positive-fixture-correction
+  - key: p0-v1-negative-control
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: V1 ground 必须具有独立负向控制：`actual != expected` 同时项目提交 `comparison.passed = true`、`verdict = passed` 时，Harness 必须在 selected-design comparison owner 处拒绝，错误 ground truth 不能由被测 verifier 生成，且失败需定位到 exact comparison/result identity 语义而非无关 schema。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.p0-v1-negative-control
+  - key: p0-v2-negative-control
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: V2 symbolic 必须具有与 V1 同构的独立负向控制：规则/区域对应的 actual digest 与 frozen expected digest 不同而项目自报通过时必须被拒绝；V2 的规则、区域、certificate identity 仍按既有 symbolic owner 校验，不得因为修 exact 而弱化 V2 的 extensional closure。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.p0-v2-negative-control
+  - key: shared-exact-comparison-owner
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 提取或复用一个共享 exact comparison primitive，输入至少包含 actual digest、expected digest、comparator、mode、parameters、tolerance 和 mask，输出由 Harness 计算的 comparison result 与 result identity。selected-design runtime 必须复用非 UI exact/result-identity 的既有语义或共享底层 primitive，消除两条路径的重复真相；项目提交的 `passed`/`verdict` 只能作为兼容冗余，与 Harness 结果不一致时 fail closed。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.shared-exact-comparison-owner
+  - key: p0-owner-local-and-v3-compatible
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: P0 严格 owner-local：主要修改 `packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts`、必要的共享 exact primitive、`tests/ty-context/long-task-delivery-fixtures.mjs`、现有 `tests/ty-context/long-task-semantic-drift-closure.test.mjs` 和现有哨兵 rationale。P0 不改变 schema，不为了局部比较修复发布 v4，不新建测试 registry、生命周期状态或第二套 Fact taxonomy。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.p0-owner-local-and-v3-compatible
+  - key: p0-verification-boundary
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: P0 当前候选必须依次通过 focused exact mismatch tests、`selected-design-fact-closure`/新强化的 `selected-design-exact-verdict-recomputation` critical sentinel、Long-Task Trust Boundary Gate、affected tests 和完整 package regression；还需证明旧行为接受冻结反例而修复候选拒绝它。P0 通过不得被表述为完整设计目的已恢复。
+    disposition:
+      type: acceptance
+      refs:
+        - p0-exact-recomputation.verify-p0-exact-recomputation.acceptance-p0-verification-boundary
+  - key: purpose-validity-floor-before-relative-antidegradation
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 机制开发准入顺序必须是：在明确威胁模型与 TCB 内的声明目的有效性下限 → 相对非劣化 → 有效候选不被误阻 → 总成本与 ROI。有效性下限至少要求冻结关键反例全部被拒绝、正确控制组全部通过、没有未关闭的已知 critical false acceptance、能力声明不超过证据支持范围；它不是“绝对正确”机器状态，也不得成为消费者 Long-Task 的新 Gate、状态、Authority 或 registry。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.purpose-validity-floor-before-relative-antidegradation
+  - key: invalid-baseline-and-claim-downgrade
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 发现 current `main` 的 critical false-completion path 后，错误行为被标记为 defect，不属于需要保留的有效 Coverage；相关高水准能力声明立即降级，反例先进入固定威胁集，候选必须证明旧版接受且修复版拒绝。在回归、可信观察闭环和要求的真实回放完成前，不得以旧测试绿色、总体逻辑、文档禁止或项目 verifier 写错为由维持原声明。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.invalid-baseline-and-claim-downgrade
+  - key: coverage-defined-by-rejected-attack-surface
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 防劣化 Coverage 表示机制能拒绝的已知错误完成路径集合，不以测试文件数、Assertion 数、Fact 数、哨兵名称或 CI 绿色计数代替。相对比较只能使用已证明有效的 baseline：`Coverage_new` 不少于有效 baseline，false-negative resistance、false-positive behavior、Authority、freshness 与 fail-closed 不得变弱；选择一个允许方案不删除其他仍受支持的允许成员。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.coverage-defined-by-rejected-attack-surface
+  - key: critical-sentinel-positive-negative-controls
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 每个高层 critical sentinel 至少绑定：一个正确候选通过；一个直接违反该能力的错误候选失败；独立于被测 verifier 的 ground truth；修改真实生产语义的 mutation；在声明 owner/Fact/Assertion 边界的预期定位；以及证明合法共享执行、容差、mask 和动态值不会被误阻的控制组。继续复用 `CRITICAL_TEST_SENTINELS`，不新增第二 registry。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.critical-sentinel-positive-negative-controls
+  - key: incident-counterexample-first-rule
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 任何真实的明显需求违背、selected-design 漂移、历史证据冒充当前证据、verifier 自证或 Final Gate 近似错误接受，必须先形成能在旧版复现的最小负向 fixture，再修改实现；修复后证明旧版接受、当前版拒绝，且失败落在声明的语义 owner。开放 critical counterexample 自动降级对应能力声明。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.incident-counterexample-first-rule
+  - key: sentinel-rationale-evidence-bounded
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 现有 critical sentinel rationale 和测试策略描述不得超过实际正负控制证明的范围。`selected-design-exact-verdict-recomputation` 应强化现有 semantic-drift-closure 测试和现有 registry 项，不必新建测试文件；如果测试只证明 exact digest 重算，就不得声称已证明任意 observer、任意 UI 格式或完整 live-session 真实性。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.sentinel-rationale-evidence-bounded
+  - key: capability-claim-levels
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 正式开发与发布结论只使用四级能力表述：已设计；已实现；已建立已知反例保护；在明确 TCB 内已高水准实现设计目的。最高级必须同时具备明确支持范围/TCB、Source 与投影闭包、独立当前 actual、Harness 重算 verdict、关键攻击全拒绝、正确控制组通过、黑盒 Final Gate、至少一个真实或脱敏真实项目回放、无开放 critical counterexample 和机制 ROI 准入。GPT、Codex、人工 prose 审计、文档声明、测试数量或单次 benchmark 都不能提升等级。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.capability-claim-levels
+  - key: route-b-project-owner-decision
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 项目 owner 本次明确选择 Observer/TCB 路线 B：普通模型编写 verifier 的错误属于威胁模型。路线 A——继续完全信任正确冻结 verifier/runner TCB 并将能力声明收窄为“阻止该 TCB 已正确观察的漂移”——保留为被拒绝的本次选择和兼容理解，不得作为无限期延期路线 B 的理由。路线 B 是恢复宽泛设计目的声明的必要闭环，必须在本 Goal 内设计、实现和验证。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.obligation.route-b-project-owner-decision
+  - key: observation-channel-authority
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 能关闭 machine Claim 的观察通道必须按能力和完整观察链准入，而非按文件年龄：package-owned/admitted observer；Harness 直接调用且依赖闭包冻结的 executable comparator/adapter；经明确冻结 TCB、当前 snapshot、生产可达性和因果控制证明的项目 observer。项目 verifier 不能仅凭自报 actual digest、comparison、passed 或 verdict 关闭 material/selected-design Claim；无法满足准入能力时必须 fail closed 或使用现有 External Confirmation。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.observation-channel-authority
+  - key: expected-actual-comparison-verdict-ownership
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: expected 的值/定位摘要与比较 Authority 由 Source、canonical design resource 和 Contract 冻结；actual 由当前生产 target/session 的准入 observer 从声明 artifact/locator 提取；comparison 与 result identity 由 Harness-owned primitive 或 Harness 直接调用的冻结 comparator 计算；最终 verdict 由 Evidence Kernel/Final Gate 从重算结果得出。项目 runner 可提交原始观察、环境、artifact、locator 和兼容冗余字段，但不得同时拥有 expected、actual、comparison 和 authoritative verdict。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.obligation.expected-actual-comparison-verdict-ownership
+  - key: bounded-admitted-artifact-contract
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 首版 artifact contract 冻结为 package-owned `json-pointer-exact-v1`：只接受仓库/Check 准入根内、当前执行收集的 UTF-8 JSON，locator 只允许 RFC 6901 JSON Pointer（对象键和 canonical 非负数组下标；禁止 URI fragment、wildcard、filter 和 custom locator），值按现有 canonical JSON 语义规范化（对象键排序、数组顺序保留、JSON scalar/null 精确保留）后摘要；只支持 `exact_value + exact` 且 tolerance/mask 必须为空。单文件上限 1 MiB、嵌套深度 64、pointer 4096 字节/128 段、单个规范化值 256 KiB、每 Check 最多 256 个 observation artifact 且总计 16 MiB；路径必须 containment/no-follow 并拒绝 symlink/path escape，JSON 重复对象键和非 JSON 数值 fail closed。plain 值可在内存规范化但不新增 raw evidence；protected 值首版不从普通 JSON artifact machine-accept，只允许直接调用的冻结 adapter 或 External Confirmation。extractor/comparator 的 package identity/version/spec digest 必须冻结。首版不扩展成布局树、可访问性树、时间线、像素或任意 custom locator 的通用 UI 观察框架。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.bounded-admitted-artifact-contract
+  - key: actual-artifact-reextraction
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 对于 `json-pointer-exact-v1`，Harness 必须从当前 artifact 与 locator 重新提取、规范化 actual 并计算 digest，不能只相信 runner 提交的 `value_sha256`；提交值、Harness 重算值和冻结 expected 任一不一致都 fail closed。该路径只准入 package-owned extractor，或由 Harness 直接调用且 digest/version/capability 冻结的 adapter；v3 没有可安全表达直接调用入口的任意项目 executable，因此普通 `named_external_tcb`/项目 runner 的自报 JSON 不能单独 machine-accept。无法由 package 解析的 custom locator、protected raw 值、live native/session、layout/a11y/motion/pixel/tolerance/mask 首版保持 External Confirmation。P0 的 digest equality 是第一步，不能被误称为任意 artifact authenticity。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.actual-artifact-reextraction
+  - key: challenge-is-freshness-only
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: Final Gate challenge/nonce 只用于拒绝直接复用旧截图、旧 session JSON 和旧 evidence payload；若未来准入 live-session，它必须绑定当前 invocation、candidate Git commit/tree、workspace snapshot、runner/build identity、target process/session、启动/采集时间和操作轨迹。首版 `json-pointer-exact-v1` 只接受 Final Gate 当前执行重新收集并绑定当前 snapshot/hash 的静态 JSON，不以新增 challenge 字段伪装 live-session 可信度；native/live 继续 External Confirmation。challenge 不是信任根，因为项目 runner 可以读取并回显新 challenge；主动伪造还必须由准入 observer、expected/actual 隔离、Harness comparator、生产可达性和 Counterfactual 共同防御。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.challenge-is-freshness-only
+  - key: generated-carrier-semantic-role
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: carrier 准入按语义角色而非路径年龄或一刀切路径名单判断：纯 evidence/report/status/comparison/Receipt/历史 session 产物不得充当生产 carrier；由构建生成且被真实产品 target 消费的 bundle、配置或编译产物可以作为生产 carrier；只被 verifier 读取的生成物不能证明生产可达性。不得笼统禁止所有 `expected_output_paths`，而要证明其是否进入产品 target 的真实依赖或运行时读取链。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.generated-carrier-semantic-role
+  - key: expected-to-actual-self-proof-rejection
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 必须阻止 expected→actual 自证：actual artifact/locator 不得指向 Contract、handoff、expected resource 或 comparison artifact；actual 必须来自当前 target/session 或其真实消费的构建产物；同任务 verifier 不能独立关闭关键 Claim；生产语义 mutation 后 actual 必须按声明影响集发生变化。静态扫描 verifier 是否读取 expected 只能作为诊断，不能成为唯一安全边界。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.expected-to-actual-self-proof-rejection
+  - key: production-reachability
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 敏感 Counterfactual 的 Binding 必须能证明至少一种生产可达性：位于 target root 的冻结静态依赖闭包；进入生产 bundle/build manifest；属于 target 运行时直接读取路径；或 mutation 被准入 observer 证明改变了当前目标 actual。只被 verifier 或报告生成器消费的路径不得用于关闭生产语义 Claim。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.production-reachability
+  - key: counterfactual-actual-change-and-impact-set
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: Counterfactual 不只检查 Assertion 从 true 变 false，还必须比较 baseline 与 mutated actual，保持 target liveness，并对声明的受影响 Fact 集逐项产生可归因失败。一个中心 token/carrier 可以合法影响多个相关 Fact，但每个 Fact 仍需独立 locator/result；影响集必须精确声明，允许真实 fan-out，禁止把“所有无关 Fact 都不变”写成不可能约束，也禁止一个 aggregate `/status` 关闭无直接因果关系的异质 Claim。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.counterfactual-actual-change-and-impact-set
+  - key: selected-design-existing-owner-preservation
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 本 Goal 不重建设计 Fact 类型体系。继续复用现有 Expected/Canonical/Handoff 集合闭包、Fact×method、property→required methods、exact-target layout/pixel、Anatomy、relation、条件空间、V1/V2 identity 和 Final Gate fact_results owners；攻击用例应定位“现有规则未执行”或“证据被错误信任”的位置。资源 preflight 只证明输入完整性，不能代替 production conformance；reference/constraint 的 production 投影和 Fact-method compatibility 继续由既有 owners 承担。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.requirement.selected-design-existing-owner-preservation
+  - key: no-universal-ui-observer
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 首版明确不建设任意 HTML/native/UI 的通用理解、布局、像素、无障碍、时间线或 custom locator 框架，不承诺证明任意 Oracle 语义真实性，也不通过多加字段制造伪 TCB。支持范围外的 target/Fact 必须诚实转为 External Confirmation，后续格式只能经独立机制准入与收益证据扩展。
+    disposition:
+      type: global_constraint
+      refs:
+        - non_goal.no-universal-ui-observer
+  - key: v3-v4-and-migration-rule
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: P0 与首版 `json-pointer-exact-v1` 使用 v3 已有 artifact path/hash、JSON Pointer、Oracle/environment 和 comparison 字段，由 compiled/current-evidence 内部元数据补充 package adapter identity 与资源上限，因此不发布 v4；任意外部 executable 直接调用描述、可信 live-session handle/challenge/trace 或新 observation authority 若无法用 v3 保义表达，才发布 v4。若需要 v4，必须同步 schema、types/codec/decoder、managed source、Context、英文/中文 README、package README、examples、tests、source sync、tarball/consumer 验证和迁移说明；旧 Active Authority 不得自动迁移为通过，verifier/Authority identity 变化必须重新 Compile，旧 v3 selected-design 自报结果不能自动升级为通过。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.requirement.v3-v4-and-migration-rule
+  - key: attack-suite-ground-truth
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 确定性 attack suite 的 hidden ground truth 由测试 harness/package owner 持有，不由项目 verifier 生成。必须覆盖：A1 actual≠expected 但自报 pass；A2 expected 复制为 actual；A3 Anatomy 错而局部控件正确；A4 整体视觉模式错误；A5 主要行动层级错误；A6 大量异质 Assertion 共读 aggregate status；A7 mutation 指向纯 evidence carrier；A8 历史 native session；A9 H5/browser 代理冒充 native target；A10 旧截图与当前 tree 不一致；A11 task-authored verifier 是唯一 material Oracle；A12 asset_integrity 错误关闭 layout/a11y/motion。每个失败必须定位到对应 owner，而非无关 fixture/schema。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.attack-suite-ground-truth
+  - key: valid-control-suite
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 正确控制组必须证明：合法 tolerance 与动态 mask；一次 render/artifact 被多个 Fact 使用但 locator/result 独立；中心 token 合法影响多个细粒度 Fact；正确 scoped reference+constraint；准入的当前 native session；能力完整且冻结的 observer；正确 exact 候选；非 UI Long-Task 现有行为；普通 Workflow Contract 零新增运行成本；以及无可信机器观察时 External Confirmation 不被误当失败或 machine acceptance。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.valid-control-suite
+  - key: black-box-final-gate-lifecycle
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 黑盒验证必须走真实 Long-Task 生命周期并在同一当前候选上完成 Preflight/Compile、candidate、Final Gate，证明错误候选不能获得 `machine_accepted`、正确候选可以通过、开放外部确认保持 pending、protected inputs/candidate/snapshot 变化会失效，并且失败原因落到具体 Fact/method/observer/production-carrier 边界。历史 Progress、Receipt、targeted pass 或 prose inspection 不是该证据。
+    disposition:
+      type: acceptance
+      refs:
+        - proof-and-roi.verify-proof-and-roi.acceptance-black-box-final-gate-lifecycle
+  - key: starward-sanitized-replay
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 恢复“在明确 TCB 内已高水准实现设计目的”前必须完成一个受控脱敏的 Starward 派生真实项目回放，至少包含地图页、点位详情、点位夜空、“我的”页、selected design、错误与正确生产实现、自证 verifier、历史 native session 和 H5 代理路径；hidden ground truth 由 harness 持有。Starward 回放不是 P0 的前置条件，但属于本 Goal 最终能力声明恢复的前置条件。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.starward-sanitized-replay
+  - key: fresh-agent-benchmark-boundary
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: fresh-agent 配对实验复用现有冻结任务、隐藏 probe、独立配对和 2/3→必要时 3/5 的治理，只衡量 Agent 遵循率、首次发现时间、返工、Contract/Compile/Final Gate 成本、target 采集次数、token、总时长、Authority 体积、迁移与维护成本。它不得证明安全定理、关键假阳性为零或替代 deterministic attack suite、黑盒 Final Gate 与真实回放；若增设 track，应沿用现有 benchmark owner 而非第二框架。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.fresh-agent-benchmark-boundary
+  - key: roi-admission-order
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 机制 ROI 按字典序准入：先满足目的有效性下限和 known attack rejection；再保证 valid control false blocking 不增加；再证明相对 coverage/fail-closed/Authority 不劣化；最后比较总时间、token、存储、维护、迁移和用户等待成本。性能或成本结论必须声明 workload、baseline/budget、环境、comparator/tolerance 和项目自有测量；不得用静态 shape 或一次 anecdotal run 代替。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.roi-admission-order
+  - key: early-real-entry-feedback
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: material UI + selected design 在第一个有用的真实生产入口可运行且早期定位收益高于运行成本时，建议用最终同类 observer 做一次页面 Anatomy、信息/行动层级、整体视觉模式和区域关系的早期并排检查；它不新增 Gate、状态、Receipt 或完成前提，早期 artifact 仅供诊断，最终候选必须重新采集并跑完整 cold-start journey。
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.early-real-entry-feedback
+  - key: no-new-lifecycle-authority-registry
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 所有修复复用现有 Source、Contract、Compile、Evidence Kernel、Counterfactual、Final Gate、External Confirmation、Trust Boundary Gate 和 critical sentinel registry；不得新增 Long-Task 阶段、Gate、Authority、scheduler、Receipt、机制矩阵、运行时 registry 或持久状态。逻辑 Fact 细粒度不等于每个 Fact 启动一次进程：允许共享 Raw Execution/artifact，但不允许共享不可区分的 total Boolean/verdict。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.obligation.no-new-lifecycle-authority-registry
+  - key: owner-dependency-lifecycle-boundary
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: selected-design comparison owner 是 `long-task-evidence-capability-runtime.ts`，共享 exact/result identity 语义来自 `long-task-semantic-fact-evidence.ts` 或新提取的同层 primitive，设计方法 taxonomy 保持在 `design-resource-fact-policy.ts` 与 `design-resource-fact-property-methods.ts`，Final Gate 保持唯一 acceptance carrier。依赖只能从 Source/Context 经 Contract、observer、comparison 流向 Final Gate；comparison primitive 不依赖项目 verifier 的 verdict，observer adapter 不拥有 expected；失败必须显式、资源与临时 session 必须有界清理，重试不能把旧 artifact 变成当前证据。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.obligation.owner-dependency-lifecycle-boundary
+  - key: build-reuse-buy-allowed-set
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-identity owner；复用现有 design policy/property-method owners；用标准库做有界 package-owned extractor/comparator；使用已安装或成熟且 license/platform/size 兼容的依赖；使用 digest/version/capability 冻结的 executable adapter；以及对未准入观察有意不抽象并保留 External Confirmation。选择前必须枚举本次可行成员；禁止重复 owner-held rule、第二 source of truth、扩张式通用 parser、无依据重依赖、nonce-only 信任、自报 Boolean、错误依赖方向和为了相似语义强制抽象。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.obligation.build-reuse-buy-allowed-set
+  - key: technical-debt-and-future-change
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 已触及技术债是 non-UI 与 selected-design validation 的 exact/result-identity 路径分叉，处置为在不改变现有外部 schema 的前提下共享 primitive 并用两类回归锁定；不得留下新的第三路径。未来新增 comparator、locator、artifact schema、symbolic version 或 native adapter，必须通过共享 capability 接口、明确 TCB、攻击/控制组和协议准入，不得复制 validator 或把新格式默认为可信。
+    disposition:
+      type: claim
+      refs:
+        - p0-exact-recomputation.obligation.technical-debt-and-future-change
+  - key: compatibility-security-resource-boundaries
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 安全与可靠性边界包括 fail-closed parsing、路径 containment、symlink 防逃逸、大小/深度/时间/内存上限、敏感观察的 digest-only/redaction、冻结 executable 与依赖闭包 identity、challenge replay protection、当前 candidate/session 绑定和临时进程/artifact 清理。兼容性必须保持普通 default workflow、非 UI Long-Task、现有 V1 默认与 V2 opt-in、合法 tolerance/mask 和 External Confirmation；任何 public/protocol 变化都必须有显式 migration/rollout/rollback 或不可逆边界说明。
+    disposition:
+      type: claim
+      refs:
+        - observer-tcb-closure.obligation.compatibility-security-resource-boundaries
+  - key: context-and-public-authority-update
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: "总体 `Context Delta: required`。必须在代码前更新 `PROJECT_SPEC.md` 和 owning Context，记录路线 B 的项目 owner 决策、旧/新定理边界、observer capability/TCB、目的有效性下限、critical counterexample/claim downgrade、owner/dependency/debt/compatibility/验证；实现索引与验证 Context 必须指向真实代码与检查。若改变公共用户行为或协议，还要同步 managed source、Skills、英文/中文公共文档、package/readme/examples 和 distribution parity；P0 单独行为修复不需要虚构新的 durable owner。"
+    disposition:
+      type: claim
+      refs:
+        - proof-and-roi.requirement.context-and-public-authority-update
+  - key: verification-sequence-and-current-candidate
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 验证顺序为：确定性攻击/正确控制组；focused 与 changed-path affected checks；Long-Task Trust Boundary Gate；complete tests/package source parity/tarball/consumer/release regression；受控脱敏真实回放；仅用于遵循率和 ROI 的 fresh-agent 配对；Context drift；最后由本 Goal 的唯一 Long-Task Final Gate 在同一干净 current candidate 上重编译并重跑全部声明 Checks。任何 Source、Context、Contract、verifier、实现或控制输入变化后必须重跑受影响检查，历史绿色不得继承。
+    disposition:
+      type: acceptance
+      refs:
+        - proof-and-roi.verify-proof-and-roi.acceptance-verification-sequence-and-current-candidate
+  - key: final-hard-acceptance
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 最终硬验收要求：UI exact mismatch 绝不通过；expected-as-actual、自报 verdict、aggregate status、纯 evidence carrier、历史 session/截图/build、browser/H5 代理 native、task-authored 唯一 material Oracle 均不能虚假 machine-accept；material design Fact 无遗漏、错误方法或静默 N/A；当前 target/snapshot/session 与 production reachability 可证；Counterfactual 改变真实 carrier 和对应 actual；合法 tolerance/mask/共享执行/fan-out 正常；目的有效性先于相对不劣化；无开放 critical counterexample；非适用任务不增加流程；适用任务 ROI 为正；没有新增阶段、Authority、Gate、scheduler、registry 或持久状态。
+    disposition:
+      type: acceptance
+      refs:
+        - proof-and-roi.verify-proof-and-roi.acceptance-final-hard-acceptance
+  - key: approved-final-capability-wording
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 只有全部硬验收成立后，正式能力表述才可恢复为：Long-Task Workflow 在完整、准确的声明范围、预期细粒度和已准入观察/TCB 内，允许模型在中间理解、实现和修复中自然发生漂移、遗漏或幻觉；但 Source→Contract 的声明内语义遗漏、准入 observer 能发现的当前生产差异、历史或代理证据、自证式 actual、错误 comparison/verdict 及未证明边界，不能进入最终 `machine_accepted`。对于无法建立可信机器观察的事实，工作流保持未完成或 External Confirmation。该表述不声称覆盖未表达意图或 TCB 外任意行为。
+    disposition:
+      type: claim
+      refs:
+        - assurance-governance.requirement.approved-final-capability-wording
+  - key: critical-scope-escape-risk
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 主要范围逃逸风险是把路线 B 演变为任意 UI/任意 native/任意 Oracle 的通用观察框架，或趁机重建设计 Fact taxonomy、生命周期实体和协议版本。准入首版必须以有限格式、明确 capability、现有 owners 和 External Confirmation 为边界；超出边界的扩展需要新的 Source/Context 决策与独立 ROI 证据。
+    disposition:
+      type: risk_fact
+      refs:
+        - critical_user_path:observer-tcb-closure
+  - key: critical-self-attestation-risk
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 主要 TCB 风险是同一模型同时编写实现、verifier、actual、comparison 和 verdict，或 runner 回显 challenge 后继续自证。任何允许 project self-attestation 单独关闭 material Claim、允许 actual 从 expected/report 读取、或只校验字段内部一致性的实现都属于 forbidden shortcut，并阻止 handoff。
+    disposition:
+      type: risk_fact
+      refs:
+        - weak_observability:observer-tcb-closure
+  - key: critical-claim-inflation-risk
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 主要治理风险是以文档、绿测、哨兵名称、Agent benchmark 或 P0 局部成功重新宣称完整高水准能力。能力等级必须由机器攻击/控制组、明确 TCB、黑盒 Final Gate、真实回放和开放反例状态共同约束；任何超出证据范围的 rationale 或发布结论都视为防劣化失败。
+    disposition:
+      type: risk_fact
+      refs:
+        - critical_user_path:assurance-governance
+stages:
+  - key: stage-p0-exact-recomputation
+    title: P0 exact recomputation
+    depends_on: []
+    gate_outcome: p0-exact-recomputation
+  - key: stage-assurance-governance
+    title: Assurance governance
+    depends_on:
+      - stage-p0-exact-recomputation
+    gate_outcome: assurance-governance
+  - key: stage-observer-tcb-closure
+    title: Observer and TCB closure
+    depends_on:
+      - stage-assurance-governance
+    gate_outcome: observer-tcb-closure
+  - key: stage-proof-and-roi
+    title: Proof and ROI
+    depends_on:
+      - stage-observer-tcb-closure
+    gate_outcome: proof-and-roi
+risk:
+  requested_level: strict
+  facts:
+    public_api_or_schema_change: []
+    persistent_data_change: []
+    data_migration: []
+    security_boundary_change: []
+    permission_boundary_change: []
+    irreversible_external_effect: []
+    critical_user_path:
+      - p0-exact-recomputation
+      - observer-tcb-closure
+      - assurance-governance
+    full_population_operation: []
+    multi_repository_change: []
+    weak_observability:
+      - observer-tcb-closure
+global:
+  applicability:
+    - key: global-current-success
+      target_ref: harness-package-runtime
+      journey_role: success
+      dimensions:
+        - key: candidate
+          value: current
+      given_refs:
+        - global-source-locked
+      when_refs:
+        - global-verify-current
+  product:
+    non_goals:
+      - key: no-universal-ui-observer
+        statement: 首版明确不建设任意 HTML/native/UI 的通用理解、布局、像素、无障碍、时间线或 custom locator 框架，不承诺证明任意 Oracle 语义真实性，也不通过多加字段制造伪 TCB。支持范围外的 target/Fact 必须诚实转为 External Confirmation，后续格式只能经独立机制准入与收益证据扩展。
+        applicability_refs:
+          - global-current-success
+  technical:
+    constraints: []
+    forbidden_paths: []
+    forbidden_shortcuts: []
+  acceptance:
+    checks:
+      - key: verify-global-observer-boundary
+        journey_roles:
+          - success
+          - conformance
+        execution_target:
+          target_ref: harness-package-runtime
+          entrypoint: root
+        scenario:
+          given:
+            - key: global-source-locked
+              statement: The route-B observer boundary is available.
+          when:
+            - key: global-verify-current
+              statement: Inspect the bounded observer non-goal.
+        proof_surface: runtime_behavior
+        runner:
+          type: node_oracle
+          target: tools/verify_long_task_real_capability_delivery.mjs
+          argv:
+            - observer-tcb-closure
+            - global-conformance
+          cwd: .
+          timeout_ms: 900000
+          effect: read_only
+          retry_policy: none
+          idempotent: true
+        verification_inputs:
+          - tools/verify_long_task_real_capability_delivery.mjs
+          - tools/semantic_fact_delivery_evidence.mjs
+          - tools/npm_command_spec.mjs
+          - tests/ty-context/long-task-real-capability-closure.test.mjs
+        input_paths:
+          - packages/ty-context/src/lib/long-task-artifacts.ts
+          - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+          - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
+          - packages/ty-context/src/lib/long-task-evidence-v2.ts
+          - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+          - tests/ty-context/fixtures/long-task-real-capability-state.json
+        expected_output_paths:
+          - packages/ty-context/dist/**
+          - tests/src/**
+          - tests/artifacts/**
+          - tests/ty-context/base-oracle.mjs
+        artifact_globs:
+          - artifacts/semantic-fact-results.json
+        positive_assertions:
+          - key: global-observer-liveness
+            criterion: The package observer verification target remains live under mutation.
+            claims: []
+            observation: target_live
+            evidence_capabilities:
+              - target_runtime
+            operator: equals
+            expected: true
+        negative_assertions:
+          - key: non-goal-no-universal-ui-observer
+            criterion: 首版明确不建设任意 HTML/native/UI 的通用理解、布局、像素、无障碍、时间线或 custom locator 框架，不承诺证明任意 Oracle 语义真实性，也不通过多加字段制造伪 TCB。支持范围外的 target/Fact 必须诚实转为 External Confirmation，后续格式只能经独立机制准入与收益证据扩展。
+            claims:
+              - non_goal.no-universal-ui-observer
+            applicability_ref: global-current-success
+            observation: non_goal_no_universal_ui_observer
+            evidence_capabilities:
+              - target_runtime
+              - state_delta
+            operator: equals
+            expected: true
+        environment_requirements:
+          - key: node
+            kind: executable
+            target: node
+    counterfactual_controls:
+      - key: mutate-global-no-universal-ui-observer
+        binding_ref: observer-tcb-closure.admitted-observation-owner
+        claims:
+          - non_goal.no-universal-ui-observer
+        check_key: verify-global-observer-boundary
+        mutation:
+          type: replace_text
+          path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+          match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
+          replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
+        expected_assertion_failures:
+          - non-goal-no-universal-ui-observer
+        preserved_assertions:
+          - global-observer-liveness
+    external_confirmations: []
+outcomes:
+  - key: p0-exact-recomputation
+    title: P0 exact recomputation
+    stage: stage-p0-exact-recomputation
+    depends_on: []
+    applicability:
+      - key: p0-exact-recomputation-current-success
+        target_ref: harness-package-runtime
+        journey_role: success
+        dimensions:
+          - key: candidate
+            value: current
+        given_refs:
+          - p0-exact-recomputation-source-locked
+        when_refs:
+          - p0-exact-recomputation-verify-current
+    semantic_fact_bindings:
+      manifest_ref: long-task-real-capability-facts
+      facts:
+        - fact_ref: fact.requirement.known-selected-design-false-acceptance
+          claim_ref: semantic_fact.fact.requirement.known-selected-design-false-acceptance
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.p0-positive-fixture-correction
+          claim_ref: semantic_fact.fact.requirement.p0-positive-fixture-correction
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.p0-v1-negative-control
+          claim_ref: semantic_fact.fact.requirement.p0-v1-negative-control
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.p0-v2-negative-control
+          claim_ref: semantic_fact.fact.requirement.p0-v2-negative-control
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.shared-exact-comparison-owner
+          claim_ref: semantic_fact.fact.requirement.shared-exact-comparison-owner
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.p0-owner-local-and-v3-compatible
+          claim_ref: semantic_fact.fact.requirement.p0-owner-local-and-v3-compatible
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.p0-verification-boundary
+          claim_ref: semantic_fact.fact.requirement.p0-verification-boundary
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.selected-design-existing-owner-preservation
+          claim_ref: semantic_fact.fact.requirement.selected-design-existing-owner-preservation
+          applicability_ref: p0-exact-recomputation-current-success
+        - fact_ref: fact.requirement.technical-debt-and-future-change
+          claim_ref: semantic_fact.fact.requirement.technical-debt-and-future-change
+          applicability_ref: p0-exact-recomputation-current-success
+      proofs:
+        - proof_ref: proof.requirement.known-selected-design-false-acceptance.exact
+          fact_ref: fact.requirement.known-selected-design-false-acceptance
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-known-selected-design-false-acceptance
+        - proof_ref: proof.requirement.p0-positive-fixture-correction.exact
+          fact_ref: fact.requirement.p0-positive-fixture-correction
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-p0-positive-fixture-correction
+        - proof_ref: proof.requirement.p0-v1-negative-control.exact
+          fact_ref: fact.requirement.p0-v1-negative-control
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-p0-v1-negative-control
+        - proof_ref: proof.requirement.p0-v2-negative-control.exact
+          fact_ref: fact.requirement.p0-v2-negative-control
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-p0-v2-negative-control
+        - proof_ref: proof.requirement.shared-exact-comparison-owner.exact
+          fact_ref: fact.requirement.shared-exact-comparison-owner
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-shared-exact-comparison-owner
+        - proof_ref: proof.requirement.p0-owner-local-and-v3-compatible.exact
+          fact_ref: fact.requirement.p0-owner-local-and-v3-compatible
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-p0-owner-local-and-v3-compatible
+        - proof_ref: proof.requirement.p0-verification-boundary.exact
+          fact_ref: fact.requirement.p0-verification-boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-p0-verification-boundary
+        - proof_ref: proof.requirement.selected-design-existing-owner-preservation.exact
+          fact_ref: fact.requirement.selected-design-existing-owner-preservation
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-selected-design-existing-owner-preservation
+        - proof_ref: proof.requirement.technical-debt-and-future-change.exact
+          fact_ref: fact.requirement.technical-debt-and-future-change
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-p0-exact-recomputation
+          assertion_ref: semantic-technical-debt-and-future-change
+    product:
+      observable_result: P0 exact recomputation is complete on the current package candidate.
+      result_applicability_refs:
+        - p0-exact-recomputation-current-success
+      success_path_required: true
+      degradation_path_required: false
+      owner:
+        label: harness-package
+        context_refs:
+          - project_context/areas/harness-package.md
+          - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+          - project_context/areas/harness-package/implementation-index.md
+        path_globs:
+          - packages/ty-context/src/lib/long-task-exact-comparison.ts
+          - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+          - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
+          - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - docs/long-task-real-capability-closure.md
+          - PROJECT_SPEC.md
+          - project_context/**
+          - .codex/skills/authoring/harness_package_design/**
+      requirements:
+        - key: p0-positive-fixture-correction
+          statement: 默认 selected-design 正向 fixture 必须使 `actual_observation.value_sha256 == expected.sha256`；任何 mismatch 必须由测试显式构造并断言失败，禁止正向 fixture 继续内含实际不一致却自报通过的 Fact。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+        - key: p0-v1-negative-control
+          statement: V1 ground 必须具有独立负向控制：`actual != expected` 同时项目提交 `comparison.passed = true`、`verdict = passed` 时，Harness 必须在 selected-design comparison owner 处拒绝，错误 ground truth 不能由被测 verifier 生成，且失败需定位到 exact comparison/result identity 语义而非无关 schema。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+        - key: p0-v2-negative-control
+          statement: V2 symbolic 必须具有与 V1 同构的独立负向控制：规则/区域对应的 actual digest 与 frozen expected digest 不同而项目自报通过时必须被拒绝；V2 的规则、区域、certificate identity 仍按既有 symbolic owner 校验，不得因为修 exact 而弱化 V2 的 extensional closure。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+        - key: shared-exact-comparison-owner
+          statement: 提取或复用一个共享 exact comparison primitive，输入至少包含 actual digest、expected digest、comparator、mode、parameters、tolerance 和 mask，输出由 Harness 计算的 comparison result 与 result identity。selected-design runtime 必须复用非 UI exact/result-identity 的既有语义或共享底层 primitive，消除两条路径的重复真相；项目提交的 `passed`/`verdict` 只能作为兼容冗余，与 Harness 结果不一致时 fail closed。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+        - key: p0-owner-local-and-v3-compatible
+          statement: P0 严格 owner-local：主要修改 `packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts`、必要的共享 exact primitive、`tests/ty-context/long-task-delivery-fixtures.mjs`、现有 `tests/ty-context/long-task-semantic-drift-closure.test.mjs` 和现有哨兵 rationale。P0 不改变 schema，不为了局部比较修复发布 v4，不新建测试 registry、生命周期状态或第二套 Fact taxonomy。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+        - key: selected-design-existing-owner-preservation
+          statement: 本 Goal 不重建设计 Fact 类型体系。继续复用现有 Expected/Canonical/Handoff 集合闭包、Fact×method、property→required methods、exact-target layout/pixel、Anatomy、relation、条件空间、V1/V2 identity 和 Final Gate fact_results owners；攻击用例应定位“现有规则未执行”或“证据被错误信任”的位置。资源 preflight 只证明输入完整性，不能代替 production conformance；reference/constraint 的 production 投影和 Fact-method compatibility 继续由既有 owners 承担。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+      owner_surfaces: []
+      controls: []
+      control_relation_closure:
+        state: not_applicable
+        statement: This non-UI mechanism Outcome declares no user Controls or cross-Control relation.
+        applicability_refs:
+          - p0-exact-recomputation-current-success
+      control_relations: []
+      surface_bindings: []
+      non_completing_outcomes: []
+    technical:
+      obligations:
+        - key: technical-debt-and-future-change
+          statement: 已触及技术债是 non-UI 与 selected-design validation 的 exact/result-identity 路径分叉，处置为在不改变现有外部 schema 的前提下共享 primitive 并用两类回归锁定；不得留下新的第三路径。未来新增 comparator、locator、artifact schema、symbolic version 或 native adapter，必须通过共享 capability 接口、明确 TCB、攻击/控制组和协议准入，不得复制 validator 或把新格式默认为可信。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - p0-exact-recomputation-current-success
+      expected_change_paths:
+        - packages/ty-context/src/lib/long-task-exact-comparison.ts
+        - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+        - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
+        - tests/ty-context/fixtures/long-task-real-capability-state.json
+      allowed_support_paths:
+        - docs/long-task-real-capability-closure.md
+        - PROJECT_SPEC.md
+        - project_context/**
+        - .codex/skills/authoring/harness_package_design/**
+      forbidden_paths:
+        - .git/**
+      bindings:
+        - key: exact-comparison-owner
+          kind: file
+          target: packages/ty-context/src/lib/long-task-exact-comparison.ts
+          carrier_paths:
+            - packages/ty-context/src/lib/long-task-exact-comparison.ts
+          existence: planned
+        - key: relation-fixture
+          kind: file
+          target: tests/ty-context/fixtures/long-task-real-capability-state.json
+          carrier_paths:
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          existence: existing
+      forbidden_shortcuts: []
+      rollback_and_recovery: null
+    acceptance:
+      checks:
+        - key: verify-p0-exact-recomputation
+          journey_roles:
+            - success
+            - stage_gate
+          execution_target:
+            target_ref: harness-package-runtime
+            entrypoint: root
+          scenario:
+            given:
+              - key: p0-exact-recomputation-source-locked
+                statement: The Source, full Context and current package candidate are available.
+            when:
+              - key: p0-exact-recomputation-verify-current
+                statement: Run P0 exact recomputation verification on the current candidate.
+          proof_surface: runtime_behavior
+          runner:
+            type: node_oracle
+            target: tools/verify_long_task_real_capability_delivery.mjs
+            argv:
+              - p0-exact-recomputation
+            cwd: .
+            timeout_ms: 900000
+            effect: test_sandbox
+            retry_policy: none
+            idempotent: true
+          verification_inputs:
+            - tools/verify_long_task_real_capability_delivery.mjs
+            - tools/semantic_fact_delivery_evidence.mjs
+            - tools/npm_command_spec.mjs
+            - tests/ty-context/long-task-semantic-drift-closure.test.mjs
+            - tests/ty-context/long-task-symbolic-denotation-v2.test.mjs
+            - tests/ty-context/long-task-delivery-fixtures.mjs
+            - tests/ty-context/long-task-exact-comparison-fixture.mjs
+            - tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs
+            - tests/ty-context/symbolic-denotation-long-task-v2-records.mjs
+          input_paths:
+            - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+            - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          expected_output_paths:
+            - packages/ty-context/dist/**
+            - tests/src/**
+            - tests/artifacts/**
+            - tests/ty-context/base-oracle.mjs
+          artifact_globs:
+            - artifacts/semantic-fact-results.json
+            - .artifacts/long-task-real-capability/**
+          positive_assertions:
+            - key: p0-exact-recomputation-result
+              criterion: P0 exact recomputation is complete on the current package candidate.
+              claims:
+                - result
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: p0_exact_recomputation_result
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-p0-positive-fixture-correction
+              criterion: 默认 selected-design 正向 fixture 必须使 `actual_observation.value_sha256 == expected.sha256`；任何 mismatch 必须由测试显式构造并断言失败，禁止正向 fixture 继续内含实际不一致却自报通过的 Fact。
+              claims:
+                - requirement.p0-positive-fixture-correction
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_p0_positive_fixture_correction
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-p0-v1-negative-control
+              criterion: V1 ground 必须具有独立负向控制：`actual != expected` 同时项目提交 `comparison.passed = true`、`verdict = passed` 时，Harness 必须在 selected-design comparison owner 处拒绝，错误 ground truth 不能由被测 verifier 生成，且失败需定位到 exact comparison/result identity 语义而非无关 schema。
+              claims:
+                - requirement.p0-v1-negative-control
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_p0_v1_negative_control
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-p0-v2-negative-control
+              criterion: V2 symbolic 必须具有与 V1 同构的独立负向控制：规则/区域对应的 actual digest 与 frozen expected digest 不同而项目自报通过时必须被拒绝；V2 的规则、区域、certificate identity 仍按既有 symbolic owner 校验，不得因为修 exact 而弱化 V2 的 extensional closure。
+              claims:
+                - requirement.p0-v2-negative-control
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_p0_v2_negative_control
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-shared-exact-comparison-owner
+              criterion: 提取或复用一个共享 exact comparison primitive，输入至少包含 actual digest、expected digest、comparator、mode、parameters、tolerance 和 mask，输出由 Harness 计算的 comparison result 与 result identity。selected-design runtime 必须复用非 UI exact/result-identity 的既有语义或共享底层 primitive，消除两条路径的重复真相；项目提交的 `passed`/`verdict` 只能作为兼容冗余，与 Harness 结果不一致时 fail closed。
+              claims:
+                - requirement.shared-exact-comparison-owner
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_shared_exact_comparison_owner
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-p0-owner-local-and-v3-compatible
+              criterion: P0 严格 owner-local：主要修改 `packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts`、必要的共享 exact primitive、`tests/ty-context/long-task-delivery-fixtures.mjs`、现有 `tests/ty-context/long-task-semantic-drift-closure.test.mjs` 和现有哨兵 rationale。P0 不改变 schema，不为了局部比较修复发布 v4，不新建测试 registry、生命周期状态或第二套 Fact taxonomy。
+              claims:
+                - requirement.p0-owner-local-and-v3-compatible
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_p0_owner_local_and_v3_compatible
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-selected-design-existing-owner-preservation
+              criterion: 本 Goal 不重建设计 Fact 类型体系。继续复用现有 Expected/Canonical/Handoff 集合闭包、Fact×method、property→required methods、exact-target layout/pixel、Anatomy、relation、条件空间、V1/V2 identity 和 Final Gate fact_results owners；攻击用例应定位“现有规则未执行”或“证据被错误信任”的位置。资源 preflight 只证明输入完整性，不能代替 production conformance；reference/constraint 的 production 投影和 Fact-method compatibility 继续由既有 owners 承担。
+              claims:
+                - requirement.selected-design-existing-owner-preservation
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: requirement_selected_design_existing_owner_preservation
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-technical-debt-and-future-change
+              criterion: 已触及技术债是 non-UI 与 selected-design validation 的 exact/result-identity 路径分叉，处置为在不改变现有外部 schema 的前提下共享 primitive 并用两类回归锁定；不得留下新的第三路径。未来新增 comparator、locator、artifact schema、symbolic version 或 native adapter，必须通过共享 capability 接口、明确 TCB、攻击/控制组和协议准入，不得复制 validator 或把新格式默认为可信。
+              claims:
+                - obligation.technical-debt-and-future-change
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: obligation_technical_debt_and_future_change
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: semantic-known-selected-design-false-acceptance
+              criterion: The exact Source-indexed semantic Fact known-selected-design-false-acceptance is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.known-selected-design-false-acceptance
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_known_selected_design_false_acceptance
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-p0-positive-fixture-correction
+              criterion: The exact Source-indexed semantic Fact p0-positive-fixture-correction is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.p0-positive-fixture-correction
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_p0_positive_fixture_correction
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-p0-v1-negative-control
+              criterion: The exact Source-indexed semantic Fact p0-v1-negative-control is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.p0-v1-negative-control
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_p0_v1_negative_control
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-p0-v2-negative-control
+              criterion: The exact Source-indexed semantic Fact p0-v2-negative-control is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.p0-v2-negative-control
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_p0_v2_negative_control
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-shared-exact-comparison-owner
+              criterion: The exact Source-indexed semantic Fact shared-exact-comparison-owner is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.shared-exact-comparison-owner
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_shared_exact_comparison_owner
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-p0-owner-local-and-v3-compatible
+              criterion: The exact Source-indexed semantic Fact p0-owner-local-and-v3-compatible is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.p0-owner-local-and-v3-compatible
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_p0_owner_local_and_v3_compatible
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-p0-verification-boundary
+              criterion: The exact Source-indexed semantic Fact p0-verification-boundary is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.p0-verification-boundary
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_p0_verification_boundary
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-selected-design-existing-owner-preservation
+              criterion: The exact Source-indexed semantic Fact selected-design-existing-owner-preservation is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.selected-design-existing-owner-preservation
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_selected_design_existing_owner_preservation
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-technical-debt-and-future-change
+              criterion: The exact Source-indexed semantic Fact technical-debt-and-future-change is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.technical-debt-and-future-change
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: semantic_fact_technical_debt_and_future_change
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: acceptance-p0-verification-boundary
+              criterion: P0 当前候选必须依次通过 focused exact mismatch tests、`selected-design-fact-closure`/新强化的 `selected-design-exact-verdict-recomputation` critical sentinel、Long-Task Trust Boundary Gate、affected tests 和完整 package regression；还需证明旧行为接受冻结反例而修复候选拒绝它。P0 通过不得被表述为完整设计目的已恢复。
+              claims:
+                - requirement.p0-positive-fixture-correction
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: acceptance_p0_verification_boundary
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: p0-exact-recomputation-liveness
+              criterion: The package verification target remains live under semantic mutation.
+              claims: []
+              observation: target_live
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: true
+          negative_assertions:
+            - key: p0-exact-recomputation-relations-na
+              criterion: Cross-Control relations remain inapplicable because this Outcome declares no Controls.
+              claims:
+                - control_relation_closure
+              applicability_ref: p0-exact-recomputation-current-success
+              observation: relations_applicable
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: false
+          environment_requirements:
+            - key: node
+              kind: executable
+              target: node
+      population: null
+      counterfactual_controls:
+        - key: mutate-p0-exact-recomputation
+          binding_key: exact-comparison-owner
+          claims:
+            - result
+            - requirement.p0-positive-fixture-correction
+            - requirement.p0-v1-negative-control
+            - requirement.p0-v2-negative-control
+            - requirement.shared-exact-comparison-owner
+            - requirement.p0-owner-local-and-v3-compatible
+            - requirement.selected-design-existing-owner-preservation
+            - obligation.technical-debt-and-future-change
+            - semantic_fact.fact.requirement.known-selected-design-false-acceptance
+            - semantic_fact.fact.requirement.p0-positive-fixture-correction
+            - semantic_fact.fact.requirement.p0-v1-negative-control
+            - semantic_fact.fact.requirement.p0-v2-negative-control
+            - semantic_fact.fact.requirement.shared-exact-comparison-owner
+            - semantic_fact.fact.requirement.p0-owner-local-and-v3-compatible
+            - semantic_fact.fact.requirement.p0-verification-boundary
+            - semantic_fact.fact.requirement.selected-design-existing-owner-preservation
+            - semantic_fact.fact.requirement.technical-debt-and-future-change
+          check_key: verify-p0-exact-recomputation
+          mutation:
+            type: replace_text
+            path: packages/ty-context/src/lib/long-task-exact-comparison.ts
+            match: actual_value_sha256 === expected_value_sha256
+            replacement: actual_value_sha256 !== expected_value_sha256
+          expected_assertion_failures:
+            - p0-exact-recomputation-result
+            - requirement-p0-positive-fixture-correction
+            - requirement-p0-v1-negative-control
+            - requirement-p0-v2-negative-control
+            - requirement-shared-exact-comparison-owner
+            - requirement-p0-owner-local-and-v3-compatible
+            - requirement-selected-design-existing-owner-preservation
+            - obligation-technical-debt-and-future-change
+            - semantic-known-selected-design-false-acceptance
+            - semantic-p0-positive-fixture-correction
+            - semantic-p0-v1-negative-control
+            - semantic-p0-v2-negative-control
+            - semantic-shared-exact-comparison-owner
+            - semantic-p0-owner-local-and-v3-compatible
+            - semantic-p0-verification-boundary
+            - semantic-selected-design-existing-owner-preservation
+            - semantic-technical-debt-and-future-change
+            - acceptance-p0-verification-boundary
+          preserved_assertions:
+            - p0-exact-recomputation-liveness
+        - key: mutate-p0-exact-recomputation-relation-closure
+          binding_key: relation-fixture
+          claims:
+            - control_relation_closure
+          check_key: verify-p0-exact-recomputation
+          mutation:
+            type: replace_json_value
+            path: tests/ty-context/fixtures/long-task-real-capability-state.json
+            pointer: /relations_applicable
+            value: true
+          expected_assertion_failures:
+            - p0-exact-recomputation-relations-na
+          preserved_assertions:
+            - p0-exact-recomputation-liveness
+  - key: assurance-governance
+    title: Assurance governance
+    stage: stage-assurance-governance
+    depends_on:
+      - p0-exact-recomputation
+    applicability:
+      - key: assurance-governance-current-success
+        target_ref: harness-package-runtime
+        journey_role: success
+        dimensions:
+          - key: candidate
+            value: current
+        given_refs:
+          - assurance-governance-source-locked
+        when_refs:
+          - assurance-governance-verify-current
+    semantic_fact_bindings:
+      manifest_ref: long-task-real-capability-facts
+      facts:
+        - fact_ref: fact.requirement.purpose-validity-floor-before-relative-antidegradation
+          claim_ref: semantic_fact.fact.requirement.purpose-validity-floor-before-relative-antidegradation
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.invalid-baseline-and-claim-downgrade
+          claim_ref: semantic_fact.fact.requirement.invalid-baseline-and-claim-downgrade
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.coverage-defined-by-rejected-attack-surface
+          claim_ref: semantic_fact.fact.requirement.coverage-defined-by-rejected-attack-surface
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.critical-sentinel-positive-negative-controls
+          claim_ref: semantic_fact.fact.requirement.critical-sentinel-positive-negative-controls
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.incident-counterexample-first-rule
+          claim_ref: semantic_fact.fact.requirement.incident-counterexample-first-rule
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.sentinel-rationale-evidence-bounded
+          claim_ref: semantic_fact.fact.requirement.sentinel-rationale-evidence-bounded
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.capability-claim-levels
+          claim_ref: semantic_fact.fact.requirement.capability-claim-levels
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.no-new-lifecycle-authority-registry
+          claim_ref: semantic_fact.fact.requirement.no-new-lifecycle-authority-registry
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.approved-final-capability-wording
+          claim_ref: semantic_fact.fact.requirement.approved-final-capability-wording
+          applicability_ref: assurance-governance-current-success
+        - fact_ref: fact.requirement.critical-claim-inflation-risk
+          claim_ref: semantic_fact.fact.requirement.critical-claim-inflation-risk
+          applicability_ref: assurance-governance-current-success
+      proofs:
+        - proof_ref: proof.requirement.purpose-validity-floor-before-relative-antidegradation.exact
+          fact_ref: fact.requirement.purpose-validity-floor-before-relative-antidegradation
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-purpose-validity-floor-before-relative-antidegradation
+        - proof_ref: proof.requirement.invalid-baseline-and-claim-downgrade.exact
+          fact_ref: fact.requirement.invalid-baseline-and-claim-downgrade
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-invalid-baseline-and-claim-downgrade
+        - proof_ref: proof.requirement.coverage-defined-by-rejected-attack-surface.exact
+          fact_ref: fact.requirement.coverage-defined-by-rejected-attack-surface
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-coverage-defined-by-rejected-attack-surface
+        - proof_ref: proof.requirement.critical-sentinel-positive-negative-controls.exact
+          fact_ref: fact.requirement.critical-sentinel-positive-negative-controls
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-critical-sentinel-positive-negative-controls
+        - proof_ref: proof.requirement.incident-counterexample-first-rule.exact
+          fact_ref: fact.requirement.incident-counterexample-first-rule
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-incident-counterexample-first-rule
+        - proof_ref: proof.requirement.sentinel-rationale-evidence-bounded.exact
+          fact_ref: fact.requirement.sentinel-rationale-evidence-bounded
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-sentinel-rationale-evidence-bounded
+        - proof_ref: proof.requirement.capability-claim-levels.exact
+          fact_ref: fact.requirement.capability-claim-levels
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-capability-claim-levels
+        - proof_ref: proof.requirement.no-new-lifecycle-authority-registry.exact
+          fact_ref: fact.requirement.no-new-lifecycle-authority-registry
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-no-new-lifecycle-authority-registry
+        - proof_ref: proof.requirement.approved-final-capability-wording.exact
+          fact_ref: fact.requirement.approved-final-capability-wording
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-approved-final-capability-wording
+        - proof_ref: proof.requirement.critical-claim-inflation-risk.exact
+          fact_ref: fact.requirement.critical-claim-inflation-risk
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-assurance-governance
+          assertion_ref: semantic-critical-claim-inflation-risk
+    product:
+      observable_result: Assurance governance is complete on the current package candidate.
+      result_applicability_refs:
+        - assurance-governance-current-success
+      success_path_required: true
+      degradation_path_required: false
+      owner:
+        label: harness-package
+        context_refs:
+          - project_context/areas/harness-package.md
+          - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+          - project_context/areas/harness-package/implementation-index.md
+        path_globs:
+          - tools/test_suite_policy.mjs
+          - PROJECT_SPEC.md
+          - project_context/areas/harness-package/verification.md
+          - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+          - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
+          - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
+          - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - docs/long-task-real-capability-closure.md
+          - project_context/**
+          - .codex/skills/authoring/harness_package_design/**
+      requirements:
+        - key: purpose-validity-floor-before-relative-antidegradation
+          statement: 机制开发准入顺序必须是：在明确威胁模型与 TCB 内的声明目的有效性下限 → 相对非劣化 → 有效候选不被误阻 → 总成本与 ROI。有效性下限至少要求冻结关键反例全部被拒绝、正确控制组全部通过、没有未关闭的已知 critical false acceptance、能力声明不超过证据支持范围；它不是“绝对正确”机器状态，也不得成为消费者 Long-Task 的新 Gate、状态、Authority 或 registry。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: invalid-baseline-and-claim-downgrade
+          statement: 发现 current `main` 的 critical false-completion path 后，错误行为被标记为 defect，不属于需要保留的有效 Coverage；相关高水准能力声明立即降级，反例先进入固定威胁集，候选必须证明旧版接受且修复版拒绝。在回归、可信观察闭环和要求的真实回放完成前，不得以旧测试绿色、总体逻辑、文档禁止或项目 verifier 写错为由维持原声明。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: coverage-defined-by-rejected-attack-surface
+          statement: 防劣化 Coverage 表示机制能拒绝的已知错误完成路径集合，不以测试文件数、Assertion 数、Fact 数、哨兵名称或 CI 绿色计数代替。相对比较只能使用已证明有效的 baseline：`Coverage_new` 不少于有效 baseline，false-negative resistance、false-positive behavior、Authority、freshness 与 fail-closed 不得变弱；选择一个允许方案不删除其他仍受支持的允许成员。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: critical-sentinel-positive-negative-controls
+          statement: 每个高层 critical sentinel 至少绑定：一个正确候选通过；一个直接违反该能力的错误候选失败；独立于被测 verifier 的 ground truth；修改真实生产语义的 mutation；在声明 owner/Fact/Assertion 边界的预期定位；以及证明合法共享执行、容差、mask 和动态值不会被误阻的控制组。继续复用 `CRITICAL_TEST_SENTINELS`，不新增第二 registry。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: incident-counterexample-first-rule
+          statement: 任何真实的明显需求违背、selected-design 漂移、历史证据冒充当前证据、verifier 自证或 Final Gate 近似错误接受，必须先形成能在旧版复现的最小负向 fixture，再修改实现；修复后证明旧版接受、当前版拒绝，且失败落在声明的语义 owner。开放 critical counterexample 自动降级对应能力声明。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: sentinel-rationale-evidence-bounded
+          statement: 现有 critical sentinel rationale 和测试策略描述不得超过实际正负控制证明的范围。`selected-design-exact-verdict-recomputation` 应强化现有 semantic-drift-closure 测试和现有 registry 项，不必新建测试文件；如果测试只证明 exact digest 重算，就不得声称已证明任意 observer、任意 UI 格式或完整 live-session 真实性。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: capability-claim-levels
+          statement: 正式开发与发布结论只使用四级能力表述：已设计；已实现；已建立已知反例保护；在明确 TCB 内已高水准实现设计目的。最高级必须同时具备明确支持范围/TCB、Source 与投影闭包、独立当前 actual、Harness 重算 verdict、关键攻击全拒绝、正确控制组通过、黑盒 Final Gate、至少一个真实或脱敏真实项目回放、无开放 critical counterexample 和机制 ROI 准入。GPT、Codex、人工 prose 审计、文档声明、测试数量或单次 benchmark 都不能提升等级。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+        - key: approved-final-capability-wording
+          statement: 只有全部硬验收成立后，正式能力表述才可恢复为：Long-Task Workflow 在完整、准确的声明范围、预期细粒度和已准入观察/TCB 内，允许模型在中间理解、实现和修复中自然发生漂移、遗漏或幻觉；但 Source→Contract 的声明内语义遗漏、准入 observer 能发现的当前生产差异、历史或代理证据、自证式 actual、错误 comparison/verdict 及未证明边界，不能进入最终 `machine_accepted`。对于无法建立可信机器观察的事实，工作流保持未完成或 External Confirmation。该表述不声称覆盖未表达意图或 TCB 外任意行为。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+      owner_surfaces: []
+      controls: []
+      control_relation_closure:
+        state: not_applicable
+        statement: This non-UI mechanism Outcome declares no user Controls or cross-Control relation.
+        applicability_refs:
+          - assurance-governance-current-success
+      control_relations: []
+      surface_bindings: []
+      non_completing_outcomes: []
+    technical:
+      obligations:
+        - key: no-new-lifecycle-authority-registry
+          statement: 所有修复复用现有 Source、Contract、Compile、Evidence Kernel、Counterfactual、Final Gate、External Confirmation、Trust Boundary Gate 和 critical sentinel registry；不得新增 Long-Task 阶段、Gate、Authority、scheduler、Receipt、机制矩阵、运行时 registry 或持久状态。逻辑 Fact 细粒度不等于每个 Fact 启动一次进程：允许共享 Raw Execution/artifact，但不允许共享不可区分的 total Boolean/verdict。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - assurance-governance-current-success
+      expected_change_paths:
+        - tools/test_suite_policy.mjs
+        - PROJECT_SPEC.md
+        - project_context/areas/harness-package/verification.md
+        - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+        - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
+        - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
+        - tests/ty-context/fixtures/long-task-real-capability-state.json
+      allowed_support_paths:
+        - docs/long-task-real-capability-closure.md
+        - PROJECT_SPEC.md
+        - project_context/**
+        - .codex/skills/authoring/harness_package_design/**
+      forbidden_paths:
+        - .git/**
+      bindings:
+        - key: critical-sentinel-policy
+          kind: file
+          target: tools/test_suite_policy.mjs
+          carrier_paths:
+            - tools/test_suite_policy.mjs
+          existence: existing
+        - key: relation-fixture
+          kind: file
+          target: tests/ty-context/fixtures/long-task-real-capability-state.json
+          carrier_paths:
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          existence: existing
+      forbidden_shortcuts: []
+      rollback_and_recovery: null
+    acceptance:
+      checks:
+        - key: verify-assurance-governance
+          journey_roles:
+            - success
+            - stage_gate
+          execution_target:
+            target_ref: harness-package-runtime
+            entrypoint: root
+          scenario:
+            given:
+              - key: assurance-governance-source-locked
+                statement: The Source, full Context and current package candidate are available.
+            when:
+              - key: assurance-governance-verify-current
+                statement: Run Assurance governance verification on the current candidate.
+          proof_surface: runtime_behavior
+          runner:
+            type: node_oracle
+            target: tools/verify_long_task_real_capability_delivery.mjs
+            argv:
+              - assurance-governance
+            cwd: .
+            timeout_ms: 900000
+            effect: test_sandbox
+            retry_policy: none
+            idempotent: true
+          verification_inputs:
+            - tools/verify_long_task_real_capability_delivery.mjs
+            - tools/semantic_fact_delivery_evidence.mjs
+            - tools/npm_command_spec.mjs
+            - tests/ty-context/test-suite-runtime.test.mjs
+            - tests/ty-context/long-task-delivery-fixtures.mjs
+            - tests/ty-context/long-task-exact-comparison-fixture.mjs
+            - tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs
+            - tests/ty-context/symbolic-denotation-long-task-v2-records.mjs
+          input_paths:
+            - tools/test_suite_policy.mjs
+            - PROJECT_SPEC.md
+            - project_context/areas/harness-package/verification.md
+            - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+            - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
+            - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          expected_output_paths:
+            - packages/ty-context/dist/**
+            - tests/src/**
+            - tests/artifacts/**
+            - tests/ty-context/base-oracle.mjs
+          artifact_globs:
+            - artifacts/semantic-fact-results.json
+            - .artifacts/long-task-real-capability/**
+          positive_assertions:
+            - key: assurance-governance-result
+              criterion: Assurance governance is complete on the current package candidate.
+              claims:
+                - result
+              applicability_ref: assurance-governance-current-success
+              observation: assurance_governance_result
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-purpose-validity-floor-before-relative-antidegradation
+              criterion: 机制开发准入顺序必须是：在明确威胁模型与 TCB 内的声明目的有效性下限 → 相对非劣化 → 有效候选不被误阻 → 总成本与 ROI。有效性下限至少要求冻结关键反例全部被拒绝、正确控制组全部通过、没有未关闭的已知 critical false acceptance、能力声明不超过证据支持范围；它不是“绝对正确”机器状态，也不得成为消费者 Long-Task 的新 Gate、状态、Authority 或 registry。
+              claims:
+                - requirement.purpose-validity-floor-before-relative-antidegradation
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_purpose_validity_floor_before_relative_antidegradation
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-invalid-baseline-and-claim-downgrade
+              criterion: 发现 current `main` 的 critical false-completion path 后，错误行为被标记为 defect，不属于需要保留的有效 Coverage；相关高水准能力声明立即降级，反例先进入固定威胁集，候选必须证明旧版接受且修复版拒绝。在回归、可信观察闭环和要求的真实回放完成前，不得以旧测试绿色、总体逻辑、文档禁止或项目 verifier 写错为由维持原声明。
+              claims:
+                - requirement.invalid-baseline-and-claim-downgrade
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_invalid_baseline_and_claim_downgrade
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-coverage-defined-by-rejected-attack-surface
+              criterion: 防劣化 Coverage 表示机制能拒绝的已知错误完成路径集合，不以测试文件数、Assertion 数、Fact 数、哨兵名称或 CI 绿色计数代替。相对比较只能使用已证明有效的 baseline：`Coverage_new` 不少于有效 baseline，false-negative resistance、false-positive behavior、Authority、freshness 与 fail-closed 不得变弱；选择一个允许方案不删除其他仍受支持的允许成员。
+              claims:
+                - requirement.coverage-defined-by-rejected-attack-surface
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_coverage_defined_by_rejected_attack_surface
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-critical-sentinel-positive-negative-controls
+              criterion: 每个高层 critical sentinel 至少绑定：一个正确候选通过；一个直接违反该能力的错误候选失败；独立于被测 verifier 的 ground truth；修改真实生产语义的 mutation；在声明 owner/Fact/Assertion 边界的预期定位；以及证明合法共享执行、容差、mask 和动态值不会被误阻的控制组。继续复用 `CRITICAL_TEST_SENTINELS`，不新增第二 registry。
+              claims:
+                - requirement.critical-sentinel-positive-negative-controls
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_critical_sentinel_positive_negative_controls
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-incident-counterexample-first-rule
+              criterion: 任何真实的明显需求违背、selected-design 漂移、历史证据冒充当前证据、verifier 自证或 Final Gate 近似错误接受，必须先形成能在旧版复现的最小负向 fixture，再修改实现；修复后证明旧版接受、当前版拒绝，且失败落在声明的语义 owner。开放 critical counterexample 自动降级对应能力声明。
+              claims:
+                - requirement.incident-counterexample-first-rule
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_incident_counterexample_first_rule
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-sentinel-rationale-evidence-bounded
+              criterion: 现有 critical sentinel rationale 和测试策略描述不得超过实际正负控制证明的范围。`selected-design-exact-verdict-recomputation` 应强化现有 semantic-drift-closure 测试和现有 registry 项，不必新建测试文件；如果测试只证明 exact digest 重算，就不得声称已证明任意 observer、任意 UI 格式或完整 live-session 真实性。
+              claims:
+                - requirement.sentinel-rationale-evidence-bounded
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_sentinel_rationale_evidence_bounded
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-capability-claim-levels
+              criterion: 正式开发与发布结论只使用四级能力表述：已设计；已实现；已建立已知反例保护；在明确 TCB 内已高水准实现设计目的。最高级必须同时具备明确支持范围/TCB、Source 与投影闭包、独立当前 actual、Harness 重算 verdict、关键攻击全拒绝、正确控制组通过、黑盒 Final Gate、至少一个真实或脱敏真实项目回放、无开放 critical counterexample 和机制 ROI 准入。GPT、Codex、人工 prose 审计、文档声明、测试数量或单次 benchmark 都不能提升等级。
+              claims:
+                - requirement.capability-claim-levels
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_capability_claim_levels
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-approved-final-capability-wording
+              criterion: 只有全部硬验收成立后，正式能力表述才可恢复为：Long-Task Workflow 在完整、准确的声明范围、预期细粒度和已准入观察/TCB 内，允许模型在中间理解、实现和修复中自然发生漂移、遗漏或幻觉；但 Source→Contract 的声明内语义遗漏、准入 observer 能发现的当前生产差异、历史或代理证据、自证式 actual、错误 comparison/verdict 及未证明边界，不能进入最终 `machine_accepted`。对于无法建立可信机器观察的事实，工作流保持未完成或 External Confirmation。该表述不声称覆盖未表达意图或 TCB 外任意行为。
+              claims:
+                - requirement.approved-final-capability-wording
+              applicability_ref: assurance-governance-current-success
+              observation: requirement_approved_final_capability_wording
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-no-new-lifecycle-authority-registry
+              criterion: 所有修复复用现有 Source、Contract、Compile、Evidence Kernel、Counterfactual、Final Gate、External Confirmation、Trust Boundary Gate 和 critical sentinel registry；不得新增 Long-Task 阶段、Gate、Authority、scheduler、Receipt、机制矩阵、运行时 registry 或持久状态。逻辑 Fact 细粒度不等于每个 Fact 启动一次进程：允许共享 Raw Execution/artifact，但不允许共享不可区分的 total Boolean/verdict。
+              claims:
+                - obligation.no-new-lifecycle-authority-registry
+              applicability_ref: assurance-governance-current-success
+              observation: obligation_no_new_lifecycle_authority_registry
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: semantic-purpose-validity-floor-before-relative-antidegradation
+              criterion: The exact Source-indexed semantic Fact purpose-validity-floor-before-relative-antidegradation is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.purpose-validity-floor-before-relative-antidegradation
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_purpose_validity_floor_before_relative_antidegradation
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-invalid-baseline-and-claim-downgrade
+              criterion: The exact Source-indexed semantic Fact invalid-baseline-and-claim-downgrade is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.invalid-baseline-and-claim-downgrade
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_invalid_baseline_and_claim_downgrade
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-coverage-defined-by-rejected-attack-surface
+              criterion: The exact Source-indexed semantic Fact coverage-defined-by-rejected-attack-surface is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.coverage-defined-by-rejected-attack-surface
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_coverage_defined_by_rejected_attack_surface
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-critical-sentinel-positive-negative-controls
+              criterion: The exact Source-indexed semantic Fact critical-sentinel-positive-negative-controls is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.critical-sentinel-positive-negative-controls
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_critical_sentinel_positive_negative_controls
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-incident-counterexample-first-rule
+              criterion: The exact Source-indexed semantic Fact incident-counterexample-first-rule is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.incident-counterexample-first-rule
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_incident_counterexample_first_rule
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-sentinel-rationale-evidence-bounded
+              criterion: The exact Source-indexed semantic Fact sentinel-rationale-evidence-bounded is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.sentinel-rationale-evidence-bounded
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_sentinel_rationale_evidence_bounded
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-capability-claim-levels
+              criterion: The exact Source-indexed semantic Fact capability-claim-levels is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.capability-claim-levels
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_capability_claim_levels
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-no-new-lifecycle-authority-registry
+              criterion: The exact Source-indexed semantic Fact no-new-lifecycle-authority-registry is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.no-new-lifecycle-authority-registry
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_no_new_lifecycle_authority_registry
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-approved-final-capability-wording
+              criterion: The exact Source-indexed semantic Fact approved-final-capability-wording is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.approved-final-capability-wording
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_approved_final_capability_wording
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-critical-claim-inflation-risk
+              criterion: The exact Source-indexed semantic Fact critical-claim-inflation-risk is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.critical-claim-inflation-risk
+              applicability_ref: assurance-governance-current-success
+              observation: semantic_fact_critical_claim_inflation_risk
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: assurance-governance-liveness
+              criterion: The package verification target remains live under semantic mutation.
+              claims: []
+              observation: target_live
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: true
+          negative_assertions:
+            - key: assurance-governance-relations-na
+              criterion: Cross-Control relations remain inapplicable because this Outcome declares no Controls.
+              claims:
+                - control_relation_closure
+              applicability_ref: assurance-governance-current-success
+              observation: relations_applicable
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: false
+          environment_requirements:
+            - key: node
+              kind: executable
+              target: node
+      population: null
+      counterfactual_controls:
+        - key: mutate-assurance-governance
+          binding_key: critical-sentinel-policy
+          claims:
+            - result
+            - requirement.purpose-validity-floor-before-relative-antidegradation
+            - requirement.invalid-baseline-and-claim-downgrade
+            - requirement.coverage-defined-by-rejected-attack-surface
+            - requirement.critical-sentinel-positive-negative-controls
+            - requirement.incident-counterexample-first-rule
+            - requirement.sentinel-rationale-evidence-bounded
+            - requirement.capability-claim-levels
+            - requirement.approved-final-capability-wording
+            - obligation.no-new-lifecycle-authority-registry
+            - semantic_fact.fact.requirement.purpose-validity-floor-before-relative-antidegradation
+            - semantic_fact.fact.requirement.invalid-baseline-and-claim-downgrade
+            - semantic_fact.fact.requirement.coverage-defined-by-rejected-attack-surface
+            - semantic_fact.fact.requirement.critical-sentinel-positive-negative-controls
+            - semantic_fact.fact.requirement.incident-counterexample-first-rule
+            - semantic_fact.fact.requirement.sentinel-rationale-evidence-bounded
+            - semantic_fact.fact.requirement.capability-claim-levels
+            - semantic_fact.fact.requirement.no-new-lifecycle-authority-registry
+            - semantic_fact.fact.requirement.approved-final-capability-wording
+            - semantic_fact.fact.requirement.critical-claim-inflation-risk
+          check_key: verify-assurance-governance
+          mutation:
+            type: replace_text
+            path: tools/test_suite_policy.mjs
+            match: selected-design-fact-closure
+            replacement: selected-design-fact-disabled
+          expected_assertion_failures:
+            - assurance-governance-result
+            - requirement-purpose-validity-floor-before-relative-antidegradation
+            - requirement-invalid-baseline-and-claim-downgrade
+            - requirement-coverage-defined-by-rejected-attack-surface
+            - requirement-critical-sentinel-positive-negative-controls
+            - requirement-incident-counterexample-first-rule
+            - requirement-sentinel-rationale-evidence-bounded
+            - requirement-capability-claim-levels
+            - requirement-approved-final-capability-wording
+            - obligation-no-new-lifecycle-authority-registry
+            - semantic-purpose-validity-floor-before-relative-antidegradation
+            - semantic-invalid-baseline-and-claim-downgrade
+            - semantic-coverage-defined-by-rejected-attack-surface
+            - semantic-critical-sentinel-positive-negative-controls
+            - semantic-incident-counterexample-first-rule
+            - semantic-sentinel-rationale-evidence-bounded
+            - semantic-capability-claim-levels
+            - semantic-no-new-lifecycle-authority-registry
+            - semantic-approved-final-capability-wording
+            - semantic-critical-claim-inflation-risk
+          preserved_assertions:
+            - assurance-governance-liveness
+        - key: mutate-assurance-governance-relation-closure
+          binding_key: relation-fixture
+          claims:
+            - control_relation_closure
+          check_key: verify-assurance-governance
+          mutation:
+            type: replace_json_value
+            path: tests/ty-context/fixtures/long-task-real-capability-state.json
+            pointer: /relations_applicable
+            value: true
+          expected_assertion_failures:
+            - assurance-governance-relations-na
+          preserved_assertions:
+            - assurance-governance-liveness
+  - key: observer-tcb-closure
+    title: Observer and TCB closure
+    stage: stage-observer-tcb-closure
+    depends_on:
+      - assurance-governance
+    applicability:
+      - key: observer-tcb-closure-current-success
+        target_ref: harness-package-runtime
+        journey_role: success
+        dimensions:
+          - key: candidate
+            value: current
+        given_refs:
+          - observer-tcb-closure-source-locked
+        when_refs:
+          - observer-tcb-closure-verify-current
+    semantic_fact_bindings:
+      manifest_ref: long-task-real-capability-facts
+      facts:
+        - fact_ref: fact.requirement.route-b-project-owner-decision
+          claim_ref: semantic_fact.fact.requirement.route-b-project-owner-decision
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.observation-channel-authority
+          claim_ref: semantic_fact.fact.requirement.observation-channel-authority
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.expected-actual-comparison-verdict-ownership
+          claim_ref: semantic_fact.fact.requirement.expected-actual-comparison-verdict-ownership
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.bounded-admitted-artifact-contract
+          claim_ref: semantic_fact.fact.requirement.bounded-admitted-artifact-contract
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.actual-artifact-reextraction
+          claim_ref: semantic_fact.fact.requirement.actual-artifact-reextraction
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.challenge-is-freshness-only
+          claim_ref: semantic_fact.fact.requirement.challenge-is-freshness-only
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.generated-carrier-semantic-role
+          claim_ref: semantic_fact.fact.requirement.generated-carrier-semantic-role
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.expected-to-actual-self-proof-rejection
+          claim_ref: semantic_fact.fact.requirement.expected-to-actual-self-proof-rejection
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.production-reachability
+          claim_ref: semantic_fact.fact.requirement.production-reachability
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.counterfactual-actual-change-and-impact-set
+          claim_ref: semantic_fact.fact.requirement.counterfactual-actual-change-and-impact-set
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.no-universal-ui-observer
+          claim_ref: semantic_fact.fact.requirement.no-universal-ui-observer
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.v3-v4-and-migration-rule
+          claim_ref: semantic_fact.fact.requirement.v3-v4-and-migration-rule
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.owner-dependency-lifecycle-boundary
+          claim_ref: semantic_fact.fact.requirement.owner-dependency-lifecycle-boundary
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.build-reuse-buy-allowed-set
+          claim_ref: semantic_fact.fact.requirement.build-reuse-buy-allowed-set
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.compatibility-security-resource-boundaries
+          claim_ref: semantic_fact.fact.requirement.compatibility-security-resource-boundaries
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.critical-scope-escape-risk
+          claim_ref: semantic_fact.fact.requirement.critical-scope-escape-risk
+          applicability_ref: observer-tcb-closure-current-success
+        - fact_ref: fact.requirement.critical-self-attestation-risk
+          claim_ref: semantic_fact.fact.requirement.critical-self-attestation-risk
+          applicability_ref: observer-tcb-closure-current-success
+      proofs:
+        - proof_ref: proof.requirement.route-b-project-owner-decision.exact
+          fact_ref: fact.requirement.route-b-project-owner-decision
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-route-b-project-owner-decision
+        - proof_ref: proof.requirement.observation-channel-authority.exact
+          fact_ref: fact.requirement.observation-channel-authority
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-observation-channel-authority
+        - proof_ref: proof.requirement.expected-actual-comparison-verdict-ownership.exact
+          fact_ref: fact.requirement.expected-actual-comparison-verdict-ownership
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-expected-actual-comparison-verdict-ownership
+        - proof_ref: proof.requirement.bounded-admitted-artifact-contract.exact
+          fact_ref: fact.requirement.bounded-admitted-artifact-contract
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-bounded-admitted-artifact-contract
+        - proof_ref: proof.requirement.actual-artifact-reextraction.exact
+          fact_ref: fact.requirement.actual-artifact-reextraction
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-actual-artifact-reextraction
+        - proof_ref: proof.requirement.challenge-is-freshness-only.exact
+          fact_ref: fact.requirement.challenge-is-freshness-only
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-challenge-is-freshness-only
+        - proof_ref: proof.requirement.generated-carrier-semantic-role.exact
+          fact_ref: fact.requirement.generated-carrier-semantic-role
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-generated-carrier-semantic-role
+        - proof_ref: proof.requirement.expected-to-actual-self-proof-rejection.exact
+          fact_ref: fact.requirement.expected-to-actual-self-proof-rejection
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-expected-to-actual-self-proof-rejection
+        - proof_ref: proof.requirement.production-reachability.exact
+          fact_ref: fact.requirement.production-reachability
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-production-reachability
+        - proof_ref: proof.requirement.counterfactual-actual-change-and-impact-set.exact
+          fact_ref: fact.requirement.counterfactual-actual-change-and-impact-set
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-counterfactual-actual-change-and-impact-set
+        - proof_ref: proof.requirement.no-universal-ui-observer.exact
+          fact_ref: fact.requirement.no-universal-ui-observer
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-no-universal-ui-observer
+        - proof_ref: proof.requirement.v3-v4-and-migration-rule.exact
+          fact_ref: fact.requirement.v3-v4-and-migration-rule
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-v3-v4-and-migration-rule
+        - proof_ref: proof.requirement.owner-dependency-lifecycle-boundary.exact
+          fact_ref: fact.requirement.owner-dependency-lifecycle-boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-owner-dependency-lifecycle-boundary
+        - proof_ref: proof.requirement.build-reuse-buy-allowed-set.exact
+          fact_ref: fact.requirement.build-reuse-buy-allowed-set
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-build-reuse-buy-allowed-set
+        - proof_ref: proof.requirement.compatibility-security-resource-boundaries.exact
+          fact_ref: fact.requirement.compatibility-security-resource-boundaries
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-compatibility-security-resource-boundaries
+        - proof_ref: proof.requirement.critical-scope-escape-risk.exact
+          fact_ref: fact.requirement.critical-scope-escape-risk
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-critical-scope-escape-risk
+        - proof_ref: proof.requirement.critical-self-attestation-risk.exact
+          fact_ref: fact.requirement.critical-self-attestation-risk
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-observer-tcb-closure
+          assertion_ref: semantic-critical-self-attestation-risk
+    product:
+      observable_result: Observer and TCB closure is complete on the current package candidate.
+      result_applicability_refs:
+        - observer-tcb-closure-current-success
+      success_path_required: true
+      degradation_path_required: false
+      owner:
+        label: harness-package
+        context_refs:
+          - project_context/areas/harness-package.md
+          - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+          - project_context/areas/harness-package/implementation-index.md
+        path_globs:
+          - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          - packages/ty-context/src/lib/long-task-artifacts.ts
+          - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+          - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
+          - packages/ty-context/src/lib/long-task-evidence-v2.ts
+          - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+          - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - docs/long-task-real-capability-closure.md
+          - PROJECT_SPEC.md
+          - project_context/**
+          - .codex/skills/authoring/harness_package_design/**
+      requirements:
+        - key: observation-channel-authority
+          statement: 能关闭 machine Claim 的观察通道必须按能力和完整观察链准入，而非按文件年龄：package-owned/admitted observer；Harness 直接调用且依赖闭包冻结的 executable comparator/adapter；经明确冻结 TCB、当前 snapshot、生产可达性和因果控制证明的项目 observer。项目 verifier 不能仅凭自报 actual digest、comparison、passed 或 verdict 关闭 material/selected-design Claim；无法满足准入能力时必须 fail closed 或使用现有 External Confirmation。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: bounded-admitted-artifact-contract
+          statement: 首版 artifact contract 冻结为 package-owned `json-pointer-exact-v1`：只接受仓库/Check 准入根内、当前执行收集的 UTF-8 JSON，locator 只允许 RFC 6901 JSON Pointer（对象键和 canonical 非负数组下标；禁止 URI fragment、wildcard、filter 和 custom locator），值按现有 canonical JSON 语义规范化（对象键排序、数组顺序保留、JSON scalar/null 精确保留）后摘要；只支持 `exact_value + exact` 且 tolerance/mask 必须为空。单文件上限 1 MiB、嵌套深度 64、pointer 4096 字节/128 段、单个规范化值 256 KiB、每 Check 最多 256 个 observation artifact 且总计 16 MiB；路径必须 containment/no-follow 并拒绝 symlink/path escape，JSON 重复对象键和非 JSON 数值 fail closed。plain 值可在内存规范化但不新增 raw evidence；protected 值首版不从普通 JSON artifact machine-accept，只允许直接调用的冻结 adapter 或 External Confirmation。extractor/comparator 的 package identity/version/spec digest 必须冻结。首版不扩展成布局树、可访问性树、时间线、像素或任意 custom locator 的通用 UI 观察框架。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: actual-artifact-reextraction
+          statement: 对于 `json-pointer-exact-v1`，Harness 必须从当前 artifact 与 locator 重新提取、规范化 actual 并计算 digest，不能只相信 runner 提交的 `value_sha256`；提交值、Harness 重算值和冻结 expected 任一不一致都 fail closed。该路径只准入 package-owned extractor，或由 Harness 直接调用且 digest/version/capability 冻结的 adapter；v3 没有可安全表达直接调用入口的任意项目 executable，因此普通 `named_external_tcb`/项目 runner 的自报 JSON 不能单独 machine-accept。无法由 package 解析的 custom locator、protected raw 值、live native/session、layout/a11y/motion/pixel/tolerance/mask 首版保持 External Confirmation。P0 的 digest equality 是第一步，不能被误称为任意 artifact authenticity。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: challenge-is-freshness-only
+          statement: Final Gate challenge/nonce 只用于拒绝直接复用旧截图、旧 session JSON 和旧 evidence payload；若未来准入 live-session，它必须绑定当前 invocation、candidate Git commit/tree、workspace snapshot、runner/build identity、target process/session、启动/采集时间和操作轨迹。首版 `json-pointer-exact-v1` 只接受 Final Gate 当前执行重新收集并绑定当前 snapshot/hash 的静态 JSON，不以新增 challenge 字段伪装 live-session 可信度；native/live 继续 External Confirmation。challenge 不是信任根，因为项目 runner 可以读取并回显新 challenge；主动伪造还必须由准入 observer、expected/actual 隔离、Harness comparator、生产可达性和 Counterfactual 共同防御。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: generated-carrier-semantic-role
+          statement: carrier 准入按语义角色而非路径年龄或一刀切路径名单判断：纯 evidence/report/status/comparison/Receipt/历史 session 产物不得充当生产 carrier；由构建生成且被真实产品 target 消费的 bundle、配置或编译产物可以作为生产 carrier；只被 verifier 读取的生成物不能证明生产可达性。不得笼统禁止所有 `expected_output_paths`，而要证明其是否进入产品 target 的真实依赖或运行时读取链。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: expected-to-actual-self-proof-rejection
+          statement: 必须阻止 expected→actual 自证：actual artifact/locator 不得指向 Contract、handoff、expected resource 或 comparison artifact；actual 必须来自当前 target/session 或其真实消费的构建产物；同任务 verifier 不能独立关闭关键 Claim；生产语义 mutation 后 actual 必须按声明影响集发生变化。静态扫描 verifier 是否读取 expected 只能作为诊断，不能成为唯一安全边界。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: production-reachability
+          statement: 敏感 Counterfactual 的 Binding 必须能证明至少一种生产可达性：位于 target root 的冻结静态依赖闭包；进入生产 bundle/build manifest；属于 target 运行时直接读取路径；或 mutation 被准入 observer 证明改变了当前目标 actual。只被 verifier 或报告生成器消费的路径不得用于关闭生产语义 Claim。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: counterfactual-actual-change-and-impact-set
+          statement: Counterfactual 不只检查 Assertion 从 true 变 false，还必须比较 baseline 与 mutated actual，保持 target liveness，并对声明的受影响 Fact 集逐项产生可归因失败。一个中心 token/carrier 可以合法影响多个相关 Fact，但每个 Fact 仍需独立 locator/result；影响集必须精确声明，允许真实 fan-out，禁止把“所有无关 Fact 都不变”写成不可能约束，也禁止一个 aggregate `/status` 关闭无直接因果关系的异质 Claim。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: v3-v4-and-migration-rule
+          statement: P0 与首版 `json-pointer-exact-v1` 使用 v3 已有 artifact path/hash、JSON Pointer、Oracle/environment 和 comparison 字段，由 compiled/current-evidence 内部元数据补充 package adapter identity 与资源上限，因此不发布 v4；任意外部 executable 直接调用描述、可信 live-session handle/challenge/trace 或新 observation authority 若无法用 v3 保义表达，才发布 v4。若需要 v4，必须同步 schema、types/codec/decoder、managed source、Context、英文/中文 README、package README、examples、tests、source sync、tarball/consumer 验证和迁移说明；旧 Active Authority 不得自动迁移为通过，verifier/Authority identity 变化必须重新 Compile，旧 v3 selected-design 自报结果不能自动升级为通过。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+      owner_surfaces: []
+      controls: []
+      control_relation_closure:
+        state: not_applicable
+        statement: This non-UI mechanism Outcome declares no user Controls or cross-Control relation.
+        applicability_refs:
+          - observer-tcb-closure-current-success
+      control_relations: []
+      surface_bindings: []
+      non_completing_outcomes: []
+    technical:
+      obligations:
+        - key: route-b-project-owner-decision
+          statement: 项目 owner 本次明确选择 Observer/TCB 路线 B：普通模型编写 verifier 的错误属于威胁模型。路线 A——继续完全信任正确冻结 verifier/runner TCB 并将能力声明收窄为“阻止该 TCB 已正确观察的漂移”——保留为被拒绝的本次选择和兼容理解，不得作为无限期延期路线 B 的理由。路线 B 是恢复宽泛设计目的声明的必要闭环，必须在本 Goal 内设计、实现和验证。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: expected-actual-comparison-verdict-ownership
+          statement: expected 的值/定位摘要与比较 Authority 由 Source、canonical design resource 和 Contract 冻结；actual 由当前生产 target/session 的准入 observer 从声明 artifact/locator 提取；comparison 与 result identity 由 Harness-owned primitive 或 Harness 直接调用的冻结 comparator 计算；最终 verdict 由 Evidence Kernel/Final Gate 从重算结果得出。项目 runner 可提交原始观察、环境、artifact、locator 和兼容冗余字段，但不得同时拥有 expected、actual、comparison 和 authoritative verdict。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: owner-dependency-lifecycle-boundary
+          statement: selected-design comparison owner 是 `long-task-evidence-capability-runtime.ts`，共享 exact/result identity 语义来自 `long-task-semantic-fact-evidence.ts` 或新提取的同层 primitive，设计方法 taxonomy 保持在 `design-resource-fact-policy.ts` 与 `design-resource-fact-property-methods.ts`，Final Gate 保持唯一 acceptance carrier。依赖只能从 Source/Context 经 Contract、observer、comparison 流向 Final Gate；comparison primitive 不依赖项目 verifier 的 verdict，observer adapter 不拥有 expected；失败必须显式、资源与临时 session 必须有界清理，重试不能把旧 artifact 变成当前证据。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: build-reuse-buy-allowed-set
+          statement: Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-identity owner；复用现有 design policy/property-method owners；用标准库做有界 package-owned extractor/comparator；使用已安装或成熟且 license/platform/size 兼容的依赖；使用 digest/version/capability 冻结的 executable adapter；以及对未准入观察有意不抽象并保留 External Confirmation。选择前必须枚举本次可行成员；禁止重复 owner-held rule、第二 source of truth、扩张式通用 parser、无依据重依赖、nonce-only 信任、自报 Boolean、错误依赖方向和为了相似语义强制抽象。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+        - key: compatibility-security-resource-boundaries
+          statement: 安全与可靠性边界包括 fail-closed parsing、路径 containment、symlink 防逃逸、大小/深度/时间/内存上限、敏感观察的 digest-only/redaction、冻结 executable 与依赖闭包 identity、challenge replay protection、当前 candidate/session 绑定和临时进程/artifact 清理。兼容性必须保持普通 default workflow、非 UI Long-Task、现有 V1 默认与 V2 opt-in、合法 tolerance/mask 和 External Confirmation；任何 public/protocol 变化都必须有显式 migration/rollout/rollback 或不可逆边界说明。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - observer-tcb-closure-current-success
+      expected_change_paths:
+        - packages/ty-context/src/lib/long-task-admitted-observation.ts
+        - packages/ty-context/src/lib/long-task-artifacts.ts
+        - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+        - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
+        - packages/ty-context/src/lib/long-task-evidence-v2.ts
+        - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+        - tests/ty-context/fixtures/long-task-real-capability-state.json
+      allowed_support_paths:
+        - docs/long-task-real-capability-closure.md
+        - PROJECT_SPEC.md
+        - project_context/**
+        - .codex/skills/authoring/harness_package_design/**
+      forbidden_paths:
+        - .git/**
+      bindings:
+        - key: admitted-observation-owner
+          kind: file
+          target: packages/ty-context/src/lib/long-task-admitted-observation.ts
+          carrier_paths:
+            - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          existence: planned
+        - key: relation-fixture
+          kind: file
+          target: tests/ty-context/fixtures/long-task-real-capability-state.json
+          carrier_paths:
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          existence: existing
+      forbidden_shortcuts: []
+      rollback_and_recovery: null
+    acceptance:
+      checks:
+        - key: verify-observer-tcb-closure
+          journey_roles:
+            - success
+            - stage_gate
+          execution_target:
+            target_ref: harness-package-runtime
+            entrypoint: root
+          scenario:
+            given:
+              - key: observer-tcb-closure-source-locked
+                statement: The Source, full Context and current package candidate are available.
+            when:
+              - key: observer-tcb-closure-verify-current
+                statement: Run Observer and TCB closure verification on the current candidate.
+          proof_surface: runtime_behavior
+          runner:
+            type: node_oracle
+            target: tools/verify_long_task_real_capability_delivery.mjs
+            argv:
+              - observer-tcb-closure
+            cwd: .
+            timeout_ms: 900000
+            effect: test_sandbox
+            retry_policy: none
+            idempotent: true
+          verification_inputs:
+            - tools/verify_long_task_real_capability_delivery.mjs
+            - tools/semantic_fact_delivery_evidence.mjs
+            - tools/npm_command_spec.mjs
+            - tests/ty-context/long-task-real-capability-closure.test.mjs
+          input_paths:
+            - packages/ty-context/src/lib/long-task-artifacts.ts
+            - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+            - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
+            - packages/ty-context/src/lib/long-task-evidence-v2.ts
+            - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          expected_output_paths:
+            - packages/ty-context/dist/**
+            - tests/src/**
+            - tests/artifacts/**
+            - tests/ty-context/base-oracle.mjs
+          artifact_globs:
+            - artifacts/semantic-fact-results.json
+            - .artifacts/long-task-real-capability/**
+          positive_assertions:
+            - key: observer-tcb-closure-result
+              criterion: Observer and TCB closure is complete on the current package candidate.
+              claims:
+                - result
+              applicability_ref: observer-tcb-closure-current-success
+              observation: observer_tcb_closure_result
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-observation-channel-authority
+              criterion: 能关闭 machine Claim 的观察通道必须按能力和完整观察链准入，而非按文件年龄：package-owned/admitted observer；Harness 直接调用且依赖闭包冻结的 executable comparator/adapter；经明确冻结 TCB、当前 snapshot、生产可达性和因果控制证明的项目 observer。项目 verifier 不能仅凭自报 actual digest、comparison、passed 或 verdict 关闭 material/selected-design Claim；无法满足准入能力时必须 fail closed 或使用现有 External Confirmation。
+              claims:
+                - requirement.observation-channel-authority
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_observation_channel_authority
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-bounded-admitted-artifact-contract
+              criterion: 首版 artifact contract 冻结为 package-owned `json-pointer-exact-v1`：只接受仓库/Check 准入根内、当前执行收集的 UTF-8 JSON，locator 只允许 RFC 6901 JSON Pointer（对象键和 canonical 非负数组下标；禁止 URI fragment、wildcard、filter 和 custom locator），值按现有 canonical JSON 语义规范化（对象键排序、数组顺序保留、JSON scalar/null 精确保留）后摘要；只支持 `exact_value + exact` 且 tolerance/mask 必须为空。单文件上限 1 MiB、嵌套深度 64、pointer 4096 字节/128 段、单个规范化值 256 KiB、每 Check 最多 256 个 observation artifact 且总计 16 MiB；路径必须 containment/no-follow 并拒绝 symlink/path escape，JSON 重复对象键和非 JSON 数值 fail closed。plain 值可在内存规范化但不新增 raw evidence；protected 值首版不从普通 JSON artifact machine-accept，只允许直接调用的冻结 adapter 或 External Confirmation。extractor/comparator 的 package identity/version/spec digest 必须冻结。首版不扩展成布局树、可访问性树、时间线、像素或任意 custom locator 的通用 UI 观察框架。
+              claims:
+                - requirement.bounded-admitted-artifact-contract
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_bounded_admitted_artifact_contract
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-actual-artifact-reextraction
+              criterion: 对于 `json-pointer-exact-v1`，Harness 必须从当前 artifact 与 locator 重新提取、规范化 actual 并计算 digest，不能只相信 runner 提交的 `value_sha256`；提交值、Harness 重算值和冻结 expected 任一不一致都 fail closed。该路径只准入 package-owned extractor，或由 Harness 直接调用且 digest/version/capability 冻结的 adapter；v3 没有可安全表达直接调用入口的任意项目 executable，因此普通 `named_external_tcb`/项目 runner 的自报 JSON 不能单独 machine-accept。无法由 package 解析的 custom locator、protected raw 值、live native/session、layout/a11y/motion/pixel/tolerance/mask 首版保持 External Confirmation。P0 的 digest equality 是第一步，不能被误称为任意 artifact authenticity。
+              claims:
+                - requirement.actual-artifact-reextraction
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_actual_artifact_reextraction
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-challenge-is-freshness-only
+              criterion: Final Gate challenge/nonce 只用于拒绝直接复用旧截图、旧 session JSON 和旧 evidence payload；若未来准入 live-session，它必须绑定当前 invocation、candidate Git commit/tree、workspace snapshot、runner/build identity、target process/session、启动/采集时间和操作轨迹。首版 `json-pointer-exact-v1` 只接受 Final Gate 当前执行重新收集并绑定当前 snapshot/hash 的静态 JSON，不以新增 challenge 字段伪装 live-session 可信度；native/live 继续 External Confirmation。challenge 不是信任根，因为项目 runner 可以读取并回显新 challenge；主动伪造还必须由准入 observer、expected/actual 隔离、Harness comparator、生产可达性和 Counterfactual 共同防御。
+              claims:
+                - requirement.challenge-is-freshness-only
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_challenge_is_freshness_only
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-generated-carrier-semantic-role
+              criterion: carrier 准入按语义角色而非路径年龄或一刀切路径名单判断：纯 evidence/report/status/comparison/Receipt/历史 session 产物不得充当生产 carrier；由构建生成且被真实产品 target 消费的 bundle、配置或编译产物可以作为生产 carrier；只被 verifier 读取的生成物不能证明生产可达性。不得笼统禁止所有 `expected_output_paths`，而要证明其是否进入产品 target 的真实依赖或运行时读取链。
+              claims:
+                - requirement.generated-carrier-semantic-role
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_generated_carrier_semantic_role
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-expected-to-actual-self-proof-rejection
+              criterion: 必须阻止 expected→actual 自证：actual artifact/locator 不得指向 Contract、handoff、expected resource 或 comparison artifact；actual 必须来自当前 target/session 或其真实消费的构建产物；同任务 verifier 不能独立关闭关键 Claim；生产语义 mutation 后 actual 必须按声明影响集发生变化。静态扫描 verifier 是否读取 expected 只能作为诊断，不能成为唯一安全边界。
+              claims:
+                - requirement.expected-to-actual-self-proof-rejection
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_expected_to_actual_self_proof_rejection
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-production-reachability
+              criterion: 敏感 Counterfactual 的 Binding 必须能证明至少一种生产可达性：位于 target root 的冻结静态依赖闭包；进入生产 bundle/build manifest；属于 target 运行时直接读取路径；或 mutation 被准入 observer 证明改变了当前目标 actual。只被 verifier 或报告生成器消费的路径不得用于关闭生产语义 Claim。
+              claims:
+                - requirement.production-reachability
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_production_reachability
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-counterfactual-actual-change-and-impact-set
+              criterion: Counterfactual 不只检查 Assertion 从 true 变 false，还必须比较 baseline 与 mutated actual，保持 target liveness，并对声明的受影响 Fact 集逐项产生可归因失败。一个中心 token/carrier 可以合法影响多个相关 Fact，但每个 Fact 仍需独立 locator/result；影响集必须精确声明，允许真实 fan-out，禁止把“所有无关 Fact 都不变”写成不可能约束，也禁止一个 aggregate `/status` 关闭无直接因果关系的异质 Claim。
+              claims:
+                - requirement.counterfactual-actual-change-and-impact-set
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_counterfactual_actual_change_and_impact_set
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-v3-v4-and-migration-rule
+              criterion: P0 与首版 `json-pointer-exact-v1` 使用 v3 已有 artifact path/hash、JSON Pointer、Oracle/environment 和 comparison 字段，由 compiled/current-evidence 内部元数据补充 package adapter identity 与资源上限，因此不发布 v4；任意外部 executable 直接调用描述、可信 live-session handle/challenge/trace 或新 observation authority 若无法用 v3 保义表达，才发布 v4。若需要 v4，必须同步 schema、types/codec/decoder、managed source、Context、英文/中文 README、package README、examples、tests、source sync、tarball/consumer 验证和迁移说明；旧 Active Authority 不得自动迁移为通过，verifier/Authority identity 变化必须重新 Compile，旧 v3 selected-design 自报结果不能自动升级为通过。
+              claims:
+                - requirement.v3-v4-and-migration-rule
+              applicability_ref: observer-tcb-closure-current-success
+              observation: requirement_v3_v4_and_migration_rule
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-route-b-project-owner-decision
+              criterion: 项目 owner 本次明确选择 Observer/TCB 路线 B：普通模型编写 verifier 的错误属于威胁模型。路线 A——继续完全信任正确冻结 verifier/runner TCB 并将能力声明收窄为“阻止该 TCB 已正确观察的漂移”——保留为被拒绝的本次选择和兼容理解，不得作为无限期延期路线 B 的理由。路线 B 是恢复宽泛设计目的声明的必要闭环，必须在本 Goal 内设计、实现和验证。
+              claims:
+                - obligation.route-b-project-owner-decision
+              applicability_ref: observer-tcb-closure-current-success
+              observation: obligation_route_b_project_owner_decision
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-expected-actual-comparison-verdict-ownership
+              criterion: expected 的值/定位摘要与比较 Authority 由 Source、canonical design resource 和 Contract 冻结；actual 由当前生产 target/session 的准入 observer 从声明 artifact/locator 提取；comparison 与 result identity 由 Harness-owned primitive 或 Harness 直接调用的冻结 comparator 计算；最终 verdict 由 Evidence Kernel/Final Gate 从重算结果得出。项目 runner 可提交原始观察、环境、artifact、locator 和兼容冗余字段，但不得同时拥有 expected、actual、comparison 和 authoritative verdict。
+              claims:
+                - obligation.expected-actual-comparison-verdict-ownership
+              applicability_ref: observer-tcb-closure-current-success
+              observation: obligation_expected_actual_comparison_verdict_ownership
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-owner-dependency-lifecycle-boundary
+              criterion: selected-design comparison owner 是 `long-task-evidence-capability-runtime.ts`，共享 exact/result identity 语义来自 `long-task-semantic-fact-evidence.ts` 或新提取的同层 primitive，设计方法 taxonomy 保持在 `design-resource-fact-policy.ts` 与 `design-resource-fact-property-methods.ts`，Final Gate 保持唯一 acceptance carrier。依赖只能从 Source/Context 经 Contract、observer、comparison 流向 Final Gate；comparison primitive 不依赖项目 verifier 的 verdict，observer adapter 不拥有 expected；失败必须显式、资源与临时 session 必须有界清理，重试不能把旧 artifact 变成当前证据。
+              claims:
+                - obligation.owner-dependency-lifecycle-boundary
+              applicability_ref: observer-tcb-closure-current-success
+              observation: obligation_owner_dependency_lifecycle_boundary
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-build-reuse-buy-allowed-set
+              criterion: Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-identity owner；复用现有 design policy/property-method owners；用标准库做有界 package-owned extractor/comparator；使用已安装或成熟且 license/platform/size 兼容的依赖；使用 digest/version/capability 冻结的 executable adapter；以及对未准入观察有意不抽象并保留 External Confirmation。选择前必须枚举本次可行成员；禁止重复 owner-held rule、第二 source of truth、扩张式通用 parser、无依据重依赖、nonce-only 信任、自报 Boolean、错误依赖方向和为了相似语义强制抽象。
+              claims:
+                - obligation.build-reuse-buy-allowed-set
+              applicability_ref: observer-tcb-closure-current-success
+              observation: obligation_build_reuse_buy_allowed_set
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: obligation-compatibility-security-resource-boundaries
+              criterion: 安全与可靠性边界包括 fail-closed parsing、路径 containment、symlink 防逃逸、大小/深度/时间/内存上限、敏感观察的 digest-only/redaction、冻结 executable 与依赖闭包 identity、challenge replay protection、当前 candidate/session 绑定和临时进程/artifact 清理。兼容性必须保持普通 default workflow、非 UI Long-Task、现有 V1 默认与 V2 opt-in、合法 tolerance/mask 和 External Confirmation；任何 public/protocol 变化都必须有显式 migration/rollout/rollback 或不可逆边界说明。
+              claims:
+                - obligation.compatibility-security-resource-boundaries
+              applicability_ref: observer-tcb-closure-current-success
+              observation: obligation_compatibility_security_resource_boundaries
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: semantic-route-b-project-owner-decision
+              criterion: The exact Source-indexed semantic Fact route-b-project-owner-decision is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.route-b-project-owner-decision
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_route_b_project_owner_decision
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-observation-channel-authority
+              criterion: The exact Source-indexed semantic Fact observation-channel-authority is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.observation-channel-authority
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_observation_channel_authority
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-expected-actual-comparison-verdict-ownership
+              criterion: The exact Source-indexed semantic Fact expected-actual-comparison-verdict-ownership is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.expected-actual-comparison-verdict-ownership
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_expected_actual_comparison_verdict_ownership
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-bounded-admitted-artifact-contract
+              criterion: The exact Source-indexed semantic Fact bounded-admitted-artifact-contract is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.bounded-admitted-artifact-contract
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_bounded_admitted_artifact_contract
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-actual-artifact-reextraction
+              criterion: The exact Source-indexed semantic Fact actual-artifact-reextraction is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.actual-artifact-reextraction
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_actual_artifact_reextraction
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-challenge-is-freshness-only
+              criterion: The exact Source-indexed semantic Fact challenge-is-freshness-only is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.challenge-is-freshness-only
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_challenge_is_freshness_only
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-generated-carrier-semantic-role
+              criterion: The exact Source-indexed semantic Fact generated-carrier-semantic-role is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.generated-carrier-semantic-role
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_generated_carrier_semantic_role
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-expected-to-actual-self-proof-rejection
+              criterion: The exact Source-indexed semantic Fact expected-to-actual-self-proof-rejection is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.expected-to-actual-self-proof-rejection
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_expected_to_actual_self_proof_rejection
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-production-reachability
+              criterion: The exact Source-indexed semantic Fact production-reachability is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.production-reachability
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_production_reachability
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-counterfactual-actual-change-and-impact-set
+              criterion: The exact Source-indexed semantic Fact counterfactual-actual-change-and-impact-set is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.counterfactual-actual-change-and-impact-set
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_counterfactual_actual_change_and_impact_set
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-no-universal-ui-observer
+              criterion: The exact Source-indexed semantic Fact no-universal-ui-observer is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.no-universal-ui-observer
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_no_universal_ui_observer
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-v3-v4-and-migration-rule
+              criterion: The exact Source-indexed semantic Fact v3-v4-and-migration-rule is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.v3-v4-and-migration-rule
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_v3_v4_and_migration_rule
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-owner-dependency-lifecycle-boundary
+              criterion: The exact Source-indexed semantic Fact owner-dependency-lifecycle-boundary is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.owner-dependency-lifecycle-boundary
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_owner_dependency_lifecycle_boundary
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-build-reuse-buy-allowed-set
+              criterion: The exact Source-indexed semantic Fact build-reuse-buy-allowed-set is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.build-reuse-buy-allowed-set
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_build_reuse_buy_allowed_set
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-compatibility-security-resource-boundaries
+              criterion: The exact Source-indexed semantic Fact compatibility-security-resource-boundaries is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.compatibility-security-resource-boundaries
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_compatibility_security_resource_boundaries
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-critical-scope-escape-risk
+              criterion: The exact Source-indexed semantic Fact critical-scope-escape-risk is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.critical-scope-escape-risk
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_critical_scope_escape_risk
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-critical-self-attestation-risk
+              criterion: The exact Source-indexed semantic Fact critical-self-attestation-risk is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.critical-self-attestation-risk
+              applicability_ref: observer-tcb-closure-current-success
+              observation: semantic_fact_critical_self_attestation_risk
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: observer-tcb-closure-liveness
+              criterion: The package verification target remains live under semantic mutation.
+              claims: []
+              observation: target_live
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: true
+          negative_assertions:
+            - key: observer-tcb-closure-relations-na
+              criterion: Cross-Control relations remain inapplicable because this Outcome declares no Controls.
+              claims:
+                - control_relation_closure
+              applicability_ref: observer-tcb-closure-current-success
+              observation: relations_applicable
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: false
+          environment_requirements:
+            - key: node
+              kind: executable
+              target: node
+      population: null
+      counterfactual_controls:
+        - key: mutate-observer-tcb-closure
+          binding_key: admitted-observation-owner
+          claims:
+            - result
+            - requirement.observation-channel-authority
+            - requirement.bounded-admitted-artifact-contract
+            - requirement.actual-artifact-reextraction
+            - requirement.challenge-is-freshness-only
+            - requirement.generated-carrier-semantic-role
+            - requirement.expected-to-actual-self-proof-rejection
+            - requirement.production-reachability
+            - requirement.counterfactual-actual-change-and-impact-set
+            - requirement.v3-v4-and-migration-rule
+            - obligation.route-b-project-owner-decision
+            - obligation.expected-actual-comparison-verdict-ownership
+            - obligation.owner-dependency-lifecycle-boundary
+            - obligation.build-reuse-buy-allowed-set
+            - obligation.compatibility-security-resource-boundaries
+            - semantic_fact.fact.requirement.route-b-project-owner-decision
+            - semantic_fact.fact.requirement.observation-channel-authority
+            - semantic_fact.fact.requirement.expected-actual-comparison-verdict-ownership
+            - semantic_fact.fact.requirement.bounded-admitted-artifact-contract
+            - semantic_fact.fact.requirement.actual-artifact-reextraction
+            - semantic_fact.fact.requirement.challenge-is-freshness-only
+            - semantic_fact.fact.requirement.generated-carrier-semantic-role
+            - semantic_fact.fact.requirement.expected-to-actual-self-proof-rejection
+            - semantic_fact.fact.requirement.production-reachability
+            - semantic_fact.fact.requirement.counterfactual-actual-change-and-impact-set
+            - semantic_fact.fact.requirement.no-universal-ui-observer
+            - semantic_fact.fact.requirement.v3-v4-and-migration-rule
+            - semantic_fact.fact.requirement.owner-dependency-lifecycle-boundary
+            - semantic_fact.fact.requirement.build-reuse-buy-allowed-set
+            - semantic_fact.fact.requirement.compatibility-security-resource-boundaries
+            - semantic_fact.fact.requirement.critical-scope-escape-risk
+            - semantic_fact.fact.requirement.critical-self-attestation-risk
+          check_key: verify-observer-tcb-closure
+          mutation:
+            type: replace_text
+            path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+            match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
+            replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
+          expected_assertion_failures:
+            - observer-tcb-closure-result
+            - requirement-observation-channel-authority
+            - requirement-bounded-admitted-artifact-contract
+            - requirement-actual-artifact-reextraction
+            - requirement-challenge-is-freshness-only
+            - requirement-generated-carrier-semantic-role
+            - requirement-expected-to-actual-self-proof-rejection
+            - requirement-production-reachability
+            - requirement-counterfactual-actual-change-and-impact-set
+            - requirement-v3-v4-and-migration-rule
+            - obligation-route-b-project-owner-decision
+            - obligation-expected-actual-comparison-verdict-ownership
+            - obligation-owner-dependency-lifecycle-boundary
+            - obligation-build-reuse-buy-allowed-set
+            - obligation-compatibility-security-resource-boundaries
+            - semantic-route-b-project-owner-decision
+            - semantic-observation-channel-authority
+            - semantic-expected-actual-comparison-verdict-ownership
+            - semantic-bounded-admitted-artifact-contract
+            - semantic-actual-artifact-reextraction
+            - semantic-challenge-is-freshness-only
+            - semantic-generated-carrier-semantic-role
+            - semantic-expected-to-actual-self-proof-rejection
+            - semantic-production-reachability
+            - semantic-counterfactual-actual-change-and-impact-set
+            - semantic-no-universal-ui-observer
+            - semantic-v3-v4-and-migration-rule
+            - semantic-owner-dependency-lifecycle-boundary
+            - semantic-build-reuse-buy-allowed-set
+            - semantic-compatibility-security-resource-boundaries
+            - semantic-critical-scope-escape-risk
+            - semantic-critical-self-attestation-risk
+          preserved_assertions:
+            - observer-tcb-closure-liveness
+        - key: mutate-observer-tcb-closure-relation-closure
+          binding_key: relation-fixture
+          claims:
+            - control_relation_closure
+          check_key: verify-observer-tcb-closure
+          mutation:
+            type: replace_json_value
+            path: tests/ty-context/fixtures/long-task-real-capability-state.json
+            pointer: /relations_applicable
+            value: true
+          expected_assertion_failures:
+            - observer-tcb-closure-relations-na
+          preserved_assertions:
+            - observer-tcb-closure-liveness
+  - key: proof-and-roi
+    title: Proof and ROI
+    stage: stage-proof-and-roi
+    depends_on:
+      - observer-tcb-closure
+    applicability:
+      - key: proof-and-roi-current-success
+        target_ref: harness-package-runtime
+        journey_role: success
+        dimensions:
+          - key: candidate
+            value: current
+        given_refs:
+          - proof-and-roi-source-locked
+        when_refs:
+          - proof-and-roi-verify-current
+    semantic_fact_bindings:
+      manifest_ref: long-task-real-capability-facts
+      facts:
+        - fact_ref: fact.requirement.real-capability-closure-result
+          claim_ref: semantic_fact.fact.requirement.real-capability-closure-result
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.material-input-provenance
+          claim_ref: semantic_fact.fact.requirement.material-input-provenance
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.declared-assurance-theorem
+          claim_ref: semantic_fact.fact.requirement.declared-assurance-theorem
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.assurance-causal-chain
+          claim_ref: semantic_fact.fact.requirement.assurance-causal-chain
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.attack-suite-ground-truth
+          claim_ref: semantic_fact.fact.requirement.attack-suite-ground-truth
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.valid-control-suite
+          claim_ref: semantic_fact.fact.requirement.valid-control-suite
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.black-box-final-gate-lifecycle
+          claim_ref: semantic_fact.fact.requirement.black-box-final-gate-lifecycle
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.starward-sanitized-replay
+          claim_ref: semantic_fact.fact.requirement.starward-sanitized-replay
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.fresh-agent-benchmark-boundary
+          claim_ref: semantic_fact.fact.requirement.fresh-agent-benchmark-boundary
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.roi-admission-order
+          claim_ref: semantic_fact.fact.requirement.roi-admission-order
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.early-real-entry-feedback
+          claim_ref: semantic_fact.fact.requirement.early-real-entry-feedback
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.context-and-public-authority-update
+          claim_ref: semantic_fact.fact.requirement.context-and-public-authority-update
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.verification-sequence-and-current-candidate
+          claim_ref: semantic_fact.fact.requirement.verification-sequence-and-current-candidate
+          applicability_ref: proof-and-roi-current-success
+        - fact_ref: fact.requirement.final-hard-acceptance
+          claim_ref: semantic_fact.fact.requirement.final-hard-acceptance
+          applicability_ref: proof-and-roi-current-success
+      proofs:
+        - proof_ref: proof.requirement.real-capability-closure-result.exact
+          fact_ref: fact.requirement.real-capability-closure-result
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-real-capability-closure-result
+        - proof_ref: proof.requirement.material-input-provenance.exact
+          fact_ref: fact.requirement.material-input-provenance
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-material-input-provenance
+        - proof_ref: proof.requirement.declared-assurance-theorem.exact
+          fact_ref: fact.requirement.declared-assurance-theorem
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-declared-assurance-theorem
+        - proof_ref: proof.requirement.assurance-causal-chain.exact
+          fact_ref: fact.requirement.assurance-causal-chain
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-assurance-causal-chain
+        - proof_ref: proof.requirement.attack-suite-ground-truth.exact
+          fact_ref: fact.requirement.attack-suite-ground-truth
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-attack-suite-ground-truth
+        - proof_ref: proof.requirement.valid-control-suite.exact
+          fact_ref: fact.requirement.valid-control-suite
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-valid-control-suite
+        - proof_ref: proof.requirement.black-box-final-gate-lifecycle.exact
+          fact_ref: fact.requirement.black-box-final-gate-lifecycle
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-black-box-final-gate-lifecycle
+        - proof_ref: proof.requirement.starward-sanitized-replay.exact
+          fact_ref: fact.requirement.starward-sanitized-replay
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-starward-sanitized-replay
+        - proof_ref: proof.requirement.fresh-agent-benchmark-boundary.exact
+          fact_ref: fact.requirement.fresh-agent-benchmark-boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-fresh-agent-benchmark-boundary
+        - proof_ref: proof.requirement.roi-admission-order.exact
+          fact_ref: fact.requirement.roi-admission-order
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-roi-admission-order
+        - proof_ref: proof.requirement.early-real-entry-feedback.exact
+          fact_ref: fact.requirement.early-real-entry-feedback
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-early-real-entry-feedback
+        - proof_ref: proof.requirement.context-and-public-authority-update.exact
+          fact_ref: fact.requirement.context-and-public-authority-update
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-context-and-public-authority-update
+        - proof_ref: proof.requirement.verification-sequence-and-current-candidate.exact
+          fact_ref: fact.requirement.verification-sequence-and-current-candidate
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-verification-sequence-and-current-candidate
+        - proof_ref: proof.requirement.final-hard-acceptance.exact
+          fact_ref: fact.requirement.final-hard-acceptance
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities:
+            - semantic_fact
+          authority: machine
+          check_ref: verify-proof-and-roi
+          assertion_ref: semantic-final-hard-acceptance
+    product:
+      observable_result: Long-Task 的真实能力与防劣化闭环必须完成四个不可拆散的结果：立即关闭 selected-design `exact_value + exact` 的已知假阳性；同步让关键哨兵和能力声明治理能够证明其宣称防御的错误候选确实被拒绝；明确选择并落实把普通模型编写 verifier 的错误纳入威胁模型的 Observer/TCB 路线 B；最后用确定性攻击/控制组、当前候选 Trust/full/package 验证、受控脱敏真实项目回放和只用于遵循率/ROI 的 fresh-agent 证据完成准入。P0 完成只证明关闭一个确定漏洞，在可信观察闭环和真实回放完成前不得恢复“Long-Task 已高水准抵御模型自然漂移并保证最终无漂移交付”的宽泛声明。
+      result_applicability_refs:
+        - proof-and-roi-current-success
+      success_path_required: true
+      degradation_path_required: false
+      owner:
+        label: harness-package
+        context_refs:
+          - project_context/areas/harness-package.md
+          - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
+          - project_context/areas/harness-package/implementation-index.md
+        path_globs:
+          - README.md
+          - README.zh-CN.md
+          - packages/ty-context/README.md
+          - packages/ty-context/assets/README.md
+          - packages/ty-context/assets/README.zh-CN.md
+          - packages/ty-context/source-mappings.yaml
+          - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - docs/long-task-real-capability-closure.md
+          - PROJECT_SPEC.md
+          - project_context/**
+          - .codex/skills/authoring/harness_package_design/**
+      requirements:
+        - key: material-input-provenance
+          statement: 本 Source 是本 Goal 唯一的项目原生需求载体，完整归并三类输入：原方案附件 `pasted-text.txt`，其 SHA-256 为 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`；Codex 对该方案的仓库证据审计与修正；用户粘贴的 GPT Pro 最终裁决。附件中未被最终裁决推翻的要求继续有效；Codex 审计对绝对有效性、observer 文件年龄、challenge、通用 artifact 解析、重复设计 Fact 体系、generated carrier、Counterfactual、benchmark、v4 和能力措辞的修正优先；GPT Pro 明确批准的路线 B 和工作包 0–4 是最终用户 Authority。任何压缩或恢复都必须从本 Source、Contract、Active Authority 和 owning Context 重建，而不是依赖对话记忆。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: declared-assurance-theorem
+          statement: 正式能力定理必须限制在完整、准确的声明范围、预期细粒度、机器索引的 Fact×条件×方法宇宙和已准入观察/TCB 内：任何仍存在于该宇宙且能由准入观察链发现的当前生产漂移，不得进入 `machine_accepted`；无法建立可信机器观察的 Fact 保持未完成或进入 External Confirmation。该定理不得扩张为自动发现未表达意图、证明任意 Oracle 语义正确，或抵御 TCB 外的一切模型与宿主行为。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: assurance-causal-chain
+          statement: 完成链必须保持单向：完整准确 Source Authority → 无遗漏保义的细粒度 Fact 投影 → Fact×适用条件×所需方法闭包 → 从当前生产目标采集 actual → Harness 或其直接调用的冻结 comparator 重算比较 → 每个 Fact 可独立归因且通过因果敏感性验证 → 同一当前快照的唯一 Final Gate → `machine_accepted`。代码、项目 verifier、自报结果、历史 Receipt 或 prose 不得反向成为 expected Authority。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: attack-suite-ground-truth
+          statement: 确定性 attack suite 的 hidden ground truth 由测试 harness/package owner 持有，不由项目 verifier 生成。必须覆盖：A1 actual≠expected 但自报 pass；A2 expected 复制为 actual；A3 Anatomy 错而局部控件正确；A4 整体视觉模式错误；A5 主要行动层级错误；A6 大量异质 Assertion 共读 aggregate status；A7 mutation 指向纯 evidence carrier；A8 历史 native session；A9 H5/browser 代理冒充 native target；A10 旧截图与当前 tree 不一致；A11 task-authored verifier 是唯一 material Oracle；A12 asset_integrity 错误关闭 layout/a11y/motion。每个失败必须定位到对应 owner，而非无关 fixture/schema。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: valid-control-suite
+          statement: 正确控制组必须证明：合法 tolerance 与动态 mask；一次 render/artifact 被多个 Fact 使用但 locator/result 独立；中心 token 合法影响多个细粒度 Fact；正确 scoped reference+constraint；准入的当前 native session；能力完整且冻结的 observer；正确 exact 候选；非 UI Long-Task 现有行为；普通 Workflow Contract 零新增运行成本；以及无可信机器观察时 External Confirmation 不被误当失败或 machine acceptance。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: starward-sanitized-replay
+          statement: 恢复“在明确 TCB 内已高水准实现设计目的”前必须完成一个受控脱敏的 Starward 派生真实项目回放，至少包含地图页、点位详情、点位夜空、“我的”页、selected design、错误与正确生产实现、自证 verifier、历史 native session 和 H5 代理路径；hidden ground truth 由 harness 持有。Starward 回放不是 P0 的前置条件，但属于本 Goal 最终能力声明恢复的前置条件。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: fresh-agent-benchmark-boundary
+          statement: fresh-agent 配对实验复用现有冻结任务、隐藏 probe、独立配对和 2/3→必要时 3/5 的治理，只衡量 Agent 遵循率、首次发现时间、返工、Contract/Compile/Final Gate 成本、target 采集次数、token、总时长、Authority 体积、迁移与维护成本。它不得证明安全定理、关键假阳性为零或替代 deterministic attack suite、黑盒 Final Gate 与真实回放；若增设 track，应沿用现有 benchmark owner 而非第二框架。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: roi-admission-order
+          statement: 机制 ROI 按字典序准入：先满足目的有效性下限和 known attack rejection；再保证 valid control false blocking 不增加；再证明相对 coverage/fail-closed/Authority 不劣化；最后比较总时间、token、存储、维护、迁移和用户等待成本。性能或成本结论必须声明 workload、baseline/budget、环境、comparator/tolerance 和项目自有测量；不得用静态 shape 或一次 anecdotal run 代替。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: early-real-entry-feedback
+          statement: material UI + selected design 在第一个有用的真实生产入口可运行且早期定位收益高于运行成本时，建议用最终同类 observer 做一次页面 Anatomy、信息/行动层级、整体视觉模式和区域关系的早期并排检查；它不新增 Gate、状态、Receipt 或完成前提，早期 artifact 仅供诊断，最终候选必须重新采集并跑完整 cold-start journey。
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+        - key: context-and-public-authority-update
+          statement: "总体 `Context Delta: required`。必须在代码前更新 `PROJECT_SPEC.md` 和 owning Context，记录路线 B 的项目 owner 决策、旧/新定理边界、observer capability/TCB、目的有效性下限、critical counterexample/claim downgrade、owner/dependency/debt/compatibility/验证；实现索引与验证 Context 必须指向真实代码与检查。若改变公共用户行为或协议，还要同步 managed source、Skills、英文/中文公共文档、package/readme/examples 和 distribution parity；P0 单独行为修复不需要虚构新的 durable owner。"
+          required_proof_surfaces:
+            - runtime_behavior
+          applicability_refs:
+            - proof-and-roi-current-success
+      owner_surfaces: []
+      controls: []
+      control_relation_closure:
+        state: not_applicable
+        statement: This non-UI mechanism Outcome declares no user Controls or cross-Control relation.
+        applicability_refs:
+          - proof-and-roi-current-success
+      control_relations: []
+      surface_bindings: []
+      non_completing_outcomes: []
+    technical:
+      obligations: []
+      expected_change_paths:
+        - README.md
+        - README.zh-CN.md
+        - packages/ty-context/README.md
+        - packages/ty-context/assets/README.md
+        - packages/ty-context/assets/README.zh-CN.md
+        - packages/ty-context/source-mappings.yaml
+        - packages/ty-context/src/lib/long-task-admitted-observation.ts
+        - tests/ty-context/fixtures/long-task-real-capability-state.json
+      allowed_support_paths:
+        - docs/long-task-real-capability-closure.md
+        - PROJECT_SPEC.md
+        - project_context/**
+        - .codex/skills/authoring/harness_package_design/**
+      forbidden_paths:
+        - .git/**
+      bindings:
+        - key: proof-observation-owner
+          kind: file
+          target: packages/ty-context/src/lib/long-task-admitted-observation.ts
+          carrier_paths:
+            - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          existence: planned
+        - key: relation-fixture
+          kind: file
+          target: tests/ty-context/fixtures/long-task-real-capability-state.json
+          carrier_paths:
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          existence: existing
+      forbidden_shortcuts: []
+      rollback_and_recovery: null
+    acceptance:
+      checks:
+        - key: verify-proof-and-roi
+          journey_roles:
+            - success
+            - stage_gate
+          execution_target:
+            target_ref: harness-package-runtime
+            entrypoint: root
+          scenario:
+            given:
+              - key: proof-and-roi-source-locked
+                statement: The Source, full Context and current package candidate are available.
+            when:
+              - key: proof-and-roi-verify-current
+                statement: Run Proof and ROI verification on the current candidate.
+          proof_surface: runtime_behavior
+          runner:
+            type: node_oracle
+            target: tools/verify_long_task_real_capability_delivery.mjs
+            argv:
+              - proof-and-roi
+            cwd: .
+            timeout_ms: 3600000
+            effect: test_sandbox
+            retry_policy: none
+            idempotent: true
+          verification_inputs:
+            - tools/verify_long_task_real_capability_delivery.mjs
+            - tools/semantic_fact_delivery_evidence.mjs
+            - tools/npm_command_spec.mjs
+            - tests/ty-context/long-task-real-capability-replay.test.mjs
+            - tools/verify_long_task_real_capability_roi.mjs
+          input_paths:
+            - README.md
+            - README.zh-CN.md
+            - packages/ty-context/README.md
+            - packages/ty-context/assets/README.md
+            - packages/ty-context/assets/README.zh-CN.md
+            - packages/ty-context/source-mappings.yaml
+            - tests/ty-context/fixtures/long-task-real-capability-state.json
+          expected_output_paths:
+            - packages/ty-context/dist/**
+            - tests/src/**
+            - tests/artifacts/**
+            - tests/ty-context/base-oracle.mjs
+          artifact_globs:
+            - artifacts/semantic-fact-results.json
+            - .artifacts/long-task-real-capability/**
+          positive_assertions:
+            - key: proof-and-roi-result
+              criterion: Proof and ROI is complete on the current package candidate.
+              claims:
+                - result
+              applicability_ref: proof-and-roi-current-success
+              observation: proof_and_roi_result
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-material-input-provenance
+              criterion: 本 Source 是本 Goal 唯一的项目原生需求载体，完整归并三类输入：原方案附件 `pasted-text.txt`，其 SHA-256 为 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`；Codex 对该方案的仓库证据审计与修正；用户粘贴的 GPT Pro 最终裁决。附件中未被最终裁决推翻的要求继续有效；Codex 审计对绝对有效性、observer 文件年龄、challenge、通用 artifact 解析、重复设计 Fact 体系、generated carrier、Counterfactual、benchmark、v4 和能力措辞的修正优先；GPT Pro 明确批准的路线 B 和工作包 0–4 是最终用户 Authority。任何压缩或恢复都必须从本 Source、Contract、Active Authority 和 owning Context 重建，而不是依赖对话记忆。
+              claims:
+                - requirement.material-input-provenance
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_material_input_provenance
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-declared-assurance-theorem
+              criterion: 正式能力定理必须限制在完整、准确的声明范围、预期细粒度、机器索引的 Fact×条件×方法宇宙和已准入观察/TCB 内：任何仍存在于该宇宙且能由准入观察链发现的当前生产漂移，不得进入 `machine_accepted`；无法建立可信机器观察的 Fact 保持未完成或进入 External Confirmation。该定理不得扩张为自动发现未表达意图、证明任意 Oracle 语义正确，或抵御 TCB 外的一切模型与宿主行为。
+              claims:
+                - requirement.declared-assurance-theorem
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_declared_assurance_theorem
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-assurance-causal-chain
+              criterion: 完成链必须保持单向：完整准确 Source Authority → 无遗漏保义的细粒度 Fact 投影 → Fact×适用条件×所需方法闭包 → 从当前生产目标采集 actual → Harness 或其直接调用的冻结 comparator 重算比较 → 每个 Fact 可独立归因且通过因果敏感性验证 → 同一当前快照的唯一 Final Gate → `machine_accepted`。代码、项目 verifier、自报结果、历史 Receipt 或 prose 不得反向成为 expected Authority。
+              claims:
+                - requirement.assurance-causal-chain
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_assurance_causal_chain
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-attack-suite-ground-truth
+              criterion: 确定性 attack suite 的 hidden ground truth 由测试 harness/package owner 持有，不由项目 verifier 生成。必须覆盖：A1 actual≠expected 但自报 pass；A2 expected 复制为 actual；A3 Anatomy 错而局部控件正确；A4 整体视觉模式错误；A5 主要行动层级错误；A6 大量异质 Assertion 共读 aggregate status；A7 mutation 指向纯 evidence carrier；A8 历史 native session；A9 H5/browser 代理冒充 native target；A10 旧截图与当前 tree 不一致；A11 task-authored verifier 是唯一 material Oracle；A12 asset_integrity 错误关闭 layout/a11y/motion。每个失败必须定位到对应 owner，而非无关 fixture/schema。
+              claims:
+                - requirement.attack-suite-ground-truth
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_attack_suite_ground_truth
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-valid-control-suite
+              criterion: 正确控制组必须证明：合法 tolerance 与动态 mask；一次 render/artifact 被多个 Fact 使用但 locator/result 独立；中心 token 合法影响多个细粒度 Fact；正确 scoped reference+constraint；准入的当前 native session；能力完整且冻结的 observer；正确 exact 候选；非 UI Long-Task 现有行为；普通 Workflow Contract 零新增运行成本；以及无可信机器观察时 External Confirmation 不被误当失败或 machine acceptance。
+              claims:
+                - requirement.valid-control-suite
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_valid_control_suite
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-starward-sanitized-replay
+              criterion: 恢复“在明确 TCB 内已高水准实现设计目的”前必须完成一个受控脱敏的 Starward 派生真实项目回放，至少包含地图页、点位详情、点位夜空、“我的”页、selected design、错误与正确生产实现、自证 verifier、历史 native session 和 H5 代理路径；hidden ground truth 由 harness 持有。Starward 回放不是 P0 的前置条件，但属于本 Goal 最终能力声明恢复的前置条件。
+              claims:
+                - requirement.starward-sanitized-replay
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_starward_sanitized_replay
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-fresh-agent-benchmark-boundary
+              criterion: fresh-agent 配对实验复用现有冻结任务、隐藏 probe、独立配对和 2/3→必要时 3/5 的治理，只衡量 Agent 遵循率、首次发现时间、返工、Contract/Compile/Final Gate 成本、target 采集次数、token、总时长、Authority 体积、迁移与维护成本。它不得证明安全定理、关键假阳性为零或替代 deterministic attack suite、黑盒 Final Gate 与真实回放；若增设 track，应沿用现有 benchmark owner 而非第二框架。
+              claims:
+                - requirement.fresh-agent-benchmark-boundary
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_fresh_agent_benchmark_boundary
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-roi-admission-order
+              criterion: 机制 ROI 按字典序准入：先满足目的有效性下限和 known attack rejection；再保证 valid control false blocking 不增加；再证明相对 coverage/fail-closed/Authority 不劣化；最后比较总时间、token、存储、维护、迁移和用户等待成本。性能或成本结论必须声明 workload、baseline/budget、环境、comparator/tolerance 和项目自有测量；不得用静态 shape 或一次 anecdotal run 代替。
+              claims:
+                - requirement.roi-admission-order
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_roi_admission_order
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-early-real-entry-feedback
+              criterion: material UI + selected design 在第一个有用的真实生产入口可运行且早期定位收益高于运行成本时，建议用最终同类 observer 做一次页面 Anatomy、信息/行动层级、整体视觉模式和区域关系的早期并排检查；它不新增 Gate、状态、Receipt 或完成前提，早期 artifact 仅供诊断，最终候选必须重新采集并跑完整 cold-start journey。
+              claims:
+                - requirement.early-real-entry-feedback
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_early_real_entry_feedback
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: requirement-context-and-public-authority-update
+              criterion: "总体 `Context Delta: required`。必须在代码前更新 `PROJECT_SPEC.md` 和 owning Context，记录路线 B 的项目 owner 决策、旧/新定理边界、observer capability/TCB、目的有效性下限、critical counterexample/claim downgrade、owner/dependency/debt/compatibility/验证；实现索引与验证 Context 必须指向真实代码与检查。若改变公共用户行为或协议，还要同步 managed source、Skills、英文/中文公共文档、package/readme/examples 和 distribution parity；P0 单独行为修复不需要虚构新的 durable owner。"
+              claims:
+                - requirement.context-and-public-authority-update
+              applicability_ref: proof-and-roi-current-success
+              observation: requirement_context_and_public_authority_update
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: semantic-real-capability-closure-result
+              criterion: The exact Source-indexed semantic Fact real-capability-closure-result is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.real-capability-closure-result
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_real_capability_closure_result
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-material-input-provenance
+              criterion: The exact Source-indexed semantic Fact material-input-provenance is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.material-input-provenance
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_material_input_provenance
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-declared-assurance-theorem
+              criterion: The exact Source-indexed semantic Fact declared-assurance-theorem is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.declared-assurance-theorem
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_declared_assurance_theorem
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-assurance-causal-chain
+              criterion: The exact Source-indexed semantic Fact assurance-causal-chain is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.assurance-causal-chain
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_assurance_causal_chain
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-attack-suite-ground-truth
+              criterion: The exact Source-indexed semantic Fact attack-suite-ground-truth is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.attack-suite-ground-truth
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_attack_suite_ground_truth
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-valid-control-suite
+              criterion: The exact Source-indexed semantic Fact valid-control-suite is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.valid-control-suite
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_valid_control_suite
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-black-box-final-gate-lifecycle
+              criterion: The exact Source-indexed semantic Fact black-box-final-gate-lifecycle is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.black-box-final-gate-lifecycle
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_black_box_final_gate_lifecycle
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-starward-sanitized-replay
+              criterion: The exact Source-indexed semantic Fact starward-sanitized-replay is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.starward-sanitized-replay
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_starward_sanitized_replay
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-fresh-agent-benchmark-boundary
+              criterion: The exact Source-indexed semantic Fact fresh-agent-benchmark-boundary is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.fresh-agent-benchmark-boundary
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_fresh_agent_benchmark_boundary
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-roi-admission-order
+              criterion: The exact Source-indexed semantic Fact roi-admission-order is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.roi-admission-order
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_roi_admission_order
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-early-real-entry-feedback
+              criterion: The exact Source-indexed semantic Fact early-real-entry-feedback is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.early-real-entry-feedback
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_early_real_entry_feedback
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-context-and-public-authority-update
+              criterion: The exact Source-indexed semantic Fact context-and-public-authority-update is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.context-and-public-authority-update
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_context_and_public_authority_update
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-verification-sequence-and-current-candidate
+              criterion: The exact Source-indexed semantic Fact verification-sequence-and-current-candidate is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.verification-sequence-and-current-candidate
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_verification_sequence_and_current_candidate
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: semantic-final-hard-acceptance
+              criterion: The exact Source-indexed semantic Fact final-hard-acceptance is true on the current candidate.
+              claims:
+                - semantic_fact.fact.requirement.final-hard-acceptance
+              applicability_ref: proof-and-roi-current-success
+              observation: semantic_fact_final_hard_acceptance
+              evidence_capabilities:
+                - semantic_fact
+              operator: equals
+              expected: true
+            - key: acceptance-black-box-final-gate-lifecycle
+              criterion: 黑盒验证必须走真实 Long-Task 生命周期并在同一当前候选上完成 Preflight/Compile、candidate、Final Gate，证明错误候选不能获得 `machine_accepted`、正确候选可以通过、开放外部确认保持 pending、protected inputs/candidate/snapshot 变化会失效，并且失败原因落到具体 Fact/method/observer/production-carrier 边界。历史 Progress、Receipt、targeted pass 或 prose inspection 不是该证据。
+              claims:
+                - requirement.material-input-provenance
+              applicability_ref: proof-and-roi-current-success
+              observation: acceptance_black_box_final_gate_lifecycle
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: acceptance-verification-sequence-and-current-candidate
+              criterion: 验证顺序为：确定性攻击/正确控制组；focused 与 changed-path affected checks；Long-Task Trust Boundary Gate；complete tests/package source parity/tarball/consumer/release regression；受控脱敏真实回放；仅用于遵循率和 ROI 的 fresh-agent 配对；Context drift；最后由本 Goal 的唯一 Long-Task Final Gate 在同一干净 current candidate 上重编译并重跑全部声明 Checks。任何 Source、Context、Contract、verifier、实现或控制输入变化后必须重跑受影响检查，历史绿色不得继承。
+              claims:
+                - requirement.material-input-provenance
+              applicability_ref: proof-and-roi-current-success
+              observation: acceptance_verification_sequence_and_current_candidate
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: acceptance-final-hard-acceptance
+              criterion: 最终硬验收要求：UI exact mismatch 绝不通过；expected-as-actual、自报 verdict、aggregate status、纯 evidence carrier、历史 session/截图/build、browser/H5 代理 native、task-authored 唯一 material Oracle 均不能虚假 machine-accept；material design Fact 无遗漏、错误方法或静默 N/A；当前 target/snapshot/session 与 production reachability 可证；Counterfactual 改变真实 carrier 和对应 actual；合法 tolerance/mask/共享执行/fan-out 正常；目的有效性先于相对不劣化；无开放 critical counterexample；非适用任务不增加流程；适用任务 ROI 为正；没有新增阶段、Authority、Gate、scheduler、registry 或持久状态。
+              claims:
+                - requirement.material-input-provenance
+              applicability_ref: proof-and-roi-current-success
+              observation: acceptance_final_hard_acceptance
+              evidence_capabilities:
+                - target_runtime
+                - state_delta
+              operator: equals
+              expected: true
+            - key: proof-and-roi-liveness
+              criterion: The package verification target remains live under semantic mutation.
+              claims: []
+              observation: target_live
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: true
+          negative_assertions:
+            - key: proof-and-roi-relations-na
+              criterion: Cross-Control relations remain inapplicable because this Outcome declares no Controls.
+              claims:
+                - control_relation_closure
+              applicability_ref: proof-and-roi-current-success
+              observation: relations_applicable
+              evidence_capabilities:
+                - target_runtime
+              operator: equals
+              expected: false
+          environment_requirements:
+            - key: node
+              kind: executable
+              target: node
+      population: null
+      counterfactual_controls:
+        - key: mutate-proof-and-roi
+          binding_key: proof-observation-owner
+          claims:
+            - result
+            - requirement.material-input-provenance
+            - requirement.declared-assurance-theorem
+            - requirement.assurance-causal-chain
+            - requirement.attack-suite-ground-truth
+            - requirement.valid-control-suite
+            - requirement.starward-sanitized-replay
+            - requirement.fresh-agent-benchmark-boundary
+            - requirement.roi-admission-order
+            - requirement.early-real-entry-feedback
+            - requirement.context-and-public-authority-update
+            - semantic_fact.fact.requirement.real-capability-closure-result
+            - semantic_fact.fact.requirement.material-input-provenance
+            - semantic_fact.fact.requirement.declared-assurance-theorem
+            - semantic_fact.fact.requirement.assurance-causal-chain
+            - semantic_fact.fact.requirement.attack-suite-ground-truth
+            - semantic_fact.fact.requirement.valid-control-suite
+            - semantic_fact.fact.requirement.black-box-final-gate-lifecycle
+            - semantic_fact.fact.requirement.starward-sanitized-replay
+            - semantic_fact.fact.requirement.fresh-agent-benchmark-boundary
+            - semantic_fact.fact.requirement.roi-admission-order
+            - semantic_fact.fact.requirement.early-real-entry-feedback
+            - semantic_fact.fact.requirement.context-and-public-authority-update
+            - semantic_fact.fact.requirement.verification-sequence-and-current-candidate
+            - semantic_fact.fact.requirement.final-hard-acceptance
+          check_key: verify-proof-and-roi
+          mutation:
+            type: replace_text
+            path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+            match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
+            replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
+          expected_assertion_failures:
+            - proof-and-roi-result
+            - requirement-material-input-provenance
+            - requirement-declared-assurance-theorem
+            - requirement-assurance-causal-chain
+            - requirement-attack-suite-ground-truth
+            - requirement-valid-control-suite
+            - requirement-starward-sanitized-replay
+            - requirement-fresh-agent-benchmark-boundary
+            - requirement-roi-admission-order
+            - requirement-early-real-entry-feedback
+            - requirement-context-and-public-authority-update
+            - semantic-real-capability-closure-result
+            - semantic-material-input-provenance
+            - semantic-declared-assurance-theorem
+            - semantic-assurance-causal-chain
+            - semantic-attack-suite-ground-truth
+            - semantic-valid-control-suite
+            - semantic-black-box-final-gate-lifecycle
+            - semantic-starward-sanitized-replay
+            - semantic-fresh-agent-benchmark-boundary
+            - semantic-roi-admission-order
+            - semantic-early-real-entry-feedback
+            - semantic-context-and-public-authority-update
+            - semantic-verification-sequence-and-current-candidate
+            - semantic-final-hard-acceptance
+            - acceptance-black-box-final-gate-lifecycle
+            - acceptance-verification-sequence-and-current-candidate
+            - acceptance-final-hard-acceptance
+          preserved_assertions:
+            - proof-and-roi-liveness
+        - key: mutate-proof-and-roi-relation-closure
+          binding_key: relation-fixture
+          claims:
+            - control_relation_closure
+          check_key: verify-proof-and-roi
+          mutation:
+            type: replace_json_value
+            path: tests/ty-context/fixtures/long-task-real-capability-state.json
+            pointer: /relations_applicable
+            value: true
+          expected_assertion_failures:
+            - proof-and-roi-relations-na
+          preserved_assertions:
+            - proof-and-roi-liveness

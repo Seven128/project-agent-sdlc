@@ -33,6 +33,10 @@ import {
 import {
   synchronizeFixtureSemanticManifest,
 } from "./long-task-semantic-sync-fixture.mjs";
+import {
+  fixtureExactComparisonInput,
+  fixtureExactComparisonResultIdentity,
+} from "./long-task-exact-comparison-fixture.mjs";
 
 export {
   fixtureSemanticManifest,
@@ -116,7 +120,7 @@ export function designFactResultFixture(
     sensitivity = "plain",
   },
 ) {
-  return {
+  const result = {
     fact_ref: expectation.fact_ref,
     subject_ref: expectation.subject_ref,
     variation_ref: expectation.variation_ref,
@@ -128,7 +132,7 @@ export function designFactResultFixture(
         kind: "json_pointer",
         value: `/observations/${locatorSuffix}`,
       },
-      value_sha256: "f".repeat(64),
+      value_sha256: expectation.expected.sha256,
       sensitivity,
       redaction:
         sensitivity === "protected"
@@ -156,7 +160,7 @@ export function designFactResultFixture(
         kind: "json_pointer",
         value: `/comparisons/${locatorSuffix}`,
       },
-      result_sha256: "1".repeat(64),
+      result_sha256: "0".repeat(64),
       comparator: expectation.comparison.comparator,
       mode: expectation.comparison.mode,
       parameters: structuredClone(expectation.comparison.parameters),
@@ -168,6 +172,23 @@ export function designFactResultFixture(
     oracle: structuredClone(expectation.oracle),
     environment: structuredClone(expectation.environment),
   };
+  const identityInput = fixtureExactComparisonInput({
+    identity: {
+      kind: "selected_design_ground_v1",
+      fact_ref: result.fact_ref,
+      subject_ref: result.subject_ref,
+      variation_ref: result.variation_ref,
+      property_ref: result.property_ref,
+    },
+    actualValueSha256: result.actual_observation.value_sha256,
+    expectedValueSha256: result.expected.sha256,
+    comparison: result.comparison,
+  });
+  result.comparison.result_sha256 = fixtureExactComparisonResultIdentity({
+    ...identityInput,
+    passed: true,
+  });
+  return result;
 }
 
 export async function createDeliveryFixture(options = {}) {

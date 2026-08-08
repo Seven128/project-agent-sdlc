@@ -639,6 +639,30 @@ function validateSymbolicEvidenceMutations(
     ),
     "design_symbolic_method_identity_mismatch",
   );
+  const mismatchedExactValue = structuredClone(symbolicMethod);
+  mismatchedExactValue.rule_results[0].actual_observation.value_sha256 =
+    "0".repeat(64);
+  mismatchedExactValue.rule_results[0].comparison.passed = true;
+  mismatchedExactValue.rule_results[0].verdict = "passed";
+  assert.equal(
+    validateRuntimeEvidenceRecord(
+      compiledCheck,
+      decodeEvidenceCapabilityRecords([mismatchedExactValue])[0],
+      artifactHashes,
+    ),
+    "design_symbolic_method_exact_value_mismatch",
+  );
+  const forgedComparisonIdentity = structuredClone(symbolicMethod);
+  forgedComparisonIdentity.rule_results[0].comparison.result_sha256 =
+    "0".repeat(64);
+  assert.equal(
+    validateRuntimeEvidenceRecord(
+      compiledCheck,
+      decodeEvidenceCapabilityRecords([forgedComparisonIdentity])[0],
+      artifactHashes,
+    ),
+    "design_symbolic_method_comparison_result_identity_mismatch",
+  );
   const mutatedCertificate = structuredClone(symbolicCertificate);
   mutatedCertificate.certificate_results[0].fact_rule_refs.pop();
   assert.equal(

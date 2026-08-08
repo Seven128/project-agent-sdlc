@@ -12,15 +12,18 @@ Source carries complete declared meaning, Contract carries machine bindings and 
 
 Evaluate changes in this order:
 
-1. prove `Coverage_new ⊇ Coverage_old` and `FalseNegative_new ⊆ FalseNegative_old` for the protected purpose;
-2. prove Authority, fail-closed behavior and complete current-final-snapshot verification remain non-bypassable;
-3. preserve semantic granularity and the explicit Oracle/Inspector/runtime trust boundary;
-4. only then compare total authoring, runtime, state, recovery, maintenance, test, process, adoption and migration cost;
-5. positive net ROI admits consideration, never automatic adoption.
+1. prove a declared-purpose validity floor inside the named threat model and TCB: every frozen critical counterexample is rejected, every independently grounded correct control passes, each critical sentinel fails at its claimed semantic owner/boundary, and no known critical false acceptance remains open;
+2. prove `Coverage_new ⊇ Coverage_valid_baseline` and `FalseNegative_new ⊆ FalseNegative_valid_baseline`; invalid old behavior is defect rather than protected baseline, and Coverage is demonstrably rejected erroneous completion paths rather than test/Fact/tag counts;
+3. prove Authority, fail-closed behavior and complete current-final-snapshot verification remain non-bypassable;
+4. preserve semantic granularity and the explicit admitted Observer/Oracle/Inspector/runtime trust boundary;
+5. only then compare total authoring, runtime, state, recovery, maintenance, test, process, adoption and migration cost;
+6. positive net ROI admits consideration, never automatic adoption.
 
 Cost reduction cannot compensate for weakened drift interception. If non-degradation cannot be established, leave the formal acceptance path unchanged and isolate any experiment outside it. With equivalent cost, prefer stronger purpose fulfillment; with equivalent effect, prefer lower total cost. Use measured data when available; otherwise use rigorous causal argument plus a small bounded validation and involve the user/project owner when a genuine product choice remains.
 
-For every added, removed or strengthened mechanism, identify the exact false-completion path, invariant, proof/check, overlap, deletion reopening risk, fail-closed behavior and total incremental benefit/cost. Implement runtime/invariant changes in the mechanism owner; do not disguise them as documentation or test-only changes. Add no Mechanism Matrix, Receipt, registry or state merely to record this reasoning.
+For every added, removed or strengthened mechanism, identify the exact false-completion path, invariant, independently grounded positive/negative controls, expected failure owner/localization, must-allow controls, proof/check, overlap, deletion reopening risk, fail-closed behavior and total incremental benefit/cost. Freeze a reproducible critical incident before repair and downgrade the affected capability wording until its required regression and replay close. A sentinel rationale, prose audit, green aggregate or fresh-Agent run cannot establish behavior its controls do not prove. Implement runtime/invariant changes in the mechanism owner; do not disguise them as documentation or test-only changes. Add no Mechanism Matrix, Receipt, second registry or state merely to record this reasoning.
+
+For Observer/TCB changes, classify trust by capability and the complete observation chain, never file age. Preserve distinct expected, actual, comparison/result-identity and verdict owners. Challenge/nonce supplies freshness against direct replay only. A project runner's `value_sha256`, `passed` or `verdict` cannot alone close a material Claim; use a package-owned admitted extractor/comparator, a directly invoked digest/version/capability-frozen executable, or target-blocking External Confirmation. Keep the first admitted artifact/locator set bounded, with explicit media/schema/version, normalization/tolerance/mask, containment/no-follow, resource and protected-value rules. Do not build a universal UI observer or a second Fact taxonomy.
 
 ## Protected purpose and implementation freedom
 

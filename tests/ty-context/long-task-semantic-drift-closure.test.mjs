@@ -1021,6 +1021,24 @@ function assertFactResultDriftClosure({
       "design_method_actual_observation_mismatch",
     ],
     [
+      "exact value mismatch cannot be overridden by submitted pass fields",
+      (record) => {
+        record.cells[0].fact_results[0].actual_observation.value_sha256 =
+          "9".repeat(64);
+        record.cells[0].fact_results[0].comparison.passed = true;
+        record.cells[0].fact_results[0].verdict = "passed";
+      },
+      "design_method_exact_value_mismatch",
+    ],
+    [
+      "comparison result identity is recomputed",
+      (record) => {
+        record.cells[0].fact_results[0].comparison.result_sha256 =
+          "9".repeat(64);
+      },
+      "design_method_comparison_result_identity_mismatch",
+    ],
+    [
       "actual environment",
       (record) => {
         record.cells[0].fact_results[0].actual_environment.value_sha256 =
