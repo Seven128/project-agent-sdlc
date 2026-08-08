@@ -512,6 +512,7 @@ test("sanitized admission attestation binds the exact clean main tree and result
     path: "run/deterministic/deterministic-report.json",
     sha256: "d".repeat(64),
     value: {
+      schema_version: "tiny-context-admission-deterministic-v3",
       global_execution_envelope_sha256: "global-frozen",
       track_config_sha256: {
         "dra-semantic-recovery": "dra-semantic-recovery-frozen",
@@ -522,6 +523,7 @@ test("sanitized admission attestation binds the exact clean main tree and result
         "dra-semantic-recovery": { passed: true },
         "build-reuse-buy": { passed: true },
       },
+      ...passingDeterministicEnvironment(),
     },
   };
   const trackConfigSha = {
@@ -670,13 +672,14 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
   );
   const deterministic = jsonRecord(
     {
-      schema_version: "tiny-context-admission-deterministic-v2",
+      schema_version: "tiny-context-admission-deterministic-v3",
       global_execution_envelope_sha256: globalSha,
       track_config_sha256: trackConfigSha,
       candidate_git: candidate,
       tracks: Object.fromEntries(
         Object.keys(trackConfigSha).map((track) => [track, { passed: true }]),
       ),
+      ...passingDeterministicEnvironment(),
     },
     "deterministic.json",
   );
@@ -687,7 +690,14 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
       global_execution_envelope_sha256: globalSha,
       track_config_sha256: trackConfigSha,
       candidate_git: candidate,
-      deterministic: { artifact_sha256: deterministic.sha256, passed: true },
+      deterministic: {
+        artifact_sha256: deterministic.sha256,
+        passed: true,
+        benchmark_execution_environment:
+          deterministic.value.benchmark_execution_environment,
+        deterministic_runtime_environment:
+          deterministic.value.deterministic_runtime_environment,
+      },
       tracks: aggregateRecords.map((aggregate) => ({
         track: aggregate.value.track,
         track_config_sha256: aggregate.value.track_config_sha256,
@@ -809,6 +819,27 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
     await rm(temporary, { recursive: true, force: true });
   }
 });
+
+function passingDeterministicEnvironment() {
+  return {
+    benchmark_execution_environment: {
+      identity: "windows-x64-node24-codex-0.144.5-v1",
+      provenance: "frozen-track-input",
+    },
+    deterministic_runtime_environment: {
+      platform: "win32",
+      arch: "x64",
+      node_version: "v24.0.0",
+      node_major: 24,
+      runner: "local",
+      observed: true,
+      package_engine: ">=24",
+      node_engine_conformant: true,
+      engine_failure: null,
+    },
+    deterministic_runtime_passed: true,
+  };
+}
 
 function eventTrace(metadata = {}) {
   return [

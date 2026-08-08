@@ -121,10 +121,6 @@ function validatePatch(
     activeAccepted.map((delta) => [delta.delta_id, delta]),
   );
   const bindingIdentities: string[] = [];
-  uniqueValues(
-    operations.map((operation) => operation.before_text_sha256),
-    "patch_source_span_duplicate",
-  );
   for (const operation of operations) {
     if (operation.before_text === operation.after_text)
       invalid(`patch_operation_no_change:${operation.operation_id}`);
@@ -138,6 +134,7 @@ function validatePatch(
       sha256Hex(operation.after_text),
       `patch_after_text_digest:${operation.operation_id}`,
     );
+    validateSourceSpanMetadata(operation);
     const operationBinding = validateSemanticBinding(
       operation,
       operation.semantic_binding,
@@ -152,12 +149,46 @@ function validatePatch(
       invalid(`patch_operation_owner_mismatch:${operation.operation_id}`);
     bindingIdentities.push(operationBinding.identity);
   }
+  validateSourceSpanLayout(operations);
   uniqueValues(bindingIdentities, "patch_binding_duplicate_global");
   assertExactSet(
     bindingIdentities,
     [...expectedBindings.keys()],
     "writeback_patch_binding_universe_mismatch",
   );
+}
+
+function validateSourceSpanLayout(
+  operations: DesignResourceExactPatchOperation[],
+): void {
+  const ordered = [...operations].sort(
+    (left, right) =>
+      left.source_span.start_offset - right.source_span.start_offset ||
+      left.source_span.end_offset - right.source_span.end_offset ||
+      left.operation_id.localeCompare(right.operation_id),
+  );
+  for (let index = 1; index < ordered.length; index += 1) {
+    const previous = ordered[index - 1];
+    const current = ordered[index];
+    if (current.source_span.start_offset < previous.source_span.end_offset)
+      invalid(
+        `patch_source_span_overlap:${previous.operation_id}:${current.operation_id}`,
+      );
+  }
+}
+
+function validateSourceSpanMetadata(
+  operation: DesignResourceExactPatchOperation,
+): void {
+  const span = operation.source_span;
+  if (
+    span.start_offset < 0 ||
+    span.end_offset <= span.start_offset ||
+    span.end_offset - span.start_offset !== operation.before_text.length
+  )
+    invalid(`patch_source_span_range:${operation.operation_id}`);
+  if (span.before_text_sha256 !== operation.before_text_sha256)
+    invalid(`patch_source_span_digest:${operation.operation_id}`);
 }
 
 function validateSemanticBinding(
@@ -212,13 +243,7 @@ function validateOperationProjection(
       !operation.after_text.length
     )
       invalid(`patch_add_shape:${operationId}`);
-    validateTextProjection(
-      operationId,
-      "after",
-      operation.after_text,
-      delta.after_semantics,
-      binding.after_text_projection,
-    );
+    validateCanonicalCarrierAdd(operation, delta, binding);
     return;
   }
   if (operation.operation === "remove") {
@@ -229,13 +254,7 @@ function validateOperationProjection(
       operation.after_text !== ""
     )
       invalid(`patch_remove_shape:${operationId}`);
-    validateTextProjection(
-      operationId,
-      "before",
-      operation.before_text,
-      delta.before_semantics,
-      binding.before_text_projection,
-    );
+    validateCanonicalCarrierRemove(operation, delta, binding);
     return;
   }
   if (
@@ -258,6 +277,131 @@ function validateOperationProjection(
     delta.after_semantics,
     binding.after_text_projection,
   );
+  const beforeProjection = binding.before_text_projection;
+  const afterProjection = binding.after_text_projection;
+  if (!beforeProjection || !afterProjection)
+    invalid(`patch_replace_projection_required:${operationId}`);
+  if (
+    operation.before_text.slice(0, beforeProjection.start_offset) !==
+    operation.after_text.slice(0, afterProjection.start_offset)
+  )
+    invalid(`patch_replace_scaffold_prefix:${operationId}`);
+  if (
+    operation.before_text.slice(beforeProjection.end_offset) !==
+    operation.after_text.slice(afterProjection.end_offset)
+  )
+    invalid(`patch_replace_scaffold_suffix:${operationId}`);
+}
+
+function validateCanonicalCarrierAdd(
+  operation: DesignResourceExactPatchOperation,
+  delta: DesignResourceDelta,
+  binding: DesignResourcePatchSemanticBinding,
+): void {
+  const operationId = operation.operation_id;
+  const leaf = uniqueScalarLeaf(delta.after_semantics, operationId, "after");
+  const carrier = renderDesignResourceProposalScalarCarrier(
+    operation.target_key,
+    leaf.path,
+    leaf.value,
+    operationId,
+  );
+  if (
+    countLiteral(operation.before_text, carrier) !== 0 ||
+    countLiteral(operation.after_text, carrier) !== 1
+  )
+    invalid(`patch_add_carrier_count:${operationId}`);
+  const carrierLine = carrierLineFragment(operation.after_text, carrier);
+  const anchorFirst =
+    operation.after_text === operation.before_text + carrierLine;
+  const anchorLast =
+    operation.after_text === carrierLine + operation.before_text;
+  if (!anchorFirst && !anchorLast)
+    invalid(`patch_add_anchor_or_carrier:${operationId}`);
+  if (anchorFirst && !/(?:\r\n|\n|\r)$/u.test(operation.before_text))
+    invalid(`patch_add_carrier_line_boundary:${operationId}`);
+  validateCarrierProjection(
+    operationId,
+    "after",
+    operation.after_text,
+    leaf,
+    binding.after_text_projection,
+    anchorFirst ? operation.before_text.length : 0,
+    carrier,
+  );
+}
+
+function countLiteral(text: string, value: string): number {
+  let count = 0;
+  let offset = 0;
+  while (true) {
+    const found = text.indexOf(value, offset);
+    if (found < 0) return count;
+    count += 1;
+    offset = found + value.length;
+  }
+}
+
+function validateCanonicalCarrierRemove(
+  operation: DesignResourceExactPatchOperation,
+  delta: DesignResourceDelta,
+  binding: DesignResourcePatchSemanticBinding,
+): void {
+  const operationId = operation.operation_id;
+  const leaf = uniqueScalarLeaf(delta.before_semantics, operationId, "before");
+  const carrier = renderDesignResourceProposalScalarCarrier(
+    operation.target_key,
+    leaf.path,
+    leaf.value,
+    operationId,
+  );
+  if (
+    operation.before_text !==
+    carrierLineFragment(operation.before_text, carrier)
+  )
+    invalid(`patch_remove_carrier:${operationId}`);
+  validateCarrierProjection(
+    operationId,
+    "before",
+    operation.before_text,
+    leaf,
+    binding.before_text_projection,
+    0,
+    carrier,
+  );
+}
+
+function carrierLineFragment(text: string, carrier: string): string {
+  for (const eol of ["\r\n", "\n", "\r"])
+    if (text.includes(`${carrier}${eol}`)) return `${carrier}${eol}`;
+  return "";
+}
+
+function validateCarrierProjection(
+  operationId: string,
+  side: "before" | "after",
+  text: string,
+  leaf: { path: string[]; value: string | number | boolean | null },
+  projection: DesignResourceTextSemanticProjection | null,
+  carrierOffset: number,
+  carrier: string,
+): void {
+  if (!projection)
+    invalid(`patch_${side}_semantic_projection_required:${operationId}`);
+  if (!samePath(projection.semantic_path, leaf.path))
+    invalid(`patch_${side}_semantic_path:${operationId}`);
+  const scalar = canonicalCarrierScalar(leaf.value, operationId, side);
+  const marker = `\"value\":${scalar}`;
+  const relative = carrier.indexOf(marker);
+  if (relative < 0) invalid(`patch_${side}_carrier_scalar:${operationId}`);
+  const expectedStart = carrierOffset + relative + `\"value\":`.length;
+  const expectedEnd = expectedStart + scalar.length;
+  if (
+    projection.start_offset !== expectedStart ||
+    projection.end_offset !== expectedEnd ||
+    text.slice(expectedStart, expectedEnd) !== scalar
+  )
+    invalid(`patch_${side}_carrier_projection:${operationId}`);
 }
 
 function validateTextProjection(
@@ -344,14 +488,67 @@ function renderSemanticScalar(
   side: string,
 ): string {
   if (typeof value === "string") {
-    if (!value.length || value.includes("\0"))
-      invalid(`patch_${side}_semantic_scalar:${operationId}`);
+    assertSafeStringScalar(value, operationId, side);
     return value;
   }
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   if (typeof value === "boolean") return String(value);
   if (value === null) return "null";
   invalid(`patch_${side}_semantic_scalar_required:${operationId}`);
+}
+
+export function renderDesignResourceProposalScalarCarrier(
+  targetKey: string,
+  semanticPath: string[],
+  value: string | number | boolean | null,
+  operationId = "carrier",
+): string {
+  assertSafeCarrierCommentComponent(targetKey, operationId, "target_key");
+  for (const segment of semanticPath)
+    assertSafeCarrierCommentComponent(segment, operationId, "semantic_path");
+  if (typeof value === "string") {
+    assertSafeStringScalar(value, operationId, "carrier");
+    assertSafeCarrierCommentComponent(value, operationId, "value");
+  }
+  if (
+    !targetKey.length ||
+    semanticPath.some((segment) => !segment.length) ||
+    (typeof value === "number" && !Number.isFinite(value))
+  )
+    invalid(`patch_carrier_value:${operationId}`);
+  return `<!-- ty-dra-proposal-scalar-v1 ${canonicalValueJson({
+    semantic_path: semanticPath,
+    target_key: targetKey,
+    value,
+  })} -->`;
+}
+
+function assertSafeCarrierCommentComponent(
+  value: string,
+  operationId: string,
+  field: string,
+): void {
+  if (/--/u.test(value))
+    invalid(`patch_carrier_comment_escape:${operationId}:${field}`);
+}
+
+function canonicalCarrierScalar(
+  value: string | number | boolean | null,
+  operationId: string,
+  side: string,
+): string {
+  if (typeof value === "string")
+    assertSafeStringScalar(value, operationId, side);
+  return canonicalValueJson(value);
+}
+
+function assertSafeStringScalar(
+  value: string,
+  operationId: string,
+  side: string,
+): void {
+  if (!value.length || /[\p{Cc}\p{Cs}]/u.test(value))
+    invalid(`patch_${side}_semantic_scalar_control:${operationId}`);
 }
 
 function deltaTarget(deltaId: string, target: string): string {

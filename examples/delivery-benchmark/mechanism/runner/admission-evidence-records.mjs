@@ -172,6 +172,40 @@ export function assertAdmissionEvidenceSameCandidate(actual, expected, label) {
     throw new Error(`admission_evidence_candidate_mismatch:${label}`);
 }
 
+export function assertAdmissionDeterministicEnvironmentBinding(
+  deterministic,
+  attestation,
+) {
+  const benchmark = deterministic?.benchmark_execution_environment;
+  const runtime = deterministic?.deterministic_runtime_environment;
+  if (
+    deterministic?.schema_version !==
+      "tiny-context-admission-deterministic-v3" ||
+    deterministic.deterministic_runtime_passed !== true ||
+    benchmark?.provenance !== "frozen-track-input" ||
+    typeof benchmark.identity !== "string" ||
+    runtime?.observed !== true ||
+    typeof runtime.platform !== "string" ||
+    typeof runtime.arch !== "string" ||
+    !/^v\d+\.\d+\.\d+$/u.test(runtime.node_version) ||
+    !Number.isInteger(runtime.node_major) ||
+    !["local", "github-hosted", "github-actions"].includes(runtime.runner) ||
+    typeof runtime.package_engine !== "string" ||
+    runtime.node_engine_conformant !== true ||
+    runtime.engine_failure !== null ||
+    attestation?.deterministic?.passed !== true ||
+    !sameAdmissionEvidenceObject(
+      attestation.deterministic.benchmark_execution_environment,
+      benchmark,
+    ) ||
+    !sameAdmissionEvidenceObject(
+      attestation.deterministic.deterministic_runtime_environment,
+      runtime,
+    )
+  )
+    throw new Error("admission_evidence_deterministic_environment_invalid");
+}
+
 export function sameAdmissionEvidenceObject(left, right) {
   return canonicalJson(left) === canonicalJson(right);
 }

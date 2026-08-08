@@ -8,6 +8,7 @@ import {
   assertAdmissionEvidencePath,
   assertAdmissionEvidenceRecordSchema,
   assertAdmissionEvidenceSameCandidate,
+  assertAdmissionDeterministicEnvironmentBinding,
   assertAdmissionEvidenceSanitizedJson,
   assertSanitizedAdmissionPairSetMatchesAggregate,
   groupAdmissionPairRecords,
@@ -106,7 +107,7 @@ function coreRecords(records) {
   const manifest = records.get("admission-evidence-manifest.json");
   assertAdmissionEvidenceRecordSchema(
     deterministic,
-    "tiny-context-admission-deterministic-v2",
+    "tiny-context-admission-deterministic-v3",
     "payload-deterministic",
   );
   assertAdmissionEvidenceRecordSchema(
@@ -143,6 +144,10 @@ function validateCoreIdentities(core, payload) {
       label,
     );
   }
+  assertAdmissionDeterministicEnvironmentBinding(
+    core.deterministic.value,
+    core.attestation.value,
+  );
   const manifest = core.manifest.value;
   if (
     manifest.retention_days !== 30 ||

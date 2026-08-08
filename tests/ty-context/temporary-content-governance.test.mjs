@@ -10,11 +10,19 @@ import {
   buildAdmissionEvidencePayload,
   encodeAdmissionEvidencePayload,
 } from "../../examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs";
+import { runDeterministicAdmissionChecks } from "../../examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs";
 import { sha256 } from "../../examples/delivery-benchmark/mechanism/runner/admission-shared.mjs";
+import {
+  evaluateNodeEngineConformance,
+  observeDeterministicRuntimeEnvironment,
+} from "../../examples/delivery-benchmark/mechanism/runner/admission-runtime-environment.mjs";
 import { materializeCiAdmissionEvidence } from "../../tools/ci_admission_evidence.mjs";
 
 const exec = promisify(execFile);
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const read = (relative) => readFile(path.join(repo, relative), "utf8");
 
 test("temporary-content governance classifies every required dimension and scope", async () => {
@@ -52,7 +60,10 @@ test("temporary-content governance classifies every required dimension and scope
   ])
     assert.ok(contract.includes(scope), scope);
   assert.match(contract, /path name never determines authority/iu);
-  assert.match(contract, /writer, reader, migration, tests, public documentation/iu);
+  assert.match(
+    contract,
+    /writer, reader, migration, tests, public documentation/iu,
+  );
   assert.match(contract, /no global Temporary Artifact Manager/iu);
 });
 
@@ -100,6 +111,77 @@ test("DRA checkpoint is ignored and cleanup cannot recurse or follow names", asy
   assert.match(cleanup, /expectedDigest/u);
 });
 
+test("deterministic admission binds observed runtime separately and fails below the package engine", () => {
+  const candidate = {
+    branch: "main",
+    commit: "1".repeat(40),
+    tree: "2".repeat(40),
+    main_commit: "1".repeat(40),
+    working_tree_clean: true,
+  };
+  const config = {
+    environment: {
+      identity: "windows-x64-node24-codex-0.144.5-v1",
+      platform: "win32",
+      arch: "x64",
+      node_major: 24,
+    },
+    deterministic_checks: { "dra-semantic-recovery": [] },
+  };
+  const runtime = observeDeterministicRuntimeEnvironment();
+  const report = runDeterministicAdmissionChecks(
+    config,
+    "global",
+    { "dra-semantic-recovery": "track" },
+    { candidate, runtime },
+  );
+  assert.equal(
+    report.schema_version,
+    "tiny-context-admission-deterministic-v3",
+  );
+  assert.equal(
+    report.benchmark_execution_environment.identity,
+    config.environment.identity,
+  );
+  assert.equal(
+    report.benchmark_execution_environment.provenance,
+    "frozen-track-input",
+  );
+  assert.equal(
+    report.deterministic_runtime_environment.platform,
+    process.platform,
+  );
+  assert.equal(
+    report.deterministic_runtime_environment.node_version,
+    process.version,
+  );
+  assert.notEqual(
+    report.deterministic_runtime_environment,
+    report.benchmark_execution_environment,
+  );
+  assert.equal(report.deterministic_runtime_passed, true);
+
+  const below = evaluateNodeEngineConformance("v22.20.0", ">=24");
+  assert.equal(below.conformant, false);
+  const unsupported = runDeterministicAdmissionChecks(
+    config,
+    "global",
+    { "dra-semantic-recovery": "track" },
+    {
+      candidate,
+      runtime: {
+        ...runtime,
+        node_version: "v22.20.0",
+        node_major: 22,
+        node_engine_conformant: false,
+        engine_failure: "node_major_below_package_engine",
+      },
+    },
+  );
+  assert.equal(unsupported.tracks["dra-semantic-recovery"].passed, false);
+  assert.equal(unsupported.deterministic_runtime_passed, false);
+});
+
 test("CI evidence rebinds deterministic proof and reports three distinct digest meanings", async () => {
   const candidate = {
     branch: "main",
@@ -114,30 +196,27 @@ test("CI evidence rebinds deterministic proof and reports three distinct digest 
     "build-reuse-buy": "c".repeat(64),
   };
   const pairs = Object.entries(tracks).map(([track, digest]) =>
-    evidenceRecord(
-      `${track}/pair.json`,
-      {
-        schema_version: "tiny-context-fresh-agent-pair-v3",
-        global_execution_envelope_sha256: global,
-        track_config_sha256: digest,
-        track,
-        pair_id: "pair-1",
-        replicate: 1,
-        candidate_git: candidate,
-        baseline: {
-          quality: {
-            score: { targeted_defects: 2, findings: [] },
-            trace_identity: "d".repeat(64),
-          },
-        },
-        candidate: {
-          quality: {
-            score: { targeted_defects: 1, findings: [] },
-            trace_identity: "e".repeat(64),
-          },
+    evidenceRecord(`${track}/pair.json`, {
+      schema_version: "tiny-context-fresh-agent-pair-v3",
+      global_execution_envelope_sha256: global,
+      track_config_sha256: digest,
+      track,
+      pair_id: "pair-1",
+      replicate: 1,
+      candidate_git: candidate,
+      baseline: {
+        quality: {
+          score: { targeted_defects: 2, findings: [] },
+          trace_identity: "d".repeat(64),
         },
       },
-    ),
+      candidate: {
+        quality: {
+          score: { targeted_defects: 1, findings: [] },
+          trace_identity: "e".repeat(64),
+        },
+      },
+    }),
   );
   const aggregates = pairs.map((pair) =>
     evidenceRecord(`${pair.value.track}/aggregate.json`, {
@@ -151,13 +230,19 @@ test("CI evidence rebinds deterministic proof and reports three distinct digest 
     }),
   );
   const localDeterministic = evidenceRecord("local-deterministic.json", {
-    schema_version: "tiny-context-admission-deterministic-v2",
+    schema_version: "tiny-context-admission-deterministic-v3",
     global_execution_envelope_sha256: global,
     track_config_sha256: tracks,
     candidate_git: candidate,
     tracks: Object.fromEntries(
       Object.keys(tracks).map((track) => [track, { passed: true }]),
     ),
+    benchmark_execution_environment: {
+      identity: "windows-x64-node24-codex-0.144.5-v1",
+      provenance: "frozen-track-input",
+    },
+    deterministic_runtime_environment: observeDeterministicRuntimeEnvironment(),
+    deterministic_runtime_passed: true,
   });
   const attestation = evidenceRecord("attestation.json", {
     schema_version: "tiny-context-admission-attestation-v2",
@@ -168,6 +253,10 @@ test("CI evidence rebinds deterministic proof and reports three distinct digest 
     deterministic: {
       artifact_sha256: localDeterministic.sha256,
       passed: true,
+      benchmark_execution_environment:
+        localDeterministic.value.benchmark_execution_environment,
+      deterministic_runtime_environment:
+        localDeterministic.value.deterministic_runtime_environment,
     },
     tracks: aggregates.map((aggregate) => ({
       track: aggregate.value.track,
@@ -250,10 +339,41 @@ test("CI evidence rebinds deterministic proof and reports three distinct digest 
     );
     const workflow = await read(".github/workflows/admission-evidence.yml");
     assert.match(workflow, /fetch-depth:\s*0/u);
+    assert.match(workflow, /actions\/setup-node@[0-9a-f]+/u);
+    assert.match(workflow, /node-version:\s*24/u);
+    assert.match(workflow, /cache:\s*npm/u);
+    assert.match(workflow, /admission-runtime-environment\.mjs --check/u);
     assert.match(workflow, /npm ci --ignore-scripts/u);
     assert.match(workflow, /admission_benchmark\.mjs.*deterministic/su);
     assert.match(workflow, /ci_admission_evidence\.mjs/u);
     assert.match(workflow, /artifact-digest/u);
+
+    const mismatchedPath = path.join(
+      temporary,
+      "wrong-tree-deterministic.json",
+    );
+    await writeFile(
+      mismatchedPath,
+      `${JSON.stringify(
+        {
+          ...JSON.parse(ciBytes.toString("utf8")),
+          candidate_git: { ...candidate, tree: "3".repeat(40) },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    await assert.rejects(
+      materializeCiAdmissionEvidence({
+        encoded,
+        outputDirectory: path.join(temporary, "wrong-tree-materialized"),
+        deterministicReport: mismatchedPath,
+        expectedCommit: candidate.commit,
+        expectedTree: candidate.tree,
+      }),
+      /candidate_mismatch/u,
+    );
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

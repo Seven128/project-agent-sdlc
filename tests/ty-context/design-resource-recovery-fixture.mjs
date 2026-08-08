@@ -89,7 +89,7 @@ export async function createRecoveryFixture(options = {}) {
     writeFile(path.join(root, ...resourceLocator.split("/")), resourceBytes),
   ]);
   const patch = {
-    schema_version: "design-resource-exact-patch-v3",
+    schema_version: "design-resource-exact-patch-v4",
     operations: [
       {
         operation_id: "patch.visual.color",
@@ -100,6 +100,12 @@ export async function createRecoveryFixture(options = {}) {
         after_text: "color: red",
         before_text_sha256: sha256("color: blue"),
         after_text_sha256: sha256("color: red"),
+        source_span: {
+          coordinate_system: "utf16-code-unit-v1",
+          start_offset: before.indexOf("color: blue"),
+          end_offset: before.indexOf("color: blue") + "color: blue".length,
+          before_text_sha256: sha256("color: blue"),
+        },
         semantic_binding: {
           delta_id: "delta.color",
           target_key: "visual.color",

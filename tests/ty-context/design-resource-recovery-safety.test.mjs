@@ -15,6 +15,10 @@ import {
   createRecoveryFixture,
   sha256,
 } from "./design-resource-recovery-fixture.mjs";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const exec = promisify(execFile);
 const repo = path.resolve(
@@ -67,6 +71,17 @@ test("mixed EOL and ambiguous patches fail before checkpoint publication", async
       fixture.input.writeback.pre_write_raw_byte_digest = sha256(before);
       fixture.input.writeback.expected_post_write_raw_byte_digest =
         sha256(after);
+      const start = content.indexOf("color: blue");
+      fixture.input.writeback.patch.operations[0].source_span = {
+        coordinate_system: "utf16-code-unit-v1",
+        start_offset: start,
+        end_offset: start + "color: blue".length,
+        before_text_sha256:
+          fixture.input.writeback.patch.operations[0].before_text_sha256,
+      };
+      fixture.input.writeback.patch_identity = sha256Hex(
+        canonicalValueJson(fixture.input.writeback.patch),
+      );
       await assert.rejects(
         createDesignResourceRecoveryCheckpoint(fixture.root, fixture.input),
         /mixed_eol|patch_occurrence_mismatch/u,

@@ -23,6 +23,7 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import { renderDesignResourceProposalScalarCarrier } from "../../packages/ty-context/dist/lib/design-resource-recovery-writeback-policy.js";
 import {
   clone,
   createRecoveryFixture,
@@ -794,7 +795,9 @@ test("resource-owned exact visual is frozen and never changes Proposal bytes", a
     const input = clone(fixture.input);
     const audit = clone(fixture.audit);
     configureResourceOwnedColor(input, audit);
-    const proposalBefore = await readFile(path.join(fixture.root, "proposal.md"));
+    const proposalBefore = await readFile(
+      path.join(fixture.root, "proposal.md"),
+    );
     await createDesignResourceRecoveryCheckpoint(fixture.root, input);
     await writeAudit(fixture, audit);
     const result = await reconcileDesignResourceRecovery(
@@ -878,7 +881,9 @@ test("audit cannot select or change the checkpoint-frozen final owner", async ()
 });
 
 test("changing final owner succeeds only through checkpoint digest CAS update", async () => {
-  const fixture = await createRecoveryFixture({ sessionId: "owner-cas-update" });
+  const fixture = await createRecoveryFixture({
+    sessionId: "owner-cas-update",
+  });
   try {
     const created = await createDesignResourceRecoveryCheckpoint(
       fixture.root,
@@ -894,7 +899,9 @@ test("changing final owner succeeds only through checkpoint digest CAS update", 
     );
     assert.equal(updated.status, "updated");
     await writeAudit(fixture, audit);
-    const proposalBefore = await readFile(path.join(fixture.root, "proposal.md"));
+    const proposalBefore = await readFile(
+      path.join(fixture.root, "proposal.md"),
+    );
     const result = await reconcileDesignResourceRecovery(
       fixture.root,
       input.session_id,
@@ -1032,11 +1039,7 @@ test("explicit meaning targets are exact while delegated nonvisual meaning is in
     const fixture = await createRecoveryFixture({ sessionId: name });
     try {
       const input = clone(fixture.input);
-      await configureDelegatedNonvisualColor(
-        fixture,
-        input,
-        independent,
-      );
+      await configureDelegatedNonvisualColor(fixture, input, independent);
       if (expected)
         await assert.rejects(
           createDesignResourceRecoveryCheckpoint(fixture.root, input),
@@ -1215,7 +1218,7 @@ test("superseded Proposal text projection cannot survive the active replacement"
     );
     await assert.rejects(
       createDesignResourceRecoveryCheckpoint(fixture.root, input),
-      /superseded_before_text_leakage/u,
+      /patch_replace_scaffold_/u,
     );
   } finally {
     await fixture.cleanup();
@@ -1403,7 +1406,9 @@ test("Proposal semantic projection is atomic and a source span cannot carry two 
     await multiLeaf.cleanup();
   }
 
-  const multiDelta = await createRecoveryFixture({ sessionId: "one-op-two-delta" });
+  const multiDelta = await createRecoveryFixture({
+    sessionId: "one-op-two-delta",
+  });
   try {
     const input = clone(multiDelta.input);
     input.writeback.patch.operations[0].delta_ids = [
@@ -1424,7 +1429,7 @@ test("Proposal semantic projection is atomic and a source span cannot carry two 
     await addDelegatedProposalAccent(sharedSpan, input);
     await assert.rejects(
       createDesignResourceRecoveryCheckpoint(sharedSpan.root, input),
-      /patch_source_span_duplicate/u,
+      /patch_source_span_overlap/u,
     );
   } finally {
     await sharedSpan.cleanup();
@@ -1502,12 +1507,7 @@ test("atomic replace, add and remove preserve exact operation semantics", async 
   try {
     const input = clone(disabled.input);
     const audit = clone(disabled.audit);
-    await configureAtomicColorOperation(
-      disabled,
-      input,
-      audit,
-      "remove",
-    );
+    await configureAtomicColorOperation(disabled, input, audit, "remove");
     const patch = input.writeback.patch.operations[0];
     patch.after_text = "disabled";
     patch.after_text_sha256 = sha256("disabled");
@@ -1520,21 +1520,413 @@ test("atomic replace, add and remove preserve exact operation semantics", async 
     await disabled.cleanup();
   }
 
-  const stale = await createRecoveryFixture({ sessionId: "remove-stale-readback" });
+  const stale = await createRecoveryFixture({
+    sessionId: "remove-stale-readback",
+  });
   try {
     const input = clone(stale.input);
     const audit = clone(stale.audit);
     await configureAtomicColorOperation(stale, input, audit, "remove");
+    const current = await readFile(path.join(stale.root, "proposal.md"));
     assert.throws(
       () =>
-        verifyDesignResourceExactPatchReadback(
-          stale.beforeBytes,
-          input.writeback.patch,
-        ),
+        verifyDesignResourceExactPatchReadback(current, input.writeback.patch),
       /patch_remove_before_still_present/u,
     );
   } finally {
     await stale.cleanup();
+  }
+});
+
+test("Proposal scalar carriers reject scaffold, control, anchor and neighboring-meaning interference", async () => {
+  assert.throws(
+    () =>
+      renderDesignResourceProposalScalarCarrier(
+        "visual.color",
+        ["color"],
+        "red-->permission.admin: true",
+      ),
+    /patch_carrier_comment_escape/u,
+  );
+  for (const [name, configure, pattern] of [
+    [
+      "replace-injects-unrelated-line",
+      async (fixture, input) => {
+        const operation = input.writeback.patch.operations[0];
+        operation.after_text = "permission.admin: true\r\ncolor: red";
+        operation.after_text_sha256 = sha256(operation.after_text);
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["color"],
+          start_offset: operation.after_text.lastIndexOf("red"),
+          end_offset: operation.after_text.lastIndexOf("red") + 3,
+        };
+      },
+      /patch_replace_scaffold_prefix/u,
+    ],
+    [
+      "replace-mutates-scaffold",
+      async (fixture, input) => {
+        const operation = input.writeback.patch.operations[0];
+        operation.after_text = "renamed-color: red";
+        operation.after_text_sha256 = sha256(operation.after_text);
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["color"],
+          start_offset: operation.after_text.indexOf("red"),
+          end_offset: operation.after_text.indexOf("red") + 3,
+        };
+      },
+      /patch_replace_scaffold_prefix/u,
+    ],
+    [
+      "scalar-newline-injection",
+      async (fixture, input) => {
+        const value = "red\npermission.admin: true";
+        const operation = input.writeback.patch.operations[0];
+        input.deltas[0].after_semantics = { color: value };
+        operation.after_text = `color: ${value}`;
+        operation.after_text_sha256 = sha256(operation.after_text);
+        operation.semantic_binding.after_semantics_sha256 = sha256Hex(
+          canonicalValueJson(input.deltas[0].after_semantics),
+        );
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["color"],
+          start_offset: 7,
+          end_offset: 7 + value.length,
+        };
+      },
+      /patch_after_semantic_scalar_control/u,
+    ],
+    [
+      "add-deletes-anchor",
+      async (fixture, input, audit) => {
+        await configureAtomicColorOperation(fixture, input, audit, "add");
+        const operation = input.writeback.patch.operations[0];
+        operation.after_text = operation.after_text.slice(
+          0,
+          -operation.before_text.length,
+        );
+        operation.after_text_sha256 = sha256(operation.after_text);
+      },
+      /patch_add_anchor_or_carrier/u,
+    ],
+    [
+      "add-injects-second-record",
+      async (fixture, input, audit) => {
+        await configureAtomicColorOperation(fixture, input, audit, "add");
+        const operation = input.writeback.patch.operations[0];
+        operation.after_text += "\r\npermission.admin: true";
+        operation.after_text_sha256 = sha256(operation.after_text);
+      },
+      /patch_add_anchor_or_carrier/u,
+    ],
+    [
+      "remove-deletes-neighbor",
+      async (fixture, input, audit) => {
+        await configureAtomicColorOperation(fixture, input, audit, "remove");
+        const operation = input.writeback.patch.operations[0];
+        operation.before_text += "layout: compact";
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.source_span.end_offset =
+          operation.source_span.start_offset + operation.before_text.length;
+        operation.source_span.before_text_sha256 = operation.before_text_sha256;
+      },
+      /patch_remove_carrier/u,
+    ],
+    [
+      "remove-wrong-target-carrier",
+      async (fixture, input, audit) => {
+        await configureAtomicColorOperation(fixture, input, audit, "remove");
+        const operation = input.writeback.patch.operations[0];
+        const newline = fixtureText(
+          await readFile(path.join(fixture.root, "proposal.md")),
+        ).includes("\r\n")
+          ? "\r\n"
+          : "\n";
+        const carrier = renderDesignResourceProposalScalarCarrier(
+          "visual.opacity",
+          ["color"],
+          "blue",
+        );
+        operation.before_text = `${carrier}${newline}`;
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.source_span.end_offset =
+          operation.source_span.start_offset + operation.before_text.length;
+        operation.source_span.before_text_sha256 = operation.before_text_sha256;
+        const scalar = canonicalValueJson("blue");
+        operation.semantic_binding.before_text_projection = {
+          semantic_path: ["color"],
+          start_offset: operation.before_text.indexOf(scalar),
+          end_offset: operation.before_text.indexOf(scalar) + scalar.length,
+        };
+      },
+      /patch_remove_carrier/u,
+    ],
+  ]) {
+    const fixture = await createRecoveryFixture({ sessionId: name });
+    try {
+      const input = clone(fixture.input);
+      const audit = clone(fixture.audit);
+      await configure(fixture, input, audit);
+      refreshPatchIdentity(input);
+      await assert.rejects(
+        createDesignResourceRecoveryCheckpoint(fixture.root, input),
+        pattern,
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+});
+
+test("patch source spans come only from one original preimage and cannot overlap", async () => {
+  for (const [name, configure, pattern] of [
+    [
+      "operation-uses-prior-output",
+      async (fixture, input) => {
+        await addDelegatedProposalAccent(fixture, input);
+        const operation = input.writeback.patch.operations[1];
+        const delta = input.deltas.find(
+          (row) => row.delta_id === "delta.accent",
+        );
+        delta.before_semantics = { accent: "red" };
+        delta.after_semantics = { accent: "green" };
+        operation.before_text = "color: red";
+        operation.after_text = "color: green";
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.after_text_sha256 = sha256(operation.after_text);
+        operation.source_span.start_offset = fixtureText(
+          fixture.beforeBytes,
+        ).indexOf("layout: compact");
+        operation.source_span.end_offset =
+          operation.source_span.start_offset + operation.before_text.length;
+        operation.source_span.before_text_sha256 = operation.before_text_sha256;
+        operation.semantic_binding.before_semantics_sha256 = sha256Hex(
+          canonicalValueJson(delta.before_semantics),
+        );
+        operation.semantic_binding.after_semantics_sha256 = sha256Hex(
+          canonicalValueJson(delta.after_semantics),
+        );
+        operation.semantic_binding.before_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 7,
+          end_offset: 10,
+        };
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 7,
+          end_offset: 12,
+        };
+      },
+      /patch_source_span_preimage/u,
+    ],
+    [
+      "partially-overlapping-operation-spans",
+      async (fixture, input) => {
+        await addDelegatedProposalAccent(fixture, input);
+        const operation = input.writeback.patch.operations[1];
+        operation.before_text = "blue\r\nlayout";
+        operation.after_text = "red\r\nlayout";
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.after_text_sha256 = sha256(operation.after_text);
+        const start = fixtureText(fixture.beforeBytes).indexOf("blue");
+        operation.source_span = {
+          coordinate_system: "utf16-code-unit-v1",
+          start_offset: start,
+          end_offset: start + operation.before_text.length,
+          before_text_sha256: operation.before_text_sha256,
+        };
+        operation.semantic_binding.before_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 0,
+          end_offset: 4,
+        };
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 0,
+          end_offset: 3,
+        };
+      },
+      /patch_source_span_overlap/u,
+    ],
+    [
+      "nested-operation-spans",
+      async (fixture, input) => {
+        await addDelegatedProposalAccent(fixture, input);
+        const operation = input.writeback.patch.operations[1];
+        operation.before_text = "blue";
+        operation.after_text = "red";
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.after_text_sha256 = sha256(operation.after_text);
+        const start = fixtureText(fixture.beforeBytes).indexOf("blue");
+        operation.source_span = {
+          coordinate_system: "utf16-code-unit-v1",
+          start_offset: start,
+          end_offset: start + operation.before_text.length,
+          before_text_sha256: operation.before_text_sha256,
+        };
+        operation.semantic_binding.before_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 0,
+          end_offset: 4,
+        };
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: 0,
+          end_offset: 3,
+        };
+      },
+      /patch_source_span_overlap/u,
+    ],
+    [
+      "two-adds-share-one-insertion-anchor",
+      async (fixture, input, audit) => {
+        await configureAtomicColorOperation(fixture, input, audit, "add");
+        await addDelegatedProposalAccent(fixture, input);
+        const delta = input.deltas.find(
+          (row) => row.delta_id === "delta.accent",
+        );
+        delta.operation = "add";
+        delta.before_semantics = null;
+        const operation = input.writeback.patch.operations[1];
+        const newline = fixtureText(
+          await readFile(path.join(fixture.root, "proposal.md")),
+        ).includes("\r\n")
+          ? "\r\n"
+          : "\n";
+        const carrier = renderDesignResourceProposalScalarCarrier(
+          "visual.accent",
+          ["accent"],
+          "red",
+        );
+        operation.operation = "add";
+        operation.before_text = input.writeback.patch.operations[0].before_text;
+        operation.after_text = `${carrier}${newline}${operation.before_text}`;
+        operation.before_text_sha256 = sha256(operation.before_text);
+        operation.after_text_sha256 = sha256(operation.after_text);
+        operation.source_span = clone(
+          input.writeback.patch.operations[0].source_span,
+        );
+        operation.semantic_binding.before_semantics_sha256 = sha256Hex(
+          canonicalValueJson(null),
+        );
+        operation.semantic_binding.before_text_projection = null;
+        const scalar = canonicalValueJson("red");
+        operation.semantic_binding.after_text_projection = {
+          semantic_path: ["accent"],
+          start_offset: operation.after_text.indexOf(scalar),
+          end_offset: operation.after_text.indexOf(scalar) + scalar.length,
+        };
+      },
+      /patch_source_span_overlap/u,
+    ],
+  ]) {
+    const fixture = await createRecoveryFixture({ sessionId: name });
+    try {
+      const input = clone(fixture.input);
+      const audit = clone(fixture.audit);
+      await configure(fixture, input, audit);
+      refreshPatchIdentity(input);
+      await assert.rejects(
+        createDesignResourceRecoveryCheckpoint(fixture.root, input),
+        pattern,
+      );
+    } finally {
+      await fixture.cleanup();
+    }
+  }
+});
+
+test("two disjoint original-preimage operations apply without coordinate drift", async () => {
+  const fixture = await createRecoveryFixture({ sessionId: "disjoint-spans" });
+  try {
+    const input = clone(fixture.input);
+    const audit = clone(fixture.audit);
+    await addDelegatedProposalAccent(fixture, input);
+    const newline = fixtureText(fixture.beforeBytes).includes("\r\n")
+      ? "\r\n"
+      : "\n";
+    const beforeText = fixtureText(fixture.beforeBytes).replace(
+      "layout: compact",
+      `accent: blue${newline}layout: compact`,
+    );
+    const afterText = beforeText
+      .replace("color: blue", "color: red")
+      .replace("accent: blue", "accent: red");
+    const beforeBytes = Buffer.from(beforeText, "utf8");
+    const afterBytes = Buffer.from(afterText, "utf8");
+    await writeFile(path.join(fixture.root, "proposal.md"), beforeBytes);
+    const operation = input.writeback.patch.operations[1];
+    operation.before_text = "accent: blue";
+    operation.after_text = "accent: red";
+    operation.before_text_sha256 = sha256(operation.before_text);
+    operation.after_text_sha256 = sha256(operation.after_text);
+    const start = beforeText.indexOf(operation.before_text);
+    operation.source_span = {
+      coordinate_system: "utf16-code-unit-v1",
+      start_offset: start,
+      end_offset: start + operation.before_text.length,
+      before_text_sha256: operation.before_text_sha256,
+    };
+    operation.semantic_binding.before_text_projection = {
+      semantic_path: ["accent"],
+      start_offset: 8,
+      end_offset: 12,
+    };
+    operation.semantic_binding.after_text_projection = {
+      semantic_path: ["accent"],
+      start_offset: 8,
+      end_offset: 11,
+    };
+    input.writeback.pre_write_raw_byte_digest = sha256(beforeBytes);
+    input.writeback.expected_post_write_raw_byte_digest = sha256(afterBytes);
+    audit.base_raw_byte_digest = input.base.raw_byte_digest;
+    audit.accepted_delta_ids.push("delta.accent");
+    audit.changed_keys.push("visual.accent");
+    audit.requirements_to_resource.push({
+      key: "visual.accent",
+      verdict: "covered",
+      delta_ids: ["delta.accent"],
+      resource_refs: ["resource.main"],
+      condition_refs: ["condition.default"],
+    });
+    audit.resource_to_requirements.push({
+      key: "resource-decision.accent",
+      resource_ref: "resource.main",
+      status: "accepted",
+      semantic_kind: "exact-visual",
+      delta_ids: ["delta.accent"],
+      condition_refs: ["condition.default"],
+      requirement_bindings: [
+        {
+          binding_id: "binding.accent",
+          requirement_key: "visual.accent",
+          delta_id: "delta.accent",
+          origin: "provider-suggested",
+          decision_authority: "delegated:visual-choice",
+          source_refs: ["source.visual-color-delegation"],
+          final_disposition: {
+            kind: "proposal-written",
+            operation_id: "patch.visual.accent",
+          },
+        },
+      ],
+    });
+    audit.writeback_target_raw_byte_digest = sha256(afterBytes);
+    refreshPatchIdentity(input);
+    await createDesignResourceRecoveryCheckpoint(fixture.root, input);
+    await writeAudit(fixture, audit);
+    const result = await applyDesignResourceRecoveryWriteback(
+      fixture.root,
+      input.session_id,
+      fixture.auditLocator,
+    );
+    assert.equal(result.status, "writeback-applied");
+    assert.deepEqual(
+      await readFile(path.join(fixture.root, "proposal.md")),
+      afterBytes,
+    );
+  } finally {
+    await fixture.cleanup();
   }
 });
 
@@ -1594,7 +1986,9 @@ test("downstream owner is structured, digest-current and never a recovery formal
     await external.cleanup();
   }
 
-  const drift = await createRecoveryFixture({ sessionId: "owner-digest-drift" });
+  const drift = await createRecoveryFixture({
+    sessionId: "owner-digest-drift",
+  });
   try {
     const input = clone(drift.input);
     const audit = clone(drift.audit);
@@ -1630,11 +2024,11 @@ test("v3 recovery and audit state are never interpreted as v4", async () => {
       () => parseDesignResourceRecoveryCreateInput(JSON.stringify(inputV3)),
       /schema_version.*design-resource-recovery-input-v4/u,
     );
-    const patchV2 = clone(fixture.input);
-    patchV2.writeback.patch.schema_version = "design-resource-exact-patch-v2";
+    const patchV3 = clone(fixture.input);
+    patchV3.writeback.patch.schema_version = "design-resource-exact-patch-v3";
     assert.throws(
-      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(patchV2)),
-      /schema_version.*design-resource-exact-patch-v3/u,
+      () => parseDesignResourceRecoveryCreateInput(JSON.stringify(patchV3)),
+      /schema_version.*design-resource-exact-patch-v4/u,
     );
     const auditV3 = clone(fixture.audit);
     auditV3.schema_version = "design-resource-reconciliation-audit-v3";
@@ -1736,6 +2130,14 @@ function configureAcceptedColorSupersession(input, currentBytes, color) {
   operation.after_text = `color: ${color}`;
   operation.before_text_sha256 = sha256(operation.before_text);
   operation.after_text_sha256 = sha256(operation.after_text);
+  const sourceStart = fixtureText(currentBytes).indexOf(operation.before_text);
+  assert.notEqual(sourceStart, -1);
+  operation.source_span = {
+    coordinate_system: "utf16-code-unit-v1",
+    start_offset: sourceStart,
+    end_offset: sourceStart + operation.before_text.length,
+    before_text_sha256: operation.before_text_sha256,
+  };
   operation.semantic_binding = {
     delta_id: "delta.color.v2",
     target_key: "visual.color",
@@ -1809,9 +2211,7 @@ function configureResourceOwnedColor(input, audit, options = {}) {
     resource_ref: "resource.main",
     condition_refs: ["condition.default"],
     downstream_owner: {
-      kind: options.external
-        ? "external-immutable"
-        : "selected-source-record",
+      kind: options.external ? "external-immutable" : "selected-source-record",
       locator: selected.locator,
       raw_byte_digest: selected.raw_byte_digest,
       resource_key: "resource.main",
@@ -1832,9 +2232,7 @@ function resourceOwnedDisposition(input, options = {}) {
     resource_ref: "resource.main",
     condition_refs: ["condition.default"],
     downstream_owner: {
-      kind: options.external
-        ? "external-immutable"
-        : "selected-source-record",
+      kind: options.external ? "external-immutable" : "selected-source-record",
       locator: selected.locator,
       raw_byte_digest: selected.raw_byte_digest,
       resource_key: "resource.main",
@@ -1967,12 +2365,8 @@ async function addDelegatedProposalAccent(fixture, input) {
     ...operation.semantic_binding,
     delta_id: "delta.accent",
     target_key: "visual.accent",
-    before_semantics_sha256: sha256Hex(
-      canonicalValueJson({ accent: "blue" }),
-    ),
-    after_semantics_sha256: sha256Hex(
-      canonicalValueJson({ accent: "red" }),
-    ),
+    before_semantics_sha256: sha256Hex(canonicalValueJson({ accent: "blue" })),
+    after_semantics_sha256: sha256Hex(canonicalValueJson({ accent: "red" })),
     before_text_projection: {
       ...operation.semantic_binding.before_text_projection,
       semantic_path: ["accent"],
@@ -1987,12 +2381,7 @@ async function addDelegatedProposalAccent(fixture, input) {
   refreshPatchIdentity(input);
 }
 
-async function configureAtomicColorOperation(
-  fixture,
-  input,
-  audit,
-  operation,
-) {
+async function configureAtomicColorOperation(fixture, input, audit, operation) {
   const newline = fixtureText(fixture.beforeBytes).includes("\r\n")
     ? "\r\n"
     : "\n";
@@ -2004,30 +2393,43 @@ async function configureAtomicColorOperation(
   patch.operation = operation;
   if (operation === "add") {
     before = original.replace(`color: blue${newline}`, "");
+    const carrier = renderDesignResourceProposalScalarCarrier(
+      "visual.color",
+      ["color"],
+      "red",
+    );
     expected = before.replace(
-      `# Proposal${newline}`,
-      `# Proposal${newline}color: red${newline}`,
+      "layout: compact",
+      `${carrier}${newline}layout: compact`,
     );
     delta.operation = "add";
     delta.before_semantics = null;
-    patch.before_text = `# Proposal${newline}`;
-    patch.after_text = `# Proposal${newline}color: red${newline}`;
+    patch.before_text = "layout: compact";
+    patch.after_text = `${carrier}${newline}layout: compact`;
     patch.semantic_binding.before_text_projection = null;
+    const scalar = canonicalValueJson("red");
     patch.semantic_binding.after_text_projection = {
       semantic_path: ["color"],
-      start_offset: patch.after_text.indexOf("red"),
-      end_offset: patch.after_text.indexOf("red") + 3,
+      start_offset: patch.after_text.indexOf(scalar),
+      end_offset: patch.after_text.indexOf(scalar) + scalar.length,
     };
   } else if (operation === "remove") {
-    expected = original.replace(`color: blue${newline}`, "");
+    const carrier = renderDesignResourceProposalScalarCarrier(
+      "visual.color",
+      ["color"],
+      "blue",
+    );
+    before = original.replace("color: blue", carrier);
+    expected = before.replace(`${carrier}${newline}`, "");
     delta.operation = "remove";
     delta.after_semantics = null;
-    patch.before_text = `color: blue${newline}`;
+    patch.before_text = `${carrier}${newline}`;
     patch.after_text = "";
+    const scalar = canonicalValueJson("blue");
     patch.semantic_binding.before_text_projection = {
       semantic_path: ["color"],
-      start_offset: 7,
-      end_offset: 11,
+      start_offset: patch.before_text.indexOf(scalar),
+      end_offset: patch.before_text.indexOf(scalar) + scalar.length,
     };
     patch.semantic_binding.after_text_projection = null;
   }
@@ -2039,6 +2441,14 @@ async function configureAtomicColorOperation(
   patch.semantic_binding.after_semantics_sha256 = sha256Hex(
     canonicalValueJson(delta.after_semantics),
   );
+  const spanStart = before.indexOf(patch.before_text);
+  assert.notEqual(spanStart, -1);
+  patch.source_span = {
+    coordinate_system: "utf16-code-unit-v1",
+    start_offset: spanStart,
+    end_offset: spanStart + patch.before_text.length,
+    before_text_sha256: patch.before_text_sha256,
+  };
   const beforeBytes = Buffer.from(before, "utf8");
   const expectedBytes = Buffer.from(expected, "utf8");
   await writeFile(path.join(fixture.root, "proposal.md"), beforeBytes);
@@ -2058,11 +2468,7 @@ function configureExplicitProductColor(input) {
   input.audit_expectations.resource_decisions[0].semantic_kind = "product";
 }
 
-async function configureDelegatedNonvisualColor(
-  fixture,
-  input,
-  independent,
-) {
+async function configureDelegatedNonvisualColor(fixture, input, independent) {
   input.deltas[0].semantic_kind = "product";
   input.audit_expectations.resource_decisions[0].semantic_kind = "product";
   input.delegations[0].allowed_semantic_kinds.push("product");

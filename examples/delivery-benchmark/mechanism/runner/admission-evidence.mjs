@@ -14,6 +14,7 @@ import {
   assertAdmissionEvidencePath,
   assertAdmissionEvidenceRecordSchema,
   assertAdmissionEvidenceSameCandidate,
+  assertAdmissionDeterministicEnvironmentBinding,
   assertAdmissionEvidenceSanitizedJson,
   assertAdmissionPairSetMatchesAggregate,
   compareAdmissionPairRecords,
@@ -35,7 +36,7 @@ export function buildAdmissionEvidencePayload({
 }) {
   assertAdmissionEvidenceRecordSchema(
     deterministic,
-    "tiny-context-admission-deterministic-v2",
+    "tiny-context-admission-deterministic-v3",
     "deterministic",
   );
   assertAdmissionEvidenceRecordSchema(
@@ -66,6 +67,10 @@ export function buildAdmissionEvidencePayload({
     )
   )
     throw new Error("admission_evidence_deterministic_track_mismatch");
+  assertAdmissionDeterministicEnvironmentBinding(
+    deterministic.value,
+    attestation.value,
+  );
 
   const aggregateByTrack = uniqueAdmissionRecordsByTrack(
     aggregates,

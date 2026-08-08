@@ -3,6 +3,7 @@ import type {
   DesignResourceTextEncoding,
 } from "./design-resource-recovery-types.js";
 import type { DesignResourceExactPatch } from "./design-resource-recovery-patch-types.js";
+import { sha256Hex } from "./strict-codec.js";
 
 export interface DesignResourceDecodedText {
   text: string;
@@ -77,15 +78,13 @@ export function applyDesignResourceExactPatch(
     invalid(`encoding_changed:${expectedEncoding}:${decoded.encoding}`);
   if (expectedEol && decoded.eol_policy !== expectedEol)
     invalid(`eol_changed:${expectedEol}:${decoded.eol_policy}`);
+  const operations = resolveOriginalSourceSpans(decoded.text, patch);
   let text = decoded.text;
-  for (const operation of patch.operations) {
-    const count = occurrenceCount(text, operation.before_text);
-    if (count !== operation.expected_occurrences)
-      invalid(
-        `patch_occurrence_mismatch:${operation.operation_id}:${operation.expected_occurrences}:${count}`,
-      );
-    text = text.replace(operation.before_text, operation.after_text);
+  for (const operation of [...operations].reverse()) {
+    const { start_offset: start, end_offset: end } = operation.source_span;
+    text = `${text.slice(0, start)}${operation.after_text}${text.slice(end)}`;
   }
+  assertPatchFinalIntervals(text, patch);
   assertPatchAfterTextOccurrences(text, patch);
   const postEol = detectEolPolicy(text);
   if (postEol !== decoded.eol_policy)
@@ -102,6 +101,7 @@ export function verifyDesignResourceExactPatchReadback(
   patch: DesignResourceExactPatch,
 ): void {
   const decoded = decodeDesignResourceText(bytes);
+  assertPatchFinalIntervals(decoded.text, patch);
   assertPatchAfterTextOccurrences(decoded.text, patch);
 }
 
@@ -141,6 +141,84 @@ function occurrenceCount(value: string, search: string): number {
     if (found < 0) return count;
     count += 1;
     offset = found + search.length;
+  }
+}
+
+function resolveOriginalSourceSpans(
+  text: string,
+  patch: DesignResourceExactPatch,
+): DesignResourceExactPatch["operations"] {
+  const operations = [...patch.operations].sort(
+    (left, right) =>
+      left.source_span.start_offset - right.source_span.start_offset ||
+      left.source_span.end_offset - right.source_span.end_offset ||
+      left.operation_id.localeCompare(right.operation_id),
+  );
+  let previous: (typeof operations)[number] | undefined;
+  for (const operation of operations) {
+    const span = operation.source_span;
+    if (
+      span.coordinate_system !== "utf16-code-unit-v1" ||
+      span.start_offset < 0 ||
+      span.end_offset <= span.start_offset ||
+      span.end_offset > text.length ||
+      span.end_offset - span.start_offset !== operation.before_text.length
+    )
+      invalid(`patch_source_span_range:${operation.operation_id}`);
+    const actual = text.slice(span.start_offset, span.end_offset);
+    if (
+      actual !== operation.before_text ||
+      sha256Hex(actual) !== span.before_text_sha256 ||
+      span.before_text_sha256 !== operation.before_text_sha256
+    )
+      invalid(`patch_source_span_preimage:${operation.operation_id}`);
+    if (
+      (operation.operation === "remove" ||
+        (operation.operation === "add" &&
+          operation.after_text.startsWith(
+            "<!-- ty-dra-proposal-scalar-v1 ",
+          ))) &&
+      span.start_offset > 0 &&
+      !["\n", "\r"].includes(text[span.start_offset - 1])
+    )
+      invalid(`patch_carrier_line_boundary:${operation.operation_id}`);
+    const count = occurrenceCount(text, operation.before_text);
+    if (count !== operation.expected_occurrences)
+      invalid(
+        `patch_occurrence_mismatch:${operation.operation_id}:${operation.expected_occurrences}:${count}`,
+      );
+    if (previous && span.start_offset < previous.source_span.end_offset)
+      invalid(
+        `patch_source_span_overlap:${previous.operation_id}:${operation.operation_id}`,
+      );
+    previous = operation;
+  }
+  return operations;
+}
+
+function assertPatchFinalIntervals(
+  text: string,
+  patch: DesignResourceExactPatch,
+): void {
+  const operations = [...patch.operations].sort(
+    (left, right) =>
+      left.source_span.start_offset - right.source_span.start_offset ||
+      left.source_span.end_offset - right.source_span.end_offset ||
+      left.operation_id.localeCompare(right.operation_id),
+  );
+  let offsetDelta = 0;
+  for (const operation of operations) {
+    const start = operation.source_span.start_offset + offsetDelta;
+    const end = start + operation.after_text.length;
+    if (
+      start < 0 ||
+      end > text.length ||
+      text.slice(start, end) !== operation.after_text
+    )
+      invalid(`patch_readback_output_span:${operation.operation_id}`);
+    offsetDelta +=
+      operation.after_text.length -
+      (operation.source_span.end_offset - operation.source_span.start_offset);
   }
 }
 

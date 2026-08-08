@@ -731,6 +731,172 @@
       },
       "allowed": { "checkpoint": ["create", "retain"] },
       "contains": { "accepted_keys": ["visual.color", "visual.opacity"] }
+    },
+    {
+      "id": "replace-injects-unrelated-line",
+      "severity": "critical",
+      "category": "proposal-carrier-noninterference",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      },
+      "contains": { "accepted_keys": ["visual.color"] }
+    },
+    {
+      "id": "replace-mutates-scaffold",
+      "severity": "critical",
+      "category": "proposal-carrier-noninterference",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      },
+      "contains": { "accepted_keys": ["visual.color"] }
+    },
+    {
+      "id": "scalar-newline-injection",
+      "severity": "critical",
+      "category": "proposal-scalar-control-safety",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      },
+      "contains": { "accepted_keys": ["visual.color"] }
+    },
+    {
+      "id": "add-deletes-anchor",
+      "severity": "critical",
+      "category": "proposal-carrier-noninterference",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      }
+    },
+    {
+      "id": "add-injects-second-record",
+      "severity": "critical",
+      "category": "proposal-carrier-noninterference",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      }
+    },
+    {
+      "id": "remove-deletes-neighbor",
+      "severity": "critical",
+      "category": "proposal-carrier-noninterference",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      }
+    },
+    {
+      "id": "operation-uses-prior-output",
+      "severity": "critical",
+      "category": "original-preimage-conservation",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      }
+    },
+    {
+      "id": "overlapping-operation-spans",
+      "severity": "critical",
+      "category": "original-preimage-conservation",
+      "exact": {
+        "disposition": "block",
+        "checkpoint": "reject",
+        "write_action": "block",
+        "audit_status": "blocked",
+        "handoff_ready": false
+      }
+    },
+    {
+      "id": "same-scaffold-atomic-replace",
+      "severity": "major",
+      "category": "proposal-carrier-must-allow",
+      "must_allow": true,
+      "exact": {
+        "disposition": "allow",
+        "write_action": "apply",
+        "audit_status": "balanced",
+        "handoff_ready": false
+      },
+      "allowed": { "checkpoint": ["create", "retain"] },
+      "contains": { "accepted_keys": ["visual.color"] }
+    },
+    {
+      "id": "canonical-target-add",
+      "severity": "major",
+      "category": "proposal-carrier-must-allow",
+      "must_allow": true,
+      "exact": {
+        "disposition": "allow",
+        "write_action": "apply",
+        "audit_status": "balanced",
+        "handoff_ready": false
+      },
+      "allowed": { "checkpoint": ["create", "retain"] }
+    },
+    {
+      "id": "canonical-target-remove",
+      "severity": "major",
+      "category": "proposal-carrier-must-allow",
+      "must_allow": true,
+      "exact": {
+        "disposition": "allow",
+        "write_action": "apply",
+        "audit_status": "balanced",
+        "handoff_ready": false
+      },
+      "allowed": { "checkpoint": ["create", "retain"] }
+    },
+    {
+      "id": "two-disjoint-proposal-operations",
+      "severity": "major",
+      "category": "original-preimage-must-allow",
+      "must_allow": true,
+      "exact": {
+        "disposition": "allow",
+        "write_action": "apply",
+        "audit_status": "balanced",
+        "handoff_ready": false
+      },
+      "allowed": { "checkpoint": ["create", "retain"] }
+    },
+    {
+      "id": "resource-owned-read-only-reconcile",
+      "severity": "major",
+      "category": "resource-owner-must-allow",
+      "must_allow": true,
+      "exact": {
+        "disposition": "allow",
+        "write_action": "none",
+        "audit_status": "balanced",
+        "handoff_ready": false
+      },
+      "allowed": { "checkpoint": ["create", "retain"] },
+      "contains": { "accepted_keys": ["visual.color"] }
     }
   ]
 }

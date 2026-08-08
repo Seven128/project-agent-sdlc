@@ -19,6 +19,13 @@ export interface DesignResourcePatchSemanticBinding {
   after_text_projection: DesignResourceTextSemanticProjection | null;
 }
 
+export interface DesignResourcePatchSourceSpan {
+  coordinate_system: "utf16-code-unit-v1";
+  start_offset: number;
+  end_offset: number;
+  before_text_sha256: string;
+}
+
 export interface DesignResourceExactPatchOperation {
   operation_id: string;
   operation: "add" | "replace" | "remove";
@@ -28,6 +35,7 @@ export interface DesignResourceExactPatchOperation {
   after_text: string;
   before_text_sha256: string;
   after_text_sha256: string;
+  source_span: DesignResourcePatchSourceSpan;
   semantic_binding: DesignResourcePatchSemanticBinding;
   expected_occurrences: 1;
 }

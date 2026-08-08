@@ -7,10 +7,12 @@ import { materializeAdmissionEvidencePayload } from "../examples/delivery-benchm
 import { validateAdmissionEvidencePayload } from "../examples/delivery-benchmark/mechanism/runner/admission-evidence-validation.mjs";
 import {
   assertAdmissionEvidenceCandidateShape,
+  assertAdmissionDeterministicEnvironmentBinding,
   assertAdmissionEvidenceSameCandidate,
   assertAdmissionEvidenceSanitizedJson,
   sameAdmissionEvidenceObject,
 } from "../examples/delivery-benchmark/mechanism/runner/admission-evidence-records.mjs";
+import { observeDeterministicRuntimeEnvironment } from "../examples/delivery-benchmark/mechanism/runner/admission-runtime-environment.mjs";
 import {
   canonicalJson,
   sha256,
@@ -61,7 +63,12 @@ export async function materializeCiAdmissionEvidence({
     artifact_path: "deterministic-report.json",
     artifact_sha256: deterministicSha256,
     passed: true,
+    benchmark_execution_environment:
+      deterministic.benchmark_execution_environment,
+    deterministic_runtime_environment:
+      deterministic.deterministic_runtime_environment,
   };
+  assertAdmissionDeterministicEnvironmentBinding(deterministic, attestation);
   await writeFile(deterministicPath, deterministicBytes);
   await writeJson(attestationPath, attestation);
 
@@ -117,7 +124,8 @@ export async function materializeCiAdmissionEvidence({
     input_payload_sha256: inputPayloadSha256,
     materialized_json_set_sha256: materializedJsonSetSha256,
     ci_deterministic_report_sha256: deterministicSha256,
-    deterministic_runtime_passed: true,
+    deterministic_runtime_passed:
+      deterministic.deterministic_runtime_passed === true,
     fresh_agent_evidence_internally_valid: true,
     fresh_agent_provenance_qualification: {
       status: Object.values(provenance).every((value) => value === "verified")
@@ -128,12 +136,17 @@ export async function materializeCiAdmissionEvidence({
     candidate_git: attestation.candidate_git,
     materialized_json_file_count: evidenceFiles.length,
   };
-  await writeJson(path.join(outputDirectory, "ci-evidence-summary.json"), summary);
+  await writeJson(
+    path.join(outputDirectory, "ci-evidence-summary.json"),
+    summary,
+  );
   return summary;
 }
 
 function validateCiDeterministic(deterministic, attestation, candidate) {
-  if (deterministic.schema_version !== "tiny-context-admission-deterministic-v2")
+  if (
+    deterministic.schema_version !== "tiny-context-admission-deterministic-v3"
+  )
     throw new Error("admission_ci_deterministic_schema_unsupported");
   assertAdmissionEvidenceCandidateShape(deterministic.candidate_git);
   assertAdmissionEvidenceSameCandidate(
@@ -150,6 +163,23 @@ function validateCiDeterministic(deterministic, attestation, candidate) {
     )
   )
     throw new Error("admission_ci_deterministic_identity_mismatch");
+  const observed = observeDeterministicRuntimeEnvironment();
+  if (
+    deterministic.deterministic_runtime_passed !== true ||
+    deterministic.benchmark_execution_environment?.provenance !==
+      "frozen-track-input" ||
+    !sameAdmissionEvidenceObject(
+      deterministic.benchmark_execution_environment,
+      attestation.deterministic?.benchmark_execution_environment,
+    ) ||
+    !sameAdmissionEvidenceObject(
+      deterministic.deterministic_runtime_environment,
+      observed,
+    ) ||
+    (process.env.GITHUB_ACTIONS === "true" &&
+      observed.runner !== "github-hosted")
+  )
+    throw new Error("admission_ci_deterministic_environment_mismatch");
   const attestedTracks = new Set(attestation.tracks.map((row) => row.track));
   if (
     Object.keys(deterministic.tracks).length !== attestedTracks.size ||
@@ -187,7 +217,8 @@ async function listJsonFiles(root) {
     if (entry.isSymbolicLink())
       throw new Error(`admission_ci_evidence_link_forbidden:${entry.name}`);
     if (entry.isDirectory()) result.push(...(await listJsonFiles(absolute)));
-    else if (entry.isFile() && entry.name.endsWith(".json")) result.push(absolute);
+    else if (entry.isFile() && entry.name.endsWith(".json"))
+      result.push(absolute);
     else throw new Error(`admission_ci_evidence_file_forbidden:${entry.name}`);
   }
   return result;

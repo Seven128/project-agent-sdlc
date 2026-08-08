@@ -35,7 +35,7 @@
   },
   "tracks": {
     "dra-semantic-recovery": {
-      "fixture_identity": "fc69f749057e43e631267cfebdb21cff4310fe0b191124dd2741a61da4bbe2db",
+      "fixture_identity": "fc96e56b054d73b3ade6a64fb881c37a7c80351a8a6daeeb1ac52f2d7efd9d4e",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -60,7 +60,7 @@
         "pre/post digest-derived CAS and idempotent no-write",
         "Source-owned structured authority projection for deterministic accepted recovery",
         "v4 set-equal audit catalog with checkpoint-frozen final disposition and immutable resource conditions",
-        "proposal-only exact patch-v3 atomic scalar projection or resource-owned read-only reconciliation",
+        "proposal-only exact patch-v4 scalar carrier with original-preimage disjoint spans or resource-owned read-only reconciliation",
         "balanced current bidirectional audit before DRA derives handoff-ready"
       ],
       "prohibited_failure_modes": [
@@ -80,6 +80,10 @@
         "Delta semantics and patch text projection mismatch",
         "audit-selected final owner or resource-owned meaning copied into Proposal",
         "multi-leaf, shared-span or non-empty remove projection",
+        "replace scaffold or control-character injection outside the authorized scalar",
+        "add anchor deletion, second-record injection or non-canonical carrier",
+        "remove of a wrong carrier, adjacent requirement or other target",
+        "overlapping original spans or an operation consuming a prior operation output",
         "explicit meaning target superset or delegated nonvisual meaning without one independently matching Source Item",
         "wrong resource condition, unchanged resource or Source basis",
         "external-only or unstructured downstream final owner",
@@ -106,15 +110,15 @@
         "quality": {
           "task": {
             "path": "admission/dra-quality-cases.json",
-            "sha256": "873be7e209d919eea09675ba03aab201411a4a310fbbb1bb9cae57a1db6f6a58"
+            "sha256": "667a134e15fedfe8128efd14fc8321e0d66a58b582960dd6e8f6d2c8340e33d5"
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
+            "sha256": "a980d57d8d7c521f853ad4383c4d372020b08774193f4b7e32bf925631951ca0"
           },
           "schema": {
             "path": "admission/dra-quality-result.schema.json",
-            "sha256": "87d8e30672d26fb24b8a0b1429504580f33845f05c78d314bf197d7be447b42d"
+            "sha256": "860cc24b7c8bef9b7b43d227e9259991872170f44b0e7b8050a8508c91c0ae2d"
           }
         },
         "simple": {
@@ -124,7 +128,7 @@
           },
           "hidden": {
             "path": "hidden/dra-semantic-recovery-admission-v1.json",
-            "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
+            "sha256": "a980d57d8d7c521f853ad4383c4d372020b08774193f4b7e32bf925631951ca0"
           },
           "schema": {
             "path": "admission/dra-simple-result.schema.json",
@@ -176,7 +180,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "a8d61c9371037c622a7ac9520b640765fd82946049286029540123e86d5719ce",
+              "bundle_sha256": "411411a5a3ccad82ced7297b6743ed355dec8af38b54e547f422667215e5bf1c",
               "sources": [
                 {
                   "kind": "worktree",
@@ -194,7 +198,7 @@
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "f05131dfc3e364c93928b77f73efae4787451cb1baf77b30dce5d10475dd4f87"
+                  "content_sha256": "511e9f754edc51362113b99ff069599712c04f27191f8c79a915248432ad1f3f"
                 }
               ]
             },
@@ -311,7 +315,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-          "bundle_sha256": "ef3c131c8bd561406650e91f32bebda57ef7fd1924360e9694d1f7b1ba5c661f",
+              "bundle_sha256": "ef3c131c8bd561406650e91f32bebda57ef7fd1924360e9694d1f7b1ba5c661f",
               "sources": [
                 {
                   "kind": "worktree",
@@ -327,7 +331,7 @@
                   "kind": "worktree",
                   "label": "engineer_candidate",
                   "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-              "content_sha256": "e7cf5083b7b4db4011171fa2a3b49a6cc8e0fc99def38d3a08e9a1f5e861be40"
+                  "content_sha256": "e7cf5083b7b4db4011171fa2a3b49a6cc8e0fc99def38d3a08e9a1f5e861be40"
                 }
               ]
             }
@@ -360,11 +364,7 @@
       {
         "id": "package-source-parity",
         "command": "node",
-        "args": [
-          "packages/ty-context/dist/cli.js",
-          "package",
-          "check-source"
-        ],
+        "args": ["packages/ty-context/dist/cli.js", "package", "check-source"],
         "timeout_ms": 120000
       },
       {
@@ -395,7 +395,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
-      "sha256": "873be7e209d919eea09675ba03aab201411a4a310fbbb1bb9cae57a1db6f6a58"
+      "sha256": "667a134e15fedfe8128efd14fc8321e0d66a58b582960dd6e8f6d2c8340e33d5"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -410,7 +410,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/admission/dra-quality-result.schema.json",
-      "sha256": "87d8e30672d26fb24b8a0b1429504580f33845f05c78d314bf197d7be447b42d"
+      "sha256": "860cc24b7c8bef9b7b43d227e9259991872170f44b0e7b8050a8508c91c0ae2d"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -425,7 +425,7 @@
     {
       "scope": "track:dra-semantic-recovery",
       "path": "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
-      "sha256": "4cba1187d851fe59fdf1bd9a98def570120c6c022ec9d6102004878c91df3a6e"
+      "sha256": "a980d57d8d7c521f853ad4383c4d372020b08774193f4b7e32bf925631951ca0"
     },
     {
       "scope": "track:build-reuse-buy",
@@ -480,27 +480,32 @@
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence-records.mjs",
-      "sha256": "d51d04eced999f45021116dffbbf44daf1b1bb4906a8e89013a74a8e40863708"
+      "sha256": "245687d6441f0e5158bb0e3ebec74f1021d1b9bba3031d7c06a6cd9b27284781"
     },
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence-validation.mjs",
-      "sha256": "ac6957aa6787954f16e1c4984cbf42db045ecd49409f98df76630d4df09c1419"
+      "sha256": "2a755377d9dcd90e66684ca60c12cf1e2fc41dc1e232d718801766a996662efd"
     },
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-evidence.mjs",
-      "sha256": "11e706a8ce485669abcd3298f1cb724c1eb93160b5e3ef75f887603d97c1e268"
+      "sha256": "e1b48c1bcfe8a904a2d39c58d7f8bd78e1b919dc109377f565263ed76ff05065"
     },
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-deterministic.mjs",
-      "sha256": "a363cf49ffb7544a4d7d8fd05646dcd132992d854d2b0883b1199bacaf515413"
+      "sha256": "ea8a4ef6b6b82476e130398d7806ef0a480c2f47339419d9a041a33f4f893497"
+    },
+    {
+      "scope": "global",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-runtime-environment.mjs",
+      "sha256": "94661f50ac17f6149de5d51812bb6b8ac9bccf90f5737c3bcd29a2caf7585e58"
     },
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs",
-      "sha256": "15e37307183e09e27d07069a3df2efdca66f478c0039f764d038997be24f982d"
+      "sha256": "e819ae7c397c1c566b68f99b3beb554c5897aa7b1798cf11719744dfe55a4f10"
     },
     {
       "scope": "global",
@@ -510,7 +515,7 @@
     {
       "scope": "global",
       "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-      "sha256": "39fe632afd24f9a9068ecae97483816932e0d397f38c572face9ff7b05f2c0a3"
+      "sha256": "da0f9c7e8b604b83d400ced82c397ea06dcc335bf089bfa222ae5e9e9091d48b"
     },
     {
       "scope": "global",

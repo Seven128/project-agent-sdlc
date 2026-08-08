@@ -66,6 +66,7 @@ export function parsePatch(
           "after_text",
           "before_text_sha256",
           "after_text_sha256",
+          "source_span",
           "semantic_binding",
           "expected_occurrences",
         ]);
@@ -103,6 +104,10 @@ export function parsePatch(
             operation.after_text_sha256,
             `${itemLabel}.after_text_sha256`,
           ),
+          source_span: parsePatchSourceSpan(
+            operation.source_span,
+            `${itemLabel}.source_span`,
+          ),
           semantic_binding: parsePatchSemanticBinding(
             operation.semantic_binding,
             `${itemLabel}.semantic_binding`,
@@ -110,6 +115,32 @@ export function parsePatch(
           expected_occurrences: 1 as const,
         };
       },
+    ),
+  };
+}
+
+function parsePatchSourceSpan(
+  value: unknown,
+  label: string,
+): DesignResourceExactPatch["operations"][number]["source_span"] {
+  const row = object(value, label, [
+    "coordinate_system",
+    "start_offset",
+    "end_offset",
+    "before_text_sha256",
+  ]);
+  literal(
+    row.coordinate_system,
+    "utf16-code-unit-v1",
+    `${label}.coordinate_system`,
+  );
+  return {
+    coordinate_system: "utf16-code-unit-v1",
+    start_offset: integer(row.start_offset, `${label}.start_offset`),
+    end_offset: integer(row.end_offset, `${label}.end_offset`),
+    before_text_sha256: digest(
+      row.before_text_sha256,
+      `${label}.before_text_sha256`,
     ),
   };
 }

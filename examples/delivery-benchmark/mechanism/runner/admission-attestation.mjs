@@ -25,6 +25,7 @@ export function buildAdmissionAttestation({
     candidate,
     "deterministic",
   );
+  assertDeterministicEnvironment(deterministic.value);
   const byTrack = new Map();
   for (const aggregate of aggregates) {
     const value = aggregate.value;
@@ -62,9 +63,15 @@ export function buildAdmissionAttestation({
     deterministic: {
       artifact_path: deterministic.path,
       artifact_sha256: deterministic.sha256,
-      passed: expectedTracks.every(
-        (track) => deterministic.value.tracks?.[track]?.passed === true,
-      ),
+      passed:
+        deterministic.value.deterministic_runtime_passed === true &&
+        expectedTracks.every(
+          (track) => deterministic.value.tracks?.[track]?.passed === true,
+        ),
+      benchmark_execution_environment:
+        deterministic.value.benchmark_execution_environment,
+      deterministic_runtime_environment:
+        deterministic.value.deterministic_runtime_environment,
     },
     tracks: expectedTracks.sort().map((track) => {
       const aggregate = byTrack.get(track);
@@ -108,6 +115,20 @@ export function buildAdmissionAttestation({
       };
     }),
   };
+}
+
+function assertDeterministicEnvironment(deterministic) {
+  if (
+    deterministic.schema_version !==
+      "tiny-context-admission-deterministic-v3" ||
+    deterministic.benchmark_execution_environment?.provenance !==
+      "frozen-track-input" ||
+    deterministic.deterministic_runtime_environment?.observed !== true ||
+    deterministic.deterministic_runtime_environment?.node_engine_conformant !==
+      true ||
+    deterministic.deterministic_runtime_passed !== true
+  )
+    throw new Error("admission_attestation_deterministic_runtime_invalid");
 }
 
 export function currentExactMainCandidate() {

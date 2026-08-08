@@ -1,27 +1,41 @@
 import { spawnSync } from "node:child_process";
 import { REPO_ROOT, sha256 } from "./admission-shared.mjs";
 import { currentExactMainCandidate } from "./admission-attestation.mjs";
+import { observeDeterministicRuntimeEnvironment } from "./admission-runtime-environment.mjs";
 
 export function runDeterministicAdmissionChecks(
   config,
   globalExecutionEnvelopeSha,
   trackConfigSha,
+  options = {},
 ) {
+  const deterministicRuntime =
+    options.runtime ?? observeDeterministicRuntimeEnvironment();
   const tracks = {};
   for (const [trackId, checks] of Object.entries(config.deterministic_checks)) {
     const results = checks.map(runCheck);
     tracks[trackId] = {
       track_config_sha256: trackConfigSha[trackId],
-      passed: results.every((item) => item.status === 0),
+      passed:
+        deterministicRuntime.node_engine_conformant &&
+        results.every((item) => item.status === 0),
       results,
     };
   }
+  const deterministicRuntimePassed =
+    deterministicRuntime.node_engine_conformant &&
+    Object.values(tracks).every((track) => track.passed);
   return {
-    schema_version: "tiny-context-admission-deterministic-v2",
+    schema_version: "tiny-context-admission-deterministic-v3",
     global_execution_envelope_sha256: globalExecutionEnvelopeSha,
     track_config_sha256: trackConfigSha,
-    candidate_git: currentExactMainCandidate(),
-    environment_identity: config.environment.identity,
+    candidate_git: options.candidate ?? currentExactMainCandidate(),
+    benchmark_execution_environment: {
+      ...config.environment,
+      provenance: "frozen-track-input",
+    },
+    deterministic_runtime_environment: deterministicRuntime,
+    deterministic_runtime_passed: deterministicRuntimePassed,
     tracks,
   };
 }

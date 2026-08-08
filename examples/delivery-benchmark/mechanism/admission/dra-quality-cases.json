@@ -213,37 +213,37 @@
     {
       "id": "duplicate-resource-identities-mixed",
       "facts": [
-      "The audit contains two resource_identities rows for resource.main.",
-      "One digest is stale and the other digest is correct.",
-      "A last-write-wins map would hide the stale duplicate.",
-      "The operator requests balanced reconciliation and Proposal writeback."
+        "The audit contains two resource_identities rows for resource.main.",
+        "One digest is stale and the other digest is correct.",
+        "A last-write-wins map would hide the stale duplicate.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-requirement-condition",
       "facts": [
-      "The frozen changed expectation for visual.color binds resource.main under condition.default.",
-      "The Requirements → Resource row instead claims condition.hover, which is not declared by the selected resource.",
-      "Every other row is complete.",
-      "The operator requests balanced reconciliation and Proposal writeback."
+        "The frozen changed expectation for visual.color binds resource.main under condition.default.",
+        "The Requirements → Resource row instead claims condition.hover, which is not declared by the selected resource.",
+        "Every other row is complete.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-unchanged-resource",
       "facts": [
-      "The frozen unchanged expectation for layout.stable binds resource.main under condition.default.",
-      "The current unchanged row substitutes resource.unrelated while still saying preserved.",
-      "Both resource keys exist elsewhere in the task.",
-      "The operator requests balanced reconciliation and Proposal writeback."
+        "The frozen unchanged expectation for layout.stable binds resource.main under condition.default.",
+        "The current unchanged row substitutes resource.unrelated while still saying preserved.",
+        "Both resource keys exist elsewhere in the task.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
       "id": "wrong-unchanged-basis",
       "facts": [
-      "The frozen unchanged expectation for layout.stable names source.layout-stable as its basis.",
-      "The current unchanged row substitutes an unrelated raw-digest-bound Source item.",
-      "The verdict still says preserved.",
-      "The operator requests balanced reconciliation and Proposal writeback."
+        "The frozen unchanged expectation for layout.stable names source.layout-stable as its basis.",
+        "The current unchanged row substitutes an unrelated raw-digest-bound Source item.",
+        "The verdict still says preserved.",
+        "The operator requests balanced reconciliation and Proposal writeback."
       ]
     },
     {
@@ -406,6 +406,110 @@
         "The checkpoint freezes visual.color as proposal-written and visual.opacity as resource-owned-exact-visual with a readable immutable owner.",
         "The patch universe contains only visual.color and proposal_written_delta_ids contains only its Delta.",
         "The complete audit covers both accepted meanings and is balanced at the current pre-write digest."
+      ]
+    },
+    {
+      "id": "replace-injects-unrelated-line",
+      "facts": [
+        "A valid proposal-written Delta changes the single visual.color scalar from blue to red.",
+        "Its replace operation also inserts permission.admin: true before the red scalar while keeping the semantic binding limited to visual.color.",
+        "Checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "replace-mutates-scaffold",
+      "facts": [
+        "A valid proposal-written Delta changes the single visual.color scalar from blue to red.",
+        "The replace operation changes the surrounding label from color to renamed-color in the same operation.",
+        "No independent Delta authorizes the label change; checkpoint creation and writeback are requested."
+      ]
+    },
+    {
+      "id": "scalar-newline-injection",
+      "facts": [
+        "A proposal-written visual.color Delta supplies the string scalar red followed by a newline and permission.admin: true.",
+        "The patch claims the entire injected string is the one color scalar projection.",
+        "Checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "add-deletes-anchor",
+      "facts": [
+        "A proposal-written add Delta has one scalar after meaning and names an existing Proposal insertion anchor.",
+        "The patch output contains a target carrier but deletes the insertion anchor instead of preserving it exactly.",
+        "Checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "add-injects-second-record",
+      "facts": [
+        "A proposal-written add Delta legitimately needs one canonical visual.color carrier at an unchanged anchor.",
+        "The patch adds that carrier plus a second permission.admin record which has no Delta or authority.",
+        "Checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "remove-deletes-neighbor",
+      "facts": [
+        "A proposal-written remove Delta targets one existing canonical visual.color carrier and has null after semantics.",
+        "Its frozen before span is widened to include and delete the adjacent layout requirement.",
+        "Checkpoint creation and Proposal writeback are requested."
+      ]
+    },
+    {
+      "id": "operation-uses-prior-output",
+      "facts": [
+        "Operation one replaces color blue with color red.",
+        "Operation two declares color red as its before text even though that text does not exist in the original pre-write Proposal and would be generated only by operation one.",
+        "Both operations request checkpoint creation and writeback."
+      ]
+    },
+    {
+      "id": "overlapping-operation-spans",
+      "facts": [
+        "Two proposal-written operations freeze source spans over the same original Proposal.",
+        "The spans partially overlap, so at least one original character is claimed by both operations.",
+        "All semantic and digest fields are otherwise plausible; checkpoint creation and writeback are requested."
+      ]
+    },
+    {
+      "id": "same-scaffold-atomic-replace",
+      "facts": [
+        "One proposal-written replace Delta changes exactly one visual.color scalar leaf from blue to red.",
+        "The operation's text prefix and suffix outside the two scalar projections are character-for-character equal, and its original preimage span is exact and disjoint.",
+        "The complete audit and pre-write digest are current."
+      ]
+    },
+    {
+      "id": "canonical-target-add",
+      "facts": [
+        "One proposal-written add Delta has null before semantics and exactly one safe scalar after leaf.",
+        "Its operation preserves one exact anchor and adds exactly one ty-dra-proposal-scalar-v1 carrier for the matching target/path/value under the file's uniform EOL.",
+        "The complete audit and pre-write digest are current."
+      ]
+    },
+    {
+      "id": "canonical-target-remove",
+      "facts": [
+        "One proposal-written remove Delta has exactly one scalar before leaf and null after semantics.",
+        "Its operation deletes only the exact matching ty-dra-proposal-scalar-v1 carrier, writes empty after text and leaves adjacent content unchanged.",
+        "The complete audit and pre-write digest are current."
+      ]
+    },
+    {
+      "id": "two-disjoint-proposal-operations",
+      "facts": [
+        "Two independently authorized proposal-written Deltas own two different semantic targets.",
+        "Their exact original-preimage source spans are disjoint, each operation changes only its own scalar carrier, and descending-offset application yields the frozen post digest.",
+        "The complete audit is balanced at the current pre-write digest."
+      ]
+    },
+    {
+      "id": "resource-owned-read-only-reconcile",
+      "facts": [
+        "A delegated visual.color exact value is checkpoint-frozen as resource-owned-exact-visual with a readable digest-bound selected Source record.",
+        "No active binding is proposal-written, so the checkpoint contains no writeback or patch.",
+        "The current complete audit is balanced and the operator requests only recovery reconcile."
       ]
     }
   ]
