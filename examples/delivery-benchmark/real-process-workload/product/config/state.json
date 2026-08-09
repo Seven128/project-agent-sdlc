@@ -1,0 +1,25 @@
+{
+  "mode": "normal",
+  "catalog": {
+    "primary_ready": true,
+    "fallback_ready": true
+  },
+  "pricing": {
+    "currency": "CNY"
+  },
+  "inventory": {
+    "available": 17
+  },
+  "checkout": {
+    "enabled": true
+  },
+  "observability": {
+    "audit_event_emitted": true
+  },
+  "resilience": {
+    "retry_budget": 3
+  },
+  "health": {
+    "live": true
+  }
+}

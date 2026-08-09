@@ -330,6 +330,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-public-contract-example.test.mjs",
   "long-task-qualified-completion.test.mjs",
   "long-task-raw-execution-identity.test.mjs",
+  "long-task-real-process-roi.test.mjs",
   "long-task-runner-freeze-v2.test.mjs",
   "long-task-schema-parser-parity.test.mjs",
   "long-task-semantic-assurance-closure.test.mjs",
@@ -572,11 +573,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 49 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 50 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/49/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/50/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

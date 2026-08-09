@@ -1,0 +1,80 @@
+{
+  "schema_version": "long-task-real-process-workload-v1",
+  "workload_id": "source-backed-process-closure-v1",
+  "purpose": "real-process-lifecycle-roi-only",
+  "safety_theorem_claimed": false,
+  "fact_count": 8,
+  "modes": ["normal", "degraded"],
+  "counterfactuals": [
+    {
+      "id": "disable-checkout",
+      "pointer": "/checkout/enabled",
+      "value": false,
+      "affected_fact_ids": ["checkout-enabled"],
+      "preserved_fact_ids": [
+        "catalog-resolution-ready",
+        "pricing-currency-cny",
+        "inventory-nonnegative",
+        "degraded-fallback-visible",
+        "audit-event-emitted",
+        "retry-budget-bounded",
+        "health-live"
+      ],
+      "allowed_fanout_fact_ids": []
+    },
+    {
+      "id": "exceed-retry-budget",
+      "pointer": "/resilience/retry_budget",
+      "value": 99,
+      "affected_fact_ids": ["retry-budget-bounded"],
+      "preserved_fact_ids": [
+        "catalog-resolution-ready",
+        "pricing-currency-cny",
+        "inventory-nonnegative",
+        "checkout-enabled",
+        "degraded-fallback-visible",
+        "audit-event-emitted",
+        "health-live"
+      ],
+      "allowed_fanout_fact_ids": []
+    }
+  ],
+  "cases": [
+    {
+      "id": "correct-control",
+      "kind": "control",
+      "gold_conformant": true
+    },
+    {
+      "id": "wrong-product-value",
+      "kind": "attack",
+      "gold_conformant": false
+    },
+    {
+      "id": "r9-evidence-role-runtime-input",
+      "kind": "attack",
+      "gold_conformant": false
+    },
+    {
+      "id": "r10-verification-role-runtime-input",
+      "kind": "attack",
+      "gold_conformant": false
+    },
+    {
+      "id": "r11-source-wrong-execution-root",
+      "kind": "attack",
+      "gold_conformant": false
+    }
+  ],
+  "comparator": "exact terminal, exact gold, paired monotonic wall-clock median",
+  "timing_tolerance": {
+    "maximum_coefficient_of_variation": 0.2,
+    "threshold_nearness": 0.05
+  },
+  "resource_limits": {
+    "product_stdout_bytes": 262144,
+    "command_timeout_ms": 120000,
+    "build_timeout_ms": 600000,
+    "maximum_artifact_file_bytes": 67108864
+  }
+}
