@@ -3,6 +3,10 @@ import { rm } from "node:fs/promises";
 import test, { after } from "node:test";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
+  synchronizeFixtureExecutionTargetSource,
+  writeContract,
+} from "./long-task-delivery-fixtures.mjs";
+import {
   applyEvidenceRoleProcessConflict,
   applyEvidenceRoleStaticConflict,
   applyRootArgvWrapperAttack,
@@ -117,6 +121,11 @@ const reportCases = Object.freeze({
   r11: wrongCase(
     "wrong.execution-target-source-drift",
     "observer-trust.r11.execution-target-source-drift",
+    "control.process",
+  ),
+  r11b: wrongCase(
+    "wrong.execution-target-unbound-argv",
+    "observer-trust.r11b.execution-target-unbound-argv",
     "control.process",
   ),
   staticControl: controlCase(
@@ -619,6 +628,32 @@ test(
       assert.match(
         executionDiagnostics(execution),
         /process_root_source_identity_mismatch/u,
+      );
+    }),
+);
+
+test(
+  "[case:host-derived-target-runtime:R11b] [real-capability:observer-trust.r11b.execution-target-unbound-argv] a missing unbound repository path in the complete root invocation cannot disappear from the runtime closure",
+  { concurrency: false },
+  async () =>
+    withFixture({ twoOutcomes: true }, async (fixture) => {
+      await configureRepoProcessProductControl(fixture);
+      const missingRuntimePath = "config/missing-runtime.json";
+      const target = fixture.contract.task.execution_targets[0];
+      target.root_argv.push(missingRuntimePath);
+      for (const outcome of fixture.contract.outcomes)
+        outcome.acceptance.checks[0].runner.argv.push(missingRuntimePath);
+      await synchronizeFixtureExecutionTargetSource(
+        fixture.root,
+        fixture.contract,
+      );
+      await writeContract(fixture.workdir, fixture.contract);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r11b, execution);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `missing unbound root argv path escaped closure admission: ${executionLabel(execution)}`,
       );
     }),
 );
