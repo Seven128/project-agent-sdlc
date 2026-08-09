@@ -29,6 +29,7 @@ import {
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
 import {
+  PROCESS_PRODUCT_MODULE_PATH,
   PROCESS_PRODUCT_STATE_PATH,
   PROCESS_PRODUCT_VERIFICATION_PATH,
   configureRepoProcessProductControl,
@@ -354,6 +355,94 @@ test("process Counterfactual keeps the compiled closure identity and mutates onl
     assert.equal(
       findings[0].actual.observation_impact_issue,
       "counterfactual_runtime_reachability_unproven",
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("process Counterfactual rejects an unlisted Fact change from another Check in the shared envelope", async () => {
+  const fixture = await createDeliveryFixture({ twoOutcomes: true });
+  try {
+    await configureRepoProcessProductControl(fixture);
+    const productPath = path.join(
+      fixture.root,
+      ...PROCESS_PRODUCT_MODULE_PATH.split("/"),
+    );
+    const productSource = await readFile(productPath, "utf8");
+    const independentObservation =
+      "const observable = state[outcome] === true;";
+    const coupledObservation =
+      'const observable = outcome === "second" ? state.first === true : state[outcome] === true;';
+    const coupledProductSource = productSource.replace(
+      independentObservation,
+      coupledObservation,
+    );
+    assert.notEqual(coupledProductSource, productSource);
+    await writeFile(productPath, coupledProductSource);
+
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    const checks = compiled.outcomes.flatMap(
+      (outcome) => outcome.acceptance.checks,
+    );
+    assert.equal(checks.length, 2);
+    assert.equal(
+      new Set(checks.map((check) => check.raw_execution_identity)).size,
+      1,
+    );
+    const manifest = await captureWorkspaceManifest(
+      fixture.root,
+      fixture.workdir,
+    );
+    const prepared = await prepareExecutionObservationGroup({
+      checks,
+      snapshot_root: fixture.root,
+      workspace_manifest: manifest,
+    });
+    let raw;
+    try {
+      raw = await prepared.finalize(
+        await executeCheckRunner(
+          checks[0],
+          prepared.execution_root,
+          prepared.runner_context,
+        ),
+      );
+    } finally {
+      await prepared.dispose();
+    }
+    const baselineResults = await Promise.all(
+      compiled.outcomes.map(async (outcome) => {
+        const check = outcome.acceptance.checks[0];
+        return evaluateCheckEvidence(check, raw, fixture.root, outcome);
+      }),
+    );
+    assert.ok(
+      baselineResults.every((result) => result.status === "passed"),
+      JSON.stringify(baselineResults.flatMap((result) => result.findings)),
+    );
+
+    const firstOutcome = structuredClone(compiled.outcomes[0]);
+    firstOutcome.acceptance.counterfactual_controls = [
+      firstOutcome.acceptance.counterfactual_controls[0],
+    ];
+    const findings = await evaluateOutcomeCounterfactuals(
+      firstOutcome,
+      fixture.root,
+      manifest,
+      [],
+      baselineResults,
+      new Map([[checks[0].raw_execution_identity, raw]]),
+      checks,
+    );
+    assert.equal(findings.length, 1);
+    assert.equal(
+      findings[0].actual.observation_impact_issue,
+      "counterfactual_unexpected_fact_impact",
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
