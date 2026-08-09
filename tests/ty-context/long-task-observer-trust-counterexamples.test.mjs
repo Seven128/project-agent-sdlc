@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 import test, { after } from "node:test";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
   applyEvidenceRoleProcessConflict,
   applyEvidenceRoleStaticConflict,
@@ -26,6 +27,10 @@ import {
   isSecurelyRejected,
 } from "./long-task-observer-trust-fixtures.mjs";
 import { createDeliveryTerminalReportRecorder } from "./long-task-real-capability-delivery-machine-report.mjs";
+import {
+  assertIndependentProcessRuntimeClosure,
+  configureRepoProcessProductControl,
+} from "./long-task-process-product-fixture.mjs";
 
 const terminalReport = createDeliveryTerminalReportRecorder();
 const reportCases = Object.freeze({
@@ -643,26 +648,55 @@ test(
 );
 
 test(
-  "[control:host-derived-target-runtime] [real-capability:observer-trust.control.process] Harness starts the frozen product-root invocation, observes exact output, and preserves liveness under Counterfactual",
+  "[control:host-derived-target-runtime] [real-capability:observer-trust.control.process] Harness starts the Source-backed repository product once for multiple Facts, observes exact output, and preserves liveness under Counterfactual",
   { concurrency: false },
   async () =>
-    withFixture({}, async (fixture) => {
-      await configurePackageObservationCase(fixture, {
-        carrierPath: "src/state.json",
-        bindingPath: "src/state.json",
-        mutationPath: "src/state.json",
-        inputPaths: ["src/state.json"],
-        artifactGlobs: [],
-        diagnosticArtifactPaths: ["artifacts/process-control-diagnostic.json"],
-        proofSurface: "runtime_behavior",
-        directProcess: true,
-      });
+    withFixture({ twoOutcomes: true }, async (fixture) => {
+      await configureRepoProcessProductControl(fixture);
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
+      );
+      const checks = compiled.outcomes.flatMap(
+        (outcome) => outcome.acceptance.checks,
+      );
+      assert.equal(checks.length, 2);
+      const closures = checks.map(assertIndependentProcessRuntimeClosure);
+      assert.equal(
+        new Set(closures.map((closure) => closure.closure_identity)).size,
+        1,
+        "baseline checks must share one compiled runtime closure",
+      );
+      assert.equal(
+        new Set(checks.map((check) => check.raw_execution_identity)).size,
+        1,
+        "one raw execution must carry both Semantic Facts",
+      );
       const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.processControl, execution);
       assert.equal(
         isMachineAccepted(execution),
         true,
         `valid direct process control failed: ${executionLabel(execution)}`,
+      );
+      assert.equal(execution.result.check_results.length, 2);
+      assert.equal(
+        new Set(
+          execution.result.check_results.map(
+            (result) => result.execution_identity,
+          ),
+        ).size,
+        1,
+        "Final Gate must reuse one raw execution for both Check projections",
+      );
+      assert.ok(
+        execution.result.check_results.every(
+          (result) =>
+            result.status === "passed" &&
+            result.findings.length === 0 &&
+            result.attempts === 1,
+        ),
       );
     }),
 );
