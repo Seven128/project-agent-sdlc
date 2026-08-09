@@ -490,12 +490,12 @@ global:
           - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
           - packages/ty-context/src/lib/long-task-verifier-v2.ts
           - tests/ty-context/fixtures/long-task-real-capability-state.json
-        expected_output_paths:
+        expected_output_paths: []
+        artifact_globs:
           - packages/ty-context/dist/**
           - tests/src/**
           - tests/artifacts/**
           - tests/ty-context/base-oracle.mjs
-        artifact_globs:
           - artifacts/semantic-fact-results.json
         positive_assertions:
           - key: global-observer-liveness
@@ -819,12 +819,12 @@ outcomes:
             - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
             - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
             - tests/ty-context/fixtures/long-task-real-capability-state.json
-          expected_output_paths:
+          expected_output_paths: []
+          artifact_globs:
             - packages/ty-context/dist/**
             - tests/src/**
             - tests/artifacts/**
             - tests/ty-context/base-oracle.mjs
-          artifact_globs:
             - artifacts/semantic-fact-results.json
           positive_assertions:
             - key: p0-exact-recomputation-result
@@ -1417,12 +1417,12 @@ outcomes:
             - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
             - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
             - tests/ty-context/fixtures/long-task-real-capability-state.json
-          expected_output_paths:
+          expected_output_paths: []
+          artifact_globs:
             - packages/ty-context/dist/**
             - tests/src/**
             - tests/artifacts/**
             - tests/ty-context/base-oracle.mjs
-          artifact_globs:
             - artifacts/semantic-fact-results.json
           positive_assertions:
             - key: assurance-governance-result
@@ -2163,12 +2163,12 @@ outcomes:
             - packages/ty-context/src/lib/long-task-verifier-v2.ts
             - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
             - tests/ty-context/fixtures/long-task-real-capability-state.json
-          expected_output_paths:
+          expected_output_paths: []
+          artifact_globs:
             - packages/ty-context/dist/**
             - tests/src/**
             - tests/artifacts/**
             - tests/ty-context/base-oracle.mjs
-          artifact_globs:
             - artifacts/semantic-fact-results.json
           positive_assertions:
             - key: observer-tcb-closure-result
@@ -3020,12 +3020,12 @@ outcomes:
             - tools/test_suite_policy.mjs
             - tests/ty-context/fixtures/long-task-real-capability-fresh-agent-paired.json
             - tests/ty-context/fixtures/long-task-real-capability-state.json
-          expected_output_paths:
+          expected_output_paths: []
+          artifact_globs:
             - packages/ty-context/dist/**
             - tests/src/**
             - tests/artifacts/**
             - tests/ty-context/base-oracle.mjs
-          artifact_globs:
             - artifacts/semantic-fact-results.json
             - .artifacts/long-task-real-capability/**
           positive_assertions:
