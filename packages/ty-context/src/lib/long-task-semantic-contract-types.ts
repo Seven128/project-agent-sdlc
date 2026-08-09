@@ -39,6 +39,7 @@ export interface ExecutionTargetV2 {
   role: "product" | "support" | "observer";
   runtime_family: ExecutionTargetRuntimeFamilyV2;
   root_entrypoint: string;
+  root_argv?: string[];
   capabilities: ExecutionTargetCapabilityV2[];
 }
 

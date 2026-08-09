@@ -1,0 +1,563 @@
+import assert from "node:assert/strict";
+import {
+  chmod,
+  copyFile,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import test from "node:test";
+import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
+import { decodeProductObservationEnvelope } from "../../packages/ty-context/dist/lib/long-task-process-observation.js";
+
+const SNAPSHOT_SHA256 = "a".repeat(64);
+
+test("direct process observation captures one root stdout envelope and host attestation", async () => {
+  const fixture = await createProcessFixture();
+  try {
+    const authorities = [
+      observationAuthority(fixture.target, "fact/a"),
+      observationAuthority(fixture.target, "fact~b"),
+    ];
+    const check = processCheck(fixture, authorities);
+    const validLog = path.join(fixture.root, "valid-attempts.jsonl");
+    setProcessInvocation(check, authorities, [
+      "product.mjs",
+      "valid",
+      validLog,
+    ]);
+    const valid = await executeCheckRunner(check, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: [],
+    });
+
+    assert.equal(valid.execution_status, "completed");
+    assert.equal(valid.exit_code, 0);
+    assert.deepEqual(valid.observations, {});
+    assert.equal(valid.package_observations.length, 2);
+    assert.deepEqual(
+      valid.package_observations.map((entry) => entry.observation_identity),
+      ["fact/a", "fact~b"],
+    );
+    assert.deepEqual(
+      valid.package_observations.map((entry) => entry.raw_value),
+      [{ accepted: true }, ["one", "two"]],
+    );
+    for (const entry of valid.package_observations) {
+      assert.equal(entry.authority, "package_process_json_exact");
+      assert.equal(entry.reason, null);
+      assert.equal(entry.observation.capability, "json-pointer-exact-v1");
+      assert.equal(entry.observation.artifact_path, "process.stdout.json");
+      assert.match(entry.observation.value_sha256, /^[a-f0-9]{64}$/u);
+    }
+    assert.equal(valid.host_execution_attestation.direct_root_match, true);
+    assert.deepEqual(valid.host_execution_attestation.actual_argv, [
+      "product.mjs",
+      "valid",
+      validLog,
+    ]);
+    assert.deepEqual(
+      valid.host_execution_attestation.declared_root_argv,
+      valid.host_execution_attestation.actual_argv,
+    );
+    assert.equal(
+      valid.host_execution_attestation.raw_execution_identity,
+      check.raw_execution_identity,
+    );
+    assert.equal(
+      valid.host_execution_attestation.snapshot_sha256,
+      SNAPSHOT_SHA256,
+    );
+    assert.ok(valid.host_execution_attestation.pid > 0);
+    assert.match(
+      valid.host_execution_attestation.observation_execution_nonce,
+      /^[a-f0-9]{64}$/u,
+    );
+    assert.match(
+      valid.host_execution_attestation.observation_artifact_sha256,
+      /^[a-f0-9]{64}$/u,
+    );
+    assert.equal(
+      Date.parse(valid.host_execution_attestation.started_at) <=
+        Date.parse(valid.host_execution_attestation.completed_at),
+      true,
+    );
+    const [validAttempt] = await attemptRows(validLog);
+    assert.deepEqual(
+      {
+        mode: validAttempt.mode,
+        observation_environment_present:
+          validAttempt.observation_environment_present,
+      },
+      { mode: "valid", observation_environment_present: false },
+    );
+    assert.equal(Number.isSafeInteger(validAttempt.root_pid), true);
+
+    const grouped = processCheck(fixture, [authorities[0]]);
+    const groupedLog = path.join(fixture.root, "grouped-channels.jsonl");
+    const groupedAuthorities = [
+      structuredClone(authorities[0]),
+      structuredClone(authorities[1]),
+    ];
+    setProcessInvocation(grouped, groupedAuthorities, [
+      "product.mjs",
+      "valid",
+      groupedLog,
+    ]);
+    grouped.observation_authorities = [groupedAuthorities[0]];
+    const groupedRaw = await executeCheckRunner(grouped, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: [groupedAuthorities[1]],
+    });
+    assert.equal(groupedRaw.execution_status, "completed");
+    assert.equal(groupedRaw.package_observations.length, 2);
+    assert.equal((await attemptRows(groupedLog)).length, 1);
+
+    const wrongIdentity = structuredClone(check);
+    const wrongIdentityAuthorities = structuredClone(authorities);
+    setProcessInvocation(wrongIdentity, wrongIdentityAuthorities, [
+      "product.mjs",
+      "wrong-identity",
+      path.join(fixture.root, "wrong-identity.jsonl"),
+    ]);
+    const rejected = await executeCheckRunner(wrongIdentity, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: wrongIdentityAuthorities,
+    });
+    assert.equal(rejected.execution_status, "invalid_evidence");
+    assert.match(rejected.error, /process_observation_identity_set_mismatch/u);
+    assert.deepEqual(rejected.package_observations, []);
+    assert.equal(rejected.host_execution_attestation, null);
+
+    const nonzero = structuredClone(check);
+    const nonzeroAuthorities = structuredClone(authorities);
+    setProcessInvocation(nonzero, nonzeroAuthorities, [
+      "product.mjs",
+      "nonzero",
+      path.join(fixture.root, "nonzero.jsonl"),
+    ]);
+    const nonzeroResult = await executeCheckRunner(nonzero, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: nonzeroAuthorities,
+    });
+    assert.equal(nonzeroResult.execution_status, "invalid_evidence");
+    assert.equal(nonzeroResult.exit_code, 7);
+    assert.equal(nonzeroResult.error, "process_observer_nonzero_exit");
+
+    const reservedEnvironment = structuredClone(check);
+    reservedEnvironment.environment_requirements = [
+      {
+        key: "reserved-output",
+        kind: "env_var",
+        target: "ty_context_observation_output",
+      },
+    ];
+    const reserved = await executeCheckRunner(
+      reservedEnvironment,
+      fixture.root,
+      {
+        snapshot_sha256: SNAPSHOT_SHA256,
+        observation_authorities: authorities,
+      },
+    );
+    assert.equal(reserved.execution_status, "invalid_evidence");
+    assert.equal(
+      reserved.error,
+      "process_observer_reserved_environment_requirement",
+    );
+
+    const retryLog = path.join(fixture.root, "retry-attempts.jsonl");
+    const retry = structuredClone(check);
+    retry.runner.retry_policy = "transient_once";
+    const retryAuthorities = structuredClone(authorities);
+    setProcessInvocation(retry, retryAuthorities, [
+      "product.mjs",
+      "retry",
+      retryLog,
+    ]);
+    const retried = await executeCheckRunner(retry, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: retryAuthorities,
+    });
+    assert.equal(retried.execution_status, "completed");
+    assert.equal(retried.attempts, 2);
+    const attempts = await attemptRows(retryLog);
+    assert.equal(attempts.length, 2);
+    assert.deepEqual(
+      attempts.map((attempt) => attempt.observation_environment_present),
+      [false, false],
+    );
+
+    const descendantLog = path.join(fixture.root, "descendant-attempts.jsonl");
+    const descendant = structuredClone(check);
+    const descendantAuthorities = structuredClone(authorities);
+    setProcessInvocation(descendant, descendantAuthorities, [
+      "product.mjs",
+      "descendant",
+      descendantLog,
+    ]);
+    const descendantResult = await executeCheckRunner(
+      descendant,
+      fixture.root,
+      {
+        snapshot_sha256: SNAPSHOT_SHA256,
+        observation_authorities: descendantAuthorities,
+      },
+    );
+    assert.equal(
+      descendantResult.execution_status,
+      "invalid_evidence",
+      JSON.stringify(descendantResult),
+    );
+    assert.equal(
+      descendantResult.error,
+      "process_observer_descendant_process_alive",
+    );
+    const descendantPid = (await attemptRows(descendantLog)).at(-1).child_pid;
+    await assertProcessGone(descendantPid);
+
+    const timeoutLog = path.join(fixture.root, "timeout-attempts.jsonl");
+    const timeoutTree = structuredClone(check);
+    timeoutTree.runner.timeout_ms = 250;
+    const timeoutAuthorities = structuredClone(authorities);
+    setProcessInvocation(timeoutTree, timeoutAuthorities, [
+      "product.mjs",
+      "timeout-tree",
+      timeoutLog,
+    ]);
+    const timeoutStarted = Date.now();
+    const timeoutResult = await executeCheckRunner(timeoutTree, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: timeoutAuthorities,
+    });
+    assert.equal(timeoutResult.execution_status, "infrastructure_error");
+    assert.equal(timeoutResult.error, "command_timeout");
+    assert.ok(Date.now() - timeoutStarted < 3_500);
+    const timeoutAttempts = await attemptRows(timeoutLog);
+    await assertProcessGone(timeoutAttempts[0].root_pid);
+    await assertProcessGone(timeoutAttempts.at(-1).child_pid);
+
+    const wrapper = structuredClone(check);
+    const wrapperAuthorities = structuredClone(authorities);
+    setProcessInvocation(wrapper, wrapperAuthorities, [
+      "product.mjs",
+      "valid",
+      path.join(fixture.root, "wrapper.jsonl"),
+    ]);
+    wrapper.runner.argv[1] = "wrong-wrapper-argv";
+    const wrapperResult = await executeCheckRunner(wrapper, fixture.root, {
+      snapshot_sha256: SNAPSHOT_SHA256,
+      observation_authorities: wrapperAuthorities,
+    });
+    assert.equal(wrapperResult.execution_status, "invalid_evidence");
+    assert.equal(wrapperResult.attempts, 0);
+    assert.equal(wrapperResult.error, "process_observer_direct_root_required");
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("direct process decoder rejects extra fields, duplicate keys, deep trees, oversize values, and identity drift", () => {
+  const target = "bin/product-root";
+  const authority = observationAuthority(target, "fact");
+  const envelope = (observations) =>
+    Buffer.from(
+      JSON.stringify({
+        schema_version: "ty-context-product-observation-v1",
+        observations,
+      }),
+    );
+
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: Buffer.from(
+          JSON.stringify({
+            schema_version: "ty-context-product-observation-v1",
+            stale_session: "replayed-file",
+            observations: { fact: true },
+          }),
+        ),
+        authorities: [authority],
+      }),
+    /process_observation_envelope_fields_invalid/u,
+  );
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: Buffer.from(
+          `{"schema_version":"ty-context-product-observation-v1","observations":{"fact":true},"observations":{"fact":true}}`,
+        ),
+        authorities: [authority],
+      }),
+    /process_observation_decode_invalid:observation_json_duplicate_key/u,
+  );
+  let deep = true;
+  for (let index = 0; index < 66; index += 1) deep = { value: deep };
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: envelope({ fact: deep }),
+        authorities: [authority],
+      }),
+    /process_observation_decode_invalid:observation_json_depth_limit/u,
+  );
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: envelope({ fact: "x".repeat(262_145) }),
+        authorities: [authority],
+      }),
+    /process_observation_value_size_limit/u,
+  );
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: envelope({ fact: true, extra: true }),
+        authorities: [authority],
+      }),
+    /process_observation_identity_set_mismatch/u,
+  );
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: Buffer.concat([
+          Buffer.from([0xef, 0xbb, 0xbf]),
+          envelope({ fact: true }),
+        ]),
+        authorities: [authority],
+      }),
+    /process_observation_decode_invalid:observation_json_utf8_invalid/u,
+  );
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: Buffer.alloc(1_048_577, 0x20),
+        authorities: [authority],
+      }),
+    /process_observation_decode_invalid:observation_artifact_size_limit/u,
+  );
+  const longIdentity = "x".repeat(4_097);
+  assert.throws(
+    () =>
+      decodeProductObservationEnvelope({
+        bytes: envelope({ [longIdentity]: true }),
+        authorities: [observationAuthority(target, longIdentity)],
+      }),
+    /process_observation_decode_invalid:observation_locator_not_admitted/u,
+  );
+  const secondMethod = {
+    ...structuredClone(authority),
+    assertion_ref: "assertion.fact.content",
+    obligation_ref: "obligation.fact.content",
+    method: "content",
+  };
+  const sharedActual = decodeProductObservationEnvelope({
+    bytes: envelope({ fact: true }),
+    authorities: [authority, secondMethod],
+  });
+  assert.equal(sharedActual.package_observations.length, 2);
+  assert.deepEqual(
+    sharedActual.package_observations.map((entry) => entry.obligation_ref),
+    [authority.obligation_ref, secondMethod.obligation_ref],
+  );
+});
+
+test("legacy runner execution receives no package observation channel", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "ty-context-legacy-runner-"));
+  try {
+    const check = {
+      internal_id: "CHECK.legacy",
+      outcome_key: null,
+      key: "legacy",
+      proof_surface: "runtime_behavior",
+      execution_target: { target_ref: "legacy", entrypoint: "root" },
+      runner: {
+        type: "node_oracle",
+        target: "unused",
+        argv: [],
+        cwd: ".",
+        timeout_ms: 10_000,
+        effect: "read_only",
+        retry_policy: "never",
+        idempotent: true,
+        executable: process.execPath,
+        executable_argv_prefix: [
+          "-e",
+          `console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{output:Boolean(process.env.TY_CONTEXT_OBSERVATION_OUTPUT),challenge:Boolean(process.env.TY_CONTEXT_OBSERVATION_CHALLENGE)},evidence_records:[]}))`,
+        ],
+        resolved_cwd: ".",
+        resolved_target: "unused",
+        definition_sha256: "legacy",
+        frozen_files: {},
+        package_script: null,
+        execution_identity: "legacy",
+        raw_execution_identity: "legacy",
+      },
+      environment_requirements: [],
+      observation_authorities: [],
+    };
+    const raw = await executeCheckRunner(check, root);
+    assert.equal(raw.execution_status, "completed");
+    assert.deepEqual(raw.observations, { output: false, challenge: false });
+    assert.deepEqual(raw.package_observations, []);
+    assert.equal(raw.host_execution_attestation, null);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+async function createProcessFixture() {
+  const root = await mkdtemp(
+    path.join(tmpdir(), "ty-context-process-observer-"),
+  );
+  const target = `bin/product-root${process.platform === "win32" ? ".exe" : ""}`;
+  await import("node:fs/promises").then(({ mkdir }) =>
+    mkdir(path.join(root, "bin"), { recursive: true }),
+  );
+  await copyFile(process.execPath, path.join(root, target));
+  if (process.platform !== "win32") await chmod(path.join(root, target), 0o755);
+  await writeFile(
+    path.join(root, "product.mjs"),
+    `import { spawn } from "node:child_process";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
+const [mode, log] = process.argv.slice(2);
+let prior = 0;
+if (existsSync(log)) prior = readFileSync(log, "utf8").trim().split(/\\r?\\n/u).filter(Boolean).length;
+appendFileSync(log, JSON.stringify({ mode, root_pid: process.pid, observation_environment_present: Boolean(process.env.TY_CONTEXT_OBSERVATION_OUTPUT || process.env.TY_CONTEXT_OBSERVATION_CHALLENGE || process.env.TY_CONTEXT_CHECK_PROTOCOL) }) + "\\n");
+if (mode === "missing") process.exit(0);
+if (mode === "descendant" || mode === "timeout-tree") {
+  const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60_000)"], {
+    stdio: mode === "timeout-tree" ? "inherit" : "ignore",
+    detached: mode === "descendant",
+  });
+  appendFileSync(log, JSON.stringify({ child_pid: child.pid }) + "\\n");
+  if (mode === "descendant") {
+    child.unref();
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+  }
+  if (mode === "timeout-tree") await new Promise(() => {});
+}
+if (mode === "retry" && prior === 0) {
+  console.log(JSON.stringify({ schema_version: "invalid", observations: {} }));
+  process.exit(0);
+}
+const observations = mode === "wrong-identity"
+  ? { "wrong/fact": true }
+  : { "fact/a": { accepted: true }, "fact~b": ["one", "two"] };
+console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
+if (mode === "nonzero") process.exit(7);
+`,
+  );
+  return { root, target };
+}
+
+function processCheck(fixture, authorities) {
+  return {
+    internal_id: "CHECK.process",
+    outcome_key: "process",
+    key: "process",
+    proof_surface: "runtime_behavior",
+    execution_target: { target_ref: "product", entrypoint: "root" },
+    runner: {
+      type: "project_binary",
+      target: fixture.target,
+      argv: [],
+      cwd: ".",
+      timeout_ms: 10_000,
+      effect: "test_sandbox",
+      retry_policy: "never",
+      idempotent: true,
+      executable: fixture.target,
+      executable_argv_prefix: [],
+      resolved_cwd: ".",
+      resolved_target: fixture.target,
+      definition_sha256: "process",
+      frozen_files: {},
+      package_script: null,
+      execution_identity: "process",
+      raw_execution_identity: "process",
+    },
+    environment_requirements: [],
+    observation_authorities: authorities,
+    raw_execution_identity: "process",
+  };
+}
+
+function observationAuthority(target, identity) {
+  return {
+    obligation_ref: `obligation.${identity}`,
+    fact_ref: identity,
+    assertion_ref: `assertion.${identity}`,
+    claim_refs: [],
+    target_ref: "product",
+    proof_surface: "runtime_behavior",
+    method: "exact_value",
+    evidence_capabilities: ["presence"],
+    authority: "package_process_json_exact",
+    expected_identity: `expected.${identity}`,
+    expected_value_sha256: "e".repeat(64),
+    actual_projection: "raw_exact",
+    observation_identity: identity,
+    comparison: {
+      comparator: "exact_value",
+      mode: "exact",
+      parameters_sha256: "p".repeat(64),
+      tolerance_sha256: null,
+      mask_sha256: null,
+    },
+    locator_policy: {
+      kind: "fixed_json_pointer",
+      value: `/observations/${identity.replace(/~/gu, "~0").replace(/\//gu, "~1")}`,
+    },
+    carrier_refs: [],
+    runtime_requirements: {
+      runtime_family: "process",
+      target_role: "product",
+      entrypoint: "root",
+      runner_type: "project_binary",
+      resolved_runner_target: target,
+      declared_root_entrypoint: target,
+      resolved_runner_argv: [],
+      declared_root_argv: [],
+      effect: "test_sandbox",
+      direct_root_match: true,
+    },
+  };
+}
+
+function setProcessInvocation(check, authorities, argv) {
+  check.runner.argv = [...argv];
+  check.observation_authorities = authorities;
+  for (const authority of authorities) {
+    authority.runtime_requirements.resolved_runner_argv = [...argv];
+    authority.runtime_requirements.declared_root_argv = [...argv];
+    authority.runtime_requirements.direct_root_match = true;
+  }
+}
+
+async function attemptRows(file) {
+  return (await readFile(file, "utf8"))
+    .trim()
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
+async function assertProcessGone(pid) {
+  assert.ok(Number.isSafeInteger(pid) && pid > 0);
+  const deadline = Date.now() + 2_000;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+    } catch (error) {
+      if (error?.code === "ESRCH") return;
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  assert.fail(`process ${pid} remained alive after tree cleanup`);
+}

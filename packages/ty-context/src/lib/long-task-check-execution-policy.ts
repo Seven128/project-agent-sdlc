@@ -42,6 +42,11 @@ export function rawExecutionInputProjection(
   projection.known_execution_targets = check.known_execution_targets;
   projection.design_conformance_targets =
     check.design_conformance_targets ?? [];
+  projection.package_observation_protocol = (
+    check.observation_authorities ?? []
+  ).some((authority) => authority.authority === "package_process_json_exact")
+    ? "ty-context-product-observation-v1"
+    : null;
   for (const field of Object.keys(CHECK_EXECUTION_INPUT_POLICY) as Array<
     keyof DeliveryCheckV2
   >) {

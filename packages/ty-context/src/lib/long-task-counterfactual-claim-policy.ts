@@ -109,7 +109,9 @@ export function validateGlobalCounterfactualBindingClaims(
 function validateExpectedAssertions(
   control: Pick<
     CounterfactualControlV2,
-    "expected_assertion_failures" | "preserved_assertions"
+    | "expected_assertion_failures"
+    | "preserved_assertions"
+    | "allowed_fanout_assertions"
   >,
   check: DeliveryContractV2["global"]["acceptance"]["checks"][number],
   unknownPrefix: string,
@@ -124,11 +126,19 @@ function validateExpectedAssertions(
   for (const key of control.expected_assertion_failures)
     if (!assertions.has(key)) throw new Error(`${unknownPrefix}:${key}`);
   const failures = new Set(control.expected_assertion_failures);
+  const preserved = new Set(control.preserved_assertions);
   for (const key of control.preserved_assertions) {
     if (!assertions.has(key)) throw new Error(`${unknownPrefix}:${key}`);
     if (failures.has(key))
       throw new Error(
         `counterfactual_preserved_assertion_conflict:${unknownPrefix}:${key}`,
+      );
+  }
+  for (const key of control.allowed_fanout_assertions) {
+    if (!assertions.has(key)) throw new Error(`${unknownPrefix}:${key}`);
+    if (failures.has(key) || preserved.has(key))
+      throw new Error(
+        `counterfactual_fanout_assertion_conflict:${unknownPrefix}:${key}`,
       );
   }
 }

@@ -26,6 +26,7 @@ import type {
 import type { SemanticFactExpectationV2 } from "./semantic-fact-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
+import type { JsonPointerExactObservation } from "./long-task-json-pointer-observation.js";
 
 export interface FrozenRunnerV2 extends DeliveryRunnerV2 {
   executable: string;
@@ -43,6 +44,9 @@ export type CompiledObservationAuthorityKindV2 =
   | "package_process_json_exact"
   | "external_confirmation";
 
+export type CompiledObservationActualProjectionV2 =
+  "raw_exact" | "presence_boolean" | "truthy_boolean" | "falsy_boolean";
+
 export interface CompiledObservationAuthorityV2 {
   obligation_ref: string;
   fact_ref: string | null;
@@ -55,6 +59,7 @@ export interface CompiledObservationAuthorityV2 {
   authority: CompiledObservationAuthorityKindV2;
   expected_identity: string;
   expected_value_sha256: string;
+  actual_projection: CompiledObservationActualProjectionV2;
   observation_identity: string;
   comparison: {
     comparator: string;
@@ -78,6 +83,8 @@ export interface CompiledObservationAuthorityV2 {
     runner_type: DeliveryRunnerV2["type"];
     resolved_runner_target: string;
     declared_root_entrypoint: string;
+    resolved_runner_argv: string[];
+    declared_root_argv: string[] | null;
     effect: DeliveryRunnerV2["effect"];
     direct_root_match: boolean;
   };
@@ -270,6 +277,51 @@ export interface RawCommandExecutionV2 {
   attempts: number;
   duration_ms: number;
   error: string | null;
+  package_observations?: PackageObservationValueV2[];
+  host_execution_attestation?: HostExecutionAttestationV2 | null;
+}
+
+export interface PackageObservationValueV2 {
+  authority: Exclude<
+    CompiledObservationAuthorityKindV2,
+    "external_confirmation"
+  >;
+  observation_identity: string;
+  assertion_ref: string;
+  obligation_ref: string;
+  method: string;
+  raw_value: unknown;
+  observation: JsonPointerExactObservation | null;
+  reason: string | null;
+}
+
+export interface PackageProcessObservationV1 {
+  schema_version: "ty-context-product-observation-v1";
+  artifact_sha256: string;
+  observations: Record<string, unknown>;
+  value_sha256_by_identity: Record<string, string>;
+  package_observations: PackageObservationValueV2[];
+}
+
+export interface HostExecutionAttestationV2 {
+  raw_execution_identity: string;
+  executable_path: string;
+  declared_root_entrypoint: string;
+  actual_argv: string[];
+  declared_root_argv: string[];
+  direct_root_match: boolean;
+  pid: number;
+  started_at: string;
+  completed_at: string;
+  exit_code: number;
+  snapshot_sha256: string;
+  observation_execution_nonce: string;
+  observation_artifact_sha256: string;
+}
+
+export interface CheckRunnerExecutionContextV2 {
+  snapshot_sha256?: string;
+  observation_authorities?: readonly CompiledObservationAuthorityV2[];
 }
 
 export interface CheckExecutionResultV2 {

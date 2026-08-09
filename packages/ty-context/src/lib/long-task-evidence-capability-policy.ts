@@ -4,6 +4,7 @@ import type {
   EvidenceCapabilityRecordV2,
   EvidenceCapabilityV2,
   LongTaskFindingV2,
+  RawCommandExecutionV2,
 } from "./long-task-delivery-types.js";
 import { validateRuntimeEvidenceRecord } from "./long-task-evidence-capability-runtime.js";
 import { validateDistinctSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
@@ -243,6 +244,7 @@ export function evaluateEvidenceCapabilities(
   records: EvidenceCapabilityRecordV2[],
   artifactHashes: Record<string, string>,
   admittedObservations?: PreparedAdmittedObservationSet,
+  rawExecution?: RawCommandExecutionV2,
 ): {
   complete: Record<string, boolean>;
   findings: LongTaskFindingV2[];
@@ -281,23 +283,39 @@ export function evaluateEvidenceCapabilities(
   for (const assertion of assertions) {
     let assertionComplete = true;
     for (const capability of assertion.evidence_capabilities) {
-      if (capability === "presence") continue;
       const matches = runtimeRecords.filter(
         (record) =>
           record.assertion_key === assertion.key &&
           record.capability === capability,
       );
-      const reason =
+      const derived = packageDerivedCapability(
+        check,
+        assertion.key,
+        capability,
+        admittedObservations,
+        rawExecution,
+      );
+      const submittedReason =
         matches.length === 1
           ? validateRuntimeEvidenceRecord(
               check,
               matches[0],
               artifactHashes,
               admittedObservations,
+              rawExecution?.host_execution_attestation ?? null,
             )
-          : matches.length === 0
-            ? "record_missing"
-            : "record_duplicate";
+          : matches.length > 1
+            ? "record_duplicate"
+            : null;
+      const reason =
+        submittedReason ??
+        (derived.supported
+          ? derived.reason
+          : capability === "presence"
+            ? null
+            : matches.length === 0
+              ? "record_missing"
+              : null);
       if (!reason) continue;
       assertionComplete = false;
       findings.push({
@@ -360,7 +378,72 @@ export function evaluateEvidenceCapabilities(
       expected: "unique_fact_proof_and_artifact_locator_identity",
       actual: semanticDistinctness,
     });
+  for (const entry of admittedObservations?.entries ?? [])
+    if (!entry.authority_key && entry.reason)
+      findings.push({
+        ...checkFinding(
+          check,
+          "evidence_capability_invalid",
+          `A package observation was not bound to the compiled observation plan: ${entry.identity_ref}:${entry.reason}.`,
+          "Emit only the exact identity set selected by the Harness-owned compiled observation plan.",
+        ),
+        expected: "compiled_observation_identity",
+        actual: entry.identity_ref,
+      });
   return { complete, findings };
+}
+
+function packageDerivedCapability(
+  check: CompiledCheckV2,
+  assertionKey: string,
+  capability: EvidenceCapabilityV2,
+  admitted: PreparedAdmittedObservationSet | undefined,
+  raw: RawCommandExecutionV2 | undefined,
+): { supported: boolean; reason: string | null } {
+  const authorities = (check.observation_authorities ?? []).filter(
+    (authority) => authority.assertion_ref === assertionKey,
+  );
+  const supported =
+    capability === "presence" ||
+    capability === "semantic_fact" ||
+    capability === "design_method" ||
+    capability === "target_runtime";
+  if (!supported || !authorities.length)
+    return { supported: false, reason: null };
+  for (const authority of authorities) {
+    if (authority.authority === "external_confirmation")
+      return {
+        supported: true,
+        reason: "unsupported_observer_requires_external_confirmation",
+      };
+    const prepared = admitted?.by_authority_key.get(
+      admittedObservationAuthorityKey(authority),
+    );
+    if (!prepared)
+      return { supported: true, reason: "admitted_observation_missing" };
+    if (prepared.reason) return { supported: true, reason: prepared.reason };
+    if (!prepared.observation || !prepared.comparison)
+      return { supported: true, reason: "admitted_observation_missing" };
+  }
+  const processRequired =
+    capability === "target_runtime" ||
+    authorities.some(
+      (authority) => authority.authority === "package_process_json_exact",
+    );
+  if (processRequired) {
+    const attestation = raw?.host_execution_attestation;
+    if (!attestation)
+      return { supported: true, reason: "host_attestation_required" };
+    if (
+      !attestation.direct_root_match ||
+      attestation.raw_execution_identity !== check.raw_execution_identity ||
+      !attestation.snapshot_sha256 ||
+      attestation.exit_code !== 0 ||
+      attestation.exit_code !== raw?.exit_code
+    )
+      return { supported: true, reason: "host_attestation_mismatch" };
+  }
+  return { supported: true, reason: null };
 }
 
 function assertionObservationAuthorityIssues(

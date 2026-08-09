@@ -169,15 +169,39 @@
       ],
       "properties": {
         "claims": { "type": "integer", "minimum": 0, "maximum": 1000000 },
-        "claim_projections": { "type": "integer", "minimum": 0, "maximum": 2000000 },
-        "selector_members": { "type": "integer", "minimum": 0, "maximum": 5000000 },
-        "structure_families": { "type": "integer", "minimum": 0, "maximum": 1000000 },
-        "structure_references": { "type": "integer", "minimum": 0, "maximum": 10000000 },
-        "structure_arguments": { "type": "integer", "minimum": 0, "maximum": 50000000 },
+        "claim_projections": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2000000
+        },
+        "selector_members": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        "structure_families": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "structure_references": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        "structure_arguments": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
         "facts": { "type": "integer", "minimum": 0, "maximum": 1000000 },
         "obligations": { "type": "integer", "minimum": 0, "maximum": 2000000 },
         "assertions": { "type": "integer", "minimum": 0, "maximum": 5000000 },
-        "canonical_bytes": { "type": "integer", "minimum": 0, "maximum": 268435456 }
+        "canonical_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 268435456
+        }
       }
     },
     "longTaskCompactCarrier": {
@@ -229,9 +253,18 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["key", "digest", "boundary", "parameter_count", "template"],
+            "required": [
+              "key",
+              "digest",
+              "boundary",
+              "parameter_count",
+              "template"
+            ],
             "properties": {
-              "key": { "type": "string", "pattern": "^structure\\.[a-f0-9]{24}$" },
+              "key": {
+                "type": "string",
+                "pattern": "^structure\\.[a-f0-9]{24}$"
+              },
               "digest": { "$ref": "#/$defs/sha256" },
               "boundary": { "$ref": "#/$defs/semanticRef" },
               "parameter_count": { "type": "integer", "minimum": 0 },
@@ -464,6 +497,10 @@
           ]
         },
         "root_entrypoint": { "$ref": "#/$defs/nonEmpty" },
+        "root_argv": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[^\\u0000]*$" }
+        },
         "capabilities": {
           "type": "array",
           "minItems": 1,
@@ -2011,6 +2048,10 @@
         "check_key": { "$ref": "#/$defs/key" },
         "expected_assertion_failures": { "$ref": "#/$defs/keys" },
         "preserved_assertions": { "$ref": "#/$defs/keys", "default": [] },
+        "allowed_fanout_assertions": {
+          "$ref": "#/$defs/keys",
+          "default": []
+        },
         "mutation": {
           "oneOf": [
             {
@@ -2091,6 +2132,10 @@
           "uniqueItems": true
         },
         "preserved_assertions": { "$ref": "#/$defs/keys", "default": [] },
+        "allowed_fanout_assertions": {
+          "$ref": "#/$defs/keys",
+          "default": []
+        },
         "mutation": {
           "oneOf": [
             {

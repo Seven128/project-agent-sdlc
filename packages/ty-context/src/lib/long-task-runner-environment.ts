@@ -26,10 +26,11 @@ const BASE_ENVIRONMENT_KEYS = [
 
 export function runnerEnvironment(
   requirements: EnvironmentRequirementV2[],
+  mode: "legacy_check" | "product_observation" = "legacy_check",
 ): NodeJS.ProcessEnv {
-  const environment: NodeJS.ProcessEnv = {
-    TY_CONTEXT_CHECK_PROTOCOL: "long-task-check-result-v3",
-  };
+  const environment: NodeJS.ProcessEnv = {};
+  if (mode === "legacy_check")
+    environment.TY_CONTEXT_CHECK_PROTOCOL = "long-task-check-result-v3";
   for (const key of BASE_ENVIRONMENT_KEYS)
     copyEnvironmentValue(environment, key);
   for (const requirement of requirements)

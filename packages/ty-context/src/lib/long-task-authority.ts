@@ -288,6 +288,7 @@ function counterfactualsStrengthened(
     mutation: unknown;
     expected_assertion_failures: string[];
     preserved_assertions: string[];
+    allowed_fanout_assertions?: string[];
   }>,
   next: Array<{
     binding_key?: string;
@@ -297,6 +298,7 @@ function counterfactualsStrengthened(
     mutation: unknown;
     expected_assertion_failures: string[];
     preserved_assertions: string[];
+    allowed_fanout_assertions?: string[];
   }>,
 ): boolean {
   return previous.every((control) =>
@@ -311,7 +313,11 @@ function counterfactualsStrengthened(
           control.expected_assertion_failures,
           candidate.expected_assertion_failures,
         ) &&
-        subset(control.preserved_assertions, candidate.preserved_assertions),
+        subset(control.preserved_assertions, candidate.preserved_assertions) &&
+        subset(
+          candidate.allowed_fanout_assertions ?? [],
+          control.allowed_fanout_assertions ?? [],
+        ),
     ),
   );
 }

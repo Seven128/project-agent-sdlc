@@ -5,6 +5,7 @@ import {
   prepareAdmittedObservations,
 } from "./long-task-artifacts.js";
 import { executeCheckRunner } from "./long-task-check-runner.js";
+import { prepareExecutionObservationGroup } from "./long-task-execution-observation.js";
 import { createCounterfactualSandbox } from "./long-task-counterfactual-sandbox.js";
 import type {
   CheckExecutionResultV2,
@@ -25,11 +26,13 @@ import {
   evaluateAssertionResults,
 } from "./long-task-evidence-findings.js";
 import { classifyPlaywrightCounterfactual } from "./long-task-playwright-counterfactual-policy.js";
+import { admittedObservationAuthorityKey } from "./long-task-admitted-observation.js";
 import { applyNarrowSemanticMutation } from "./long-task-semantic-mutation.js";
 import { evaluateEvidenceCapabilities } from "./long-task-evidence-capability-policy.js";
 import { validateCounterfactualObservationImpact } from "./long-task-evidence-sensitivity-policy.js";
 import { matchesRepoPattern } from "./long-task-paths.js";
 import { resolveInsideRepository } from "./long-task-workspace.js";
+import { canonicalValueJson } from "./strict-codec.js";
 
 export async function evaluateCheckEvidence(
   check: CompiledCheckV2,
@@ -44,22 +47,45 @@ export async function evaluateCheckEvidence(
     records: raw.evidence_records ?? [],
     snapshot_root: snapshotRoot,
     authority_paths: observationAuthorityPaths,
+    package_observations: (raw.package_observations ?? []).filter((candidate) =>
+      (check.observation_authorities ?? []).some(
+        (authority) =>
+          authority.authority === candidate.authority &&
+          authority.observation_identity === candidate.observation_identity &&
+          authority.assertion_ref === candidate.assertion_ref &&
+          authority.obligation_ref === candidate.obligation_ref &&
+          authority.method === candidate.method,
+      ),
+    ),
   });
-  const assertionResults = evaluateAssertionResults(check, raw.observations);
+  const derived = packageDerivedAssertionObservations(
+    check,
+    raw.observations,
+    admittedObservations,
+  );
+  const authoritativeRaw = { ...raw, observations: derived.observations };
+  const assertionResults = evaluateAssertionResults(
+    check,
+    authoritativeRaw.observations,
+  );
   const executionCompleted = raw.execution_status === "completed";
   const findings = collectExecutionFindings(
     check,
-    raw,
+    authoritativeRaw,
     outcome,
     artifacts,
     assertionResults,
     admittedObservations,
   );
+  findings.push(...derived.findings);
 
   const population = outcome?.acceptance.population;
   let populationPassed = true;
   if (executionCompleted && population?.check_key === check.key) {
-    const result = evaluatePopulation(population, raw.observations);
+    const result = evaluatePopulation(
+      population,
+      authoritativeRaw.observations,
+    );
     populationPassed = result.passed;
     if (!result.passed)
       findings.push({
@@ -113,7 +139,7 @@ export async function evaluateCheckEvidence(
     evidence_adapter: check.evidence_adapter,
     execution_identity: raw.raw_execution_identity,
     assertion_results: assertionResults,
-    observations: raw.observations,
+    observations: authoritativeRaw.observations,
     evidence_records: raw.evidence_records ?? [],
     artifact_hashes: artifacts.hashes,
     claim_proofs: claimProofs,
@@ -121,6 +147,61 @@ export async function evaluateCheckEvidence(
     attempts: raw.attempts,
     duration_ms: raw.duration_ms,
   };
+}
+
+function packageDerivedAssertionObservations(
+  check: CompiledCheckV2,
+  submitted: Record<string, unknown>,
+  admitted: Awaited<ReturnType<typeof prepareAdmittedObservations>>,
+): { observations: Record<string, unknown>; findings: LongTaskFindingV2[] } {
+  const observations = { ...submitted };
+  const findings: LongTaskFindingV2[] = [];
+  for (const assertion of [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ]) {
+    const authorities = (check.observation_authorities ?? []).filter(
+      (authority) => authority.assertion_ref === assertion.key,
+    );
+    if (!authorities.length) continue;
+    const entries = authorities.map((authority) =>
+      admitted.by_authority_key.get(admittedObservationAuthorityKey(authority)),
+    );
+    if (
+      entries.some(
+        (entry) =>
+          !entry || entry.reason || !entry.observation || !entry.comparison,
+      )
+    )
+      continue;
+    const factBound = authorities.some(
+      (authority) => authority.fact_ref !== null,
+    );
+    const derivedValue = factBound
+      ? entries.every((entry) => entry!.comparison!.passed)
+      : entries.length === 1
+        ? entries[0]!.raw_value
+        : entries.every((entry) => entry!.comparison!.passed);
+    if (
+      Object.hasOwn(submitted, assertion.observation) &&
+      canonicalValueJson(submitted[assertion.observation]) !==
+        canonicalValueJson(derivedValue)
+    )
+      findings.push({
+        ...checkFinding(
+          check,
+          "project_submitted_verdict_disagrees_with_harness",
+          `Project-submitted observation ${assertion.observation} disagrees with the package-derived current Actual.`,
+          "Remove the compatibility copy or make it agree with the Harness-derived observation; it cannot act as Authority.",
+        ),
+        assertion_key: assertion.key,
+        claim_keys: assertion.claims,
+        expected: derivedValue,
+        actual: submitted[assertion.observation],
+      });
+    observations[assertion.observation] = derivedValue;
+  }
+  return { observations, findings };
 }
 
 function collectExecutionFindings(
@@ -180,6 +261,7 @@ function collectExecutionFindings(
     raw.evidence_records,
     artifacts.hashes,
     admittedObservations,
+    raw,
   );
   const passedAssertions = new Set(
     assertionResults
@@ -189,7 +271,9 @@ function collectExecutionFindings(
   findings.push(
     ...capabilityEvaluation.findings.filter(
       (finding) =>
-        !finding.assertion_key || passedAssertions.has(finding.assertion_key),
+        !finding.assertion_key ||
+        passedAssertions.has(finding.assertion_key) ||
+        isObservationAuthorityFailureFinding(finding),
     ),
   );
   for (const result of assertionResults)
@@ -198,12 +282,23 @@ function collectExecutionFindings(
   return findings;
 }
 
+function isObservationAuthorityFailureFinding(
+  finding: LongTaskFindingV2,
+): boolean {
+  if (typeof finding.actual !== "string") return false;
+  return /^(?:admitted_observation_|counterfactual_admitted_observation_|host_attestation_|machine_observer_|observation_|process_observation_|process_observer_|project_submitted_|static_observation_|unsupported_observer_)/u.test(
+    finding.actual,
+  );
+}
+
 export async function evaluateOutcomeCounterfactuals(
   outcome: CompiledOutcomeV2,
   snapshotRoot: string,
   manifest?: WorkspaceManifestV2,
   protectedAuthorityPaths: readonly string[] = [],
   baselineResults: readonly CheckExecutionResultV2[] = [],
+  baselineExecutions: ReadonlyMap<string, RawCommandExecutionV2> = new Map(),
+  executionUniverse: readonly CompiledCheckV2[] = outcome.acceptance.checks,
 ): Promise<LongTaskFindingV2[]> {
   return evaluateCounterfactualSet(
     outcome.acceptance.counterfactual_controls.map((control) => ({
@@ -220,6 +315,8 @@ export async function evaluateOutcomeCounterfactuals(
     manifest,
     protectedAuthorityPaths,
     baselineResults,
+    baselineExecutions,
+    executionUniverse,
   );
 }
 
@@ -229,6 +326,11 @@ export async function evaluateGlobalCounterfactuals(
   selectedCheckKeys?: ReadonlySet<string>,
   manifest?: WorkspaceManifestV2,
   baselineResults: readonly CheckExecutionResultV2[] = [],
+  baselineExecutions: ReadonlyMap<string, RawCommandExecutionV2> = new Map(),
+  executionUniverse: readonly CompiledCheckV2[] = [
+    ...compiled.global.acceptance.checks,
+    ...compiled.outcomes.flatMap((outcome) => outcome.acceptance.checks),
+  ],
 ): Promise<LongTaskFindingV2[]> {
   return evaluateCounterfactualSet(
     (compiled.global.acceptance.counterfactual_controls ?? [])
@@ -254,6 +356,8 @@ export async function evaluateGlobalCounterfactuals(
     manifest,
     compiledAuthorityPaths(compiled),
     baselineResults,
+    baselineExecutions,
+    executionUniverse,
   );
 }
 
@@ -272,6 +376,8 @@ async function evaluateCounterfactualSet(
   manifest?: WorkspaceManifestV2,
   protectedAuthorityPaths: readonly string[] = [],
   baselineResults: readonly CheckExecutionResultV2[] = [],
+  baselineExecutions: ReadonlyMap<string, RawCommandExecutionV2> = new Map(),
+  executionUniverse: readonly CompiledCheckV2[] = [],
 ): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
   for (const entry of entries) {
@@ -306,7 +412,13 @@ async function evaluateCounterfactualSet(
         continue;
       }
       await applyCounterfactualMutation(root, control);
-      const raw = await executeCheckRunner(check, root);
+      const raw = await executeCounterfactualCheck(
+        check,
+        root,
+        manifest,
+        protectedAuthorityPaths,
+        executionUniverse,
+      );
       const result = await evaluateCheckEvidence(
         check,
         raw,
@@ -319,7 +431,9 @@ async function evaluateCounterfactualSet(
         baselineResults.find(
           (candidate) => candidate.internal_id === check.internal_id,
         ),
+        baselineExecutions.get(check.raw_execution_identity),
         result,
+        raw,
         snapshotRoot,
         root,
         mutationTargets,
@@ -337,6 +451,9 @@ async function evaluateCounterfactualSet(
         .map((assertion) => assertion.key)
         .sort();
       const expected = [...control.expected_assertion_failures].sort();
+      const allowedFanout = [
+        ...(control.allowed_fanout_assertions ?? []),
+      ].sort();
       const acceptedExit = playwrightClassification
         ? playwrightClassification.accepted_test_failure_exit
         : raw.exit_code === 0;
@@ -344,7 +461,11 @@ async function evaluateCounterfactualSet(
         raw.execution_status === "completed" &&
         acceptedExit &&
         observationImpactIssue === null &&
-        isValidCounterfactualCheckResult(sensitivityResult, expected);
+        isValidCounterfactualCheckResult(
+          sensitivityResult,
+          expected,
+          allowedFanout,
+        );
       if (!valid)
         findings.push(
           counterfactualIntegrityFinding(
@@ -371,6 +492,56 @@ async function evaluateCounterfactualSet(
     }
   }
   return findings;
+}
+
+async function executeCounterfactualCheck(
+  check: CompiledCheckV2,
+  root: string,
+  manifest: WorkspaceManifestV2 | undefined,
+  protectedAuthorityPaths: readonly string[],
+  executionUniverse: readonly CompiledCheckV2[],
+): Promise<RawCommandExecutionV2> {
+  const packageAuthorities = (check.observation_authorities ?? []).filter(
+    (authority) => authority.authority !== "external_confirmation",
+  );
+  if (!packageAuthorities.length) return executeCheckRunner(check, root);
+  if (!manifest)
+    return {
+      raw_execution_identity: check.raw_execution_identity,
+      execution_identity: check.raw_execution_identity,
+      execution_status: "invalid_evidence",
+      exit_code: -1,
+      observations: {},
+      evidence_records: [],
+      stdout_sha256: "",
+      stderr_sha256: "",
+      attempts: 0,
+      duration_ms: 0,
+      error: "counterfactual_admitted_observation_required",
+      package_observations: [],
+      host_execution_attestation: null,
+    };
+  const group = executionUniverse.filter(
+    (candidate) =>
+      candidate.raw_execution_identity === check.raw_execution_identity,
+  );
+  const prepared = await prepareExecutionObservationGroup({
+    checks: group.length ? group : [check],
+    snapshot_root: root,
+    workspace_manifest: manifest,
+    protected_authority_paths: protectedAuthorityPaths,
+  });
+  try {
+    return await prepared.finalize(
+      await executeCheckRunner(
+        check,
+        prepared.execution_root,
+        prepared.runner_context,
+      ),
+    );
+  } finally {
+    await prepared.dispose();
+  }
 }
 
 function counterfactualMutationTargets(
@@ -415,7 +586,11 @@ async function applyCounterfactualMutation(
         control.mutation.fixture_path,
         "counterfactual.fixture",
       ),
-      resolveInsideRepository(root, control.mutation.path, "counterfactual.path"),
+      resolveInsideRepository(
+        root,
+        control.mutation.path,
+        "counterfactual.path",
+      ),
     );
     return;
   }
@@ -425,29 +600,49 @@ async function applyCounterfactualMutation(
 async function counterfactualObservationImpactIssue(
   entry: RuntimeCounterfactual,
   baselineResult: CheckExecutionResultV2 | undefined,
+  baselineRaw: RawCommandExecutionV2 | undefined,
   mutatedResult: CheckExecutionResultV2,
+  mutatedRaw: RawCommandExecutionV2,
   baselineRoot: string,
   mutatedRoot: string,
   mutationTargets: string[],
   bindingCarrierPaths: string[],
   protectedAuthorityPaths: readonly string[],
 ): Promise<string | null> {
-  if (!baselineResult) return null;
+  const machineClosing = [
+    ...entry.check.positive_assertions,
+    ...entry.check.negative_assertions,
+  ].some((assertion) => assertion.claims.length > 0);
+  if (!baselineResult || !baselineRaw)
+    return machineClosing
+      ? "counterfactual_admitted_observation_required"
+      : null;
   const [baseline, mutated] = await Promise.all([
     prepareAdmittedObservations({
       check: entry.check,
       records: baselineResult.evidence_records,
       snapshot_root: baselineRoot,
       authority_paths: protectedAuthorityPaths,
+      package_observations: packageObservationsForCheck(
+        entry.check,
+        baselineRaw.package_observations ?? [],
+      ),
     }),
     prepareAdmittedObservations({
       check: entry.check,
       records: mutatedResult.evidence_records,
       snapshot_root: mutatedRoot,
       authority_paths: protectedAuthorityPaths,
+      package_observations: packageObservationsForCheck(
+        entry.check,
+        mutatedRaw.package_observations ?? [],
+      ),
     }),
   ]);
-  if (!baseline.entries.length && !mutated.entries.length) return null;
+  if (!baseline.entries.length || !mutated.entries.length)
+    return machineClosing
+      ? "counterfactual_admitted_observation_required"
+      : null;
   const baselineIssue = baseline.entries.find(
     (candidate) => candidate.reason || !candidate.observation,
   );
@@ -458,30 +653,38 @@ async function counterfactualObservationImpactIssue(
   );
   if (mutatedIssue)
     return `counterfactual_mutated_observation_invalid:${mutatedIssue.reason ?? "missing"}`;
+  const baselineKeys = baseline.entries.map(observationImpactIdentity).sort();
+  const mutatedKeys = mutated.entries.map(observationImpactIdentity).sort();
+  if (canonicalValueJson(baselineKeys) !== canonicalValueJson(mutatedKeys))
+    return "counterfactual_obligation_universe_changed";
   const baselineByFact = Object.fromEntries(
     baseline.entries.map((candidate) => [
-      candidate.identity_ref,
+      observationImpactIdentity(candidate),
       candidate.observation!.value_sha256,
     ]),
   );
   const mutatedByFact = Object.fromEntries(
     mutated.entries.map((candidate) => [
-      candidate.identity_ref,
+      observationImpactIdentity(candidate),
       candidate.observation!.value_sha256,
     ]),
   );
-  const expectedAssertions = new Set(
-    entry.control.expected_assertion_failures,
-  );
+  const expectedAssertions = new Set(entry.control.expected_assertion_failures);
   const preservedAssertions = new Set(entry.control.preserved_assertions);
+  const allowedFanoutAssertions = new Set(
+    entry.control.allowed_fanout_assertions ?? [],
+  );
   const expectedFactRefs = baseline.entries
     .filter((candidate) => expectedAssertions.has(candidate.assertion_key))
-    .map((candidate) => candidate.identity_ref);
+    .map(observationImpactIdentity);
   if (!expectedFactRefs.length)
     return "counterfactual_expected_fact_observation_missing";
   const preservedFactRefs = baseline.entries
     .filter((candidate) => preservedAssertions.has(candidate.assertion_key))
-    .map((candidate) => candidate.identity_ref);
+    .map(observationImpactIdentity);
+  const allowedFanoutFactRefs = baseline.entries
+    .filter((candidate) => allowedFanoutAssertions.has(candidate.assertion_key))
+    .map(observationImpactIdentity);
   const targetLive = entry.control.preserved_assertions.every((key) =>
     mutatedResult.assertion_results.some(
       (assertion) => assertion.key === key && assertion.passed,
@@ -503,9 +706,39 @@ async function counterfactualObservationImpactIssue(
     mutated_by_fact: mutatedByFact,
     expected_affected_fact_refs: expectedFactRefs,
     preserved_fact_refs: preservedFactRefs,
+    allowed_fanout_fact_refs: allowedFanoutFactRefs,
     target_live: targetLive,
     carrier_role: carrierRole,
   });
+}
+
+function packageObservationsForCheck(
+  check: CompiledCheckV2,
+  observations: readonly NonNullable<
+    RawCommandExecutionV2["package_observations"]
+  >[number][],
+): NonNullable<RawCommandExecutionV2["package_observations"]> {
+  return observations.filter((candidate) =>
+    (check.observation_authorities ?? []).some(
+      (authority) =>
+        authority.authority === candidate.authority &&
+        authority.observation_identity === candidate.observation_identity &&
+        authority.assertion_ref === candidate.assertion_ref &&
+        authority.obligation_ref === candidate.obligation_ref &&
+        authority.method === candidate.method,
+    ),
+  );
+}
+
+function observationImpactIdentity(
+  candidate: Awaited<
+    ReturnType<typeof prepareAdmittedObservations>
+  >["entries"][number],
+): string {
+  return (
+    candidate.authority_key ??
+    `${candidate.assertion_key}\0${candidate.obligation_ref ?? candidate.identity_ref}\0${candidate.method}`
+  );
 }
 
 function compiledAuthorityPaths(
@@ -590,29 +823,28 @@ function counterfactualIntegrityFinding(
 export function isValidCounterfactualCheckResult(
   result: CheckExecutionResultV2,
   expectedAssertionFailures: string[],
+  allowedFanoutAssertions: string[] = [],
 ): boolean {
   const expected = [...expectedAssertionFailures].sort();
+  const allowed = new Set([...expected, ...allowedFanoutAssertions]);
   const failedAssertions = result.assertion_results
     .filter((assertion) => !assertion.passed)
     .map((assertion) => assertion.key)
     .sort();
   return (
     result.status === "assertion_failed" &&
-    result.findings.length === expected.length &&
-    result.findings.filter((finding) => finding.assertion_key).length ===
-      expected.length &&
-    result.findings
-      .filter((finding) => finding.assertion_key)
-      .every((finding) =>
-        expected.some((key) => finding.assertion_key === key),
-      ) &&
+    result.findings.length === failedAssertions.length &&
+    result.findings.every(
+      (finding) =>
+        Boolean(finding.assertion_key) && allowed.has(finding.assertion_key!),
+    ) &&
     result.findings.every(
       (finding) => finding.code === "assertion_value_mismatch",
     ) &&
     result.assertion_results
       .filter((assertion) => !assertion.passed)
       .every((assertion) => assertion.status === "assertion_value_mismatch") &&
-    failedAssertions.length === expected.length &&
-    failedAssertions.every((item, index) => item === expected[index])
+    expected.every((item) => failedAssertions.includes(item)) &&
+    failedAssertions.every((item) => allowed.has(item))
   );
 }

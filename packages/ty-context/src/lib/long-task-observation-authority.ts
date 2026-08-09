@@ -28,6 +28,7 @@ interface CompileObservationAuthorityPlanInput {
   design_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
   production_bindings: DeliveryBindingV2[];
+  protected_authority_paths?: readonly string[];
 }
 
 interface ExactCandidate {
@@ -38,6 +39,7 @@ interface ExactCandidate {
   target_ref: string;
   method: string;
   expected_value_sha256: string;
+  actual_projection: CompiledObservationAuthorityV2["actual_projection"];
   comparison: CompiledObservationAuthorityV2["comparison"];
   sensitivity: "plain" | "protected";
   oracle?: {
@@ -51,12 +53,15 @@ interface ExactCandidate {
 
 const PROCESS_DERIVED_CAPABILITIES = new Set<EvidenceCapabilityV2>([
   "presence",
-  "interaction_trace",
-  "state_delta",
-  "design_conformance",
   "target_runtime",
-  "input_variation",
 ]);
+
+const PROCESS_CAPABILITIES_REQUIRING_A_SEPARATE_PACKAGE_DERIVATION =
+  new Set<EvidenceCapabilityV2>([
+    "interaction_trace",
+    "state_delta",
+    "design_conformance",
+  ]);
 
 const STATIC_DERIVED_CAPABILITIES = new Set<EvidenceCapabilityV2>(["presence"]);
 
@@ -92,6 +97,7 @@ export function compileObservationAuthorityPlan(
       target_ref: input.check.execution_target.target_ref,
       method: expectation.method,
       expected_value_sha256: expectation.expected.sha256,
+      actual_projection: "raw_exact",
       comparison: {
         comparator: expectation.comparison.comparator,
         mode: expectation.comparison.mode,
@@ -133,6 +139,7 @@ export function compileObservationAuthorityPlan(
             target_ref: target.target_ref,
             method: binding.method,
             expected_value_sha256: expectation.expected.sha256,
+            actual_projection: "raw_exact",
             comparison: {
               comparator: expectation.comparison.comparator,
               mode: expectation.comparison.mode,
@@ -167,6 +174,7 @@ export function compileObservationAuthorityPlan(
           target_ref: target.target_ref,
           method: binding.method,
           expected_value_sha256: expectation.expected.sha256,
+          actual_projection: "raw_exact",
           comparison: {
             comparator: expectation.comparison.comparator,
             mode: expectation.comparison.mode,
@@ -197,6 +205,7 @@ export function compileObservationAuthorityPlan(
       target_ref: input.check.execution_target.target_ref,
       method: "exact_value",
       expected_value_sha256: sha256Hex(canonicalValueJson(expected)),
+      actual_projection: assertionActualProjection(assertion),
       comparison: {
         comparator: "exact_value",
         mode: "exact",
@@ -224,6 +233,17 @@ function compileCandidate(
   input: CompileObservationAuthorityPlanInput,
   candidate: ExactCandidate,
 ): CompiledObservationAuthorityV2 {
+  const unimplementedDerivedCapability =
+    candidate.assertion.evidence_capabilities.find((capability) =>
+      PROCESS_CAPABILITIES_REQUIRING_A_SEPARATE_PACKAGE_DERIVATION.has(
+        capability,
+      ),
+    );
+  if (unimplementedDerivedCapability)
+    fail(
+      "unsupported_observer_requires_external_confirmation",
+      `${candidate.obligation_ref}:${unimplementedDerivedCapability}:package_derivation_required`,
+    );
   if (candidate.oracle && !isJsonPointerExactOracle(candidate.oracle))
     fail(
       "custom_oracle_machine_completion_forbidden",
@@ -265,6 +285,15 @@ function compileCandidate(
         "machine_observer_not_admitted",
         `${candidate.obligation_ref}:static_production_carrier_exact_path_required`,
       );
+    const staticCarrierRoleIssue = staticCarrierRoleConflict(
+      input,
+      staticPaths[0],
+    );
+    if (staticCarrierRoleIssue)
+      fail(
+        "machine_observer_not_admitted",
+        `${candidate.obligation_ref}:${staticCarrierRoleIssue}`,
+      );
   }
   const comparison = candidate.comparison;
   const expectedIdentity = sha256Hex(
@@ -274,6 +303,7 @@ function compileCandidate(
       method: candidate.method,
       expected_value_sha256: candidate.expected_value_sha256,
       comparison,
+      actual_projection: candidate.actual_projection,
     }),
   );
   return {
@@ -290,6 +320,7 @@ function compileCandidate(
     authority,
     expected_identity: expectedIdentity,
     expected_value_sha256: candidate.expected_value_sha256,
+    actual_projection: candidate.actual_projection,
     observation_identity: candidate.observation_identity,
     comparison,
     locator_policy: {
@@ -351,6 +382,13 @@ function selectAuthority(
       "process_observer_direct_root_required",
       `${candidate.obligation_ref}:${input.runner.resolved_target}:${target.root_entrypoint}`,
     );
+  if (!target.root_argv)
+    fail("process_observer_root_invocation_required", candidate.obligation_ref);
+  if (!sameStringArray(input.check.runner.argv, target.root_argv))
+    fail(
+      "process_observer_root_argv_mismatch",
+      `${candidate.obligation_ref}:${canonicalValueJson(input.check.runner.argv)}:${canonicalValueJson(target.root_argv)}`,
+    );
   if (
     candidate.diagnostic_scope === "assertion" &&
     !capabilitiesAdmitted(
@@ -375,12 +413,75 @@ function runtimeRequirements(
     runner_type: input.check.runner.type,
     resolved_runner_target: input.runner.resolved_target,
     declared_root_entrypoint: input.execution_target.root_entrypoint,
+    resolved_runner_argv: [...input.runner.argv],
+    declared_root_argv: input.execution_target.root_argv
+      ? [...input.execution_target.root_argv]
+      : null,
     effect: input.check.runner.effect,
     direct_root_match:
       input.check.runner.type === "project_binary" &&
       input.check.execution_target.entrypoint === "root" &&
-      input.runner.resolved_target === input.execution_target.root_entrypoint,
+      input.runner.resolved_target === input.execution_target.root_entrypoint &&
+      input.execution_target.root_argv !== undefined &&
+      sameStringArray(
+        input.check.runner.argv,
+        input.execution_target.root_argv,
+      ),
   };
+}
+
+function assertionActualProjection(
+  assertion: DeliveryAssertionV2,
+): CompiledObservationAuthorityV2["actual_projection"] {
+  if (assertion.operator === "equals") return "raw_exact";
+  if (assertion.operator === "exists") return "presence_boolean";
+  if (assertion.operator === "truthy") return "truthy_boolean";
+  if (assertion.operator === "falsy") return "falsy_boolean";
+  fail(
+    "machine_observer_not_admitted",
+    `${assertion.key}:exact_equals_or_host_boolean_required`,
+  );
+}
+
+function staticCarrierRoleConflict(
+  input: CompileObservationAuthorityPlanInput,
+  carrierPath: string,
+): string | null {
+  const expectedAuthorityPatterns = [
+    ...Object.keys(input.runner.frozen_files),
+    ...(input.protected_authority_paths ?? []),
+  ];
+  if (
+    expectedAuthorityPatterns.some(
+      (pattern) =>
+        classifyRepositoryPatternOverlap(carrierPath, pattern).status ===
+        "proven_overlap",
+    )
+  )
+    return "static_carrier_expected_authority_forbidden";
+  const evidencePatterns = [
+    ...input.check.expected_output_paths,
+    ...input.check.artifact_globs,
+  ];
+  if (
+    evidencePatterns.some(
+      (pattern) =>
+        classifyRepositoryPatternOverlap(carrierPath, pattern).status ===
+        "proven_overlap",
+    )
+  )
+    return "static_carrier_evidence_role_forbidden";
+  return null;
+}
+
+function sameStringArray(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 function capabilitiesAdmitted(

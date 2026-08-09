@@ -85,14 +85,19 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
       "task.execution_targets",
     ).map((item, index) => {
       const label = `task.execution_targets[${index}]`;
-      const target = object(item, label, [
-        "key",
-        "description",
-        "role",
-        "runtime_family",
-        "root_entrypoint",
-        "capabilities",
-      ]);
+      const target = object(
+        item,
+        label,
+        [
+          "key",
+          "description",
+          "role",
+          "runtime_family",
+          "root_entrypoint",
+          "capabilities",
+        ],
+        ["root_argv"],
+      );
       return {
         key: key(target.key, `${label}.key`),
         description: string(target.description, `${label}.description`),
@@ -117,6 +122,19 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
           target.root_entrypoint,
           `${label}.root_entrypoint`,
         ),
+        ...(Object.hasOwn(target, "root_argv")
+          ? {
+              root_argv: strings(target.root_argv, `${label}.root_argv`).map(
+                (argument, argumentIndex) => {
+                  if (argument.includes("\0"))
+                    throw new Error(
+                      `delivery_contract_invalid:execution_target_root_argv_invalid:${label}:${argumentIndex}`,
+                    );
+                  return argument;
+                },
+              ),
+            }
+          : {}),
         capabilities: strings(target.capabilities, `${label}.capabilities`).map(
           (item, capabilityIndex) =>
             literal(

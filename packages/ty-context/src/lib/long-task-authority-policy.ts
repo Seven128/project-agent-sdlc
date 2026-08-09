@@ -349,6 +349,7 @@ const COUNTERFACTUAL_AUTHORITY_POLICY = {
   mutation: "proof_additive",
   expected_assertion_failures: "proof_additive",
   preserved_assertions: "proof_additive",
+  allowed_fanout_assertions: "semantic_user_review",
 } satisfies Record<keyof CounterfactualControlV2, AuthorityFieldPolicy>;
 
 const GLOBAL_COUNTERFACTUAL_AUTHORITY_POLICY = {
@@ -359,6 +360,7 @@ const GLOBAL_COUNTERFACTUAL_AUTHORITY_POLICY = {
   mutation: "proof_additive",
   expected_assertion_failures: "proof_additive",
   preserved_assertions: "proof_additive",
+  allowed_fanout_assertions: "semantic_user_review",
 } satisfies Record<keyof GlobalCounterfactualControlV2, AuthorityFieldPolicy>;
 
 export const AUTHORITY_FIELD_POLICY_REGISTRIES = {

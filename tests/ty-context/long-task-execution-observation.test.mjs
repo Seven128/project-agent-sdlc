@@ -1,0 +1,371 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+import { prepareExecutionObservationUniverse } from "../../packages/ty-context/dist/lib/long-task-execution-observation.js";
+
+const regularMode = 0o100644;
+
+test("execution observation freezes every raw group before an earlier runner can prime a later carrier", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "state/first.json": Buffer.from('{"value":"first"}'),
+      "state/second.json": Buffer.from('{"value":"second"}'),
+    };
+    await writeFixtureFiles(root, files);
+    const first = staticCheck("raw:first", "assert:first", "state/first.json");
+    const second = staticCheck(
+      "raw:second",
+      "assert:second",
+      "state/second.json",
+    );
+    const prepared = await prepareExecutionObservationUniverse({
+      groups: [[first], [second]],
+      snapshot_root: root,
+      workspace_manifest: manifest(files),
+    });
+
+    // This mutation represents the first group's runner trying to prime a
+    // carrier that belongs to a later raw execution.
+    await writeFile(
+      path.join(root, "state", "second.json"),
+      '{"value":"forged"}',
+    );
+    await prepared[0].finalize(rawExecution());
+    const result = await prepared[1].finalize(rawExecution());
+
+    assert.deepEqual(
+      result.package_observations.map((entry) => entry.reason),
+      ["static_observation_changed_by_runner"],
+    );
+  });
+});
+
+test("process observation rejects cross-group transient input replacement even after the original inode is restored", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "state/first.json": Buffer.from('{"value":"first"}'),
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "config/secondary.json": Buffer.from('{"feature":true}'),
+      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+    };
+    await writeFixtureFiles(root, files);
+    const first = staticCheck("raw:first", "assert:first", "state/first.json");
+    const second = processCheck();
+    const prepared = await prepareExecutionObservationUniverse({
+      groups: [[first], [second]],
+      snapshot_root: root,
+      workspace_manifest: manifest(files),
+    });
+    const carrier = path.join(
+      prepared[1].execution_root,
+      "config",
+      "runtime.json",
+    );
+    const backup = path.join(
+      prepared[1].execution_root,
+      "config",
+      "runtime.original.json",
+    );
+
+    await rename(carrier, backup);
+    await writeFile(carrier, '{"mode":"forged"}');
+    await prepared[0].finalize(rawExecution());
+    await unlink(carrier);
+    await rename(backup, carrier);
+    const result = await prepared[1].finalize(
+      rawExecution([
+        validProcessObservation(second.observation_authorities[0]),
+      ]),
+    );
+
+    assert.equal(result.package_observations.length, 1);
+    assert.equal(
+      result.package_observations[0].reason,
+      "process_observation_input_changed_by_runner",
+    );
+    assert.equal(result.package_observations[0].observation, null);
+  });
+});
+
+for (const changedPath of [
+  "config/secondary.json",
+  "bin/product.mjs",
+  "tests/product-helper.mjs",
+]) {
+  test(`process observation rejects post-freeze mutation of ${changedPath}`, async () => {
+    await withRoot(async (root) => {
+      const files = {
+        "bin/product.mjs": Buffer.from("export default true;\n"),
+        "config/runtime.json": Buffer.from('{"mode":"production"}'),
+        "config/secondary.json": Buffer.from('{"feature":true}'),
+        "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      };
+      await writeFixtureFiles(root, files);
+      const check = processCheck();
+      const [prepared] = await prepareExecutionObservationUniverse({
+        groups: [[check]],
+        snapshot_root: root,
+        workspace_manifest: manifest(files),
+      });
+
+      await writeFile(
+        path.join(prepared.execution_root, ...changedPath.split("/")),
+        Buffer.from(`changed:${changedPath}`),
+      );
+      const result = await prepared.finalize(
+        rawExecution([
+          validProcessObservation(check.observation_authorities[0]),
+        ]),
+      );
+
+      assert.equal(result.package_observations.length, 1);
+      assert.equal(
+        result.package_observations[0].reason,
+        "process_observation_input_changed_by_runner",
+      );
+      assert.equal(result.package_observations[0].observation, null);
+    });
+  });
+}
+
+test("process observation freezes repository files attributed only by the declared root argv", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "runtime/unlisted-entry.mjs": Buffer.from("export const input = true;\n"),
+      "tests/product-helper.mjs": Buffer.from("export const helper = true;\n"),
+    };
+    await writeFixtureFiles(root, files);
+    const check = processCheck();
+    const rootArgv = [
+      "--config=config/runtime.json",
+      "runtime/unlisted-entry.mjs",
+    ];
+    check.runner.argv = rootArgv;
+    check.observation_authorities[0].runtime_requirements.declared_root_argv =
+      rootArgv;
+    const [prepared] = await prepareExecutionObservationUniverse({
+      groups: [[check]],
+      snapshot_root: root,
+      workspace_manifest: manifest(files),
+    });
+
+    await writeFile(
+      path.join(prepared.execution_root, "runtime", "unlisted-entry.mjs"),
+      "export const input = 'forged';\n",
+    );
+    const result = await prepared.finalize(
+      rawExecution([validProcessObservation(check.observation_authorities[0])]),
+    );
+
+    assert.equal(result.package_observations.length, 1);
+    assert.equal(
+      result.package_observations[0].reason,
+      "process_observation_input_changed_by_runner",
+    );
+    assert.equal(result.package_observations[0].observation, null);
+  });
+});
+
+test("process observation fails closed when a declared input pattern has no pre-run member", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+    };
+    await writeFixtureFiles(root, files);
+    const check = processCheck();
+    check.input_paths = ["missing/**"];
+    const [prepared] = await prepareExecutionObservationUniverse({
+      groups: [[check]],
+      snapshot_root: root,
+      workspace_manifest: manifest(files),
+    });
+    const result = await prepared.finalize(
+      rawExecution([validProcessObservation(check.observation_authorities[0])]),
+    );
+
+    assert.deepEqual(
+      result.package_observations.map((entry) => entry.reason),
+      ["process_observation_input_not_in_pre_run_snapshot"],
+    );
+  });
+});
+
+test("process execution snapshot contains only the frozen runtime closure and excludes expected Authority", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "config/secondary.json": Buffer.from('{"feature":true}'),
+      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "tests/expected-only.json": Buffer.from('{"expected":"secret"}'),
+      "delivery-contract.yaml": Buffer.from("expected: secret\n"),
+      "source/expected.json": Buffer.from('{"expected":"secret"}'),
+    };
+    await writeFixtureFiles(root, files);
+    const check = processCheck();
+    const [prepared] = await prepareExecutionObservationUniverse({
+      groups: [[check]],
+      snapshot_root: root,
+      workspace_manifest: manifest(files),
+      protected_authority_paths: [
+        "delivery-contract.yaml",
+        "source/expected.json",
+      ],
+    });
+
+    assert.equal(
+      await readFile(
+        path.join(prepared.execution_root, "config", "runtime.json"),
+        "utf8",
+      ),
+      '{"mode":"production"}',
+    );
+    await assert.rejects(
+      access(path.join(prepared.execution_root, "delivery-contract.yaml")),
+    );
+    await assert.rejects(
+      access(path.join(prepared.execution_root, "source", "expected.json")),
+    );
+    await assert.rejects(
+      access(path.join(prepared.execution_root, "tests", "expected-only.json")),
+    );
+    await prepared.dispose();
+  });
+});
+
+function staticCheck(rawIdentity, assertionRef, artifactPath) {
+  return {
+    raw_execution_identity: rawIdentity,
+    observation_authorities: [
+      observationAuthority({
+        authority: "package_static_json_exact",
+        assertion_ref: assertionRef,
+        observation_identity: `observation:${assertionRef}`,
+        carrier_paths: [artifactPath],
+      }),
+    ],
+  };
+}
+
+function processCheck() {
+  const authority = observationAuthority({
+    authority: "package_process_json_exact",
+    assertion_ref: "assert:process",
+    observation_identity: "observation:process",
+    carrier_paths: ["config/runtime.json"],
+  });
+  authority.runtime_requirements.declared_root_argv = [
+    "--config=config/runtime.json",
+    "tests/product-helper.mjs",
+  ];
+  return {
+    raw_execution_identity: "raw:process",
+    input_paths: ["config/**"],
+    verification_inputs: ["tests/**"],
+    runner: {
+      resolved_target: "bin/product.mjs",
+      resolved_cwd: ".",
+      executable_argv_prefix: [],
+      argv: ["--config=config/runtime.json", "tests/product-helper.mjs"],
+      frozen_files: {},
+    },
+    observation_authorities: [authority],
+  };
+}
+
+function observationAuthority({
+  authority,
+  assertion_ref,
+  observation_identity,
+  carrier_paths,
+}) {
+  return {
+    authority,
+    assertion_ref,
+    obligation_ref: `obligation:${assertion_ref}`,
+    method: "exact_value",
+    observation_identity,
+    locator_policy: { kind: "fixed_json_pointer", value: "/value" },
+    carrier_refs: [{ binding_ref: "binding:fixture", carrier_paths }],
+    runtime_requirements: {
+      declared_root_argv: [],
+    },
+  };
+}
+
+function validProcessObservation(authority) {
+  return {
+    authority: authority.authority,
+    observation_identity: authority.observation_identity,
+    assertion_ref: authority.assertion_ref,
+    obligation_ref: authority.obligation_ref,
+    method: authority.method,
+    raw_value: "production",
+    observation: { capability: "fixture" },
+    reason: null,
+  };
+}
+
+function rawExecution(packageObservations = []) {
+  return { package_observations: packageObservations };
+}
+
+function manifest(files) {
+  return {
+    repository_root: "fixture",
+    git_head: "fixture-head",
+    files: Object.entries(files).map(([filePath, bytes]) => ({
+      path: filePath,
+      mode: regularMode,
+      size: bytes.byteLength,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+    })),
+    fingerprint: {
+      head: "fixture-head",
+      head_tree: "fixture-tree",
+      index_tree: "fixture-tree",
+      staged_diff_sha256: "0".repeat(64),
+      unstaged_diff_sha256: "0".repeat(64),
+      untracked_sha256: "0".repeat(64),
+      status_sha256: "0".repeat(64),
+      identity: "1".repeat(64),
+    },
+    snapshot_sha256: "1".repeat(64),
+  };
+}
+
+async function writeFixtureFiles(root, files) {
+  for (const [filePath, bytes] of Object.entries(files)) {
+    const absolute = path.join(root, ...filePath.split("/"));
+    await mkdir(path.dirname(absolute), { recursive: true });
+    await writeFile(absolute, bytes);
+  }
+}
+
+async function withRoot(action) {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-execution-observation-"),
+  );
+  try {
+    await action(root);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}

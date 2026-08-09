@@ -22,6 +22,7 @@ export interface CounterfactualControlV2 {
   mutation: CounterfactualMutationV2;
   expected_assertion_failures: string[];
   preserved_assertions: string[];
+  allowed_fanout_assertions: string[];
 }
 
 export interface GlobalCounterfactualControlV2 {
@@ -32,4 +33,5 @@ export interface GlobalCounterfactualControlV2 {
   mutation: CounterfactualMutationV2;
   expected_assertion_failures: string[];
   preserved_assertions: string[];
+  allowed_fanout_assertions: string[];
 }

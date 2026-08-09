@@ -195,6 +195,7 @@ function flattenProductSemantics(
     fields.set(`${prefix}.role`, target.role);
     fields.set(`${prefix}.runtime_family`, target.runtime_family);
     fields.set(`${prefix}.root_entrypoint`, target.root_entrypoint);
+    fields.set(`${prefix}.root_argv`, target.root_argv ?? null);
   }
   for (const stage of projection.stages) {
     const prefix = `stages.${stage.key}`;

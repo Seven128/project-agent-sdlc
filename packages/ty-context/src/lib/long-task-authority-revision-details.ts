@@ -265,6 +265,8 @@ function counterfactualCoveragePreserved(
     claims: string[];
     mutation: unknown;
     expected_assertion_failures: string[];
+    preserved_assertions?: string[];
+    allowed_fanout_assertions?: string[];
   },
   next: Array<{
     binding_key?: string;
@@ -273,6 +275,8 @@ function counterfactualCoveragePreserved(
     claims: string[];
     mutation: unknown;
     expected_assertion_failures: string[];
+    preserved_assertions?: string[];
+    allowed_fanout_assertions?: string[];
   }>,
 ): boolean {
   return next.some(
@@ -285,6 +289,14 @@ function counterfactualCoveragePreserved(
       includesEvery(
         candidate.expected_assertion_failures,
         previous.expected_assertion_failures,
+      ) &&
+      includesEvery(
+        candidate.preserved_assertions ?? [],
+        previous.preserved_assertions ?? [],
+      ) &&
+      includesEvery(
+        previous.allowed_fanout_assertions ?? [],
+        candidate.allowed_fanout_assertions ?? [],
       ),
   );
 }

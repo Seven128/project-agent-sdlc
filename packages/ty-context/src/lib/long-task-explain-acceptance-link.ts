@@ -125,6 +125,8 @@ function acceptanceCounterfactuals(
         binding_ref: control.binding_ref,
         owning_outcome_key: control.binding_ref.split(".")[0],
         expected_assertion_failures: control.expected_assertion_failures,
+        preserved_assertions: control.preserved_assertions,
+        allowed_fanout_assertions: control.allowed_fanout_assertions,
       }));
   const outcome = contract.outcomes.find((item) => item.key === outcomeKey);
   return (outcome?.acceptance.counterfactual_controls ?? [])
@@ -139,5 +141,7 @@ function acceptanceCounterfactuals(
       binding_key: control.binding_key,
       owning_outcome_key: outcomeKey,
       expected_assertion_failures: control.expected_assertion_failures,
+      preserved_assertions: control.preserved_assertions,
+      allowed_fanout_assertions: control.allowed_fanout_assertions,
     }));
 }

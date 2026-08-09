@@ -34,7 +34,7 @@ export function parseCounterfactuals(
         "mutation",
         "expected_assertion_failures",
       ],
-      ["preserved_assertions"],
+      ["preserved_assertions", "allowed_fanout_assertions"],
     );
     const mutation = object(
       row.mutation,
@@ -86,6 +86,17 @@ export function parseCounterfactuals(
             key(item, `${itemLabel}.preserved_assertions[${assertionIndex}]`),
           )
         : [],
+      allowed_fanout_assertions: Object.hasOwn(row, "allowed_fanout_assertions")
+        ? strings(
+            row.allowed_fanout_assertions,
+            `${itemLabel}.allowed_fanout_assertions`,
+          ).map((item, assertionIndex) =>
+            key(
+              item,
+              `${itemLabel}.allowed_fanout_assertions[${assertionIndex}]`,
+            ),
+          )
+        : [],
     };
   });
 }
@@ -107,7 +118,7 @@ export function parseGlobalCounterfactuals(
         "mutation",
         "expected_assertion_failures",
       ],
-      ["preserved_assertions"],
+      ["preserved_assertions", "allowed_fanout_assertions"],
     );
     const bindingRef = string(row.binding_ref, `${itemLabel}.binding_ref`);
     if (!/^[a-z0-9][a-z0-9-]*\.[a-z0-9][a-z0-9-]*$/u.test(bindingRef))
@@ -138,6 +149,17 @@ export function parseGlobalCounterfactuals(
             `${itemLabel}.preserved_assertions`,
           ).map((entry, assertionIndex) =>
             key(entry, `${itemLabel}.preserved_assertions[${assertionIndex}]`),
+          )
+        : [],
+      allowed_fanout_assertions: Object.hasOwn(row, "allowed_fanout_assertions")
+        ? strings(
+            row.allowed_fanout_assertions,
+            `${itemLabel}.allowed_fanout_assertions`,
+          ).map((entry, assertionIndex) =>
+            key(
+              entry,
+              `${itemLabel}.allowed_fanout_assertions[${assertionIndex}]`,
+            ),
           )
         : [],
     };

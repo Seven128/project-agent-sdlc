@@ -44,7 +44,7 @@ export function isMachineAccepted(execution) {
 export function isSecurelyRejected(execution) {
   if (execution.stage === "final-gate") return !isMachineAccepted(execution);
   const diagnostic = JSON.stringify(execution.result ?? {});
-  return /machine_observer_not_admitted|unsupported_observer_requires_external_confirmation|custom_oracle_machine_completion_forbidden|static_observation_not_in_pre_run_snapshot|static_observation_changed_by_runner|process_observer_direct_root_required|legacy_target_runtime_non_authoritative|counterfactual_admitted_observation_required|counterfactual_runtime_reachability_unproven|project_submitted_verdict_disagrees_with_harness/u.test(
+  return /machine_observer_not_admitted|unsupported_observer_requires_external_confirmation|custom_oracle_machine_completion_forbidden|static_observation_not_in_pre_run_snapshot|static_observation_changed_by_runner|process_observer_direct_root_required|process_observer_root_invocation_required|process_observer_root_argv_mismatch|process_observation_input_changed_by_runner|legacy_target_runtime_non_authoritative|counterfactual_admitted_observation_required|counterfactual_runtime_reachability_unproven|project_submitted_verdict_disagrees_with_harness/u.test(
     diagnostic,
   );
 }
@@ -62,7 +62,10 @@ export async function configureExpectedAsActualAttack(fixture) {
   await writeFile(oraclePath, replaced);
 }
 
-export async function configureHistoricalRuntimeAttack(fixture) {
+export async function configureHistoricalRuntimeAttack(
+  fixture,
+  { removeHostAttestation = false } = {},
+) {
   const sessionPath = path.join(fixture.root, "artifacts", "session.json");
   await writeFile(
     sessionPath,
@@ -70,6 +73,11 @@ export async function configureHistoricalRuntimeAttack(fixture) {
   );
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
   check.verification_inputs.push("artifacts/session.json");
+  if (removeHostAttestation) {
+    check.runner.type = "node_oracle";
+    check.runner.target = "tests/oracle.mjs";
+    delete fixture.contract.task.execution_targets[0].root_argv;
+  }
   await writeContract(fixture.workdir, fixture.contract);
   const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
   const source = await readFile(oraclePath, "utf8");
@@ -79,13 +87,23 @@ export async function configureHistoricalRuntimeAttack(fixture) {
       `// R3: a historical file is replayed as a supposedly fresh runtime.\nconst historicalSession = JSON.parse(await readFile(new URL("../artifacts/session.json", import.meta.url), "utf8"));\nconst targetRecord = (assertionKey) => ({`,
     )
     .replace(
-      /session_id: `fixture-\$\{key\}-session`,/u,
-      "session_id: `${historicalSession.session_id}-replayed`,",
+      'session_id:"project-submitted-session"',
+      "session_id:`${historicalSession.session_id}-replayed`",
     )
     .replace("cold_start: true", "cold_start: historicalSession.cold_start");
   if (withSession === source)
     throw new Error("observer_fixture_historical_session_rewrite_missing");
-  await writeFile(oraclePath, withSession);
+  if (!withSession.includes("historicalSession.session_id"))
+    throw new Error(
+      "observer_fixture_historical_session_identity_rewrite_missing",
+    );
+  const historicalPayload = removeHostAttestation
+    ? withSession.replace(
+        "console.log(JSON.stringify(productEnvelope));",
+        'console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,requirement_result:true,obligation_result:true,architecture_result:true,semantic_fact_result:true,relations_applicable:false,target_live:true},evidence_records:[...assertionKeys.map(targetRecord),targetRecord("first-liveness")]}));',
+      )
+    : withSession;
+  await writeFile(oraclePath, historicalPayload);
 }
 
 export async function configurePackageObservationCase(
@@ -97,17 +115,28 @@ export async function configurePackageObservationCase(
     runnerWritesCarrier = false,
     bindingPath = carrierPath,
     mutationPath = bindingPath,
-    mutationPointer = "/observations/fact.first.observable",
+    mutationPointer = null,
+    runnerValueSourcePath = mutationPath,
+    runnerValueSourcePointer = mutationPointer,
     inputPaths = [carrierPath],
     artifactGlobs = [carrierPath],
     proofSurface = "implementation_structure",
     directProcess = false,
     diagnosticArtifactPaths = [],
+    submitProjectEvidenceCopies = false,
   },
 ) {
   const externalConfirmation = fixture.contract.source_claims.some(
     (claim) => claim.disposition.type === "external_confirmation",
   );
+  const staticObservation = proofSurface === "implementation_structure";
+  const effectiveMutationPointer =
+    mutationPointer ??
+    (staticObservation
+      ? "/observations/assertion.first.first-static-check.first-architecture"
+      : "/observations/fact.first.observable");
+  const effectiveRunnerValueSourcePointer =
+    runnerValueSourcePointer ?? effectiveMutationPointer;
   const manifest = fixtureSemanticManifest({ externalConfirmation });
   manifest.oracles[0] = {
     ...manifest.oracles[0],
@@ -116,7 +145,7 @@ export async function configurePackageObservationCase(
     sha256: null,
   };
   for (const proof of manifest.proof_obligations)
-    proof.proof_surface = proofSurface;
+    proof.proof_surface = staticObservation ? "runtime_behavior" : proofSurface;
   refreshFixtureSemanticManifest(manifest);
   await writeFixtureSourceAndOracle(
     fixture.root,
@@ -125,30 +154,95 @@ export async function configurePackageObservationCase(
   );
 
   const outcome = fixture.contract.outcomes[0];
-  const check = outcome.acceptance.checks[0];
-  check.proof_surface = proofSurface;
-  check.input_paths = [...new Set(inputPaths)];
-  check.artifact_globs = [
+  const processCheck = outcome.acceptance.checks[0];
+  for (const assertion of [
+    ...processCheck.positive_assertions,
+    ...processCheck.negative_assertions,
+  ])
+    assertion.evidence_capabilities = assertion.evidence_capabilities.filter(
+      (capability) =>
+        capability !== "state_delta" &&
+        capability !== "interaction_trace" &&
+        capability !== "design_conformance",
+    );
+  let observationCheck = processCheck;
+  if (staticObservation) {
+    const staticAssertionIndex = processCheck.positive_assertions.findIndex(
+      (assertion) => assertion.key === "first-architecture",
+    );
+    if (staticAssertionIndex === -1)
+      throw new Error("observer_fixture_static_assertion_missing");
+    const [staticAssertion] = processCheck.positive_assertions.splice(
+      staticAssertionIndex,
+      1,
+    );
+    staticAssertion.evidence_capabilities = ["presence"];
+    staticAssertion.operator = "equals";
+    staticAssertion.expected = true;
+    observationCheck = {
+      ...structuredClone(processCheck),
+      key: "first-static-check",
+      proof_surface: "implementation_structure",
+      runner: {
+        type: "node_oracle",
+        target: "tests/static-observer.mjs",
+        argv: ["first"],
+        cwd: ".",
+        timeout_ms: 30000,
+        effect: "read_only",
+        retry_policy: "none",
+        idempotent: true,
+      },
+      verification_inputs: ["tests/static-observer.mjs"],
+      input_paths: [...new Set(inputPaths)],
+      artifact_globs: [
+        ...new Set([...artifactGlobs, ...diagnosticArtifactPaths]),
+      ],
+      expected_output_paths: [],
+      positive_assertions: [staticAssertion],
+      negative_assertions: [],
+    };
+    outcome.acceptance.checks = [observationCheck, processCheck];
+    const architectureObligation = outcome.technical.obligations.find(
+      (obligation) => obligation.key === "architecture-first",
+    );
+    if (!architectureObligation)
+      throw new Error("observer_fixture_static_obligation_missing");
+    architectureObligation.required_proof_surfaces = [
+      "implementation_structure",
+    ];
+  }
+
+  observationCheck.proof_surface = proofSurface;
+  observationCheck.input_paths = staticObservation
+    ? [...new Set(inputPaths)]
+    : [...new Set(inputPaths)];
+  observationCheck.artifact_globs = [
     ...new Set([...artifactGlobs, ...diagnosticArtifactPaths]),
   ];
-  check.expected_output_paths = [];
-  check.runner.effect = "read_only";
-  check.journey_roles = ["success", "stage_gate"];
-  outcome.product.requirements[0].required_proof_surfaces = [proofSurface];
-  for (const obligation of outcome.technical.obligations)
-    obligation.required_proof_surfaces = [proofSurface];
-  outcome.semantic_fact_bindings.proofs[0].proof_surface = proofSurface;
+  observationCheck.expected_output_paths = [];
+  observationCheck.runner.effect = "read_only";
+  observationCheck.journey_roles = ["success", "stage_gate"];
+  if (!staticObservation) {
+    outcome.product.requirements[0].required_proof_surfaces = [proofSurface];
+    for (const obligation of outcome.technical.obligations)
+      obligation.required_proof_surfaces = [proofSurface];
+  }
+  outcome.semantic_fact_bindings.proofs[0].proof_surface = staticObservation
+    ? "runtime_behavior"
+    : proofSurface;
 
   const allClaims = [
     ...new Set(
-      [...check.positive_assertions, ...check.negative_assertions].flatMap(
-        (assertion) => assertion.claims,
-      ),
+      [
+        ...observationCheck.positive_assertions,
+        ...observationCheck.negative_assertions,
+      ].flatMap((assertion) => assertion.claims),
     ),
   ];
   const claimBearingAssertions = [
-    ...check.positive_assertions,
-    ...check.negative_assertions,
+    ...observationCheck.positive_assertions,
+    ...observationCheck.negative_assertions,
   ].filter((assertion) => assertion.claims.length > 0);
 
   const binding = outcome.technical.bindings.find(
@@ -156,7 +250,7 @@ export async function configurePackageObservationCase(
   );
   binding.target = bindingPath;
   binding.carrier_paths = [bindingPath];
-  binding.existence = "existing";
+  binding.existence = carrierExists ? "existing" : "planned";
   const ownerPattern = repoOwnerPattern(bindingPath);
   if (!outcome.product.owner.path_globs.includes(ownerPattern))
     outcome.product.owner.path_globs.push(ownerPattern);
@@ -177,35 +271,72 @@ export async function configurePackageObservationCase(
   const mutation = {
     type: "replace_json_value",
     path: mutationPath,
-    pointer: mutationPointer,
+    pointer: effectiveMutationPointer,
     value: false,
   };
-  outcome.acceptance.counterfactual_controls = [
+  const counterfactualControls = [
     {
       key: "change-observed-production-carrier",
       binding_key: binding.key,
       claims: [...allClaims],
-      check_key: check.key,
+      check_key: observationCheck.key,
       mutation,
       expected_assertion_failures: claimBearingAssertions.map(
         (assertion) => assertion.key,
       ),
-      preserved_assertions: ["first-liveness"],
+      preserved_assertions: staticObservation ? [] : ["first-liveness"],
     },
   ];
+  if (staticObservation) {
+    const processAssertions = [
+      ...processCheck.positive_assertions,
+      ...processCheck.negative_assertions,
+    ];
+    counterfactualControls.push({
+      key: "change-process-observed-production-carrier",
+      binding_key: binding.key,
+      claims: [
+        ...new Set(processAssertions.flatMap((assertion) => assertion.claims)),
+      ],
+      check_key: processCheck.key,
+      mutation: {
+        type: "replace_json_value",
+        path: mutationPath,
+        pointer: "/observations/fact.first.observable",
+        value: false,
+      },
+      expected_assertion_failures: processAssertions
+        .filter((assertion) => assertion.claims.length > 0)
+        .map((assertion) => assertion.key),
+      preserved_assertions: ["first-liveness"],
+    });
+  }
+  outcome.acceptance.counterfactual_controls = counterfactualControls;
 
   let targetRoot = fixture.contract.task.execution_targets[0].root_entrypoint;
-  if (directProcess) {
+  if (directProcess || staticObservation) {
     targetRoot = await installProjectProcessRoot(fixture, "product-root");
     const target = fixture.contract.task.execution_targets[0];
     target.runtime_family = "process";
     target.root_entrypoint = targetRoot;
     target.capabilities = ["process-runtime", "cold-start", "production-root"];
-    check.runner.type = "project_binary";
-    check.runner.target = targetRoot;
-    check.runner.argv = projectBinaryArguments("tests/oracle.mjs", "first");
-    check.execution_target.entrypoint = "root";
-    check.verification_inputs = ["tests/oracle.mjs"];
+    processCheck.proof_surface = "runtime_behavior";
+    processCheck.runner.type = "project_binary";
+    processCheck.runner.target = targetRoot;
+    processCheck.runner.argv = projectBinaryArguments(
+      "tests/oracle.mjs",
+      "first",
+    );
+    target.root_argv = [...processCheck.runner.argv];
+    processCheck.execution_target.entrypoint = "root";
+    processCheck.verification_inputs = ["tests/oracle.mjs"];
+    processCheck.input_paths = [...new Set(inputPaths)];
+    processCheck.artifact_globs = [
+      ...new Set([...artifactGlobs, ...diagnosticArtifactPaths]),
+    ];
+    processCheck.expected_output_paths = [];
+    processCheck.runner.effect = "read_only";
+    processCheck.journey_roles = ["success", "stage_gate"];
   }
 
   if (carrierExists)
@@ -243,13 +374,39 @@ export async function configurePackageObservationCase(
       obligationRevisionDigest:
         parsedManifest.obligation_revisions[0].revision_digest,
       carrierPath,
-      runnerWritesCarrier,
-      valueSourcePath: mutationPath,
-      valueSourcePointer: mutationPointer,
+      runnerWritesCarrier: false,
+      valueSourcePath: runnerValueSourcePath,
+      valueSourcePointer: effectiveRunnerValueSourcePointer,
       targetRoot,
-      writeProcessEnvelope: directProcess,
+      writeProcessEnvelope: directProcess || staticObservation,
+      processObservationIdentities: processObservationIdentities(processCheck, {
+        includeSemanticFact: true,
+      }),
+      actualObservationIdentity: parsedManifest.manifest.facts[0].key,
+      submitProjectEvidenceCopies,
     }),
   );
+  if (staticObservation)
+    await writeFile(
+      path.join(fixture.root, "tests", "static-observer.mjs"),
+      packageObservationOracleSource({
+        manifest: parsedManifest.manifest,
+        manifestSha256: parsedManifest.sha256,
+        factRevisionDigest: parsedManifest.fact_revisions[0].revision_digest,
+        obligationRevisionDigest:
+          parsedManifest.obligation_revisions[0].revision_digest,
+        carrierPath,
+        runnerWritesCarrier,
+        valueSourcePath: runnerValueSourcePath,
+        valueSourcePointer: effectiveRunnerValueSourcePointer,
+        targetRoot,
+        writeProcessEnvelope: false,
+        processObservationIdentities: [],
+        actualObservationIdentity:
+          "assertion.first.first-static-check.first-architecture",
+        submitProjectEvidenceCopies,
+      }),
+    );
 }
 
 export async function configureProxyTargetAttack(
@@ -275,6 +432,7 @@ export async function configureProxyTargetAttack(
   check.runner.type = "project_binary";
   check.runner.target = runnerRoot;
   check.runner.argv = projectBinaryArguments("tests/oracle.mjs", "first");
+  target.root_argv = [...check.runner.argv];
   check.execution_target.entrypoint = "root";
   await writeContract(fixture.workdir, fixture.contract);
 
@@ -296,6 +454,132 @@ export async function configureProxyTargetAttack(
   await writeFile(oraclePath, classifiedProxy);
 }
 
+export async function configureRootArgvWrapperAttack(fixture) {
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json"],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/root-invocation-diagnostic.json"],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  const target = fixture.contract.task.execution_targets[0];
+  const declaredProductScript = "tests/product-root.mjs";
+  await writeFile(
+    path.join(fixture.root, ...declaredProductScript.split("/")),
+    'await import("./oracle.mjs");\n',
+  );
+  target.root_argv = projectBinaryArguments(declaredProductScript, "first");
+  await writeContract(fixture.workdir, fixture.contract);
+}
+
+export async function configureCrossExecutionStaticPrimingAttack(fixture) {
+  const carrierPath = "artifacts/cross-group-static.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath,
+    carrierExists: true,
+    carrierInitialValue: false,
+    bindingPath: carrierPath,
+    mutationPath: carrierPath,
+    inputPaths: [carrierPath],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/static-priming-diagnostic.json"],
+  });
+  const outcome = fixture.contract.outcomes[0];
+  const staticCheck = requiredFixtureCheck(outcome, "first-static-check");
+  const poisonPath = "tests/prime-later-static-carrier.mjs";
+  const poisonCheck = structuredClone(staticCheck);
+  poisonCheck.key = "prime-later-static-carrier";
+  poisonCheck.journey_roles = ["success"];
+  poisonCheck.runner = {
+    type: "node_oracle",
+    target: poisonPath,
+    argv: [],
+    cwd: ".",
+    timeout_ms: 30000,
+    effect: "read_only",
+    retry_policy: "none",
+    idempotent: true,
+  };
+  poisonCheck.verification_inputs = [poisonPath];
+  poisonCheck.input_paths = [carrierPath];
+  poisonCheck.expected_output_paths = [];
+  poisonCheck.artifact_globs = [];
+  poisonCheck.positive_assertions = [];
+  poisonCheck.negative_assertions = [];
+  outcome.acceptance.checks.unshift(poisonCheck);
+  await writeFile(
+    path.join(fixture.root, ...poisonPath.split("/")),
+    `import { writeFile } from "node:fs/promises";
+await writeFile(new URL(${JSON.stringify(`../${carrierPath}`)}, import.meta.url), ${JSON.stringify(`${JSON.stringify(observationCarrier(true))}\n`)});
+console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{},evidence_records:[]}));
+`,
+  );
+  await writeContract(fixture.workdir, fixture.contract);
+}
+
+export async function configureProcessInputMutationAttack(fixture) {
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    carrierExists: true,
+    carrierInitialValue: false,
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json"],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/process-input-diagnostic.json"],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+  const source = await readFile(oraclePath, "utf8");
+  const marker = "const artifact = await readFile(artifactFile);";
+  const mutated = source.replace(
+    marker,
+    `// The product runner rewrites its declared production input to Expected before observing it.\nawait writeFile(artifactFile, JSON.stringify(observationDocument(fact.expected.value)));\n${marker}`,
+  );
+  if (mutated === source)
+    throw new Error("observer_fixture_process_input_mutation_rewrite_missing");
+  await writeFile(oraclePath, mutated);
+}
+
+export async function configureVerificationInputStaticAttack(fixture) {
+  const carrierPath = "tests/expected-static-actual.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath,
+    bindingPath: carrierPath,
+    mutationPath: carrierPath,
+    inputPaths: [carrierPath],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/expected-authority-diagnostic.json"],
+  });
+  const staticCheck = requiredFixtureCheck(
+    fixture.contract.outcomes[0],
+    "first-static-check",
+  );
+  staticCheck.verification_inputs.push(carrierPath);
+  await writeContract(fixture.workdir, fixture.contract);
+}
+
+export async function configureEvidenceRoleStaticAttack(fixture) {
+  const carrierPath = "artifacts/pre-existing-status-report.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath,
+    bindingPath: carrierPath,
+    mutationPath: carrierPath,
+    inputPaths: [carrierPath],
+    artifactGlobs: [carrierPath],
+  });
+  const staticCheck = requiredFixtureCheck(
+    fixture.contract.outcomes[0],
+    "first-static-check",
+  );
+  staticCheck.expected_output_paths = [carrierPath];
+  await writeContract(fixture.workdir, fixture.contract);
+}
+
 async function invoke(cwd, args) {
   try {
     return { ok: true, result: await runCli(cwd, args) };
@@ -312,6 +596,8 @@ async function invoke(cwd, args) {
 }
 
 async function installProjectProcessRoot(fixture, name) {
+  // Keep the lifecycle fixture compact while still giving Harness a
+  // repository-owned executable plus an exact, frozen root invocation.
   const source = process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
   if (!source) throw new Error("observer_fixture_shell_unavailable");
   const extension = process.platform === "win32" ? ".exe" : "";
@@ -342,6 +628,14 @@ function repoOwnerPattern(relative) {
   return slash === -1 ? normalized : `${normalized.slice(0, slash)}/**`;
 }
 
+function requiredFixtureCheck(outcome, key) {
+  const check = outcome.acceptance.checks.find(
+    (candidate) => candidate.key === key,
+  );
+  if (!check) throw new Error(`observer_fixture_check_missing:${key}`);
+  return check;
+}
+
 async function writeRepositoryJson(root, relative, value) {
   const target = path.join(root, ...relative.split("/"));
   await mkdir(path.dirname(target), { recursive: true });
@@ -357,11 +651,28 @@ function observationCarrier(value) {
       "first-architecture": value,
       "first-requirement": value,
       "first-obligation": value,
+      "first-liveness": true,
       "first-relations-na": !value,
+      "assertion.first.first-check.first-result": value,
+      "assertion.first.first-check.first-architecture": value,
+      "assertion.first.first-check.first-requirement": value,
+      "assertion.first.first-check.first-obligation": value,
+      "assertion.first.first-check.first-liveness": true,
+      "assertion.first.first-check.first-relations-na": !value,
+      "assertion.first.first-static-check.first-architecture": value,
     },
     environment: { runtime: "fixture-process" },
     comparisons: { "proof.first.observable.exact": value },
   };
+}
+
+function processObservationIdentities(check, { includeSemanticFact }) {
+  return [
+    ...(includeSemanticFact ? ["fact.first.observable"] : []),
+    ...[...check.positive_assertions, ...check.negative_assertions]
+      .filter((assertion) => assertion.key !== "first-semantic-fact")
+      .map((assertion) => `assertion.first.${check.key}.${assertion.key}`),
+  ];
 }
 
 function packageObservationOracleSource({
@@ -375,6 +686,9 @@ function packageObservationOracleSource({
   valueSourcePointer,
   targetRoot,
   writeProcessEnvelope,
+  processObservationIdentities,
+  actualObservationIdentity,
+  submitProjectEvidenceCopies,
 }) {
   const fact = manifest.facts[0];
   const proof = manifest.proof_obligations[0];
@@ -395,7 +709,8 @@ const artifactPath = ${JSON.stringify(carrierPath)};
 const artifactFile = fileURLToPath(new URL(${JSON.stringify(`../${carrierPath}`)}, import.meta.url));
 const canonicalize = (value) => Array.isArray(value) ? value.map(canonicalize) : value && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalize(value[key])])) : value;
 const pointer = (value, pointerValue) => pointerValue.split("/").slice(1).reduce((current, segment) => current[segment.replaceAll("~1", "/").replaceAll("~0", "~")], value);
-const observationDocument = (value) => ({observations:{[fact.key]:value,"first-result":value,"first-semantic-fact":value,"first-architecture":value,"first-requirement":value,"first-obligation":value,"first-relations-na":!value},environment:{runtime:"fixture-process"},comparisons:{[proof.key]:value}});
+const observationTemplate = ${JSON.stringify(observationCarrier(true))};
+const observationDocument = (value) => ({observations:Object.fromEntries(Object.keys(observationTemplate.observations).map((key) => [key, key.endsWith("liveness") ? true : key.endsWith("relations-na") ? !value : value])),environment:{runtime:"fixture-process"},comparisons:{[proof.key]:value}});
 ${
   runnerWritesCarrier
     ? `const source = JSON.parse(await readFile(new URL(${JSON.stringify(`../${valueSourcePath}`)}, import.meta.url), "utf8"));
@@ -407,22 +722,21 @@ await writeFile(artifactFile, JSON.stringify(observationDocument(runnerValue)));
 }
 const artifact = await readFile(artifactFile);
 const artifactDocument = JSON.parse(artifact.toString("utf8"));
-const actualValue = artifactDocument.observations[fact.key];
+const actualValue = artifactDocument.observations[${JSON.stringify(actualObservationIdentity)}];
 const artifactSha256 = createHash("sha256").update(artifact).digest("hex");
 const actualValueSha256 = createHash("sha256").update(JSON.stringify(canonicalize(actualValue))).digest("hex");
 const comparisonPassed = actualValueSha256 === fact.expected.sha256;
 const comparisonResultSha256 = createHash("sha256").update(JSON.stringify(canonicalize({identity:{kind:"semantic_fact_non_ui",fact_ref:fact.key,proof_ref:proof.key,fact_key:fact.key,fact_revision_digest:factRevisionDigest,obligation_key:proof.key,obligation_revision_digest:obligationRevisionDigest,target_ref:"fixture-app"},actual_value_sha256:actualValueSha256,expected_value_sha256:fact.expected.sha256,comparator:proof.comparison.comparator,mode:proof.comparison.mode,parameters_sha256:proof.comparison.parameters.sha256,tolerance_sha256:proof.comparison.tolerance?.sha256 ?? null,mask_sha256:proof.comparison.mask?.sha256 ?? null,passed:actualValueSha256===fact.expected.sha256}))).digest("hex");
 ${
   writeProcessEnvelope
-    ? `if (process.env.TY_CONTEXT_OBSERVATION_OUTPUT) {
-  await writeFile(process.env.TY_CONTEXT_OBSERVATION_OUTPUT, JSON.stringify({schema_version:"ty-context-product-observation-v1",challenge:process.env.TY_CONTEXT_OBSERVATION_CHALLENGE,observations:observationDocument(actualValue).observations}));
-}`
+    ? `const productObservations = observationDocument(actualValue).observations;
+const productEnvelope = {schema_version:"ty-context-product-observation-v1",observations:Object.fromEntries(${JSON.stringify(processObservationIdentities)}.map((identity) => [identity, productObservations[identity]]))};`
     : ""
 }
 const assertionKeys = ["first-result","first-requirement","first-obligation","first-relations-na","first-architecture"];
 const targetRecord = (assertionKey) => ({assertion_key:assertionKey,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:${JSON.stringify(targetRoot)},session_id:"project-submitted-session",cold_start:true});
 const stateRecord = (assertionKey) => ({assertion_key:assertionKey,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]});
 const semanticRecord = {assertion_key:"first-semantic-fact",capability:"semantic_fact",manifest_ref:${JSON.stringify(manifest.key)},manifest_sha256:manifestSha256,outcome_ref:"first",target_ref:"fixture-app",fact_ref:fact.key,fact_key:fact.key,fact_revision_digest:factRevisionDigest,proof_ref:proof.key,obligation_key:proof.key,obligation_revision_digest:obligationRevisionDigest,method:proof.method,subject_ref:fact.unit_ref,condition_ref:fact.condition_ref,property_ref:fact.property_ref,actual_observation:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/observations/"+fact.key},value_sha256:actualValueSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:environment.definition.sha256},expected:fact.expected,comparison:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparisons/"+proof.key},result_sha256:comparisonResultSha256,comparator:proof.comparison.comparator,mode:proof.comparison.mode,parameters:proof.comparison.parameters,tolerance:proof.comparison.tolerance,mask:proof.comparison.mask,passed:comparisonPassed},verdict:comparisonPassed?"passed":"failed",oracle,environment,observer_results:[]};
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:actualValue,requirement_result:actualValue,obligation_result:actualValue,architecture_result:actualValue,semantic_fact_result:actualValue,relations_applicable:!actualValue,target_live:true,negative:false,population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:actualValue?["first"]:[],excluded_items:[]}},evidence_records:[...assertionKeys.flatMap((assertionKey)=>[targetRecord(assertionKey),stateRecord(assertionKey)]),targetRecord("first-liveness"),semanticRecord]}));
+console.log(JSON.stringify(${writeProcessEnvelope ? "productEnvelope" : `{schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:actualValue,requirement_result:actualValue,obligation_result:actualValue,architecture_result:actualValue,semantic_fact_result:actualValue,relations_applicable:!actualValue,target_live:true,negative:false,population:{universe_ids:["first"],eligible_ids:["first"],observed_ids:actualValue?["first"]:[],excluded_items:[]}},evidence_records:${submitProjectEvidenceCopies ? '[...assertionKeys.flatMap((assertionKey)=>[targetRecord(assertionKey),stateRecord(assertionKey)]),targetRecord("first-liveness"),semanticRecord]' : "[]"}}`}));
 `;
 }

@@ -102,6 +102,8 @@ export function explainGlobalClaimLinks(
             owner_paths: outcome?.product.owner.path_globs ?? [],
             carrier_paths: binding?.carrier_paths ?? [],
             expected_assertion_failures: control.expected_assertion_failures,
+            preserved_assertions: control.preserved_assertions,
+            allowed_fanout_assertions: control.allowed_fanout_assertions,
             mutation: control.mutation,
           };
         }),

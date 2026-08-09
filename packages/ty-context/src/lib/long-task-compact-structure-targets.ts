@@ -13,6 +13,8 @@ const BASE_STRUCTURE_BOUNDARY_BY_FIELD: Readonly<Record<string, string>> = {
   journey_roles: "contract.check.journey-roles",
   carrier_paths: "contract.binding.carrier-paths",
   preserved_assertions: "contract.counterfactual.preserved-assertions",
+  allowed_fanout_assertions:
+    "contract.counterfactual.allowed-fanout-assertions",
   expected_assertion_failures:
     "contract.counterfactual.expected-assertion-failures",
 };

@@ -2,10 +2,15 @@ import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 import test from "node:test";
 import {
+  configureCrossExecutionStaticPrimingAttack,
+  configureEvidenceRoleStaticAttack,
   configureExpectedAsActualAttack,
   configureHistoricalRuntimeAttack,
   configurePackageObservationCase,
+  configureProcessInputMutationAttack,
   configureProxyTargetAttack,
+  configureRootArgvWrapperAttack,
+  configureVerificationInputStaticAttack,
   createObserverTrustFixture,
   executeObserverTrustWorkflow,
   isMachineAccepted,
@@ -46,7 +51,25 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R2] runner-created package carrier cannot close a machine Fact",
+  "[critical:observer-admission-no-bypass:R1b] verifier Expected input cannot masquerade as a static production carrier",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureVerificationInputStaticAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `verification-input static carrier reached ${executionLabel(execution)}`,
+      );
+      const diagnostic = JSON.stringify(execution.result);
+      assert.match(diagnostic, /machine_observer_not_admitted/u);
+      assert.match(diagnostic, /static_carrier_expected_authority_forbidden/u);
+    }),
+);
+
+test(
+  "[critical:static-carrier-pre-run-freeze:R2] runner-created package carrier cannot close a machine exact obligation",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -54,17 +77,24 @@ test(
         carrierPath: "artifacts/runner-created.json",
         carrierExists: false,
         runnerWritesCarrier: true,
-        bindingPath: "src/state.json",
-        mutationPath: "src/state.json",
-        mutationPointer: "/first",
+        bindingPath: "artifacts/runner-created.json",
+        mutationPath: "artifacts/runner-created.json",
+        mutationPointer: "/observations/fact.first.observable",
+        runnerValueSourcePath: "src/state.json",
+        runnerValueSourcePointer: "/first",
         inputPaths: ["src/state.json", "artifacts/**"],
-        artifactGlobs: ["artifacts/**"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/runner-created-diagnostic.json"],
       });
       const execution = await executeObserverTrustWorkflow(fixture);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `runner-created carrier reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /static_observation_not_in_pre_run_snapshot/u,
       );
     }),
 );
@@ -74,12 +104,28 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureHistoricalRuntimeAttack(fixture);
+      await configurePackageObservationCase(fixture, {
+        carrierPath: "src/state.json",
+        bindingPath: "src/state.json",
+        mutationPath: "src/state.json",
+        inputPaths: ["src/state.json"],
+        artifactGlobs: ["src/state.json"],
+        proofSurface: "runtime_behavior",
+        directProcess: true,
+        submitProjectEvidenceCopies: true,
+      });
+      await configureHistoricalRuntimeAttack(fixture, {
+        removeHostAttestation: true,
+      });
       const execution = await executeObserverTrustWorkflow(fixture);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `historical runtime replay reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /process_observer_direct_root_required/u,
       );
     }),
 );
@@ -124,6 +170,24 @@ test(
 );
 
 test(
+  "[critical:static-carrier-pre-run-freeze:R5b] pre-existing status/report evidence cannot machine-close a static production obligation",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureEvidenceRoleStaticAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `evidence-role static carrier reached ${executionLabel(execution)}`,
+      );
+      const diagnostic = JSON.stringify(execution.result);
+      assert.match(diagnostic, /machine_observer_not_admitted/u);
+      assert.match(diagnostic, /static_carrier_evidence_role_forbidden/u);
+    }),
+);
+
+test(
   "[critical:host-derived-target-runtime:R6] verifier wrapper cannot substitute for the declared process root",
   { concurrency: false },
   async () =>
@@ -142,7 +206,26 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R7] runner-modified frozen carrier cannot close a machine Fact",
+  "[critical:host-derived-target-runtime:R6b] interpreter root cannot select a verifier wrapper through runner argv",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureRootArgvWrapperAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `argv wrapper reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /process_observer_root_argv_mismatch/u,
+      );
+    }),
+);
+
+test(
+  "[critical:static-carrier-pre-run-freeze:R7] runner-modified frozen carrier cannot close a machine exact obligation",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -151,17 +234,62 @@ test(
         carrierExists: true,
         carrierInitialValue: false,
         runnerWritesCarrier: true,
-        bindingPath: "src/state.json",
-        mutationPath: "src/state.json",
-        mutationPointer: "/first",
+        bindingPath: "artifacts/frozen-actual.json",
+        mutationPath: "artifacts/frozen-actual.json",
+        mutationPointer: "/observations/fact.first.observable",
+        runnerValueSourcePath: "src/state.json",
+        runnerValueSourcePointer: "/first",
         inputPaths: ["src/state.json", "artifacts/frozen-actual.json"],
-        artifactGlobs: ["artifacts/frozen-actual.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/runner-modified-diagnostic.json"],
       });
       const execution = await executeObserverTrustWorkflow(fixture);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `runner-modified carrier reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /static_observation_changed_by_runner/u,
+      );
+    }),
+);
+
+test(
+  "[critical:static-carrier-pre-run-freeze:R7b] an earlier raw execution cannot prime a later static carrier before it is frozen",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureCrossExecutionStaticPrimingAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `cross-execution carrier priming reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /static_observation_changed_by_runner/u,
+      );
+    }),
+);
+
+test(
+  "[critical:host-derived-target-runtime:R7c] direct process cannot rewrite a frozen production input before observing it",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureProcessInputMutationAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `process input rewrite reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        JSON.stringify(execution.result),
+        /process_observation_input_changed_by_runner/u,
       );
     }),
 );
@@ -190,7 +318,7 @@ test(
         bindingPath: "dist/generated-config.json",
         mutationPath: "dist/generated-config.json",
         inputPaths: ["dist/generated-config.json"],
-        artifactGlobs: ["dist/generated-config.json"],
+        artifactGlobs: [],
         diagnosticArtifactPaths: ["artifacts/session-diagnostic.json"],
         directProcess: true,
       });
@@ -204,7 +332,7 @@ test(
 );
 
 test(
-  "[control:host-derived-target-runtime] direct process root emits exact observations and preserves liveness under Counterfactual",
+  "[control:host-derived-target-runtime] Harness starts the frozen product-root invocation, observes exact output, and preserves liveness under Counterfactual",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {

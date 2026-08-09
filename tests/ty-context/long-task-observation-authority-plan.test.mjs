@@ -24,10 +24,11 @@ test("compile projects an ordinary exact Claim Assertion to direct-process autho
     target_ref: "product",
     proof_surface: "runtime_behavior",
     method: "exact_value",
-    evidence_capabilities: ["state_delta", "target_runtime"],
+    evidence_capabilities: ["target_runtime"],
     authority: "package_process_json_exact",
     expected_identity: rows[0].expected_identity,
     expected_value_sha256: rows[0].expected_value_sha256,
+    actual_projection: "raw_exact",
     observation_identity: "assertion.OUTCOME.check.result",
     comparison: {
       comparator: "exact_value",
@@ -50,6 +51,8 @@ test("compile projects an ordinary exact Claim Assertion to direct-process autho
       runner_type: "project_binary",
       resolved_runner_target: "bin/product.exe",
       declared_root_entrypoint: "bin/product.exe",
+      resolved_runner_argv: [],
+      declared_root_argv: [],
       effect: "test_sandbox",
       direct_root_match: true,
     },
@@ -71,6 +74,34 @@ test("compiled observation values bind Check identity without splitting Raw Exec
   assert.equal(
     computeRawExecutionIdentity(compiledRawInput(first, firstRows)),
     computeRawExecutionIdentity(compiledRawInput(second, secondRows)),
+  );
+});
+
+test("the package stdout observation protocol cannot share a legacy Raw Execution", () => {
+  const input = processInput();
+  const processAuthorities = compileObservationAuthorityPlan(input);
+  assert.notEqual(
+    computeRawExecutionIdentity(compiledRawInput(input, processAuthorities)),
+    computeRawExecutionIdentity(compiledRawInput(input, [])),
+  );
+});
+
+test("the complete declared root invocation binds Raw Execution identity", () => {
+  const first = processInput();
+  first.check.runner.argv = ["product.mjs", "--mode=first"];
+  first.runner.argv = ["product.mjs", "--mode=first"];
+  first.execution_target.root_argv = ["product.mjs", "--mode=first"];
+  const second = processInput();
+  second.check.runner.argv = ["product.mjs", "--mode=second"];
+  second.runner.argv = ["product.mjs", "--mode=second"];
+  second.execution_target.root_argv = ["product.mjs", "--mode=second"];
+  assert.notEqual(
+    computeRawExecutionIdentity(
+      compiledRawInput(first, compileObservationAuthorityPlan(first)),
+    ),
+    computeRawExecutionIdentity(
+      compiledRawInput(second, compileObservationAuthorityPlan(second)),
+    ),
   );
 });
 
@@ -141,6 +172,42 @@ test("indirect process wrappers fail the direct-root compile boundary", () => {
   );
 });
 
+test("direct-process machine admission binds the complete root argv", () => {
+  const missing = processInput();
+  delete missing.execution_target.root_argv;
+  assert.throws(
+    () => compileObservationAuthorityPlan(missing),
+    /process_observer_root_invocation_required/u,
+  );
+
+  const wrapper = processInput();
+  wrapper.execution_target.root_argv = ["tests/product.mjs"];
+  wrapper.check.runner.argv = ["tests/verifier-wrapper.mjs"];
+  wrapper.runner.argv = ["tests/verifier-wrapper.mjs"];
+  assert.throws(
+    () => compileObservationAuthorityPlan(wrapper),
+    /process_observer_root_argv_mismatch/u,
+  );
+});
+
+test("ordinary Assertion exact plans bind Harness-owned actual projection", () => {
+  const identities = new Map();
+  for (const [operator, projection, expected] of [
+    ["equals", "raw_exact", { accepted: true }],
+    ["exists", "presence_boolean", true],
+    ["truthy", "truthy_boolean", true],
+    ["falsy", "falsy_boolean", false],
+  ]) {
+    const input = processInput();
+    input.check.positive_assertions[0].operator = operator;
+    input.check.positive_assertions[0].expected = expected;
+    const [row] = compileObservationAuthorityPlan(input);
+    assert.equal(row.actual_projection, projection);
+    identities.set(operator, row.expected_identity);
+  }
+  assert.notEqual(identities.get("exists"), identities.get("truthy"));
+});
+
 test("claimless preserved-liveness Assertion is still a machine observation obligation", () => {
   const input = processInput();
   input.check.positive_assertions[0] = {
@@ -200,6 +267,40 @@ test("static authority requires one attributable owning production Binding", () 
   );
 });
 
+test("static carriers cannot overlap output, evidence, verifier, or protected Authority roles", () => {
+  for (const [mutate, reason] of [
+    [
+      (input) => input.check.expected_output_paths.push("product/input.json"),
+      "static_carrier_evidence_role_forbidden",
+    ],
+    [
+      (input) => input.check.artifact_globs.push("product/**"),
+      "static_carrier_evidence_role_forbidden",
+    ],
+    [
+      (input) => {
+        input.runner.frozen_files["product/input.json"] = "a".repeat(64);
+      },
+      "static_carrier_expected_authority_forbidden",
+    ],
+    [
+      (input) => input.protected_authority_paths.push("product/input.json"),
+      "static_carrier_expected_authority_forbidden",
+    ],
+  ]) {
+    const input = processInput({
+      proofSurface: "implementation_structure",
+      capabilities: ["presence"],
+    });
+    input.protected_authority_paths = [];
+    mutate(input);
+    assert.throws(
+      () => compileObservationAuthorityPlan(input),
+      new RegExp(`machine_observer_not_admitted:.*${reason}`, "u"),
+    );
+  }
+});
+
 test("browser/native/proxy and non-exact machine Assertions require explicit External Confirmation", () => {
   const native = processInput();
   native.execution_target.runtime_family = "native";
@@ -220,16 +321,30 @@ test("browser/native/proxy and non-exact machine Assertions require explicit Ext
   );
 });
 
+test("design, interaction, and state capabilities cannot reuse a plain exact row as package-derived proof", () => {
+  for (const capability of [
+    "design_conformance",
+    "interaction_trace",
+    "state_delta",
+  ]) {
+    const input = processInput({ capabilities: [capability] });
+    assert.throws(
+      () => compileObservationAuthorityPlan(input),
+      new RegExp(
+        `unsupported_observer_requires_external_confirmation:.*${capability}:package_derivation_required`,
+        "u",
+      ),
+    );
+  }
+});
+
 function processInput(options = {}) {
   const assertion = {
     key: "result",
     claims: ["result"],
     applicability_ref: "product-root",
     observation: "result",
-    evidence_capabilities: options.capabilities ?? [
-      "target_runtime",
-      "state_delta",
-    ],
+    evidence_capabilities: options.capabilities ?? ["target_runtime"],
     operator: "equals",
     expected: options.semantic ? true : { accepted: true },
   };
@@ -281,6 +396,7 @@ function processInput(options = {}) {
       role: "product",
       runtime_family: "process",
       root_entrypoint: "bin/product.exe",
+      root_argv: [],
       capabilities: ["process-runtime", "cold-start", "production-root"],
     },
     design_targets: [],

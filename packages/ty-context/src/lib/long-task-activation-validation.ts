@@ -135,6 +135,11 @@ export async function validateContractForActivation(options: {
       : null;
 
   const workdirRelative = repoRelative(repository, workdir);
+  const observationAuthorityPaths = [
+    `${workdirRelative}/delivery-contract.yaml`,
+    ...Object.keys(sourceHashes ?? {}),
+    ...(context?.files ?? []),
+  ];
   const workspace = await attempt(mode, diagnostics, async () => {
     const manifest = await captureWorkspaceManifest(repository, workdir);
     validateTechnicalPaths(contract, repository, workdirRelative, manifest);
@@ -169,7 +174,7 @@ export async function validateContractForActivation(options: {
           [],
           [],
           [],
-          context?.files ?? [],
+          observationAuthorityPaths,
         ),
       null,
       check.key,
@@ -198,7 +203,7 @@ export async function validateContractForActivation(options: {
             designTargetsForCheck(outcome, check.key),
             semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
             outcome.technical.bindings,
-            context?.files ?? [],
+            observationAuthorityPaths,
           ),
         outcome.key,
         check.key,

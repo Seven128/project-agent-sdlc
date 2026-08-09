@@ -4,6 +4,7 @@ import type {
   DesignSymbolicCertificateEvidenceV2,
   DesignSymbolicMethodEvidenceV2,
   EvidenceCapabilityRecordV2,
+  HostExecutionAttestationV2,
 } from "./long-task-delivery-types.js";
 import {
   evaluateExactDigestComparison,
@@ -25,6 +26,7 @@ export function validateRuntimeEvidenceRecord(
   record: EvidenceCapabilityRecordV2,
   artifactHashes: Record<string, string>,
   admittedObservations?: PreparedAdmittedObservationSet,
+  hostAttestation: HostExecutionAttestationV2 | null = null,
 ): string | null {
   const admittedObservationIssue = validateAdmittedObservationRecord(
     check,
@@ -34,7 +36,7 @@ export function validateRuntimeEvidenceRecord(
   if (admittedObservationIssue) return admittedObservationIssue;
   switch (record.capability) {
     case "interaction_trace":
-      return validateInteractionTrace(check, record);
+      return validateInteractionTrace(check, record, hostAttestation);
     case "state_delta":
       if (record.before_sha256 === record.after_sha256)
         return "state_unchanged";
@@ -66,7 +68,7 @@ export function validateRuntimeEvidenceRecord(
     case "semantic_fact":
       return validateSemanticFactEvidence(check, record, artifactHashes);
     case "target_runtime":
-      return validateTargetRuntime(check, record);
+      return validateTargetRuntime(check, record, hostAttestation);
     case "input_variation":
       return validateInputVariation(record);
   }
@@ -109,12 +111,19 @@ function validateAdmittedObservationRecord(
     if (prepared.reason) return prepared.reason;
     if (!prepared.observation) return "admitted_observation_missing";
     if (
-      prepared.observation.artifact_path !==
+      authorityResolution.authority.authority === "package_static_json_exact" &&
+      (prepared.observation.artifact_path !==
         candidate.actual_observation.artifact_path ||
-      prepared.observation.artifact_sha256 !==
-        candidate.actual_observation.artifact_sha256
+        prepared.observation.artifact_sha256 !==
+          candidate.actual_observation.artifact_sha256)
     )
       return "admitted_observation_artifact_mismatch";
+    if (
+      candidate.actual_observation.locator.kind !== "json_pointer" ||
+      candidate.actual_observation.locator.value !==
+        authorityResolution.authority.locator_policy.value
+    )
+      return "observation_locator_identity_mismatch";
     if (
       prepared.observation.value_sha256 !==
       candidate.actual_observation.value_sha256
@@ -791,7 +800,10 @@ function validateInteractionTrace(
     EvidenceCapabilityRecordV2,
     { capability: "interaction_trace" }
   >,
+  hostAttestation: HostExecutionAttestationV2 | null,
 ): string | null {
+  if (!hostAttestation?.direct_root_match)
+    return "legacy_interaction_trace_non_authoritative";
   if (record.target_ref !== check.execution_target.target_ref)
     return "target_mismatch";
   if (
@@ -854,7 +866,10 @@ function validateObserverEvidence(
 function validateTargetRuntime(
   check: CompiledCheckV2,
   record: Extract<EvidenceCapabilityRecordV2, { capability: "target_runtime" }>,
+  hostAttestation: HostExecutionAttestationV2 | null,
 ): string | null {
+  if (!hostAttestation?.direct_root_match)
+    return "legacy_target_runtime_non_authoritative";
   if (record.target_ref !== check.execution_target.target_ref)
     return "target_mismatch";
   if (

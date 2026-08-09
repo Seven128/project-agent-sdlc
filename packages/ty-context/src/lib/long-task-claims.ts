@@ -484,6 +484,7 @@ function validateCounterfactualReferences(
     for (const assertion of [
       ...control.expected_assertion_failures,
       ...control.preserved_assertions,
+      ...control.allowed_fanout_assertions,
     ])
       if (!assertions.has(assertion))
         fail(

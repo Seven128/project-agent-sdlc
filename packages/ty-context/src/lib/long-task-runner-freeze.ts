@@ -124,6 +124,7 @@ export async function freezeDeliveryCheck(
     design_targets: designConformanceTargets,
     semantic_fact_expectations: semanticFactExpectations,
     production_bindings: productionBindings,
+    protected_authority_paths: protectedAuthorityPaths,
   });
   const compiled = {
     ...check,

@@ -2,22 +2,23 @@ import type {
   CompiledCheckV2,
   CompiledObservationAuthorityV2,
   EvidenceCapabilityRecordV2,
+  PackageObservationValueV2,
 } from "./long-task-delivery-types.js";
 import { matchesRepoPattern } from "./long-task-paths.js";
-import { canonicalValueJson } from "./strict-codec.js";
-import { admittedObservationCandidates } from "./long-task-admitted-observation-records.js";
+import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
+import {
+  evaluateExactDigestComparison,
+  type ExactDigestComparisonResult,
+} from "./long-task-exact-comparison.js";
 import {
   JSON_POINTER_EXACT_CAPABILITY,
   JSON_POINTER_EXACT_METHODS,
-  createJsonPointerExactBudget,
   isJsonPointerExactOracle,
   normalizeObservationArtifactPath,
-  observationErrorMessage,
   validateJsonPointerExactLocator,
   type JsonPointerExactLocator,
   type JsonPointerExactObservation,
 } from "./long-task-json-pointer-observation.js";
-import { extractJsonPointerExactObservation } from "./long-task-observation-artifact.js";
 
 export {
   JSON_POINTER_EXACT_CAPABILITY,
@@ -44,7 +45,10 @@ export interface PreparedAdmittedObservation {
   obligation_ref: string | null;
   method: string;
   observation_key: string;
+  authority: CompiledObservationAuthorityV2["authority"] | null;
+  raw_value: unknown;
   observation: JsonPointerExactObservation | null;
+  comparison: ExactDigestComparisonResult | null;
   reason: string | null;
 }
 
@@ -59,130 +63,110 @@ export async function prepareAdmittedObservations(input: {
   records: EvidenceCapabilityRecordV2[];
   snapshot_root: string;
   authority_paths?: readonly string[];
+  package_observations?: readonly PackageObservationValueV2[];
 }): Promise<PreparedAdmittedObservationSet> {
-  const budget = createJsonPointerExactBudget();
   const entries: PreparedAdmittedObservation[] = [];
-  const consumedAuthorities = new Set<string>();
   const entriesByAuthority = new Map<string, PreparedAdmittedObservation>();
-  for (const candidate of admittedObservationCandidates(input.records)) {
-    const observationKey = admittedObservationKey(
-      candidate.actual_observation.artifact_path,
-      candidate.actual_observation.locator,
-    );
-    let reason: string | null = null;
-    let observation: JsonPointerExactObservation | null = null;
-    const authorityResolution = resolveObservationAuthority(input.check, {
-      assertion_key: candidate.assertion_key,
-      identity_ref: candidate.identity_ref,
-      method: candidate.method,
-    });
-    const authority = authorityResolution.authority;
-    const authorityKey = authority
-      ? admittedObservationAuthorityKey(authority)
-      : null;
-    if (!isJsonPointerExactOracle(candidate.oracle))
-      reason = "custom_oracle_machine_completion_forbidden";
-    else if (!authority) reason = authorityResolution.reason;
-    else if (authority.authority === "external_confirmation")
-      reason = "unsupported_observer_requires_external_confirmation";
-    else if (consumedAuthorities.has(authorityKey!)) {
-      reason = "admitted_observation_duplicate";
-      const prior = entriesByAuthority.get(authorityKey!);
-      if (prior) {
-        prior.observation = null;
-        prior.reason = reason;
-      }
-    } else if (authority.authority === "package_process_json_exact")
-      reason = "admitted_observation_runtime_required";
-    if (authorityKey) consumedAuthorities.add(authorityKey);
-    if (!reason) {
-      const decision = observationAdmissionDecision({
-        method: candidate.method,
-        comparator: candidate.comparison.comparator,
-        mode: candidate.comparison.mode,
-        tolerance: candidate.comparison.tolerance,
-        mask: candidate.comparison.mask,
-        sensitivity: candidate.actual_observation.sensitivity,
-        locator: candidate.actual_observation.locator,
-        oracle: candidate.oracle,
-        target_family: input.check.execution_target_definition.runtime_family,
-        current_static_artifact:
-          input.check.execution_target_definition.role === "product",
-        snapshot_matches: true,
-      });
-      if (decision.authority !== "machine") reason = decision.reason;
-    }
-    const carrierRole = classifyObservationCarrier({
-      artifact_path: candidate.actual_observation.artifact_path,
-      source_paths: [...(input.authority_paths ?? [])],
-      expected_authority_paths: input.check.verification_inputs,
-      product_carrier_paths:
-        authority?.carrier_refs.flatMap((ref) => ref.carrier_paths) ?? [],
-      current_observer_artifact_paths: input.check.artifact_globs,
-    });
-    if (!reason && carrierRole !== "product_carrier")
-      reason =
-        carrierRole === "expected_authority_forbidden"
-          ? "observation_expected_authority_forbidden"
-          : "observation_product_reachability_required";
-    const expectedLocator = authority
-      ? {
-          kind: "json_pointer" as const,
-          value: authority.locator_policy.value,
-        }
-      : null;
-    if (
-      !reason &&
-      expectedLocator &&
-      canonicalValueJson(candidate.actual_observation.locator) !==
-        canonicalValueJson(expectedLocator)
-    )
-      reason = "observation_locator_identity_mismatch";
-    if (!reason)
-      try {
-        observation = await extractJsonPointerExactObservation({
-          root: input.snapshot_root,
-          artifact_path: candidate.actual_observation.artifact_path,
-          locator: candidate.actual_observation.locator,
-          sensitivity: candidate.actual_observation.sensitivity,
-          budget,
-        });
-      } catch (error) {
-        reason = observationErrorMessage(error);
-      }
-    const entry: PreparedAdmittedObservation = {
-      assertion_key: candidate.assertion_key,
-      identity_ref: candidate.identity_ref,
-      authority_key: authorityKey,
-      obligation_ref: authority?.obligation_ref ?? null,
-      method: candidate.method,
-      observation_key: observationKey,
-      observation,
-      reason,
-    };
-    entries.push(entry);
-    if (authorityKey) entriesByAuthority.set(authorityKey, entry);
-  }
   for (const authority of input.check.observation_authorities ?? []) {
     const authorityKey = admittedObservationAuthorityKey(authority);
-    if (consumedAuthorities.has(authorityKey)) continue;
+    const candidates = (input.package_observations ?? []).filter(
+      (candidate) =>
+        candidate.authority === authority.authority &&
+        candidate.observation_identity === authority.observation_identity &&
+        candidate.assertion_ref === authority.assertion_ref &&
+        candidate.obligation_ref === authority.obligation_ref &&
+        candidate.method === authority.method,
+    );
+    const candidate = candidates.length === 1 ? candidates[0] : null;
+    let reason: string | null = null;
+    let comparison: ExactDigestComparisonResult | null = null;
+    if (authority.authority === "external_confirmation")
+      reason = "unsupported_observer_requires_external_confirmation";
+    else if (candidates.length > 1) reason = "admitted_observation_duplicate";
+    else if (!candidate)
+      reason =
+        authority.authority === "package_process_json_exact"
+          ? "admitted_observation_runtime_required"
+          : "admitted_observation_missing";
+    else if (candidate.reason) reason = candidate.reason;
+    else if (!candidate.observation) reason = "admitted_observation_missing";
+    else if (
+      candidate.observation.locator.kind !== "json_pointer" ||
+      candidate.observation.locator.value !== authority.locator_policy.value
+    )
+      reason = "observation_locator_identity_mismatch";
+    else {
+      try {
+        comparison = evaluateExactDigestComparison({
+          identity: {
+            kind: "compiled_observation_authority",
+            expected_identity: authority.expected_identity,
+            obligation_ref: authority.obligation_ref,
+            observation_identity: authority.observation_identity,
+            target_ref: authority.target_ref,
+            method: authority.method,
+          },
+          actual_value_sha256: projectedActualValueSha256(authority, candidate),
+          expected_value_sha256: authority.expected_value_sha256,
+          comparator: authority.comparison.comparator,
+          mode: authority.comparison.mode as "exact" | "tolerance",
+          parameters_sha256: authority.comparison.parameters_sha256 ?? "",
+          tolerance_sha256: authority.comparison.tolerance_sha256,
+          mask_sha256: authority.comparison.mask_sha256,
+        });
+      } catch (error) {
+        reason = error instanceof Error ? error.message : String(error);
+      }
+    }
     const entry: PreparedAdmittedObservation = {
       assertion_key: authority.assertion_ref,
       identity_ref: authority.observation_identity,
       authority_key: authorityKey,
       obligation_ref: authority.obligation_ref,
       method: authority.method,
-      observation_key: `compiled-authority\0${authorityKey}`,
-      observation: null,
-      reason:
-        authority.authority === "external_confirmation"
-          ? "unsupported_observer_requires_external_confirmation"
-          : authority.authority === "package_process_json_exact"
-            ? "admitted_observation_runtime_required"
-            : "admitted_observation_missing",
+      observation_key: candidate?.observation
+        ? admittedObservationKey(
+            candidate.observation.artifact_path,
+            candidate.observation.locator,
+          )
+        : `compiled-authority\0${authorityKey}`,
+      authority: authority.authority,
+      raw_value: candidate?.raw_value,
+      observation: candidate?.observation ?? null,
+      comparison,
+      reason,
     };
     entries.push(entry);
     entriesByAuthority.set(authorityKey, entry);
+  }
+  for (const candidate of input.package_observations ?? []) {
+    const matches = (input.check.observation_authorities ?? []).filter(
+      (authority) =>
+        authority.authority === candidate.authority &&
+        authority.observation_identity === candidate.observation_identity &&
+        authority.assertion_ref === candidate.assertion_ref &&
+        authority.obligation_ref === candidate.obligation_ref &&
+        authority.method === candidate.method,
+    );
+    if (matches.length) continue;
+    entries.push({
+      assertion_key: "",
+      identity_ref: candidate.observation_identity,
+      authority_key: null,
+      obligation_ref: null,
+      method: "exact_value",
+      observation_key: candidate.observation
+        ? admittedObservationKey(
+            candidate.observation.artifact_path,
+            candidate.observation.locator,
+          )
+        : `unbound-package-observation\0${candidate.observation_identity}`,
+      authority: null,
+      raw_value: candidate.raw_value,
+      observation: candidate.observation,
+      comparison: null,
+      reason: "machine_observer_not_admitted",
+    });
   }
   return {
     by_observation_key: new Map(
@@ -191,6 +175,20 @@ export async function prepareAdmittedObservations(input: {
     by_authority_key: entriesByAuthority,
     entries,
   };
+}
+
+function projectedActualValueSha256(
+  authority: CompiledObservationAuthorityV2,
+  candidate: PackageObservationValueV2,
+): string {
+  if (!candidate.observation) throw new Error("admitted_observation_missing");
+  if (authority.actual_projection === "raw_exact")
+    return candidate.observation.value_sha256;
+  const projected =
+    authority.actual_projection === "presence_boolean"
+      ? true
+      : Boolean(candidate.raw_value);
+  return sha256Hex(canonicalValueJson(projected));
 }
 
 export function admittedObservationAuthorityKey(

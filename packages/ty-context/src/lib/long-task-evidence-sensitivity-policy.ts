@@ -18,6 +18,7 @@ export function validateCounterfactualObservationImpact(input: {
   mutated_by_fact: Record<string, string>;
   expected_affected_fact_refs: string[];
   preserved_fact_refs: string[];
+  allowed_fanout_fact_refs?: string[];
   target_live: boolean;
   carrier_role: "product" | "evidence";
 }): string | null {
@@ -26,22 +27,21 @@ export function validateCounterfactualObservationImpact(input: {
   if (!input.target_live) return "counterfactual_target_not_live";
   const expected = new Set(input.expected_affected_fact_refs);
   const preserved = new Set(input.preserved_fact_refs);
+  const allowedFanout = new Set(input.allowed_fanout_fact_refs ?? []);
   for (const factRef of expected) {
     if (
       !Object.hasOwn(input.baseline_by_fact, factRef) ||
       !Object.hasOwn(input.mutated_by_fact, factRef)
     )
       return "counterfactual_expected_fact_observation_missing";
-    if (
-      input.baseline_by_fact[factRef] === input.mutated_by_fact[factRef]
-    )
+    if (input.baseline_by_fact[factRef] === input.mutated_by_fact[factRef])
       return "counterfactual_expected_fact_unchanged";
   }
   for (const factRef of new Set([
     ...Object.keys(input.baseline_by_fact),
     ...Object.keys(input.mutated_by_fact),
   ])) {
-    if (expected.has(factRef)) continue;
+    if (expected.has(factRef) || allowedFanout.has(factRef)) continue;
     const baseline = input.baseline_by_fact[factRef];
     const mutated = input.mutated_by_fact[factRef];
     if (
@@ -181,7 +181,6 @@ function isBehavioralAssertion(
 ): boolean {
   return !(
     check.proof_surface === "implementation_structure" &&
-    assertion.operator === "exists" &&
     assertion.evidence_capabilities.every(
       (capability) => capability === "presence",
     )

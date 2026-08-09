@@ -14,6 +14,7 @@ import {
   enrichFinding,
 } from "./long-task-finding-context.js";
 import { executeCheckRunner } from "./long-task-check-runner.js";
+import { prepareExecutionObservationUniverse } from "./long-task-execution-observation.js";
 import {
   evaluateCheckEvidence,
   evaluateGlobalCounterfactuals,
@@ -159,13 +160,56 @@ export async function runDeliveryChecks(
     };
 
   const rawExecutions = new Map<string, RawCommandExecutionV2>();
+  const completeChecks = allCompiledChecks(compiled);
+  const selectedExecutionGroups = rawExecutionGroups(checks);
+  const completeExecutionGroups = selectedExecutionGroups.map((group) =>
+    completeChecks.filter(
+      (check) =>
+        check.raw_execution_identity === group[0].raw_execution_identity,
+    ),
+  );
+  const preparedExecutionGroups = await prepareExecutionObservationUniverse({
+    groups: completeExecutionGroups,
+    snapshot_root: snapshot.root,
+    workspace_manifest: snapshot.manifest,
+    protected_authority_paths: observationAuthorityPaths,
+  });
+  try {
+    const pending: Array<{
+      raw_execution_identity: string;
+      raw: RawCommandExecutionV2;
+      prepared: (typeof preparedExecutionGroups)[number];
+    }> = [];
+    for (const [index, group] of selectedExecutionGroups.entries()) {
+      const prepared = preparedExecutionGroups[index];
+      if (!prepared) throw new Error("raw_execution_group_prepare_missing");
+      pending.push({
+        raw_execution_identity: group[0].raw_execution_identity,
+        raw: await executeCheckRunner(
+          group[0],
+          prepared.execution_root,
+          prepared.runner_context,
+        ),
+        prepared,
+      });
+    }
+    const finalized = await Promise.all(
+      pending.map(async (entry) => ({
+        raw_execution_identity: entry.raw_execution_identity,
+        raw: await entry.prepared.finalize(entry.raw),
+      })),
+    );
+    for (const entry of finalized)
+      rawExecutions.set(entry.raw_execution_identity, entry.raw);
+  } finally {
+    await Promise.all(
+      preparedExecutionGroups.map((prepared) => prepared.dispose()),
+    );
+  }
   const mainCheckResults: CheckExecutionResultV2[] = [];
   for (const check of checks) {
-    let raw = rawExecutions.get(check.raw_execution_identity);
-    if (!raw) {
-      raw = await executeCheckRunner(check, snapshot.root);
-      rawExecutions.set(check.raw_execution_identity, raw);
-    }
+    const raw = rawExecutions.get(check.raw_execution_identity);
+    if (!raw) throw new Error("raw_execution_group_result_missing");
     const outcome = check.outcome_key
       ? compiled.outcomes.find((item) => item.key === check.outcome_key)
       : undefined;
@@ -209,6 +253,8 @@ export async function runDeliveryChecks(
           selectedGlobalCheckKeys,
           snapshot.manifest,
           mainCheckResults,
+          rawExecutions,
+          completeChecks,
         )),
       );
     const outcomeKeys = new Set(
@@ -244,6 +290,8 @@ export async function runDeliveryChecks(
           snapshot.manifest,
           observationAuthorityPaths,
           mainCheckResults,
+          rawExecutions,
+          completeChecks,
         )),
       );
     }
@@ -270,6 +318,18 @@ export async function runDeliveryChecks(
     check_results: checkResults,
     findings: findings.map((finding) => enrichFinding(compiled, finding)),
   };
+}
+
+function rawExecutionGroups(
+  checks: readonly CompiledCheckV2[],
+): CompiledCheckV2[][] {
+  const groups = new Map<string, CompiledCheckV2[]>();
+  for (const check of checks) {
+    const group = groups.get(check.raw_execution_identity);
+    if (group) group.push(check);
+    else groups.set(check.raw_execution_identity, [check]);
+  }
+  return [...groups.values()];
 }
 
 function applyCounterfactualFindings(
@@ -344,6 +404,15 @@ function finalPathFindings(
         binding.existence === "planned" &&
         !plannedBindingRequiredPatterns(binding).every((pattern) =>
           manifest.files.some((file) => matchesRepoPattern(file.path, pattern)),
+        ) &&
+        !outcome.acceptance.checks.some((check) =>
+          (check.observation_authorities ?? []).some(
+            (authority) =>
+              authority.authority === "package_static_json_exact" &&
+              authority.carrier_refs.some(
+                (carrier) => carrier.binding_ref === binding.key,
+              ),
+          ),
         )
       )
         findings.push({

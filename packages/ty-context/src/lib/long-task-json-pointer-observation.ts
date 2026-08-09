@@ -94,7 +94,9 @@ export function extractJsonPointerExactObservationFromBytes(input: {
   const locator = validateJsonPointerExactLocator(input.locator);
   const parsed = parseJsonWithoutDuplicateKeys(decodeUtf8Json(input.bytes));
   assertJsonTree(parsed, 0);
-  const canonical = canonicalValueJson(resolveJsonPointer(parsed, locator.value));
+  const canonical = canonicalValueJson(
+    resolveJsonPointer(parsed, locator.value),
+  );
   const canonicalBytes = Buffer.byteLength(canonical, "utf8");
   if (canonicalBytes > JSON_POINTER_EXACT_LIMITS.max_canonical_value_bytes)
     throw invalidObservation("observation_canonical_value_size_limit");
@@ -140,7 +142,9 @@ export function normalizeObservationArtifactPath(value: string): string {
   )
     throw invalidObservation("observation_artifact_path_escape");
   const segments = value.split("/");
-  if (segments.some((segment) => !segment || segment === "." || segment === ".."))
+  if (
+    segments.some((segment) => !segment || segment === "." || segment === "..")
+  )
     throw invalidObservation("observation_artifact_path_escape");
   return segments.join("/");
 }
@@ -153,7 +157,7 @@ export function observationErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function resolveJsonPointer(root: unknown, pointer: string): unknown {
+export function resolveJsonPointer(root: unknown, pointer: string): unknown {
   let current = root;
   if (pointer === "") return current;
   for (const encoded of pointer.slice(1).split("/")) {
@@ -167,14 +171,18 @@ function resolveJsonPointer(root: unknown, pointer: string): unknown {
       current = current[index];
       continue;
     }
-    if (!current || typeof current !== "object" || !Object.hasOwn(current, token))
+    if (
+      !current ||
+      typeof current !== "object" ||
+      !Object.hasOwn(current, token)
+    )
       throw invalidObservation("observation_locator_not_found");
     current = (current as Record<string, unknown>)[token];
   }
   return current;
 }
 
-function parseJsonWithoutDuplicateKeys(content: string): unknown {
+export function parseJsonWithoutDuplicateKeys(content: string): unknown {
   let parsed: unknown;
   try {
     parsed = JSON.parse(content) as unknown;
@@ -194,7 +202,7 @@ function parseJsonWithoutDuplicateKeys(content: string): unknown {
   return parsed;
 }
 
-function decodeUtf8Json(bytes: Uint8Array): string {
+export function decodeUtf8Json(bytes: Uint8Array): string {
   if (
     bytes.byteLength >= 3 &&
     bytes[0] === 0xef &&
@@ -209,7 +217,7 @@ function decodeUtf8Json(bytes: Uint8Array): string {
   }
 }
 
-function assertJsonTree(value: unknown, depth: number): void {
+export function assertJsonTree(value: unknown, depth: number): void {
   if (depth > JSON_POINTER_EXACT_LIMITS.max_depth)
     throw invalidObservation("observation_json_depth_limit");
   if (typeof value === "number" && !Number.isFinite(value))

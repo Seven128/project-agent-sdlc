@@ -396,6 +396,7 @@ test("package observer is joined to selected-design validation from the current 
           authority: "package_static_json_exact",
           expected_identity: "d".repeat(64),
           expected_value_sha256: valueSha256,
+          actual_projection: "raw_exact",
           observation_identity: expectation.fact_ref,
           comparison: {
             comparator: "exact_value",
@@ -423,18 +424,81 @@ test("package observer is joined to selected-design validation from the current 
             runner_type: "project_binary",
             resolved_runner_target: "bin/product",
             declared_root_entrypoint: "bin/product",
+            resolved_runner_argv: [],
+            declared_root_argv: [],
             effect: "read_only",
             direct_root_match: true,
           },
         },
       ],
     };
+    const packageObservation = {
+      authority: "package_static_json_exact",
+      observation_identity: expectation.fact_ref,
+      assertion_ref: "route-b-content",
+      obligation_ref: obligationRef,
+      method: "content",
+      raw_value: "accepted",
+      observation: {
+        capability: admitted.JSON_POINTER_EXACT_CAPABILITY,
+        artifact_path: observationPath,
+        artifact_sha256: observationSha256,
+        locator: admitted.jsonPointerExactLocatorForIdentity(
+          expectation.fact_ref,
+        ),
+        value_sha256: valueSha256,
+        canonical_value_bytes: Buffer.byteLength(JSON.stringify("accepted")),
+        sensitivity: "plain",
+      },
+      reason: null,
+    };
     const prepared = await admitted.prepareAdmittedObservations({
       check,
       records: [record],
       snapshot_root: root,
+      package_observations: [packageObservation],
     });
     assert.equal(prepared.entries[0].reason, null);
+    for (const projectionCase of [
+      {
+        name: "exists preserves a present false value",
+        projection: "presence_boolean",
+        raw: false,
+        expected: true,
+      },
+      {
+        name: "truthy preserves non-Boolean assertion semantics",
+        projection: "truthy_boolean",
+        raw: "present",
+        expected: true,
+      },
+      {
+        name: "falsy preserves zero assertion semantics",
+        projection: "falsy_boolean",
+        raw: 0,
+        expected: false,
+      },
+    ]) {
+      const projectedCheck = structuredClone(check);
+      const projectedAuthority = projectedCheck.observation_authorities[0];
+      projectedAuthority.fact_ref = null;
+      projectedAuthority.actual_projection = projectionCase.projection;
+      projectedAuthority.expected_value_sha256 = sha(
+        JSON.stringify(projectionCase.expected),
+      );
+      const projectedObservation = structuredClone(packageObservation);
+      projectedObservation.raw_value = projectionCase.raw;
+      projectedObservation.observation.value_sha256 = sha(
+        JSON.stringify(projectionCase.raw),
+      );
+      const projected = await admitted.prepareAdmittedObservations({
+        check: projectedCheck,
+        records: [],
+        snapshot_root: root,
+        package_observations: [projectedObservation],
+      });
+      assert.equal(projected.entries[0].reason, null, projectionCase.name);
+    }
     assert.equal(
       exact.validateRuntimeEvidenceRecord(
         check,
@@ -474,6 +538,7 @@ test("package observer is joined to selected-design validation from the current 
       attempts: 1,
       duration_ms: 1,
       error: null,
+      package_observations: [packageObservation],
     };
     const accepted = await evaluateCheckEvidence(check, raw, root);
     assert.equal(accepted.status, "passed");
@@ -496,12 +561,10 @@ test("package observer is joined to selected-design validation from the current 
       check,
       records: [customOracle],
       snapshot_root: root,
+      package_observations: [packageObservation],
     });
     assert.equal(customPrepared.entries.length, 1);
-    assert.equal(
-      customPrepared.entries[0].reason,
-      "custom_oracle_machine_completion_forbidden",
-    );
+    assert.equal(customPrepared.entries[0].reason, null);
     assert.equal(
       exact.validateRuntimeEvidenceRecord(
         check,
@@ -528,16 +591,37 @@ test("package observer is joined to selected-design validation from the current 
       "admitted_observation_runtime_required",
     );
 
+    const legacyRuntimeCheck = structuredClone(check);
+    legacyRuntimeCheck.execution_target_definition.root_entrypoint =
+      "bin/product";
+    assert.equal(
+      exact.validateRuntimeEvidenceRecord(
+        legacyRuntimeCheck,
+        {
+          assertion_key: "route-b-content",
+          capability: "target_runtime",
+          target_ref: "route-b-process",
+          root_entrypoint: "bin/product",
+          session_id: "historical-session-replayed",
+          cold_start: true,
+        },
+        {},
+        undefined,
+        null,
+      ),
+      "legacy_target_runtime_non_authoritative",
+    );
+
     const duplicated = await admitted.prepareAdmittedObservations({
       check,
-      records: [record, record],
+      records: [record],
       snapshot_root: root,
+      package_observations: [packageObservation, packageObservation],
     });
-    assert.equal(duplicated.entries.length, 2);
-    assert.ok(
-      duplicated.entries.every(
-        (entry) => entry.reason === "admitted_observation_duplicate",
-      ),
+    assert.equal(duplicated.entries.length, 1);
+    assert.equal(
+      duplicated.entries[0].reason,
+      "admitted_observation_duplicate",
     );
 
     const noAuthority = structuredClone(check);
