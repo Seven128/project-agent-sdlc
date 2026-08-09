@@ -31,6 +31,13 @@ Migration must never silently:
 - invent a Source-backed execution target or production Binding for an old root; or
 - preserve a known false-acceptance path as compatibility behavior.
 
+Greenfield authoring may declare an exact process root, argv repository file
+or production carrier as `planned`. Its exact Source/Binding declaration is
+stable through Preflight/Compile and later materialization, but Final Gate
+requires every compiled closure member to exist. A glob, a manifest sibling or
+an undeclared repository-file argv token cannot substitute; migration does not
+invent these exact declarations or parse language dependencies.
+
 Preflight and doctor should report the narrow failing obligation and an
 actionable manual route through diagnostics such as
 `machine_observer_not_admitted`,
@@ -49,6 +56,8 @@ actionable manual route through diagnostics such as
 `process_root_source_binding_required`,
 `process_root_production_binding_required`,
 `process_root_source_identity_mismatch`,
+`process_runtime_carrier_exact_path_required`,
+`process_runtime_input_missing`,
 `process_runtime_closure_identity_mismatch`,
 `legacy_target_runtime_non_authoritative`,
 `counterfactual_admitted_observation_required`,

@@ -123,15 +123,15 @@ machine Counterfactual 必须同时拥有合法 baseline 与 mutated package obs
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=attack-suite-ground-truth kind=requirement -->
-当前黑盒攻击集固定覆盖 R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失。每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report；不得以内部 policy error 或 aggregate Boolean代替。
+当前 Level 3 黑盒集合固定为 21 个 case，其中 18 个 wrong candidate 均被拒绝：R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R5c direct-process evidence-role carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失，以及 R9 non-carrier evidence input、R10 non-carrier verification input、R11 Source-wrong product root 与 R11b 未绑定 repository argv 文件。R9–R11 及 R11b 已在当前 owner 修复；每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report，Compile-time 攻击还必须以合法近邻 Authority 获得 Final-Gate 拒绝，不得以内层 policy error、`active_task_missing` 或 aggregate Boolean 代替。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=valid-control-suite kind=requirement -->
-正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure machine-accepted；Harness 直接启动 process product root、同一 envelope承载多个 observation identity并在合法 Counterfactual 中观察到 affected/preserved/fan-out 关系的 process control machine-accepted；unsupported browser/native/layout/visual 等保留 `blocked_external`/external-pending 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
+三个正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure 达到 `machine_accepted`；Harness 直接启动 process product root，在同一 Raw Execution/envelope 中承载多个显式 Fact 及 cross-Check implicit-preserved Fact，并在合法 Counterfactual 中观察 affected/preserved/allowed-fan-out 关系，达到 `machine_accepted`；unsupported target-blocking control 保留 `blocked_external` 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=black-box-final-gate-lifecycle kind=requirement -->
-能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
+能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；Compile-time 攻击同时保留 owner diagnostic 和合法近邻 Authority 的 Final-Gate 拒绝，`active_task_missing` 不算能力证明。源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=starward-sanitized-replay kind=requirement -->
@@ -143,7 +143,7 @@ machine Counterfactual 必须同时拥有合法 baseline 与 mutated package obs
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=roi-admission-order kind=requirement -->
-ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Level 4 前必须由 `real-process-workload-roi` 提供至少一个真实 Long-Task process workload 的 baseline/candidate 配对，明确 workload、环境、authoring/Compile/Verify/Counterfactual/Final Gate 成本、返工、错误完成率、总时长、comparator/tolerance，并证明新增成本保持正 ROI；旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
+ROI 必须在目的有效性与 valid-control 非劣化之后评估。仓库已实现 `examples/delivery-benchmark/real-process-workload/**` 的 8-Fact normal/degraded 真实 process workload、两个 Counterfactual、独立 semantic gold，以及 A legacy self-report、B `808efa9e` isolated envelope、C clean final candidate 的收集/评分/复算 owner。但 authentic A/B/C collection 仍等待干净已提交的 final C，`authoring_token_count` 仍必须来自 invocation-bound host/provider usage event；缺失时是 `required-unverified`，不接受 surrogate tokenizer，也不得得出正 ROI 或 Level 4。旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=early-real-entry-feedback kind=requirement -->
@@ -155,7 +155,11 @@ ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Lev
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=owner-dependency-lifecycle-boundary kind=technical_obligation aspect=architecture -->
-`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。
+`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-process-runtime-closure.ts` 绑定 Source-backed root、完整 argv 与 production carriers，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。声明稳定的 exact `planned` root/argv/carrier 可在 Preflight/Compile 时尚未生成，但 Final Gate 必须要求其当前实体；兼容 Checks 复用同一 Raw Execution/envelope，cross-Check implicit-preserved Fact 仍保留独立 obligation/result identity。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=harness-package-runtime-execution-target kind=technical_obligation aspect=architecture -->
+Execution target authority: {"capabilities":["cold-start","process-runtime","production-root"],"key":"harness-package-runtime","role":"product","root_argv":[],"root_entrypoint":"packages/ty-context/dist/cli.js","runtime_family":"process"}.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=build-reuse-buy-allowed-set kind=technical_obligation aspect=architecture -->
@@ -167,7 +171,7 @@ ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Lev
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=compatibility-security-resource-boundaries kind=technical_obligation aspect=architecture -->
-direct-process 在 runner 前复制 root executable、完整 argv 中可归因仓库文件、声明 input_paths 与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe共享预算做 streaming pre/post identity+digest；Source/Contract/Context与任意 verification/frozen_files 不进入 closure。child 环境最小化、stdout有界、process tree被监测清理，但这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime与进程枚举/终止仍属于 TCB。超出该攻击边界需独立 sandbox与 External Confirmation。
+direct-process 在 runner 前复制 Source-backed root executable、完整 argv 中可归因仓库文件与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe 共享预算做 streaming pre/post identity+digest；不会因 `input_paths`、manifest/glob sibling 或任意 verification/frozen_files 而扩大 closure，Source/Contract/Context 也不进入 closure。child 环境最小化、stdout 有界、process tree 被监测清理；prepare-all watcher/pre-post 检查、process containment/cleanup 的 subtraction review 仍保留，移除任一项都必须使冻结控制失败。这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime 与进程枚举/终止仍属于 TCB，超出该攻击边界需独立 sandbox 与 External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=context-and-public-authority-update kind=requirement -->
@@ -175,11 +179,11 @@ direct-process 在 runner 前复制 root executable、完整 argv 中可归因�
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=verification-sequence-and-current-candidate kind=requirement -->
-机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run黑盒 Final Gate report。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 preflight结构检查并明确保留两个 blocks_target External Confirmation，独立审计之后才可修订能力等级。
+机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run 黑盒 Final Gate report。当前 complete Long-Task test population 的审查分类是 18 pure、50 isolated、11 exclusive；新测试必须先分类，不能默认进入并发 lane。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 Preflight 结构检查并明确保留两个 blocks_target External Confirmation，独立审计与真实 ROI 完成后才可修订能力等级。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=final-hard-acceptance kind=requirement -->
-Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner不能创建/修改 static actual；process runtime由Harness直接持有的root进程证明；项目actual/pass/verdict/runtime/interaction/state不能自证；unsupported family/method必须External Confirmation；Counterfactual必须观察真实carrier导致actual变化且不得无观察跳过；V1/V2/non-UI/static/process共用exact evaluator；R1–R8及扩展攻击经真实Final Gate拒绝、static/process正确控制通过、external控制不machine-accept；能力 verifier不以字符串证明runtime；Trust/full/package/Context全绿、无开放critical反例、真实workload正ROI且无第二Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明Level 3。
+Level 4 的硬验收仍要求：custom Oracle 不能关闭 machine Claim；runner 不能创建/修改 static actual；process runtime 由 Harness 直接持有的 Source-backed root 进程证明；项目 actual/pass/verdict/runtime/interaction/state 不能自证；unsupported family/method 必须 External Confirmation；Counterfactual 必须观察真实 carrier 导致 actual 变化且不得无观察跳过；V1/V2/non-UI/static/process 共用 exact evaluator；21-case R1–R11b 黑盒集的 18 个 wrong candidate 经真实 Final Gate 拒绝、static/process 正确控制通过、external 控制不 machine-accept；能力 verifier 不以字符串证明 runtime；Trust/full/package/Context 全绿、无开放 critical 反例、独立审计通过、真实 workload 正 ROI 且无第二 Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明 Level 3。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=approved-final-capability-wording kind=requirement -->
@@ -199,11 +203,11 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=independent-capability-audit kind=external_confirmation -->
-必须由独立于本次开发 Agent 的审计者复核当前候选、R1–R8及扩展反例、static/process正确控制、machine report完整性、Observer/TCB能力边界、无开放critical false acceptance和能力措辞。审计结论在形成明确Source/Contract Revision前保持blocks_target；本次开发Agent、旧Receipt、prose或自交付verifier不能自行完成该确认。
+必须由独立于本次开发 Agent 的审计者复核当前候选、21-case R1–R11b 黑盒集与三个正确 terminal control、machine report 完整性、Observer/TCB 能力边界、stable exact planned closure、same-envelope implicit-preserved 与 subtraction review，并确认无开放 critical false acceptance 且能力措辞未超过证据。审计结论在形成明确 Source/Contract Revision 前保持 blocks_target；本次开发 Agent、旧 Receipt、prose 或自交付 verifier 不能自行完成该确认。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=real-process-workload-roi kind=external_confirmation -->
-必须以至少一个真实Long-Task process workload完成baseline/candidate配对，保留可核验的原始运行与评分材料，测量authoring、Compile、Verify、Counterfactual、Final Gate、返工、错误完成率、总时长和维护/迁移成本，并在目的有效性先成立的前提下证明新增机制保持正ROI。该证据完成并经外部复核前保持blocks_target。
+仓库已实现可复算的真实 Long-Task process workload benchmark：同一 8-Fact product、normal/degraded modes、两个 Counterfactual、单 envelope 多 Fact、独立 semantic gold，以及 A=`0f35e08a` legacy cost/error baseline（永不 safety-eligible）、B=`808efa9e` isolated envelope、C=clean final candidate 的平衡 3→5 repeats、raw SHA closure 与 scoring/verifier owner。但 authentic collection 必须等待干净已提交的 final C，authoring token 必须有 invocation-bound host/provider usage event；当前二者尚未受信完成，不能以 surrogate token 或未经核验的 collection 得出正 ROI。该证据完成并经外部复核前保持 blocks_target。
 <!-- ty-source-item:end -->
 
 ```yaml semantic-fact-manifest-v1
@@ -258,6 +262,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "early-real-entry-feedback",
       "no-new-lifecycle-authority-registry",
       "owner-dependency-lifecycle-boundary",
+      "harness-package-runtime-execution-target",
       "build-reuse-buy-allowed-set",
       "technical-debt-and-future-change",
       "compatibility-security-resource-boundaries",
@@ -862,7 +867,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/inputs/31"
         },
-        "identity_sha256": "311cbc82d54a8e6971de27738306c8d05f1a41176aa542a015d9674c8fbfb3ba",
+        "identity_sha256": "2cf7d378292c9223f99527b02aaa911b06db765ee33390426ee8832298957ef8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.attack-suite-ground-truth"
@@ -880,7 +885,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/inputs/32"
         },
-        "identity_sha256": "c88792035e9d4a11369347cf4b12fa8bf9c3ff19a6ce13b9747cbf09aefc6376",
+        "identity_sha256": "615f877798441b829a628ecfa048bbd0ad8af345b5011324df9f5032c53522ef",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.valid-control-suite"
@@ -898,7 +903,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/inputs/33"
         },
-        "identity_sha256": "b5b349a6507bf3c1e2bf5f76da4009cc204a0ab8d720e908f73ad236fbbfc696",
+        "identity_sha256": "19c4eb3d3a446714d3b16db38a5a34afd47fa5c54db7cf300b53b9321413313a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.black-box-final-gate-lifecycle"
@@ -952,7 +957,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/inputs/36"
         },
-        "identity_sha256": "1308ef7830e7ada1f12491f2472fb20c328d0f15a3a4dc5100e6a1804d2e338d",
+        "identity_sha256": "8bc60e916e53760a9e655e152868b2b926858b371f9c4ef69552269846d987d5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.roi-admission-order"
@@ -1006,7 +1011,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/inputs/39"
         },
-        "identity_sha256": "d59dc6b7932cb01aa7541b35d92e53178797dd50243ca04a438e6212fc181d99",
+        "identity_sha256": "ba5b9550112f629f61456d527bbe3c3eee22f28447199a739f49fa64b40fb410",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -1017,12 +1022,30 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
-        "key": "input.source.build-reuse-buy-allowed-set",
+        "key": "input.source.harness-package-runtime-execution-target",
         "kind": "input",
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
           "value": "/inputs/40"
+        },
+        "identity_sha256": "e89d9733cdc25387ebf7c56bf2e41db74bd31816031c7a03326b3941bd8877c3",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.owner-dependency-lifecycle-boundary"
+        ],
+        "basis_refs": [
+          "harness-package-runtime-execution-target"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "input.source.build-reuse-buy-allowed-set",
+        "kind": "input",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/inputs/41"
         },
         "identity_sha256": "d207acdab3873997dd1797e58195a2075fbcbce9b934e9b9b25c225ee974cf0d",
         "disposition": "material_with_facts",
@@ -1040,7 +1063,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/41"
+          "value": "/inputs/42"
         },
         "identity_sha256": "41c29774cf9fa35e108230f42e8750448b82e2bf7daceb593d5b9b7de6e240d5",
         "disposition": "material_with_facts",
@@ -1058,9 +1081,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/42"
+          "value": "/inputs/43"
         },
-        "identity_sha256": "2690543bc9ca7628b6a710bc61c492715f78201729b161ee9eec90da25de3ffa",
+        "identity_sha256": "2bfb6a1a193974859c9a7b195071c2d57549ea251a1fc821d6fc10ee3d445c88",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.compatibility-security-resource-boundaries"
@@ -1076,7 +1099,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/43"
+          "value": "/inputs/44"
         },
         "identity_sha256": "7fcba43298a0a8c7fa0e6b07b4ba214305486187116bbc2201d3cfae2e29373f",
         "disposition": "material_with_facts",
@@ -1094,9 +1117,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/44"
+          "value": "/inputs/45"
         },
-        "identity_sha256": "b6761ee02402d12bc24652b102a8cc9ea7595e9901dbe74cb1bbb21ea52ccd2d",
+        "identity_sha256": "9e8b82fa2ca18e3c6f4b6c7e9debd2a68c1a07312b10c0e1575a286ec8d44e4a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
@@ -1112,9 +1135,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/45"
+          "value": "/inputs/46"
         },
-        "identity_sha256": "45ec59206628cdde7bdf9a8395658205b8fe4a4d1d26f9e9c90bfccd1a2a2240",
+        "identity_sha256": "53e475a866bbb3638fd69c466e5d06616e574ce5524d3576ff4f2ba91e97ef34",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.final-hard-acceptance"
@@ -1130,7 +1153,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/46"
+          "value": "/inputs/47"
         },
         "identity_sha256": "f9d80d0ea403f6505f4171e107da9b53b4254b359fc4c70b5cdb205a610d3faa",
         "disposition": "material_with_facts",
@@ -1148,7 +1171,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/47"
+          "value": "/inputs/48"
         },
         "identity_sha256": "c9cdd892a89b3bb5c5b853172a6f64a9c8f73dd6fdab87bf394916a41d709903",
         "disposition": "material_with_facts",
@@ -1166,7 +1189,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/48"
+          "value": "/inputs/49"
         },
         "identity_sha256": "13fd18a6a2f71bcfab28693c806d9dcc5b07d95a1028c548f6e77490967f5e9f",
         "disposition": "material_with_facts",
@@ -1184,7 +1207,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/49"
+          "value": "/inputs/50"
         },
         "identity_sha256": "98155d260b277f1eb00b60b2e17577efe8c09e768ec1a1e5eedaa52177161421",
         "disposition": "material_with_facts",
@@ -1197,12 +1220,48 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
+        "key": "input.source.independent-capability-audit",
+        "kind": "input",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/inputs/51"
+        },
+        "identity_sha256": "de6ea27491a8f22b222905ad3986ca9d14c7b55bad489bf569d7b31e2b247c9e",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "input.source.real-process-workload-roi",
+        "kind": "input",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/inputs/52"
+        },
+        "identity_sha256": "f87f16307e8e6ce6fa2bb883799b38043e8a2be87dd01d631302d859fd8960e9",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
         "key": "input.context.project-context-architecture-md",
         "kind": "input",
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/50"
+          "value": "/inputs/53"
         },
         "identity_sha256": "872e13bb00f787e43e37d16d5f7aec9c679bfcfb87c33fbe2af29d5b5bd0d439",
         "disposition": "material_with_facts",
@@ -1220,7 +1279,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/51"
+          "value": "/inputs/54"
         },
         "identity_sha256": "33362dd77c33b7b93d56543615dcb947c0e29ce731607a79103500fad579b56a",
         "disposition": "material_with_facts",
@@ -1238,7 +1297,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/52"
+          "value": "/inputs/55"
         },
         "identity_sha256": "6b4b1bb14d03176cb9b832a4233b55d4bc81ca8715b6ad8f2978a1598fd1790d",
         "disposition": "material_with_facts",
@@ -1256,7 +1315,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/53"
+          "value": "/inputs/56"
         },
         "identity_sha256": "c386607f7267cdbc35b7bca8eabe9b82454b6f95fe6a048d2d882be2dacafbd5",
         "disposition": "material_with_facts",
@@ -1274,7 +1333,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/54"
+          "value": "/inputs/57"
         },
         "identity_sha256": "d883d6bcb24f00b642ac1fcbbc99593d8cf6a2ee3bb04707fbcbc3211f3abdff",
         "disposition": "material_with_facts",
@@ -1292,7 +1351,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/55"
+          "value": "/inputs/58"
         },
         "identity_sha256": "3474a6f9f37d102510ea66c03f3312cfd067d8aa9fdc61a5bf1e0e263d9f1088",
         "disposition": "material_with_facts",
@@ -1310,7 +1369,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/56"
+          "value": "/inputs/59"
         },
         "identity_sha256": "2329ee48564489986ee1d2297ee4669ed7d938d51e1a4d45e93bbdfe91a899a5",
         "disposition": "material_with_facts",
@@ -1328,9 +1387,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/57"
+          "value": "/inputs/60"
         },
-        "identity_sha256": "c2465b0f0b4b01a57cf15946b2d177af9fb4a7fac6ea77d486aa37c28e7ab6ce",
+        "identity_sha256": "479e0e44c155b7415531c90365a3df2c1e0977bcd92e906f39c48a279a9db6b2",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-new-lifecycle-authority-registry"
@@ -1346,7 +1405,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/58"
+          "value": "/inputs/61"
         },
         "identity_sha256": "6e097862618422c06a00843d1979cf528d01ceaf4816cedc1ef29666c4b2f063",
         "disposition": "material_with_facts",
@@ -1364,9 +1423,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/59"
+          "value": "/inputs/62"
         },
-        "identity_sha256": "a602dbe5497099da9a5ad6b82e9013ec21067876c393b7683c2b91792b32617e",
+        "identity_sha256": "c28589ab65c048e0b74439b3f632213bfb8f2de794493eacecf74db8b315b54c",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.route-b-project-owner-decision"
@@ -1382,7 +1441,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/60"
+          "value": "/inputs/63"
         },
         "identity_sha256": "6aac798fec574905d3bfa03d095f3b80e6f11385fba5b8f828ba0e7bfb764dea",
         "disposition": "material_with_facts",
@@ -1400,7 +1459,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/61"
+          "value": "/inputs/64"
         },
         "identity_sha256": "6debfddb2271c3e5b401559842880f1be687dc130447afc9a6e7acd0fdcf848f",
         "disposition": "material_with_facts",
@@ -1418,9 +1477,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/62"
+          "value": "/inputs/65"
         },
-        "identity_sha256": "2cb22a7e457619dd925b89664512ee7450b211b7e878e8973fb0b8c94f69130b",
+        "identity_sha256": "1921d64b1e9f90bbd2b16ad38ae589fbad1bc0e889fbd8b387eb75417bb460f7",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -1436,9 +1495,9 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/63"
+          "value": "/inputs/66"
         },
-        "identity_sha256": "9e253fb586341b1bf78dff77e4f460c719768896b483d21833683dfc2a9e089e",
+        "identity_sha256": "d5e1e494b50c089ca9378baf8cce5ba9657e96615c75fac191ab32f7cd5e0e05",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
@@ -1454,7 +1513,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/64"
+          "value": "/inputs/67"
         },
         "identity_sha256": "aa8d9ea06bb5d6d11d55faed8484a3776fa456f38a19b6ef2fa4eaa8f4927695",
         "disposition": "material_with_facts",
@@ -1472,7 +1531,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "locator": {
           "material_ref": "long-task-real-capability-facts",
           "kind": "manifest_pointer",
-          "value": "/inputs/65"
+          "value": "/inputs/68"
         },
         "identity_sha256": "8ca4430373ea9d7fd15a963515763420c6aebfd35a721cee7130cb09d0b50a0e",
         "disposition": "material_with_facts",
@@ -1481,42 +1540,6 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         ],
         "basis_refs": [
           "material-input-provenance"
-        ],
-        "rationale": "This census identity contributes to an exact semantic Fact."
-      },
-      {
-        "key": "input.source.independent-capability-audit",
-        "kind": "input",
-        "locator": {
-          "material_ref": "long-task-real-capability-facts",
-          "kind": "manifest_pointer",
-          "value": "/inputs/66"
-        },
-        "identity_sha256": "f23f99e0c66fb3cd97897beab2a42598a9147591c08f792700d7712589fa47db",
-        "disposition": "material_with_facts",
-        "fact_refs": [
-          "fact.requirement.independent-capability-audit"
-        ],
-        "basis_refs": [
-          "independent-capability-audit"
-        ],
-        "rationale": "This census identity contributes to an exact semantic Fact."
-      },
-      {
-        "key": "input.source.real-process-workload-roi",
-        "kind": "input",
-        "locator": {
-          "material_ref": "long-task-real-capability-facts",
-          "kind": "manifest_pointer",
-          "value": "/inputs/67"
-        },
-        "identity_sha256": "37afed6729ba03047e33a94d9564a1e14572e3542bc200c505f83cceedabb739",
-        "disposition": "material_with_facts",
-        "fact_refs": [
-          "fact.requirement.real-process-workload-roi"
-        ],
-        "basis_refs": [
-          "real-process-workload-roi"
         ],
         "rationale": "This census identity contributes to an exact semantic Fact."
       },
@@ -5545,13 +5568,14 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "kind": "manifest_pointer",
           "value": "/facts/39"
         },
-        "identity_sha256": "837755f7bf4d1ad1bf6a88d83668928f820aae2244bf4c1c9fabb6239c4f055a",
+        "identity_sha256": "a039ec027d2635ceb1aeab92104902274e9d7cbdb0e1390918206de36c2769d6",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
         ],
         "basis_refs": [
-          "owner-dependency-lifecycle-boundary"
+          "owner-dependency-lifecycle-boundary",
+          "harness-package-runtime-execution-target"
         ],
         "rationale": "This census identity contributes to an exact semantic Fact."
       },
@@ -6487,7 +6511,8 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
           "fact.requirement.owner-dependency-lifecycle-boundary"
         ],
         "basis_refs": [
-          "owner-dependency-lifecycle-boundary"
+          "owner-dependency-lifecycle-boundary",
+          "harness-package-runtime-execution-target"
         ],
         "rationale": "This census identity contributes to an exact semantic Fact."
       },
@@ -6858,13 +6883,13 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
     "collections": [
       {
         "name": "inputs",
-        "expected_count": 68,
-        "identity_sha256": "77690a70fdbd85ee6486a4b1b9ceb59edd4249e54e36a136688a1e9a30a699c8"
+        "expected_count": 69,
+        "identity_sha256": "2d02cbdb6850c778689af7930cdcb692371515cc6607478d6f33b9406fb8eea6"
       },
       {
         "name": "inspector_census",
-        "expected_count": 358,
-        "identity_sha256": "279f3a0c35865940350ef7806b07f0fccd140908f044de7f97400ec99b27cbb3"
+        "expected_count": 359,
+        "identity_sha256": "790b80c167a8136aeb9d21f184ca4d79194fc0fa47e39874e2cf7aca957503cd"
       },
       {
         "name": "family_dispositions",
@@ -7382,7 +7407,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.attack-suite-ground-truth",
       "kind": "source_item",
       "source_ref": "attack-suite-ground-truth",
-      "sha256": "f1c1106a6d29e4c4ad68985a73e9d6e30c244da0f9b26234a7b3f5dfb2896deb",
+      "sha256": "2658b7ac24769b97269c15b785ba569215c2c0908a5a628440bd7c548aa0643b",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.attack-suite-ground-truth"
@@ -7396,7 +7421,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.valid-control-suite",
       "kind": "source_item",
       "source_ref": "valid-control-suite",
-      "sha256": "87ca0654d40f376202ddaff18121af351c95195bbbd6b89e2d0e8247b45498f2",
+      "sha256": "9b3155f3b900dcc582beae7fcb8d3174f2c042e728d3144ed528fe96e814390c",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.valid-control-suite"
@@ -7410,7 +7435,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.black-box-final-gate-lifecycle",
       "kind": "source_item",
       "source_ref": "black-box-final-gate-lifecycle",
-      "sha256": "64de5cb1d524b22bb302ffd72b0d5b11f467bcd5b963375b8df9ad88e1d71d78",
+      "sha256": "84ddd2af874d975ff0790b49c1bd2909a2782acc9903d672649e1e72090de7e7",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.black-box-final-gate-lifecycle"
@@ -7452,7 +7477,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.roi-admission-order",
       "kind": "source_item",
       "source_ref": "roi-admission-order",
-      "sha256": "64dcaaa2f4ed70c390afb0245b16ff978ff6af619a2562a0d999ab1c8731afb8",
+      "sha256": "60928fa1922da5b56f3d5618aaa075f6fe7fcfb29417ae34c778dd4a296adf09",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.roi-admission-order"
@@ -7494,7 +7519,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.owner-dependency-lifecycle-boundary",
       "kind": "source_item",
       "source_ref": "owner-dependency-lifecycle-boundary",
-      "sha256": "7ae6acb57f0b9fc6d4d75bab007f8f4af66bac0f6ddbdae3e0a4df1ce9d1081a",
+      "sha256": "f7e26be6572ac7905475ff3eccca2e941d5dfbfd7b2c5e1623e5cd5a7f25a83c",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -7503,6 +7528,20 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "owner-dependency-lifecycle-boundary"
       ],
       "rationale": "The marked Source item owns one independently traceable requirement Fact."
+    },
+    {
+      "key": "input.source.harness-package-runtime-execution-target",
+      "kind": "source_item",
+      "source_ref": "harness-package-runtime-execution-target",
+      "sha256": "579db43704bfd89013aebe4c03e43cc49f374917a749d3aaab4e8a6568c77f00",
+      "disposition": "non_ui_material",
+      "fact_refs": [
+        "fact.requirement.owner-dependency-lifecycle-boundary"
+      ],
+      "basis_refs": [
+        "harness-package-runtime-execution-target"
+      ],
+      "rationale": "The marked Source item owns the exact package process execution-target authority and contributes to the observer architecture Fact."
     },
     {
       "key": "input.source.build-reuse-buy-allowed-set",
@@ -7536,7 +7575,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.compatibility-security-resource-boundaries",
       "kind": "source_item",
       "source_ref": "compatibility-security-resource-boundaries",
-      "sha256": "7ee25ef71e1acbf1463315c2948f8e9f4e953d6739dbb65f039a8e4a7ce6f6e6",
+      "sha256": "4996a11fe0b37ee3277c58b23756607bff23a7a13d07a56cec719147d765b898",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.compatibility-security-resource-boundaries"
@@ -7564,7 +7603,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.verification-sequence-and-current-candidate",
       "kind": "source_item",
       "source_ref": "verification-sequence-and-current-candidate",
-      "sha256": "4594c2f0efe1add984175000f23712aa00df0e81433781b5c79532c99fc30d4a",
+      "sha256": "eab241287d13040aa42f2088868f69aed11082fb63d19c5c4fe866e3a3a79554",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.verification-sequence-and-current-candidate"
@@ -7578,7 +7617,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.source.final-hard-acceptance",
       "kind": "source_item",
       "source_ref": "final-hard-acceptance",
-      "sha256": "3ded71cbbdfae3d28675c2c6a056340ca75110b56029041ba07640f6e15d7f2c",
+      "sha256": "7956ae032542586d5b2f1be7e150d48578082e92b82dd34a075b5522a210d6a4",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.final-hard-acceptance"
@@ -7643,6 +7682,34 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "critical-claim-inflation-risk"
       ],
       "rationale": "The marked Source item owns one independently traceable requirement Fact."
+    },
+    {
+      "key": "input.source.independent-capability-audit",
+      "kind": "source_item",
+      "source_ref": "independent-capability-audit",
+      "sha256": "db603333b2770c4bf560c048627b58e9aabb4772e4043c963694f3c4cbc844d4",
+      "disposition": "non_ui_material",
+      "fact_refs": [
+        "fact.requirement.independent-capability-audit"
+      ],
+      "basis_refs": [
+        "independent-capability-audit"
+      ],
+      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
+    },
+    {
+      "key": "input.source.real-process-workload-roi",
+      "kind": "source_item",
+      "source_ref": "real-process-workload-roi",
+      "sha256": "7cc42b28cd1ad4cd9f6adf8b7918e9498a891cde07c580cdf6c17456509d535c",
+      "disposition": "non_ui_material",
+      "fact_refs": [
+        "fact.requirement.real-process-workload-roi"
+      ],
+      "basis_refs": [
+        "real-process-workload-roi"
+      ],
+      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
     },
     {
       "key": "input.context.project-context-architecture-md",
@@ -7746,7 +7813,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.context.project-context-areas-harness-package-contracts-workflow-contract-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/workflow-contract.md",
-      "sha256": "4f58f20b3ce157c4a1e33d68c9ec685a53c3be6f0be197ef3040b881b08dceea",
+      "sha256": "d67757e1edd4abf068af55245d9b18035b8679160772764900a05b841e755184",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.no-new-lifecycle-authority-registry"
@@ -7774,7 +7841,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      "sha256": "e1c4b08a57189f2fbdc1877d096fd8324355a0f1936563a50191d23cd1b0c85e",
+      "sha256": "04ccde8c4c15bb5c56bcafed91887eaf0c4cd3d358806f8fb398cf24718548da",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.route-b-project-owner-decision"
@@ -7816,7 +7883,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.context.project-context-areas-harness-package-implementation-index-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/implementation-index.md",
-      "sha256": "a4793d2f90c389221cbdfa1fe844e4fd283126c5c2cf65363d809b9f713fe561",
+      "sha256": "9c5943b2af7490496148098604225a46ce50781506aff6ab4f4e03c303237430",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -7830,7 +7897,7 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
       "key": "input.context.project-context-areas-harness-package-verification-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/verification.md",
-      "sha256": "94dc896c04a6865933996cde8a5f7642a0fdcecd2bbe28d716293c902a3ff39c",
+      "sha256": "b2d734c8deba9a4816cbc06e4d8ae99c51fd90820171a66332b5c524204460d5",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.verification-sequence-and-current-candidate"
@@ -7867,34 +7934,6 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "material-input-provenance"
       ],
       "rationale": "The complete Context snapshot is classified and bound to its owning requirement Fact."
-    },
-    {
-      "key": "input.source.independent-capability-audit",
-      "kind": "source_item",
-      "source_ref": "independent-capability-audit",
-      "sha256": "c4a2edb61ed63ec875d4e75c01d2fe907185ab4570eb603b15921b74960ceeb1",
-      "disposition": "non_ui_material",
-      "fact_refs": [
-        "fact.requirement.independent-capability-audit"
-      ],
-      "basis_refs": [
-        "independent-capability-audit"
-      ],
-      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
-    },
-    {
-      "key": "input.source.real-process-workload-roi",
-      "kind": "source_item",
-      "source_ref": "real-process-workload-roi",
-      "sha256": "0880ae763030e03f34e0db22308523590556c4078df5d49acefdedaafceb5542",
-      "disposition": "non_ui_material",
-      "fact_refs": [
-        "fact.requirement.real-process-workload-roi"
-      ],
-      "basis_refs": [
-        "real-process-workload-roi"
-      ],
-      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
     }
   ],
   "family_dispositions": [
@@ -12830,7 +12869,8 @@ Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner
         "derivation": null
       },
       "source_item_refs": [
-        "owner-dependency-lifecycle-boundary"
+        "owner-dependency-lifecycle-boundary",
+        "harness-package-runtime-execution-target"
       ]
     },
     {

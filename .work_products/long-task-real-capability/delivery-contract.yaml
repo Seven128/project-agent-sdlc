@@ -2,7 +2,7 @@ schema_version: long-task-delivery-v2
 semantic_fact_manifest:
   key: long-task-real-capability-facts
   source_path: docs/long-task-real-capability-closure.md
-  sha256: 3942480794c8a9b0bff5f8f098a55111267df402829feb7b407aa91c303ba0f9
+  sha256: 462dbe63f2157ecfc23c53fa1480e4b4c0bafc2bf6982835114f50da4bf6f7cc
 task:
   id: long-task-real-capability-closure
   title: Long-Task real capability and anti-degradation closure
@@ -252,21 +252,21 @@ source_claims:
         - observer-tcb-closure.requirement.v3-v4-and-migration-rule
   - key: attack-suite-ground-truth
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 当前黑盒攻击集固定覆盖 R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失。每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report；不得以内部 policy error 或 aggregate Boolean代替。
+    statement: 当前 Level 3 黑盒集合固定为 21 个 case，其中 18 个 wrong candidate 均被拒绝：R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R5c direct-process evidence-role carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失，以及 R9 non-carrier evidence input、R10 non-carrier verification input、R11 Source-wrong product root 与 R11b 未绑定 repository argv 文件。R9–R11 及 R11b 已在当前 owner 修复；每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report，Compile-time 攻击还必须以合法近邻 Authority 获得 Final-Gate 拒绝，不得以内层 policy error、`active_task_missing` 或 aggregate Boolean 代替。
     disposition:
       type: claim
       refs:
         - proof-and-roi.requirement.attack-suite-ground-truth
   - key: valid-control-suite
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure machine-accepted；Harness 直接启动 process product root、同一 envelope承载多个 observation identity并在合法 Counterfactual 中观察到 affected/preserved/fan-out 关系的 process control machine-accepted；unsupported browser/native/layout/visual 等保留 `blocked_external`/external-pending 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
+    statement: 三个正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure 达到 `machine_accepted`；Harness 直接启动 process product root，在同一 Raw Execution/envelope 中承载多个显式 Fact 及 cross-Check implicit-preserved Fact，并在合法 Counterfactual 中观察 affected/preserved/allowed-fan-out 关系，达到 `machine_accepted`；unsupported target-blocking control 保留 `blocked_external` 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
     disposition:
       type: claim
       refs:
         - proof-and-roi.requirement.valid-control-suite
   - key: black-box-final-gate-lifecycle
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
+    statement: 能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；Compile-time 攻击同时保留 owner diagnostic 和合法近邻 Authority 的 Final-Gate 拒绝，`active_task_missing` 不算能力证明。源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
     disposition:
       type: claim
       refs:
@@ -287,7 +287,7 @@ source_claims:
         - proof-and-roi.requirement.fresh-agent-benchmark-boundary
   - key: roi-admission-order
     source_ref: docs/long-task-real-capability-closure.md
-    statement: ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Level 4 前必须由 `real-process-workload-roi` 提供至少一个真实 Long-Task process workload 的 baseline/candidate 配对，明确 workload、环境、authoring/Compile/Verify/Counterfactual/Final Gate 成本、返工、错误完成率、总时长、comparator/tolerance，并证明新增成本保持正 ROI；旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
+    statement: ROI 必须在目的有效性与 valid-control 非劣化之后评估。仓库已实现 `examples/delivery-benchmark/real-process-workload/**` 的 8-Fact normal/degraded 真实 process workload、两个 Counterfactual、独立 semantic gold，以及 A legacy self-report、B `808efa9e` isolated envelope、C clean final candidate 的收集/评分/复算 owner。但 authentic A/B/C collection 仍等待干净已提交的 final C，`authoring_token_count` 仍必须来自 invocation-bound host/provider usage event；缺失时是 `required-unverified`，不接受 surrogate tokenizer，也不得得出正 ROI 或 Level 4。旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
     disposition:
       type: claim
       refs:
@@ -308,11 +308,18 @@ source_claims:
         - assurance-governance.obligation.no-new-lifecycle-authority-registry
   - key: owner-dependency-lifecycle-boundary
     source_ref: docs/long-task-real-capability-closure.md
-    statement: "`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。"
+    statement: "`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-process-runtime-closure.ts` 绑定 Source-backed root、完整 argv 与 production carriers，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。声明稳定的 exact `planned` root/argv/carrier 可在 Preflight/Compile 时尚未生成，但 Final Gate 必须要求其当前实体；兼容 Checks 复用同一 Raw Execution/envelope，cross-Check implicit-preserved Fact 仍保留独立 obligation/result identity。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。"
     disposition:
       type: claim
       refs:
         - observer-tcb-closure.obligation.owner-dependency-lifecycle-boundary
+  - key: harness-package-runtime-execution-target
+    source_ref: docs/long-task-real-capability-closure.md
+    statement: 'Execution target authority: {"capabilities":["cold-start","process-runtime","production-root"],"key":"harness-package-runtime","role":"product","root_argv":[],"root_entrypoint":"packages/ty-context/dist/cli.js","runtime_family":"process"}.'
+    disposition:
+      type: claim
+      refs:
+        - execution_target.harness-package-runtime
   - key: build-reuse-buy-allowed-set
     source_ref: docs/long-task-real-capability-closure.md
     statement: 本轮选择复用现有 snapshot manifest、raw execution identity、Counterfactual sandbox、JSON Pointer/canonical JSON limits、External Confirmation 与 Final Gate owners，并以标准库实现有界 streaming digest、隔离 closure复制、direct spawn/stdout capture 和 host attestation；没有引入通用 observer framework 或新依赖。禁止重复 exact owner、把 project verifier置回 TCB、无限缓冲 stdout、按 raw group重复无界预算或复制 Expected/verification 全闭包。
@@ -329,7 +336,7 @@ source_claims:
         - p0-exact-recomputation.obligation.technical-debt-and-future-change
   - key: compatibility-security-resource-boundaries
     source_ref: docs/long-task-real-capability-closure.md
-    statement: direct-process 在 runner 前复制 root executable、完整 argv 中可归因仓库文件、声明 input_paths 与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe共享预算做 streaming pre/post identity+digest；Source/Contract/Context与任意 verification/frozen_files 不进入 closure。child 环境最小化、stdout有界、process tree被监测清理，但这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime与进程枚举/终止仍属于 TCB。超出该攻击边界需独立 sandbox与 External Confirmation。
+    statement: direct-process 在 runner 前复制 Source-backed root executable、完整 argv 中可归因仓库文件与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe 共享预算做 streaming pre/post identity+digest；不会因 `input_paths`、manifest/glob sibling 或任意 verification/frozen_files 而扩大 closure，Source/Contract/Context 也不进入 closure。child 环境最小化、stdout 有界、process tree 被监测清理；prepare-all watcher/pre-post 检查、process containment/cleanup 的 subtraction review 仍保留，移除任一项都必须使冻结控制失败。这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime 与进程枚举/终止仍属于 TCB，超出该攻击边界需独立 sandbox 与 External Confirmation。
     disposition:
       type: claim
       refs:
@@ -343,14 +350,14 @@ source_claims:
         - proof-and-roi.requirement.context-and-public-authority-update
   - key: verification-sequence-and-current-candidate
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run黑盒 Final Gate report。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 preflight结构检查并明确保留两个 blocks_target External Confirmation，独立审计之后才可修订能力等级。
+    statement: 机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run 黑盒 Final Gate report。当前 complete Long-Task test population 的审查分类是 18 pure、50 isolated、11 exclusive；新测试必须先分类，不能默认进入并发 lane。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 Preflight 结构检查并明确保留两个 blocks_target External Confirmation，独立审计与真实 ROI 完成后才可修订能力等级。
     disposition:
       type: claim
       refs:
         - proof-and-roi.requirement.verification-sequence-and-current-candidate
   - key: final-hard-acceptance
     source_ref: docs/long-task-real-capability-closure.md
-    statement: Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner不能创建/修改 static actual；process runtime由Harness直接持有的root进程证明；项目actual/pass/verdict/runtime/interaction/state不能自证；unsupported family/method必须External Confirmation；Counterfactual必须观察真实carrier导致actual变化且不得无观察跳过；V1/V2/non-UI/static/process共用exact evaluator；R1–R8及扩展攻击经真实Final Gate拒绝、static/process正确控制通过、external控制不machine-accept；能力 verifier不以字符串证明runtime；Trust/full/package/Context全绿、无开放critical反例、真实workload正ROI且无第二Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明Level 3。
+    statement: Level 4 的硬验收仍要求：custom Oracle 不能关闭 machine Claim；runner 不能创建/修改 static actual；process runtime 由 Harness 直接持有的 Source-backed root 进程证明；项目 actual/pass/verdict/runtime/interaction/state 不能自证；unsupported family/method 必须 External Confirmation；Counterfactual 必须观察真实 carrier 导致 actual 变化且不得无观察跳过；V1/V2/non-UI/static/process 共用 exact evaluator；21-case R1–R11b 黑盒集的 18 个 wrong candidate 经真实 Final Gate 拒绝、static/process 正确控制通过、external 控制不 machine-accept；能力 verifier 不以字符串证明 runtime；Trust/full/package/Context 全绿、无开放 critical 反例、独立审计通过、真实 workload 正 ROI 且无第二 Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明 Level 3。
     disposition:
       type: claim
       refs:
@@ -385,14 +392,14 @@ source_claims:
         - critical_user_path:assurance-governance
   - key: independent-capability-audit
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 必须由独立于本次开发 Agent 的审计者复核当前候选、R1–R8及扩展反例、static/process正确控制、machine report完整性、Observer/TCB能力边界、无开放critical false acceptance和能力措辞。审计结论在形成明确Source/Contract Revision前保持blocks_target；本次开发Agent、旧Receipt、prose或自交付verifier不能自行完成该确认。
+    statement: 必须由独立于本次开发 Agent 的审计者复核当前候选、21-case R1–R11b 黑盒集与三个正确 terminal control、machine report 完整性、Observer/TCB 能力边界、stable exact planned closure、same-envelope implicit-preserved 与 subtraction review，并确认无开放 critical false acceptance 且能力措辞未超过证据。审计结论在形成明确 Source/Contract Revision 前保持 blocks_target；本次开发 Agent、旧 Receipt、prose 或自交付 verifier 不能自行完成该确认。
     disposition:
       type: external_confirmation
       refs:
         - independent-capability-audit
   - key: real-process-workload-roi
     source_ref: docs/long-task-real-capability-closure.md
-    statement: 必须以至少一个真实Long-Task process workload完成baseline/candidate配对，保留可核验的原始运行与评分材料，测量authoring、Compile、Verify、Counterfactual、Final Gate、返工、错误完成率、总时长和维护/迁移成本，并在目的有效性先成立的前提下证明新增机制保持正ROI。该证据完成并经外部复核前保持blocks_target。
+    statement: 仓库已实现可复算的真实 Long-Task process workload benchmark：同一 8-Fact product、normal/degraded modes、两个 Counterfactual、单 envelope 多 Fact、独立 semantic gold，以及 A=`0f35e08a` legacy cost/error baseline（永不 safety-eligible）、B=`808efa9e` isolated envelope、C=clean final candidate 的平衡 3→5 repeats、raw SHA closure 与 scoring/verifier owner。但 authentic collection 必须等待干净已提交的 final C，authoring token 必须有 invocation-bound host/provider usage event；当前二者尚未受信完成，不能以 surrogate token 或未经核验的 collection 得出正 ROI。该证据完成并经外部复核前保持 blocks_target。
     disposition:
       type: external_confirmation
       refs:
@@ -461,7 +468,7 @@ global:
     counterfactual_controls: []
     external_confirmations:
       - key: independent-capability-audit
-        description: 必须由独立于本次开发 Agent 的审计者复核当前候选、R1–R8及扩展反例、static/process正确控制、machine report完整性、Observer/TCB能力边界、无开放critical false acceptance和能力措辞。审计结论在形成明确Source/Contract Revision前保持blocks_target；本次开发Agent、旧Receipt、prose或自交付verifier不能自行完成该确认。
+        description: 必须由独立于本次开发 Agent 的审计者复核当前候选、21-case R1–R11b 黑盒集与三个正确 terminal control、machine report 完整性、Observer/TCB 能力边界、stable exact planned closure、same-envelope implicit-preserved 与 subtraction review，并确认无开放 critical false acceptance 且能力措辞未超过证据。审计结论在形成明确 Source/Contract Revision 前保持 blocks_target；本次开发 Agent、旧 Receipt、prose 或自交付 verifier 不能自行完成该确认。
         owner: independent capability auditor
         kind: expert_authority
         impact_claims:
@@ -571,7 +578,7 @@ global:
           - proof-and-roi.semantic_fact.fact.requirement.independent-capability-audit
         blocks_target: true
       - key: real-process-workload-roi
-        description: 必须以至少一个真实Long-Task process workload完成baseline/candidate配对，保留可核验的原始运行与评分材料，测量authoring、Compile、Verify、Counterfactual、Final Gate、返工、错误完成率、总时长和维护/迁移成本，并在目的有效性先成立的前提下证明新增机制保持正ROI。该证据完成并经外部复核前保持blocks_target。
+        description: 仓库已实现可复算的真实 Long-Task process workload benchmark：同一 8-Fact product、normal/degraded modes、两个 Counterfactual、单 envelope 多 Fact、独立 semantic gold，以及 A=`0f35e08a` legacy cost/error baseline（永不 safety-eligible）、B=`808efa9e` isolated envelope、C=clean final candidate 的平衡 3→5 repeats、raw SHA closure 与 scoring/verifier owner。但 authentic collection 必须等待干净已提交的 final C，authoring token 必须有 invocation-bound host/provider usage event；当前二者尚未受信完成，不能以 surrogate token 或未经核验的 collection 得出正 ROI。该证据完成并经外部复核前保持 blocks_target。
         owner: project owner and independent ROI reviewer
         kind: field_validation
         impact_claims:
@@ -1017,6 +1024,7 @@ outcomes:
           - tests/ty-context/long-task-public-contract-example.test.mjs
           - tests/ty-context/long-task-release-tarball-contract.test.mjs
           - tools/release_tarball_smoke_fixture.mjs
+          - tests/ty-context/test-suite-runtime.test.mjs
       requirements:
         - key: purpose-validity-floor-before-relative-antidegradation
           statement: 机制开发准入顺序必须是：在明确威胁模型与 TCB 内的声明目的有效性下限 → 相对非劣化 → 有效候选不被误阻 → 总成本与 ROI。有效性下限至少要求冻结关键反例全部被拒绝、正确控制组全部通过、没有未关闭的已知 critical false acceptance、能力声明不超过证据支持范围；它不是“绝对正确”机器状态，也不得成为消费者 Long-Task 的新 Gate、状态、Authority 或 registry。
@@ -1139,6 +1147,7 @@ outcomes:
         - tests/ty-context/long-task-public-contract-example.test.mjs
         - tests/ty-context/long-task-release-tarball-contract.test.mjs
         - tools/release_tarball_smoke_fixture.mjs
+        - tests/ty-context/test-suite-runtime.test.mjs
       forbidden_paths:
         - .git/**
       bindings:
@@ -1417,6 +1426,26 @@ outcomes:
           - tests/ty-context/long-task-platform-boundary.test.mjs
           - tests/ty-context/long-task-playwright-trust-boundary.test.mjs
           - tests/ty-context/long-task-runner-freeze-v2.test.mjs
+          - packages/ty-context/src/lib/long-task-activation-validation.ts
+          - packages/ty-context/src/lib/long-task-check-execution-policy.ts
+          - packages/ty-context/src/lib/long-task-check-runner.ts
+          - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
+          - packages/ty-context/src/lib/long-task-delivery-compiler.ts
+          - packages/ty-context/src/lib/long-task-execution-observation.ts
+          - packages/ty-context/src/lib/long-task-process-runtime-closure.ts
+          - packages/ty-context/src/lib/long-task-progress.ts
+          - packages/ty-context/src/lib/long-task-runner-freeze.ts
+          - packages/ty-context/src/lib/long-task-runtime-types.ts
+          - packages/ty-context/src/lib/long-task-source-claim-validation.ts
+          - packages/ty-context/src/lib/long-task-source-target-continuity.ts
+          - packages/ty-context/src/lib/long-task-source-target-index.ts
+          - examples/process-product/README.md
+          - examples/process-product/config/state.json
+          - examples/process-product/src/product.mjs
+          - tests/ty-context/long-task-process-product-fixture.mjs
+          - tests/ty-context/long-task-semantic-manifest-fixture.mjs
+          - tests/ty-context/long-task-semantic-oracle-fixture.mjs
+          - tests/ty-context/long-task-semantic-records-fixture.mjs
       requirements:
         - key: observation-channel-authority
           statement: machine obligation 只允许两类 package-admitted 当前 Actual：A）runner 前已存在且在全部 raw execution 前统一冻结、runner 后 identity/digest 未变化的 static UTF-8 JSON exact carrier；B）Harness 在隔离 runtime-closure snapshot 中直接启动 `process/product/root` 并从 bounded stdout 捕获的 `ty-context-product-observation-v1` exact envelope。其他 custom/named project Oracle、wrapper、browser/native/device/layout/pixel/a11y/motion、protected/tolerance/mask/custom locator 都必须 External Confirmation。
@@ -1497,7 +1526,7 @@ outcomes:
           applicability_refs:
             - observer-tcb-closure-current-success
         - key: owner-dependency-lifecycle-boundary
-          statement: "`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。"
+          statement: "`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-process-runtime-closure.ts` 绑定 Source-backed root、完整 argv 与 production carriers，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。声明稳定的 exact `planned` root/argv/carrier 可在 Preflight/Compile 时尚未生成，但 Final Gate 必须要求其当前实体；兼容 Checks 复用同一 Raw Execution/envelope，cross-Check implicit-preserved Fact 仍保留独立 obligation/result identity。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。"
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
@@ -1509,7 +1538,7 @@ outcomes:
           applicability_refs:
             - observer-tcb-closure-current-success
         - key: compatibility-security-resource-boundaries
-          statement: direct-process 在 runner 前复制 root executable、完整 argv 中可归因仓库文件、声明 input_paths 与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe共享预算做 streaming pre/post identity+digest；Source/Contract/Context与任意 verification/frozen_files 不进入 closure。child 环境最小化、stdout有界、process tree被监测清理，但这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime与进程枚举/终止仍属于 TCB。超出该攻击边界需独立 sandbox与 External Confirmation。
+          statement: direct-process 在 runner 前复制 Source-backed root executable、完整 argv 中可归因仓库文件与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe 共享预算做 streaming pre/post identity+digest；不会因 `input_paths`、manifest/glob sibling 或任意 verification/frozen_files 而扩大 closure，Source/Contract/Context 也不进入 closure。child 环境最小化、stdout 有界、process tree 被监测清理；prepare-all watcher/pre-post 检查、process containment/cleanup 的 subtraction review 仍保留，移除任一项都必须使冻结控制失败。这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime 与进程枚举/终止仍属于 TCB，超出该攻击边界需独立 sandbox 与 External Confirmation。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
@@ -1526,6 +1555,19 @@ outcomes:
         - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
         - packages/ty-context/src/lib/long-task-verifier-v2.ts
         - tests/ty-context/fixtures/long-task-real-capability-state.json
+        - packages/ty-context/src/lib/long-task-activation-validation.ts
+        - packages/ty-context/src/lib/long-task-check-execution-policy.ts
+        - packages/ty-context/src/lib/long-task-check-runner.ts
+        - packages/ty-context/src/lib/long-task-counterfactual-sandbox.ts
+        - packages/ty-context/src/lib/long-task-delivery-compiler.ts
+        - packages/ty-context/src/lib/long-task-execution-observation.ts
+        - packages/ty-context/src/lib/long-task-process-runtime-closure.ts
+        - packages/ty-context/src/lib/long-task-progress.ts
+        - packages/ty-context/src/lib/long-task-runner-freeze.ts
+        - packages/ty-context/src/lib/long-task-runtime-types.ts
+        - packages/ty-context/src/lib/long-task-source-claim-validation.ts
+        - packages/ty-context/src/lib/long-task-source-target-continuity.ts
+        - packages/ty-context/src/lib/long-task-source-target-index.ts
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
         - PROJECT_SPEC.md
@@ -1552,6 +1594,13 @@ outcomes:
         - tests/ty-context/long-task-platform-boundary.test.mjs
         - tests/ty-context/long-task-playwright-trust-boundary.test.mjs
         - tests/ty-context/long-task-runner-freeze-v2.test.mjs
+        - examples/process-product/README.md
+        - examples/process-product/config/state.json
+        - examples/process-product/src/product.mjs
+        - tests/ty-context/long-task-process-product-fixture.mjs
+        - tests/ty-context/long-task-semantic-manifest-fixture.mjs
+        - tests/ty-context/long-task-semantic-oracle-fixture.mjs
+        - tests/ty-context/long-task-semantic-records-fixture.mjs
       forbidden_paths:
         - .git/**
       bindings:
@@ -1812,6 +1861,23 @@ outcomes:
           - tests/ty-context/long-task-real-capability-delivery-verifier.test.mjs
           - tools/consumer_lab_full_test.mjs
           - tests/ty-context/consumer-lab-script.test.mjs
+          - .codex/skills/long-task-workflow/SKILL.md
+          - .codex/skills/long-task-workflow/references/contract-authoring.md
+          - .codex/skills/long-task-workflow/references/evidence-design.md
+          - examples/delivery-benchmark/real-process-workload/README.md
+          - examples/delivery-benchmark/real-process-workload/product/config/state.json
+          - examples/delivery-benchmark/real-process-workload/product/facts.mjs
+          - examples/delivery-benchmark/real-process-workload/product/product.mjs
+          - examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs
+          - examples/delivery-benchmark/real-process-workload/runner/gold.mjs
+          - examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs
+          - examples/delivery-benchmark/real-process-workload/semantic-gold.json
+          - examples/delivery-benchmark/real-process-workload/workload.json
+          - tools/long_task_real_process_roi_policy.mjs
+          - tools/long_task_real_process_roi_runner.mjs
+          - tools/long_task_real_process_roi_scoring.mjs
+          - tools/verify_long_task_real_process_roi.mjs
+          - tests/ty-context/long-task-real-process-roi.test.mjs
       requirements:
         - key: material-input-provenance
           statement: 本 Source 是本 Goal 唯一的项目原生需求载体，完整归并原方案附件 `pasted-text.txt`（SHA-256 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`）、Codex 仓库证据审计、GPT Pro 最终裁决，以及用户批准的《Long-Task 真实能力闭环补开发方案 V2》。V2 以 `0f35e08a` 为历史基线并收紧剩余 observer/runner/runtime/production-reachability 边界；冲突时以 V2 和本 Source 的诚实 Level 3 交接为准。压缩或恢复必须从本 Source、Contract、当前 Context 与代码重建，不得从旧 compiled/progress/Receipt 或对话记忆继承完成结论。
@@ -1832,13 +1898,13 @@ outcomes:
           applicability_refs:
             - proof-and-roi-current-success
         - key: attack-suite-ground-truth
-          statement: 当前黑盒攻击集固定覆盖 R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失。每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report；不得以内部 policy error 或 aggregate Boolean代替。
+          statement: 当前 Level 3 黑盒集合固定为 21 个 case，其中 18 个 wrong candidate 均被拒绝：R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R5c direct-process evidence-role carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失，以及 R9 non-carrier evidence input、R10 non-carrier verification input、R11 Source-wrong product root 与 R11b 未绑定 repository argv 文件。R9–R11 及 R11b 已在当前 owner 修复；每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report，Compile-time 攻击还必须以合法近邻 Authority 获得 Final-Gate 拒绝，不得以内层 policy error、`active_task_missing` 或 aggregate Boolean 代替。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
             - proof-and-roi-current-success
         - key: valid-control-suite
-          statement: 正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure machine-accepted；Harness 直接启动 process product root、同一 envelope承载多个 observation identity并在合法 Counterfactual 中观察到 affected/preserved/fan-out 关系的 process control machine-accepted；unsupported browser/native/layout/visual 等保留 `blocked_external`/external-pending 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
+          statement: 三个正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure 达到 `machine_accepted`；Harness 直接启动 process product root，在同一 Raw Execution/envelope 中承载多个显式 Fact 及 cross-Check implicit-preserved Fact，并在合法 Counterfactual 中观察 affected/preserved/allowed-fan-out 关系，达到 `machine_accepted`；unsupported target-blocking control 保留 `blocked_external` 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
@@ -1856,7 +1922,7 @@ outcomes:
           applicability_refs:
             - proof-and-roi-current-success
         - key: roi-admission-order
-          statement: ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Level 4 前必须由 `real-process-workload-roi` 提供至少一个真实 Long-Task process workload 的 baseline/candidate 配对，明确 workload、环境、authoring/Compile/Verify/Counterfactual/Final Gate 成本、返工、错误完成率、总时长、comparator/tolerance，并证明新增成本保持正 ROI；旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
+          statement: ROI 必须在目的有效性与 valid-control 非劣化之后评估。仓库已实现 `examples/delivery-benchmark/real-process-workload/**` 的 8-Fact normal/degraded 真实 process workload、两个 Counterfactual、独立 semantic gold，以及 A legacy self-report、B `808efa9e` isolated envelope、C clean final candidate 的收集/评分/复算 owner。但 authentic A/B/C collection 仍等待干净已提交的 final C，`authoring_token_count` 仍必须来自 invocation-bound host/provider usage event；缺失时是 `required-unverified`，不接受 surrogate tokenizer，也不得得出正 ROI 或 Level 4。旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
@@ -1874,19 +1940,19 @@ outcomes:
           applicability_refs:
             - proof-and-roi-current-success
         - key: black-box-final-gate-lifecycle
-          statement: 能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
+          statement: 能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；Compile-time 攻击同时保留 owner diagnostic 和合法近邻 Authority 的 Final-Gate 拒绝，`active_task_missing` 不算能力证明。源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
             - proof-and-roi-current-success
         - key: verification-sequence-and-current-candidate
-          statement: 机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run黑盒 Final Gate report。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 preflight结构检查并明确保留两个 blocks_target External Confirmation，独立审计之后才可修订能力等级。
+          statement: 机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run 黑盒 Final Gate report。当前 complete Long-Task test population 的审查分类是 18 pure、50 isolated、11 exclusive；新测试必须先分类，不能默认进入并发 lane。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 Preflight 结构检查并明确保留两个 blocks_target External Confirmation，独立审计与真实 ROI 完成后才可修订能力等级。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
             - proof-and-roi-current-success
         - key: final-hard-acceptance
-          statement: Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner不能创建/修改 static actual；process runtime由Harness直接持有的root进程证明；项目actual/pass/verdict/runtime/interaction/state不能自证；unsupported family/method必须External Confirmation；Counterfactual必须观察真实carrier导致actual变化且不得无观察跳过；V1/V2/non-UI/static/process共用exact evaluator；R1–R8及扩展攻击经真实Final Gate拒绝、static/process正确控制通过、external控制不machine-accept；能力 verifier不以字符串证明runtime；Trust/full/package/Context全绿、无开放critical反例、真实workload正ROI且无第二Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明Level 3。
+          statement: Level 4 的硬验收仍要求：custom Oracle 不能关闭 machine Claim；runner 不能创建/修改 static actual；process runtime 由 Harness 直接持有的 Source-backed root 进程证明；项目 actual/pass/verdict/runtime/interaction/state 不能自证；unsupported family/method 必须 External Confirmation；Counterfactual 必须观察真实 carrier 导致 actual 变化且不得无观察跳过；V1/V2/non-UI/static/process 共用 exact evaluator；21-case R1–R11b 黑盒集的 18 个 wrong candidate 经真实 Final Gate 拒绝、static/process 正确控制通过、external 控制不 machine-accept；能力 verifier 不以字符串证明 runtime；Trust/full/package/Context 全绿、无开放 critical 反例、独立审计通过、真实 workload 正 ROI 且无第二 Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明 Level 3。
           required_proof_surfaces:
             - runtime_behavior
           applicability_refs:
@@ -1913,6 +1979,22 @@ outcomes:
         - packages/ty-context/src/lib/long-task-admitted-observation.ts
         - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
         - tests/ty-context/fixtures/long-task-real-capability-state.json
+        - .codex/skills/long-task-workflow/SKILL.md
+        - .codex/skills/long-task-workflow/references/contract-authoring.md
+        - .codex/skills/long-task-workflow/references/evidence-design.md
+        - examples/delivery-benchmark/real-process-workload/README.md
+        - examples/delivery-benchmark/real-process-workload/product/config/state.json
+        - examples/delivery-benchmark/real-process-workload/product/facts.mjs
+        - examples/delivery-benchmark/real-process-workload/product/product.mjs
+        - examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs
+        - examples/delivery-benchmark/real-process-workload/runner/gold.mjs
+        - examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs
+        - examples/delivery-benchmark/real-process-workload/semantic-gold.json
+        - examples/delivery-benchmark/real-process-workload/workload.json
+        - tools/long_task_real_process_roi_policy.mjs
+        - tools/long_task_real_process_roi_runner.mjs
+        - tools/long_task_real_process_roi_scoring.mjs
+        - tools/verify_long_task_real_process_roi.mjs
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
         - PROJECT_SPEC.md
@@ -1934,6 +2016,7 @@ outcomes:
         - tests/ty-context/long-task-real-capability-delivery-verifier.test.mjs
         - tools/consumer_lab_full_test.mjs
         - tests/ty-context/consumer-lab-script.test.mjs
+        - tests/ty-context/long-task-real-process-roi.test.mjs
       forbidden_paths:
         - .git/**
       bindings:
