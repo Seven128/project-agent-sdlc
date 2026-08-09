@@ -24,6 +24,7 @@ import {
   LONG_TASK_EXCLUSIVE_TEST_FILES,
   LONG_TASK_ISOLATED_TEST_FILES,
   LONG_TASK_PURE_TEST_FILES,
+  LONG_TASK_TRUST_TEST_FILES,
   classifyLongTaskTestFile,
   criticalSentinelsForSuite,
   planLongTaskIsolationLanes,
@@ -333,9 +334,16 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   ];
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
-  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 16);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 45);
+  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 18);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 49);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 18);
+  assert.equal(
+    LONG_TASK_TRUST_TEST_FILES.filter(
+      (file) => file === "long-task-observer-trust-counterexamples.test.mjs",
+    ).length,
+    1,
+  );
   for (const restoredFile of [
     "long-task-authority-progress-retry.test.mjs",
     "long-task-state-resume.test.mjs",
@@ -366,9 +374,26 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     "pure",
   );
   assert.equal(
+    classifyLongTaskTestFile(
+      "long-task-real-capability-delivery-verifier.test.mjs",
+    ),
+    "pure",
+  );
+  assert.equal(
     classifyLongTaskTestFile("long-task-real-capability-replay.test.mjs"),
     "pure",
   );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-observation-authority-plan.test.mjs"),
+    "pure",
+  );
+  for (const observerRuntimeFile of [
+    "long-task-direct-process-observer.test.mjs",
+    "long-task-execution-observation.test.mjs",
+    "long-task-observer-trust-counterexamples.test.mjs",
+    "long-task-static-observation-freeze.test.mjs",
+  ])
+    assert.equal(classifyLongTaskTestFile(observerRuntimeFile), "isolated");
   assert.equal(
     classifyLongTaskTestFile("long-task-verifier-root-directory.test.mjs"),
     "isolated",
@@ -442,7 +467,7 @@ test("file timing diagnostics retain one terminal record for every selected file
   ]);
 });
 
-test("[critical:critical-policy-continuity] critical sentinel policy rejects semantic replacement while permitting reviewed evolution", () => {
+test("[critical:critical-policy-continuity] critical sentinel policy rejects semantic replacement while permitting reviewed evolution", async () => {
   const required = criticalSentinelsForSuite("default");
   assert.throws(
     () => criticalSentinelsForSuite("future-unreviewed-suite"),
@@ -462,7 +487,105 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   );
   assert.match(selectedDesign.rationale, /positive and negative controls/u);
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
-  assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 22);
+  assert.equal(
+    new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
+    26,
+  );
+
+  const observerSentinelControls = new Map([
+    [
+      "observer-admission-no-bypass",
+      {
+        positive: "[control:static-carrier-pre-run-freeze]",
+        negative: "[critical:observer-admission-no-bypass]",
+      },
+    ],
+    [
+      "static-carrier-pre-run-freeze",
+      {
+        positive: "[control:static-carrier-pre-run-freeze]",
+        negative: "[critical:static-carrier-pre-run-freeze]",
+      },
+    ],
+    [
+      "host-derived-target-runtime",
+      {
+        positive: "[control:host-derived-target-runtime]",
+        negative: "[critical:host-derived-target-runtime]",
+      },
+    ],
+    [
+      "counterfactual-production-observation-impact",
+      {
+        positive: "[control:host-derived-target-runtime]",
+        negative: "[critical:counterfactual-production-observation-impact]",
+      },
+    ],
+  ]);
+  const observerSentinels = [...observerSentinelControls].map(
+    ([id, controls]) => {
+      const entry = CRITICAL_TEST_SENTINELS.find(
+        (candidate) => candidate.id === id,
+      );
+      assert.ok(entry, `missing Observer/TCB sentinel ${id}`);
+      assert.equal(
+        entry.file,
+        "long-task-observer-trust-counterexamples.test.mjs",
+      );
+      assert.deepEqual(entry.required_suites, ["long-task", "long-task-trust"]);
+      assert.ok(entry.rationale.includes(controls.positive));
+      assert.ok(entry.rationale.includes(controls.negative));
+      for (const boundary of [
+        "Positive control:",
+        "Negative control:",
+        "Owner/path:",
+        "Scope:",
+        "Does not prove:",
+      ])
+        assert.ok(
+          entry.rationale.includes(boundary),
+          `${id} rationale must retain ${boundary}`,
+        );
+      return entry;
+    },
+  );
+  const observerFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "long-task-observer-trust-counterexamples.test.mjs",
+  );
+  const observerSource = await readFile(observerFile, "utf8");
+  assert.deepEqual(
+    [...observerSource.matchAll(/\[critical:([a-z][a-z0-9-]+)\]/gu)]
+      .map((match) => match[1])
+      .sort(),
+    [...observerSentinelControls.keys()].sort(),
+  );
+  for (const caseId of [
+    "observer-admission-no-bypass:R1b",
+    "static-carrier-pre-run-freeze:R2",
+    "static-carrier-pre-run-freeze:R5b",
+    "static-carrier-pre-run-freeze:R7",
+    "host-derived-target-runtime:R4",
+    "host-derived-target-runtime:R6",
+    "host-derived-target-runtime:R6b",
+    "host-derived-target-runtime:R7c",
+    "counterfactual-production-observation-impact:R5",
+  ])
+    assert.ok(
+      observerSource.includes(`[case:${caseId}]`),
+      `Observer/TCB fixed case ${caseId} must remain non-canonical`,
+    );
+  for (const controlId of [
+    "static-carrier-pre-run-freeze",
+    "host-derived-target-runtime",
+    "unsupported-observer-external",
+  ])
+    assert.ok(
+      observerSource.includes(`[control:${controlId}]`),
+      `Observer/TCB control ${controlId} must remain fixed`,
+    );
   const expectedFile = path.join(
     repositoryRoot,
     "tests",

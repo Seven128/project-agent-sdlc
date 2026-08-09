@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
-import test from "node:test";
+import test, { after } from "node:test";
 import {
   configureCrossExecutionStaticPrimingAttack,
   configureEvidenceRoleStaticAttack,
   configureExpectedAsActualAttack,
   configureHistoricalRuntimeAttack,
+  configureMissingCounterfactualObservationAttack,
   configurePackageObservationCase,
   configureProcessInputMutationAttack,
   configureProxyTargetAttack,
@@ -16,6 +17,119 @@ import {
   isMachineAccepted,
   isSecurelyRejected,
 } from "./long-task-observer-trust-fixtures.mjs";
+import { createDeliveryTerminalReportRecorder } from "./long-task-real-capability-delivery-machine-report.mjs";
+
+const terminalReport = createDeliveryTerminalReportRecorder();
+const reportCases = Object.freeze({
+  r1: wrongCase(
+    "wrong.r1.custom-oracle",
+    "observer-trust.r1.custom-oracle",
+    "control.process",
+  ),
+  r1b: wrongCase(
+    "wrong.r1b.verification-input-static",
+    "observer-trust.r1b.verification-input-static",
+    "control.static",
+  ),
+  r2: wrongCase(
+    "wrong.r2.runner-created-static",
+    "observer-trust.r2.runner-created-static",
+    "control.static",
+  ),
+  r3: wrongCase(
+    "wrong.r3.historical-runtime",
+    "observer-trust.r3.historical-runtime",
+    "control.process",
+  ),
+  r4: wrongCase(
+    "wrong.r4.browser-native-proxy",
+    "observer-trust.r4.browser-native-proxy",
+    "control.external",
+  ),
+  r5: wrongCase(
+    "wrong.r5.synthetic-status-binding",
+    "observer-trust.r5.synthetic-status-binding",
+    "control.static",
+  ),
+  r5b: wrongCase(
+    "wrong.r5b.evidence-role-static",
+    "observer-trust.r5b.evidence-role-static",
+    "control.static",
+  ),
+  r6: wrongCase(
+    "wrong.r6.verifier-wrapper",
+    "observer-trust.r6.verifier-wrapper",
+    "control.process",
+  ),
+  r6b: wrongCase(
+    "wrong.r6b.argv-wrapper",
+    "observer-trust.r6b.argv-wrapper",
+    "control.process",
+  ),
+  r7: wrongCase(
+    "wrong.r7.runner-modified-static",
+    "observer-trust.r7.runner-modified-static",
+    "control.static",
+  ),
+  r7b: wrongCase(
+    "wrong.r7b.cross-execution-priming",
+    "observer-trust.r7b.cross-execution-priming",
+    "control.static",
+  ),
+  r7c: wrongCase(
+    "wrong.r7c.process-input-mutation",
+    "observer-trust.r7c.process-input-mutation",
+    "control.process",
+  ),
+  r8: wrongCase(
+    "wrong.r8.empty-observation",
+    "observer-trust.r8.empty-observation",
+    "control.process",
+  ),
+  staticControl: controlCase(
+    "control.static",
+    "observer-trust.control.static",
+    "control",
+    "machine_accepted",
+  ),
+  processControl: controlCase(
+    "control.process",
+    "observer-trust.control.process",
+    "control",
+    "machine_accepted",
+  ),
+  externalControl: controlCase(
+    "control.external",
+    "observer-trust.control.external",
+    "external",
+    "blocked_external",
+  ),
+});
+
+after(async () => terminalReport.write());
+
+function wrongCase(caseId, testId, controlCaseId) {
+  return {
+    case_id: caseId,
+    test_id: testId,
+    candidate_role: "wrong",
+    control_case_id: controlCaseId,
+    expected_relation: {
+      operator: "not_equals",
+      value: "machine_accepted",
+    },
+  };
+}
+
+function controlCase(caseId, testId, candidateRole, expectedStatus) {
+  return {
+    case_id: caseId,
+    test_id: testId,
+    candidate_role: candidateRole,
+    control_case_id: null,
+    expected_relation: { operator: "equals", value: expectedStatus },
+  };
+}
 
 async function withFixture(options, body) {
   const fixture = await createObserverTrustFixture(options);
@@ -36,12 +150,13 @@ function executionLabel(execution) {
 }
 
 test(
-  "[critical:observer-admission-no-bypass:R1] custom Oracle expected-as-actual cannot close a machine Fact",
+  "[critical:observer-admission-no-bypass] [real-capability:observer-trust.r1.custom-oracle] custom Oracle expected-as-actual cannot close a machine Fact",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureExpectedAsActualAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r1, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -51,12 +166,13 @@ test(
 );
 
 test(
-  "[critical:observer-admission-no-bypass:R1b] verifier Expected input cannot masquerade as a static production carrier",
+  "[case:observer-admission-no-bypass:R1b] [real-capability:observer-trust.r1b.verification-input-static] verifier Expected input cannot masquerade as a static production carrier",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureVerificationInputStaticAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r1b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -69,7 +185,7 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R2] runner-created package carrier cannot close a machine exact obligation",
+  "[case:static-carrier-pre-run-freeze:R2] [real-capability:observer-trust.r2.runner-created-static] runner-created package carrier cannot close a machine exact obligation",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -87,6 +203,7 @@ test(
         diagnosticArtifactPaths: ["artifacts/runner-created-diagnostic.json"],
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r2, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -100,7 +217,7 @@ test(
 );
 
 test(
-  "[critical:host-derived-target-runtime:R3] replayed historical session cannot prove current target runtime",
+  "[critical:host-derived-target-runtime] [real-capability:observer-trust.r3.historical-runtime] replayed historical session cannot prove current target runtime",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -118,6 +235,7 @@ test(
         removeHostAttestation: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r3, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -131,7 +249,7 @@ test(
 );
 
 test(
-  "[critical:host-derived-target-runtime:R4] browser proxy cannot close a Native target",
+  "[case:host-derived-target-runtime:R4] [real-capability:observer-trust.r4.browser-native-proxy] browser proxy cannot close a Native target",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -140,6 +258,7 @@ test(
         indirectWrapper: false,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r4, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -149,7 +268,7 @@ test(
 );
 
 test(
-  "[critical:counterfactual-production-observation-impact:R5] synthetic status Binding cannot prove production reachability",
+  "[case:counterfactual-production-observation-impact:R5] [real-capability:observer-trust.r5.synthetic-status-binding] synthetic status Binding cannot prove production reachability",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -161,6 +280,7 @@ test(
         artifactGlobs: ["status.json"],
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r5, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -170,12 +290,13 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R5b] pre-existing status/report evidence cannot machine-close a static production obligation",
+  "[case:static-carrier-pre-run-freeze:R5b] [real-capability:observer-trust.r5b.evidence-role-static] pre-existing status/report evidence cannot machine-close a static production obligation",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureEvidenceRoleStaticAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r5b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -188,7 +309,7 @@ test(
 );
 
 test(
-  "[critical:host-derived-target-runtime:R6] verifier wrapper cannot substitute for the declared process root",
+  "[case:host-derived-target-runtime:R6] [real-capability:observer-trust.r6.verifier-wrapper] verifier wrapper cannot substitute for the declared process root",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -197,6 +318,7 @@ test(
         indirectWrapper: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r6, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -206,12 +328,13 @@ test(
 );
 
 test(
-  "[critical:host-derived-target-runtime:R6b] interpreter root cannot select a verifier wrapper through runner argv",
+  "[case:host-derived-target-runtime:R6b] [real-capability:observer-trust.r6b.argv-wrapper] interpreter root cannot select a verifier wrapper through runner argv",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureRootArgvWrapperAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r6b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -225,7 +348,7 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R7] runner-modified frozen carrier cannot close a machine exact obligation",
+  "[case:static-carrier-pre-run-freeze:R7] [real-capability:observer-trust.r7.runner-modified-static] runner-modified frozen carrier cannot close a machine exact obligation",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -244,6 +367,7 @@ test(
         diagnosticArtifactPaths: ["artifacts/runner-modified-diagnostic.json"],
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r7, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -257,12 +381,13 @@ test(
 );
 
 test(
-  "[critical:static-carrier-pre-run-freeze:R7b] an earlier raw execution cannot prime a later static carrier before it is frozen",
+  "[critical:static-carrier-pre-run-freeze] [real-capability:observer-trust.r7b.cross-execution-priming] an earlier raw execution cannot prime a later static carrier before it is frozen",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureCrossExecutionStaticPrimingAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r7b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -276,12 +401,13 @@ test(
 );
 
 test(
-  "[critical:host-derived-target-runtime:R7c] direct process cannot rewrite a frozen production input before observing it",
+  "[case:host-derived-target-runtime:R7c] [real-capability:observer-trust.r7c.process-input-mutation] direct process cannot rewrite a frozen production input before observing it",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
       await configureProcessInputMutationAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r7c, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
@@ -295,21 +421,27 @@ test(
 );
 
 test(
-  "[critical:counterfactual-production-observation-impact:R8] claim-bearing Counterfactual cannot skip an empty admitted-observation set",
+  "[critical:counterfactual-production-observation-impact] [real-capability:observer-trust.r8.empty-observation] claim-bearing Counterfactual cannot skip an empty admitted-observation set",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
+      await configureMissingCounterfactualObservationAttack(fixture);
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r8, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `empty admitted observation set reached ${executionLabel(execution)}`,
       );
+      assert.match(
+        JSON.stringify(execution.result),
+        /counterfactual_integrity_failed[\s\S]*counterfactual_mutated_observation_invalid:admitted_observation_runtime_required/u,
+      );
     }),
 );
 
 test(
-  "[control:static-carrier-pre-run-freeze] pre-existing unchanged generated JSON is accepted and historical diagnostics stay non-authoritative",
+  "[control:static-carrier-pre-run-freeze] [real-capability:observer-trust.control.static] pre-existing unchanged generated JSON is accepted and historical diagnostics stay non-authoritative",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -323,6 +455,7 @@ test(
         directProcess: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.staticControl, execution);
       assert.equal(
         isMachineAccepted(execution),
         true,
@@ -332,7 +465,7 @@ test(
 );
 
 test(
-  "[control:host-derived-target-runtime] Harness starts the frozen product-root invocation, observes exact output, and preserves liveness under Counterfactual",
+  "[control:host-derived-target-runtime] [real-capability:observer-trust.control.process] Harness starts the frozen product-root invocation, observes exact output, and preserves liveness under Counterfactual",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
@@ -346,6 +479,7 @@ test(
         directProcess: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.processControl, execution);
       assert.equal(
         isMachineAccepted(execution),
         true,
@@ -355,10 +489,12 @@ test(
 );
 
 test(
-  "[control:unsupported-observer-external] unsupported external observation remains blocking instead of machine accepted",
+  "[control:unsupported-observer-external] [real-capability:observer-trust.control.external] unsupported external observation remains blocking instead of machine accepted",
   { concurrency: false },
   async () =>
     withFixture({ externalConfirmation: true }, async (fixture) => {
+      fixture.contract.global.acceptance.external_confirmations[0].blocks_target =
+        true;
       await configurePackageObservationCase(fixture, {
         carrierPath: "src/state.json",
         bindingPath: "src/state.json",
@@ -369,10 +505,11 @@ test(
         directProcess: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.externalControl, execution);
       assert.equal(execution.stage, "final-gate", executionLabel(execution));
       assert.equal(
         execution.result.workflow_status,
-        "machine_accepted_external_pending",
+        "blocked_external",
       );
       assert.notEqual(execution.result.workflow_status, "machine_accepted");
     }),

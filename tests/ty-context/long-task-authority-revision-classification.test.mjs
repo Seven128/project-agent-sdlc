@@ -117,7 +117,10 @@ test("[critical:protected-revision-classification] semantic or proof changes are
       diagnosis.revision.decision_brief,
     );
     assert.match(pending.next_action, /Authority Revision brief:/u);
-    assert.match(pending.next_action, new RegExp(diagnosis.revision.revision_identity, "u"));
+    assert.match(
+      pending.next_action,
+      new RegExp(diagnosis.revision.revision_identity, "u"),
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -185,6 +188,77 @@ test("additive verification dependencies remain automatic and are summarized", a
   }
 });
 
+test("widening Counterfactual allowed fan-out is a protected proof reduction", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+
+    const control =
+      fixture.contract.outcomes[0].acceptance.counterfactual_controls[0];
+    control.allowed_fanout_assertions = ["first-relations-na"];
+    await writeContract(fixture.workdir, fixture.contract);
+
+    const diagnosis = await runCli(fixture.root, [
+      "long-task",
+      "diagnose-revision",
+      fixture.workdir,
+    ]);
+    assert.equal(diagnosis.status, "protected_change_previewed");
+    assert.equal(
+      diagnosis.revision.change_class,
+      "protected_semantic_or_proof_change",
+    );
+    assert.equal(diagnosis.revision.user_decision_required, true);
+    assert.equal(
+      diagnosis.revision.approval_summary.acceptance_or_proof_weakened,
+      true,
+    );
+    assert.ok(
+      diagnosis.revision.approval_summary.protected_reasons.includes(
+        "counterfactual_removed",
+      ),
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("narrowing Counterfactual allowed fan-out preserves authority coverage", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const control =
+      fixture.contract.outcomes[0].acceptance.counterfactual_controls[0];
+    control.allowed_fanout_assertions = ["first-relations-na"];
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+
+    control.allowed_fanout_assertions = [];
+    await writeContract(fixture.workdir, fixture.contract);
+    const revised = await runCli(fixture.root, [
+      "long-task",
+      "compile",
+      fixture.workdir,
+      "--revise",
+    ]);
+    assert.equal(revised.status, "compiled");
+    assert.equal(
+      revised.authority_revision_change.change_class,
+      "monotonic_evidence_strengthening",
+    );
+    assert.equal(revised.authority_revision_change.approval_required, false);
+    assert.equal(
+      revised.authority_revision_change.approval_summary.protected_reasons.includes(
+        "counterfactual_removed",
+      ),
+      false,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("protected summaries enumerate removed Source and external-confirmation keys", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
@@ -226,7 +300,10 @@ ${fixtureArchitectureSourceItem()}
     ]);
     assert.equal(summary.external_confirmations_changed, true);
     const brief = pending.pending_authority_revision.decision_brief;
-    assert.match(brief.headline, /Source\/Claims[\s\S]*external confirmations/iu);
+    assert.match(
+      brief.headline,
+      /Source\/Claims[\s\S]*external confirmations/iu,
+    );
     assert.ok(
       brief.material_changes.some((change) =>
         /fixture-external:removed/u.test(change),

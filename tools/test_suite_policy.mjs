@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 17,
-    reviewed_on: "2026-08-03",
+    max_files: 18,
+    reviewed_on: "2026-08-09",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including compact stable-key plus revision-digest Fact/obligation closure and the prior symbolic, selected-design and non-UI semantic rejection paths.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family, including the end-to-end admitted-observer attack/control file added for custom-Oracle, static-freeze, host-runtime and Counterfactual production-impact closure; no second invocation is added for its four sentinels.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -100,6 +100,30 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-semantic-drift-closure.test.mjs",
     ["long-task", "long-task-trust"],
     "selected-design-exact-verdict-recomputation proves, through independent positive and negative controls, that selected-design method evidence conserves the exact manifest-backed atomic Fact and property-required proof set, freezes expected comparison authority, and rejects an actual/expected exact digest mismatch or forged comparison result identity even when submitted pass/verdict fields claim success. It also covers omission, substitution, stale authority, unsafe sensitive evidence, and attributable current-snapshot results at this owner boundary; it does not prove arbitrary observers, arbitrary UI formats, or live-session authenticity.",
+  ),
+  criticalSentinel(
+    "observer-admission-no-bypass",
+    "long-task-observer-trust-counterexamples.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: [control:static-carrier-pre-run-freeze] reaches machine_accepted from a package-admitted current Actual. Negative control: canonical [critical:observer-admission-no-bypass] plus the R1b case rejects custom-Oracle expected-as-actual and Expected-authority carrier substitution. Owner/path: createObserverTrustFixture → executeObserverTrustWorkflow traverses Parse/Compile, current snapshot, real runner, package admission/extraction, Counterfactual and Final Gate through long-task-observation-authority.ts and long-task-admitted-observation.ts. Scope: plain exact machine obligations cannot fall through to a named/custom project Oracle or Expected-owned Actual. Does not prove: arbitrary observer semantics, UI/native/device formats, live-session authenticity or hostile-host isolation.",
+  ),
+  criticalSentinel(
+    "static-carrier-pre-run-freeze",
+    "long-task-observer-trust-counterexamples.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: [control:static-carrier-pre-run-freeze] accepts one pre-existing unchanged static JSON structure. Negative control: canonical [critical:static-carrier-pre-run-freeze] plus R2, R5b and R7 cases reject cross-execution priming, runner creation/mutation and evidence-role carriers. Owner/path: executeObserverTrustWorkflow reaches prepareExecutionObservationUniverse, long-task-static-observation-freeze.ts, package extraction and Final Gate on the real lifecycle. Scope: every Raw Execution group is frozen before any runner and a static carrier must retain its candidate-snapshot identity and content. Does not prove: runtime consumption, interaction/render behavior, arbitrary generated formats or absolute filesystem/hostile-writer soundness.",
+  ),
+  criticalSentinel(
+    "host-derived-target-runtime",
+    "long-task-observer-trust-counterexamples.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: [control:host-derived-target-runtime] reaches machine_accepted through a Harness-spawned declared product-root process and package-observed exact output. Negative control: canonical [critical:host-derived-target-runtime] plus R4, R6, R6b and R7c cases reject historical runtime, proxy family, wrapper argv and frozen-input mutation. Owner/path: executeObserverTrustWorkflow reaches long-task-observation-authority.ts, long-task-execution-observation.ts, long-task-check-runner.ts, long-task-process-observation.ts and Final Gate. Scope: bounded process exact/presence Actual and target_runtime require the complete declared root invocation and host execution attestation. Does not prove: interaction_trace, state_delta, design_conformance, browser/native/device observation or absolute cross-platform process containment.",
+  ),
+  criticalSentinel(
+    "counterfactual-production-observation-impact",
+    "long-task-observer-trust-counterexamples.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: [control:host-derived-target-runtime] proves a declared production carrier mutation changes the package-observed process Actual while liveness is preserved; [control:unsupported-observer-external] remains target-blocking External Confirmation. Negative control: canonical [critical:counterfactual-production-observation-impact] plus R5 rejects an empty admitted-observation skip and a synthetic status Binding. Owner/path: executeObserverTrustWorkflow reaches long-task-evidence-v2.ts, long-task-execution-observation.ts, long-task-verifier-v2.ts and the sole Final Gate with baseline/mutated package observations. Scope: equal obligation universe, affected/preserved/allowed-fan-out and no-skip production-impact closure for admitted static/process exact observation. Does not prove: arbitrary causal semantics, production reachability outside declared carriers/direct process output, UI/native/device behavior or external confirmation.",
   ),
   criticalSentinel(
     "symbolic-mixed-representation-closure",
@@ -259,9 +283,11 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
   "long-task-design-context.test.mjs",
   "long-task-efficiency-design.test.mjs",
   "long-task-execution-input-policy.test.mjs",
+  "long-task-observation-authority-plan.test.mjs",
   "long-task-playwright-ac-evidence.test.mjs",
   "long-task-playwright-config-argument.test.mjs",
   "long-task-real-capability-closure.test.mjs",
+  "long-task-real-capability-delivery-verifier.test.mjs",
   "long-task-real-capability-replay.test.mjs",
   "long-task-semantic-drift-closure.test.mjs",
   "long-task-structural-closure-cost.test.mjs",
@@ -282,6 +308,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-context-evolution.test.mjs",
   "long-task-corrupt-state-abandon.test.mjs",
   "long-task-counterfactual-integrity.test.mjs",
+  "long-task-direct-process-observer.test.mjs",
   "long-task-evidence-kernel.test.mjs",
   "long-task-evidence-sensitivity-policy.test.mjs",
   "long-task-evidence-sensitivity-surfaces.test.mjs",
@@ -291,8 +318,10 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-global-blocked-status.test.mjs",
   "long-task-global-claim-coverage.test.mjs",
   "long-task-global-evidence-sensitivity.test.mjs",
+  "long-task-execution-observation.test.mjs",
   "long-task-model-choice-checkpoint.test.mjs",
   "long-task-non-completing-source.test.mjs",
+  "long-task-observer-trust-counterexamples.test.mjs",
   "long-task-path-canonicalization.test.mjs",
   "long-task-pattern-containment.test.mjs",
   "long-task-pattern-overlap.test.mjs",
@@ -310,6 +339,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-source-authority-closure.test.mjs",
   "long-task-source-risk-binding.test.mjs",
   "long-task-state-resume.test.mjs",
+  "long-task-static-observation-freeze.test.mjs",
   "long-task-verification-preview.test.mjs",
   "long-task-verifier-root-directory.test.mjs",
   "long-task-workspace-scope.test.mjs",
@@ -541,12 +571,12 @@ function assertIsolationPolicy() {
   if (new Set(classified).size !== classified.length)
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
-    LONG_TASK_PURE_TEST_FILES.length !== 16 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 45 ||
+    LONG_TASK_PURE_TEST_FILES.length !== 18 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 49 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 16/45/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/49/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

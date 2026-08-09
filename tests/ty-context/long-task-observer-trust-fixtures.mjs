@@ -50,6 +50,16 @@ export function isSecurelyRejected(execution) {
 }
 
 export async function configureExpectedAsActualAttack(fixture) {
+  const externalConfirmation = fixture.contract.source_claims.some(
+    (claim) => claim.disposition.type === "external_confirmation",
+  );
+  const manifest = fixtureSemanticManifest({ externalConfirmation });
+  refreshFixtureSemanticManifest(manifest);
+  await writeFixtureSourceAndOracle(
+    fixture.root,
+    { externalConfirmation },
+    manifest,
+  );
   await writeContract(fixture.workdir, fixture.contract);
   const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
   const source = await readFile(oraclePath, "utf8");
@@ -154,6 +164,10 @@ export async function configurePackageObservationCase(
   );
 
   const outcome = fixture.contract.outcomes[0];
+  if (!outcome.product.owner.path_globs.includes("tests/legacy-oracle.mjs"))
+    outcome.product.owner.path_globs.push("tests/legacy-oracle.mjs");
+  if (!outcome.technical.allowed_support_paths.includes("tests/legacy-oracle.mjs"))
+    outcome.technical.allowed_support_paths.push("tests/legacy-oracle.mjs");
   const processCheck = outcome.acceptance.checks[0];
   for (const assertion of [
     ...processCheck.positive_assertions,
@@ -438,19 +452,15 @@ export async function configureProxyTargetAttack(
 
   const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
   const source = await readFile(oraclePath, "utf8");
-  const rewritten = source.replaceAll(
-    'root_entrypoint: "tests/oracle.mjs"',
-    `root_entrypoint: ${JSON.stringify(productRoot)}`,
-  );
   const classifiedProxy =
     requiredFamily === "native"
-      ? rewritten.replace(
-          "observations: {",
-          'observations: { actual_runtime_family: "browser",',
+      ? source.replace(
+          "const observations = {",
+          'const observations = { actual_runtime_family: "browser",',
         )
-      : rewritten;
-  if (classifiedProxy === source && productRoot !== "tests/oracle.mjs")
-    throw new Error("observer_fixture_proxy_root_rewrite_missing");
+      : source;
+  if (requiredFamily === "native" && classifiedProxy === source)
+    throw new Error("observer_fixture_proxy_classification_rewrite_missing");
   await writeFile(oraclePath, classifiedProxy);
 }
 
@@ -543,6 +553,33 @@ export async function configureProcessInputMutationAttack(fixture) {
   if (mutated === source)
     throw new Error("observer_fixture_process_input_mutation_rewrite_missing");
   await writeFile(oraclePath, mutated);
+}
+
+export async function configureMissingCounterfactualObservationAttack(fixture) {
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json"],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: [
+      "artifacts/counterfactual-observation-diagnostic.json",
+    ],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+  const source = await readFile(oraclePath, "utf8");
+  const marker = "console.log(JSON.stringify(productEnvelope));";
+  const conditionalOutput = source.replace(
+    marker,
+    "if (actualValue === true) console.log(JSON.stringify(productEnvelope));",
+  );
+  if (conditionalOutput === source)
+    throw new Error(
+      "observer_fixture_counterfactual_missing_observation_rewrite_missing",
+    );
+  await writeFile(oraclePath, conditionalOutput);
 }
 
 export async function configureVerificationInputStaticAttack(fixture) {

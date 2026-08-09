@@ -6,19 +6,17 @@ import {
   parseDesignResourceHandoffMarkdown,
 } from "../../packages/ty-context/dist/lib/design-resource-handoff-parser.js";
 import { parseSourceItems } from "../../packages/ty-context/dist/lib/long-task-source-item-parser.js";
+import { fixtureOracleSource } from "./long-task-semantic-oracle-fixture.mjs";
 import {
-  fixtureSemanticManifest,
-} from "./long-task-semantic-manifest-fixture.mjs";
-import {
-  fixtureOracleSource,
-} from "./long-task-semantic-oracle-fixture.mjs";
+  PACKAGE_EXACT_ORACLE_IDENTITY,
+  packageAdmittedFixtureSemanticManifest,
+  refreshPackageMachineFixtureOracle,
+} from "./long-task-package-machine-fixture.mjs";
 import {
   refreshFixtureSemanticManifest,
   semanticManifestIdentity,
 } from "./long-task-semantic-refresh-fixture.mjs";
-import {
-  reconcileFixtureSemanticManifest,
-} from "./long-task-semantic-reconcile-fixture.mjs";
+import { reconcileFixtureSemanticManifest } from "./long-task-semantic-reconcile-fixture.mjs";
 
 export async function synchronizeFixtureSemanticManifest(workdir, contract) {
   const root = path.dirname(workdir);
@@ -33,7 +31,7 @@ export async function synchronizeFixtureSemanticManifest(workdir, contract) {
   source = stripSemanticFactManifest(source);
   const manifest =
     existingManifest ??
-    fixtureSemanticManifest({
+    packageAdmittedFixtureSemanticManifest({
       twoOutcomes: contract.outcomes.length > 1,
       externalConfirmation: contract.source_claims.some(
         (claim) => claim.disposition.type === "external_confirmation",
@@ -136,11 +134,19 @@ async function persistFixtureSemanticManifest(
     absoluteSourcePath,
     `${normalizedSource}\n\n\`\`\`yaml semantic-fact-manifest-v1\n${serialized}\n\`\`\`\n`,
   );
-  if (rewriteOracle && fixtureOracleParticipatesInVerification(contract))
-    await writeFile(
-      path.join(root, "tests", "oracle.mjs"),
-      fixtureOracleSource(manifest),
-    );
+  if (rewriteOracle && fixtureOracleParticipatesInVerification(contract)) {
+    if (
+      manifest.oracles.some(
+        (oracle) => oracle.identity === PACKAGE_EXACT_ORACLE_IDENTITY,
+      )
+    )
+      await refreshPackageMachineFixtureOracle(root, manifest);
+    else
+      await writeFile(
+        path.join(root, "tests", "oracle.mjs"),
+        fixtureOracleSource(manifest),
+      );
+  }
   contract.semantic_fact_manifest = {
     key: manifest.key,
     source_path: sourcePath,

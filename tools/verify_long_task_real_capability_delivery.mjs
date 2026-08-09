@@ -1,169 +1,339 @@
-import { createHash } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import {
   appendFile,
   copyFile,
+  mkdtemp,
   mkdir,
   readFile,
   realpath,
+  rm,
   writeFile,
 } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { materializeSemanticFactEvidence } from "./semantic_fact_delivery_evidence.mjs";
 import { npmCommandSpec } from "./npm_command_spec.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const rootEntrypoint = "tools/verify_long_task_real_capability_delivery.mjs";
-const targetRef = "harness-package-runtime";
-const outcomeKey = process.argv[2] ?? "p0-exact-recomputation";
-const globalConformance = process.argv[3] === "global-conformance";
 const sourcePath = "docs/long-task-real-capability-closure.md";
 const source = await readText(sourcePath);
 const manifest = loadManifest(source);
 const sourceKinds = loadSourceKinds(source);
-if (!manifest.scope.outcome_refs.includes(outcomeKey))
-  throw new Error(`real_capability_outcome_unknown:${outcomeKey}`);
-if (outcomeKey === "proof-and-roi") await materializeFreshAgentEvidence();
-
-const commands = globalConformance
-  ? await runGlobalConformanceCommands()
-  : await runOutcomeCommands(outcomeKey);
-const facts = globalConformance
-  ? manifest.facts.filter(
-      (fact) => sourceKinds.get(fact.provenance.authority_ref) === "non_goal",
-    )
-  : manifest.facts.filter((fact) => fact.outcome_ref === outcomeKey);
-const proofs = manifest.proof_obligations.filter((proof) =>
-  facts.some((fact) => fact.key === proof.fact_ref),
-);
-const factResults = new Map();
-const observations = {};
-for (const fact of facts) {
-  const authorityRef = fact.provenance.authority_ref;
-  const passed =
-    commands.every((command) => command.code === 0) &&
-    (await sourceSpecificProbe(authorityRef, outcomeKey));
-  factResults.set(fact.key, passed);
-  observations[`semantic_fact_${slug(authorityRef)}`] = passed;
-  const kind = sourceKinds.get(authorityRef);
-  if (kind === "requirement") observations[`requirement_${slug(authorityRef)}`] = passed;
-  if (kind === "technical_obligation") observations[`obligation_${slug(authorityRef)}`] = passed;
-  if (kind === "acceptance") observations[`acceptance_${slug(authorityRef)}`] = passed;
-  if (kind === "non_goal") observations[`non_goal_${slug(authorityRef)}`] = passed;
-}
-const outcomePassed = [...factResults.values()].every(Boolean);
-observations[`${slug(outcomeKey)}_result`] = outcomePassed;
-observations.target_live = commands[0]?.code === 0;
-const fixtureState = JSON.parse(
-  await readText("tests/ty-context/fixtures/long-task-real-capability-state.json"),
-);
-observations.relations_applicable = fixtureState.relations_applicable;
-observations.command_results = commands;
-
-const manifestSha256 = sha256(canonicalJson(manifest));
-const sessionId = `real-capability-${slug(outcomeKey)}-${sha256(canonicalJson(observations)).slice(0, 16)}`;
-const manifestSubset = {
-  ...manifest,
-  facts,
-  proof_obligations: proofs,
-};
-const assertionByObligation = new Map(
-  proofs.map((proof) => {
-    const fact = facts.find((candidate) => candidate.key === proof.fact_ref);
-    const authorityRef = fact.provenance.authority_ref;
-    return [
-      proof.key,
-      `semantic-${authorityRef}`,
-    ];
-  }),
-);
-const semanticRecords = globalConformance
-  ? []
-  : (
-      await materializeSemanticFactEvidence({
-        repositoryRoot,
-        targetRef,
-        rootEntrypoint,
-        manifest: manifestSubset,
-        manifestSha256,
-        passedByFact: factResults,
-        assertionByObligation,
-        sessionId,
-      })
-    ).filter((record) => record.capability === "semantic_fact");
-const targetRecord = (assertionKey) => ({
-  assertion_key: assertionKey,
-  capability: "target_runtime",
-  target_ref: targetRef,
-  root_entrypoint: rootEntrypoint,
-  session_id: sessionId,
-  cold_start: true,
-});
-const resultAssertion = `${outcomeKey}-result`;
-const livenessAssertion = globalConformance
-  ? "global-observer-liveness"
-  : `${outcomeKey}-liveness`;
-const relationsAssertion = `${outcomeKey}-relations-na`;
-const productAssertionRecords = facts.flatMap((fact) => {
-  const authorityRef = fact.provenance.authority_ref;
-  const kind = sourceKinds.get(authorityRef);
-  const assertionKey =
-    kind === "requirement"
-      ? `requirement-${authorityRef}`
-      : kind === "technical_obligation"
-        ? `obligation-${authorityRef}`
-        : kind === "acceptance"
-          ? `acceptance-${authorityRef}`
-        : kind === "non_goal"
-          ? `non-goal-${authorityRef}`
-          : null;
-  if (!assertionKey) return [];
-  const passed = factResults.get(fact.key);
-  return [
-    targetRecord(assertionKey),
-    {
-      assertion_key: assertionKey,
-      capability: "state_delta",
-      before_sha256: "0".repeat(64),
-      after_sha256: sha256(canonicalJson({ authority_ref: authorityRef, passed })),
-      changed_fields: [`requirement.${authorityRef}`],
-    },
-  ];
-});
-const evidenceRecords = [
-  ...semanticRecords,
-  ...productAssertionRecords,
-  ...(
-    globalConformance
-      ? []
-      : [
-          targetRecord(resultAssertion),
-          {
-            assertion_key: resultAssertion,
-            capability: "state_delta",
-            before_sha256: "0".repeat(64),
-            after_sha256: sha256(
-              canonicalJson({ outcome: outcomeKey, passed: outcomePassed }),
-            ),
-            changed_fields: [`outcome.${outcomeKey}`],
-          },
-        ]
+export const DELIVERY_BLACK_BOX_CASE_POLICY = Object.freeze([
+  wrongProofCase(
+    "wrong.r1.custom-oracle",
+    "observer-trust.r1.custom-oracle",
+    "control.process",
   ),
-  targetRecord(livenessAssertion),
-  ...(globalConformance ? [] : [targetRecord(relationsAssertion)]),
-];
-console.log(
-  JSON.stringify({
-    schema_version: "long-task-check-result-v3",
-    execution_status: "completed",
-    observations,
-    evidence_records: evidenceRecords,
-  }),
+  wrongProofCase(
+    "wrong.r1b.verification-input-static",
+    "observer-trust.r1b.verification-input-static",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r2.runner-created-static",
+    "observer-trust.r2.runner-created-static",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r3.historical-runtime",
+    "observer-trust.r3.historical-runtime",
+    "control.process",
+  ),
+  wrongProofCase(
+    "wrong.r4.browser-native-proxy",
+    "observer-trust.r4.browser-native-proxy",
+    "control.external",
+  ),
+  wrongProofCase(
+    "wrong.r5.synthetic-status-binding",
+    "observer-trust.r5.synthetic-status-binding",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r5b.evidence-role-static",
+    "observer-trust.r5b.evidence-role-static",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r6.verifier-wrapper",
+    "observer-trust.r6.verifier-wrapper",
+    "control.process",
+  ),
+  wrongProofCase(
+    "wrong.r6b.argv-wrapper",
+    "observer-trust.r6b.argv-wrapper",
+    "control.process",
+  ),
+  wrongProofCase(
+    "wrong.r7.runner-modified-static",
+    "observer-trust.r7.runner-modified-static",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r7b.cross-execution-priming",
+    "observer-trust.r7b.cross-execution-priming",
+    "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r7c.process-input-mutation",
+    "observer-trust.r7c.process-input-mutation",
+    "control.process",
+  ),
+  wrongProofCase(
+    "wrong.r8.empty-observation",
+    "observer-trust.r8.empty-observation",
+    "control.process",
+  ),
+  controlProofCase(
+    "control.static",
+    "observer-trust.control.static",
+    "control",
+    "machine_accepted",
+  ),
+  controlProofCase(
+    "control.process",
+    "observer-trust.control.process",
+    "control",
+    "machine_accepted",
+  ),
+  controlProofCase(
+    "control.external",
+    "observer-trust.control.external",
+    "external",
+    "blocked_external",
+  ),
+]);
+
+const selectedDesignExactTest =
+  "[critical:selected-design-fact-closure] selected design targets require exact fact-bound comparison evidence and blocker disposition";
+const symbolicExactTest =
+  "[critical:symbolic-mixed-representation-closure] one Contract compiles and reaches one Final Gate with mixed V1 and opt-in UI V2 targets";
+const starwardShapeTest =
+  "Starward sanitized replay contains the four-page product shape and independently scored candidate paths";
+const starwardGroundTruthTest =
+  "Starward hidden ground truth rejects A1-A12 and accepts the valid control set";
+
+const nodeMachineFactTests = new Map([
+  ["known-selected-design-false-acceptance", [selectedDesignExactTest]],
+  ["p0-positive-fixture-correction", [selectedDesignExactTest]],
+  ["p0-v1-negative-control", [selectedDesignExactTest]],
+  ["p0-v2-negative-control", [symbolicExactTest]],
+  [
+    "shared-exact-comparison-owner",
+    [selectedDesignExactTest, symbolicExactTest],
+  ],
+  ["p0-verification-boundary", [selectedDesignExactTest, symbolicExactTest]],
+  ["selected-design-existing-owner-preservation", [selectedDesignExactTest]],
+  ["starward-sanitized-replay", [starwardShapeTest, starwardGroundTruthTest]],
+]);
+
+const allWrongBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.filter(
+  (entry) => entry.candidate_role === "wrong",
+).map((entry) => entry.case_id);
+const allControlBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.filter(
+  (entry) => entry.candidate_role !== "wrong",
+).map((entry) => entry.case_id);
+const allBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.map(
+  (entry) => entry.case_id,
 );
+
+const blackBoxFactCases = new Map([
+  ["coverage-defined-by-rejected-attack-surface", allWrongBlackBoxCases],
+  [
+    "critical-sentinel-positive-negative-controls",
+    [
+      "wrong.r1.custom-oracle",
+      "wrong.r3.historical-runtime",
+      "wrong.r7b.cross-execution-priming",
+      "wrong.r8.empty-observation",
+      ...allControlBlackBoxCases,
+    ],
+  ],
+  [
+    "observation-channel-authority",
+    [
+      "wrong.r1.custom-oracle",
+      "wrong.r2.runner-created-static",
+      "wrong.r3.historical-runtime",
+      "wrong.r4.browser-native-proxy",
+      "wrong.r6.verifier-wrapper",
+      ...allControlBlackBoxCases,
+    ],
+  ],
+  [
+    "expected-actual-comparison-verdict-ownership",
+    ["wrong.r1.custom-oracle", "wrong.r3.historical-runtime", "control.process"],
+  ],
+  [
+    "bounded-admitted-artifact-contract",
+    [
+      "wrong.r1b.verification-input-static",
+      "wrong.r2.runner-created-static",
+      "wrong.r7.runner-modified-static",
+      "wrong.r7b.cross-execution-priming",
+      "control.static",
+    ],
+  ],
+  [
+    "actual-artifact-reextraction",
+    [
+      "wrong.r2.runner-created-static",
+      "wrong.r7.runner-modified-static",
+      "wrong.r7b.cross-execution-priming",
+      "control.static",
+    ],
+  ],
+  [
+    "generated-carrier-semantic-role",
+    [
+      "wrong.r5.synthetic-status-binding",
+      "wrong.r5b.evidence-role-static",
+      "control.static",
+    ],
+  ],
+  [
+    "expected-to-actual-self-proof-rejection",
+    [
+      "wrong.r1.custom-oracle",
+      "wrong.r1b.verification-input-static",
+      "control.process",
+      "control.static",
+    ],
+  ],
+  [
+    "production-reachability",
+    [
+      "wrong.r5.synthetic-status-binding",
+      "wrong.r6.verifier-wrapper",
+      "wrong.r6b.argv-wrapper",
+      "wrong.r7c.process-input-mutation",
+      "control.process",
+      "control.static",
+    ],
+  ],
+  [
+    "counterfactual-actual-change-and-impact-set",
+    [
+      "wrong.r5.synthetic-status-binding",
+      "wrong.r7c.process-input-mutation",
+      "wrong.r8.empty-observation",
+      "control.process",
+    ],
+  ],
+  [
+    "compatibility-security-resource-boundaries",
+    [
+      "wrong.r3.historical-runtime",
+      "wrong.r4.browser-native-proxy",
+      "wrong.r6.verifier-wrapper",
+      "wrong.r7c.process-input-mutation",
+      "control.process",
+      "control.external",
+    ],
+  ],
+  [
+    "critical-scope-escape-risk",
+    ["wrong.r4.browser-native-proxy", "control.external"],
+  ],
+  [
+    "critical-self-attestation-risk",
+    [
+      "wrong.r1.custom-oracle",
+      "wrong.r3.historical-runtime",
+      "wrong.r6.verifier-wrapper",
+      "control.process",
+    ],
+  ],
+  ["attack-suite-ground-truth", allWrongBlackBoxCases],
+  ["valid-control-suite", allControlBlackBoxCases],
+  ["black-box-final-gate-lifecycle", allBlackBoxCases],
+]);
+
+const regressionFactRefs = new Set([
+  "verification-sequence-and-current-candidate",
+]);
+
+const pendingIndependentProofFactRefs = new Set([
+  "real-capability-closure-result",
+  "final-hard-acceptance",
+  "approved-final-capability-wording",
+]);
+
+const documentationFactRefs = new Set([
+  "material-input-provenance",
+  "declared-assurance-theorem",
+  "assurance-causal-chain",
+  "p0-owner-local-and-v3-compatible",
+  "purpose-validity-floor-before-relative-antidegradation",
+  "invalid-baseline-and-claim-downgrade",
+  "incident-counterexample-first-rule",
+  "sentinel-rationale-evidence-bounded",
+  "capability-claim-levels",
+  "route-b-project-owner-decision",
+  "challenge-is-freshness-only",
+  "no-universal-ui-observer",
+  "v3-v4-and-migration-rule",
+  "fresh-agent-benchmark-boundary",
+  "roi-admission-order",
+  "early-real-entry-feedback",
+  "no-new-lifecycle-authority-registry",
+  "owner-dependency-lifecycle-boundary",
+  "build-reuse-buy-allowed-set",
+  "technical-debt-and-future-change",
+  "context-and-public-authority-update",
+  "critical-claim-inflation-risk",
+]);
+
+for (const fact of manifest.facts)
+  classifyDeliveryFactAuthority(fact.provenance.authority_ref);
+
+if (isMainModule()) await main();
+
+async function main() {
+  const outcomeKey = process.argv[2] ?? "p0-exact-recomputation";
+  const globalConformance = process.argv[3] === "global-conformance";
+  if (!manifest.scope.outcome_refs.includes(outcomeKey))
+    throw new Error(`real_capability_outcome_unknown:${outcomeKey}`);
+  if (outcomeKey === "proof-and-roi") await materializeFreshAgentEvidence();
+
+  const commands = globalConformance
+    ? await runGlobalConformanceCommands()
+    : await runOutcomeCommands(outcomeKey);
+  const facts = globalConformance
+    ? manifest.facts.filter(
+        (fact) => sourceKinds.get(fact.provenance.authority_ref) === "non_goal",
+      )
+    : manifest.facts.filter((fact) => fact.outcome_ref === outcomeKey);
+  const factResults = [];
+  for (const fact of facts)
+    factResults.push(
+      await evaluateFactResult({ fact, outcomeKey, commands }),
+    );
+
+  console.log(
+    JSON.stringify({
+      schema_version: "long-task-real-capability-delivery-verifier-report-v1",
+      outcome_key: globalConformance ? "global-conformance" : outcomeKey,
+      capability_level: 3,
+      independent_capability_audit: "blocking",
+      fact_results: factResults,
+      command_results: commands,
+    }),
+  );
+}
 
 async function runOutcomeCommands(outcome) {
-  const build = npmCommandSpec(["run", "build", "--workspace", "project-tiny-context-harness"]);
+  const build = {
+    ...npmCommandSpec([
+      "run",
+      "build",
+      "--workspace",
+      "project-tiny-context-harness",
+    ]),
+    proof_domain: "regression",
+  };
   const specs = {
     "p0-exact-recomputation": [
       build,
@@ -172,10 +342,12 @@ async function runOutcomeCommands(outcome) {
     ],
     "assurance-governance": [
       build,
+      blackBoxNodeTest(),
       nodeTest(null, "tests/ty-context/test-suite-runtime.test.mjs"),
     ],
     "observer-tcb-closure": [
       build,
+      blackBoxNodeTest(),
       nodeTest(null, "tests/ty-context/long-task-real-capability-closure.test.mjs"),
       nodeTest(
         "package-reextracted baseline and mutated actual",
@@ -184,22 +356,45 @@ async function runOutcomeCommands(outcome) {
     ],
     "proof-and-roi": [
       build,
-      { command: process.execPath, args: ["tests/ty-context/long-task-real-capability-replay.test.mjs"] },
-      { command: process.execPath, args: ["tools/verify_long_task_real_capability_roi.mjs"] },
-      npmCommandSpec([
-        "run",
-        "test:trust",
-        "--workspace",
-        "project-tiny-context-harness",
-      ]),
-      npmCommandSpec(["test"]),
-      { command: process.execPath, args: ["packages/ty-context/dist/cli.js", "package", "check-source"] },
-      { command: process.execPath, args: ["packages/ty-context/dist/cli.js", "validate-context"] },
+      blackBoxNodeTest(),
+      nodeTest(null, "tests/ty-context/long-task-real-capability-replay.test.mjs"),
+      {
+        command: process.execPath,
+        args: ["tools/verify_long_task_real_capability_roi.mjs"],
+        proof_domain: "roi",
+      },
+      {
+        ...npmCommandSpec([
+          "run",
+          "test:trust",
+          "--workspace",
+          "project-tiny-context-harness",
+        ]),
+        proof_domain: "regression",
+      },
+      { ...npmCommandSpec(["test"]), proof_domain: "regression" },
+      {
+        command: process.execPath,
+        args: [
+          "packages/ty-context/dist/cli.js",
+          "package",
+          "check-source",
+        ],
+        proof_domain: "regression",
+      },
+      {
+        command: process.execPath,
+        args: [
+          "packages/ty-context/dist/cli.js",
+          "validate-context",
+        ],
+        proof_domain: "regression",
+      },
     ],
   }[outcome];
   const results = [];
   for (const [index, spec] of specs.entries()) {
-    const result = await run(spec.command, spec.args);
+    const result = await runCommandSpec(spec);
     results.push(result);
     if (result.code !== 0) break;
     if (outcome === "proof-and-roi" && index === 0) {
@@ -287,24 +482,29 @@ function portableGitFailure(step) {
 
 async function runGlobalConformanceCommands() {
   const specs = [
-    npmCommandSpec([
-      "run",
-      "build",
-      "--workspace",
-      "project-tiny-context-harness",
-    ]),
+    {
+      ...npmCommandSpec([
+        "run",
+        "build",
+        "--workspace",
+        "project-tiny-context-harness",
+      ]),
+      proof_domain: "regression",
+    },
     {
       command: process.execPath,
       args: ["packages/ty-context/dist/cli.js", "package", "check-source"],
+      proof_domain: "documentation_conformance",
     },
     {
       command: process.execPath,
       args: ["packages/ty-context/dist/cli.js", "validate-context"],
+      proof_domain: "documentation_conformance",
     },
   ];
   const results = [];
   for (const spec of specs) {
-    const result = await run(spec.command, spec.args);
+    const result = await runCommandSpec(spec);
     results.push(result);
     if (result.code !== 0) break;
   }
@@ -330,66 +530,578 @@ async function materializeFreshAgentEvidence() {
 
 function nodeTest(pattern, file) {
   return {
-    command: process.execPath,
-    args: ["--test", ...(pattern ? [`--test-name-pattern=${pattern}`] : []), file],
+    kind: "node_machine_report",
+    file,
+    pattern,
+    proof_domain: "runtime_capability",
   };
 }
 
-async function sourceSpecificProbe(authorityRef, outcome) {
-  if (!source.includes(`key=${authorityRef} `)) return false;
-  const shared = {
-    "p0-exact-recomputation": [
-      ["packages/ty-context/src/lib/long-task-exact-comparison.ts", "exactComparisonResultIdentity"],
-      ["packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts", "design_method_exact_value_mismatch"],
-      ["tests/ty-context/long-task-semantic-drift-closure.test.mjs", "comparison result identity is recomputed"],
-    ],
-    "assurance-governance": [
-      ["tools/test_suite_policy.mjs", "selected-design-exact-verdict-recomputation"],
-      ["PROJECT_SPEC.md", "declared-purpose validity floor"],
-      ["project_context/areas/harness-package/verification.md", "positive/negative"],
-    ],
-    "observer-tcb-closure": [
-      ["packages/ty-context/src/lib/long-task-json-pointer-observation.ts", "json-pointer-exact-v1"],
-      ["tests/ty-context/long-task-real-capability-closure.test.mjs", "expected-as-actual"],
-      ["tests/ty-context/long-task-real-capability-closure.test.mjs", "production reachability"],
-      ["tests/ty-context/long-task-counterfactual-integrity.test.mjs", "package-reextracted baseline and mutated actual"],
-    ],
-    "proof-and-roi": [
-      ["tests/ty-context/long-task-real-capability-replay.test.mjs", "Starward"],
-      ["tools/verify_long_task_real_capability_roi.mjs", "fresh-agent"],
-      ["project_context/areas/harness-package/verification.md", "deterministic"],
-    ],
-  }[outcome];
-  if (!(await containsAll(shared))) return false;
-  const specific = specificProbes(authorityRef);
-  return containsAll(specific);
+function blackBoxNodeTest() {
+  return {
+    kind: "black_box_machine_report",
+    file: "tests/ty-context/long-task-observer-trust-counterexamples.test.mjs",
+    proof_domain: "runtime_capability",
+  };
 }
 
-function specificProbes(authorityRef) {
-  return ({
-  "p0-positive-fixture-correction": [["tests/ty-context/long-task-delivery-fixtures.mjs", "DESIGN_FACT_FIXTURE_SHA256"]],
-  "p0-v1-negative-control": [["tests/ty-context/long-task-semantic-drift-closure.test.mjs", "exact value mismatch cannot be overridden"]],
-  "p0-v2-negative-control": [["tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs", "design_symbolic_method_exact_value_mismatch"]],
-  "shared-exact-comparison-owner": [["packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts", "exactComparisonResultIdentity"]],
-  "critical-sentinel-positive-negative-controls": [["tools/test_suite_policy.mjs", "positive and negative controls"]],
-  "incident-counterexample-first-rule": [["tests/ty-context/long-task-semantic-drift-closure.test.mjs", "submitted pass fields"]],
-  "sentinel-rationale-evidence-bounded": [["tools/test_suite_policy.mjs", "does not prove arbitrary observers"]],
-  "capability-claim-levels": [
-    ["PROJECT_SPEC.md", "Formal capability reporting has four evidence-bounded levels"],
-    ["PROJECT_SPEC.md", "no open critical counterexample"],
-  ],
-  "actual-artifact-reextraction": [["packages/ty-context/src/lib/long-task-admitted-observation.ts", "extractJsonPointerExactObservation"]],
-  "challenge-is-freshness-only": [["project_context/areas/harness-package/decision-rationale/long-task-workflow.md", "Challenge/nonce is only"]],
-  "generated-carrier-semantic-role": [["packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts", "generated_evidence"]],
-  "expected-to-actual-self-proof-rejection": [["tests/ty-context/long-task-real-capability-closure.test.mjs", "expected-as-actual"]],
-  "production-reachability": [["tests/ty-context/long-task-real-capability-closure.test.mjs", "production reachability"]],
-  "counterfactual-actual-change-and-impact-set": [["packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts", "validateCounterfactualObservationImpact"]],
-  "attack-suite-ground-truth": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "A12"]],
-  "valid-control-suite": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "valid control"]],
-  "starward-sanitized-replay": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "Starward"]],
-  "fresh-agent-benchmark-boundary": [["tools/verify_long_task_real_capability_roi.mjs", "fresh-agent"]],
-  "roi-admission-order": [["tools/verify_long_task_real_capability_roi.mjs", "validity_floor"]],
-  })[authorityRef] ?? [];
+async function runCommandSpec(spec) {
+  if (spec.kind === "node_machine_report")
+    return runNodeMachineReport(spec, false);
+  if (spec.kind === "black_box_machine_report")
+    return runNodeMachineReport(spec, true);
+  return {
+    ...(await run(spec.command, spec.args)),
+    proof_domain: spec.proof_domain ?? "regression",
+  };
+}
+
+async function runNodeMachineReport(spec, blackBox) {
+  const temporaryRoot = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-real-capability-report-"),
+  );
+  const eventPath = path.join(temporaryRoot, "node-events.jsonl");
+  const terminalPath = path.join(temporaryRoot, "workflow-terminals.json");
+  const invocationId = randomBytes(16).toString("hex");
+  const reporter = "./tests/ty-context/test-suite-file-reporter.mjs";
+  try {
+    const args = [
+      "--test",
+      "--test-concurrency=1",
+      `--test-reporter=${reporter}`,
+      `--test-reporter-destination=${eventPath}`,
+      ...(spec.pattern ? [`--test-name-pattern=${spec.pattern}`] : []),
+      spec.file,
+    ];
+    const env = blackBox
+      ? {
+          ...process.env,
+          TY_CONTEXT_REAL_CAPABILITY_TERMINAL_REPORT: terminalPath,
+          TY_CONTEXT_REAL_CAPABILITY_REPORT_INVOCATION: invocationId,
+        }
+      : process.env;
+    const execution = await run(process.execPath, args, { env });
+    let nodeReport = null;
+    let terminalReport = null;
+    let blackBoxProof = null;
+    let reportError = null;
+    try {
+      nodeReport = parseNodeMachineReport(await readFile(eventPath, "utf8"), {
+        file: spec.file,
+      });
+      if (blackBox) {
+        terminalReport = JSON.parse(await readFile(terminalPath, "utf8"));
+        blackBoxProof = validateBlackBoxMachineProof({
+          invocationId,
+          nodeReport,
+          terminalReport,
+        });
+      }
+    } catch (error) {
+      reportError = error instanceof Error ? error.message : String(error);
+    }
+    return {
+      ...execution,
+      code: execution.code === 0 && reportError === null ? 0 : 1,
+      proof_domain: spec.proof_domain,
+      node_machine_report: nodeReport,
+      black_box_terminal_report: terminalReport,
+      black_box_proof: blackBoxProof,
+      machine_report_error: reportError,
+    };
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+}
+
+export function parseNodeMachineReport(jsonl, { file = null } = {}) {
+  const tests = [];
+  for (const [index, line] of String(jsonl).split(/\r?\n/u).entries()) {
+    if (!line.trim()) continue;
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch {
+      throw new Error(`real_capability_node_report_json_invalid:${index + 1}`);
+    }
+    if (event?.type !== "test:pass" && event?.type !== "test:fail") continue;
+    const name = typeof event.data?.name === "string" ? event.data.name : "";
+    if (!name) throw new Error("real_capability_node_report_test_name_missing");
+    tests.push({
+      name,
+      status:
+        event.data?.skip || event.data?.todo
+          ? "skipped"
+          : event.type === "test:pass"
+            ? "passed"
+            : "failed",
+      line: Number.isInteger(event.data?.line) ? event.data.line : null,
+      column: Number.isInteger(event.data?.column)
+        ? event.data.column
+        : null,
+    });
+  }
+  if (!tests.length) throw new Error("real_capability_node_report_empty");
+  return {
+    schema_version: "long-task-real-capability-node-machine-report-v1",
+    file,
+    tests,
+  };
+}
+
+export function validateBlackBoxMachineProof({
+  invocationId,
+  nodeReport,
+  terminalReport,
+}) {
+  if (!/^[a-f0-9]{32}$/u.test(invocationId ?? ""))
+    throw new Error("real_capability_black_box_invocation_invalid");
+  if (
+    !nodeReport ||
+    nodeReport.schema_version !==
+      "long-task-real-capability-node-machine-report-v1" ||
+    nodeReport.file !==
+      "tests/ty-context/long-task-observer-trust-counterexamples.test.mjs" ||
+    !Array.isArray(nodeReport.tests)
+  )
+    throw new Error("real_capability_black_box_node_report_invalid");
+  if (
+    !terminalReport ||
+    !sameKeys(terminalReport, ["schema_version", "invocation_id", "cases"]) ||
+    terminalReport.schema_version !==
+      "long-task-real-capability-black-box-terminal-report-v1" ||
+    terminalReport.invocation_id !== invocationId ||
+    !Array.isArray(terminalReport.cases)
+  )
+    throw new Error("real_capability_black_box_terminal_report_invalid");
+
+  const policyByCase = new Map(
+    DELIVERY_BLACK_BOX_CASE_POLICY.map((entry) => [entry.case_id, entry]),
+  );
+  const policyByTest = new Map(
+    DELIVERY_BLACK_BOX_CASE_POLICY.map((entry) => [entry.test_id, entry]),
+  );
+  const caseById = uniqueMap(
+    terminalReport.cases,
+    (entry) => entry?.case_id,
+    "real_capability_black_box_case",
+  );
+  assertExactSet(
+    caseById.keys(),
+    policyByCase.keys(),
+    "real_capability_black_box_case_set_mismatch",
+  );
+
+  const nodeTests = [];
+  for (const test of nodeReport?.tests ?? []) {
+    const matches = [
+      ...String(test.name).matchAll(
+        /\[real-capability:([a-z0-9]+(?:[.-][a-z0-9]+)*)\]/gu,
+      ),
+    ];
+    if (matches.length > 1)
+      throw new Error("real_capability_black_box_node_test_id_ambiguous");
+    if (matches.length === 1)
+      nodeTests.push({ ...test, test_id: matches[0][1] });
+  }
+  const nodeByTest = uniqueMap(
+    nodeTests,
+    (entry) => entry.test_id,
+    "real_capability_black_box_node_test",
+  );
+  assertExactSet(
+    nodeByTest.keys(),
+    policyByTest.keys(),
+    "real_capability_black_box_node_test_set_mismatch",
+  );
+
+  for (const policy of DELIVERY_BLACK_BOX_CASE_POLICY) {
+    const record = caseById.get(policy.case_id);
+    const nodeTestRecord = nodeByTest.get(policy.test_id);
+    if (nodeTestRecord.status !== "passed")
+      throw new Error(
+        `real_capability_black_box_node_test_not_passed:${policy.test_id}:${nodeTestRecord.status}`,
+      );
+    if (
+      !sameKeys(record, [
+        "case_id",
+        "test_id",
+        "candidate_role",
+        "control_case_id",
+        "expected_relation",
+        "terminal",
+      ]) ||
+      record.test_id !== policy.test_id ||
+      record.candidate_role !== policy.candidate_role ||
+      record.control_case_id !== policy.control_case_id ||
+      canonicalJson(record.expected_relation) !==
+        canonicalJson(policy.expected_relation) ||
+      !sameKeys(record.terminal, [
+        "stage",
+        "workflow_status",
+        "result_status",
+      ]) ||
+      typeof record.terminal.stage !== "string" ||
+      record.terminal.stage === "unknown" ||
+      typeof record.terminal.workflow_status !== "string" ||
+      record.terminal.workflow_status.length === 0 ||
+      !(
+        typeof record.terminal.result_status === "string" ||
+        record.terminal.result_status === null
+      )
+    )
+      throw new Error(
+        `real_capability_black_box_case_record_invalid:${policy.case_id}`,
+      );
+    assertExpectedTerminal(policy, record.terminal.workflow_status);
+  }
+
+  for (const policy of DELIVERY_BLACK_BOX_CASE_POLICY.filter(
+    (entry) => entry.candidate_role === "wrong",
+  )) {
+    const control = caseById.get(policy.control_case_id);
+    if (!control || !["control", "external"].includes(control.candidate_role))
+      throw new Error(
+        `real_capability_black_box_control_missing:${policy.case_id}:${policy.control_case_id}`,
+      );
+    assertExpectedTerminal(
+      policyByCase.get(policy.control_case_id),
+      control.terminal.workflow_status,
+    );
+  }
+
+  return {
+    schema_version: "long-task-real-capability-black-box-proof-v1",
+    invocation_id: invocationId,
+    cases: DELIVERY_BLACK_BOX_CASE_POLICY.map((policy) => ({
+      case_id: policy.case_id,
+      test_id: policy.test_id,
+      candidate_role: policy.candidate_role,
+      control_case_id: policy.control_case_id,
+      terminal: { ...caseById.get(policy.case_id).terminal },
+    })),
+  };
+}
+
+function wrongProofCase(caseId, testId, controlCaseId) {
+  return Object.freeze({
+    case_id: caseId,
+    test_id: testId,
+    candidate_role: "wrong",
+    control_case_id: controlCaseId,
+    expected_relation: Object.freeze({
+      operator: "not_equals",
+      value: "machine_accepted",
+    }),
+  });
+}
+
+function controlProofCase(caseId, testId, candidateRole, expectedStatus) {
+  return Object.freeze({
+    case_id: caseId,
+    test_id: testId,
+    candidate_role: candidateRole,
+    control_case_id: null,
+    expected_relation: Object.freeze({
+      operator: "equals",
+      value: expectedStatus,
+    }),
+  });
+}
+
+function assertExpectedTerminal(policy, workflowStatus) {
+  const relation = policy.expected_relation;
+  const matches =
+    relation.operator === "equals"
+      ? workflowStatus === relation.value
+      : workflowStatus !== relation.value;
+  if (!matches)
+    throw new Error(
+      `real_capability_black_box_terminal_relation_failed:${policy.case_id}:${workflowStatus ?? "null"}:${relation.operator}:${relation.value}`,
+    );
+}
+
+function uniqueMap(values, keyOf, diagnostic) {
+  const result = new Map();
+  for (const value of values) {
+    const key = keyOf(value);
+    if (typeof key !== "string" || !key)
+      throw new Error(`${diagnostic}_id_invalid`);
+    if (result.has(key)) throw new Error(`${diagnostic}_duplicate:${key}`);
+    result.set(key, value);
+  }
+  return result;
+}
+
+function assertExactSet(actual, expected, diagnostic) {
+  const actualValues = [...actual].sort();
+  const expectedValues = [...expected].sort();
+  if (canonicalJson(actualValues) !== canonicalJson(expectedValues))
+    throw new Error(
+      `${diagnostic}:expected=${expectedValues.join(",")}:actual=${actualValues.join(",")}`,
+    );
+}
+
+function sameKeys(value, expected) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const actual = Object.keys(value).sort();
+  return canonicalJson(actual) === canonicalJson([...expected].sort());
+}
+
+export async function evaluateFactResult({ fact, outcomeKey, commands }) {
+  const authorityRef = fact?.provenance?.authority_ref;
+  const base = {
+    fact_ref: fact?.key ?? null,
+    authority_ref: authorityRef ?? null,
+    source_kind: sourceKinds.get(authorityRef) ?? null,
+    expected: fact?.expected?.value ?? null,
+  };
+  if (fact?.expected?.value !== true)
+    return failedFact(base, "real_capability_fact_expected_value_unsupported");
+
+  const proofRoute = classifyDeliveryFactAuthority(authorityRef);
+  if (proofRoute === "node_machine_report") {
+    const requiredTests = nodeMachineFactTests.get(authorityRef);
+    const proof = nodeMachineProof(commands, requiredTests);
+    return observedFact(base, proof.ok, {
+      proof_kind: "fixed_id_node_machine_report",
+      evidence: {
+        required_test_ids: [...requiredTests],
+        observed_tests: proof.observed,
+      },
+      diagnostic: proof.diagnostic,
+    });
+  }
+  if (proofRoute === "black_box_terminal_pairs") {
+    const requiredCases = blackBoxFactCases.get(authorityRef);
+    const proof = blackBoxFactProof(commands, requiredCases);
+    return observedFact(base, proof.ok, {
+      proof_kind: "black_box_terminal_pairs",
+      evidence: {
+        required_case_ids: [...requiredCases],
+        observed_cases: proof.observed,
+      },
+      diagnostic: proof.diagnostic,
+    });
+  }
+  if (proofRoute === "documentation_conformance") {
+    const passed = await documentationConformance(authorityRef);
+    return observedFact(base, passed, {
+      proof_kind: "documentation_conformance",
+      evidence: {
+        source_path: sourcePath,
+        static_probes: documentationProbes(authorityRef),
+      },
+      diagnostic: passed ? null : "documentation_conformance_failed",
+      proof_limit:
+        "Static checks establish declared rule and owner-document consistency only; they do not establish runtime capability.",
+    });
+  }
+  if (proofRoute === "current_candidate_regression") {
+    const proof = currentCandidateRegressionProof(commands, outcomeKey);
+    return observedFact(base, proof.ok, {
+      proof_kind: "current_candidate_regression",
+      evidence: proof.evidence,
+      diagnostic: proof.diagnostic,
+      proof_limit:
+        "Regression command success is not used as runtime-capability evidence; runtime facts use fixed test identities and black-box terminal pairs.",
+    });
+  }
+  if (proofRoute === "blocking_independent_confirmation")
+    return {
+      ...base,
+      actual: false,
+      status: "external_confirmation_required",
+      proof_kind: "blocking_independent_confirmation",
+      diagnostic:
+        "independent_capability_audit_and_real_process_workload_roi_required",
+      evidence: {
+        capability_level: 3,
+        independent_capability_audit: "blocking",
+      },
+    };
+  return failedFact(base, "real_capability_fact_proof_route_unreachable");
+}
+
+export function classifyDeliveryFactAuthority(authorityRef) {
+  const routes = [
+    nodeMachineFactTests.has(authorityRef) && "node_machine_report",
+    blackBoxFactCases.has(authorityRef) && "black_box_terminal_pairs",
+    documentationFactRefs.has(authorityRef) && "documentation_conformance",
+    regressionFactRefs.has(authorityRef) && "current_candidate_regression",
+    pendingIndependentProofFactRefs.has(authorityRef) &&
+      "blocking_independent_confirmation",
+  ].filter(Boolean);
+  if (routes.length !== 1)
+    throw new Error(
+      routes.length === 0
+        ? `real_capability_fact_proof_route_missing:${authorityRef ?? "null"}`
+        : `real_capability_fact_proof_route_ambiguous:${authorityRef}:${routes.join(",")}`,
+    );
+  return routes[0];
+}
+
+function nodeMachineProof(commands, requiredTests) {
+  const observed = [];
+  for (const requiredName of requiredTests) {
+    const matches = commands.flatMap((command, commandIndex) =>
+      (command.node_machine_report?.tests ?? [])
+        .filter((test) => test.name === requiredName)
+        .map((test) => ({
+          command_index: commandIndex,
+          command_code: command.code,
+          name: test.name,
+          status: test.status,
+          machine_report_error: command.machine_report_error ?? null,
+        })),
+    );
+    observed.push(...matches);
+    if (
+      matches.length !== 1 ||
+      matches[0].command_code !== 0 ||
+      matches[0].status !== "passed" ||
+      matches[0].machine_report_error !== null
+    )
+      return {
+        ok: false,
+        observed,
+        diagnostic: `fixed_node_test_not_proven:${requiredName}`,
+      };
+  }
+  return { ok: true, observed, diagnostic: null };
+}
+
+function blackBoxFactProof(commands, requiredCases) {
+  const candidates = commands.filter(
+    (command) => command.black_box_proof !== null && command.black_box_proof !== undefined,
+  );
+  if (candidates.length !== 1 || candidates[0].code !== 0)
+    return {
+      ok: false,
+      observed: [],
+      diagnostic: "black_box_current_invocation_proof_missing_or_ambiguous",
+    };
+  const proof = candidates[0].black_box_proof;
+  const byId = new Map(proof.cases.map((entry) => [entry.case_id, entry]));
+  const observed = requiredCases.map((caseId) => byId.get(caseId) ?? null);
+  if (observed.some((entry) => entry === null))
+    return {
+      ok: false,
+      observed,
+      diagnostic: "black_box_required_terminal_pair_missing",
+    };
+  return { ok: true, observed, diagnostic: null };
+}
+
+function currentCandidateRegressionProof(commands, outcomeKey) {
+  const safetyCommands = commands.filter(
+    (command) => command.proof_domain !== "roi",
+  );
+  const proofDomains = new Set(
+    safetyCommands.map((command) => command.proof_domain),
+  );
+  const hasCurrentRuntimeProof = safetyCommands.some(
+    (command) =>
+      command.code === 0 &&
+      (command.black_box_proof || command.node_machine_report),
+  );
+  const ok =
+    outcomeKey === "proof-and-roi" &&
+    safetyCommands.length >= 7 &&
+    safetyCommands.every((command) => command.code === 0) &&
+    proofDomains.has("regression") &&
+    proofDomains.has("runtime_capability") &&
+    hasCurrentRuntimeProof;
+  return {
+    ok,
+    diagnostic: ok ? null : "current_candidate_verification_sequence_incomplete",
+    evidence: {
+      outcome_key: outcomeKey,
+      roi_commands_excluded_from_safety_verdict: commands.filter(
+        (command) => command.proof_domain === "roi",
+      ).length,
+      safety_command_count: safetyCommands.length,
+      proof_domains: [...proofDomains].sort(),
+      command_codes: safetyCommands.map((command) => command.code),
+    },
+  };
+}
+
+function observedFact(base, passed, detail) {
+  return {
+    ...base,
+    actual: passed,
+    status: passed ? "passed" : "failed",
+    ...detail,
+  };
+}
+
+function failedFact(base, diagnostic) {
+  return {
+    ...base,
+    actual: false,
+    status: "failed",
+    proof_kind: "none",
+    diagnostic,
+    evidence: null,
+  };
+}
+
+async function documentationConformance(authorityRef) {
+  if (!source.includes(`key=${authorityRef} `)) return false;
+  return containsAll(documentationProbes(authorityRef));
+}
+
+function documentationProbes(authorityRef) {
+  return (
+    {
+      "material-input-provenance": [
+        ["docs/long-task-real-capability-closure.md", "material-input-provenance"],
+      ],
+      "purpose-validity-floor-before-relative-antidegradation": [
+        ["PROJECT_SPEC.md", "declared-purpose validity floor"],
+      ],
+      "incident-counterexample-first-rule": [
+        ["project_context/areas/harness-package/verification.md", "counterexample"],
+      ],
+      "sentinel-rationale-evidence-bounded": [
+        ["tools/test_suite_policy.mjs", "does not prove"],
+      ],
+      "capability-claim-levels": [
+        ["PROJECT_SPEC.md", "Formal capability reporting has four evidence-bounded levels"],
+        ["PROJECT_SPEC.md", "no open critical counterexample"],
+      ],
+      "route-b-project-owner-decision": [
+        [
+          "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+          "ordinary model-authored verifier mistakes",
+        ],
+      ],
+      "challenge-is-freshness-only": [
+        [
+          "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+          "freshness",
+        ],
+      ],
+      "no-universal-ui-observer": [
+        ["PROJECT_SPEC.md", "External Confirmation"],
+      ],
+      "v3-v4-and-migration-rule": [
+        ["PROJECT_SPEC.md", "long-task-check-result-v3"],
+      ],
+      "fresh-agent-benchmark-boundary": [
+        ["tools/verify_long_task_real_capability_roi.mjs", "fresh-agent"],
+      ],
+      "roi-admission-order": [
+        ["tools/verify_long_task_real_capability_roi.mjs", "validity_floor"],
+      ],
+      "context-and-public-authority-update": [
+        ["project_context/areas/harness-package/implementation-index.md", "observer"],
+        ["README.md", "External Confirmation"],
+        ["README.zh-CN.md", "External Confirmation"],
+      ],
+    }[authorityRef] ?? []
+  );
 }
 
 async function containsAll(probes) {
@@ -418,11 +1130,11 @@ function loadSourceKinds(value) {
   return result;
 }
 
-function run(command, args) {
+function run(command, args, { env = process.env } = {}) {
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       cwd: repositoryRoot,
-      env: process.env,
+      env,
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
       shell: false,
@@ -451,10 +1163,7 @@ function sortCanonical(value) {
   return value;
 }
 
-function sha256(value) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function slug(value) {
-  return value.replace(/[^a-z0-9]+/gu, "_").replace(/^_|_$/gu, "");
+function isMainModule() {
+  if (!process.argv[1]) return false;
+  return path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
 }

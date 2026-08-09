@@ -14,12 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import YAML from "yaml";
-import {
-  fixtureSemanticManifest,
-} from "./long-task-semantic-manifest-fixture.mjs";
-import {
-  writeFixtureSourceAndOracle,
-} from "./long-task-semantic-oracle-fixture.mjs";
+import { fixtureSemanticManifest } from "./long-task-semantic-manifest-fixture.mjs";
+import { writeFixtureSourceAndOracle } from "./long-task-semantic-oracle-fixture.mjs";
 import {
   authoringTemplateSemanticManifest,
   publicExampleSemanticManifest,
@@ -30,13 +26,22 @@ import {
   refreshFixtureSemanticManifest,
   semanticManifestIdentity,
 } from "./long-task-semantic-refresh-fixture.mjs";
-import {
-  synchronizeFixtureSemanticManifest,
-} from "./long-task-semantic-sync-fixture.mjs";
+import { synchronizeFixtureSemanticManifest } from "./long-task-semantic-sync-fixture.mjs";
 import {
   fixtureExactComparisonInput,
   fixtureExactComparisonResultIdentity,
 } from "./long-task-exact-comparison-fixture.mjs";
+import {
+  FIXTURE_FIRST_SCOPE_ENV,
+  FIXTURE_LEGACY_ORACLE_PATH,
+  FIXTURE_SECOND_SCOPE_ENV,
+  FIXTURE_STATIC_FALSE_PATH,
+  FIXTURE_STATIC_RELATIONS_PATH,
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+  installPackageMachineFixture,
+  packageAdmittedFixtureSemanticManifest,
+} from "./long-task-package-machine-fixture.mjs";
 
 export {
   fixtureSemanticManifest,
@@ -200,13 +205,33 @@ export async function createDeliveryFixture(options = {}) {
     await assertSeedRepository(template);
     await cp(template, root, { recursive: true, force: true });
     if (options.twoOutcomes) {
-      await writeFixtureSourceAndOracle(root, {
+      const manifest = packageAdmittedFixtureSemanticManifest({
         twoOutcomes: true,
         externalConfirmation: Boolean(options.externalConfirmation),
       });
-      await exec("git", ["add", "source.md", "tests/oracle.mjs"], {
-        cwd: root,
-      });
+      await writeFixtureSourceAndOracle(
+        root,
+        {
+          twoOutcomes: true,
+          externalConfirmation: Boolean(options.externalConfirmation),
+        },
+        manifest,
+      );
+      await installPackageMachineFixture(root, manifest);
+      await exec(
+        "git",
+        [
+          "add",
+          "source.md",
+          "src/state.json",
+          "tests/oracle.mjs",
+          FIXTURE_LEGACY_ORACLE_PATH,
+          FIXTURE_STATIC_FALSE_PATH,
+          FIXTURE_STATIC_RELATIONS_PATH,
+          fixtureProductRootPath(),
+        ],
+        { cwd: root },
+      );
       await exec("git", ["commit", "--amend", "--no-edit"], { cwd: root });
     }
   } catch (error) {
@@ -266,9 +291,11 @@ async function initializeSeedRepository(root, externalConfirmation) {
     path.join(root, "artifacts", "proof.json"),
     '{"fixture_proof":true}\n',
   );
-  await writeFixtureSourceAndOracle(root, {
+  const manifest = packageAdmittedFixtureSemanticManifest({
     externalConfirmation,
   });
+  await writeFixtureSourceAndOracle(root, { externalConfirmation }, manifest);
+  await installPackageMachineFixture(root, manifest);
   await writeFile(
     path.join(root, "tests", "semantic-false.json"),
     `${JSON.stringify({
@@ -375,9 +402,9 @@ export function claimApplicability(outcomeKey = "first") {
 }
 
 export function deliveryContract(options = {}) {
-  const semanticManifest = fixtureSemanticManifest(options);
+  const semanticManifest = packageAdmittedFixtureSemanticManifest(options);
   const semanticManifestSha256 = digestCanonical(semanticManifest);
-  const check = (key, argument, outcomeKey) => ({
+  const check = (key, _argument, outcomeKey) => ({
     key,
     journey_roles: ["success", "stage_gate"],
     execution_target: { target_ref: "fixture-app", entrypoint: "root" },
@@ -387,9 +414,9 @@ export function deliveryContract(options = {}) {
     },
     proof_surface: "runtime_behavior",
     runner: {
-      type: "node_oracle",
-      target: "tests/oracle.mjs",
-      argv: [argument],
+      type: "project_binary",
+      target: fixtureProductRootPath(),
+      argv: fixtureProductRootArgv("tests/oracle.mjs", "first"),
       cwd: ".",
       timeout_ms: 30000,
       effect: "read_only",
@@ -407,7 +434,7 @@ export function deliveryContract(options = {}) {
         claims: ["result"],
         applicability_ref: `${outcomeKey}-root-success`,
         observation: "result",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
@@ -430,7 +457,7 @@ export function deliveryContract(options = {}) {
               claims: ["obligation.architecture-first"],
               applicability_ref: "first-root-success",
               observation: "architecture_result",
-              evidence_capabilities: ["target_runtime", "state_delta"],
+              evidence_capabilities: ["target_runtime"],
               operator: "equals",
               expected: true,
             },
@@ -442,7 +469,7 @@ export function deliveryContract(options = {}) {
         claims: [`requirement.observe-${outcomeKey}`],
         applicability_ref: `${outcomeKey}-root-success`,
         observation: "requirement_result",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
@@ -452,7 +479,7 @@ export function deliveryContract(options = {}) {
         claims: [`obligation.implement-${outcomeKey}`],
         applicability_ref: `${outcomeKey}-root-success`,
         observation: "obligation_result",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
@@ -474,110 +501,119 @@ export function deliveryContract(options = {}) {
         claims: ["control_relation_closure"],
         applicability_ref: `${outcomeKey}-root-success`,
         observation: "relations_applicable",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: false,
       },
     ],
-    environment_requirements: [],
+    environment_requirements: [
+      {
+        key: `${outcomeKey}-fixture-scope`,
+        kind: "env_var",
+        target:
+          outcomeKey === "first"
+            ? FIXTURE_FIRST_SCOPE_ENV
+            : FIXTURE_SECOND_SCOPE_ENV,
+      },
+    ],
   });
   const outcome = (key, argument, dependsOn = []) => ({
-    key,
-    title: `${key} title`,
-    stage: key,
-    depends_on: dependsOn,
-    applicability: [claimApplicability(key)],
-    semantic_fact_bindings: {
-      manifest_ref: semanticManifest.key,
-      facts: [
-        {
-          fact_ref: `fact.${key}.observable`,
-          claim_ref: `semantic_fact.fact.${key}.observable`,
-          applicability_ref: `${key}-root-success`,
-        },
-      ],
-      proofs: [
-        {
-          proof_ref: `proof.${key}.observable.exact`,
-          fact_ref: `fact.${key}.observable`,
-          method: "exact_value",
-          proof_surface: "runtime_behavior",
-          evidence_capabilities: ["semantic_fact"],
-          authority: "machine",
-          check_ref: `${key}-check`,
-          assertion_ref: `${key}-semantic-fact`,
-        },
-      ],
-    },
-    product: {
-      observable_result: `${key} becomes observable`,
-      result_applicability_refs: [`${key}-root-success`],
-      success_path_required: true,
-      degradation_path_required: false,
-      owner: {
-        label: "fixture",
-        context_refs: ["project_context/areas/main.md"],
-        path_globs: ["src/**"],
+      key,
+      title: `${key} title`,
+      stage: key,
+      depends_on: dependsOn,
+      applicability: [claimApplicability(key)],
+      semantic_fact_bindings: {
+        manifest_ref: semanticManifest.key,
+        facts: [
+          {
+            fact_ref: `fact.${key}.observable`,
+            claim_ref: `semantic_fact.fact.${key}.observable`,
+            applicability_ref: `${key}-root-success`,
+          },
+        ],
+        proofs: [
+          {
+            proof_ref: `proof.${key}.observable.exact`,
+            fact_ref: `fact.${key}.observable`,
+            method: "exact_value",
+            proof_surface: "runtime_behavior",
+            evidence_capabilities: ["semantic_fact"],
+            authority: "machine",
+            check_ref: `${key}-check`,
+            assertion_ref: `${key}-semantic-fact`,
+          },
+        ],
       },
-      requirements: [
-        {
-          key: `observe-${key}`,
-          statement: `The ${key} outcome must be observable.`,
-          required_proof_surfaces: ["runtime_behavior"],
+      product: {
+        observable_result: `${key} becomes observable`,
+        result_applicability_refs: [`${key}-root-success`],
+        success_path_required: true,
+        degradation_path_required: false,
+        owner: {
+          label: "fixture",
+          context_refs: ["project_context/areas/main.md"],
+          path_globs: ["src/**", FIXTURE_LEGACY_ORACLE_PATH],
+        },
+        requirements: [
+          {
+            key: `observe-${key}`,
+            statement: `The ${key} outcome must be observable.`,
+            required_proof_surfaces: ["runtime_behavior"],
+            applicability_refs: [`${key}-root-success`],
+          },
+        ],
+        owner_surfaces: [],
+        controls: [],
+        control_relation_closure: {
+          state: "not_applicable",
+          statement: "This Outcome declares no user-visible Controls.",
           applicability_refs: [`${key}-root-success`],
         },
-      ],
-      owner_surfaces: [],
-      controls: [],
-      control_relation_closure: {
-        state: "not_applicable",
-        statement: "This Outcome declares no user-visible Controls.",
-        applicability_refs: [`${key}-root-success`],
+        control_relations: [],
+        surface_bindings: [],
+        non_completing_outcomes: [],
       },
-      control_relations: [],
-      surface_bindings: [],
-      non_completing_outcomes: [],
-    },
-    technical: {
-      obligations: [
-        {
-          key: `implement-${key}`,
-          statement: `Implement ${key}`,
-          required_proof_surfaces: ["runtime_behavior"],
-          applicability_refs: [`${key}-root-success`],
-        },
-        ...(key === "first"
-          ? [
-              {
-                key: "architecture-first",
-                statement:
-                  "Preserve the fixture state owner and verifier boundary.",
-                required_proof_surfaces: ["runtime_behavior"],
-                applicability_refs: ["first-root-success"],
-              },
-            ]
-          : []),
-      ],
-      expected_change_paths: ["src/**"],
-      allowed_support_paths: [],
-      forbidden_paths: ["secrets/**"],
-      forbidden_shortcuts: [],
-      bindings: [
-        {
-          key: `state-${key}`,
-          kind: "file",
-          target: "src/state.json",
-          carrier_paths: ["src/state.json"],
-          existence: "existing",
-        },
-      ],
-      rollback_and_recovery: null,
-    },
-    acceptance: {
-      checks: [check(`${key}-check`, argument, key)],
-      population: null,
-      counterfactual_controls: [],
-    },
+      technical: {
+        obligations: [
+          {
+            key: `implement-${key}`,
+            statement: `Implement ${key}`,
+            required_proof_surfaces: ["runtime_behavior"],
+            applicability_refs: [`${key}-root-success`],
+          },
+          ...(key === "first"
+            ? [
+                {
+                  key: "architecture-first",
+                  statement:
+                    "Preserve the fixture state owner and verifier boundary.",
+                  required_proof_surfaces: ["runtime_behavior"],
+                  applicability_refs: ["first-root-success"],
+                },
+              ]
+            : []),
+        ],
+        expected_change_paths: ["src/**"],
+        allowed_support_paths: [FIXTURE_LEGACY_ORACLE_PATH],
+        forbidden_paths: ["secrets/**"],
+        forbidden_shortcuts: [],
+        bindings: [
+          {
+            key: `state-${key}`,
+            kind: "file",
+            target: "src/state.json",
+            carrier_paths: ["src/state.json"],
+            existence: "existing",
+          },
+        ],
+        rollback_and_recovery: null,
+      },
+      acceptance: {
+        checks: [check(`${key}-check`, argument, key)],
+        population: null,
+        counterfactual_controls: [],
+      },
   });
   return {
     schema_version: "long-task-delivery-v2",
@@ -603,7 +639,8 @@ export function deliveryContract(options = {}) {
           description: "The fixture process entrypoint.",
           role: "product",
           runtime_family: "process",
-          root_entrypoint: "tests/oracle.mjs",
+          root_entrypoint: fixtureProductRootPath(),
+          root_argv: fixtureProductRootArgv("tests/oracle.mjs", "first"),
           capabilities: ["process-runtime", "cold-start", "production-root"],
         },
       ],
