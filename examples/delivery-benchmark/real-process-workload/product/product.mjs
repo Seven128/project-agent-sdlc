@@ -1,11 +1,15 @@
 import { readFile } from "node:fs/promises";
 import { evaluateProductFacts } from "./facts.mjs";
 
-const scope = process.env.TY_CONTEXT_FIXTURE_SECOND_SCOPE
-  ? "second"
-  : process.env.TY_CONTEXT_FIXTURE_FIRST_SCOPE
-    ? "first"
-    : (process.argv[2] ?? "all");
+const requestedScope = process.argv[2] ?? null;
+const scope =
+  requestedScope === "all"
+    ? "all"
+    : process.env.TY_CONTEXT_FIXTURE_SECOND_SCOPE
+      ? "second"
+      : process.env.TY_CONTEXT_FIXTURE_FIRST_SCOPE
+        ? "first"
+        : (requestedScope ?? "all");
 if (!["first", "second", "all"].includes(scope))
   throw new Error(`roi_product_scope_unsupported:${scope}`);
 

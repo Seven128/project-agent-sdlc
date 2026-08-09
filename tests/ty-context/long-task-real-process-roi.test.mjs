@@ -90,15 +90,55 @@ test("repository process product has eight independent normal/degraded facts and
       path.join(temporary, "config", "state.json"),
       `${JSON.stringify(gold.degraded)}\n`,
     );
-    const result = await execute(process.execPath, [
-      path.join(temporary, "src", "product.mjs"),
-      "all",
-    ]);
+    const result = await execute(
+      process.execPath,
+      [path.join(temporary, "src", "product.mjs"), "all"],
+      {
+        env: {
+          ...process.env,
+          TY_CONTEXT_FIXTURE_FIRST_SCOPE: "inherited-concurrent-fixture",
+          TY_CONTEXT_FIXTURE_SECOND_SCOPE: "inherited-concurrent-fixture",
+        },
+      },
+    );
     assert.equal(result.status, 0, result.stderr);
     const envelope = JSON.parse(result.stdout);
     assert.equal(envelope.schema_version, "ty-context-product-observation-v1");
-    assert.ok(Object.keys(envelope.observations).length >= 12);
+    assert.equal(Object.keys(envelope.observations).length, 14);
     assert.equal(result.stdout.trim().split(/\r?\n/u).length, 1);
+
+    const first = await execute(
+      process.execPath,
+      [path.join(temporary, "src", "product.mjs"), "first"],
+      {
+        env: {
+          ...process.env,
+          TY_CONTEXT_FIXTURE_FIRST_SCOPE: "first-check",
+          TY_CONTEXT_FIXTURE_SECOND_SCOPE: "",
+        },
+      },
+    );
+    const second = await execute(
+      process.execPath,
+      [path.join(temporary, "src", "product.mjs"), "first"],
+      {
+        env: {
+          ...process.env,
+          TY_CONTEXT_FIXTURE_FIRST_SCOPE: "",
+          TY_CONTEXT_FIXTURE_SECOND_SCOPE: "second-check",
+        },
+      },
+    );
+    assert.equal(first.status, 0, first.stderr);
+    assert.equal(second.status, 0, second.stderr);
+    const firstEnvelope = JSON.parse(first.stdout);
+    const secondEnvelope = JSON.parse(second.stdout);
+    assert.equal(Object.keys(firstEnvelope.observations).length, 7);
+    assert.equal(Object.keys(secondEnvelope.observations).length, 7);
+    assert.equal("fact.first.observable" in firstEnvelope.observations, true);
+    assert.equal("fact.second.observable" in firstEnvelope.observations, false);
+    assert.equal("fact.first.observable" in secondEnvelope.observations, false);
+    assert.equal("fact.second.observable" in secondEnvelope.observations, true);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
@@ -601,8 +641,9 @@ function caseFixture(variantId, caseId) {
   };
 }
 
-async function execute(executable, args) {
+async function execute(executable, args, options = {}) {
   const child = spawn(executable, args, {
+    ...options,
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
