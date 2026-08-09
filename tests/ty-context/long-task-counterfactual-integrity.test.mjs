@@ -7,6 +7,7 @@ import {
   evaluateOutcomeCounterfactuals,
   isValidCounterfactualCheckResult,
 } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
 import {
   createCounterfactualSandbox,
@@ -19,6 +20,7 @@ import {
   createDeliveryFixture,
   deliveryContract,
   runCli,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { configurePackageObservationCase } from "./long-task-observer-trust-fixtures.mjs";
@@ -26,6 +28,11 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
+import {
+  PROCESS_PRODUCT_STATE_PATH,
+  PROCESS_PRODUCT_VERIFICATION_PATH,
+  configureRepoProcessProductControl,
+} from "./long-task-process-product-fixture.mjs";
 
 const COUNTERFACTUAL_PRODUCT_PATH = "tests/counterfactual-product.mjs";
 
@@ -230,6 +237,129 @@ test("package Counterfactual compares baseline and mutated actual through the ma
   }
 });
 
+test("process Counterfactual keeps the compiled closure identity and mutates only its production carrier", async () => {
+  const fixture = await createDeliveryFixture({ twoOutcomes: true });
+  try {
+    await configureRepoProcessProductControl(fixture);
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    const checks = compiled.outcomes.flatMap(
+      (outcome) => outcome.acceptance.checks,
+    );
+    const manifest = await captureWorkspaceManifest(
+      fixture.root,
+      fixture.workdir,
+    );
+    const prepared = await prepareExecutionObservationGroup({
+      checks,
+      snapshot_root: fixture.root,
+      workspace_manifest: manifest,
+    });
+    let raw;
+    try {
+      raw = await prepared.finalize(
+        await executeCheckRunner(
+          checks[0],
+          prepared.execution_root,
+          prepared.runner_context,
+        ),
+      );
+    } finally {
+      await prepared.dispose();
+    }
+    const outcome = compiled.outcomes[0];
+    const check = outcome.acceptance.checks[0];
+    const baseline = await evaluateCheckEvidence(
+      check,
+      raw,
+      fixture.root,
+      outcome,
+    );
+    assert.equal(baseline.status, "passed", JSON.stringify(baseline.findings));
+    assert.equal(
+      raw.host_execution_attestation.process_runtime_closure_identity,
+      check.process_runtime_closure.closure_identity,
+    );
+    assert.ok(
+      check.process_runtime_closure.production_carrier_files.includes(
+        PROCESS_PRODUCT_STATE_PATH,
+      ),
+    );
+    const baselineResults = [baseline];
+    const baselineExecutions = new Map([[check.raw_execution_identity, raw]]);
+    assert.deepEqual(
+      await evaluateOutcomeCounterfactuals(
+        outcome,
+        fixture.root,
+        manifest,
+        [],
+        baselineResults,
+        baselineExecutions,
+        checks,
+      ),
+      [],
+    );
+
+    const staleRaw = structuredClone(raw);
+    staleRaw.host_execution_attestation.process_runtime_closure_identity =
+      "f".repeat(64);
+    let findings = await evaluateOutcomeCounterfactuals(
+      {
+        ...outcome,
+        acceptance: {
+          ...outcome.acceptance,
+          counterfactual_controls: [
+            outcome.acceptance.counterfactual_controls[0],
+          ],
+        },
+      },
+      fixture.root,
+      manifest,
+      [],
+      baselineResults,
+      new Map([[check.raw_execution_identity, staleRaw]]),
+      checks,
+    );
+    assert.equal(findings.length, 1);
+    assert.equal(
+      findings[0].actual.observation_impact_issue,
+      "process_runtime_closure_identity_mismatch",
+    );
+
+    const nonCarrierMutation = structuredClone(outcome);
+    nonCarrierMutation.acceptance.counterfactual_controls = [
+      {
+        ...nonCarrierMutation.acceptance.counterfactual_controls[0],
+        mutation: {
+          type: "replace_json_value",
+          path: PROCESS_PRODUCT_VERIFICATION_PATH,
+          pointer: "/kind",
+          value: "mutated-verification-input",
+        },
+      },
+    ];
+    findings = await evaluateOutcomeCounterfactuals(
+      nonCarrierMutation,
+      fixture.root,
+      manifest,
+      [],
+      baselineResults,
+      baselineExecutions,
+      checks,
+    );
+    assert.equal(findings.length, 1);
+    assert.equal(
+      findings[0].actual.observation_impact_issue,
+      "counterfactual_runtime_reachability_unproven",
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("Counterfactual accepts only the exact designated Assertion failure", async () => {
   const fixture = await createDeliveryFixture();
   try {
@@ -288,6 +418,10 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       },
     ];
     configureCounterfactualProduct(fixture, check);
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await writeOracle(fixture.root, "valid");
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -426,7 +560,7 @@ test("Counterfactual cannot delete the runner or a declared helper", async () =>
       await assert.rejects(
         runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
         (error) =>
-          /verification_input_overlaps_implementation|counterfactual_mutates_verification_input/u.test(
+          /verification_input_overlaps_implementation|counterfactual_mutates_verification_input|process_runtime_input_verification_role_forbidden/u.test(
             error.stderr ?? "",
           ),
         target,
@@ -442,9 +576,6 @@ test("Counterfactual sparse sandbox includes only declared frozen Context inputs
   try {
     const declaredContext = "project_context/global.md";
     const undeclaredContext = "project_context/architecture.md";
-    fixture.contract.outcomes[0].acceptance.checks[0].input_paths.push(
-      declaredContext,
-    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -456,6 +587,7 @@ test("Counterfactual sparse sandbox includes only declared frozen Context inputs
     );
     const outcome = compiled.outcomes[0];
     const check = outcome.acceptance.checks[0];
+    check.input_paths.push(declaredContext);
     const control = outcome.acceptance.counterfactual_controls[0];
     const binding = outcome.technical.bindings.find(
       (item) => item.key === control.binding_key,
@@ -725,13 +857,30 @@ async function evaluateCounterfactualsWithCurrentBaseline(outcome, fixture) {
 function configureCounterfactualProduct(fixture, check) {
   const rootArgv = fixtureProductRootArgv(COUNTERFACTUAL_PRODUCT_PATH, "first");
   const target = fixture.contract.task.execution_targets[0];
+  const outcome = fixture.contract.outcomes[0];
   target.root_entrypoint = fixtureProductRootPath();
   target.root_argv = rootArgv;
   check.runner.type = "project_binary";
   check.runner.target = fixtureProductRootPath();
   check.runner.argv = [...rootArgv];
-  check.verification_inputs = [
-    COUNTERFACTUAL_PRODUCT_PATH,
-    "tests/semantic-false.json",
-  ];
+  check.verification_inputs = ["tests/semantic-false.json"];
+  check.input_paths.push("src/counterfactual-mode.json");
+  outcome.product.owner.path_globs.push(COUNTERFACTUAL_PRODUCT_PATH);
+  outcome.technical.allowed_support_paths.push(COUNTERFACTUAL_PRODUCT_PATH);
+  outcome.technical.bindings.push(
+    {
+      key: "counterfactual-product-module",
+      kind: "file",
+      target: COUNTERFACTUAL_PRODUCT_PATH,
+      carrier_paths: [COUNTERFACTUAL_PRODUCT_PATH],
+      existence: "existing",
+    },
+    {
+      key: "counterfactual-mode",
+      kind: "file",
+      target: "src/counterfactual-mode.json",
+      carrier_paths: ["src/counterfactual-mode.json"],
+      existence: "existing",
+    },
+  );
 }
