@@ -8,6 +8,7 @@ import type {
   ExecutionTargetV2,
   FrozenRunnerV2,
   SemanticFactExpectationV2,
+  SourceBackedExecutionTargetV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import { computeRawExecutionIdentity } from "./long-task-check-execution-policy.js";
@@ -34,6 +35,7 @@ import {
   packageScriptVerifierRoots,
 } from "./long-task-verifier-dependency-closure.js";
 import { compileObservationAuthorityPlan } from "./long-task-observation-authority.js";
+import { compileProcessRuntimeClosure } from "./long-task-process-runtime-closure.js";
 
 export async function freezeDeliveryCheck(
   check: DeliveryCheckV2,
@@ -45,6 +47,8 @@ export async function freezeDeliveryCheck(
   designConformanceTargets: CompiledDesignTargetV2[],
   semanticFactExpectations: SemanticFactExpectationV2[],
   productionBindings: DeliveryBindingV2[],
+  productionOwnerPaths: string[],
+  sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null,
   protectedAuthorityPaths: readonly string[] = [],
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
@@ -103,6 +107,7 @@ export async function freezeDeliveryCheck(
     baseline,
     cwd,
     target,
+    executionTarget,
   );
   validateSemanticFactOracleInputs(
     check.key,
@@ -124,6 +129,20 @@ export async function freezeDeliveryCheck(
     design_targets: designConformanceTargets,
     semantic_fact_expectations: semanticFactExpectations,
     production_bindings: productionBindings,
+    production_owner_paths: productionOwnerPaths,
+    source_backed_execution_target: sourceBackedExecutionTarget,
+    workspace_manifest: baseline,
+    protected_authority_paths: protectedAuthorityPaths,
+  });
+  const processRuntimeClosure = compileProcessRuntimeClosure({
+    check,
+    runner,
+    execution_target: executionTarget,
+    observation_authorities: observationAuthorities,
+    production_bindings: productionBindings,
+    production_owner_paths: productionOwnerPaths,
+    source_backed_execution_target: sourceBackedExecutionTarget,
+    workspace_manifest: baseline,
     protected_authority_paths: protectedAuthorityPaths,
   });
   const compiled = {
@@ -138,6 +157,7 @@ export async function freezeDeliveryCheck(
     design_conformance_targets: designConformanceTargets,
     semantic_fact_expectations: semanticFactExpectations,
     observation_authorities: observationAuthorities,
+    process_runtime_closure: processRuntimeClosure,
   };
   return {
     ...compiled,
@@ -290,6 +310,7 @@ async function freezeVerificationInputs(
   manifest: WorkspaceManifestV2,
   cwd: string,
   target: string,
+  executionTarget: ExecutionTargetV2,
 ): Promise<Record<string, string>> {
   const result: Record<string, string> = {};
   for (const [index, source] of check.verification_inputs.entries()) {
@@ -312,17 +333,30 @@ async function freezeVerificationInputs(
       result[file.path] = sha256Hex(await readFile(protectedFile));
     }
   }
-  const automatic = new Set<string>([repoRelative(repository, target)]);
-  const packageFile = await nearestRunnerFile(cwd, repository, "package.json");
-  if (packageFile) automatic.add(repoRelative(repository, packageFile));
-  for (const name of [
-    "package-lock.json",
-    "npm-shrinkwrap.json",
-    "pnpm-lock.yaml",
-    "yarn.lock",
-  ]) {
-    const file = await nearestRunnerFile(cwd, repository, name);
-    if (file) automatic.add(repoRelative(repository, file));
+  const directProductRoot =
+    check.runner.type === "project_binary" &&
+    executionTarget.role === "product" &&
+    executionTarget.runtime_family === "process" &&
+    check.execution_target.entrypoint === "root";
+  const automatic = new Set<string>(
+    directProductRoot ? [] : [repoRelative(repository, target)],
+  );
+  if (!directProductRoot) {
+    const packageFile = await nearestRunnerFile(
+      cwd,
+      repository,
+      "package.json",
+    );
+    if (packageFile) automatic.add(repoRelative(repository, packageFile));
+    for (const name of [
+      "package-lock.json",
+      "npm-shrinkwrap.json",
+      "pnpm-lock.yaml",
+      "yarn.lock",
+    ]) {
+      const file = await nearestRunnerFile(cwd, repository, name);
+      if (file) automatic.add(repoRelative(repository, file));
+    }
   }
   if (check.runner.type === "playwright_test")
     if (playwrightConfigArgument(check.runner.argv)) {

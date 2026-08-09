@@ -102,8 +102,7 @@ test("overlap call sites fail closed for global wildcards and protected evidence
       mutate(contract) {
         contract.outcomes[0].acceptance.checks[0].artifact_globs = ["**"];
       },
-      error:
-        /machine_observer_not_admitted:.*process_carrier_evidence_role_forbidden/u,
+      error: /process_runtime_input_evidence_role_forbidden/u,
     },
   ];
   for (const scenario of scenarios) {
@@ -126,9 +125,11 @@ test("overlap call sites fail closed for global wildcards and protected evidence
 test("only proven expected-output overlap permits a missing input path", async () => {
   const accepted = await createDeliveryFixture();
   try {
-    const check = accepted.contract.outcomes[0].acceptance.checks[0];
-    check.input_paths = ["src/state.json", "generated/report.json"];
-    check.expected_output_paths = ["generated/**"];
+    addMissingOutputDiagnosticCheck(
+      accepted.contract,
+      "generated/report.json",
+      "generated/**",
+    );
     await writeContract(accepted.workdir, accepted.contract);
     await runCli(accepted.root, ["enable", "long-task"]);
     await runCli(accepted.root, ["long-task", "compile", accepted.workdir]);
@@ -138,19 +139,34 @@ test("only proven expected-output overlap permits a missing input path", async (
 
   const rejected = await createDeliveryFixture();
   try {
-    const check = rejected.contract.outcomes[0].acceptance.checks[0];
-    check.input_paths = ["src/state.json", "generated/report.txt"];
-    check.expected_output_paths = ["generated/*.json"];
+    addMissingOutputDiagnosticCheck(
+      rejected.contract,
+      "generated/report.txt",
+      "generated/*.json",
+    );
     await writeContract(rejected.workdir, rejected.contract);
     await runCli(rejected.root, ["enable", "long-task"]);
     await assert.rejects(
       runCli(rejected.root, ["long-task", "compile", rejected.workdir]),
-      /input_path_not_found:first-check:generated\/report\.txt/u,
+      /input_path_not_found:missing-output-diagnostic:generated\/report\.txt/u,
     );
   } finally {
     await rm(rejected.root, { recursive: true, force: true });
   }
 });
+
+function addMissingOutputDiagnosticCheck(contract, inputPath, outputPattern) {
+  const outcome = contract.outcomes[0];
+  const check = structuredClone(outcome.acceptance.checks[0]);
+  check.key = "missing-output-diagnostic";
+  check.journey_roles = ["success"];
+  check.input_paths = [inputPath];
+  check.expected_output_paths = [outputPattern];
+  check.artifact_globs = [];
+  check.positive_assertions = [];
+  check.negative_assertions = [];
+  outcome.acceptance.checks.push(check);
+}
 
 test("unsupported patterns fail during compile instead of reaching a divergent matcher", async () => {
   for (const pattern of [

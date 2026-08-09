@@ -18,6 +18,7 @@ import type {
   CompiledSourceItemV2,
   ContextAuthoritySnapshotV2,
   DeliveryContractV2,
+  SourceBackedExecutionTargetV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import { validateClaimEvidenceSensitivity } from "./long-task-evidence-sensitivity-policy.js";
@@ -86,6 +87,10 @@ export async function validateContractForActivation(options: {
   await attempt(mode, diagnostics, () =>
     validateSourceAnchors(repository, contract.source_claims),
   );
+  let sourceBackedExecutionTargets = new Map<
+    string,
+    SourceBackedExecutionTargetV2
+  >();
   const sourceItems = await attempt(mode, diagnostics, async () => {
     const items = await compileSourceInventory(
       repository,
@@ -98,7 +103,7 @@ export async function validateContractForActivation(options: {
         ? (error) => addDiagnosticError(diagnostics, new Error(error))
         : undefined,
     );
-    validateSourceTargetContinuity(
+    sourceBackedExecutionTargets = validateSourceTargetContinuity(
       contract,
       items,
       mode === "collect"
@@ -135,11 +140,6 @@ export async function validateContractForActivation(options: {
       : null;
 
   const workdirRelative = repoRelative(repository, workdir);
-  const observationAuthorityPaths = [
-    `${workdirRelative}/delivery-contract.yaml`,
-    ...Object.keys(sourceHashes ?? {}),
-    ...(context?.files ?? []),
-  ];
   const workspace = await attempt(mode, diagnostics, async () => {
     const manifest = await captureWorkspaceManifest(repository, workdir);
     validateTechnicalPaths(contract, repository, workdirRelative, manifest);
@@ -153,6 +153,17 @@ export async function validateContractForActivation(options: {
       sourceItems,
       context,
     );
+  const observationAuthorityPaths = [
+    ...workspace.files
+      .map((file) => file.path)
+      .filter(
+        (file) =>
+          file === workdirRelative || file.startsWith(`${workdirRelative}/`),
+      ),
+    `${workdirRelative}/delivery-contract.yaml`,
+    ...Object.keys(sourceHashes ?? {}),
+    ...(context?.files ?? []),
+  ];
 
   const globalChecks: CompiledCheckV2[] = [];
   for (const check of contract.global.acceptance.checks) {
@@ -173,7 +184,11 @@ export async function validateContractForActivation(options: {
           contract.task.execution_targets,
           [],
           [],
-          [],
+          contract.outcomes.flatMap((outcome) => outcome.technical.bindings),
+          contract.outcomes.flatMap(
+            (outcome) => outcome.product.owner.path_globs,
+          ),
+          sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
           observationAuthorityPaths,
         ),
       null,
@@ -203,6 +218,8 @@ export async function validateContractForActivation(options: {
             designTargetsForCheck(outcome, check.key),
             semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
             outcome.technical.bindings,
+            outcome.product.owner.path_globs,
+            sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
             observationAuthorityPaths,
           ),
         outcome.key,

@@ -438,6 +438,9 @@ function packageDerivedCapability(
       !attestation.direct_root_match ||
       attestation.raw_execution_identity !== check.raw_execution_identity ||
       !attestation.snapshot_sha256 ||
+      !check.process_runtime_closure ||
+      attestation.process_runtime_closure_identity !==
+        check.process_runtime_closure.closure_identity ||
       attestation.exit_code !== 0 ||
       attestation.exit_code !== raw?.exit_code
     )

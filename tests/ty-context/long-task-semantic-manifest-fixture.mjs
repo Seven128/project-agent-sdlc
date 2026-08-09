@@ -8,9 +8,8 @@ import {
   digestText,
   refreshFixtureSemanticManifest,
 } from "./long-task-semantic-refresh-fixture.mjs";
-import {
-  fixtureSemanticFactRecords,
-} from "./long-task-semantic-records-fixture.mjs";
+import { fixtureSemanticFactRecords } from "./long-task-semantic-records-fixture.mjs";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 
 export const fixtureSourceStatements = {
   "first-observable": "The first outcome must be observable.",
@@ -27,19 +26,20 @@ export function fixtureSemanticManifest(options = {}) {
     "first-observable",
     ...(options.twoOutcomes ? ["second-observable"] : []),
     "fixture-architecture",
+    ...(options.executionTarget ? ["fixture-execution-target"] : []),
     ...(options.externalConfirmation ? ["fixture-external"] : []),
   ];
   const manifestKey = "fixture-semantic-facts";
   const familyKey = (family) => `family.${family.replaceAll("_", "-")}`;
   const axisKey = (axis) => `axis.${axis.replaceAll("_", "-")}`;
-  const propertyKey = (property) =>
-    `property.${property.replaceAll("_", "-")}`;
+  const propertyKey = (property) => `property.${property.replaceAll("_", "-")}`;
   const conditionKey = (outcome) => `condition.${outcome}.baseline`;
   const unitKey = (outcome) => `subject.${outcome}.outcome`;
   const sourceFacts = (sourceKey) => {
     if (sourceKey === "first-observable") return ["fact.first.observable"];
     if (sourceKey === "second-observable") return ["fact.second.observable"];
     if (sourceKey === "fixture-architecture") return factKeys;
+    if (sourceKey === "fixture-execution-target") return factKeys;
     if (sourceKey === "fixture-external") return factKeys;
     return [];
   };
@@ -48,7 +48,11 @@ export function fixtureSemanticManifest(options = {}) {
       key: `input.${sourceKey}`,
       kind: "source_item",
       source_ref: sourceKey,
-      sha256: digestText(fixtureSourceStatements[sourceKey]),
+      sha256: digestText(
+        sourceKey === "fixture-execution-target"
+          ? executionTargetSourceStatement(options.executionTarget)
+          : fixtureSourceStatements[sourceKey],
+      ),
       disposition: "non_ui_material",
       fact_refs: sourceFacts(sourceKey),
       basis_refs: [sourceKey],
@@ -98,24 +102,20 @@ export function fixtureSemanticManifest(options = {}) {
       rationale: "The owning Context is classified and bound.",
     },
   ];
-  const familyDispositions = SEMANTIC_FACT_STANDARD_FAMILIES.map(
-    (family) => ({
-      key: familyKey(family),
-      family,
-      standard: true,
-      disposition:
-        family === "goal_scope_glossary"
-          ? "applicable"
-          : "not_applicable",
-      outcome_refs: outcomeKeys,
-      source_item_refs: ["fixture-architecture"],
-      basis_refs: ["fixture-architecture"],
-      rationale:
-        family === "goal_scope_glossary"
-          ? "The fixture exposes one observable outcome Fact per Outcome."
-          : "The bounded fixture Source explicitly excludes this standard family.",
-    }),
-  );
+  const familyDispositions = SEMANTIC_FACT_STANDARD_FAMILIES.map((family) => ({
+    key: familyKey(family),
+    family,
+    standard: true,
+    disposition:
+      family === "goal_scope_glossary" ? "applicable" : "not_applicable",
+    outcome_refs: outcomeKeys,
+    source_item_refs: ["fixture-architecture"],
+    basis_refs: ["fixture-architecture"],
+    rationale:
+      family === "goal_scope_glossary"
+        ? "The fixture exposes one observable outcome Fact per Outcome."
+        : "The bounded fixture Source explicitly excludes this standard family.",
+  }));
   const subjects = outcomeKeys.map((outcome) => ({
     key: unitKey(outcome),
     family_ref: familyKey("goal_scope_glossary"),
@@ -136,8 +136,7 @@ export function fixtureSemanticManifest(options = {}) {
       values: [],
       source_item_refs: ["fixture-architecture"],
       basis_refs: ["fixture-architecture"],
-      rationale:
-        "The bounded fixture has no condition variation on this axis.",
+      rationale: "The bounded fixture has no condition variation on this axis.",
     }),
   );
   const conditions = outcomeKeys.map((outcome) => ({

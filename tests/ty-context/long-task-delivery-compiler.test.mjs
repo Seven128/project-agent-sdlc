@@ -10,6 +10,7 @@ import {
   addProductionControlBinding,
   completeControl,
   createDeliveryFixture,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -53,9 +54,10 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     assert.equal(check.runner.resolved_cwd, "");
     assert.equal(check.runner.resolved_target, "bin/product-root.exe");
     assert.equal(
-      check.verification_input_hashes["bin/product-root.exe"].length,
-      64,
+      check.process_runtime_closure.root_target,
+      "bin/product-root.exe",
     );
+    assert.equal(check.process_runtime_closure.closure_identity.length, 64);
     assert.equal(compiled.source_hashes["source.md"].length, 64);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -444,6 +446,10 @@ test("Long-Task Compile binds every declared design verification method to an in
     target.capabilities = target.capabilities.filter(
       (capability) => capability !== "motion-observation",
     );
+    await synchronizeFixtureExecutionTargetSource(
+      missingRuntimeCapability.root,
+      missingRuntimeCapability.contract,
+    );
     await writeContract(
       missingRuntimeCapability.workdir,
       missingRuntimeCapability.contract,
@@ -816,8 +822,13 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
       }),
       /counterfactual_path_outside_binding:first:missing-carrier:src\/missing\.json/,
     );
+    const protectedRunnerBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === "product-root-first",
+    );
+    outcome.acceptance.counterfactual_controls[0].binding_key =
+      protectedRunnerBinding.key;
     outcome.acceptance.counterfactual_controls[0].mutation.path =
-      "tests/oracle.mjs";
+      protectedRunnerBinding.target;
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
       compileDeliveryContract(fixture.workdir, fixture.root, {
@@ -1108,6 +1119,7 @@ async function attachDesignResourceHandoff(fixture) {
       refs: ["first.requirement.design-handoff"],
     },
   });
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   return handoff;
 }
 

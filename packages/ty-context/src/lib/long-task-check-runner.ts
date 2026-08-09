@@ -84,6 +84,7 @@ export async function executeCheckRunner(
         snapshotRoot,
         processAuthorities,
         context?.snapshot_sha256,
+        context?.process_runtime_closure_identity,
       );
       const secrets = declaredEnvironmentValues(check.environment_requirements);
       let decoded = outputContainsDeclaredEnvironmentValue(raw, secrets)
@@ -166,6 +167,7 @@ async function runOnce(
   snapshotRoot: string,
   processAuthorities: readonly CompiledObservationAuthorityV2[],
   snapshotSha256: string | undefined,
+  processRuntimeClosureIdentity: string | undefined,
 ): Promise<{
   exit_code: number;
   stdout: Buffer;
@@ -256,6 +258,7 @@ async function runOnce(
       snapshot_sha256: snapshotSha256!,
       observation_execution_nonce: executionNonce,
       observation_artifact_sha256: processObservation.artifact_sha256,
+      process_runtime_closure_identity: processRuntimeClosureIdentity!,
     },
   };
 }
@@ -588,6 +591,13 @@ function validateProcessObserverActivation(
   if (!authorities.length) return null;
   if (!context?.snapshot_sha256)
     return "process_observer_snapshot_identity_required";
+  if (
+    !context.process_runtime_closure_identity ||
+    !check.process_runtime_closure ||
+    context.process_runtime_closure_identity !==
+      check.process_runtime_closure.closure_identity
+  )
+    return "process_runtime_closure_identity_mismatch";
   if (
     check.environment_requirements.some(
       (requirement) =>

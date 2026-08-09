@@ -9,6 +9,8 @@ import type {
   ExecutionTargetV2,
   FrozenRunnerV2,
   SemanticFactExpectationV2,
+  SourceBackedExecutionTargetV2,
+  WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import {
   JSON_POINTER_EXACT_METHODS,
@@ -29,6 +31,9 @@ interface CompileObservationAuthorityPlanInput {
   design_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
   production_bindings: DeliveryBindingV2[];
+  production_owner_paths: string[];
+  source_backed_execution_target: SourceBackedExecutionTargetV2 | null;
+  workspace_manifest: WorkspaceManifestV2;
   protected_authority_paths?: readonly string[];
 }
 
@@ -287,20 +292,20 @@ function compileCandidate(
         `${candidate.obligation_ref}:static_production_carrier_exact_path_required`,
       );
   }
-  for (const carrierPath of carrierRefs.flatMap(
-    (carrier) => carrier.carrier_paths,
-  )) {
-    const carrierRoleIssue = observationCarrierRoleConflict(
-      input,
-      carrierPath,
-      authority,
-    );
-    if (carrierRoleIssue)
-      fail(
-        "machine_observer_not_admitted",
-        `${candidate.obligation_ref}:${carrierRoleIssue}`,
+  if (authority === "package_static_json_exact")
+    for (const carrierPath of carrierRefs.flatMap(
+      (carrier) => carrier.carrier_paths,
+    )) {
+      const carrierRoleIssue = staticObservationCarrierRoleConflict(
+        input,
+        carrierPath,
       );
-  }
+      if (carrierRoleIssue)
+        fail(
+          "machine_observer_not_admitted",
+          `${candidate.obligation_ref}:${carrierRoleIssue}`,
+        );
+    }
   const comparison = candidate.comparison;
   const expectedIdentity = sha256Hex(
     canonicalValueJson({
@@ -447,15 +452,12 @@ function assertionActualProjection(
   );
 }
 
-function observationCarrierRoleConflict(
+function staticObservationCarrierRoleConflict(
   input: CompileObservationAuthorityPlanInput,
   carrierPath: string,
-  authority: CompiledObservationAuthorityKindV2,
 ): string | null {
   const expectedAuthorityPatterns = [
-    ...(authority === "package_static_json_exact"
-      ? Object.keys(input.runner.frozen_files)
-      : input.check.verification_inputs),
+    ...Object.keys(input.runner.frozen_files),
     ...(input.protected_authority_paths ?? []),
   ];
   const evidencePatterns = [
@@ -468,9 +470,7 @@ function observationCarrierRoleConflict(
     evidence_role_patterns: evidencePatterns,
   });
   if (!conflict) return null;
-  const prefix =
-    authority === "package_process_json_exact" ? "process" : "static";
-  return `${prefix}_carrier_${conflict}_forbidden`;
+  return `static_carrier_${conflict}_forbidden`;
 }
 
 function sameStringArray(

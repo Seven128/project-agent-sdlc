@@ -3,6 +3,7 @@ import { resolveAcceptanceAssertion } from "./long-task-acceptance-reference.js"
 import type { compileProductClaimCoverage } from "./long-task-claims.js";
 import { fail } from "./long-task-delivery-shape.js";
 import type { RiskFactName } from "./long-task-risk-types.js";
+import { executionTargetSourceTargetRef } from "./long-task-source-target-index.js";
 
 export function validateSourceClaimMappings(
   contract: DeliveryContractV2,
@@ -15,6 +16,11 @@ export function validateSourceClaimMappings(
     Object.values(compiledClaims.by_outcome)
       .flat()
       .map((claim) => claim.id),
+  );
+  const executionTargetClaims = new Set(
+    contract.task.execution_targets.map((target) =>
+      executionTargetSourceTargetRef(target.key),
+    ),
   );
   const globalClaims = new Map(
     compiledClaims.by_global.map((claim) => [claim.local_key, claim]),
@@ -48,7 +54,10 @@ export function validateSourceClaimMappings(
             "source_claim_result_overcompression",
             `${claim.key}:${reference}`,
           );
-        if (!productClaims.has(reference))
+        if (
+          !productClaims.has(reference) &&
+          !executionTargetClaims.has(reference)
+        )
           issue(
             report,
             "source_claim_product_ref_unknown",

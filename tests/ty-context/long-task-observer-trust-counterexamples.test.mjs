@@ -394,8 +394,10 @@ test(
         `evidence-role process carrier reached ${executionLabel(execution)}`,
       );
       const diagnostic = executionDiagnostics(execution);
-      assert.match(diagnostic, /machine_observer_not_admitted/u);
-      assert.match(diagnostic, /process_carrier_evidence_role_forbidden/u);
+      assert.match(
+        diagnostic,
+        /process_runtime_input_evidence_role_forbidden/u,
+      );
     }),
 );
 

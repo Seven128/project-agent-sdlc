@@ -1,17 +1,20 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import {
   fixtureSemanticManifest,
   fixtureSourceStatements,
 } from "./long-task-semantic-manifest-fixture.mjs";
-import {
-  digestCanonical,
-} from "./long-task-semantic-refresh-fixture.mjs";
+import { digestCanonical } from "./long-task-semantic-refresh-fixture.mjs";
 
 export async function writeFixtureSourceAndOracle(
   root,
-  { twoOutcomes = false, externalConfirmation = false } = {},
+  {
+    twoOutcomes = false,
+    externalConfirmation = false,
+    executionTarget = null,
+  } = {},
   manifestOverride = null,
 ) {
   const options = { twoOutcomes, externalConfirmation };
@@ -22,6 +25,14 @@ export async function writeFixtureSourceAndOracle(
       ? [["second-observable", fixtureSourceStatements["second-observable"]]]
       : []),
     ["fixture-architecture", fixtureSourceStatements["fixture-architecture"]],
+    ...(executionTarget
+      ? [
+          [
+            "fixture-execution-target",
+            executionTargetSourceStatement(executionTarget),
+          ],
+        ]
+      : []),
     ...(externalConfirmation
       ? [["fixture-external", fixtureSourceStatements["fixture-external"]]]
       : []),
@@ -32,9 +43,11 @@ export async function writeFixtureSourceAndOracle(
       const kind =
         key === "fixture-architecture"
           ? "technical_obligation aspect=architecture"
-          : key === "fixture-external"
-            ? "external_confirmation"
-            : "requirement";
+          : key === "fixture-execution-target"
+            ? "technical_obligation"
+            : key === "fixture-external"
+              ? "external_confirmation"
+              : "requirement";
       const item = `<!-- ty-source-item:start key=${key} kind=${kind} -->\n${statement}\n<!-- ty-source-item:end -->`;
       return key === "fixture-external"
         ? [

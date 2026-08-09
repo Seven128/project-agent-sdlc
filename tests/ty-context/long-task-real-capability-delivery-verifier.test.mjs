@@ -29,7 +29,7 @@ const compileBoundaryDiagnostics = new Map([
   ],
   [
     "wrong.r5c.evidence-role-process",
-    "machine_observer_not_admitted:process_carrier_evidence_role_forbidden",
+    "process_runtime_input_evidence_role_forbidden",
   ],
   ["wrong.r6.verifier-wrapper", "process_observer_direct_root_required"],
   ["wrong.r6b.argv-wrapper", "process_observer_root_argv_mismatch"],

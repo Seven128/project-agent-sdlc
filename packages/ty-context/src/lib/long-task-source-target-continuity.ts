@@ -1,14 +1,17 @@
 import type {
   CompiledSourceItemV2,
   DeliveryContractV2,
+  SourceBackedExecutionTargetV2,
   SourceClaimV2,
 } from "./long-task-delivery-types.js";
 import { resolveAcceptanceAssertion } from "./long-task-acceptance-reference.js";
 import {
   buildCanonicalSourceTargetIndex,
+  executionTargetSourceTargetRef,
   sourceKindForTarget,
   type CanonicalSourceTarget,
 } from "./long-task-source-target-index.js";
+import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 
 type ValidationReporter = (message: string) => void;
 
@@ -24,19 +27,22 @@ interface SourceContinuityState {
   }>;
   architectureItems: Set<string>;
   ownedArchitectureItems: Set<string>;
+  executionTargetAuthorities: Map<string, SourceBackedExecutionTargetV2>;
 }
 
 export function validateSourceTargetContinuity(
   contract: DeliveryContractV2,
   items: CompiledSourceItemV2[],
   report?: ValidationReporter,
-): void {
+): Map<string, SourceBackedExecutionTargetV2> {
   const state = sourceContinuityState(contract, items);
   for (const claim of contract.source_claims)
     validateSourceClaimContinuity(claim, state, report);
 
   validateAcceptanceBindingContinuity(contract, state, report);
   validateArchitectureContinuity(state, report);
+  validateRequiredExecutionTargetContinuity(contract, state, report);
+  return state.executionTargetAuthorities;
 }
 
 function sourceContinuityState(
@@ -56,6 +62,10 @@ function sourceContinuityState(
         .map((item) => item.key),
     ),
     ownedArchitectureItems: new Set<string>(),
+    executionTargetAuthorities: new Map<
+      string,
+      SourceBackedExecutionTargetV2
+    >(),
   };
 }
 
@@ -99,7 +109,12 @@ function validateSourceClaimContinuity(
     target.normalized_text !== undefined &&
     target.normalized_text !== item.normalized_text
   ) {
-    issue(report, `source_target_statement_mismatch:${claim.key}:${ref}`);
+    issue(
+      report,
+      target.execution_target_ref
+        ? `process_root_source_identity_mismatch:${target.execution_target_ref}:${claim.key}`
+        : `source_target_statement_mismatch:${claim.key}:${ref}`,
+    );
     return;
   }
   const owner = state.owners.get(ref);
@@ -134,6 +149,44 @@ function validateSourceClaimContinuity(
     state.sourceBackedGlobalClaims.add(ref);
   if (target.kind === "acceptance")
     state.acceptanceBindings.push({ claim, target });
+  if (target.execution_target_ref)
+    state.executionTargetAuthorities.set(target.execution_target_ref, {
+      target_ref: target.execution_target_ref,
+      canonical_target_ref: ref,
+      source_claim_key: claim.key,
+      source_item_key: item.key,
+      source_path: item.source_path,
+      source_text_sha256: item.text_sha256,
+      target_identity: sha256Hex(
+        canonicalValueJson({
+          canonical_target_ref: ref,
+          source_claim_key: claim.key,
+          source_item_key: item.key,
+          source_path: item.source_path,
+          source_text_sha256: item.text_sha256,
+          normalized_text: item.normalized_text,
+        }),
+      ),
+    });
+}
+
+function validateRequiredExecutionTargetContinuity(
+  contract: DeliveryContractV2,
+  state: SourceContinuityState,
+  report?: ValidationReporter,
+): void {
+  for (const targetRef of contract.task.target_profile.required_target_refs) {
+    if (state.executionTargetAuthorities.has(targetRef)) continue;
+    const target = contract.task.execution_targets.find(
+      (candidate) => candidate.key === targetRef,
+    );
+    issue(
+      report,
+      target?.runtime_family === "process"
+        ? `process_root_source_binding_required:${targetRef}:${executionTargetSourceTargetRef(targetRef)}`
+        : `execution_target_source_binding_required:${targetRef}:${executionTargetSourceTargetRef(targetRef)}`,
+    );
+  }
 }
 
 function validateAcceptanceBindingContinuity(

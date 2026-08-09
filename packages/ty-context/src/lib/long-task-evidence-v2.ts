@@ -33,7 +33,10 @@ import {
 import { applyNarrowSemanticMutation } from "./long-task-semantic-mutation.js";
 import { evaluateEvidenceCapabilities } from "./long-task-evidence-capability-policy.js";
 import { validateCounterfactualObservationImpact } from "./long-task-evidence-sensitivity-policy.js";
-import { matchesRepoPattern } from "./long-task-paths.js";
+import {
+  matchesRepoPattern,
+  normalizeRepositoryFile,
+} from "./long-task-paths.js";
 import { resolveInsideRepository } from "./long-task-workspace.js";
 import { canonicalValueJson } from "./strict-codec.js";
 
@@ -483,6 +486,7 @@ async function evaluateCounterfactualSet(
               : {
                   execution_status: raw.execution_status,
                   exit_code: raw.exit_code,
+                  execution_error: raw.error,
                   result_status: result.status,
                   failed_assertions: failedAssertions,
                   finding_codes: result.findings.map((finding) => finding.code),
@@ -620,6 +624,27 @@ async function counterfactualObservationImpactIssue(
     return machineClosing
       ? "counterfactual_admitted_observation_required"
       : null;
+  const processObserved = (entry.check.observation_authorities ?? []).some(
+    (authority) => authority.authority === "package_process_json_exact",
+  );
+  const processClosure = processObserved
+    ? entry.check.process_runtime_closure
+    : null;
+  if (processObserved) {
+    if (!processClosure) return "process_runtime_closure_identity_mismatch";
+    const normalizedMutationTargets = mutationTargets.map((target, index) =>
+      normalizeRepositoryFile(
+        target,
+        `counterfactual.mutation_targets[${index}]`,
+      ),
+    );
+    if (
+      normalizedMutationTargets.some(
+        (target) => !processClosure.production_carrier_files.includes(target),
+      )
+    )
+      return "counterfactual_runtime_reachability_unproven";
+  }
   const [baseline, mutated] = await Promise.all([
     prepareAdmittedObservations({
       check: entry.check,
@@ -656,6 +681,20 @@ async function counterfactualObservationImpactIssue(
   );
   if (mutatedIssue)
     return `counterfactual_mutated_observation_invalid:${mutatedIssue.reason ?? "missing"}`;
+  if (processClosure) {
+    const baselineClosureIdentity =
+      baselineRaw.host_execution_attestation
+        ?.process_runtime_closure_identity ?? null;
+    const mutatedClosureIdentity =
+      mutatedRaw.host_execution_attestation?.process_runtime_closure_identity ??
+      null;
+    if (
+      baselineClosureIdentity !== processClosure.closure_identity ||
+      mutatedClosureIdentity !== processClosure.closure_identity ||
+      baselineClosureIdentity !== mutatedClosureIdentity
+    )
+      return "process_runtime_closure_identity_mismatch";
+  }
   const baselineKeys = baseline.entries.map(observationImpactIdentity).sort();
   const mutatedKeys = mutated.entries.map(observationImpactIdentity).sort();
   if (canonicalValueJson(baselineKeys) !== canonicalValueJson(mutatedKeys))
@@ -693,38 +732,37 @@ async function counterfactualObservationImpactIssue(
       (assertion) => assertion.key === key && assertion.passed,
     ),
   );
-  const carrierRoleConflict = mutationTargets
-    .map((target) =>
-      classifyMachineObservationCarrierRoleConflict({
-        carrier_pattern: target,
-        expected_authority_patterns: [
-          ...entry.check.verification_inputs,
-          ...protectedAuthorityPaths,
-        ],
-        evidence_role_patterns: [
-          ...entry.check.expected_output_paths,
-          ...entry.check.artifact_globs,
-        ],
-      }),
+  let carrierRole: "product" | "evidence" = "product";
+  if (!processObserved) {
+    const carrierRoleConflict = mutationTargets
+      .map((target) =>
+        classifyMachineObservationCarrierRoleConflict({
+          carrier_pattern: target,
+          expected_authority_patterns: [
+            ...entry.check.verification_inputs,
+            ...protectedAuthorityPaths,
+          ],
+          evidence_role_patterns: [
+            ...entry.check.expected_output_paths,
+            ...entry.check.artifact_globs,
+          ],
+        }),
+      )
+      .find((candidate) => candidate !== null);
+    if (carrierRoleConflict)
+      return `counterfactual_static_carrier_${carrierRoleConflict}_forbidden`;
+    carrierRole = mutationTargets.every(
+      (target) =>
+        bindingCarrierPaths.some((pattern) =>
+          matchesRepoPattern(target, pattern),
+        ) &&
+        entry.check.input_paths.some((pattern) =>
+          matchesRepoPattern(target, pattern),
+        ),
     )
-    .find((candidate) => candidate !== null);
-  if (carrierRoleConflict) {
-    const processObserved = (entry.check.observation_authorities ?? []).some(
-      (authority) => authority.authority === "package_process_json_exact",
-    );
-    return `counterfactual_${processObserved ? "process" : "static"}_carrier_${carrierRoleConflict}_forbidden`;
+      ? "product"
+      : "evidence";
   }
-  const carrierRole = mutationTargets.every(
-    (target) =>
-      bindingCarrierPaths.some((pattern) =>
-        matchesRepoPattern(target, pattern),
-      ) &&
-      entry.check.input_paths.some((pattern) =>
-        matchesRepoPattern(target, pattern),
-      ),
-  )
-    ? "product"
-    : "evidence";
   return validateCounterfactualObservationImpact({
     baseline_by_fact: baselineByFact,
     mutated_by_fact: mutatedByFact,

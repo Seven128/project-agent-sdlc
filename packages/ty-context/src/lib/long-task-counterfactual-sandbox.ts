@@ -67,6 +67,7 @@ export async function createCounterfactualSandbox(
   const exactPaths = new Set([
     ...Object.keys(check.runner.frozen_files),
     ...Object.keys(check.verification_input_hashes),
+    ...(check.process_runtime_closure?.allowed_runtime_files ?? []),
     check.runner.resolved_target,
     ...(control.mutation.type === "replace_file"
       ? [control.mutation.fixture_path]

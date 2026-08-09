@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { compileObservationAuthorityPlan } from "../../packages/ty-context/dist/lib/long-task-observation-authority.js";
 import { computeRawExecutionIdentity } from "../../packages/ty-context/dist/lib/long-task-check-execution-policy.js";
+import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
 
 const PACKAGE_ORACLE = {
   key: "oracle.package-json-exact",
@@ -275,7 +276,9 @@ test("static authority requires one attributable owning production Binding", () 
     proofSurface: "implementation_structure",
     capabilities: ["presence"],
   });
-  projectSelected.production_bindings[0].carrier_paths = ["product/*.json"];
+  projectSelected.production_bindings.find(
+    (binding) => binding.key === "product-input",
+  ).carrier_paths = ["product/*.json"];
   assert.throws(
     () => compileObservationAuthorityPlan(projectSelected),
     /machine_observer_not_admitted:.*static_production_carrier_exact_path_required/u,
@@ -353,6 +356,89 @@ test("design, interaction, and state capabilities cannot reuse a plain exact row
   }
 });
 
+test("the compiled process runtime closure excludes ordinary non-carrier input paths", () => {
+  const input = processInput();
+  input.check.input_paths.push("diagnostics/ordinary.json");
+  input.workspace_manifest.files.push(
+    workspaceFile("diagnostics/ordinary.json"),
+  );
+  const closure = compileProcessRuntimeClosure({
+    ...input,
+    observation_authorities: compileObservationAuthorityPlan(input),
+  });
+  assert.ok(closure);
+  assert.deepEqual(closure.allowed_runtime_files, [
+    "bin/product.exe",
+    "product/input.json",
+  ]);
+  assert.deepEqual(closure.production_carrier_files, ["product/input.json"]);
+  assert.equal(
+    closure.allowed_runtime_files.includes("diagnostics/ordinary.json"),
+    false,
+  );
+  assert.match(closure.closure_identity, /^[a-f0-9]{64}$/u);
+});
+
+test("the full process input surface rejects evidence and verification roles", () => {
+  const evidence = processInput();
+  evidence.check.input_paths.push("artifacts/expected-status.json");
+  evidence.check.artifact_globs.push("artifacts/expected-status.json");
+  evidence.workspace_manifest.files.push(
+    workspaceFile("artifacts/expected-status.json"),
+  );
+  assert.throws(
+    () =>
+      compileProcessRuntimeClosure({
+        ...evidence,
+        observation_authorities: compileObservationAuthorityPlan(evidence),
+      }),
+    /process_runtime_input_evidence_role_forbidden/u,
+  );
+
+  const verification = processInput();
+  verification.check.input_paths.push("tests/expected-map.json");
+  verification.check.verification_inputs.push("tests/expected-map.json");
+  verification.workspace_manifest.files.push(
+    workspaceFile("tests/expected-map.json"),
+  );
+  assert.throws(
+    () =>
+      compileProcessRuntimeClosure({
+        ...verification,
+        observation_authorities: compileObservationAuthorityPlan(verification),
+      }),
+    /process_runtime_input_verification_role_forbidden/u,
+  );
+});
+
+test("process root ownership and Source continuity are required by the closure", () => {
+  const missingSource = processInput();
+  missingSource.source_backed_execution_target = null;
+  assert.throws(
+    () =>
+      compileProcessRuntimeClosure({
+        ...missingSource,
+        observation_authorities: compileObservationAuthorityPlan(missingSource),
+      }),
+    /process_root_source_binding_required/u,
+  );
+
+  const missingBinding = processInput();
+  missingBinding.production_bindings =
+    missingBinding.production_bindings.filter(
+      (binding) => binding.key !== "product-root",
+    );
+  assert.throws(
+    () =>
+      compileProcessRuntimeClosure({
+        ...missingBinding,
+        observation_authorities:
+          compileObservationAuthorityPlan(missingBinding),
+      }),
+    /process_root_production_binding_required/u,
+  );
+});
+
 function processInput(options = {}) {
   const assertion = {
     key: "result",
@@ -417,13 +503,62 @@ function processInput(options = {}) {
     design_targets: [],
     production_bindings: [
       {
+        key: "product-root",
+        kind: "file",
+        target: "bin/product.exe",
+        carrier_paths: ["bin/product.exe"],
+        existence: "existing",
+      },
+      {
         key: "product-input",
+        kind: "file",
+        target: "product/input.json",
         carrier_paths: ["product/input.json"],
+        existence: "existing",
       },
     ],
+    production_owner_paths: ["bin/**", "product/**"],
+    source_backed_execution_target: {
+      target_ref: "product",
+      canonical_target_ref: "execution_target.product",
+      source_claim_key: "product-target",
+      source_item_key: "product-target",
+      source_path: "source.md",
+      source_text_sha256: "c".repeat(64),
+      target_identity: "d".repeat(64),
+    },
+    workspace_manifest: {
+      repository_root: "C:/fixture",
+      git_head: "e".repeat(40),
+      files: [
+        workspaceFile("bin/product.exe"),
+        workspaceFile("product/input.json"),
+      ],
+      fingerprint: {
+        head: "e".repeat(40),
+        head_tree: "f".repeat(40),
+        index_tree: "f".repeat(40),
+        staged_diff_sha256: "0".repeat(64),
+        unstaged_diff_sha256: "0".repeat(64),
+        untracked_sha256: "0".repeat(64),
+        status_sha256: "0".repeat(64),
+        identity: "1".repeat(64),
+      },
+      snapshot_sha256: "2".repeat(64),
+    },
+    protected_authority_paths: ["source.md"],
     semantic_fact_expectations: options.semantic
       ? [semanticExpectation(assertion.key)]
       : [],
+  };
+}
+
+function workspaceFile(filePath) {
+  return {
+    path: filePath,
+    mode: 0o100644,
+    size: 1,
+    sha256: `git:${"a".repeat(40)}`,
   };
 }
 

@@ -215,6 +215,25 @@ async function prepareExecutionObservationGroupWithBudget(input: {
       (state) => state.authority.authority === "package_process_json_exact",
     )
     .map((state) => state.authority);
+  const processRuntimeClosureIdentities = [
+    ...new Set(
+      input.checks
+        .filter((check) =>
+          (check.observation_authorities ?? []).some(
+            (authority) => authority.authority === "package_process_json_exact",
+          ),
+        )
+        .map(
+          (check) => check.process_runtime_closure?.closure_identity ?? null,
+        ),
+    ),
+  ];
+  if (
+    processExecution &&
+    (processRuntimeClosureIdentities.length !== 1 ||
+      processRuntimeClosureIdentities[0] === null)
+  )
+    throw new Error("process_runtime_closure_identity_mismatch");
   let disposed = false;
   const dispose = async (): Promise<void> => {
     if (disposed) return;
@@ -228,6 +247,12 @@ async function prepareExecutionObservationGroupWithBudget(input: {
     runner_context: {
       snapshot_sha256: input.workspace_manifest.snapshot_sha256,
       observation_authorities: processAuthorities,
+      ...(processExecution
+        ? {
+            process_runtime_closure_identity:
+              processRuntimeClosureIdentities[0]!,
+          }
+        : {}),
     },
     finalize: async (
       raw: RawCommandExecutionV2,
@@ -287,11 +312,13 @@ function authorityCarrierStates(
       );
       addPatternClosure(state, manifest, carrierPatterns);
       if (authority.authority === "package_process_json_exact") {
-        addPatternClosure(state, manifest, check.input_paths);
-        addExactManifestPath(state, manifest, check.runner.resolved_target);
-        state.artifact_paths.push(
-          ...argvAttributedRepositoryFiles(state, manifest),
-        );
+        const closure = check.process_runtime_closure;
+        if (!closure)
+          recordAuthorityFailure(
+            state,
+            "process_runtime_closure_identity_mismatch",
+          );
+        else state.artifact_paths.push(...closure.allowed_runtime_files);
       }
       state.artifact_paths = [...new Set(state.artifact_paths)].sort();
       if (
@@ -328,66 +355,6 @@ function addPatternClosure(
     }
     state.artifact_paths.push(...matches);
   }
-}
-
-function addExactManifestPath(
-  state: AuthorityCarrierState,
-  manifest: WorkspaceManifestV2,
-  artifactPath: string,
-): void {
-  const matches = manifest.files.filter((file) => file.path === artifactPath);
-  if (matches.length !== 1) {
-    recordAuthorityFailure(
-      state,
-      matches.length
-        ? "static_observation_manifest_invalid"
-        : "static_observation_not_in_pre_run_snapshot",
-    );
-    return;
-  }
-  state.artifact_paths.push(artifactPath);
-}
-
-function argvAttributedRepositoryFiles(
-  state: AuthorityCarrierState,
-  manifest: WorkspaceManifestV2,
-): string[] {
-  const { authority, check } = state;
-  const argv = [
-    ...check.runner.executable_argv_prefix,
-    ...check.runner.argv,
-    ...(authority.runtime_requirements.declared_root_argv ?? []),
-  ];
-  return manifest.files
-    .map((file) => file.path)
-    .filter((artifactPath) =>
-      argv.some((argument) =>
-        argumentReferencesArtifact(
-          argument,
-          artifactPath,
-          check.runner.resolved_cwd,
-        ),
-      ),
-    );
-}
-
-function argumentReferencesArtifact(
-  argument: string,
-  artifactPath: string,
-  cwd: string,
-): boolean {
-  const normalizedArgument = portableArgument(argument);
-  const repositoryPath = portableArgument(artifactPath);
-  const relativeFromCwd = portableArgument(
-    path.posix.relative(cwd === "." ? "" : cwd, artifactPath),
-  );
-  return [repositoryPath, relativeFromCwd, `./${relativeFromCwd}`].some(
-    (candidate) => candidate !== "" && normalizedArgument.includes(candidate),
-  );
-}
-
-function portableArgument(value: string): string {
-  return value.replace(/\\/gu, "/").toLowerCase();
 }
 
 function observationCarrierGroups(
@@ -524,6 +491,7 @@ function recordAuthorityFailure(
 
 function processInputFailureReason(reason: string): string {
   if (reason === "observation_expected_authority_forbidden") return reason;
+  if (reason === "process_runtime_closure_identity_mismatch") return reason;
   if (reason.startsWith("process_observation_input_")) return reason;
   if (reason.startsWith("static_observation_"))
     return `process_observation_input_${reason.slice("static_observation_".length)}`;

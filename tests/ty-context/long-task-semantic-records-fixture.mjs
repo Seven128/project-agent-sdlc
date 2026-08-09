@@ -1,6 +1,4 @@
-import {
-  digestCanonical,
-} from "./long-task-semantic-refresh-fixture.mjs";
+import { digestCanonical } from "./long-task-semantic-refresh-fixture.mjs";
 
 export function fixtureSemanticFactRecords({
   outcomeKeys,
@@ -9,57 +7,60 @@ export function fixtureSemanticFactRecords({
   externalConfirmation,
 }) {
   const trueDigest = digestCanonical(true);
-  const facts = outcomeKeys.map((outcome, index) => ({
-    key: `fact.${outcome}.observable`,
-    cell_ref: `cell.${outcome}.observable`,
-    outcome_ref: outcome,
-    unit_ref: `subject.${outcome}.outcome`,
-    family_ref: "family.goal-scope-glossary",
-    condition_ref: `condition.${outcome}.baseline`,
-    property_ref: "property.observable-outcome",
-    owner_ref: "owner.fixture",
-    value_kind: "boolean",
-    observation_scope: "product_boundary",
-    observation_sensitivity: "plain",
-    quantifier: {
-      kind: "one",
-      minimum: null,
-      maximum: null,
-      population_ref: null,
-    },
-    expected: {
-      representation: "inline",
-      locator: {
-        material_ref: manifestKey,
-        kind: "manifest_pointer",
-        value: `/facts/${index}/expected/value`,
+  const facts = outcomeKeys.map((outcome, index) => {
+    const sourceItemRefs = inputs
+      .filter(
+        (input) =>
+          input.kind === "source_item" &&
+          input.fact_refs.includes(`fact.${outcome}.observable`),
+      )
+      .map((input) => input.source_ref);
+    return {
+      key: `fact.${outcome}.observable`,
+      cell_ref: `cell.${outcome}.observable`,
+      outcome_ref: outcome,
+      unit_ref: `subject.${outcome}.outcome`,
+      family_ref: "family.goal-scope-glossary",
+      condition_ref: `condition.${outcome}.baseline`,
+      property_ref: "property.observable-outcome",
+      owner_ref: "owner.fixture",
+      value_kind: "boolean",
+      observation_scope: "product_boundary",
+      observation_sensitivity: "plain",
+      quantifier: {
+        kind: "one",
+        minimum: null,
+        maximum: null,
+        population_ref: null,
       },
-      sha256: trueDigest,
-      value: true,
-    },
-    provenance: {
-      kind: "direct",
-      authority_ref: `${outcome}-observable`,
-      basis_refs: [
-        `${outcome}-observable`,
-        "fixture-architecture",
-        ...(externalConfirmation ? ["fixture-external"] : []),
-        ...inputs
-          .filter(
-            (input) =>
-              input.kind !== "source_item" &&
-              input.fact_refs.includes(`fact.${outcome}.observable`),
-          )
-          .map((input) => input.key),
-      ],
-      derivation: null,
-    },
-    source_item_refs: [
-      `${outcome}-observable`,
-      "fixture-architecture",
-      ...(externalConfirmation ? ["fixture-external"] : []),
-    ],
-  }));
+      expected: {
+        representation: "inline",
+        locator: {
+          material_ref: manifestKey,
+          kind: "manifest_pointer",
+          value: `/facts/${index}/expected/value`,
+        },
+        sha256: trueDigest,
+        value: true,
+      },
+      provenance: {
+        kind: "direct",
+        authority_ref: `${outcome}-observable`,
+        basis_refs: [
+          ...sourceItemRefs,
+          ...inputs
+            .filter(
+              (input) =>
+                input.kind !== "source_item" &&
+                input.fact_refs.includes(`fact.${outcome}.observable`),
+            )
+            .map((input) => input.key),
+        ],
+        derivation: null,
+      },
+      source_item_refs: [...sourceItemRefs],
+    };
+  });
   const comparisonParameters = {
     representation: "inline",
     locator: {

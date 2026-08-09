@@ -15,6 +15,8 @@ import {
   createDeliveryFixture,
   deliveryContract,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceRecord,
+  fixtureExecutionTargetSourceItem,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -34,6 +36,8 @@ The implementation must preserve the declared evidence boundary.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     await assert.rejects(
@@ -65,6 +69,8 @@ The first outcome must be observable.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     await assert.rejects(
@@ -93,6 +99,8 @@ The first outcome must be observable.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     await assert.rejects(
@@ -194,6 +202,8 @@ ${statement}
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
       );
       fixture.contract.source_claims[0].statement = statement;
@@ -880,19 +890,16 @@ async function assertPreflightAndCompileReject(fixture, code, message = code) {
 }
 
 async function writeSourceItems(root, items) {
-  const materialItems = items.some(
-    (item) => item.key === "fixture-architecture",
-  )
-    ? items
-    : [
-        ...items,
-        {
-          key: "fixture-architecture",
-          kind: "technical_obligation",
-          aspect: "architecture",
-          statement: "Preserve the fixture state owner and verifier boundary.",
-        },
-      ];
+  const materialItems = [...items];
+  if (!materialItems.some((item) => item.key === "fixture-architecture"))
+    materialItems.push({
+      key: "fixture-architecture",
+      kind: "technical_obligation",
+      aspect: "architecture",
+      statement: "Preserve the fixture state owner and verifier boundary.",
+    });
+  if (!materialItems.some((item) => item.key === "fixture-execution-target"))
+    materialItems.push(fixtureExecutionTargetSourceRecord());
   await writeFile(
     path.join(root, "source.md"),
     `${sourceHeading()}\n\n${materialItems

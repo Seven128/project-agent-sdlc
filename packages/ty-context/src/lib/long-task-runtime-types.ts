@@ -90,6 +90,32 @@ export interface CompiledObservationAuthorityV2 {
   };
 }
 
+export interface SourceBackedExecutionTargetV2 {
+  target_ref: string;
+  canonical_target_ref: string;
+  source_claim_key: string;
+  source_item_key: string;
+  source_path: string;
+  source_text_sha256: string;
+  target_identity: string;
+}
+
+export interface CompiledProcessRuntimeClosureV2 {
+  target_ref: string;
+  source_target: SourceBackedExecutionTargetV2;
+  root_target: string;
+  root_argv_files: string[];
+  production_carrier_files: string[];
+  allowed_runtime_files: string[];
+  production_binding_refs: string[];
+  forbidden_role_matches: Array<{
+    path: string;
+    role: "expected_authority" | "verification" | "evidence";
+    pattern: string;
+  }>;
+  closure_identity: string;
+}
+
 export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   internal_id: string;
   outcome_key: string | null;
@@ -102,6 +128,7 @@ export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   design_conformance_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
   observation_authorities: CompiledObservationAuthorityV2[];
+  process_runtime_closure: CompiledProcessRuntimeClosureV2 | null;
 }
 
 export interface ProductClaimV2 {
@@ -317,11 +344,13 @@ export interface HostExecutionAttestationV2 {
   snapshot_sha256: string;
   observation_execution_nonce: string;
   observation_artifact_sha256: string;
+  process_runtime_closure_identity: string;
 }
 
 export interface CheckRunnerExecutionContextV2 {
   snapshot_sha256?: string;
   observation_authorities?: readonly CompiledObservationAuthorityV2[];
+  process_runtime_closure_identity?: string;
 }
 
 export interface CheckExecutionResultV2 {

@@ -154,6 +154,7 @@ export async function compileDeliveryContract(
         raw_execution_identity: check.raw_execution_identity,
         evidence_adapter: check.evidence_adapter,
         observation_authorities: check.observation_authorities,
+        process_runtime_closure: check.process_runtime_closure,
       })),
     }),
   );

@@ -18,7 +18,11 @@ process.env[FIXTURE_SECOND_SCOPE_ENV] ??= "fixture-scope-two-not-observed";
 
 export function packageAdmittedFixtureSemanticManifest(options = {}) {
   return admitPackageExactFixtureSemanticManifest(
-    fixtureSemanticManifest(options),
+    fixtureSemanticManifest({
+      ...options,
+      executionTarget:
+        options.executionTarget ?? fixtureProcessExecutionTarget(),
+    }),
   );
 }
 
@@ -35,6 +39,18 @@ export function admitPackageExactFixtureSemanticManifest(input) {
 
 export function fixtureProductRootPath() {
   return `bin/product-root${process.platform === "win32" ? ".exe" : ""}`;
+}
+
+export function fixtureProcessExecutionTarget() {
+  return {
+    key: "fixture-app",
+    description: "The fixture process entrypoint.",
+    role: "product",
+    runtime_family: "process",
+    root_entrypoint: fixtureProductRootPath(),
+    root_argv: fixtureProductRootArgv("tests/oracle.mjs", "first"),
+    capabilities: ["process-runtime", "cold-start", "production-root"],
+  };
 }
 
 export function fixtureProductRootArgv(script, argument, extraArguments = []) {

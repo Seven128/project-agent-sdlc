@@ -14,6 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import YAML from "yaml";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import { fixtureSemanticManifest } from "./long-task-semantic-manifest-fixture.mjs";
 import { writeFixtureSourceAndOracle } from "./long-task-semantic-oracle-fixture.mjs";
 import {
@@ -39,6 +40,7 @@ import {
   FIXTURE_STATIC_RELATIONS_PATH,
   fixtureProductRootArgv,
   fixtureProductRootPath,
+  fixtureProcessExecutionTarget,
   installPackageMachineFixture,
   packageAdmittedFixtureSemanticManifest,
 } from "./long-task-package-machine-fixture.mjs";
@@ -214,6 +216,7 @@ export async function createDeliveryFixture(options = {}) {
         {
           twoOutcomes: true,
           externalConfirmation: Boolean(options.externalConfirmation),
+          executionTarget: fixtureProcessExecutionTarget(),
         },
         manifest,
       );
@@ -299,7 +302,14 @@ async function initializeSeedRepository(root, externalConfirmation) {
   const manifest = packageAdmittedFixtureSemanticManifest({
     externalConfirmation,
   });
-  await writeFixtureSourceAndOracle(root, { externalConfirmation }, manifest);
+  await writeFixtureSourceAndOracle(
+    root,
+    {
+      externalConfirmation,
+      executionTarget: fixtureProcessExecutionTarget(),
+    },
+    manifest,
+  );
   await installPackageMachineFixture(root, manifest);
   await writeFile(
     path.join(root, "tests", "semantic-false.json"),
@@ -409,6 +419,7 @@ export function claimApplicability(outcomeKey = "first") {
 export function deliveryContract(options = {}) {
   const semanticManifest = packageAdmittedFixtureSemanticManifest(options);
   const semanticManifestSha256 = digestCanonical(semanticManifest);
+  const executionTarget = fixtureProcessExecutionTarget();
   const check = (key, argument, outcomeKey) => ({
     key,
     journey_roles: ["success", "stage_gate"],
@@ -428,7 +439,7 @@ export function deliveryContract(options = {}) {
       retry_policy: "none",
       idempotent: true,
     },
-    verification_inputs: ["tests/oracle.mjs", "tests/semantic-false.json"],
+    verification_inputs: ["tests/semantic-false.json"],
     input_paths: ["src/**"],
     expected_output_paths: [],
     artifact_globs: ["artifacts/proof.json"],
@@ -558,7 +569,12 @@ export function deliveryContract(options = {}) {
       owner: {
         label: "fixture",
         context_refs: ["project_context/areas/main.md"],
-        path_globs: ["src/**", FIXTURE_LEGACY_ORACLE_PATH],
+        path_globs: [
+          "src/**",
+          "bin/**",
+          "tests/oracle.mjs",
+          FIXTURE_LEGACY_ORACLE_PATH,
+        ],
       },
       requirements: [
         {
@@ -600,10 +616,28 @@ export function deliveryContract(options = {}) {
           : []),
       ],
       expected_change_paths: ["src/**"],
-      allowed_support_paths: [FIXTURE_LEGACY_ORACLE_PATH],
+      allowed_support_paths: [
+        "bin/**",
+        "tests/oracle.mjs",
+        FIXTURE_LEGACY_ORACLE_PATH,
+      ],
       forbidden_paths: ["secrets/**"],
       forbidden_shortcuts: [],
       bindings: [
+        {
+          key: `product-root-${key}`,
+          kind: "file",
+          target: fixtureProductRootPath(),
+          carrier_paths: [fixtureProductRootPath()],
+          existence: "existing",
+        },
+        {
+          key: `product-module-${key}`,
+          kind: "file",
+          target: "tests/oracle.mjs",
+          carrier_paths: ["tests/oracle.mjs"],
+          existence: "existing",
+        },
         {
           key: `state-${key}`,
           kind: "file",
@@ -638,17 +672,7 @@ export function deliveryContract(options = {}) {
         required_state: "target_profile_usable",
         required_target_refs: ["fixture-app"],
       },
-      execution_targets: [
-        {
-          key: "fixture-app",
-          description: "The fixture process entrypoint.",
-          role: "product",
-          runtime_family: "process",
-          root_entrypoint: fixtureProductRootPath(),
-          root_argv: fixtureProductRootArgv("tests/oracle.mjs", "first"),
-          capabilities: ["process-runtime", "cold-start", "production-root"],
-        },
-      ],
+      execution_targets: [executionTarget],
       source_paths: ["source.md"],
       context_refs: ["project_context/areas/main.md"],
       context_snapshot_mode: "full",
@@ -683,6 +707,15 @@ export function deliveryContract(options = {}) {
         disposition: {
           type: "claim",
           refs: ["first.obligation.architecture-first"],
+        },
+      },
+      {
+        key: "fixture-execution-target",
+        source_ref: "source.md#fixture-source",
+        statement: executionTargetSourceStatement(executionTarget),
+        disposition: {
+          type: "claim",
+          refs: ["execution_target.fixture-app"],
         },
       },
       ...(options.externalConfirmation
@@ -989,6 +1022,52 @@ export function fixtureArchitectureSourceItem() {
   return `<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
 Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->`;
+}
+
+export function fixtureExecutionTargetSourceItem(
+  executionTarget = fixtureProcessExecutionTarget(),
+) {
+  const item = fixtureExecutionTargetSourceRecord(executionTarget);
+  return `<!-- ty-source-item:start key=${item.key} kind=${item.kind} aspect=${item.aspect} -->
+${item.statement}
+<!-- ty-source-item:end -->`;
+}
+
+export function fixtureExecutionTargetSourceRecord(
+  executionTarget = fixtureProcessExecutionTarget(),
+) {
+  return {
+    key: "fixture-execution-target",
+    kind: "technical_obligation",
+    aspect: "architecture",
+    statement: executionTargetSourceStatement(executionTarget),
+  };
+}
+
+export async function synchronizeFixtureExecutionTargetSource(
+  root,
+  contract,
+  targetRef = "fixture-app",
+) {
+  const executionTarget = contract.task.execution_targets.find(
+    (target) => target.key === targetRef,
+  );
+  if (!executionTarget)
+    throw new Error(`fixture_execution_target_missing:${targetRef}`);
+  const statement = executionTargetSourceStatement(executionTarget);
+  const sourcePath = path.join(root, "source.md");
+  const source = await readFile(sourcePath, "utf8");
+  const pattern =
+    /(<!-- ty-source-item:start key=fixture-execution-target\b[^>]*-->\r?\n)[\s\S]*?(\r?\n<!-- ty-source-item:end -->)/u;
+  if (!pattern.test(source))
+    throw new Error("fixture_execution_target_source_item_missing");
+  await writeFile(sourcePath, source.replace(pattern, `$1${statement}$2`));
+  const sourceClaim = contract.source_claims.find(
+    (claim) => claim.key === "fixture-execution-target",
+  );
+  if (!sourceClaim)
+    throw new Error("fixture_execution_target_source_claim_missing");
+  sourceClaim.statement = statement;
 }
 
 export async function writeContract(

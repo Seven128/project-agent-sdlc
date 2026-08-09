@@ -47,6 +47,8 @@ export function rawExecutionInputProjection(
   ).some((authority) => authority.authority === "package_process_json_exact")
     ? "ty-context-product-observation-v1"
     : null;
+  projection.process_runtime_closure_identity =
+    check.process_runtime_closure?.closure_identity ?? null;
   for (const field of Object.keys(CHECK_EXECUTION_INPUT_POLICY) as Array<
     keyof DeliveryCheckV2
   >) {

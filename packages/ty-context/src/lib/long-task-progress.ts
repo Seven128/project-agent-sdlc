@@ -146,6 +146,7 @@ export function checkIdentity(check: CompiledCheckV2): string {
       scenario: check.scenario,
       environment_requirements: check.environment_requirements,
       observation_authorities: check.observation_authorities,
+      process_runtime_closure: check.process_runtime_closure,
     }),
   );
 }

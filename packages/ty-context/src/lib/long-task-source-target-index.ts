@@ -4,6 +4,7 @@ import type {
 } from "./long-task-delivery-types.js";
 import { controlFieldFacts } from "./long-task-control-fields.js";
 import { normalizeSourceItemText } from "./long-task-source-item-parser.js";
+import { canonicalValueJson } from "./strict-codec.js";
 
 export interface CanonicalSourceTarget {
   ref: string;
@@ -25,12 +26,22 @@ export interface CanonicalSourceTarget {
   outcome_key?: string;
   risk_fact?: keyof DeliveryContractV2["risk"]["facts"];
   affected_outcome?: string;
+  execution_target_ref?: string;
 }
 
 export function buildCanonicalSourceTargetIndex(
   contract: DeliveryContractV2,
 ): Map<string, CanonicalSourceTarget> {
   const targets: CanonicalSourceTarget[] = [];
+  for (const executionTarget of contract.task.execution_targets)
+    targets.push({
+      ...target(
+        executionTargetSourceTargetRef(executionTarget.key),
+        "technical_obligation",
+        executionTargetSourceStatement(executionTarget),
+      ),
+      execution_target_ref: executionTarget.key,
+    });
   for (const outcome of contract.outcomes) {
     targets.push(
       target(
@@ -167,6 +178,23 @@ export function buildCanonicalSourceTargetIndex(
   for (const item of contract.global.acceptance.external_confirmations)
     targets.push(target(item.key, "external_confirmation", item.description));
   return new Map(targets.map((item) => [item.ref, item]));
+}
+
+export function executionTargetSourceTargetRef(targetKey: string): string {
+  return `execution_target.${targetKey}`;
+}
+
+export function executionTargetSourceStatement(
+  targetValue: DeliveryContractV2["task"]["execution_targets"][number],
+): string {
+  return `Execution target authority: ${canonicalValueJson({
+    key: targetValue.key,
+    role: targetValue.role,
+    runtime_family: targetValue.runtime_family,
+    root_entrypoint: targetValue.root_entrypoint,
+    root_argv: [...(targetValue.root_argv ?? [])],
+    capabilities: [...new Set(targetValue.capabilities)].sort(),
+  })}.`;
 }
 
 function target(
