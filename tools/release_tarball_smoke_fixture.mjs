@@ -12,11 +12,49 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "../tests/ty-context/long-task-package-machine-fixture.mjs";
+import { executionTargetSourceStatement } from "../packages/ty-context/dist/lib/long-task-source-target-index.js";
 
 export async function writeReleaseTarballLongTaskFixture(root) {
+  const workdir = path.join(root, ".long-task");
+  const productRoot = fixtureProductRootPath();
+  const productModule = "src/product.mjs";
+  const productArgv = fixtureProductRootArgv(productModule, "installed");
+  const executionTarget = {
+    key: "installed-runtime",
+    description: "Installed fixture runtime",
+    role: "product",
+    runtime_family: "process",
+    root_entrypoint: productRoot,
+    root_argv: productArgv,
+    capabilities: ["process-runtime", "cold-start", "production-root"],
+  };
+  const executionTargetStatement =
+    executionTargetSourceStatement(executionTarget);
   const semanticManifest = admitPackageExactFixtureSemanticManifest(
     releaseTarballSemanticManifest(),
   );
+  const architectureInput = semanticManifest.inputs.find(
+    (input) => input.source_ref === "packaged-architecture",
+  );
+  if (!architectureInput)
+    throw new Error("release_tarball_architecture_input_missing");
+  const executionTargetInputKey = "input.packaged-execution-target";
+  semanticManifest.scope.source_item_refs.push("packaged-execution-target");
+  semanticManifest.inputs.push({
+    ...structuredClone(architectureInput),
+    key: executionTargetInputKey,
+    source_ref: "packaged-execution-target",
+    sha256: createHash("sha256").update(executionTargetStatement).digest("hex"),
+    basis_refs: ["packaged-execution-target"],
+    rationale:
+      "This marked Source item contributes to the fixture's exact non-UI Fact universe.",
+  });
+  for (const fact of semanticManifest.facts) {
+    if (!fact.source_item_refs.includes("packaged-execution-target"))
+      fact.source_item_refs.push("packaged-execution-target");
+    if (!fact.provenance.basis_refs.includes(executionTargetInputKey))
+      fact.provenance.basis_refs.push(executionTargetInputKey);
+  }
   const verificationContextRef = "project_context/areas/main/verification.md";
   const verificationContext = await readFile(
     path.join(root, ...verificationContextRef.split("/")),
@@ -43,9 +81,6 @@ export async function writeReleaseTarballLongTaskFixture(root) {
       .digest("hex");
   refreshFixtureSemanticManifest(semanticManifest);
   const semanticManifestSha256 = semanticManifestIdentity(semanticManifest);
-  const workdir = path.join(root, ".long-task");
-  const productRoot = fixtureProductRootPath();
-  const productArgv = fixtureProductRootArgv("tests/oracle.mjs", "installed");
   await mkdir(path.join(root, "src"), { recursive: true });
   await mkdir(path.join(root, "tests"), { recursive: true });
   await mkdir(path.join(root, "artifacts"), { recursive: true });
@@ -77,13 +112,17 @@ Use the packaged verifier.
 Preserve the packaged state owner and verifier boundary.
 <!-- ty-source-item:end -->
 
+<!-- ty-source-item:start key=packaged-execution-target kind=technical_obligation aspect=architecture -->
+${executionTargetStatement}
+<!-- ty-source-item:end -->
+
 \`\`\`yaml semantic-fact-manifest-v1
 ${YAML.stringify(JSON.parse(JSON.stringify(semanticManifest)), { lineWidth: 0 }).trimEnd()}
 \`\`\`
 `,
   );
   await writeFile(
-    path.join(root, "tests/oracle.mjs"),
+    path.join(root, productModule),
     `import { readFile } from "node:fs/promises";
 let state = { ready: false, relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
@@ -116,13 +155,13 @@ task:
     required_state: target_profile_usable
     required_target_refs: [installed-runtime]
   execution_targets:
-    - key: installed-runtime
-      description: Installed fixture runtime
-      role: product
-      runtime_family: process
-      root_entrypoint: ${productRoot}
-      root_argv: ${JSON.stringify(productArgv)}
-      capabilities: [process-runtime, cold-start, production-root]
+    - key: ${executionTarget.key}
+      description: ${executionTarget.description}
+      role: ${executionTarget.role}
+      runtime_family: ${executionTarget.runtime_family}
+      root_entrypoint: ${executionTarget.root_entrypoint}
+      root_argv: ${JSON.stringify(executionTarget.root_argv)}
+      capabilities: ${JSON.stringify(executionTarget.capabilities)}
   source_paths: [source.md]
   context_refs: [project_context/areas/main.md]
   context_snapshot_mode: full
@@ -139,6 +178,12 @@ source_claims:
     disposition:
       type: claim
       refs: [installed.obligation.architecture]
+  - key: packaged-execution-target
+    source_ref: source.md
+    statement: ${JSON.stringify(executionTargetStatement)}
+    disposition:
+      type: claim
+      refs: [execution_target.installed-runtime]
 stages:
   - key: delivery
     title: Delivery
@@ -181,7 +226,7 @@ outcomes:
       owner:
         label: fixture
         context_refs: [project_context/areas/main.md]
-        path_globs: [src/**]
+        path_globs: [bin/**, src/**]
       control_relation_closure:
         state: not_applicable
         statement: This Outcome declares no user-visible Controls.
@@ -197,7 +242,18 @@ outcomes:
           required_proof_surfaces: [runtime_behavior]
           applicability_refs: [installed-root-success]
       expected_change_paths: [src/**]
+      allowed_support_paths: [bin/**]
       bindings:
+        - key: product-root
+          kind: file
+          target: ${productRoot}
+          carrier_paths: [${productRoot}]
+          existence: existing
+        - key: product-module
+          kind: file
+          target: ${productModule}
+          carrier_paths: [${productModule}]
+          existence: existing
         - key: state
           kind: file
           target: src/state.json
@@ -217,7 +273,7 @@ outcomes:
             target: ${productRoot}
             argv: ${JSON.stringify(productArgv)}
             effect: read_only
-          verification_inputs: [tests/oracle.mjs, tests/semantic-false.json]
+          verification_inputs: [tests/semantic-false.json]
           input_paths: [src/state.json]
           artifact_globs: [artifacts/proof.json]
           positive_assertions:

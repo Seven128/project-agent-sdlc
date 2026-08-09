@@ -9,6 +9,7 @@ import {
   createDeliveryFixture,
   runCli,
   runCliFailure,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -132,6 +133,7 @@ async function configureMachinePlaywright(fixture, { weak }) {
   for (const obligation of outcome.technical.obligations)
     obligation.required_proof_surfaces = ["ui_browser"];
   if (weak) fixture.contract.risk.facts.weak_observability = ["first"];
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
 }
 

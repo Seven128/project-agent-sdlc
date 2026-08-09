@@ -87,7 +87,7 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
   }
 });
 
-test("Final Gate rejects every protected-input class changed during execution", async (t) => {
+test("Final Gate rejects protected inputs and current-candidate runtime files changed during execution", async (t) => {
   const cases = [
     {
       name: "raw Contract",
@@ -118,7 +118,8 @@ test("Final Gate rejects every protected-input class changed during execution", 
         ),
     },
     {
-      name: "runner",
+      name: "product runner module",
+      expectedFinding: "workspace_changed_during_final_gate",
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.root, "tests", "oracle.mjs"),
@@ -189,7 +190,9 @@ test("Final Gate rejects every protected-input class changed during execution", 
         assert.ok(
           receipt.findings.some(
             (finding) =>
-              finding.code === "protected_inputs_changed_during_final_gate",
+              finding.code ===
+              (mutation.expectedFinding ??
+                "protected_inputs_changed_during_final_gate"),
           ),
           JSON.stringify(receipt.findings),
         );
