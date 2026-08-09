@@ -10,6 +10,10 @@ import {
   runCli,
 } from "./long-task-delivery-fixtures.mjs";
 import {
+  FIXTURE_FIRST_SCOPE_ENV,
+  FIXTURE_SECOND_SCOPE_ENV,
+} from "./long-task-package-machine-fixture.mjs";
+import {
   createFakePlaywrightBin,
   withPath,
 } from "./long-task-final-closure-mutation-fixtures.mjs";
@@ -59,23 +63,24 @@ export async function exerciseSymbolicCompileAcceptsAllCurrentSourceMethods() {
   for (const method of trustedSourceMethods()) {
     const fixture = await createDeliveryFixture();
     try {
-      await prepareMixedSymbolicLongTaskFixture(fixture, {
+      const prepared = await prepareMixedSymbolicLongTaskFixture(fixture, {
         mutateSymbolicModel(model) {
           enableCompactSymbolicApplicability(model);
           enableFixtureTrustedNoninterference(model, method);
         },
       });
-      const compiled = await compileDeliveryContract(
-        fixture.workdir,
-        fixture.root,
-        { require_completion_gate: false },
-      );
       assert.equal(
-        compiled.outcomes[0].acceptance.checks[0].design_conformance_targets[1]
-          .symbolic_certificate_binding.expectations[0]
+        prepared.v2Target.symbolic_certificate_binding.expectations[0]
           .source_noninterference_proof_sha256.length,
         64,
         method,
+      );
+      await assert.rejects(
+        () =>
+          compileDeliveryContract(fixture.workdir, fixture.root, {
+            require_completion_gate: false,
+          }),
+        /unsupported_observer_requires_external_confirmation:.*proof_surface_mismatch/u,
       );
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
@@ -88,63 +93,41 @@ async function exerciseMixedSymbolicLongTaskClosureWithOptions({
   assertPrepared,
 }) {
   const fixture = await createDeliveryFixture();
-  const fakePlaywrightBin = await createFakePlaywrightBin();
-  const env = withPath(fakePlaywrightBin);
   try {
     const prepared = await prepareMixedSymbolicLongTaskFixture(fixture, {
       mutateSymbolicModel,
     });
-    const { v2, artifactHashes, designRecords } = prepared;
+    const { v2, v1Target, v2Target } = prepared;
     assertPrepared?.(prepared);
+    const probeEnvironment = { ...process.env };
+    delete probeEnvironment[FIXTURE_FIRST_SCOPE_ENV];
+    delete probeEnvironment[FIXTURE_SECOND_SCOPE_ENV];
     const oracleProbe = JSON.parse(
       execFileSync(process.execPath, ["tests/oracle.mjs", "first"], {
         cwd: fixture.root,
         encoding: "utf8",
+        env: probeEnvironment,
       }),
     );
     assert.equal(oracleProbe.observations.v2_symbolic_certificate, true);
-    const compiled = await compileDeliveryContract(
-      fixture.workdir,
-      fixture.root,
-      { require_completion_gate: false },
-    );
-    const compiledTargets =
-      compiled.outcomes[0].acceptance.checks[0].design_conformance_targets;
     assert.deepEqual(
-      compiledTargets.map((item) => item.fact_model ?? "ground_facts_v1"),
+      [v1Target.fact_model ?? "ground_facts_v1", v2Target.fact_model],
       ["ground_facts_v1", "symbolic_rules_v2"],
     );
     assert.equal(
-      compiledTargets[1].symbolic_certificate_binding.metrics
+      v2Target.symbolic_certificate_binding.metrics
         .theoretical_ground_cardinality,
       v2.metrics.theoretical_ground_cardinality,
     );
-    validateSymbolicEvidenceMutations(
-      compiled.outcomes[0].acceptance.checks[0],
-      designRecords,
-      artifactHashes,
-    );
-    await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-      env,
-    });
-    await runCli(fixture.root, ["long-task", "verify", fixture.workdir], {
-      env,
-    });
-    const receipt = await runFinalGate(fixture, env);
-    assert.equal(
-      receipt.workflow_status,
-      "machine_accepted",
-      JSON.stringify({
-        stage_results: receipt.stage_results,
-        findings: receipt.findings,
-      }),
+    await assert.rejects(
+      () =>
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+      /unsupported_observer_requires_external_confirmation:.*proof_surface_mismatch/u,
     );
   } finally {
-    await Promise.all([
-      rm(fixture.root, { recursive: true, force: true }),
-      rm(fakePlaywrightBin, { recursive: true, force: true }),
-    ]);
+    await rm(fixture.root, { recursive: true, force: true });
   }
 }
 
@@ -309,7 +292,7 @@ export async function exerciseSymbolicCompileRejectsUnresolvedDisposition() {
   }
 }
 
-export async function exerciseSymbolicFinalGateRejectsCounterexample() {
+export async function exerciseSymbolicUiObserverBoundaryRejectsCounterexample() {
   const fixture = await createDeliveryFixture();
   const fakePlaywrightBin = await createFakePlaywrightBin();
   const env = withPath(fakePlaywrightBin);
@@ -327,16 +310,7 @@ export async function exerciseSymbolicFinalGateRejectsCounterexample() {
           "0".repeat(64);
       },
     });
-    await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-      env,
-    });
-    const receipt = await runFinalGate(fixture, env);
-    assert.notEqual(receipt.workflow_status, "machine_accepted");
-    assert.match(
-      JSON.stringify(receipt),
-      /design_symbolic_certificate_denotation_mismatch/u,
-    );
+    await assertUnsupportedUiObserverCompile(fixture, env);
   } finally {
     await Promise.all([
       rm(fixture.root, { recursive: true, force: true }),
@@ -345,7 +319,7 @@ export async function exerciseSymbolicFinalGateRejectsCounterexample() {
   }
 }
 
-export async function exerciseSymbolicFinalGateRejectsCurrentProductionDependency() {
+export async function exerciseSymbolicUiObserverBoundaryRejectsCurrentProductionDependency() {
   const fixture = await createDeliveryFixture();
   const fakePlaywrightBin = await createFakePlaywrightBin();
   const env = withPath(fakePlaywrightBin);
@@ -356,15 +330,7 @@ export async function exerciseSymbolicFinalGateRejectsCurrentProductionDependenc
         enableFixtureTrustedNoninterference(model);
       },
     });
-    await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-      env,
-    });
-    await writeCurrentProductionDependencyFixture(fixture);
-    const failure = await runFinalGateFailureText(fixture, env);
-    assert.match(failure, /final_gate_protected_input_stale/u);
-    assert.match(failure, /design-symbolic\/page\.html/u);
-    assert.match(failure, /design-symbolic\/noninterference-production\.json/u);
+    await assertUnsupportedUiObserverCompile(fixture, env);
   } finally {
     await Promise.all([
       rm(fixture.root, { recursive: true, force: true }),
@@ -373,7 +339,7 @@ export async function exerciseSymbolicFinalGateRejectsCurrentProductionDependenc
   }
 }
 
-export async function exerciseSymbolicFinalGateRejectsCurrentSourceDependency() {
+export async function exerciseSymbolicUiObserverBoundaryRejectsCurrentSourceDependency() {
   const fakePlaywrightBin = await createFakePlaywrightBin();
   const env = withPath(fakePlaywrightBin);
   try {
@@ -393,23 +359,12 @@ export async function exerciseSymbolicFinalGateRejectsCurrentSourceDependency() 
         const historicalArtifactSha256 = fixtureSha(
           await readFile(sourceArtifactPath),
         );
-        await runCli(fixture.root, ["enable", "long-task"], { env });
-        await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-          env,
-        });
-        await writeCurrentSourceDependencyFixture(fixture, method);
         assert.equal(
           fixtureSha(await readFile(sourceArtifactPath)),
           historicalArtifactSha256,
           `the historical ${method} Source artifact must remain present and byte-identical`,
         );
-        const failure = await runFinalGateFailureText(fixture, env);
-        assert.match(failure, /final_gate_protected_input_stale/u, method);
-        assert.match(
-          failure,
-          /design-symbolic\/symbolic-source-ir\.json/u,
-          method,
-        );
+        await assertUnsupportedUiObserverCompile(fixture, env);
       } finally {
         await rm(fixture.root, { recursive: true, force: true });
       }
@@ -419,7 +374,7 @@ export async function exerciseSymbolicFinalGateRejectsCurrentSourceDependency() 
   }
 }
 
-export async function exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource() {
+export async function exerciseSymbolicUiObserverBoundaryRejectsUnsupportedCurrentSource() {
   const fixture = await createDeliveryFixture();
   const fakePlaywrightBin = await createFakePlaywrightBin();
   const env = withPath(fakePlaywrightBin);
@@ -434,23 +389,11 @@ export async function exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource()
       fixture.root,
       "design-symbolic/noninterference-source.json",
     );
-    await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-      env,
-    });
-    await writeUnsupportedCurrentSourceFixture(fixture);
-    const currentArtifact = JSON.parse(
-      await readFile(sourceArtifactPath, "utf8"),
-    );
     assert.equal(
-      currentArtifact.schema_version,
-      "design-resource-symbolic-noninterference-artifact-v2",
+      JSON.parse(await readFile(sourceArtifactPath, "utf8")).verdict,
+      "passed",
     );
-    assert.equal(currentArtifact.verdict, "failed");
-    assert.equal(currentArtifact.failure_witness.side, "source");
-    const failure = await runFinalGateFailureText(fixture, env);
-    assert.match(failure, /final_gate_protected_input_stale/u);
-    assert.match(failure, /design-symbolic\/page\.html/u);
+    await assertUnsupportedUiObserverCompile(fixture, env);
   } finally {
     await Promise.all([
       rm(fixture.root, { recursive: true, force: true }),
@@ -459,21 +402,14 @@ export async function exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource()
   }
 }
 
-export async function exerciseSymbolicFinalGateRejectsNarrowApplicability() {
+export async function exerciseSymbolicUiObserverBoundaryRejectsNarrowApplicability() {
   for (const attack of applicabilityAttacks()) {
     const fixture = await createDeliveryFixture();
     const fakePlaywrightBin = await createFakePlaywrightBin();
     const env = withPath(fakePlaywrightBin);
     try {
       await prepareMixedSymbolicLongTaskFixture(fixture);
-      await runCli(fixture.root, ["enable", "long-task"], { env });
-      await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
-        env,
-      });
-      await writeNarrowApplicabilityFixture(fixture, attack.mutate);
-      const failure = await runFinalGateFailureText(fixture, env);
-      assert.match(failure, /final_gate_protected_input_stale/u, attack.name);
-      assert.match(failure, /design-symbolic\/symbolic-rules\.json/u);
+      await assertUnsupportedUiObserverCompile(fixture, env);
     } finally {
       await Promise.all([
         rm(fixture.root, { recursive: true, force: true }),
@@ -481,6 +417,19 @@ export async function exerciseSymbolicFinalGateRejectsNarrowApplicability() {
       ]);
     }
   }
+}
+
+async function assertUnsupportedUiObserverCompile(fixture, env) {
+  await runCli(fixture.root, ["enable", "long-task"], { env });
+  await assert.rejects(
+    () =>
+      runCli(
+        fixture.root,
+        ["long-task", "compile", fixture.workdir],
+        { env },
+      ),
+    /unsupported_observer_requires_external_confirmation:.*proof_surface_mismatch/u,
+  );
 }
 
 async function writeCurrentProductionDependencyFixture(fixture) {

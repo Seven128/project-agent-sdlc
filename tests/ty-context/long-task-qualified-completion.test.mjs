@@ -9,6 +9,8 @@ import {
   createDeliveryFixture,
   pathExists,
   runCli,
+  runCliFailure,
+  writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
 const externalConfirmations = [
@@ -75,6 +77,86 @@ test("fresh external pending qualification reaches status and resume", async () 
   }
 });
 
+test("blocking Claim projection can finish only as blocked_external", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    fixture.contract.global.acceptance.external_confirmations = [
+      {
+        key: "unsupported-observation",
+        description: "The unsupported observations require an external owner.",
+        owner: "external-owner",
+        kind: "functional_prerequisite",
+        impact_claims: ["first.result"],
+        blocks_target: true,
+      },
+    ];
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const status = await runCli(fixture.root, [
+      "long-task",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.deepEqual(status.outcomes, { first: "blocked_external" });
+    assert.deepEqual(status.stages, { first: "blocked_external" });
+    assert.deepEqual(status.ready_stages, []);
+    assert.deepEqual(status.ready_outcomes, []);
+    const final = await runCliFailure(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(
+      final.workflow_status,
+      "blocked_external",
+      JSON.stringify(final, null, 2),
+    );
+    assert.deepEqual(final.outcome_results, { first: "blocked_external" });
+    assert.deepEqual(final.stage_results, { first: "blocked_external" });
+    assert.notEqual(final.workflow_status, "machine_accepted");
+    assert.notEqual(final.workflow_status, "machine_accepted_external_pending");
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("target blocking confirmation without exact result impact does not reclassify the Outcome", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    fixture.contract.global.acceptance.external_confirmations = [
+      {
+        key: "partial-external-impact",
+        description: "Only one non-result Claim remains externally blocked.",
+        owner: "external-owner",
+        kind: "functional_prerequisite",
+        impact_claims: ["first.requirement.observe-first"],
+        blocks_target: true,
+      },
+    ];
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const status = await runCli(fixture.root, [
+      "long-task",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.deepEqual(status.outcomes, { first: "unverified" });
+    assert.deepEqual(status.stages, { first: "ready" });
+    const final = await runCliFailure(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(final.workflow_status, "blocked_external");
+    assert.deepEqual(final.outcome_results, { first: "passed" });
+    assert.deepEqual(final.stage_results, { first: "passed" });
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("resume finishes workspace write-tree before current Git status", async () => {
   const fixture = await createDeliveryFixture();
   const traceRoot = await mkdtemp(
@@ -84,13 +166,9 @@ test("resume finishes workspace write-tree before current Git status", async () 
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    await runCli(
-      fixture.root,
-      ["long-task", "resume", fixture.workdir],
-      {
-        env: { ...process.env, GIT_TRACE2_EVENT: traceFile },
-      },
-    );
+    await runCli(fixture.root, ["long-task", "resume", fixture.workdir], {
+      env: { ...process.env, GIT_TRACE2_EVENT: traceFile },
+    });
     const events = (await readFile(traceFile, "utf8"))
       .trim()
       .split(/\r?\n/u)
@@ -171,7 +249,10 @@ test("stop-check returns structured external pending qualification and clears CA
     assert.equal(result.native_goal_effect, "none");
     assert.equal(result.target_state, "target_profile_usable");
     assert.deepEqual(result.stage_results, { first: "passed" });
-    assert.match(result.message, /complete external delivery remains pending/iu);
+    assert.match(
+      result.message,
+      /complete external delivery remains pending/iu,
+    );
     assert.match(result.message, /platform-native Goal/iu);
     assert.match(result.message, /fixture-external \(release-owner\)/u);
     assert.equal(await pathExists(record), false);
@@ -266,6 +347,10 @@ test("[critical:qualified-close-safety] failed Live Gates do not report success 
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const statePath = path.join(fixture.root, "src", "state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.second = false;
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
     await commitCandidate(fixture.root);
     const record = await activeRecordPath(fixture.root);
     const stop = await runCli(fixture.root, [

@@ -129,6 +129,21 @@ test("semantic package exact projection uses the Fact-by-method obligation", () 
   assert.equal(rows[0].locator_policy.value, "/observations/fact.observable");
 });
 
+test("a static Fact-bound observer cannot derive target runtime", () => {
+  const input = processInput({
+    semantic: true,
+    proofSurface: "implementation_structure",
+    capabilities: ["semantic_fact", "target_runtime"],
+  });
+  input.check.runner.type = "node_oracle";
+  input.runner.type = "node_oracle";
+  input.runner.resolved_target = "tests/observer.mjs";
+  assert.throws(
+    () => compileObservationAuthorityPlan(input),
+    /unsupported_observer_requires_external_confirmation:.*static_capability_not_admitted/u,
+  );
+});
+
 test("selected-design content can use only the bounded static exact slice", () => {
   const input = processInput({
     proofSurface: "implementation_structure",

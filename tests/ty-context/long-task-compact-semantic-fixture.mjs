@@ -12,9 +12,12 @@ import {
   fixtureSemanticManifest,
   refreshFixtureSemanticManifest,
 } from "./long-task-delivery-fixtures.mjs";
+import { admitPackageExactFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
 
 export function deterministicCompactSemanticManifest(factCount = 64) {
-  const manifest = fixtureSemanticManifest();
+  const manifest = admitPackageExactFixtureSemanticManifest(
+    fixtureSemanticManifest(),
+  );
   const originalFact = manifest.facts[0];
   const originalSubject = manifest.subjects.find(
     (item) => item.key === originalFact.unit_ref,
@@ -66,6 +69,7 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
         suffix,
         "custom.snapshot_digest",
         proofs.length + 1,
+        "external_confirmation",
       ),
     );
   }
@@ -89,26 +93,55 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
         disposition[field] = subjectKeys;
   }
   property.required_methods = ["exact_value", "custom.snapshot_digest"];
-  manifest.oracles[0].capabilities = [
-    "exact_value",
-    "custom.snapshot_digest",
-  ];
+  manifest.oracles[0].capabilities = ["exact_value"];
+  manifest.oracles.push({
+    key: "oracle.synthetic-snapshot-audit",
+    trust: "named_external_tcb",
+    identity: "fixture-synthetic-snapshot-auditor",
+    version: "1.0.0",
+    sha256: null,
+    capabilities: ["custom.snapshot_digest"],
+  });
   for (const input of manifest.inputs)
     if (input.fact_refs.includes(originalFact.key))
       input.fact_refs = exactFacts.map((item) => item.key);
   return refreshFixtureSemanticManifest(manifest);
 }
 
-function proofFor(original, factKey, suffix, method, proofIndex) {
-  const comparisonValue = { comparator: method };
+function proofFor(
+  original,
+  factKey,
+  suffix,
+  method,
+  proofIndex,
+  authority = "machine",
+) {
+  const comparator =
+    authority === "machine" ? "exact_value" : "custom.snapshot_digest";
+  const comparisonValue = { comparator };
   return {
     ...structuredClone(original),
     key: `proof.synthetic.${suffix}.${method.replace(/[^a-z0-9]+/gu, "-")}`,
     fact_ref: factKey,
     method,
+    authority,
+    oracle_ref:
+      authority === "machine"
+        ? original.oracle_ref
+        : "oracle.synthetic-snapshot-audit",
+    counterfactual:
+      authority === "machine"
+        ? structuredClone(original.counterfactual)
+        : {
+            disposition: "external",
+            refs: ["synthetic-snapshot-digest-confirmation"],
+            basis_refs: ["fixture-architecture"],
+            rationale:
+              "The non-admitted custom snapshot method remains a blocking external confirmation.",
+          },
     comparison: {
       ...structuredClone(original.comparison),
-      comparator: method,
+      comparator,
       parameters: {
         ...structuredClone(original.comparison.parameters),
         locator: {
@@ -130,16 +163,40 @@ export function projectSyntheticCompactContract(contract, manifest) {
     claim_ref: `semantic_fact.${fact.key}`,
     applicability_ref: "first-root-success",
   }));
-  const proofBindings = manifest.proof_obligations.map((proof) => ({
-    proof_ref: proof.key,
-    fact_ref: proof.fact_ref,
-    method: proof.method,
-    proof_surface: proof.proof_surface,
-    evidence_capabilities: proof.evidence_capabilities,
-    authority: "machine",
-    check_ref: check.key,
-    assertion_ref: assertionKey(proof.key),
-  }));
+  const externalConfirmationKey = "synthetic-snapshot-digest-confirmation";
+  contract.global.acceptance.external_confirmations.push({
+    key: externalConfirmationKey,
+    description:
+      "Confirm the synthetic custom snapshot obligations outside the admitted exact observer.",
+    owner: "fixture-audit-owner",
+    kind: "expert_authority",
+    impact_claims: manifest.facts.map(
+      (fact) => `first.semantic_fact.${fact.key}`,
+    ),
+    blocks_target: true,
+  });
+  const proofBindings = manifest.proof_obligations.map((proof) =>
+    proof.authority === "machine"
+      ? {
+          proof_ref: proof.key,
+          fact_ref: proof.fact_ref,
+          method: proof.method,
+          proof_surface: proof.proof_surface,
+          evidence_capabilities: proof.evidence_capabilities,
+          authority: "machine",
+          check_ref: check.key,
+          assertion_ref: assertionKey(proof.key),
+        }
+      : {
+          proof_ref: proof.key,
+          fact_ref: proof.fact_ref,
+          method: proof.method,
+          proof_surface: proof.proof_surface,
+          evidence_capabilities: proof.evidence_capabilities,
+          authority: "external_confirmation",
+          confirmation_ref: externalConfirmationKey,
+        },
+  );
   outcome.semantic_fact_bindings = {
     manifest_ref: manifest.key,
     facts: factBindings,
@@ -149,16 +206,18 @@ export function projectSyntheticCompactContract(contract, manifest) {
     (assertion) => assertion.key !== "first-semantic-fact",
   );
   check.positive_assertions.push(
-    ...manifest.proof_obligations.map((proof) => ({
-      key: assertionKey(proof.key),
-      criterion: `The current candidate satisfies the exact Source Fact ${proof.fact_ref}.`,
-      claims: [`semantic_fact.${proof.fact_ref}`],
-      applicability_ref: "first-root-success",
-      observation: `semantic_${proof.key.replace(/[^a-z0-9]+/gu, "_")}`,
-      evidence_capabilities: proof.evidence_capabilities,
-      operator: "equals",
-      expected: true,
-    })),
+    ...manifest.proof_obligations
+      .filter((proof) => proof.authority === "machine")
+      .map((proof) => ({
+        key: assertionKey(proof.key),
+        criterion: `The current candidate satisfies the exact Source Fact ${proof.fact_ref}.`,
+        claims: [`semantic_fact.${proof.fact_ref}`],
+        applicability_ref: "first-root-success",
+        observation: `semantic_${proof.key.replace(/[^a-z0-9]+/gu, "_")}`,
+        evidence_capabilities: proof.evidence_capabilities,
+        operator: "equals",
+        expected: true,
+      })),
   );
   const counterfactual = outcome.acceptance.counterfactual_controls.find(
     (item) => item.key === manifest.proof_obligations[0].counterfactual.refs[0],
@@ -173,7 +232,9 @@ export function projectSyntheticCompactContract(contract, manifest) {
     ...counterfactual.expected_assertion_failures.filter(
       (key) => key !== "first-semantic-fact",
     ),
-    ...manifest.proof_obligations.map((proof) => assertionKey(proof.key)),
+    ...manifest.proof_obligations
+      .filter((proof) => proof.authority === "machine")
+      .map((proof) => assertionKey(proof.key)),
   ];
   return contract;
 }

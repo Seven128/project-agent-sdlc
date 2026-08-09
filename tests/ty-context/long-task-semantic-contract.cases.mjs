@@ -182,9 +182,12 @@ test("declared semantic observers must be independent observer-role targets", as
   }
 });
 
-test("a frozen semantic Oracle is bound to its actual verification-input digest", async () => {
+test("a project frozen semantic Oracle cannot replace the package-admitted observer", async () => {
   const fixture = await createDeliveryFixture();
   try {
+    const admittedOracle = structuredClone(
+      fixture.contract.outcomes[0].semantic_fact_bindings,
+    );
     const oracleSha256 = createHash("sha256")
       .update(await readFile(path.join(fixture.root, "tests", "oracle.mjs")))
       .digest("hex");
@@ -196,29 +199,27 @@ test("a frozen semantic Oracle is bound to its actual verification-input digest"
         sha256: oracleSha256,
       };
     });
-    await compileDeliveryContract(fixture.workdir, fixture.root, {
-      require_completion_gate: false,
-    });
-
-    await mutateFixtureSemanticManifest(fixture, (manifest) => {
-      manifest.oracles[0].identity = "tests/not-the-oracle.mjs";
-    });
     await assert.rejects(
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /semantic_fact_oracle_verification_input_missing:first-check:oracle\.fixture-semantic:tests\/not-the-oracle\.mjs/u,
+      /custom_oracle_machine_completion_forbidden:semantic_fact:proof\.first\.observable\.exact:tests\/oracle\.mjs/u,
     );
 
+    fixture.contract.outcomes[0].semantic_fact_bindings = admittedOracle;
     await mutateFixtureSemanticManifest(fixture, (manifest) => {
-      manifest.oracles[0].identity = "tests/oracle.mjs";
-      manifest.oracles[0].sha256 = "0".repeat(64);
+      manifest.oracles[0] = {
+        ...manifest.oracles[0],
+        trust: "named_external_tcb",
+        identity: "ty-context-json-pointer-exact",
+        version: "1.0.0",
+        sha256: null,
+      };
     });
-    await assert.rejects(
+    await assert.doesNotReject(
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /semantic_fact_oracle_verification_input_mismatch:first-check:oracle\.fixture-semantic:tests\/oracle\.mjs/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

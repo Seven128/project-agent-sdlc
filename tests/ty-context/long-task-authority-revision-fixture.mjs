@@ -2,9 +2,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { projectAuthorityRevisionDecision } from "../../packages/ty-context/dist/lib/long-task-authority-revision-summary.js";
+import { revisionFixtureOracleSource } from "./long-task-delegating-oracle-fixture.mjs";
 import {
-  revisionFixtureOracleSource,
-} from "./long-task-delegating-oracle-fixture.mjs";
+  FIXTURE_LEGACY_ORACLE_PATH,
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
 
 export async function prepareAuthorityRevisionFixture(fixture) {
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
@@ -27,7 +30,13 @@ export async function prepareAuthorityRevisionFixture(fixture) {
     path.join(fixture.root, "artifacts", "optional-proof.json"),
     '{"optional":true}\n',
   );
-  check.runner.target = "tests/revision-oracle.mjs";
+  const rootArgv = fixtureProductRootArgv("tests/revision-oracle.mjs", "first");
+  fixture.contract.task.execution_targets[0].root_entrypoint =
+    fixtureProductRootPath();
+  fixture.contract.task.execution_targets[0].root_argv = rootArgv;
+  check.runner.type = "project_binary";
+  check.runner.target = fixtureProductRootPath();
+  check.runner.argv = [...rootArgv];
   check.verification_inputs.push(
     "tests/revision-oracle.mjs",
     "tests/helper.mjs",
@@ -43,6 +52,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
   outcome.technical.allowed_support_paths = [
     "src/support/**",
     "artifacts/**",
+    FIXTURE_LEGACY_ORACLE_PATH,
   ];
   outcome.technical.rollback_and_recovery = {
     rollback: "Restore the previous state file.",
@@ -122,7 +132,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
     criterion: "The strict negative floor remains satisfied.",
     claims: [],
     observation: "negative",
-    evidence_capabilities: ["state_delta"],
+    evidence_capabilities: ["presence"],
     operator: "equals",
     expected: false,
   });
@@ -133,18 +143,14 @@ export async function inspectAuthorityRevisionCandidate(
   previousAuthority,
 ) {
   let proposal = null;
-  await compileDeliveryContract(
-    fixture.workdir,
-    fixture.root,
-    {
-      revise: true,
-      previous_authority: previousAuthority,
-      authority_revision_mode: "diagnose",
-      on_authority_revision(value) {
-        proposal = value;
-      },
+  await compileDeliveryContract(fixture.workdir, fixture.root, {
+    revise: true,
+    previous_authority: previousAuthority,
+    authority_revision_mode: "diagnose",
+    on_authority_revision(value) {
+      proposal = value;
     },
-  );
+  });
   if (!proposal) throw new Error("authority_revision_candidate_unchanged");
   return {
     proposal,
@@ -154,22 +160,21 @@ export async function inspectAuthorityRevisionCandidate(
 
 export const authorityReductionScenarios = [
   {
-    name: "runner target",
+    name: "runner timeout",
     field: "runner_definitions_changed",
     reason: "runner_definition_changed",
     userDecisionRequired: false,
     mutate(contract) {
-      contract.outcomes[0].acceptance.checks[0].runner.target =
-        "tests/alternate-oracle.mjs";
+      contract.outcomes[0].acceptance.checks[0].runner.timeout_ms += 1000;
     },
   },
   {
-    name: "runner type",
+    name: "runner effect",
     field: "runner_definitions_changed",
     reason: "runner_definition_changed",
     userDecisionRequired: true,
     mutate(contract) {
-      contract.outcomes[0].acceptance.checks[0].runner.type = "project_binary";
+      contract.outcomes[0].acceptance.checks[0].runner.effect = "test_sandbox";
     },
   },
   {

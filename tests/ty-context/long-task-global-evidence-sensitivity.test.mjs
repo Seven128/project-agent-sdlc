@@ -65,7 +65,14 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
       otherGlobal.contract.global.acceptance.checks[0],
     );
     second.key = "other-global-check";
-    second.runner.argv = ["first", "other-global"];
+    process.env.TY_CONTEXT_OTHER_GLOBAL_SCOPE ??= "fixture-other-global";
+    second.environment_requirements = [
+      {
+        key: "other-global-scope",
+        kind: "env_var",
+        target: "TY_CONTEXT_OTHER_GLOBAL_SCOPE",
+      },
+    ];
     second.positive_assertions[0].key = "other-global-assertion";
     otherGlobal.contract.global.acceptance.checks.push(second);
     otherGlobal.contract.global.acceptance.counterfactual_controls.push({
@@ -154,7 +161,10 @@ test("a constant Global Oracle cannot pass the Live Final Gate", async () => {
     assert.equal(finding.owning_outcome_key, "first");
     assert.deepEqual(finding.source_claim_keys, ["global-state-source"]);
     assert.deepEqual(finding.source_target_refs, ["constraint.global-state"]);
-    assert.deepEqual(finding.owner_paths, ["src/**"]);
+    assert.deepEqual(finding.owner_paths, [
+      "src/**",
+      "tests/legacy-oracle.mjs",
+    ]);
     assert.match(finding.next_action, /referenced implementation carrier/iu);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import {
   appendFile,
@@ -15,7 +15,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { npmCommandSpec } from "./npm_command_spec.mjs";
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const sourcePath = "docs/long-task-real-capability-closure.md";
 const source = await readText(sourcePath);
 const manifest = loadManifest(source);
@@ -55,6 +58,11 @@ export const DELIVERY_BLACK_BOX_CASE_POLICY = Object.freeze([
     "wrong.r5b.evidence-role-static",
     "observer-trust.r5b.evidence-role-static",
     "control.static",
+  ),
+  wrongProofCase(
+    "wrong.r5c.evidence-role-process",
+    "observer-trust.r5c.evidence-role-process",
+    "control.process",
   ),
   wrongProofCase(
     "wrong.r6.verifier-wrapper",
@@ -106,26 +114,34 @@ export const DELIVERY_BLACK_BOX_CASE_POLICY = Object.freeze([
   ),
 ]);
 
-const selectedDesignExactTest =
-  "[critical:selected-design-fact-closure] selected design targets require exact fact-bound comparison evidence and blocker disposition";
-const symbolicExactTest =
-  "[critical:symbolic-mixed-representation-closure] one Contract compiles and reaches one Final Gate with mixed V1 and opt-in UI V2 targets";
+const sharedExactTest =
+  "shared exact evaluator recomputes V1 and V2 pass and comparison identity";
+const selectedDesignObservationTest =
+  "package observer is joined to selected-design validation from the current product carrier";
+const symbolicObserverBoundaryTest =
+  "[critical:symbolic-mixed-representation-closure] mixed V1 and opt-in UI V2 targets preserve symbolic closure and require External Confirmation without an admitted UI observer";
 const starwardShapeTest =
   "Starward sanitized replay contains the four-page product shape and independently scored candidate paths";
 const starwardGroundTruthTest =
   "Starward hidden ground truth rejects A1-A12 and accepts the valid control set";
 
 const nodeMachineFactTests = new Map([
-  ["known-selected-design-false-acceptance", [selectedDesignExactTest]],
-  ["p0-positive-fixture-correction", [selectedDesignExactTest]],
-  ["p0-v1-negative-control", [selectedDesignExactTest]],
-  ["p0-v2-negative-control", [symbolicExactTest]],
   [
-    "shared-exact-comparison-owner",
-    [selectedDesignExactTest, symbolicExactTest],
+    "known-selected-design-false-acceptance",
+    [sharedExactTest, selectedDesignObservationTest],
   ],
-  ["p0-verification-boundary", [selectedDesignExactTest, symbolicExactTest]],
-  ["selected-design-existing-owner-preservation", [selectedDesignExactTest]],
+  ["p0-positive-fixture-correction", [selectedDesignObservationTest]],
+  ["p0-v1-negative-control", [sharedExactTest]],
+  ["p0-v2-negative-control", [sharedExactTest, symbolicObserverBoundaryTest]],
+  ["shared-exact-comparison-owner", [sharedExactTest]],
+  [
+    "p0-verification-boundary",
+    [selectedDesignObservationTest, symbolicObserverBoundaryTest],
+  ],
+  [
+    "selected-design-existing-owner-preservation",
+    [selectedDesignObservationTest],
+  ],
   ["starward-sanitized-replay", [starwardShapeTest, starwardGroundTruthTest]],
 ]);
 
@@ -138,6 +154,39 @@ const allControlBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.filter(
 const allBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.map(
   (entry) => entry.case_id,
 );
+
+const compileBoundaryOwnerDiagnostics = new Map([
+  ["wrong.r1.custom-oracle", ["custom_oracle_machine_completion_forbidden"]],
+  [
+    "wrong.r1b.verification-input-static",
+    [
+      "machine_observer_not_admitted",
+      "static_carrier_expected_authority_forbidden",
+    ],
+  ],
+  ["wrong.r3.historical-runtime", ["process_observer_direct_root_required"]],
+  [
+    "wrong.r4.browser-native-proxy",
+    ["unsupported_observer_requires_external_confirmation"],
+  ],
+  [
+    "wrong.r5.synthetic-status-binding",
+    ["machine_observer_not_admitted", "static_carrier_evidence_role_forbidden"],
+  ],
+  [
+    "wrong.r5b.evidence-role-static",
+    ["machine_observer_not_admitted", "static_carrier_evidence_role_forbidden"],
+  ],
+  [
+    "wrong.r5c.evidence-role-process",
+    [
+      "machine_observer_not_admitted",
+      "process_carrier_evidence_role_forbidden",
+    ],
+  ],
+  ["wrong.r6.verifier-wrapper", ["process_observer_direct_root_required"]],
+  ["wrong.r6b.argv-wrapper", ["process_observer_root_argv_mismatch"]],
+]);
 
 const blackBoxFactCases = new Map([
   ["coverage-defined-by-rejected-attack-surface", allWrongBlackBoxCases],
@@ -164,7 +213,11 @@ const blackBoxFactCases = new Map([
   ],
   [
     "expected-actual-comparison-verdict-ownership",
-    ["wrong.r1.custom-oracle", "wrong.r3.historical-runtime", "control.process"],
+    [
+      "wrong.r1.custom-oracle",
+      "wrong.r3.historical-runtime",
+      "control.process",
+    ],
   ],
   [
     "bounded-admitted-artifact-contract",
@@ -190,6 +243,7 @@ const blackBoxFactCases = new Map([
     [
       "wrong.r5.synthetic-status-binding",
       "wrong.r5b.evidence-role-static",
+      "wrong.r5c.evidence-role-process",
       "control.static",
     ],
   ],
@@ -206,6 +260,7 @@ const blackBoxFactCases = new Map([
     "production-reachability",
     [
       "wrong.r5.synthetic-status-binding",
+      "wrong.r5c.evidence-role-process",
       "wrong.r6.verifier-wrapper",
       "wrong.r6b.argv-wrapper",
       "wrong.r7c.process-input-mutation",
@@ -217,6 +272,7 @@ const blackBoxFactCases = new Map([
     "counterfactual-actual-change-and-impact-set",
     [
       "wrong.r5.synthetic-status-binding",
+      "wrong.r5c.evidence-role-process",
       "wrong.r7c.process-input-mutation",
       "wrong.r8.empty-observation",
       "control.process",
@@ -259,6 +315,8 @@ const pendingIndependentProofFactRefs = new Set([
   "real-capability-closure-result",
   "final-hard-acceptance",
   "approved-final-capability-wording",
+  "independent-capability-audit",
+  "real-process-workload-roi",
 ]);
 
 const documentationFactRefs = new Set([
@@ -308,9 +366,7 @@ async function main() {
     : manifest.facts.filter((fact) => fact.outcome_ref === outcomeKey);
   const factResults = [];
   for (const fact of facts)
-    factResults.push(
-      await evaluateFactResult({ fact, outcomeKey, commands }),
-    );
+    factResults.push(await evaluateFactResult({ fact, outcomeKey, commands }));
 
   console.log(
     JSON.stringify({
@@ -337,8 +393,18 @@ async function runOutcomeCommands(outcome) {
   const specs = {
     "p0-exact-recomputation": [
       build,
-      nodeTest("selected design targets require exact fact-bound", "tests/ty-context/long-task-semantic-drift-closure.test.mjs"),
-      nodeTest("one Contract compiles and reaches one Final Gate", "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs"),
+      nodeTest(
+        "shared exact evaluator recomputes V1 and V2",
+        "tests/ty-context/long-task-real-capability-closure.test.mjs",
+      ),
+      nodeTest(
+        "package observer is joined to selected-design validation",
+        "tests/ty-context/long-task-real-capability-closure.test.mjs",
+      ),
+      nodeTest(
+        "mixed V1 and opt-in UI V2 targets preserve symbolic closure",
+        "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
+      ),
     ],
     "assurance-governance": [
       build,
@@ -348,7 +414,10 @@ async function runOutcomeCommands(outcome) {
     "observer-tcb-closure": [
       build,
       blackBoxNodeTest(),
-      nodeTest(null, "tests/ty-context/long-task-real-capability-closure.test.mjs"),
+      nodeTest(
+        null,
+        "tests/ty-context/long-task-real-capability-closure.test.mjs",
+      ),
       nodeTest(
         "package-reextracted baseline and mutated actual",
         "tests/ty-context/long-task-counterfactual-integrity.test.mjs",
@@ -357,7 +426,10 @@ async function runOutcomeCommands(outcome) {
     "proof-and-roi": [
       build,
       blackBoxNodeTest(),
-      nodeTest(null, "tests/ty-context/long-task-real-capability-replay.test.mjs"),
+      nodeTest(
+        null,
+        "tests/ty-context/long-task-real-capability-replay.test.mjs",
+      ),
       {
         command: process.execPath,
         args: ["tools/verify_long_task_real_capability_roi.mjs"],
@@ -375,19 +447,12 @@ async function runOutcomeCommands(outcome) {
       { ...npmCommandSpec(["test"]), proof_domain: "regression" },
       {
         command: process.execPath,
-        args: [
-          "packages/ty-context/dist/cli.js",
-          "package",
-          "check-source",
-        ],
+        args: ["packages/ty-context/dist/cli.js", "package", "check-source"],
         proof_domain: "regression",
       },
       {
         command: process.execPath,
-        args: [
-          "packages/ty-context/dist/cli.js",
-          "validate-context",
-        ],
+        args: ["packages/ty-context/dist/cli.js", "validate-context"],
         proof_domain: "regression",
       },
     ],
@@ -525,7 +590,10 @@ async function materializeFreshAgentEvidence() {
     "long-task-real-capability",
   );
   await mkdir(targetDirectory, { recursive: true });
-  await copyFile(fixture, path.join(targetDirectory, "fresh-agent-paired.json"));
+  await copyFile(
+    fixture,
+    path.join(targetDirectory, "fresh-agent-paired.json"),
+  );
 }
 
 function nodeTest(pattern, file) {
@@ -636,9 +704,7 @@ export function parseNodeMachineReport(jsonl, { file = null } = {}) {
             ? "passed"
             : "failed",
       line: Number.isInteger(event.data?.line) ? event.data.line : null,
-      column: Number.isInteger(event.data?.column)
-        ? event.data.column
-        : null,
+      column: Number.isInteger(event.data?.column) ? event.data.column : null,
     });
   }
   if (!tests.length) throw new Error("real_capability_node_report_empty");
@@ -730,6 +796,7 @@ export function validateBlackBoxMachineProof({
         "control_case_id",
         "expected_relation",
         "terminal",
+        "final_gate",
       ]) ||
       record.test_id !== policy.test_id ||
       record.candidate_role !== policy.candidate_role ||
@@ -748,11 +815,13 @@ export function validateBlackBoxMachineProof({
       !(
         typeof record.terminal.result_status === "string" ||
         record.terminal.result_status === null
-      )
+      ) ||
+      !validFinalGateProof(record.final_gate)
     )
       throw new Error(
         `real_capability_black_box_case_record_invalid:${policy.case_id}`,
       );
+    validateOwnerCompileDiagnostic(policy.case_id, record.final_gate);
     assertExpectedTerminal(policy, record.terminal.workflow_status);
   }
 
@@ -781,6 +850,85 @@ export function validateBlackBoxMachineProof({
       terminal: { ...caseById.get(policy.case_id).terminal },
     })),
   };
+}
+
+function validFinalGateProof(proof) {
+  if (
+    !proof ||
+    !sameKeys(proof, [
+      "invoked",
+      "command",
+      "workdir_sha256",
+      "command_identity",
+      "candidate_head",
+      "candidate_tree",
+      "contract_sha256",
+      "candidate_identity",
+      "owner_compile_diagnostic",
+      "final_gate_diagnostic",
+    ]) ||
+    proof.invoked !== true ||
+    proof.command !== "long-task final-gate" ||
+    !sha256(proof.workdir_sha256) ||
+    !sha256(proof.command_identity) ||
+    !gitObjectIdentity(proof.candidate_head) ||
+    !gitObjectIdentity(proof.candidate_tree) ||
+    !sha256(proof.contract_sha256) ||
+    !sha256(proof.candidate_identity) ||
+    typeof proof.final_gate_diagnostic !== "string" ||
+    proof.final_gate_diagnostic.length === 0 ||
+    proof.final_gate_diagnostic.includes("active_task_missing")
+  )
+    return false;
+  const expectedCommandIdentity = sha256Text(
+    JSON.stringify({
+      command: proof.command,
+      workdir_sha256: proof.workdir_sha256,
+    }),
+  );
+  const expectedCandidateIdentity = sha256Text(
+    JSON.stringify({
+      candidate_head: proof.candidate_head,
+      candidate_tree: proof.candidate_tree,
+      contract_sha256: proof.contract_sha256,
+    }),
+  );
+  return (
+    proof.command_identity === expectedCommandIdentity &&
+    proof.candidate_identity === expectedCandidateIdentity
+  );
+}
+
+function validateOwnerCompileDiagnostic(caseId, proof) {
+  const required = compileBoundaryOwnerDiagnostics.get(caseId);
+  if (!required) {
+    if (proof.owner_compile_diagnostic !== null)
+      throw new Error(
+        `real_capability_black_box_owner_compile_unexpected:${caseId}`,
+      );
+    return;
+  }
+  if (
+    typeof proof.owner_compile_diagnostic !== "string" ||
+    !required.every((token) => proof.owner_compile_diagnostic.includes(token))
+  )
+    throw new Error(
+      `real_capability_black_box_owner_compile_diagnostic_invalid:${caseId}`,
+    );
+}
+
+function sha256(value) {
+  return typeof value === "string" && /^[a-f0-9]{64}$/u.test(value);
+}
+
+function gitObjectIdentity(value) {
+  return (
+    typeof value === "string" && /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(value)
+  );
+}
+
+function sha256Text(value) {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 function wrongProofCase(caseId, testId, controlCaseId) {
@@ -973,7 +1121,8 @@ function nodeMachineProof(commands, requiredTests) {
 
 function blackBoxFactProof(commands, requiredCases) {
   const candidates = commands.filter(
-    (command) => command.black_box_proof !== null && command.black_box_proof !== undefined,
+    (command) =>
+      command.black_box_proof !== null && command.black_box_proof !== undefined,
   );
   if (candidates.length !== 1 || candidates[0].code !== 0)
     return {
@@ -1014,7 +1163,9 @@ function currentCandidateRegressionProof(commands, outcomeKey) {
     hasCurrentRuntimeProof;
   return {
     ok,
-    diagnostic: ok ? null : "current_candidate_verification_sequence_incomplete",
+    diagnostic: ok
+      ? null
+      : "current_candidate_verification_sequence_incomplete",
     evidence: {
       outcome_key: outcomeKey,
       roi_commands_excluded_from_safety_verdict: commands.filter(
@@ -1056,19 +1207,28 @@ function documentationProbes(authorityRef) {
   return (
     {
       "material-input-provenance": [
-        ["docs/long-task-real-capability-closure.md", "material-input-provenance"],
+        [
+          "docs/long-task-real-capability-closure.md",
+          "material-input-provenance",
+        ],
       ],
       "purpose-validity-floor-before-relative-antidegradation": [
         ["PROJECT_SPEC.md", "declared-purpose validity floor"],
       ],
       "incident-counterexample-first-rule": [
-        ["project_context/areas/harness-package/verification.md", "counterexample"],
+        [
+          "project_context/areas/harness-package/verification.md",
+          "counterexample",
+        ],
       ],
       "sentinel-rationale-evidence-bounded": [
         ["tools/test_suite_policy.mjs", "does not prove"],
       ],
       "capability-claim-levels": [
-        ["PROJECT_SPEC.md", "Formal capability reporting has four evidence-bounded levels"],
+        [
+          "PROJECT_SPEC.md",
+          "Formal capability reporting has four evidence-bounded levels",
+        ],
         ["PROJECT_SPEC.md", "no open critical counterexample"],
       ],
       "route-b-project-owner-decision": [
@@ -1096,7 +1256,10 @@ function documentationProbes(authorityRef) {
         ["tools/verify_long_task_real_capability_roi.mjs", "validity_floor"],
       ],
       "context-and-public-authority-update": [
-        ["project_context/areas/harness-package/implementation-index.md", "observer"],
+        [
+          "project_context/areas/harness-package/implementation-index.md",
+          "observer",
+        ],
         ["README.md", "External Confirmation"],
         ["README.zh-CN.md", "External Confirmation"],
       ],
@@ -1105,16 +1268,22 @@ function documentationProbes(authorityRef) {
 }
 
 async function containsAll(probes) {
-  for (const [file, token] of probes) if (!(await readText(file)).includes(token)) return false;
+  for (const [file, token] of probes)
+    if (!(await readText(file)).includes(token)) return false;
   return true;
 }
 
 async function readText(relative) {
-  return readFile(path.join(repositoryRoot, ...relative.split("/")), "utf8").catch(() => "");
+  return readFile(
+    path.join(repositoryRoot, ...relative.split("/")),
+    "utf8",
+  ).catch(() => "");
 }
 
 function loadManifest(value) {
-  const match = value.match(/```yaml semantic-fact-manifest-v1\r?\n([\s\S]*?)\r?\n```/u);
+  const match = value.match(
+    /```yaml semantic-fact-manifest-v1\r?\n([\s\S]*?)\r?\n```/u,
+  );
   if (!match) throw new Error("real_capability_semantic_manifest_missing");
   return JSON.parse(match[1]);
 }
@@ -1141,10 +1310,27 @@ function run(command, args, { env = process.env } = {}) {
     });
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk) => (stdout = tail(stdout + chunk.toString())));
-    child.stderr.on("data", (chunk) => (stderr = tail(stderr + chunk.toString())));
-    child.on("error", (error) => resolve({ command, args, code: null, error: error.message, stdout, stderr }));
-    child.on("exit", (code, signal) => resolve({ command, args, code, signal, stdout, stderr }));
+    child.stdout.on(
+      "data",
+      (chunk) => (stdout = tail(stdout + chunk.toString())),
+    );
+    child.stderr.on(
+      "data",
+      (chunk) => (stderr = tail(stderr + chunk.toString())),
+    );
+    child.on("error", (error) =>
+      resolve({
+        command,
+        args,
+        code: null,
+        error: error.message,
+        stdout,
+        stderr,
+      }),
+    );
+    child.on("exit", (code, signal) =>
+      resolve({ command, args, code, signal, stdout, stderr }),
+    );
   });
 }
 
@@ -1159,11 +1345,18 @@ function canonicalJson(value) {
 function sortCanonical(value) {
   if (Array.isArray(value)) return value.map(sortCanonical);
   if (value && typeof value === "object")
-    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sortCanonical(value[key])]));
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, sortCanonical(value[key])]),
+    );
   return value;
 }
 
 function isMainModule() {
   if (!process.argv[1]) return false;
-  return path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+  return (
+    path.resolve(process.argv[1]) ===
+    path.resolve(fileURLToPath(import.meta.url))
+  );
 }

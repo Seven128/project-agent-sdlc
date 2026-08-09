@@ -1,62 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import {
-  addProductionControlBinding,
-  completeControl,
-  runCli,
-} from "./long-task-delivery-fixtures.mjs";
+import { runCli } from "./long-task-delivery-fixtures.mjs";
 
 export function prepareSemanticAuthority(contract) {
   const outcome = contract.outcomes[0];
-  contract.task.execution_targets.push({
-    key: "fixture-browser",
-    description: "The browser product surface.",
-    role: "product",
-    runtime_family: "browser",
-    root_entrypoint: "/",
-    capabilities: [
-      "browser-runtime",
-      "cold-start",
-      "production-root",
-      "keyboard-input",
-      "assistive-technology",
-    ],
-  });
-  contract.task.target_profile.required_target_refs.push("fixture-browser");
-  outcome.applicability.push({
-    key: "first-browser-success",
-    target_ref: "fixture-browser",
-    journey_role: "success",
-    dimensions: [{ key: "fixture-state", value: "loaded" }],
-    given_refs: ["fixture-loaded"],
-    when_refs: ["read-outcome"],
-  });
-  outcome.product.result_applicability_refs.push("first-browser-success");
-  const submit = completeControl({
-    key: "submit",
-    surface: "fixture-main",
-    location: "footer",
-    trigger: "",
-    input: "",
-    validation: "invalid input remains identified",
-    loading_state: "",
-    empty_state: "",
-    success_state: "done",
-    failure_state: "error",
-    recovery: "retry preserves valid input",
-    feedback: "",
-    accessibility: "the named control supports keyboard activation",
-  });
-  for (const coverage of submit.field_coverage)
-    if (coverage.state !== "unresolved")
-      coverage.applicability_refs = ["first-browser-success"];
-  outcome.product.controls.push(submit);
-  outcome.product.control_relation_closure = {
-    state: "not_applicable",
-    statement: "Only one Control is declared, so no cross-Control relation applies.",
-    applicability_refs: ["first-root-success"],
-  };
   outcome.product.non_completing_outcomes.push({
     key: "exit-zero-only",
     statement: "Exit zero alone is not completion.",
@@ -70,102 +18,14 @@ export function prepareSemanticAuthority(contract) {
     criterion: "Exit zero alone remains insufficient.",
     claims: ["non_completing.exit-zero-only"],
     applicability_ref: "first-root-success",
-    observation: "result_copy",
-    evidence_capabilities: ["state_delta"],
+    observation: "exit_zero_is_insufficient",
+    evidence_capabilities: ["presence", "target_runtime"],
     operator: "equals",
     expected: true,
   });
   outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.push(
     "exit-zero-is-insufficient",
   );
-  const uiCheck = {
-    ...structuredClone(outcome.acceptance.checks[0]),
-    key: "submit-ui",
-    journey_roles: ["success", "stage_gate"],
-    execution_target: {
-      target_ref: "fixture-browser",
-      entrypoint: "root",
-    },
-    proof_surface: "ui_browser",
-    runner: {
-      ...structuredClone(outcome.acceptance.checks[0].runner),
-      type: "playwright_test",
-      target: "tests/oracle.mjs",
-    },
-    positive_assertions: [
-      {
-        key: "submit-ui-result",
-        criterion: "The browser target exposes the declared result.",
-        claims: ["result"],
-        applicability_ref: "first-browser-success",
-        observation: "playwright.case.submit-ui-result.passed",
-        evidence_capabilities: ["interaction_trace", "target_runtime"],
-        operator: "equals",
-        expected: true,
-      },
-      {
-        key: "submit-ui-liveness",
-        criterion: "The browser target remains live under semantic mutation.",
-        claims: [],
-        observation: "playwright.case.submit-ui-liveness.passed",
-        evidence_capabilities: ["target_runtime"],
-        operator: "equals",
-        expected: true,
-      },
-    ],
-    negative_assertions: [],
-  };
-  outcome.acceptance.checks.push(uiCheck);
-  addProductionControlBinding(contract, {
-    controlKey: "submit",
-    surfaceRef: "fixture-main",
-    targetRef: "fixture-browser",
-    rootCheckRef: "submit-ui",
-    rootClaimRef: "control.submit.location",
-    acceptanceBlockers: [
-      {
-        key: "submit-accessibility-proof",
-        status: "machine_claim",
-        refs: ["control.submit.accessibility"],
-        source_item_refs: ["submit-design"],
-        verification_methods: ["accessibility_semantics"],
-        required_capabilities: ["assistive-technology"],
-        rationale:
-          "The target-local UI Check resolves the declared accessibility blocker.",
-      },
-    ],
-  });
-  for (const assertion of [
-    ...uiCheck.positive_assertions,
-    ...uiCheck.negative_assertions,
-  ]) {
-    assertion.observation = `playwright.case.${assertion.key}.passed`;
-    assertion.evidence_capabilities = assertion.claims.length
-      ? ["interaction_trace", "target_runtime"]
-      : ["target_runtime"];
-    assertion.operator = "equals";
-    assertion.expected = true;
-  }
-  const uiClaimAssertions = [
-    ...uiCheck.positive_assertions,
-    ...uiCheck.negative_assertions,
-  ].filter((assertion) => assertion.claims.length);
-  outcome.acceptance.counterfactual_controls.push({
-    key: "replace-submit-ui-semantics",
-    binding_key: "state-first",
-    claims: uiClaimAssertions.flatMap((assertion) => assertion.claims),
-    check_key: "submit-ui",
-    mutation: {
-      type: "replace_json_value",
-      path: "src/state.json",
-      pointer: "/first",
-      value: false,
-    },
-    expected_assertion_failures: uiClaimAssertions.map(
-      (assertion) => assertion.key,
-    ),
-    preserved_assertions: ["submit-ui-liveness"],
-  });
   contract.global.applicability.push({
     key: "global-root-success",
     target_ref: "fixture-app",
@@ -182,18 +42,15 @@ export function prepareSemanticAuthority(contract) {
   contract.global.acceptance.checks.push({
     ...structuredClone(outcome.acceptance.checks[0]),
     key: "stable-runtime-check",
-    runner: {
-      ...structuredClone(outcome.acceptance.checks[0].runner),
-      argv: ["first", "global"],
-    },
+    runner: structuredClone(outcome.acceptance.checks[0].runner),
     positive_assertions: [
       {
         key: "stable-runtime-proof",
         criterion: "The declared runtime remains stable.",
         claims: ["constraint.stable-runtime"],
         applicability_ref: "global-root-success",
-        observation: "result_copy",
-        evidence_capabilities: ["state_delta"],
+        observation: "stable_runtime",
+        evidence_capabilities: ["presence", "target_runtime"],
         operator: "equals",
         expected: true,
       },

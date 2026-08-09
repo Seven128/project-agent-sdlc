@@ -86,11 +86,9 @@ export function validateSemanticFactContractProjection(
       `contract_proof_set:${outcome.key}`,
     );
     uniqueSemanticFactClosureValues(
-      bindings.proofs.map((item) =>
-        item.authority === "machine"
-          ? `${item.check_ref}\0${item.assertion_ref}`
-          : `external\0${item.confirmation_ref}`,
-      ),
+      bindings.proofs
+        .filter((item) => item.authority === "machine")
+        .map((item) => `${item.check_ref}\0${item.assertion_ref}`),
       `contract_proof_target:${outcome.key}`,
     );
     validateSemanticFactOutcomeBindings(

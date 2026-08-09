@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -27,16 +28,12 @@ const binaryOperators = [
 const presenceOrUnaryOperators = ["exists", "truthy", "falsy"];
 
 test("all active Assertion operators fail closed for missing Observations", () => {
-  for (const operator of [
-    ...presenceOrUnaryOperators,
-    ...binaryOperators,
-  ]) {
+  for (const operator of [...presenceOrUnaryOperators, ...binaryOperators]) {
     const assertion = {
       key: "safety",
       claims: ["result"],
       observation: "missing.value",
-      evidence_capabilities:
-        operator === "exists" ? ["presence"] : ["state_delta"],
+      evidence_capabilities: ["presence"],
       operator,
       ...(binaryOperators.includes(operator)
         ? { expected: expected(operator) }
@@ -80,8 +77,7 @@ test("Parser statically validates expected presence, type, and regular expressio
   }
   for (const operator of presenceOrUnaryOperators) {
     const contract = contractWithAssertion(operator);
-    contract.outcomes[0].acceptance.checks[0].positive_assertions[0].expected =
-      true;
+    contract.outcomes[0].acceptance.checks[0].positive_assertions[0].expected = true;
     assert.throws(
       () => parseDeliveryContractText(YAML.stringify(contract)),
       /assertion_expected_forbidden/u,
@@ -159,7 +155,7 @@ test("negative operators cannot pass through incomparable Observation types", ()
   );
 });
 
-test("missing Observation produces assertion_failed without Claim proof", async () => {
+test("missing admitted Observation produces invalid_evidence without Claim proof", async () => {
   const check = {
     internal_id: "CHECK.safety.missing",
     outcome_key: "safety",
@@ -194,7 +190,7 @@ test("missing Observation produces assertion_failed without Claim proof", async 
         key: "missing-result",
         claims: ["OUT.safety.result"],
         observation: "missing",
-        evidence_capabilities: ["state_delta"],
+        evidence_capabilities: ["presence"],
         operator: "equals",
         expected: false,
       },
@@ -217,11 +213,12 @@ test("missing Observation produces assertion_failed without Claim proof", async 
     },
     path.resolve("."),
   );
-  assert.equal(result.status, "assertion_failed");
+  assert.equal(result.status, "invalid_evidence");
   assert.deepEqual(result.claim_proofs, []);
-  assert.deepEqual(
-    result.findings.map((finding) => finding.code),
-    ["observation_missing"],
+  assert.ok(
+    result.findings.some(
+      (finding) => finding.actual === "machine_observer_not_admitted",
+    ),
   );
 });
 
@@ -236,6 +233,13 @@ test("a Check emits Claim Proof only when its complete status is passed", async 
       excluded_items: [],
     },
   });
+  const passing = await evaluateCheckEvidence(
+    base,
+    passingRaw,
+    path.resolve("."),
+  );
+  assert.equal(passing.status, "passed");
+  assert.equal(passing.claim_proofs.length, 1);
 
   const exitFailure = await evaluateCheckEvidence(
     base,
@@ -306,8 +310,7 @@ function contractWithAssertion(operator) {
       criterion: "Auxiliary operator parsing remains well-defined.",
       claims: [],
       observation: "auxiliary",
-      evidence_capabilities:
-        operator === "exists" ? ["presence"] : ["state_delta"],
+      evidence_capabilities: ["presence"],
       operator,
       ...(binaryOperators.includes(operator)
         ? { expected: expected(operator) }
@@ -323,7 +326,7 @@ function assertion(operator, expectedValue) {
     key: "negative",
     claims: ["result"],
     observation: "value",
-    evidence_capabilities: ["state_delta"],
+    evidence_capabilities: ["presence"],
     operator,
     expected: expectedValue,
   };
@@ -331,12 +334,9 @@ function assertion(operator, expectedValue) {
 
 function expected(operator) {
   if (
-    [
-      "greater_than",
-      "greater_or_equal",
-      "less_than",
-      "less_or_equal",
-    ].includes(operator)
+    ["greater_than", "greater_or_equal", "less_than", "less_or_equal"].includes(
+      operator,
+    )
   )
     return 0;
   if (["set_equals", "subset_of", "superset_of"].includes(operator)) return [];
@@ -395,13 +395,54 @@ function compiledCheck() {
         criterion: "The complete Check result is true.",
         claims: ["result"],
         observation: "result",
-        evidence_capabilities: ["state_delta"],
+        evidence_capabilities: ["presence"],
         operator: "equals",
         expected: true,
       },
     ],
     negative_assertions: [],
     environment_requirements: [],
+    observation_authorities: [
+      {
+        actual_projection: "raw_exact",
+        assertion_ref: "result",
+        authority: "package_static_json_exact",
+        carrier_refs: [],
+        claim_refs: ["result"],
+        comparison: {
+          comparator: "exact_value",
+          mask_sha256: null,
+          mode: "exact",
+          parameters_sha256: digest("exact-parameters"),
+          tolerance_sha256: null,
+        },
+        evidence_capabilities: ["presence"],
+        expected_identity: digest("expected-result"),
+        expected_value_sha256: digest(JSON.stringify(true)),
+        fact_ref: null,
+        locator_policy: {
+          kind: "fixed_json_pointer",
+          value: "/observations/assertion.safety.complete.result",
+        },
+        method: "exact_value",
+        obligation_ref: "assertion.safety.complete.result",
+        observation_identity: "assertion.safety.complete.result",
+        proof_surface: "static_structure",
+        runtime_requirements: {
+          declared_root_argv: [],
+          declared_root_entrypoint: "tests/oracle.mjs",
+          direct_root_match: false,
+          effect: "read_only",
+          entrypoint: "root",
+          resolved_runner_argv: [],
+          resolved_runner_target: "tests/oracle.mjs",
+          runner_type: "node_oracle",
+          runtime_family: "process",
+          target_role: "product",
+        },
+        target_ref: "safety-target",
+      },
+    ],
   };
 }
 
@@ -412,19 +453,41 @@ function rawExecution(check, observations) {
     execution_status: "completed",
     exit_code: 0,
     observations,
-    evidence_records: [
-      {
-        assertion_key: check.positive_assertions[0].key,
-        capability: "state_delta",
-        before_sha256: "0".repeat(64),
-        after_sha256: "1".repeat(64),
-        changed_fields: ["result"],
-      },
-    ],
+    evidence_records: [],
+    package_observations: [packageObservation(check, true)],
     stdout_sha256: "stdout",
     stderr_sha256: "stderr",
     attempts: 1,
     duration_ms: 1,
     error: null,
   };
+}
+
+function packageObservation(check, rawValue) {
+  const authority = check.observation_authorities[0];
+  return {
+    authority: authority.authority,
+    observation_identity: authority.observation_identity,
+    assertion_ref: authority.assertion_ref,
+    obligation_ref: authority.obligation_ref,
+    method: authority.method,
+    raw_value: rawValue,
+    observation: {
+      capability: "json-pointer-exact-v1",
+      artifact_path: "static-observation.json",
+      artifact_sha256: digest("static-observation"),
+      locator: {
+        kind: "json_pointer",
+        value: authority.locator_policy.value,
+      },
+      value_sha256: digest(JSON.stringify(rawValue)),
+      canonical_value_bytes: Buffer.byteLength(JSON.stringify(rawValue)),
+      sensitivity: "plain",
+    },
+    reason: null,
+  };
+}
+
+function digest(value) {
+  return createHash("sha256").update(value).digest("hex");
 }

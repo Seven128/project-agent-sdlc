@@ -104,8 +104,7 @@ export async function assertSyntheticCompactFixtureCompiles() {
     const synthetic = await writeSyntheticCompactFixture(fixture, 64);
     assert.equal(synthetic.compactSource.proof_templates.length, 2);
     assert.equal(
-      synthetic.compactContract.compact_semantic_carrier.proof_templates
-        .length,
+      synthetic.compactContract.compact_semantic_carrier.proof_templates.length,
       2,
     );
     validateSemanticFactManifestPolicy(synthetic.manifest);
@@ -116,28 +115,66 @@ export async function assertSyntheticCompactFixtureCompiles() {
     );
     const check = compiled.outcomes[0].acceptance.checks[0];
     const expectations = check.semantic_fact_expectations;
+    const proofBindings = compiled.outcomes[0].semantic_fact_bindings.proofs;
+    const machineProofs = synthetic.manifest.proof_obligations.filter(
+      (proof) => proof.authority === "machine",
+    );
+    const externalProofs = synthetic.manifest.proof_obligations.filter(
+      (proof) => proof.authority === "external_confirmation",
+    );
     assert.equal(synthetic.manifest.facts.length, 64);
     assert.equal(synthetic.manifest.proof_obligations.length, 128);
-    assert.equal(expectations.length, 128);
+    assert.equal(machineProofs.length, 64);
+    assert.equal(externalProofs.length, 64);
+    assert.equal(
+      proofBindings.filter((proof) => proof.authority === "machine").length,
+      64,
+    );
+    assert.equal(
+      proofBindings.filter(
+        (proof) => proof.authority === "external_confirmation",
+      ).length,
+      64,
+    );
+    assert.equal(expectations.length, 64);
     assert.equal(
       expectations.filter(
         (item) => item.fact_key === synthetic.manifest.facts[0].key,
       ).length,
-      2,
+      1,
     );
     assert.ok(expectations.every((item) => item.revision_identity_required));
     assert.equal(
       new Set(expectations.map((item) => item.obligation_key)).size,
+      64,
+    );
+    assert.equal(
+      new Set(synthetic.manifest.proof_obligations.map((item) => item.key))
+        .size,
       128,
+    );
+    assert.deepEqual(
+      compiled.global.acceptance.external_confirmations.map((item) => ({
+        key: item.key,
+        blocks_target: item.blocks_target,
+      })),
+      [
+        {
+          key: "synthetic-snapshot-digest-confirmation",
+          blocks_target: true,
+        },
+      ],
     );
     const compactIdentity = parseSemanticFactCompactCarrierShape(
       synthetic.compactSource,
     );
+    const machineEvidenceManifest = structuredClone(synthetic.manifest);
+    machineEvidenceManifest.proof_obligations = machineProofs;
     const evidenceRecords = await materializeSemanticFactEvidence({
       repositoryRoot: fixture.root,
       targetRef: check.execution_target.target_ref,
       rootEntrypoint: "tools/verify-synthetic-compact.mjs",
-      manifest: synthetic.manifest,
+      manifest: machineEvidenceManifest,
       manifestSha256: sha256Hex(canonicalValueJson(synthetic.compactSource)),
       passedByFact: new Map(
         synthetic.manifest.facts.map((fact) => [fact.key, true]),
@@ -162,7 +199,7 @@ export async function assertSyntheticCompactFixtureCompiles() {
     const semanticEvidence = decodeEvidenceCapabilityRecords(
       evidenceRecords,
     ).filter((item) => item.capability === "semantic_fact");
-    assert.equal(semanticEvidence.length, 128);
+    assert.equal(semanticEvidence.length, 64);
     assert.equal(validateDistinctSemanticFactEvidence(semanticEvidence), null);
     const artifactHashes = Object.fromEntries(
       semanticEvidence.map((record) => [

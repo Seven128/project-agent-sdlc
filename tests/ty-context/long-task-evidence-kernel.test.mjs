@@ -1,17 +1,15 @@
 import assert from "node:assert/strict";
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
   createDeliveryFixture,
   runCli,
   runCliFailure,
+  writeContract,
 } from "./long-task-delivery-fixtures.mjs";
-import {
-  preserveFixtureSemanticOracle,
-  preservedFixtureOracleDelegationPrelude,
-} from "./long-task-delegating-oracle-fixture.mjs";
 import { decodeEvidenceCapabilityRecords } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-policy.js";
+import { evaluatePopulation } from "../../packages/ty-context/dist/lib/long-task-assertions-v2.js";
 
 test("design-conformance evidence has a strict target, condition and artifact shape", () => {
   const record = {
@@ -52,7 +50,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
       criterion: "The security proof artifact is produced.",
       claims: [],
       observation: "artifacts-ready",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["presence"],
       operator: "equals",
       expected: true,
     });
@@ -67,7 +65,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
       claims: ["forbidden_shortcut.self-report"],
       applicability_ref: "first-root-success",
       observation: "negative_ok",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["target_runtime", "presence"],
       operator: "equals",
       expected: true,
     });
@@ -115,7 +113,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
         preserved_assertions: ["first-liveness"],
       },
     ];
-    await preserveFixtureSemanticOracle(fixture);
+    await writeContract(fixture.workdir, fixture.contract);
     await writeArtifactOracle(fixture.root);
 
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -130,7 +128,11 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
       "final-gate",
       fixture.workdir,
     ]);
-    assert.equal(accepted.workflow_status, "machine_accepted");
+    assert.equal(
+      accepted.workflow_status,
+      "machine_accepted",
+      JSON.stringify(accepted.findings),
+    );
     assert.ok(
       accepted.check_results[0].artifact_hashes["artifacts/proof.json"],
     );
@@ -139,34 +141,13 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
   }
 });
 
-test("Population V2 proves entity coverage and fails on an omitted eligible id", async () => {
+test("Population V2 evaluation stays exact while machine proof remains externally blocked", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
-    const check = outcome.acceptance.checks[0];
     fixture.contract.risk.facts.full_population_operation = ["first"];
-    check.proof_surface = "population_coverage";
-    outcome.product.requirements[0].required_proof_surfaces = [
-      "population_coverage",
-    ];
-    for (const obligation of outcome.technical.obligations)
-      obligation.required_proof_surfaces = ["population_coverage"];
-    check.negative_assertions.push({
-      key: "negative-path",
-      criterion: "The negative population path remains valid.",
-      claims: [],
-      observation: "negative_ok",
-      evidence_capabilities: ["state_delta"],
-      operator: "equals",
-      expected: true,
-    });
-    const populationCheck = structuredClone(check);
-    populationCheck.key = "population-check";
-    populationCheck.positive_assertions = [];
-    populationCheck.negative_assertions = [];
-    outcome.acceptance.checks.push(populationCheck);
-    outcome.acceptance.population = {
-      check_key: populationCheck.key,
+    const population = {
+      check_key: "population-check",
       universe_binding_key: "state-first",
       claims: ["result"],
       observations: {
@@ -177,83 +158,42 @@ test("Population V2 proves entity coverage and fails on an omitted eligible id",
       },
       exclusion_rules: [],
     };
-    outcome.acceptance.counterfactual_controls = [
-      {
-        key: "replace-state-semantics",
-        binding_key: "state-first",
-        claims: [
-          "result",
-          "requirement.observe-first",
-          "obligation.implement-first",
-          "obligation.architecture-first",
-          "semantic_fact.fact.first.observable",
-        ],
-        check_key: check.key,
-        mutation: {
-          type: "replace_json_value",
-          path: "src/state.json",
-          pointer: "/first",
-          value: false,
-        },
-        expected_assertion_failures: [
-          "first-result",
-          "first-requirement",
-          "first-obligation",
-          "first-architecture",
-          "first-semantic-fact",
-        ],
-        preserved_assertions: ["first-liveness"],
+    const complete = {
+      population: {
+        universe_ids: ["first"],
+        eligible_ids: ["first"],
+        observed_ids: ["first"],
+        excluded_items: [],
       },
-      {
-        key: "make-first-relations-applicable",
-        binding_key: "state-first",
-        claims: ["control_relation_closure"],
-        check_key: check.key,
-        mutation: {
-          type: "replace_json_value",
-          path: "src/state.json",
-          pointer: "/first_relations_applicable",
-          value: true,
-        },
-        expected_assertion_failures: ["first-relations-na"],
-        preserved_assertions: ["first-liveness"],
-      },
-    ];
-    await preserveFixtureSemanticOracle(fixture);
-    await writePopulationOracle(fixture.root);
+    };
+    const omitted = structuredClone(complete);
+    omitted.population.observed_ids = [];
+    assert.equal(evaluatePopulation(population, complete).passed, true);
+    const omittedResult = evaluatePopulation(population, omitted);
+    assert.equal(omittedResult.passed, false);
+    assert.equal(omittedResult.reason, "eligible_population_incomplete");
+
+    fixture.contract.global.acceptance.external_confirmations.push({
+      key: "population-observer-review",
+      description:
+        "The unsupported population observation requires an external owner.",
+      owner: "external-owner",
+      kind: "functional_prerequisite",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+    });
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     assert.equal(
       (
-        await runCli(fixture.root, [
+        await runCliFailure(fixture.root, [
           "long-task",
           "final-gate",
           fixture.workdir,
         ])
       ).workflow_status,
-      "machine_accepted",
-    );
-
-    await writeFile(
-      path.join(fixture.root, "src/state.json"),
-      `${JSON.stringify({
-        first: true,
-        second: true,
-        first_relations_applicable: false,
-        second_relations_applicable: false,
-        omit_population: true,
-      })}\n`,
-    );
-    const failed = await runCliFailure(fixture.root, [
-      "long-task",
-      "final-gate",
-      fixture.workdir,
-    ]);
-    assert.equal(failed.workflow_status, "needs_work");
-    assert.ok(
-      failed.findings.some(
-        (item) => item.code === "population_coverage_failed",
-      ),
+      "blocked_external",
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -279,63 +219,22 @@ test("exit zero, handwritten status and invalid Result Protocol cannot manufactu
       fixture.workdir,
     ]);
     assert.equal(failed.workflow_status, "needs_work");
-    assert.ok(
-      failed.findings.some((item) => item.code === "invalid_evidence"),
-    );
+    assert.ok(failed.findings.some((item) => item.code === "invalid_evidence"));
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
 async function writeArtifactOracle(root) {
+  const oraclePath = path.join(root, "tests/oracle.mjs");
+  const original = await readFile(oraclePath, "utf8");
   await writeFile(
-    path.join(root, "tests/oracle.mjs"),
-    `${preservedFixtureOracleDelegationPrelude()}
-result.observations["artifacts-ready"] = true;
-result.observations.negative_ok = result.observations.result;
-result.evidence_records.push(
-  {
-    assertion_key: "artifact-present",
-    capability: "state_delta",
-    before_sha256: "2".repeat(64),
-    after_sha256: "3".repeat(64),
-    changed_fields: ["artifact"]
-  },
-  {
-    assertion_key: "shortcut-rejected",
-    capability: "state_delta",
-    before_sha256: "4".repeat(64),
-    after_sha256: "5".repeat(64),
-    changed_fields: ["negative"]
-  }
-);
-console.log(JSON.stringify(result));
-`,
-  );
-}
-
-async function writePopulationOracle(root) {
-  await writeFile(
-    path.join(root, "tests/oracle.mjs"),
-    `import { readFile } from "node:fs/promises";
-${preservedFixtureOracleDelegationPrelude()}
-let state = {};
-try {
-  state = JSON.parse(
-    await readFile(new URL("../src/state.json", import.meta.url), "utf8")
-  );
-} catch {}
-result.observations.negative_ok = true;
-if (state.omit_population)
-  result.observations.population.observed_ids = [];
-result.evidence_records.push({
-  assertion_key: "negative-path",
-  capability: "state_delta",
-  before_sha256: "2".repeat(64),
-  after_sha256: "3".repeat(64),
-  changed_fields: ["negative"]
-});
-console.log(JSON.stringify(result));
-`,
+    oraclePath,
+    original.replace(
+      "console.log(JSON.stringify({",
+      `observations["assertion.first.first-check.artifact-present"] = true;
+observations["assertion.first.first-check.shortcut-rejected"] = observed;
+console.log(JSON.stringify({`,
+    ),
   );
 }

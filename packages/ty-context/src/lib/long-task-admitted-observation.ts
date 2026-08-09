@@ -4,7 +4,10 @@ import type {
   EvidenceCapabilityRecordV2,
   PackageObservationValueV2,
 } from "./long-task-delivery-types.js";
-import { matchesRepoPattern } from "./long-task-paths.js";
+import {
+  classifyRepositoryPatternOverlap,
+  matchesRepoPattern,
+} from "./long-task-paths.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import {
   evaluateExactDigestComparison,
@@ -248,6 +251,33 @@ export type ObservationCarrierRole =
   | "product_carrier"
   | "current_observer_artifact"
   | "unadmitted_evidence";
+
+export type MachineObservationCarrierRoleConflict =
+  "expected_authority" | "evidence_role";
+
+export function classifyMachineObservationCarrierRoleConflict(input: {
+  carrier_pattern: string;
+  expected_authority_patterns: readonly string[];
+  evidence_role_patterns: readonly string[];
+}): MachineObservationCarrierRoleConflict | null {
+  if (
+    input.expected_authority_patterns.some(
+      (pattern) =>
+        classifyRepositoryPatternOverlap(input.carrier_pattern, pattern)
+          .status === "proven_overlap",
+    )
+  )
+    return "expected_authority";
+  if (
+    input.evidence_role_patterns.some(
+      (pattern) =>
+        classifyRepositoryPatternOverlap(input.carrier_pattern, pattern)
+          .status === "proven_overlap",
+    )
+  )
+    return "evidence_role";
+  return null;
+}
 
 export function classifyObservationCarrier(input: {
   artifact_path: string;

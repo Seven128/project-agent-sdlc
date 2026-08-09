@@ -393,11 +393,13 @@ async function verifyManagedAssets(labDir, add) {
     const guidanceReady =
       agents.includes("Minimal Context Harness") &&
       agents.includes("project_context/global.md") &&
-      agents.includes("Harness 只维护上下文质量") &&
+      agents.includes("Default Workflow Contract") &&
+      agents.includes("Long-Task Routing") &&
       !agents.includes("选择任何角色或 skill 前，先读取");
     add({
       area: "Managed assets",
-      evidence: "AGENTS guidance is Minimal Context, not stage routing",
+      evidence:
+        "AGENTS guidance separates the default Workflow Contract from explicit Long-Task routing",
       status: guidanceReady ? "PASS" : "FAIL",
       details: guidanceReady
         ? "Minimal Context AGENTS guidance present"

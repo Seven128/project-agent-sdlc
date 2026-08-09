@@ -1,4 +1,5 @@
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
 
 type Reporter = (message: string) => void;
 
@@ -99,15 +100,24 @@ function validateStageGateClosure(
     const stageGateChecks = gate.acceptance.checks.filter((check) =>
       check.journey_roles.includes("stage_gate"),
     );
-    if (!stageGateChecks.length)
+    const resultExternallyBlocked = outcomeResultExternallyBlocked(
+      contract,
+      gate.key,
+    );
+    if (!stageGateChecks.length && !resultExternallyBlocked)
       issue(report, "stage_gate_check_required", `${stage.key}:${gate.key}`);
-    else if (!stageGateChecks.some((check) => provesGate(check, gate)))
+    else if (
+      !resultExternallyBlocked &&
+      !stageGateChecks.some((check) => provesGate(check, gate))
+    )
       issue(
         report,
         "stage_gate_target_runtime_result_required",
         `${stage.key}:${gate.key}`,
       );
-    for (const targetRef of contract.task.target_profile.required_target_refs)
+    for (const targetRef of resultExternallyBlocked
+      ? []
+      : contract.task.target_profile.required_target_refs)
       if (
         !stageGateChecks.some(
           (check) =>
@@ -125,6 +135,7 @@ function validateStageGateClosure(
       (candidate) => candidate.stage === stage.key,
     );
     if (
+      !resultExternallyBlocked &&
       stageOutcomes.length > 1 &&
       !stageGateChecks.some((check) =>
         [...check.positive_assertions, ...check.negative_assertions].some(

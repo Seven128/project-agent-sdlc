@@ -1,4 +1,7 @@
-import type { CompiledClaimsV2 } from "./long-task-claims.js";
+import {
+  outcomeResultExternallyBlocked,
+  type CompiledClaimsV2,
+} from "./long-task-claims.js";
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
 
 type Reporter = (message: string) => void;
@@ -182,6 +185,7 @@ function validateCriticalPathTargets(
       (candidate) => candidate.key === outcomeKey,
     );
     if (!outcome) continue;
+    if (outcomeResultExternallyBlocked(contract, outcome.key)) continue;
     for (const targetRef of requiredTargetRefs)
       if (
         !outcome.acceptance.checks.some((check) =>

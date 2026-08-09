@@ -21,11 +21,13 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
-import {
-  preserveFixtureSemanticOracle,
-  preservedFixtureOracleDelegationPrelude,
-} from "./long-task-delegating-oracle-fixture.mjs";
 import { configurePackageObservationCase } from "./long-task-observer-trust-fixtures.mjs";
+import {
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
+
+const COUNTERFACTUAL_PRODUCT_PATH = "tests/counterfactual-product.mjs";
 
 test("allowed fan-out Assertion references exist and remain disjoint from expected and preserved sets", () => {
   const contract = deliveryContract();
@@ -239,7 +241,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       criterion: "The unrelated observation remains true.",
       claims: [],
       observation: "other",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["target_runtime"],
       operator: "equals",
       expected: true,
     });
@@ -285,7 +287,8 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
         preserved_assertions: ["first-liveness"],
       },
     ];
-    await preserveFixtureSemanticOracle(fixture);
+    configureCounterfactualProduct(fixture, check);
+    await writeContract(fixture.workdir, fixture.contract);
     await writeOracle(fixture.root, "valid");
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -297,16 +300,19 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     );
 
     assert.deepEqual(
-      await evaluateOutcomeCounterfactuals(compiled.outcomes[0], fixture.root),
+      await evaluateCounterfactualsWithCurrentBaseline(
+        compiled.outcomes[0],
+        fixture,
+      ),
       [],
     );
     const artifactFailure = structuredClone(compiled.outcomes[0]);
     artifactFailure.acceptance.checks[0].artifact_globs = [
       "artifacts/missing-proof.json",
     ];
-    let findings = await evaluateOutcomeCounterfactuals(
+    let findings = await evaluateCounterfactualsWithCurrentBaseline(
       artifactFailure,
-      fixture.root,
+      fixture,
     );
     assert.equal(findings.length, 2);
     const mainArtifactFinding = findings.find((finding) =>
@@ -326,7 +332,6 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     assert.deepEqual(relationArtifactFinding.actual.finding_codes.sort(), [
       "artifact_missing",
       "assertion_value_mismatch",
-      "evidence_capability_invalid",
     ]);
 
     const populationFailure = structuredClone(compiled.outcomes[0]);
@@ -342,9 +347,12 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       },
       exclusion_rules: [],
     };
-    findings = await evaluateOutcomeCounterfactuals(
+    populationFailure.acceptance.counterfactual_controls = [
+      populationFailure.acceptance.counterfactual_controls[0],
+    ];
+    findings = await evaluateCounterfactualsWithCurrentBaseline(
       populationFailure,
-      fixture.root,
+      fixture,
     );
     assert.equal(findings.length, 1);
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
@@ -368,7 +376,10 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       const candidate = structuredClone(compiled.outcomes[0]);
       if (mode === "timeout")
         candidate.acceptance.checks[0].runner.timeout_ms = 120;
-      findings = await evaluateOutcomeCounterfactuals(candidate, fixture.root);
+      findings = await evaluateCounterfactualsWithCurrentBaseline(
+        candidate,
+        fixture,
+      );
       assert.equal(findings.length, 2, mode);
       assert.ok(
         findings.every(
@@ -499,7 +510,7 @@ test("Counterfactual Claims must belong to the designated sensitive Assertion", 
       claims: ["obligation.unrelated"],
       applicability_ref: "first-root-success",
       observation: "other",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["target_runtime"],
       operator: "equals",
       expected: true,
     });
@@ -633,49 +644,94 @@ async function prepareStaticPackageCounterfactualCase() {
 }
 
 async function writeOracle(root, mode) {
-  const prelude =
-    mode === "timeout"
-      ? "await new Promise(() => {});"
-      : mode === "blocked"
-        ? 'console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"blocked_external",reason:"fixture"})); process.exit(0);'
-        : mode === "invalid"
-          ? 'console.log("not-json"); process.exit(0);'
-          : "";
-  const other = mode === "extra-failure" ? "false" : "true";
-  const resultObservation =
-    mode === "observation-missing"
-      ? ""
-      : mode === "observation-type"
-        ? 'result:"not-a-boolean",'
-        : "result,";
   await writeFile(
-    path.join(root, "tests/oracle.mjs"),
-    `${preservedFixtureOracleDelegationPrelude({
-      beforeDelegation: prelude,
-    })}
-const observedResult = result.observations.result;
-${
-  resultObservation
-    ? `result.observations.result = ${
-        mode === "observation-type" ? '"not-a-boolean"' : "observedResult"
-      };`
-    : "delete result.observations.result;"
+    path.join(root, "src", "counterfactual-mode.json"),
+    `${JSON.stringify({ mode })}\n`,
+  );
+  await writeFile(
+    path.join(root, ...COUNTERFACTUAL_PRODUCT_PATH.split("/")),
+    `import { readFile } from "node:fs/promises";
+let mode = "valid";
+try { mode = JSON.parse(await readFile(new URL("../src/counterfactual-mode.json", import.meta.url), "utf8")).mode; } catch {}
+if (mode === "timeout") await new Promise(() => {});
+if (mode === "blocked") {
+  console.log(JSON.stringify({ schema_version: "long-task-check-result-v3", execution_status: "blocked_external", reason: "fixture" }));
+  process.exit(0);
 }
-result.observations.other = ${other};
-result.observations.population = {
-  universe_ids: ["first"],
-  eligible_ids: ["first"],
-  observed_ids: observedResult ? ["first"] : [],
-  excluded_items: []
+if (mode === "invalid") {
+  console.log("not-json");
+  process.exit(0);
+}
+let state = { first: false, first_relations_applicable: false };
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const observed = state.first === true;
+const assertion = (key) => "assertion.first.first-check." + key;
+const observations = {
+  "fact.first.observable": observed,
+  [assertion("first-result")]: observed,
+  [assertion("first-requirement")]: observed,
+  [assertion("first-obligation")]: observed,
+  [assertion("first-architecture")]: observed,
+  [assertion("first-liveness")]: mode === "observation-type" ? "not-a-boolean" : true,
+  [assertion("first-relations-na")]: state.first_relations_applicable === true,
+  [assertion("other-stays-true")]: mode !== "extra-failure"
 };
-result.evidence_records.push({
-  assertion_key: "other-stays-true",
-  capability: "state_delta",
-  before_sha256: "2".repeat(64),
-  after_sha256: "3".repeat(64),
-  changed_fields: ["other"]
-});
-console.log(JSON.stringify(result));
+if (mode === "observation-missing") delete observations[assertion("first-result")];
+console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 `,
   );
+}
+
+async function evaluateCounterfactualsWithCurrentBaseline(outcome, fixture) {
+  const manifest = await captureWorkspaceManifest(
+    fixture.root,
+    fixture.workdir,
+  );
+  const check = outcome.acceptance.checks[0];
+  const prepared = await prepareExecutionObservationGroup({
+    checks: [check],
+    snapshot_root: fixture.root,
+    workspace_manifest: manifest,
+  });
+  let raw;
+  try {
+    raw = await prepared.finalize(
+      await executeCheckRunner(
+        check,
+        prepared.execution_root,
+        prepared.runner_context,
+      ),
+    );
+  } finally {
+    await prepared.dispose();
+  }
+  const baseline = await evaluateCheckEvidence(
+    check,
+    raw,
+    fixture.root,
+    outcome,
+  );
+  return evaluateOutcomeCounterfactuals(
+    outcome,
+    fixture.root,
+    manifest,
+    [],
+    [baseline],
+    new Map([[check.raw_execution_identity, raw]]),
+    outcome.acceptance.checks,
+  );
+}
+
+function configureCounterfactualProduct(fixture, check) {
+  const rootArgv = fixtureProductRootArgv(COUNTERFACTUAL_PRODUCT_PATH, "first");
+  const target = fixture.contract.task.execution_targets[0];
+  target.root_entrypoint = fixtureProductRootPath();
+  target.root_argv = rootArgv;
+  check.runner.type = "project_binary";
+  check.runner.target = fixtureProductRootPath();
+  check.runner.argv = [...rootArgv];
+  check.verification_inputs = [
+    COUNTERFACTUAL_PRODUCT_PATH,
+    "tests/semantic-false.json",
+  ];
 }

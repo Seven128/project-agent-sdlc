@@ -22,10 +22,14 @@ export async function extractJsonPointerExactObservation(input: {
   const resolved = path.resolve(root, ...artifactPath.split("/"));
   assertContained(root, resolved);
   await rejectSymbolicPath(root, artifactPath);
-  const [rootReal, fileReal] = await Promise.all([realpath(root), realpath(resolved)]);
+  const [rootReal, fileReal] = await Promise.all([
+    realpath(root),
+    realpath(resolved),
+  ]);
   assertContained(rootReal, fileReal);
   const before = await lstat(resolved);
-  if (!before.isFile()) throw invalidObservation("observation_artifact_not_file");
+  if (!before.isFile())
+    throw invalidObservation("observation_artifact_not_file");
   if (before.size > JSON_POINTER_EXACT_LIMITS.max_file_bytes)
     throw invalidObservation("observation_artifact_size_limit");
   const handle = await open(resolved, "r");
@@ -53,7 +57,10 @@ function assertContained(root: string, target: string): void {
     throw invalidObservation("observation_artifact_path_escape");
 }
 
-async function rejectSymbolicPath(root: string, relative: string): Promise<void> {
+async function rejectSymbolicPath(
+  root: string,
+  relative: string,
+): Promise<void> {
   let current = root;
   for (const segment of relative.split("/")) {
     current = path.join(current, segment);

@@ -1,5 +1,8 @@
+import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import {
   createDeliveryFixture,
   parseCliJson,
@@ -13,6 +16,7 @@ import { loadSemanticFactManifest } from "../../packages/ty-context/dist/lib/sem
 
 export const PACKAGE_EXACT_ORACLE_IDENTITY = "ty-context-json-pointer-exact";
 export const PACKAGE_EXACT_ORACLE_VERSION = "1.0.0";
+const execFileAsync = promisify(execFile);
 
 export async function createObserverTrustFixture(options = {}) {
   return createDeliveryFixture(options);
@@ -26,12 +30,78 @@ export async function executeObserverTrustWorkflow(fixture) {
     fixture.workdir,
   ]);
   if (!compiled.ok) return { stage: "compile", result: compiled.result };
+  return executeObserverTrustFinalGate(fixture, null);
+}
+
+export async function executeObserverTrustAttackAfterAuthority(
+  fixture,
+  configureAttack,
+) {
+  await runCli(fixture.root, ["enable", "long-task"]);
+  const baseline = await invoke(fixture.root, [
+    "long-task",
+    "compile",
+    fixture.workdir,
+  ]);
+  if (!baseline.ok)
+    throw new Error(
+      `observer_fixture_valid_authority_compile_failed:${JSON.stringify(baseline.result)}`,
+    );
+  await configureAttack();
+  const ownerCompile = await invoke(fixture.root, [
+    "long-task",
+    "compile",
+    fixture.workdir,
+    "--revise",
+  ]);
+  if (ownerCompile.ok)
+    throw new Error("observer_fixture_attack_compile_unexpectedly_succeeded");
+  return executeObserverTrustFinalGate(fixture, ownerCompile.result);
+}
+
+async function executeObserverTrustFinalGate(fixture, ownerCompileResult) {
+  const command = "long-task final-gate";
+  const workdirSha256 = sha256(path.resolve(fixture.workdir));
   const final = await invoke(fixture.root, [
     "long-task",
     "final-gate",
     fixture.workdir,
   ]);
-  return { stage: "final-gate", result: final.result, ok: final.ok };
+  const [candidateHead, candidateTree, contractBytes] = await Promise.all([
+    gitIdentity(fixture.root, ["rev-parse", "HEAD"]),
+    gitIdentity(fixture.root, ["rev-parse", "HEAD^{tree}"]),
+    readFile(path.join(fixture.workdir, "delivery-contract.yaml")),
+  ]);
+  const result =
+    typeof final.result?.workflow_status === "string"
+      ? final.result
+      : { ...final.result, workflow_status: "final_gate_rejected" };
+  return {
+    stage: "final-gate",
+    result,
+    ok: final.ok,
+    final_gate_proof: {
+      invoked: true,
+      command,
+      workdir_sha256: workdirSha256,
+      command_identity: sha256(
+        JSON.stringify({ command, workdir_sha256: workdirSha256 }),
+      ),
+      candidate_head: candidateHead,
+      candidate_tree: candidateTree,
+      contract_sha256: sha256(contractBytes),
+      candidate_identity: sha256(
+        JSON.stringify({
+          candidate_head: candidateHead,
+          candidate_tree: candidateTree,
+          contract_sha256: sha256(contractBytes),
+        }),
+      ),
+      owner_compile_diagnostic:
+        ownerCompileResult === null ? null : JSON.stringify(ownerCompileResult),
+      final_gate_diagnostic: JSON.stringify(final.result),
+    },
+  };
 }
 
 export function isMachineAccepted(execution) {
@@ -166,7 +236,9 @@ export async function configurePackageObservationCase(
   const outcome = fixture.contract.outcomes[0];
   if (!outcome.product.owner.path_globs.includes("tests/legacy-oracle.mjs"))
     outcome.product.owner.path_globs.push("tests/legacy-oracle.mjs");
-  if (!outcome.technical.allowed_support_paths.includes("tests/legacy-oracle.mjs"))
+  if (
+    !outcome.technical.allowed_support_paths.includes("tests/legacy-oracle.mjs")
+  )
     outcome.technical.allowed_support_paths.push("tests/legacy-oracle.mjs");
   const processCheck = outcome.acceptance.checks[0];
   for (const assertion of [
@@ -454,10 +526,15 @@ export async function configureProxyTargetAttack(
   const source = await readFile(oraclePath, "utf8");
   const classifiedProxy =
     requiredFamily === "native"
-      ? source.replace(
-          "const observations = {",
-          'const observations = { actual_runtime_family: "browser",',
-        )
+      ? source.includes("const observations = {")
+        ? source.replace(
+            "const observations = {",
+            'const observations = { actual_runtime_family: "browser",',
+          )
+        : source.replace(
+            "const productEnvelope = {",
+            'const actualRuntimeFamily = "browser";\nconst productEnvelope = {',
+          )
       : source;
   if (requiredFamily === "native" && classifiedProxy === source)
     throw new Error("observer_fixture_proxy_classification_rewrite_missing");
@@ -475,6 +552,10 @@ export async function configureRootArgvWrapperAttack(fixture) {
     proofSurface: "runtime_behavior",
     directProcess: true,
   });
+  await applyRootArgvWrapperAttack(fixture);
+}
+
+export async function applyRootArgvWrapperAttack(fixture) {
   const target = fixture.contract.task.execution_targets[0];
   const declaredProductScript = "tests/product-root.mjs";
   await writeFile(
@@ -583,7 +664,12 @@ export async function configureMissingCounterfactualObservationAttack(fixture) {
 }
 
 export async function configureVerificationInputStaticAttack(fixture) {
-  const carrierPath = "tests/expected-static-actual.json";
+  await configureVerificationInputStaticBase(fixture);
+  await applyVerificationInputStaticConflict(fixture);
+}
+
+export async function configureVerificationInputStaticBase(fixture) {
+  const carrierPath = "expected/expected-static-actual.json";
   await configurePackageObservationCase(fixture, {
     carrierPath,
     bindingPath: carrierPath,
@@ -592,6 +678,10 @@ export async function configureVerificationInputStaticAttack(fixture) {
     artifactGlobs: [],
     diagnosticArtifactPaths: ["artifacts/expected-authority-diagnostic.json"],
   });
+}
+
+export async function applyVerificationInputStaticConflict(fixture) {
+  const carrierPath = "expected/expected-static-actual.json";
   const staticCheck = requiredFixtureCheck(
     fixture.contract.outcomes[0],
     "first-static-check",
@@ -601,19 +691,60 @@ export async function configureVerificationInputStaticAttack(fixture) {
 }
 
 export async function configureEvidenceRoleStaticAttack(fixture) {
+  await configureEvidenceRoleStaticBase(fixture);
+  await applyEvidenceRoleStaticConflict(fixture);
+}
+
+export async function configureEvidenceRoleStaticBase(fixture) {
   const carrierPath = "artifacts/pre-existing-status-report.json";
   await configurePackageObservationCase(fixture, {
     carrierPath,
     bindingPath: carrierPath,
     mutationPath: carrierPath,
     inputPaths: [carrierPath],
-    artifactGlobs: [carrierPath],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/static-status-diagnostic.json"],
   });
+}
+
+export async function applyEvidenceRoleStaticConflict(fixture) {
+  const carrierPath = "artifacts/pre-existing-status-report.json";
   const staticCheck = requiredFixtureCheck(
     fixture.contract.outcomes[0],
     "first-static-check",
   );
   staticCheck.expected_output_paths = [carrierPath];
+  staticCheck.artifact_globs = [carrierPath];
+  await writeContract(fixture.workdir, fixture.contract);
+}
+
+export async function configureEvidenceRoleProcessAttack(fixture) {
+  await configureEvidenceRoleProcessBase(fixture);
+  await applyEvidenceRoleProcessConflict(fixture);
+}
+
+export async function configureEvidenceRoleProcessBase(fixture) {
+  const carrierPath = "artifacts/pre-existing-process-status-report.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath,
+    bindingPath: carrierPath,
+    mutationPath: carrierPath,
+    inputPaths: [carrierPath],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/process-status-diagnostic.json"],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+}
+
+export async function applyEvidenceRoleProcessConflict(fixture) {
+  const carrierPath = "artifacts/pre-existing-process-status-report.json";
+  const processCheck = requiredFixtureCheck(
+    fixture.contract.outcomes[0],
+    "first-check",
+  );
+  processCheck.expected_output_paths = [carrierPath];
+  processCheck.artifact_globs = [carrierPath];
   await writeContract(fixture.workdir, fixture.contract);
 }
 
@@ -630,6 +761,15 @@ async function invoke(cwd, args) {
         : { status: "rejected", diagnostic: String(error.stderr).trim() },
     };
   }
+}
+
+async function gitIdentity(cwd, args) {
+  const result = await execFileAsync("git", args, { cwd, windowsHide: true });
+  return result.stdout.trim();
+}
+
+function sha256(value) {
+  return createHash("sha256").update(value).digest("hex");
 }
 
 async function installProjectProcessRoot(fixture, name) {

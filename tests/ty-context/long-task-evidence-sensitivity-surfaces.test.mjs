@@ -52,7 +52,9 @@ test("Population does not waive semantic sensitivity for its behavioral Assertio
       },
       exclusion_rules: [],
     };
-    outcome.acceptance.counterfactual_controls = [];
+    const control = outcome.acceptance.counterfactual_controls[0];
+    control.claims = ["semantic_fact.fact.first.observable"];
+    control.expected_assertion_failures = ["first-semantic-fact"];
     await assertActivationRejects(fixture, {
       code: "behavioral_semantic_counterfactual_required",
       includes: ["first-obligation"],
@@ -62,7 +64,7 @@ test("Population does not waive semantic sensitivity for its behavioral Assertio
   }
 });
 
-test("Playwright behavioral Claims also require semantic Counterfactuals", async () => {
+test("unsupported Playwright machine observation requires External Confirmation", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
@@ -180,8 +182,8 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
       },
     ];
     await assertActivationRejects(fixture, {
-      code: "behavioral_semantic_counterfactual_required",
-      includes: ["first-result"],
+      code: "unsupported_observer_requires_external_confirmation",
+      includes: ["proof.first.observable.exact", "browser", "ui_browser"],
     });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

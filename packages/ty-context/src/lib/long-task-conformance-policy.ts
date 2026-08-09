@@ -3,6 +3,7 @@ import type {
   DeliveryContractV2,
   EffectiveRiskLevel,
 } from "./long-task-delivery-types.js";
+import { allOutcomeResultsExternallyBlocked } from "./long-task-claims.js";
 
 type Reporter = (message: string) => void;
 
@@ -34,7 +35,8 @@ export function validateSemanticConformance(
   );
   if (
     semanticConformanceRequired(contract, effectiveRisk) &&
-    !declared.length
+    !declared.length &&
+    !allOutcomeResultsExternallyBlocked(contract)
   ) {
     issue(report, "semantic_conformance_check_required", contract.task.id);
     return;

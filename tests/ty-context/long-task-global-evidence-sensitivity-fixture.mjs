@@ -4,10 +4,13 @@ import path from "node:path";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { writeContract } from "./long-task-delivery-fixtures.mjs";
+import { FIXTURE_GLOBAL_SCOPE_ENV } from "./long-task-delegating-oracle-fixture.mjs";
 import {
-  preserveFixtureSemanticOracle,
-  preservedFixtureSemanticOraclePath,
-} from "./long-task-delegating-oracle-fixture.mjs";
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
+
+const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
 
 export async function addGlobalClaim(
   fixture,
@@ -41,11 +44,31 @@ export async function addGlobalClaim(
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
+  const rootArgv = fixtureProductRootArgv(GLOBAL_PRODUCT_PATH, "first");
+  const target = fixture.contract.task.execution_targets[0];
+  target.root_entrypoint = fixtureProductRootPath();
+  target.root_argv = rootArgv;
+  for (const outcome of fixture.contract.outcomes)
+    for (const outcomeCheck of outcome.acceptance.checks) {
+      outcomeCheck.runner.type = "project_binary";
+      outcomeCheck.runner.target = fixtureProductRootPath();
+      outcomeCheck.runner.argv = [...rootArgv];
+      outcomeCheck.verification_inputs = [
+        GLOBAL_PRODUCT_PATH,
+        "tests/semantic-false.json",
+      ];
+    }
   const check = structuredClone(
     fixture.contract.outcomes[0].acceptance.checks[0],
   );
   check.key = "global-state-check";
-  check.runner.argv = ["first", "global"];
+  check.environment_requirements = [
+    {
+      key: "global-fixture-scope",
+      kind: "env_var",
+      target: FIXTURE_GLOBAL_SCOPE_ENV,
+    },
+  ];
   check.positive_assertions = [
     {
       key: "global-state-assertion",
@@ -53,7 +76,7 @@ export async function addGlobalClaim(
       claims: ["constraint.global-state"],
       applicability_ref: "global-root-success",
       observation: "global_result",
-      evidence_capabilities: ["target_runtime", "state_delta"],
+      evidence_capabilities: ["target_runtime"],
       operator: "equals",
       expected: true,
     },
@@ -70,37 +93,30 @@ export async function addGlobalClaim(
   check.negative_assertions = [];
   fixture.contract.global.acceptance.checks.push(check);
   if (counterfactual) await addGlobalCounterfactual(fixture.contract);
-  await preserveFixtureSemanticOracle(fixture);
+  await writeContract(fixture.workdir, fixture.contract);
   await writeFile(
-    path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { execFileSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+    path.join(fixture.root, ...GLOBAL_PRODUCT_PATH.split("/")),
+    `import { readFile } from "node:fs/promises";
 let state = { first: false, first_relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const key = process.argv[2] || "first";
-const globalCheck = process.argv[3] === "global";
-const target = (assertion_key) => ({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:\`fixture-${"${key}"}-session\`,cold_start:true});
-const delta = (assertion_key) => ({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:[key]});
+const key = process.env.TY_CONTEXT_FIXTURE_SECOND_SCOPE ? "second" : process.env.TY_CONTEXT_FIXTURE_FIRST_SCOPE ? "first" : process.argv[2] || "first";
+const globalCheck = process.env.${FIXTURE_GLOBAL_SCOPE_ENV} === "fixture-global-scope-observed";
 const globalResult = ${constant ? "true" : "state[key] === true"};
-const result = globalCheck
-  ? {
-      schema_version: "long-task-check-result-v3",
-      execution_status: "completed",
-      observations: { global_result: globalResult, target_live: true },
-      evidence_records: [
-        target("global-state-assertion"),
-        delta("global-state-assertion"),
-        target("global-state-liveness")
-      ]
-    }
-  : JSON.parse(
-      execFileSync(
-        process.execPath,
-        [${JSON.stringify(preservedFixtureSemanticOraclePath)}, key],
-        {cwd:process.cwd(),encoding:"utf8"}
-      )
-    );
-console.log(JSON.stringify(result));
+const observed = state[key] === true;
+const assertion = (assertionKey) => "assertion." + key + "." + key + "-check." + assertionKey;
+const observations = globalCheck ? {
+  "assertion.GLOBAL.global-state-check.global-state-assertion": globalResult,
+  "assertion.GLOBAL.global-state-check.global-state-liveness": true
+} : {
+  ["fact." + key + ".observable"]: observed,
+  [assertion(key + "-result")]: observed,
+  [assertion(key + "-requirement")]: observed,
+  [assertion(key + "-obligation")]: observed,
+  [assertion(key + "-liveness")]: true,
+  [assertion(key + "-relations-na")]: state[key + "_relations_applicable"] === true,
+  ...(key === "first" ? { [assertion("first-architecture")]: observed } : {})
+};
+console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 `,
   );
 }

@@ -1,14 +1,12 @@
 import { writeFile } from "node:fs/promises";
 
-const REPORT_SCHEMA =
-  "long-task-real-capability-black-box-terminal-report-v1";
+const REPORT_SCHEMA = "long-task-real-capability-black-box-terminal-report-v1";
 const candidateRoles = new Set(["wrong", "control", "external"]);
 const relationOperators = new Set(["equals", "not_equals"]);
 
 export function createDeliveryTerminalReportRecorder({
   reportPath = process.env.TY_CONTEXT_REAL_CAPABILITY_TERMINAL_REPORT ?? "",
-  invocationId =
-    process.env.TY_CONTEXT_REAL_CAPABILITY_REPORT_INVOCATION ?? "",
+  invocationId = process.env.TY_CONTEXT_REAL_CAPABILITY_REPORT_INVOCATION ?? "",
 } = {}) {
   const enabled = reportPath.length > 0 || invocationId.length > 0;
   if (enabled && (!reportPath || !/^[a-f0-9]{32}$/u.test(invocationId)))
@@ -42,6 +40,7 @@ export function createDeliveryTerminalReportRecorder({
           workflow_status: workflowStatus,
           result_status: resultStatus,
         },
+        final_gate: normalizeFinalGateProof(execution?.final_gate_proof),
       });
     },
 
@@ -57,6 +56,34 @@ export function createDeliveryTerminalReportRecorder({
         { encoding: "utf8", flag: "wx" },
       );
     },
+  };
+}
+
+function normalizeFinalGateProof(proof) {
+  if (!proof)
+    return {
+      invoked: false,
+      command: null,
+      workdir_sha256: null,
+      command_identity: null,
+      candidate_head: null,
+      candidate_tree: null,
+      contract_sha256: null,
+      candidate_identity: null,
+      owner_compile_diagnostic: null,
+      final_gate_diagnostic: null,
+    };
+  return {
+    invoked: proof.invoked === true,
+    command: proof.command ?? null,
+    workdir_sha256: proof.workdir_sha256 ?? null,
+    command_identity: proof.command_identity ?? null,
+    candidate_head: proof.candidate_head ?? null,
+    candidate_tree: proof.candidate_tree ?? null,
+    contract_sha256: proof.contract_sha256 ?? null,
+    candidate_identity: proof.candidate_identity ?? null,
+    owner_compile_diagnostic: proof.owner_compile_diagnostic ?? null,
+    final_gate_diagnostic: proof.final_gate_diagnostic ?? null,
   };
 }
 
@@ -78,9 +105,7 @@ function validateDefinition(definition) {
     throw new Error("real_capability_machine_report_candidate_role_invalid");
   if (
     definition.candidate_role === "wrong" &&
-    !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u.test(
-      definition.control_case_id ?? "",
-    )
+    !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u.test(definition.control_case_id ?? "")
   )
     throw new Error("real_capability_machine_report_control_ref_required");
   if (

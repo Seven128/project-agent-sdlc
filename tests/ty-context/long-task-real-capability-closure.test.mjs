@@ -8,43 +8,52 @@ import * as admitted from "../../packages/ty-context/dist/lib/long-task-artifact
 import * as exact from "../../packages/ty-context/dist/lib/long-task-evidence-capability-runtime.js";
 import { evaluateCheckEvidence } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
 
-test("json-pointer-exact-v1 recomputes exact pass and comparison identity", async () => {
+test("shared exact evaluator recomputes V1 and V2 pass and comparison identity", async () => {
   assert.equal(typeof exact.evaluateExactDigestComparison, "function");
   assert.equal(typeof exact.exactComparisonResultIdentity, "function");
   const expected = "a".repeat(64);
-  const base = {
-    identity: { kind: "design_fact", fact_ref: "map.layout.phone" },
-    actual_value_sha256: expected,
-    expected_value_sha256: expected,
-    comparator: "exact_value",
-    mode: "exact",
-    parameters_sha256: "b".repeat(64),
-    tolerance_sha256: null,
-    mask_sha256: null,
-  };
-  const accepted = exact.evaluateExactDigestComparison(base);
-  assert.deepEqual(accepted, {
-    passed: true,
-    result_sha256: exact.exactComparisonResultIdentity({
-      ...base,
+  for (const identity of [
+    { kind: "selected_design_ground_v1", fact_ref: "map.layout.phone" },
+    {
+      kind: "selected_design_symbolic_v2",
+      obligation_ref: "rule.map.layout.phone.exact",
+      region_ref: "region.phone",
+    },
+  ]) {
+    const base = {
+      identity,
+      actual_value_sha256: expected,
+      expected_value_sha256: expected,
+      comparator: "exact_value",
+      mode: "exact",
+      parameters_sha256: "b".repeat(64),
+      tolerance_sha256: null,
+      mask_sha256: null,
+    };
+    const accepted = exact.evaluateExactDigestComparison(base);
+    assert.deepEqual(accepted, {
       passed: true,
-    }),
-  });
-  const rejected = exact.evaluateExactDigestComparison({
-    ...base,
-    actual_value_sha256: "f".repeat(64),
-    submitted_passed: true,
-    submitted_verdict: "passed",
-  });
-  assert.equal(rejected.passed, false);
-  assert.equal(
-    rejected.result_sha256,
-    exact.exactComparisonResultIdentity({
+      result_sha256: exact.exactComparisonResultIdentity({
+        ...base,
+        passed: true,
+      }),
+    });
+    const rejected = exact.evaluateExactDigestComparison({
       ...base,
       actual_value_sha256: "f".repeat(64),
-      passed: false,
-    }),
-  );
+      submitted_passed: true,
+      submitted_verdict: "passed",
+    });
+    assert.equal(rejected.passed, false);
+    assert.equal(
+      rejected.result_sha256,
+      exact.exactComparisonResultIdentity({
+        ...base,
+        actual_value_sha256: "f".repeat(64),
+        passed: false,
+      }),
+    );
+  }
 });
 
 test("json-pointer-exact-v1 re-extracts canonical current JSON under fixed limits", async () => {

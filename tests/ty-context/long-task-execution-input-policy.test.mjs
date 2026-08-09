@@ -56,6 +56,15 @@ test("all raw execution fields affect identity and per-check evidence does not",
   targetChanged.execution_target.target_ref = "other-target";
   assert.notEqual(computeRawExecutionIdentity(targetChanged), baseIdentity);
 
+  const packageObservationProtocolChanged = structuredClone(base);
+  packageObservationProtocolChanged.observation_authorities = [
+    { authority: "package_process_json_exact" },
+  ];
+  assert.notEqual(
+    computeRawExecutionIdentity(packageObservationProtocolChanged),
+    baseIdentity,
+  );
+
   const designTargetChanged = structuredClone(base);
   designTargetChanged.design_conformance_targets.push({
     key: "settings-default",
@@ -116,6 +125,7 @@ test("all raw execution fields affect identity and per-check evidence does not",
     "execution_target",
     "execution_target_definition",
     "known_execution_targets",
+    "package_observation_protocol",
     "runner",
     "verification_inputs",
   ]);

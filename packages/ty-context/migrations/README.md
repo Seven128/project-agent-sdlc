@@ -38,6 +38,9 @@ actionable manual route through diagnostics such as
 `static_observation_not_in_pre_run_snapshot`,
 `static_observation_changed_by_runner`,
 `process_observer_direct_root_required`,
+`process_observer_root_invocation_required`,
+`process_observer_root_argv_mismatch`,
+`process_observation_input_changed_by_runner`,
 `legacy_target_runtime_non_authoritative`,
 `counterfactual_admitted_observation_required`,
 `counterfactual_runtime_reachability_unproven` and
@@ -47,13 +50,25 @@ External Confirmation. That semantic choice is `manual_required`, not ordinary
 `sync` or a migration-registry inference; release guidance must therefore use
 the `manual-required` update mode for affected consumers.
 
+When the whole affected Outcome is unsupported, re-author it explicitly as an
+external-only route: set `success_path_required: false`, remove machine Checks,
+bind every ordinary/global and Semantic Fact Claim through exact
+`impact_claims`, keep every Semantic Fact proof's explicit `confirmation_ref`,
+and ensure a `blocks_target: true` confirmation impacts each
+Stage Gate result Claim. A non-blocking confirmation or one missing gate-result
+lineage cannot replace a Stage Gate, and migration never invents these choices.
+The valid route ends as `blocked_external`, not either machine-accepted status.
+
 Changing verifier identity, Compile admission policy or the observation TCB
 invalidates the prior Active Authority. The Contract must be recompiled or
 adopted through an explicit Authority Revision; old Progress, evidence and
 Receipt are not reusable on the new boundary. Public
 `long-task-check-result-v3` remains the compatibility payload, but its
 project-authored actual/pass/verdict/runtime fields are non-authoritative. The
-Harness-owned process output uses the separate
-`ty-context-product-observation-v1` envelope. No v4 is introduced by this
-revision; a future v4 requires a distinct need to carry a live browser/native
-session handle across processes.
+Harness-owned process adapter captures the separate
+`ty-context-product-observation-v1` envelope from bounded stdout inside an
+isolated frozen runtime-closure snapshot. It exposes no output-path, challenge
+or protocol environment variable to the child; any execution nonce remains
+internal host-attestation data. No v4 is introduced by this revision; a future
+v4 requires a distinct need to carry a live browser/native session handle
+across processes.

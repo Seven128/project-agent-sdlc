@@ -238,7 +238,7 @@ ${fixtureArchitectureSourceItem()}
             claims: ["non_goal.no-legacy"],
             applicability_ref: applicabilityRef,
             observation: "negative",
-            evidence_capabilities: ["state_delta"],
+            evidence_capabilities: ["presence", "target_runtime"],
             operator: "equals",
             expected: false,
           },
@@ -655,6 +655,8 @@ test("Source Acceptance resolves a Source-backed Global Assertion chain", async 
         binding_ref: "first.state-first",
         owning_outcome_key: "first",
         expected_assertion_failures: ["no-legacy-assertion"],
+        preserved_assertions: ["no-legacy-liveness"],
+        allowed_fanout_assertions: undefined,
       },
     ]);
 
@@ -770,7 +772,7 @@ async function configureGlobalSourceAcceptance(fixture, { sourceBacked }) {
       claims: ["constraint.no-legacy"],
       applicability_ref: applicabilityRef,
       observation: "result_copy",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["presence", "target_runtime"],
       operator: "equals",
       expected: true,
     },

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import YAML from "yaml";
-import { generateClaims } from "../../packages/ty-context/dist/lib/long-task-claim-definitions.js";
+import {
+  generateClaims,
+  generateGlobalClaims,
+} from "../../packages/ty-context/dist/lib/long-task-claim-definitions.js";
+import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { parseControls } from "../../packages/ty-context/dist/lib/long-task-product-shape.js";
 import { buildCanonicalSourceTargetIndex } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
@@ -213,10 +217,7 @@ test("non-completing and forbidden shortcuts reject positive-only coverage", () 
       operator: "equals",
       expected: true,
     });
-    assert.throws(
-      () => parse(contract),
-      /claim_proof_polarity_mismatch/,
-    );
+    assert.throws(() => parse(contract), /claim_proof_polarity_mismatch/);
   }
 });
 
@@ -225,4 +226,148 @@ test("fully covered Claims parse successfully and Source Claims target generated
   assert.doesNotThrow(() => parse(contract));
   contract.source_claims[0].disposition.refs = ["first.missing"];
   assert.throws(() => parse(contract), /source_claim_product_ref_unknown/);
+});
+
+test("blocking External Confirmation projects exact ordinary GLOBAL and Outcome Claims without machine Assertions", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  outcome.product.controls.push(
+    completeControl({
+      key: "external-submit",
+      surface: "fixture-main",
+      trigger: "click",
+    }),
+  );
+  outcome.product.non_completing_outcomes.push({
+    key: "external-only",
+    statement:
+      "External confirmation cannot be mistaken for machine completion.",
+    applicability_refs: ["first-root-success"],
+  });
+  outcome.technical.forbidden_shortcuts.push({
+    key: "external-self-report",
+    statement: "A self-report is not machine proof.",
+    applicability_refs: ["first-root-success"],
+  });
+  contract.global.applicability = [
+    {
+      key: "global-root",
+      target_ref: "fixture-app",
+      journey_role: "success",
+      dimensions: [{ key: "fixture-state", value: "loaded" }],
+      given_refs: ["fixture-loaded"],
+      when_refs: ["read-outcome"],
+    },
+  ];
+  contract.global.product.non_goals = [
+    {
+      key: "no-self-attestation",
+      statement: "Do not treat external confirmation as machine proof.",
+      applicability_refs: ["global-root"],
+    },
+  ];
+  contract.global.technical.constraints = [
+    {
+      key: "external-owner",
+      statement: "The external owner remains authoritative.",
+      applicability_refs: ["global-root"],
+    },
+  ];
+  contract.global.technical.forbidden_shortcuts = [
+    {
+      key: "no-external-bypass",
+      statement: "External confirmation cannot bypass Final Gate.",
+      applicability_refs: ["global-root"],
+    },
+  ];
+  outcome.acceptance.checks = [];
+  const semanticProof = outcome.semantic_fact_bindings.proofs[0];
+  outcome.semantic_fact_bindings.proofs = [
+    {
+      proof_ref: semanticProof.proof_ref,
+      fact_ref: semanticProof.fact_ref,
+      method: semanticProof.method,
+      proof_surface: semanticProof.proof_surface,
+      evidence_capabilities: semanticProof.evidence_capabilities,
+      authority: "external_confirmation",
+      confirmation_ref: "unsupported-observation",
+    },
+  ];
+  const claims = [
+    ...generateGlobalClaims(contract.global),
+    ...generateClaims(outcome),
+  ];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-observation",
+      description: "The unsupported observations require an external owner.",
+      owner: "external-owner",
+      kind: "functional_prerequisite",
+      impact_claims: claims.map((claim) => claim.id),
+      blocks_target: true,
+    },
+  ];
+
+  const compiled = compileProductClaimCoverage(contract);
+  assert.deepEqual(compiled.summary.uncovered_claims, []);
+  for (const claim of claims) {
+    const summary = claim.id.startsWith("GLOBAL.")
+      ? compiled.summary.claims_by_global[claim.local_key]
+      : compiled.summary.claims_by_outcome.first[claim.local_key];
+    assert.ok(summary.covered, claim.id);
+    assert.ok(
+      summary.proofs.every(
+        (proof) =>
+          proof.check_key === "EXTERNAL.unsupported-observation" &&
+          proof.assertion_key === null,
+      ),
+      claim.id,
+    );
+  }
+});
+
+test("ordinary Claim projection requires a blocking confirmation and Semantic Facts still require explicit bindings", () => {
+  for (const mutation of ["non-blocking", "semantic-binding-missing"]) {
+    const contract = deliveryContract();
+    const outcome = contract.outcomes[0];
+    outcome.acceptance.checks = [];
+    const semanticProof = outcome.semantic_fact_bindings.proofs[0];
+    if (mutation !== "semantic-binding-missing")
+      outcome.semantic_fact_bindings.proofs = [
+        {
+          proof_ref: semanticProof.proof_ref,
+          fact_ref: semanticProof.fact_ref,
+          method: semanticProof.method,
+          proof_surface: semanticProof.proof_surface,
+          evidence_capabilities: semanticProof.evidence_capabilities,
+          authority: "external_confirmation",
+          confirmation_ref: "unsupported-observation",
+        },
+      ];
+    const claims = generateClaims(outcome);
+    contract.global.acceptance.external_confirmations = [
+      {
+        key: "unsupported-observation",
+        description: "The unsupported observations require an external owner.",
+        owner: "external-owner",
+        kind: "field_validation",
+        impact_claims: claims.map((claim) => claim.id),
+        blocks_target: mutation !== "non-blocking",
+      },
+    ];
+    const compiled = compileProductClaimCoverage(contract, {
+      allow_uncovered: true,
+    });
+    if (mutation === "non-blocking")
+      assert.ok(
+        compiled.summary.uncovered_claims.includes(
+          "first.requirement.observe-first",
+        ),
+        mutation,
+      );
+    else
+      assert.deepEqual(compiled.summary.uncovered_claims, [
+        "first.semantic_fact.fact.first.observable",
+      ]);
+  }
 });

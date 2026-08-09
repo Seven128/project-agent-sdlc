@@ -3,6 +3,7 @@ import { rm } from "node:fs/promises";
 import test from "node:test";
 import YAML from "yaml";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { generateClaims } from "../../packages/ty-context/dist/lib/long-task-claim-definitions.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import {
   createDeliveryFixture,
@@ -101,10 +102,9 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
     "ui_browser",
     "data_state",
   ];
-  outcome.technical.obligations =
-    outcome.technical.obligations.filter(
-      (obligation) => obligation.key === "architecture-first",
-    );
+  outcome.technical.obligations = outcome.technical.obligations.filter(
+    (obligation) => obligation.key === "architecture-first",
+  );
   outcome.technical.obligations[0].required_proof_surfaces = ["ui_browser"];
   const browserCheck = outcome.acceptance.checks[0];
   contract.task.execution_targets.push({
@@ -215,6 +215,97 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
   assert.doesNotThrow(() => parse(contract));
 });
 
+test("blocking result External Confirmation permits a Stage gate with no machine stage_gate Check", () => {
+  const contract = deliveryContract();
+  contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-stage-result",
+      description:
+        "The unsupported Stage result requires external confirmation.",
+      owner: "external-owner",
+      kind: "functional_prerequisite",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+    },
+  ];
+  assert.doesNotThrow(() => parse(contract));
+});
+
+test("Stage gate omission rejects non-blocking or non-result External Confirmation", () => {
+  for (const mutation of ["non-blocking", "missing-result"]) {
+    const contract = deliveryContract();
+    contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
+    contract.global.acceptance.external_confirmations = [
+      {
+        key: "unsupported-stage-result",
+        description:
+          "The unsupported Stage result requires external confirmation.",
+        owner: "external-owner",
+        kind: "field_validation",
+        impact_claims:
+          mutation === "missing-result"
+            ? ["first.requirement.observe-first"]
+            : ["first.result"],
+        blocks_target: mutation !== "non-blocking",
+      },
+    ];
+    assert.throws(
+      () => parse(contract),
+      /stage_gate_check_required:first:first/u,
+      mutation,
+    );
+  }
+});
+
+test("External Confirmation never waives an explicitly required success path", () => {
+  const contract = deliveryContract();
+  contract.outcomes[0].acceptance.checks[0].journey_roles = ["stage_gate"];
+  contract.outcomes[0].applicability[0].journey_role = "stage_gate";
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-stage-result",
+      description:
+        "The unsupported Stage result requires external confirmation.",
+      owner: "external-owner",
+      kind: "functional_prerequisite",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+    },
+  ];
+  assert.throws(() => parse(contract), /success_path_check_required:first/u);
+});
+
+test("all unsupported ordinary Claims and Semantic Facts can preflight only as explicit blocking external work", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  outcome.product.success_path_required = false;
+  outcome.acceptance.checks = [];
+  const semanticProof = outcome.semantic_fact_bindings.proofs[0];
+  outcome.semantic_fact_bindings.proofs = [
+    {
+      proof_ref: semanticProof.proof_ref,
+      fact_ref: semanticProof.fact_ref,
+      method: semanticProof.method,
+      proof_surface: semanticProof.proof_surface,
+      evidence_capabilities: semanticProof.evidence_capabilities,
+      authority: "external_confirmation",
+      confirmation_ref: "unsupported-observation",
+    },
+  ];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-observation",
+      description: "The unsupported observations require an external owner.",
+      owner: "external-owner",
+      kind: "functional_prerequisite",
+      impact_claims: generateClaims(outcome).map((claim) => claim.id),
+      blocks_target: true,
+    },
+  ];
+  assert.doesNotThrow(() => parse(contract));
+});
+
 test("Control relation closure remains an atomic Claim when other atomic declarations are absent", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];
@@ -235,9 +326,7 @@ test("Control relation closure remains an atomic Claim when other atomic declara
         assertion.key === "first-semantic-fact" ||
         assertion.key === "first-liveness",
     );
-  assert.doesNotThrow(
-    () => parse(contract),
-  );
+  assert.doesNotThrow(() => parse(contract));
 });
 
 test("Claim-bearing Product Assertions cannot use unary operators", () => {

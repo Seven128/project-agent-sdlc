@@ -19,8 +19,14 @@ import {
 } from "./long-task-delivery-fixtures.mjs";
 import {
   constantFixtureOracleSource,
+  FIXTURE_GLOBAL_SCOPE_ENV,
+  globalFixtureOracleSource,
   scopedFixtureOracleSource,
 } from "./long-task-delegating-oracle-fixture.mjs";
+import {
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
 
 test("Authority Revision separates user decisions from mechanically bounded repairs", async () => {
   const fixture = await createDeliveryFixture();
@@ -44,11 +50,6 @@ test("Authority Revision separates user decisions from mechanically bounded repa
       /authority_revision_requires_revise_flag/u,
     );
     for (const scenario of authorityReductionScenarios) {
-      if (scenario.name === "runner target")
-        await writeFile(
-          path.join(fixture.root, "tests", "alternate-oracle.mjs"),
-          `console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true,negative:false},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"alternate-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]},{assertion_key:"negative-floor",capability:"state_delta",before_sha256:"2".repeat(64),after_sha256:"3".repeat(64),changed_fields:["negative"]}]}));\n`,
-        );
       const candidate = structuredClone(baseline);
       scenario.mutate(candidate);
       await writeContract(fixture.workdir, candidate);
@@ -88,11 +89,6 @@ test("Authority Revision separates user decisions from mechanically bounded repa
           scenario.name,
         );
       }
-      if (scenario.name === "runner target")
-        await rm(
-          path.join(fixture.root, "tests", "alternate-oracle.mjs"),
-          { force: true },
-        );
     }
     assert.equal(
       await pathExists(
@@ -140,6 +136,7 @@ test("Authority Revision separates user decisions from mechanically bounded repa
     tightened.outcomes[0].technical.allowed_support_paths = [
       "src/support/core/**",
       "artifacts/**",
+      "tests/legacy-oracle.mjs",
     ];
     await writeContract(fixture.workdir, tightened);
     await runCli(fixture.root, [
@@ -173,8 +170,8 @@ test("Authority Revision rejects a risk downgrade instead of approving it", asyn
       criterion: "The strict negative floor remains satisfied.",
       claims: [],
       observation: "result_copy",
-      evidence_capabilities: ["state_delta"],
-      operator: "not_equals",
+      evidence_capabilities: ["presence"],
+      operator: "equals",
       expected: false,
     });
     await writeContract(fixture.workdir, fixture.contract);
@@ -207,23 +204,19 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
     await writeFile(path.join(fixture.root, "src", "extra.json"), "true\n");
     await writeFile(
       path.join(fixture.root, "tests", "global-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";
-let stable=false;
-try { stable=JSON.parse(await readFile(new URL("../src/state.json",import.meta.url),"utf8")).first === true; } catch {}
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"global-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["runtime"]});
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{stable,target_live:true},evidence_records:[target("global-proof"),delta("global-proof"),target("global-liveness")]}));
-`,
+      globalFixtureOracleSource(),
     );
     const outcomeCheck = fixture.contract.outcomes[0].acceptance.checks[0];
-    fixture.contract.outcomes[0].product.owner.path_globs.push(
-      "artifacts/**",
-    );
+    fixture.contract.outcomes[0].product.owner.path_globs.push("artifacts/**");
     fixture.contract.outcomes[0].technical.allowed_support_paths.push(
       "artifacts/**",
     );
     outcomeCheck.input_paths = ["src/state.json"];
     outcomeCheck.expected_output_paths = ["artifacts/proof.json"];
+    outcomeCheck.verification_inputs = [
+      "tests/global-oracle.mjs",
+      "tests/semantic-false.json",
+    ];
     fixture.contract.global.technical.constraints.push({
       key: "stable-runtime",
       statement: "Runtime behavior remains stable.",
@@ -239,8 +232,6 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
     });
     const globalCheck = structuredClone(outcomeCheck);
     globalCheck.key = "global-check";
-    globalCheck.runner.target = "tests/global-oracle.mjs";
-    globalCheck.runner.argv = [];
     globalCheck.verification_inputs = [
       "tests/global-oracle.mjs",
       "tests/semantic-false.json",
@@ -252,7 +243,7 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
         claims: ["constraint.stable-runtime"],
         applicability_ref: "global-root-success",
         observation: "stable",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       },
@@ -267,7 +258,18 @@ console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution
       },
     ];
     globalCheck.negative_assertions = [];
+    globalCheck.environment_requirements = [
+      {
+        key: "global-fixture-scope",
+        kind: "env_var",
+        target: FIXTURE_GLOBAL_SCOPE_ENV,
+      },
+    ];
     fixture.contract.global.acceptance.checks.push(globalCheck);
+    configureDirectProductScript(fixture.contract, "tests/global-oracle.mjs", [
+      outcomeCheck,
+      globalCheck,
+    ]);
     fixture.contract.global.acceptance.counterfactual_controls.push({
       key: "replace-global-runtime",
       binding_ref: "first.state-first",
@@ -424,7 +426,6 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
     );
     for (const outcome of fixture.contract.outcomes) {
       const check = outcome.acceptance.checks[0];
-      check.runner.target = "tests/scoped-oracle.mjs";
       check.verification_inputs = [
         "tests/scoped-oracle.mjs",
         "tests/oracle.mjs",
@@ -432,6 +433,11 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
       ];
       check.input_paths = ["src/state.json", `src/${outcome.key}.json`];
     }
+    configureDirectProductScript(
+      fixture.contract,
+      "tests/scoped-oracle.mjs",
+      fixture.contract.outcomes.map((outcome) => outcome.acceptance.checks[0]),
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -479,13 +485,16 @@ test("Counterfactual failure is persisted as failing Check Progress", async () =
       constantFixtureOracleSource(),
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
-    check.runner.target = "tests/constant-oracle.mjs";
-    check.runner.argv = [];
     check.verification_inputs = [
       "tests/constant-oracle.mjs",
       "tests/oracle.mjs",
       "tests/semantic-false.json",
     ];
+    configureDirectProductScript(
+      fixture.contract,
+      "tests/constant-oracle.mjs",
+      [check],
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -619,3 +628,16 @@ test("runner retries only an explicitly safe infrastructure failure", async () =
   );
   assert.equal(unsafe.attempts, 1);
 });
+
+function configureDirectProductScript(contract, script, checks) {
+  const rootArgv = fixtureProductRootArgv(script, "first");
+  const target = contract.task.execution_targets[0];
+  target.root_entrypoint = fixtureProductRootPath();
+  target.root_argv = rootArgv;
+  for (const check of checks) {
+    check.runner.type = "project_binary";
+    check.runner.target = fixtureProductRootPath();
+    check.runner.argv = [...rootArgv];
+    check.runner.idempotent = true;
+  }
+}

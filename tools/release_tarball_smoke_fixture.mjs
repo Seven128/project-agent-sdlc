@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import {
@@ -7,11 +7,17 @@ import {
   refreshFixtureSemanticManifest,
   semanticManifestIdentity,
 } from "../tests/ty-context/long-task-delivery-fixtures.mjs";
+import {
+  admitPackageExactFixtureSemanticManifest,
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "../tests/ty-context/long-task-package-machine-fixture.mjs";
 
 export async function writeReleaseTarballLongTaskFixture(root) {
-  const semanticManifest = releaseTarballSemanticManifest();
-  const verificationContextRef =
-    "project_context/areas/main/verification.md";
+  const semanticManifest = admitPackageExactFixtureSemanticManifest(
+    releaseTarballSemanticManifest(),
+  );
+  const verificationContextRef = "project_context/areas/main/verification.md";
   const verificationContext = await readFile(
     path.join(root, ...verificationContextRef.split("/")),
   );
@@ -19,9 +25,7 @@ export async function writeReleaseTarballLongTaskFixture(root) {
     key: "input.context-main-verification",
     kind: "context",
     source_ref: verificationContextRef,
-    sha256: createHash("sha256")
-      .update(verificationContext)
-      .digest("hex"),
+    sha256: createHash("sha256").update(verificationContext).digest("hex"),
     disposition: "non_ui_material",
     fact_refs: semanticManifest.facts.map((fact) => fact.key),
     basis_refs: ["packaged-architecture"],
@@ -29,33 +33,24 @@ export async function writeReleaseTarballLongTaskFixture(root) {
       "The package-generated verification Context is classified in the full Context snapshot.",
   });
   for (const fact of semanticManifest.facts)
-    if (
-      !fact.provenance.basis_refs.includes(
-        "input.context-main-verification",
-      )
-    )
+    if (!fact.provenance.basis_refs.includes("input.context-main-verification"))
       fact.provenance.basis_refs.push("input.context-main-verification");
   for (const input of semanticManifest.inputs.filter(
     (candidate) => candidate.kind === "context",
   ))
     input.sha256 = createHash("sha256")
-      .update(
-        await readFile(path.join(root, ...input.source_ref.split("/"))),
-      )
+      .update(await readFile(path.join(root, ...input.source_ref.split("/"))))
       .digest("hex");
   refreshFixtureSemanticManifest(semanticManifest);
   const semanticManifestSha256 = semanticManifestIdentity(semanticManifest);
-  const semanticAuthority = JSON.stringify({
-    manifestSha256: semanticManifestSha256,
-    fact: semanticManifest.facts[0],
-    proof: semanticManifest.proof_obligations[0],
-    environment: semanticManifest.environments[0],
-    oracle: semanticManifest.oracles[0],
-  });
   const workdir = path.join(root, ".long-task");
+  const productRoot = fixtureProductRootPath();
+  const productArgv = fixtureProductRootArgv("tests/oracle.mjs", "installed");
   await mkdir(path.join(root, "src"), { recursive: true });
   await mkdir(path.join(root, "tests"), { recursive: true });
+  await mkdir(path.join(root, "artifacts"), { recursive: true });
   await mkdir(workdir, { recursive: true });
+  await installProductRoot(root, productRoot);
   await writeFile(
     path.join(root, "src/state.json"),
     '{"ready":true,"relations_applicable":false}\n',
@@ -63,6 +58,10 @@ export async function writeReleaseTarballLongTaskFixture(root) {
   await writeFile(
     path.join(root, "tests/semantic-false.json"),
     '{"ready":false}\n',
+  );
+  await writeFile(
+    path.join(root, "artifacts/proof.json"),
+    '{"fixture_proof":true}\n',
   );
   await writeFile(
     path.join(root, "source.md"),
@@ -85,22 +84,22 @@ ${YAML.stringify(JSON.parse(JSON.stringify(semanticManifest)), { lineWidth: 0 })
   );
   await writeFile(
     path.join(root, "tests/oracle.mjs"),
-    `import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+    `import { readFile } from "node:fs/promises";
 let state = { ready: false, relations_applicable: false };
 try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-const target=(assertion_key)=>({assertion_key,capability:"target_runtime",target_ref:"installed-runtime",root_entrypoint:"tests/oracle.mjs",session_id:"tarball-session",cold_start:true});
-const delta=(assertion_key)=>({assertion_key,capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["ready"]});
-const claimAssertions=["installed-result","installed-obligation","installed-architecture","installed-relations-na"];
-const semantic=${semanticAuthority};
-const artifact=await readFile(new URL("../src/state.json",import.meta.url));
-const artifactSha256=createHash("sha256").update(artifact).digest("hex");
-const actualSha256=createHash("sha256").update(JSON.stringify(state.ready===true)).digest("hex");
-const canonicalize=(value)=>Array.isArray(value)?value.map(canonicalize):value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map((key)=>[key,canonicalize(value[key])])):value;
-const comparisonPassed=state.ready===true;
-const comparisonResultSha256=createHash("sha256").update(JSON.stringify(canonicalize({identity:{kind:"semantic_fact_non_ui",fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,target_ref:"installed-runtime"},actual_value_sha256:actualSha256,expected_value_sha256:semantic.fact.expected.sha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters_sha256:semantic.proof.comparison.parameters.sha256,tolerance_sha256:semantic.proof.comparison.tolerance?.sha256??null,mask_sha256:semantic.proof.comparison.mask?.sha256??null,passed:actualSha256===semantic.fact.expected.sha256}))).digest("hex");
-const semanticRecord={assertion_key:"installed-semantic-fact",capability:"semantic_fact",manifest_ref:"tarball-semantic-facts",manifest_sha256:semantic.manifestSha256,outcome_ref:"installed",target_ref:"installed-runtime",fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,method:semantic.proof.method,subject_ref:semantic.fact.unit_ref,condition_ref:semantic.fact.condition_ref,property_ref:semantic.fact.property_ref,actual_observation:{artifact_path:"src/state.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/ready"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:"src/state.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semantic.environment.definition.sha256},expected:semantic.fact.expected,comparison:{artifact_path:"src/state.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters:semantic.proof.comparison.parameters,tolerance:semantic.proof.comparison.tolerance,mask:semantic.proof.comparison.mask,passed:comparisonPassed},verdict:comparisonPassed?"passed":"failed",oracle:semantic.oracle,environment:semantic.environment,observer_results:[]};
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{ready:state.ready,obligation_ready:state.ready,architecture_ready:state.ready,semantic_fact_result:state.ready,relations_applicable:state.relations_applicable,target_live:true},evidence_records:[...claimAssertions.flatMap((key)=>[target(key),delta(key)]),target("installed-liveness"),semanticRecord]}));
+const ready = state.ready === true;
+const assertion = (key) => "assertion.installed.installed-check." + key;
+console.log(JSON.stringify({
+  schema_version: "ty-context-product-observation-v1",
+  observations: {
+    "installed.result.observable": ready,
+    [assertion("installed-result")]: ready,
+    [assertion("installed-obligation")]: ready,
+    [assertion("installed-architecture")]: ready,
+    [assertion("installed-liveness")]: true,
+    [assertion("installed-relations-na")]: state.relations_applicable === true
+  }
+}));
 `,
   );
   await writeFile(
@@ -121,7 +120,8 @@ task:
       description: Installed fixture runtime
       role: product
       runtime_family: process
-      root_entrypoint: tests/oracle.mjs
+      root_entrypoint: ${productRoot}
+      root_argv: ${JSON.stringify(productArgv)}
       capabilities: [process-runtime, cold-start, production-root]
   source_paths: [source.md]
   context_refs: [project_context/areas/main.md]
@@ -213,19 +213,20 @@ outcomes:
             when: [{key: inspect-installed, statement: Inspect it with the installed verifier.}]
           proof_surface: runtime_behavior
           runner:
-            type: node_oracle
-            target: tests/oracle.mjs
+            type: project_binary
+            target: ${productRoot}
+            argv: ${JSON.stringify(productArgv)}
             effect: read_only
           verification_inputs: [tests/oracle.mjs, tests/semantic-false.json]
           input_paths: [src/state.json]
-          artifact_globs: [src/state.json]
+          artifact_globs: [artifacts/proof.json]
           positive_assertions:
             - key: installed-result
               criterion: The installed packaged verifier reports the fixture ready.
               claims: [result]
               applicability_ref: installed-root-success
               observation: ready
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: installed-obligation
@@ -233,7 +234,7 @@ outcomes:
               claims: [obligation.packaged-verifier]
               applicability_ref: installed-root-success
               observation: obligation_ready
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: installed-semantic-fact
@@ -249,7 +250,7 @@ outcomes:
               claims: [obligation.architecture]
               applicability_ref: installed-root-success
               observation: architecture_ready
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: installed-liveness
@@ -265,7 +266,7 @@ outcomes:
               claims: [control_relation_closure]
               applicability_ref: installed-root-success
               observation: relations_applicable
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: false
       counterfactual_controls:
@@ -294,4 +295,15 @@ outcomes:
 `,
   );
   return workdir;
+}
+
+async function installProductRoot(root, relative) {
+  const executableSource =
+    process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
+  if (!executableSource)
+    throw new Error("release_tarball_product_root_shell_unavailable");
+  const executablePath = path.join(root, ...relative.split("/"));
+  await mkdir(path.dirname(executablePath), { recursive: true });
+  await copyFile(executableSource, executablePath);
+  if (process.platform !== "win32") await chmod(executablePath, 0o755);
 }

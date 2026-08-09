@@ -74,7 +74,7 @@ test("literal route-group parentheses are allowed only in repository files and c
     assert.throws(() => normalizeRepositoryFile(unsafe), undefined, unsafe);
 });
 
-test("overlap call sites fail closed for global wildcards and protected verification inputs", async () => {
+test("overlap call sites fail closed for global wildcards and protected evidence roles", async () => {
   const scenarios = [
     {
       name: "implementation wildcard",
@@ -102,7 +102,8 @@ test("overlap call sites fail closed for global wildcards and protected verifica
       mutate(contract) {
         contract.outcomes[0].acceptance.checks[0].artifact_globs = ["**"];
       },
-      error: /verification_input_protected/u,
+      error:
+        /machine_observer_not_admitted:.*process_carrier_evidence_role_forbidden/u,
     },
   ];
   for (const scenario of scenarios) {

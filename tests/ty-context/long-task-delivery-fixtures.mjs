@@ -218,6 +218,11 @@ export async function createDeliveryFixture(options = {}) {
         manifest,
       );
       await installPackageMachineFixture(root, manifest);
+      const statePath = path.join(root, "src", "state.json");
+      const state = JSON.parse(await readFile(statePath, "utf8"));
+      state.first = true;
+      state.second = false;
+      await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
       await exec(
         "git",
         [
@@ -404,7 +409,7 @@ export function claimApplicability(outcomeKey = "first") {
 export function deliveryContract(options = {}) {
   const semanticManifest = packageAdmittedFixtureSemanticManifest(options);
   const semanticManifestSha256 = digestCanonical(semanticManifest);
-  const check = (key, _argument, outcomeKey) => ({
+  const check = (key, argument, outcomeKey) => ({
     key,
     journey_roles: ["success", "stage_gate"],
     execution_target: { target_ref: "fixture-app", entrypoint: "root" },
@@ -416,7 +421,7 @@ export function deliveryContract(options = {}) {
     runner: {
       type: "project_binary",
       target: fixtureProductRootPath(),
-      argv: fixtureProductRootArgv("tests/oracle.mjs", "first"),
+      argv: fixtureProductRootArgv("tests/oracle.mjs", argument),
       cwd: ".",
       timeout_ms: 30000,
       effect: "read_only",
@@ -518,102 +523,102 @@ export function deliveryContract(options = {}) {
     ],
   });
   const outcome = (key, argument, dependsOn = []) => ({
-      key,
-      title: `${key} title`,
-      stage: key,
-      depends_on: dependsOn,
-      applicability: [claimApplicability(key)],
-      semantic_fact_bindings: {
-        manifest_ref: semanticManifest.key,
-        facts: [
-          {
-            fact_ref: `fact.${key}.observable`,
-            claim_ref: `semantic_fact.fact.${key}.observable`,
-            applicability_ref: `${key}-root-success`,
-          },
-        ],
-        proofs: [
-          {
-            proof_ref: `proof.${key}.observable.exact`,
-            fact_ref: `fact.${key}.observable`,
-            method: "exact_value",
-            proof_surface: "runtime_behavior",
-            evidence_capabilities: ["semantic_fact"],
-            authority: "machine",
-            check_ref: `${key}-check`,
-            assertion_ref: `${key}-semantic-fact`,
-          },
-        ],
-      },
-      product: {
-        observable_result: `${key} becomes observable`,
-        result_applicability_refs: [`${key}-root-success`],
-        success_path_required: true,
-        degradation_path_required: false,
-        owner: {
-          label: "fixture",
-          context_refs: ["project_context/areas/main.md"],
-          path_globs: ["src/**", FIXTURE_LEGACY_ORACLE_PATH],
+    key,
+    title: `${key} title`,
+    stage: key,
+    depends_on: dependsOn,
+    applicability: [claimApplicability(key)],
+    semantic_fact_bindings: {
+      manifest_ref: semanticManifest.key,
+      facts: [
+        {
+          fact_ref: `fact.${key}.observable`,
+          claim_ref: `semantic_fact.fact.${key}.observable`,
+          applicability_ref: `${key}-root-success`,
         },
-        requirements: [
-          {
-            key: `observe-${key}`,
-            statement: `The ${key} outcome must be observable.`,
-            required_proof_surfaces: ["runtime_behavior"],
-            applicability_refs: [`${key}-root-success`],
-          },
-        ],
-        owner_surfaces: [],
-        controls: [],
-        control_relation_closure: {
-          state: "not_applicable",
-          statement: "This Outcome declares no user-visible Controls.",
+      ],
+      proofs: [
+        {
+          proof_ref: `proof.${key}.observable.exact`,
+          fact_ref: `fact.${key}.observable`,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["semantic_fact"],
+          authority: "machine",
+          check_ref: `${key}-check`,
+          assertion_ref: `${key}-semantic-fact`,
+        },
+      ],
+    },
+    product: {
+      observable_result: `${key} becomes observable`,
+      result_applicability_refs: [`${key}-root-success`],
+      success_path_required: true,
+      degradation_path_required: false,
+      owner: {
+        label: "fixture",
+        context_refs: ["project_context/areas/main.md"],
+        path_globs: ["src/**", FIXTURE_LEGACY_ORACLE_PATH],
+      },
+      requirements: [
+        {
+          key: `observe-${key}`,
+          statement: `The ${key} outcome must be observable.`,
+          required_proof_surfaces: ["runtime_behavior"],
           applicability_refs: [`${key}-root-success`],
         },
-        control_relations: [],
-        surface_bindings: [],
-        non_completing_outcomes: [],
+      ],
+      owner_surfaces: [],
+      controls: [],
+      control_relation_closure: {
+        state: "not_applicable",
+        statement: "This Outcome declares no user-visible Controls.",
+        applicability_refs: [`${key}-root-success`],
       },
-      technical: {
-        obligations: [
-          {
-            key: `implement-${key}`,
-            statement: `Implement ${key}`,
-            required_proof_surfaces: ["runtime_behavior"],
-            applicability_refs: [`${key}-root-success`],
-          },
-          ...(key === "first"
-            ? [
-                {
-                  key: "architecture-first",
-                  statement:
-                    "Preserve the fixture state owner and verifier boundary.",
-                  required_proof_surfaces: ["runtime_behavior"],
-                  applicability_refs: ["first-root-success"],
-                },
-              ]
-            : []),
-        ],
-        expected_change_paths: ["src/**"],
-        allowed_support_paths: [FIXTURE_LEGACY_ORACLE_PATH],
-        forbidden_paths: ["secrets/**"],
-        forbidden_shortcuts: [],
-        bindings: [
-          {
-            key: `state-${key}`,
-            kind: "file",
-            target: "src/state.json",
-            carrier_paths: ["src/state.json"],
-            existence: "existing",
-          },
-        ],
-        rollback_and_recovery: null,
-      },
-      acceptance: {
-        checks: [check(`${key}-check`, argument, key)],
-        population: null,
-        counterfactual_controls: [],
-      },
+      control_relations: [],
+      surface_bindings: [],
+      non_completing_outcomes: [],
+    },
+    technical: {
+      obligations: [
+        {
+          key: `implement-${key}`,
+          statement: `Implement ${key}`,
+          required_proof_surfaces: ["runtime_behavior"],
+          applicability_refs: [`${key}-root-success`],
+        },
+        ...(key === "first"
+          ? [
+              {
+                key: "architecture-first",
+                statement:
+                  "Preserve the fixture state owner and verifier boundary.",
+                required_proof_surfaces: ["runtime_behavior"],
+                applicability_refs: ["first-root-success"],
+              },
+            ]
+          : []),
+      ],
+      expected_change_paths: ["src/**"],
+      allowed_support_paths: [FIXTURE_LEGACY_ORACLE_PATH],
+      forbidden_paths: ["secrets/**"],
+      forbidden_shortcuts: [],
+      bindings: [
+        {
+          key: `state-${key}`,
+          kind: "file",
+          target: "src/state.json",
+          carrier_paths: ["src/state.json"],
+          existence: "existing",
+        },
+      ],
+      rollback_and_recovery: null,
+    },
+    acceptance: {
+      checks: [check(`${key}-check`, argument, key)],
+      population: null,
+      counterfactual_controls: [],
+    },
   });
   return {
     schema_version: "long-task-delivery-v2",
@@ -758,7 +763,7 @@ export function deliveryContract(options = {}) {
       },
     },
     outcomes: options.twoOutcomes
-      ? [outcome("first", "first"), outcome("second", "second", ["first"])]
+      ? [outcome("first", "first"), outcome("second", "first", ["first"])]
       : [outcome("first", "first")],
   };
 }

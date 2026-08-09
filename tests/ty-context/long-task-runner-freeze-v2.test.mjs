@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { computeAuthorityHashes } from "../../packages/ty-context/dist/lib/long-task-authority.js";
@@ -12,15 +12,17 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
 
 test("Evidence Adapter identity participates in Acceptance Authority", () => {
   const structured = deliveryContract();
   const sameAdapter = structuredClone(structured);
-  sameAdapter.outcomes[0].acceptance.checks[0].runner.type =
-    "project_binary";
+  sameAdapter.outcomes[0].acceptance.checks[0].runner.type = "project_binary";
   const playwright = structuredClone(structured);
-  playwright.outcomes[0].acceptance.checks[0].runner.type =
-    "playwright_test";
+  playwright.outcomes[0].acceptance.checks[0].runner.type = "playwright_test";
   assert.equal(
     computeAuthorityHashes(structured).acceptance_authority_hash,
     computeAuthorityHashes(sameAdapter).acceptance_authority_hash,
@@ -35,15 +37,39 @@ test("runner target resolves from a subdirectory and executes that frozen target
   const fixture = await createDeliveryFixture();
   try {
     await mkdir(path.join(fixture.root, "tools/sub"), { recursive: true });
+    const subdirectoryRoot = `tools/sub/${path.basename(fixtureProductRootPath())}`;
+    await copyFile(
+      path.join(fixture.root, ...fixtureProductRootPath().split("/")),
+      path.join(fixture.root, ...subdirectoryRoot.split("/")),
+    );
     await writeFile(
-      path.join(fixture.root, "tools/sub/oracle.mjs"),
-      'console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:true},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"subdirectory-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]}]}));\n',
+      path.join(fixture.root, "tools/sub/product-observation.mjs"),
+      `const assertion = (key) => "assertion.first.first-check." + key;
+console.log(JSON.stringify({
+  schema_version: "ty-context-product-observation-v1",
+  observations: {
+    "fact.first.observable": true,
+    [assertion("first-result")]: true,
+    [assertion("first-requirement")]: true,
+    [assertion("first-obligation")]: true,
+    [assertion("first-architecture")]: true,
+    [assertion("first-liveness")]: true,
+    [assertion("first-relations-na")]: false
+  }
+}));
+`,
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
+    const rootArgv = fixtureProductRootArgv("product-observation.mjs", "first");
+    fixture.contract.task.execution_targets[0].root_entrypoint =
+      subdirectoryRoot;
+    fixture.contract.task.execution_targets[0].root_argv = [...rootArgv];
     check.runner.cwd = "tools/sub";
-    check.runner.target = "oracle.mjs";
+    check.runner.target = path.basename(subdirectoryRoot);
+    check.runner.argv = [...rootArgv];
     check.verification_inputs = [
-      "tools/sub/oracle.mjs",
+      subdirectoryRoot,
+      "tools/sub/product-observation.mjs",
       "tests/semantic-false.json",
     ];
     await writeContract(fixture.workdir, fixture.contract);
@@ -52,10 +78,21 @@ test("runner target resolves from a subdirectory and executes that frozen target
     const compiled = await compiledContract(fixture.workdir);
     const frozen = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(frozen.runner.resolved_cwd, "tools/sub");
-    assert.equal(frozen.runner.resolved_target, "tools/sub/oracle.mjs");
-    const raw = await executeCheckRunner(frozen, fixture.root);
-    assert.equal(raw.execution_status, "completed");
-    assert.equal(raw.observations.result, true);
+    assert.equal(frozen.runner.resolved_target, subdirectoryRoot);
+    const raw = await executeCheckRunner(frozen, fixture.root, {
+      snapshot_sha256: "1".repeat(64),
+      observation_authorities: frozen.observation_authorities,
+    });
+    assert.equal(raw.execution_status, "completed", raw.error);
+    assert.deepEqual(raw.observations, {});
+    assert.ok(
+      raw.package_observations.some(
+        (observation) =>
+          observation.observation_identity ===
+            "assertion.first.first-check.first-result" &&
+          observation.raw_value === true,
+      ),
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -64,7 +101,10 @@ test("runner target resolves from a subdirectory and executes that frozen target
 test("helper, fixture, Playwright config, package script and lockfile are frozen", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    await writeFile(path.join(fixture.root, "tests/helper.mjs"), "export {};\n");
+    await writeFile(
+      path.join(fixture.root, "tests/helper.mjs"),
+      "export {};\n",
+    );
     await writeFile(path.join(fixture.root, "tests/fixture.json"), "{}\n");
     await writeFile(
       path.join(fixture.root, "tests/ui.spec.mjs"),
@@ -80,48 +120,38 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
       "export default {};\n",
     );
     await writeFile(path.join(fixture.root, "package-lock.json"), "{}\n");
-    const check = fixture.contract.outcomes[0].acceptance.checks[0];
-    fixture.contract.task.execution_targets[0].runtime_family = "browser";
-    fixture.contract.task.execution_targets[0].capabilities = [
-      "browser-runtime",
-      "cold-start",
-      "production-root",
-    ];
+    const outcome = fixture.contract.outcomes[0];
+    fixture.contract.task.execution_targets.push({
+      key: "fixture-browser",
+      description:
+        "Diagnostic browser target used only to freeze its runner inputs.",
+      role: "product",
+      runtime_family: "browser",
+      root_entrypoint: "tests/ui.spec.mjs",
+      capabilities: ["browser-runtime", "cold-start", "production-root"],
+    });
+    const check = structuredClone(outcome.acceptance.checks[0]);
+    check.key = "playwright-freeze";
     check.runner.type = "playwright_test";
     check.runner.target = "tests/ui.spec.mjs";
+    check.execution_target.target_ref = "fixture-browser";
     check.proof_surface = "ui_browser";
-    for (const assertion of check.positive_assertions) {
-      if (!assertion.claims.length) continue;
-      assertion.observation = `playwright.case.${assertion.key}.passed`;
-      assertion.evidence_capabilities = [
-        "interaction_trace",
-        "target_runtime",
-      ];
-    }
-    for (const assertion of check.negative_assertions) {
-      assertion.observation = `playwright.case.${assertion.key}.passed`;
-      assertion.evidence_capabilities = [
-        "interaction_trace",
-        "target_runtime",
-      ];
-      assertion.operator = "equals";
-      assertion.expected = true;
-    }
-    fixture.contract.outcomes[0].product.requirements[0].required_proof_surfaces =
-      ["ui_browser"];
-    for (const obligation of fixture.contract.outcomes[0].technical
-      .obligations)
-      obligation.required_proof_surfaces = ["ui_browser"];
+    check.positive_assertions = [];
+    check.negative_assertions = [];
     check.verification_inputs = [
       "tests/helper.mjs",
       "tests/fixture.json",
       "tests/semantic-false.json",
     ];
+    outcome.acceptance.checks.push(check);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = await compiledContract(fixture.workdir);
-    const frozen = compiled.outcomes[0].acceptance.checks[0];
+    const frozen = compiled.outcomes[0].acceptance.checks.find(
+      (candidate) => candidate.key === "playwright-freeze",
+    );
+    assert.ok(frozen);
     for (const file of [
       "tests/helper.mjs",
       "tests/fixture.json",
@@ -179,6 +209,9 @@ test("zero-test and all-skipped Playwright reports cannot pass", async () => {
       { expected: 0, unexpected: 0, skipped: 1, flaky: 0 },
     ]) {
       const check = structuredClone(base);
+      check.positive_assertions = [];
+      check.negative_assertions = [];
+      check.observation_authorities = [];
       check.runner.type = "playwright_test";
       check.runner.executable = process.execPath;
       check.runner.executable_argv_prefix = [
@@ -187,12 +220,7 @@ test("zero-test and all-skipped Playwright reports cannot pass", async () => {
       ];
       check.runner.argv = [];
       const raw = await executeCheckRunner(check, fixture.root);
-      const evidence = await evaluateCheckEvidence(
-        check,
-        raw,
-        fixture.root,
-        compiled.outcomes[0],
-      );
+      const evidence = await evaluateCheckEvidence(check, raw, fixture.root);
       assert.equal(evidence.status, "test_failed");
       assert.equal(raw.observations["playwright.zero_or_all_skipped"], true);
     }
@@ -203,6 +231,9 @@ test("zero-test and all-skipped Playwright reports cannot pass", async () => {
 
 async function compiledContract(workdir) {
   return JSON.parse(
-    await readFile(path.join(workdir, ".ty-context/compiled-contract.json"), "utf8"),
+    await readFile(
+      path.join(workdir, ".ty-context/compiled-contract.json"),
+      "utf8",
+    ),
   );
 }

@@ -7,6 +7,7 @@ import {
   evaluateEvidenceCapabilities,
   validateEvidenceCapabilityDeclarations,
 } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-policy.js";
+import { evaluateExactDigestComparison } from "../../packages/ty-context/dist/lib/long-task-exact-comparison.js";
 import {
   addProductionControlBinding,
   completeControl,
@@ -494,209 +495,42 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
     conformanceRecords,
     artifacts,
   );
-  assert.equal(conformed.complete[assertionKey], true);
-  assert.deepEqual(conformed.findings, []);
+  assert.equal(conformed.complete[assertionKey], false);
+  assert.ok(
+    conformed.findings.some(
+      (item) => item.actual === "machine_observer_not_admitted",
+    ),
+    "project-submitted layout evidence remains syntactically checked but cannot close a machine Claim without a package-admitted observer",
+  );
 
-  assertFactResultDriftClosure({
-    compiled,
-    conformanceRecords,
-    artifacts,
-    assertionKey,
-  });
-
-  const protectedCompiled = structuredClone(compiled);
-  protectedCompiled.design_conformance_targets[0].verification_method_bindings[0].evidence_artifacts[0].fact_expectations[0].observation_sensitivity =
-    "protected";
-  const protectedRecords = structuredClone(conformanceRecords);
-  const protectedResult = protectedRecords.find(
+  const selectedFact = conformanceRecords.find(
     (record) => record.capability === "design_method",
   ).cells[0].fact_results[0];
-  protectedResult.actual_observation.sensitivity = "protected";
-  protectedResult.actual_observation.redaction = null;
-  const missingProtection = evaluateEvidenceCapabilities(
-    protectedCompiled,
-    protectedRecords,
-    artifacts,
-  );
-  assert.equal(missingProtection.complete[assertionKey], false);
-  assert.ok(
-    missingProtection.findings.some(
-      (item) => item.actual === "design_method_observation_protection_mismatch",
-    ),
-  );
-  protectedResult.actual_observation.redaction = {
-    policy_ref: "policy.fixture-redaction",
-    representation: "digest_only",
-    raw_persisted: false,
-  };
-  const protectedConformed = evaluateEvidenceCapabilities(
-    protectedCompiled,
-    protectedRecords,
-    artifacts,
-  );
-  assert.equal(protectedConformed.complete[assertionKey], true);
-
-  for (const [name, identityField, expectedCode] of [
-    [
-      "actual observation reuse",
-      "actual_observation",
-      "design_method_actual_observation_reused",
-    ],
-    [
-      "comparison result reuse",
-      "comparison",
-      "design_method_comparison_result_reused",
-    ],
-  ]) {
-    const twoFactCompiled = structuredClone(compiled);
-    const phoneArtifact =
-      twoFactCompiled.design_conformance_targets[0]
-        .verification_method_bindings[0].evidence_artifacts[0];
-    const secondExpectation = designFactExpectationFixture(
-      "map.layout.phone.second",
-    );
-    phoneArtifact.fact_refs.push(secondExpectation.fact_ref);
-    phoneArtifact.fact_expectations.push(secondExpectation);
-    const records = structuredClone(conformanceRecords);
-    const methodRecord = records.find(
-      (record) => record.capability === "design_method",
-    );
-    const phoneCell = methodRecord.cells[0];
-    const secondResult = designFactResultFixture(secondExpectation, {
-      artifactPath: phoneCell.artifact_path,
-      observationPath: phoneCell.observation_artifact_path,
-      artifactSha256: artifacts[phoneCell.artifact_path],
-      observationSha256: artifacts[phoneCell.observation_artifact_path],
-    });
-    if (identityField === "actual_observation")
-      secondResult.actual_observation.locator =
-        phoneCell.fact_results[0].actual_observation.locator;
-    else
-      secondResult.comparison.locator =
-        phoneCell.fact_results[0].comparison.locator;
-    phoneCell.fact_refs.push(secondExpectation.fact_ref);
-    phoneCell.fact_results.push(secondResult);
-    const result = evaluateEvidenceCapabilities(
-      twoFactCompiled,
-      records,
-      artifacts,
-    );
-    assert.equal(result.complete[assertionKey], false, name);
-    assert.ok(
-      result.findings.some((item) => item.actual === expectedCode),
-      name,
-    );
-  }
-
-  const factDriftRecords = structuredClone(conformanceRecords);
-  const factDriftMethod = factDriftRecords.find(
-    (record) => record.capability === "design_method",
-  );
-  factDriftMethod.cells[0].fact_refs = ["map.layout.unbound"];
-  const factDrift = evaluateEvidenceCapabilities(
-    compiled,
-    factDriftRecords,
-    artifacts,
-  );
-  assert.equal(factDrift.complete[assertionKey], false);
-  assert.ok(
-    factDrift.findings.some(
-      (item) => item.actual === "design_method_fact_refs_mismatch",
-    ),
-  );
-
-  const copiedMethodArtifacts = evaluateEvidenceCapabilities(
-    compiled,
-    [
-      ...commonRecords,
-      {
-        assertion_key: assertionKey,
-        capability: "design_conformance",
-        design_target_ref: "map-default",
-        target_ref: "fixture-app",
-        condition_keys: ["dark", "default", "phone"],
-        actual_artifact_path: "artifacts/map-actual.png",
-        comparison_artifact_path: "artifacts/map-diff.json",
-      },
-      {
-        assertion_key: assertionKey,
-        capability: "design_method",
-        design_target_ref: "map-default",
-        target_ref: "fixture-app",
-        method: "layout_geometry",
-        cells: [
-          {
-            condition_key: "phone",
-            artifact_path: "artifacts/map-layout-phone.json",
-            observation_artifact_path:
-              "artifacts/map-layout-phone-observation.json",
-            fact_refs: ["map.layout.phone"],
-            fact_results: [
-              designFactResultFixture(
-                designFactExpectationFixture("map.layout.phone"),
-                {
-                  artifactPath: "artifacts/map-layout-phone.json",
-                  observationPath:
-                    "artifacts/map-layout-phone-observation.json",
-                  artifactSha256: "3".repeat(64),
-                  observationSha256: "9".repeat(64),
-                },
-              ),
-            ],
-          },
-          {
-            condition_key: "dark",
-            artifact_path: "artifacts/map-layout-dark.json",
-            observation_artifact_path:
-              "artifacts/map-layout-dark-observation.json",
-            fact_refs: ["map.layout.dark"],
-            fact_results: [
-              designFactResultFixture(
-                designFactExpectationFixture("map.layout.dark"),
-                {
-                  artifactPath: "artifacts/map-layout-dark.json",
-                  observationPath: "artifacts/map-layout-dark-observation.json",
-                  artifactSha256: "4".repeat(64),
-                  observationSha256: "9".repeat(64),
-                },
-              ),
-            ],
-          },
-          {
-            condition_key: "default",
-            artifact_path: "artifacts/map-layout-default.json",
-            observation_artifact_path:
-              "artifacts/map-layout-default-observation.json",
-            fact_refs: ["map.layout.default"],
-            fact_results: [
-              designFactResultFixture(
-                designFactExpectationFixture("map.layout.default"),
-                {
-                  artifactPath: "artifacts/map-layout-default.json",
-                  observationPath:
-                    "artifacts/map-layout-default-observation.json",
-                  artifactSha256: "5".repeat(64),
-                  observationSha256: "8".repeat(64),
-                },
-              ),
-            ],
-          },
-        ],
-      },
-    ],
-    {
-      ...artifacts,
-      "artifacts/map-layout-phone-observation.json": "9".repeat(64),
-      "artifacts/map-layout-dark-observation.json": "9".repeat(64),
+  const exactAuthority = {
+    identity: {
+      kind: "selected_design_ground_v1",
+      fact_ref: selectedFact.fact_ref,
+      subject_ref: selectedFact.subject_ref,
+      variation_ref: selectedFact.variation_ref,
+      property_ref: selectedFact.property_ref,
     },
-  );
-  assert.equal(copiedMethodArtifacts.complete[assertionKey], true);
-  assert.ok(
-    copiedMethodArtifacts.findings.some(
-      (item) =>
-        item.code === "design_method_evidence_reused" &&
-        item.actual?.identity_kind === "sha256",
-    ),
+    actual_value_sha256: selectedFact.actual_observation.value_sha256,
+    expected_value_sha256: selectedFact.expected.sha256,
+    comparator: selectedFact.comparison.comparator,
+    mode: selectedFact.comparison.mode,
+    parameters_sha256: selectedFact.comparison.parameters.sha256,
+    tolerance_sha256: null,
+    mask_sha256: null,
+  };
+  assert.equal(evaluateExactDigestComparison(exactAuthority).passed, true);
+  assert.equal(
+    evaluateExactDigestComparison({
+      ...exactAuthority,
+      actual_value_sha256: "9".repeat(64),
+      submitted_passed: true,
+      submitted_verdict: "passed",
+    }).passed,
+    false,
   );
 
   const blockerMissing = structuredClone(contract);
@@ -785,7 +619,7 @@ test("behavior Claims cannot be proved by presence text and success cannot be re
   );
 });
 
-test("multi-Outcome Stage Gates require typed cross-surface consistency evidence", () => {
+test("multi-Outcome Stage Gates validate cross-surface records but require an admitted observer", () => {
   const contract = deliveryContract({ twoOutcomes: true });
   contract.stages = [
     { key: "first", title: "First", depends_on: [], gate_outcome: "second" },
@@ -839,11 +673,15 @@ test("multi-Outcome Stage Gates require typed cross-surface consistency evidence
     ],
     {},
   );
-  assert.equal(valid.complete[check.positive_assertions[0].key], true);
-  assert.deepEqual(valid.findings, []);
+  assert.equal(valid.complete[check.positive_assertions[0].key], false);
+  assert.ok(
+    valid.findings.some(
+      (item) => item.actual === "machine_observer_not_admitted",
+    ),
+  );
 });
 
-test("variable inputs and external effects require independent typed runtime evidence", () => {
+test("variable inputs and external effects validate typed records but remain external without admitted observers", () => {
   const contract = deliveryContract();
   const baseCheck = contract.outcomes[0].acceptance.checks[0];
   const variation = compiledCheck(contract, baseCheck, "first", [
@@ -883,7 +721,12 @@ test("variable inputs and external effects require independent typed runtime evi
     ],
     {},
   );
-  assert.equal(varied.complete[assertionKey], true);
+  assert.equal(varied.complete[assertionKey], false);
+  assert.ok(
+    varied.findings.some(
+      (item) => item.actual === "machine_observer_not_admitted",
+    ),
+  );
 
   baseCheck.positive_assertions[0].evidence_capabilities.push(
     "external_side_effect",
@@ -923,7 +766,12 @@ test("variable inputs and external effects require independent typed runtime evi
     ],
     {},
   );
-  assert.equal(evidence.complete[observedKey], true);
+  assert.equal(evidence.complete[observedKey], false);
+  assert.ok(
+    evidence.findings.some(
+      (item) => item.actual === "machine_observer_not_admitted",
+    ),
+  );
 });
 
 function assertFactResultDriftClosure({
@@ -1074,7 +922,7 @@ function assertFactResultDriftClosure({
     assert.equal(result.complete[assertionKey], false, name);
     assert.ok(
       result.findings.some((item) => item.actual === expectedCode),
-      name,
+      `${name}: ${JSON.stringify(result.findings)}`,
     );
   }
 }

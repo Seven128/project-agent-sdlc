@@ -51,9 +51,9 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     assert.equal(compiled.claim_coverage.claims_total, 11);
     const check = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(check.runner.resolved_cwd, "");
-    assert.equal(check.runner.resolved_target, "tests/oracle.mjs");
+    assert.equal(check.runner.resolved_target, "bin/product-root.exe");
     assert.equal(
-      check.verification_input_hashes["tests/oracle.mjs"].length,
+      check.verification_input_hashes["bin/product-root.exe"].length,
       64,
     );
     assert.equal(compiled.source_hashes["source.md"].length, 64);
@@ -132,7 +132,7 @@ test("preflight rejects invalid Context, missing runner path and Outcome without
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /node_oracle_path_not_found/,
+      /project_binary_path_not_found:first-check:tests\/missing\.mjs/,
     );
     fixture.contract.outcomes[0].acceptance.checks = [];
     fixture.contract.outcomes[0].acceptance.counterfactual_controls = [];
@@ -176,18 +176,14 @@ test("preflight rejects missing package scripts and UI outcomes without browser 
   }
 });
 
-test("Long-Task Compile consumes the same strict design handoff through target, Claim and root Assertion bindings", async () => {
+test("Long-Task Compile refuses to machine-close strict design methods without package derivation", async () => {
   const fixture = await createDeliveryFixture();
   try {
     await attachDesignResourceHandoff(fixture);
     await writeContract(fixture.workdir, fixture.contract);
-    const compiled = await compileDeliveryContract(
-      fixture.workdir,
-      fixture.root,
-      { require_completion_gate: false },
-    );
     const target =
-      compiled.outcomes[0].product.surface_bindings[0].design_targets[0];
+      fixture.contract.outcomes[0].product.surface_bindings[0]
+        .design_targets[0];
     assert.equal(target.key, DESIGN_TARGET_KEY);
     assert.deepEqual(target.condition_keys, DESIGN_CONDITION_KEYS);
     assert.deepEqual(target.source_paths, [
@@ -210,9 +206,11 @@ test("Long-Task Compile consumes the same strict design handoff through target, 
         "visual_pixel",
       ],
     );
-    assert.equal(
-      compiled.source_items.some((item) => item.key === DESIGN_SOURCE_ITEM_KEY),
-      true,
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /unsupported_observer_requires_external_confirmation:design\.main-default\.layout_geometry\..*:design_conformance:package_derivation_required/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -794,8 +792,8 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
       criterion: "The result remains comparable in the negative scenario.",
       claims: [],
       observation: "result_not_false",
-      evidence_capabilities: ["state_delta"],
-      operator: "not_equals",
+      evidence_capabilities: ["presence"],
+      operator: "equals",
       expected: false,
     });
     outcome.acceptance.counterfactual_controls.push({

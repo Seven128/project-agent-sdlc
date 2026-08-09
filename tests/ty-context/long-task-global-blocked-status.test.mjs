@@ -116,7 +116,7 @@ function addBlockedGlobalCheck(contract) {
         claims: ["constraint.external-service"],
         applicability_ref: "external-service-degradation",
         observation: "result",
-        evidence_capabilities: ["target_runtime", "state_delta"],
+        evidence_capabilities: ["target_runtime", "presence"],
         operator: "equals",
         expected: true,
       },

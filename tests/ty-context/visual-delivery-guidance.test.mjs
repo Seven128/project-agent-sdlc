@@ -147,7 +147,10 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     authoring,
     /generated implementation screenshot\/diff is an Artifact, not the target/iu,
   );
-  assert.match(authoring, /browser or Expo-Web proxy cannot prove a native/iu);
+  assert.match(
+    authoring,
+    /Browser, Expo-Web, native, mobile and desktop UI conformance cannot machine-close a Claim/iu,
+  );
   assert.match(
     authoring,
     /atomic Requirement, applicable Control field or named AC Assertion/iu,
@@ -160,18 +163,21 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   assert.match(authoring, /minimum aggregated Product `surface_bindings`/iu);
   assert.match(
     authoring,
-    /root journey[\s\S]*`navigation_result`[\s\S]*`interaction_trace`[\s\S]*`target_runtime`/iu,
+    /direct-process observer can derive host `target_runtime`[\s\S]*does not currently derive `interaction_trace`/iu,
   );
-  assert.match(authoring, /typed current-execution `design_method` evidence/iu);
+  assert.match(
+    authoring,
+    /project or Playwright `design_method`[\s\S]*remain diagnostic and cannot provide authority/iu,
+  );
   assert.match(authoring, /exact proof-owned `fact_refs`/iu);
   assert.match(authoring, /canonical `fact_expectations` row for every Fact/iu);
   assert.match(
     authoring,
-    /one exact `fact_results` row per Fact[\s\S]*actual observation[\s\S]*pass\/fail verdict/iu,
+    /current package derivation supplies only admitted plain exact\/presence results and host `target_runtime`/iu,
   );
   assert.match(
     authoring,
-    /all-of `design_conformance`, `interaction_trace` and `target_runtime`/iu,
+    /design conformance, interaction, layout, pixel, accessibility, motion[\s\S]*blocking External Confirmations/iu,
   );
   assert.match(
     authoring,
@@ -212,14 +218,14 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     /complete per-resource\/Fact Cell\/Fact\/proof closure/iu,
   );
   assert.match(evidence, /exact handoff `fact_refs`/iu);
-  assert.match(evidence, /full `fact_expectations`/iu);
+  assert.match(evidence, /exact expectation/iu);
   assert.match(
     evidence,
-    /each current `fact_results` row[\s\S]*actual observation[\s\S]*pass\/fail verdict/iu,
+    /project `design_method`, `fact_results`, screenshots and Playwright attachments are repair diagnostics only/iu,
   );
   assert.match(
     evidence,
-    /aggregate Boolean[\s\S]*one `all-states` result[\s\S]*per-Fact rows/iu,
+    /aggregate Boolean[\s\S]*one `all-states` result[\s\S]*per-Fact authority/iu,
   );
   assert.match(
     evidence,
@@ -252,7 +258,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
     evidence,
     /implementation's current screenshot is never its own target/iu,
   );
-  assert.match(evidence, /`ui_browser` proves browser UI only/iu);
+  assert.match(evidence, /`ui_browser` does not create machine proof/iu);
   assert.match(evidence, /stable surface\/control\/target keys/iu);
   assert.match(
     evidence,
@@ -260,7 +266,7 @@ test("Long-Task visual guidance reuses existing authoring and evidence mechanism
   );
   assert.match(
     evidence,
-    /named root-entry journey[\s\S]*required product target root/iu,
+    /Host `target_runtime`[\s\S]*directly executes the process product root[\s\S]*`interaction_trace` has no package derivation/iu,
   );
   assert.match(
     evidence,
@@ -509,7 +515,7 @@ test("default workflow routes Design Authority readiness without adding a visual
     assert.match(content, /Product `surface_bindings`/u);
     assert.match(
       content,
-      /`design_conformance`[\s\S]*typed current-execution record/iu,
+      /project `design_conformance`, `design_method` and `fact_results` records are diagnostic[\s\S]*blocking External Confirmations/iu,
     );
     assert.match(content, /first useful runnable production slice/iu);
     assert.match(
@@ -533,7 +539,10 @@ test("default workflow routes Design Authority readiness without adding a visual
   assert.match(chineseReadme, /Context-reachable Source/iu);
   assert.match(chineseReadme, /新 immutable version/u);
   assert.match(chineseReadme, /Product `surface_bindings`/u);
-  assert.match(chineseReadme, /`design_conformance`[\s\S]*当前执行记录/iu);
+  assert.match(
+    chineseReadme,
+    /项目 `design_conformance`、`design_method` 与 `fact_results` record 只作诊断[\s\S]*阻断性 External Confirmation/iu,
+  );
   assert.match(chineseReadme, /第一个有价值的可运行纵向切片/u);
   assert.match(chineseReadme, /两种 carrier 互斥/u);
   assert.match(chineseReadme, /exactly-one canonical adoption record/iu);

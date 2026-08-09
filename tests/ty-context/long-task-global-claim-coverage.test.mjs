@@ -20,7 +20,10 @@ test("Global non-goals, constraints, and forbidden shortcuts require Global Chec
     statement: "Legacy behavior is not allowed.",
     applicability_refs: [ensureGlobalApplicability(nonGoal)],
   });
-  assert.throws(() => parse(nonGoal), /global_claim_uncovered:GLOBAL\.non_goal\.no-legacy/u);
+  assert.throws(
+    () => parse(nonGoal),
+    /global_claim_uncovered:GLOBAL\.non_goal\.no-legacy/u,
+  );
 
   const constraint = deliveryContract();
   constraint.global.technical.constraints.push({
@@ -70,10 +73,7 @@ test("negative Global non-goal/shortcut proof and positive constraint proof comp
   contract.global.acceptance.checks.push(
     makeGlobalCheck(contract, {
       positive: ["constraint.stable-runtime"],
-      negative: [
-        "non_goal.no-legacy",
-        "forbidden_shortcut.self-report",
-      ],
+      negative: ["non_goal.no-legacy", "forbidden_shortcut.self-report"],
     }),
   );
   const parsed = parse(contract);
@@ -88,9 +88,7 @@ test("negative Global non-goal/shortcut proof and positive constraint proof comp
     true,
   );
   assert.equal(
-    coverage.summary.claims_by_global[
-      "forbidden_shortcut.self-report"
-    ].covered,
+    coverage.summary.claims_by_global["forbidden_shortcut.self-report"].covered,
     true,
   );
 });
@@ -156,11 +154,7 @@ test("Global forbidden paths stay outside Claim coverage and remain statically e
   const coverage = compileProductClaimCoverage(parsed);
   assert.equal(coverage.by_global.length, 0);
   assert.deepEqual(
-    classifyWorkspaceScope(
-      contract,
-      ["secrets/token.txt"],
-      [],
-    ).forbidden,
+    classifyWorkspaceScope(contract, ["secrets/token.txt"], []).forbidden,
     ["secrets/token.txt"],
   );
 });
@@ -201,9 +195,8 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       fixture.workdir,
     ]);
     assert.equal(
-      compiled.claim_coverage.claims_by_global[
-        "constraint.global-runtime"
-      ].covered,
+      compiled.claim_coverage.claims_by_global["constraint.global-runtime"]
+        .covered,
       true,
     );
     const explained = await runCli(fixture.root, [
@@ -217,9 +210,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       ),
     );
     assert.ok(
-      explained.claims.some(
-        (claim) => claim.claim === "OUTCOME.first.result",
-      ),
+      explained.claims.some((claim) => claim.claim === "OUTCOME.first.result"),
     );
 
     const receipt = await runCliFailure(fixture.root, [
@@ -246,11 +237,8 @@ function makeGlobalCheck(
   { positive = [], negative = [], expected = true },
 ) {
   const applicabilityRef = ensureGlobalApplicability(contract);
-  const check = structuredClone(
-    contract.outcomes[0].acceptance.checks[0],
-  );
+  const check = structuredClone(contract.outcomes[0].acceptance.checks[0]);
   check.key = "global-claim-check";
-  check.runner.argv = ["first", "global-claim"];
   check.positive_assertions = positive.length
     ? [
         ...positive.map((claim, index) => ({
@@ -259,7 +247,7 @@ function makeGlobalCheck(
           claims: [claim],
           applicability_ref: applicabilityRef,
           observation: `global_positive_${index + 1}`,
-          evidence_capabilities: ["target_runtime", "state_delta"],
+          evidence_capabilities: ["target_runtime", "presence"],
           operator: "equals",
           expected,
         })),
@@ -276,15 +264,15 @@ function makeGlobalCheck(
     : [];
   check.negative_assertions = negative.length
     ? negative.map((claim, index) => ({
-          key: index === 0 ? "global-negative" : `global-negative-${index + 1}`,
-          criterion: "The declared Global negative Claim is satisfied.",
-          claims: [claim],
-          applicability_ref: applicabilityRef,
-          observation: `global_negative_${index + 1}`,
-          evidence_capabilities: ["target_runtime", "state_delta"],
-          operator: "equals",
-          expected: false,
-        }))
+        key: index === 0 ? "global-negative" : `global-negative-${index + 1}`,
+        criterion: "The declared Global negative Claim is satisfied.",
+        claims: [claim],
+        applicability_ref: applicabilityRef,
+        observation: `global_negative_${index + 1}`,
+        evidence_capabilities: ["target_runtime", "presence"],
+        operator: "equals",
+        expected: false,
+      }))
     : [];
   return check;
 }

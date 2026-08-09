@@ -1,45 +1,45 @@
 <!-- ty-source-item:start key=real-capability-closure-result kind=outcome_result -->
-Long-Task 的真实能力与防劣化闭环必须完成四个不可拆散的结果：立即关闭 selected-design `exact_value + exact` 的已知假阳性；同步让关键哨兵和能力声明治理能够证明其宣称防御的错误候选确实被拒绝；明确选择并落实把普通模型编写 verifier 的错误纳入威胁模型的 Observer/TCB 路线 B；最后用确定性攻击/控制组、当前候选 Trust/full/package 验证、受控脱敏真实项目回放和只用于遵循率/ROI 的 fresh-agent 证据完成准入。P0 完成只证明关闭一个确定漏洞，在可信观察闭环和真实回放完成前不得恢复“Long-Task 已高水准抵御模型自然漂移并保证最终无漂移交付”的宽泛声明。
+当前候选只达到 Level 3：已对声明的已知反例建立可执行保护。P0 exact 重算、防虚假能力声明治理、package-admitted static/process exact observer、生产载体冻结、host-derived process runtime、Counterfactual actual-impact 与黑盒攻击/控制报告已形成当前实现边界；但 Level 4 仍由 `independent-capability-audit` 与 `real-process-workload-roi` 两个阻断型 External Confirmation 明确拦截。在二者完成并形成新的 Source/Contract Revision 前，不得宣称 Long-Task 已在明确 TCB 内高水准实现全部设计目的。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=material-input-provenance kind=requirement -->
-本 Source 是本 Goal 唯一的项目原生需求载体，完整归并三类输入：原方案附件 `pasted-text.txt`，其 SHA-256 为 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`；Codex 对该方案的仓库证据审计与修正；用户粘贴的 GPT Pro 最终裁决。附件中未被最终裁决推翻的要求继续有效；Codex 审计对绝对有效性、observer 文件年龄、challenge、通用 artifact 解析、重复设计 Fact 体系、generated carrier、Counterfactual、benchmark、v4 和能力措辞的修正优先；GPT Pro 明确批准的路线 B 和工作包 0–4 是最终用户 Authority。任何压缩或恢复都必须从本 Source、Contract、Active Authority 和 owning Context 重建，而不是依赖对话记忆。
+本 Source 是本 Goal 唯一的项目原生需求载体，完整归并原方案附件 `pasted-text.txt`（SHA-256 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`）、Codex 仓库证据审计、GPT Pro 最终裁决，以及用户批准的《Long-Task 真实能力闭环补开发方案 V2》。V2 以 `0f35e08a` 为历史基线并收紧剩余 observer/runner/runtime/production-reachability 边界；冲突时以 V2 和本 Source 的诚实 Level 3 交接为准。压缩或恢复必须从本 Source、Contract、当前 Context 与代码重建，不得从旧 compiled/progress/Receipt 或对话记忆继承完成结论。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=declared-assurance-theorem kind=requirement -->
-正式能力定理必须限制在完整、准确的声明范围、预期细粒度、机器索引的 Fact×条件×方法宇宙和已准入观察/TCB 内：任何仍存在于该宇宙且能由准入观察链发现的当前生产漂移，不得进入 `machine_accepted`；无法建立可信机器观察的 Fact 保持未完成或进入 External Confirmation。该定理不得扩张为自动发现未表达意图、证明任意 Oracle 语义正确，或抵御 TCB 外的一切模型与宿主行为。
+目标机器定理限制在完整准确的声明范围、预期细粒度、机器索引的 Fact×条件×方法宇宙和明确的 package-admitted TCB 内：`machine_accepted` 只能由未漂移 expected Authority、当前 package actual、Harness comparison/verdict、可归因 production carrier 或 direct process root、因果 Counterfactual 和当前 Final Gate 快照共同推出；unsupported obligation 必须保留为阻断型 External Confirmation。当前交付仅声明已保护已知反例的 Level 3，不把待独立审计的目标定理当作已经自证成立。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=assurance-causal-chain kind=requirement -->
-完成链必须保持单向：完整准确 Source Authority → 无遗漏保义的细粒度 Fact 投影 → Fact×适用条件×所需方法闭包 → 从当前生产目标采集 actual → Harness 或其直接调用的冻结 comparator 重算比较 → 每个 Fact 可独立归因且通过因果敏感性验证 → 同一当前快照的唯一 Final Gate → `machine_accepted`。代码、项目 verifier、自报结果、历史 Receipt 或 prose 不得反向成为 expected Authority。
+完成链保持单向：完整准确 Source Authority → 无遗漏保义的细粒度 Fact 投影 → Fact×适用条件×所需方法闭包 → package static pre-run carrier 或 Harness 直接启动的 process product root 所产生的当前 actual → `evaluateExactDigestComparison(...)` 重算 comparison/result identity/verdict → admitted baseline/mutated actual 的因果 Counterfactual → 同一当前快照的唯一 Final Gate。代码、项目 verifier、项目 v3 actual/pass/verdict/runtime/interaction/state 记录、历史 Receipt 或 prose 都不能反向成为 expected 或 terminal Authority。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=known-selected-design-false-acceptance kind=risk_fact fact=critical_user_path outcome=p0-exact-recomputation -->
-当前已知 critical false-acceptance 位于 selected-design evidence runtime：正向 fixture 的 expected digest 为 `"a".repeat(64)`、actual digest 为 `"f".repeat(64)`，但 comparison `passed: true` 和 verdict `passed` 仍被接受；ground 与 symbolic 路径只校验 identity、authority、artifact 与提交字段的一致性，没有执行 `actual == expected` 或重算 comparison result identity。非 UI `semantic_fact` 路径已经执行 exact 摘要比较并重算 identity，因此缺陷必须 owner-local 修复，不能笼统重写整个 Evidence Kernel。
+历史 critical false-acceptance 是 selected-design `exact_value + exact` 路径曾接受 actual digest 与 expected digest 不同但项目自报 `passed` 的候选。该事故已被 owner-local exact evaluator 与 V1/V2 负向回归关闭，现作为冻结反例保留；它不能再被描述为当前开放漏洞，也不能单独证明 observer、生产可达性或 Level 4。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=p0-positive-fixture-correction kind=requirement -->
-默认 selected-design 正向 fixture 必须使 `actual_observation.value_sha256 == expected.sha256`；任何 mismatch 必须由测试显式构造并断言失败，禁止正向 fixture 继续内含实际不一致却自报通过的 Fact。
+selected-design 正确控制的 actual digest 必须等于 expected digest；mismatch 只能出现在独立负向控制中并由 Harness exact owner 拒绝。该边界已由当前 V1/V2 fixture 与共享 evaluator 回归保护，仍需独立审计确认本次整体能力声明没有超出测试范围。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=p0-v1-negative-control kind=requirement -->
-V1 ground 必须具有独立负向控制：`actual != expected` 同时项目提交 `comparison.passed = true`、`verdict = passed` 时，Harness 必须在 selected-design comparison owner 处拒绝，错误 ground truth 不能由被测 verifier 生成，且失败需定位到 exact comparison/result identity 语义而非无关 schema。
+V1 ground 负向控制固定 `actual != expected` 且项目提交 `comparison.passed = true`、`verdict = passed` 的攻击，Harness 必须在共享 exact comparison/result identity owner 拒绝，ground truth 不由项目 verifier 生成。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=p0-v2-negative-control kind=requirement -->
-V2 symbolic 必须具有与 V1 同构的独立负向控制：规则/区域对应的 actual digest 与 frozen expected digest 不同而项目自报通过时必须被拒绝；V2 的规则、区域、certificate identity 仍按既有 symbolic owner 校验，不得因为修 exact 而弱化 V2 的 extensional closure。
+V2 symbolic 负向控制与 V1 同构：Rule/region actual digest 与 frozen expected 不同而项目自报通过时必须拒绝，同时保持 V2 Rule、region、certificate identity 和 extensional closure 的既有约束。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=shared-exact-comparison-owner kind=requirement -->
-提取或复用一个共享 exact comparison primitive，输入至少包含 actual digest、expected digest、comparator、mode、parameters、tolerance 和 mask，输出由 Harness 计算的 comparison result 与 result identity。selected-design runtime 必须复用非 UI exact/result-identity 的既有语义或共享底层 primitive，消除两条路径的重复真相；项目提交的 `passed`/`verdict` 只能作为兼容冗余，与 Harness 结果不一致时 fail closed。
+V1 ground、V2 symbolic、non-UI semantic Fact、static observer 与 process observer 全部复用 `evaluateExactDigestComparison(...)` 及其 result-identity owner；exact 只允许 exact mode，tolerance/mask 为空，actual 与 expected 不等即失败，项目 `passed`/`verdict` 仅为可选诊断副本且不一致时 fail closed。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=p0-owner-local-and-v3-compatible kind=requirement -->
-P0 严格 owner-local：主要修改 `packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts`、必要的共享 exact primitive、`tests/ty-context/long-task-delivery-fixtures.mjs`、现有 `tests/ty-context/long-task-semantic-drift-closure.test.mjs` 和现有哨兵 rationale。P0 不改变 schema，不为了局部比较修复发布 v4，不新建测试 registry、生命周期状态或第二套 Fact taxonomy。
+P0 没有为局部 exact 修复发布 v4；公共项目结果仍为 v3，新的产品 observation 使用独立 `ty-context-product-observation-v1` stdout envelope，权威 observation/comparison/runtime attestation 留在 Harness 内部。未来只有跨进程表达新的 browser/native session authority 等无法由当前边界保义承载时才评估 v4。
 <!-- ty-source-item:end -->
 
-<!-- ty-source-item:start key=p0-verification-boundary kind=acceptance -->
-P0 当前候选必须依次通过 focused exact mismatch tests、`selected-design-fact-closure`/新强化的 `selected-design-exact-verdict-recomputation` critical sentinel、Long-Task Trust Boundary Gate、affected tests 和完整 package regression；还需证明旧行为接受冻结反例而修复候选拒绝它。P0 通过不得被表述为完整设计目的已恢复。
+<!-- ty-source-item:start key=p0-verification-boundary kind=requirement -->
+P0 的 focused exact mismatch、V1/V2 控制、critical sentinel、Trust 与 package regression 只能证明对应 exact owner 的已知反例保护；不得据此把 self-delivery 当前候选提升到 Level 4。整体 Level 4 仍需独立能力审计和真实 process workload ROI。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=purpose-validity-floor-before-relative-antidegradation kind=requirement -->
@@ -55,7 +55,7 @@ P0 当前候选必须依次通过 focused exact mismatch tests、`selected-desig
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=critical-sentinel-positive-negative-controls kind=requirement -->
-每个高层 critical sentinel 至少绑定：一个正确候选通过；一个直接违反该能力的错误候选失败；独立于被测 verifier 的 ground truth；修改真实生产语义的 mutation；在声明 owner/Fact/Assertion 边界的预期定位；以及证明合法共享执行、容差、mask 和动态值不会被误阻的控制组。继续复用 `CRITICAL_TEST_SENTINELS`，不新增第二 registry。
+现有 `CRITICAL_TEST_SENTINELS` 复用四个唯一 canonical 边界：`observer-admission-no-bypass` 对应 R1，`static-carrier-pre-run-freeze` 对应 R7b，`host-derived-target-runtime` 对应 R3，`counterfactual-production-observation-impact` 对应 R8。每个 sentinel 必须绑定准确的正/负控制、真实 owner、完整 runtime 路径和明确的不证明内容；不得用 tolerance/mask、native/UI 或字符串存在性扩大 rationale。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=incident-counterexample-first-rule kind=requirement -->
@@ -63,51 +63,51 @@ P0 当前候选必须依次通过 focused exact mismatch tests、`selected-desig
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=sentinel-rationale-evidence-bounded kind=requirement -->
-现有 critical sentinel rationale 和测试策略描述不得超过实际正负控制证明的范围。`selected-design-exact-verdict-recomputation` 应强化现有 semantic-drift-closure 测试和现有 registry 项，不必新建测试文件；如果测试只证明 exact digest 重算，就不得声称已证明任意 observer、任意 UI 格式或完整 live-session 真实性。
+critical sentinel 的 rationale 只能覆盖其 canonical 黑盒反例与正确控制实际证明的 owner 边界；固定 test ID、workflow terminal 和 wrong/control 对照必须来自当前 invocation 的独占 machine report，不能由 aggregate Boolean、命令 exit 0 或源码 token 存在替代。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=capability-claim-levels kind=requirement -->
-正式开发与发布结论只使用四级能力表述：已设计；已实现；已建立已知反例保护；在明确 TCB 内已高水准实现设计目的。最高级必须同时具备明确支持范围/TCB、Source 与投影闭包、独立当前 actual、Harness 重算 verdict、关键攻击全拒绝、正确控制组通过、黑盒 Final Gate、至少一个真实或脱敏真实项目回放、无开放 critical counterexample 和机制 ROI 准入。GPT、Codex、人工 prose 审计、文档声明、测试数量或单次 benchmark 都不能提升等级。
+正式结论保持四级：Level 1 已设计、Level 2 已实现、Level 3 已建立声明内已知反例保护、Level 4 在明确 TCB 内高水准实现设计目的。当前候选最多为 Level 3；只有 `independent-capability-audit` 和 `real-process-workload-roi` 都完成、无开放 critical counterexample 且 Source/Contract 显式修订后才可进入 Level 4。GPT/Codex/人工 prose、文档、绿测数量、旧 Receipt 或 fresh-agent 汇总都不能自行提升等级。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=route-b-project-owner-decision kind=technical_obligation aspect=architecture -->
-项目 owner 本次明确选择 Observer/TCB 路线 B：普通模型编写 verifier 的错误属于威胁模型。路线 A——继续完全信任正确冻结 verifier/runner TCB 并将能力声明收窄为“阻止该 TCB 已正确观察的漂移”——保留为被拒绝的本次选择和兼容理解，不得作为无限期延期路线 B 的理由。路线 B 是恢复宽泛设计目的声明的必要闭环，必须在本 Goal 内设计、实现和验证。
+项目 owner 继续选择路线 B：普通模型编写 verifier 的错误、自报 actual/verdict/runtime、历史 session、代理 target 和纯 evidence carrier 属于威胁模型。首版实现只准入 package static JSON exact 与 package direct-process JSON exact；其他 observer 诚实进入 External Confirmation，不以保留 custom Oracle 的机器兼容换取表面兼容。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=observation-channel-authority kind=requirement -->
-能关闭 machine Claim 的观察通道必须按能力和完整观察链准入，而非按文件年龄：package-owned/admitted observer；Harness 直接调用且依赖闭包冻结的 executable comparator/adapter；经明确冻结 TCB、当前 snapshot、生产可达性和因果控制证明的项目 observer。项目 verifier 不能仅凭自报 actual digest、comparison、passed 或 verdict 关闭 material/selected-design Claim；无法满足准入能力时必须 fail closed 或使用现有 External Confirmation。
+machine obligation 只允许两类 package-admitted 当前 Actual：A）runner 前已存在且在全部 raw execution 前统一冻结、runner 后 identity/digest 未变化的 static UTF-8 JSON exact carrier；B）Harness 在隔离 runtime-closure snapshot 中直接启动 `process/product/root` 并从 bounded stdout 捕获的 `ty-context-product-observation-v1` exact envelope。其他 custom/named project Oracle、wrapper、browser/native/device/layout/pixel/a11y/motion、protected/tolerance/mask/custom locator 都必须 External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=expected-actual-comparison-verdict-ownership kind=technical_obligation aspect=architecture -->
-expected 的值/定位摘要与比较 Authority 由 Source、canonical design resource 和 Contract 冻结；actual 由当前生产 target/session 的准入 observer 从声明 artifact/locator 提取；comparison 与 result identity 由 Harness-owned primitive 或 Harness 直接调用的冻结 comparator 计算；最终 verdict 由 Evidence Kernel/Final Gate 从重算结果得出。项目 runner 可提交原始观察、环境、artifact、locator 和兼容冗余字段，但不得同时拥有 expected、actual、comparison 和 authoritative verdict。
+Expected 由 Source/Context/canonical resource/Contract 持有；Actual 由 package static 或 direct-process adapter 持有；comparison/result identity/verdict 由 Harness exact owner持有；terminal 只由当前快照 Final Gate 持有。项目 runner 只能启动产品、提供输入/诊断或提交兼容 v3 副本，不能拥有 authoritative actual、passed、verdict、target-runtime authenticity、interaction、state 或 production reachability。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=bounded-admitted-artifact-contract kind=requirement -->
-首版 artifact contract 冻结为 package-owned `json-pointer-exact-v1`：只接受仓库/Check 准入根内、当前执行收集的 UTF-8 JSON，locator 只允许 RFC 6901 JSON Pointer（对象键和 canonical 非负数组下标；禁止 URI fragment、wildcard、filter 和 custom locator），值按现有 canonical JSON 语义规范化（对象键排序、数组顺序保留、JSON scalar/null 精确保留）后摘要；只支持 `exact_value + exact` 且 tolerance/mask 必须为空。单文件上限 1 MiB、嵌套深度 64、pointer 4096 字节/128 段、单个规范化值 256 KiB、每 Check 最多 256 个 observation artifact 且总计 16 MiB；路径必须 containment/no-follow 并拒绝 symlink/path escape，JSON 重复对象键和非 JSON 数值 fail closed。plain 值可在内存规范化但不新增 raw evidence；protected 值首版不从普通 JSON artifact machine-accept，只允许直接调用的冻结 adapter 或 External Confirmation。extractor/comparator 的 package identity/version/spec digest 必须冻结。首版不扩展成布局树、可访问性树、时间线、像素或任意 custom locator 的通用 UI 观察框架。
+static 首版只支持 pre-existing unchanged UTF-8 JSON、RFC 6901 JSON Pointer、plain `exact_value + exact` 与既有 size/depth/pointer/canonical JSON/no-follow 限制；它只证明当前结构/config carrier 内容。process 首版只支持 `runtime_family=process`、`role=product`、direct root entrypoint、plain exact JSON stdout；一个 raw execution 的一个 bounded envelope可承载多个 obligation identity，extra/missing identity 均拒绝。两类都不扩张为通用 UI/native observer。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=actual-artifact-reextraction kind=requirement -->
-对于 `json-pointer-exact-v1`，Harness 必须从当前 artifact 与 locator 重新提取、规范化 actual 并计算 digest，不能只相信 runner 提交的 `value_sha256`；提交值、Harness 重算值和冻结 expected 任一不一致都 fail closed。该路径只准入 package-owned extractor，或由 Harness 直接调用且 digest/version/capability 冻结的 adapter；v3 没有可安全表达直接调用入口的任意项目 executable，因此普通 `named_external_tcb`/项目 runner 的自报 JSON 不能单独 machine-accept。无法由 package 解析的 custom locator、protected raw 值、live native/session、layout/a11y/motion/pixel/tolerance/mask 首版保持 External Confirmation。P0 的 digest equality 是第一步，不能被误称为任意 artifact authenticity。
+static adapter 从 runner 前冻结且 runner 后未变的 carrier 重新提取 JSON Pointer 值并摘要；process adapter 从 Harness 捕获的产品 root stdout envelope 重新提取 actual。两者都调用共享 exact evaluator，并拒绝项目提交 actual/pass/verdict 与 Harness 结果不一致；不能直接绑定该静态对象或 root exact JSON 输出面的 Claim 必须 External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=challenge-is-freshness-only kind=requirement -->
-Final Gate challenge/nonce 只用于拒绝直接复用旧截图、旧 session JSON 和旧 evidence payload；若未来准入 live-session，它必须绑定当前 invocation、candidate Git commit/tree、workspace snapshot、runner/build identity、target process/session、启动/采集时间和操作轨迹。首版 `json-pointer-exact-v1` 只接受 Final Gate 当前执行重新收集并绑定当前 snapshot/hash 的静态 JSON，不以新增 challenge 字段伪装 live-session 可信度；native/live 继续 External Confirmation。challenge 不是信任根，因为项目 runner 可以读取并回显新 challenge；主动伪造还必须由准入 observer、expected/actual 隔离、Harness comparator、生产可达性和 Counterfactual 共同防御。
+direct-process adapter 不向 child 暴露 output path、challenge、protocol 或 Harness 专用环境变量；Harness 仅在 host attestation 内持有一次性内部 nonce，并从受限 stdout 捕获唯一 envelope。nonce 只绑定一次执行 freshness，不证明 root 语义、session 真实性或 observer soundness；真实性还依赖直接 root、隔离 closure、pre/post freeze、package extraction、exact comparison 与 Counterfactual。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=generated-carrier-semantic-role kind=requirement -->
-carrier 准入按语义角色而非路径年龄或一刀切路径名单判断：纯 evidence/report/status/comparison/Receipt/历史 session 产物不得充当生产 carrier；由构建生成且被真实产品 target 消费的 bundle、配置或编译产物可以作为生产 carrier；只被 verifier 读取的生成物不能证明生产可达性。不得笼统禁止所有 `expected_output_paths`，而要证明其是否进入产品 target 的真实依赖或运行时读取链。
+纯 evidence/report/status/comparison/Receipt/verifier output/历史 session 不能成为 production carrier。静态生成配置只有在 Final Gate 前已存在于 candidate snapshot、属于声明 Binding carrier 且 runner 未修改时才可证明该结构本身；运行时生成物只有通过 direct-process root 的 package observation 和 Counterfactual actual-change 才能证明 production reachability。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=expected-to-actual-self-proof-rejection kind=requirement -->
-必须阻止 expected→actual 自证：actual artifact/locator 不得指向 Contract、handoff、expected resource 或 comparison artifact；actual 必须来自当前 target/session 或其真实消费的构建产物；同任务 verifier 不能独立关闭关键 Claim；生产语义 mutation 后 actual 必须按声明影响集发生变化。静态扫描 verifier 是否读取 expected 只能作为诊断，不能成为唯一安全边界。
+Expected/Source/Contract/Context/canonical resource、verification input 和 evidence/report/status 路径不能充当 Actual；custom Oracle 或项目 wrapper 不能关闭 machine Claim。static carrier 必须 pre-existing unchanged，process actual 必须来自 Harness 直接启动的产品 root stdout，项目 v3 actual/pass/verdict/runtime 只作诊断副本。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=production-reachability kind=requirement -->
-敏感 Counterfactual 的 Binding 必须能证明至少一种生产可达性：位于 target root 的冻结静态依赖闭包；进入生产 bundle/build manifest；属于 target 运行时直接读取路径；或 mutation 被准入 observer 证明改变了当前目标 actual。只被 verifier 或报告生成器消费的路径不得用于关闭生产语义 Claim。
+静态 observation 只证明被观察结构/config 对象的当前内容，不自动证明运行时消费。runtime production reachability 只由 `Harness mutation → 重新 prepare/freeze 隔离 closure → 直接启动同一 product root → package 捕获对应 actual 改变` 建立；Binding/input 路径声明、synthetic status、generated evidence 或 verifier wrapper 均不足。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=counterfactual-actual-change-and-impact-set kind=requirement -->
-Counterfactual 不只检查 Assertion 从 true 变 false，还必须比较 baseline 与 mutated actual，保持 target liveness，并对声明的受影响 Fact 集逐项产生可归因失败。一个中心 token/carrier 可以合法影响多个相关 Fact，但每个 Fact 仍需独立 locator/result；影响集必须精确声明，允许真实 fan-out，禁止把“所有无关 Fact 都不变”写成不可能约束，也禁止一个 aggregate `/status` 关闭无直接因果关系的异质 Claim。
+machine Counterfactual 必须同时拥有合法 baseline 与 mutated package observation，且 obligation universe 完全相同；expected affected Facts 必须变化，preserved Facts 与 target liveness 不得变化，其他变化只能属于显式 allowed fan-out。没有 admitted observation 时不得跳过；static 只证明结构，process 必须重新执行同一 direct root。当前 self-delivery 的所有 semantic Counterfactual 都明确交由 External Confirmation，不用项目 verifier 自证。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=selected-design-existing-owner-preservation kind=requirement -->
@@ -115,87 +115,95 @@ Counterfactual 不只检查 Assertion 从 true 变 false，还必须比较 basel
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=no-universal-ui-observer kind=non_goal -->
-首版明确不建设任意 HTML/native/UI 的通用理解、布局、像素、无障碍、时间线或 custom locator 框架，不承诺证明任意 Oracle 语义真实性，也不通过多加字段制造伪 TCB。支持范围外的 target/Fact 必须诚实转为 External Confirmation，后续格式只能经独立机制准入与收益证据扩展。
+本轮不建设 browser/native/device、布局、像素、无障碍树、motion timeline、OCR 或任意 custom locator 的通用观察框架，也不把产品自定义 instrumentation 映射成任意内部/UI事实后冒充 package observer。无法把 Claim 直接绑定 pre-existing static JSON 结构或 direct product root 的 exact JSON stdout surface 时，必须保留阻断型 External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=v3-v4-and-migration-rule kind=requirement -->
-P0 与首版 `json-pointer-exact-v1` 使用 v3 已有 artifact path/hash、JSON Pointer、Oracle/environment 和 comparison 字段，由 compiled/current-evidence 内部元数据补充 package adapter identity 与资源上限，因此不发布 v4；任意外部 executable 直接调用描述、可信 live-session handle/challenge/trace 或新 observation authority 若无法用 v3 保义表达，才发布 v4。若需要 v4，必须同步 schema、types/codec/decoder、managed source、Context、英文/中文 README、package README、examples、tests、source sync、tarball/consumer 验证和迁移说明；旧 Active Authority 不得自动迁移为通过，verifier/Authority identity 变化必须重新 Compile，旧 v3 selected-design 自报结果不能自动升级为通过。
+公共 project result 保持 `long-task-check-result-v3`，同名 actual/pass/verdict/target_runtime/interaction/state/design records 全部降为诊断或一致性副本；产品 direct-process 输出使用独立 `ty-context-product-observation-v1` bounded stdout envelope，child 不接收 output/challenge/protocol env。TCB 与 Compile policy 变化要求重新 Compile/Authority Revision，旧 Progress/Receipt 不可复用；未来 browser/native session handle 确需跨进程权威表达时再单独裁决 v4。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=attack-suite-ground-truth kind=requirement -->
-确定性 attack suite 的 hidden ground truth 由测试 harness/package owner 持有，不由项目 verifier 生成。必须覆盖：A1 actual≠expected 但自报 pass；A2 expected 复制为 actual；A3 Anatomy 错而局部控件正确；A4 整体视觉模式错误；A5 主要行动层级错误；A6 大量异质 Assertion 共读 aggregate status；A7 mutation 指向纯 evidence carrier；A8 历史 native session；A9 H5/browser 代理冒充 native target；A10 旧截图与当前 tree 不一致；A11 task-authored verifier 是唯一 material Oracle；A12 asset_integrity 错误关闭 layout/a11y/motion。每个失败必须定位到对应 owner，而非无关 fixture/schema。
+当前黑盒攻击集固定覆盖 R1 custom Oracle expected-as-actual、R1b Expected/verification input 充当 static actual、R2 runner 新建 static carrier、R3 历史 target-runtime 自证、R4 browser 代理 native、R5 synthetic status Binding、R5b evidence-role static carrier、R6 verifier wrapper、R6b argv wrapper、R7 runner 修改 frozen carrier、R7b cross-execution priming、R7c process input mutation、R8 Counterfactual mutated observation 缺失。每个 case 使用固定 ID、真实 Contract→runner→admission→Counterfactual→Final Gate 路径与独立 terminal report；不得以内部 policy error 或 aggregate Boolean代替。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=valid-control-suite kind=requirement -->
-正确控制组必须证明：合法 tolerance 与动态 mask；一次 render/artifact 被多个 Fact 使用但 locator/result 独立；中心 token 合法影响多个细粒度 Fact；正确 scoped reference+constraint；准入的当前 native session；能力完整且冻结的 observer；正确 exact 候选；非 UI Long-Task 现有行为；普通 Workflow Contract 零新增运行成本；以及无可信机器观察时 External Confirmation 不被误当失败或 machine acceptance。
+正确控制组固定为：pre-existing 且 runner 前后 unchanged 的 static JSON structure machine-accepted；Harness 直接启动 process product root、同一 envelope承载多个 observation identity并在合法 Counterfactual 中观察到 affected/preserved/fan-out 关系的 process control machine-accepted；unsupported browser/native/layout/visual 等保留 `blocked_external`/external-pending 而绝不 machine-accept。普通历史文件仅作诊断时不误阻。
 <!-- ty-source-item:end -->
 
-<!-- ty-source-item:start key=black-box-final-gate-lifecycle kind=acceptance -->
-黑盒验证必须走真实 Long-Task 生命周期并在同一当前候选上完成 Preflight/Compile、candidate、Final Gate，证明错误候选不能获得 `machine_accepted`、正确候选可以通过、开放外部确认保持 pending、protected inputs/candidate/snapshot 变化会失效，并且失败原因落到具体 Fact/method/observer/production-carrier 边界。历史 Progress、Receipt、targeted pass 或 prose inspection 不是该证据。
+<!-- ty-source-item:start key=black-box-final-gate-lifecycle kind=requirement -->
+能力安全证据读取当前 invocation 独占临时路径中的 Node machine report：固定 case ID、candidate role、workflow terminal、expected relation、wrong case 的 control_case_id、reporter pass/skip/fail 计数必须集合完整、无重复且相互一致。每个 wrong terminal 必须与正确 static/process 或 external-pending control 按边界配对；源码 `contains(token)`、命令 exit 0、汇总 Boolean、旧 report/Receipt 都不能生成 runtime capability actual。该证据支持 Level 3，不能代替独立审计。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=starward-sanitized-replay kind=requirement -->
-恢复“在明确 TCB 内已高水准实现设计目的”前必须完成一个受控脱敏的 Starward 派生真实项目回放，至少包含地图页、点位详情、点位夜空、“我的”页、selected design、错误与正确生产实现、自证 verifier、历史 native session 和 H5 代理路径；hidden ground truth 由 harness 持有。Starward 回放不是 P0 的前置条件，但属于本 Goal 最终能力声明恢复的前置条件。
+现有 Starward 材料只能证明脱敏 fixture 内部形态与回放规则，不包含可独立核验的原事故设计源、生产截图、运行证据或明确的“原事故事实→脱敏 fixture”映射，因此不得声称真实事故覆盖率或以它恢复 Level 4。未来补齐原始材料时必须作为新的受控外部证据审查。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=fresh-agent-benchmark-boundary kind=requirement -->
-fresh-agent 配对实验复用现有冻结任务、隐藏 probe、独立配对和 2/3→必要时 3/5 的治理，只衡量 Agent 遵循率、首次发现时间、返工、Contract/Compile/Final Gate 成本、target 采集次数、token、总时长、Authority 体积、迁移与维护成本。它不得证明安全定理、关键假阳性为零或替代 deterministic attack suite、黑盒 Final Gate 与真实回放；若增设 track，应沿用现有 benchmark owner 而非第二框架。
+现有 fresh-agent 汇总只能条件性说明 authoring 遵循率与局部 ROI；五组原始 pair report、aggregate report 的独立原始 JSONL trace、评分过程及 model/provider identity未完整保留，因而不能用于安全定理、零假阳性或高置信度实验结论。后续 benchmark 只测 machine/external 选择、authoring token、诊断修复轮数、wall time 与 false blocking。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=roi-admission-order kind=requirement -->
-机制 ROI 按字典序准入：先满足目的有效性下限和 known attack rejection；再保证 valid control false blocking 不增加；再证明相对 coverage/fail-closed/Authority 不劣化；最后比较总时间、token、存储、维护、迁移和用户等待成本。性能或成本结论必须声明 workload、baseline/budget、环境、comparator/tolerance 和项目自有测量；不得用静态 shape 或一次 anecdotal run 代替。
+ROI 必须在目的有效性与 valid-control 非劣化之后评估。恢复 Level 4 前必须由 `real-process-workload-roi` 提供至少一个真实 Long-Task process workload 的 baseline/candidate 配对，明确 workload、环境、authoring/Compile/Verify/Counterfactual/Final Gate 成本、返工、错误完成率、总时长、comparator/tolerance，并证明新增成本保持正 ROI；旧 fresh-agent 汇总和 Starward fixture 不承担该结论。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=early-real-entry-feedback kind=requirement -->
-material UI + selected design 在第一个有用的真实生产入口可运行且早期定位收益高于运行成本时，建议用最终同类 observer 做一次页面 Anatomy、信息/行动层级、整体视觉模式和区域关系的早期并排检查；它不新增 Gate、状态、Receipt 或完成前提，早期 artifact 仅供诊断，最终候选必须重新采集并跑完整 cold-start journey。
+真实入口早期反馈仍是风险收益合适时的建议诊断，不是新 Gate 或 machine proof。当前 browser/native/layout/visual 不具备 package observer，任何真实 UI 入口结果都必须由 External Confirmation承载，不能从 direct-process stdout instrumentation 推导任意内部/UI事实。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=no-new-lifecycle-authority-registry kind=technical_obligation aspect=architecture -->
-所有修复复用现有 Source、Contract、Compile、Evidence Kernel、Counterfactual、Final Gate、External Confirmation、Trust Boundary Gate 和 critical sentinel registry；不得新增 Long-Task 阶段、Gate、Authority、scheduler、Receipt、机制矩阵、运行时 registry 或持久状态。逻辑 Fact 细粒度不等于每个 Fact 启动一次进程：允许共享 Raw Execution/artifact，但不允许共享不可区分的 total Boolean/verdict。
+实现继续复用现有 Source、Contract、Compile、Evidence Kernel、Counterfactual、Final Gate、External Confirmation、Trust Boundary Gate 与 `CRITICAL_TEST_SENTINELS`；compiled observation authority 是投影而不是第二 Authority/registry。本轮没有新增 Gate、状态机、调度器、持久 challenge/session 或 per-edit validation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=owner-dependency-lifecycle-boundary kind=technical_obligation aspect=architecture -->
-selected-design comparison owner 是 `long-task-evidence-capability-runtime.ts`，共享 exact/result identity 语义来自 `long-task-semantic-fact-evidence.ts` 或新提取的同层 primitive，设计方法 taxonomy 保持在 `design-resource-fact-policy.ts` 与 `design-resource-fact-property-methods.ts`，Final Gate 保持唯一 acceptance carrier。依赖只能从 Source/Context 经 Contract、observer、comparison 流向 Final Gate；comparison primitive 不依赖项目 verifier 的 verdict，observer adapter 不拥有 expected；失败必须显式、资源与临时 session 必须有界清理，重试不能把旧 artifact 变成当前证据。
+`long-task-observation-authority.ts` 编译 machine/external plan，`long-task-execution-observation.ts` 执行全 universe prepare-all→execute/finalize，`long-task-static-observation-freeze.ts` 统一 no-follow pre/post identity+streaming digest freeze，`long-task-process-observation.ts` 解码 bounded stdout envelope，`long-task-exact-comparison.ts` 唯一计算 exact/result identity，Final Gate 保持 terminal owner。Expected 不进入 runtime closure，observer 不拥有 expected，失败显式且临时 snapshot/process/artifact 有界清理。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=build-reuse-buy-allowed-set kind=technical_obligation aspect=architecture -->
-Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-identity owner；复用现有 design policy/property-method owners；用标准库做有界 package-owned extractor/comparator；使用已安装或成熟且 license/platform/size 兼容的依赖；使用 digest/version/capability 冻结的 executable adapter；以及对未准入观察有意不抽象并保留 External Confirmation。选择前必须枚举本次可行成员；禁止重复 owner-held rule、第二 source of truth、扩张式通用 parser、无依据重依赖、nonce-only 信任、自报 Boolean、错误依赖方向和为了相似语义强制抽象。
+本轮选择复用现有 snapshot manifest、raw execution identity、Counterfactual sandbox、JSON Pointer/canonical JSON limits、External Confirmation 与 Final Gate owners，并以标准库实现有界 streaming digest、隔离 closure复制、direct spawn/stdout capture 和 host attestation；没有引入通用 observer framework 或新依赖。禁止重复 exact owner、把 project verifier置回 TCB、无限缓冲 stdout、按 raw group重复无界预算或复制 Expected/verification 全闭包。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=technical-debt-and-future-change kind=technical_obligation aspect=architecture -->
-已触及技术债是 non-UI 与 selected-design validation 的 exact/result-identity 路径分叉，处置为在不改变现有外部 schema 的前提下共享 primitive 并用两类回归锁定；不得留下新的第三路径。未来新增 comparator、locator、artifact schema、symbolic version 或 native adapter，必须通过共享 capability 接口、明确 TCB、攻击/控制组和协议准入，不得复制 validator 或把新格式默认为可信。
+已关闭 non-UI/selected-design/static/process 多条 exact equality 分叉，统一到共享 evaluator；已关闭 raw group 顺序导致 cross-group priming 的冻结空窗。剩余有意边界是只支持 static/process plain exact JSON，interaction_trace/state_delta/design_conformance尚无 package derivation，browser/native/UI 与恶意 OS sandbox escape不在首版机器证明内，均通过 External Confirmation而非第三条自证路径管理。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=compatibility-security-resource-boundaries kind=technical_obligation aspect=architecture -->
-安全与可靠性边界包括 fail-closed parsing、路径 containment、symlink 防逃逸、大小/深度/时间/内存上限、敏感观察的 digest-only/redaction、冻结 executable 与依赖闭包 identity、challenge replay protection、当前 candidate/session 绑定和临时进程/artifact 清理。兼容性必须保持普通 default workflow、非 UI Long-Task、现有 V1 默认与 V2 opt-in、合法 tolerance/mask 和 External Confirmation；任何 public/protocol 变化都必须有显式 migration/rollout/rollback 或不可逆边界说明。
+direct-process 在 runner 前复制 root executable、完整 argv 中可归因仓库文件、声明 input_paths 与 production carrier refs 到隔离 runtime-closure snapshot，并以全 universe共享预算做 streaming pre/post identity+digest；Source/Contract/Context与任意 verification/frozen_files 不进入 closure。child 环境最小化、stdout有界、process tree被监测清理，但这不是绝对恶意代码沙箱：host OS/filesystem/process API、Node runtime与进程枚举/终止仍属于 TCB。超出该攻击边界需独立 sandbox与 External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=context-and-public-authority-update kind=requirement -->
-总体 `Context Delta: required`。必须在代码前更新 `PROJECT_SPEC.md` 和 owning Context，记录路线 B 的项目 owner 决策、旧/新定理边界、observer capability/TCB、目的有效性下限、critical counterexample/claim downgrade、owner/dependency/debt/compatibility/验证；实现索引与验证 Context 必须指向真实代码与检查。若改变公共用户行为或协议，还要同步 managed source、Skills、英文/中文公共文档、package/readme/examples 和 distribution parity；P0 单独行为修复不需要虚构新的 durable owner。
+本轮 `Context Delta: required` 已由 owning Context、PROJECT_SPEC、mechanism-admission/test governance、managed Skill 与中英文公共文档记录：package static/process exact范围、stdout隔离、host runtime、Counterfactual、unsupported external、Level 3 与 OS/process containment TCB。Source/Contract 必须与这些 owner一致，旧 canonical compiled/progress/receipt只作历史审计材料。
 <!-- ty-source-item:end -->
 
-<!-- ty-source-item:start key=verification-sequence-and-current-candidate kind=acceptance -->
-验证顺序为：确定性攻击/正确控制组；focused 与 changed-path affected checks；Long-Task Trust Boundary Gate；complete tests/package source parity/tarball/consumer/release regression；受控脱敏真实回放；仅用于遵循率和 ROI 的 fresh-agent 配对；Context drift；最后由本 Goal 的唯一 Long-Task Final Gate 在同一干净 current candidate 上重编译并重跑全部声明 Checks。任何 Source、Context、Contract、verifier、实现或控制输入变化后必须重跑受影响检查，历史绿色不得继承。
+<!-- ty-source-item:start key=verification-sequence-and-current-candidate kind=requirement -->
+机制候选验证顺序是 build/typecheck/format → focused attack/control/owner tests → Delivery/Long-Task focused → Trust Boundary Gate → complete package regression → source/managed/package parity → consumer/tarball smoke → Context validation → current-run黑盒 Final Gate report。当前 Source/Contract 迁移不自举 Compile/Verify/Final/Close；它只接受 preflight结构检查并明确保留两个 blocks_target External Confirmation，独立审计之后才可修订能力等级。
 <!-- ty-source-item:end -->
 
-<!-- ty-source-item:start key=final-hard-acceptance kind=acceptance -->
-最终硬验收要求：UI exact mismatch 绝不通过；expected-as-actual、自报 verdict、aggregate status、纯 evidence carrier、历史 session/截图/build、browser/H5 代理 native、task-authored 唯一 material Oracle 均不能虚假 machine-accept；material design Fact 无遗漏、错误方法或静默 N/A；当前 target/snapshot/session 与 production reachability 可证；Counterfactual 改变真实 carrier 和对应 actual；合法 tolerance/mask/共享执行/fan-out 正常；目的有效性先于相对不劣化；无开放 critical counterexample；非适用任务不增加流程；适用任务 ROI 为正；没有新增阶段、Authority、Gate、scheduler、registry 或持久状态。
+<!-- ty-source-item:start key=final-hard-acceptance kind=requirement -->
+Level 4 的硬验收仍要求：custom Oracle不能关闭 machine Claim；runner不能创建/修改 static actual；process runtime由Harness直接持有的root进程证明；项目actual/pass/verdict/runtime/interaction/state不能自证；unsupported family/method必须External Confirmation；Counterfactual必须观察真实carrier导致actual变化且不得无观察跳过；V1/V2/non-UI/static/process共用exact evaluator；R1–R8及扩展攻击经真实Final Gate拒绝、static/process正确控制通过、external控制不machine-accept；能力 verifier不以字符串证明runtime；Trust/full/package/Context全绿、无开放critical反例、真实workload正ROI且无第二Authority/Gate/state/registry。当前这组条件尚未由两项外部确认全部建立，因此只声明Level 3。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=approved-final-capability-wording kind=requirement -->
-只有全部硬验收成立后，正式能力表述才可恢复为：Long-Task Workflow 在完整、准确的声明范围、预期细粒度和已准入观察/TCB 内，允许模型在中间理解、实现和修复中自然发生漂移、遗漏或幻觉；但 Source→Contract 的声明内语义遗漏、准入 observer 能发现的当前生产差异、历史或代理证据、自证式 actual、错误 comparison/verdict 及未证明边界，不能进入最终 `machine_accepted`。对于无法建立可信机器观察的事实，工作流保持未完成或 External Confirmation。该表述不声称覆盖未表达意图或 TCB 外任意行为。
+当前获准表述是：Long-Task 已对声明的已知 observer/runner/self-attestation/production-reachability 反例建立 Level 3 保护；在 static pre-existing unchanged JSON 与 Harness direct-process exact JSON stdout 的受限 TCB 内，项目自报 actual/pass/verdict/runtime、custom Oracle、历史 session、代理 target 与纯 evidence carrier不能单独形成 machine completion，unsupported观察保持阻断型 External Confirmation。不得在 `independent-capability-audit` 与 `real-process-workload-roi` 完成前使用“已高水准实现设计目的”或“最终无漂移保证”的 Level 4 宽泛措辞。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=critical-scope-escape-risk kind=risk_fact fact=critical_user_path outcome=observer-tcb-closure -->
-主要范围逃逸风险是把路线 B 演变为任意 UI/任意 native/任意 Oracle 的通用观察框架，或趁机重建设计 Fact taxonomy、生命周期实体和协议版本。准入首版必须以有限格式、明确 capability、现有 owners 和 External Confirmation 为边界；超出边界的扩展需要新的 Source/Context 决策与独立 ROI 证据。
+范围逃逸风险是把 direct-process stdout扩张为任意 runtime/UI truth、把项目 instrumentation当package observer，或建设通用 browser/native/layout/pixel/a11y/motion框架。当前 observer只证明direct product root在声明exact JSON output surface上实际发出的值；无法直接绑定该surface时必须External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=critical-self-attestation-risk kind=risk_fact fact=weak_observability outcome=observer-tcb-closure -->
-主要 TCB 风险是同一模型同时编写实现、verifier、actual、comparison 和 verdict，或 runner 回显 challenge 后继续自证。任何允许 project self-attestation 单独关闭 material Claim、允许 actual 从 expected/report 读取、或只校验字段内部一致性的实现都属于 forbidden shortcut，并阻止 handoff。
+自证风险来自同一项目控制 implementation、verifier、actual、comparison、verdict或利用ambient OS/filesystem/network绕过隔离closure。package admission、direct root、stdout capture、pre/post freeze与Harness exact owner关闭已知路径，但不声称绝对封禁恶意进程逃逸；更强对手模型必须使用独立sandbox并保持External Confirmation。
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=critical-claim-inflation-risk kind=risk_fact fact=critical_user_path outcome=assurance-governance -->
-主要治理风险是以文档、绿测、哨兵名称、Agent benchmark 或 P0 局部成功重新宣称完整高水准能力。能力等级必须由机器攻击/控制组、明确 TCB、黑盒 Final Gate、真实回放和开放反例状态共同约束；任何超出证据范围的 rationale 或发布结论都视为防劣化失败。
+能力膨胀风险是把命令exit 0、源码token、旧Receipt、fixture replay或fresh-agent汇总误当安全定理。当前固定terminal pair machine report只支持Level 3；`independent-capability-audit`与`real-process-workload-roi`均为blocks_target，任何一项未完成都禁止Level 4。
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=independent-capability-audit kind=external_confirmation -->
+必须由独立于本次开发 Agent 的审计者复核当前候选、R1–R8及扩展反例、static/process正确控制、machine report完整性、Observer/TCB能力边界、无开放critical false acceptance和能力措辞。审计结论在形成明确Source/Contract Revision前保持blocks_target；本次开发Agent、旧Receipt、prose或自交付verifier不能自行完成该确认。
+<!-- ty-source-item:end -->
+
+<!-- ty-source-item:start key=real-process-workload-roi kind=external_confirmation -->
+必须以至少一个真实Long-Task process workload完成baseline/candidate配对，保留可核验的原始运行与评分材料，测量authoring、Compile、Verify、Counterfactual、Final Gate、返工、错误完成率、总时长和维护/迁移成本，并在目的有效性先成立的前提下证明新增机制保持正ROI。该证据完成并经外部复核前保持blocks_target。
 <!-- ty-source-item:end -->
 
 ```yaml semantic-fact-manifest-v1
@@ -259,7 +267,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "approved-final-capability-wording",
       "critical-scope-escape-risk",
       "critical-self-attestation-risk",
-      "critical-claim-inflation-risk"
+      "critical-claim-inflation-risk",
+      "independent-capability-audit",
+      "real-process-workload-roi"
     ],
     "exclusions": []
   },
@@ -294,7 +304,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/0"
         },
-        "identity_sha256": "9276465a28a64dd2c38e64df0511f49541fbafd654e0ff8f6b70af10a3b657e0",
+        "identity_sha256": "280fa25bd1280b1cbfa1e6f70f5314461edaaf7ade0817081a7c5b1204c8056b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.real-capability-closure-result"
@@ -302,7 +312,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.material-input-provenance",
@@ -312,7 +322,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/1"
         },
-        "identity_sha256": "9f7b7d53d2c604e504438cc98f04477967895b2ec47b60e9d5ee76367be03ebd",
+        "identity_sha256": "91634ced801855d52e2b6ab65644a25a33f47505e6746f49477335dc6cd96214",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.material-input-provenance"
@@ -320,7 +330,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.declared-assurance-theorem",
@@ -330,7 +340,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/2"
         },
-        "identity_sha256": "1e6867bf9a66072c1b485b121a03766eeaf6ec3dac8c2198e12a50ae7154dd31",
+        "identity_sha256": "d1f8da3ccf8157d11d9c5eb2a986db6119db4b174784e67f20e78edc07cf08b9",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.declared-assurance-theorem"
@@ -338,7 +348,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "declared-assurance-theorem"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.assurance-causal-chain",
@@ -348,7 +358,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/3"
         },
-        "identity_sha256": "5f058dac5725680395a74e02800dba492aeb0f15c227f2b93e970a4fcf1310a0",
+        "identity_sha256": "bd340970d020ce1c5fdf1fa83a963f259f3d87bc17b4163ac1ee59d8483f8b7c",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.assurance-causal-chain"
@@ -356,7 +366,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "assurance-causal-chain"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.known-selected-design-false-acceptance",
@@ -366,7 +376,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/4"
         },
-        "identity_sha256": "e4085a3cd013d6e5e2a67313c6d52199f9add844324d53e4fe251eebac0349c5",
+        "identity_sha256": "b7d35fb356d3e4179f7593c180171b78cd0813d8d41f1ecc32de774a93052ffa",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.known-selected-design-false-acceptance"
@@ -374,7 +384,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.p0-positive-fixture-correction",
@@ -384,7 +394,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/5"
         },
-        "identity_sha256": "009232ed9b11ce4e9657e6ee037ff12b2b44a928c64d0c207bd76d17e294342e",
+        "identity_sha256": "dd9d38bfb4056a559bf1501ca6ede0e5be9b21a6279b45ff60ac03e9f5e05897",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-positive-fixture-correction"
@@ -392,7 +402,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-positive-fixture-correction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.p0-v1-negative-control",
@@ -402,7 +412,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/6"
         },
-        "identity_sha256": "49012308114bc84aa973bdce291974ddc0695efb77bbb47b199e96aef95c238c",
+        "identity_sha256": "e6cc15bc6bf60e2b97e981a5b6c881bcfa0f1b2a161901f00e4d143ebfa24c9e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-v1-negative-control"
@@ -410,7 +420,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v1-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.p0-v2-negative-control",
@@ -420,7 +430,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/7"
         },
-        "identity_sha256": "b484c05e0bad2b270eb6dacb589b248a1cd0493cd2586705d5c63471f1681275",
+        "identity_sha256": "ca7bbd9c93c365248439dc4fbeed3d197187d208ad9fad3426b21c73c8d0c711",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-v2-negative-control"
@@ -428,7 +438,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v2-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.shared-exact-comparison-owner",
@@ -438,7 +448,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/8"
         },
-        "identity_sha256": "db9d50a99128cb064316166f9feff27ab7aef11931d153fd487d5170428a0e39",
+        "identity_sha256": "5e7f076c131d1398a757f9433557ce8883bca30bff590556beb3140f6c49f80b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.shared-exact-comparison-owner"
@@ -446,7 +456,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "shared-exact-comparison-owner"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.p0-owner-local-and-v3-compatible",
@@ -456,7 +466,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/9"
         },
-        "identity_sha256": "9f89cb2425c7395eca3448b8f9b55c64d20cb8f40f4965c4d0fead49af319cb7",
+        "identity_sha256": "f60589442548b2282b285e97dac34e71723ed254dafdd428cda0ea649f5c39c9",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-owner-local-and-v3-compatible"
@@ -464,7 +474,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-owner-local-and-v3-compatible"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.p0-verification-boundary",
@@ -474,7 +484,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/10"
         },
-        "identity_sha256": "0244a6c175ace5335d22d561471d4fc8df90f872d9aa938f1416b6230debb3b4",
+        "identity_sha256": "92ef49ffb0030128ef4b71c801e66df7732e38fec3f6cfd065dc1d426322ce6f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-verification-boundary"
@@ -482,7 +492,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-verification-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.purpose-validity-floor-before-relative-antidegradation",
@@ -500,7 +510,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.invalid-baseline-and-claim-downgrade",
@@ -518,7 +528,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "invalid-baseline-and-claim-downgrade"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.coverage-defined-by-rejected-attack-surface",
@@ -536,7 +546,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "coverage-defined-by-rejected-attack-surface"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.critical-sentinel-positive-negative-controls",
@@ -546,7 +556,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/14"
         },
-        "identity_sha256": "675c5a63b286860b3fef9cc4616c45e5e6f4b21d83a5d596508b6278868d905e",
+        "identity_sha256": "7c69e2a045f8d64ea65cc5d48385f77ff1ba8971c6777764c9e3d1e8c77b5e1a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-sentinel-positive-negative-controls"
@@ -554,7 +564,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-sentinel-positive-negative-controls"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.incident-counterexample-first-rule",
@@ -572,7 +582,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "incident-counterexample-first-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.sentinel-rationale-evidence-bounded",
@@ -582,7 +592,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/16"
         },
-        "identity_sha256": "cf574c0f26403cad9721b4819955b39ecebacf4e63b4acb95ea9d0b4881e16e9",
+        "identity_sha256": "e451a16acbed6edadc2d5813123e787b01f5b6c96676159aafacb5486862a36d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.sentinel-rationale-evidence-bounded"
@@ -590,7 +600,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "sentinel-rationale-evidence-bounded"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.capability-claim-levels",
@@ -600,7 +610,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/17"
         },
-        "identity_sha256": "dd286cd441863bdd50a75fe1b1545738622982c4cd8b51f3b75db8268ecd5502",
+        "identity_sha256": "d00822e31be2a3c4ceb95b48fc7285dbc0a56116b6b311be69eea62ce3be7131",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.capability-claim-levels"
@@ -608,7 +618,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "capability-claim-levels"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.route-b-project-owner-decision",
@@ -618,7 +628,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/18"
         },
-        "identity_sha256": "2cc6743ca8ae088d40779237620025f40c285d5bbbb0352cbf3bd2273256456a",
+        "identity_sha256": "68492eb804731e554584a94f3b064cea0940713b60c3d13b9cd5db172eedff66",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.route-b-project-owner-decision"
@@ -626,7 +636,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.observation-channel-authority",
@@ -636,7 +646,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/19"
         },
-        "identity_sha256": "7a29f9e3e4af41a947aa8f9669c4db1bb37a8e567f77af2190f31b537a6748db",
+        "identity_sha256": "192298bc888a77c96e785dc77638428e1963bd2ab1a35165a1a24ea45199a2ef",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.observation-channel-authority"
@@ -644,7 +654,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "observation-channel-authority"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.expected-actual-comparison-verdict-ownership",
@@ -654,7 +664,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/20"
         },
-        "identity_sha256": "22dbe616f0630ae9a32d52ff03ee7ebc83545f7c88cac6c1f62b3dabdbafee0b",
+        "identity_sha256": "e017b14037726aa867567f528ca75cffba0fca50dbcaed9a65e631e5d695dd42",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.expected-actual-comparison-verdict-ownership"
@@ -662,7 +672,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-actual-comparison-verdict-ownership"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.bounded-admitted-artifact-contract",
@@ -672,7 +682,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/21"
         },
-        "identity_sha256": "ca07b85d5247fd3f0572afcfc1f837f8aa543fb4b3b5bf06830e6f95ff324374",
+        "identity_sha256": "8e75859fa4b8c50d420da09d6683156b39d1dac67d9563ebe46f5b3dcd7a3842",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.bounded-admitted-artifact-contract"
@@ -680,7 +690,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "bounded-admitted-artifact-contract"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.actual-artifact-reextraction",
@@ -690,7 +700,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/22"
         },
-        "identity_sha256": "532b64b125b976951c8c73c90a3913eb599dd1421aea6a879f892fc4c453689c",
+        "identity_sha256": "f0ac48aa5f3c9263df5a4dc61a31dfad6e04d125d77b39ecb148956c0c180a0a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.actual-artifact-reextraction"
@@ -698,7 +708,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "actual-artifact-reextraction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.challenge-is-freshness-only",
@@ -708,7 +718,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/23"
         },
-        "identity_sha256": "995db7445bfaec178e5a0aa62e1a46715a14da6366b4f7c899f70f1c991b8d2b",
+        "identity_sha256": "5cd9de441beb7ae1b17ecdf1bd0fef7b3e6c947725b3470e84eb95828b59e06f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.challenge-is-freshness-only"
@@ -716,7 +726,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "challenge-is-freshness-only"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.generated-carrier-semantic-role",
@@ -726,7 +736,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/24"
         },
-        "identity_sha256": "8a9fac7c3f3ca462aeb09ffb77ed2f2aa221125e0dddbc14930f282a0db3fd52",
+        "identity_sha256": "96ea4707e596353041e4cbb11ef0b502d551d1677ab58b2c3dbbee5043ba9d6e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.generated-carrier-semantic-role"
@@ -734,7 +744,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "generated-carrier-semantic-role"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.expected-to-actual-self-proof-rejection",
@@ -744,7 +754,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/25"
         },
-        "identity_sha256": "ff28a28595090249c8da08eedccda395398002fe898032d58931e614eb01c3db",
+        "identity_sha256": "e0038b7d2803a1e078a0d2cba951c553461a1f6aa5f5dc6a252237367878b91e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.expected-to-actual-self-proof-rejection"
@@ -752,7 +762,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-to-actual-self-proof-rejection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.production-reachability",
@@ -762,7 +772,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/26"
         },
-        "identity_sha256": "9c64ccfa1948e174a56a4883ada3cc12776d10319983fc49386a4fa6f61da94a",
+        "identity_sha256": "9427abf71ba0313f8276c7246b149bf00a715e0d2e906ed798101a702f39a3fc",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.production-reachability"
@@ -770,7 +780,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "production-reachability"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.counterfactual-actual-change-and-impact-set",
@@ -780,7 +790,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/27"
         },
-        "identity_sha256": "0c8d3837fefc43c4e17693d9586289e533ccdcd938b91fccc41a47bc0c2d696f",
+        "identity_sha256": "f41d9cbc04c5f42d4c56daf349cd99b79ce399656456d8e6c96cd640f8e8fc75",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.counterfactual-actual-change-and-impact-set"
@@ -788,7 +798,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "counterfactual-actual-change-and-impact-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.selected-design-existing-owner-preservation",
@@ -806,7 +816,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.no-universal-ui-observer",
@@ -816,7 +826,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/29"
         },
-        "identity_sha256": "21689bc101d5e9537b3a7c39083fcb3b5fa0ce37590144ec0cf19094cb0a5860",
+        "identity_sha256": "565288d6a898484f8243feab0d39bfe5f9e4e394e82237b5f23a097c12186673",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-universal-ui-observer"
@@ -824,7 +834,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-universal-ui-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.v3-v4-and-migration-rule",
@@ -834,7 +844,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/30"
         },
-        "identity_sha256": "d3cd8e7a80dfe65400ee999e56c7210e897566d3a7ae9a9c89b09036ff3335e4",
+        "identity_sha256": "5a5f713e2cee6780b8bad0f0f69fdd1e32d1f8b9f76b8c8045e4d6c7d53f459c",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.v3-v4-and-migration-rule"
@@ -842,7 +852,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "v3-v4-and-migration-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.attack-suite-ground-truth",
@@ -852,7 +862,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/31"
         },
-        "identity_sha256": "465479fcfe7d7fafc83ce06e7111a283382b2faf73824484809b86d443c98b8e",
+        "identity_sha256": "311cbc82d54a8e6971de27738306c8d05f1a41176aa542a015d9674c8fbfb3ba",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.attack-suite-ground-truth"
@@ -860,7 +870,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "attack-suite-ground-truth"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.valid-control-suite",
@@ -870,7 +880,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/32"
         },
-        "identity_sha256": "84e17d88432326a71b89cee1ada73017b98b05062943bc5cb26d772bb4625702",
+        "identity_sha256": "c88792035e9d4a11369347cf4b12fa8bf9c3ff19a6ce13b9747cbf09aefc6376",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.valid-control-suite"
@@ -878,7 +888,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "valid-control-suite"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.black-box-final-gate-lifecycle",
@@ -888,7 +898,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/33"
         },
-        "identity_sha256": "b4681db06d52577a3af90097d4ea672cd580bac725d82fdfcab6d5aa55c31bfb",
+        "identity_sha256": "b5b349a6507bf3c1e2bf5f76da4009cc204a0ab8d720e908f73ad236fbbfc696",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.black-box-final-gate-lifecycle"
@@ -896,7 +906,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "black-box-final-gate-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.starward-sanitized-replay",
@@ -906,7 +916,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/34"
         },
-        "identity_sha256": "050ab83b79856ae5becca75d6a0189bbd2897bdc032b34b17defcb46534cefd6",
+        "identity_sha256": "eb5a9769996b1e051a88ce6572363ee62f09e10f5750ae3f2d526cc13b587c4d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.starward-sanitized-replay"
@@ -914,7 +924,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "starward-sanitized-replay"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.fresh-agent-benchmark-boundary",
@@ -924,7 +934,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/35"
         },
-        "identity_sha256": "1241204b2bb88639cf29b36e09d82d1891ea7ed993c2a5518ce7b106b9aaf6c6",
+        "identity_sha256": "222b77b2976f562d635b8a70d64895cf7b0e796772376c2b5d8393b4d39aa079",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.fresh-agent-benchmark-boundary"
@@ -932,7 +942,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.roi-admission-order",
@@ -942,7 +952,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/36"
         },
-        "identity_sha256": "c7ab2512af95a38cefe8b6759c09d4db5e69de64a3ed39135ada3aa37e47f106",
+        "identity_sha256": "1308ef7830e7ada1f12491f2472fb20c328d0f15a3a4dc5100e6a1804d2e338d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.roi-admission-order"
@@ -950,7 +960,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "roi-admission-order"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.early-real-entry-feedback",
@@ -960,7 +970,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/37"
         },
-        "identity_sha256": "c9e0b6704a59915effe7ba3817c4a182dccdffc774b0ac89b22c1ce7d264a6f4",
+        "identity_sha256": "c9adbe78ad581bf635ef987680f4cfa32d423d1060bee9673894ed8887e92093",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.early-real-entry-feedback"
@@ -968,7 +978,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "early-real-entry-feedback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.no-new-lifecycle-authority-registry",
@@ -978,7 +988,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/38"
         },
-        "identity_sha256": "b397d02a10fb4b4e7c1a9c1c1d1b27a80d7aef9f216a3a2659d8e009735ee1ee",
+        "identity_sha256": "8d63ce654ea860fb78af4f015805c7f467cf35446ae4e0c676b2ef22268db3a8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-new-lifecycle-authority-registry"
@@ -986,7 +996,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.owner-dependency-lifecycle-boundary",
@@ -996,7 +1006,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/39"
         },
-        "identity_sha256": "1a5cdab5b4dc353260706a8472ae1b7954ef47599d03184747a1b544eec553a3",
+        "identity_sha256": "d59dc6b7932cb01aa7541b35d92e53178797dd50243ca04a438e6212fc181d99",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -1004,7 +1014,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.build-reuse-buy-allowed-set",
@@ -1014,7 +1024,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/40"
         },
-        "identity_sha256": "8fac9fa970487a2fc2848463e3ed24e5631d7e1bfabfdb33baaf72a43801f37b",
+        "identity_sha256": "d207acdab3873997dd1797e58195a2075fbcbce9b934e9b9b25c225ee974cf0d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.build-reuse-buy-allowed-set"
@@ -1022,7 +1032,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.technical-debt-and-future-change",
@@ -1032,7 +1042,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/41"
         },
-        "identity_sha256": "43c632303b019d0a3c0c3a4bdf2171b196ed4f85527dba2b16cbe86e9652fb3f",
+        "identity_sha256": "41c29774cf9fa35e108230f42e8750448b82e2bf7daceb593d5b9b7de6e240d5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.technical-debt-and-future-change"
@@ -1040,7 +1050,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "technical-debt-and-future-change"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.compatibility-security-resource-boundaries",
@@ -1050,7 +1060,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/42"
         },
-        "identity_sha256": "78fb29a137a99c2b1a593a187c4d7ed56b0bfcb95041b38fc7be2268159c25a8",
+        "identity_sha256": "2690543bc9ca7628b6a710bc61c492715f78201729b161ee9eec90da25de3ffa",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.compatibility-security-resource-boundaries"
@@ -1058,7 +1068,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "compatibility-security-resource-boundaries"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.context-and-public-authority-update",
@@ -1068,7 +1078,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/43"
         },
-        "identity_sha256": "5e1fa1e3ac1de3faa1025bce9824bda3990f68418a7dae91892411a469360987",
+        "identity_sha256": "7fcba43298a0a8c7fa0e6b07b4ba214305486187116bbc2201d3cfae2e29373f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.context-and-public-authority-update"
@@ -1076,7 +1086,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.verification-sequence-and-current-candidate",
@@ -1086,7 +1096,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/44"
         },
-        "identity_sha256": "8d75a2314c8053a01ea138eeee44c0e88edcc28ae0aa67570ada4cf90b6a8f6b",
+        "identity_sha256": "b6761ee02402d12bc24652b102a8cc9ea7595e9901dbe74cb1bbb21ea52ccd2d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
@@ -1094,7 +1104,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.final-hard-acceptance",
@@ -1104,7 +1114,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/45"
         },
-        "identity_sha256": "5ecf5aee4b3e201954b9d8c03ab16d67cc6c5e254a1cb4d2c1953a825c8867fe",
+        "identity_sha256": "45ec59206628cdde7bdf9a8395658205b8fe4a4d1d26f9e9c90bfccd1a2a2240",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.final-hard-acceptance"
@@ -1112,7 +1122,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.approved-final-capability-wording",
@@ -1122,7 +1132,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/46"
         },
-        "identity_sha256": "e63c5da2b737917e96af4bf9fb4146099fa515b44db924c5f55dc9c2968e59db",
+        "identity_sha256": "f9d80d0ea403f6505f4171e107da9b53b4254b359fc4c70b5cdb205a610d3faa",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.approved-final-capability-wording"
@@ -1130,7 +1140,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "approved-final-capability-wording"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.critical-scope-escape-risk",
@@ -1140,7 +1150,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/47"
         },
-        "identity_sha256": "0969fa3c12fa1121a7c2b031bd18b1c5fd1bc47f63d0bdf7eff4f5af842fae7c",
+        "identity_sha256": "c9cdd892a89b3bb5c5b853172a6f64a9c8f73dd6fdab87bf394916a41d709903",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-scope-escape-risk"
@@ -1148,7 +1158,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-scope-escape-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.critical-self-attestation-risk",
@@ -1158,7 +1168,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/48"
         },
-        "identity_sha256": "0ab5ba0129d2f568540fc6ef0f3a6947bb14a8166801bcbcde5e12c5e13fdf7a",
+        "identity_sha256": "13fd18a6a2f71bcfab28693c806d9dcc5b07d95a1028c548f6e77490967f5e9f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-self-attestation-risk"
@@ -1166,7 +1176,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-self-attestation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source.critical-claim-inflation-risk",
@@ -1176,7 +1186,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/49"
         },
-        "identity_sha256": "3ea58afc5c1141783e1a68a1eb8af7e9819cde67bbc17fffc2e7036650fd0495",
+        "identity_sha256": "98155d260b277f1eb00b60b2e17577efe8c09e768ec1a1e5eedaa52177161421",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-claim-inflation-risk"
@@ -1184,7 +1194,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-claim-inflation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-architecture-md",
@@ -1202,7 +1212,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-delivery-benchmark-md",
@@ -1220,7 +1230,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-md",
@@ -1238,7 +1248,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-contracts-design-resource-authoring-md",
@@ -1256,7 +1266,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md",
@@ -1266,7 +1276,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/54"
         },
-        "identity_sha256": "d8c2975e57559d698acb2caf6f3fbae37d817830382bddfc5ed53c250e9ffbc1",
+        "identity_sha256": "d883d6bcb24f00b642ac1fcbbc99593d8cf6a2ee3bb04707fbcbc3211f3abdff",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.selected-design-existing-owner-preservation"
@@ -1274,7 +1284,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md",
@@ -1292,7 +1302,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-contracts-temporary-content-governance-md",
@@ -1310,7 +1320,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-contracts-workflow-contract-md",
@@ -1320,7 +1330,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/57"
         },
-        "identity_sha256": "09bacab6cb034d097a7f1609351999465911975cdf7d8f90712916396e8aa0ce",
+        "identity_sha256": "c2465b0f0b4b01a57cf15946b2d177af9fb4a7fac6ea77d486aa37c28e7ab6ce",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-new-lifecycle-authority-registry"
@@ -1328,7 +1338,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-decision-rationale-architecture-quality-md",
@@ -1346,7 +1356,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md",
@@ -1356,7 +1366,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/59"
         },
-        "identity_sha256": "a19c256f987fa9d0a9905a02cfaa1e6595f64a5c6724ba8e865df02c5339f512",
+        "identity_sha256": "a602dbe5497099da9a5ad6b82e9013ec21067876c393b7683c2b91792b32617e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.route-b-project-owner-decision"
@@ -1364,7 +1374,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-decision-rationale-minimal-context-md",
@@ -1382,7 +1392,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-foundation-context-model-md",
@@ -1400,7 +1410,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-implementation-index-md",
@@ -1410,7 +1420,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/62"
         },
-        "identity_sha256": "8e7ee8a00179429727b7464963c2d63c97c885a9f2c4bf0ddcee9a73a5cf5837",
+        "identity_sha256": "2cb22a7e457619dd925b89664512ee7450b211b7e878e8973fb0b8c94f69130b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -1418,7 +1428,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-areas-harness-package-verification-md",
@@ -1428,7 +1438,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/63"
         },
-        "identity_sha256": "a5f28ba56f9186f60bf0ae303ff8f0acd86be5e7c646a990e11f1d339abbd491",
+        "identity_sha256": "9e253fb586341b1bf78dff77e4f460c719768896b483d21833683dfc2a9e089e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
@@ -1436,7 +1446,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-context-toml",
@@ -1454,7 +1464,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project-context-global-md",
@@ -1472,7 +1482,43 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "input.source.independent-capability-audit",
+        "kind": "input",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/inputs/66"
+        },
+        "identity_sha256": "f23f99e0c66fb3cd97897beab2a42598a9147591c08f792700d7712589fa47db",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "input.source.real-process-workload-roi",
+        "kind": "input",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/inputs/67"
+        },
+        "identity_sha256": "37afed6729ba03047e33a94d9564a1e14572e3542bc200c505f83cceedabb739",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "family.standard-goal-scope-glossary",
@@ -1978,7 +2024,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/family_dispositions/31"
         },
-        "identity_sha256": "d9f73f4e7417a650ac1fcc37c7ef372b7d41e53a9f7594c373c3dbb19caa25db",
+        "identity_sha256": "d48bb9ce958a06266388a92f737e561f4ae5a3c55a560b50c02bfea38d4049bf",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.actual-artifact-reextraction",
@@ -2006,6 +2052,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.fresh-agent-benchmark-boundary",
           "fact.requirement.generated-carrier-semantic-role",
           "fact.requirement.incident-counterexample-first-rule",
+          "fact.requirement.independent-capability-audit",
           "fact.requirement.invalid-baseline-and-claim-downgrade",
           "fact.requirement.known-selected-design-false-acceptance",
           "fact.requirement.material-input-provenance",
@@ -2021,6 +2068,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.production-reachability",
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
           "fact.requirement.real-capability-closure-result",
+          "fact.requirement.real-process-workload-roi",
           "fact.requirement.roi-admission-order",
           "fact.requirement.route-b-project-owner-decision",
           "fact.requirement.selected-design-existing-owner-preservation",
@@ -2036,7 +2084,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "real-capability-closure-result",
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.real-capability-closure-result",
@@ -2054,7 +2102,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.material-input-provenance",
@@ -2072,7 +2120,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.declared-assurance-theorem",
@@ -2090,7 +2138,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "declared-assurance-theorem"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.assurance-causal-chain",
@@ -2108,7 +2156,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "assurance-causal-chain"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.known-selected-design-false-acceptance",
@@ -2126,7 +2174,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.p0-positive-fixture-correction",
@@ -2144,7 +2192,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-positive-fixture-correction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.p0-v1-negative-control",
@@ -2162,7 +2210,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v1-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.p0-v2-negative-control",
@@ -2180,7 +2228,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v2-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.shared-exact-comparison-owner",
@@ -2198,7 +2246,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "shared-exact-comparison-owner"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.p0-owner-local-and-v3-compatible",
@@ -2216,7 +2264,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-owner-local-and-v3-compatible"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.p0-verification-boundary",
@@ -2234,7 +2282,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-verification-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.purpose-validity-floor-before-relative-antidegradation",
@@ -2252,7 +2300,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.invalid-baseline-and-claim-downgrade",
@@ -2270,7 +2318,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "invalid-baseline-and-claim-downgrade"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.coverage-defined-by-rejected-attack-surface",
@@ -2288,7 +2336,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "coverage-defined-by-rejected-attack-surface"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.critical-sentinel-positive-negative-controls",
@@ -2306,7 +2354,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-sentinel-positive-negative-controls"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.incident-counterexample-first-rule",
@@ -2324,7 +2372,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "incident-counterexample-first-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.sentinel-rationale-evidence-bounded",
@@ -2342,7 +2390,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "sentinel-rationale-evidence-bounded"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.capability-claim-levels",
@@ -2360,7 +2408,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "capability-claim-levels"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.route-b-project-owner-decision",
@@ -2378,7 +2426,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.observation-channel-authority",
@@ -2396,7 +2444,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "observation-channel-authority"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.expected-actual-comparison-verdict-ownership",
@@ -2414,7 +2462,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-actual-comparison-verdict-ownership"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.bounded-admitted-artifact-contract",
@@ -2432,7 +2480,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "bounded-admitted-artifact-contract"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.actual-artifact-reextraction",
@@ -2450,7 +2498,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "actual-artifact-reextraction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.challenge-is-freshness-only",
@@ -2468,7 +2516,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "challenge-is-freshness-only"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.generated-carrier-semantic-role",
@@ -2486,7 +2534,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "generated-carrier-semantic-role"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.expected-to-actual-self-proof-rejection",
@@ -2504,7 +2552,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-to-actual-self-proof-rejection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.production-reachability",
@@ -2522,7 +2570,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "production-reachability"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.counterfactual-actual-change-and-impact-set",
@@ -2540,7 +2588,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "counterfactual-actual-change-and-impact-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.selected-design-existing-owner-preservation",
@@ -2558,7 +2606,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.no-universal-ui-observer",
@@ -2576,7 +2624,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-universal-ui-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.v3-v4-and-migration-rule",
@@ -2594,7 +2642,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "v3-v4-and-migration-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.attack-suite-ground-truth",
@@ -2612,7 +2660,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "attack-suite-ground-truth"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.valid-control-suite",
@@ -2630,7 +2678,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "valid-control-suite"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.black-box-final-gate-lifecycle",
@@ -2648,7 +2696,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "black-box-final-gate-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.starward-sanitized-replay",
@@ -2666,7 +2714,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "starward-sanitized-replay"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.fresh-agent-benchmark-boundary",
@@ -2684,7 +2732,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.roi-admission-order",
@@ -2702,7 +2750,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "roi-admission-order"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.early-real-entry-feedback",
@@ -2720,7 +2768,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "early-real-entry-feedback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.no-new-lifecycle-authority-registry",
@@ -2738,7 +2786,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.owner-dependency-lifecycle-boundary",
@@ -2756,7 +2804,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.build-reuse-buy-allowed-set",
@@ -2774,7 +2822,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.technical-debt-and-future-change",
@@ -2792,7 +2840,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "technical-debt-and-future-change"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.compatibility-security-resource-boundaries",
@@ -2810,7 +2858,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "compatibility-security-resource-boundaries"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.context-and-public-authority-update",
@@ -2828,7 +2876,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.verification-sequence-and-current-candidate",
@@ -2846,7 +2894,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.final-hard-acceptance",
@@ -2864,7 +2912,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.approved-final-capability-wording",
@@ -2882,7 +2930,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "approved-final-capability-wording"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.critical-scope-escape-risk",
@@ -2900,7 +2948,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-scope-escape-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.critical-self-attestation-risk",
@@ -2918,7 +2966,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-self-attestation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.requirement.critical-claim-inflation-risk",
@@ -2936,7 +2984,43 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-claim-inflation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "subject.requirement.independent-capability-audit",
+        "kind": "subject",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/subjects/50"
+        },
+        "identity_sha256": "74a1a2b89961643037096ee7cc5ba86faa7503938e1fd3e85d60df249aaefe1d",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "subject.requirement.real-process-workload-roi",
+        "kind": "subject",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/subjects/51"
+        },
+        "identity_sha256": "5bb1f0ec42385588c334a778866a14fbc7870f139db03c154e50f7555238e980",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "axis.actor",
@@ -3650,7 +3734,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "condition.assurance-governance.current-candidate",
@@ -3677,7 +3761,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "condition.observer-tcb-closure.current-candidate",
@@ -3711,7 +3795,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "condition.proof-and-roi.current-candidate",
@@ -3721,7 +3805,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/conditions/3"
         },
-        "identity_sha256": "3af959cfb84fe38945a707c003f129757d70b5decd630bdb62fbfa1bbe45b365",
+        "identity_sha256": "f258dca3d1097137897039df5635754bef31721e8a6b51fa72bb464b0ffe68fe",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.assurance-causal-chain",
@@ -3732,8 +3816,10 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.early-real-entry-feedback",
           "fact.requirement.final-hard-acceptance",
           "fact.requirement.fresh-agent-benchmark-boundary",
+          "fact.requirement.independent-capability-audit",
           "fact.requirement.material-input-provenance",
           "fact.requirement.real-capability-closure-result",
+          "fact.requirement.real-process-workload-roi",
           "fact.requirement.roi-admission-order",
           "fact.requirement.starward-sanitized-replay",
           "fact.requirement.valid-control-suite",
@@ -3742,7 +3828,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "property.custom-requirement-satisfied",
@@ -3752,7 +3838,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/property_dispositions/0"
         },
-        "identity_sha256": "b5ff2bc8e3b114f505a6ad3a63db0ca342e9070be77c007513c42fc062e55923",
+        "identity_sha256": "099a2da9b633a61804a9f95727af8012924bf00346b4cb0e000400cb5f33908b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.actual-artifact-reextraction",
@@ -3780,6 +3866,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.fresh-agent-benchmark-boundary",
           "fact.requirement.generated-carrier-semantic-role",
           "fact.requirement.incident-counterexample-first-rule",
+          "fact.requirement.independent-capability-audit",
           "fact.requirement.invalid-baseline-and-claim-downgrade",
           "fact.requirement.known-selected-design-false-acceptance",
           "fact.requirement.material-input-provenance",
@@ -3795,6 +3882,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.production-reachability",
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
           "fact.requirement.real-capability-closure-result",
+          "fact.requirement.real-process-workload-roi",
           "fact.requirement.roi-admission-order",
           "fact.requirement.route-b-project-owner-decision",
           "fact.requirement.selected-design-existing-owner-preservation",
@@ -3809,7 +3897,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.real-capability-closure-result",
@@ -3827,7 +3915,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.material-input-provenance",
@@ -3845,7 +3933,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.declared-assurance-theorem",
@@ -3863,7 +3951,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "declared-assurance-theorem"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.assurance-causal-chain",
@@ -3881,7 +3969,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "assurance-causal-chain"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.known-selected-design-false-acceptance",
@@ -3899,7 +3987,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.p0-positive-fixture-correction",
@@ -3917,7 +4005,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-positive-fixture-correction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.p0-v1-negative-control",
@@ -3935,7 +4023,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v1-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.p0-v2-negative-control",
@@ -3953,7 +4041,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-v2-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.shared-exact-comparison-owner",
@@ -3971,7 +4059,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "shared-exact-comparison-owner"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.p0-owner-local-and-v3-compatible",
@@ -3989,7 +4077,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-owner-local-and-v3-compatible"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.p0-verification-boundary",
@@ -4007,7 +4095,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "p0-verification-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.purpose-validity-floor-before-relative-antidegradation",
@@ -4025,7 +4113,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.invalid-baseline-and-claim-downgrade",
@@ -4043,7 +4131,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "invalid-baseline-and-claim-downgrade"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.coverage-defined-by-rejected-attack-surface",
@@ -4061,7 +4149,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "coverage-defined-by-rejected-attack-surface"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.critical-sentinel-positive-negative-controls",
@@ -4079,7 +4167,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-sentinel-positive-negative-controls"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.incident-counterexample-first-rule",
@@ -4097,7 +4185,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "incident-counterexample-first-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.sentinel-rationale-evidence-bounded",
@@ -4115,7 +4203,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "sentinel-rationale-evidence-bounded"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.capability-claim-levels",
@@ -4133,7 +4221,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "capability-claim-levels"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.route-b-project-owner-decision",
@@ -4151,7 +4239,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.observation-channel-authority",
@@ -4169,7 +4257,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "observation-channel-authority"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.expected-actual-comparison-verdict-ownership",
@@ -4187,7 +4275,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-actual-comparison-verdict-ownership"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.bounded-admitted-artifact-contract",
@@ -4205,7 +4293,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "bounded-admitted-artifact-contract"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.actual-artifact-reextraction",
@@ -4223,7 +4311,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "actual-artifact-reextraction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.challenge-is-freshness-only",
@@ -4241,7 +4329,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "challenge-is-freshness-only"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.generated-carrier-semantic-role",
@@ -4259,7 +4347,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "generated-carrier-semantic-role"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.expected-to-actual-self-proof-rejection",
@@ -4277,7 +4365,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "expected-to-actual-self-proof-rejection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.production-reachability",
@@ -4295,7 +4383,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "production-reachability"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.counterfactual-actual-change-and-impact-set",
@@ -4313,7 +4401,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "counterfactual-actual-change-and-impact-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.selected-design-existing-owner-preservation",
@@ -4331,7 +4419,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.no-universal-ui-observer",
@@ -4349,7 +4437,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-universal-ui-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.v3-v4-and-migration-rule",
@@ -4367,7 +4455,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "v3-v4-and-migration-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.attack-suite-ground-truth",
@@ -4385,7 +4473,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "attack-suite-ground-truth"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.valid-control-suite",
@@ -4403,7 +4491,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "valid-control-suite"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.black-box-final-gate-lifecycle",
@@ -4421,7 +4509,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "black-box-final-gate-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.starward-sanitized-replay",
@@ -4439,7 +4527,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "starward-sanitized-replay"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.fresh-agent-benchmark-boundary",
@@ -4457,7 +4545,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.roi-admission-order",
@@ -4475,7 +4563,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "roi-admission-order"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.early-real-entry-feedback",
@@ -4493,7 +4581,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "early-real-entry-feedback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.no-new-lifecycle-authority-registry",
@@ -4511,7 +4599,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.owner-dependency-lifecycle-boundary",
@@ -4529,7 +4617,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.build-reuse-buy-allowed-set",
@@ -4547,7 +4635,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.technical-debt-and-future-change",
@@ -4565,7 +4653,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "technical-debt-and-future-change"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.compatibility-security-resource-boundaries",
@@ -4583,7 +4671,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "compatibility-security-resource-boundaries"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.context-and-public-authority-update",
@@ -4601,7 +4689,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.verification-sequence-and-current-candidate",
@@ -4619,7 +4707,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.final-hard-acceptance",
@@ -4637,7 +4725,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.approved-final-capability-wording",
@@ -4655,7 +4743,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "approved-final-capability-wording"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.critical-scope-escape-risk",
@@ -4673,7 +4761,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-scope-escape-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.critical-self-attestation-risk",
@@ -4691,7 +4779,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-self-attestation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.requirement.critical-claim-inflation-risk",
@@ -4709,7 +4797,43 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "critical-claim-inflation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "cell.requirement.independent-capability-audit",
+        "kind": "fact_cell",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/fact_cells/50"
+        },
+        "identity_sha256": "c0e7dc3223678ebc04dcc20315259c0096a172ab8e8fcfc0f6a3a82b75d2f70e",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "cell.requirement.real-process-workload-roi",
+        "kind": "fact_cell",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/fact_cells/51"
+        },
+        "identity_sha256": "99e3d306956f66827e42efa4b52cafd0edf7fdb046dd55c938a6a7a70e4ed95b",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.real-capability-closure-result",
@@ -4727,7 +4851,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.material-input-provenance",
@@ -4743,9 +4867,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.material-input-provenance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.declared-assurance-theorem",
@@ -4761,9 +4885,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.declared-assurance-theorem"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "declared-assurance-theorem"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.assurance-causal-chain",
@@ -4779,9 +4903,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.assurance-causal-chain"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "assurance-causal-chain"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.known-selected-design-false-acceptance",
@@ -4797,9 +4921,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.known-selected-design-false-acceptance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.p0-positive-fixture-correction",
@@ -4815,9 +4939,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.p0-positive-fixture-correction"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-positive-fixture-correction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.p0-v1-negative-control",
@@ -4833,9 +4957,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.p0-v1-negative-control"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-v1-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.p0-v2-negative-control",
@@ -4851,9 +4975,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.p0-v2-negative-control"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-v2-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.shared-exact-comparison-owner",
@@ -4869,9 +4993,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.shared-exact-comparison-owner"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "shared-exact-comparison-owner"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.p0-owner-local-and-v3-compatible",
@@ -4887,9 +5011,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.p0-owner-local-and-v3-compatible"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-owner-local-and-v3-compatible"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.p0-verification-boundary",
@@ -4905,9 +5029,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.p0-verification-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-verification-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
@@ -4923,9 +5047,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.invalid-baseline-and-claim-downgrade",
@@ -4941,9 +5065,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.invalid-baseline-and-claim-downgrade"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "invalid-baseline-and-claim-downgrade"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.coverage-defined-by-rejected-attack-surface",
@@ -4959,9 +5083,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.coverage-defined-by-rejected-attack-surface"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "coverage-defined-by-rejected-attack-surface"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.critical-sentinel-positive-negative-controls",
@@ -4977,9 +5101,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.critical-sentinel-positive-negative-controls"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-sentinel-positive-negative-controls"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.incident-counterexample-first-rule",
@@ -4995,9 +5119,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.incident-counterexample-first-rule"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "incident-counterexample-first-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.sentinel-rationale-evidence-bounded",
@@ -5013,9 +5137,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.sentinel-rationale-evidence-bounded"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "sentinel-rationale-evidence-bounded"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.capability-claim-levels",
@@ -5031,9 +5155,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.capability-claim-levels"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "capability-claim-levels"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.route-b-project-owner-decision",
@@ -5049,9 +5173,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.route-b-project-owner-decision"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.observation-channel-authority",
@@ -5067,9 +5191,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.observation-channel-authority"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "observation-channel-authority"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.expected-actual-comparison-verdict-ownership",
@@ -5085,9 +5209,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.expected-actual-comparison-verdict-ownership"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "expected-actual-comparison-verdict-ownership"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.bounded-admitted-artifact-contract",
@@ -5103,9 +5227,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.bounded-admitted-artifact-contract"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "bounded-admitted-artifact-contract"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.actual-artifact-reextraction",
@@ -5121,9 +5245,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.actual-artifact-reextraction"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "actual-artifact-reextraction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.challenge-is-freshness-only",
@@ -5139,9 +5263,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.challenge-is-freshness-only"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "challenge-is-freshness-only"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.generated-carrier-semantic-role",
@@ -5157,9 +5281,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.generated-carrier-semantic-role"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "generated-carrier-semantic-role"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.expected-to-actual-self-proof-rejection",
@@ -5175,9 +5299,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.expected-to-actual-self-proof-rejection"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "expected-to-actual-self-proof-rejection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.production-reachability",
@@ -5193,9 +5317,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.production-reachability"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "production-reachability"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.counterfactual-actual-change-and-impact-set",
@@ -5211,9 +5335,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.counterfactual-actual-change-and-impact-set"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "counterfactual-actual-change-and-impact-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.selected-design-existing-owner-preservation",
@@ -5229,9 +5353,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.selected-design-existing-owner-preservation"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.no-universal-ui-observer",
@@ -5247,9 +5371,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.no-universal-ui-observer"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "no-universal-ui-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.v3-v4-and-migration-rule",
@@ -5265,9 +5389,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.v3-v4-and-migration-rule"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "v3-v4-and-migration-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.attack-suite-ground-truth",
@@ -5283,9 +5407,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.attack-suite-ground-truth"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "attack-suite-ground-truth"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.valid-control-suite",
@@ -5301,9 +5425,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.valid-control-suite"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "valid-control-suite"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.black-box-final-gate-lifecycle",
@@ -5319,9 +5443,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.black-box-final-gate-lifecycle"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "black-box-final-gate-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.starward-sanitized-replay",
@@ -5337,9 +5461,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.starward-sanitized-replay"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "starward-sanitized-replay"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.fresh-agent-benchmark-boundary",
@@ -5355,9 +5479,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.fresh-agent-benchmark-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.roi-admission-order",
@@ -5373,9 +5497,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.roi-admission-order"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "roi-admission-order"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.early-real-entry-feedback",
@@ -5391,9 +5515,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.early-real-entry-feedback"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "early-real-entry-feedback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.no-new-lifecycle-authority-registry",
@@ -5409,9 +5533,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.no-new-lifecycle-authority-registry"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.owner-dependency-lifecycle-boundary",
@@ -5427,9 +5551,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.owner-dependency-lifecycle-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.build-reuse-buy-allowed-set",
@@ -5445,9 +5569,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.build-reuse-buy-allowed-set"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.technical-debt-and-future-change",
@@ -5463,9 +5587,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.technical-debt-and-future-change"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "technical-debt-and-future-change"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.compatibility-security-resource-boundaries",
@@ -5481,9 +5605,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.compatibility-security-resource-boundaries"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "compatibility-security-resource-boundaries"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.context-and-public-authority-update",
@@ -5499,9 +5623,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.context-and-public-authority-update"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.verification-sequence-and-current-candidate",
@@ -5517,9 +5641,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.verification-sequence-and-current-candidate"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.final-hard-acceptance",
@@ -5535,9 +5659,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.final-hard-acceptance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.approved-final-capability-wording",
@@ -5553,9 +5677,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.approved-final-capability-wording"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "approved-final-capability-wording"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.critical-scope-escape-risk",
@@ -5571,9 +5695,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.critical-scope-escape-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-scope-escape-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.critical-self-attestation-risk",
@@ -5589,9 +5713,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.critical-self-attestation-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-self-attestation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.requirement.critical-claim-inflation-risk",
@@ -5607,9 +5731,45 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.critical-claim-inflation-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-claim-inflation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "fact.requirement.independent-capability-audit",
+        "kind": "fact",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/facts/50"
+        },
+        "identity_sha256": "524b31eecefcdbb2170e5e6e74b511b9f1e508c5fdc396dc919392258a206ee4",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "fact.requirement.real-process-workload-roi",
+        "kind": "fact",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/facts/51"
+        },
+        "identity_sha256": "83eabb9d499777cec043b098bdbb59b7d98c86abb5f16b28609bce7444daa51c",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.real-capability-closure-result.exact",
@@ -5619,7 +5779,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/0"
         },
-        "identity_sha256": "bf0b263751f9daa68ad4b0b2f51e5a876a4a35e55ca9a85c6f0634db9cf1a950",
+        "identity_sha256": "4fd054aa4b3b71c4cee4b98fcc87fa77d5b29732b9d5094ec52c8aed26e45518",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.real-capability-closure-result"
@@ -5627,7 +5787,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.material-input-provenance.exact",
@@ -5637,15 +5797,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/1"
         },
-        "identity_sha256": "d2b97e2184fa00a93abd2ab7930333efbedbeea07ff483925a19ed44f3b7e07d",
+        "identity_sha256": "c5f416eb23b368d3eaf148841de881c5eb254a50b340d704ea9ea833920fcc3f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.material-input-provenance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "material-input-provenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.declared-assurance-theorem.exact",
@@ -5655,15 +5815,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/2"
         },
-        "identity_sha256": "e8b8fbf78a28d754cf611f528986e86702a1537a03c911c2ee1348f121c8caf2",
+        "identity_sha256": "10c52a7926375ad81cc33ea0ddb515ba23380d870c0d4a52764ed1d17de54249",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.declared-assurance-theorem"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "declared-assurance-theorem"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.assurance-causal-chain.exact",
@@ -5673,15 +5833,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/3"
         },
-        "identity_sha256": "c2e61f9c1cce32912757cee4da6cbe470a78ce33bf2c0f94bbe7b7a1323fee28",
+        "identity_sha256": "3dba2789466806158547ddda5d016c5abf60ce1bab3123064dacd8a38e65678f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.assurance-causal-chain"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "assurance-causal-chain"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.known-selected-design-false-acceptance.exact",
@@ -5691,15 +5851,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/4"
         },
-        "identity_sha256": "46d1b65779be156d097ee625b2ed25430f3f564b225a408c903ff6a04e0e0471",
+        "identity_sha256": "3e2f532d2ff2ee4ce11c1b7e208b0d6aca83912a44e891557aa8b228c912e562",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.known-selected-design-false-acceptance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "known-selected-design-false-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.p0-positive-fixture-correction.exact",
@@ -5709,15 +5869,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/5"
         },
-        "identity_sha256": "e34f2eb24370315fe74df8854a39adebf6fb165b977a44f47d0544bba3fb3f4f",
+        "identity_sha256": "039ad9d1f79bc07d2ecda77a9fecc5a23e6bd2bda32ef0913b2f2786b9571230",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-positive-fixture-correction"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-positive-fixture-correction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.p0-v1-negative-control.exact",
@@ -5727,15 +5887,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/6"
         },
-        "identity_sha256": "cc8357f0904323e9c51e5b8a887f51b4a8f41c29a648dff6f94b707d29f7ab40",
+        "identity_sha256": "16f96d9ccedc4ff923b50e206c17a108dc5d489ac6d0db07493cea2b8267bd4e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-v1-negative-control"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-v1-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.p0-v2-negative-control.exact",
@@ -5745,15 +5905,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/7"
         },
-        "identity_sha256": "848accc649007d91824bdb9608d361facfa3ace64a767bbb9cc808df76adcbed",
+        "identity_sha256": "2327aa6c030aa4f38c66e5b5cb4adb141b2db6ea6d07ebcbb3eeab3080d53d52",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-v2-negative-control"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-v2-negative-control"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.shared-exact-comparison-owner.exact",
@@ -5763,15 +5923,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/8"
         },
-        "identity_sha256": "adc308e5b624c88e958dac8ee4276be631521a2ca04c4e2be65a2ef7358b8903",
+        "identity_sha256": "a4e73a7469f70ae0a299f9052045a4140f16024892d3f61d7517750ed346938b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.shared-exact-comparison-owner"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "shared-exact-comparison-owner"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.p0-owner-local-and-v3-compatible.exact",
@@ -5781,15 +5941,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/9"
         },
-        "identity_sha256": "d2df7c25bbc506a7486aa47cb9e865f6c04d21597cf8393344313f1f5319e3fc",
+        "identity_sha256": "ad003f271d47dd9bd54be9e8621ca7ff18a14c166fbe36f5410d66fe9753b73a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-owner-local-and-v3-compatible"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-owner-local-and-v3-compatible"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.p0-verification-boundary.exact",
@@ -5799,15 +5959,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/10"
         },
-        "identity_sha256": "ad34fb2036a34cfc9ad1bae67d239f59cd6c2344a1b478500fdca6c3af2bb8fb",
+        "identity_sha256": "2aaac0795cb530798d4886bb417f6dc04c50172b0713e952ab1767a0f7e50b2f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.p0-verification-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "p0-verification-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.purpose-validity-floor-before-relative-antidegradation.exact",
@@ -5817,15 +5977,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/11"
         },
-        "identity_sha256": "042a171157b771bd301bb273f026ba2d65a186fb06e7b585954ea4557c65b80d",
+        "identity_sha256": "0f5a69a34fb8f9d2a046884e891852a6a8dca17065286114853cac74f8d0af76",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "purpose-validity-floor-before-relative-antidegradation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.invalid-baseline-and-claim-downgrade.exact",
@@ -5835,15 +5995,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/12"
         },
-        "identity_sha256": "926f6e9f1e7e13daafb154ba3af838418f71e180d0e67fa456e5ac69db6ec4f1",
+        "identity_sha256": "07b65d44b631c8757f792863752561e0ad827b3fde1ab2abe888f4d2ad2c5620",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.invalid-baseline-and-claim-downgrade"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "invalid-baseline-and-claim-downgrade"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.coverage-defined-by-rejected-attack-surface.exact",
@@ -5853,15 +6013,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/13"
         },
-        "identity_sha256": "bcda4110ba86ae2f08b43f11e11b0627528d8fa16160181453e26de014816320",
+        "identity_sha256": "57bbdfa498d46473081d444465a5d44e1402f7c51fc947119db4ddb04414f385",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.coverage-defined-by-rejected-attack-surface"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "coverage-defined-by-rejected-attack-surface"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.critical-sentinel-positive-negative-controls.exact",
@@ -5871,15 +6031,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/14"
         },
-        "identity_sha256": "9ca5976eb819ace0642f266810c65a698c8740569673969377ec9c5af8e0cddc",
+        "identity_sha256": "1890674b63ea3f512218ac67f1b5268e9e6c9a09c411c19e0cbf17cd18cab2d2",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-sentinel-positive-negative-controls"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-sentinel-positive-negative-controls"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.incident-counterexample-first-rule.exact",
@@ -5889,15 +6049,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/15"
         },
-        "identity_sha256": "ab4177cd5b652d3613a0f81c4f32d642c20fb25d32dfba1a581534523cc4e7eb",
+        "identity_sha256": "d290dd65d25c07a6712ca01702d775b3152f7208cb86ccf7f2ef0c90fb38bdc5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.incident-counterexample-first-rule"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "incident-counterexample-first-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.sentinel-rationale-evidence-bounded.exact",
@@ -5907,15 +6067,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/16"
         },
-        "identity_sha256": "f9559cde282b3c0b4c44fea32dd0c3b7bdbfc22cd38afb99be886965df8ff62e",
+        "identity_sha256": "d7fa64f2f799953603248fa8216d3f74fc9dbd6e4894401825266598e7f0e087",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.sentinel-rationale-evidence-bounded"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "sentinel-rationale-evidence-bounded"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.capability-claim-levels.exact",
@@ -5925,15 +6085,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/17"
         },
-        "identity_sha256": "0c4feadea8127d25f7eb2420a2027ac78f4e7147e2b1d46bcdccb3494a4fcd66",
+        "identity_sha256": "68853d62a86d934b0952c52265067a78c9b97e86b54c0c7d155b22a7e6e7f8d4",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.capability-claim-levels"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "capability-claim-levels"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.route-b-project-owner-decision.exact",
@@ -5943,15 +6103,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/18"
         },
-        "identity_sha256": "e5b37fbdaf9bd16310fe450fc57c1c266558ea2ffc4dfa86a100d9ca8a85c59e",
+        "identity_sha256": "13ce1c25eb2b9c0763b7fcf15033750286d081714a20dd2a0ba180afea28784f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.route-b-project-owner-decision"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "route-b-project-owner-decision"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.observation-channel-authority.exact",
@@ -5961,15 +6121,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/19"
         },
-        "identity_sha256": "dd6c8fa80de615611fc46ad3e57b49c6838eb62995d670b966a7ae7f22099604",
+        "identity_sha256": "8a751351ce6deab385539ea3c6b10d1a03a6c56c0ca39e06319dacf58a693323",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.observation-channel-authority"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "observation-channel-authority"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.expected-actual-comparison-verdict-ownership.exact",
@@ -5979,15 +6139,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/20"
         },
-        "identity_sha256": "b9069c269809306d3e6c85b151392c943697c966374185e2edfd772a55f3db1d",
+        "identity_sha256": "d99ee35c7be8272d01f8d35764377b47753e263a7343ab8080008dd5cc429a89",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.expected-actual-comparison-verdict-ownership"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "expected-actual-comparison-verdict-ownership"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.bounded-admitted-artifact-contract.exact",
@@ -5997,15 +6157,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/21"
         },
-        "identity_sha256": "86ea937c9a040ba71209cbd85bdf38c7aeff32e4cb76043a3946b9a764e3ed42",
+        "identity_sha256": "7448f8f7cc95216a1e756a5b142db559a2f65fb5c2be3ac4c7f8fafa43ef1e1d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.bounded-admitted-artifact-contract"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "bounded-admitted-artifact-contract"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.actual-artifact-reextraction.exact",
@@ -6015,15 +6175,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/22"
         },
-        "identity_sha256": "55f64485270aed3680996aaef8f30fd52a994ebd610f4fdd701dcdaf1327eabe",
+        "identity_sha256": "e6ba429e72a52e741c8a79adad17e119633345723f1607c6d7fd4f695bd74193",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.actual-artifact-reextraction"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "actual-artifact-reextraction"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.challenge-is-freshness-only.exact",
@@ -6033,15 +6193,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/23"
         },
-        "identity_sha256": "64943eeb42d55e94caaaaaba8b0b7be99c2231ee12964380e33a5d4ec29fd3a8",
+        "identity_sha256": "e49b8df0d6637c38771aaf54c580f86c825b79b09e58c0ffd3d0b74837f76fda",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.challenge-is-freshness-only"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "challenge-is-freshness-only"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.generated-carrier-semantic-role.exact",
@@ -6051,15 +6211,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/24"
         },
-        "identity_sha256": "6cba85de00209b0a9aa15bffd3de9c7f9c4e30f6dd1cf5dc7e9c286b972115a6",
+        "identity_sha256": "cc450b3dd7a56055c6f7af9725dedfba728b9281e5a218f663b1c5ae7f69aab8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.generated-carrier-semantic-role"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "generated-carrier-semantic-role"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.expected-to-actual-self-proof-rejection.exact",
@@ -6069,15 +6229,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/25"
         },
-        "identity_sha256": "faeee424fa9dab90c47970dc8546ee4e3798ca3156fb98f5aed170cc01b40c5b",
+        "identity_sha256": "dcac32e87d04339907fbb4f25cd8b1f9671a346a29b91524bba731f2436c93cd",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.expected-to-actual-self-proof-rejection"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "expected-to-actual-self-proof-rejection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.production-reachability.exact",
@@ -6087,15 +6247,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/26"
         },
-        "identity_sha256": "69c918ebd5d2c5556084e9f2051638cdcbf4eb7993338adcdd961f64a77e3a24",
+        "identity_sha256": "9e0a2d1bb0e81913a8d6257bad588aced73bed384e44257978b1a26603828153",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.production-reachability"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "production-reachability"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.counterfactual-actual-change-and-impact-set.exact",
@@ -6105,15 +6265,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/27"
         },
-        "identity_sha256": "007323799b3479714201e26900b68fef3ebd22d6d0391422b7570d2e95566932",
+        "identity_sha256": "282b18deb33edda9f2ded650bf4d91ba5b74284f7ca89a3612c72597a729d85b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.counterfactual-actual-change-and-impact-set"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "counterfactual-actual-change-and-impact-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.selected-design-existing-owner-preservation.exact",
@@ -6123,15 +6283,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/28"
         },
-        "identity_sha256": "2ee712b758a3239b5f6fbd9bc731cfed8621ecdf0331ac3a23065af590812ab3",
+        "identity_sha256": "041dbc035a3d04bc4b6a328b2d74a1a95c41200f26564eae60551877029ed51c",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.selected-design-existing-owner-preservation"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "selected-design-existing-owner-preservation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.no-universal-ui-observer.exact",
@@ -6141,15 +6301,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/29"
         },
-        "identity_sha256": "3007a569c1d7d986fbce9ba611535b3e65306c29f91f07813389e89cd4d58ac4",
+        "identity_sha256": "25afa18c1335a4695449ea9b3322df3c3bfdd2d503c3a4d533b45fc69115a078",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-universal-ui-observer"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "no-universal-ui-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.v3-v4-and-migration-rule.exact",
@@ -6159,15 +6319,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/30"
         },
-        "identity_sha256": "49e5e6e39cf8de8321ba79093bdf54aadbc0c7278fdba5526dbc0f018871e88a",
+        "identity_sha256": "9cf488db3777812844c18dceaccaafb5c4249c560e4bc6abce39109cb5a912d3",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.v3-v4-and-migration-rule"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "v3-v4-and-migration-rule"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.attack-suite-ground-truth.exact",
@@ -6177,15 +6337,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/31"
         },
-        "identity_sha256": "5d2208cee15ddda78017cdd2369e60b2965c6e1be361bb48a816e39e47789c05",
+        "identity_sha256": "fe32ad5effa76933beecfaa845f8d8fbb564acbbd693778103d497920431339f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.attack-suite-ground-truth"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "attack-suite-ground-truth"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.valid-control-suite.exact",
@@ -6195,15 +6355,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/32"
         },
-        "identity_sha256": "d6eb8976e7469afb352d5782a12d7059b46fa5d4e17bccd1d937110995125dc9",
+        "identity_sha256": "c1f8670b15ead9886c22ca8ce5c29e9d107de8ce0d93943de46e0ca17fece3e8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.valid-control-suite"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "valid-control-suite"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.black-box-final-gate-lifecycle.exact",
@@ -6213,15 +6373,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/33"
         },
-        "identity_sha256": "70af7bb250cdd59ec88afa46acbf2407d0edc12ed288323c2ea7e1e282e13287",
+        "identity_sha256": "52554a1738cac794a84d03f480784c23030568a7012a3dd68627fb010dd101b5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.black-box-final-gate-lifecycle"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "black-box-final-gate-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.starward-sanitized-replay.exact",
@@ -6231,15 +6391,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/34"
         },
-        "identity_sha256": "0d3571eb76d254b9ad6225eea4928222c0cc8434eb1891a7dbcaa2c24d93efa3",
+        "identity_sha256": "65a086c05d8b80075a356405f8bf9143a054ce682f78eaa9068f8f69d5a320eb",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.starward-sanitized-replay"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "starward-sanitized-replay"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.fresh-agent-benchmark-boundary.exact",
@@ -6249,15 +6409,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/35"
         },
-        "identity_sha256": "c745bca02f6e8d154c4a76387626eb35e1114f618ca63f76bbce9a410a2b24ef",
+        "identity_sha256": "792d55c7865280ca445a72f6c48a78e0d529b0be2a7e340b940b6d6d46767238",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.fresh-agent-benchmark-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "fresh-agent-benchmark-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.roi-admission-order.exact",
@@ -6267,15 +6427,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/36"
         },
-        "identity_sha256": "8f0d69d4b301e771635f35a8275b123f6ec5d9036d0843e7becb9f67bc9ed60c",
+        "identity_sha256": "991d711736fa2483c865826d98b7013fffd2040add2ad2a1a6a1f6eb7bcc2e2a",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.roi-admission-order"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "roi-admission-order"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.early-real-entry-feedback.exact",
@@ -6285,15 +6445,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/37"
         },
-        "identity_sha256": "03eb684512abb41d8e9f6b3b49c4fd8a2c1ac499dce141474275e8438fcfdcc8",
+        "identity_sha256": "d06091c6c2577a82f258400d7080621e33ede42f3092b89f988623c061451100",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.early-real-entry-feedback"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "early-real-entry-feedback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.no-new-lifecycle-authority-registry.exact",
@@ -6303,15 +6463,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/38"
         },
-        "identity_sha256": "4b1b50856d0f39a8f8703949db48c2d7399f2bfc4ff14535a13c1338ce1b6b47",
+        "identity_sha256": "0527678881507051d94788aaed32ba232888e46596e9f2fc9c16678cecafd8ed",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-new-lifecycle-authority-registry"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "no-new-lifecycle-authority-registry"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.owner-dependency-lifecycle-boundary.exact",
@@ -6321,15 +6481,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/39"
         },
-        "identity_sha256": "df5246dc1e48c72746011e388b35ae053e4242826c84246b05928d582f3f8c3f",
+        "identity_sha256": "8a431dbeb4476cbb92fa0f1eccd1430a4aa5cf83c5ad64e7eb113e8a63445b7e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "owner-dependency-lifecycle-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.build-reuse-buy-allowed-set.exact",
@@ -6339,15 +6499,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/40"
         },
-        "identity_sha256": "5621484a2a189e493d77fdfb8c6d2bf8719d64520d664a5c7ecf44466fda8126",
+        "identity_sha256": "201eb1927dce26d390b8e220235c201d3e2eff5a8a3c62d400128bf25a4da88e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.build-reuse-buy-allowed-set"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "build-reuse-buy-allowed-set"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.technical-debt-and-future-change.exact",
@@ -6357,15 +6517,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/41"
         },
-        "identity_sha256": "b26eba927673707644a5657e04b12d34b361ff6884b8f92a634a7b33128e6adc",
+        "identity_sha256": "70255679b34cf0d763fee801d4ae5ff793e44a07498bda20dbda84c674ed8e2d",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.technical-debt-and-future-change"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "technical-debt-and-future-change"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.compatibility-security-resource-boundaries.exact",
@@ -6375,15 +6535,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/42"
         },
-        "identity_sha256": "5631d8caf1643288286a5676d3ce136e4ea1b31930bd37cf91594a94e7540cb9",
+        "identity_sha256": "51ca45c4b2fce6c0243189d5ea06e54035b5f9b8057f84899bdc11900d0a3637",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.compatibility-security-resource-boundaries"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "compatibility-security-resource-boundaries"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.context-and-public-authority-update.exact",
@@ -6393,15 +6553,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/43"
         },
-        "identity_sha256": "84fc4a8755b7a529dacff9a04b904e06894a817ed935fdb5b914fd679ed31d88",
+        "identity_sha256": "fa2dbd70f8de140470ef00ea16371864363903e39ba684734c25da6e9e25132e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.context-and-public-authority-update"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "context-and-public-authority-update"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.verification-sequence-and-current-candidate.exact",
@@ -6411,15 +6571,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/44"
         },
-        "identity_sha256": "424164d3a896b6dc1c2985176b7dd0dc9ca1a1affcd4e5a42113f9e45b8098b6",
+        "identity_sha256": "5f12f3d762a255733beeb9d6ddc919fb74f5c427ef48267281a4eafa894c8a9f",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "verification-sequence-and-current-candidate"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.final-hard-acceptance.exact",
@@ -6429,15 +6589,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/45"
         },
-        "identity_sha256": "a734a8992a0651d55eedcb6b18dabe27baff1fa25df92806bc9214360bbe3dc2",
+        "identity_sha256": "a4e476a7e69739d1a706f6e8a36363e0fa6080cfc6985d7c31408fa8b1f21214",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.final-hard-acceptance"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "final-hard-acceptance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.approved-final-capability-wording.exact",
@@ -6447,15 +6607,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/46"
         },
-        "identity_sha256": "98c5bdc6ce34b5c73a02fe4119e79d6627603cfc50949ad98a87d4b18fa1eb8c",
+        "identity_sha256": "36be88a4e3442726528a403fec0e7d5169ad744ec63410a78064cf013ef8b87b",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.approved-final-capability-wording"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "approved-final-capability-wording"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.critical-scope-escape-risk.exact",
@@ -6465,15 +6625,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/47"
         },
-        "identity_sha256": "a547afb6e610b31196e75eb728dd8b3e388da534719cbffe81b341d4cc2bcb5e",
+        "identity_sha256": "1878f6a1094b799d5cac6b84564ad372cd8a88663816ca45cb05695509a4b6bb",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-scope-escape-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-scope-escape-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.critical-self-attestation-risk.exact",
@@ -6483,15 +6643,15 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/48"
         },
-        "identity_sha256": "2684ebed8e95ed34921c3c40b330f03774979dbbd5b2ff1e375962ec2c9e3925",
+        "identity_sha256": "44270a99e919e706d4d8f9d68704be4cccc1bd2d8a0ab4f2ea0444cf46245a91",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-self-attestation-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-self-attestation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.requirement.critical-claim-inflation-risk.exact",
@@ -6501,15 +6661,51 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/proof_obligations/49"
         },
-        "identity_sha256": "7aaaa857435c545c946ac8ff180cec6dc88d07ef936918adb5579d5918796f5e",
+        "identity_sha256": "7814477dd29e8175af10f5858f2e82b5bb2aefa8ea8916ff05efc892dbff3658",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.critical-claim-inflation-risk"
         ],
         "basis_refs": [
-          "real-capability-closure-result"
+          "critical-claim-inflation-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "proof.requirement.independent-capability-audit.exact",
+        "kind": "proof_obligation",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/proof_obligations/50"
+        },
+        "identity_sha256": "ca72e9e1064555325af348ed8df2f6aa9d4c0ed06d3fa5c84bc30f4af911407f",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.independent-capability-audit"
+        ],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
+      },
+      {
+        "key": "proof.requirement.real-process-workload-roi.exact",
+        "kind": "proof_obligation",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/proof_obligations/51"
+        },
+        "identity_sha256": "b87e87ca44d7e2a7629074099836e41588bb2f8d07110936b7a822f07365d0e4",
+        "disposition": "material_with_facts",
+        "fact_refs": [
+          "fact.requirement.real-process-workload-roi"
+        ],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "oracle.long-task-real-capability",
@@ -6547,6 +6743,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.fresh-agent-benchmark-boundary",
           "fact.requirement.generated-carrier-semantic-role",
           "fact.requirement.incident-counterexample-first-rule",
+          "fact.requirement.independent-capability-audit",
           "fact.requirement.invalid-baseline-and-claim-downgrade",
           "fact.requirement.known-selected-design-false-acceptance",
           "fact.requirement.material-input-provenance",
@@ -6562,6 +6759,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.production-reachability",
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
           "fact.requirement.real-capability-closure-result",
+          "fact.requirement.real-process-workload-roi",
           "fact.requirement.roi-admission-order",
           "fact.requirement.route-b-project-owner-decision",
           "fact.requirement.selected-design-existing-owner-preservation",
@@ -6576,7 +6774,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "environment.long-task-real-capability",
@@ -6614,6 +6812,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.fresh-agent-benchmark-boundary",
           "fact.requirement.generated-carrier-semantic-role",
           "fact.requirement.incident-counterexample-first-rule",
+          "fact.requirement.independent-capability-audit",
           "fact.requirement.invalid-baseline-and-claim-downgrade",
           "fact.requirement.known-selected-design-false-acceptance",
           "fact.requirement.material-input-provenance",
@@ -6629,6 +6828,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "fact.requirement.production-reachability",
           "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
           "fact.requirement.real-capability-closure-result",
+          "fact.requirement.real-process-workload-roi",
           "fact.requirement.roi-admission-order",
           "fact.requirement.route-b-project-owner-decision",
           "fact.requirement.selected-design-existing-owner-preservation",
@@ -6643,7 +6843,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "basis_refs": [
           "real-capability-closure-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       }
     ]
   },
@@ -6658,13 +6858,13 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
     "collections": [
       {
         "name": "inputs",
-        "expected_count": 66,
-        "identity_sha256": "e85871679da76ce090819d2ace62dfdefceb3a2c811eed102bbb8e9e38ee9460"
+        "expected_count": 68,
+        "identity_sha256": "77690a70fdbd85ee6486a4b1b9ceb59edd4249e54e36a136688a1e9a30a699c8"
       },
       {
         "name": "inspector_census",
-        "expected_count": 348,
-        "identity_sha256": "a1134cf96c6345d78086017d0d62b52eabf249e68b9143cb481986049225ea1f"
+        "expected_count": 358,
+        "identity_sha256": "279f3a0c35865940350ef7806b07f0fccd140908f044de7f97400ec99b27cbb3"
       },
       {
         "name": "family_dispositions",
@@ -6673,8 +6873,8 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       },
       {
         "name": "subjects",
-        "expected_count": 50,
-        "identity_sha256": "9875ab463a05287cceeb3b2341d8dacb6f2ad76861e1906831d0b4fdf553589e"
+        "expected_count": 52,
+        "identity_sha256": "d6b7c9c222ccfed30fbe37bdb17ac4ff679e88062d3f96c5be5092eb5ec65cd5"
       },
       {
         "name": "relations",
@@ -6713,18 +6913,18 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       },
       {
         "name": "fact_cells",
-        "expected_count": 50,
-        "identity_sha256": "61557ca32bfafa584e32b2ef0323d2f62ceb1e98ffd21cdee7d0e108fc166376"
+        "expected_count": 52,
+        "identity_sha256": "6f6dde3c1742bef39ab90b345cfa47c0696953516258c4959fdb05e718225abd"
       },
       {
         "name": "facts",
-        "expected_count": 50,
-        "identity_sha256": "d197b68ad8a809c54ef3c606ffaab2ad73cc894ab8373cecfb4f2ce78b0aa43b"
+        "expected_count": 52,
+        "identity_sha256": "c9f510168e473cd5d5fcc40d947c69b1d07588159cb9faa10bcd90b002a8d989"
       },
       {
         "name": "proof_obligations",
-        "expected_count": 50,
-        "identity_sha256": "2a1faf0d265d42916da671656e7c54e63b22f3e18b3c88f6c80dae32cb2365c6"
+        "expected_count": 52,
+        "identity_sha256": "d391b4d20e677c1562ee05daa75223903465b10877611eee91a10ea07f5af005"
       },
       {
         "name": "oracles",
@@ -6748,7 +6948,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.real-capability-closure-result",
       "kind": "source_item",
       "source_ref": "real-capability-closure-result",
-      "sha256": "1002a5940af39aa8a0d275855b6ed79b5a0aee42fd57341f0736b7f250c2b638",
+      "sha256": "ec26a5000eb57e1d4e41fe2a8e1d997b24dd46fd55cc39c14ad2eedceee7c8b4",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.real-capability-closure-result"
@@ -6762,7 +6962,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.material-input-provenance",
       "kind": "source_item",
       "source_ref": "material-input-provenance",
-      "sha256": "1ee3e8f6c86b2fed8ab4fdd22a3baad46f96f4e730ba96cbb3e387160cebbaa6",
+      "sha256": "16866a4c73cb56bb21ea7ee490daa1524cfb035cba0a41b9353258ae98d993c5",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.material-input-provenance"
@@ -6776,7 +6976,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.declared-assurance-theorem",
       "kind": "source_item",
       "source_ref": "declared-assurance-theorem",
-      "sha256": "51bcf26e1d84e6c51158d80fa8f4b99cbc1980686e497979e4dd5ed7d1e4a042",
+      "sha256": "98b147664e6d64372b92f6efdac40c3305b1049caf43d7eee7923f81209ba1e6",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.declared-assurance-theorem"
@@ -6790,7 +6990,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.assurance-causal-chain",
       "kind": "source_item",
       "source_ref": "assurance-causal-chain",
-      "sha256": "fe6aa551c117a5032c84b31340b7fac50d318d474827c70210a5758d0cd44b48",
+      "sha256": "2da2214856079b7585bb36e57ee184e7ded90ed7c6767375cfc423d6997bcfe3",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.assurance-causal-chain"
@@ -6804,7 +7004,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.known-selected-design-false-acceptance",
       "kind": "source_item",
       "source_ref": "known-selected-design-false-acceptance",
-      "sha256": "144d2dee7aedbf28e3822c5b44f04fda764e9b3db534889473b9feb284b04d22",
+      "sha256": "63424c0a0da9c5f941c40db608781adcd4d74cdd94d171070453933661322db3",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.known-selected-design-false-acceptance"
@@ -6818,7 +7018,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.p0-positive-fixture-correction",
       "kind": "source_item",
       "source_ref": "p0-positive-fixture-correction",
-      "sha256": "2279bcfa3eec9b70c0652aefec47eb5ddf7dedebe1c7fe96cc64944d5bfcb9dd",
+      "sha256": "ebfa81d9b620a6b0625e0c72d449d8889482aeb7f09474f0dcfc0b626ca9bb07",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.p0-positive-fixture-correction"
@@ -6832,7 +7032,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.p0-v1-negative-control",
       "kind": "source_item",
       "source_ref": "p0-v1-negative-control",
-      "sha256": "2951f076c648308a0feca9eba59ce5fc3fa6f25c48fe86fecbf469d12008d176",
+      "sha256": "04f1f460242b18a7b426cbc9a1290c971875b6b77e52e93be595c546254e4ba7",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.p0-v1-negative-control"
@@ -6846,7 +7046,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.p0-v2-negative-control",
       "kind": "source_item",
       "source_ref": "p0-v2-negative-control",
-      "sha256": "23a04c231c23f285d4ede3eddf9fca1498fda0fdc0e98e056137541180a48cff",
+      "sha256": "e4ed3ac5b975d1f9c9944052e67882d784a4a821e4a2c16f961af8be9687ddce",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.p0-v2-negative-control"
@@ -6860,7 +7060,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.shared-exact-comparison-owner",
       "kind": "source_item",
       "source_ref": "shared-exact-comparison-owner",
-      "sha256": "fbdcb1ae3efb78bc2063bde1b4138bfdc7f90b1c086c865587fdf6c6a9bf58d7",
+      "sha256": "588b9b49704718796bff60044ae0d7ea5d5ae69f5490546707211e010f17410a",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.shared-exact-comparison-owner"
@@ -6874,7 +7074,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.p0-owner-local-and-v3-compatible",
       "kind": "source_item",
       "source_ref": "p0-owner-local-and-v3-compatible",
-      "sha256": "008ca45fe7124796e35aa380f5e75b90bd9e5693d285862394a2641385690a80",
+      "sha256": "45e98d132708d7671534ac2c1ffe851d16c093155abfe16db36a368beb53f51a",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.p0-owner-local-and-v3-compatible"
@@ -6888,7 +7088,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.p0-verification-boundary",
       "kind": "source_item",
       "source_ref": "p0-verification-boundary",
-      "sha256": "fcd9ddfd8598ea00c22f0eb6bf1d96e64e646991ac2e55634cb8441acdda7a52",
+      "sha256": "b8134f1be372827a9f7073643ffb412b0b0ea51e367fb650393c4cffccf19b6e",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.p0-verification-boundary"
@@ -6944,7 +7144,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.critical-sentinel-positive-negative-controls",
       "kind": "source_item",
       "source_ref": "critical-sentinel-positive-negative-controls",
-      "sha256": "93a14f3d2bbffcb66d1b5df4f2c163d4ae48d6b26d5a7fcaf8d1812c2ece8dd8",
+      "sha256": "cd454b3660dd8798c08928f6d2110a4424381bcbc7d9d9b86d1628b83ee26d2f",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.critical-sentinel-positive-negative-controls"
@@ -6972,7 +7172,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.sentinel-rationale-evidence-bounded",
       "kind": "source_item",
       "source_ref": "sentinel-rationale-evidence-bounded",
-      "sha256": "c44740fdb123854f1013f57414b4a8f18b42e4c662541472628618ecdd571135",
+      "sha256": "68c7b2651095e435d018f5abba3f399a33b6ba2086df1e7b348334b6940ea1d9",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.sentinel-rationale-evidence-bounded"
@@ -6986,7 +7186,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.capability-claim-levels",
       "kind": "source_item",
       "source_ref": "capability-claim-levels",
-      "sha256": "60f120b715fd228f33c0a9ad955d8064e9ccfb15263fe8c39e0cec0d31a3761f",
+      "sha256": "0c00a1eda5c4708cb2ce74e94b5911408f1780f4ef8dc25cfd622da67987dd17",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.capability-claim-levels"
@@ -7000,7 +7200,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.route-b-project-owner-decision",
       "kind": "source_item",
       "source_ref": "route-b-project-owner-decision",
-      "sha256": "68d69b272727ce873538d4885fbdd66381b439c18efe1d9d48d5994dec8b5c2d",
+      "sha256": "941538e0e17117185bec7c868e52f4f084563b739d801fdd598dee159b99ae65",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.route-b-project-owner-decision"
@@ -7014,7 +7214,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.observation-channel-authority",
       "kind": "source_item",
       "source_ref": "observation-channel-authority",
-      "sha256": "13b42ced570bc32ec4ac05e51f8f4380ffb0d1faa35fcb958a6b74dee8b0c132",
+      "sha256": "59617ba2cd614decc7a738cc5ea66d7b3bac19da3d2702412956a061a540c8de",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.observation-channel-authority"
@@ -7028,7 +7228,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.expected-actual-comparison-verdict-ownership",
       "kind": "source_item",
       "source_ref": "expected-actual-comparison-verdict-ownership",
-      "sha256": "6a1f3d133527a8a76b8ebe2cc8a3bd457bab8e575afed95cf42ffa81f7ad5204",
+      "sha256": "a4eb5520fb4221a3eaec89afa0383079ba6ab8c71f746b6bfd86f6b6087cc000",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.expected-actual-comparison-verdict-ownership"
@@ -7042,7 +7242,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.bounded-admitted-artifact-contract",
       "kind": "source_item",
       "source_ref": "bounded-admitted-artifact-contract",
-      "sha256": "d3d0ef1a2c84f29a996644b2cbb68f68e97d094d43a0baca6d55e303bf8e3548",
+      "sha256": "d5a680dea8fcf87e63ad7e13979104e6c0ed79ed16e50dec3f471cd5e35f84fa",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.bounded-admitted-artifact-contract"
@@ -7056,7 +7256,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.actual-artifact-reextraction",
       "kind": "source_item",
       "source_ref": "actual-artifact-reextraction",
-      "sha256": "d80f0c0ae9bd46955ae990837724dcfae85f1e51a1ab73f4a029ad6956acb90a",
+      "sha256": "00194a3d969dd6e0f3471159ba177f00b68848a3969436439f97e73d064d4248",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.actual-artifact-reextraction"
@@ -7070,7 +7270,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.challenge-is-freshness-only",
       "kind": "source_item",
       "source_ref": "challenge-is-freshness-only",
-      "sha256": "1bc8d4d0b31ff68c5aaf302d124c01d9295782b4637fff17c7f8b36bc005006a",
+      "sha256": "3c30d8a842bc73b81dbe576013f68b64adc5779e18c0cd455d7e12a6aa67f5eb",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.challenge-is-freshness-only"
@@ -7084,7 +7284,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.generated-carrier-semantic-role",
       "kind": "source_item",
       "source_ref": "generated-carrier-semantic-role",
-      "sha256": "6f010ae3b3758e8e5afacd499e37be23fe67e87b2263018919ae9d6fb102bce9",
+      "sha256": "b3503f7c5b7f0faa828e3f3edeba87282b30e54463aee5e2912f2e5519358cf0",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.generated-carrier-semantic-role"
@@ -7098,7 +7298,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.expected-to-actual-self-proof-rejection",
       "kind": "source_item",
       "source_ref": "expected-to-actual-self-proof-rejection",
-      "sha256": "f276c195caae1f98b82d3fa84d37b759342654388547e9fab254b713bbc7184e",
+      "sha256": "775857d55b8a2e05d263d07a65b1b436823ef4526a3557c8a06cb04d7b65aad0",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.expected-to-actual-self-proof-rejection"
@@ -7112,7 +7312,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.production-reachability",
       "kind": "source_item",
       "source_ref": "production-reachability",
-      "sha256": "fa50c5ed2e1e255d531febd3b4e89090f818831db185ff5a9cf5ed211fcdba47",
+      "sha256": "6c26098368e3ee4d2dec6903d1c7616edda79e206ae2451499e9003d91183fe6",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.production-reachability"
@@ -7126,7 +7326,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.counterfactual-actual-change-and-impact-set",
       "kind": "source_item",
       "source_ref": "counterfactual-actual-change-and-impact-set",
-      "sha256": "2d42986c358e5770e64c511b2d817504e2846e6635ebf313f9e73ee2e6a4c9cf",
+      "sha256": "ac31519bf9a8cd3b4d30cfb82595d2e06099842caa26f1ac55f323656b0e5140",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.counterfactual-actual-change-and-impact-set"
@@ -7154,7 +7354,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.no-universal-ui-observer",
       "kind": "source_item",
       "source_ref": "no-universal-ui-observer",
-      "sha256": "313430d6191e83a956d54f0ee9dae1c5902aadb4e8ab8b11b4420dc45e85e11e",
+      "sha256": "57c9ee21f20e23fe4a043d811dd3439304508b16f0fbbd6017f912130929a866",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.no-universal-ui-observer"
@@ -7168,7 +7368,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.v3-v4-and-migration-rule",
       "kind": "source_item",
       "source_ref": "v3-v4-and-migration-rule",
-      "sha256": "9a974eb3c2ecd5508e4f7ab47231ab6a6498f5273819a808dbbc2c444a2bc08e",
+      "sha256": "ab6ecf52b0a8542451ee8169e377887ad6fd6d1f2a329842ab2c2b5ed7b5c022",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.v3-v4-and-migration-rule"
@@ -7182,7 +7382,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.attack-suite-ground-truth",
       "kind": "source_item",
       "source_ref": "attack-suite-ground-truth",
-      "sha256": "837167ff9f39a7c76720d62fd6f068d79105ff01dc50eb7f0bfd713511583093",
+      "sha256": "f1c1106a6d29e4c4ad68985a73e9d6e30c244da0f9b26234a7b3f5dfb2896deb",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.attack-suite-ground-truth"
@@ -7196,7 +7396,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.valid-control-suite",
       "kind": "source_item",
       "source_ref": "valid-control-suite",
-      "sha256": "6c5b9076d847ca0bc6f54e4b41afd91f4b28738ca5389589b2333405b74dfd2f",
+      "sha256": "87ca0654d40f376202ddaff18121af351c95195bbbd6b89e2d0e8247b45498f2",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.valid-control-suite"
@@ -7210,7 +7410,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.black-box-final-gate-lifecycle",
       "kind": "source_item",
       "source_ref": "black-box-final-gate-lifecycle",
-      "sha256": "ed7b93817e80228884c3277839cc6bad808afd26cb3384248436951a9873e213",
+      "sha256": "64de5cb1d524b22bb302ffd72b0d5b11f467bcd5b963375b8df9ad88e1d71d78",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.black-box-final-gate-lifecycle"
@@ -7224,7 +7424,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.starward-sanitized-replay",
       "kind": "source_item",
       "source_ref": "starward-sanitized-replay",
-      "sha256": "f9ec5589c7bb4caed4c45a31e19fd282bcc049f41c3a26f6040baf5253a4087d",
+      "sha256": "9e28922f8156f78b7187f1cad484a5deb05951aa49fb0872029036eaa677bbeb",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.starward-sanitized-replay"
@@ -7238,7 +7438,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.fresh-agent-benchmark-boundary",
       "kind": "source_item",
       "source_ref": "fresh-agent-benchmark-boundary",
-      "sha256": "e9530673e7472459294277800b444c24f7c041490ced622ed38e526458bbbb3e",
+      "sha256": "c4e89f90598e39ac678cc607a20c5a55d4ab177b8d2547744bee40d6fffb1d5e",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.fresh-agent-benchmark-boundary"
@@ -7252,7 +7452,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.roi-admission-order",
       "kind": "source_item",
       "source_ref": "roi-admission-order",
-      "sha256": "bf93904bd63b59252dc13ddb1dde73209acf646a1a6309fd7809dccb578f8a8f",
+      "sha256": "64dcaaa2f4ed70c390afb0245b16ff978ff6af619a2562a0d999ab1c8731afb8",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.roi-admission-order"
@@ -7266,7 +7466,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.early-real-entry-feedback",
       "kind": "source_item",
       "source_ref": "early-real-entry-feedback",
-      "sha256": "a5cadb249446917e0c68b5d7a301f6bb8703a17b855707ed4e168376c7e17aae",
+      "sha256": "d80bb99120fb5d3f009865f65bb8904f398e2517576ed5a1ebfe36b0c95b6d7d",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.early-real-entry-feedback"
@@ -7280,7 +7480,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.no-new-lifecycle-authority-registry",
       "kind": "source_item",
       "source_ref": "no-new-lifecycle-authority-registry",
-      "sha256": "19fb4594b0337e99ca50e281d17ded749ffcc33b3aa3c9d4dd8ee0451ae32bdc",
+      "sha256": "2ddc6db2a0edc396f851da4b92fbbe908413152a2fd9422c015bd139700b91be",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.no-new-lifecycle-authority-registry"
@@ -7294,7 +7494,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.owner-dependency-lifecycle-boundary",
       "kind": "source_item",
       "source_ref": "owner-dependency-lifecycle-boundary",
-      "sha256": "c165518ffae3cf3ee9bc80db5076e6137ab2cb78ef1510ac0302759d0a23181f",
+      "sha256": "7ae6acb57f0b9fc6d4d75bab007f8f4af66bac0f6ddbdae3e0a4df1ce9d1081a",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -7308,7 +7508,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.build-reuse-buy-allowed-set",
       "kind": "source_item",
       "source_ref": "build-reuse-buy-allowed-set",
-      "sha256": "6074a9ad06c4a0ee9b1c8ada701db6bdacf436ec03940773b6926ab8b32709e9",
+      "sha256": "5bc2407393d6448bbddd533323ba455e1f733f153de738f5bc49d601937913c1",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.build-reuse-buy-allowed-set"
@@ -7322,7 +7522,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.technical-debt-and-future-change",
       "kind": "source_item",
       "source_ref": "technical-debt-and-future-change",
-      "sha256": "6c6d9109a36ac4d2e729c6b7ded6967df855aae3e16630e9f4cf2fc1f6e19f26",
+      "sha256": "5cbec04e7eff16bc5434b3ceb9016b19fc161061b896058543a3d2bbc5145b40",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.technical-debt-and-future-change"
@@ -7336,7 +7536,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.compatibility-security-resource-boundaries",
       "kind": "source_item",
       "source_ref": "compatibility-security-resource-boundaries",
-      "sha256": "3512b6adfe30bdcbcebe1b58e6c2557bc4db0e09c65f11d2f965ee29e9bd200d",
+      "sha256": "7ee25ef71e1acbf1463315c2948f8e9f4e953d6739dbb65f039a8e4a7ce6f6e6",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.compatibility-security-resource-boundaries"
@@ -7350,7 +7550,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.context-and-public-authority-update",
       "kind": "source_item",
       "source_ref": "context-and-public-authority-update",
-      "sha256": "da5c9b91771f6415d127e8caf95f3e7c7a9e0bc0941acd52c2143697957a1790",
+      "sha256": "29e6a52489007c4aab8612b6a340fec35731c66095094c0ba2360fcf350891ee",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.context-and-public-authority-update"
@@ -7364,7 +7564,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.verification-sequence-and-current-candidate",
       "kind": "source_item",
       "source_ref": "verification-sequence-and-current-candidate",
-      "sha256": "ebfc1db198d6c343304a6050e4192bcca895ac5fd97a63a128c9156ceb310617",
+      "sha256": "4594c2f0efe1add984175000f23712aa00df0e81433781b5c79532c99fc30d4a",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.verification-sequence-and-current-candidate"
@@ -7378,7 +7578,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.final-hard-acceptance",
       "kind": "source_item",
       "source_ref": "final-hard-acceptance",
-      "sha256": "ccd21c838ac3ca85ac4e9758b3dfbedace86aae04330936ea7ee2992b5ef060a",
+      "sha256": "3ded71cbbdfae3d28675c2c6a056340ca75110b56029041ba07640f6e15d7f2c",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.final-hard-acceptance"
@@ -7392,7 +7592,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.approved-final-capability-wording",
       "kind": "source_item",
       "source_ref": "approved-final-capability-wording",
-      "sha256": "d1999a47683655357049c5712e6cebd646f1935ec3cdb73332380a6c5b7b3444",
+      "sha256": "ffe938c7d51deb97f382376f6514b0bc8fe66fd45a3df4a3051fc194c4b28957",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.approved-final-capability-wording"
@@ -7406,7 +7606,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.critical-scope-escape-risk",
       "kind": "source_item",
       "source_ref": "critical-scope-escape-risk",
-      "sha256": "c6e3ec8b6d6937c4c6205210f36c721c7269d6f7707e69c93c153a3d3f6530bd",
+      "sha256": "84d2dd6dca2351915a75bb0a5f1bd83974e261e01ad122d96400e3077684402f",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.critical-scope-escape-risk"
@@ -7420,7 +7620,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.critical-self-attestation-risk",
       "kind": "source_item",
       "source_ref": "critical-self-attestation-risk",
-      "sha256": "7d977055f491bd6dac46497d59def93454adaf41169ccfc6d6e1b74957f40616",
+      "sha256": "ca6aaabfa6876ac7dee8da7af26acd32e1d7894dc44ca8a9b7bd34563362c3b3",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.critical-self-attestation-risk"
@@ -7434,7 +7634,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.source.critical-claim-inflation-risk",
       "kind": "source_item",
       "source_ref": "critical-claim-inflation-risk",
-      "sha256": "34e9bc67b4ec589f77e2e5d66bfd9ef34744d4e5e93b6aa2ef14a92ebff4e685",
+      "sha256": "255c447eb75cfdc1e8b9f86b74a3bcb4f323473440e48dabc05142a1b569e8e0",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.critical-claim-inflation-risk"
@@ -7504,7 +7704,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-      "sha256": "059851902064173a0048fb05fd3b1fa38aa19f7d9f3a0cf80b68e1a984dc5035",
+      "sha256": "bbc07c6b7ba9b2d33ffdc091c64d0c018cea84b7cfdcdd2f845e1762dc3f8c36",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.selected-design-existing-owner-preservation"
@@ -7546,7 +7746,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-contracts-workflow-contract-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/workflow-contract.md",
-      "sha256": "8b99babaf5e3dc0d388cc58c34667e87a707af1a9b85b07da7a06e40f2b3eb75",
+      "sha256": "4f58f20b3ce157c4a1e33d68c9ec685a53c3be6f0be197ef3040b881b08dceea",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.no-new-lifecycle-authority-registry"
@@ -7574,7 +7774,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      "sha256": "873b13e659622c7ddf4b9e0003060c144a3ef73e6c21d29357b71e992752cf5d",
+      "sha256": "e1c4b08a57189f2fbdc1877d096fd8324355a0f1936563a50191d23cd1b0c85e",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.route-b-project-owner-decision"
@@ -7616,7 +7816,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-implementation-index-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/implementation-index.md",
-      "sha256": "bf7d7fef5175d0c4392067827eecbe8471671c3fd7d899bf797d50ff90a3dd92",
+      "sha256": "a4793d2f90c389221cbdfa1fe844e4fd283126c5c2cf65363d809b9f713fe561",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -7630,7 +7830,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-verification-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/verification.md",
-      "sha256": "d63dc554535cd020ac9fe5ff7292379729f5112a65a3aa3f4dda263c9fa8048c",
+      "sha256": "94dc896c04a6865933996cde8a5f7642a0fdcecd2bbe28d716293c902a3ff39c",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.verification-sequence-and-current-candidate"
@@ -7667,6 +7867,34 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "material-input-provenance"
       ],
       "rationale": "The complete Context snapshot is classified and bound to its owning requirement Fact."
+    },
+    {
+      "key": "input.source.independent-capability-audit",
+      "kind": "source_item",
+      "source_ref": "independent-capability-audit",
+      "sha256": "c4a2edb61ed63ec875d4e75c01d2fe907185ab4570eb603b15921b74960ceeb1",
+      "disposition": "non_ui_material",
+      "fact_refs": [
+        "fact.requirement.independent-capability-audit"
+      ],
+      "basis_refs": [
+        "independent-capability-audit"
+      ],
+      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
+    },
+    {
+      "key": "input.source.real-process-workload-roi",
+      "kind": "source_item",
+      "source_ref": "real-process-workload-roi",
+      "sha256": "0880ae763030e03f34e0db22308523590556c4078df5d49acefdedaafceb5542",
+      "disposition": "non_ui_material",
+      "fact_refs": [
+        "fact.requirement.real-process-workload-roi"
+      ],
+      "basis_refs": [
+        "real-process-workload-roi"
+      ],
+      "rationale": "The marked External Confirmation Source item owns one independently traceable pending requirement Fact."
     }
   ],
   "family_dispositions": [
@@ -8320,7 +8548,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "approved-final-capability-wording",
         "critical-scope-escape-risk",
         "critical-self-attestation-risk",
-        "critical-claim-inflation-risk"
+        "critical-claim-inflation-risk",
+        "independent-capability-audit",
+        "real-process-workload-roi"
       ],
       "basis_refs": [
         "real-capability-closure-result",
@@ -9028,6 +9258,34 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       ],
       "basis_refs": [
         "critical-claim-inflation-risk"
+      ]
+    },
+    {
+      "key": "subject.requirement.independent-capability-audit",
+      "family_ref": "family.custom-long-task-real-capability",
+      "outcome_ref": "proof-and-roi",
+      "kind": "requirement",
+      "parent_ref": null,
+      "owner_ref": "owner.harness-package",
+      "source_item_refs": [
+        "independent-capability-audit"
+      ],
+      "basis_refs": [
+        "independent-capability-audit"
+      ]
+    },
+    {
+      "key": "subject.requirement.real-process-workload-roi",
+      "family_ref": "family.custom-long-task-real-capability",
+      "outcome_ref": "proof-and-roi",
+      "kind": "requirement",
+      "parent_ref": null,
+      "owner_ref": "owner.harness-package",
+      "source_item_refs": [
+        "real-process-workload-roi"
+      ],
+      "basis_refs": [
+        "real-process-workload-roi"
       ]
     }
   ],
@@ -9981,7 +10239,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "early-real-entry-feedback",
         "context-and-public-authority-update",
         "verification-sequence-and-current-candidate",
-        "final-hard-acceptance"
+        "final-hard-acceptance",
+        "independent-capability-audit",
+        "real-process-workload-roi"
       ],
       "basis_refs": [
         "real-capability-closure-result"
@@ -10052,7 +10312,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "subject.requirement.approved-final-capability-wording",
         "subject.requirement.critical-scope-escape-risk",
         "subject.requirement.critical-self-attestation-risk",
-        "subject.requirement.critical-claim-inflation-risk"
+        "subject.requirement.critical-claim-inflation-risk",
+        "subject.requirement.independent-capability-audit",
+        "subject.requirement.real-process-workload-roi"
       ],
       "not_applicable_unit_refs": [],
       "decision_required_unit_refs": [],
@@ -10113,7 +10375,9 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "approved-final-capability-wording",
         "critical-scope-escape-risk",
         "critical-self-attestation-risk",
-        "critical-claim-inflation-risk"
+        "critical-claim-inflation-risk",
+        "independent-capability-audit",
+        "real-process-workload-roi"
       ],
       "basis_refs": [
         "final-hard-acceptance"
@@ -10921,6 +11185,38 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
         "critical-claim-inflation-risk"
       ],
       "rationale": "The independently decidable Source requirement is specified for the current candidate."
+    },
+    {
+      "key": "cell.requirement.independent-capability-audit",
+      "outcome_ref": "proof-and-roi",
+      "unit_ref": "subject.requirement.independent-capability-audit",
+      "condition_ref": "condition.proof-and-roi.current-candidate",
+      "property_ref": "property.custom-requirement-satisfied",
+      "disposition": "specified",
+      "fact_ref": "fact.requirement.independent-capability-audit",
+      "source_item_refs": [
+        "independent-capability-audit"
+      ],
+      "basis_refs": [
+        "independent-capability-audit"
+      ],
+      "rationale": "The pending External Confirmation requirement is specified for the current candidate and cannot be self-confirmed."
+    },
+    {
+      "key": "cell.requirement.real-process-workload-roi",
+      "outcome_ref": "proof-and-roi",
+      "unit_ref": "subject.requirement.real-process-workload-roi",
+      "condition_ref": "condition.proof-and-roi.current-candidate",
+      "property_ref": "property.custom-requirement-satisfied",
+      "disposition": "specified",
+      "fact_ref": "fact.requirement.real-process-workload-roi",
+      "source_item_refs": [
+        "real-process-workload-roi"
+      ],
+      "basis_refs": [
+        "real-process-workload-roi"
+      ],
+      "rationale": "The pending External Confirmation requirement is specified for the current candidate and cannot be self-confirmed."
     }
   ],
   "facts": [
@@ -12939,6 +13235,86 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "source_item_refs": [
         "critical-claim-inflation-risk"
       ]
+    },
+    {
+      "key": "fact.requirement.independent-capability-audit",
+      "cell_ref": "cell.requirement.independent-capability-audit",
+      "outcome_ref": "proof-and-roi",
+      "unit_ref": "subject.requirement.independent-capability-audit",
+      "family_ref": "family.custom-long-task-real-capability",
+      "condition_ref": "condition.proof-and-roi.current-candidate",
+      "property_ref": "property.custom-requirement-satisfied",
+      "owner_ref": "owner.harness-package",
+      "value_kind": "boolean",
+      "observation_scope": "product_boundary",
+      "observation_sensitivity": "plain",
+      "quantifier": {
+        "kind": "one",
+        "minimum": null,
+        "maximum": null,
+        "population_ref": null
+      },
+      "expected": {
+        "representation": "inline",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/facts/50/expected/value"
+        },
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+        "value": true
+      },
+      "provenance": {
+        "kind": "direct",
+        "authority_ref": "independent-capability-audit",
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "derivation": null
+      },
+      "source_item_refs": [
+        "independent-capability-audit"
+      ]
+    },
+    {
+      "key": "fact.requirement.real-process-workload-roi",
+      "cell_ref": "cell.requirement.real-process-workload-roi",
+      "outcome_ref": "proof-and-roi",
+      "unit_ref": "subject.requirement.real-process-workload-roi",
+      "family_ref": "family.custom-long-task-real-capability",
+      "condition_ref": "condition.proof-and-roi.current-candidate",
+      "property_ref": "property.custom-requirement-satisfied",
+      "owner_ref": "owner.harness-package",
+      "value_kind": "boolean",
+      "observation_scope": "product_boundary",
+      "observation_sensitivity": "plain",
+      "quantifier": {
+        "kind": "one",
+        "minimum": null,
+        "maximum": null,
+        "population_ref": null
+      },
+      "expected": {
+        "representation": "inline",
+        "locator": {
+          "material_ref": "long-task-real-capability-facts",
+          "kind": "manifest_pointer",
+          "value": "/facts/51/expected/value"
+        },
+        "sha256": "b5bea41b6c623f7c09f1bf24dcae58ebab3c0cdd90ad966bc43a45b44867e12b",
+        "value": true
+      },
+      "provenance": {
+        "kind": "direct",
+        "authority_ref": "real-process-workload-roi",
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "derivation": null
+      },
+      "source_item_refs": [
+        "real-process-workload-roi"
+      ]
     }
   ],
   "proof_obligations": [
@@ -12946,7 +13322,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "proof.requirement.real-capability-closure-result.exact",
       "fact_ref": "fact.requirement.real-capability-closure-result",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -12973,21 +13349,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "real-capability-closure-result"
+          "real-capability-closure-result",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.material-input-provenance.exact",
       "fact_ref": "fact.requirement.material-input-provenance",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13014,21 +13389,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "material-input-provenance"
+          "material-input-provenance",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.declared-assurance-theorem.exact",
       "fact_ref": "fact.requirement.declared-assurance-theorem",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13055,21 +13429,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "declared-assurance-theorem"
+          "declared-assurance-theorem",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.assurance-causal-chain.exact",
       "fact_ref": "fact.requirement.assurance-causal-chain",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13096,21 +13469,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "assurance-causal-chain"
+          "assurance-causal-chain",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.known-selected-design-false-acceptance.exact",
       "fact_ref": "fact.requirement.known-selected-design-false-acceptance",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13137,21 +13509,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "known-selected-design-false-acceptance"
+          "known-selected-design-false-acceptance",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.p0-positive-fixture-correction.exact",
       "fact_ref": "fact.requirement.p0-positive-fixture-correction",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13178,21 +13549,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "p0-positive-fixture-correction"
+          "p0-positive-fixture-correction",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.p0-v1-negative-control.exact",
       "fact_ref": "fact.requirement.p0-v1-negative-control",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13219,21 +13589,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "p0-v1-negative-control"
+          "p0-v1-negative-control",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.p0-v2-negative-control.exact",
       "fact_ref": "fact.requirement.p0-v2-negative-control",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13260,21 +13629,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "p0-v2-negative-control"
+          "p0-v2-negative-control",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.shared-exact-comparison-owner.exact",
       "fact_ref": "fact.requirement.shared-exact-comparison-owner",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13301,21 +13669,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "shared-exact-comparison-owner"
+          "shared-exact-comparison-owner",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.p0-owner-local-and-v3-compatible.exact",
       "fact_ref": "fact.requirement.p0-owner-local-and-v3-compatible",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13342,21 +13709,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "p0-owner-local-and-v3-compatible"
+          "p0-owner-local-and-v3-compatible",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.p0-verification-boundary.exact",
       "fact_ref": "fact.requirement.p0-verification-boundary",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13383,21 +13749,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "p0-verification-boundary"
+          "p0-verification-boundary",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.purpose-validity-floor-before-relative-antidegradation.exact",
       "fact_ref": "fact.requirement.purpose-validity-floor-before-relative-antidegradation",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13424,21 +13789,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "purpose-validity-floor-before-relative-antidegradation"
+          "purpose-validity-floor-before-relative-antidegradation",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.invalid-baseline-and-claim-downgrade.exact",
       "fact_ref": "fact.requirement.invalid-baseline-and-claim-downgrade",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13465,21 +13829,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "invalid-baseline-and-claim-downgrade"
+          "invalid-baseline-and-claim-downgrade",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.coverage-defined-by-rejected-attack-surface.exact",
       "fact_ref": "fact.requirement.coverage-defined-by-rejected-attack-surface",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13506,21 +13869,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "coverage-defined-by-rejected-attack-surface"
+          "coverage-defined-by-rejected-attack-surface",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.critical-sentinel-positive-negative-controls.exact",
       "fact_ref": "fact.requirement.critical-sentinel-positive-negative-controls",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13547,21 +13909,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "critical-sentinel-positive-negative-controls"
+          "critical-sentinel-positive-negative-controls",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.incident-counterexample-first-rule.exact",
       "fact_ref": "fact.requirement.incident-counterexample-first-rule",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13588,21 +13949,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "incident-counterexample-first-rule"
+          "incident-counterexample-first-rule",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.sentinel-rationale-evidence-bounded.exact",
       "fact_ref": "fact.requirement.sentinel-rationale-evidence-bounded",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13629,21 +13989,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "sentinel-rationale-evidence-bounded"
+          "sentinel-rationale-evidence-bounded",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.capability-claim-levels.exact",
       "fact_ref": "fact.requirement.capability-claim-levels",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13670,21 +14029,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "capability-claim-levels"
+          "capability-claim-levels",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.route-b-project-owner-decision.exact",
       "fact_ref": "fact.requirement.route-b-project-owner-decision",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13711,21 +14069,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "route-b-project-owner-decision"
+          "route-b-project-owner-decision",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.observation-channel-authority.exact",
       "fact_ref": "fact.requirement.observation-channel-authority",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13752,21 +14109,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "observation-channel-authority"
+          "observation-channel-authority",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.expected-actual-comparison-verdict-ownership.exact",
       "fact_ref": "fact.requirement.expected-actual-comparison-verdict-ownership",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13793,21 +14149,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "expected-actual-comparison-verdict-ownership"
+          "expected-actual-comparison-verdict-ownership",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.bounded-admitted-artifact-contract.exact",
       "fact_ref": "fact.requirement.bounded-admitted-artifact-contract",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13834,21 +14189,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "bounded-admitted-artifact-contract"
+          "bounded-admitted-artifact-contract",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.actual-artifact-reextraction.exact",
       "fact_ref": "fact.requirement.actual-artifact-reextraction",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13875,21 +14229,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "actual-artifact-reextraction"
+          "actual-artifact-reextraction",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.challenge-is-freshness-only.exact",
       "fact_ref": "fact.requirement.challenge-is-freshness-only",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13916,21 +14269,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "challenge-is-freshness-only"
+          "challenge-is-freshness-only",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.generated-carrier-semantic-role.exact",
       "fact_ref": "fact.requirement.generated-carrier-semantic-role",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13957,21 +14309,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "generated-carrier-semantic-role"
+          "generated-carrier-semantic-role",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.expected-to-actual-self-proof-rejection.exact",
       "fact_ref": "fact.requirement.expected-to-actual-self-proof-rejection",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -13998,21 +14349,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "expected-to-actual-self-proof-rejection"
+          "expected-to-actual-self-proof-rejection",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.production-reachability.exact",
       "fact_ref": "fact.requirement.production-reachability",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14039,21 +14389,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "production-reachability"
+          "production-reachability",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.counterfactual-actual-change-and-impact-set.exact",
       "fact_ref": "fact.requirement.counterfactual-actual-change-and-impact-set",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14080,21 +14429,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "counterfactual-actual-change-and-impact-set"
+          "counterfactual-actual-change-and-impact-set",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.selected-design-existing-owner-preservation.exact",
       "fact_ref": "fact.requirement.selected-design-existing-owner-preservation",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14121,21 +14469,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "selected-design-existing-owner-preservation"
+          "selected-design-existing-owner-preservation",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.no-universal-ui-observer.exact",
       "fact_ref": "fact.requirement.no-universal-ui-observer",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14162,21 +14509,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "no-universal-ui-observer"
+          "no-universal-ui-observer",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.v3-v4-and-migration-rule.exact",
       "fact_ref": "fact.requirement.v3-v4-and-migration-rule",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14203,21 +14549,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "v3-v4-and-migration-rule"
+          "v3-v4-and-migration-rule",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.attack-suite-ground-truth.exact",
       "fact_ref": "fact.requirement.attack-suite-ground-truth",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14244,21 +14589,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "attack-suite-ground-truth"
+          "attack-suite-ground-truth",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.valid-control-suite.exact",
       "fact_ref": "fact.requirement.valid-control-suite",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14285,21 +14629,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "valid-control-suite"
+          "valid-control-suite",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.black-box-final-gate-lifecycle.exact",
       "fact_ref": "fact.requirement.black-box-final-gate-lifecycle",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14326,21 +14669,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "black-box-final-gate-lifecycle"
+          "black-box-final-gate-lifecycle",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.starward-sanitized-replay.exact",
       "fact_ref": "fact.requirement.starward-sanitized-replay",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14367,21 +14709,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "starward-sanitized-replay"
+          "starward-sanitized-replay",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.fresh-agent-benchmark-boundary.exact",
       "fact_ref": "fact.requirement.fresh-agent-benchmark-boundary",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14408,21 +14749,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "fresh-agent-benchmark-boundary"
+          "fresh-agent-benchmark-boundary",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.roi-admission-order.exact",
       "fact_ref": "fact.requirement.roi-admission-order",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14449,21 +14789,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "roi-admission-order"
+          "roi-admission-order",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.early-real-entry-feedback.exact",
       "fact_ref": "fact.requirement.early-real-entry-feedback",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14490,21 +14829,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "early-real-entry-feedback"
+          "early-real-entry-feedback",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.no-new-lifecycle-authority-registry.exact",
       "fact_ref": "fact.requirement.no-new-lifecycle-authority-registry",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14531,21 +14869,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "no-new-lifecycle-authority-registry"
+          "no-new-lifecycle-authority-registry",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.owner-dependency-lifecycle-boundary.exact",
       "fact_ref": "fact.requirement.owner-dependency-lifecycle-boundary",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14572,21 +14909,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "owner-dependency-lifecycle-boundary"
+          "owner-dependency-lifecycle-boundary",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.build-reuse-buy-allowed-set.exact",
       "fact_ref": "fact.requirement.build-reuse-buy-allowed-set",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14613,21 +14949,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "build-reuse-buy-allowed-set"
+          "build-reuse-buy-allowed-set",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.technical-debt-and-future-change.exact",
       "fact_ref": "fact.requirement.technical-debt-and-future-change",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14654,21 +14989,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-p0-exact-recomputation"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "technical-debt-and-future-change"
+          "technical-debt-and-future-change",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.compatibility-security-resource-boundaries.exact",
       "fact_ref": "fact.requirement.compatibility-security-resource-boundaries",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14695,21 +15029,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "compatibility-security-resource-boundaries"
+          "compatibility-security-resource-boundaries",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.context-and-public-authority-update.exact",
       "fact_ref": "fact.requirement.context-and-public-authority-update",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14736,21 +15069,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "context-and-public-authority-update"
+          "context-and-public-authority-update",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.verification-sequence-and-current-candidate.exact",
       "fact_ref": "fact.requirement.verification-sequence-and-current-candidate",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14777,21 +15109,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "verification-sequence-and-current-candidate"
+          "verification-sequence-and-current-candidate",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.final-hard-acceptance.exact",
       "fact_ref": "fact.requirement.final-hard-acceptance",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14818,21 +15149,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-proof-and-roi"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "final-hard-acceptance"
+          "final-hard-acceptance",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.approved-final-capability-wording.exact",
       "fact_ref": "fact.requirement.approved-final-capability-wording",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14859,21 +15189,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "approved-final-capability-wording"
+          "approved-final-capability-wording",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.critical-scope-escape-risk.exact",
       "fact_ref": "fact.requirement.critical-scope-escape-risk",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14900,21 +15229,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "critical-scope-escape-risk"
+          "critical-scope-escape-risk",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.critical-self-attestation-risk.exact",
       "fact_ref": "fact.requirement.critical-self-attestation-risk",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14941,21 +15269,20 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-observer-tcb-closure"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "critical-self-attestation-risk"
+          "critical-self-attestation-risk",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
       }
     },
     {
       "key": "proof.requirement.critical-claim-inflation-risk.exact",
       "fact_ref": "fact.requirement.critical-claim-inflation-risk",
       "method": "exact_value",
-      "authority": "machine",
+      "authority": "external_confirmation",
       "proof_surface": "runtime_behavior",
       "evidence_capabilities": [
         "semantic_fact"
@@ -14982,14 +15309,91 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "environment_ref": "environment.long-task-real-capability",
       "observer_refs": [],
       "counterfactual": {
-        "disposition": "required",
-        "refs": [
-          "mutate-assurance-governance"
-        ],
+        "disposition": "external",
+        "refs": [],
         "basis_refs": [
-          "critical-claim-inflation-risk"
+          "critical-claim-inflation-risk",
+          "independent-capability-audit"
         ],
-        "rationale": "The Outcome-owned production or governance carrier mutation must make this independently observed requirement fail while preserving target liveness."
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
+      }
+    },
+    {
+      "key": "proof.requirement.independent-capability-audit.exact",
+      "fact_ref": "fact.requirement.independent-capability-audit",
+      "method": "exact_value",
+      "authority": "external_confirmation",
+      "proof_surface": "runtime_behavior",
+      "evidence_capabilities": [
+        "semantic_fact"
+      ],
+      "comparison": {
+        "comparator": "exact_value",
+        "mode": "exact",
+        "parameters": {
+          "representation": "inline",
+          "locator": {
+            "material_ref": "long-task-real-capability-facts",
+            "kind": "manifest_pointer",
+            "value": "/proof_obligations/50/comparison/parameters/value"
+          },
+          "sha256": "a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820",
+          "value": {
+            "comparator": "exact_value"
+          }
+        },
+        "tolerance": null,
+        "mask": null
+      },
+      "oracle_ref": "oracle.long-task-real-capability",
+      "environment_ref": "environment.long-task-real-capability",
+      "observer_refs": [],
+      "counterfactual": {
+        "disposition": "external",
+        "refs": [],
+        "basis_refs": [
+          "independent-capability-audit"
+        ],
+        "rationale": "Independent capability audit owns this Fact and its counterfactual confirmation; the self-delivery verifier is not machine authority."
+      }
+    },
+    {
+      "key": "proof.requirement.real-process-workload-roi.exact",
+      "fact_ref": "fact.requirement.real-process-workload-roi",
+      "method": "exact_value",
+      "authority": "external_confirmation",
+      "proof_surface": "runtime_behavior",
+      "evidence_capabilities": [
+        "semantic_fact"
+      ],
+      "comparison": {
+        "comparator": "exact_value",
+        "mode": "exact",
+        "parameters": {
+          "representation": "inline",
+          "locator": {
+            "material_ref": "long-task-real-capability-facts",
+            "kind": "manifest_pointer",
+            "value": "/proof_obligations/51/comparison/parameters/value"
+          },
+          "sha256": "a6b8e09402c2277ac9516f6820940db216072211e7912326b64ff416e54f2820",
+          "value": {
+            "comparator": "exact_value"
+          }
+        },
+        "tolerance": null,
+        "mask": null
+      },
+      "oracle_ref": "oracle.long-task-real-capability",
+      "environment_ref": "environment.long-task-real-capability",
+      "observer_refs": [],
+      "counterfactual": {
+        "disposition": "external",
+        "refs": [],
+        "basis_refs": [
+          "real-process-workload-roi"
+        ],
+        "rationale": "A real process workload pair and its ROI review remain externally confirmed; no self-delivery machine Counterfactual is accepted."
       }
     }
   ],

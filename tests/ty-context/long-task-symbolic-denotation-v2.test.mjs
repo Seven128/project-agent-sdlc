@@ -9,27 +9,27 @@ import {
   exerciseSymbolicCompileRejectsUnsupportedCurrentSource,
   exerciseSymbolicCompileRejectsNarrowApplicability,
   exerciseSymbolicCompileRejectsUnresolvedDisposition,
-  exerciseSymbolicFinalGateRejectsCounterexample,
-  exerciseSymbolicFinalGateRejectsCurrentProductionDependency,
-  exerciseSymbolicFinalGateRejectsCurrentSourceDependency,
-  exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource,
-  exerciseSymbolicFinalGateRejectsNarrowApplicability,
+  exerciseSymbolicUiObserverBoundaryRejectsCounterexample,
+  exerciseSymbolicUiObserverBoundaryRejectsCurrentProductionDependency,
+  exerciseSymbolicUiObserverBoundaryRejectsCurrentSourceDependency,
+  exerciseSymbolicUiObserverBoundaryRejectsUnsupportedCurrentSource,
+  exerciseSymbolicUiObserverBoundaryRejectsNarrowApplicability,
 } from "./symbolic-denotation-long-task-v2-exercise.mjs";
 
 export { exerciseMixedSymbolicLongTaskClosure };
 
 test(
-  "[critical:symbolic-mixed-representation-closure] one Contract compiles and reaches one Final Gate with mixed V1 and opt-in UI V2 targets",
+  "[critical:symbolic-mixed-representation-closure] mixed V1 and opt-in UI V2 targets preserve symbolic closure and require External Confirmation without an admitted UI observer",
   exerciseMixedSymbolicLongTaskClosure,
 );
 
 test(
-  "compact profiles and trusted non-interference reach the existing sole Final Gate",
+  "compact profiles and trusted non-interference preserve symbolic closure but require an admitted UI observer",
   exerciseCompactTrustedSymbolicLongTaskClosure,
 );
 
 test(
-  "Long-Task compile accepts all three package-derived current Source proof methods",
+  "Long-Task compile accepts all three package-derived current Source proof methods before enforcing the UI observer boundary",
   exerciseSymbolicCompileAcceptsAllCurrentSourceMethods,
 );
 
@@ -64,28 +64,28 @@ test(
 );
 
 test(
-  "the sole Final Gate rejects a current production non-interference proof counterexample",
-  exerciseSymbolicFinalGateRejectsCounterexample,
+  "an unsupported UI observer blocks a production non-interference counterexample before machine Final Gate",
+  exerciseSymbolicUiObserverBoundaryRejectsCounterexample,
 );
 
 test(
-  "the sole Final Gate source recompile rejects a current production omitted-axis dependency",
-  exerciseSymbolicFinalGateRejectsCurrentProductionDependency,
+  "an unsupported UI observer blocks a current-production candidate before machine Final Gate",
+  exerciseSymbolicUiObserverBoundaryRejectsCurrentProductionDependency,
 );
 
 test(
-  "the sole Final Gate source recompile rejects current Source drift while the historical artifact remains",
+  "an unsupported UI observer blocks a current-Source candidate before machine Final Gate even when a historical artifact remains",
   { timeout: 300000 },
-  exerciseSymbolicFinalGateRejectsCurrentSourceDependency,
+  exerciseSymbolicUiObserverBoundaryRejectsCurrentSourceDependency,
 );
 
 test(
-  "the sole Final Gate source recompile rejects unsupported current Source with a valid failed artifact",
+  "an unsupported UI observer blocks an unsupported-Source candidate before machine Final Gate",
   { timeout: 120000 },
-  exerciseSymbolicFinalGateRejectsUnsupportedCurrentSource,
+  exerciseSymbolicUiObserverBoundaryRejectsUnsupportedCurrentSource,
 );
 
 test(
-  "the sole Final Gate source recompile rejects narrowed text, control, asset and single-property applicability",
-  exerciseSymbolicFinalGateRejectsNarrowApplicability,
+  "an unsupported UI observer blocks narrowed-applicability candidates before machine Final Gate",
+  exerciseSymbolicUiObserverBoundaryRejectsNarrowApplicability,
 );

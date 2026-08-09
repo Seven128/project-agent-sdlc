@@ -2,17 +2,22 @@ import assert from "node:assert/strict";
 import { rm } from "node:fs/promises";
 import test, { after } from "node:test";
 import {
+  applyEvidenceRoleProcessConflict,
+  applyEvidenceRoleStaticConflict,
+  applyRootArgvWrapperAttack,
+  applyVerificationInputStaticConflict,
   configureCrossExecutionStaticPrimingAttack,
-  configureEvidenceRoleStaticAttack,
+  configureEvidenceRoleProcessBase,
+  configureEvidenceRoleStaticBase,
   configureExpectedAsActualAttack,
   configureHistoricalRuntimeAttack,
   configureMissingCounterfactualObservationAttack,
   configurePackageObservationCase,
   configureProcessInputMutationAttack,
   configureProxyTargetAttack,
-  configureRootArgvWrapperAttack,
-  configureVerificationInputStaticAttack,
+  configureVerificationInputStaticBase,
   createObserverTrustFixture,
+  executeObserverTrustAttackAfterAuthority,
   executeObserverTrustWorkflow,
   isMachineAccepted,
   isSecurelyRejected,
@@ -55,6 +60,11 @@ const reportCases = Object.freeze({
     "wrong.r5b.evidence-role-static",
     "observer-trust.r5b.evidence-role-static",
     "control.static",
+  ),
+  r5c: wrongCase(
+    "wrong.r5c.evidence-role-process",
+    "observer-trust.r5c.evidence-role-process",
+    "control.process",
   ),
   r6: wrongCase(
     "wrong.r6.verifier-wrapper",
@@ -149,13 +159,32 @@ function executionLabel(execution) {
   return `${execution.stage}:${status}${diagnostic}`;
 }
 
+function executionDiagnostics(execution) {
+  return JSON.stringify({
+    result: execution.result ?? null,
+    final_gate_proof: execution.final_gate_proof ?? null,
+  });
+}
+
 test(
   "[critical:observer-admission-no-bypass] [real-capability:observer-trust.r1.custom-oracle] custom Oracle expected-as-actual cannot close a machine Fact",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureExpectedAsActualAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      await configurePackageObservationCase(fixture, {
+        carrierPath: "src/state.json",
+        bindingPath: "src/state.json",
+        mutationPath: "src/state.json",
+        inputPaths: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/r1-baseline-diagnostic.json"],
+        proofSurface: "runtime_behavior",
+        directProcess: true,
+      });
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => configureExpectedAsActualAttack(fixture),
+      );
       terminalReport.record(reportCases.r1, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -170,15 +199,18 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureVerificationInputStaticAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      await configureVerificationInputStaticBase(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyVerificationInputStaticConflict(fixture),
+      );
       terminalReport.record(reportCases.r1b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `verification-input static carrier reached ${executionLabel(execution)}`,
       );
-      const diagnostic = JSON.stringify(execution.result);
+      const diagnostic = executionDiagnostics(execution);
       assert.match(diagnostic, /machine_observer_not_admitted/u);
       assert.match(diagnostic, /static_carrier_expected_authority_forbidden/u);
     }),
@@ -226,15 +258,21 @@ test(
         bindingPath: "src/state.json",
         mutationPath: "src/state.json",
         inputPaths: ["src/state.json"],
-        artifactGlobs: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: [
+          "artifacts/historical-runtime-diagnostic.json",
+        ],
         proofSurface: "runtime_behavior",
         directProcess: true,
         submitProjectEvidenceCopies: true,
       });
-      await configureHistoricalRuntimeAttack(fixture, {
-        removeHostAttestation: true,
-      });
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () =>
+          configureHistoricalRuntimeAttack(fixture, {
+            removeHostAttestation: true,
+          }),
+      );
       terminalReport.record(reportCases.r3, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -242,7 +280,7 @@ test(
         `historical runtime replay reached ${executionLabel(execution)}`,
       );
       assert.match(
-        JSON.stringify(execution.result),
+        executionDiagnostics(execution),
         /process_observer_direct_root_required/u,
       );
     }),
@@ -253,11 +291,24 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureProxyTargetAttack(fixture, {
-        requiredFamily: "native",
-        indirectWrapper: false,
+      await configurePackageObservationCase(fixture, {
+        carrierPath: "src/state.json",
+        bindingPath: "src/state.json",
+        mutationPath: "src/state.json",
+        inputPaths: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/r4-baseline-diagnostic.json"],
+        proofSurface: "runtime_behavior",
+        directProcess: true,
       });
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () =>
+          configureProxyTargetAttack(fixture, {
+            requiredFamily: "native",
+            indirectWrapper: false,
+          }),
+      );
       terminalReport.record(reportCases.r4, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -272,14 +323,11 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configurePackageObservationCase(fixture, {
-        carrierPath: "status.json",
-        bindingPath: "status.json",
-        mutationPath: "status.json",
-        inputPaths: ["status.json"],
-        artifactGlobs: ["status.json"],
-      });
-      const execution = await executeObserverTrustWorkflow(fixture);
+      await configureEvidenceRoleStaticBase(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyEvidenceRoleStaticConflict(fixture),
+      );
       terminalReport.record(reportCases.r5, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -294,17 +342,42 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureEvidenceRoleStaticAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      await configureEvidenceRoleStaticBase(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyEvidenceRoleStaticConflict(fixture),
+      );
       terminalReport.record(reportCases.r5b, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `evidence-role static carrier reached ${executionLabel(execution)}`,
       );
-      const diagnostic = JSON.stringify(execution.result);
+      const diagnostic = executionDiagnostics(execution);
       assert.match(diagnostic, /machine_observer_not_admitted/u);
       assert.match(diagnostic, /static_carrier_evidence_role_forbidden/u);
+    }),
+);
+
+test(
+  "[case:counterfactual-production-observation-impact:R5c] [real-capability:observer-trust.r5c.evidence-role-process] direct process cannot promote a status/report proof output into a production carrier",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureEvidenceRoleProcessBase(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyEvidenceRoleProcessConflict(fixture),
+      );
+      terminalReport.record(reportCases.r5c, execution);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `evidence-role process carrier reached ${executionLabel(execution)}`,
+      );
+      const diagnostic = executionDiagnostics(execution);
+      assert.match(diagnostic, /machine_observer_not_admitted/u);
+      assert.match(diagnostic, /process_carrier_evidence_role_forbidden/u);
     }),
 );
 
@@ -313,11 +386,24 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureProxyTargetAttack(fixture, {
-        requiredFamily: "process",
-        indirectWrapper: true,
+      await configurePackageObservationCase(fixture, {
+        carrierPath: "src/state.json",
+        bindingPath: "src/state.json",
+        mutationPath: "src/state.json",
+        inputPaths: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/r6-baseline-diagnostic.json"],
+        proofSurface: "runtime_behavior",
+        directProcess: true,
       });
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () =>
+          configureProxyTargetAttack(fixture, {
+            requiredFamily: "process",
+            indirectWrapper: true,
+          }),
+      );
       terminalReport.record(reportCases.r6, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -332,8 +418,20 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureRootArgvWrapperAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      await configurePackageObservationCase(fixture, {
+        carrierPath: "src/state.json",
+        bindingPath: "src/state.json",
+        mutationPath: "src/state.json",
+        inputPaths: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/r6b-baseline-diagnostic.json"],
+        proofSurface: "runtime_behavior",
+        directProcess: true,
+      });
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyRootArgvWrapperAttack(fixture),
+      );
       terminalReport.record(reportCases.r6b, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -341,7 +439,7 @@ test(
         `argv wrapper reached ${executionLabel(execution)}`,
       );
       assert.match(
-        JSON.stringify(execution.result),
+        executionDiagnostics(execution),
         /process_observer_root_argv_mismatch/u,
       );
     }),
@@ -474,7 +572,8 @@ test(
         bindingPath: "src/state.json",
         mutationPath: "src/state.json",
         inputPaths: ["src/state.json"],
-        artifactGlobs: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/process-control-diagnostic.json"],
         proofSurface: "runtime_behavior",
         directProcess: true,
       });
@@ -493,24 +592,21 @@ test(
   { concurrency: false },
   async () =>
     withFixture({ externalConfirmation: true }, async (fixture) => {
-      fixture.contract.global.acceptance.external_confirmations[0].blocks_target =
-        true;
+      fixture.contract.global.acceptance.external_confirmations[0].blocks_target = true;
       await configurePackageObservationCase(fixture, {
         carrierPath: "src/state.json",
         bindingPath: "src/state.json",
         mutationPath: "src/state.json",
         inputPaths: ["src/state.json"],
-        artifactGlobs: ["src/state.json"],
+        artifactGlobs: [],
+        diagnosticArtifactPaths: ["artifacts/external-control-diagnostic.json"],
         proofSurface: "runtime_behavior",
         directProcess: true,
       });
       const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.externalControl, execution);
       assert.equal(execution.stage, "final-gate", executionLabel(execution));
-      assert.equal(
-        execution.result.workflow_status,
-        "blocked_external",
-      );
+      assert.equal(execution.result.workflow_status, "blocked_external");
       assert.notEqual(execution.result.workflow_status, "machine_accepted");
     }),
 );

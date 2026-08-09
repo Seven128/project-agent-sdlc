@@ -709,7 +709,15 @@ test("source-rich facts and residual handoff preserve the Long-Task proof chain"
   assert.match(contractAuthoring, /production `surface_bindings`/iu);
   assert.match(
     contractAuthoring,
-    /`source_claims`[\s\S]*method-specific Source Claims[\s\S]*single-Claim Assertions[\s\S]*`design_conformance`[\s\S]*`interaction_trace`[\s\S]*`target_runtime`/iu,
+    /`source_claims`[\s\S]*method-specific Source Claims[\s\S]*single-Claim Assertions/iu,
+  );
+  assert.match(
+    contractAuthoring,
+    /Current package derivation supplies only admitted plain exact\/presence results and host `target_runtime`/iu,
+  );
+  assert.match(
+    contractAuthoring,
+    /`design_conformance` and `interaction_trace` rows remain diagnostic and cannot provide authority[\s\S]*blocking External Confirmations/iu,
   );
   assert.match(guidance, /Final Gate/iu);
   assert.match(

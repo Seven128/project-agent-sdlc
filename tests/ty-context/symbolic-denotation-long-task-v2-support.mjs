@@ -25,7 +25,7 @@ if (!passed)
     if (record.capability === "design_symbolic_certificate")
       for (const result of record.certificate_results) result.verdict = "failed";
   }
-base.evidence_records.push(...records);
+if (Array.isArray(base.evidence_records)) base.evidence_records.push(...records);
 console.log(JSON.stringify(base));
 `;
 }

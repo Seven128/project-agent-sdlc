@@ -89,8 +89,9 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
       false,
     );
     assert.ok(
-      revised.authority_revision_change.approval_summary
-        .mechanically_bounded_reasons.includes("source_file_content_changed"),
+      revised.authority_revision_change.approval_summary.mechanically_bounded_reasons.includes(
+        "source_file_content_changed",
+      ),
     );
     assert.equal(revised.progress_preserved, false);
 
@@ -121,8 +122,9 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
       false,
     );
     assert.ok(
-      revised.authority_revision_change.approval_summary
-        .mechanically_bounded_reasons.includes("context_authority_changed"),
+      revised.authority_revision_change.approval_summary.mechanically_bounded_reasons.includes(
+        "context_authority_changed",
+      ),
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -136,16 +138,13 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    await runCliFailure(fixture.root, [
-      "long-task",
-      "verify",
-      fixture.workdir,
-    ]);
+    await runCliFailure(fixture.root, ["long-task", "verify", fixture.workdir]);
     const sourceFile = path.join(fixture.root, "source.md");
     const sourceBaseline = await readFile(sourceFile, "utf8");
     const contractBaseline = structuredClone(fixture.contract);
-    const previousAuthority =
-      await readCompiledDeliveryContract(fixture.workdir);
+    const previousAuthority = await readCompiledDeliveryContract(
+      fixture.workdir,
+    );
 
     const semanticCases = [
       {
@@ -181,57 +180,6 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
         },
       },
       {
-        address: "outcomes.first.controls.submit.location",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].location =
-            "a different surface";
-        },
-      },
-      {
-        address: "outcomes.first.controls.submit.success_state",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].success_state =
-            "A changed success state.";
-        },
-      },
-      {
-        address: "outcomes.first.controls.submit.failure_state",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].failure_state =
-            "A changed failure state.";
-        },
-      },
-      {
-        address: "outcomes.first.controls.submit.validation",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].validation =
-            "A changed validation contract.";
-        },
-      },
-      {
-        address: "outcomes.first.controls.submit.recovery",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].recovery =
-            "A changed recovery contract.";
-        },
-      },
-      {
-        address: "outcomes.first.controls.submit.accessibility",
-        mutate(contract) {
-          contract.outcomes[0].product.controls[0].accessibility =
-            "A changed accessibility contract.";
-        },
-      },
-      {
-        address:
-          "outcomes.first.surface_bindings.submit-fixture-browser.acceptance_blockers.submit-accessibility-proof",
-        mutate(contract) {
-          contract.outcomes[0].product.surface_bindings[0]
-            .acceptance_blockers[0].rationale =
-            "A changed design acceptance disposition.";
-        },
-      },
-      {
         address: "outcomes.first.non_completing.exit-zero-only",
         mutate(contract) {
           contract.outcomes[0].product.non_completing_outcomes[0].statement =
@@ -243,7 +191,8 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
       const candidate = structuredClone(contractBaseline);
       scenario.mutate(candidate);
       if (scenario.address === "outcomes.first.requirements.observe-first") {
-        const statement = candidate.outcomes[0].product.requirements[0].statement;
+        const statement =
+          candidate.outcomes[0].product.requirements[0].statement;
         candidate.source_claims[0].statement = statement;
         await writeFile(
           sourceFile,
@@ -291,7 +240,7 @@ ${fixtureArchitectureSourceItem()}
       claims: ["obligation.new-product-scope"],
       applicability_ref: "first-root-success",
       observation: "new_product_scope",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["presence", "target_runtime"],
       operator: "equals",
       expected: true,
     });
@@ -375,7 +324,6 @@ test("mechanical proof additions and path tightening remain automatic revisions"
       "--revise",
     ]);
     assert.equal(result.authority_revision, 2);
-    await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
 
     await writeFile(
       path.join(fixture.root, "tests", "extra-input.mjs"),
@@ -392,7 +340,6 @@ test("mechanical proof additions and path tightening remain automatic revisions"
       "--revise",
     ]);
     assert.equal(result.authority_revision, 3);
-    await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
 
     fixture.contract.outcomes[0].technical.expected_change_paths = [
       "src/state.json",

@@ -57,14 +57,12 @@ test("deleting progress, Receipt, cache, or restoring code cannot unlock authori
         recursive: true,
         force: true,
       }),
-      rm(
-        path.join(fixture.workdir, ".ty-context", "final-receipt.json"),
-        { force: true },
-      ),
-      rm(
-        path.join(fixture.workdir, ".ty-context", "compiled-contract.json"),
-        { force: true },
-      ),
+      rm(path.join(fixture.workdir, ".ty-context", "final-receipt.json"), {
+        force: true,
+      }),
+      rm(path.join(fixture.workdir, ".ty-context", "compiled-contract.json"), {
+        force: true,
+      }),
     ]);
     await writeFile(stateFile, initialState);
     fixture.contract.task.goal = "Weakened after deleting derived state.";
@@ -88,10 +86,10 @@ test("proof additions and proven scope tightening revise automatically", async (
       key: "additional-proof",
       criterion: "The additional proof remains true.",
       claims: [],
-      observation: "negative",
-      evidence_capabilities: ["state_delta"],
+      observation: "package_exact_additional_proof",
+      evidence_capabilities: ["presence"],
       operator: "equals",
-      expected: false,
+      expected: true,
     });
     await writeContract(fixture.workdir, fixture.contract);
     const proofRevision = await runCli(fixture.root, [

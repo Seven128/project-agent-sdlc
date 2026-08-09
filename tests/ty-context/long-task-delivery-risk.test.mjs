@@ -110,3 +110,29 @@ test("user-requested strict requires falsifiable proof on every Outcome", () => 
     /strict_negative_assertion_required:first[\s\S]*strict_counterfactual_control_required:second/,
   );
 });
+
+test("a blocking result External Confirmation permits no machine Check but a non-blocking confirmation does not", () => {
+  const contract = deliveryContract();
+  contract.outcomes[0].acceptance.checks = [];
+  contract.risk.facts.critical_user_path = ["first"];
+  contract.risk.facts.weak_observability = ["first"];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-observation",
+      description: "The unsupported result remains externally blocked.",
+      owner: "external-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+    },
+  ];
+  assert.doesNotThrow(() =>
+    validateRiskProof(contract, classifyLongTaskRisk(contract)),
+  );
+
+  contract.global.acceptance.external_confirmations[0].blocks_target = false;
+  assert.throws(
+    () => validateRiskProof(contract, classifyLongTaskRisk(contract)),
+    /outcome_without_executable_check:first[\s\S]*strict_critical_path_observable_proof_required:first/u,
+  );
+});

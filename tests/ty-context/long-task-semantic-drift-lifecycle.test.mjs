@@ -35,6 +35,27 @@ test("read-only Product Conformance is required only for weak, complex deliverie
     /semantic_conformance_check_required/u,
   );
 
+  staged.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-conformance",
+      description:
+        "All cross-stage semantic conformance remains externally blocked.",
+      owner: "external-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result", "second.result"],
+      blocks_target: true,
+    },
+  ];
+  assert.doesNotThrow(() =>
+    validateSemanticConformance(staged, "strict", []),
+  );
+  staged.global.acceptance.external_confirmations[0].blocks_target = false;
+  assert.throws(
+    () => validateSemanticConformance(staged, "strict", []),
+    /semantic_conformance_check_required/u,
+  );
+  staged.global.acceptance.external_confirmations = [];
+
   const conformance = structuredClone(staged.outcomes[0].acceptance.checks[0]);
   conformance.key = "product-conformance";
   conformance.journey_roles = ["conformance"];

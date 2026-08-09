@@ -88,10 +88,7 @@ test("outcome_files uses the same exact-path canonicalization", async () => {
       assert.deepEqual(parsed.outcome_files, [expected]);
     }
     for (const [value, error] of [
-      [
-        "outcomes/./first.yaml",
-        /non_canonical_repository_path_dot_segment/u,
-      ],
+      ["outcomes/./first.yaml", /non_canonical_repository_path_dot_segment/u],
       ["outcomes/../first.yaml", /unsafe_path/u],
       ["/absolute/first.yaml", /unsafe_path/u],
       ["outcomes/[first].yaml", /unsupported_repository_path_syntax/u],
@@ -127,6 +124,8 @@ test("internal dot cannot bypass a forbidden path", async () => {
 
 function parseScenario(scenario, value) {
   const contract = deliveryContract();
+  contract.outcomes[0].product.owner.path_globs = ["src/**"];
+  contract.outcomes[0].technical.allowed_support_paths = [];
   scenario.set(contract, value);
   const parsed = parseDeliveryContractText(YAML.stringify(contract));
   return scenario.get(parsed);
@@ -212,8 +211,7 @@ function pathCases() {
       "binding.carrier_paths",
       (contract, value) =>
         (contract.outcomes[0].technical.bindings[0].carrier_paths = [value]),
-      (contract) =>
-        contract.outcomes[0].technical.bindings[0].carrier_paths[0],
+      (contract) => contract.outcomes[0].technical.bindings[0].carrier_paths[0],
       "src/state.json",
     ),
     common(
@@ -248,8 +246,7 @@ function pathCases() {
       "input_paths",
       (contract, value) =>
         (contract.outcomes[0].acceptance.checks[0].input_paths = [value]),
-      (contract) =>
-        contract.outcomes[0].acceptance.checks[0].input_paths[0],
+      (contract) => contract.outcomes[0].acceptance.checks[0].input_paths[0],
     ),
     pattern(
       "expected_output_paths",
@@ -265,8 +262,7 @@ function pathCases() {
       "artifact_globs",
       (contract, value) =>
         (contract.outcomes[0].acceptance.checks[0].artifact_globs = [value]),
-      (contract) =>
-        contract.outcomes[0].acceptance.checks[0].artifact_globs[0],
+      (contract) => contract.outcomes[0].acceptance.checks[0].artifact_globs[0],
       "artifacts/**",
     ),
     common(

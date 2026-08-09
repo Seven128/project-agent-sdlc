@@ -26,7 +26,10 @@ import {
   evaluateAssertionResults,
 } from "./long-task-evidence-findings.js";
 import { classifyPlaywrightCounterfactual } from "./long-task-playwright-counterfactual-policy.js";
-import { admittedObservationAuthorityKey } from "./long-task-admitted-observation.js";
+import {
+  admittedObservationAuthorityKey,
+  classifyMachineObservationCarrierRoleConflict,
+} from "./long-task-admitted-observation.js";
 import { applyNarrowSemanticMutation } from "./long-task-semantic-mutation.js";
 import { evaluateEvidenceCapabilities } from "./long-task-evidence-capability-policy.js";
 import { validateCounterfactualObservationImpact } from "./long-task-evidence-sensitivity-policy.js";
@@ -690,6 +693,27 @@ async function counterfactualObservationImpactIssue(
       (assertion) => assertion.key === key && assertion.passed,
     ),
   );
+  const carrierRoleConflict = mutationTargets
+    .map((target) =>
+      classifyMachineObservationCarrierRoleConflict({
+        carrier_pattern: target,
+        expected_authority_patterns: [
+          ...entry.check.verification_inputs,
+          ...protectedAuthorityPaths,
+        ],
+        evidence_role_patterns: [
+          ...entry.check.expected_output_paths,
+          ...entry.check.artifact_globs,
+        ],
+      }),
+    )
+    .find((candidate) => candidate !== null);
+  if (carrierRoleConflict) {
+    const processObserved = (entry.check.observation_authorities ?? []).some(
+      (authority) => authority.authority === "package_process_json_exact",
+    );
+    return `counterfactual_${processObserved ? "process" : "static"}_carrier_${carrierRoleConflict}_forbidden`;
+  }
   const carrierRole = mutationTargets.every(
     (target) =>
       bindingCarrierPaths.some((pattern) =>

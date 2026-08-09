@@ -41,16 +41,25 @@ test("long-task never invokes model/Git orchestration surfaces and runs only dec
       GIT_TRACE: gitTrace,
     };
     await runCli(fixture.root, ["enable", "long-task"], { env });
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], { env });
-    const first = await runCli(fixture.root, [
-      "long-task", "verify", fixture.workdir, "--outcome", "first",
-    ], { env });
-    assert.deepEqual(first.check_results.map((item) => item.attempts), [1]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir], {
+      env,
+    });
+    const first = await runCli(
+      fixture.root,
+      ["long-task", "verify", fixture.workdir, "--outcome", "first"],
+      { env },
+    );
+    assert.deepEqual(
+      first.check_results.map((item) => item.attempts),
+      [1],
+    );
     await commitCandidate(fixture.root);
     const before = await gitShape(fixture.root);
-    const failed = await runCliFailure(fixture.root, [
-      "long-task", "final-gate", fixture.workdir,
-    ], { env, skipCandidateCommit: true });
+    const failed = await runCliFailure(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env, skipCandidateCommit: true },
+    );
     assert.equal(failed.workflow_status, "needs_work");
     assert.deepEqual(
       failed.check_results.map((item) => item.check_key).sort(),
@@ -64,7 +73,10 @@ test("long-task never invokes model/Git orchestration surfaces and runs only dec
       trace,
       /\bgit (?:worktree|branch|switch|checkout\s|merge|push|request-pull)\b/u,
     );
-    assert.equal(await pathExists(path.join(fixture.root, ".git/refs/remotes")), false);
+    assert.equal(
+      await pathExists(path.join(fixture.root, ".git/refs/remotes")),
+      false,
+    );
   } finally {
     await rm(
       path.join(
@@ -81,24 +93,30 @@ test("long-task never invokes model/Git orchestration surfaces and runs only dec
 test("package_script runner executes in the immutable snapshot with project dependencies available", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    fixture.contract.outcomes[0].acceptance.checks[0].runner = {
-      type: "package_script",
-      target: "oracle",
-      argv: [],
-      cwd: ".",
-      timeout_ms: 30_000,
-      effect: "read_only",
-      retry_policy: "none",
-      idempotent: true,
-    };
+    await addPackageScriptDiagnostic(fixture, {
+      script:
+        "node tests/package-script-diagnostic.mjs fixture-dependency-ready",
+    });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const accepted = await runCli(fixture.root, [
-      "long-task", "final-gate", fixture.workdir,
+      "long-task",
+      "final-gate",
+      fixture.workdir,
     ]);
     assert.equal(accepted.workflow_status, "machine_accepted");
-    assert.equal(accepted.check_results[0].attempts, 1);
+    assert.deepEqual(
+      accepted.check_results.map((result) => [
+        result.check_key,
+        result.status,
+        result.attempts,
+      ]),
+      [
+        ["first-check", "passed", 1],
+        ["package-script-diagnostic", "passed", 1],
+      ],
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -107,21 +125,10 @@ test("package_script runner executes in the immutable snapshot with project depe
 test("package_script runner rejects unresolved shell and verifier dependency closure", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    fixture.contract.outcomes[0].acceptance.checks[0].runner = {
-      type: "package_script",
-      target: "oracle",
-      argv: [],
-      cwd: ".",
-      timeout_ms: 30_000,
-      effect: "read_only",
-      retry_policy: "none",
-      idempotent: true,
-    };
-    const packageFile = path.join(fixture.root, "package.json");
-    const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
-    packageJson.scripts.oracle =
-      "node tests/oracle.mjs first && node tests/unfrozen-helper.mjs";
-    await writeFile(packageFile, `${JSON.stringify(packageJson, null, 2)}\n`);
+    await addPackageScriptDiagnostic(fixture, {
+      script:
+        "node tests/package-script-diagnostic.mjs fixture-dependency-ready && node tests/unfrozen-helper.mjs",
+    });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await assert.rejects(
@@ -138,6 +145,50 @@ test("package_script runner rejects unresolved shell and verifier dependency clo
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+async function addPackageScriptDiagnostic(fixture, { script }) {
+  const outcome = fixture.contract.outcomes[0];
+  const primary = outcome.acceptance.checks[0];
+  await writeFile(
+    path.join(fixture.root, "tests", "package-script-diagnostic.mjs"),
+    `const expected = "fixture-dependency-ready";
+console.log(JSON.stringify({
+  schema_version: "long-task-check-result-v3",
+  execution_status: "completed",
+  observations: { dependency_available: process.argv[2] === expected },
+  evidence_records: []
+}));
+`,
+  );
+  const packageFile = path.join(fixture.root, "package.json");
+  const packageJson = JSON.parse(await readFile(packageFile, "utf8"));
+  packageJson.scripts.diagnostic = script;
+  await writeFile(packageFile, `${JSON.stringify(packageJson, null, 2)}\n`);
+  outcome.acceptance.checks.push({
+    key: "package-script-diagnostic",
+    journey_roles: ["success"],
+    execution_target: structuredClone(primary.execution_target),
+    scenario: structuredClone(primary.scenario),
+    proof_surface: "runtime_behavior",
+    runner: {
+      type: "package_script",
+      target: "diagnostic",
+      argv: [],
+      cwd: ".",
+      timeout_ms: 30_000,
+      effect: "read_only",
+      retry_policy: "none",
+      idempotent: true,
+    },
+    verification_inputs: ["tests/package-script-diagnostic.mjs"],
+    input_paths: [],
+    expected_output_paths: [],
+    artifact_globs: [],
+    positive_assertions: [],
+    negative_assertions: [],
+    environment_requirements: [],
+  });
+}
 
 async function gitShape(root) {
   const [head, branches, worktrees, status] = await Promise.all([

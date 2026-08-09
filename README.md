@@ -393,6 +393,8 @@ Compile derives an internal `CompiledObservationAuthority` projection for every 
 
 Project-submitted v3 actual/value digest, comparison, `passed`, verdict and capability records are compatibility diagnostics only; they never supply Actual or completion authority. The current package-derived capability slice is exact/presence plus host-derived `target_runtime`. `interaction_trace`, `state_delta`, `design_conformance` and every other capability without a package-derived implementation require blocking External Confirmation even when a project record is present. Custom/`named_external_tcb` Oracles, wrappers, browser/native/device sessions, layout/pixel/accessibility/motion, protected observation, tolerance/mask and custom locators likewise cannot machine-close an obligation. Every machine Counterfactual needs package-admitted baseline and mutated observations, an attributable production carrier, exact affected/preserved/allowed-fan-out accounting, equal obligation universes and host-derived process liveness where applicable; no-observation never skips validation. Existing Contracts are not silently rewritten, and observer/TCB changes invalidate prior Active Authority, Progress and Receipts for acceptance.
 
+An honestly unsupported Contract does not need a dummy verifier. Existing External Confirmations may cover exact ordinary/global and Semantic Fact Claim identities through `impact_claims`, while each Semantic Fact proof keeps its explicit `confirmation_ref`. An external-only Outcome sets `success_path_required: false`; a Stage Gate may omit its machine Check only when a `blocks_target: true` confirmation impacts that gate's result Claim. Missing result lineage, a non-blocking confirmation or a declared machine success path without a real success Check fails Preflight/Compile. A valid external-only route ends as `blocked_external`, never machine accepted.
+
 Direct-process observation is bounded containment, not an absolute hostile-code sandbox. Its TCB includes the host OS/filesystem/process APIs, Node runtime, snapshot-copy and no-follow/digest checks, stdout capture/decoder, process-tree inspection and cleanup. It does not claim to stop an intentionally malicious executable from escaping the copied closure, accessing ambient machine/network resources or evading every OS process-tree mechanism; workloads needing that adversary boundary require an external sandbox or External Confirmation.
 
 Raw/revised proposals, selected design resources and mixed attachments enter one Source-bound Contract Draft loop immediately. Complete input inventory, stable keys, Product Control-level meaning, selected-resource design facts, acceptance/risk coverage, direct/derived/delegated/evidence-backed provenance, Source ownership and Contract mapping converge together. Every non-empty line in declared Markdown Source must belong to one Material `ty-source-item` block, one validated `design-resource-handoff-v1` or `design-resource-handoff-v2` formal block, or a closed-grammar background block: `markdown-structure` permits only text-free anchors/horizontal rules and `provenance` permits only `ty-source-provenance` comments with fixed `input`, `mode`, conditional `source` and optional `sha256` fields. A text-bearing heading or free-form provenance field can express authority and is therefore rejected as background. Arbitrary background prose and all other unclassified text fail closed. At least one marked technical obligation carries `aspect=architecture` and maps to an independently provable architecture obligation. If an unknown preference could materially change comparative research or selection, the workflow asks before Preflight/Compile can succeed. Once criteria are clear, a defensible recommendation is written into real Source with its delegation, preference/evidence basis and exact meaning; it is never hidden only in YAML. High-risk action remains an external confirmation. A pre-existing planning document's structure never blocks authoring.
@@ -479,7 +481,8 @@ task:
       description: Example product runtime
       role: product
       runtime_family: process
-      root_entrypoint: bin/example-runtime
+      root_entrypoint: bin/example-runtime.exe
+      root_argv: [tests/runtime.mjs]
       capabilities: [process-runtime, cold-start, production-root]
   source_paths: [plans/example.md]
   context_refs: [project_context/areas/main.md]
@@ -573,12 +576,13 @@ outcomes:
           proof_surface: runtime_behavior
           runner:
             type: project_binary
-            target: bin/example-runtime
+            target: bin/example-runtime.exe
+            argv: [tests/runtime.mjs]
             effect: read_only
-          verification_inputs: [bin/example-runtime]
+          verification_inputs: [bin/example-runtime.exe, tests/runtime.mjs]
           input_paths: [src/observable.ts]
           expected_output_paths: []
-          artifact_globs: []
+          artifact_globs: [artifacts/proof.json]
           positive_assertions:
             - key: result-ac
               criterion: The declared overall result is observable.
@@ -714,7 +718,7 @@ Version 0.6.0 retires the V1 schema/runtime and repo-local Hook. Enable, disable
 
 Version 0.6.0 defined the first public V2 semantics while retaining the `long-task-delivery-v2` schema name and physical `outcome_files` parser form. It introduced the former optional Source Plan helper without adding Schema, CLI, Preflight, Compile, Validator, Receipt, Authority or state. Current releases integrate those Source-authoring semantics into `long-task-workflow` and retain the old Skill only as a compatibility pointer. Preflight and direct Compile use one activation-safety kernel.
 
-The current V2 semantic-assurance closure additionally requires full Context, an architecture-classified Source obligation, atomic applicability dimensions, explicit target and blocker capabilities, applicability-bound Control-relation closure, Population universe carriers, claim-local semantic mutation, per-method/condition authority and the admitted observation chain. An older V2 Contract with custom machine Oracle, unsupported method/family, wrapper root or missing admitted Counterfactual observation receives precise manual diagnostics; re-author it from Source as static exact, direct-process exact or blocking External Confirmation. The diagnostic set includes `machine_observer_not_admitted`, `unsupported_observer_requires_external_confirmation`, `custom_oracle_machine_completion_forbidden`, `static_observation_not_in_pre_run_snapshot`, `static_observation_changed_by_runner`, `process_observer_direct_root_required`, `legacy_target_runtime_non_authoritative`, `counterfactual_admitted_observation_required`, `counterfactual_runtime_reachability_unproven` and `project_submitted_verdict_disagrees_with_harness`. Upgrade never chooses among them or imports old Active Authority, Progress or Receipts as passing evidence. Public result payload v3 remains compatible, but its self-reported proof fields are non-authoritative.
+The current V2 semantic-assurance closure additionally requires full Context, an architecture-classified Source obligation, atomic applicability dimensions, explicit target and blocker capabilities, applicability-bound Control-relation closure, Population universe carriers, claim-local semantic mutation, per-method/condition authority and the admitted observation chain. An older V2 Contract with custom machine Oracle, unsupported method/family, wrapper root or missing admitted Counterfactual observation receives precise manual diagnostics; re-author it from Source as static exact, direct-process exact or blocking External Confirmation. The diagnostic set includes `machine_observer_not_admitted`, `unsupported_observer_requires_external_confirmation`, `custom_oracle_machine_completion_forbidden`, `static_observation_not_in_pre_run_snapshot`, `static_observation_changed_by_runner`, `process_observer_direct_root_required`, `process_observer_root_invocation_required`, `process_observer_root_argv_mismatch`, `process_observation_input_changed_by_runner`, `legacy_target_runtime_non_authoritative`, `counterfactual_admitted_observation_required`, `counterfactual_runtime_reachability_unproven` and `project_submitted_verdict_disagrees_with_harness`. Upgrade never chooses among them or imports old Active Authority, Progress or Receipts as passing evidence. Public result payload v3 remains compatible, but its self-reported proof fields are non-authoritative.
 
 ### Package update modes
 

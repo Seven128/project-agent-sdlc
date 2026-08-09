@@ -5,6 +5,7 @@ import type {
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-delivery-types.js";
+import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
 
 export interface RiskDecisionV2 {
   effective_level: EffectiveRiskLevel;
@@ -80,7 +81,8 @@ export function validateRiskProof(
   if (!contract.outcomes.length) errors.push("outcome_required");
   for (const check of contract.global.acceptance.checks)
     validateCheck(check, "global", errors);
-  for (const outcome of contract.outcomes) validateOutcome(outcome, errors);
+  for (const outcome of contract.outcomes)
+    validateOutcome(contract, outcome, errors);
   if (decision.effective_level === "strict")
     validateStrict(contract, decision, errors);
   if (errors.length)
@@ -89,11 +91,19 @@ export function validateRiskProof(
     );
 }
 
-function validateOutcome(outcome: DeliveryOutcomeV2, errors: string[]): void {
+function validateOutcome(
+  contract: DeliveryContractV2,
+  outcome: DeliveryOutcomeV2,
+  errors: string[],
+): void {
   const checks = new Map(
     outcome.acceptance.checks.map((check) => [check.key, check]),
   );
-  if (!checks.size)
+  const resultExternallyBlocked = outcomeResultExternallyBlocked(
+    contract,
+    outcome.key,
+  );
+  if (!checks.size && !resultExternallyBlocked)
     errors.push(`outcome_without_executable_check:${outcome.key}`);
   if (!outcome.technical.expected_change_paths.length)
     errors.push(`expected_change_paths_empty:${outcome.key}`);
@@ -102,6 +112,7 @@ function validateOutcome(outcome: DeliveryOutcomeV2, errors: string[]): void {
   if (
     (outcome.product.owner_surfaces.length ||
       outcome.product.controls.length) &&
+    !resultExternallyBlocked &&
     ![...checks.values()].some((check) => check.proof_surface === "ui_browser")
   )
     errors.push(`ui_outcome_requires_ui_browser_proof:${outcome.key}`);
@@ -130,6 +141,7 @@ function validateStrict(
   const explicitStrictWithoutFacts =
     contract.risk.requested_level === "strict" && decision.reasons.length === 0;
   for (const outcome of contract.outcomes) {
+    if (outcomeResultExternallyBlocked(contract, outcome.key)) continue;
     const facts = new Set(decision.reasons_by_outcome[outcome.key]);
     const checks = outcome.acceptance.checks;
     const hasNegative = checks.some(

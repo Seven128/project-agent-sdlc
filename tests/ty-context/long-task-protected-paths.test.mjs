@@ -23,7 +23,12 @@ test("runner target symlink is rejected", async (t) => {
     if (
       !(await replaceWithSymlink(
         t,
-        path.join(fixture.root, "tests", "oracle.mjs"),
+        path.join(
+          fixture.root,
+          ...fixture.contract.outcomes[0].acceptance.checks[0].runner.target.split(
+            "/",
+          ),
+        ),
       ))
     )
       return;
@@ -58,12 +63,7 @@ test("verification input symlink is rejected", async (t) => {
 test("Source file symlink is rejected", async (t) => {
   const fixture = await createDeliveryFixture();
   try {
-    if (
-      !(await replaceWithSymlink(
-        t,
-        path.join(fixture.root, "source.md"),
-      ))
-    )
+    if (!(await replaceWithSymlink(t, path.join(fixture.root, "source.md"))))
       return;
     await assert.rejects(
       compileFixture(fixture),

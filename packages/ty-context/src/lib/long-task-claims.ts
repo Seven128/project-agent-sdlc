@@ -30,6 +30,44 @@ export interface CompiledClaimsV2 {
   summary: ClaimCoverageSummaryV2;
 }
 
+interface ExternalConfirmationProjectionInput {
+  global: {
+    acceptance: {
+      external_confirmations: readonly {
+        blocks_target: boolean;
+        impact_claims: readonly string[];
+      }[];
+    };
+  };
+}
+
+interface AllOutcomeExternalConfirmationProjectionInput extends ExternalConfirmationProjectionInput {
+  outcomes: readonly { key: string }[];
+}
+
+export function outcomeResultExternallyBlocked(
+  contract: ExternalConfirmationProjectionInput,
+  outcomeKey: string,
+): boolean {
+  const resultClaim = `${outcomeKey}.result`;
+  return contract.global.acceptance.external_confirmations.some(
+    (confirmation) =>
+      confirmation.blocks_target &&
+      confirmation.impact_claims.includes(resultClaim),
+  );
+}
+
+export function allOutcomeResultsExternallyBlocked(
+  contract: AllOutcomeExternalConfirmationProjectionInput,
+): boolean {
+  return (
+    contract.outcomes.length > 0 &&
+    contract.outcomes.every((outcome) =>
+      outcomeResultExternallyBlocked(contract, outcome.key),
+    )
+  );
+}
+
 interface ScopeProofInput {
   check: DeliveryCheckV2;
   assertion: DeliveryAssertionV2;
@@ -143,6 +181,8 @@ function compileGlobalScope(
     validateGlobalAssertionOperator(proof.assertion, proof.check.key);
     addProof(proofs, claimKey, claimProof);
   }
+  for (const claim of claims)
+    addBlockingExternalConfirmationProofs(contract, claim, proofs);
   validateProfileUse("GLOBAL", profiles, claims);
   return Object.fromEntries(
     claims.map((claim) => {
@@ -260,6 +300,10 @@ function compileOutcomeScope(
       applicability_ref: factBinding.applicability_ref,
     });
   }
+
+  for (const claim of claims)
+    if (claim.kind !== "semantic_fact")
+      addBlockingExternalConfirmationProofs(contract, claim, proofs);
 
   validatePopulationReferences(outcome, claimMap);
   validateCounterfactualReferences(outcome, claimMap);
@@ -563,6 +607,35 @@ function addProof(
   const rows = proofs.get(claim) ?? [];
   rows.push(proof);
   proofs.set(claim, rows);
+}
+
+function addBlockingExternalConfirmationProofs(
+  contract: DeliveryContractV2,
+  claim: ProductClaimV2 | GlobalClaimV2,
+  proofs: Map<string, ClaimProofV2[]>,
+): void {
+  const confirmations =
+    contract.global.acceptance.external_confirmations.filter(
+      (confirmation) =>
+        confirmation.blocks_target &&
+        confirmation.impact_claims.includes(claim.id),
+    );
+  if (!confirmations.length) return;
+  const proofSurfaces =
+    "required_proof_surfaces" in claim &&
+    claim.required_proof_surfaces.length > 0
+      ? claim.required_proof_surfaces
+      : (["runtime_behavior"] as const);
+  for (const confirmation of confirmations)
+    for (const applicabilityRef of claim.applicability_refs)
+      for (const proofSurface of proofSurfaces)
+        addProof(proofs, claim.local_key, {
+          check_key: `EXTERNAL.${confirmation.key}`,
+          assertion_key: null,
+          polarity: claim.required_polarity,
+          proof_surface: proofSurface,
+          applicability_ref: applicabilityRef,
+        });
 }
 
 function sameSet(left: string[], right: string[]): boolean {

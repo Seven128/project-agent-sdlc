@@ -9,11 +9,16 @@ import { promisify } from "node:util";
 import { writeReleaseTarballLongTaskFixture } from "../../tools/release_tarball_smoke_fixture.mjs";
 
 const exec = promisify(execFile);
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const cli = path.join(repo, "packages/ty-context/dist/cli.js");
 
-test("release tarball fixture compiles and reaches the Live Final Gate with sensitive proof", async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "release-tarball-contract-"));
+test("release tarball fixture compiles and reaches the Live Final Gate with package-observed exact proof", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "release-tarball-contract-"),
+  );
   try {
     await runCli(root, ["init", "--adopt", "--harness-folder", ".agent"]);
     await runCli(root, ["enable", "long-task"]);
@@ -36,9 +41,9 @@ test("release tarball fixture compiles and reaches the Live Final Gate with sens
     assert.equal(receipt.workflow_status, "machine_accepted");
     assert.deepEqual(receipt.findings, []);
     assert.equal(receipt.check_results[0].status, "passed");
-    // Final Gate cannot accept this structured Check unless the semantic
-    // replacement produced exactly both designated mismatches while liveness
-    // remained passing.
+    // Final Gate cannot accept this direct-process Check unless the package
+    // observer sees exactly both designated mismatches while liveness remains
+    // passing.
   } finally {
     await rm(root, { recursive: true, force: true });
   }

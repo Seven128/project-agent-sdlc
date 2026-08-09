@@ -53,22 +53,20 @@ test("conservative repository pattern containment proves only supported subsets"
     "unknown",
   );
   assert.deepEqual(
-    expandedPatterns(
-      "scope",
-      ["src/safe/*.ts"],
-      ["src/safe/**"],
-    ),
+    expandedPatterns("scope", ["src/safe/*.ts"], ["src/safe/**"]),
     ["scope:src/safe/**"],
   );
-  assert.deepEqual(
-    expandedPatterns("scope", ["src/a?.ts"], ["src/**"]),
-    ["scope:src/**"],
-  );
+  assert.deepEqual(expandedPatterns("scope", ["src/a?.ts"], ["src/**"]), [
+    "scope:src/**",
+  ]);
 });
 
 test("owner, support, and binding boundaries fail closed for widening patterns", () => {
   const expectedPath = deliveryContract();
-  expectedPath.outcomes[0].product.owner.path_globs = ["src/safe/*.ts"];
+  expectedPath.outcomes[0].product.owner.path_globs = [
+    "src/safe/*.ts",
+    "tests/legacy-oracle.mjs",
+  ];
   expectedPath.outcomes[0].technical.expected_change_paths = ["src/safe/**"];
   assert.throws(
     () => parse(expectedPath),
@@ -76,10 +74,11 @@ test("owner, support, and binding boundaries fail closed for widening patterns",
   );
 
   const supportPath = deliveryContract();
-  supportPath.outcomes[0].product.owner.path_globs = ["src/safe/*.ts"];
-  supportPath.outcomes[0].technical.expected_change_paths = [
-    "src/safe/a.ts",
+  supportPath.outcomes[0].product.owner.path_globs = [
+    "src/safe/*.ts",
+    "tests/legacy-oracle.mjs",
   ];
+  supportPath.outcomes[0].technical.expected_change_paths = ["src/safe/a.ts"];
   supportPath.outcomes[0].technical.allowed_support_paths = ["src/safe/**"];
   assert.throws(
     () => parse(supportPath),
@@ -87,7 +86,10 @@ test("owner, support, and binding boundaries fail closed for widening patterns",
   );
 
   const binding = deliveryContract();
-  binding.outcomes[0].product.owner.path_globs = ["src/safe/*"];
+  binding.outcomes[0].product.owner.path_globs = [
+    "src/safe/*",
+    "tests/legacy-oracle.mjs",
+  ];
   binding.outcomes[0].technical.expected_change_paths = ["src/safe/*.ts"];
   binding.outcomes[0].technical.bindings[0].carrier_paths = ["src/safe/**"];
   assert.throws(

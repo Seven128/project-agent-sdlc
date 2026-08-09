@@ -7,6 +7,7 @@ import type {
   StageStatusV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
+import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
 import { progressRecordFresh } from "./long-task-progress.js";
 
 interface StatusProjectionInputV2 {
@@ -89,7 +90,8 @@ function projectOutcomes(
     });
     outcomes[outcome.key] = states.includes("progress_failing")
       ? "progress_failing"
-      : states.includes("blocked_external")
+      : outcomeResultExternallyBlocked(input.compiled, outcome.key) ||
+          states.includes("blocked_external")
         ? "blocked_external"
         : states.includes("progress_stale")
           ? "progress_stale"
@@ -153,7 +155,9 @@ function readyOutcomes(
     .filter(
       (outcome) =>
         stages[outcome.stage] !== "locked" &&
+        stages[outcome.stage] !== "blocked_external" &&
         stages[outcome.stage] !== "progress_passing" &&
+        outcomes[outcome.key] !== "blocked_external" &&
         outcomes[outcome.key] !== "progress_passing" &&
         outcome.depends_on.every(
           (dependency) => outcomes[dependency] === "progress_passing",

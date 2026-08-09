@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import {
-  mkdir,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -42,7 +37,9 @@ test("[critical:authority-lock-continuity] compiled cache deletion cannot reset 
     ]);
     const before = (await loadActiveLongTaskAuthority(fixture.root)).authority;
     assert.ok(before);
-    await rm(path.join(fixture.workdir, ".ty-context", "compiled-contract.json"));
+    await rm(
+      path.join(fixture.workdir, ".ty-context", "compiled-contract.json"),
+    );
 
     const status = await runCli(fixture.root, [
       "long-task",
@@ -72,7 +69,9 @@ test("[critical:authority-lock-continuity] compiled cache deletion cannot reset 
     assert.deepEqual(after.initial_task_base, before.initial_task_base);
 
     await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
-    await rm(path.join(fixture.workdir, ".ty-context", "compiled-contract.json"));
+    await rm(
+      path.join(fixture.workdir, ".ty-context", "compiled-contract.json"),
+    );
     fixture.contract.task.goal = "Weakened replacement goal.";
     await writeContract(fixture.workdir, fixture.contract);
     await assertCliFailure(
@@ -85,9 +84,8 @@ test("[critical:authority-lock-continuity] compiled cache deletion cannot reset 
       ["long-task", "compile", fixture.workdir, "--revise"],
       /authority_change_requires_user_decision/u,
     );
-    const unchanged = (
-      await loadActiveLongTaskAuthority(fixture.root)
-    ).authority;
+    const unchanged = (await loadActiveLongTaskAuthority(fixture.root))
+      .authority;
     assert.equal(unchanged.active_authority_identity, first.compiled_identity);
     assert.deepEqual(unchanged.initial_task_base, before.initial_task_base);
   } finally {
@@ -105,15 +103,17 @@ test("strict risk downgrade remains rejected after cache deletion", async () => 
       key: "negative-floor",
       criterion: "The strict negative floor remains satisfied.",
       claims: [],
-      observation: "result_copy",
-      evidence_capabilities: ["state_delta"],
-      operator: "not_equals",
+      observation: "package_exact_negative_floor",
+      evidence_capabilities: ["presence"],
+      operator: "equals",
       expected: false,
     });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    await rm(path.join(fixture.workdir, ".ty-context", "compiled-contract.json"));
+    await rm(
+      path.join(fixture.workdir, ".ty-context", "compiled-contract.json"),
+    );
     fixture.contract.risk.requested_level = "auto";
     await writeContract(fixture.workdir, fixture.contract);
     await assertCliFailure(
@@ -141,8 +141,7 @@ test("a self-consistent forged cache is ignored by verify and doctor", async () 
       "compiled-contract.json",
     );
     const forged = JSON.parse(await readFile(cacheFile, "utf8"));
-    forged.outcomes[0].acceptance.checks[0].positive_assertions[0].expected =
-      false;
+    forged.outcomes[0].acceptance.checks[0].positive_assertions[0].expected = false;
     delete forged.compiled_identity;
     forged.compiled_identity = sha256Hex(canonicalValueJson(forged));
     await writeFile(cacheFile, `${JSON.stringify(forged)}\n`);
@@ -192,12 +191,7 @@ test("legacy development V2 Active Authority is manual-required and never migrat
     });
 
     await assert.rejects(
-      () =>
-        runCli(fixture.root, [
-          "long-task",
-          "status",
-          fixture.workdir,
-        ]),
+      () => runCli(fixture.root, ["long-task", "status", fixture.workdir]),
       /legacy_v2_active_authority_manual_required/u,
     );
     await assert.rejects(
@@ -214,10 +208,7 @@ test("legacy development V2 Active Authority is manual-required and never migrat
       "doctor",
       fixture.workdir,
     ]);
-    assert.equal(
-      doctor.status,
-      "legacy_v2_active_authority_manual_required",
-    );
+    assert.equal(doctor.status, "legacy_v2_active_authority_manual_required");
     assert.equal(
       doctor.next_action,
       `ty-context long-task abandon ${fixture.workdir} --force-corrupt-state`,
@@ -254,8 +245,8 @@ test("CAS and authority commit failure preserve old authority and progress", asy
       key: "additional-proof",
       criterion: "The additional proof remains true.",
       claims: [],
-      observation: "result_copy",
-      evidence_capabilities: ["state_delta"],
+      observation: "package_exact_additional_proof",
+      evidence_capabilities: ["presence"],
       operator: "equals",
       expected: true,
     });

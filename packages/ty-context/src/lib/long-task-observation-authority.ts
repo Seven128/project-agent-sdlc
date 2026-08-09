@@ -14,6 +14,7 @@ import {
   JSON_POINTER_EXACT_METHODS,
   isJsonPointerExactOracle,
 } from "./long-task-json-pointer-observation.js";
+import { classifyMachineObservationCarrierRoleConflict } from "./long-task-admitted-observation.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import {
   classifyRepositoryPatternOverlap,
@@ -285,14 +286,19 @@ function compileCandidate(
         "machine_observer_not_admitted",
         `${candidate.obligation_ref}:static_production_carrier_exact_path_required`,
       );
-    const staticCarrierRoleIssue = staticCarrierRoleConflict(
+  }
+  for (const carrierPath of carrierRefs.flatMap(
+    (carrier) => carrier.carrier_paths,
+  )) {
+    const carrierRoleIssue = observationCarrierRoleConflict(
       input,
-      staticPaths[0],
+      carrierPath,
+      authority,
     );
-    if (staticCarrierRoleIssue)
+    if (carrierRoleIssue)
       fail(
         "machine_observer_not_admitted",
-        `${candidate.obligation_ref}:${staticCarrierRoleIssue}`,
+        `${candidate.obligation_ref}:${carrierRoleIssue}`,
       );
   }
   const comparison = candidate.comparison;
@@ -350,10 +356,9 @@ function selectAuthority(
         `${candidate.obligation_ref}:static_carrier_required`,
       );
     if (
-      candidate.diagnostic_scope === "assertion" &&
       !capabilitiesAdmitted(
         candidate.assertion.evidence_capabilities,
-        STATIC_DERIVED_CAPABILITIES,
+        admittedCapabilities(candidate, STATIC_DERIVED_CAPABILITIES),
       )
     )
       fail(
@@ -390,10 +395,9 @@ function selectAuthority(
       `${candidate.obligation_ref}:${canonicalValueJson(input.check.runner.argv)}:${canonicalValueJson(target.root_argv)}`,
     );
   if (
-    candidate.diagnostic_scope === "assertion" &&
     !capabilitiesAdmitted(
       candidate.assertion.evidence_capabilities,
-      PROCESS_DERIVED_CAPABILITIES,
+      admittedCapabilities(candidate, PROCESS_DERIVED_CAPABILITIES),
     )
   )
     fail(
@@ -443,35 +447,30 @@ function assertionActualProjection(
   );
 }
 
-function staticCarrierRoleConflict(
+function observationCarrierRoleConflict(
   input: CompileObservationAuthorityPlanInput,
   carrierPath: string,
+  authority: CompiledObservationAuthorityKindV2,
 ): string | null {
   const expectedAuthorityPatterns = [
-    ...Object.keys(input.runner.frozen_files),
+    ...(authority === "package_static_json_exact"
+      ? Object.keys(input.runner.frozen_files)
+      : input.check.verification_inputs),
     ...(input.protected_authority_paths ?? []),
   ];
-  if (
-    expectedAuthorityPatterns.some(
-      (pattern) =>
-        classifyRepositoryPatternOverlap(carrierPath, pattern).status ===
-        "proven_overlap",
-    )
-  )
-    return "static_carrier_expected_authority_forbidden";
   const evidencePatterns = [
     ...input.check.expected_output_paths,
     ...input.check.artifact_globs,
   ];
-  if (
-    evidencePatterns.some(
-      (pattern) =>
-        classifyRepositoryPatternOverlap(carrierPath, pattern).status ===
-        "proven_overlap",
-    )
-  )
-    return "static_carrier_evidence_role_forbidden";
-  return null;
+  const conflict = classifyMachineObservationCarrierRoleConflict({
+    carrier_pattern: carrierPath,
+    expected_authority_patterns: expectedAuthorityPatterns,
+    evidence_role_patterns: evidencePatterns,
+  });
+  if (!conflict) return null;
+  const prefix =
+    authority === "package_process_json_exact" ? "process" : "static";
+  return `${prefix}_carrier_${conflict}_forbidden`;
 }
 
 function sameStringArray(
@@ -489,6 +488,18 @@ function capabilitiesAdmitted(
   admitted: ReadonlySet<EvidenceCapabilityV2>,
 ): boolean {
   return capabilities.every((capability) => admitted.has(capability));
+}
+
+function admittedCapabilities(
+  candidate: ExactCandidate,
+  derived: ReadonlySet<EvidenceCapabilityV2>,
+): ReadonlySet<EvidenceCapabilityV2> {
+  const admitted = new Set(derived);
+  if (candidate.diagnostic_scope === "semantic_fact")
+    admitted.add("semantic_fact");
+  else if (candidate.diagnostic_scope === "design_fact")
+    admitted.add("design_method");
+  return admitted;
 }
 
 function productionCarrierRefs(

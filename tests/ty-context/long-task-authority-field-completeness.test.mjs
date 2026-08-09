@@ -122,7 +122,8 @@ test("every Delivery Contract authority structure has a complete field policy re
           method: "layout_geometry",
           assertion_ref: "settings-layout",
           artifact_path: "artifacts/settings-symbolic-layout.json",
-          observation_path: "artifacts/settings-symbolic-layout-observation.json",
+          observation_path:
+            "artifacts/settings-symbolic-layout-observation.json",
           rule_expectations: [],
         },
       ],
@@ -205,6 +206,7 @@ test("every Delivery Contract authority structure has a complete field policy re
       mutation: { type: "remove_paths", paths: ["src/state.json"] },
       expected_assertion_failures: ["first-result"],
       preserved_assertions: ["first-liveness"],
+      allowed_fanout_assertions: [],
     },
     global_counterfactual: {
       key: "global-counterfactual",
@@ -214,6 +216,7 @@ test("every Delivery Contract authority structure has a complete field policy re
       mutation: { type: "remove_paths", paths: ["src/state.json"] },
       expected_assertion_failures: ["global-assertion"],
       preserved_assertions: ["global-liveness"],
+      allowed_fanout_assertions: [],
     },
   };
   assert.deepEqual(

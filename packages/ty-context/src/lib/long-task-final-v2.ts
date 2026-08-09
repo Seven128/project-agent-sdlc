@@ -1,4 +1,5 @@
 import { compileDeliveryContract } from "./long-task-delivery-compiler.js";
+import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
 import type {
   CheckExecutionResultV2,
   FinalReceiptV2,
@@ -96,7 +97,7 @@ export async function runDeliveryFinalGate(
       })),
     );
     const outcomeResults = projectOutcomes(
-      compiled.outcomes.map((outcome) => outcome.key),
+      compiled,
       run.check_results,
       run.findings,
     );
@@ -201,12 +202,13 @@ function projectStages(
 }
 
 function projectOutcomes(
-  outcomeKeys: string[],
+  compiled: Awaited<ReturnType<typeof compileDeliveryContract>>,
   checks: CheckExecutionResultV2[],
   findings: LongTaskFindingV2[],
 ): Record<string, "passed" | "failed" | "blocked_external"> {
   return Object.fromEntries(
-    outcomeKeys.map((outcomeKey) => {
+    compiled.outcomes.map((outcome) => {
+      const outcomeKey = outcome.key;
       const owned = checks.filter((check) => check.outcome_key === outcomeKey);
       const ownFindings = findings.filter(
         (finding) =>
@@ -218,7 +220,8 @@ function projectOutcomes(
             check.status !== "passed" && check.status !== "blocked_external",
         ) || ownFindings.some((finding) => finding.code !== "blocked_external")
           ? "failed"
-          : owned.some((check) => check.status === "blocked_external")
+          : outcomeResultExternallyBlocked(compiled, outcomeKey) ||
+              owned.some((check) => check.status === "blocked_external")
             ? "blocked_external"
             : "passed";
       return [outcomeKey, status];

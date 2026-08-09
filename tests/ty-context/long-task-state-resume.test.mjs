@@ -12,10 +12,7 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
-import {
-  preserveFixtureSemanticOracle,
-  preservedFixtureOracleDelegationPrelude,
-} from "./long-task-delegating-oracle-fixture.mjs";
+import { fixtureProductRootArgv } from "./long-task-package-machine-fixture.mjs";
 
 test("status projects rolling progress but always requires a Live Final Gate", async () => {
   const fixture = await createDeliveryFixture();
@@ -31,7 +28,10 @@ test("status projects rolling progress but always requires a Live Final Gate", a
       "compile",
       fixture.workdir,
     ]);
-    assert.equal(secondCompile.compiled_identity, firstCompile.compiled_identity);
+    assert.equal(
+      secondCompile.compiled_identity,
+      firstCompile.compiled_identity,
+    );
 
     const unverified = await runCli(fixture.root, [
       "long-task",
@@ -71,11 +71,7 @@ test("status projects rolling progress but always requires a Live Final Gate", a
       fixture.workdir,
     ]);
     assert.equal(status.outcomes.first, "progress_stale");
-    await runCliFailure(fixture.root, [
-      "long-task",
-      "verify",
-      fixture.workdir,
-    ]);
+    await runCliFailure(fixture.root, ["long-task", "verify", fixture.workdir]);
     status = await runCli(fixture.root, [
       "long-task",
       "status",
@@ -92,9 +88,8 @@ test("status projects rolling progress but always requires a Live Final Gate", a
         second_relations_applicable: false,
       })}\n`,
     );
-    fixture.contract.outcomes[0].acceptance.checks[0].environment_requirements = [
-      { key: "missing-token", kind: "env_var", target: "MISSING_TEST_TOKEN" },
-    ];
+    fixture.contract.outcomes[0].acceptance.checks[0].environment_requirements =
+      [{ key: "missing-token", kind: "env_var", target: "MISSING_TEST_TOKEN" }];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, [
       "long-task",
@@ -102,11 +97,7 @@ test("status projects rolling progress but always requires a Live Final Gate", a
       fixture.workdir,
       "--revise",
     ]);
-    await runCliFailure(fixture.root, [
-      "long-task",
-      "verify",
-      fixture.workdir,
-    ]);
+    await runCliFailure(fixture.root, ["long-task", "verify", fixture.workdir]);
     status = await runCli(fixture.root, [
       "long-task",
       "status",
@@ -164,7 +155,10 @@ test("source, selected Context, verification inputs and verifier bundle stale au
       path.join(fixture.root, "project_context/areas/main.md"),
       "# Main\n",
     );
-    await writeFile(path.join(fixture.root, "tests/oracle.mjs"), "// changed\n");
+    await writeFile(
+      path.join(fixture.root, "tests/oracle.mjs"),
+      "// changed\n",
+    );
     status = await runCli(fixture.root, [
       "long-task",
       "status",
@@ -182,20 +176,35 @@ test("source, selected Context, verification inputs and verifier bundle stale au
 
 test("identical raw execution is deduplicated while artifacts remain per-Check", async () => {
   const fixture = await createDeliveryFixture();
+  const runCountFile = `${fixture.root}-run-count.txt`;
   try {
-    await writeFile(path.join(fixture.root, "tests/run-count.txt"), "0\n");
-    const original = fixture.contract.outcomes[0].acceptance.checks[0];
-    original.verification_inputs.push("tests/run-count.txt");
-    original.artifact_globs = [
-      "artifacts/proof.json",
+    await writeFile(runCountFile, "0\n");
+    await writeFile(path.join(fixture.root, "artifacts/a.json"), "");
+    await writeFile(path.join(fixture.root, "artifacts/b.json"), "");
+    fixture.contract.outcomes[0].technical.allowed_support_paths.push(
       "artifacts/a.json",
+      "artifacts/b.json",
+    );
+    fixture.contract.outcomes[0].product.owner.path_globs.push(
+      "artifacts/a.json",
+      "artifacts/b.json",
+    );
+    const original = fixture.contract.outcomes[0].acceptance.checks[0];
+    original.runner.effect = "test_sandbox";
+    original.runner.argv = fixtureProductRootArgv("tests/oracle.mjs", "first", [
+      runCountFile.replaceAll("\\", "/"),
+    ]);
+    fixture.contract.task.execution_targets[0].root_argv = [
+      ...original.runner.argv,
     ];
+    original.artifact_globs = ["artifacts/proof.json", "artifacts/a.json"];
+    original.expected_output_paths = ["artifacts/a.json"];
     original.positive_assertions.push({
       key: "single-invocation",
       criterion: "The shared Raw Execution is invoked exactly once.",
       claims: [],
       observation: "invocation_count",
-      evidence_capabilities: ["state_delta"],
+      evidence_capabilities: ["presence"],
       operator: "equals",
       expected: 1,
     });
@@ -207,10 +216,8 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
     );
     const second = structuredClone(original);
     second.key = "same-execution-check";
-    second.artifact_globs = [
-      "artifacts/proof.json",
-      "artifacts/b.json",
-    ];
+    second.artifact_globs = ["artifacts/proof.json", "artifacts/b.json"];
+    second.expected_output_paths = ["artifacts/b.json"];
     second.positive_assertions = second.positive_assertions
       .filter((assertion) => assertion.key !== "first-semantic-fact")
       .map((assertion) => {
@@ -224,33 +231,44 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
       return claimless;
     });
     fixture.contract.outcomes[0].acceptance.checks.push(second);
-    await preserveFixtureSemanticOracle(fixture);
+    const productRootScript = path.join(fixture.root, "tests/oracle.mjs");
+    const productRootSource = await readFile(productRootScript, "utf8");
+    assert.match(productRootSource, /console\.log\(JSON\.stringify\(\{/u);
     await writeFile(
-      path.join(fixture.root, "tests/oracle.mjs"),
-      `import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-const countFile = new URL("./run-count.txt", import.meta.url);
+      productRootScript,
+      productRootSource
+        .replace(
+          'import { readFile } from "node:fs/promises";',
+          'import { readFile, writeFile } from "node:fs/promises";',
+        )
+        .replace(
+          "console.log(JSON.stringify({",
+          `const countFile = process.argv[3];
 const count = Number((await readFile(countFile, "utf8")).trim()) + 1;
 await writeFile(countFile, String(count));
-await mkdir(path.join(process.cwd(), "artifacts"), {recursive:true});
-await writeFile(path.join(process.cwd(), "artifacts", "a.json"), "a");
-await writeFile(path.join(process.cwd(), "artifacts", "b.json"), "b");
-${preservedFixtureOracleDelegationPrelude()}
-result.observations.invocation_count =
-  result.observations.result &&
-  !result.observations.relations_applicable
+const firstCheckPrefix = "assertion.first.first-check.";
+const secondCheckPrefix = "assertion.first.same-execution-check.";
+const invocationCount =
+  observations[firstCheckPrefix + "first-result"] &&
+  !observations[firstCheckPrefix + "first-relations-na"]
     ? count
     : 1;
-result.evidence_records.push({
-  assertion_key: "single-invocation",
-  capability: "state_delta",
-  before_sha256: "2".repeat(64),
-  after_sha256: "3".repeat(64),
-  changed_fields: ["invocation_count"]
-});
-console.log(JSON.stringify(result));
-`,
+observations[firstCheckPrefix + "single-invocation"] = invocationCount;
+for (const assertionKey of [
+  "first-result",
+  "first-architecture",
+  "first-requirement",
+  "first-obligation",
+  "first-liveness",
+  "single-invocation",
+  "first-relations-na"
+])
+  observations[secondCheckPrefix + assertionKey] =
+    observations[firstCheckPrefix + assertionKey];
+console.log(JSON.stringify({`,
+        ),
     );
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const accepted = await runCli(fixture.root, [
@@ -263,16 +281,17 @@ console.log(JSON.stringify(result));
       accepted.check_results.map((item) => item.observations.invocation_count),
       [1, 1],
     );
-    assert.deepEqual(
-      Object.keys(accepted.check_results[0].artifact_hashes),
-      ["artifacts/a.json", "artifacts/proof.json"],
-    );
-    assert.deepEqual(
-      Object.keys(accepted.check_results[1].artifact_hashes),
-      ["artifacts/b.json", "artifacts/proof.json"],
-    );
+    assert.deepEqual(Object.keys(accepted.check_results[0].artifact_hashes), [
+      "artifacts/a.json",
+      "artifacts/proof.json",
+    ]);
+    assert.deepEqual(Object.keys(accepted.check_results[1].artifact_hashes), [
+      "artifacts/b.json",
+      "artifacts/proof.json",
+    ]);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
+    await rm(runCountFile, { force: true });
   }
 });
 

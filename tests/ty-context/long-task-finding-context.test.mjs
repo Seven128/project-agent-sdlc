@@ -49,7 +49,10 @@ test("Verify, Status and Resume retain Source-Claim-AC repair context", async ()
     assert.equal(finding.observation, "requirement_result");
     assert.equal(finding.expected, true);
     assert.equal(finding.actual, false);
-    assert.deepEqual(finding.owner_paths, ["src/**"]);
+    assert.deepEqual(finding.owner_paths, [
+      "src/**",
+      "tests/legacy-oracle.mjs",
+    ]);
     assert.match(finding.next_action, /acceptance assertion/u);
 
     const status = await runCli(fixture.root, [

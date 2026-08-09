@@ -1,12 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import {
-  access,
-  appendFile,
-  mkdir,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { access, appendFile, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -37,9 +31,8 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
     await installSlowOracle(fixture, signal);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    const authorityA = (
-      await loadActiveLongTaskAuthority(fixture.root)
-    ).authority;
+    const authorityA = (await loadActiveLongTaskAuthority(fixture.root))
+      .authority;
     await commitCandidate(fixture.root);
 
     const finalProcess = runCliProcess(fixture.root, [
@@ -69,9 +62,7 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
           finding.code === "active_authority_changed_during_final_gate",
       ),
     );
-    const activeB = (
-      await loadActiveLongTaskAuthority(fixture.root)
-    ).authority;
+    const activeB = (await loadActiveLongTaskAuthority(fixture.root)).authority;
     assert.equal(activeB.authority_revision, 2);
     await assert.rejects(
       () =>
@@ -198,8 +189,7 @@ test("Final Gate rejects every protected-input class changed during execution", 
         assert.ok(
           receipt.findings.some(
             (finding) =>
-              finding.code ===
-              "protected_inputs_changed_during_final_gate",
+              finding.code === "protected_inputs_changed_during_final_gate",
           ),
           JSON.stringify(receipt.findings),
         );
@@ -239,8 +229,7 @@ test("targeted verify writes no progress for an Authority that became stale", as
     assert.deepEqual(result.updated_progress_records, []);
     assert.ok(
       result.findings.some(
-        (finding) =>
-          finding.code === "active_authority_changed_during_verify",
+        (finding) => finding.code === "active_authority_changed_during_verify",
       ),
     );
     assert.deepEqual(await readProgressRecords(fixture.workdir), {});
@@ -262,8 +251,22 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
     ]);
     assert.equal(acceptedA.workflow_status, "machine_accepted");
 
-    addBlockedProof(fixture.contract);
+    addBlockingExternalConfirmation(fixture.contract);
     await writeContract(fixture.workdir, fixture.contract);
+    const pending = await runCliFailure(fixture.root, [
+      "long-task",
+      "compile",
+      fixture.workdir,
+      "--revise",
+    ]);
+    assert.equal(pending.status, "authority_revision_pending");
+    await runCli(fixture.root, [
+      "long-task",
+      "approve-authority-revision",
+      fixture.workdir,
+      "--revision",
+      pending.pending_authority_revision.revision_identity,
+    ]);
     const revisionB = await runCli(fixture.root, [
       "long-task",
       "compile",
@@ -285,12 +288,7 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
       revisionB.compiled_identity,
     );
     await assert.rejects(
-      () =>
-        runCli(fixture.root, [
-          "long-task",
-          "close",
-          fixture.workdir,
-        ]),
+      () => runCli(fixture.root, ["long-task", "close", fixture.workdir]),
       /close_live_final_gate_failed:blocked_external/u,
     );
     assert.equal(
@@ -315,30 +313,15 @@ function addProof(contract, key) {
   });
 }
 
-function addBlockedProof(contract) {
-  const base = contract.outcomes[0].acceptance.checks[0];
-  contract.outcomes[0].acceptance.checks.push({
-    ...structuredClone(base),
-    key: "blocked-proof",
-    positive_assertions: [
-      {
-        key: "blocked-proof-result",
-        criterion: "The blocked proof result remains observable.",
-        claims: [],
-        observation: "result",
-        evidence_capabilities: ["state_delta"],
-        operator: "equals",
-        expected: true,
-      },
-    ],
-    negative_assertions: [],
-    environment_requirements: [
-      {
-        key: "missing-env",
-        kind: "env_var",
-        target: "TY_CONTEXT_MISSING_RACE_ENV",
-      },
-    ],
+function addBlockingExternalConfirmation(contract) {
+  contract.global.acceptance.external_confirmations.push({
+    key: "race-blocking-confirmation",
+    description:
+      "The revised Authority requires a blocking external confirmation.",
+    owner: "external-owner",
+    kind: "functional_prerequisite",
+    impact_claims: ["first.result"],
+    blocks_target: true,
   });
 }
 
@@ -353,7 +336,20 @@ while (!existsSync(${JSON.stringify(signal.release)})) {
 }
 let state = {first:false};
 try { state = JSON.parse(readFileSync(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
-console.log(JSON.stringify({schema_version:"long-task-check-result-v3",execution_status:"completed",observations:{result:state.first,result_copy:state.first,negative:false},evidence_records:[{assertion_key:"first-result",capability:"target_runtime",target_ref:"fixture-app",root_entrypoint:"tests/oracle.mjs",session_id:"race-session",cold_start:true},{assertion_key:"first-result",capability:"state_delta",before_sha256:"0".repeat(64),after_sha256:"1".repeat(64),changed_fields:["first"]}]}));
+const observed = state.first === true;
+const assertion = (key) => "assertion.first.first-check." + key;
+console.log(JSON.stringify({
+  schema_version: "ty-context-product-observation-v1",
+  observations: {
+    "fact.first.observable": observed,
+    [assertion("first-result")]: observed,
+    [assertion("first-requirement")]: observed,
+    [assertion("first-obligation")]: observed,
+    [assertion("first-architecture")]: observed,
+    [assertion("first-liveness")]: true,
+    [assertion("first-relations-na")]: state.first_relations_applicable === true
+  }
+}));
 `,
   );
   await commitCandidate(fixture.root);

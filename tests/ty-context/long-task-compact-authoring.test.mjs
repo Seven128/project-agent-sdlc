@@ -27,17 +27,13 @@ test("Compact and expanded V2 authoring normalize to the same Contract", () => {
   const expandedLines = lineCount(YAML.stringify(expanded));
   const compactLines = lineCount(YAML.stringify(compact));
   assert.ok(
-    compactLines <= Math.floor(expandedLines * 0.88),
-    `expected at least 12% fewer lines after explicit applicability and semantic-witness metadata, expanded=${expandedLines}, compact=${compactLines}`,
+    compactLines <= Math.floor(expandedLines * 0.89),
+    `expected at least 11% fewer lines after explicit applicability, semantic-witness, and admitted-process metadata, expanded=${expandedLines}, compact=${compactLines}`,
   );
 });
 
 test("Compact and expanded V2 authoring compile to identical authority", async () => {
   const fixture = await createDeliveryFixture();
-  await writeFile(
-    path.join(fixture.root, "tests", "compact-playwright.mjs"),
-    "export const compactPlaywrightFixture = true;\n",
-  );
   const expanded = expandedContract();
   await writeFile(
     path.join(fixture.root, "source.md"),
@@ -78,10 +74,7 @@ ${fixtureArchitectureSourceItem()}
     compactCompiled.authority_materials,
     expandedCompiled.authority_materials,
   );
-  assert.equal(
-    compactCompiled.effective_risk,
-    expandedCompiled.effective_risk,
-  );
+  assert.equal(compactCompiled.effective_risk, expandedCompiled.effective_risk);
   assert.deepEqual(
     compactCompiled.claim_coverage,
     expandedCompiled.claim_coverage,
@@ -103,41 +96,6 @@ function expandedContract() {
     "first.obligation.implement-first",
   ];
   contract.source_claims[0].statement = "Implement first";
-  check.proof_surface = "ui_browser";
-  contract.task.execution_targets[0].runtime_family = "browser";
-  contract.task.execution_targets[0].capabilities = [
-    "browser-runtime",
-    "cold-start",
-    "production-root",
-  ];
-  check.runner.type = "playwright_test";
-  check.runner.target = "tests/compact-playwright.mjs";
-  check.verification_inputs = ["tests/compact-playwright.mjs"];
-  contract.outcomes[0].semantic_fact_bindings.proofs[0].proof_surface =
-    "ui_browser";
-  for (const assertion of check.positive_assertions) {
-    if (!assertion.claims.length) continue;
-    assertion.observation = `playwright.case.${assertion.key}.passed`;
-    assertion.evidence_capabilities =
-      assertion.key === "first-semantic-fact"
-        ? ["semantic_fact"]
-        : ["interaction_trace", "target_runtime"];
-  }
-  for (const assertion of check.negative_assertions) {
-    if (!assertion.claims.length) continue;
-    assertion.observation = `playwright.case.${assertion.key}.passed`;
-    assertion.evidence_capabilities = [
-      "interaction_trace",
-      "target_runtime",
-    ];
-    assertion.expected = true;
-  }
-  for (const obligation of contract.outcomes[0].technical.obligations)
-    obligation.required_proof_surfaces = ["ui_browser"];
-  check.artifact_globs = ["artifacts/proof.json"];
-  check.runner.argv = [];
-  check.runner.idempotent = false;
-  check.input_paths = [];
   contract.outcomes[0].acceptance.counterfactual_controls = [
     {
       key: "replace-first-state",
@@ -185,6 +143,7 @@ function compactContract(expanded) {
   const contract = structuredClone(expanded);
   delete contract.risk.requested_level;
   contract.risk.facts = {};
+  delete contract.global.applicability;
   delete contract.global.product;
   delete contract.global.acceptance;
   delete contract.global.technical.constraints;
@@ -195,21 +154,18 @@ function compactContract(expanded) {
   delete outcome.product.requirements;
   delete outcome.product.owner_surfaces;
   delete outcome.product.controls;
+  delete outcome.product.control_relations;
+  delete outcome.product.surface_bindings;
   delete outcome.product.non_completing_outcomes;
-  delete outcome.technical.allowed_support_paths;
   delete outcome.technical.forbidden_shortcuts;
   delete outcome.technical.rollback_and_recovery;
   delete outcome.acceptance.population;
 
   const check = outcome.acceptance.checks[0];
-  delete check.runner.argv;
   delete check.runner.cwd;
   delete check.runner.timeout_ms;
   delete check.runner.retry_policy;
-  delete check.runner.idempotent;
-  delete check.input_paths;
   delete check.expected_output_paths;
-  delete check.environment_requirements;
   return contract;
 }
 

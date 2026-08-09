@@ -1,207 +1,51 @@
 import { chmod, mkdtemp, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
+
+export const MUTATION_CLOSURE_PRODUCT_PATH =
+  "tests/mutation-closure-product.mjs";
 
 export function configureMixedEvidenceContract(contract) {
-  contract.task.execution_targets.push({
-    key: "fixture-browser",
-    description: "The browser product runtime.",
-    role: "product",
-    runtime_family: "browser",
-    root_entrypoint: "/",
-    capabilities: ["browser-runtime", "cold-start", "production-root"],
-  });
-  const browser = contract.outcomes[0];
-  browser.applicability.push({
-    key: "first-browser-success",
-    target_ref: "fixture-browser",
-    journey_role: "success",
-    dimensions: [{ key: "fixture-state", value: "loaded" }],
-    given_refs: ["fixture-loaded"],
-    when_refs: ["read-outcome"],
-  });
-  browser.product.requirements.push(
-    {
-      key: "ui-acceptance",
-      statement: "The UI acceptance requirement is observable.",
-      required_proof_surfaces: ["ui_browser"],
-      applicability_refs: ["first-browser-success"],
-    },
-    {
-      key: "ui-recovery",
-      statement: "The UI recovery requirement is observable.",
-      required_proof_surfaces: ["ui_browser"],
-      applicability_refs: ["first-browser-success"],
-    },
+  const rootArgv = fixtureProductRootArgv(
+    MUTATION_CLOSURE_PRODUCT_PATH,
+    "first",
   );
-  const stageGate = browser.acceptance.checks[0];
-  const ui = structuredClone(stageGate);
-  ui.key = "ui-check";
-  ui.journey_roles = ["success"];
-  ui.execution_target = {
-    target_ref: "fixture-browser",
-    entrypoint: "root",
-  };
-  ui.proof_surface = "ui_browser";
-  ui.runner = {
-    type: "playwright_test",
-    target: "tests/ui.spec.ts",
-    argv: [],
-    cwd: ".",
-    timeout_ms: 30000,
-    effect: "test_sandbox",
-    retry_policy: "none",
-    idempotent: false,
-  };
-  ui.verification_inputs = [
-    "tests/ui.spec.ts",
-    "tests/semantic-false.json",
-  ];
-  ui.artifact_globs = [];
-  ui.positive_assertions = [
-    {
-      key: "ui-acceptance",
-      criterion: "The UI acceptance case passes.",
-      claims: ["requirement.ui-acceptance"],
-      applicability_ref: "first-browser-success",
-      observation: "playwright.case.ui-acceptance.passed",
-      evidence_capabilities: ["interaction_trace", "target_runtime"],
-      operator: "equals",
-      expected: true,
-    },
-    {
-      key: "ui-recovery",
-      criterion: "The UI recovery case passes.",
-      claims: ["requirement.ui-recovery"],
-      applicability_ref: "first-browser-success",
-      observation: "playwright.case.ui-recovery.passed",
-      evidence_capabilities: ["interaction_trace", "target_runtime"],
-      operator: "equals",
-      expected: true,
-    },
-    {
-      key: "ui-liveness",
-      criterion: "The browser target remains live under semantic mutation.",
-      claims: [],
-      observation: "playwright.case.ui-liveness.passed",
-      evidence_capabilities: ["target_runtime"],
-      operator: "equals",
-      expected: true,
-    },
-  ];
-  ui.negative_assertions = [];
-  browser.acceptance.checks.push(ui);
-  browser.acceptance.counterfactual_controls.push({
-    key: "replace-ui-semantics",
-    binding_key: "state-first",
-    claims: ["requirement.ui-acceptance", "requirement.ui-recovery"],
-    check_key: "ui-check",
-    mutation: {
-      type: "replace_file",
-      path: "src/state.json",
-      fixture_path: "tests/semantic-false.json",
-    },
-    expected_assertion_failures: ["ui-acceptance", "ui-recovery"],
-    preserved_assertions: ["ui-liveness"],
-  });
+  const target = contract.task.execution_targets[0];
+  target.root_entrypoint = fixtureProductRootPath();
+  target.root_argv = rootArgv;
+  for (const outcome of contract.outcomes) {
+    const check = outcome.acceptance.checks[0];
+    check.runner.type = "project_binary";
+    check.runner.target = fixtureProductRootPath();
+    check.runner.argv = [...rootArgv];
+    check.verification_inputs = [
+      MUTATION_CLOSURE_PRODUCT_PATH,
+      "tests/semantic-false.json",
+    ];
+  }
 
   const structured = contract.outcomes[1];
-  const semanticCheck = structured.acceptance.checks[0];
-  semanticCheck.key = "second-semantic-check";
-  for (const binding of structured.semantic_fact_bindings.proofs)
-    if (binding.check_ref === "second-check")
-      binding.check_ref = semanticCheck.key;
-  for (const control of structured.acceptance.counterfactual_controls)
-    if (control.check_key === "second-check")
-      control.check_key = semanticCheck.key;
-  const structuredCheck = structuredClone(semanticCheck);
-  structuredCheck.key = "second-check";
-  structuredCheck.runner.target = "tests/constant-oracle.mjs";
-  structuredCheck.verification_inputs = [
-    "tests/constant-oracle.mjs",
-    "tests/semantic-false.json",
-  ];
-  structuredCheck.artifact_globs = [];
-  structuredCheck.runner.argv = [
-    "second",
-    "structured-acceptance",
-  ];
-  structuredCheck.positive_assertions = [
-    {
-      key: "structured-result",
-      criterion: "The structured overall result is observable.",
-      claims: ["result"],
-      applicability_ref: "second-root-success",
-      observation: "result",
-      evidence_capabilities: ["target_runtime", "state_delta"],
-      operator: "equals",
-      expected: true,
-    },
-    {
-      key: "structured-acceptance",
-      criterion: "The structured outcome is observable and implemented.",
-      claims: ["requirement.observe-second"],
-      applicability_ref: "second-root-success",
-      observation: "requirement_result",
-      evidence_capabilities: ["target_runtime", "state_delta"],
-      operator: "equals",
-      expected: true,
-    },
-    {
-      key: "structured-obligation",
-      criterion: "The structured implementation obligation is satisfied.",
-      claims: ["obligation.implement-second"],
-      applicability_ref: "second-root-success",
-      observation: "obligation_result",
-      evidence_capabilities: ["target_runtime", "state_delta"],
-      operator: "equals",
-      expected: true,
-    },
-    {
-      key: "structured-liveness",
-      criterion: "The structured target remains live under semantic mutation.",
-      claims: [],
-      observation: "target_live",
-      evidence_capabilities: ["target_runtime"],
-      operator: "equals",
-      expected: true,
-    },
-  ];
-  structured.acceptance.checks.push(structuredCheck);
+  const structuredCheck = structured.acceptance.checks[0];
+  structuredCheck.positive_assertions.push({
+    key: "structured-acceptance",
+    criterion: "The structured outcome is observable and implemented.",
+    claims: ["requirement.observe-second"],
+    applicability_ref: "second-root-success",
+    observation: "structured_requirement_result",
+    evidence_capabilities: ["target_runtime"],
+    operator: "equals",
+    expected: true,
+  });
 
   contract.source_claims[0].statement = "Implement first";
   contract.source_claims[0].disposition.refs = [
     "first.obligation.implement-first",
   ];
   contract.source_claims.push(
-    {
-      key: "first-ui-requirement",
-      source_ref: "source.md#fixture-source",
-      statement: "The UI acceptance requirement is observable.",
-      disposition: {
-        type: "claim",
-        refs: ["first.requirement.ui-acceptance"],
-      },
-    },
-    sourceAcceptance(
-      "first-ui-acceptance",
-      "The UI acceptance case passes.",
-      "first.ui-check.ui-acceptance",
-    ),
-    {
-      key: "first-ui-recovery-requirement",
-      source_ref: "source.md#fixture-source",
-      statement: "The UI recovery requirement is observable.",
-      disposition: {
-        type: "claim",
-        refs: ["first.requirement.ui-recovery"],
-      },
-    },
-    sourceAcceptance(
-      "first-ui-recovery",
-      "The UI recovery case passes.",
-      "first.ui-check.ui-recovery",
-    ),
     sourceAcceptance(
       "second-structured-acceptance",
       "The structured outcome is observable and implemented.",
@@ -210,12 +54,33 @@ export function configureMixedEvidenceContract(contract) {
   );
 }
 
+export function mutationClosureProductOracleSource() {
+  return `import { readFile } from "node:fs/promises";
+const key = process.env.TY_CONTEXT_FIXTURE_SECOND_SCOPE ? "second" : process.env.TY_CONTEXT_FIXTURE_FIRST_SCOPE ? "first" : process.argv[2] || "first";
+let state = { first: false, second: false };
+try { state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
+const observed = state[key] === true;
+const relationApplicable = state[key + "_relations_applicable"] === true;
+const assertion = (assertionKey) => "assertion." + key + "." + key + "-check." + assertionKey;
+const observations = {
+  ["fact." + key + ".observable"]: observed,
+  [assertion(key + "-result")]: observed,
+  [assertion(key + "-requirement")]: observed,
+  [assertion(key + "-obligation")]: observed,
+  [assertion(key + "-liveness")]: true,
+  [assertion(key + "-relations-na")]: relationApplicable,
+  ...(key === "first" ? { [assertion("first-architecture")]: observed } : {}),
+  ...(key === "second" ? { [assertion("structured-acceptance")]: observed } : {})
+};
+console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
+`;
+}
+
 export async function writeSource(
   root,
   {
     wrongRequirementTarget,
-    structuredCriterion =
-      "The structured outcome is observable and implemented.",
+    structuredCriterion = "The structured outcome is observable and implemented.",
   },
 ) {
   const firstStatement = wrongRequirementTarget
@@ -229,22 +94,6 @@ export async function writeSource(
 
 <!-- ty-source-item:start key=first-observable kind=requirement -->
 ${firstStatement}
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=first-ui-requirement kind=requirement -->
-The UI acceptance requirement is observable.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=first-ui-acceptance kind=acceptance -->
-The UI acceptance case passes.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=first-ui-recovery-requirement kind=requirement -->
-The UI recovery requirement is observable.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=first-ui-recovery kind=acceptance -->
-The UI recovery case passes.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=second-observable kind=requirement -->

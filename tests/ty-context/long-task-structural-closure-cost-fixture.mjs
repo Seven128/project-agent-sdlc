@@ -17,6 +17,7 @@ export function structuralContractFixture(manifest) {
   contract.semantic_fact_manifest.key = manifest.key;
   outcome.product.owner.path_globs = sharedPathSet;
   outcome.technical.expected_change_paths = sharedPathSet;
+  outcome.technical.allowed_support_paths = [];
   outcome.semantic_fact_bindings = {
     manifest_ref: manifest.key,
     facts: manifest.facts.map((fact) => ({

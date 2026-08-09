@@ -17,7 +17,13 @@ process.env[FIXTURE_FIRST_SCOPE_ENV] ??= "fixture-scope-one-not-observed";
 process.env[FIXTURE_SECOND_SCOPE_ENV] ??= "fixture-scope-two-not-observed";
 
 export function packageAdmittedFixtureSemanticManifest(options = {}) {
-  const manifest = fixtureSemanticManifest(options);
+  return admitPackageExactFixtureSemanticManifest(
+    fixtureSemanticManifest(options),
+  );
+}
+
+export function admitPackageExactFixtureSemanticManifest(input) {
+  const manifest = structuredClone(input);
   manifest.oracles[0] = {
     ...manifest.oracles[0],
     identity: PACKAGE_EXACT_ORACLE_IDENTITY,
@@ -31,17 +37,18 @@ export function fixtureProductRootPath() {
   return `bin/product-root${process.platform === "win32" ? ".exe" : ""}`;
 }
 
-export function fixtureProductRootArgv(script, argument) {
+export function fixtureProductRootArgv(script, argument, extraArguments = []) {
+  const commandArguments = [script, argument, ...extraArguments];
   if (process.platform === "win32")
     return [
       "/d",
       "/s",
       "/c",
-      `node ${cmdToken(script)} ${cmdToken(argument)}`,
+      `node ${commandArguments.map(cmdToken).join(" ")}`,
     ];
   return [
     "-c",
-    `${shellQuote(process.execPath)} ${shellQuote(script)} ${shellQuote(argument)}`,
+    `${shellQuote(process.execPath)} ${commandArguments.map(shellQuote).join(" ")}`,
   ];
 }
 
