@@ -29,6 +29,7 @@ import {
   sha256,
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
+import { npmCommandSpec } from "./npm_command_spec.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workloadRoot = path.join(
@@ -208,8 +209,10 @@ export async function collectRealProcessRoi({
     path.join(os.tmpdir(), "ty-real-process-roi-"),
   );
   const prepared = {};
+  const registeredCheckouts = new Set();
   const runs = [];
   const setupRecords = [];
+  let collectionError = null;
   try {
     for (const variantId of VARIANT_IDS) {
       const variant = plan.variants[variantId];
@@ -219,6 +222,7 @@ export async function collectRealProcessRoi({
         checkout,
         variant,
         outputDir: path.join(runSetRoot, "setup", variantId),
+        registeredCheckouts,
       });
       prepared[variantId] = setup;
       setupRecords.push(setup.record);
@@ -299,15 +303,18 @@ export async function collectRealProcessRoi({
     };
     await writeJson(path.join(runSetRoot, "attestation.json"), attestation);
     return { runSetRoot, aggregate, manifest, attestation };
+  } catch (error) {
+    collectionError = error;
   } finally {
     if (!keepWorktrees)
-      for (const setup of Object.values(prepared))
-        await removeWorktree(repositoryRoot, setup.checkout).catch(
-          () => undefined,
-        );
-    if (!keepWorktrees)
-      await rm(temporaryRoot, { recursive: true, force: true });
+      await finalizeRealProcessRoiResources({
+        repositoryRoot,
+        checkouts: registeredCheckouts,
+        temporaryRoot,
+        primaryError: collectionError,
+      });
   }
+  throw collectionError;
 }
 
 async function materializeSourceIdentity({
@@ -421,6 +428,7 @@ async function prepareVariant({
   checkout,
   variant,
   outputDir,
+  registeredCheckouts,
 }) {
   await mkdir(outputDir, { recursive: true });
   const records = [];
@@ -438,8 +446,10 @@ async function prepareVariant({
   );
   if (records.at(-1).status !== 0)
     throw new Error(`real_process_roi_worktree_add_failed:${variant.id}`);
+  registeredCheckouts.add(checkout);
+  const npmCi = realProcessRoiNpmCommandSpec(["ci"]);
   records.push(
-    await spawnCaptured(npmExecutable(), ["ci"], {
+    await spawnCaptured(npmCi.command, npmCi.args, {
       cwd: checkout,
       timeoutMs: 10 * 60 * 1000,
       outputDir,
@@ -448,39 +458,38 @@ async function prepareVariant({
   );
   if (records.at(-1).status !== 0)
     throw new Error(`real_process_roi_npm_ci_failed:${variant.id}`);
+  const packageBuild = realProcessRoiNpmCommandSpec([
+    "run",
+    "build",
+    "--workspace",
+    "project-tiny-context-harness",
+  ]);
   records.push(
-    await spawnCaptured(
-      npmExecutable(),
-      ["run", "build", "--workspace", "project-tiny-context-harness"],
-      {
-        cwd: checkout,
-        timeoutMs: 10 * 60 * 1000,
-        outputDir,
-        label: "package-build",
-      },
-    ),
+    await spawnCaptured(packageBuild.command, packageBuild.args, {
+      cwd: checkout,
+      timeoutMs: 10 * 60 * 1000,
+      outputDir,
+      label: "package-build",
+    }),
   );
   if (records.at(-1).status !== 0)
     throw new Error(`real_process_roi_build_failed:${variant.id}`);
   const packDir = path.join(outputDir, "pack");
   await mkdir(packDir, { recursive: true });
+  const packagePack = realProcessRoiNpmCommandSpec([
+    "pack",
+    "--workspace",
+    "project-tiny-context-harness",
+    "--pack-destination",
+    packDir,
+  ]);
   records.push(
-    await spawnCaptured(
-      npmExecutable(),
-      [
-        "pack",
-        "--workspace",
-        "project-tiny-context-harness",
-        "--pack-destination",
-        packDir,
-      ],
-      {
-        cwd: checkout,
-        timeoutMs: 10 * 60 * 1000,
-        outputDir,
-        label: "package-pack",
-      },
-    ),
+    await spawnCaptured(packagePack.command, packagePack.args, {
+      cwd: checkout,
+      timeoutMs: 10 * 60 * 1000,
+      outputDir,
+      label: "package-pack",
+    }),
   );
   if (records.at(-1).status !== 0)
     throw new Error(`real_process_roi_pack_failed:${variant.id}`);
@@ -511,6 +520,10 @@ async function prepareVariant({
     package_sha256: record.package_sha256,
     record,
   };
+}
+
+export function realProcessRoiNpmCommandSpec(args, options = {}) {
+  return npmCommandSpec(args, options);
 }
 
 async function spawnCaptured(executable, args, options) {
@@ -682,7 +695,7 @@ async function removeWorktree(repositoryRoot, checkout) {
   try {
     const result = await spawnCaptured(
       "git",
-      ["worktree", "remove", resolved],
+      ["worktree", "remove", "--force", resolved],
       {
         cwd: repositoryRoot,
         timeoutMs: 120000,
@@ -695,6 +708,53 @@ async function removeWorktree(repositoryRoot, checkout) {
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }
+}
+
+export async function cleanupRealProcessRoiWorktrees(
+  repositoryRoot,
+  checkouts,
+) {
+  const failures = [];
+  for (const checkout of new Set(checkouts))
+    try {
+      await removeWorktree(repositoryRoot, checkout);
+    } catch (error) {
+      failures.push(error);
+    }
+  if (failures.length)
+    throw new AggregateError(
+      failures,
+      "real_process_roi_worktree_cleanup_failed",
+    );
+}
+
+export async function finalizeRealProcessRoiResources({
+  repositoryRoot,
+  checkouts,
+  temporaryRoot,
+  primaryError = null,
+  cleanupWorktrees = cleanupRealProcessRoiWorktrees,
+  removeTemporaryRoot = (target) =>
+    rm(target, { recursive: true, force: true }),
+}) {
+  const failures = primaryError ? [primaryError] : [];
+  try {
+    await cleanupWorktrees(repositoryRoot, checkouts);
+  } catch (error) {
+    failures.push(error);
+  }
+  try {
+    await removeTemporaryRoot(temporaryRoot);
+  } catch (error) {
+    failures.push(error);
+  }
+  if (failures.length === 1) throw failures[0];
+  if (failures.length > 1)
+    throw new AggregateError(
+      failures,
+      "real_process_roi_collection_resource_cleanup_failed",
+      { cause: primaryError ?? failures[0] },
+    );
 }
 
 async function listFiles(rootPath) {
@@ -729,10 +789,6 @@ function compactTimestamp() {
 
 function round(value) {
   return Math.round(value * 10_000) / 10_000;
-}
-
-function npmExecutable() {
-  return process.platform === "win32" ? "npm.cmd" : "npm";
 }
 
 export const realProcessRoiPaths = Object.freeze({

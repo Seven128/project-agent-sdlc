@@ -27,7 +27,12 @@ import {
   unverifiedMetric,
   validateRunRecord,
 } from "../../tools/long_task_real_process_roi_scoring.mjs";
-import { buildArtifactManifest } from "../../tools/long_task_real_process_roi_runner.mjs";
+import {
+  buildArtifactManifest,
+  cleanupRealProcessRoiWorktrees,
+  finalizeRealProcessRoiResources,
+  realProcessRoiNpmCommandSpec,
+} from "../../tools/long_task_real_process_roi_runner.mjs";
 import { verifyRealProcessRoiReport } from "../../tools/verify_long_task_real_process_roi.mjs";
 import { evaluateProductFacts } from "../../examples/delivery-benchmark/real-process-workload/product/facts.mjs";
 import {
@@ -46,6 +51,99 @@ const workloadRoot = path.join(
 const fakeCandidate = "c".repeat(40);
 const fakeTree = "d".repeat(40);
 const digest = (value) => createHash("sha256").update(value).digest("hex");
+
+test("real process ROI setup routes every Windows npm command through ComSpec without collecting A/B/C", () => {
+  const options = {
+    platform: "win32",
+    environment: { ComSpec: "C:\\Windows\\System32\\cmd.exe" },
+  };
+  for (const args of [
+    ["ci"],
+    ["run", "build", "--workspace", "project-tiny-context-harness"],
+    [
+      "pack",
+      "--workspace",
+      "project-tiny-context-harness",
+      "--pack-destination",
+      "C:\\tmp\\pack",
+    ],
+  ])
+    assert.deepEqual(realProcessRoiNpmCommandSpec(args, options), {
+      command: "C:\\Windows\\System32\\cmd.exe",
+      args: ["/d", "/s", "/c", "call", "npm", ...args],
+    });
+});
+
+test("partial real process ROI setup explicitly removes a registered dirty worktree", async () => {
+  const temporary = await mkdtemp(
+    path.join(os.tmpdir(), "ty-roi-cleanup-test-"),
+  );
+  const repository = path.join(temporary, "repository");
+  const checkout = path.join(temporary, "partial-variant");
+  try {
+    await mkdir(repository, { recursive: true });
+    await git(repository, ["init", "-b", "main"]);
+    await git(repository, ["config", "user.email", "fixture@example.invalid"]);
+    await git(repository, ["config", "user.name", "Fixture"]);
+    await writeFile(path.join(repository, "fixture.txt"), "baseline\n");
+    await git(repository, ["add", "fixture.txt"]);
+    await git(repository, ["commit", "-m", "fixture"]);
+    await git(repository, ["worktree", "add", "--detach", checkout, "HEAD"]);
+    await writeFile(path.join(checkout, "partial-install.txt"), "dirty\n");
+
+    await cleanupRealProcessRoiWorktrees(repository, [checkout]);
+
+    const worktrees = await git(repository, [
+      "worktree",
+      "list",
+      "--porcelain",
+    ]);
+    assert.equal(
+      normalizePath(worktrees.stdout).includes(normalizePath(checkout)),
+      false,
+    );
+    await assert.rejects(readFile(path.join(checkout, "partial-install.txt")));
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("real process ROI finalization attempts every resource and preserves primary plus cleanup failures", async () => {
+  const calls = [];
+  const primaryError = new Error("collection-failed");
+  const worktreeError = new Error("worktree-cleanup-failed");
+  const temporaryRootError = new Error("temporary-root-cleanup-failed");
+  await assert.rejects(
+    finalizeRealProcessRoiResources({
+      repositoryRoot: "repository",
+      checkouts: new Set(["checkout"]),
+      temporaryRoot: "temporary-root",
+      primaryError,
+      cleanupWorktrees: async (repositoryRoot, checkouts) => {
+        calls.push(["worktrees", repositoryRoot, [...checkouts]]);
+        throw worktreeError;
+      },
+      removeTemporaryRoot: async (temporaryRoot) => {
+        calls.push(["temporary-root", temporaryRoot]);
+        throw temporaryRootError;
+      },
+    }),
+    (error) => {
+      assert.ok(error instanceof AggregateError);
+      assert.equal(error.cause, primaryError);
+      assert.deepEqual(error.errors, [
+        primaryError,
+        worktreeError,
+        temporaryRootError,
+      ]);
+      return true;
+    },
+  );
+  assert.deepEqual(calls, [
+    ["worktrees", "repository", ["checkout"]],
+    ["temporary-root", "temporary-root"],
+  ]);
+});
 
 test("real process ROI policy permanently excludes A from safety and balances the first three repeats", () => {
   const variants = variantDefinitions(fakeCandidate);
@@ -657,6 +755,16 @@ async function execute(executable, args, options = {}) {
     stdout: Buffer.concat(stdout).toString("utf8"),
     stderr: Buffer.concat(stderr).toString("utf8"),
   };
+}
+
+async function git(cwd, args) {
+  const result = await execute("git", args, { cwd });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  return result;
+}
+
+function normalizePath(value) {
+  return value.replaceAll("\\", "/").toLowerCase();
 }
 
 async function resignManifest(runSetRoot) {
