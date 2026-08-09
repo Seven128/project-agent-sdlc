@@ -13,6 +13,7 @@ import {
   commitCandidate,
   createDeliveryFixture,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   pathExists,
   readState,
   writeContract,
@@ -38,6 +39,8 @@ The first outcome must be observable.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 
 <!-- ty-source-item:start key=second-observable kind=requirement -->
 The second outcome must be observable.
@@ -172,6 +175,8 @@ The first outcome must be observable.
 
 ${fixtureArchitectureSourceItem()}
 
+${fixtureExecutionTargetSourceItem()}
+
 <!-- ty-source-item:start key=second-observable kind=requirement -->
 The second outcome must be observable.
 <!-- ty-source-item:end -->
@@ -189,12 +194,7 @@ ${revisedAcceptance}
     ).criterion = revisedAcceptance;
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
-      () =>
-        run(fixture.root, [
-          "long-task",
-          "compile",
-          fixture.workdir,
-        ]),
+      () => run(fixture.root, ["long-task", "compile", fixture.workdir]),
       /authority_revision_requires_revise_flag/u,
     );
     const pending = await expectDecision(fixture, {
@@ -227,13 +227,8 @@ ${revisedAcceptance}
     assert.equal(acceptedStop.continue, true);
     assert.equal(await pathExists(activeFile), false);
     assert.equal(
-      (
-        await run(fixture.root, [
-          "long-task",
-          "stop-check",
-          fixture.workdir,
-        ])
-      ).reason,
+      (await run(fixture.root, ["long-task", "stop-check", fixture.workdir]))
+        .reason,
       "no_active_task",
     );
 
@@ -268,9 +263,13 @@ ${revisedAcceptance}
       cwd: fixture.root,
     });
     assert.equal((worktrees.stdout.match(/^worktree /gmu) ?? []).length, 1);
-    const branches = await exec("git", ["branch", "--format=%(refname:short)"], {
-      cwd: fixture.root,
-    });
+    const branches = await exec(
+      "git",
+      ["branch", "--format=%(refname:short)"],
+      {
+        cwd: fixture.root,
+      },
+    );
     assert.equal(
       branches.stdout.trim().split(/\r?\n/u).filter(Boolean).length,
       1,

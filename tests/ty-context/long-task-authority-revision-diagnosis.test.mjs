@@ -37,9 +37,6 @@ test("[critical:revision-diagnosis-isolation] scope-only candidates stay statele
     candidate.outcomes[0].acceptance.checks[0].verification_inputs.push(
       "tests/extra.mjs",
     );
-    candidate.outcomes[0].acceptance.checks[0].input_paths.push(
-      "tests/extra.mjs",
-    );
     await writeContract(fixture.workdir, candidate);
 
     const diagnosis = await runCli(fixture.root, [

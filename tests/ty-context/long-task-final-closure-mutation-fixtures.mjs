@@ -5,6 +5,7 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
+import { fixtureExecutionTargetSourceItem } from "./long-task-delivery-fixtures.mjs";
 
 export const MUTATION_CLOSURE_PRODUCT_PATH =
   "tests/mutation-closure-product.mjs";
@@ -19,13 +20,31 @@ export function configureMixedEvidenceContract(contract) {
   target.root_argv = rootArgv;
   for (const outcome of contract.outcomes) {
     const check = outcome.acceptance.checks[0];
+    outcome.product.owner.path_globs = outcome.product.owner.path_globs.map(
+      (candidate) =>
+        candidate === "tests/oracle.mjs"
+          ? MUTATION_CLOSURE_PRODUCT_PATH
+          : candidate,
+    );
+    outcome.technical.allowed_support_paths =
+      outcome.technical.allowed_support_paths.map((candidate) =>
+        candidate === "tests/oracle.mjs"
+          ? MUTATION_CLOSURE_PRODUCT_PATH
+          : candidate,
+      );
+    const productModuleBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === `product-module-${outcome.key}`,
+    );
+    if (!productModuleBinding)
+      throw new Error(
+        `mutation_closure_product_binding_missing:${outcome.key}`,
+      );
+    productModuleBinding.target = MUTATION_CLOSURE_PRODUCT_PATH;
+    productModuleBinding.carrier_paths = [MUTATION_CLOSURE_PRODUCT_PATH];
     check.runner.type = "project_binary";
     check.runner.target = fixtureProductRootPath();
     check.runner.argv = [...rootArgv];
-    check.verification_inputs = [
-      MUTATION_CLOSURE_PRODUCT_PATH,
-      "tests/semantic-false.json",
-    ];
+    check.verification_inputs = ["tests/semantic-false.json"];
   }
 
   const structured = contract.outcomes[1];
@@ -81,6 +100,7 @@ export async function writeSource(
   {
     wrongRequirementTarget,
     structuredCriterion = "The structured outcome is observable and implemented.",
+    executionTarget,
   },
 ) {
   const firstStatement = wrongRequirementTarget
@@ -107,6 +127,8 @@ ${structuredCriterion}
 <!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
 Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
+
+${fixtureExecutionTargetSourceItem(executionTarget)}
 `,
   );
 }

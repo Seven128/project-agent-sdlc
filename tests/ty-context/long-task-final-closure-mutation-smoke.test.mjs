@@ -8,6 +8,7 @@ import {
   readState,
   runCli,
   runCliFailure,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { readProgressRecords } from "../../packages/ty-context/dist/lib/long-task-state.js";
@@ -26,7 +27,14 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
       path.join(fixture.root, ...MUTATION_CLOSURE_PRODUCT_PATH.split("/")),
       mutationClosureProductOracleSource(),
     );
-    await writeSource(fixture.root, { wrongRequirementTarget: true });
+    await writeSource(fixture.root, {
+      wrongRequirementTarget: true,
+      executionTarget: fixture.contract.task.execution_targets[0],
+    });
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
 
@@ -46,7 +54,10 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     fixture.contract.source_claims[0].disposition.refs = [
       "first.requirement.observe-first",
     ];
-    await writeSource(fixture.root, { wrongRequirementTarget: false });
+    await writeSource(fixture.root, {
+      wrongRequirementTarget: false,
+      executionTarget: fixture.contract.task.execution_targets[0],
+    });
     await writeContract(fixture.workdir, fixture.contract);
     preflight = await runCliFailure(fixture.root, [
       "long-task",
@@ -109,6 +120,8 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     assert.equal(finding.observation, "structured_requirement_result");
     assert.deepEqual(finding.owner_paths, [
       "src/**",
+      "bin/**",
+      MUTATION_CLOSURE_PRODUCT_PATH,
       "tests/legacy-oracle.mjs",
     ]);
 
@@ -153,6 +166,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     await writeSource(fixture.root, {
       wrongRequirementTarget: false,
       structuredCriterion: revisedCriterion,
+      executionTarget: fixture.contract.task.execution_targets[0],
     });
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(

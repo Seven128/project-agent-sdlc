@@ -14,9 +14,13 @@ export function structuralContractFixture(manifest) {
         `src/structural-boundary-${String(index).padStart(4, "0")}/**`,
     ),
   ];
+  const productionOwnerPaths = outcome.product.owner.path_globs.filter(
+    (pattern) => pattern !== "src/**",
+  );
+  const structuralOwnerPaths = [...sharedPathSet, ...productionOwnerPaths];
   contract.semantic_fact_manifest.key = manifest.key;
-  outcome.product.owner.path_globs = sharedPathSet;
-  outcome.technical.expected_change_paths = sharedPathSet;
+  outcome.product.owner.path_globs = structuralOwnerPaths;
+  outcome.technical.expected_change_paths = structuralOwnerPaths;
   outcome.technical.allowed_support_paths = [];
   outcome.semantic_fact_bindings = {
     manifest_ref: manifest.key,

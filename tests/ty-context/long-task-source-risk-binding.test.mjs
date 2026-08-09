@@ -9,6 +9,7 @@ import {
   createDeliveryFixture,
   deliveryContract,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -37,8 +38,8 @@ test("Risk Source marker binds one exact Fact/Affected Outcome pair", async () =
       compiled.source_items.find((item) => item.key === "risk-source")
         .risk_semantics,
       {
-      fact: "critical_user_path",
-      affected_outcome: "first",
+        fact: "critical_user_path",
+        affected_outcome: "first",
       },
     );
   } finally {
@@ -93,7 +94,7 @@ test("Risk marker requires fact/outcome and rejects those attributes elsewhere",
       fixture.contract.risk.facts.critical_user_path = ["first"];
       await writeFile(
         path.join(fixture.root, "source.md"),
-        `${sourceHeading("Risk", "risk-heading")}\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n`,
+        `${sourceHeading("Risk", "risk-heading")}\n\n${scenario.marker}\nRisk text.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n\n${sourceHeading("Fixture source", "fixture-source-heading")}\n\n${fixtureExecutionTargetSourceItem()}\n`,
       );
       await assertPreflightAndCompileReject(fixture, scenario.code);
     } finally {
@@ -142,6 +143,10 @@ Choose the exact Risk Fact and affected Outcome.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${sourceHeading("Fixture source", "fixture-source-heading")}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     await writeContract(fixture.workdir, fixture.contract);
@@ -202,8 +207,7 @@ async function configureRiskSource(
   dispositionRef,
   resetFacts = true,
 ) {
-  if (resetFacts)
-    fixture.contract.risk.facts[markerFact] = [markerOutcome];
+  if (resetFacts) fixture.contract.risk.facts[markerFact] = [markerOutcome];
   fixture.contract.source_claims[0] = riskSourceClaim(dispositionRef);
   await writeFile(
     path.join(fixture.root, "source.md"),
@@ -214,6 +218,10 @@ Risk text.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${sourceHeading("Fixture source", "fixture-source-heading")}
+
+${fixtureExecutionTargetSourceItem()}
 `,
   );
   await writeContract(fixture.workdir, fixture.contract);

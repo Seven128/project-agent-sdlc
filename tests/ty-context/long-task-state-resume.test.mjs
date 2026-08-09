@@ -10,6 +10,7 @@ import {
   pathExists,
   runCli,
   runCliFailure,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { fixtureProductRootArgv } from "./long-task-package-machine-fixture.mjs";
@@ -156,8 +157,8 @@ test("source, selected Context, verification inputs and verifier bundle stale au
       "# Main\n",
     );
     await writeFile(
-      path.join(fixture.root, "tests/oracle.mjs"),
-      "// changed\n",
+      path.join(fixture.root, "tests/semantic-false.json"),
+      "{}\n",
     );
     status = await runCli(fixture.root, [
       "long-task",
@@ -219,18 +220,19 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
     second.artifact_globs = ["artifacts/proof.json", "artifacts/b.json"];
     second.expected_output_paths = ["artifacts/b.json"];
     second.positive_assertions = second.positive_assertions
-      .filter((assertion) => assertion.key !== "first-semantic-fact")
+      .filter((assertion) => assertion.key === "single-invocation")
       .map((assertion) => {
         const claimless = { ...assertion, claims: [] };
         delete claimless.applicability_ref;
         return claimless;
       });
-    second.negative_assertions = second.negative_assertions.map((assertion) => {
-      const claimless = { ...assertion, claims: [] };
-      delete claimless.applicability_ref;
-      return claimless;
-    });
+    second.negative_assertions = [];
     fixture.contract.outcomes[0].acceptance.checks.push(second);
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
+    await writeContract(fixture.workdir, fixture.contract);
     const productRootScript = path.join(fixture.root, "tests/oracle.mjs");
     const productRootSource = await readFile(productRootScript, "utf8");
     assert.match(productRootSource, /console\.log\(JSON\.stringify\(\{/u);
@@ -254,21 +256,10 @@ const invocationCount =
     ? count
     : 1;
 observations[firstCheckPrefix + "single-invocation"] = invocationCount;
-for (const assertionKey of [
-  "first-result",
-  "first-architecture",
-  "first-requirement",
-  "first-obligation",
-  "first-liveness",
-  "single-invocation",
-  "first-relations-na"
-])
-  observations[secondCheckPrefix + assertionKey] =
-    observations[firstCheckPrefix + assertionKey];
+observations[secondCheckPrefix + "single-invocation"] = invocationCount;
 console.log(JSON.stringify({`,
         ),
     );
-    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const accepted = await runCli(fixture.root, [

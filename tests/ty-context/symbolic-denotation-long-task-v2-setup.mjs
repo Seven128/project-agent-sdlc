@@ -14,6 +14,7 @@ import {
 import {
   addProductionControlBinding,
   completeControl,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -158,6 +159,7 @@ export async function prepareMixedSymbolicLongTaskFixture(
   for (const key of assertionKeys)
     if (!sensitivity.expected_assertion_failures.includes(key))
       sensitivity.expected_assertion_failures.push(key);
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
   const synchronizedOracle = await readFile(
     path.join(fixture.root, "tests/oracle.mjs"),

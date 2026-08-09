@@ -8,16 +8,11 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
-import {
-  fixtureSemanticManifest,
-  refreshFixtureSemanticManifest,
-} from "./long-task-delivery-fixtures.mjs";
-import { admitPackageExactFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
+import { refreshFixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
+import { packageAdmittedFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
 
 export function deterministicCompactSemanticManifest(factCount = 64) {
-  const manifest = admitPackageExactFixtureSemanticManifest(
-    fixtureSemanticManifest(),
-  );
+  const manifest = packageAdmittedFixtureSemanticManifest();
   const originalFact = manifest.facts[0];
   const originalSubject = manifest.subjects.find(
     (item) => item.key === originalFact.unit_ref,
