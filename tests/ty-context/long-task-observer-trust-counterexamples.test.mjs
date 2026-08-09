@@ -12,9 +12,12 @@ import {
   configureExpectedAsActualAttack,
   configureHistoricalRuntimeAttack,
   configureMissingCounterfactualObservationAttack,
+  configureNonCarrierEvidenceInputAttack,
+  configureNonCarrierVerificationInputAttack,
   configurePackageObservationCase,
   configureProcessInputMutationAttack,
   configureProxyTargetAttack,
+  configureExecutionTargetSourceDriftAttack,
   configureVerificationInputStaticBase,
   createObserverTrustFixture,
   executeObserverTrustAttackAfterAuthority,
@@ -94,6 +97,21 @@ const reportCases = Object.freeze({
   r8: wrongCase(
     "wrong.r8.empty-observation",
     "observer-trust.r8.empty-observation",
+    "control.process",
+  ),
+  r9: wrongCase(
+    "wrong.process-noncarrier-evidence-input",
+    "observer-trust.r9.process-noncarrier-evidence-input",
+    "control.process",
+  ),
+  r10: wrongCase(
+    "wrong.process-noncarrier-verification-input",
+    "observer-trust.r10.process-noncarrier-verification-input",
+    "control.process",
+  ),
+  r11: wrongCase(
+    "wrong.execution-target-source-drift",
+    "observer-trust.r11.execution-target-source-drift",
     "control.process",
   ),
   staticControl: controlCase(
@@ -534,6 +552,66 @@ test(
       assert.match(
         JSON.stringify(execution.result),
         /counterfactual_integrity_failed[\s\S]*counterfactual_mutated_observation_invalid:admitted_observation_runtime_required/u,
+      );
+    }),
+);
+
+test(
+  "[case:observer-admission-no-bypass:R9] [real-capability:observer-trust.r9.process-noncarrier-evidence-input] a non-carrier evidence input cannot enter the process runtime closure",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureNonCarrierEvidenceInputAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r9, execution);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `non-carrier evidence input reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        executionDiagnostics(execution),
+        /process_runtime_input_evidence_role_forbidden/u,
+      );
+    }),
+);
+
+test(
+  "[case:observer-admission-no-bypass:R10] [real-capability:observer-trust.r10.process-noncarrier-verification-input] a non-carrier verification input cannot enter the process runtime closure",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureNonCarrierVerificationInputAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r10, execution);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `non-carrier verification input reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        executionDiagnostics(execution),
+        /process_runtime_input_verification_role_forbidden/u,
+      );
+    }),
+);
+
+test(
+  "[case:host-derived-target-runtime:R11] [real-capability:observer-trust.r11.execution-target-source-drift] an internally consistent verifier root cannot replace the Source-backed product root",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureExecutionTargetSourceDriftAttack(fixture);
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r11, execution);
+      assert.equal(
+        isSecurelyRejected(execution),
+        true,
+        `Source-drifted execution target reached ${executionLabel(execution)}`,
+      );
+      assert.match(
+        executionDiagnostics(execution),
+        /process_root_source_identity_mismatch/u,
       );
     }),
 );

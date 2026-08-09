@@ -114,7 +114,7 @@ export function isMachineAccepted(execution) {
 export function isSecurelyRejected(execution) {
   if (execution.stage === "final-gate") return !isMachineAccepted(execution);
   const diagnostic = JSON.stringify(execution.result ?? {});
-  return /machine_observer_not_admitted|unsupported_observer_requires_external_confirmation|custom_oracle_machine_completion_forbidden|static_observation_not_in_pre_run_snapshot|static_observation_changed_by_runner|process_observer_direct_root_required|process_observer_root_invocation_required|process_observer_root_argv_mismatch|process_observation_input_changed_by_runner|legacy_target_runtime_non_authoritative|counterfactual_admitted_observation_required|counterfactual_runtime_reachability_unproven|project_submitted_verdict_disagrees_with_harness/u.test(
+  return /machine_observer_not_admitted|unsupported_observer_requires_external_confirmation|custom_oracle_machine_completion_forbidden|static_observation_not_in_pre_run_snapshot|static_observation_changed_by_runner|process_observer_direct_root_required|process_observer_root_invocation_required|process_observer_root_argv_mismatch|process_observation_input_changed_by_runner|process_runtime_input_evidence_role_forbidden|process_runtime_input_verification_role_forbidden|process_root_source_identity_mismatch|legacy_target_runtime_non_authoritative|counterfactual_admitted_observation_required|counterfactual_runtime_reachability_unproven|project_submitted_verdict_disagrees_with_harness/u.test(
     diagnostic,
   );
 }
@@ -663,6 +663,178 @@ export async function configureMissingCounterfactualObservationAttack(fixture) {
   await writeFile(oraclePath, conditionalOutput);
 }
 
+export async function configureNonCarrierEvidenceInputAttack(fixture) {
+  const leakedExpectedPath = "artifacts/expected-status.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json", leakedExpectedPath],
+    artifactGlobs: [],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  await writeRepositoryJson(fixture.root, leakedExpectedPath, {
+    expected: true,
+    role: "expected-status",
+  });
+  const check = requiredFixtureCheck(
+    fixture.contract.outcomes[0],
+    "first-check",
+  );
+  check.expected_output_paths = [leakedExpectedPath];
+  check.artifact_globs = [leakedExpectedPath];
+  const outcome = fixture.contract.outcomes[0];
+  outcome.product.owner.path_globs.push(leakedExpectedPath);
+  outcome.technical.allowed_support_paths.push(leakedExpectedPath);
+  await writeContract(fixture.workdir, fixture.contract);
+  await rewriteProcessProductToUseLeakedExpected(fixture, leakedExpectedPath);
+}
+
+export async function configureNonCarrierVerificationInputAttack(fixture) {
+  const leakedExpectedPath = "tests/expected-map.json";
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json", leakedExpectedPath],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/r10-diagnostic.json"],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  await writeRepositoryJson(fixture.root, leakedExpectedPath, {
+    expected: true,
+    role: "verification-expected-map",
+  });
+  const check = requiredFixtureCheck(
+    fixture.contract.outcomes[0],
+    "first-check",
+  );
+  check.verification_inputs.push(leakedExpectedPath);
+  await writeContract(fixture.workdir, fixture.contract);
+  await rewriteProcessProductToUseLeakedExpected(fixture, leakedExpectedPath);
+}
+
+export async function configureExecutionTargetSourceDriftAttack(fixture) {
+  await configurePackageObservationCase(fixture, {
+    carrierPath: "src/state.json",
+    bindingPath: "src/state.json",
+    mutationPath: "src/state.json",
+    inputPaths: ["src/state.json"],
+    artifactGlobs: [],
+    diagnosticArtifactPaths: ["artifacts/r11-diagnostic.json"],
+    proofSurface: "runtime_behavior",
+    directProcess: true,
+  });
+  const realRoot = await installProjectProcessExecutable(
+    fixture,
+    "bin/real-product",
+  );
+  const wrapperRoot = await installProjectProcessExecutable(
+    fixture,
+    "tests/verifier-wrapper",
+  );
+  const realProductScript = "src/real-product.mjs";
+  await writeFile(
+    path.join(fixture.root, ...realProductScript.split("/")),
+    'import { readFile } from "node:fs/promises";\nawait readFile(new URL("./state.json", import.meta.url));\n',
+  );
+  const realArgv = projectBinaryArguments(realProductScript, "first");
+  const wrapperArgv = projectBinaryArguments("tests/oracle.mjs", "first");
+  const targetStatement = sourceBackedExecutionTargetStatement({
+    key: "fixture-app",
+    role: "product",
+    runtimeFamily: "process",
+    rootEntrypoint: realRoot,
+    rootArgv: realArgv,
+    capabilities: ["process-runtime", "cold-start", "production-root"],
+  });
+  const sourcePath = path.join(fixture.root, "source.md");
+  const source = await readFile(sourcePath, "utf8");
+  const rewrittenSource = source.replace(
+    "Preserve the fixture state owner and verifier boundary.",
+    targetStatement,
+  );
+  if (rewrittenSource === source)
+    throw new Error("observer_fixture_execution_target_source_rewrite_missing");
+  await writeFile(sourcePath, rewrittenSource);
+  const contextPath = path.join(
+    fixture.root,
+    "project_context",
+    "areas",
+    "main.md",
+  );
+  const context = await readFile(contextPath, "utf8");
+  await writeFile(
+    contextPath,
+    `${context.trimEnd()}\n\nRequired process product root: ${realRoot}; argv: ${JSON.stringify(realArgv)}.\n`,
+  );
+
+  const outcome = fixture.contract.outcomes[0];
+  const architecture = outcome.technical.obligations.find(
+    (obligation) => obligation.key === "architecture-first",
+  );
+  if (!architecture)
+    throw new Error("observer_fixture_architecture_obligation_missing");
+  architecture.statement = targetStatement;
+  const sourceClaim = fixture.contract.source_claims.find(
+    (claim) => claim.key === "fixture-architecture",
+  );
+  if (!sourceClaim)
+    throw new Error("observer_fixture_architecture_source_claim_missing");
+  sourceClaim.statement = targetStatement;
+  outcome.product.owner.path_globs.push("bin/**");
+  outcome.technical.expected_change_paths.push("bin/**");
+  outcome.technical.bindings.push(
+    {
+      key: "source-backed-product-root",
+      kind: "file",
+      target: realRoot,
+      carrier_paths: [realRoot],
+      existence: "existing",
+    },
+    {
+      key: "source-backed-product-module",
+      kind: "file",
+      target: realProductScript,
+      carrier_paths: [realProductScript],
+      existence: "existing",
+    },
+  );
+  const target = fixture.contract.task.execution_targets[0];
+  target.root_entrypoint = wrapperRoot;
+  target.root_argv = [...wrapperArgv];
+  const check = requiredFixtureCheck(outcome, "first-check");
+  check.runner.target = wrapperRoot;
+  check.runner.argv = [...wrapperArgv];
+  await writeContract(fixture.workdir, fixture.contract);
+  const parsedManifest = await loadSemanticFactManifest(fixture.root, [
+    fixture.contract.semantic_fact_manifest.source_path,
+  ]);
+  await writeFile(
+    path.join(fixture.root, "tests", "oracle.mjs"),
+    packageObservationOracleSource({
+      manifest: parsedManifest.manifest,
+      manifestSha256: parsedManifest.sha256,
+      factRevisionDigest: parsedManifest.fact_revisions[0].revision_digest,
+      obligationRevisionDigest:
+        parsedManifest.obligation_revisions[0].revision_digest,
+      carrierPath: "src/state.json",
+      runnerWritesCarrier: false,
+      valueSourcePath: "src/state.json",
+      valueSourcePointer: "/observations/fact.first.observable",
+      targetRoot: wrapperRoot,
+      writeProcessEnvelope: true,
+      processObservationIdentities: processObservationIdentities(check, {
+        includeSemanticFact: true,
+      }),
+      actualObservationIdentity: parsedManifest.manifest.facts[0].key,
+      submitProjectEvidenceCopies: false,
+    }),
+  );
+}
+
 export async function configureVerificationInputStaticAttack(fixture) {
   await configureVerificationInputStaticBase(fixture);
   await applyVerificationInputStaticConflict(fixture);
@@ -775,15 +947,45 @@ function sha256(value) {
 async function installProjectProcessRoot(fixture, name) {
   // Keep the lifecycle fixture compact while still giving Harness a
   // repository-owned executable plus an exact, frozen root invocation.
+  return installProjectProcessExecutable(fixture, `bin/${name}`);
+}
+
+async function installProjectProcessExecutable(fixture, relativeBase) {
   const source = process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
   if (!source) throw new Error("observer_fixture_shell_unavailable");
   const extension = process.platform === "win32" ? ".exe" : "";
-  const relative = `bin/${name}${extension}`;
+  const relative = `${relativeBase}${extension}`;
   const destination = path.join(fixture.root, ...relative.split("/"));
   await mkdir(path.dirname(destination), { recursive: true });
   await copyFile(source, destination);
   if (process.platform !== "win32") await chmod(destination, 0o755);
   return relative;
+}
+
+async function rewriteProcessProductToUseLeakedExpected(
+  fixture,
+  leakedExpectedPath,
+) {
+  const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+  const source = await readFile(oraclePath, "utf8");
+  const marker =
+    'const actualValue = artifactDocument.observations["fact.first.observable"];';
+  const replacement = `const productionValue = artifactDocument.observations["fact.first.observable"];\nconst leakedExpected = JSON.parse(await readFile(new URL(${JSON.stringify(`../${leakedExpectedPath}`)}, import.meta.url), "utf8"));\nconst actualValue = productionValue === false ? false : leakedExpected.expected;`;
+  const rewritten = source.replace(marker, replacement);
+  if (rewritten === source)
+    throw new Error("observer_fixture_leaked_expected_rewrite_missing");
+  await writeFile(oraclePath, rewritten);
+}
+
+function sourceBackedExecutionTargetStatement({
+  key,
+  role,
+  runtimeFamily,
+  rootEntrypoint,
+  rootArgv,
+  capabilities,
+}) {
+  return `Execution target ${key} must use role ${role}, runtime family ${runtimeFamily}, root entrypoint ${rootEntrypoint}, root argv ${JSON.stringify(rootArgv)}, and capabilities ${JSON.stringify(capabilities)}.`;
 }
 
 function projectBinaryArguments(script, argument) {
