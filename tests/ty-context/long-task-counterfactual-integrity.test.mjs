@@ -3,9 +3,11 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
+  evaluateCheckEvidence,
   evaluateOutcomeCounterfactuals,
   isValidCounterfactualCheckResult,
 } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
+import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
 import {
   createCounterfactualSandbox,
   removeCounterfactualSandboxRoot,
@@ -173,6 +175,93 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
         mode,
       );
     }
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Counterfactual compares package-reextracted baseline and mutated actual", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const statePath = path.join(fixture.root, "src/state.json");
+    const state = JSON.parse(await readFile(statePath, "utf8"));
+    state.observations = { "fact.first.observable": true };
+    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
+    const outcome = fixture.contract.outcomes[0];
+    const check = outcome.acceptance.checks[0];
+    const primary = outcome.acceptance.counterfactual_controls.find(
+      (control) => control.key === "remove-first-state",
+    );
+    assert.ok(primary);
+    primary.mutation = {
+      type: "replace_json_value",
+      path: "src/state.json",
+      pointer: "/observations/fact.first.observable",
+      value: false,
+    };
+    outcome.acceptance.counterfactual_controls.push({
+        ...structuredClone(primary),
+        key: "replace-assertion-without-actual-change",
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first",
+          value: false,
+        },
+      });
+    await preserveFixtureSemanticOracle(fixture);
+    await writePackageObserverOracle(fixture.root);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const compiled = JSON.parse(
+      await readFile(
+        path.join(fixture.workdir, ".ty-context/compiled-contract.json"),
+        "utf8",
+      ),
+    );
+    const compiledOutcome = compiled.outcomes[0];
+    compiledOutcome.acceptance.counterfactual_controls =
+      compiledOutcome.acceptance.counterfactual_controls.filter((control) =>
+        [
+          "remove-first-state",
+          "replace-assertion-without-actual-change",
+        ].includes(control.key),
+      );
+    const compiledCheck = compiledOutcome.acceptance.checks[0];
+    compiledCheck.artifact_globs.push("src/state.json");
+    for (const expectation of compiledCheck.semantic_fact_expectations)
+      if (expectation.fact_ref === "fact.first.observable")
+        expectation.oracle = {
+          ...expectation.oracle,
+          trust: "named_external_tcb",
+          identity: "ty-context-json-pointer-exact",
+          version: "1.0.0",
+          sha256: null,
+        };
+    const raw = await executeCheckRunner(compiledCheck, fixture.root);
+    const baseline = await evaluateCheckEvidence(
+      compiledCheck,
+      raw,
+      fixture.root,
+      compiledOutcome,
+    );
+    assert.equal(baseline.status, "passed", JSON.stringify(baseline.findings));
+    const findings = await evaluateOutcomeCounterfactuals(
+      compiledOutcome,
+      fixture.root,
+      undefined,
+      [],
+      [baseline],
+    );
+    assert.equal(findings.length, 1);
+    assert.match(
+      findings[0].message,
+      /replace-assertion-without-actual-change/u,
+    );
+    assert.equal(
+      findings[0].actual.observation_impact_issue,
+      "counterfactual_expected_fact_unchanged",
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -428,6 +517,51 @@ result.evidence_records.push({
   after_sha256: "3".repeat(64),
   changed_fields: ["other"]
 });
+console.log(JSON.stringify(result));
+`,
+  );
+}
+
+async function writePackageObserverOracle(root) {
+  await writeFile(
+    path.join(root, "tests/oracle.mjs"),
+    `${preservedFixtureOracleDelegationPrelude()}
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+const stateBytes = readFileSync("src/state.json");
+const state = JSON.parse(stateBytes.toString("utf8"));
+const observed = state.observations["fact.first.observable"];
+const asserted = state.first && observed;
+result.observations.result = asserted;
+result.observations.requirement_result = asserted;
+result.observations.obligation_result = asserted;
+result.observations.architecture_result = asserted;
+result.observations.semantic_fact_result = asserted;
+const record = result.evidence_records.find(
+  (candidate) =>
+    candidate.capability === "semantic_fact" &&
+    candidate.fact_ref === "fact.first.observable"
+);
+const artifactSha256 = createHash("sha256").update(stateBytes).digest("hex");
+const valueSha256 = createHash("sha256")
+  .update(JSON.stringify(observed))
+  .digest("hex");
+record.actual_observation.artifact_path = "src/state.json";
+record.actual_observation.artifact_sha256 = artifactSha256;
+record.actual_observation.locator = {
+  kind: "json_pointer",
+  value: "/observations/fact.first.observable"
+};
+record.actual_observation.value_sha256 = valueSha256;
+record.actual_environment.artifact_path = "src/state.json";
+record.actual_environment.artifact_sha256 = artifactSha256;
+record.oracle = {
+  ...record.oracle,
+  trust: "named_external_tcb",
+  identity: "ty-context-json-pointer-exact",
+  version: "1.0.0",
+  sha256: null
+};
 console.log(JSON.stringify(result));
 `,
   );

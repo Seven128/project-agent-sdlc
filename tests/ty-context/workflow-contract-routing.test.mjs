@@ -1122,6 +1122,8 @@ test("retired semantic census permits only isolated migration, tombstone, histor
     "git",
     [
       "grep",
+      "--no-index",
+      "--exclude-standard",
       "-Iil",
       ...retiredSemanticPolicies.flatMap(({ search }) => ["-e", search]),
       "--",

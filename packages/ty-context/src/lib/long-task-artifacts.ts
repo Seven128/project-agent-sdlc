@@ -4,6 +4,24 @@ import type { CompiledCheckV2 } from "./long-task-delivery-types.js";
 import { matchesRepoPattern } from "./long-task-paths.js";
 import { sha256Hex } from "./strict-codec.js";
 
+export {
+  JSON_POINTER_EXACT_CAPABILITY,
+  JSON_POINTER_EXACT_LIMITS,
+  JSON_POINTER_EXACT_METHODS,
+  JSON_POINTER_EXACT_ORACLE_IDENTITY,
+  JSON_POINTER_EXACT_ORACLE_VERSION,
+  JSON_POINTER_EXACT_SPEC_SHA256,
+  admittedObservationKey,
+  classifyObservationCarrier,
+  createJsonPointerExactBudget,
+  extractJsonPointerExactObservation,
+  extractJsonPointerExactObservationFromBytes,
+  isJsonPointerExactOracle,
+  jsonPointerExactLocatorForIdentity,
+  observationAdmissionDecision,
+  prepareAdmittedObservations,
+} from "./long-task-admitted-observation.js";
+
 export async function collectCheckArtifacts(
   check: CompiledCheckV2,
   snapshotRoot: string,

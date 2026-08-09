@@ -1,3 +1,117 @@
 {
-  "relations_applicable": false
+  "schema_version": "starward-sanitized-real-replay-v1",
+  "provenance": {
+    "shape": "sanitized-real-project",
+    "source": "Starward-derived product topology",
+    "contains_original_product_data": false,
+    "contains_user_or_device_data": false
+  },
+  "relations_applicable": false,
+  "product_targets": [
+    {
+      "key": "starward-native",
+      "runtime_family": "native",
+      "entrypoint": "root",
+      "pages": [
+        "map",
+        "point-details",
+        "point-night-sky",
+        "mine"
+      ]
+    },
+    {
+      "key": "starward-h5-proxy",
+      "runtime_family": "browser",
+      "entrypoint": "root",
+      "proxy_for": "starward-native"
+    },
+    {
+      "key": "starward-process-projection",
+      "runtime_family": "process",
+      "entrypoint": "root",
+      "consumes": [
+        "generated/starward-runtime-config.json"
+      ]
+    }
+  ],
+  "selected_design": {
+    "resource_ref": "starward-sanitized-selected-design-v1",
+    "conditions": [
+      "phone-light-default",
+      "phone-dark-night"
+    ],
+    "facts": [
+      {
+        "key": "starward.map.anatomy",
+        "page": "map",
+        "method": "layout_geometry",
+        "value": "map-with-search-layer-and-primary-observation-action"
+      },
+      {
+        "key": "starward.map.visual-mode",
+        "page": "map",
+        "method": "visual_fidelity",
+        "value": "dark-map-with-readable-overlays"
+      },
+      {
+        "key": "starward.map.primary-action",
+        "page": "map",
+        "method": "information_hierarchy",
+        "value": "observe-before-secondary-navigation"
+      },
+      {
+        "key": "starward.point-details.title",
+        "page": "point-details",
+        "method": "content",
+        "value": "Sanitized Ridge"
+      },
+      {
+        "key": "starward.point-night-sky.mode",
+        "page": "point-night-sky",
+        "method": "component_state",
+        "value": "night-ready"
+      },
+      {
+        "key": "starward.mine.summary",
+        "page": "mine",
+        "method": "content",
+        "value": "Saved observations"
+      }
+    ]
+  },
+  "candidates": {
+    "correct_process_product": {
+      "artifact_path": "generated/starward-runtime-config.json",
+      "observations": {
+        "starward.point-details.title": "Sanitized Ridge",
+        "starward.point-night-sky.mode": "night-ready",
+        "starward.mine.summary": "Saved observations"
+      }
+    },
+    "wrong_process_product": {
+      "artifact_path": "generated/starward-runtime-config.json",
+      "observations": {
+        "starward.point-details.title": "Wrong Ridge",
+        "starward.point-night-sky.mode": "night-ready",
+        "starward.mine.summary": "Saved observations"
+      },
+      "submitted_verdict": "passed"
+    },
+    "self_attested_verifier": {
+      "oracle_identity": "task-authored-starward-verifier",
+      "submitted_actual": "expected",
+      "submitted_verdict": "passed"
+    },
+    "historical_native_session": {
+      "target_ref": "starward-native",
+      "candidate_tree": "previous-tree",
+      "session": "previous-session",
+      "submitted_verdict": "passed"
+    },
+    "h5_native_proxy": {
+      "target_ref": "starward-native",
+      "observed_target_ref": "starward-h5-proxy",
+      "submitted_verdict": "passed"
+    }
+  }
 }

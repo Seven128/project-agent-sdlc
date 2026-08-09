@@ -2,7 +2,8 @@ import type {
   CompiledCheckV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
-import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
+import { exactComparisonResultIdentity } from "./long-task-exact-comparison.js";
+import { canonicalValueJson } from "./strict-codec.js";
 
 type SemanticRecord = Extract<
   EvidenceCapabilityRecordV2,
@@ -278,24 +279,22 @@ export function semanticFactComparisonResultIdentity(value: {
     value.fact_revision_digest !== undefined ||
     value.obligation_key !== undefined ||
     value.obligation_revision_digest !== undefined;
-  return sha256Hex(
-    canonicalValueJson(
-      revisionIdentityPresent
-        ? value
-        : {
-            fact_ref: value.fact_ref,
-            proof_ref: value.proof_ref,
-            target_ref: value.target_ref,
-            actual_value_sha256: value.actual_value_sha256,
-            expected_value_sha256: value.expected_value_sha256,
-            comparator: value.comparator,
-            mode: value.mode,
-            parameters_sha256: value.parameters_sha256,
-            tolerance_sha256: value.tolerance_sha256,
-            mask_sha256: value.mask_sha256,
-            passed: value.passed,
-          },
-    ),
+  return exactComparisonResultIdentity(
+    revisionIdentityPresent
+      ? value
+      : {
+          fact_ref: value.fact_ref,
+          proof_ref: value.proof_ref,
+          target_ref: value.target_ref,
+          actual_value_sha256: value.actual_value_sha256,
+          expected_value_sha256: value.expected_value_sha256,
+          comparator: value.comparator,
+          mode: value.mode,
+          parameters_sha256: value.parameters_sha256,
+          tolerance_sha256: value.tolerance_sha256,
+          mask_sha256: value.mask_sha256,
+          passed: value.passed,
+        },
   );
 }
 

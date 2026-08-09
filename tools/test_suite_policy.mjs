@@ -99,7 +99,7 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "selected-design-fact-closure",
     "long-task-semantic-drift-closure.test.mjs",
     ["long-task", "long-task-trust"],
-    "Proves that selected-design method evidence must conserve the exact manifest-backed atomic Fact and property-required proof set for every target/condition, freeze each Fact's expected locator/comparator/tolerance/mask/Oracle/environment/sensitivity authority, and return one attributable passing current-snapshot result per Fact, so artifact or aggregate-pass presence cannot hide omission, substitution, stale authority, unsafe sensitive evidence, or a failed design Fact.",
+    "selected-design-exact-verdict-recomputation proves, through independent positive and negative controls, that selected-design method evidence conserves the exact manifest-backed atomic Fact and property-required proof set, freezes expected comparison authority, and rejects an actual/expected exact digest mismatch or forged comparison result identity even when submitted pass/verdict fields claim success. It also covers omission, substitution, stale authority, unsafe sensitive evidence, and attributable current-snapshot results at this owner boundary; it does not prove arbitrary observers, arbitrary UI formats, or live-session authenticity.",
   ),
   criticalSentinel(
     "symbolic-mixed-representation-closure",
@@ -261,6 +261,8 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
   "long-task-execution-input-policy.test.mjs",
   "long-task-playwright-ac-evidence.test.mjs",
   "long-task-playwright-config-argument.test.mjs",
+  "long-task-real-capability-closure.test.mjs",
+  "long-task-real-capability-replay.test.mjs",
   "long-task-semantic-drift-closure.test.mjs",
   "long-task-structural-closure-cost.test.mjs",
 ]);
@@ -539,12 +541,12 @@ function assertIsolationPolicy() {
   if (new Set(classified).size !== classified.length)
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
-    LONG_TASK_PURE_TEST_FILES.length !== 14 ||
+    LONG_TASK_PURE_TEST_FILES.length !== 16 ||
     LONG_TASK_ISOLATED_TEST_FILES.length !== 45 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 13/44/11 population; review the new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 16/45/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

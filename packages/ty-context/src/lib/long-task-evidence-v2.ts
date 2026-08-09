@@ -1,6 +1,9 @@
 import { copyFile, rm, stat } from "node:fs/promises";
 import { evaluatePopulation } from "./long-task-assertions-v2.js";
-import { collectCheckArtifacts } from "./long-task-artifacts.js";
+import {
+  collectCheckArtifacts,
+  prepareAdmittedObservations,
+} from "./long-task-artifacts.js";
 import { executeCheckRunner } from "./long-task-check-runner.js";
 import { createCounterfactualSandbox } from "./long-task-counterfactual-sandbox.js";
 import type {
@@ -24,6 +27,8 @@ import {
 import { classifyPlaywrightCounterfactual } from "./long-task-playwright-counterfactual-policy.js";
 import { applyNarrowSemanticMutation } from "./long-task-semantic-mutation.js";
 import { evaluateEvidenceCapabilities } from "./long-task-evidence-capability-policy.js";
+import { validateCounterfactualObservationImpact } from "./long-task-evidence-sensitivity-policy.js";
+import { matchesRepoPattern } from "./long-task-paths.js";
 import { resolveInsideRepository } from "./long-task-workspace.js";
 
 export async function evaluateCheckEvidence(
@@ -31,8 +36,15 @@ export async function evaluateCheckEvidence(
   raw: RawCommandExecutionV2,
   snapshotRoot: string,
   outcome?: CompiledOutcomeV2,
+  observationAuthorityPaths: readonly string[] = [],
 ): Promise<CheckExecutionResultV2> {
   const artifacts = await collectCheckArtifacts(check, snapshotRoot);
+  const admittedObservations = await prepareAdmittedObservations({
+    check,
+    records: raw.evidence_records ?? [],
+    snapshot_root: snapshotRoot,
+    authority_paths: observationAuthorityPaths,
+  });
   const assertionResults = evaluateAssertionResults(check, raw.observations);
   const executionCompleted = raw.execution_status === "completed";
   const findings = collectExecutionFindings(
@@ -41,6 +53,7 @@ export async function evaluateCheckEvidence(
     outcome,
     artifacts,
     assertionResults,
+    admittedObservations,
   );
 
   const population = outcome?.acceptance.population;
@@ -116,6 +129,7 @@ function collectExecutionFindings(
   outcome: CompiledOutcomeV2 | undefined,
   artifacts: Awaited<ReturnType<typeof collectCheckArtifacts>>,
   assertionResults: CheckExecutionResultV2["assertion_results"],
+  admittedObservations: Awaited<ReturnType<typeof prepareAdmittedObservations>>,
 ): LongTaskFindingV2[] {
   const findings: LongTaskFindingV2[] = [];
   if (raw.execution_status !== "completed") {
@@ -165,6 +179,7 @@ function collectExecutionFindings(
     check,
     raw.evidence_records,
     artifacts.hashes,
+    admittedObservations,
   );
   const passedAssertions = new Set(
     assertionResults
@@ -188,6 +203,7 @@ export async function evaluateOutcomeCounterfactuals(
   snapshotRoot: string,
   manifest?: WorkspaceManifestV2,
   protectedAuthorityPaths: readonly string[] = [],
+  baselineResults: readonly CheckExecutionResultV2[] = [],
 ): Promise<LongTaskFindingV2[]> {
   return evaluateCounterfactualSet(
     outcome.acceptance.counterfactual_controls.map((control) => ({
@@ -203,6 +219,7 @@ export async function evaluateOutcomeCounterfactuals(
     snapshotRoot,
     manifest,
     protectedAuthorityPaths,
+    baselineResults,
   );
 }
 
@@ -211,6 +228,7 @@ export async function evaluateGlobalCounterfactuals(
   snapshotRoot: string,
   selectedCheckKeys?: ReadonlySet<string>,
   manifest?: WorkspaceManifestV2,
+  baselineResults: readonly CheckExecutionResultV2[] = [],
 ): Promise<LongTaskFindingV2[]> {
   return evaluateCounterfactualSet(
     (compiled.global.acceptance.counterfactual_controls ?? [])
@@ -234,7 +252,8 @@ export async function evaluateGlobalCounterfactuals(
       }),
     snapshotRoot,
     manifest,
-    compiled.context_snapshot.files,
+    compiledAuthorityPaths(compiled),
+    baselineResults,
   );
 }
 
@@ -252,6 +271,7 @@ async function evaluateCounterfactualSet(
   snapshotRoot: string,
   manifest?: WorkspaceManifestV2,
   protectedAuthorityPaths: readonly string[] = [],
+  baselineResults: readonly CheckExecutionResultV2[] = [],
 ): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
   for (const entry of entries) {
@@ -270,18 +290,11 @@ async function evaluateCounterfactualSet(
     );
     const root = sandbox.root;
     try {
-      const mutationTargets =
-        control.mutation.type === "remove_paths"
-          ? control.mutation.paths
-          : [control.mutation.path];
-      const missingTargets: string[] = [];
-      for (const target of mutationTargets)
-        if (
-          !(await stat(
-            resolveInsideRepository(root, target, "counterfactual.target"),
-          ).catch(() => null))
-        )
-          missingTargets.push(target);
+      const mutationTargets = counterfactualMutationTargets(control);
+      const missingTargets = await missingCounterfactualMutationTargets(
+        root,
+        mutationTargets,
+      );
       if (missingTargets.length) {
         findings.push(
           counterfactualIntegrityFinding(entry, {
@@ -292,38 +305,26 @@ async function evaluateCounterfactualSet(
         );
         continue;
       }
-      if (control.mutation.type === "remove_paths") {
-        for (const target of control.mutation.paths)
-          await rm(
-            resolveInsideRepository(
-              root,
-              target,
-              "counterfactual.remove_paths",
-            ),
-            { recursive: true, force: true },
-          );
-      } else if (control.mutation.type === "replace_file") {
-        await copyFile(
-          resolveInsideRepository(
-            root,
-            control.mutation.fixture_path,
-            "counterfactual.fixture",
-          ),
-          resolveInsideRepository(
-            root,
-            control.mutation.path,
-            "counterfactual.path",
-          ),
-        );
-      } else {
-        await applyNarrowSemanticMutation(root, control.mutation);
-      }
+      await applyCounterfactualMutation(root, control);
       const raw = await executeCheckRunner(check, root);
       const result = await evaluateCheckEvidence(
         check,
         raw,
         root,
         entry.evidenceOutcome,
+        protectedAuthorityPaths,
+      );
+      const observationImpactIssue = await counterfactualObservationImpactIssue(
+        entry,
+        baselineResults.find(
+          (candidate) => candidate.internal_id === check.internal_id,
+        ),
+        result,
+        snapshotRoot,
+        root,
+        mutationTargets,
+        owningBinding?.carrier_paths ?? [],
+        protectedAuthorityPaths,
       );
       const playwrightClassification =
         result.evidence_adapter === "playwright_json_v1"
@@ -342,6 +343,7 @@ async function evaluateCounterfactualSet(
       const valid =
         raw.execution_status === "completed" &&
         acceptedExit &&
+        observationImpactIssue === null &&
         isValidCounterfactualCheckResult(sensitivityResult, expected);
       if (!valid)
         findings.push(
@@ -360,6 +362,7 @@ async function evaluateCounterfactualSet(
                   result_status: result.status,
                   failed_assertions: failedAssertions,
                   finding_codes: result.findings.map((finding) => finding.code),
+                  observation_impact_issue: observationImpactIssue,
                 },
           ),
         );
@@ -368,6 +371,152 @@ async function evaluateCounterfactualSet(
     }
   }
   return findings;
+}
+
+function counterfactualMutationTargets(
+  control: RuntimeCounterfactual["control"],
+): string[] {
+  return control.mutation.type === "remove_paths"
+    ? control.mutation.paths
+    : [control.mutation.path];
+}
+
+async function missingCounterfactualMutationTargets(
+  root: string,
+  targets: string[],
+): Promise<string[]> {
+  const missing: string[] = [];
+  for (const target of targets)
+    if (
+      !(await stat(
+        resolveInsideRepository(root, target, "counterfactual.target"),
+      ).catch(() => null))
+    )
+      missing.push(target);
+  return missing;
+}
+
+async function applyCounterfactualMutation(
+  root: string,
+  control: RuntimeCounterfactual["control"],
+): Promise<void> {
+  if (control.mutation.type === "remove_paths") {
+    for (const target of control.mutation.paths)
+      await rm(
+        resolveInsideRepository(root, target, "counterfactual.remove_paths"),
+        { recursive: true, force: true },
+      );
+    return;
+  }
+  if (control.mutation.type === "replace_file") {
+    await copyFile(
+      resolveInsideRepository(
+        root,
+        control.mutation.fixture_path,
+        "counterfactual.fixture",
+      ),
+      resolveInsideRepository(root, control.mutation.path, "counterfactual.path"),
+    );
+    return;
+  }
+  await applyNarrowSemanticMutation(root, control.mutation);
+}
+
+async function counterfactualObservationImpactIssue(
+  entry: RuntimeCounterfactual,
+  baselineResult: CheckExecutionResultV2 | undefined,
+  mutatedResult: CheckExecutionResultV2,
+  baselineRoot: string,
+  mutatedRoot: string,
+  mutationTargets: string[],
+  bindingCarrierPaths: string[],
+  protectedAuthorityPaths: readonly string[],
+): Promise<string | null> {
+  if (!baselineResult) return null;
+  const [baseline, mutated] = await Promise.all([
+    prepareAdmittedObservations({
+      check: entry.check,
+      records: baselineResult.evidence_records,
+      snapshot_root: baselineRoot,
+      authority_paths: protectedAuthorityPaths,
+    }),
+    prepareAdmittedObservations({
+      check: entry.check,
+      records: mutatedResult.evidence_records,
+      snapshot_root: mutatedRoot,
+      authority_paths: protectedAuthorityPaths,
+    }),
+  ]);
+  if (!baseline.entries.length && !mutated.entries.length) return null;
+  const baselineIssue = baseline.entries.find(
+    (candidate) => candidate.reason || !candidate.observation,
+  );
+  if (baselineIssue)
+    return `counterfactual_baseline_observation_invalid:${baselineIssue.reason ?? "missing"}`;
+  const mutatedIssue = mutated.entries.find(
+    (candidate) => candidate.reason || !candidate.observation,
+  );
+  if (mutatedIssue)
+    return `counterfactual_mutated_observation_invalid:${mutatedIssue.reason ?? "missing"}`;
+  const baselineByFact = Object.fromEntries(
+    baseline.entries.map((candidate) => [
+      candidate.identity_ref,
+      candidate.observation!.value_sha256,
+    ]),
+  );
+  const mutatedByFact = Object.fromEntries(
+    mutated.entries.map((candidate) => [
+      candidate.identity_ref,
+      candidate.observation!.value_sha256,
+    ]),
+  );
+  const expectedAssertions = new Set(
+    entry.control.expected_assertion_failures,
+  );
+  const preservedAssertions = new Set(entry.control.preserved_assertions);
+  const expectedFactRefs = baseline.entries
+    .filter((candidate) => expectedAssertions.has(candidate.assertion_key))
+    .map((candidate) => candidate.identity_ref);
+  if (!expectedFactRefs.length)
+    return "counterfactual_expected_fact_observation_missing";
+  const preservedFactRefs = baseline.entries
+    .filter((candidate) => preservedAssertions.has(candidate.assertion_key))
+    .map((candidate) => candidate.identity_ref);
+  const targetLive = entry.control.preserved_assertions.every((key) =>
+    mutatedResult.assertion_results.some(
+      (assertion) => assertion.key === key && assertion.passed,
+    ),
+  );
+  const carrierRole = mutationTargets.every(
+    (target) =>
+      bindingCarrierPaths.some((pattern) =>
+        matchesRepoPattern(target, pattern),
+      ) &&
+      entry.check.input_paths.some((pattern) =>
+        matchesRepoPattern(target, pattern),
+      ),
+  )
+    ? "product"
+    : "evidence";
+  return validateCounterfactualObservationImpact({
+    baseline_by_fact: baselineByFact,
+    mutated_by_fact: mutatedByFact,
+    expected_affected_fact_refs: expectedFactRefs,
+    preserved_fact_refs: preservedFactRefs,
+    target_live: targetLive,
+    carrier_role: carrierRole,
+  });
+}
+
+function compiledAuthorityPaths(
+  compiled: CompiledDeliveryContractV2,
+): string[] {
+  return [
+    compiled.contract_file,
+    ...Object.keys(compiled.contract_files),
+    ...Object.keys(compiled.source_hashes),
+    ...compiled.context_snapshot.files,
+  ];
 }
 
 function playwrightCounterfactualDiagnostic(

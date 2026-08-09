@@ -1320,7 +1320,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/57"
         },
-        "identity_sha256": "4fdaeade2167ea17a954dc2cecfb42fdee58ddf73e9d7955d365ed56458cd533",
+        "identity_sha256": "09bacab6cb034d097a7f1609351999465911975cdf7d8f90712916396e8aa0ce",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.no-new-lifecycle-authority-registry"
@@ -1356,7 +1356,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/59"
         },
-        "identity_sha256": "1496821a8cf6a4a48fe6656f475826a92a37143d086ed9f8b74f8397396250e2",
+        "identity_sha256": "a19c256f987fa9d0a9905a02cfaa1e6595f64a5c6724ba8e865df02c5339f512",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.route-b-project-owner-decision"
@@ -1410,7 +1410,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/62"
         },
-        "identity_sha256": "5cae5260c61834443801a94755ce54cfb1e1b34c7e3d9b97a17e57b07f62eb04",
+        "identity_sha256": "8e7ee8a00179429727b7464963c2d63c97c885a9f2c4bf0ddcee9a73a5cf5837",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -1428,7 +1428,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
           "kind": "manifest_pointer",
           "value": "/inputs/63"
         },
-        "identity_sha256": "ad62b44a758d09320b745d0f8ef38d7a94fb9ae3d121d7d29533ec723527a790",
+        "identity_sha256": "a5f28ba56f9186f60bf0ae303ff8f0acd86be5e7c646a990e11f1d339abbd491",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.requirement.verification-sequence-and-current-candidate"
@@ -7546,7 +7546,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-contracts-workflow-contract-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/workflow-contract.md",
-      "sha256": "306f15e8c9ffd4060eeba48b091cb2fa80abd08f9ce420aed9a926ab8c066abb",
+      "sha256": "8b99babaf5e3dc0d388cc58c34667e87a707af1a9b85b07da7a06e40f2b3eb75",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.no-new-lifecycle-authority-registry"
@@ -7574,7 +7574,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      "sha256": "e56dfee89b0b8630112fcd280ae3b615529182d3d23f58bf80d71da2b63e6c54",
+      "sha256": "873b13e659622c7ddf4b9e0003060c144a3ef73e6c21d29357b71e992752cf5d",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.route-b-project-owner-decision"
@@ -7616,7 +7616,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-implementation-index-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/implementation-index.md",
-      "sha256": "8d0a2b68a77ad309712341d97b4c88e7a252e12422a401b4e2e0047d7b9ef239",
+      "sha256": "bf7d7fef5175d0c4392067827eecbe8471671c3fd7d899bf797d50ff90a3dd92",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.owner-dependency-lifecycle-boundary"
@@ -7630,7 +7630,7 @@ Build/Reuse/Buy 允许集合包括：复用现有 semantic-fact exact/result-ide
       "key": "input.context.project-context-areas-harness-package-verification-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/verification.md",
-      "sha256": "2f91ef99314a7095e01d36040896072393e807199b16df91830c43cc0ff297b2",
+      "sha256": "d63dc554535cd020ac9fe5ff7292379729f5112a65a3aa3f4dda263c9fa8048c",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.requirement.verification-sequence-and-current-candidate"

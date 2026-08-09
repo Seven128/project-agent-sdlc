@@ -1,6 +1,13 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import {
+  appendFile,
+  copyFile,
+  mkdir,
+  readFile,
+  realpath,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { materializeSemanticFactEvidence } from "./semantic_fact_delivery_evidence.mjs";
@@ -17,6 +24,7 @@ const manifest = loadManifest(source);
 const sourceKinds = loadSourceKinds(source);
 if (!manifest.scope.outcome_refs.includes(outcomeKey))
   throw new Error(`real_capability_outcome_unknown:${outcomeKey}`);
+if (outcomeKey === "proof-and-roi") await materializeFreshAgentEvidence();
 
 const commands = globalConformance
   ? await runGlobalConformanceCommands()
@@ -72,16 +80,18 @@ const assertionByObligation = new Map(
 );
 const semanticRecords = globalConformance
   ? []
-  : await materializeSemanticFactEvidence({
-      repositoryRoot,
-      targetRef,
-      rootEntrypoint,
-      manifest: manifestSubset,
-      manifestSha256,
-      passedByFact: factResults,
-      assertionByObligation,
-      sessionId,
-    });
+  : (
+      await materializeSemanticFactEvidence({
+        repositoryRoot,
+        targetRef,
+        rootEntrypoint,
+        manifest: manifestSubset,
+        manifestSha256,
+        passedByFact: factResults,
+        assertionByObligation,
+        sessionId,
+      })
+    ).filter((record) => record.capability === "semantic_fact");
 const targetRecord = (assertionKey) => ({
   assertion_key: assertionKey,
   capability: "target_runtime",
@@ -90,11 +100,11 @@ const targetRecord = (assertionKey) => ({
   session_id: sessionId,
   cold_start: true,
 });
-const resultAssertion = `${slug(outcomeKey)}-result`;
+const resultAssertion = `${outcomeKey}-result`;
 const livenessAssertion = globalConformance
   ? "global-observer-liveness"
-  : `${slug(outcomeKey)}-liveness`;
-const relationsAssertion = `${slug(outcomeKey)}-relations-na`;
+  : `${outcomeKey}-liveness`;
+const relationsAssertion = `${outcomeKey}-relations-na`;
 const productAssertionRecords = facts.flatMap((fact) => {
   const authorityRef = fact.provenance.authority_ref;
   const kind = sourceKinds.get(authorityRef);
@@ -167,28 +177,122 @@ async function runOutcomeCommands(outcome) {
     "observer-tcb-closure": [
       build,
       nodeTest(null, "tests/ty-context/long-task-real-capability-closure.test.mjs"),
+      nodeTest(
+        "package-reextracted baseline and mutated actual",
+        "tests/ty-context/long-task-counterfactual-integrity.test.mjs",
+      ),
     ],
     "proof-and-roi": [
       build,
       { command: process.execPath, args: ["tests/ty-context/long-task-real-capability-replay.test.mjs"] },
       { command: process.execPath, args: ["tools/verify_long_task_real_capability_roi.mjs"] },
-      npmCommandSpec(["run", "test:long-task:trust"]),
+      npmCommandSpec([
+        "run",
+        "test:trust",
+        "--workspace",
+        "project-tiny-context-harness",
+      ]),
       npmCommandSpec(["test"]),
       { command: process.execPath, args: ["packages/ty-context/dist/cli.js", "package", "check-source"] },
       { command: process.execPath, args: ["packages/ty-context/dist/cli.js", "validate-context"] },
     ],
   }[outcome];
   const results = [];
-  for (const spec of specs) {
+  for (const [index, spec] of specs.entries()) {
     const result = await run(spec.command, spec.args);
     results.push(result);
     if (result.code !== 0) break;
+    if (outcome === "proof-and-roi" && index === 0) {
+      const gitCandidate = await materializePortableGitCandidate();
+      results.push(gitCandidate);
+      if (gitCandidate.code !== 0) break;
+    }
   }
   return results;
 }
 
+async function materializePortableGitCandidate() {
+  const existing = await run("git", ["rev-parse", "--is-inside-work-tree"]);
+  if (existing.code === 0) return existing;
+
+  const dependencyRoot = await realpath(
+    path.join(repositoryRoot, "node_modules"),
+  ).catch(() => "");
+  const hostRoot = dependencyRoot ? path.dirname(dependencyRoot) : "";
+  const hostHead = hostRoot
+    ? await run("git", ["-C", hostRoot, "rev-parse", "HEAD"])
+    : null;
+  const hostCommonDirectory = hostRoot
+    ? await run("git", [
+        "-C",
+        hostRoot,
+        "rev-parse",
+        "--path-format=absolute",
+        "--git-common-dir",
+      ])
+    : null;
+  if (hostHead?.code !== 0 || hostCommonDirectory?.code !== 0)
+    return portableGitFailure("host-history-unavailable");
+
+  const steps = [
+    ["init", "--initial-branch=main"],
+    ["config", "core.autocrlf", "false"],
+    ["config", "core.filemode", "false"],
+    ["config", "user.name", "Tiny Context verification"],
+    ["config", "user.email", "verification@invalid.local"],
+  ];
+  for (const args of steps) {
+    const result = await run("git", args);
+    if (result.code !== 0)
+      return { ...result, portable_git_step: args.join(" ") };
+  }
+  await writeFile(
+    path.join(repositoryRoot, ".git", "objects", "info", "alternates"),
+    `${path.join(hostCommonDirectory.stdout.trim(), "objects")}\n`,
+    "utf8",
+  );
+  await appendFile(
+    path.join(repositoryRoot, ".git", "info", "exclude"),
+    "\n.work_products/**/.ty-context/\n",
+    "utf8",
+  );
+  for (const args of [
+    ["reset", "--mixed", hostHead.stdout.trim()],
+    ["add", "--all", "--", "."],
+    ["commit", "--no-gpg-sign", "-m", "verification snapshot"],
+  ]) {
+    const result = await run("git", args);
+    if (result.code !== 0)
+      return { ...result, portable_git_step: args.join(" ") };
+  }
+  const clean = await run("git", ["status", "--porcelain=v1"]);
+  return {
+    ...clean,
+    code: clean.code === 0 && clean.stdout.trim() === "" ? 0 : 1,
+    portable_git_step: "candidate-ready",
+  };
+}
+
+function portableGitFailure(step) {
+  return {
+    command: "git",
+    args: [],
+    code: 1,
+    signal: null,
+    stdout: "",
+    stderr: `portable_git_candidate:${step}`,
+    portable_git_step: step,
+  };
+}
+
 async function runGlobalConformanceCommands() {
   const specs = [
+    npmCommandSpec([
+      "run",
+      "build",
+      "--workspace",
+      "project-tiny-context-harness",
+    ]),
     {
       command: process.execPath,
       args: ["packages/ty-context/dist/cli.js", "package", "check-source"],
@@ -205,6 +309,23 @@ async function runGlobalConformanceCommands() {
     if (result.code !== 0) break;
   }
   return results;
+}
+
+async function materializeFreshAgentEvidence() {
+  const fixture = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "fixtures",
+    "long-task-real-capability-fresh-agent-paired.json",
+  );
+  const targetDirectory = path.join(
+    repositoryRoot,
+    ".artifacts",
+    "long-task-real-capability",
+  );
+  await mkdir(targetDirectory, { recursive: true });
+  await copyFile(fixture, path.join(targetDirectory, "fresh-agent-paired.json"));
 }
 
 function nodeTest(pattern, file) {
@@ -228,9 +349,10 @@ async function sourceSpecificProbe(authorityRef, outcome) {
       ["project_context/areas/harness-package/verification.md", "positive/negative"],
     ],
     "observer-tcb-closure": [
-      ["packages/ty-context/src/lib/long-task-admitted-observation.ts", "json-pointer-exact-v1"],
+      ["packages/ty-context/src/lib/long-task-json-pointer-observation.ts", "json-pointer-exact-v1"],
       ["tests/ty-context/long-task-real-capability-closure.test.mjs", "expected-as-actual"],
       ["tests/ty-context/long-task-real-capability-closure.test.mjs", "production reachability"],
+      ["tests/ty-context/long-task-counterfactual-integrity.test.mjs", "package-reextracted baseline and mutated actual"],
     ],
     "proof-and-roi": [
       ["tests/ty-context/long-task-real-capability-replay.test.mjs", "Starward"],
@@ -239,11 +361,12 @@ async function sourceSpecificProbe(authorityRef, outcome) {
     ],
   }[outcome];
   if (!(await containsAll(shared))) return false;
-  const specific = SPECIFIC_PROBES[authorityRef] ?? [];
+  const specific = specificProbes(authorityRef);
   return containsAll(specific);
 }
 
-const SPECIFIC_PROBES = {
+function specificProbes(authorityRef) {
+  return ({
   "p0-positive-fixture-correction": [["tests/ty-context/long-task-delivery-fixtures.mjs", "DESIGN_FACT_FIXTURE_SHA256"]],
   "p0-v1-negative-control": [["tests/ty-context/long-task-semantic-drift-closure.test.mjs", "exact value mismatch cannot be overridden"]],
   "p0-v2-negative-control": [["tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs", "design_symbolic_method_exact_value_mismatch"]],
@@ -251,19 +374,23 @@ const SPECIFIC_PROBES = {
   "critical-sentinel-positive-negative-controls": [["tools/test_suite_policy.mjs", "positive and negative controls"]],
   "incident-counterexample-first-rule": [["tests/ty-context/long-task-semantic-drift-closure.test.mjs", "submitted pass fields"]],
   "sentinel-rationale-evidence-bounded": [["tools/test_suite_policy.mjs", "does not prove arbitrary observers"]],
-  "capability-claim-levels": [["PROJECT_SPEC.md", "known-counterexample protection"]],
+  "capability-claim-levels": [
+    ["PROJECT_SPEC.md", "Formal capability reporting has four evidence-bounded levels"],
+    ["PROJECT_SPEC.md", "no open critical counterexample"],
+  ],
   "actual-artifact-reextraction": [["packages/ty-context/src/lib/long-task-admitted-observation.ts", "extractJsonPointerExactObservation"]],
   "challenge-is-freshness-only": [["project_context/areas/harness-package/decision-rationale/long-task-workflow.md", "Challenge/nonce is only"]],
   "generated-carrier-semantic-role": [["packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts", "generated_evidence"]],
   "expected-to-actual-self-proof-rejection": [["tests/ty-context/long-task-real-capability-closure.test.mjs", "expected-as-actual"]],
   "production-reachability": [["tests/ty-context/long-task-real-capability-closure.test.mjs", "production reachability"]],
-  "counterfactual-actual-change-and-impact-set": [["packages/ty-context/src/lib/long-task-counterfactual-runtime.ts", "actual"]],
+  "counterfactual-actual-change-and-impact-set": [["packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts", "validateCounterfactualObservationImpact"]],
   "attack-suite-ground-truth": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "A12"]],
   "valid-control-suite": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "valid control"]],
   "starward-sanitized-replay": [["tests/ty-context/long-task-real-capability-replay.test.mjs", "Starward"]],
   "fresh-agent-benchmark-boundary": [["tools/verify_long_task_real_capability_roi.mjs", "fresh-agent"]],
   "roi-admission-order": [["tools/verify_long_task_real_capability_roi.mjs", "validity_floor"]],
-};
+  })[authorityRef] ?? [];
+}
 
 async function containsAll(probes) {
   for (const [file, token] of probes) if (!(await readText(file)).includes(token)) return false;
@@ -310,7 +437,7 @@ function run(command, args) {
 }
 
 function tail(value) {
-  return value.length > 16_384 ? value.slice(-16_384) : value;
+  return value.length > 524_288 ? value.slice(-524_288) : value;
 }
 
 function canonicalJson(value) {

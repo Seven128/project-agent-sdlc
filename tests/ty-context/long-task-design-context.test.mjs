@@ -1088,7 +1088,7 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
   );
   assert.match(
     policy,
-    /Coverage_new\s*⊇\s*Coverage_old[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_old/iu,
+    /declared-purpose validity floor[\s\S]*Coverage_new\s*⊇\s*Coverage_valid_baseline[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_valid_baseline/iu,
   );
   assert.match(
     policy,
@@ -1154,7 +1154,7 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   );
   assert.match(
     skill,
-    /Coverage_new\s*⊇\s*Coverage_old[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_old/iu,
+    /declared-purpose validity floor[\s\S]*Coverage_new\s*⊇\s*Coverage_valid_baseline[\s\S]*FalseNegative_new\s*⊆\s*FalseNegative_valid_baseline/iu,
   );
   assert.match(
     skill,
@@ -1170,7 +1170,7 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   );
   assert.match(
     skill,
-    /Add no Mechanism Matrix, Receipt, registry or state/iu,
+    /Add no Mechanism Matrix, Receipt, second registry or state/iu,
   );
 });
 

@@ -5,13 +5,31 @@ import type {
   DesignSymbolicMethodEvidenceV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
+import {
+  evaluateExactDigestComparison,
+  exactComparisonResultIdentity,
+  type ExactDigestComparisonInput,
+} from "./long-task-exact-comparison.js";
+import {
+  admittedObservationKey,
+  isJsonPointerExactOracle,
+  type PreparedAdmittedObservationSet,
+} from "./long-task-admitted-observation.js";
 import { validateSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
+
+export { evaluateExactDigestComparison, exactComparisonResultIdentity };
 
 export function validateRuntimeEvidenceRecord(
   check: CompiledCheckV2,
   record: EvidenceCapabilityRecordV2,
   artifactHashes: Record<string, string>,
+  admittedObservations?: PreparedAdmittedObservationSet,
 ): string | null {
+  const admittedObservationIssue = validateAdmittedObservationRecord(
+    record,
+    admittedObservations,
+  );
+  if (admittedObservationIssue) return admittedObservationIssue;
   switch (record.capability) {
     case "interaction_trace":
       return validateInteractionTrace(check, record);
@@ -50,6 +68,82 @@ export function validateRuntimeEvidenceRecord(
     case "input_variation":
       return validateInputVariation(record);
   }
+}
+
+function validateAdmittedObservationRecord(
+  record: EvidenceCapabilityRecordV2,
+  admitted: PreparedAdmittedObservationSet | undefined,
+): string | null {
+  const candidates = runtimeAdmittedObservationCandidates(record);
+  for (const candidate of candidates) {
+    if (!isJsonPointerExactOracle(candidate.oracle)) continue;
+    if (!admitted) return "admitted_observation_runtime_required";
+    const key = admittedObservationKey(
+      candidate.actual_observation.artifact_path,
+      candidate.actual_observation.locator,
+    );
+    const prepared = admitted.by_observation_key.get(key);
+    if (!prepared || prepared.identity_ref !== candidate.identity_ref)
+      return "admitted_observation_missing";
+    if (prepared.reason) return prepared.reason;
+    if (!prepared.observation) return "admitted_observation_missing";
+    if (
+      prepared.observation.artifact_path !==
+        candidate.actual_observation.artifact_path ||
+      prepared.observation.artifact_sha256 !==
+        candidate.actual_observation.artifact_sha256
+    )
+      return "admitted_observation_artifact_mismatch";
+    if (
+      prepared.observation.value_sha256 !==
+      candidate.actual_observation.value_sha256
+    )
+      return "admitted_observation_value_mismatch";
+  }
+  return null;
+}
+
+type RuntimeAdmittedObservationCandidate = {
+  identity_ref: string;
+  actual_observation: {
+    artifact_path: string;
+    artifact_sha256: string;
+    locator: { kind: string; value: string };
+    value_sha256: string;
+  };
+  oracle: {
+    trust: string;
+    identity: string;
+    version: string;
+    sha256: string | null;
+  };
+};
+
+function runtimeAdmittedObservationCandidates(
+  record: EvidenceCapabilityRecordV2,
+): RuntimeAdmittedObservationCandidate[] {
+  if (record.capability === "semantic_fact")
+    return [
+      {
+        identity_ref: record.fact_ref,
+        actual_observation: record.actual_observation,
+        oracle: record.oracle,
+      },
+    ];
+  if (record.capability !== "design_method") return [];
+  return "fact_model" in record
+    ? record.rule_results.map((result) => ({
+        identity_ref: result.obligation_ref,
+        actual_observation: result.actual_observation,
+        oracle: result.oracle,
+      }))
+    : record.cells.flatMap((cell) =>
+        cell.fact_results.map((result) => ({
+          identity_ref: result.fact_ref,
+          actual_observation: result.actual_observation,
+          oracle: result.oracle,
+        })),
+      );
 }
 
 function validateDesignMethod(
@@ -198,6 +292,8 @@ function validateGroundCellResults(
       artifactHashes,
     );
     if (artifactIssue) return artifactIssue;
+    const exactIssue = validateGroundExactComparison(result);
+    if (exactIssue) return exactIssue;
     const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
     if (actualIdentities.has(actualIdentity))
       return "design_method_actual_observation_reused";
@@ -210,6 +306,30 @@ function validateGroundCellResults(
       return "design_method_fact_failed";
   }
   return null;
+}
+
+function validateGroundExactComparison(result: GroundResult): string | null {
+  if (
+    result.comparison.comparator !== "exact_value" ||
+    result.comparison.mode !== "exact"
+  )
+    return null;
+  if (result.comparison.tolerance !== null || result.comparison.mask !== null)
+    return "design_method_comparison_authority_mismatch";
+  const recomputed = evaluateExactDigestComparison({
+    identity: {
+      kind: "selected_design_ground_v1",
+      fact_ref: result.fact_ref,
+      subject_ref: result.subject_ref,
+      variation_ref: result.variation_ref,
+      property_ref: result.property_ref,
+    },
+    ...exactComparisonMaterial(result),
+  });
+  if (!recomputed.passed) return "design_method_exact_value_mismatch";
+  return result.comparison.result_sha256 === recomputed.result_sha256
+    ? null
+    : "design_method_comparison_result_identity_mismatch";
 }
 
 type GroundResult = GroundCell["fact_results"][number];
@@ -365,6 +485,8 @@ function validateSymbolicRuleResults(
       artifactHashes,
     );
     if (artifactIssue) return artifactIssue;
+    const exactIssue = validateSymbolicExactComparison(result);
+    if (exactIssue) return exactIssue;
     const actualIdentity = `${result.actual_observation.artifact_path}\0${canonicalJson(result.actual_observation.locator)}`;
     if (actualIdentities.has(actualIdentity))
       return "design_symbolic_method_actual_observation_reused";
@@ -377,6 +499,52 @@ function validateSymbolicRuleResults(
       return "design_symbolic_method_obligation_failed";
   }
   return null;
+}
+
+function validateSymbolicExactComparison(
+  result: SymbolicResult,
+): string | null {
+  if (
+    result.comparison.comparator !== "exact_value" ||
+    result.comparison.mode !== "exact"
+  )
+    return null;
+  if (result.comparison.tolerance !== null || result.comparison.mask !== null)
+    return "design_symbolic_method_comparison_authority_mismatch";
+  const recomputed = evaluateExactDigestComparison({
+    identity: {
+      kind: "selected_design_symbolic_v2",
+      obligation_ref: result.obligation_ref,
+      fact_rule_ref: result.fact_rule_ref,
+      region_sha256: result.region_sha256,
+      subject_or_relation_ref: result.subject_or_relation_ref,
+      property_ref: result.property_ref,
+      population_ref: result.population_ref,
+      quantifier: result.quantifier,
+    },
+    ...exactComparisonMaterial(result),
+  });
+  if (!recomputed.passed)
+    return "design_symbolic_method_exact_value_mismatch";
+  return result.comparison.result_sha256 === recomputed.result_sha256
+    ? null
+    : "design_symbolic_method_comparison_result_identity_mismatch";
+}
+
+function exactComparisonMaterial(
+  result: GroundResult | SymbolicResult,
+): Omit<ExactDigestComparisonInput, "identity"> {
+  return {
+    actual_value_sha256: result.actual_observation.value_sha256,
+    expected_value_sha256: result.expected.sha256,
+    comparator: result.comparison.comparator,
+    mode: result.comparison.mode,
+    parameters_sha256: result.comparison.parameters.sha256,
+    tolerance_sha256: result.comparison.tolerance?.sha256 ?? null,
+    mask_sha256: result.comparison.mask?.sha256 ?? null,
+    submitted_passed: result.comparison.passed,
+    submitted_verdict: result.verdict,
+  };
 }
 
 type SymbolicResult = DesignSymbolicMethodEvidenceV2["rule_results"][number];

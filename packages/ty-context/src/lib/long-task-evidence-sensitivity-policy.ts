@@ -13,6 +13,48 @@ const NON_RESULT_SENSITIVITY_PREFIXES = [
   "forbidden_shortcut.",
 ];
 
+export function validateCounterfactualObservationImpact(input: {
+  baseline_by_fact: Record<string, string>;
+  mutated_by_fact: Record<string, string>;
+  expected_affected_fact_refs: string[];
+  preserved_fact_refs: string[];
+  target_live: boolean;
+  carrier_role: "product" | "evidence";
+}): string | null {
+  if (input.carrier_role === "evidence")
+    return "counterfactual_mutates_generated_evidence";
+  if (!input.target_live) return "counterfactual_target_not_live";
+  const expected = new Set(input.expected_affected_fact_refs);
+  const preserved = new Set(input.preserved_fact_refs);
+  for (const factRef of expected) {
+    if (
+      !Object.hasOwn(input.baseline_by_fact, factRef) ||
+      !Object.hasOwn(input.mutated_by_fact, factRef)
+    )
+      return "counterfactual_expected_fact_observation_missing";
+    if (
+      input.baseline_by_fact[factRef] === input.mutated_by_fact[factRef]
+    )
+      return "counterfactual_expected_fact_unchanged";
+  }
+  for (const factRef of new Set([
+    ...Object.keys(input.baseline_by_fact),
+    ...Object.keys(input.mutated_by_fact),
+  ])) {
+    if (expected.has(factRef)) continue;
+    const baseline = input.baseline_by_fact[factRef];
+    const mutated = input.mutated_by_fact[factRef];
+    if (
+      preserved.has(factRef) &&
+      (baseline === undefined || mutated === undefined || baseline !== mutated)
+    )
+      return "counterfactual_unexpected_fact_impact";
+    if (!preserved.has(factRef) && baseline !== mutated)
+      return "counterfactual_unexpected_fact_impact";
+  }
+  return null;
+}
+
 export function validateClaimEvidenceSensitivity(
   contract: DeliveryContractV2,
   globalChecks: CompiledCheckV2[],

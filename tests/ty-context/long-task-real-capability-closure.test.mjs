@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import * as admitted from "../../packages/ty-context/dist/lib/long-task-artifacts.js";
 import * as exact from "../../packages/ty-context/dist/lib/long-task-evidence-capability-runtime.js";
+import { evaluateCheckEvidence } from "../../packages/ty-context/dist/lib/long-task-evidence-v2.js";
 
 test("json-pointer-exact-v1 recomputes exact pass and comparison identity", async () => {
   assert.equal(typeof exact.evaluateExactDigestComparison, "function");
@@ -44,6 +46,15 @@ test("json-pointer-exact-v1 recomputes exact pass and comparison identity", asyn
 
 test("json-pointer-exact-v1 re-extracts canonical current JSON under fixed limits", async () => {
   assert.equal(admitted.JSON_POINTER_EXACT_CAPABILITY, "json-pointer-exact-v1");
+  assert.deepEqual(admitted.JSON_POINTER_EXACT_METHODS, [
+    "exact_value",
+    "content",
+    "component_state",
+  ]);
+  assert.equal(
+    admitted.JSON_POINTER_EXACT_SPEC_SHA256,
+    "a4cf79d5165d55fa7c7f16a407fd975e2d4337b5ea9c01f8ea42320018f6e344",
+  );
   assert.deepEqual(admitted.JSON_POINTER_EXACT_LIMITS, {
     max_file_bytes: 1_048_576,
     max_depth: 64,
@@ -177,4 +188,258 @@ test("expected-as-actual and pure evidence carriers cannot prove production reac
     }),
     "product_carrier",
   );
+});
+
+test("package observer is joined to selected-design validation from the current product carrier", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-observer-runtime-"));
+  try {
+    const observationPath = "runtime-state.json";
+    const comparisonPath = "comparison.json";
+    const observationBytes = Buffer.from(
+      JSON.stringify({ observations: { "fact.route_b": "accepted" } }),
+    );
+    const comparisonBytes = Buffer.from('{"comparison":true}');
+    await writeFile(path.join(root, observationPath), observationBytes);
+    await writeFile(path.join(root, comparisonPath), comparisonBytes);
+    const sha = (value) =>
+      createHash("sha256").update(value).digest("hex");
+    const valueSha256 = sha(JSON.stringify("accepted"));
+    const observationSha256 = sha(observationBytes);
+    const comparisonSha256 = sha(comparisonBytes);
+    const expectation = {
+      fact_ref: "fact.route_b",
+      subject_ref: "subject.route_b",
+      variation_ref: "variation.default",
+      property_ref: "content.value",
+      observation_sensitivity: "plain",
+      expected: {
+        locator: {
+          resource_ref: "resource.route_b",
+          kind: "json_pointer",
+          value: "/expected/fact.route_b",
+        },
+        sha256: valueSha256,
+      },
+      comparison: {
+        comparator: "exact_value",
+        mode: "exact",
+        parameters: {
+          locator: {
+            resource_ref: "resource.route_b",
+            kind: "json_pointer",
+            value: "/comparators/exact",
+          },
+          sha256: "b".repeat(64),
+        },
+        tolerance: null,
+        mask: null,
+      },
+      oracle: {
+        key: "oracle.route_b",
+        trust: "named_external_tcb",
+        identity: admitted.JSON_POINTER_EXACT_ORACLE_IDENTITY,
+        version: admitted.JSON_POINTER_EXACT_ORACLE_VERSION,
+        sha256: null,
+      },
+      environment: {
+        key: "environment.route_b",
+        identity: "fixture-process-v1",
+        definition: {
+          locator: {
+            resource_ref: "resource.route_b",
+            kind: "json_pointer",
+            value: "/environment",
+          },
+          sha256: "c".repeat(64),
+        },
+      },
+    };
+    const comparison = {
+      artifact_path: comparisonPath,
+      artifact_sha256: comparisonSha256,
+      locator: { kind: "json_pointer", value: "/comparisons/fact.route_b" },
+      result_sha256: "0".repeat(64),
+      comparator: "exact_value",
+      mode: "exact",
+      parameters: structuredClone(expectation.comparison.parameters),
+      tolerance: null,
+      mask: null,
+      passed: true,
+    };
+    const comparisonInput = {
+      identity: {
+        kind: "selected_design_ground_v1",
+        fact_ref: expectation.fact_ref,
+        subject_ref: expectation.subject_ref,
+        variation_ref: expectation.variation_ref,
+        property_ref: expectation.property_ref,
+      },
+      actual_value_sha256: valueSha256,
+      expected_value_sha256: valueSha256,
+      comparator: "exact_value",
+      mode: "exact",
+      parameters_sha256: expectation.comparison.parameters.sha256,
+      tolerance_sha256: null,
+      mask_sha256: null,
+      passed: true,
+    };
+    comparison.result_sha256 = exact.exactComparisonResultIdentity(
+      comparisonInput,
+    );
+    const result = {
+      fact_ref: expectation.fact_ref,
+      subject_ref: expectation.subject_ref,
+      variation_ref: expectation.variation_ref,
+      property_ref: expectation.property_ref,
+      actual_observation: {
+        artifact_path: observationPath,
+        artifact_sha256: observationSha256,
+        locator: admitted.jsonPointerExactLocatorForIdentity(
+          expectation.fact_ref,
+        ),
+        value_sha256: valueSha256,
+        sensitivity: "plain",
+        redaction: null,
+      },
+      actual_environment: {
+        artifact_path: observationPath,
+        artifact_sha256: observationSha256,
+        locator: { kind: "json_pointer", value: "/environment" },
+        value_sha256: expectation.environment.definition.sha256,
+      },
+      expected: structuredClone(expectation.expected),
+      comparison,
+      verdict: "passed",
+      oracle: structuredClone(expectation.oracle),
+      environment: structuredClone(expectation.environment),
+    };
+    const record = {
+      assertion_key: "route-b-content",
+      capability: "design_method",
+      design_target_ref: "route-b-target",
+      target_ref: "route-b-process",
+      method: "content",
+      cells: [
+        {
+          condition_key: "default",
+          artifact_path: comparisonPath,
+          observation_artifact_path: observationPath,
+          fact_refs: [expectation.fact_ref],
+          fact_results: [result],
+        },
+      ],
+    };
+    const check = {
+      internal_id: "GLOBAL:route-b-check",
+      outcome_key: null,
+      key: "route-b-check",
+      proof_surface: "runtime_behavior",
+      evidence_adapter: "structured_json_v2",
+      execution_target: { target_ref: "route-b-process", entrypoint: "root" },
+      execution_target_definition: {
+        key: "route-b-process",
+        role: "product",
+        runtime_family: "process",
+      },
+      verification_inputs: ["delivery-contract.yaml"],
+      input_paths: [observationPath],
+      expected_output_paths: [],
+      artifact_globs: [observationPath, comparisonPath],
+      positive_assertions: [
+        {
+          key: "route-b-content",
+          claims: ["result"],
+          observation: "result",
+          evidence_capabilities: ["design_method"],
+          operator: "equals",
+          expected: true,
+        },
+      ],
+      negative_assertions: [],
+      design_conformance_targets: [
+        {
+          key: "route-b-target",
+          target_ref: "route-b-process",
+          condition_keys: ["default"],
+          verification_method_bindings: [
+            {
+              assertion_ref: "route-b-content",
+              method: "content",
+              evidence_artifacts: [
+                {
+                  condition_key: "default",
+                  path: comparisonPath,
+                  observation_path: observationPath,
+                  fact_refs: [expectation.fact_ref],
+                  fact_expectations: [expectation],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const prepared = await admitted.prepareAdmittedObservations({
+      check,
+      records: [record],
+      snapshot_root: root,
+    });
+    assert.equal(prepared.entries[0].reason, null);
+    assert.equal(
+      exact.validateRuntimeEvidenceRecord(
+        check,
+        record,
+        {
+          [observationPath]: observationSha256,
+          [comparisonPath]: comparisonSha256,
+        },
+        prepared,
+      ),
+      null,
+    );
+    const forged = structuredClone(record);
+    forged.cells[0].fact_results[0].actual_observation.value_sha256 =
+      "f".repeat(64);
+    assert.equal(
+      exact.validateRuntimeEvidenceRecord(
+        check,
+        forged,
+        {
+          [observationPath]: observationSha256,
+          [comparisonPath]: comparisonSha256,
+        },
+        prepared,
+      ),
+      "admitted_observation_value_mismatch",
+    );
+    const raw = {
+      raw_execution_identity: "route-b-raw",
+      execution_identity: "route-b-execution",
+      execution_status: "completed",
+      exit_code: 0,
+      observations: { result: true },
+      evidence_records: [record],
+      stdout_sha256: "1".repeat(64),
+      stderr_sha256: "2".repeat(64),
+      attempts: 1,
+      duration_ms: 1,
+      error: null,
+    };
+    const accepted = await evaluateCheckEvidence(check, raw, root);
+    assert.equal(accepted.status, "passed");
+    const forgedExecution = await evaluateCheckEvidence(
+      check,
+      { ...raw, evidence_records: [forged] },
+      root,
+    );
+    assert.equal(forgedExecution.status, "invalid_evidence");
+    assert.ok(
+      forgedExecution.findings.some(
+        (finding) =>
+          finding.actual === "admitted_observation_value_mismatch",
+      ),
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

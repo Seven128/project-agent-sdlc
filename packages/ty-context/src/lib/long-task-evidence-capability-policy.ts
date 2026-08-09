@@ -8,6 +8,7 @@ import type {
 import { validateRuntimeEvidenceRecord } from "./long-task-evidence-capability-runtime.js";
 import { validateDistinctSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
 import { checkFinding } from "./long-task-evidence-findings.js";
+import type { PreparedAdmittedObservationSet } from "./long-task-admitted-observation.js";
 
 export { decodeEvidenceCapabilityRecords } from "./long-task-evidence-capability-codec.js";
 
@@ -238,6 +239,7 @@ export function evaluateEvidenceCapabilities(
   check: CompiledCheckV2,
   records: EvidenceCapabilityRecordV2[],
   artifactHashes: Record<string, string>,
+  admittedObservations?: PreparedAdmittedObservationSet,
 ): {
   complete: Record<string, boolean>;
   findings: LongTaskFindingV2[];
@@ -284,7 +286,12 @@ export function evaluateEvidenceCapabilities(
       );
       const reason =
         matches.length === 1
-          ? validateRuntimeEvidenceRecord(check, matches[0], artifactHashes)
+          ? validateRuntimeEvidenceRecord(
+              check,
+              matches[0],
+              artifactHashes,
+              admittedObservations,
+            )
           : matches.length === 0
             ? "record_missing"
             : "record_duplicate";

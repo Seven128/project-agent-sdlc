@@ -142,6 +142,12 @@ export async function runDeliveryChecks(
   includeCounterfactuals: boolean,
   finalGate = false,
 ): Promise<DeliveryRunV2> {
+  const observationAuthorityPaths = [
+    compiled.contract_file,
+    ...Object.keys(compiled.contract_files),
+    ...Object.keys(compiled.source_hashes),
+    ...compiled.context_snapshot.files,
+  ];
   const findings = await preRunFindings(compiled, snapshot.manifest);
   if (finalGate)
     findings.push(...finalPathFindings(compiled, snapshot.manifest));
@@ -164,7 +170,13 @@ export async function runDeliveryChecks(
       ? compiled.outcomes.find((item) => item.key === check.outcome_key)
       : undefined;
     mainCheckResults.push(
-      await evaluateCheckEvidence(check, raw, snapshot.root, outcome),
+      await evaluateCheckEvidence(
+        check,
+        raw,
+        snapshot.root,
+        outcome,
+        observationAuthorityPaths,
+      ),
     );
   }
 
@@ -196,6 +208,7 @@ export async function runDeliveryChecks(
           snapshot.root,
           selectedGlobalCheckKeys,
           snapshot.manifest,
+          mainCheckResults,
         )),
       );
     const outcomeKeys = new Set(
@@ -229,7 +242,8 @@ export async function runDeliveryChecks(
           },
           snapshot.root,
           snapshot.manifest,
-          compiled.context_snapshot.files,
+          observationAuthorityPaths,
+          mainCheckResults,
         )),
       );
     }

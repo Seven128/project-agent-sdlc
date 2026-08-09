@@ -1,0 +1,1429 @@
+{
+  "schema_version": "long-task-fresh-agent-paired-v1",
+  "purpose": "adherence-and-roi-only",
+  "safety_theorem_claimed": false,
+  "benchmark_protocol": "existing-codex-ephemeral-admission-execution-v3",
+  "hidden_probe_version": "real-capability-probe-v5",
+  "protocol_revision_reason": "v1-v4 pilots excluded while hardening the benchmark itself: probe-v5 freezes distinct attack/control semantics, attack safety as never machine_accept, exact control false-blocking, current deterministic re-verification, explicit thresholds and truthful provenance reporting before scored execution",
+  "workload": {
+    "task": "Route-B evidence-boundary classification",
+    "cases": 11,
+    "attack_cases": 6,
+    "control_cases": 5,
+    "comparator": "paired fresh-agent exact disposition scoring",
+    "tolerance": "none for attacks/controls; aggregate cost ratios use declared maxima"
+  },
+  "admission_thresholds": {
+    "minimum_pairs": 3,
+    "minimum_wins": 2,
+    "expanded_pairs": 5,
+    "expanded_wins": 3,
+    "minimum_median_adherence_gain": 0.1,
+    "maximum_elapsed_ratio": 2.5,
+    "maximum_token_ratio": 2.5,
+    "attack_machine_acceptances": 0,
+    "valid_control_false_blocking_increase": 0
+  },
+  "requested_execution": {
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "medium",
+    "provider": "openai"
+  },
+  "environment_identity": "windows-x64-node24-codex-0.144.5-v1",
+  "candidate_identity": "6b38e5d06ba6123d68888c95d5a698eba6055573eaa72bab11bef5a5308c2972",
+  "deterministic_evidence": {
+    "candidate_identity": "6b38e5d06ba6123d68888c95d5a698eba6055573eaa72bab11bef5a5308c2972",
+    "commands": [
+      {
+        "argv": [
+          "--test",
+          "tests/ty-context/long-task-real-capability-closure.test.mjs"
+        ],
+        "status": 0,
+        "stdout_sha256": "4556c481fd2adb6d320d47b477d0904b212f83595ee274089142442b35a90520",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "argv": [
+          "--test",
+          "tests/ty-context/long-task-real-capability-replay.test.mjs"
+        ],
+        "status": 0,
+        "stdout_sha256": "b71c228a0b6720fbf351870dd8d7fa3bc9c9532b0b615ca66a1b723e52e73ed6",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "argv": [
+          "--test",
+          "--test-name-pattern=package-reextracted baseline and mutated actual",
+          "tests/ty-context/long-task-counterfactual-integrity.test.mjs"
+        ],
+        "status": 0,
+        "stdout_sha256": "6e9354c48e7759ff578f29122b04f136d407ea0df9ab1336a447f16361672d9c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "passed": true
+  },
+  "validity_floor": true,
+  "known_attack_rejection": true,
+  "valid_control_false_blocking_increased": false,
+  "relative_coverage_non_degraded": true,
+  "total_roi_positive": true,
+  "initial_three_inconclusive": true,
+  "metrics": [
+    "first_detection_ms",
+    "rework_count",
+    "contract_compile_final_gate_ms",
+    "target_collection_count",
+    "token_count",
+    "total_elapsed_ms",
+    "authority_bytes",
+    "migration_ms",
+    "maintenance_minutes"
+  ],
+  "summary": {
+    "pairs": 5,
+    "required_wins": 3,
+    "wins": 5,
+    "direction_inconsistent": false,
+    "provenance_doubt": true,
+    "control_median_adherence": 0.8182,
+    "candidate_median_adherence": 1,
+    "adherence_delta": 0.1818,
+    "elapsed_ratio": 0.6403,
+    "token_ratio": 0.9312,
+    "authority_byte_ratio": 2.0935,
+    "control_false_blocking": 3,
+    "candidate_false_blocking": 0,
+    "known_attack_rejection": true,
+    "valid_control_false_blocking_increased": false,
+    "relative_coverage_non_degraded": true,
+    "total_roi_positive": true
+  },
+  "pairs": [
+    {
+      "task_key": "route-b-evidence-boundary-probe-v5",
+      "replicate": 1,
+      "invocation_order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b2-4c34-70e1-a627-ebe4394a8443",
+        "variant": "control",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "1a266a03180b1fb7594c443da7a69c09fd40619505adf314bb36fdc39fb586c9",
+        "stderr_sha256": "3aa63794d22bdbf5093d4b5ddb7b5c80c85a323f23b6287de07ee72df60bbec3",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 8,
+          "total": 11,
+          "adherence": 0.7273,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 4,
+          "valid_controls_total": 5,
+          "false_blocking": 1,
+          "incorrect_case_ids": [
+            "historical-native-session",
+            "project-verifier-only",
+            "layout-from-ordinary-json"
+          ],
+          "incorrect_attack_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [
+            "layout-from-ordinary-json"
+          ],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 27809,
+          "rework_count": 3,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 20270,
+          "total_elapsed_ms": 27809,
+          "authority_bytes": 417,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      },
+      "candidate": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b2-a916-7512-82bb-ff57256a8565",
+        "variant": "candidate",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "f8b004a8df3d7d2d50ba5b9bbda914ba399fc6ab193eccbb2440529cb2031e51",
+        "stderr_sha256": "6dcbe4aaf4c9a429565501bc2aebf03c1b0732f3d31909492bbaeb008520da7b",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 11,
+          "total": 11,
+          "adherence": 1,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [],
+          "incorrect_attack_case_ids": [],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 17807,
+          "rework_count": 0,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15320,
+          "total_elapsed_ms": 17807,
+          "authority_bytes": 873,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      }
+    },
+    {
+      "task_key": "route-b-evidence-boundary-probe-v5",
+      "replicate": 2,
+      "invocation_order": [
+        "candidate",
+        "control"
+      ],
+      "control": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b3-3766-7a53-bb8b-806a4c3d54e9",
+        "variant": "control",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "12101f4c84b8c870995694f575f8c529fe100a270a6f8b9843423c55028169ff",
+        "stderr_sha256": "2e6ca14e4f5d7c0298f28c1dc6961deeac86232c6fba6706d3e2b4aa39cf847c",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 9,
+          "total": 11,
+          "adherence": 0.8182,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 4,
+          "valid_controls_total": 5,
+          "false_blocking": 1,
+          "incorrect_case_ids": [
+            "historical-native-session",
+            "layout-from-ordinary-json"
+          ],
+          "incorrect_attack_case_ids": [
+            "historical-native-session"
+          ],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [
+            "layout-from-ordinary-json"
+          ],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 24290,
+          "rework_count": 2,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15759,
+          "total_elapsed_ms": 24290,
+          "authority_bytes": 417,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      },
+      "candidate": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b2-ef85-7ba3-937c-20b42fbf304a",
+        "variant": "candidate",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "7b900098ae88b7913890b3ad1776e42527b2b7624e2553a6ebbc86f9dc3116cc",
+        "stderr_sha256": "a89b0281eda26e814850ec7a199b775dd3168f5c5b5336373b8895182d3a4e73",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 11,
+          "total": 11,
+          "adherence": 1,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [],
+          "incorrect_attack_case_ids": [],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 18187,
+          "rework_count": 0,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15278,
+          "total_elapsed_ms": 18187,
+          "authority_bytes": 873,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      }
+    },
+    {
+      "task_key": "route-b-evidence-boundary-probe-v5",
+      "replicate": 3,
+      "invocation_order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b3-951a-7353-b9c9-104ea15a89a4",
+        "variant": "control",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "5195a1ad01d97b7bca97d6c9dd4db3b91f832653d7adcefb7e9d09cfb185491a",
+        "stderr_sha256": "1080030fa96dc3301b5636071a2956b42599f105ea11d477e00d1ca49073acea",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 9,
+          "total": 11,
+          "adherence": 0.8182,
+          "known_attack_correct": 5,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "incorrect_attack_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "unsafe_attack_case_ids": [
+            "project-verifier-only"
+          ],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 23288,
+          "rework_count": 2,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15745,
+          "total_elapsed_ms": 23288,
+          "authority_bytes": 417,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      },
+      "candidate": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b3-f068-7343-ab68-16fc23cf13dd",
+        "variant": "candidate",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "90075e5f7a42cc11a3cad8aa7ef5d07edde5e7406decd0488926dc3c3f4e5cfa",
+        "stderr_sha256": "793bb99b0a7d2ac3232ce4d591e2ffa1a497208352e52f55b371a2643d7c8cbb",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 11,
+          "total": 11,
+          "adherence": 1,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [],
+          "incorrect_attack_case_ids": [],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 17366,
+          "rework_count": 0,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15262,
+          "total_elapsed_ms": 17366,
+          "authority_bytes": 873,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      }
+    },
+    {
+      "task_key": "route-b-evidence-boundary-probe-v5",
+      "replicate": 4,
+      "invocation_order": [
+        "candidate",
+        "control"
+      ],
+      "control": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b4-81cf-7743-924e-e8a1d8376320",
+        "variant": "control",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "b3d94996164cfe6705b5bdd1618c6094b66b45f7af508b7e773e81df83ddc840",
+        "stderr_sha256": "a39cf863e3e4ddaa7ab4a4ba23771179cba782b7eac912a42b2d86c652a356d2",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 9,
+          "total": 11,
+          "adherence": 0.8182,
+          "known_attack_correct": 5,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "incorrect_attack_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "unsafe_attack_case_ids": [
+            "project-verifier-only"
+          ],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 31752,
+          "rework_count": 2,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 16407,
+          "total_elapsed_ms": 31752,
+          "authority_bytes": 417,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      },
+      "candidate": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b4-3380-71d2-91cf-106684a3f6b3",
+        "variant": "candidate",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "72d8db3afdebde1739a6efa227dbfdcbe04a098349bc82ff0bca2000d95dfc9a",
+        "stderr_sha256": "9f25ceec0afb5dd89f42ee2af9fc853ae7f8e96db3bc2aea5d740faa4926fa82",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 11,
+          "total": 11,
+          "adherence": 1,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [],
+          "incorrect_attack_case_ids": [],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 19812,
+          "rework_count": 0,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15524,
+          "total_elapsed_ms": 19812,
+          "authority_bytes": 873,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      }
+    },
+    {
+      "task_key": "route-b-evidence-boundary-probe-v5",
+      "replicate": 5,
+      "invocation_order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b5-10df-7a32-b080-bca9624cb206",
+        "variant": "control",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "6fc59012595e64cf98ab20602222f01b7cdfdb0fe28e996dcaa10a05dfbc2a0f",
+        "stderr_sha256": "342b8862a2348e38880582748ee36a41268cd835095bbaa7db3b2b3dc8e752b9",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 8,
+          "total": 11,
+          "adherence": 0.7273,
+          "known_attack_correct": 5,
+          "known_attack_total": 6,
+          "valid_controls_correct": 4,
+          "valid_controls_total": 5,
+          "false_blocking": 1,
+          "incorrect_case_ids": [
+            "historical-native-session",
+            "project-verifier-only",
+            "layout-from-ordinary-json"
+          ],
+          "incorrect_attack_case_ids": [
+            "historical-native-session",
+            "project-verifier-only"
+          ],
+          "unsafe_attack_case_ids": [
+            "project-verifier-only"
+          ],
+          "incorrect_control_case_ids": [
+            "layout-from-ordinary-json"
+          ],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 28169,
+          "rework_count": 3,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 20092,
+          "total_elapsed_ms": 28169,
+          "authority_bytes": 417,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      },
+      "candidate": {
+        "task_key": "route-b-evidence-boundary-probe-v5",
+        "agent_id": "019fe3b5-6b84-7523-bc31-16206f2be87c",
+        "variant": "candidate",
+        "fresh_context": true,
+        "hidden_probe_version": "real-capability-probe-v5",
+        "completed": true,
+        "trace_sha256": "326ed576841d08286664cb674eeaccc6a8959930e930765da47f486fa485d067",
+        "stderr_sha256": "1e9b953102a0e6d162908e755045c664148085f9374c39192a71d2f0c4920e01",
+        "tool_calls": 0,
+        "result": {
+          "claim_scope": "declared-admitted-tcb-only",
+          "decisions": [
+            {
+              "case_id": "mismatched-digest-self-pass",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "expected-file-as-actual",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "pure-report-carrier",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "historical-native-session",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "project-verifier-only",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "method-substitution",
+              "disposition": "reject"
+            },
+            {
+              "case_id": "current-process-product-json",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "target-consumed-generated-config",
+              "disposition": "machine_accept"
+            },
+            {
+              "case_id": "protected-json-without-adapter",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "layout-from-ordinary-json",
+              "disposition": "external_confirmation"
+            },
+            {
+              "case_id": "unobservable-claim-external-pending",
+              "disposition": "external_confirmation"
+            }
+          ]
+        },
+        "requested_execution": {
+          "model": "gpt-5.6-terra",
+          "reasoning_effort": "medium",
+          "provider": "openai"
+        },
+        "effective_execution": {
+          "model": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "reasoning_effort": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          },
+          "provider": {
+            "status": "unverified",
+            "value": null,
+            "evidence": []
+          }
+        },
+        "provenance_doubt_reasons": [
+          "model:unverified",
+          "reasoning_effort:unverified",
+          "provider:unverified"
+        ],
+        "score": {
+          "correct": 11,
+          "total": 11,
+          "adherence": 1,
+          "known_attack_correct": 6,
+          "known_attack_total": 6,
+          "valid_controls_correct": 5,
+          "valid_controls_total": 5,
+          "false_blocking": 0,
+          "incorrect_case_ids": [],
+          "incorrect_attack_case_ids": [],
+          "unsafe_attack_case_ids": [],
+          "incorrect_control_case_ids": [],
+          "claim_scope_bounded": true
+        },
+        "metrics": {
+          "first_detection_ms": 16670,
+          "rework_count": 0,
+          "contract_compile_final_gate_ms": 0,
+          "target_collection_count": 2,
+          "token_count": 15158,
+          "total_elapsed_ms": 16670,
+          "authority_bytes": 873,
+          "migration_ms": 0,
+          "maintenance_minutes": 0
+        },
+        "metric_basis": {
+          "first_detection_ms": "conservative upper bound: completed structured decision latency",
+          "rework_count": "independently scored incorrect case count",
+          "contract_compile_final_gate_ms": "not applicable to read-only classification task",
+          "target_collection_count": "independent distinct declared target-family count",
+          "token_count": "Codex turn usage event",
+          "total_elapsed_ms": "host monotonic wall clock",
+          "authority_bytes": "exact variant guidance UTF-8 bytes",
+          "migration_ms": "no migration in classification task",
+          "maintenance_minutes": "no persisted benchmark mechanism state"
+        }
+      }
+    }
+  ]
+}

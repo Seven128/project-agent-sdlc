@@ -333,7 +333,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   ];
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
-  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 14);
+  assert.equal(LONG_TASK_PURE_TEST_FILES.length, 16);
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 45);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   for (const restoredFile of [
@@ -359,6 +359,14 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   );
   assert.equal(
     classifyLongTaskTestFile("long-task-playwright-config-argument.test.mjs"),
+    "pure",
+  );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-real-capability-closure.test.mjs"),
+    "pure",
+  );
+  assert.equal(
+    classifyLongTaskTestFile("long-task-real-capability-replay.test.mjs"),
     "pure",
   );
   assert.equal(
@@ -444,6 +452,16 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     (entry) => entry.id === "critical-policy-continuity",
   );
   assert.ok(sentinel);
+  const selectedDesign = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "selected-design-fact-closure",
+  );
+  assert.ok(selectedDesign);
+  assert.match(
+    selectedDesign.rationale,
+    /selected-design-exact-verdict-recomputation/u,
+  );
+  assert.match(selectedDesign.rationale, /positive and negative controls/u);
+  assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size, 22);
   const expectedFile = path.join(
     repositoryRoot,

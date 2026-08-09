@@ -2,7 +2,7 @@ schema_version: long-task-delivery-v2
 semantic_fact_manifest:
   key: long-task-real-capability-facts
   source_path: docs/long-task-real-capability-closure.md
-  sha256: bcc5077f390bef1b8972d747817f9d557c0a2d9df45164a7ad3126f5f907244b
+  sha256: 2bc753046bf97fefa4beb389db5f46d47f768e9c2329474907d8200625ec364a
 task:
   id: long-task-real-capability-closure
   title: Long-Task real capability and anti-degradation closure
@@ -475,12 +475,20 @@ global:
           - tools/semantic_fact_delivery_evidence.mjs
           - tools/npm_command_spec.mjs
           - tests/ty-context/long-task-real-capability-closure.test.mjs
+          - tests/ty-context/long-task-counterfactual-integrity.test.mjs
         input_paths:
+          - docs/long-task-real-capability-closure.md
+          - packages/ty-context/package.json
+          - packages/ty-context/tsconfig.json
+          - packages/ty-context/src/**
+          - tools/package_build_fingerprint.mjs
+          - packages/ty-context/src/lib/long-task-admitted-observation.ts
           - packages/ty-context/src/lib/long-task-artifacts.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
           - packages/ty-context/src/lib/long-task-evidence-v2.ts
           - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+          - packages/ty-context/src/lib/long-task-verifier-v2.ts
           - tests/ty-context/fixtures/long-task-real-capability-state.json
         expected_output_paths:
           - packages/ty-context/dist/**
@@ -522,7 +530,7 @@ global:
         check_key: verify-global-observer-boundary
         mutation:
           type: replace_text
-          path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+          path: packages/ty-context/src/lib/long-task-json-pointer-observation.ts
           match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
           replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
         expected_assertion_failures:
@@ -676,6 +684,8 @@ outcomes:
           - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
           - tests/ty-context/fixtures/long-task-real-capability-state.json
           - docs/long-task-real-capability-closure.md
+          - docs/symbolic-denotation-efficiency.md
+          - .work_products/symbolic-denotation-efficiency/delivery-contract.yaml
           - PROJECT_SPEC.md
           - project_context/**
           - .codex/skills/authoring/harness_package_design/**
@@ -741,6 +751,8 @@ outcomes:
         - tests/ty-context/fixtures/long-task-real-capability-state.json
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
+        - docs/symbolic-denotation-efficiency.md
+        - .work_products/symbolic-denotation-efficiency/delivery-contract.yaml
         - PROJECT_SPEC.md
         - project_context/**
         - .codex/skills/authoring/harness_package_design/**
@@ -799,6 +811,11 @@ outcomes:
             - tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs
             - tests/ty-context/symbolic-denotation-long-task-v2-records.mjs
           input_paths:
+            - docs/long-task-real-capability-closure.md
+            - packages/ty-context/package.json
+            - packages/ty-context/tsconfig.json
+            - packages/ty-context/src/**
+            - tools/package_build_fingerprint.mjs
             - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
             - packages/ty-context/src/lib/long-task-semantic-fact-evidence.ts
             - tests/ty-context/fixtures/long-task-real-capability-state.json
@@ -809,7 +826,6 @@ outcomes:
             - tests/ty-context/base-oracle.mjs
           artifact_globs:
             - artifacts/semantic-fact-results.json
-            - .artifacts/long-task-real-capability/**
           positive_assertions:
             - key: p0-exact-recomputation-result
               criterion: P0 exact recomputation is complete on the current package candidate.
@@ -1246,6 +1262,7 @@ outcomes:
           - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
           - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
           - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - tests/ty-context/long-task-design-context.test.mjs
           - docs/long-task-real-capability-closure.md
           - project_context/**
           - .codex/skills/authoring/harness_package_design/**
@@ -1324,6 +1341,7 @@ outcomes:
         - .codex/skills/authoring/harness_package_design/references/long-task-mechanism-admission.md
         - .codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md
         - tests/ty-context/fixtures/long-task-real-capability-state.json
+        - tests/ty-context/long-task-design-context.test.mjs
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
         - PROJECT_SPEC.md
@@ -1383,7 +1401,16 @@ outcomes:
             - tests/ty-context/symbolic-denotation-long-task-v2-exercise.mjs
             - tests/ty-context/symbolic-denotation-long-task-v2-records.mjs
           input_paths:
+            - docs/long-task-real-capability-closure.md
+            - packages/ty-context/package.json
+            - packages/ty-context/tsconfig.json
+            - packages/ty-context/src/**
+            - tools/package_build_fingerprint.mjs
             - tools/test_suite_policy.mjs
+            - tools/verify_design_fact_completeness_delivery.mjs
+            - tools/verify_test_suite_antidegradation_delivery.mjs
+            - tests/ty-context/long-task-*.test.mjs
+            - tests/ty-context/long-task-authority-revision-fixture.mjs
             - PROJECT_SPEC.md
             - project_context/areas/harness-package/verification.md
             - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
@@ -1397,7 +1424,6 @@ outcomes:
             - tests/ty-context/base-oracle.mjs
           artifact_globs:
             - artifacts/semantic-fact-results.json
-            - .artifacts/long-task-real-capability/**
           positive_assertions:
             - key: assurance-governance-result
               criterion: Assurance governance is complete on the current package candidate.
@@ -1938,11 +1964,17 @@ outcomes:
           - project_context/areas/harness-package/implementation-index.md
         path_globs:
           - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          - packages/ty-context/src/lib/long-task-admitted-observation-records.ts
+          - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+          - packages/ty-context/src/lib/long-task-observation-artifact.ts
           - packages/ty-context/src/lib/long-task-artifacts.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
           - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
           - packages/ty-context/src/lib/long-task-evidence-v2.ts
           - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+          - packages/ty-context/src/lib/long-task-verifier-v2.ts
+          - tests/ty-context/long-task-real-capability-closure.test.mjs
+          - tests/ty-context/long-task-counterfactual-integrity.test.mjs
           - tests/ty-context/fixtures/long-task-real-capability-state.json
           - docs/long-task-real-capability-closure.md
           - PROJECT_SPEC.md
@@ -2047,11 +2079,15 @@ outcomes:
             - observer-tcb-closure-current-success
       expected_change_paths:
         - packages/ty-context/src/lib/long-task-admitted-observation.ts
+        - packages/ty-context/src/lib/long-task-admitted-observation-records.ts
+        - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+        - packages/ty-context/src/lib/long-task-observation-artifact.ts
         - packages/ty-context/src/lib/long-task-artifacts.ts
         - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
         - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
         - packages/ty-context/src/lib/long-task-evidence-v2.ts
         - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+        - packages/ty-context/src/lib/long-task-verifier-v2.ts
         - tests/ty-context/fixtures/long-task-real-capability-state.json
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
@@ -2066,7 +2102,8 @@ outcomes:
           target: packages/ty-context/src/lib/long-task-admitted-observation.ts
           carrier_paths:
             - packages/ty-context/src/lib/long-task-admitted-observation.ts
-          existence: planned
+            - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+          existence: existing
         - key: relation-fixture
           kind: file
           target: tests/ty-context/fixtures/long-task-real-capability-state.json
@@ -2107,12 +2144,24 @@ outcomes:
             - tools/semantic_fact_delivery_evidence.mjs
             - tools/npm_command_spec.mjs
             - tests/ty-context/long-task-real-capability-closure.test.mjs
+            - tests/ty-context/long-task-counterfactual-integrity.test.mjs
           input_paths:
+            - docs/long-task-real-capability-closure.md
+            - packages/ty-context/package.json
+            - packages/ty-context/tsconfig.json
+            - packages/ty-context/src/**
+            - tools/package_build_fingerprint.mjs
+            - packages/ty-context/src/lib/long-task-admitted-observation.ts
+            - packages/ty-context/src/lib/long-task-admitted-observation-records.ts
+            - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+            - packages/ty-context/src/lib/long-task-observation-artifact.ts
             - packages/ty-context/src/lib/long-task-artifacts.ts
             - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
             - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
             - packages/ty-context/src/lib/long-task-evidence-v2.ts
             - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+            - packages/ty-context/src/lib/long-task-verifier-v2.ts
+            - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
             - tests/ty-context/fixtures/long-task-real-capability-state.json
           expected_output_paths:
             - packages/ty-context/dist/**
@@ -2121,7 +2170,6 @@ outcomes:
             - tests/ty-context/base-oracle.mjs
           artifact_globs:
             - artifacts/semantic-fact-results.json
-            - .artifacts/long-task-real-capability/**
           positive_assertions:
             - key: observer-tcb-closure-result
               criterion: Observer and TCB closure is complete on the current package candidate.
@@ -2521,7 +2569,7 @@ outcomes:
           check_key: verify-observer-tcb-closure
           mutation:
             type: replace_text
-            path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+            path: packages/ty-context/src/lib/long-task-json-pointer-observation.ts
             match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
             replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
           expected_assertion_failures:
@@ -2781,7 +2829,9 @@ outcomes:
           - packages/ty-context/assets/README.zh-CN.md
           - packages/ty-context/source-mappings.yaml
           - packages/ty-context/src/lib/long-task-admitted-observation.ts
+          - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
           - tests/ty-context/fixtures/long-task-real-capability-state.json
+          - tests/ty-context/workflow-contract-routing.test.mjs
           - docs/long-task-real-capability-closure.md
           - PROJECT_SPEC.md
           - project_context/**
@@ -2867,12 +2917,14 @@ outcomes:
         - packages/ty-context/assets/README.zh-CN.md
         - packages/ty-context/source-mappings.yaml
         - packages/ty-context/src/lib/long-task-admitted-observation.ts
+        - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
         - tests/ty-context/fixtures/long-task-real-capability-state.json
       allowed_support_paths:
         - docs/long-task-real-capability-closure.md
         - PROJECT_SPEC.md
         - project_context/**
         - .codex/skills/authoring/harness_package_design/**
+        - tests/ty-context/workflow-contract-routing.test.mjs
       forbidden_paths:
         - .git/**
       bindings:
@@ -2881,7 +2933,8 @@ outcomes:
           target: packages/ty-context/src/lib/long-task-admitted-observation.ts
           carrier_paths:
             - packages/ty-context/src/lib/long-task-admitted-observation.ts
-          existence: planned
+            - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+          existence: existing
         - key: relation-fixture
           kind: file
           target: tests/ty-context/fixtures/long-task-real-capability-state.json
@@ -2923,13 +2976,49 @@ outcomes:
             - tools/npm_command_spec.mjs
             - tests/ty-context/long-task-real-capability-replay.test.mjs
             - tools/verify_long_task_real_capability_roi.mjs
+            - tools/long_task_real_capability_roi_policy.mjs
+            - tools/long_task_real_capability_roi_scoring.mjs
+            - tests/ty-context/fixtures/long-task-real-capability-fresh-agent-paired.json
+            - examples/delivery-benchmark/mechanism/runner/admission-execute.mjs
+            - examples/delivery-benchmark/mechanism/admission-set.json
           input_paths:
+            - "*"
+            - .codex/**
+            - .devcontainer/**
+            - .github/**
+            - .work_products/design-fact-universe-closure/delivery-contract.yaml
+            - .work_products/symbolic-denotation-efficiency/delivery-contract.yaml
+            - docs/**
+            - examples/**
+            - packages/**
+            - project_context/**
+            - src/**
+            - tests/**
+            - tools/**
+            - docs/long-task-real-capability-closure.md
+            - packages/ty-context/package.json
+            - packages/ty-context/tsconfig.json
+            - packages/ty-context/src/**
+            - tools/package_build_fingerprint.mjs
             - README.md
             - README.zh-CN.md
             - packages/ty-context/README.md
             - packages/ty-context/assets/README.md
             - packages/ty-context/assets/README.zh-CN.md
             - packages/ty-context/source-mappings.yaml
+            - PROJECT_SPEC.md
+            - packages/ty-context/src/lib/long-task-exact-comparison.ts
+            - packages/ty-context/src/lib/long-task-admitted-observation.ts
+            - packages/ty-context/src/lib/long-task-admitted-observation-records.ts
+            - packages/ty-context/src/lib/long-task-json-pointer-observation.ts
+            - packages/ty-context/src/lib/long-task-observation-artifact.ts
+            - packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts
+            - packages/ty-context/src/lib/long-task-evidence-capability-policy.ts
+            - packages/ty-context/src/lib/long-task-evidence-v2.ts
+            - packages/ty-context/src/lib/long-task-evidence-sensitivity-policy.ts
+            - packages/ty-context/src/lib/long-task-verifier-v2.ts
+            - tools/test_suite_policy.mjs
+            - tests/ty-context/fixtures/long-task-real-capability-fresh-agent-paired.json
             - tests/ty-context/fixtures/long-task-real-capability-state.json
           expected_output_paths:
             - packages/ty-context/dist/**
@@ -3290,7 +3379,7 @@ outcomes:
           check_key: verify-proof-and-roi
           mutation:
             type: replace_text
-            path: packages/ty-context/src/lib/long-task-admitted-observation.ts
+            path: packages/ty-context/src/lib/long-task-json-pointer-observation.ts
             match: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-v1"
             replacement: JSON_POINTER_EXACT_CAPABILITY = "json-pointer-exact-disabled"
           expected_assertion_failures:
