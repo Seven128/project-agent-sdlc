@@ -33,6 +33,22 @@ const compileBoundaryDiagnostics = new Map([
   ],
   ["wrong.r6.verifier-wrapper", "process_observer_direct_root_required"],
   ["wrong.r6b.argv-wrapper", "process_observer_root_argv_mismatch"],
+  [
+    "wrong.process-noncarrier-evidence-input",
+    "process_runtime_input_evidence_role_forbidden",
+  ],
+  [
+    "wrong.process-noncarrier-verification-input",
+    "process_runtime_input_verification_role_forbidden",
+  ],
+  [
+    "wrong.execution-target-source-drift",
+    "process_root_source_identity_mismatch",
+  ],
+  [
+    "wrong.execution-target-unbound-argv",
+    "process_root_production_binding_required",
+  ],
 ]);
 
 test("delivery verifier accepts one complete current-run terminal/control report", () => {

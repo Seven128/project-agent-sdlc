@@ -8,6 +8,7 @@ import {
   parseCliJson,
   refreshFixtureSemanticManifest,
   runCli,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
   writeFixtureSourceAndOracle,
 } from "./long-task-delivery-fixtures.mjs";
@@ -208,6 +209,7 @@ export async function configurePackageObservationCase(
     artifactGlobs = [carrierPath],
     proofSurface = "implementation_structure",
     directProcess = false,
+    processCarrierPath = null,
     diagnosticArtifactPaths = [],
     submitProjectEvidenceCopies = false,
   },
@@ -231,6 +233,11 @@ export async function configurePackageObservationCase(
   )
     outcome.technical.allowed_support_paths.push("tests/legacy-oracle.mjs");
   const processCheck = outcome.acceptance.checks[0];
+  const processBinding = outcome.technical.bindings.find(
+    (candidate) => candidate.key === "state-first",
+  );
+  if (!processBinding)
+    throw new Error("observer_fixture_process_binding_missing");
   for (const assertion of [
     ...processCheck.positive_assertions,
     ...processCheck.negative_assertions,
@@ -321,12 +328,24 @@ export async function configurePackageObservationCase(
     ...observationCheck.negative_assertions,
   ].filter((assertion) => assertion.claims.length > 0);
 
-  const binding = outcome.technical.bindings.find(
-    (candidate) => candidate.key === "state-first",
-  );
-  binding.target = bindingPath;
-  binding.carrier_paths = [bindingPath];
-  binding.existence = carrierExists ? "existing" : "planned";
+  let binding = processBinding;
+  if (staticObservation && processCarrierPath) {
+    binding = {
+      ...structuredClone(processBinding),
+      key: `${processBinding.key}-static-observation`,
+      target: bindingPath,
+      carrier_paths: [bindingPath],
+      existence: carrierExists ? "existing" : "planned",
+    };
+    outcome.technical.bindings.push(binding);
+    processBinding.target = processCarrierPath;
+    processBinding.carrier_paths = [processCarrierPath];
+    processBinding.existence = "existing";
+  } else {
+    binding.target = bindingPath;
+    binding.carrier_paths = [bindingPath];
+    binding.existence = carrierExists ? "existing" : "planned";
+  }
   const ownerPattern = repoOwnerPattern(bindingPath);
   if (!outcome.product.owner.path_globs.includes(ownerPattern))
     outcome.product.owner.path_globs.push(ownerPattern);
@@ -343,6 +362,20 @@ export async function configurePackageObservationCase(
     !outcome.technical.allowed_support_paths.includes(carrierOwnerPattern)
   )
     outcome.technical.allowed_support_paths.push(carrierOwnerPattern);
+  if (staticObservation && processCarrierPath) {
+    const processCarrierOwnerPattern = repoOwnerPattern(processCarrierPath);
+    if (!outcome.product.owner.path_globs.includes(processCarrierOwnerPattern))
+      outcome.product.owner.path_globs.push(processCarrierOwnerPattern);
+    if (
+      !outcome.technical.expected_change_paths.includes(
+        processCarrierOwnerPattern,
+      ) &&
+      !outcome.technical.allowed_support_paths.includes(
+        processCarrierOwnerPattern,
+      )
+    )
+      outcome.technical.allowed_support_paths.push(processCarrierOwnerPattern);
+  }
 
   const mutation = {
     type: "replace_json_value",
@@ -370,14 +403,14 @@ export async function configurePackageObservationCase(
     ];
     counterfactualControls.push({
       key: "change-process-observed-production-carrier",
-      binding_key: binding.key,
+      binding_key: processBinding.key,
       claims: [
         ...new Set(processAssertions.flatMap((assertion) => assertion.claims)),
       ],
       check_key: processCheck.key,
       mutation: {
         type: "replace_json_value",
-        path: mutationPath,
+        path: processCarrierPath ?? mutationPath,
         pointer: "/observations/fact.first.observable",
         value: false,
       },
@@ -406,7 +439,13 @@ export async function configurePackageObservationCase(
     target.root_argv = [...processCheck.runner.argv];
     processCheck.execution_target.entrypoint = "root";
     processCheck.verification_inputs = ["tests/semantic-false.json"];
-    processCheck.input_paths = [...new Set(inputPaths)];
+    processCheck.input_paths = [
+      ...new Set(
+        staticObservation && processCarrierPath
+          ? [processCarrierPath]
+          : inputPaths,
+      ),
+    ];
     processCheck.artifact_globs = staticObservation
       ? ["proof/process-observation.json"]
       : [...new Set([...artifactGlobs, ...diagnosticArtifactPaths])];
@@ -420,6 +459,12 @@ export async function configurePackageObservationCase(
       fixture.root,
       carrierPath,
       observationCarrier(carrierInitialValue),
+    );
+  if (staticObservation && processCarrierPath)
+    await writeRepositoryJson(
+      fixture.root,
+      processCarrierPath,
+      observationCarrier(true),
     );
   for (const diagnosticPath of diagnosticArtifactPaths)
     await writeRepositoryJson(fixture.root, diagnosticPath, {
@@ -497,7 +542,10 @@ export async function configurePackageObservationCase(
       factRevisionDigest: parsedManifest.fact_revisions[0].revision_digest,
       obligationRevisionDigest:
         parsedManifest.obligation_revisions[0].revision_digest,
-      carrierPath,
+      carrierPath:
+        staticObservation && processCarrierPath
+          ? processCarrierPath
+          : carrierPath,
       runnerWritesCarrier: false,
       valueSourcePath: runnerValueSourcePath,
       valueSourcePointer: effectiveRunnerValueSourcePointer,
@@ -558,6 +606,7 @@ export async function configureProxyTargetAttack(
   check.runner.argv = projectBinaryArguments("tests/oracle.mjs", "first");
   target.root_argv = [...check.runner.argv];
   check.execution_target.entrypoint = "root";
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
 
   const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");

@@ -91,14 +91,19 @@ test("build fingerprint accepts the matching snapshot and rejects stale dist", a
 });
 
 test("workspace snapshots materialize current Context while fingerprinting it separately", async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-snapshot-context-"));
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-snapshot-context-"),
+  );
   const workdir = path.join(root, ".work_products", "task");
   let snapshot = null;
   try {
     await mkdir(path.join(root, "project_context"), { recursive: true });
     await mkdir(path.join(root, "src"), { recursive: true });
     await mkdir(workdir, { recursive: true });
-    await writeFile(path.join(root, "project_context", "global.md"), "# Initial\n");
+    await writeFile(
+      path.join(root, "project_context", "global.md"),
+      "# Initial\n",
+    );
     await writeFile(path.join(root, "src", "index.mjs"), "export {};\n");
     await git(root, ["init"]);
     await git(root, ["config", "user.email", "fixture@example.test"]);
@@ -106,11 +111,17 @@ test("workspace snapshots materialize current Context while fingerprinting it se
     await git(root, ["add", "."]);
     await git(root, ["commit", "-m", "fixture"]);
 
-    await writeFile(path.join(root, "project_context", "global.md"), "# Current\n");
+    await writeFile(
+      path.join(root, "project_context", "global.md"),
+      "# Current\n",
+    );
     snapshot = await createWorkspaceSnapshot(root, workdir, "context-fixture");
 
     assert.equal(
-      await readFile(path.join(snapshot.root, "project_context", "global.md"), "utf8"),
+      await readFile(
+        path.join(snapshot.root, "project_context", "global.md"),
+        "utf8",
+      ),
       "# Current\n",
     );
     assert.equal(
@@ -126,14 +137,19 @@ test("workspace snapshots materialize current Context while fingerprinting it se
 });
 
 test("workspace snapshots preserve clean tracked LF bytes with autocrlf enabled", async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-snapshot-eol-"));
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-snapshot-eol-"),
+  );
   const workdir = path.join(root, ".work_products", "task");
   let snapshot = null;
   try {
     await mkdir(path.join(root, "design"), { recursive: true });
     await mkdir(workdir, { recursive: true });
     const resource = path.join(root, "design", "handoff.md");
-    const expected = Buffer.from("# Frozen resource\n\nExact digest input.\n", "utf8");
+    const expected = Buffer.from(
+      "# Frozen resource\n\nExact digest input.\n",
+      "utf8",
+    );
     await writeFile(resource, expected);
     await git(root, ["init"]);
     await git(root, ["config", "user.email", "fixture@example.test"]);
@@ -143,7 +159,10 @@ test("workspace snapshots preserve clean tracked LF bytes with autocrlf enabled"
     await git(root, ["commit", "-m", "fixture"]);
 
     assert.deepEqual(await readFile(resource), expected);
-    assert.match(await git(root, ["ls-files", "--eol", "design/handoff.md"]), /w\/lf/u);
+    assert.match(
+      await git(root, ["ls-files", "--eol", "design/handoff.md"]),
+      /w\/lf/u,
+    );
 
     snapshot = await createWorkspaceSnapshot(root, workdir, "eol-fixture");
 
@@ -228,8 +247,14 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
     fixtureSeedRoot: seed.root,
   });
   try {
-    const firstCommon = await git(first.root, ["rev-parse", "--git-common-dir"]);
-    const secondCommon = await git(second.root, ["rev-parse", "--git-common-dir"]);
+    const firstCommon = await git(first.root, [
+      "rev-parse",
+      "--git-common-dir",
+    ]);
+    const secondCommon = await git(second.root, [
+      "rev-parse",
+      "--git-common-dir",
+    ]);
     assert.notEqual(
       path.resolve(first.root, firstCommon),
       path.resolve(second.root, secondCommon),
@@ -324,7 +349,9 @@ test("bulk revision and verifier migration probes preserve canonical owners and 
 });
 
 test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files closed", async () => {
-  const available = (await readdir(path.join(repositoryRoot, "tests", "ty-context")))
+  const available = (
+    await readdir(path.join(repositoryRoot, "tests", "ty-context"))
+  )
     .filter((name) => /^long-task-.*\.test\.mjs$/u.test(name))
     .sort();
   const classified = [
@@ -571,7 +598,12 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     "host-derived-target-runtime:R6",
     "host-derived-target-runtime:R6b",
     "host-derived-target-runtime:R7c",
+    "host-derived-target-runtime:R11",
+    "host-derived-target-runtime:R11b",
     "counterfactual-production-observation-impact:R5",
+    "counterfactual-production-observation-impact:R5c",
+    "counterfactual-production-observation-impact:R10",
+    "observer-admission-no-bypass:R9",
   ])
     assert.ok(
       observerSource.includes(`[case:${caseId}]`),
@@ -670,7 +702,12 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
 
   const unexpected = report([
     event("test:pass", expectedFile, `[critical:${sentinel.id}] valid`, 2),
-    event("test:pass", expectedFile, "[critical:unreviewed-invariant] surprise", 1),
+    event(
+      "test:pass",
+      expectedFile,
+      "[critical:unreviewed-invariant] surprise",
+      1,
+    ),
   ]);
   assert.deepEqual(unexpected.critical_sentinel_coverage.unexpected_ids, [
     "unreviewed-invariant",

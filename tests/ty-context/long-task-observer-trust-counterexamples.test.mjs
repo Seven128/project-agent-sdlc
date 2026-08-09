@@ -265,6 +265,7 @@ test(
         inputPaths: ["src/state.json", "artifacts/**"],
         artifactGlobs: [],
         diagnosticArtifactPaths: ["artifacts/runner-created-diagnostic.json"],
+        processCarrierPath: "src/process-observation.json",
       });
       const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.r2, execution);
@@ -577,8 +578,10 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureNonCarrierEvidenceInputAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => configureNonCarrierEvidenceInputAttack(fixture),
+      );
       terminalReport.record(reportCases.r9, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -593,12 +596,14 @@ test(
 );
 
 test(
-  "[case:observer-admission-no-bypass:R10] [real-capability:observer-trust.r10.process-noncarrier-verification-input] a non-carrier verification input cannot enter the process runtime closure",
+  "[case:counterfactual-production-observation-impact:R10] [real-capability:observer-trust.r10.process-noncarrier-verification-input] a non-carrier verification input cannot enter the process runtime closure",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureNonCarrierVerificationInputAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => configureNonCarrierVerificationInputAttack(fixture),
+      );
       terminalReport.record(reportCases.r10, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -617,8 +622,10 @@ test(
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      await configureExecutionTargetSourceDriftAttack(fixture);
-      const execution = await executeObserverTrustWorkflow(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => configureExecutionTargetSourceDriftAttack(fixture),
+      );
       terminalReport.record(reportCases.r11, execution);
       assert.equal(
         isSecurelyRejected(execution),
@@ -638,17 +645,21 @@ test(
   async () =>
     withFixture({ twoOutcomes: true }, async (fixture) => {
       await configureRepoProcessProductControl(fixture);
-      const missingRuntimePath = "config/missing-runtime.json";
-      const target = fixture.contract.task.execution_targets[0];
-      target.root_argv.push(missingRuntimePath);
-      for (const outcome of fixture.contract.outcomes)
-        outcome.acceptance.checks[0].runner.argv.push(missingRuntimePath);
-      await synchronizeFixtureExecutionTargetSource(
-        fixture.root,
-        fixture.contract,
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        async () => {
+          const missingRuntimePath = "config/missing-runtime.json";
+          const target = fixture.contract.task.execution_targets[0];
+          target.root_argv.push(missingRuntimePath);
+          for (const outcome of fixture.contract.outcomes)
+            outcome.acceptance.checks[0].runner.argv.push(missingRuntimePath);
+          await synchronizeFixtureExecutionTargetSource(
+            fixture.root,
+            fixture.contract,
+          );
+          await writeContract(fixture.workdir, fixture.contract);
+        },
       );
-      await writeContract(fixture.workdir, fixture.contract);
-      const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.r11b, execution);
       assert.equal(
         isSecurelyRejected(execution),
