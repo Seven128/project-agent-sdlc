@@ -17,6 +17,50 @@ test("parses the only active V2 Contract without entity-chain ids", () => {
     assert.equal(JSON.stringify(parsed).includes(retired), false);
 });
 
+test("Counterfactual allowed fan-out defaults to empty and preserves explicit Assertion references", () => {
+  const contractWith = (allowedFanoutAssertions) => {
+    const contract = deliveryContract();
+    contract.outcomes[0].acceptance.counterfactual_controls = [
+      {
+        key: "fanout-parser",
+        binding_key: "state-first",
+        claims: ["result"],
+        check_key: "first-check",
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first",
+          value: false,
+        },
+        expected_assertion_failures: ["first-result"],
+        preserved_assertions: ["first-liveness"],
+        ...(allowedFanoutAssertions === undefined
+          ? {}
+          : { allowed_fanout_assertions: allowedFanoutAssertions }),
+      },
+    ];
+    return contract;
+  };
+
+  const omitted = parseDeliveryContractText(
+    YAML.stringify(contractWith(undefined)),
+  );
+  assert.deepEqual(
+    omitted.outcomes[0].acceptance.counterfactual_controls[0]
+      .allowed_fanout_assertions,
+    [],
+  );
+
+  const explicit = parseDeliveryContractText(
+    YAML.stringify(contractWith(["first-relations-na"])),
+  );
+  assert.deepEqual(
+    explicit.outcomes[0].acceptance.counterfactual_controls[0]
+      .allowed_fanout_assertions,
+    ["first-relations-na"],
+  );
+});
+
 test("V1 is retired instead of entering a second Evidence Kernel", () => {
   const contract = deliveryContract();
   contract.schema_version = "long-task-delivery-v1";
@@ -100,7 +144,5 @@ test("Source Claims require declared Source files and valid file#anchor locators
 
   const valid = deliveryContract();
   valid.source_claims[0].source_ref = "source.md#section";
-  assert.doesNotThrow(() =>
-    parseDeliveryContractText(YAML.stringify(valid)),
-  );
+  assert.doesNotThrow(() => parseDeliveryContractText(YAML.stringify(valid)));
 });

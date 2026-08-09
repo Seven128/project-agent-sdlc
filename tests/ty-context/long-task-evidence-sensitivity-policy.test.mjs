@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { validateCounterfactualObservationImpact } from "../../packages/ty-context/dist/lib/long-task-evidence-sensitivity-policy.js";
 import {
   createDeliveryFixture,
   runCli,
@@ -13,6 +14,43 @@ import {
   assertActivationRejects,
   counterfactual,
 } from "./long-task-evidence-sensitivity-fixtures.mjs";
+
+test("Counterfactual observation impact enforces expected, preserved, unlisted, and allowed fan-out sets", () => {
+  const baseline = {
+    expected: "expected-before",
+    preserved: "preserved-before",
+    unlisted: "unlisted-before",
+    fanout: "fanout-before",
+  };
+  const validate = (mutated) =>
+    validateCounterfactualObservationImpact({
+      baseline_by_fact: baseline,
+      mutated_by_fact: { ...baseline, ...mutated },
+      expected_affected_fact_refs: ["expected"],
+      preserved_fact_refs: ["preserved"],
+      allowed_fanout_fact_refs: ["fanout"],
+      target_live: true,
+      carrier_role: "product",
+    });
+
+  assert.equal(validate({ expected: "expected-after" }), null);
+  assert.equal(validate({}), "counterfactual_expected_fact_unchanged");
+  assert.equal(
+    validate({
+      expected: "expected-after",
+      preserved: "preserved-after",
+    }),
+    "counterfactual_unexpected_fact_impact",
+  );
+  assert.equal(
+    validate({ expected: "expected-after", unlisted: "unlisted-after" }),
+    "counterfactual_unexpected_fact_impact",
+  );
+  assert.equal(
+    validate({ expected: "expected-after", fanout: "fanout-after" }),
+    null,
+  );
+});
 
 test("behavioral Claim proof needs semantic replacement even with an unrelated Artifact", async () => {
   const fixture = await createDeliveryFixture();
@@ -88,8 +126,8 @@ test("every behavioral Assertion needs an attributable semantic witness", async 
 test("semantic replacement must preserve an independent target liveness witness", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    fixture.contract.outcomes[0].acceptance.counterfactual_controls[0]
-      .preserved_assertions = [];
+    fixture.contract.outcomes[0].acceptance.counterfactual_controls[0].preserved_assertions =
+      [];
     await assertActivationRejects(fixture, {
       code: "behavioral_counterfactual_liveness_witness_required",
       includes: ["first-result"],
@@ -161,7 +199,7 @@ test("a currently bad carrier may compile but cannot pass the Final Gate", async
         ({ compileDeliveryContract }) =>
           compileDeliveryContract(fixture.workdir, fixture.root, {
             require_completion_gate: false,
-        }),
+          }),
       ),
     );
     await runCli(fixture.root, ["enable", "long-task"]);
