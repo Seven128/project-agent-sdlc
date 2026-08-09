@@ -24,6 +24,7 @@ import {
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
+import { fixtureProductRootArgv } from "./long-task-package-machine-fixture.mjs";
 
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
@@ -144,6 +145,71 @@ test("preflight rejects invalid Context, missing runner path and Outcome without
         require_completion_gate: false,
       }),
       /product_claim_required_surfaces_missing/,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Compile rejects a missing unbound repository file token in the complete product root argv", async () => {
+  for (const token of [
+    "tests/missing-runtime-config.json",
+    "--config=tests/missing-runtime-config.json",
+  ]) {
+    const fixture = await createDeliveryFixture();
+    try {
+      const target = fixture.contract.task.execution_targets[0];
+      const check = fixture.contract.outcomes[0].acceptance.checks[0];
+      const rootArgv = [
+        ...fixtureProductRootArgv("tests/oracle.mjs", "first"),
+        token,
+      ];
+      target.root_argv = rootArgv;
+      check.runner.argv = [...rootArgv];
+      await synchronizeFixtureExecutionTargetSource(
+        fixture.root,
+        fixture.contract,
+      );
+      await writeContract(fixture.workdir, fixture.contract);
+
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        /process_root_production_binding_required:fixture-app:tests\/missing-runtime-config\.json/u,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("Compile does not reinterpret URL or slash-bearing label argv as repository files", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const target = fixture.contract.task.execution_targets[0];
+    const check = fixture.contract.outcomes[0].acceptance.checks[0];
+    const rootArgv = [
+      ...fixtureProductRootArgv("tests/oracle.mjs", "first"),
+      "https://example.test/runtime",
+      "--endpoint=https://example.test/runtime",
+      "C:/external/config.json",
+      "../external/config.json",
+      "feature/channel",
+      "--label=release/channel",
+    ];
+    target.root_argv = rootArgv;
+    check.runner.argv = [...rootArgv];
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
+    await writeContract(fixture.workdir, fixture.contract);
+
+    await assert.doesNotReject(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

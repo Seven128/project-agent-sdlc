@@ -428,6 +428,19 @@ function finalPathFindings(
           expected: binding.carrier_paths,
           next_action: "Implement the declared binding and rerun verification.",
         });
+  for (const check of allCompiledChecks(compiled))
+    for (const runtimePath of check.process_runtime_closure
+      ?.allowed_runtime_files ?? [])
+      if (!manifest.files.some((file) => file.path === runtimePath))
+        findings.push({
+          code: "process_runtime_input_missing",
+          outcome_key: check.outcome_key,
+          check_key: check.key,
+          message: `Declared process runtime input did not exist in the Final Gate candidate: ${runtimePath}`,
+          expected: runtimePath,
+          next_action:
+            "Materialize the Source-backed product root and every declared production runtime input, then rerun Final Gate.",
+        });
   return findings;
 }
 

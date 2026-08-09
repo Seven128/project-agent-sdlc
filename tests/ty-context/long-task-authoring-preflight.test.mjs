@@ -16,6 +16,8 @@ import { compactLongTaskTemplate } from "../../packages/ty-context/dist/commands
 import { authoringRevisionPreview } from "../../packages/ty-context/dist/lib/long-task-authoring-authority-preview.js";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
+import { sha256Hex } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   activeAuthorityLockPath,
   activeRecordPath,
@@ -86,7 +88,7 @@ test("Authoring Preflight is ready, under two seconds and completely read-only",
     assert.ok(performance.now() - started < 2000);
     assert.equal(result.status, "ready");
     assert.equal(result.would_create_authority_lock, true);
-    assert.equal(result.source_coverage.resolved, 2);
+    assert.equal(result.source_coverage.resolved, 3);
     assert.equal(result.claim_coverage.uncovered_claims.length, 0);
     assert.deepEqual(await stateSnapshot(fixture), before);
     assert.equal(await exists(marker), false);
@@ -94,6 +96,41 @@ test("Authoring Preflight is ready, under two seconds and completely read-only",
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     assert.equal(await exists(await activeRecordPath(fixture.root)), true);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Authoring Preflight permits an exact planned product root without weakening arbitrary runner checks", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const outcome = fixture.contract.outcomes[0];
+    const rootBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === "product-root-first",
+    );
+    rootBinding.existence = "planned";
+    await rm(path.join(fixture.root, ...fixtureProductRootPath().split("/")));
+    await writeContract(fixture.workdir, fixture.contract);
+
+    const planned = await preflightDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    assert.equal(planned.status, "ready", JSON.stringify(planned));
+
+    outcome.acceptance.checks[0].runner.target = "tests/missing-oracle.mjs";
+    await writeContract(fixture.workdir, fixture.contract);
+    const arbitrary = await preflightDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    assert.equal(arbitrary.status, "not_ready");
+    assert.ok(
+      arbitrary.diagnostics.some(
+        (diagnostic) => diagnostic.code === "project_binary_path_not_found",
+      ),
+      JSON.stringify(arbitrary),
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -265,20 +302,13 @@ test("Authoring Preflight Revision Preview reports Source and Context materials 
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const sourceStatement = "The revised first outcome remains observable.";
+    const sourcePath = path.join(fixture.root, "source.md");
     await writeFile(
-      path.join(fixture.root, "source.md"),
-      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-<a id="fixture-source"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=first-observable kind=requirement -->
-${sourceStatement}
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
-Preserve the fixture state owner and verifier boundary.
-<!-- ty-source-item:end -->
-`,
+      sourcePath,
+      (await readFile(sourcePath, "utf8")).replace(
+        "The first outcome must be observable.",
+        sourceStatement,
+      ),
     );
     fixture.contract.source_claims[0].statement = sourceStatement;
     fixture.contract.outcomes[0].product.requirements[0].statement =
@@ -326,11 +356,7 @@ test("init template runs through Preflight, Compile and package-observed Final G
   const fixture = await createDeliveryFixture();
   try {
     const contract = parseDeliveryContractText(compactLongTaskTemplate());
-    const semanticManifest = admitPackageExactFixtureSemanticManifest(
-      authoringTemplateSemanticManifest(),
-    );
-    contract.semantic_fact_manifest.sha256 =
-      semanticManifestIdentity(semanticManifest);
+    const semanticManifestSource = authoringTemplateSemanticManifest();
     const executionTarget = contract.task.execution_targets[0];
     const check = contract.outcomes[0].acceptance.checks[0];
     const rootArgv = fixtureProductRootArgv(
@@ -339,10 +365,37 @@ test("init template runs through Preflight, Compile and package-observed Final G
     );
     executionTarget.root_entrypoint = fixtureProductRootPath();
     executionTarget.root_argv = rootArgv;
+    const executionTargetStatement =
+      executionTargetSourceStatement(executionTarget);
+    semanticManifestSource.scope.source_item_refs.push(
+      "replace-execution-target",
+    );
+    semanticManifestSource.inputs.push({
+      key: "input.replace-execution-target",
+      kind: "source_item",
+      source_ref: "replace-execution-target",
+      sha256: sha256Hex(executionTargetStatement),
+      disposition: "non_ui_material",
+      fact_refs: ["replace.result.observable"],
+      basis_refs: ["replace-execution-target"],
+      rationale:
+        "The Source-backed process root and complete argv are inventoried as runtime authority rather than a separate product Fact.",
+    });
+    addSemanticSourceItemLineage(
+      semanticManifestSource,
+      "replace-execution-target",
+      "input.replace-execution-target",
+    );
+    const semanticManifest = admitPackageExactFixtureSemanticManifest(
+      semanticManifestSource,
+    );
+    contract.semantic_fact_manifest.sha256 =
+      semanticManifestIdentity(semanticManifest);
     check.runner.type = "project_binary";
     check.runner.target = fixtureProductRootPath();
     check.runner.argv = [...rootArgv];
     check.runner.idempotent = true;
+    check.verification_inputs = ["tests/replace-semantic-failure.ts"];
     check.expected_output_paths = [];
     contract.outcomes[0].technical.bindings[0].existence = "existing";
     for (const assertion of [
@@ -352,15 +405,47 @@ test("init template runs through Preflight, Compile and package-observed Final G
       assertion.evidence_capabilities = assertion.evidence_capabilities.filter(
         (capability) => capability !== "state_delta",
       );
-    contract.outcomes[0].product.owner.path_globs.push("bin/**");
+    contract.outcomes[0].product.owner.path_globs.push(
+      "bin/**",
+      "tests/replace-oracle.mjs",
+    );
+    contract.outcomes[0].technical.allowed_support_paths.push(
+      "bin/**",
+      "tests/replace-oracle.mjs",
+    );
+    contract.outcomes[0].technical.bindings.push(
+      {
+        key: "replace-product-root",
+        kind: "file",
+        target: fixtureProductRootPath(),
+        carrier_paths: [fixtureProductRootPath()],
+        existence: "existing",
+      },
+      {
+        key: "replace-product-module",
+        kind: "file",
+        target: "tests/replace-oracle.mjs",
+        carrier_paths: ["tests/replace-oracle.mjs"],
+        existence: "existing",
+      },
+    );
     contract.outcomes[0].acceptance.checks[0].artifact_globs = [
       "artifacts/proof.json",
     ];
     await mkdir(path.join(fixture.root, "plans"), { recursive: true });
     await writeFile(
       path.join(fixture.root, "plans", "replace-me.md"),
-      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-background:start key=replace-architecture-anchor reason=markdown-structure -->\n<a id="replace-architecture"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-architecture kind=technical_obligation aspect=architecture -->\nPreserve the declared owner, dependency direction, verifier boundary and architecture conformance.\n<!-- ty-source-item:end -->\n\n\`\`\`yaml semantic-fact-manifest-v1\n${YAML.stringify(JSON.parse(JSON.stringify(semanticManifest)), { lineWidth: 0 }).trimEnd()}\n\`\`\`\n`,
+      `<!-- ty-source-background:start key=replace-heading reason=markdown-structure -->\n<a id="replace-requirement"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-requirement kind=requirement -->\nPreserve one atomic source requirement.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-background:start key=replace-architecture-anchor reason=markdown-structure -->\n<a id="replace-architecture"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=replace-architecture kind=technical_obligation aspect=architecture -->\nPreserve the declared owner, dependency direction, verifier boundary and architecture conformance.\n<!-- ty-source-item:end -->\n\n<!-- ty-source-item:start key=replace-execution-target kind=technical_obligation aspect=architecture -->\n${executionTargetStatement}\n<!-- ty-source-item:end -->\n\n\`\`\`yaml semantic-fact-manifest-v1\n${YAML.stringify(JSON.parse(JSON.stringify(semanticManifest)), { lineWidth: 0 }).trimEnd()}\n\`\`\`\n`,
     );
+    contract.source_claims.push({
+      key: "replace-execution-target",
+      source_ref: "plans/replace-me.md#replace-requirement",
+      statement: executionTargetStatement,
+      disposition: {
+        type: "claim",
+        refs: ["execution_target.replace-runtime"],
+      },
+    });
     await writeFile(
       path.join(fixture.root, "project_context", "areas", "replace-me.md"),
       "# Replace owner\n",
@@ -479,4 +564,29 @@ async function git(cwd, args) {
 
 function lineCount(value) {
   return value.trimEnd().split(/\r?\n/u).length;
+}
+
+function addSemanticSourceItemLineage(manifest, sourceItemRef, inputRef) {
+  for (const collection of [
+    "family_dispositions",
+    "subjects",
+    "relations",
+    "populations",
+    "axis_dispositions",
+    "condition_rules",
+    "conditions",
+    "condition_exclusions",
+    "property_dispositions",
+    "fact_cells",
+    "facts",
+  ])
+    for (const row of manifest[collection] ?? [])
+      if (
+        Array.isArray(row.source_item_refs) &&
+        !row.source_item_refs.includes(sourceItemRef)
+      )
+        row.source_item_refs.push(sourceItemRef);
+  for (const fact of manifest.facts)
+    if (!fact.provenance.basis_refs.includes(inputRef))
+      fact.provenance.basis_refs.push(inputRef);
 }

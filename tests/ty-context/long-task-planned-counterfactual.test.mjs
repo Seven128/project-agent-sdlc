@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
@@ -8,6 +8,7 @@ import {
   createDeliveryFixture,
   runCli,
   runCliFailure,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -16,6 +17,93 @@ import {
 } from "./long-task-package-machine-fixture.mjs";
 
 const PLANNED_PRODUCT_PATH = "tests/planned-product.mjs";
+
+test("planned exact process root, argv dependency and carrier materialize without an Authority revision", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const outcome = fixture.contract.outcomes[0];
+    const rootPath = fixtureProductRootPath();
+    const modulePath = "tests/oracle.mjs";
+    const carrierPath = "src/state.json";
+    const saved = await Promise.all(
+      [rootPath, modulePath, carrierPath].map(async (relative) => {
+        const absolute = path.join(fixture.root, ...relative.split("/"));
+        return {
+          relative,
+          bytes: await readFile(absolute),
+          mode: (await stat(absolute)).mode,
+        };
+      }),
+    );
+    for (const binding of outcome.technical.bindings)
+      binding.existence = "planned";
+    for (const file of saved)
+      await rm(path.join(fixture.root, ...file.relative.split("/")));
+    await writeContract(fixture.workdir, fixture.contract);
+
+    const preflight = await preflightDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    assert.equal(preflight.status, "ready", JSON.stringify(preflight));
+    await runCli(fixture.root, ["enable", "long-task"]);
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    const closure =
+      compiled.outcomes[0].acceptance.checks[0].process_runtime_closure;
+    assert.deepEqual(closure.root_argv_files, [modulePath]);
+    assert.deepEqual(closure.production_carrier_files, [carrierPath]);
+    assert.deepEqual(
+      closure.allowed_runtime_files,
+      [rootPath, carrierPath, modulePath].sort(),
+    );
+
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const missing = await runCliFailure(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(missing.workflow_status, "needs_work");
+    assert.ok(
+      missing.findings.some((finding) => finding.code === "binding_missing"),
+    );
+    assert.equal(missing.check_results.length, 0);
+
+    for (const file of saved) {
+      const absolute = path.join(fixture.root, ...file.relative.split("/"));
+      await writeFile(absolute, file.bytes);
+      if (process.platform !== "win32")
+        await chmod(absolute, file.mode & 0o777);
+    }
+    const materialized = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      {
+        live_gate: true,
+        initial_task_base: compiled.initial_task_base,
+        authority_revision: compiled.authority_revision,
+      },
+    );
+    assert.equal(materialized.compiled_identity, compiled.compiled_identity);
+    assert.equal(
+      materialized.outcomes[0].acceptance.checks[0].process_runtime_closure
+        .closure_identity,
+      closure.closure_identity,
+    );
+    const accepted = await runCli(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.equal(accepted.workflow_status, "machine_accepted");
+    assert.equal(accepted.compiled_identity, compiled.compiled_identity);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
 
 test("planned Counterfactual targets may be absent at Preflight and Compile", async () => {
   const fixture = await createDeliveryFixture();
@@ -40,7 +128,7 @@ test("an existing Counterfactual target remains fail-closed when absent", async 
   const fixture = await createDeliveryFixture();
   try {
     await configurePlannedCarrier(fixture);
-    fixture.contract.outcomes[0].technical.bindings[0].existence = "existing";
+    plannedCarrierBinding(fixture).existence = "existing";
     await writeContract(fixture.workdir, fixture.contract);
     const preflight = await preflightDeliveryContract(
       fixture.workdir,
@@ -130,7 +218,7 @@ test("planned to existing enters reviewed Technical Authority revision", async (
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    fixture.contract.outcomes[0].technical.bindings[0].existence = "existing";
+    plannedCarrierBinding(fixture).existence = "existing";
     await writeContract(fixture.workdir, fixture.contract);
     const failure = await runCliFailure(fixture.root, [
       "long-task",
@@ -166,7 +254,7 @@ test("planned to existing enters reviewed Technical Authority revision", async (
 
 async function configurePlannedCarrier(fixture) {
   const outcome = fixture.contract.outcomes[0];
-  const binding = outcome.technical.bindings[0];
+  const binding = plannedCarrierBinding(fixture);
   binding.target = "src/planned.json";
   binding.carrier_paths = ["src/planned.json"];
   binding.existence = "planned";
@@ -180,10 +268,14 @@ async function configurePlannedCarrier(fixture) {
   check.runner.type = "project_binary";
   check.runner.target = fixtureProductRootPath();
   check.runner.argv = [...rootArgv];
-  check.verification_inputs = [
-    PLANNED_PRODUCT_PATH,
-    "tests/semantic-false.json",
-  ];
+  const moduleBinding = outcome.technical.bindings.find(
+    (candidate) => candidate.key === "product-module-first",
+  );
+  moduleBinding.target = PLANNED_PRODUCT_PATH;
+  moduleBinding.carrier_paths = [PLANNED_PRODUCT_PATH];
+  outcome.product.owner.path_globs.push(PLANNED_PRODUCT_PATH);
+  outcome.technical.allowed_support_paths.push(PLANNED_PRODUCT_PATH);
+  check.verification_inputs = ["tests/semantic-false.json"];
   const semanticControl = outcome.acceptance.counterfactual_controls[0];
   semanticControl.mutation = {
     type: "replace_json_value",
@@ -200,6 +292,7 @@ async function configurePlannedCarrier(fixture) {
     value: true,
   };
   relationControl.preserved_assertions = ["first-liveness"];
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
   await writeFile(
     path.join(fixture.root, ...PLANNED_PRODUCT_PATH.split("/")),
@@ -221,5 +314,11 @@ console.log(JSON.stringify({
   }
 }));
 `,
+  );
+}
+
+function plannedCarrierBinding(fixture) {
+  return fixture.contract.outcomes[0].technical.bindings.find(
+    (binding) => binding.key === "state-first",
   );
 }

@@ -17,6 +17,7 @@ import {
   classifyRepositoryPatternOverlap,
   matchesRepoPattern,
   normalizeRepositoryFile,
+  proveRepositoryPatternSubset,
 } from "./long-task-paths.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import {
@@ -82,7 +83,8 @@ export async function freezeDeliveryCheck(
         (output) =>
           classifyRepositoryPatternOverlap(output, normalized).status ===
           "proven_overlap",
-      )
+      ) &&
+      !plannedBindingMayProvideInput(productionBindings, normalized)
     )
       throw new Error(`input_path_not_found:${check.key}:${pattern}`);
   }
@@ -100,7 +102,14 @@ export async function freezeDeliveryCheck(
   );
   if (!(await stat(cwd).catch(() => null))?.isDirectory())
     throw new Error(`runner_cwd_not_found:${check.key}:${check.runner.cwd}`);
-  const target = await resolvedRunnerTarget(check, repository, cwd);
+  const target = await resolvedRunnerTarget(
+    check,
+    repository,
+    cwd,
+    executionTarget,
+    productionBindings,
+    sourceBackedExecutionTarget,
+  );
   const verificationInputHashes = await freezeVerificationInputs(
     check,
     repository,
@@ -142,7 +151,6 @@ export async function freezeDeliveryCheck(
     production_bindings: productionBindings,
     production_owner_paths: productionOwnerPaths,
     source_backed_execution_target: sourceBackedExecutionTarget,
-    workspace_manifest: baseline,
     protected_authority_paths: protectedAuthorityPaths,
   });
   const compiled = {
@@ -192,6 +200,9 @@ async function resolvedRunnerTarget(
   check: DeliveryCheckV2,
   repository: string,
   cwd: string,
+  executionTarget: ExecutionTargetV2,
+  productionBindings: DeliveryBindingV2[],
+  sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null,
 ): Promise<string> {
   if (check.runner.type === "package_script") {
     const packageFile = await nearestRunnerFile(
@@ -214,10 +225,24 @@ async function resolvedRunnerTarget(
     check.runner.target,
     `${check.key}.target`,
   );
-  if (!(await stat(target).catch(() => null))?.isFile())
+  const targetInfo = await stat(target).catch(() => null);
+  if (!targetInfo?.isFile()) {
+    const relativeTarget = repoRelative(repository, target);
+    if (
+      !targetInfo &&
+      plannedDirectProductRoot({
+        check,
+        executionTarget,
+        productionBindings,
+        sourceBackedExecutionTarget,
+        relativeTarget,
+      })
+    )
+      return target;
     throw new Error(
       `${check.runner.type}_path_not_found:${check.key}:${check.runner.target}`,
     );
+  }
   const protectedTarget = await assertProtectedRepositoryFile(
     repository,
     target,
@@ -225,6 +250,57 @@ async function resolvedRunnerTarget(
   );
   repoRelative(repository, protectedTarget);
   return protectedTarget;
+}
+
+function plannedBindingMayProvideInput(
+  bindings: readonly DeliveryBindingV2[],
+  inputPattern: string,
+): boolean {
+  return bindings.some(
+    (binding) =>
+      binding.existence === "planned" &&
+      binding.carrier_paths.some(
+        (carrier) =>
+          isExactRepositoryFile(carrier, `${binding.key}.carrier`) &&
+          proveRepositoryPatternSubset(carrier, inputPattern).status ===
+            "proven_subset",
+      ),
+  );
+}
+
+function plannedDirectProductRoot(input: {
+  check: DeliveryCheckV2;
+  executionTarget: ExecutionTargetV2;
+  productionBindings: readonly DeliveryBindingV2[];
+  sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null;
+  relativeTarget: string;
+}): boolean {
+  return (
+    input.check.runner.type === "project_binary" &&
+    input.check.execution_target.entrypoint === "root" &&
+    input.executionTarget.role === "product" &&
+    input.executionTarget.runtime_family === "process" &&
+    input.sourceBackedExecutionTarget?.target_ref ===
+      input.executionTarget.key &&
+    input.relativeTarget === input.executionTarget.root_entrypoint &&
+    input.productionBindings.some(
+      (binding) =>
+        binding.existence === "planned" &&
+        binding.carrier_paths.some(
+          (carrier) =>
+            isExactRepositoryFile(carrier, `${binding.key}.carrier`) &&
+            carrier === input.relativeTarget,
+        ),
+    )
+  );
+}
+
+function isExactRepositoryFile(value: string, label: string): boolean {
+  try {
+    return normalizeRepositoryFile(value, label) === value;
+  } catch {
+    return false;
+  }
 }
 
 async function freezeRunner(

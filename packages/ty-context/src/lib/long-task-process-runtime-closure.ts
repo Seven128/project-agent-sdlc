@@ -7,7 +7,6 @@ import type {
   ExecutionTargetV2,
   FrozenRunnerV2,
   SourceBackedExecutionTargetV2,
-  WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import {
   classifyRepositoryPatternOverlap,
@@ -24,13 +23,7 @@ export interface CompileProcessRuntimeClosureInput {
   production_bindings: readonly DeliveryBindingV2[];
   production_owner_paths: readonly string[];
   source_backed_execution_target: SourceBackedExecutionTargetV2 | null;
-  workspace_manifest: WorkspaceManifestV2;
   protected_authority_paths: readonly string[];
-}
-
-interface ExpandedBinding {
-  binding: DeliveryBindingV2;
-  files: string[];
 }
 
 export function compileProcessRuntimeClosure(
@@ -50,15 +43,11 @@ export function compileProcessRuntimeClosure(
     input.execution_target.root_entrypoint,
     `${input.check.key}.process_root`,
   );
-  requireManifestFile(input.workspace_manifest, rootTarget, targetRef);
-  const expandedBindings = input.production_bindings.map((binding) => ({
-    binding,
-    files: expandBinding(input.workspace_manifest, binding),
-  }));
+  const productionBindings = [...input.production_bindings];
 
   validateInputRoleSeparation(input);
   requireProductionOwnership(input, rootTarget, targetRef);
-  const rootBindings = bindingsContaining(expandedBindings, rootTarget);
+  const rootBindings = bindingsContaining(productionBindings, rootTarget);
   if (!rootBindings.length)
     fail(
       "process_root_production_binding_required",
@@ -68,13 +57,13 @@ export function compileProcessRuntimeClosure(
   const rootArgvFiles = argvAttributedRepositoryFiles(
     input.execution_target.root_argv ?? [],
     input.runner.resolved_cwd,
-    input.workspace_manifest,
+    productionBindings,
   );
-  const selectedBindings = new Map<string, ExpandedBinding>();
+  const selectedBindings = new Map<string, DeliveryBindingV2>();
   for (const binding of rootBindings) selectBinding(selectedBindings, binding);
   for (const argvFile of rootArgvFiles) {
     requireProductionOwnership(input, argvFile, targetRef);
-    const bindings = bindingsContaining(expandedBindings, argvFile);
+    const bindings = bindingsContaining(productionBindings, argvFile);
     if (!bindings.length)
       fail(
         "process_root_production_binding_required",
@@ -87,8 +76,8 @@ export function compileProcessRuntimeClosure(
   for (const carrierRef of processAuthorities.flatMap(
     (authority) => authority.carrier_refs,
   )) {
-    const matchingBindings = expandedBindings.filter(
-      ({ binding }) =>
+    const matchingBindings = productionBindings.filter(
+      (binding) =>
         binding.key === carrierRef.binding_ref &&
         carrierRef.carrier_paths.every((carrierPath) =>
           binding.carrier_paths.includes(carrierPath),
@@ -101,15 +90,25 @@ export function compileProcessRuntimeClosure(
       );
     for (const binding of matchingBindings) {
       selectBinding(selectedBindings, binding);
-      for (const carrierPath of carrierRef.carrier_paths)
-        for (const file of expandPattern(input.workspace_manifest, carrierPath))
-          productionCarrierFiles.add(file);
+      for (const carrierPath of carrierRef.carrier_paths) {
+        let carrierFile: string;
+        try {
+          carrierFile = normalizeRepositoryFile(
+            carrierPath,
+            `${input.check.key}.process_carrier`,
+          );
+        } catch {
+          fail(
+            "process_runtime_carrier_exact_path_required",
+            `${targetRef}:${carrierRef.binding_ref}:${carrierPath}`,
+          );
+        }
+        productionCarrierFiles.add(carrierFile);
+      }
     }
   }
 
   const allowedRuntimeFiles = new Set<string>([rootTarget, ...rootArgvFiles]);
-  for (const { files } of selectedBindings.values())
-    for (const file of files) allowedRuntimeFiles.add(file);
   for (const file of productionCarrierFiles) allowedRuntimeFiles.add(file);
   for (const file of allowedRuntimeFiles) {
     requireProductionOwnership(input, file, targetRef);
@@ -212,78 +211,107 @@ function requireProductionOwnership(
     );
 }
 
-function expandBinding(
-  manifest: WorkspaceManifestV2,
-  binding: DeliveryBindingV2,
-): string[] {
-  return [
-    ...new Set(
-      binding.carrier_paths.flatMap((pattern) =>
-        expandPattern(manifest, pattern),
-      ),
-    ),
-  ].sort();
-}
-
-function expandPattern(
-  manifest: WorkspaceManifestV2,
-  pattern: string,
-): string[] {
-  return manifest.files
-    .filter((file) => matchesRepoPattern(file.path, pattern))
-    .map((file) => file.path)
-    .sort();
-}
-
 function bindingsContaining(
-  bindings: readonly ExpandedBinding[],
+  bindings: readonly DeliveryBindingV2[],
   file: string,
-): ExpandedBinding[] {
-  return bindings.filter(({ binding }) =>
+): DeliveryBindingV2[] {
+  return bindings.filter((binding) =>
     binding.carrier_paths.some((pattern) => matchesRepoPattern(file, pattern)),
   );
 }
 
 function selectBinding(
-  selected: Map<string, ExpandedBinding>,
-  binding: ExpandedBinding,
+  selected: Map<string, DeliveryBindingV2>,
+  binding: DeliveryBindingV2,
 ): void {
-  const existing = selected.get(binding.binding.key);
-  if (
-    existing &&
-    canonicalValueJson(existing.binding) !== canonicalValueJson(binding.binding)
-  )
+  const existing = selected.get(binding.key);
+  if (existing && canonicalValueJson(existing) !== canonicalValueJson(binding))
     fail(
       "process_root_production_binding_required",
-      `${binding.binding.key}:ambiguous`,
+      `${binding.key}:ambiguous`,
     );
-  selected.set(binding.binding.key, binding);
-}
-
-function requireManifestFile(
-  manifest: WorkspaceManifestV2,
-  file: string,
-  targetRef: string,
-): void {
-  if (
-    manifest.files.filter((candidate) => candidate.path === file).length !== 1
-  )
-    fail("process_root_production_binding_required", `${targetRef}:${file}`);
+  selected.set(binding.key, binding);
 }
 
 function argvAttributedRepositoryFiles(
   argv: readonly string[],
   cwd: string,
-  manifest: WorkspaceManifestV2,
+  bindings: readonly DeliveryBindingV2[],
 ): string[] {
-  return manifest.files
-    .map((file) => file.path)
-    .filter((artifactPath) =>
-      argv.some((argument) =>
-        argumentReferencesArtifact(argument, artifactPath, cwd),
-      ),
-    )
-    .sort();
+  const candidates = new Set(lexicalRepositoryPathCandidates(argv, cwd));
+  for (const binding of bindings)
+    for (const candidate of exactBindingFiles(binding))
+      if (
+        argv.some((argument) =>
+          argumentReferencesArtifact(argument, candidate, cwd),
+        )
+      )
+        candidates.add(candidate);
+  return [...candidates].sort();
+}
+
+function exactBindingFiles(binding: DeliveryBindingV2): string[] {
+  const candidates = [
+    ...(binding.kind === "file" ? [binding.target] : []),
+    ...binding.carrier_paths,
+  ];
+  const result: string[] = [];
+  for (const candidate of candidates)
+    try {
+      result.push(normalizeRepositoryFile(candidate, `${binding.key}.carrier`));
+    } catch {
+      // A pattern Binding can own an exact attributed path without making the
+      // whole dynamic match set part of the stable runtime closure.
+    }
+  return [...new Set(result)].sort();
+}
+
+function lexicalRepositoryPathCandidates(
+  argv: readonly string[],
+  cwd: string,
+): string[] {
+  const result = new Set<string>();
+  for (const argument of argv) {
+    const value = rootArgvFileToken(argument);
+    if (!value) continue;
+    const relative = value.startsWith("./") ? value.slice(2) : value;
+    const candidate =
+      cwd && !relative.startsWith(`${cwd}/`)
+        ? path.posix.join(cwd, relative)
+        : relative;
+    try {
+      result.add(normalizeRepositoryFile(candidate, "process_root_argv"));
+    } catch {
+      // Absolute, escaping and otherwise non-repository values are not paths
+      // in the admitted root-argv file-token subset.
+    }
+  }
+  return [...result].sort();
+}
+
+function rootArgvFileToken(argument: string): string | null {
+  const portable = argument.replace(/\\/gu, "/").trim();
+  if (!portable || /\s/u.test(portable)) return null;
+  const separator = portable.indexOf("=");
+  const candidate = separator >= 0 ? portable.slice(separator + 1) : portable;
+  const unquoted = candidate.replace(/^(?:"([^"]+)"|'([^']+)')$/u, "$1$2");
+  if (
+    !unquoted ||
+    /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(unquoted) ||
+    /^[A-Za-z]:\//u.test(unquoted) ||
+    unquoted.startsWith("/") ||
+    unquoted.startsWith("../") ||
+    unquoted.includes("/../")
+  )
+    return null;
+  if (!isRecognizedRepositoryFileName(unquoted)) return null;
+  return unquoted;
+}
+
+function isRecognizedRepositoryFileName(value: string): boolean {
+  return /\.(?:json|ya?ml|toml|js|mjs|cjs|ts|tsx|jsx|css|html|txt|md|conf|config|ini)$/iu.test(
+    value,
+  );
 }
 
 function argumentReferencesArtifact(
