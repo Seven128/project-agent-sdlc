@@ -12,7 +12,7 @@ const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const rolloutMarker =
   "UI symbolic V2 is explicit opt-in; V1 remains the default.";
 const scopeMarker =
-  "Non-UI symbolic admission and Provider/P0 trust-boundary work remain out of scope.";
+  "Non-UI symbolic admission remains out of scope; machine-observer and verifier/runner trust-boundary closure is mandatory rather than deferred Provider/P0 work.";
 const efficiencyMarker =
   "Purpose-fulfillment efficiency non-degradation is a package mechanism-change admission property, not an AcceptedDeliveryTerminal condition.";
 
