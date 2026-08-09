@@ -27,6 +27,8 @@ Migration must never silently:
 - turn machine proof into `external_confirmation`;
 - replace a verifier wrapper with a product root entrypoint;
 - infer a static structure carrier from `Binding`/`input_paths` alone; or
+- infer a process runtime dependency from `input_paths`, runner or verification membership;
+- invent a Source-backed execution target or production Binding for an old root; or
 - preserve a known false-acceptance path as compatibility behavior.
 
 Preflight and doctor should report the narrow failing obligation and an
@@ -41,6 +43,13 @@ actionable manual route through diagnostics such as
 `process_observer_root_invocation_required`,
 `process_observer_root_argv_mismatch`,
 `process_observation_input_changed_by_runner`,
+`process_runtime_input_expected_authority_forbidden`,
+`process_runtime_input_verification_role_forbidden`,
+`process_runtime_input_evidence_role_forbidden`,
+`process_root_source_binding_required`,
+`process_root_production_binding_required`,
+`process_root_source_identity_mismatch`,
+`process_runtime_closure_identity_mismatch`,
 `legacy_target_runtime_non_authoritative`,
 `counterfactual_admitted_observation_required`,
 `counterfactual_runtime_reachability_unproven` and
