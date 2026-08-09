@@ -15,6 +15,7 @@ import {
   pathExists,
   runCli,
   runCliFailure,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -134,6 +135,8 @@ test("Authority Revision separates user decisions from mechanically bounded repa
 
     const tightened = structuredClone(addedInput);
     tightened.outcomes[0].technical.allowed_support_paths = [
+      "bin/**",
+      "tests/revision-oracle.mjs",
       "src/support/core/**",
       "artifacts/**",
       "tests/legacy-oracle.mjs",
@@ -213,10 +216,7 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
     );
     outcomeCheck.input_paths = ["src/state.json"];
     outcomeCheck.expected_output_paths = ["artifacts/proof.json"];
-    outcomeCheck.verification_inputs = [
-      "tests/global-oracle.mjs",
-      "tests/semantic-false.json",
-    ];
+    outcomeCheck.verification_inputs = ["tests/semantic-false.json"];
     fixture.contract.global.technical.constraints.push({
       key: "stable-runtime",
       statement: "Runtime behavior remains stable.",
@@ -232,10 +232,7 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
     });
     const globalCheck = structuredClone(outcomeCheck);
     globalCheck.key = "global-check";
-    globalCheck.verification_inputs = [
-      "tests/global-oracle.mjs",
-      "tests/semantic-false.json",
-    ];
+    globalCheck.verification_inputs = ["tests/semantic-false.json"];
     globalCheck.positive_assertions = [
       {
         key: "global-proof",
@@ -266,7 +263,7 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
       },
     ];
     fixture.contract.global.acceptance.checks.push(globalCheck);
-    configureDirectProductScript(fixture.contract, "tests/global-oracle.mjs", [
+    await configureDirectProductScript(fixture, "tests/global-oracle.mjs", [
       outcomeCheck,
       globalCheck,
     ]);
@@ -427,14 +424,20 @@ test("per-Check progress accumulates and stales only on scoped inputs", async ()
     for (const outcome of fixture.contract.outcomes) {
       const check = outcome.acceptance.checks[0];
       check.verification_inputs = [
-        "tests/scoped-oracle.mjs",
         "tests/oracle.mjs",
         `tests/scoped-semantic-${outcome.key === "first" ? "false" : "true"}.json`,
       ];
       check.input_paths = ["src/state.json", `src/${outcome.key}.json`];
+      outcome.technical.bindings.push({
+        key: `scoped-state-${outcome.key}`,
+        kind: "file",
+        target: `src/${outcome.key}.json`,
+        carrier_paths: [`src/${outcome.key}.json`],
+        existence: "existing",
+      });
     }
-    configureDirectProductScript(
-      fixture.contract,
+    await configureDirectProductScript(
+      fixture,
       "tests/scoped-oracle.mjs",
       fixture.contract.outcomes.map((outcome) => outcome.acceptance.checks[0]),
     );
@@ -486,15 +489,12 @@ test("Counterfactual failure is persisted as failing Check Progress", async () =
     );
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
     check.verification_inputs = [
-      "tests/constant-oracle.mjs",
       "tests/oracle.mjs",
       "tests/semantic-false.json",
     ];
-    configureDirectProductScript(
-      fixture.contract,
-      "tests/constant-oracle.mjs",
-      [check],
-    );
+    await configureDirectProductScript(fixture, "tests/constant-oracle.mjs", [
+      check,
+    ]);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -629,7 +629,8 @@ test("runner retries only an explicitly safe infrastructure failure", async () =
   assert.equal(unsafe.attempts, 1);
 });
 
-function configureDirectProductScript(contract, script, checks) {
+async function configureDirectProductScript(fixture, script, checks) {
+  const { contract } = fixture;
   const rootArgv = fixtureProductRootArgv(script, "first");
   const target = contract.task.execution_targets[0];
   target.root_entrypoint = fixtureProductRootPath();
@@ -640,4 +641,23 @@ function configureDirectProductScript(contract, script, checks) {
     check.runner.argv = [...rootArgv];
     check.runner.idempotent = true;
   }
+  for (const outcome of contract.outcomes) {
+    const productModule = outcome.technical.bindings.find(
+      (binding) => binding.key === `product-module-${outcome.key}`,
+    );
+    productModule.target = script;
+    productModule.carrier_paths = [script];
+    outcome.product.owner.path_globs = outcome.product.owner.path_globs.filter(
+      (entry) => entry !== "tests/oracle.mjs",
+    );
+    outcome.technical.allowed_support_paths =
+      outcome.technical.allowed_support_paths.filter(
+        (entry) => entry !== "tests/oracle.mjs",
+      );
+    if (!outcome.product.owner.path_globs.includes(script))
+      outcome.product.owner.path_globs.push(script);
+    if (!outcome.technical.allowed_support_paths.includes(script))
+      outcome.technical.allowed_support_paths.push(script);
+  }
+  await synchronizeFixtureExecutionTargetSource(fixture.root, contract);
 }

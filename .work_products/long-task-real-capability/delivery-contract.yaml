@@ -1878,6 +1878,12 @@ outcomes:
           - tools/long_task_real_process_roi_scoring.mjs
           - tools/verify_long_task_real_process_roi.mjs
           - tests/ty-context/long-task-real-process-roi.test.mjs
+          - tests/ty-context/long-task-authority-authoring-fields.test.mjs
+          - tests/ty-context/long-task-authority-revision-classification.test.mjs
+          - tests/ty-context/long-task-direct-process-observer.test.mjs
+          - tests/ty-context/long-task-execution-observation.test.mjs
+          - tests/ty-context/long-task-semantic-assurance-closure.test.mjs
+          - tests/ty-context/long-task-semantic-variant-fixture.mjs
       requirements:
         - key: material-input-provenance
           statement: 本 Source 是本 Goal 唯一的项目原生需求载体，完整归并原方案附件 `pasted-text.txt`（SHA-256 `d9ffda69a25d2145f881114e3fc1969173f1560fb748a6ebb2874f73155888c8`）、Codex 仓库证据审计、GPT Pro 最终裁决，以及用户批准的《Long-Task 真实能力闭环补开发方案 V2》。V2 以 `0f35e08a` 为历史基线并收紧剩余 observer/runner/runtime/production-reachability 边界；冲突时以 V2 和本 Source 的诚实 Level 3 交接为准。压缩或恢复必须从本 Source、Contract、当前 Context 与代码重建，不得从旧 compiled/progress/Receipt 或对话记忆继承完成结论。
@@ -2017,6 +2023,12 @@ outcomes:
         - tools/consumer_lab_full_test.mjs
         - tests/ty-context/consumer-lab-script.test.mjs
         - tests/ty-context/long-task-real-process-roi.test.mjs
+        - tests/ty-context/long-task-authority-authoring-fields.test.mjs
+        - tests/ty-context/long-task-authority-revision-classification.test.mjs
+        - tests/ty-context/long-task-direct-process-observer.test.mjs
+        - tests/ty-context/long-task-execution-observation.test.mjs
+        - tests/ty-context/long-task-semantic-assurance-closure.test.mjs
+        - tests/ty-context/long-task-semantic-variant-fixture.mjs
       forbidden_paths:
         - .git/**
       bindings:

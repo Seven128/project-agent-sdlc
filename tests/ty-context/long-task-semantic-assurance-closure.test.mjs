@@ -10,6 +10,7 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { FIXTURE_LEGACY_ORACLE_PATH } from "./long-task-package-machine-fixture.mjs";
 
 test("material prose cannot be hidden in a Source background block", () => {
   assert.throws(
@@ -173,6 +174,10 @@ test("[critical:semantic-assurance-closure] a misbound oracle that reads a passi
 test("transitive local verifier dependencies are frozen and checked by Final Gate", async () => {
   const fixture = await createDeliveryFixture();
   try {
+    configureLegacyVerificationInput(fixture, [
+      "tests/projection-helper.mjs",
+      "tests/projection-config.json",
+    ]);
     const helperPath = path.join(
       fixture.root,
       "tests",
@@ -188,9 +193,13 @@ test("transitive local verifier dependencies are frozen and checked by Final Gat
       helperPath,
       'export const projectionConfig = new URL("./projection-config.json", import.meta.url);\n',
     );
-    const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+    const oraclePath = path.join(
+      fixture.root,
+      ...FIXTURE_LEGACY_ORACLE_PATH.split("/"),
+    );
     const oracle = await readFile(oraclePath, "utf8");
     await writeFile(oraclePath, `import "./projection-helper.mjs";\n${oracle}`);
+    await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = JSON.parse(
@@ -221,7 +230,11 @@ test("transitive local verifier dependencies are frozen and checked by Final Gat
 test("a verifier with a non-literal local loader fails closed", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+    configureLegacyVerificationInput(fixture);
+    const oraclePath = path.join(
+      fixture.root,
+      ...FIXTURE_LEGACY_ORACLE_PATH.split("/"),
+    );
     const oracle = await readFile(oraclePath, "utf8");
     await writeFile(
       oraclePath,
@@ -232,7 +245,7 @@ test("a verifier with a non-literal local loader fails closed", async () => {
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /verification_dependency_dynamic_unresolved:tests\/oracle\.mjs/u,
+      /verification_dependency_dynamic_unresolved:tests\/legacy-oracle\.mjs/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -242,7 +255,11 @@ test("a verifier with a non-literal local loader fails closed", async () => {
 test("createRequire cannot hide a local verifier dependency", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    const oraclePath = path.join(fixture.root, "tests", "oracle.mjs");
+    configureLegacyVerificationInput(fixture);
+    const oraclePath = path.join(
+      fixture.root,
+      ...FIXTURE_LEGACY_ORACLE_PATH.split("/"),
+    );
     const oracle = await readFile(oraclePath, "utf8");
     await writeFile(
       oraclePath,
@@ -253,9 +270,24 @@ test("createRequire cannot hide a local verifier dependency", async () => {
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /verification_dependency_dynamic_unresolved:tests\/oracle\.mjs/u,
+      /verification_dependency_dynamic_unresolved:tests\/legacy-oracle\.mjs/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+function configureLegacyVerificationInput(fixture, dependencyPaths = []) {
+  const outcome = fixture.contract.outcomes[0];
+  const verifierPaths = [FIXTURE_LEGACY_ORACLE_PATH, ...dependencyPaths];
+  outcome.technical.allowed_support_paths =
+    outcome.technical.allowed_support_paths.filter(
+      (candidate) => !verifierPaths.includes(candidate),
+    );
+  for (const verifierPath of verifierPaths)
+    if (!outcome.product.owner.path_globs.includes(verifierPath))
+      outcome.product.owner.path_globs.push(verifierPath);
+  const check = outcome.acceptance.checks[0];
+  if (!check.verification_inputs.includes(FIXTURE_LEGACY_ORACLE_PATH))
+    check.verification_inputs.push(FIXTURE_LEGACY_ORACLE_PATH);
+}

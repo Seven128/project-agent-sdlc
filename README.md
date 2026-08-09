@@ -502,6 +502,12 @@ source_claims:
     disposition:
       type: claim
       refs: [observable-outcome.obligation.preserve-observable-owner]
+  - key: example-execution-target
+    source_ref: plans/example.md#example-runtime-target
+    statement: 'Execution target authority: {"capabilities":["cold-start","process-runtime","production-root"],"key":"example-runtime","role":"product","root_argv":["tests/runtime.mjs"],"root_entrypoint":"bin/example-runtime.exe","runtime_family":"process"}.'
+    disposition:
+      type: claim
+      refs: [execution_target.example-runtime]
 stages:
   - key: delivery
     title: Delivery
@@ -544,7 +550,7 @@ outcomes:
       owner:
         label: Owning product or module boundary
         context_refs: [project_context/areas/main.md]
-        path_globs: ["src/**", "tests/**"]
+        path_globs: ["src/**", bin/example-runtime.exe, tests/runtime.mjs, tests/verify-runtime.mjs]
       requirements:
         - key: observable
           statement: The outcome is observable.
@@ -561,7 +567,18 @@ outcomes:
           required_proof_surfaces: [runtime_behavior]
           applicability_refs: [runtime-root-success]
       expected_change_paths: ["src/**"]
+      allowed_support_paths: [bin/example-runtime.exe, tests/runtime.mjs]
       bindings:
+        - key: runtime-root
+          kind: file
+          target: bin/example-runtime.exe
+          carrier_paths: [bin/example-runtime.exe]
+          existence: existing
+        - key: runtime-module
+          kind: file
+          target: tests/runtime.mjs
+          carrier_paths: [tests/runtime.mjs]
+          existence: existing
         - key: observable-carrier
           kind: file
           target: src/observable.ts
@@ -581,7 +598,7 @@ outcomes:
             target: bin/example-runtime.exe
             argv: [tests/runtime.mjs]
             effect: read_only
-          verification_inputs: [bin/example-runtime.exe, tests/runtime.mjs]
+          verification_inputs: [tests/verify-runtime.mjs]
           input_paths: [src/observable.ts]
           expected_output_paths: []
           artifact_globs: [artifacts/proof.json]

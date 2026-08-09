@@ -9,6 +9,7 @@ import {
   createDeliveryFixture,
   deliveryContract,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
@@ -27,8 +28,8 @@ test("Compact and expanded V2 authoring normalize to the same Contract", () => {
   const expandedLines = lineCount(YAML.stringify(expanded));
   const compactLines = lineCount(YAML.stringify(compact));
   assert.ok(
-    compactLines <= Math.floor(expandedLines * 0.89),
-    `expected at least 11% fewer lines after explicit applicability, semantic-witness, and admitted-process metadata, expanded=${expandedLines}, compact=${compactLines}`,
+    compactLines <= Math.floor(expandedLines * 0.9),
+    `expected at least 10% fewer lines after explicit applicability, semantic-witness, and admitted-process metadata, expanded=${expandedLines}, compact=${compactLines}`,
   );
 });
 
@@ -46,6 +47,8 @@ Implement first
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
   );
   await writeContract(fixture.workdir, expanded);

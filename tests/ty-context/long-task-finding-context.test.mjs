@@ -51,6 +51,8 @@ test("Verify, Status and Resume retain Source-Claim-AC repair context", async ()
     assert.equal(finding.actual, false);
     assert.deepEqual(finding.owner_paths, [
       "src/**",
+      "bin/**",
+      "tests/oracle.mjs",
       "tests/legacy-oracle.mjs",
     ]);
     assert.match(finding.next_action, /acceptance assertion/u);

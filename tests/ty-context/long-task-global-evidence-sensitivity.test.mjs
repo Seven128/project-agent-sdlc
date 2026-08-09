@@ -14,6 +14,7 @@ import {
   addGlobalClaim,
   addGlobalCounterfactual,
   assertPreflightAndCompileReject,
+  GLOBAL_PRODUCT_PATH,
 } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
 
@@ -163,6 +164,8 @@ test("a constant Global Oracle cannot pass the Live Final Gate", async () => {
     assert.deepEqual(finding.source_target_refs, ["constraint.global-state"]);
     assert.deepEqual(finding.owner_paths, [
       "src/**",
+      "bin/**",
+      GLOBAL_PRODUCT_PATH,
       "tests/legacy-oracle.mjs",
     ]);
     assert.match(finding.next_action, /referenced implementation carrier/iu);
@@ -315,8 +318,12 @@ test("redundant Global Counterfactual removal auto-adopts but binding_ref replac
   const replaced = await createDeliveryFixture();
   try {
     await addGlobalClaim(replaced, { counterfactual: true });
+    const stateBinding = replaced.contract.outcomes[0].technical.bindings.find(
+      (binding) => binding.key === "state-first",
+    );
+    assert.ok(stateBinding, "fixture state binding is required");
     replaced.contract.outcomes[0].technical.bindings.push({
-      ...structuredClone(replaced.contract.outcomes[0].technical.bindings[0]),
+      ...structuredClone(stateBinding),
       key: "state-global-alternate",
     });
     await writeContract(replaced.workdir, replaced.contract);

@@ -7,6 +7,7 @@ import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long
 import {
   createDeliveryFixture,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -118,7 +119,7 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
     );
     await writeFile(
       path.join(fixture.root, "source.md"),
-      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->\n<a id="fixture-source"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n`,
+      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->\n<a id="fixture-source"></a>\n<!-- ty-source-background:end -->\n\n<!-- ty-source-item:start key=first-observable kind=requirement -->\nThe first outcome must be observable.\n<!-- ty-source-item:end -->\n\n${fixtureArchitectureSourceItem()}\n\n${fixtureExecutionTargetSourceItem()}\n`,
     );
     await writeContract(fixture.workdir, fixture.contract);
     await expectDecision(fixture, {
@@ -185,6 +186,8 @@ The first outcome must be observable.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 
 <!-- ty-source-item:start key=spinner-only kind=non_completing -->
 ${nonCompleting}

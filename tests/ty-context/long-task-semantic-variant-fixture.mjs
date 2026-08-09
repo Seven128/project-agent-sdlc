@@ -1,19 +1,20 @@
-import {
-  fixtureSemanticManifest,
-} from "./long-task-semantic-manifest-fixture.mjs";
+import { fixtureSemanticManifest } from "./long-task-semantic-manifest-fixture.mjs";
 import {
   digestText,
   refreshFixtureSemanticManifest,
 } from "./long-task-semantic-refresh-fixture.mjs";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 
-export function authoringTemplateSemanticManifest() {
+export function authoringTemplateSemanticManifest(options = {}) {
   const replacements = new Map([
     ["fixture-semantic-facts", "replace-semantic-facts"],
     ["first", "replace-outcome"],
     ["first-observable", "replace-requirement"],
     ["fixture-architecture", "replace-architecture"],
+    ["fixture-execution-target", "replace-execution-target"],
     ["input.first-observable", "input.replace-requirement"],
     ["input.fixture-architecture", "input.replace-architecture"],
+    ["input.fixture-execution-target", "input.replace-execution-target"],
     ["subject.first.outcome", "subject.replace-outcome.outcome"],
     ["condition.first.baseline", "condition.replace-outcome.baseline"],
     ["cell.first.observable", "cell.replace-outcome.observable"],
@@ -23,7 +24,7 @@ export function authoringTemplateSemanticManifest() {
     ["owner.fixture", "owner.replace"],
   ]);
   const manifest = replaceExactSemanticRefs(
-    fixtureSemanticManifest(),
+    fixtureSemanticManifest({ executionTarget: options.executionTarget }),
     replacements,
   );
   const sourceStatements = new Map([
@@ -32,6 +33,14 @@ export function authoringTemplateSemanticManifest() {
       "replace-architecture",
       "Preserve the declared owner, dependency direction, verifier boundary and architecture conformance.",
     ],
+    ...(options.executionTarget
+      ? [
+          [
+            "replace-execution-target",
+            executionTargetSourceStatement(options.executionTarget),
+          ],
+        ]
+      : []),
   ]);
   for (const input of manifest.inputs) {
     if (input.kind === "source_item")
@@ -55,33 +64,29 @@ export function authoringTemplateSemanticManifest() {
   return refreshFixtureSemanticManifest(manifest);
 }
 
-export function publicExampleSemanticManifest() {
+export function publicExampleSemanticManifest(executionTarget) {
   const replacements = new Map([
     ["replace-semantic-facts", "example-semantic-facts"],
     ["replace-outcome", "observable-outcome"],
     ["replace-requirement", "observable-requirement"],
     ["replace-architecture", "architecture-owner"],
+    ["replace-execution-target", "example-execution-target"],
     ["input.replace-requirement", "input.observable-requirement"],
     ["input.replace-architecture", "input.architecture-owner"],
+    ["input.replace-execution-target", "input.example-execution-target"],
     ["subject.replace-outcome.outcome", "subject.observable-outcome.outcome"],
     [
       "condition.replace-outcome.baseline",
       "condition.observable-outcome.baseline",
     ],
-    [
-      "cell.replace-outcome.observable",
-      "cell.observable-outcome.observable",
-    ],
+    ["cell.replace-outcome.observable", "cell.observable-outcome.observable"],
     ["replace.result.observable", "example.result.observable"],
-    [
-      "replace.result.observable.runtime",
-      "example.result.observable.runtime",
-    ],
+    ["replace.result.observable.runtime", "example.result.observable.runtime"],
     ["replace-semantic-carrier", "replace-observable-semantics"],
     ["owner.replace", "owner.observable"],
   ]);
   const manifest = replaceExactSemanticRefs(
-    authoringTemplateSemanticManifest(),
+    authoringTemplateSemanticManifest({ executionTarget }),
     replacements,
   );
   manifest.inputs = manifest.inputs.filter(
@@ -96,6 +101,10 @@ export function publicExampleSemanticManifest() {
     [
       "architecture-owner",
       "Preserve the observable module as the single state owner.",
+    ],
+    [
+      "example-execution-target",
+      executionTargetSourceStatement(executionTarget),
     ],
   ]);
   for (const input of manifest.inputs)

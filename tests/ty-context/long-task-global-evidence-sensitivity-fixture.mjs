@@ -3,14 +3,17 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
-import { writeContract } from "./long-task-delivery-fixtures.mjs";
+import {
+  synchronizeFixtureExecutionTargetSource,
+  writeContract,
+} from "./long-task-delivery-fixtures.mjs";
 import { FIXTURE_GLOBAL_SCOPE_ENV } from "./long-task-delegating-oracle-fixture.mjs";
 import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
 
-const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
+export const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
 
 export async function addGlobalClaim(
   fixture,
@@ -48,16 +51,29 @@ export async function addGlobalClaim(
   const target = fixture.contract.task.execution_targets[0];
   target.root_entrypoint = fixtureProductRootPath();
   target.root_argv = rootArgv;
-  for (const outcome of fixture.contract.outcomes)
+  for (const outcome of fixture.contract.outcomes) {
+    outcome.product.owner.path_globs = outcome.product.owner.path_globs.map(
+      (candidate) =>
+        candidate === "tests/oracle.mjs" ? GLOBAL_PRODUCT_PATH : candidate,
+    );
+    outcome.technical.allowed_support_paths =
+      outcome.technical.allowed_support_paths.map((candidate) =>
+        candidate === "tests/oracle.mjs" ? GLOBAL_PRODUCT_PATH : candidate,
+      );
+    const productModuleBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === `product-module-${outcome.key}`,
+    );
+    if (!productModuleBinding)
+      throw new Error(`global_product_binding_missing:${outcome.key}`);
+    productModuleBinding.target = GLOBAL_PRODUCT_PATH;
+    productModuleBinding.carrier_paths = [GLOBAL_PRODUCT_PATH];
     for (const outcomeCheck of outcome.acceptance.checks) {
       outcomeCheck.runner.type = "project_binary";
       outcomeCheck.runner.target = fixtureProductRootPath();
       outcomeCheck.runner.argv = [...rootArgv];
-      outcomeCheck.verification_inputs = [
-        GLOBAL_PRODUCT_PATH,
-        "tests/semantic-false.json",
-      ];
+      outcomeCheck.verification_inputs = ["tests/semantic-false.json"];
     }
+  }
   const check = structuredClone(
     fixture.contract.outcomes[0].acceptance.checks[0],
   );
@@ -93,7 +109,6 @@ export async function addGlobalClaim(
   check.negative_assertions = [];
   fixture.contract.global.acceptance.checks.push(check);
   if (counterfactual) await addGlobalCounterfactual(fixture.contract);
-  await writeContract(fixture.workdir, fixture.contract);
   await writeFile(
     path.join(fixture.root, ...GLOBAL_PRODUCT_PATH.split("/")),
     `import { readFile } from "node:fs/promises";
@@ -119,6 +134,8 @@ const observations = globalCheck ? {
 console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 `,
   );
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
+  await writeContract(fixture.workdir, fixture.contract);
 }
 
 export async function addGlobalCounterfactual(contract) {

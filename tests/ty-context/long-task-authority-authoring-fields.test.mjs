@@ -3,6 +3,7 @@ import path from "node:path";
 import test from "node:test";
 import {
   createDeliveryFixture,
+  fixtureExecutionTargetSourceItem,
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
@@ -26,8 +27,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
       removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].claims.filter(
         (claim) => claim !== "requirement.observe-first",
       );
-    removedRequirement.outcomes[0].acceptance.counterfactual_controls[0]
-      .expected_assertion_failures =
+    removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures =
       removedRequirement.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures.filter(
         (assertion) => assertion !== "first-requirement",
       );
@@ -38,11 +38,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
     };
     removedRequirement.outcomes[0].acceptance.checks[0].positive_assertions[0].criterion =
       "The first outcome must be observable.";
-    await writeSource(
-      fixture.root,
-      "technical_obligation",
-      "Implement first",
-    );
+    await writeSource(fixture.root, "technical_obligation", "Implement first");
     await writeContract(fixture.workdir, removedRequirement);
     await expectDecision(fixture, {
       field: "product_claims_removed",
@@ -83,13 +79,12 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
     });
 
     const replacedAcceptance = structuredClone(baseline);
-    const replacedCheck =
-      replacedAcceptance.outcomes[0].acceptance.checks[0];
+    const replacedCheck = replacedAcceptance.outcomes[0].acceptance.checks[0];
     const requirementAssertion = replacedCheck.positive_assertions.find(
       (assertion) => assertion.key === "first-requirement",
     );
-    replacedCheck.positive_assertions =
-      replacedCheck.positive_assertions.map((assertion) =>
+    replacedCheck.positive_assertions = replacedCheck.positive_assertions.map(
+      (assertion) =>
         assertion.key === "first-requirement"
           ? {
               ...requirementAssertion,
@@ -97,7 +92,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
               criterion: "The first outcome must be observable.",
             }
           : assertion,
-      );
+    );
     replacedAcceptance.source_claims[0].disposition = {
       type: "acceptance",
       refs: ["first.first-check.replacement-requirement"],
@@ -111,8 +106,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
         refs: ["first.requirement.observe-first"],
       },
     });
-    replacedAcceptance.outcomes[0].acceptance.counterfactual_controls[0]
-      .expected_assertion_failures =
+    replacedAcceptance.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures =
       replacedAcceptance.outcomes[0].acceptance.counterfactual_controls[0].expected_assertion_failures.map(
         (assertion) =>
           assertion === "first-requirement"
@@ -147,6 +141,8 @@ ${statement}
 <!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
 Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
+
+${fixtureExecutionTargetSourceItem()}
 `,
   );
 }
@@ -169,6 +165,8 @@ The first outcome must be observable.
 <!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
 Preserve the fixture state owner and verifier boundary.
 <!-- ty-source-item:end -->
+
+${fixtureExecutionTargetSourceItem()}
 `,
   );
 }

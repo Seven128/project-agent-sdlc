@@ -124,8 +124,6 @@ test("internal dot cannot bypass a forbidden path", async () => {
 
 function parseScenario(scenario, value) {
   const contract = deliveryContract();
-  contract.outcomes[0].product.owner.path_globs = ["src/**"];
-  contract.outcomes[0].technical.allowed_support_paths = [];
   scenario.set(contract, value);
   const parsed = parseDeliveryContractText(YAML.stringify(contract));
   return scenario.get(parsed);
@@ -170,8 +168,16 @@ function pathCases() {
     ),
     pattern(
       "owner.path_globs",
-      (contract, value) =>
-        (contract.outcomes[0].product.owner.path_globs = [value]),
+      (contract, value) => {
+        const productionPaths =
+          contract.outcomes[0].product.owner.path_globs.filter(
+            (pattern) => pattern !== "src/**",
+          );
+        contract.outcomes[0].product.owner.path_globs = [
+          value,
+          ...productionPaths,
+        ];
+      },
       (contract) => contract.outcomes[0].product.owner.path_globs[0],
     ),
     pattern(

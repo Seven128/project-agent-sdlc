@@ -63,9 +63,10 @@ test("conservative repository pattern containment proves only supported subsets"
 
 test("owner, support, and binding boundaries fail closed for widening patterns", () => {
   const expectedPath = deliveryContract();
+  const expectedProductionOwnerPaths = productionOwnerPaths(expectedPath);
   expectedPath.outcomes[0].product.owner.path_globs = [
     "src/safe/*.ts",
-    "tests/legacy-oracle.mjs",
+    ...expectedProductionOwnerPaths,
   ];
   expectedPath.outcomes[0].technical.expected_change_paths = ["src/safe/**"];
   assert.throws(
@@ -74,24 +75,34 @@ test("owner, support, and binding boundaries fail closed for widening patterns",
   );
 
   const supportPath = deliveryContract();
+  const supportProductionOwnerPaths = productionOwnerPaths(supportPath);
+  const supportProductionPaths = productionSupportPaths(supportPath);
   supportPath.outcomes[0].product.owner.path_globs = [
     "src/safe/*.ts",
-    "tests/legacy-oracle.mjs",
+    ...supportProductionOwnerPaths,
   ];
   supportPath.outcomes[0].technical.expected_change_paths = ["src/safe/a.ts"];
-  supportPath.outcomes[0].technical.allowed_support_paths = ["src/safe/**"];
+  supportPath.outcomes[0].technical.allowed_support_paths = [
+    "src/safe/**",
+    ...supportProductionPaths,
+  ];
   assert.throws(
     () => parse(supportPath),
     /path_outside_owner_boundary:first:src\/safe\/\*\*/u,
   );
 
   const binding = deliveryContract();
+  const bindingProductionOwnerPaths = productionOwnerPaths(binding);
   binding.outcomes[0].product.owner.path_globs = [
     "src/safe/*",
-    "tests/legacy-oracle.mjs",
+    ...bindingProductionOwnerPaths,
   ];
   binding.outcomes[0].technical.expected_change_paths = ["src/safe/*.ts"];
-  binding.outcomes[0].technical.bindings[0].carrier_paths = ["src/safe/**"];
+  const stateBinding = binding.outcomes[0].technical.bindings.find(
+    (candidate) => candidate.key === "state-first",
+  );
+  assert.ok(stateBinding);
+  stateBinding.carrier_paths = ["src/safe/**"];
   assert.throws(
     () => parse(binding),
     /binding_carrier_outside_owner_boundary:first:state-first:src\/safe\/\*\*/u,
@@ -126,8 +137,12 @@ test("same-prefix glob widening is visible but auto-adopts as repo-bound scope e
   const fixture = await createDeliveryFixture();
   try {
     const outcome = fixture.contract.outcomes[0];
+    const supportPaths = [...outcome.technical.allowed_support_paths];
     outcome.technical.expected_change_paths = ["src/safe/*.ts"];
-    outcome.technical.allowed_support_paths = ["src/state.json"];
+    outcome.technical.allowed_support_paths = [
+      "src/state.json",
+      ...supportPaths,
+    ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -163,4 +178,16 @@ test("same-prefix glob widening is visible but auto-adopts as repo-bound scope e
 
 function parse(contract) {
   return parseDeliveryContractText(YAML.stringify(contract));
+}
+
+function productionOwnerPaths(contract) {
+  return contract.outcomes[0].product.owner.path_globs.filter(
+    (pattern) => pattern !== "src/**",
+  );
+}
+
+function productionSupportPaths(contract) {
+  return contract.outcomes[0].technical.allowed_support_paths.filter(
+    (pattern) => pattern !== "src/**",
+  );
 }

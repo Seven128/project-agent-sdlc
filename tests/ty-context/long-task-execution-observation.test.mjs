@@ -14,6 +14,11 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { prepareExecutionObservationUniverse } from "../../packages/ty-context/dist/lib/long-task-execution-observation.js";
+import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const regularMode = 0o100644;
 
@@ -59,7 +64,7 @@ test("process observation rejects cross-group transient input replacement even a
       "bin/product.mjs": Buffer.from("export default true;\n"),
       "config/runtime.json": Buffer.from('{"mode":"production"}'),
       "config/secondary.json": Buffer.from('{"feature":true}'),
-      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "product/product-helper.mjs": Buffer.from("export const input = true;\n"),
     };
     await writeFixtureFiles(root, files);
     const first = staticCheck("raw:first", "assert:first", "state/first.json");
@@ -103,7 +108,7 @@ test("process observation rejects cross-group transient input replacement even a
 for (const changedPath of [
   "config/secondary.json",
   "bin/product.mjs",
-  "tests/product-helper.mjs",
+  "product/product-helper.mjs",
 ]) {
   test(`process observation rejects post-freeze mutation of ${changedPath}`, async () => {
     await withRoot(async (root) => {
@@ -111,7 +116,9 @@ for (const changedPath of [
         "bin/product.mjs": Buffer.from("export default true;\n"),
         "config/runtime.json": Buffer.from('{"mode":"production"}'),
         "config/secondary.json": Buffer.from('{"feature":true}'),
-        "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+        "product/product-helper.mjs": Buffer.from(
+          "export const input = true;\n",
+        ),
       };
       await writeFixtureFiles(root, files);
       const check = processCheck();
@@ -147,7 +154,9 @@ test("process observation freezes repository files attributed only by the declar
       "bin/product.mjs": Buffer.from("export default true;\n"),
       "config/runtime.json": Buffer.from('{"mode":"production"}'),
       "runtime/unlisted-entry.mjs": Buffer.from("export const input = true;\n"),
-      "tests/product-helper.mjs": Buffer.from("export const helper = true;\n"),
+      "product/product-helper.mjs": Buffer.from(
+        "export const helper = true;\n",
+      ),
     };
     await writeFixtureFiles(root, files);
     const check = processCheck();
@@ -158,6 +167,10 @@ test("process observation freezes repository files attributed only by the declar
     check.runner.argv = rootArgv;
     check.observation_authorities[0].runtime_requirements.declared_root_argv =
       rootArgv;
+    refreshProcessRuntimeClosure(check, {
+      rootArgv,
+      productionFiles: ["config/runtime.json", "runtime/unlisted-entry.mjs"],
+    });
     const [prepared] = await prepareExecutionObservationUniverse({
       groups: [[check]],
       snapshot_root: root,
@@ -181,16 +194,20 @@ test("process observation freezes repository files attributed only by the declar
   });
 });
 
-test("process observation fails closed when a declared input pattern has no pre-run member", async () => {
+test("process observation fails closed when a declared runtime-closure member has no pre-run member", async () => {
   await withRoot(async (root) => {
     const files = {
       "bin/product.mjs": Buffer.from("export default true;\n"),
       "config/runtime.json": Buffer.from('{"mode":"production"}'),
-      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "product/product-helper.mjs": Buffer.from("export const input = true;\n"),
     };
     await writeFixtureFiles(root, files);
-    const check = processCheck();
-    check.input_paths = ["missing/**"];
+    const check = processCheck({
+      rootArgv: ["missing/runtime.json"],
+      productionFiles: ["missing/runtime.json"],
+      carrierPaths: ["missing/runtime.json"],
+      inputPaths: ["missing/**"],
+    });
     const [prepared] = await prepareExecutionObservationUniverse({
       groups: [[check]],
       snapshot_root: root,
@@ -213,7 +230,7 @@ test("process execution snapshot contains only the frozen runtime closure and ex
       "bin/product.mjs": Buffer.from("export default true;\n"),
       "config/runtime.json": Buffer.from('{"mode":"production"}'),
       "config/secondary.json": Buffer.from('{"feature":true}'),
-      "tests/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "product/product-helper.mjs": Buffer.from("export const input = true;\n"),
       "tests/expected-only.json": Buffer.from('{"expected":"secret"}'),
       "delivery-contract.yaml": Buffer.from("expected: secret\n"),
       "source/expected.json": Buffer.from('{"expected":"secret"}'),
@@ -264,30 +281,113 @@ function staticCheck(rawIdentity, assertionRef, artifactPath) {
   };
 }
 
-function processCheck() {
+function processCheck({
+  rootArgv = [
+    "--config=config/runtime.json",
+    "--secondary=config/secondary.json",
+    "product/product-helper.mjs",
+  ],
+  productionFiles = [
+    "config/runtime.json",
+    "config/secondary.json",
+    "product/product-helper.mjs",
+  ],
+  carrierPaths = ["config/runtime.json"],
+  inputPaths = ["config/**"],
+} = {}) {
   const authority = observationAuthority({
     authority: "package_process_json_exact",
     assertion_ref: "assert:process",
     observation_identity: "observation:process",
-    carrier_paths: ["config/runtime.json"],
+    carrier_paths: carrierPaths,
   });
-  authority.runtime_requirements.declared_root_argv = [
-    "--config=config/runtime.json",
-    "tests/product-helper.mjs",
-  ];
-  return {
+  authority.runtime_requirements.declared_root_argv = [...rootArgv];
+  const check = {
+    key: "process",
     raw_execution_identity: "raw:process",
-    input_paths: ["config/**"],
+    input_paths: inputPaths,
     verification_inputs: ["tests/**"],
+    expected_output_paths: [],
+    artifact_globs: [],
     runner: {
       resolved_target: "bin/product.mjs",
       resolved_cwd: ".",
       executable_argv_prefix: [],
-      argv: ["--config=config/runtime.json", "tests/product-helper.mjs"],
+      argv: [...rootArgv],
       frozen_files: {},
     },
     observation_authorities: [authority],
   };
+  refreshProcessRuntimeClosure(check, { rootArgv, productionFiles });
+  return check;
+}
+
+function refreshProcessRuntimeClosure(check, { rootArgv, productionFiles }) {
+  const rootTarget = check.runner.resolved_target;
+  const runtimeFiles = [
+    ...new Set([
+      ...productionFiles,
+      ...check.observation_authorities.flatMap((authority) =>
+        authority.carrier_refs.flatMap((carrier) => carrier.carrier_paths),
+      ),
+    ]),
+  ];
+  const carrierPaths = check.observation_authorities.flatMap((authority) =>
+    authority.carrier_refs.flatMap((carrier) => carrier.carrier_paths),
+  );
+  check.runner.argv = [...rootArgv];
+  const executionTarget = {
+    key: "product",
+    description: "The fixture process product root.",
+    role: "product",
+    runtime_family: "process",
+    root_entrypoint: rootTarget,
+    root_argv: [...rootArgv],
+    capabilities: ["process-runtime", "cold-start", "production-root"],
+  };
+  check.process_runtime_closure = compileProcessRuntimeClosure({
+    check,
+    runner: check.runner,
+    execution_target: executionTarget,
+    observation_authorities: check.observation_authorities,
+    production_bindings: [
+      {
+        key: "binding:fixture",
+        kind: "file",
+        target: carrierPaths[0],
+        carrier_paths: carrierPaths,
+        existence: carrierPaths[0].startsWith("missing/")
+          ? "planned"
+          : "existing",
+      },
+      ...[rootTarget, ...runtimeFiles]
+        .filter((carrierPath) => !carrierPaths.includes(carrierPath))
+        .map((carrierPath, index) => ({
+          key: `fixture-production-${index}`,
+          kind: "file",
+          target: carrierPath,
+          carrier_paths: [carrierPath],
+          existence: "existing",
+        })),
+    ],
+    production_owner_paths: [
+      "bin/**",
+      "config/**",
+      "product/**",
+      "runtime/**",
+      "missing/**",
+    ],
+    source_backed_execution_target: {
+      target_ref: "product",
+      canonical_target_ref: "execution_target.product",
+      source_claim_key: "fixture-product-target",
+      source_item_key: "fixture-product-target",
+      source_path: "source.md",
+      source_text_sha256: "a".repeat(64),
+      target_identity: sha256Hex(canonicalValueJson(executionTarget)),
+    },
+    protected_authority_paths: ["source.md"],
+  });
 }
 
 function observationAuthority({

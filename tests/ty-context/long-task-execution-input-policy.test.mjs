@@ -65,6 +65,14 @@ test("all raw execution fields affect identity and per-check evidence does not",
     baseIdentity,
   );
 
+  const processRuntimeClosureChanged = structuredClone(base);
+  processRuntimeClosureChanged.process_runtime_closure.closure_identity =
+    "closure-b";
+  assert.notEqual(
+    computeRawExecutionIdentity(processRuntimeClosureChanged),
+    baseIdentity,
+  );
+
   const designTargetChanged = structuredClone(base);
   designTargetChanged.design_conformance_targets.push({
     key: "settings-default",
@@ -126,6 +134,7 @@ test("all raw execution fields affect identity and per-check evidence does not",
     "execution_target_definition",
     "known_execution_targets",
     "package_observation_protocol",
+    "process_runtime_closure_identity",
     "runner",
     "verification_inputs",
   ]);
@@ -242,5 +251,6 @@ function compiledCheck() {
         target: "TY_CONTEXT_TEST_ENV",
       },
     ],
+    process_runtime_closure: { closure_identity: "closure-a" },
   };
 }

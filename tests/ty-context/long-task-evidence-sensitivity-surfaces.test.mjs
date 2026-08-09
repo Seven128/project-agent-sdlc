@@ -7,6 +7,7 @@ import YAML from "yaml";
 import {
   createDeliveryFixture,
   deliveryContract,
+  synchronizeFixtureExecutionTargetSource,
 } from "./long-task-delivery-fixtures.mjs";
 import { assertActivationRejects } from "./long-task-evidence-sensitivity-fixtures.mjs";
 
@@ -181,6 +182,10 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
         preserved_assertions: ["first-liveness"],
       },
     ];
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
     await assertActivationRejects(fixture, {
       code: "unsupported_observer_requires_external_confirmation",
       includes: ["proof.first.observable.exact", "browser", "ui_browser"],

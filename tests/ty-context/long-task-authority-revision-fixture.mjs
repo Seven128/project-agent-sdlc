@@ -4,10 +4,10 @@ import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long
 import { projectAuthorityRevisionDecision } from "../../packages/ty-context/dist/lib/long-task-authority-revision-summary.js";
 import { revisionFixtureOracleSource } from "./long-task-delegating-oracle-fixture.mjs";
 import {
-  FIXTURE_LEGACY_ORACLE_PATH,
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
+import { synchronizeFixtureExecutionTargetSource } from "./long-task-delivery-fixtures.mjs";
 
 export async function prepareAuthorityRevisionFixture(fixture) {
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
@@ -34,13 +34,22 @@ export async function prepareAuthorityRevisionFixture(fixture) {
   fixture.contract.task.execution_targets[0].root_entrypoint =
     fixtureProductRootPath();
   fixture.contract.task.execution_targets[0].root_argv = rootArgv;
+  const productModule = outcome.technical.bindings.find(
+    (binding) => binding.key === "product-module-first",
+  );
+  productModule.target = "tests/revision-oracle.mjs";
+  productModule.carrier_paths = ["tests/revision-oracle.mjs"];
+  outcome.product.owner.path_globs = outcome.product.owner.path_globs.filter(
+    (entry) => entry !== "tests/oracle.mjs",
+  );
+  outcome.technical.allowed_support_paths =
+    outcome.technical.allowed_support_paths.filter(
+      (entry) => entry !== "tests/oracle.mjs",
+    );
   check.runner.type = "project_binary";
   check.runner.target = fixtureProductRootPath();
   check.runner.argv = [...rootArgv];
-  check.verification_inputs.push(
-    "tests/revision-oracle.mjs",
-    "tests/helper.mjs",
-  );
+  check.verification_inputs.push("tests/helper.mjs");
   check.artifact_globs = [
     "artifacts/proof.json",
     "artifacts/optional-proof.json",
@@ -48,12 +57,15 @@ export async function prepareAuthorityRevisionFixture(fixture) {
   check.environment_requirements = [
     { key: "path", kind: "env_var", target: "PATH" },
   ];
-  outcome.product.owner.path_globs.push("artifacts/**");
-  outcome.technical.allowed_support_paths = [
+  outcome.product.owner.path_globs.push(
+    "artifacts/**",
+    "tests/revision-oracle.mjs",
+  );
+  outcome.technical.allowed_support_paths.push(
     "src/support/**",
     "artifacts/**",
-    FIXTURE_LEGACY_ORACLE_PATH,
-  ];
+    "tests/revision-oracle.mjs",
+  );
   outcome.technical.rollback_and_recovery = {
     rollback: "Restore the previous state file.",
     recovery: "Rerun the first Check.",
@@ -136,6 +148,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
     operator: "equals",
     expected: false,
   });
+  await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
 }
 
 export async function inspectAuthorityRevisionCandidate(

@@ -10,6 +10,7 @@ import {
   createDeliveryFixture,
   deliveryContract,
   runCli,
+  synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -67,11 +68,26 @@ console.log(JSON.stringify({
     check.runner.cwd = "tools/sub";
     check.runner.target = path.basename(subdirectoryRoot);
     check.runner.argv = [...rootArgv];
-    check.verification_inputs = [
-      subdirectoryRoot,
-      "tools/sub/product-observation.mjs",
-      "tests/semantic-false.json",
-    ];
+    check.verification_inputs = ["tests/semantic-false.json"];
+    const outcome = fixture.contract.outcomes[0];
+    outcome.product.owner.path_globs.push("tools/sub/**");
+    outcome.technical.allowed_support_paths.push("tools/sub/**");
+    const rootBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === "product-root-first",
+    );
+    const moduleBinding = outcome.technical.bindings.find(
+      (binding) => binding.key === "product-module-first",
+    );
+    assert.ok(rootBinding);
+    assert.ok(moduleBinding);
+    rootBinding.target = subdirectoryRoot;
+    rootBinding.carrier_paths = [subdirectoryRoot];
+    moduleBinding.target = "tools/sub/product-observation.mjs";
+    moduleBinding.carrier_paths = ["tools/sub/product-observation.mjs"];
+    await synchronizeFixtureExecutionTargetSource(
+      fixture.root,
+      fixture.contract,
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -82,6 +98,8 @@ console.log(JSON.stringify({
     const raw = await executeCheckRunner(frozen, fixture.root, {
       snapshot_sha256: "1".repeat(64),
       observation_authorities: frozen.observation_authorities,
+      process_runtime_closure_identity:
+        frozen.process_runtime_closure.closure_identity,
     });
     assert.equal(raw.execution_status, "completed", raw.error);
     assert.deepEqual(raw.observations, {});

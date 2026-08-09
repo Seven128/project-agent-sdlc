@@ -6,6 +6,7 @@ import { buildAuthorityRevisionDecisionBrief } from "../../packages/ty-context/d
 import {
   createDeliveryFixture,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   runCli,
   runCliFailure,
   writeContract,
@@ -137,9 +138,6 @@ test("additive verification dependencies remain automatic and are summarized", a
       "export const extraProofDependency = true;\n",
     );
     fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
-      "tests/extra.mjs",
-    );
-    fixture.contract.outcomes[0].acceptance.checks[0].input_paths.push(
       "tests/extra.mjs",
     );
     await writeContract(fixture.workdir, fixture.contract);
@@ -275,6 +273,8 @@ The first outcome must be observable.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     fixture.contract.source_claims = fixture.contract.source_claims.filter(

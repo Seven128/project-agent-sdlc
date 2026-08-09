@@ -15,6 +15,7 @@ import {
   addFixtureCustomConditionAxis,
   mutateFixtureSemanticManifest,
 } from "./long-task-semantic-fact-test-support.mjs";
+import { FIXTURE_LEGACY_ORACLE_PATH } from "./long-task-package-machine-fixture.mjs";
 
 test("Contract projection freezes the exact semantic Fact and proof set", async () => {
   const fixture = await createDeliveryFixture();
@@ -185,17 +186,27 @@ test("declared semantic observers must be independent observer-role targets", as
 test("a project frozen semantic Oracle cannot replace the package-admitted observer", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    const admittedOracle = structuredClone(
-      fixture.contract.outcomes[0].semantic_fact_bindings,
+    const outcome = fixture.contract.outcomes[0];
+    outcome.technical.allowed_support_paths =
+      outcome.technical.allowed_support_paths.filter(
+        (candidate) => candidate !== FIXTURE_LEGACY_ORACLE_PATH,
+      );
+    outcome.acceptance.checks[0].verification_inputs.push(
+      FIXTURE_LEGACY_ORACLE_PATH,
     );
+    const admittedOracle = structuredClone(outcome.semantic_fact_bindings);
     const oracleSha256 = createHash("sha256")
-      .update(await readFile(path.join(fixture.root, "tests", "oracle.mjs")))
+      .update(
+        await readFile(
+          path.join(fixture.root, ...FIXTURE_LEGACY_ORACLE_PATH.split("/")),
+        ),
+      )
       .digest("hex");
     await mutateFixtureSemanticManifest(fixture, (manifest) => {
       manifest.oracles[0] = {
         ...manifest.oracles[0],
         trust: "frozen_executable",
-        identity: "tests/oracle.mjs",
+        identity: FIXTURE_LEGACY_ORACLE_PATH,
         sha256: oracleSha256,
       };
     });
@@ -203,10 +214,14 @@ test("a project frozen semantic Oracle cannot replace the package-admitted obser
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
-      /custom_oracle_machine_completion_forbidden:semantic_fact:proof\.first\.observable\.exact:tests\/oracle\.mjs/u,
+      /custom_oracle_machine_completion_forbidden:semantic_fact:proof\.first\.observable\.exact:tests\/legacy-oracle\.mjs/u,
     );
 
-    fixture.contract.outcomes[0].semantic_fact_bindings = admittedOracle;
+    outcome.semantic_fact_bindings = admittedOracle;
+    outcome.acceptance.checks[0].verification_inputs =
+      outcome.acceptance.checks[0].verification_inputs.filter(
+        (candidate) => candidate !== FIXTURE_LEGACY_ORACLE_PATH,
+      );
     await mutateFixtureSemanticManifest(fixture, (manifest) => {
       manifest.oracles[0] = {
         ...manifest.oracles[0],

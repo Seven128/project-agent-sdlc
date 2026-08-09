@@ -7,6 +7,7 @@ import { inspectAuthorityRevisionCandidate } from "./long-task-authority-revisio
 import {
   createDeliveryFixture,
   fixtureArchitectureSourceItem,
+  fixtureExecutionTargetSourceItem,
   runCli,
   runCliFailure,
   writeContract,
@@ -32,6 +33,8 @@ Revised before execution.
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
     );
     fixture.contract.source_claims[0].statement = "Revised before execution.";
@@ -205,6 +208,8 @@ ${statement}
 <!-- ty-source-item:end -->
 
 ${fixtureArchitectureSourceItem()}
+
+${fixtureExecutionTargetSourceItem()}
 `,
         );
       }

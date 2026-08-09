@@ -11,7 +11,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
+import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
 import { decodeProductObservationEnvelope } from "../../packages/ty-context/dist/lib/long-task-process-observation.js";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const SNAPSHOT_SHA256 = "a".repeat(64);
 
@@ -29,10 +34,11 @@ test("direct process observation captures one root stdout envelope and host atte
       "valid",
       validLog,
     ]);
-    const valid = await executeCheckRunner(check, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: [],
-    });
+    const valid = await executeCheckRunner(
+      check,
+      fixture.root,
+      executionContext(check),
+    );
 
     assert.equal(valid.execution_status, "completed");
     assert.equal(valid.exit_code, 0);
@@ -71,6 +77,10 @@ test("direct process observation captures one root stdout envelope and host atte
       valid.host_execution_attestation.snapshot_sha256,
       SNAPSHOT_SHA256,
     );
+    assert.equal(
+      valid.host_execution_attestation.process_runtime_closure_identity,
+      check.process_runtime_closure.closure_identity,
+    );
     assert.ok(valid.host_execution_attestation.pid > 0);
     assert.match(
       valid.host_execution_attestation.observation_execution_nonce,
@@ -108,10 +118,11 @@ test("direct process observation captures one root stdout envelope and host atte
       groupedLog,
     ]);
     grouped.observation_authorities = [groupedAuthorities[0]];
-    const groupedRaw = await executeCheckRunner(grouped, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: [groupedAuthorities[1]],
-    });
+    const groupedRaw = await executeCheckRunner(
+      grouped,
+      fixture.root,
+      executionContext(grouped, [groupedAuthorities[1]]),
+    );
     assert.equal(groupedRaw.execution_status, "completed");
     assert.equal(groupedRaw.package_observations.length, 2);
     assert.equal((await attemptRows(groupedLog)).length, 1);
@@ -123,10 +134,11 @@ test("direct process observation captures one root stdout envelope and host atte
       "wrong-identity",
       path.join(fixture.root, "wrong-identity.jsonl"),
     ]);
-    const rejected = await executeCheckRunner(wrongIdentity, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: wrongIdentityAuthorities,
-    });
+    const rejected = await executeCheckRunner(
+      wrongIdentity,
+      fixture.root,
+      executionContext(wrongIdentity, wrongIdentityAuthorities),
+    );
     assert.equal(rejected.execution_status, "invalid_evidence");
     assert.match(rejected.error, /process_observation_identity_set_mismatch/u);
     assert.deepEqual(rejected.package_observations, []);
@@ -139,10 +151,11 @@ test("direct process observation captures one root stdout envelope and host atte
       "nonzero",
       path.join(fixture.root, "nonzero.jsonl"),
     ]);
-    const nonzeroResult = await executeCheckRunner(nonzero, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: nonzeroAuthorities,
-    });
+    const nonzeroResult = await executeCheckRunner(
+      nonzero,
+      fixture.root,
+      executionContext(nonzero, nonzeroAuthorities),
+    );
     assert.equal(nonzeroResult.execution_status, "invalid_evidence");
     assert.equal(nonzeroResult.exit_code, 7);
     assert.equal(nonzeroResult.error, "process_observer_nonzero_exit");
@@ -158,10 +171,7 @@ test("direct process observation captures one root stdout envelope and host atte
     const reserved = await executeCheckRunner(
       reservedEnvironment,
       fixture.root,
-      {
-        snapshot_sha256: SNAPSHOT_SHA256,
-        observation_authorities: authorities,
-      },
+      executionContext(reservedEnvironment, authorities),
     );
     assert.equal(reserved.execution_status, "invalid_evidence");
     assert.equal(
@@ -178,10 +188,11 @@ test("direct process observation captures one root stdout envelope and host atte
       "retry",
       retryLog,
     ]);
-    const retried = await executeCheckRunner(retry, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: retryAuthorities,
-    });
+    const retried = await executeCheckRunner(
+      retry,
+      fixture.root,
+      executionContext(retry, retryAuthorities),
+    );
     assert.equal(retried.execution_status, "completed");
     assert.equal(retried.attempts, 2);
     const attempts = await attemptRows(retryLog);
@@ -202,10 +213,7 @@ test("direct process observation captures one root stdout envelope and host atte
     const descendantResult = await executeCheckRunner(
       descendant,
       fixture.root,
-      {
-        snapshot_sha256: SNAPSHOT_SHA256,
-        observation_authorities: descendantAuthorities,
-      },
+      executionContext(descendant, descendantAuthorities),
     );
     assert.equal(
       descendantResult.execution_status,
@@ -229,10 +237,11 @@ test("direct process observation captures one root stdout envelope and host atte
       timeoutLog,
     ]);
     const timeoutStarted = Date.now();
-    const timeoutResult = await executeCheckRunner(timeoutTree, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: timeoutAuthorities,
-    });
+    const timeoutResult = await executeCheckRunner(
+      timeoutTree,
+      fixture.root,
+      executionContext(timeoutTree, timeoutAuthorities),
+    );
     assert.equal(timeoutResult.execution_status, "infrastructure_error");
     assert.equal(timeoutResult.error, "command_timeout");
     assert.ok(Date.now() - timeoutStarted < 3_500);
@@ -248,10 +257,11 @@ test("direct process observation captures one root stdout envelope and host atte
       path.join(fixture.root, "wrapper.jsonl"),
     ]);
     wrapper.runner.argv[1] = "wrong-wrapper-argv";
-    const wrapperResult = await executeCheckRunner(wrapper, fixture.root, {
-      snapshot_sha256: SNAPSHOT_SHA256,
-      observation_authorities: wrapperAuthorities,
-    });
+    const wrapperResult = await executeCheckRunner(
+      wrapper,
+      fixture.root,
+      executionContext(wrapper, wrapperAuthorities),
+    );
     assert.equal(wrapperResult.execution_status, "invalid_evidence");
     assert.equal(wrapperResult.attempts, 0);
     assert.equal(wrapperResult.error, "process_observer_direct_root_required");
@@ -482,6 +492,10 @@ function processCheck(fixture, authorities) {
       raw_execution_identity: "process",
     },
     environment_requirements: [],
+    verification_inputs: [],
+    input_paths: [],
+    expected_output_paths: [],
+    artifact_globs: [],
     observation_authorities: authorities,
     raw_execution_identity: "process",
   };
@@ -537,6 +551,58 @@ function setProcessInvocation(check, authorities, argv) {
     authority.runtime_requirements.declared_root_argv = [...argv];
     authority.runtime_requirements.direct_root_match = true;
   }
+  const executionTarget = {
+    key: "product",
+    description: "The fixture process product root.",
+    role: "product",
+    runtime_family: "process",
+    root_entrypoint: check.runner.resolved_target,
+    root_argv: [...argv],
+    capabilities: ["process-runtime", "cold-start", "production-root"],
+  };
+  const sourceTarget = {
+    target_ref: executionTarget.key,
+    canonical_target_ref: `execution_target.${executionTarget.key}`,
+    source_claim_key: "fixture-product-target",
+    source_item_key: "fixture-product-target",
+    source_path: "source.md",
+    source_text_sha256: "a".repeat(64),
+    target_identity: sha256Hex(canonicalValueJson(executionTarget)),
+  };
+  check.process_runtime_closure = compileProcessRuntimeClosure({
+    check,
+    runner: check.runner,
+    execution_target: executionTarget,
+    observation_authorities: authorities,
+    production_bindings: [
+      {
+        key: "product-root",
+        kind: "file",
+        target: check.runner.resolved_target,
+        carrier_paths: [check.runner.resolved_target],
+        existence: "existing",
+      },
+      {
+        key: "product-module",
+        kind: "file",
+        target: "product.mjs",
+        carrier_paths: ["product.mjs"],
+        existence: "existing",
+      },
+    ],
+    production_owner_paths: ["bin/**", "product.mjs"],
+    source_backed_execution_target: sourceTarget,
+    protected_authority_paths: ["source.md"],
+  });
+}
+
+function executionContext(check, observationAuthorities = []) {
+  return {
+    snapshot_sha256: SNAPSHOT_SHA256,
+    observation_authorities: observationAuthorities,
+    process_runtime_closure_identity:
+      check.process_runtime_closure.closure_identity,
+  };
 }
 
 async function attemptRows(file) {

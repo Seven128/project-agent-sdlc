@@ -23,6 +23,7 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import { admitPackageExactFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
 
 const exec = promisify(execFile);
@@ -37,8 +38,9 @@ test("README public Contract example runs through Preflight, Compile and Final G
     const readme = await readFile(path.join(repo, "README.md"), "utf8");
     const yaml = extractPublicExample(readme);
     const contract = parseDeliveryContractText(yaml);
+    const [executionTarget] = contract.task.execution_targets;
     const semanticManifest = admitPackageExactFixtureSemanticManifest(
-      publicExampleSemanticManifest(),
+      publicExampleSemanticManifest(executionTarget),
     );
     contract.semantic_fact_manifest.sha256 =
       semanticManifestIdentity(semanticManifest);
@@ -63,6 +65,14 @@ The outcome is observable.
 
 <!-- ty-source-item:start key=architecture-owner kind=technical_obligation aspect=architecture -->
 Preserve the observable module as the single state owner.
+<!-- ty-source-item:end -->
+
+<!-- ty-source-background:start key=example-runtime-heading reason=markdown-structure -->
+<a id="example-runtime-target"></a>
+<!-- ty-source-background:end -->
+
+<!-- ty-source-item:start key=example-execution-target kind=technical_obligation -->
+${executionTargetSourceStatement(executionTarget)}
 <!-- ty-source-item:end -->
 
 \`\`\`yaml semantic-fact-manifest-v1
@@ -92,6 +102,10 @@ console.log(JSON.stringify({
 `,
     );
     await writeFile(
+      path.join(fixture.root, "tests", "verify-runtime.mjs"),
+      'export const verifierBoundary = "package-observation";\n',
+    );
+    await writeFile(
       path.join(fixture.root, "src", "observable.ts"),
       "export const observable = true;\nexport const enabled = false;\nexport const relationsApplicable = false;\n",
     );
@@ -102,6 +116,7 @@ console.log(JSON.stringify({
       "bin/example-runtime.exe",
       "src/observable.ts",
       "tests/runtime.mjs",
+      "tests/verify-runtime.mjs",
     ]);
     await git(fixture.root, ["commit", "-m", "public example inputs"]);
 
