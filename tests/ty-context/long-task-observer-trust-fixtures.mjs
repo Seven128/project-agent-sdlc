@@ -411,7 +411,7 @@ const actualValue = artifactDocument.observations[fact.key];
 const artifactSha256 = createHash("sha256").update(artifact).digest("hex");
 const actualValueSha256 = createHash("sha256").update(JSON.stringify(canonicalize(actualValue))).digest("hex");
 const comparisonPassed = actualValueSha256 === fact.expected.sha256;
-const comparisonResultSha256 = createHash("sha256").update(JSON.stringify(canonicalize({fact_ref:fact.key,proof_ref:proof.key,fact_key:fact.key,fact_revision_digest:factRevisionDigest,obligation_key:proof.key,obligation_revision_digest:obligationRevisionDigest,target_ref:"fixture-app",actual_value_sha256:actualValueSha256,expected_value_sha256:fact.expected.sha256,comparator:proof.comparison.comparator,mode:proof.comparison.mode,parameters_sha256:proof.comparison.parameters.sha256,tolerance_sha256:proof.comparison.tolerance?.sha256 ?? null,mask_sha256:proof.comparison.mask?.sha256 ?? null,passed:comparisonPassed}))).digest("hex");
+const comparisonResultSha256 = createHash("sha256").update(JSON.stringify(canonicalize({identity:{kind:"semantic_fact_non_ui",fact_ref:fact.key,proof_ref:proof.key,fact_key:fact.key,fact_revision_digest:factRevisionDigest,obligation_key:proof.key,obligation_revision_digest:obligationRevisionDigest,target_ref:"fixture-app"},actual_value_sha256:actualValueSha256,expected_value_sha256:fact.expected.sha256,comparator:proof.comparison.comparator,mode:proof.comparison.mode,parameters_sha256:proof.comparison.parameters.sha256,tolerance_sha256:proof.comparison.tolerance?.sha256 ?? null,mask_sha256:proof.comparison.mask?.sha256 ?? null,passed:actualValueSha256===fact.expected.sha256}))).digest("hex");
 ${
   writeProcessEnvelope
     ? `if (process.env.TY_CONTEXT_OBSERVATION_OUTPUT) {

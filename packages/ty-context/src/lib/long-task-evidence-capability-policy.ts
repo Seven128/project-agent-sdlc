@@ -8,7 +8,10 @@ import type {
 import { validateRuntimeEvidenceRecord } from "./long-task-evidence-capability-runtime.js";
 import { validateDistinctSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
 import { checkFinding } from "./long-task-evidence-findings.js";
-import type { PreparedAdmittedObservationSet } from "./long-task-admitted-observation.js";
+import {
+  admittedObservationAuthorityKey,
+  type PreparedAdmittedObservationSet,
+} from "./long-task-admitted-observation.js";
 
 export { decodeEvidenceCapabilityRecords } from "./long-task-evidence-capability-codec.js";
 
@@ -310,6 +313,32 @@ export function evaluateEvidenceCapabilities(
         actual: reason,
       });
     }
+    const authorityIssues = assertionObservationAuthorityIssues(
+      check,
+      assertion.key,
+      assertion.claims.length > 0,
+      admittedObservations,
+    );
+    if (authorityIssues.length) {
+      assertionComplete = false;
+      for (const authorityIssue of authorityIssues) {
+        findings.push({
+          ...checkFinding(
+            check,
+            "evidence_capability_invalid",
+            `Assertion ${assertion.key} has no complete package-admitted current-Actual chain for ${authorityIssue.obligation_ref ?? "an unplanned machine obligation"}: ${authorityIssue.reason}.`,
+            "Bind every machine-closing or liveness-preserving obligation to its compiled package observation authority, or move unsupported observation to an explicit blocking External Confirmation.",
+          ),
+          assertion_key: assertion.key,
+          claim_keys: assertion.claims,
+          expected: {
+            authority: authorityIssue.authority,
+            obligation_ref: authorityIssue.obligation_ref,
+          },
+          actual: authorityIssue.reason,
+        });
+      }
+    }
     complete[assertion.key] = assertionComplete;
   }
   validateDistinctDesignMethodArtifacts(
@@ -332,6 +361,56 @@ export function evaluateEvidenceCapabilities(
       actual: semanticDistinctness,
     });
   return { complete, findings };
+}
+
+function assertionObservationAuthorityIssues(
+  check: CompiledCheckV2,
+  assertionKey: string,
+  machineClosing: boolean,
+  admitted: PreparedAdmittedObservationSet | undefined,
+): Array<{
+  obligation_ref: string | null;
+  authority: string | null;
+  reason: string;
+}> {
+  const authorities = (check.observation_authorities ?? []).filter(
+    (authority) => authority.assertion_ref === assertionKey,
+  );
+  if (!authorities.length)
+    return machineClosing
+      ? [
+          {
+            obligation_ref: null,
+            authority: null,
+            reason: "machine_observer_not_admitted",
+          },
+        ]
+      : [];
+  const issues: Array<{
+    obligation_ref: string;
+    authority: string;
+    reason: string;
+  }> = [];
+  for (const authority of authorities) {
+    let reason: string | null = null;
+    if (authority.authority === "external_confirmation")
+      reason = "unsupported_observer_requires_external_confirmation";
+    else if (!admitted) reason = "admitted_observation_runtime_required";
+    else {
+      const authorityKey = admittedObservationAuthorityKey(authority);
+      const prepared = admitted.by_authority_key.get(authorityKey);
+      reason =
+        prepared?.reason ??
+        (prepared?.observation ? null : "admitted_observation_missing");
+    }
+    if (reason)
+      issues.push({
+        obligation_ref: authority.obligation_ref,
+        authority: authority.authority,
+        reason,
+      });
+  }
+  return issues;
 }
 
 function validateDistinctDesignMethodArtifacts(

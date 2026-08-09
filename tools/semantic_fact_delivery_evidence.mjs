@@ -102,6 +102,7 @@ export async function materializeSemanticFactEvidence(options) {
     if (typeof passed !== "boolean")
       throw new Error(`semantic_fact_result_missing:${fact.key}`);
     const actualValueSha256 = sha256(canonicalJson(passed));
+    const comparisonPassed = actualValueSha256 === fact.expected.sha256;
     const revisionIdentity = revisionIdentityFor(fact, proof);
     artifact.obligations[proof.key] = {
       fact_key: fact.key,
@@ -109,7 +110,7 @@ export async function materializeSemanticFactEvidence(options) {
       actual: passed,
       actual_value_sha256: actualValueSha256,
       comparison: {
-        passed,
+        passed: comparisonPassed,
         result_sha256: comparisonResultIdentity({
           fact_ref: fact.key,
           proof_ref: proof.key,
@@ -122,7 +123,6 @@ export async function materializeSemanticFactEvidence(options) {
           parameters_sha256: proof.comparison.parameters.sha256,
           tolerance_sha256: proof.comparison.tolerance?.sha256 ?? null,
           mask_sha256: proof.comparison.mask?.sha256 ?? null,
-          passed,
         }),
       },
     };
@@ -266,7 +266,43 @@ function semanticRevisionIdentity(
 }
 
 function comparisonResultIdentity(value) {
-  return sha256(canonicalJson(value));
+  const {
+    fact_ref,
+    proof_ref,
+    fact_key,
+    fact_revision_digest,
+    obligation_key,
+    obligation_revision_digest,
+    target_ref,
+    ...comparison
+  } = value;
+  const revisionIdentityPresent =
+    fact_key !== undefined ||
+    fact_revision_digest !== undefined ||
+    obligation_key !== undefined ||
+    obligation_revision_digest !== undefined;
+  const identity = {
+    kind: "semantic_fact_non_ui",
+    fact_ref,
+    proof_ref,
+    ...(revisionIdentityPresent
+      ? {
+          fact_key,
+          fact_revision_digest,
+          obligation_key,
+          obligation_revision_digest,
+        }
+      : {}),
+    target_ref,
+  };
+  return sha256(
+    canonicalJson({
+      identity,
+      ...comparison,
+      passed:
+        comparison.actual_value_sha256 === comparison.expected_value_sha256,
+    }),
+  );
 }
 
 function canonicalJson(value) {

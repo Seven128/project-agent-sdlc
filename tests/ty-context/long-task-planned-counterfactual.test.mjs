@@ -236,9 +236,12 @@ const canonicalize = (value) => {
 const comparisonPassed = state.ready === true;
 const comparisonResultSha256 = createHash("sha256")
   .update(JSON.stringify(canonicalize({
-    fact_ref: semantic.fact.key,
-    proof_ref: semantic.proof.key,
-    target_ref: "fixture-app",
+    identity: {
+      kind: "semantic_fact_non_ui",
+      fact_ref: semantic.fact.key,
+      proof_ref: semantic.proof.key,
+      target_ref: "fixture-app"
+    },
     actual_value_sha256: actualSha256,
     expected_value_sha256: semantic.fact.expected.sha256,
     comparator: semantic.proof.comparison.comparator,
@@ -246,7 +249,7 @@ const comparisonResultSha256 = createHash("sha256")
     parameters_sha256: semantic.proof.comparison.parameters.sha256,
     tolerance_sha256: semantic.proof.comparison.tolerance?.sha256 ?? null,
     mask_sha256: semantic.proof.comparison.mask?.sha256 ?? null,
-    passed: comparisonPassed
+    passed: actualSha256 === semantic.fact.expected.sha256
   })))
   .digest("hex");
 const semanticRecord = {assertion_key:"first-semantic-fact",capability:"semantic_fact",manifest_ref:"${semanticManifest.key}",manifest_sha256:semantic.manifestSha256,outcome_ref:"first",target_ref:"fixture-app",fact_ref:semantic.fact.key,proof_ref:semantic.proof.key,method:semantic.proof.method,subject_ref:semantic.fact.unit_ref,condition_ref:semantic.fact.condition_ref,property_ref:semantic.fact.property_ref,actual_observation:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/ready"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semantic.environment.definition.sha256},expected:semantic.fact.expected,comparison:{artifact_path:artifactPath,artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semantic.proof.comparison.comparator,mode:semantic.proof.comparison.mode,parameters:semantic.proof.comparison.parameters,tolerance:semantic.proof.comparison.tolerance,mask:semantic.proof.comparison.mask,passed:comparisonPassed},verdict:comparisonPassed?"passed":"failed",oracle:semantic.oracle,environment:semantic.environment,observer_results:[]};

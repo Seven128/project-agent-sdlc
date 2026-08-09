@@ -11,8 +11,9 @@ import {
   type ExactDigestComparisonInput,
 } from "./long-task-exact-comparison.js";
 import {
-  admittedObservationKey,
+  admittedObservationAuthorityKey,
   isJsonPointerExactOracle,
+  resolveObservationAuthority,
   type PreparedAdmittedObservationSet,
 } from "./long-task-admitted-observation.js";
 import { validateSemanticFactEvidence } from "./long-task-semantic-fact-evidence.js";
@@ -26,6 +27,7 @@ export function validateRuntimeEvidenceRecord(
   admittedObservations?: PreparedAdmittedObservationSet,
 ): string | null {
   const admittedObservationIssue = validateAdmittedObservationRecord(
+    check,
     record,
     admittedObservations,
   );
@@ -71,19 +73,38 @@ export function validateRuntimeEvidenceRecord(
 }
 
 function validateAdmittedObservationRecord(
+  check: CompiledCheckV2,
   record: EvidenceCapabilityRecordV2,
   admitted: PreparedAdmittedObservationSet | undefined,
 ): string | null {
+  if (
+    record.capability === "semantic_fact" &&
+    record.observer_results.length > 0
+  )
+    return "semantic_fact_machine_observer_not_admitted";
   const candidates = runtimeAdmittedObservationCandidates(record);
   for (const candidate of candidates) {
-    if (!isJsonPointerExactOracle(candidate.oracle)) continue;
+    if (!isJsonPointerExactOracle(candidate.oracle))
+      return "custom_oracle_machine_completion_forbidden";
+    const authorityResolution = resolveObservationAuthority(check, {
+      assertion_key: record.assertion_key,
+      identity_ref: candidate.identity_ref,
+      method:
+        record.capability === "semantic_fact" ||
+        record.capability === "design_method"
+          ? record.method
+          : "exact_value",
+    });
+    if (!authorityResolution.authority) return authorityResolution.reason;
+    if (authorityResolution.authority.authority === "external_confirmation")
+      return "unsupported_observer_requires_external_confirmation";
     if (!admitted) return "admitted_observation_runtime_required";
-    const key = admittedObservationKey(
-      candidate.actual_observation.artifact_path,
-      candidate.actual_observation.locator,
-    );
-    const prepared = admitted.by_observation_key.get(key);
-    if (!prepared || prepared.identity_ref !== candidate.identity_ref)
+    const key = admittedObservationAuthorityKey(authorityResolution.authority);
+    const prepared = admitted.by_authority_key.get(key);
+    if (
+      !prepared ||
+      prepared.obligation_ref !== authorityResolution.authority.obligation_ref
+    )
       return "admitted_observation_missing";
     if (prepared.reason) return prepared.reason;
     if (!prepared.observation) return "admitted_observation_missing";
@@ -524,8 +545,7 @@ function validateSymbolicExactComparison(
     },
     ...exactComparisonMaterial(result),
   });
-  if (!recomputed.passed)
-    return "design_symbolic_method_exact_value_mismatch";
+  if (!recomputed.passed) return "design_symbolic_method_exact_value_mismatch";
   return result.comparison.result_sha256 === recomputed.result_sha256
     ? null
     : "design_symbolic_method_comparison_result_identity_mismatch";
@@ -542,8 +562,6 @@ function exactComparisonMaterial(
     parameters_sha256: result.comparison.parameters.sha256,
     tolerance_sha256: result.comparison.tolerance?.sha256 ?? null,
     mask_sha256: result.comparison.mask?.sha256 ?? null,
-    submitted_passed: result.comparison.passed,
-    submitted_verdict: result.verdict,
   };
 }
 

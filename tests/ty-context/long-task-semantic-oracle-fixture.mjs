@@ -127,9 +127,12 @@ const actualValueSha256 = createHash("sha256")
 const comparisonPassed = state[key] === true;
 const comparisonResultSha256 = createHash("sha256")
   .update(JSON.stringify(canonicalize({
-    fact_ref: semantic[key].fact.key,
-    proof_ref: semantic[key].proof.key,
-    target_ref: "fixture-app",
+    identity: {
+      kind: "semantic_fact_non_ui",
+      fact_ref: semantic[key].fact.key,
+      proof_ref: semantic[key].proof.key,
+      target_ref: "fixture-app"
+    },
     actual_value_sha256: actualValueSha256,
     expected_value_sha256: semantic[key].fact.expected.sha256,
     comparator: semantic[key].proof.comparison.comparator,
@@ -137,7 +140,7 @@ const comparisonResultSha256 = createHash("sha256")
     parameters_sha256: semantic[key].proof.comparison.parameters.sha256,
     tolerance_sha256: semantic[key].proof.comparison.tolerance?.sha256 ?? null,
     mask_sha256: semantic[key].proof.comparison.mask?.sha256 ?? null,
-    passed: comparisonPassed
+    passed: actualValueSha256 === semantic[key].fact.expected.sha256
   })))
   .digest("hex");
 const semanticRecord = {

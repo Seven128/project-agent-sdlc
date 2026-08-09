@@ -4,6 +4,7 @@ import type {
   CompiledCheckV2,
   CompiledDesignTargetV2,
   DeliveryCheckV2,
+  DeliveryBindingV2,
   ExecutionTargetV2,
   FrozenRunnerV2,
   SemanticFactExpectationV2,
@@ -32,6 +33,7 @@ import {
   freezeLocalVerifierDependencyClosure,
   packageScriptVerifierRoots,
 } from "./long-task-verifier-dependency-closure.js";
+import { compileObservationAuthorityPlan } from "./long-task-observation-authority.js";
 
 export async function freezeDeliveryCheck(
   check: DeliveryCheckV2,
@@ -42,6 +44,7 @@ export async function freezeDeliveryCheck(
   knownExecutionTargets: ExecutionTargetV2[],
   designConformanceTargets: CompiledDesignTargetV2[],
   semanticFactExpectations: SemanticFactExpectationV2[],
+  productionBindings: DeliveryBindingV2[],
   protectedAuthorityPaths: readonly string[] = [],
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
@@ -106,23 +109,34 @@ export async function freezeDeliveryCheck(
     semanticFactExpectations,
     verificationInputHashes,
   );
+  const runner = await freezeRunner(
+    check,
+    repository,
+    cwd,
+    target,
+    verificationInputHashes,
+  );
+  const observationAuthorities = compileObservationAuthorityPlan({
+    check,
+    outcome_key: outcomeKey,
+    runner,
+    execution_target: executionTarget,
+    design_targets: designConformanceTargets,
+    semantic_fact_expectations: semanticFactExpectations,
+    production_bindings: productionBindings,
+  });
   const compiled = {
     ...check,
     internal_id: `${prefix}.${check.key}`,
     outcome_key: outcomeKey,
     evidence_adapter: evidenceAdapterForRunner(check.runner.type),
-    runner: await freezeRunner(
-      check,
-      repository,
-      cwd,
-      target,
-      verificationInputHashes,
-    ),
+    runner,
     verification_input_hashes: verificationInputHashes,
     execution_target_definition: executionTarget,
     known_execution_targets: knownExecutionTargets,
     design_conformance_targets: designConformanceTargets,
     semantic_fact_expectations: semanticFactExpectations,
+    observation_authorities: observationAuthorities,
   };
   return {
     ...compiled,

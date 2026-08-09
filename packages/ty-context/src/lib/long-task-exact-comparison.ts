@@ -9,8 +9,6 @@ export interface ExactDigestComparisonInput {
   parameters_sha256: string;
   tolerance_sha256: string | null;
   mask_sha256: string | null;
-  submitted_passed?: boolean;
-  submitted_verdict?: string;
 }
 
 export interface ExactDigestComparisonResult {

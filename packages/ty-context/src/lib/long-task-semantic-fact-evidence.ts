@@ -2,7 +2,10 @@ import type {
   CompiledCheckV2,
   EvidenceCapabilityRecordV2,
 } from "./long-task-delivery-types.js";
-import { exactComparisonResultIdentity } from "./long-task-exact-comparison.js";
+import {
+  evaluateExactDigestComparison,
+  type ExactDigestComparisonResult,
+} from "./long-task-exact-comparison.js";
 import { canonicalValueJson } from "./strict-codec.js";
 
 type SemanticRecord = Extract<
@@ -43,8 +46,6 @@ export function validateSemanticFactEvidence(
     artifactHashes,
   );
   if (observerError) return observerError;
-  if (record.verdict !== "passed" || record.comparison.passed !== true)
-    return "semantic_fact_failed";
   return null;
 }
 
@@ -78,32 +79,8 @@ function validateSemanticFactEvidenceAuthority(
     return "semantic_fact_expected_value_mismatch";
   if (!sameSemanticFactComparisonAuthority(record, expected))
     return "semantic_fact_comparison_authority_mismatch";
-  if (
-    record.comparison.result_sha256 !==
-    semanticFactComparisonResultIdentity({
-      fact_ref: record.fact_ref,
-      proof_ref: record.proof_ref,
-      fact_key: record.fact_key,
-      fact_revision_digest: record.fact_revision_digest,
-      obligation_key: record.obligation_key,
-      obligation_revision_digest: record.obligation_revision_digest,
-      target_ref: record.target_ref,
-      actual_value_sha256: record.actual_observation.value_sha256,
-      expected_value_sha256: expected.expected.sha256,
-      comparator: record.comparison.comparator,
-      mode: record.comparison.mode,
-      parameters_sha256: record.comparison.parameters.sha256,
-      tolerance_sha256: record.comparison.tolerance?.sha256 ?? null,
-      mask_sha256: record.comparison.mask?.sha256 ?? null,
-      passed: record.comparison.passed,
-    })
-  )
-    return "semantic_fact_comparison_result_identity_mismatch";
-  if (
-    record.comparison.comparator === "exact_value" &&
-    record.actual_observation.value_sha256 !== expected.expected.sha256
-  )
-    return "semantic_fact_exact_value_mismatch";
+  const exactError = validateSemanticFactExactComparison(record, expected);
+  if (exactError) return exactError;
   if (
     canonicalValueJson(record.oracle) !== canonicalValueJson(expected.oracle) ||
     canonicalValueJson(record.environment) !==
@@ -166,6 +143,10 @@ function sameSemanticFactComparisonAuthority(
   expected: SemanticExpectation,
 ): boolean {
   return (
+    expected.comparison.comparator === "exact_value" &&
+    expected.comparison.mode === "exact" &&
+    expected.comparison.tolerance === null &&
+    expected.comparison.mask === null &&
     record.comparison.comparator === expected.comparison.comparator &&
     record.comparison.mode === expected.comparison.mode &&
     canonicalValueJson(record.comparison.parameters) ===
@@ -175,6 +156,26 @@ function sameSemanticFactComparisonAuthority(
     canonicalValueJson(record.comparison.mask) ===
       canonicalValueJson(expected.comparison.mask)
   );
+}
+
+function validateSemanticFactExactComparison(
+  record: SemanticRecord,
+  expected: SemanticExpectation,
+): string | null {
+  const recomputed = evaluateSemanticFactExactComparison(
+    expected,
+    record.target_ref,
+    record.actual_observation.value_sha256,
+  );
+  if (!recomputed.passed) return "semantic_fact_exact_value_mismatch";
+  if (
+    record.comparison.passed !== recomputed.passed ||
+    record.verdict !== semanticFactVerdict(recomputed.passed)
+  )
+    return "project_submitted_verdict_disagrees_with_harness";
+  return record.comparison.result_sha256 === recomputed.result_sha256
+    ? null
+    : "semantic_fact_comparison_result_identity_mismatch";
 }
 
 function validateSemanticFactArtifacts(
@@ -226,38 +227,21 @@ function validateSemanticFactObservers(
     observerObservations.add(observation);
     if (artifactHashes[observer.artifact_path] !== observer.artifact_sha256)
       return "semantic_fact_observer_artifact_mismatch";
-    if (
-      observer.passed !== true ||
-      (record.comparison.comparator === "exact_value" &&
-        observer.value_sha256 !== expected.expected.sha256)
-    )
-      return "semantic_fact_observer_failed";
-    if (
-      observer.comparison_result_sha256 !==
-      semanticFactComparisonResultIdentity({
-        fact_ref: record.fact_ref,
-        proof_ref: record.proof_ref,
-        fact_key: record.fact_key,
-        fact_revision_digest: record.fact_revision_digest,
-        obligation_key: record.obligation_key,
-        obligation_revision_digest: record.obligation_revision_digest,
-        target_ref: observer.target_ref,
-        actual_value_sha256: observer.value_sha256,
-        expected_value_sha256: expected.expected.sha256,
-        comparator: record.comparison.comparator,
-        mode: record.comparison.mode,
-        parameters_sha256: record.comparison.parameters.sha256,
-        tolerance_sha256: record.comparison.tolerance?.sha256 ?? null,
-        mask_sha256: record.comparison.mask?.sha256 ?? null,
-        passed: observer.passed,
-      })
-    )
+    const recomputed = evaluateSemanticFactExactComparison(
+      expected,
+      observer.target_ref,
+      observer.value_sha256,
+    );
+    if (!recomputed.passed) return "semantic_fact_observer_failed";
+    if (observer.passed !== recomputed.passed)
+      return "project_submitted_verdict_disagrees_with_harness";
+    if (observer.comparison_result_sha256 !== recomputed.result_sha256)
       return "semantic_fact_observer_comparison_identity_mismatch";
   }
   return null;
 }
 
-export function semanticFactComparisonResultIdentity(value: {
+type SemanticFactExactComparisonMaterial = {
   fact_ref: string;
   proof_ref: string;
   fact_key?: string;
@@ -272,30 +256,81 @@ export function semanticFactComparisonResultIdentity(value: {
   parameters_sha256: string;
   tolerance_sha256: string | null;
   mask_sha256: string | null;
-  passed: boolean;
-}): string {
+};
+
+export function semanticFactComparisonResultIdentity(
+  value: SemanticFactExactComparisonMaterial,
+): string {
+  return evaluateSemanticFactExactComparisonMaterial(value).result_sha256;
+}
+
+function evaluateSemanticFactExactComparison(
+  expected: SemanticExpectation,
+  targetRef: string,
+  actualValueSha256: string,
+): ExactDigestComparisonResult {
+  return evaluateSemanticFactExactComparisonMaterial({
+    fact_ref: expected.fact_ref,
+    proof_ref: expected.proof_ref,
+    fact_key: expected.fact_key,
+    fact_revision_digest: expected.fact_revision_digest,
+    obligation_key: expected.obligation_key,
+    obligation_revision_digest: expected.obligation_revision_digest,
+    target_ref: targetRef,
+    actual_value_sha256: actualValueSha256,
+    expected_value_sha256: expected.expected.sha256,
+    comparator: expected.comparison.comparator,
+    mode: expected.comparison.mode,
+    parameters_sha256: expected.comparison.parameters.sha256,
+    tolerance_sha256: expected.comparison.tolerance?.sha256 ?? null,
+    mask_sha256: expected.comparison.mask?.sha256 ?? null,
+  });
+}
+
+function evaluateSemanticFactExactComparisonMaterial(
+  value: SemanticFactExactComparisonMaterial,
+): ExactDigestComparisonResult {
+  return evaluateExactDigestComparison({
+    identity: semanticFactComparisonIdentity(value),
+    actual_value_sha256: value.actual_value_sha256,
+    expected_value_sha256: value.expected_value_sha256,
+    comparator: value.comparator,
+    mode: value.mode,
+    parameters_sha256: value.parameters_sha256,
+    tolerance_sha256: value.tolerance_sha256,
+    mask_sha256: value.mask_sha256,
+  });
+}
+
+function semanticFactComparisonIdentity(
+  value: SemanticFactExactComparisonMaterial,
+): Readonly<Record<string, unknown>> {
   const revisionIdentityPresent =
     value.fact_key !== undefined ||
     value.fact_revision_digest !== undefined ||
     value.obligation_key !== undefined ||
     value.obligation_revision_digest !== undefined;
-  return exactComparisonResultIdentity(
-    revisionIdentityPresent
-      ? value
-      : {
-          fact_ref: value.fact_ref,
-          proof_ref: value.proof_ref,
-          target_ref: value.target_ref,
-          actual_value_sha256: value.actual_value_sha256,
-          expected_value_sha256: value.expected_value_sha256,
-          comparator: value.comparator,
-          mode: value.mode,
-          parameters_sha256: value.parameters_sha256,
-          tolerance_sha256: value.tolerance_sha256,
-          mask_sha256: value.mask_sha256,
-          passed: value.passed,
-        },
-  );
+  return revisionIdentityPresent
+    ? {
+        kind: "semantic_fact_non_ui",
+        fact_ref: value.fact_ref,
+        proof_ref: value.proof_ref,
+        fact_key: value.fact_key,
+        fact_revision_digest: value.fact_revision_digest,
+        obligation_key: value.obligation_key,
+        obligation_revision_digest: value.obligation_revision_digest,
+        target_ref: value.target_ref,
+      }
+    : {
+        kind: "semantic_fact_non_ui",
+        fact_ref: value.fact_ref,
+        proof_ref: value.proof_ref,
+        target_ref: value.target_ref,
+      };
+}
+
+function semanticFactVerdict(passed: boolean): "passed" | "failed" {
+  return passed ? "passed" : "failed";
 }
 
 export function validateDistinctSemanticFactEvidence(

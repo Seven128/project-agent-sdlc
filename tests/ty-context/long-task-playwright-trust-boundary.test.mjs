@@ -178,9 +178,12 @@ const canonicalize = (value) => {
 };
 const comparisonResultSha256 = createHash("sha256")
   .update(JSON.stringify(canonicalize({
-    fact_ref: semanticAuthority.fact.key,
-    proof_ref: semanticAuthority.proof.key,
-    target_ref: "fixture-app",
+    identity: {
+      kind: "semantic_fact_non_ui",
+      fact_ref: semanticAuthority.fact.key,
+      proof_ref: semanticAuthority.proof.key,
+      target_ref: "fixture-app"
+    },
     actual_value_sha256: actualSha256,
     expected_value_sha256: semanticAuthority.fact.expected.sha256,
     comparator: semanticAuthority.proof.comparison.comparator,
@@ -188,7 +191,7 @@ const comparisonResultSha256 = createHash("sha256")
     parameters_sha256: semanticAuthority.proof.comparison.parameters.sha256,
     tolerance_sha256: semanticAuthority.proof.comparison.tolerance?.sha256 ?? null,
     mask_sha256: semanticAuthority.proof.comparison.mask?.sha256 ?? null,
-    passed: ready
+    passed: actualSha256 === semanticAuthority.fact.expected.sha256
   })))
   .digest("hex");
 const semanticRecord = {assertion_key:"first-semantic-fact",capability:"semantic_fact",manifest_ref:"${semanticManifest.key}",manifest_sha256:semanticAuthority.manifestSha256,outcome_ref:"first",target_ref:"fixture-app",fact_ref:semanticAuthority.fact.key,proof_ref:semanticAuthority.proof.key,method:semanticAuthority.proof.method,subject_ref:semanticAuthority.fact.unit_ref,condition_ref:semanticAuthority.fact.condition_ref,property_ref:semanticAuthority.fact.property_ref,actual_observation:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/first"},value_sha256:actualSha256,sensitivity:"plain",redaction:null},actual_environment:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/environment"},value_sha256:semanticAuthority.environment.definition.sha256},expected:semanticAuthority.fact.expected,comparison:{artifact_path:"artifacts/proof.json",artifact_sha256:artifactSha256,locator:{kind:"json_pointer",value:"/comparison"},result_sha256:comparisonResultSha256,comparator:semanticAuthority.proof.comparison.comparator,mode:semanticAuthority.proof.comparison.mode,parameters:semanticAuthority.proof.comparison.parameters,tolerance:semanticAuthority.proof.comparison.tolerance,mask:semanticAuthority.proof.comparison.mask,passed:ready},verdict:ready?"passed":"failed",oracle:semanticAuthority.oracle,environment:semanticAuthority.environment,observer_results:[]};

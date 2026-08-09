@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { decodeEvidenceCapabilityRecords } from "../../packages/ty-context/dist/lib/long-task-evidence-capability-codec.js";
 import {
+  semanticFactComparisonResultIdentity,
   validateDistinctSemanticFactEvidence,
   validateSemanticFactEvidence,
 } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-evidence.js";
@@ -9,9 +10,7 @@ import {
   fixtureSemanticManifest,
   semanticManifestIdentity,
 } from "./long-task-delivery-fixtures.mjs";
-import {
-  refreshComparisonIdentity,
-} from "./long-task-semantic-fact-test-support.mjs";
+import { refreshComparisonIdentity } from "./long-task-semantic-fact-test-support.mjs";
 
 test("runtime evidence is attributable per Fact and cannot reuse or rewrite frozen authority", () => {
   const manifest = fixtureSemanticManifest();
@@ -89,6 +88,23 @@ test("runtime evidence is attributable per Fact and cannot reuse or rewrite froz
     expectation,
     record.target_ref,
   );
+  assert.equal(
+    semanticFactComparisonResultIdentity({
+      fact_ref: record.fact_ref,
+      proof_ref: record.proof_ref,
+      target_ref: record.target_ref,
+      actual_value_sha256: record.actual_observation.value_sha256,
+      expected_value_sha256: expectation.expected.sha256,
+      comparator: expectation.comparison.comparator,
+      mode: expectation.comparison.mode,
+      parameters_sha256: expectation.comparison.parameters.sha256,
+      tolerance_sha256: expectation.comparison.tolerance?.sha256 ?? null,
+      mask_sha256: expectation.comparison.mask?.sha256 ?? null,
+      passed: false,
+    }),
+    record.comparison.result_sha256,
+    "submitted pass is not part of the Harness-computed exact result identity",
+  );
   const check = {
     key: "first-check",
     execution_target: { target_ref: "fixture-app" },
@@ -157,7 +173,14 @@ test("runtime evidence is attributable per Fact and cannot reuse or rewrite froz
       (candidate) => {
         candidate.verdict = "failed";
       },
-      "semantic_fact_failed",
+      "project_submitted_verdict_disagrees_with_harness",
+    ],
+    [
+      "submitted comparison pass",
+      (candidate) => {
+        candidate.comparison.passed = false;
+      },
+      "project_submitted_verdict_disagrees_with_harness",
     ],
   ]) {
     const candidate = structuredClone(record);
@@ -210,35 +233,24 @@ test("runtime evidence is attributable per Fact and cannot reuse or rewrite froz
     "artifacts/observer.json": "c".repeat(64),
   };
   assert.equal(
-    validateSemanticFactEvidence(
-      observedCheck,
-      observedRecord,
-      observedHashes,
-    ),
+    validateSemanticFactEvidence(observedCheck, observedRecord, observedHashes),
     null,
   );
   observedRecord.observer_results[0].passed = false;
   assert.equal(
-    validateSemanticFactEvidence(
-      observedCheck,
-      observedRecord,
-      observedHashes,
-    ),
-    "semantic_fact_observer_failed",
+    validateSemanticFactEvidence(observedCheck, observedRecord, observedHashes),
+    "project_submitted_verdict_disagrees_with_harness",
   );
   observedRecord.observer_results[0].passed = true;
   observedRecord.observer_results[0].artifact_path =
     record.actual_observation.artifact_path;
   observedRecord.observer_results[0].artifact_sha256 =
     record.actual_observation.artifact_sha256;
-  observedRecord.observer_results[0].locator =
-    structuredClone(record.actual_observation.locator);
+  observedRecord.observer_results[0].locator = structuredClone(
+    record.actual_observation.locator,
+  );
   assert.equal(
-    validateSemanticFactEvidence(
-      observedCheck,
-      observedRecord,
-      observedHashes,
-    ),
+    validateSemanticFactEvidence(observedCheck, observedRecord, observedHashes),
     "semantic_fact_observer_observation_reused",
   );
 

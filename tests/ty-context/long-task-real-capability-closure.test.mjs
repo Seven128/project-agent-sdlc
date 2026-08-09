@@ -25,7 +25,10 @@ test("json-pointer-exact-v1 recomputes exact pass and comparison identity", asyn
   const accepted = exact.evaluateExactDigestComparison(base);
   assert.deepEqual(accepted, {
     passed: true,
-    result_sha256: exact.exactComparisonResultIdentity({ ...base, passed: true }),
+    result_sha256: exact.exactComparisonResultIdentity({
+      ...base,
+      passed: true,
+    }),
   });
   const rejected = exact.evaluateExactDigestComparison({
     ...base,
@@ -88,7 +91,10 @@ test("json-pointer-exact-v1 fails closed on ambiguous, escaped, oversized and pr
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-observer-invalid-"));
   try {
     await writeFile(path.join(root, "duplicate.json"), '{"value":1,"value":2}');
-    await writeFile(path.join(root, "large.json"), `{"value":"${"x".repeat(1_048_576)}"}`);
+    await writeFile(
+      path.join(root, "large.json"),
+      `{"value":"${"x".repeat(1_048_576)}"}`,
+    );
     await writeFile(path.join(root, "plain.json"), '{"value":true}');
     await assert.rejects(
       admitted.extractJsonPointerExactObservation({
@@ -195,14 +201,14 @@ test("package observer is joined to selected-design validation from the current 
   try {
     const observationPath = "runtime-state.json";
     const comparisonPath = "comparison.json";
+    const obligationRef = "design.route-b-target.content.default.fact.route_b";
     const observationBytes = Buffer.from(
       JSON.stringify({ observations: { "fact.route_b": "accepted" } }),
     );
     const comparisonBytes = Buffer.from('{"comparison":true}');
     await writeFile(path.join(root, observationPath), observationBytes);
     await writeFile(path.join(root, comparisonPath), comparisonBytes);
-    const sha = (value) =>
-      createHash("sha256").update(value).digest("hex");
+    const sha = (value) => createHash("sha256").update(value).digest("hex");
     const valueSha256 = sha(JSON.stringify("accepted"));
     const observationSha256 = sha(observationBytes);
     const comparisonSha256 = sha(comparisonBytes);
@@ -283,9 +289,8 @@ test("package observer is joined to selected-design validation from the current 
       mask_sha256: null,
       passed: true,
     };
-    comparison.result_sha256 = exact.exactComparisonResultIdentity(
-      comparisonInput,
-    );
+    comparison.result_sha256 =
+      exact.exactComparisonResultIdentity(comparisonInput);
     const result = {
       fact_ref: expectation.fact_ref,
       subject_ref: expectation.subject_ref,
@@ -333,7 +338,7 @@ test("package observer is joined to selected-design validation from the current 
       internal_id: "GLOBAL:route-b-check",
       outcome_key: null,
       key: "route-b-check",
-      proof_surface: "runtime_behavior",
+      proof_surface: "implementation_structure",
       evidence_adapter: "structured_json_v2",
       execution_target: { target_ref: "route-b-process", entrypoint: "root" },
       execution_target_definition: {
@@ -376,6 +381,51 @@ test("package observer is joined to selected-design validation from the current 
               ],
             },
           ],
+        },
+      ],
+      observation_authorities: [
+        {
+          obligation_ref: obligationRef,
+          fact_ref: expectation.fact_ref,
+          assertion_ref: "route-b-content",
+          claim_refs: ["result"],
+          target_ref: "route-b-process",
+          proof_surface: "implementation_structure",
+          method: "content",
+          evidence_capabilities: ["design_method"],
+          authority: "package_static_json_exact",
+          expected_identity: "d".repeat(64),
+          expected_value_sha256: valueSha256,
+          observation_identity: expectation.fact_ref,
+          comparison: {
+            comparator: "exact_value",
+            mode: "exact",
+            parameters_sha256: expectation.comparison.parameters.sha256,
+            tolerance_sha256: null,
+            mask_sha256: null,
+          },
+          locator_policy: {
+            kind: "fixed_json_pointer",
+            value: admitted.jsonPointerExactLocatorForIdentity(
+              expectation.fact_ref,
+            ).value,
+          },
+          carrier_refs: [
+            {
+              binding_ref: "first.state-first",
+              carrier_paths: [observationPath],
+            },
+          ],
+          runtime_requirements: {
+            runtime_family: "process",
+            target_role: "product",
+            entrypoint: "root",
+            runner_type: "project_binary",
+            resolved_runner_target: "bin/product",
+            declared_root_entrypoint: "bin/product",
+            effect: "read_only",
+            direct_root_match: true,
+          },
         },
       ],
     };
@@ -435,8 +485,147 @@ test("package observer is joined to selected-design validation from the current 
     assert.equal(forgedExecution.status, "invalid_evidence");
     assert.ok(
       forgedExecution.findings.some(
-        (finding) =>
-          finding.actual === "admitted_observation_value_mismatch",
+        (finding) => finding.actual === "admitted_observation_value_mismatch",
+      ),
+    );
+
+    const customOracle = structuredClone(record);
+    customOracle.cells[0].fact_results[0].oracle.identity =
+      "project-custom-oracle";
+    const customPrepared = await admitted.prepareAdmittedObservations({
+      check,
+      records: [customOracle],
+      snapshot_root: root,
+    });
+    assert.equal(customPrepared.entries.length, 1);
+    assert.equal(
+      customPrepared.entries[0].reason,
+      "custom_oracle_machine_completion_forbidden",
+    );
+    assert.equal(
+      exact.validateRuntimeEvidenceRecord(
+        check,
+        customOracle,
+        {
+          [observationPath]: observationSha256,
+          [comparisonPath]: comparisonSha256,
+        },
+        customPrepared,
+      ),
+      "custom_oracle_machine_completion_forbidden",
+    );
+
+    const processAuthority = structuredClone(check);
+    processAuthority.observation_authorities[0].authority =
+      "package_process_json_exact";
+    const unresolvedProcess = await admitted.prepareAdmittedObservations({
+      check: processAuthority,
+      records: [record],
+      snapshot_root: root,
+    });
+    assert.equal(
+      unresolvedProcess.entries[0].reason,
+      "admitted_observation_runtime_required",
+    );
+
+    const duplicated = await admitted.prepareAdmittedObservations({
+      check,
+      records: [record, record],
+      snapshot_root: root,
+    });
+    assert.equal(duplicated.entries.length, 2);
+    assert.ok(
+      duplicated.entries.every(
+        (entry) => entry.reason === "admitted_observation_duplicate",
+      ),
+    );
+
+    const noAuthority = structuredClone(check);
+    noAuthority.observation_authorities = [];
+    const unplanned = await evaluateCheckEvidence(noAuthority, raw, root);
+    assert.equal(unplanned.status, "invalid_evidence");
+    assert.ok(
+      unplanned.findings.some(
+        (finding) => finding.actual === "machine_observer_not_admitted",
+      ),
+    );
+
+    const ordinaryObligation = "assertion.GLOBAL.route-b-check.route-b-content";
+    const ordinaryCheck = structuredClone(check);
+    ordinaryCheck.proof_surface = "runtime_behavior";
+    ordinaryCheck.execution_target_definition.root_entrypoint = "bin/product";
+    ordinaryCheck.positive_assertions[0].evidence_capabilities = [
+      "target_runtime",
+    ];
+    ordinaryCheck.design_conformance_targets = [];
+    ordinaryCheck.observation_authorities = [
+      {
+        ...structuredClone(check.observation_authorities[0]),
+        obligation_ref: ordinaryObligation,
+        fact_ref: null,
+        method: "exact_value",
+        evidence_capabilities: ["target_runtime"],
+        authority: "package_process_json_exact",
+        observation_identity: ordinaryObligation,
+        locator_policy: {
+          kind: "fixed_json_pointer",
+          value:
+            admitted.jsonPointerExactLocatorForIdentity(ordinaryObligation)
+              .value,
+        },
+      },
+    ];
+    const ordinaryRaw = {
+      ...raw,
+      evidence_records: [
+        {
+          assertion_key: "route-b-content",
+          capability: "target_runtime",
+          target_ref: "route-b-process",
+          root_entrypoint: "bin/product",
+          session_id: "project-self-attested",
+          cold_start: true,
+        },
+      ],
+    };
+    const projectRuntimeOnly = await evaluateCheckEvidence(
+      ordinaryCheck,
+      ordinaryRaw,
+      root,
+    );
+    assert.equal(projectRuntimeOnly.status, "invalid_evidence");
+    assert.ok(
+      projectRuntimeOnly.findings.some(
+        (finding) => finding.actual === "admitted_observation_runtime_required",
+      ),
+    );
+
+    const preservedLiveness = structuredClone(ordinaryCheck);
+    preservedLiveness.positive_assertions[0].claims = [];
+    preservedLiveness.observation_authorities[0].claim_refs = [];
+    const selfAttestedLiveness = await evaluateCheckEvidence(
+      preservedLiveness,
+      ordinaryRaw,
+      root,
+    );
+    assert.equal(selfAttestedLiveness.status, "invalid_evidence");
+    assert.ok(
+      selfAttestedLiveness.findings.some(
+        (finding) => finding.actual === "admitted_observation_runtime_required",
+      ),
+    );
+
+    const missingPlanProperty = structuredClone(ordinaryCheck);
+    delete missingPlanProperty.observation_authorities;
+    const missingPlan = await evaluateCheckEvidence(
+      missingPlanProperty,
+      ordinaryRaw,
+      root,
+    );
+    assert.equal(missingPlan.status, "invalid_evidence");
+    assert.ok(
+      missingPlan.findings.some(
+        (finding) => finding.actual === "machine_observer_not_admitted",
       ),
     );
   } finally {

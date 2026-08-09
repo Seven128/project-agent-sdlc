@@ -38,6 +38,51 @@ export interface FrozenRunnerV2 extends DeliveryRunnerV2 {
   execution_identity: string;
 }
 
+export type CompiledObservationAuthorityKindV2 =
+  | "package_static_json_exact"
+  | "package_process_json_exact"
+  | "external_confirmation";
+
+export interface CompiledObservationAuthorityV2 {
+  obligation_ref: string;
+  fact_ref: string | null;
+  assertion_ref: string;
+  claim_refs: string[];
+  target_ref: string;
+  proof_surface: ProofSurface;
+  method: string;
+  evidence_capabilities: EvidenceCapabilityV2[];
+  authority: CompiledObservationAuthorityKindV2;
+  expected_identity: string;
+  expected_value_sha256: string;
+  observation_identity: string;
+  comparison: {
+    comparator: string;
+    mode: string;
+    parameters_sha256: string | null;
+    tolerance_sha256: string | null;
+    mask_sha256: string | null;
+  };
+  locator_policy: {
+    kind: "fixed_json_pointer";
+    value: string;
+  };
+  carrier_refs: Array<{
+    binding_ref: string;
+    carrier_paths: string[];
+  }>;
+  runtime_requirements: {
+    runtime_family: ExecutionTargetV2["runtime_family"];
+    target_role: ExecutionTargetV2["role"];
+    entrypoint: DeliveryCheckV2["execution_target"]["entrypoint"];
+    runner_type: DeliveryRunnerV2["type"];
+    resolved_runner_target: string;
+    declared_root_entrypoint: string;
+    effect: DeliveryRunnerV2["effect"];
+    direct_root_match: boolean;
+  };
+}
+
 export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   internal_id: string;
   outcome_key: string | null;
@@ -49,6 +94,7 @@ export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   known_execution_targets: ExecutionTargetV2[];
   design_conformance_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
+  observation_authorities: CompiledObservationAuthorityV2[];
 }
 
 export interface ProductClaimV2 {
