@@ -92,24 +92,30 @@ export async function evaluateCounterfactualGold({ baseline, mutation }) {
 }
 
 function evaluateGoldFacts(state) {
+  const checkoutEnabled = state.checkout.enabled === true;
+  const retryBudgetBounded =
+    Number.isInteger(state.resilience.retry_budget) &&
+    state.resilience.retry_budget >= 0 &&
+    state.resilience.retry_budget <= 3;
   return {
     "catalog-resolution-ready":
-      state.mode === "normal"
+      checkoutEnabled &&
+      (state.mode === "normal"
         ? state.catalog.primary_ready === true
-        : state.mode === "degraded" && state.catalog.fallback_ready === true,
-    "pricing-currency-cny": state.pricing.currency === "CNY",
+        : state.mode === "degraded" && state.catalog.fallback_ready === true),
+    "pricing-currency-cny": checkoutEnabled && state.pricing.currency === "CNY",
     "inventory-nonnegative":
+      checkoutEnabled &&
       Number.isInteger(state.inventory.available) &&
       state.inventory.available >= 0,
-    "checkout-enabled": state.checkout.enabled === true,
+    "checkout-enabled": checkoutEnabled,
     "degraded-fallback-visible":
-      state.mode === "normal" || state.catalog.fallback_ready === true,
-    "audit-event-emitted": state.observability.audit_event_emitted === true,
-    "retry-budget-bounded":
-      Number.isInteger(state.resilience.retry_budget) &&
-      state.resilience.retry_budget >= 0 &&
-      state.resilience.retry_budget <= 5,
-    "health-live": state.health.live === true,
+      retryBudgetBounded &&
+      (state.mode === "normal" || state.catalog.fallback_ready === true),
+    "audit-event-emitted":
+      retryBudgetBounded && state.observability.audit_event_emitted === true,
+    "retry-budget-bounded": retryBudgetBounded,
+    "health-live": retryBudgetBounded && state.health.live === true,
   };
 }
 

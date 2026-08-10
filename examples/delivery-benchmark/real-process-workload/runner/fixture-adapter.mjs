@@ -146,11 +146,10 @@ async function configureProductTarget({ fixture, variantId, caseId, product }) {
   target.root_entrypoint = product.rootPath;
   target.capabilities = ["process-runtime", "cold-start", "production-root"];
   const externalInput = await configureAttackInput(fixture.root, caseId);
-  target.root_argv = productRootArgv(
-    product.productPath,
-    "first",
-    externalInput ? [externalInput] : [],
-  );
+  target.root_argv = productRootArgv(product.productPath, "first", [
+    `--facts=${product.factsPath}`,
+    ...(externalInput ? [`--external-input=${externalInput}`] : []),
+  ]);
 
   for (const outcome of fixture.contract.outcomes) {
     outcome.product.owner.path_globs = [
@@ -232,7 +231,7 @@ function configureAssertions(contract) {
       ["degraded-fallback-visible", ["result"]],
       ["audit-event-emitted", ["requirement.observe-second"]],
       ["retry-budget-bounded", ["obligation.implement-second"]],
-      ["health-live", []],
+      ["health-live", ["obligation.implement-second"]],
     ],
   };
   for (const outcome of contract.outcomes) {
@@ -282,12 +281,19 @@ function configureCounterfactuals(contract) {
         binding_key: "roi-product-state",
         claims: first
           ? [
-              "semantic_fact.fact.first.observable",
+              "result",
+              "requirement.observe-first",
+              "obligation.implement-first",
               "obligation.architecture-first",
+              "control_relation_closure",
+              "semantic_fact.fact.first.observable",
             ]
           : [
-              "semantic_fact.fact.second.observable",
+              "result",
+              "requirement.observe-second",
               "obligation.implement-second",
+              "control_relation_closure",
+              "semantic_fact.fact.second.observable",
             ],
         mutation: {
           type: "replace_json_value",
@@ -296,23 +302,23 @@ function configureCounterfactuals(contract) {
           value: first ? false : 99,
         },
         expected_assertion_failures: first
-          ? ["checkout-enabled", "first-semantic-fact"]
-          : ["retry-budget-bounded", "second-semantic-fact"],
-        preserved_assertions: first
           ? [
               "catalog-resolution-ready",
               "pricing-currency-cny",
               "inventory-nonnegative",
-              "first-liveness",
+              "checkout-enabled",
+              "first-semantic-fact",
               "first-relations-na",
             ]
           : [
               "degraded-fallback-visible",
               "audit-event-emitted",
+              "retry-budget-bounded",
               "health-live",
-              "second-liveness",
+              "second-semantic-fact",
               "second-relations-na",
             ],
+        preserved_assertions: first ? ["first-liveness"] : ["second-liveness"],
       },
     ];
   }
@@ -343,10 +349,13 @@ async function configureWrongRootAfterSourceBinding({ fixture, target }) {
   const wrapperModule = "tests/roi-verifier-wrapper.mjs";
   await writeFile(
     path.join(fixture.root, ...wrapperModule.split("/")),
-    `import { spawnSync } from "node:child_process";\nconst child = spawnSync(process.execPath, ["src/roi-product.mjs", process.argv[2] ?? "first"], { cwd: process.cwd(), encoding: "utf8" });\nif (child.error) throw child.error;\nprocess.stderr.write(child.stderr ?? "");\nprocess.stdout.write(child.stdout ?? "");\nprocess.exitCode = child.status ?? 1;\n`,
+    `import { spawnSync } from "node:child_process";\nconst options = new Map(process.argv.slice(3).map((argument) => { const separator = argument.indexOf("="); return [argument.slice(0, separator), argument.slice(separator + 1)]; }));\nconst product = options.get("--product");\nconst facts = options.get("--facts");\nif (!product || !facts) throw new Error("roi_wrapper_product_invocation_required");\nconst child = spawnSync(process.execPath, [product, process.argv[2] ?? "first", \`--facts=\${facts}\`], { cwd: process.cwd(), encoding: "utf8" });\nif (child.error) throw child.error;\nprocess.stderr.write(child.stderr ?? "");\nprocess.stdout.write(child.stdout ?? "");\nprocess.exitCode = child.status ?? 1;\n`,
   );
   target.root_entrypoint = wrapperRoot;
-  target.root_argv = productRootArgv(wrapperModule, "first");
+  target.root_argv = productRootArgv(wrapperModule, "first", [
+    "--product=src/roi-product.mjs",
+    "--facts=src/facts.mjs",
+  ]);
   for (const outcome of fixture.contract.outcomes) {
     outcome.product.owner.path_globs.push(wrapperRoot, wrapperModule);
     outcome.technical.allowed_support_paths.push(wrapperRoot, wrapperModule);
@@ -415,7 +424,7 @@ const result = JSON.parse(legacy.stdout.trim());
 for (const [key, value] of Object.entries(values)) result.observations["roi_" + key.replaceAll("-", "_")] = value;
 result.observations.semantic_fact_result = aggregate;
 result.observations.target_live = true;
-result.observations.relations_applicable = false;
+result.observations.relations_applicable = !aggregate;
 result.evidence_records = (result.evidence_records ?? []).filter((record) => record.capability !== "target_runtime");
 for (const key of [...Object.keys(values), scope + "-liveness", scope + "-relations-na"])
   result.evidence_records.push({ assertion_key:key, capability:"target_runtime", target_ref:"fixture-app", root_entrypoint:${JSON.stringify(target.root_entrypoint)}, session_id:"legacy-self-report-session", cold_start:true });
@@ -470,7 +479,7 @@ function shellQuote(value) {
 
 function cmdToken(value) {
   const token = String(value);
-  if (!/^[A-Za-z0-9_./:-]+$/u.test(token))
+  if (!/^[A-Za-z0-9_./:=\-]+$/u.test(token))
     throw new Error(`real_process_roi_cmd_token_unsafe:${token}`);
   return token;
 }

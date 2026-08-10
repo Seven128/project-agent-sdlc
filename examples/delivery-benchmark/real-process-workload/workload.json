@@ -10,11 +10,13 @@
       "id": "disable-checkout",
       "pointer": "/checkout/enabled",
       "value": false,
-      "affected_fact_ids": ["checkout-enabled"],
-      "preserved_fact_ids": [
+      "affected_fact_ids": [
         "catalog-resolution-ready",
         "pricing-currency-cny",
         "inventory-nonnegative",
+        "checkout-enabled"
+      ],
+      "preserved_fact_ids": [
         "degraded-fallback-visible",
         "audit-event-emitted",
         "retry-budget-bounded",
@@ -26,15 +28,17 @@
       "id": "exceed-retry-budget",
       "pointer": "/resilience/retry_budget",
       "value": 99,
-      "affected_fact_ids": ["retry-budget-bounded"],
+      "affected_fact_ids": [
+        "degraded-fallback-visible",
+        "audit-event-emitted",
+        "retry-budget-bounded",
+        "health-live"
+      ],
       "preserved_fact_ids": [
         "catalog-resolution-ready",
         "pricing-currency-cny",
         "inventory-nonnegative",
-        "checkout-enabled",
-        "degraded-fallback-visible",
-        "audit-event-emitted",
-        "health-live"
+        "checkout-enabled"
       ],
       "allowed_fanout_fact_ids": []
     }

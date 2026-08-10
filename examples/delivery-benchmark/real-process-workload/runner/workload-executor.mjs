@@ -506,6 +506,17 @@ export async function executeVariantRepeat(options) {
   return result;
 }
 
+export async function enableRealProcessRoiLongTaskProfile(invoke, cli) {
+  const enabled = await invoke("enable-long-task", process.execPath, [
+    cli,
+    "enable",
+    "long-task",
+  ]);
+  if (enabled.status !== 0)
+    throw new Error(`real_process_roi_enable_failed:${enabled.status}`);
+  return enabled;
+}
+
 async function executeLifecycle({
   harnessRoot,
   fixture,
@@ -534,6 +545,7 @@ async function executeLifecycle({
       commandRecords,
       relativeRoot,
     });
+  await enableRealProcessRoiLongTaskProfile(invoke, cli);
   const staged = await invoke("git-add", "git", ["add", "-A"]);
   if (staged.status !== 0)
     throw new Error(`real_process_roi_git_add_failed:${staged.status}`);

@@ -16,7 +16,17 @@ if (!["first", "second", "all"].includes(scope))
 const state = JSON.parse(
   await readFile(new URL("../config/state.json", import.meta.url), "utf8"),
 );
-const externalInputPath = process.argv[3] ?? null;
+const runtimeOptions = new Map(
+  process.argv.slice(3).map((argument) => {
+    const separator = argument.indexOf("=");
+    if (!argument.startsWith("--") || separator < 3)
+      throw new Error(`roi_product_runtime_option_invalid:${argument}`);
+    return [argument.slice(0, separator), argument.slice(separator + 1)];
+  }),
+);
+if (runtimeOptions.get("--facts") !== "src/facts.mjs")
+  throw new Error("roi_product_facts_invocation_required");
+const externalInputPath = runtimeOptions.get("--external-input") ?? null;
 if (externalInputPath) {
   const externalInput = JSON.parse(await readFile(externalInputPath, "utf8"));
   if (typeof externalInput.checkout_enabled === "boolean")
@@ -56,7 +66,12 @@ if (scope === "first" || scope === "all") {
     facts["checkout-enabled"],
   );
   addAssertion(observations, "first", "first-liveness", true);
-  addAssertion(observations, "first", "first-relations-na", false);
+  addAssertion(
+    observations,
+    "first",
+    "first-relations-na",
+    !firstAggregate(facts),
+  );
 }
 
 if (scope === "second" || scope === "all") {
@@ -81,7 +96,12 @@ if (scope === "second" || scope === "all") {
   );
   addAssertion(observations, "second", "health-live", facts["health-live"]);
   addAssertion(observations, "second", "second-liveness", true);
-  addAssertion(observations, "second", "second-relations-na", false);
+  addAssertion(
+    observations,
+    "second",
+    "second-relations-na",
+    !secondAggregate(facts),
+  );
 }
 
 process.stdout.write(

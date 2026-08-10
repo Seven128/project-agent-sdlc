@@ -40,6 +40,11 @@ import {
   evaluateIndependentGold,
   loadSemanticGold,
 } from "../../examples/delivery-benchmark/real-process-workload/runner/gold.mjs";
+import { enableRealProcessRoiLongTaskProfile } from "../../examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs";
+import {
+  createWorkloadFixture,
+  removeFixture,
+} from "../../examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const workloadRoot = path.join(
@@ -51,6 +56,64 @@ const workloadRoot = path.join(
 const fakeCandidate = "c".repeat(40);
 const fakeTree = "d".repeat(40);
 const digest = (value) => createHash("sha256").update(value).digest("hex");
+
+test("real process ROI lifecycle enables Long-Task before Preflight", async () => {
+  const calls = [];
+  const result = await enableRealProcessRoiLongTaskProfile(async (...args) => {
+    calls.push(args);
+    return { status: 0 };
+  }, "C:\\fixture\\cli.js");
+  assert.equal(result.status, 0);
+  assert.deepEqual(calls, [
+    [
+      "enable-long-task",
+      process.execPath,
+      ["C:\\fixture\\cli.js", "enable", "long-task"],
+    ],
+  ]);
+  await assert.rejects(
+    enableRealProcessRoiLongTaskProfile(
+      async () => ({ status: 1 }),
+      "C:\\fixture\\cli.js",
+    ),
+    /real_process_roi_enable_failed:1/u,
+  );
+});
+
+test("real process ROI current control is Preflight-ready after the measured enable step", async () => {
+  const fixture = await createWorkloadFixture({
+    harnessRoot: root,
+    variantId: "c",
+    caseId: "correct-control",
+    repeat: 1,
+  });
+  const cli = path.join(root, "packages", "ty-context", "dist", "cli.js");
+  try {
+    await enableRealProcessRoiLongTaskProfile(
+      (_label, executable, args) =>
+        execute(executable, args, { cwd: fixture.root }),
+      cli,
+    );
+    await git(fixture.root, ["add", "-A"]);
+    await git(fixture.root, [
+      "commit",
+      "--allow-empty",
+      "-m",
+      "roi-enable-preflight-control",
+    ]);
+    const preflight = await execute(
+      process.execPath,
+      [cli, "long-task", "preflight", fixture.workdir],
+      { cwd: fixture.root },
+    );
+    assert.equal(preflight.status, 0, preflight.stderr || preflight.stdout);
+    const parsed = JSON.parse(preflight.stdout);
+    assert.equal(parsed.status, "ready");
+    assert.deepEqual(parsed.diagnostics, []);
+  } finally {
+    await removeFixture(fixture);
+  }
+});
 
 test("real process ROI setup routes every Windows npm command through ComSpec without collecting A/B/C", () => {
   const options = {
@@ -165,7 +228,7 @@ test("real process ROI policy permanently excludes A from safety and balances th
     );
 });
 
-test("repository process product has eight independent normal/degraded facts and one bounded multi-Fact envelope", async () => {
+test("repository process product has eight fine-grained normal/degraded facts and one bounded multi-Fact envelope", async () => {
   const gold = await loadSemanticGold();
   for (const mode of ["normal", "degraded"])
     assert.deepEqual(
@@ -190,7 +253,11 @@ test("repository process product has eight independent normal/degraded facts and
     );
     const result = await execute(
       process.execPath,
-      [path.join(temporary, "src", "product.mjs"), "all"],
+      [
+        path.join(temporary, "src", "product.mjs"),
+        "all",
+        "--facts=src/facts.mjs",
+      ],
       {
         env: {
           ...process.env,
@@ -207,7 +274,11 @@ test("repository process product has eight independent normal/degraded facts and
 
     const first = await execute(
       process.execPath,
-      [path.join(temporary, "src", "product.mjs"), "first"],
+      [
+        path.join(temporary, "src", "product.mjs"),
+        "first",
+        "--facts=src/facts.mjs",
+      ],
       {
         env: {
           ...process.env,
@@ -218,7 +289,11 @@ test("repository process product has eight independent normal/degraded facts and
     );
     const second = await execute(
       process.execPath,
-      [path.join(temporary, "src", "product.mjs"), "first"],
+      [
+        path.join(temporary, "src", "product.mjs"),
+        "first",
+        "--facts=src/facts.mjs",
+      ],
       {
         env: {
           ...process.env,
@@ -265,6 +340,7 @@ test("external gold independently detects wrong product and exact Counterfactual
       mutation,
     });
     assert.equal(impact.passed, true);
+    assert.deepEqual(impact.changed_fact_ids, mutation.affected_fact_ids);
     assert.deepEqual(impact.unexpected_changed_fact_ids, []);
     assert.equal(impact.baseline_observation_count, 8);
     assert.equal(impact.mutated_observation_count, 8);
