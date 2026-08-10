@@ -115,6 +115,149 @@ test("real process ROI current control is Preflight-ready after the measured ena
   }
 });
 
+test("real process ROI adapters preserve each historical runtime authority boundary", async () => {
+  const fixtures = [];
+  try {
+    const legacy = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "a",
+      caseId: "r10-verification-role-runtime-input",
+      repeat: 1,
+    });
+    fixtures.push(legacy);
+    assert.equal(Object.hasOwn(legacy.target, "root_argv"), false);
+    const legacyOracle = await readFile(
+      path.join(legacy.root, "tests", "oracle.mjs"),
+      "utf8",
+    );
+    assert.match(legacyOracle, /--facts=src\/facts\.mjs/u);
+    assert.match(legacyOracle, /--external-input=" \+ extra/u);
+    assert.deepEqual(
+      legacy.contract.outcomes.map(
+        (outcome) => outcome.acceptance.checks[0].runner.argv,
+      ),
+      [["first"], ["second"]],
+    );
+    assert.ok(
+      legacy.contract.outcomes.every((outcome) => {
+        const check = outcome.acceptance.checks[0];
+        return (
+          check.input_paths.includes(legacy.product.productPath) &&
+          check.input_paths.includes(legacy.product.factsPath) &&
+          check.verification_inputs.includes(
+            "tests/legacy-generated-oracle.mjs",
+          )
+        );
+      }),
+    );
+    assert.ok(
+      legacy.contract.outcomes.every(
+        (outcome) =>
+          !outcome.technical.allowed_support_paths.includes(
+            "tests/r10-runtime-input.json",
+          ),
+      ),
+    );
+    assert.ok(
+      legacy.contract.outcomes.every((outcome) =>
+        outcome.acceptance.checks[0].verification_inputs.includes(
+          "tests/r10-runtime-input.json",
+        ),
+      ),
+    );
+
+    const legacyWrongProduct = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "a",
+      caseId: "wrong-product-value",
+      repeat: 1,
+    });
+    fixtures.push(legacyWrongProduct);
+    const wrongProductOracle = await readFile(
+      path.join(legacyWrongProduct.root, "tests", "oracle.mjs"),
+      "utf8",
+    );
+    assert.match(
+      wrongProductOracle,
+      /checkout-enabled[^\n]+\? true : envelope\.observations/u,
+    );
+
+    const legacyWrongRoot = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "a",
+      caseId: "r11-source-wrong-execution-root",
+      repeat: 1,
+    });
+    fixtures.push(legacyWrongRoot);
+    assert.equal(Object.hasOwn(legacyWrongRoot.target, "root_argv"), false);
+    assert.ok(
+      legacyWrongRoot.contract.outcomes.every(
+        (outcome) =>
+          outcome.acceptance.checks[0].runner.target === "tests/oracle.mjs",
+      ),
+    );
+
+    const isolated = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "b",
+      caseId: "r9-evidence-role-runtime-input",
+      repeat: 1,
+    });
+    fixtures.push(isolated);
+    const isolatedOutcome = isolated.contract.outcomes[0];
+    const isolatedCheck = isolatedOutcome.acceptance.checks[0];
+    assert.deepEqual(
+      isolatedOutcome.technical.bindings.map((item) => item.key),
+      ["roi-product-state"],
+    );
+    assert.ok(isolatedOutcome.product.owner.path_globs.includes("bin/**"));
+    assert.equal(
+      isolatedOutcome.technical.allowed_support_paths.includes(
+        isolated.product.rootPath,
+      ),
+      false,
+    );
+    assert.ok(isolatedCheck.input_paths.includes(isolated.product.productPath));
+    assert.ok(isolatedCheck.input_paths.includes(isolated.product.factsPath));
+    assert.ok(
+      isolatedCheck.input_paths.includes("artifacts/r9-runtime-input.json"),
+    );
+
+    const current = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "c",
+      caseId: "r10-verification-role-runtime-input",
+      repeat: 1,
+    });
+    fixtures.push(current);
+    const currentOutcome = current.contract.outcomes[0];
+    const currentCheck = currentOutcome.acceptance.checks[0];
+    assert.deepEqual(
+      currentOutcome.technical.bindings.map((item) => item.key),
+      [
+        "roi-product-root",
+        "roi-product-module",
+        "roi-product-facts",
+        "roi-product-state",
+      ],
+    );
+    assert.equal(currentCheck.runner.retry_policy, "transient_once");
+    assert.ok(
+      current.target.root_argv.some((item) =>
+        item.includes("--external-input=tests/r10-runtime-input.json"),
+      ),
+    );
+    assert.equal(
+      currentOutcome.technical.bindings.some((item) =>
+        item.carrier_paths.includes("tests/r10-runtime-input.json"),
+      ),
+      false,
+    );
+  } finally {
+    await Promise.all(fixtures.map((fixture) => removeFixture(fixture)));
+  }
+});
+
 test("real process ROI setup routes every Windows npm command through ComSpec without collecting A/B/C", () => {
   const options = {
     platform: "win32",

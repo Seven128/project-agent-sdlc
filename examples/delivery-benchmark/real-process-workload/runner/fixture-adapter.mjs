@@ -64,7 +64,12 @@ export async function createWorkloadFixture({
     migrationMs = performance.now() - migrationStarted;
   }
   if (caseId === "r11-source-wrong-execution-root")
-    await configureWrongRootAfterSourceBinding({ fixture, target });
+    await configureWrongRootAfterSourceBinding({
+      fixture,
+      target,
+      variantId,
+      product,
+    });
   await fixtureModule.writeContract(fixture.workdir, fixture.contract);
   if (variantId === "a")
     await installLegacySelfReportRunner({ fixture, target, caseId });
@@ -146,40 +151,51 @@ async function configureProductTarget({ fixture, variantId, caseId, product }) {
   target.root_entrypoint = product.rootPath;
   target.capabilities = ["process-runtime", "cold-start", "production-root"];
   const externalInput = await configureAttackInput(fixture.root, caseId);
-  target.root_argv = productRootArgv(product.productPath, "first", [
+  const rootArgv = productRootArgv(product.productPath, "first", [
     `--facts=${product.factsPath}`,
     ...(externalInput ? [`--external-input=${externalInput}`] : []),
   ]);
+  if (variantId === "a") delete target.root_argv;
+  else target.root_argv = rootArgv;
 
   for (const outcome of fixture.contract.outcomes) {
-    outcome.product.owner.path_globs = [
+    const currentClosure = variantId === "c";
+    const retainedOwnerPaths = outcome.product.owner.path_globs.filter(
+      (entry) => !["src/**", "bin/**"].includes(entry),
+    );
+    outcome.product.owner.path_globs = unique([
+      ...retainedOwnerPaths,
       "bin/**",
       product.productPath,
       product.factsPath,
       product.statePath,
       ...(externalInput ? [externalInput] : []),
-    ];
+    ]);
     outcome.technical.expected_change_paths = [product.statePath];
-    outcome.technical.allowed_support_paths = [
-      "bin/**",
-      product.productPath,
-      product.factsPath,
-      ...(externalInput ? [externalInput] : []),
-    ];
-    outcome.technical.bindings = [
-      binding("roi-product-root", product.rootPath),
-      binding("roi-product-module", product.productPath),
-      binding("roi-product-facts", product.factsPath),
-      binding("roi-product-state", product.statePath),
-      ...(externalInput
-        ? [binding("roi-product-external-input", externalInput)]
-        : []),
-    ];
+    const retainedSupportPaths = outcome.technical.allowed_support_paths.filter(
+      (entry) => !["bin/**", "tests/oracle.mjs"].includes(entry),
+    );
+    outcome.technical.allowed_support_paths = unique([
+      ...retainedSupportPaths,
+      ...(variantId === "b"
+        ? []
+        : [product.rootPath, product.productPath, product.factsPath]),
+      ...(variantId === "c" && externalInput ? [externalInput] : []),
+    ]);
+    outcome.technical.bindings = currentClosure
+      ? [
+          binding("roi-product-root", product.rootPath),
+          binding("roi-product-module", product.productPath),
+          binding("roi-product-facts", product.factsPath),
+          binding("roi-product-state", product.statePath),
+        ]
+      : [binding("roi-product-state", product.statePath)];
     const check = outcome.acceptance.checks[0];
     check.execution_target = { target_ref: target.key, entrypoint: "root" };
     check.proof_surface = "runtime_behavior";
     check.input_paths = [
       product.statePath,
+      ...(variantId !== "c" ? [product.productPath, product.factsPath] : []),
       ...(externalInput ? [externalInput] : []),
     ];
     check.expected_output_paths = [];
@@ -188,23 +204,26 @@ async function configureProductTarget({ fixture, variantId, caseId, product }) {
       check.runner = {
         type: "node_oracle",
         target: "tests/oracle.mjs",
-        argv: ["first"],
+        argv: [outcome.key],
         cwd: ".",
         timeout_ms: 30000,
         effect: "read_only",
         retry_policy: "none",
         idempotent: true,
       };
-      check.verification_inputs = ["tests/oracle.mjs"];
+      check.verification_inputs = [
+        "tests/oracle.mjs",
+        "tests/legacy-generated-oracle.mjs",
+      ];
     } else {
       check.runner = {
         type: "project_binary",
         target: target.root_entrypoint,
-        argv: [...target.root_argv],
+        argv: [...rootArgv],
         cwd: ".",
         timeout_ms: 30000,
         effect: "read_only",
-        retry_policy: "none",
+        retry_policy: variantId === "c" ? "transient_once" : "none",
         idempotent: true,
       };
       check.verification_inputs = ["tests/semantic-false.json"];
@@ -338,7 +357,12 @@ async function configureAttackInput(root, caseId) {
   return relative;
 }
 
-async function configureWrongRootAfterSourceBinding({ fixture, target }) {
+async function configureWrongRootAfterSourceBinding({
+  fixture,
+  target,
+  variantId,
+  product,
+}) {
   const wrapperRoot = `bin/roi-verifier-wrapper${process.platform === "win32" ? ".exe" : ""}`;
   await copyFile(
     path.join(fixture.root, ...target.root_entrypoint.split("/")),
@@ -352,20 +376,32 @@ async function configureWrongRootAfterSourceBinding({ fixture, target }) {
     `import { spawnSync } from "node:child_process";\nconst options = new Map(process.argv.slice(3).map((argument) => { const separator = argument.indexOf("="); return [argument.slice(0, separator), argument.slice(separator + 1)]; }));\nconst product = options.get("--product");\nconst facts = options.get("--facts");\nif (!product || !facts) throw new Error("roi_wrapper_product_invocation_required");\nconst child = spawnSync(process.execPath, [product, process.argv[2] ?? "first", \`--facts=\${facts}\`], { cwd: process.cwd(), encoding: "utf8" });\nif (child.error) throw child.error;\nprocess.stderr.write(child.stderr ?? "");\nprocess.stdout.write(child.stdout ?? "");\nprocess.exitCode = child.status ?? 1;\n`,
   );
   target.root_entrypoint = wrapperRoot;
-  target.root_argv = productRootArgv(wrapperModule, "first", [
-    "--product=src/roi-product.mjs",
-    "--facts=src/facts.mjs",
-  ]);
+  if (variantId === "a") delete target.root_argv;
+  else
+    target.root_argv = productRootArgv(wrapperModule, "first", [
+      "--product=src/roi-product.mjs",
+      "--facts=src/facts.mjs",
+    ]);
   for (const outcome of fixture.contract.outcomes) {
     outcome.product.owner.path_globs.push(wrapperRoot, wrapperModule);
-    outcome.technical.allowed_support_paths.push(wrapperRoot, wrapperModule);
-    outcome.technical.bindings.push(
-      binding("roi-wrapper-root", wrapperRoot),
-      binding("roi-wrapper-module", wrapperModule),
-    );
+    if (variantId === "c") {
+      outcome.technical.bindings.push(
+        binding("roi-wrapper-root", wrapperRoot),
+        binding("roi-wrapper-module", wrapperModule),
+      );
+    }
     const check = outcome.acceptance.checks[0];
-    check.runner.target = wrapperRoot;
-    check.runner.argv = [...target.root_argv];
+    if (variantId !== "a") {
+      check.runner.target = wrapperRoot;
+      check.runner.argv = [...target.root_argv];
+    }
+    if (variantId === "b")
+      check.input_paths = unique([
+        ...check.input_paths,
+        wrapperModule,
+        product.productPath,
+        product.factsPath,
+      ]);
   }
 }
 
@@ -393,7 +429,7 @@ const extra = ${JSON.stringify(
         ? "tests/r10-runtime-input.json"
         : null,
   )};
-const productArgs = ["src/roi-product.mjs", scope, ...(extra ? [extra] : [])];
+const productArgs = ["src/roi-product.mjs", scope, "--facts=src/facts.mjs", ...(extra ? ["--external-input=" + extra] : [])];
 const product = spawnSync(process.execPath, productArgs, { cwd: process.cwd(), encoding: "utf8" });
 if (product.error) throw product.error;
 if (product.status !== 0) throw new Error("legacy_product_failed:" + product.status);
@@ -401,7 +437,11 @@ const envelope = JSON.parse(product.stdout.trim());
 const assertion = (key) => "assertion." + scope + "." + scope + "-check." + key;
 const values = scope === "first" ? {
   "catalog-resolution-ready": envelope.observations[assertion("catalog-resolution-ready")],
-  "pricing-currency-cny": ${forcedPricing ? "true" : 'envelope.observations[assertion("pricing-currency-cny")]'},
+  "pricing-currency-cny": ${
+    forcedPricing
+      ? 'envelope.observations[assertion("checkout-enabled")] === true ? true : envelope.observations[assertion("pricing-currency-cny")]'
+      : 'envelope.observations[assertion("pricing-currency-cny")]'
+  },
   "inventory-nonnegative": envelope.observations[assertion("inventory-nonnegative")],
   "checkout-enabled": envelope.observations[assertion("checkout-enabled")]
 } : {
@@ -450,6 +490,10 @@ function binding(key, relative) {
     carrier_paths: [relative],
     existence: "existing",
   };
+}
+
+function unique(values) {
+  return [...new Set(values)];
 }
 
 function modeFor(caseId, repeat) {
