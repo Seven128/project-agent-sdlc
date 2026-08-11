@@ -7,34 +7,42 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
-  applyEvidenceRoleProcessConflict,
-  applyEvidenceRoleStaticConflict,
   applyRootArgvWrapperAttack,
-  applyVerificationInputStaticConflict,
   configureCrossExecutionStaticPrimingAttack,
-  configureEvidenceRoleProcessBase,
-  configureEvidenceRoleStaticBase,
   configureExpectedAsActualAttack,
   configureHistoricalRuntimeAttack,
   configureMissingCounterfactualObservationAttack,
-  configureNonCarrierEvidenceInputAttack,
-  configureNonCarrierVerificationInputAttack,
   configurePackageObservationCase,
   configureProcessInputMutationAttack,
   configureProxyTargetAttack,
   configureExecutionTargetSourceDriftAttack,
-  configureVerificationInputStaticBase,
   createObserverTrustFixture,
   executeObserverTrustAttackAfterAuthority,
   executeObserverTrustWorkflow,
   isMachineAccepted,
   isSecurelyRejected,
+  observerTrustRoleBoundaryCases,
 } from "./long-task-observer-trust-fixtures.mjs";
 import { createDeliveryTerminalReportRecorder } from "./long-task-real-capability-delivery-machine-report.mjs";
 import {
   assertIndependentProcessRuntimeClosure,
   configureRepoProcessProductControl,
 } from "./long-task-process-product-fixture.mjs";
+
+const {
+  applyBoundEvidenceInputClosureConflict,
+  applyBoundVerificationInputClosureConflict,
+  applyEvidenceRoleProcessConflict,
+  applyEvidenceRoleStaticConflict,
+  applyVerificationInputStaticConflict,
+  configureEvidenceRoleProcessBase,
+  configureEvidenceRoleStaticBase,
+  configureNonCarrierEvidenceInputAttack,
+  configureNonCarrierVerificationInputAttack,
+  configureUnusedNonClosureEvidenceInput,
+  configureUnusedNonClosureVerificationInput,
+  configureVerificationInputStaticBase,
+} = observerTrustRoleBoundaryCases;
 
 const terminalReport = createDeliveryTerminalReportRecorder();
 const reportCases = Object.freeze({
@@ -111,12 +119,34 @@ const reportCases = Object.freeze({
   r9: wrongCase(
     "wrong.process-noncarrier-evidence-input",
     "observer-trust.r9.process-noncarrier-evidence-input",
-    "control.process",
+    "control.r9a.unused-nonclosure-evidence-input",
+  ),
+  r9a: controlCase(
+    "control.r9a.unused-nonclosure-evidence-input",
+    "observer-trust.r9a.unused-nonclosure-evidence-input",
+    "control",
+    "machine_accepted",
+  ),
+  r9c: wrongCase(
+    "wrong.r9c.bound-evidence-input-closure-conflict",
+    "observer-trust.r9c.bound-evidence-input-closure-conflict",
+    "control.r9a.unused-nonclosure-evidence-input",
   ),
   r10: wrongCase(
     "wrong.process-noncarrier-verification-input",
     "observer-trust.r10.process-noncarrier-verification-input",
-    "control.process",
+    "control.r10a.unused-nonclosure-verification-input",
+  ),
+  r10a: controlCase(
+    "control.r10a.unused-nonclosure-verification-input",
+    "observer-trust.r10a.unused-nonclosure-verification-input",
+    "control",
+    "machine_accepted",
+  ),
+  r10c: wrongCase(
+    "wrong.r10c.bound-verification-input-closure-conflict",
+    "observer-trust.r10c.bound-verification-input-closure-conflict",
+    "control.r10a.unused-nonclosure-verification-input",
   ),
   r11: wrongCase(
     "wrong.execution-target-source-drift",
@@ -194,8 +224,54 @@ function executionLabel(execution) {
 function executionDiagnostics(execution) {
   return JSON.stringify({
     result: execution.result ?? null,
+    compile_attack_proof: execution.compile_attack_proof ?? null,
     final_gate_proof: execution.final_gate_proof ?? null,
   });
+}
+
+function assertRuntimeClosureExcludes(compiled, checkKey, excludedPath) {
+  const check = compiled.outcomes
+    .flatMap((outcome) => outcome.acceptance.checks)
+    .find((candidate) => candidate.key === checkKey);
+  assert.ok(check, `compiled Check ${checkKey} must exist`);
+  assert.ok(check.process_runtime_closure, `${checkKey} must compile a process closure`);
+  assert.equal(
+    check.process_runtime_closure.allowed_runtime_files.includes(excludedPath),
+    false,
+    `${excludedPath} must remain outside the compiled process closure`,
+  );
+}
+
+function assertCompileAttackAndLegalNeighborFreshness(
+  execution,
+  ownerDiagnostic,
+) {
+  assert.equal(execution.stage, "final-gate", executionLabel(execution));
+  assert.equal(isMachineAccepted(execution), false);
+  assert.equal(execution.compile_attack_proof?.candidate?.clean, true);
+  assert.match(
+    execution.compile_attack_proof?.owner_diagnostic ?? "",
+    ownerDiagnostic,
+  );
+  assert.equal(execution.final_gate_proof?.authority_basis, "legal_neighbor");
+  assert.equal(
+    execution.compile_attack_proof?.candidate?.identity,
+    execution.final_gate_proof?.candidate?.identity,
+    "Compile and Final Gate must bind the same committed attack candidate",
+  );
+  assert.notEqual(
+    execution.final_gate_proof?.authority_candidate_identity,
+    execution.final_gate_proof?.candidate?.identity,
+    "Final Gate must retain the legal-neighbor Authority rather than a fresh attack Compile",
+  );
+  assert.match(
+    execution.final_gate_proof?.diagnostic ?? "",
+    /final_gate_protected_input_stale/u,
+  );
+  assert.doesNotMatch(
+    execution.final_gate_proof?.diagnostic ?? "",
+    /active_task_missing|dirty_candidate/u,
+  );
 }
 
 test(
@@ -574,44 +650,176 @@ test(
 );
 
 test(
-  "[case:observer-admission-no-bypass:R9] [real-capability:observer-trust.r9.process-noncarrier-evidence-input] a non-carrier evidence input cannot enter the process runtime closure",
+  "[case:observer-admission-no-bypass:R9A] [real-capability:observer-trust.r9a.unused-nonclosure-evidence-input] an unused evidence-role input stays outside the process closure without blocking acceptance",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      const execution = await executeObserverTrustAttackAfterAuthority(
-        fixture,
-        () => configureNonCarrierEvidenceInputAttack(fixture),
+      await configureUnusedNonClosureEvidenceInput(fixture);
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
       );
+      assertRuntimeClosureExcludes(
+        compiled,
+        "first-check",
+        "artifacts/expected-status.json",
+      );
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r9a, execution);
+      assert.equal(
+        isMachineAccepted(execution),
+        true,
+        `unused non-closure evidence input blocked ${executionLabel(execution)}`,
+      );
+    }),
+);
+
+test(
+  "[case:observer-admission-no-bypass:R9] [real-capability:observer-trust.r9.process-noncarrier-evidence-input] a product cannot consume an evidence-role input that remains outside the process runtime closure",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureNonCarrierEvidenceInputAttack(fixture);
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
+      );
+      assertRuntimeClosureExcludes(
+        compiled,
+        "first-check",
+        "artifacts/expected-status.json",
+      );
+      const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.r9, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `non-carrier evidence input reached ${executionLabel(execution)}`,
       );
+      assert.equal(
+        execution.compile_attack_proof,
+        null,
+        "the isolated-consumption layer must Compile successfully",
+      );
+      assert.equal(
+        execution.final_gate_proof?.authority_basis,
+        "current_candidate",
+      );
+      assert.doesNotMatch(
+        executionDiagnostics(execution),
+        /process_runtime_input_evidence_role_forbidden|final_gate_protected_input_stale/u,
+      );
       assert.match(
         executionDiagnostics(execution),
+        /process_observation_decode_invalid/u,
+        "the omitted evidence input must fail inside isolated process execution",
+      );
+    }),
+);
+
+test(
+  "[case:observer-admission-no-bypass:R9C] [real-capability:observer-trust.r9c.bound-evidence-input-closure-conflict] an evidence-role input explicitly bound into production argv is Compile-rejected and stale Authority cannot be reused",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureUnusedNonClosureEvidenceInput(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyBoundEvidenceInputClosureConflict(fixture),
+      );
+      terminalReport.record(reportCases.r9c, execution);
+      assertCompileAttackAndLegalNeighborFreshness(
+        execution,
         /process_runtime_input_evidence_role_forbidden/u,
       );
     }),
 );
 
 test(
-  "[case:counterfactual-production-observation-impact:R10] [real-capability:observer-trust.r10.process-noncarrier-verification-input] a non-carrier verification input cannot enter the process runtime closure",
+  "[case:counterfactual-production-observation-impact:R10A] [real-capability:observer-trust.r10a.unused-nonclosure-verification-input] an unused verification input stays outside the process closure without blocking acceptance",
   { concurrency: false },
   async () =>
     withFixture({}, async (fixture) => {
-      const execution = await executeObserverTrustAttackAfterAuthority(
-        fixture,
-        () => configureNonCarrierVerificationInputAttack(fixture),
+      await configureUnusedNonClosureVerificationInput(fixture);
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
       );
+      assertRuntimeClosureExcludes(
+        compiled,
+        "first-check",
+        "tests/expected-map.json",
+      );
+      const execution = await executeObserverTrustWorkflow(fixture);
+      terminalReport.record(reportCases.r10a, execution);
+      assert.equal(
+        isMachineAccepted(execution),
+        true,
+        `unused non-closure verification input blocked ${executionLabel(execution)}`,
+      );
+    }),
+);
+
+test(
+  "[case:counterfactual-production-observation-impact:R10] [real-capability:observer-trust.r10.process-noncarrier-verification-input] a product cannot consume a verification input that remains outside the process runtime closure",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureNonCarrierVerificationInputAttack(fixture);
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
+      );
+      assertRuntimeClosureExcludes(
+        compiled,
+        "first-check",
+        "tests/expected-map.json",
+      );
+      const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.r10, execution);
       assert.equal(
         isSecurelyRejected(execution),
         true,
         `non-carrier verification input reached ${executionLabel(execution)}`,
       );
+      assert.equal(
+        execution.compile_attack_proof,
+        null,
+        "the isolated-consumption layer must Compile successfully",
+      );
+      assert.equal(
+        execution.final_gate_proof?.authority_basis,
+        "current_candidate",
+      );
+      assert.doesNotMatch(
+        executionDiagnostics(execution),
+        /process_runtime_input_verification_role_forbidden|final_gate_protected_input_stale/u,
+      );
       assert.match(
         executionDiagnostics(execution),
+        /process_observation_decode_invalid/u,
+        "the omitted verification input must fail inside isolated process execution",
+      );
+    }),
+);
+
+test(
+  "[case:counterfactual-production-observation-impact:R10C] [real-capability:observer-trust.r10c.bound-verification-input-closure-conflict] a verification input explicitly bound into production argv is Compile-rejected and stale Authority cannot be reused",
+  { concurrency: false },
+  async () =>
+    withFixture({}, async (fixture) => {
+      await configureUnusedNonClosureVerificationInput(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        () => applyBoundVerificationInputClosureConflict(fixture),
+      );
+      terminalReport.record(reportCases.r10c, execution);
+      assertCompileAttackAndLegalNeighborFreshness(
+        execution,
         /process_runtime_input_verification_role_forbidden/u,
       );
     }),
@@ -709,10 +917,19 @@ test(
       );
       assert.equal(checks.length, 2);
       const closures = checks.map(assertIndependentProcessRuntimeClosure);
+      assert.deepEqual(
+        closures.map((closure) => closure.production_binding_refs),
+        ["first", "second"].map((outcomeKey) => [
+          `${outcomeKey}.process-product-module`,
+          `${outcomeKey}.process-product-root`,
+          `${outcomeKey}.process-product-state`,
+        ]),
+        "each compiled closure must retain its complete Outcome-scoped Binding refs",
+      );
       assert.equal(
         new Set(closures.map((closure) => closure.closure_identity)).size,
         1,
-        "baseline checks must share one compiled runtime closure",
+        "physically identical compiled closures must share one runtime identity",
       );
       assert.equal(
         new Set(checks.map((check) => check.raw_execution_identity)).size,

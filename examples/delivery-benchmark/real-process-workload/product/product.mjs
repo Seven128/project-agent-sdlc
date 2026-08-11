@@ -26,15 +26,29 @@ const runtimeOptions = new Map(
 );
 if (runtimeOptions.get("--facts") !== "src/facts.mjs")
   throw new Error("roi_product_facts_invocation_required");
-const externalInputPath = runtimeOptions.get("--external-input") ?? null;
+const externalInputPath =
+  runtimeOptions.get("--external-input") ??
+  state.runtime?.external_input_path ??
+  null;
 if (externalInputPath) {
-  const externalInput = JSON.parse(await readFile(externalInputPath, "utf8"));
-  if (typeof externalInput.checkout_enabled === "boolean")
-    state.checkout.enabled = externalInput.checkout_enabled;
-  if (typeof externalInput.currency === "string")
-    state.pricing.currency = externalInput.currency;
-  if (Number.isInteger(externalInput.retry_budget))
-    state.resilience.retry_budget = externalInput.retry_budget;
+  let externalInput = null;
+  try {
+    externalInput = JSON.parse(await readFile(externalInputPath, "utf8"));
+  } catch (error) {
+    if (
+      error?.code !== "ENOENT" ||
+      state.runtime?.missing_input_behavior !== "preserve-product-state"
+    )
+      throw error;
+  }
+  if (externalInput) {
+    if (typeof externalInput.checkout_enabled === "boolean")
+      state.checkout.enabled = externalInput.checkout_enabled;
+    if (typeof externalInput.currency === "string")
+      state.pricing.currency = externalInput.currency;
+    if (Number.isInteger(externalInput.retry_budget))
+      state.resilience.retry_budget = externalInput.retry_budget;
+  }
 }
 const facts = evaluateProductFacts(state);
 const observations = {};

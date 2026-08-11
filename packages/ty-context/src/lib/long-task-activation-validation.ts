@@ -31,6 +31,7 @@ import { validateRawExecutionObservationOwnership } from "./long-task-observatio
 import { validateLongTaskDesignResourceHandoffs } from "./long-task-design-resource-handoff.js";
 import { validateLongTaskSemanticFactClosure } from "./long-task-semantic-fact-closure.js";
 import { freezeDeliveryCheck } from "./long-task-runner-freeze.js";
+import { scopeDeliveryBindings } from "./long-task-scoped-binding.js";
 import {
   classifyLongTaskRisk,
   validateRiskProof,
@@ -184,7 +185,9 @@ export async function validateContractForActivation(options: {
           contract.task.execution_targets,
           [],
           [],
-          contract.outcomes.flatMap((outcome) => outcome.technical.bindings),
+          contract.outcomes.flatMap((outcome) =>
+            scopeDeliveryBindings(outcome.key, outcome.technical.bindings),
+          ),
           contract.outcomes.flatMap(
             (outcome) => outcome.product.owner.path_globs,
           ),
@@ -217,7 +220,7 @@ export async function validateContractForActivation(options: {
             contract.task.execution_targets,
             designTargetsForCheck(outcome, check.key),
             semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
-            outcome.technical.bindings,
+            scopeDeliveryBindings(outcome.key, outcome.technical.bindings),
             outcome.product.owner.path_globs,
             sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
             observationAuthorityPaths,

@@ -1046,7 +1046,11 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
 
     await commitCandidate(fixture.root);
     const accepted = await invokeHook(fixture.root, "Stop");
-    assert.equal(Object.hasOwn(accepted, "decision"), false);
+    assert.equal(
+      Object.hasOwn(accepted, "decision"),
+      false,
+      JSON.stringify(accepted),
+    );
     assert.match(accepted.systemMessage, /platform-native Goal/iu);
     assert.match(accepted.systemMessage, /Declared machine Authority/iu);
     assert.equal(await pathExists(record), false);

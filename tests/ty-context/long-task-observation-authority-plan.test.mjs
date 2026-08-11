@@ -43,7 +43,10 @@ test("compile projects an ordinary exact Claim Assertion to direct-process autho
       value: "/observations/assertion.OUTCOME.check.result",
     },
     carrier_refs: [
-      { binding_ref: "product-input", carrier_paths: ["product/input.json"] },
+      {
+        binding_ref: "OUTCOME.product-input",
+        carrier_paths: ["product/input.json"],
+      },
     ],
     runtime_requirements: {
       runtime_family: "process",
@@ -75,6 +78,26 @@ test("compiled observation values bind Check identity without splitting Raw Exec
   assert.equal(
     computeRawExecutionIdentity(compiledRawInput(first, firstRows)),
     computeRawExecutionIdentity(compiledRawInput(second, secondRows)),
+  );
+});
+
+test("Outcome-scoped Binding refs bind exact comparison identity", () => {
+  const first = processInput();
+  const second = processInput();
+  second.production_bindings = second.production_bindings.map((scoped) => ({
+    ...scoped,
+    outcome_key: "SECOND",
+    binding_ref: `SECOND.${scoped.local_key}`,
+  }));
+  const firstAuthority = compileObservationAuthorityPlan(first)[0];
+  const secondAuthority = compileObservationAuthorityPlan(second)[0];
+  assert.notEqual(
+    firstAuthority.expected_identity,
+    secondAuthority.expected_identity,
+  );
+  assert.equal(
+    firstAuthority.observation_identity,
+    secondAuthority.observation_identity,
   );
 });
 
@@ -263,10 +286,12 @@ test("static authority requires one attributable owning production Binding", () 
     proofSurface: "implementation_structure",
     capabilities: ["presence"],
   });
-  ambiguous.production_bindings.push({
-    key: "duplicate-owner",
-    carrier_paths: ["product/input.json"],
-  });
+  ambiguous.production_bindings.push(
+    scopedBinding("OUTCOME", {
+      key: "duplicate-owner",
+      carrier_paths: ["product/input.json"],
+    }),
+  );
   assert.throws(
     () => compileObservationAuthorityPlan(ambiguous),
     /machine_observer_not_admitted:.*static_production_binding_ambiguous/u,
@@ -277,8 +302,8 @@ test("static authority requires one attributable owning production Binding", () 
     capabilities: ["presence"],
   });
   projectSelected.production_bindings.find(
-    (binding) => binding.key === "product-input",
-  ).carrier_paths = ["product/*.json"];
+    (binding) => binding.local_key === "product-input",
+  ).binding.carrier_paths = ["product/*.json"];
   assert.throws(
     () => compileObservationAuthorityPlan(projectSelected),
     /machine_observer_not_admitted:.*static_production_carrier_exact_path_required/u,
@@ -379,20 +404,23 @@ test("the compiled process runtime closure excludes ordinary non-carrier input p
   assert.match(closure.closure_identity, /^[a-f0-9]{64}$/u);
 });
 
-test("the full process input surface rejects evidence and verification roles", () => {
+test("unused non-closure input paths may overlap evidence and verification roles", () => {
   const evidence = processInput();
   evidence.check.input_paths.push("artifacts/expected-status.json");
   evidence.check.artifact_globs.push("artifacts/expected-status.json");
   evidence.workspace_manifest.files.push(
     workspaceFile("artifacts/expected-status.json"),
   );
-  assert.throws(
-    () =>
-      compileProcessRuntimeClosure({
-        ...evidence,
-        observation_authorities: compileObservationAuthorityPlan(evidence),
-      }),
-    /process_runtime_input_evidence_role_forbidden/u,
+  const evidenceClosure = compileProcessRuntimeClosure({
+    ...evidence,
+    observation_authorities: compileObservationAuthorityPlan(evidence),
+  });
+  assert.ok(evidenceClosure);
+  assert.equal(
+    evidenceClosure.allowed_runtime_files.includes(
+      "artifacts/expected-status.json",
+    ),
+    false,
   );
 
   const verification = processInput();
@@ -401,14 +429,137 @@ test("the full process input surface rejects evidence and verification roles", (
   verification.workspace_manifest.files.push(
     workspaceFile("tests/expected-map.json"),
   );
-  assert.throws(
-    () =>
-      compileProcessRuntimeClosure({
-        ...verification,
-        observation_authorities: compileObservationAuthorityPlan(verification),
-      }),
-    /process_runtime_input_verification_role_forbidden/u,
+  const verificationClosure = compileProcessRuntimeClosure({
+    ...verification,
+    observation_authorities: compileObservationAuthorityPlan(verification),
+  });
+  assert.ok(verificationClosure);
+  assert.equal(
+    verificationClosure.allowed_runtime_files.includes(
+      "tests/expected-map.json",
+    ),
+    false,
   );
+});
+
+test("only actual argv closure members retain exact role-conflict rejection", () => {
+  for (const [role, mutate] of [
+    [
+      "evidence",
+      (input) => input.check.artifact_globs.push("runtime/config"),
+    ],
+    [
+      "verification",
+      (input) => input.check.verification_inputs.push("runtime/config"),
+    ],
+  ]) {
+    const input = processInput();
+    input.runner.resolved_cwd = "apps/product";
+    input.execution_target.root_argv = ["--config=../../runtime/config"];
+    input.check.runner.argv = [...input.execution_target.root_argv];
+    input.runner.argv = [...input.execution_target.root_argv];
+    input.production_bindings.push(
+      scopedBinding("OUTCOME", {
+        key: "runtime-config",
+        kind: "file",
+        target: "runtime/config",
+        carrier_paths: ["runtime/*"],
+        existence: "existing",
+      }),
+    );
+    input.production_owner_paths.push("runtime/**");
+    mutate(input);
+    assert.throws(
+      () =>
+        compileProcessRuntimeClosure({
+          ...input,
+          observation_authorities: compileObservationAuthorityPlan(input),
+        }),
+      new RegExp(`process_runtime_input_${role}_role_forbidden`, "u"),
+    );
+  }
+});
+
+test("finite argv-to-Binding admission supports cwd-relative glob, extensionless, standalone, and key-value paths", () => {
+  const input = processInput();
+  input.runner.resolved_cwd = "apps/product";
+  input.execution_target.root_argv = [
+    "runtime/entry",
+    '"runtime/entry"',
+    "--config=config/runtime.data",
+    '--quoted-config="config/runtime.data"',
+    "unmatched/safe-label",
+    "--label=release/channel",
+  ];
+  input.check.runner.argv = [...input.execution_target.root_argv];
+  input.runner.argv = [...input.execution_target.root_argv];
+  input.production_bindings.push(
+    scopedBinding("OUTCOME", {
+      key: "runtime-entry",
+      kind: "file",
+      target: "apps/product/runtime/entry",
+      carrier_paths: ["apps/product/runtime/entry"],
+      existence: "existing",
+    }),
+    scopedBinding("OUTCOME", {
+      key: "runtime-config",
+      kind: "file",
+      target: "apps/product/config/runtime.data",
+      carrier_paths: ["apps/product/config/*"],
+      existence: "existing",
+    }),
+  );
+  input.production_owner_paths.push("apps/product/**");
+
+  const closure = compileProcessRuntimeClosure({
+    ...input,
+    observation_authorities: compileObservationAuthorityPlan(input),
+  });
+  assert.ok(closure);
+  assert.deepEqual(closure.root_argv_files, [
+    "apps/product/config/runtime.data",
+    "apps/product/runtime/entry",
+  ]);
+  assert.deepEqual(
+    closure.production_binding_refs.filter((bindingRef) =>
+      bindingRef.includes("runtime-"),
+    ),
+    ["OUTCOME.runtime-config", "OUTCOME.runtime-entry"],
+  );
+  assert.equal(
+    closure.allowed_runtime_files.some((file) => file.includes("unmatched")),
+    false,
+  );
+  assert.equal(
+    closure.allowed_runtime_files.some((file) => file.includes("release")),
+    false,
+  );
+});
+
+test("absolute, repository-escaping, file URL, and network URL argv values fail closed", () => {
+  for (const unsafe of [
+    "C:/external/config.json",
+    '"C:/external/config.json"',
+    '--config="C:/external/config.json"',
+    "../external/config.json",
+    "file:///external/config.json",
+    '--config="file:///external/config.json"',
+    "https://example.test/config.json",
+    "--config='https://example.test/config.json'",
+  ]) {
+    const input = processInput();
+    input.execution_target.root_argv = [unsafe];
+    input.check.runner.argv = [unsafe];
+    input.runner.argv = [unsafe];
+    assert.throws(
+      () =>
+        compileProcessRuntimeClosure({
+          ...input,
+          observation_authorities: compileObservationAuthorityPlan(input),
+        }),
+      /process_root_argv_unsafe/u,
+    );
+  }
 });
 
 test("process root ownership and Source continuity are required by the closure", () => {
@@ -424,10 +575,9 @@ test("process root ownership and Source continuity are required by the closure",
   );
 
   const missingBinding = processInput();
-  missingBinding.production_bindings =
-    missingBinding.production_bindings.filter(
-      (binding) => binding.key !== "product-root",
-    );
+  missingBinding.production_bindings = missingBinding.production_bindings.filter(
+    (binding) => binding.local_key !== "product-root",
+  );
   assert.throws(
     () =>
       compileProcessRuntimeClosure({
@@ -502,20 +652,20 @@ function processInput(options = {}) {
     },
     design_targets: [],
     production_bindings: [
-      {
+      scopedBinding("OUTCOME", {
         key: "product-root",
         kind: "file",
         target: "bin/product.exe",
         carrier_paths: ["bin/product.exe"],
         existence: "existing",
-      },
-      {
+      }),
+      scopedBinding("OUTCOME", {
         key: "product-input",
         kind: "file",
         target: "product/input.json",
         carrier_paths: ["product/input.json"],
         existence: "existing",
-      },
+      }),
     ],
     production_owner_paths: ["bin/**", "product/**"],
     source_backed_execution_target: {
@@ -550,6 +700,15 @@ function processInput(options = {}) {
     semantic_fact_expectations: options.semantic
       ? [semanticExpectation(assertion.key)]
       : [],
+  };
+}
+
+function scopedBinding(outcomeKey, binding) {
+  return {
+    outcome_key: outcomeKey,
+    local_key: binding.key,
+    binding_ref: `${outcomeKey}.${binding.key}`,
+    binding,
   };
 }
 

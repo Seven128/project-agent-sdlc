@@ -1,9 +1,24 @@
 {
-  "schema_version": "long-task-real-process-workload-v1",
+  "schema_version": "long-task-real-process-workload-v2",
   "workload_id": "source-backed-process-closure-v1",
   "purpose": "real-process-lifecycle-roi-only",
   "safety_theorem_claimed": false,
   "fact_count": 8,
+  "capability_level": "level_3",
+  "level_4_claimed": false,
+  "governance_judgment_included": false,
+  "total_cost_theorem": "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
+  "level_4_requires_independent_capability_audit": true,
+  "fixture_candidate_identity": {
+    "required": true,
+    "commit": "committed fixture HEAD after Long-Task enablement and materialization",
+    "tree": "tree of the same committed fixture HEAD",
+    "clean": true
+  },
+  "non_closure_runtime_input_cases": [
+    "r9-evidence-role-runtime-input",
+    "r10-verification-role-runtime-input"
+  ],
   "modes": ["normal", "degraded"],
   "counterfactuals": [
     {

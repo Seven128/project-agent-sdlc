@@ -446,7 +446,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.default-fine-grained-non-ui-authoring",
@@ -464,7 +464,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-fine-grained-non-ui-authoring"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.authority-provenance-and-decision-boundary",
@@ -482,7 +482,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authority-provenance-and-decision-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.material-input-and-basis-closure",
@@ -500,7 +500,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "material-input-and-basis-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.standard-and-custom-domain-family-closure",
@@ -518,7 +518,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "standard-and-custom-domain-family-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.subject-census-and-stable-identity",
@@ -536,7 +536,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "subject-census-and-stable-identity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.relation-hierarchy-and-population-closure",
@@ -554,7 +554,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "relation-hierarchy-and-population-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.goal-scope-glossary-assumption-and-decision-closure",
@@ -572,7 +572,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "goal-scope-glossary-assumption-and-decision-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.actor-role-tenant-entitlement-and-responsibility",
@@ -590,7 +590,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "actor-role-tenant-entitlement-and-responsibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.business-rule-decision-table-and-calculation",
@@ -608,7 +608,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-rule-decision-table-and-calculation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.data-model-field-and-value-semantics",
@@ -626,7 +626,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "data-model-field-and-value-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.operation-workflow-and-side-effect-semantics",
@@ -644,7 +644,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "operation-workflow-and-side-effect-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.state-machine-and-lifecycle-semantics",
@@ -662,7 +662,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "state-machine-and-lifecycle-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.temporal-scheduling-and-clock-semantics",
@@ -680,7 +680,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "temporal-scheduling-and-clock-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.input-validation-normalization-and-boundary",
@@ -698,7 +698,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "input-validation-normalization-and-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.output-error-feedback-and-partial-success",
@@ -716,7 +716,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "output-error-feedback-and-partial-success"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.api-protocol-and-versioning",
@@ -734,7 +734,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "api-protocol-and-versioning"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.event-message-stream-and-job",
@@ -752,7 +752,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "event-message-stream-and-job"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.persistence-cache-search-and-data-lifecycle",
@@ -770,7 +770,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "persistence-cache-search-and-data-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.transaction-consistency-concurrency-idempotency",
@@ -788,7 +788,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "transaction-consistency-concurrency-idempotency"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.fault-timeout-retry-degradation-recovery",
@@ -806,7 +806,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fault-timeout-retry-degradation-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.backup-restore-disaster-recovery",
@@ -824,7 +824,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "backup-restore-disaster-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.configuration-feature-flag-secret-and-precedence",
@@ -842,7 +842,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "configuration-feature-flag-secret-and-precedence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.compatibility-migration-rollout-and-rollback",
@@ -860,7 +860,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "compatibility-migration-rollout-and-rollback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.performance-capacity-resource-and-cost",
@@ -878,7 +878,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "performance-capacity-resource-and-cost"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.reliability-availability-freshness-and-slo",
@@ -896,7 +896,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "reliability-availability-freshness-and-slo"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.security-trust-authn-authz-session-and-abuse",
@@ -914,7 +914,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-trust-authn-authz-session-and-abuse"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.privacy-data-governance-and-rights",
@@ -932,7 +932,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "privacy-data-governance-and-rights"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.safety-compliance-human-approval-and-irreversibility",
@@ -950,7 +950,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "safety-compliance-human-approval-and-irreversibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.observability-health-alert-and-runbook",
@@ -968,7 +968,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "observability-health-alert-and-runbook"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.deployment-topology-startup-shutdown-and-maintenance",
@@ -986,7 +986,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "deployment-topology-startup-shutdown-and-maintenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.external-integration-capability-quota-and-reconciliation",
@@ -1004,7 +1004,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "external-integration-capability-quota-and-reconciliation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.notification-file-media-and-delivery",
@@ -1022,7 +1022,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "notification-file-media-and-delivery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.localization-encoding-unit-and-formatting",
@@ -1040,7 +1040,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "localization-encoding-unit-and-formatting"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.commercial-billing-metering-and-financial",
@@ -1058,7 +1058,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "commercial-billing-metering-and-financial"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.hardware-device-sensor-and-physical",
@@ -1076,7 +1076,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "hardware-device-sensor-and-physical"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.ai-ml-model-prompt-evaluation-and-human-oversight",
@@ -1094,7 +1094,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.architecture-owner-boundary-and-debt",
@@ -1112,7 +1112,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.complete-condition-axis-catalog",
@@ -1130,7 +1130,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "complete-condition-axis-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.atomic-applicability-combination-closure",
@@ -1148,7 +1148,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-applicability-combination-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.typed-fact-identity-and-expected-value",
@@ -1166,7 +1166,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-fact-identity-and-expected-value"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.quantifier-range-null-absence-and-equivalence",
@@ -1184,7 +1184,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "quantifier-range-null-absence-and-equivalence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.fact-proof-obligation-method-catalog",
@@ -1202,7 +1202,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fact-proof-obligation-method-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.per-fact-comparator-oracle-environment",
@@ -1220,7 +1220,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-comparator-oracle-environment"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.expected-source-contract-runtime-set-equality",
@@ -1238,7 +1238,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "expected-source-contract-runtime-set-equality"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.per-fact-current-result-and-multiple-observer",
@@ -1256,7 +1256,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-result-and-multiple-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.furthest-independent-boundary-and-counterfactual",
@@ -1274,7 +1274,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-independent-boundary-and-counterfactual"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.protected-evidence-redaction-and-secrets",
@@ -1292,7 +1292,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "protected-evidence-redaction-and-secrets"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.scalable-complete-generation-no-truncation",
@@ -1310,7 +1310,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "scalable-complete-generation-no-truncation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.fail-closed-dispositions-conflicts-and-unreadable",
@@ -1328,7 +1328,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fail-closed-dispositions-conflicts-and-unreadable"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.default-workflow-and-long-task-projection",
@@ -1346,7 +1346,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-workflow-and-long-task-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source-authoring-product-and-engineering-guidance",
@@ -1364,7 +1364,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-authoring-product-and-engineering-guidance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.canonical-owner-context-projection",
@@ -1382,7 +1382,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "canonical-owner-context-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.legacy-migration-and-schema-parser-parity",
@@ -1400,7 +1400,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "legacy-migration-and-schema-parser-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.anti-degradation-and-implementation-freedom",
@@ -1418,7 +1418,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "anti-degradation-and-implementation-freedom"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.honest-theorem-boundary-and-custom-extension",
@@ -1436,7 +1436,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "honest-theorem-boundary-and-custom-extension"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.public-distribution-and-cost-closure",
@@ -1454,7 +1454,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "public-distribution-and-cost-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.single-source-semantic-manifest",
@@ -1472,7 +1472,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "single-source-semantic-manifest"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.machine-enforced-semantic-universe",
@@ -1490,7 +1490,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "machine-enforced-semantic-universe"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.contract-semantic-fact-binding",
@@ -1508,7 +1508,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "contract-semantic-fact-binding"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.typed-semantic-fact-runtime-evidence",
@@ -1526,7 +1526,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-semantic-fact-runtime-evidence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-fact-antidegradation-admission",
@@ -1544,7 +1544,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-antidegradation-admission"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-fact-distribution-parity",
@@ -1562,7 +1562,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-distribution-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.no-semantic-fact-shortcuts",
@@ -1580,7 +1580,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-semantic-fact-shortcuts"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-inventory-is-not-completion",
@@ -1598,7 +1598,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-inventory-is-not-completion"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.authoring-universe-mutation-ac",
@@ -1616,7 +1616,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authoring-universe-mutation-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.atomic-axis-and-aggregate-rejection-ac",
@@ -1634,7 +1634,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-axis-and-aggregate-rejection-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.business-data-state-interface-closure-ac",
@@ -1652,7 +1652,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-data-state-interface-closure-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.concurrency-failure-migration-quality-ac",
@@ -1670,7 +1670,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "concurrency-failure-migration-quality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.security-privacy-safety-operations-ac",
@@ -1688,7 +1688,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-privacy-safety-operations-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.custom-hardware-ai-domain-extension-ac",
@@ -1706,7 +1706,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "custom-hardware-ai-domain-extension-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.source-contract-obligation-set-equality-ac",
@@ -1724,7 +1724,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-contract-obligation-set-equality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.per-fact-current-evidence-ac",
@@ -1742,7 +1742,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-evidence-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.furthest-boundary-and-counterfactual-ac",
@@ -1760,7 +1760,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-boundary-and-counterfactual-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.no-truncation-disposition-bypass-ac",
@@ -1778,7 +1778,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-truncation-disposition-bypass-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.antidegradation-and-parity-ac",
@@ -1796,7 +1796,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "antidegradation-and-parity-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-public-schema-risk",
@@ -1814,7 +1814,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-public-schema-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-false-completion-risk",
@@ -1832,7 +1832,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-false-completion-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.semantic-oracle-observability-risk",
@@ -1850,7 +1850,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-oracle-observability-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-architecture-md",
@@ -1860,7 +1860,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/79"
         },
-        "identity_sha256": "48af846391d108cf7268761c2418e6e8c5d47c1a3f9f2a0f34cbb79edd4942be",
+        "identity_sha256": "2e2affd30605f26ab26ac6ada3fcf14e55b24917d98f2f4f8241c09e3654bdb8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1868,7 +1868,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-delivery-benchmark-md",
@@ -1878,7 +1878,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/80"
         },
-        "identity_sha256": "964e624c166938492c472bd54c1e5096edc423de5304c9824a2abaf933a002b1",
+        "identity_sha256": "91816826202fb78b00b8211e19cc1ba26894e6f0493c9e07a782248f14e95b87",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1886,7 +1886,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-md",
@@ -1896,7 +1896,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/81"
         },
-        "identity_sha256": "86a8a3b46b5f051a0d87876683a9bbc0f8ebb17e28ebeb8729baf1db0afa4074",
+        "identity_sha256": "c0a0db3fda814450fc6de7d09aa4559768fb030d1e188d84125c5c406ec857e2",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1904,7 +1904,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-contracts-design-resource-handoff-md",
@@ -1914,7 +1914,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/82"
         },
-        "identity_sha256": "bee8686b23646d1fb9e6354a92e503bb932acdb0d52107fa24a51f6c72df6025",
+        "identity_sha256": "b83b144732cee6f370693261e980e83178bbefcc1261f4c00a08e9ebd46842a7",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1922,7 +1922,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-contracts-package-managed-surfaces-md",
@@ -1932,7 +1932,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/83"
         },
-        "identity_sha256": "f6b91bca0fed7115910a65207432dd1f684b493ed2d9bcedf6d88ba880740350",
+        "identity_sha256": "6b422896f2518a6d2fedf501988c978fa82501b630dac1e4bcb03335591f4547",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1940,7 +1940,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-contracts-workflow-contract-md",
@@ -1950,7 +1950,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/84"
         },
-        "identity_sha256": "dfcf9726e95a5200738cf88ecf1f748d286016aad4536c3079dcef83dbbd096f",
+        "identity_sha256": "2867e4e3a4a835376abbadd7fb6d833a6d2bfff045651119c681465c3d6c53d8",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1958,7 +1958,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-decision-rationale-architecture-quality-md",
@@ -1968,7 +1968,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/85"
         },
-        "identity_sha256": "25d508e04d9e3c7fade65ac2227d430ef3af546aabcecd8f5a4b6e107ef4df63",
+        "identity_sha256": "429a2b600f7f3213a2d7893a9ea342de40c92ee5cf5a1e6ea381d10ed122a350",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1976,7 +1976,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-decision-rationale-long-task-workflow-md",
@@ -1986,7 +1986,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/86"
         },
-        "identity_sha256": "786f5061897110d25142856df76325ddc423cdd25cfb1e05131c485d86199a8f",
+        "identity_sha256": "33919a24c90a2453bea6e6cf32548245dbbb8460fe06e3f44d3e2a78524d012e",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -1994,7 +1994,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-decision-rationale-minimal-context-md",
@@ -2004,7 +2004,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/87"
         },
-        "identity_sha256": "a7b39fe99f9595f43250c5dd9710a89a16083e57f4eaf84924477a9096ca5194",
+        "identity_sha256": "357235b3b1a4eb9288d0b01fab432fc6f931b246094668eda975c345fc7945d0",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2012,7 +2012,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-foundation-context-model-md",
@@ -2022,7 +2022,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/88"
         },
-        "identity_sha256": "e5e0661b594f6b8a3bac9ce9ff5ba5bcf6dfb48be8f37911daf865637da229c5",
+        "identity_sha256": "0614a6c338efa82b86abcabaf399d89ab2d359c599cc6ceefe822ee0bea6acb6",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2030,7 +2030,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-implementation-index-md",
@@ -2040,7 +2040,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/89"
         },
-        "identity_sha256": "e6ed14ca78e10f400bf41ad2917838d203ec44f63b00ab5d0ecff23e614c6e9a",
+        "identity_sha256": "dda62bc97bbcfed64362dd6a17874fe8609b78e5f1a6795271c1e8c16d9631b5",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2048,7 +2048,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-areas-harness-package-verification-md",
@@ -2058,7 +2058,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/90"
         },
-        "identity_sha256": "939e8b139a6a07e2cb26b1d2a3a112982730bec359610da73f36cca267a51449",
+        "identity_sha256": "ddc7b6df1548839298109334183d2c7c664c469fedf3ae9429c9116da2499fe2",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2066,7 +2066,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-context-toml",
@@ -2076,7 +2076,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/91"
         },
-        "identity_sha256": "a48313baec665307d40926070637ce0512c8eaf564942f5364ca092b410cc84d",
+        "identity_sha256": "7de0888ef684772207d600d76f9b094a317bb49876457c4c9fb0e7c5ac2ce139",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2084,7 +2084,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "input.context.project_context-global-md",
@@ -2094,7 +2094,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "kind": "manifest_pointer",
           "value": "/inputs/92"
         },
-        "identity_sha256": "5da35a7d640624d6806e39978bcf2dc7959d44fd14c8cd07425a7da2ba508f67",
+        "identity_sha256": "0deffbf171f1de551224db81f91a2283b721c4202459f4910b20d704dfc9b706",
         "disposition": "material_with_facts",
         "fact_refs": [
           "fact.semantic-fact-completeness-result"
@@ -2102,7 +2102,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "family.goal-scope-glossary",
@@ -2198,7 +2198,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "family.actor-role-tenant-entitlement",
@@ -2696,7 +2696,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.default-fine-grained-non-ui-authoring",
@@ -2714,7 +2714,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-fine-grained-non-ui-authoring"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.authority-provenance-and-decision-boundary",
@@ -2732,7 +2732,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authority-provenance-and-decision-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.material-input-and-basis-closure",
@@ -2750,7 +2750,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "material-input-and-basis-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.standard-and-custom-domain-family-closure",
@@ -2768,7 +2768,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "standard-and-custom-domain-family-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.subject-census-and-stable-identity",
@@ -2786,7 +2786,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "subject-census-and-stable-identity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.relation-hierarchy-and-population-closure",
@@ -2804,7 +2804,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "relation-hierarchy-and-population-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.goal-scope-glossary-assumption-and-decision-closure",
@@ -2822,7 +2822,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "goal-scope-glossary-assumption-and-decision-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.actor-role-tenant-entitlement-and-responsibility",
@@ -2840,7 +2840,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "actor-role-tenant-entitlement-and-responsibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.business-rule-decision-table-and-calculation",
@@ -2858,7 +2858,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-rule-decision-table-and-calculation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.data-model-field-and-value-semantics",
@@ -2876,7 +2876,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "data-model-field-and-value-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.operation-workflow-and-side-effect-semantics",
@@ -2894,7 +2894,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "operation-workflow-and-side-effect-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.state-machine-and-lifecycle-semantics",
@@ -2912,7 +2912,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "state-machine-and-lifecycle-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.temporal-scheduling-and-clock-semantics",
@@ -2930,7 +2930,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "temporal-scheduling-and-clock-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.input-validation-normalization-and-boundary",
@@ -2948,7 +2948,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "input-validation-normalization-and-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.output-error-feedback-and-partial-success",
@@ -2966,7 +2966,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "output-error-feedback-and-partial-success"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.api-protocol-and-versioning",
@@ -2984,7 +2984,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "api-protocol-and-versioning"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.event-message-stream-and-job",
@@ -3002,7 +3002,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "event-message-stream-and-job"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.persistence-cache-search-and-data-lifecycle",
@@ -3020,7 +3020,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "persistence-cache-search-and-data-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.transaction-consistency-concurrency-idempotency",
@@ -3038,7 +3038,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "transaction-consistency-concurrency-idempotency"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.fault-timeout-retry-degradation-recovery",
@@ -3056,7 +3056,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fault-timeout-retry-degradation-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.backup-restore-disaster-recovery",
@@ -3074,7 +3074,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "backup-restore-disaster-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.configuration-feature-flag-secret-and-precedence",
@@ -3092,7 +3092,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "configuration-feature-flag-secret-and-precedence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.compatibility-migration-rollout-and-rollback",
@@ -3110,7 +3110,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "compatibility-migration-rollout-and-rollback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.performance-capacity-resource-and-cost",
@@ -3128,7 +3128,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "performance-capacity-resource-and-cost"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.reliability-availability-freshness-and-slo",
@@ -3146,7 +3146,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "reliability-availability-freshness-and-slo"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.security-trust-authn-authz-session-and-abuse",
@@ -3164,7 +3164,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-trust-authn-authz-session-and-abuse"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.privacy-data-governance-and-rights",
@@ -3182,7 +3182,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "privacy-data-governance-and-rights"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.safety-compliance-human-approval-and-irreversibility",
@@ -3200,7 +3200,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "safety-compliance-human-approval-and-irreversibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.observability-health-alert-and-runbook",
@@ -3218,7 +3218,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "observability-health-alert-and-runbook"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.deployment-topology-startup-shutdown-and-maintenance",
@@ -3236,7 +3236,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "deployment-topology-startup-shutdown-and-maintenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.external-integration-capability-quota-and-reconciliation",
@@ -3254,7 +3254,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "external-integration-capability-quota-and-reconciliation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.notification-file-media-and-delivery",
@@ -3272,7 +3272,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "notification-file-media-and-delivery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.localization-encoding-unit-and-formatting",
@@ -3290,7 +3290,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "localization-encoding-unit-and-formatting"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.commercial-billing-metering-and-financial",
@@ -3308,7 +3308,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "commercial-billing-metering-and-financial"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.hardware-device-sensor-and-physical",
@@ -3326,7 +3326,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "hardware-device-sensor-and-physical"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.ai-ml-model-prompt-evaluation-and-human-oversight",
@@ -3344,7 +3344,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.architecture-owner-boundary-and-debt",
@@ -3362,7 +3362,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.complete-condition-axis-catalog",
@@ -3380,7 +3380,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "complete-condition-axis-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.atomic-applicability-combination-closure",
@@ -3398,7 +3398,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-applicability-combination-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.typed-fact-identity-and-expected-value",
@@ -3416,7 +3416,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-fact-identity-and-expected-value"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.quantifier-range-null-absence-and-equivalence",
@@ -3434,7 +3434,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "quantifier-range-null-absence-and-equivalence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.fact-proof-obligation-method-catalog",
@@ -3452,7 +3452,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fact-proof-obligation-method-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.per-fact-comparator-oracle-environment",
@@ -3470,7 +3470,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-comparator-oracle-environment"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.expected-source-contract-runtime-set-equality",
@@ -3488,7 +3488,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "expected-source-contract-runtime-set-equality"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.per-fact-current-result-and-multiple-observer",
@@ -3506,7 +3506,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-result-and-multiple-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.furthest-independent-boundary-and-counterfactual",
@@ -3524,7 +3524,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-independent-boundary-and-counterfactual"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.protected-evidence-redaction-and-secrets",
@@ -3542,7 +3542,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "protected-evidence-redaction-and-secrets"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.scalable-complete-generation-no-truncation",
@@ -3560,7 +3560,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "scalable-complete-generation-no-truncation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.fail-closed-dispositions-conflicts-and-unreadable",
@@ -3578,7 +3578,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fail-closed-dispositions-conflicts-and-unreadable"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.default-workflow-and-long-task-projection",
@@ -3596,7 +3596,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-workflow-and-long-task-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.source-authoring-product-and-engineering-guidance",
@@ -3614,7 +3614,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-authoring-product-and-engineering-guidance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.canonical-owner-context-projection",
@@ -3632,7 +3632,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "canonical-owner-context-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.legacy-migration-and-schema-parser-parity",
@@ -3650,7 +3650,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "legacy-migration-and-schema-parser-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.anti-degradation-and-implementation-freedom",
@@ -3668,7 +3668,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "anti-degradation-and-implementation-freedom"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.honest-theorem-boundary-and-custom-extension",
@@ -3686,7 +3686,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "honest-theorem-boundary-and-custom-extension"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.public-distribution-and-cost-closure",
@@ -3704,7 +3704,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "public-distribution-and-cost-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.single-source-semantic-manifest",
@@ -3722,7 +3722,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "single-source-semantic-manifest"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.machine-enforced-semantic-universe",
@@ -3740,7 +3740,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "machine-enforced-semantic-universe"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.contract-semantic-fact-binding",
@@ -3758,7 +3758,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "contract-semantic-fact-binding"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.typed-semantic-fact-runtime-evidence",
@@ -3776,7 +3776,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-semantic-fact-runtime-evidence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-fact-antidegradation-admission",
@@ -3794,7 +3794,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-antidegradation-admission"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-fact-distribution-parity",
@@ -3812,7 +3812,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-distribution-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.no-semantic-fact-shortcuts",
@@ -3830,7 +3830,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-semantic-fact-shortcuts"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-inventory-is-not-completion",
@@ -3848,7 +3848,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-inventory-is-not-completion"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.authoring-universe-mutation-ac",
@@ -3866,7 +3866,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authoring-universe-mutation-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.atomic-axis-and-aggregate-rejection-ac",
@@ -3884,7 +3884,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-axis-and-aggregate-rejection-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.business-data-state-interface-closure-ac",
@@ -3902,7 +3902,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-data-state-interface-closure-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.concurrency-failure-migration-quality-ac",
@@ -3920,7 +3920,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "concurrency-failure-migration-quality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.security-privacy-safety-operations-ac",
@@ -3938,7 +3938,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-privacy-safety-operations-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.custom-hardware-ai-domain-extension-ac",
@@ -3956,7 +3956,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "custom-hardware-ai-domain-extension-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.source-contract-obligation-set-equality-ac",
@@ -3974,7 +3974,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-contract-obligation-set-equality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.per-fact-current-evidence-ac",
@@ -3992,7 +3992,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-evidence-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.furthest-boundary-and-counterfactual-ac",
@@ -4010,7 +4010,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-boundary-and-counterfactual-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.no-truncation-disposition-bypass-ac",
@@ -4028,7 +4028,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-truncation-disposition-bypass-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.antidegradation-and-parity-ac",
@@ -4046,7 +4046,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "antidegradation-and-parity-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-public-schema-risk",
@@ -4064,7 +4064,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-public-schema-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-false-completion-risk",
@@ -4082,7 +4082,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-false-completion-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "subject.semantic-oracle-observability-risk",
@@ -4100,7 +4100,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-oracle-observability-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "axis.actor",
@@ -4885,7 +4885,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "semantic-fact-completeness-result",
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "property.goal",
@@ -4997,7 +4997,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "property.scope",
@@ -5191,7 +5191,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.default-fine-grained-non-ui-authoring",
@@ -5209,7 +5209,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-fine-grained-non-ui-authoring"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.authority-provenance-and-decision-boundary",
@@ -5227,7 +5227,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authority-provenance-and-decision-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.material-input-and-basis-closure",
@@ -5245,7 +5245,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "material-input-and-basis-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.standard-and-custom-domain-family-closure",
@@ -5263,7 +5263,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "standard-and-custom-domain-family-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.subject-census-and-stable-identity",
@@ -5281,7 +5281,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "subject-census-and-stable-identity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.relation-hierarchy-and-population-closure",
@@ -5299,7 +5299,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "relation-hierarchy-and-population-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.goal-scope-glossary-assumption-and-decision-closure",
@@ -5317,7 +5317,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "goal-scope-glossary-assumption-and-decision-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.actor-role-tenant-entitlement-and-responsibility",
@@ -5335,7 +5335,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "actor-role-tenant-entitlement-and-responsibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.business-rule-decision-table-and-calculation",
@@ -5353,7 +5353,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-rule-decision-table-and-calculation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.data-model-field-and-value-semantics",
@@ -5371,7 +5371,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "data-model-field-and-value-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.operation-workflow-and-side-effect-semantics",
@@ -5389,7 +5389,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "operation-workflow-and-side-effect-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.state-machine-and-lifecycle-semantics",
@@ -5407,7 +5407,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "state-machine-and-lifecycle-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.temporal-scheduling-and-clock-semantics",
@@ -5425,7 +5425,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "temporal-scheduling-and-clock-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.input-validation-normalization-and-boundary",
@@ -5443,7 +5443,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "input-validation-normalization-and-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.output-error-feedback-and-partial-success",
@@ -5461,7 +5461,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "output-error-feedback-and-partial-success"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.api-protocol-and-versioning",
@@ -5479,7 +5479,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "api-protocol-and-versioning"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.event-message-stream-and-job",
@@ -5497,7 +5497,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "event-message-stream-and-job"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.persistence-cache-search-and-data-lifecycle",
@@ -5515,7 +5515,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "persistence-cache-search-and-data-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.transaction-consistency-concurrency-idempotency",
@@ -5533,7 +5533,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "transaction-consistency-concurrency-idempotency"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.fault-timeout-retry-degradation-recovery",
@@ -5551,7 +5551,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fault-timeout-retry-degradation-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.backup-restore-disaster-recovery",
@@ -5569,7 +5569,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "backup-restore-disaster-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.configuration-feature-flag-secret-and-precedence",
@@ -5587,7 +5587,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "configuration-feature-flag-secret-and-precedence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.compatibility-migration-rollout-and-rollback",
@@ -5605,7 +5605,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "compatibility-migration-rollout-and-rollback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.performance-capacity-resource-and-cost",
@@ -5623,7 +5623,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "performance-capacity-resource-and-cost"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.reliability-availability-freshness-and-slo",
@@ -5641,7 +5641,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "reliability-availability-freshness-and-slo"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.security-trust-authn-authz-session-and-abuse",
@@ -5659,7 +5659,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-trust-authn-authz-session-and-abuse"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.privacy-data-governance-and-rights",
@@ -5677,7 +5677,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "privacy-data-governance-and-rights"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.safety-compliance-human-approval-and-irreversibility",
@@ -5695,7 +5695,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "safety-compliance-human-approval-and-irreversibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.observability-health-alert-and-runbook",
@@ -5713,7 +5713,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "observability-health-alert-and-runbook"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.deployment-topology-startup-shutdown-and-maintenance",
@@ -5731,7 +5731,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "deployment-topology-startup-shutdown-and-maintenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.external-integration-capability-quota-and-reconciliation",
@@ -5749,7 +5749,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "external-integration-capability-quota-and-reconciliation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.notification-file-media-and-delivery",
@@ -5767,7 +5767,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "notification-file-media-and-delivery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.localization-encoding-unit-and-formatting",
@@ -5785,7 +5785,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "localization-encoding-unit-and-formatting"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.commercial-billing-metering-and-financial",
@@ -5803,7 +5803,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "commercial-billing-metering-and-financial"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.hardware-device-sensor-and-physical",
@@ -5821,7 +5821,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "hardware-device-sensor-and-physical"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.ai-ml-model-prompt-evaluation-and-human-oversight",
@@ -5839,7 +5839,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.architecture-owner-boundary-and-debt",
@@ -5857,7 +5857,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.complete-condition-axis-catalog",
@@ -5875,7 +5875,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "complete-condition-axis-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.atomic-applicability-combination-closure",
@@ -5893,7 +5893,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-applicability-combination-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.typed-fact-identity-and-expected-value",
@@ -5911,7 +5911,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-fact-identity-and-expected-value"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.quantifier-range-null-absence-and-equivalence",
@@ -5929,7 +5929,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "quantifier-range-null-absence-and-equivalence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.fact-proof-obligation-method-catalog",
@@ -5947,7 +5947,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fact-proof-obligation-method-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.per-fact-comparator-oracle-environment",
@@ -5965,7 +5965,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-comparator-oracle-environment"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.expected-source-contract-runtime-set-equality",
@@ -5983,7 +5983,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "expected-source-contract-runtime-set-equality"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.per-fact-current-result-and-multiple-observer",
@@ -6001,7 +6001,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-result-and-multiple-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.furthest-independent-boundary-and-counterfactual",
@@ -6019,7 +6019,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-independent-boundary-and-counterfactual"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.protected-evidence-redaction-and-secrets",
@@ -6037,7 +6037,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "protected-evidence-redaction-and-secrets"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.scalable-complete-generation-no-truncation",
@@ -6055,7 +6055,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "scalable-complete-generation-no-truncation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.fail-closed-dispositions-conflicts-and-unreadable",
@@ -6073,7 +6073,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "fail-closed-dispositions-conflicts-and-unreadable"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.default-workflow-and-long-task-projection",
@@ -6091,7 +6091,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "default-workflow-and-long-task-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.source-authoring-product-and-engineering-guidance",
@@ -6109,7 +6109,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-authoring-product-and-engineering-guidance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.canonical-owner-context-projection",
@@ -6127,7 +6127,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "canonical-owner-context-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.legacy-migration-and-schema-parser-parity",
@@ -6145,7 +6145,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "legacy-migration-and-schema-parser-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.anti-degradation-and-implementation-freedom",
@@ -6163,7 +6163,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "anti-degradation-and-implementation-freedom"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.honest-theorem-boundary-and-custom-extension",
@@ -6181,7 +6181,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "honest-theorem-boundary-and-custom-extension"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.public-distribution-and-cost-closure",
@@ -6199,7 +6199,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "public-distribution-and-cost-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.single-source-semantic-manifest",
@@ -6217,7 +6217,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "single-source-semantic-manifest"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.machine-enforced-semantic-universe",
@@ -6235,7 +6235,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "machine-enforced-semantic-universe"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.contract-semantic-fact-binding",
@@ -6253,7 +6253,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "contract-semantic-fact-binding"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.typed-semantic-fact-runtime-evidence",
@@ -6271,7 +6271,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "typed-semantic-fact-runtime-evidence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-fact-antidegradation-admission",
@@ -6289,7 +6289,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-antidegradation-admission"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-fact-distribution-parity",
@@ -6307,7 +6307,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-distribution-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.no-semantic-fact-shortcuts",
@@ -6325,7 +6325,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-semantic-fact-shortcuts"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-inventory-is-not-completion",
@@ -6343,7 +6343,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-inventory-is-not-completion"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.authoring-universe-mutation-ac",
@@ -6361,7 +6361,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "authoring-universe-mutation-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.atomic-axis-and-aggregate-rejection-ac",
@@ -6379,7 +6379,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "atomic-axis-and-aggregate-rejection-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.business-data-state-interface-closure-ac",
@@ -6397,7 +6397,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "business-data-state-interface-closure-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.concurrency-failure-migration-quality-ac",
@@ -6415,7 +6415,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "concurrency-failure-migration-quality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.security-privacy-safety-operations-ac",
@@ -6433,7 +6433,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "security-privacy-safety-operations-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.custom-hardware-ai-domain-extension-ac",
@@ -6451,7 +6451,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "custom-hardware-ai-domain-extension-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.source-contract-obligation-set-equality-ac",
@@ -6469,7 +6469,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "source-contract-obligation-set-equality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.per-fact-current-evidence-ac",
@@ -6487,7 +6487,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "per-fact-current-evidence-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.furthest-boundary-and-counterfactual-ac",
@@ -6505,7 +6505,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "furthest-boundary-and-counterfactual-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.no-truncation-disposition-bypass-ac",
@@ -6523,7 +6523,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "no-truncation-disposition-bypass-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.antidegradation-and-parity-ac",
@@ -6541,7 +6541,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "antidegradation-and-parity-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-public-schema-risk",
@@ -6559,7 +6559,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-public-schema-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-false-completion-risk",
@@ -6577,7 +6577,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-false-completion-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "cell.semantic-oracle-observability-risk",
@@ -6595,7 +6595,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-oracle-observability-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-fact-completeness-result",
@@ -6613,7 +6613,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.default-fine-grained-non-ui-authoring",
@@ -6629,9 +6629,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.default-fine-grained-non-ui-authoring"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "default-fine-grained-non-ui-authoring"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.authority-provenance-and-decision-boundary",
@@ -6647,9 +6647,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.authority-provenance-and-decision-boundary"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "authority-provenance-and-decision-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.material-input-and-basis-closure",
@@ -6665,9 +6665,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.material-input-and-basis-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "material-input-and-basis-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.standard-and-custom-domain-family-closure",
@@ -6683,9 +6683,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.standard-and-custom-domain-family-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "standard-and-custom-domain-family-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.subject-census-and-stable-identity",
@@ -6701,9 +6701,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.subject-census-and-stable-identity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "subject-census-and-stable-identity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.relation-hierarchy-and-population-closure",
@@ -6719,9 +6719,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.relation-hierarchy-and-population-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "relation-hierarchy-and-population-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.goal-scope-glossary-assumption-and-decision-closure",
@@ -6737,9 +6737,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.goal-scope-glossary-assumption-and-decision-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "goal-scope-glossary-assumption-and-decision-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.actor-role-tenant-entitlement-and-responsibility",
@@ -6755,9 +6755,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.actor-role-tenant-entitlement-and-responsibility"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "actor-role-tenant-entitlement-and-responsibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.business-rule-decision-table-and-calculation",
@@ -6773,9 +6773,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.business-rule-decision-table-and-calculation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "business-rule-decision-table-and-calculation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.data-model-field-and-value-semantics",
@@ -6791,9 +6791,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.data-model-field-and-value-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "data-model-field-and-value-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.operation-workflow-and-side-effect-semantics",
@@ -6809,9 +6809,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.operation-workflow-and-side-effect-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "operation-workflow-and-side-effect-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.state-machine-and-lifecycle-semantics",
@@ -6827,9 +6827,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.state-machine-and-lifecycle-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "state-machine-and-lifecycle-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.temporal-scheduling-and-clock-semantics",
@@ -6845,9 +6845,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.temporal-scheduling-and-clock-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "temporal-scheduling-and-clock-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.input-validation-normalization-and-boundary",
@@ -6863,9 +6863,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.input-validation-normalization-and-boundary"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "input-validation-normalization-and-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.output-error-feedback-and-partial-success",
@@ -6881,9 +6881,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.output-error-feedback-and-partial-success"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "output-error-feedback-and-partial-success"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.api-protocol-and-versioning",
@@ -6899,9 +6899,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.api-protocol-and-versioning"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "api-protocol-and-versioning"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.event-message-stream-and-job",
@@ -6917,9 +6917,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.event-message-stream-and-job"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "event-message-stream-and-job"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.persistence-cache-search-and-data-lifecycle",
@@ -6935,9 +6935,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.persistence-cache-search-and-data-lifecycle"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "persistence-cache-search-and-data-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.transaction-consistency-concurrency-idempotency",
@@ -6953,9 +6953,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.transaction-consistency-concurrency-idempotency"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "transaction-consistency-concurrency-idempotency"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.fault-timeout-retry-degradation-recovery",
@@ -6971,9 +6971,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fault-timeout-retry-degradation-recovery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fault-timeout-retry-degradation-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.backup-restore-disaster-recovery",
@@ -6989,9 +6989,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.backup-restore-disaster-recovery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "backup-restore-disaster-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.configuration-feature-flag-secret-and-precedence",
@@ -7007,9 +7007,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.configuration-feature-flag-secret-and-precedence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "configuration-feature-flag-secret-and-precedence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.compatibility-migration-rollout-and-rollback",
@@ -7025,9 +7025,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.compatibility-migration-rollout-and-rollback"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "compatibility-migration-rollout-and-rollback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.performance-capacity-resource-and-cost",
@@ -7043,9 +7043,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.performance-capacity-resource-and-cost"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "performance-capacity-resource-and-cost"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.reliability-availability-freshness-and-slo",
@@ -7061,9 +7061,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.reliability-availability-freshness-and-slo"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "reliability-availability-freshness-and-slo"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.security-trust-authn-authz-session-and-abuse",
@@ -7079,9 +7079,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.security-trust-authn-authz-session-and-abuse"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "security-trust-authn-authz-session-and-abuse"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.privacy-data-governance-and-rights",
@@ -7097,9 +7097,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.privacy-data-governance-and-rights"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "privacy-data-governance-and-rights"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.safety-compliance-human-approval-and-irreversibility",
@@ -7115,9 +7115,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.safety-compliance-human-approval-and-irreversibility"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "safety-compliance-human-approval-and-irreversibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.observability-health-alert-and-runbook",
@@ -7133,9 +7133,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.observability-health-alert-and-runbook"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "observability-health-alert-and-runbook"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.deployment-topology-startup-shutdown-and-maintenance",
@@ -7151,9 +7151,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.deployment-topology-startup-shutdown-and-maintenance"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "deployment-topology-startup-shutdown-and-maintenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.external-integration-capability-quota-and-reconciliation",
@@ -7169,9 +7169,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.external-integration-capability-quota-and-reconciliation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "external-integration-capability-quota-and-reconciliation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.notification-file-media-and-delivery",
@@ -7187,9 +7187,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.notification-file-media-and-delivery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "notification-file-media-and-delivery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.localization-encoding-unit-and-formatting",
@@ -7205,9 +7205,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.localization-encoding-unit-and-formatting"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "localization-encoding-unit-and-formatting"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.commercial-billing-metering-and-financial",
@@ -7223,9 +7223,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.commercial-billing-metering-and-financial"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "commercial-billing-metering-and-financial"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.hardware-device-sensor-and-physical",
@@ -7241,9 +7241,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.hardware-device-sensor-and-physical"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "hardware-device-sensor-and-physical"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.ai-ml-model-prompt-evaluation-and-human-oversight",
@@ -7259,9 +7259,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.architecture-owner-boundary-and-debt",
@@ -7277,9 +7277,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.architecture-owner-boundary-and-debt"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.complete-condition-axis-catalog",
@@ -7295,9 +7295,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.complete-condition-axis-catalog"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "complete-condition-axis-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.atomic-applicability-combination-closure",
@@ -7313,9 +7313,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.atomic-applicability-combination-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "atomic-applicability-combination-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.typed-fact-identity-and-expected-value",
@@ -7331,9 +7331,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.typed-fact-identity-and-expected-value"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "typed-fact-identity-and-expected-value"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.quantifier-range-null-absence-and-equivalence",
@@ -7349,9 +7349,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.quantifier-range-null-absence-and-equivalence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "quantifier-range-null-absence-and-equivalence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.fact-proof-obligation-method-catalog",
@@ -7367,9 +7367,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fact-proof-obligation-method-catalog"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fact-proof-obligation-method-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.per-fact-comparator-oracle-environment",
@@ -7385,9 +7385,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-comparator-oracle-environment"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-comparator-oracle-environment"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.expected-source-contract-runtime-set-equality",
@@ -7403,9 +7403,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.expected-source-contract-runtime-set-equality"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "expected-source-contract-runtime-set-equality"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.per-fact-current-result-and-multiple-observer",
@@ -7421,9 +7421,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-current-result-and-multiple-observer"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-current-result-and-multiple-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.furthest-independent-boundary-and-counterfactual",
@@ -7439,9 +7439,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.furthest-independent-boundary-and-counterfactual"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "furthest-independent-boundary-and-counterfactual"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.protected-evidence-redaction-and-secrets",
@@ -7457,9 +7457,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.protected-evidence-redaction-and-secrets"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "protected-evidence-redaction-and-secrets"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.scalable-complete-generation-no-truncation",
@@ -7475,9 +7475,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.scalable-complete-generation-no-truncation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "scalable-complete-generation-no-truncation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.fail-closed-dispositions-conflicts-and-unreadable",
@@ -7493,9 +7493,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fail-closed-dispositions-conflicts-and-unreadable"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fail-closed-dispositions-conflicts-and-unreadable"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.default-workflow-and-long-task-projection",
@@ -7511,9 +7511,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.default-workflow-and-long-task-projection"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "default-workflow-and-long-task-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.source-authoring-product-and-engineering-guidance",
@@ -7529,9 +7529,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.source-authoring-product-and-engineering-guidance"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "source-authoring-product-and-engineering-guidance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.canonical-owner-context-projection",
@@ -7547,9 +7547,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.canonical-owner-context-projection"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "canonical-owner-context-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.legacy-migration-and-schema-parser-parity",
@@ -7565,9 +7565,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.legacy-migration-and-schema-parser-parity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "legacy-migration-and-schema-parser-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.anti-degradation-and-implementation-freedom",
@@ -7583,9 +7583,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.anti-degradation-and-implementation-freedom"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "anti-degradation-and-implementation-freedom"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.honest-theorem-boundary-and-custom-extension",
@@ -7601,9 +7601,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.honest-theorem-boundary-and-custom-extension"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "honest-theorem-boundary-and-custom-extension"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.public-distribution-and-cost-closure",
@@ -7619,9 +7619,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.public-distribution-and-cost-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "public-distribution-and-cost-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.single-source-semantic-manifest",
@@ -7637,9 +7637,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.single-source-semantic-manifest"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "single-source-semantic-manifest"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.machine-enforced-semantic-universe",
@@ -7655,9 +7655,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.machine-enforced-semantic-universe"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "machine-enforced-semantic-universe"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.contract-semantic-fact-binding",
@@ -7673,9 +7673,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.contract-semantic-fact-binding"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "contract-semantic-fact-binding"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.typed-semantic-fact-runtime-evidence",
@@ -7691,9 +7691,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.typed-semantic-fact-runtime-evidence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "typed-semantic-fact-runtime-evidence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-fact-antidegradation-admission",
@@ -7709,9 +7709,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-fact-antidegradation-admission"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-fact-antidegradation-admission"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-fact-distribution-parity",
@@ -7727,9 +7727,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-fact-distribution-parity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-fact-distribution-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.no-semantic-fact-shortcuts",
@@ -7745,9 +7745,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.no-semantic-fact-shortcuts"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "no-semantic-fact-shortcuts"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-inventory-is-not-completion",
@@ -7763,9 +7763,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-inventory-is-not-completion"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-inventory-is-not-completion"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.authoring-universe-mutation-ac",
@@ -7781,9 +7781,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.authoring-universe-mutation-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "authoring-universe-mutation-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.atomic-axis-and-aggregate-rejection-ac",
@@ -7799,9 +7799,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.atomic-axis-and-aggregate-rejection-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "atomic-axis-and-aggregate-rejection-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.business-data-state-interface-closure-ac",
@@ -7817,9 +7817,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.business-data-state-interface-closure-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "business-data-state-interface-closure-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.concurrency-failure-migration-quality-ac",
@@ -7835,9 +7835,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.concurrency-failure-migration-quality-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "concurrency-failure-migration-quality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.security-privacy-safety-operations-ac",
@@ -7853,9 +7853,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.security-privacy-safety-operations-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "security-privacy-safety-operations-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.custom-hardware-ai-domain-extension-ac",
@@ -7871,9 +7871,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.custom-hardware-ai-domain-extension-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "custom-hardware-ai-domain-extension-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.source-contract-obligation-set-equality-ac",
@@ -7889,9 +7889,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.source-contract-obligation-set-equality-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "source-contract-obligation-set-equality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.per-fact-current-evidence-ac",
@@ -7907,9 +7907,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-current-evidence-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-current-evidence-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.furthest-boundary-and-counterfactual-ac",
@@ -7925,9 +7925,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.furthest-boundary-and-counterfactual-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "furthest-boundary-and-counterfactual-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.no-truncation-disposition-bypass-ac",
@@ -7943,9 +7943,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.no-truncation-disposition-bypass-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "no-truncation-disposition-bypass-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.antidegradation-and-parity-ac",
@@ -7961,9 +7961,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.antidegradation-and-parity-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "antidegradation-and-parity-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-public-schema-risk",
@@ -7979,9 +7979,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-public-schema-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-public-schema-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-false-completion-risk",
@@ -7997,9 +7997,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-false-completion-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-false-completion-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "fact.semantic-oracle-observability-risk",
@@ -8015,9 +8015,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-oracle-observability-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-oracle-observability-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-fact-completeness-result.exact",
@@ -8035,7 +8035,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.default-fine-grained-non-ui-authoring.exact",
@@ -8051,9 +8051,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.default-fine-grained-non-ui-authoring"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "default-fine-grained-non-ui-authoring"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.authority-provenance-and-decision-boundary.exact",
@@ -8069,9 +8069,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.authority-provenance-and-decision-boundary"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "authority-provenance-and-decision-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.material-input-and-basis-closure.exact",
@@ -8087,9 +8087,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.material-input-and-basis-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "material-input-and-basis-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.standard-and-custom-domain-family-closure.exact",
@@ -8105,9 +8105,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.standard-and-custom-domain-family-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "standard-and-custom-domain-family-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.subject-census-and-stable-identity.exact",
@@ -8123,9 +8123,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.subject-census-and-stable-identity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "subject-census-and-stable-identity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.relation-hierarchy-and-population-closure.exact",
@@ -8141,9 +8141,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.relation-hierarchy-and-population-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "relation-hierarchy-and-population-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.goal-scope-glossary-assumption-and-decision-closure.exact",
@@ -8159,9 +8159,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.goal-scope-glossary-assumption-and-decision-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "goal-scope-glossary-assumption-and-decision-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.actor-role-tenant-entitlement-and-responsibility.exact",
@@ -8177,9 +8177,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.actor-role-tenant-entitlement-and-responsibility"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "actor-role-tenant-entitlement-and-responsibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.business-rule-decision-table-and-calculation.exact",
@@ -8195,9 +8195,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.business-rule-decision-table-and-calculation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "business-rule-decision-table-and-calculation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.data-model-field-and-value-semantics.exact",
@@ -8213,9 +8213,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.data-model-field-and-value-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "data-model-field-and-value-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.operation-workflow-and-side-effect-semantics.exact",
@@ -8231,9 +8231,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.operation-workflow-and-side-effect-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "operation-workflow-and-side-effect-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.state-machine-and-lifecycle-semantics.exact",
@@ -8249,9 +8249,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.state-machine-and-lifecycle-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "state-machine-and-lifecycle-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.temporal-scheduling-and-clock-semantics.exact",
@@ -8267,9 +8267,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.temporal-scheduling-and-clock-semantics"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "temporal-scheduling-and-clock-semantics"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.input-validation-normalization-and-boundary.exact",
@@ -8285,9 +8285,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.input-validation-normalization-and-boundary"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "input-validation-normalization-and-boundary"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.output-error-feedback-and-partial-success.exact",
@@ -8303,9 +8303,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.output-error-feedback-and-partial-success"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "output-error-feedback-and-partial-success"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.api-protocol-and-versioning.exact",
@@ -8321,9 +8321,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.api-protocol-and-versioning"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "api-protocol-and-versioning"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.event-message-stream-and-job.exact",
@@ -8339,9 +8339,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.event-message-stream-and-job"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "event-message-stream-and-job"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.persistence-cache-search-and-data-lifecycle.exact",
@@ -8357,9 +8357,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.persistence-cache-search-and-data-lifecycle"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "persistence-cache-search-and-data-lifecycle"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.transaction-consistency-concurrency-idempotency.exact",
@@ -8375,9 +8375,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.transaction-consistency-concurrency-idempotency"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "transaction-consistency-concurrency-idempotency"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.fault-timeout-retry-degradation-recovery.exact",
@@ -8393,9 +8393,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fault-timeout-retry-degradation-recovery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fault-timeout-retry-degradation-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.backup-restore-disaster-recovery.exact",
@@ -8411,9 +8411,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.backup-restore-disaster-recovery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "backup-restore-disaster-recovery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.configuration-feature-flag-secret-and-precedence.exact",
@@ -8429,9 +8429,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.configuration-feature-flag-secret-and-precedence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "configuration-feature-flag-secret-and-precedence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.compatibility-migration-rollout-and-rollback.exact",
@@ -8447,9 +8447,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.compatibility-migration-rollout-and-rollback"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "compatibility-migration-rollout-and-rollback"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.performance-capacity-resource-and-cost.exact",
@@ -8465,9 +8465,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.performance-capacity-resource-and-cost"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "performance-capacity-resource-and-cost"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.reliability-availability-freshness-and-slo.exact",
@@ -8483,9 +8483,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.reliability-availability-freshness-and-slo"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "reliability-availability-freshness-and-slo"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.security-trust-authn-authz-session-and-abuse.exact",
@@ -8501,9 +8501,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.security-trust-authn-authz-session-and-abuse"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "security-trust-authn-authz-session-and-abuse"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.privacy-data-governance-and-rights.exact",
@@ -8519,9 +8519,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.privacy-data-governance-and-rights"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "privacy-data-governance-and-rights"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.safety-compliance-human-approval-and-irreversibility.exact",
@@ -8537,9 +8537,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.safety-compliance-human-approval-and-irreversibility"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "safety-compliance-human-approval-and-irreversibility"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.observability-health-alert-and-runbook.exact",
@@ -8555,9 +8555,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.observability-health-alert-and-runbook"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "observability-health-alert-and-runbook"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.deployment-topology-startup-shutdown-and-maintenance.exact",
@@ -8573,9 +8573,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.deployment-topology-startup-shutdown-and-maintenance"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "deployment-topology-startup-shutdown-and-maintenance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.external-integration-capability-quota-and-reconciliation.exact",
@@ -8591,9 +8591,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.external-integration-capability-quota-and-reconciliation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "external-integration-capability-quota-and-reconciliation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.notification-file-media-and-delivery.exact",
@@ -8609,9 +8609,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.notification-file-media-and-delivery"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "notification-file-media-and-delivery"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.localization-encoding-unit-and-formatting.exact",
@@ -8627,9 +8627,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.localization-encoding-unit-and-formatting"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "localization-encoding-unit-and-formatting"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.commercial-billing-metering-and-financial.exact",
@@ -8645,9 +8645,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.commercial-billing-metering-and-financial"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "commercial-billing-metering-and-financial"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.hardware-device-sensor-and-physical.exact",
@@ -8663,9 +8663,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.hardware-device-sensor-and-physical"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "hardware-device-sensor-and-physical"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.ai-ml-model-prompt-evaluation-and-human-oversight.exact",
@@ -8681,9 +8681,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "ai-ml-model-prompt-evaluation-and-human-oversight"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.architecture-owner-boundary-and-debt.exact",
@@ -8699,9 +8699,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.architecture-owner-boundary-and-debt"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "architecture-owner-boundary-and-debt"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.complete-condition-axis-catalog.exact",
@@ -8717,9 +8717,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.complete-condition-axis-catalog"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "complete-condition-axis-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.atomic-applicability-combination-closure.exact",
@@ -8735,9 +8735,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.atomic-applicability-combination-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "atomic-applicability-combination-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.typed-fact-identity-and-expected-value.exact",
@@ -8753,9 +8753,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.typed-fact-identity-and-expected-value"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "typed-fact-identity-and-expected-value"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.quantifier-range-null-absence-and-equivalence.exact",
@@ -8771,9 +8771,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.quantifier-range-null-absence-and-equivalence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "quantifier-range-null-absence-and-equivalence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.fact-proof-obligation-method-catalog.exact",
@@ -8789,9 +8789,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fact-proof-obligation-method-catalog"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fact-proof-obligation-method-catalog"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.per-fact-comparator-oracle-environment.exact",
@@ -8807,9 +8807,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-comparator-oracle-environment"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-comparator-oracle-environment"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.expected-source-contract-runtime-set-equality.exact",
@@ -8825,9 +8825,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.expected-source-contract-runtime-set-equality"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "expected-source-contract-runtime-set-equality"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.per-fact-current-result-and-multiple-observer.exact",
@@ -8843,9 +8843,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-current-result-and-multiple-observer"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-current-result-and-multiple-observer"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.furthest-independent-boundary-and-counterfactual.exact",
@@ -8861,9 +8861,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.furthest-independent-boundary-and-counterfactual"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "furthest-independent-boundary-and-counterfactual"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.protected-evidence-redaction-and-secrets.exact",
@@ -8879,9 +8879,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.protected-evidence-redaction-and-secrets"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "protected-evidence-redaction-and-secrets"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.scalable-complete-generation-no-truncation.exact",
@@ -8897,9 +8897,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.scalable-complete-generation-no-truncation"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "scalable-complete-generation-no-truncation"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.fail-closed-dispositions-conflicts-and-unreadable.exact",
@@ -8915,9 +8915,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.fail-closed-dispositions-conflicts-and-unreadable"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "fail-closed-dispositions-conflicts-and-unreadable"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.default-workflow-and-long-task-projection.exact",
@@ -8933,9 +8933,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.default-workflow-and-long-task-projection"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "default-workflow-and-long-task-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.source-authoring-product-and-engineering-guidance.exact",
@@ -8951,9 +8951,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.source-authoring-product-and-engineering-guidance"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "source-authoring-product-and-engineering-guidance"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.canonical-owner-context-projection.exact",
@@ -8969,9 +8969,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.canonical-owner-context-projection"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "canonical-owner-context-projection"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.legacy-migration-and-schema-parser-parity.exact",
@@ -8987,9 +8987,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.legacy-migration-and-schema-parser-parity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "legacy-migration-and-schema-parser-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.anti-degradation-and-implementation-freedom.exact",
@@ -9005,9 +9005,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.anti-degradation-and-implementation-freedom"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "anti-degradation-and-implementation-freedom"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.honest-theorem-boundary-and-custom-extension.exact",
@@ -9023,9 +9023,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.honest-theorem-boundary-and-custom-extension"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "honest-theorem-boundary-and-custom-extension"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.public-distribution-and-cost-closure.exact",
@@ -9041,9 +9041,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.public-distribution-and-cost-closure"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "public-distribution-and-cost-closure"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.single-source-semantic-manifest.exact",
@@ -9059,9 +9059,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.single-source-semantic-manifest"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "single-source-semantic-manifest"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.machine-enforced-semantic-universe.exact",
@@ -9077,9 +9077,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.machine-enforced-semantic-universe"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "machine-enforced-semantic-universe"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.contract-semantic-fact-binding.exact",
@@ -9095,9 +9095,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.contract-semantic-fact-binding"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "contract-semantic-fact-binding"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.typed-semantic-fact-runtime-evidence.exact",
@@ -9113,9 +9113,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.typed-semantic-fact-runtime-evidence"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "typed-semantic-fact-runtime-evidence"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-fact-antidegradation-admission.exact",
@@ -9131,9 +9131,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-fact-antidegradation-admission"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-fact-antidegradation-admission"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-fact-distribution-parity.exact",
@@ -9149,9 +9149,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-fact-distribution-parity"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-fact-distribution-parity"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.no-semantic-fact-shortcuts.exact",
@@ -9167,9 +9167,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.no-semantic-fact-shortcuts"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "no-semantic-fact-shortcuts"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-inventory-is-not-completion.exact",
@@ -9185,9 +9185,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-inventory-is-not-completion"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-inventory-is-not-completion"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.authoring-universe-mutation-ac.exact",
@@ -9203,9 +9203,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.authoring-universe-mutation-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "authoring-universe-mutation-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.atomic-axis-and-aggregate-rejection-ac.exact",
@@ -9221,9 +9221,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.atomic-axis-and-aggregate-rejection-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "atomic-axis-and-aggregate-rejection-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.business-data-state-interface-closure-ac.exact",
@@ -9239,9 +9239,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.business-data-state-interface-closure-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "business-data-state-interface-closure-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.concurrency-failure-migration-quality-ac.exact",
@@ -9257,9 +9257,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.concurrency-failure-migration-quality-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "concurrency-failure-migration-quality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.security-privacy-safety-operations-ac.exact",
@@ -9275,9 +9275,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.security-privacy-safety-operations-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "security-privacy-safety-operations-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.custom-hardware-ai-domain-extension-ac.exact",
@@ -9293,9 +9293,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.custom-hardware-ai-domain-extension-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "custom-hardware-ai-domain-extension-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.source-contract-obligation-set-equality-ac.exact",
@@ -9311,9 +9311,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.source-contract-obligation-set-equality-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "source-contract-obligation-set-equality-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.per-fact-current-evidence-ac.exact",
@@ -9329,9 +9329,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.per-fact-current-evidence-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "per-fact-current-evidence-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.furthest-boundary-and-counterfactual-ac.exact",
@@ -9347,9 +9347,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.furthest-boundary-and-counterfactual-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "furthest-boundary-and-counterfactual-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.no-truncation-disposition-bypass-ac.exact",
@@ -9365,9 +9365,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.no-truncation-disposition-bypass-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "no-truncation-disposition-bypass-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.antidegradation-and-parity-ac.exact",
@@ -9383,9 +9383,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.antidegradation-and-parity-ac"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "antidegradation-and-parity-ac"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-public-schema-risk.exact",
@@ -9401,9 +9401,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-public-schema-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-public-schema-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-false-completion-risk.exact",
@@ -9419,9 +9419,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-false-completion-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-false-completion-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "proof.semantic-oracle-observability-risk.exact",
@@ -9437,9 +9437,9 @@ Semantic completeness and implementation comparison cross a weak-observability b
           "fact.semantic-oracle-observability-risk"
         ],
         "basis_refs": [
-          "semantic-fact-completeness-result"
+          "semantic-oracle-observability-risk"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "oracle.semantic-fact-self-host",
@@ -9535,7 +9535,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       },
       {
         "key": "environment.semantic-fact-self-host",
@@ -9631,7 +9631,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
         "basis_refs": [
           "semantic-fact-completeness-result"
         ],
-        "rationale": "This census identity contributes to an exact fixture Fact."
+        "rationale": "This census identity contributes to an exact semantic Fact."
       }
     ]
   },
@@ -10842,7 +10842,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-architecture-md",
       "kind": "context",
       "source_ref": "project_context/architecture.md",
-      "sha256": "4d920a93371898ac574b58108937cb93f81ca41c4b4d0b6e690868dd2e5b28d0",
+      "sha256": "02070971ba29519dfb359a74fc4c71dc59b62db620ab9c337e9124360dec3dd1",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10856,7 +10856,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-delivery-benchmark-md",
       "kind": "context",
       "source_ref": "project_context/areas/delivery-benchmark.md",
-      "sha256": "c2629db04e76dea18d97bf8210f152805d880b725f40775890fd0572480f1068",
+      "sha256": "cdeb78e7c753a7277edd743f6a59d7812666a3a072e82536d93678605ebca841",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10870,7 +10870,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package.md",
-      "sha256": "89d82f207dbd00ecfcab1cc4461d3e140409c2c3c5ac8c626a26dfbe0622ed38",
+      "sha256": "af7d438390c3ffc792d3587d8719f17dd9abdc8e3c3a694d580aa359840e8f91",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10884,7 +10884,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-contracts-design-resource-handoff-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-      "sha256": "b2d4e0021bbdcdf8be29475a6339141af0838a030da049638a38f40182d4bb5c",
+      "sha256": "bbc07c6b7ba9b2d33ffdc091c64d0c018cea84b7cfdcdd2f845e1762dc3f8c36",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10898,7 +10898,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-contracts-package-managed-surfaces-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
-      "sha256": "8d622212936eb5f49201ffac890865beff09b07b3d481e5b659b64882089d4b5",
+      "sha256": "ef5419673d3425b4b9ee9d20e70579a66a31807bcf47e241c951074195c7e166",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10912,7 +10912,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-contracts-workflow-contract-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/contracts/workflow-contract.md",
-      "sha256": "57614c21f41c669b1ad497f7ae42848c41980d536b8470f37e6dd3b9883d9313",
+      "sha256": "7e3a8c366c70f94c12494fa85850b06b6fe4c61c729bc736839b10a83b489b88",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10926,7 +10926,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-decision-rationale-architecture-quality-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/architecture-quality.md",
-      "sha256": "81c5e837d205c391eedab2753c06a70bab27a7af009abb5ab2a200d5dd1197b0",
+      "sha256": "5ee05ac6a62197203029109ded0421b340b4ae94908a867ed8d44dd1dfc61d5a",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10940,7 +10940,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-decision-rationale-long-task-workflow-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      "sha256": "b94aa35dabbaf09f22340979bacee59fbf7012e8ffb2a70a9b857cff94705c7e",
+      "sha256": "8d40421d4daa83541418c014a6076240f243f55cc532136407d208705db10b0e",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10954,7 +10954,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-decision-rationale-minimal-context-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/decision-rationale/minimal-context.md",
-      "sha256": "87944a21c0c5abe58cf461b65a7b1077d5f0cc0b5ab9f274214288b7f9ef30fe",
+      "sha256": "4e0b701c4b283e5e7fa8ab5a4c71db7d8731ea401c44fdad6d61e935a5dbe9b0",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10968,7 +10968,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-foundation-context-model-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/foundation/context-model.md",
-      "sha256": "9c7156b7f966d2c9706c7422b8a8f189332c2ee66feec5017627723c0fcb4169",
+      "sha256": "f94a3856e5d5aaee3c0e86110b5d1cebdbea5d7e1cc8ae5815e480a5cafd0847",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10982,7 +10982,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-implementation-index-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/implementation-index.md",
-      "sha256": "1d74a7d5538e47de7aa5231ca7619ea41fc334eaa6f6055d6b32143f32d097db",
+      "sha256": "556be1383813ad4915deb82bedbc4d71657b6b4d59ae7885129980a39272904f",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -10996,7 +10996,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-areas-harness-package-verification-md",
       "kind": "context",
       "source_ref": "project_context/areas/harness-package/verification.md",
-      "sha256": "31f78a79717b6661b3152ad5352653b4ed1abb0bb69c5d1752caf05fd56e9115",
+      "sha256": "21531262f7acba793abdf1d4bad12d20d5ae5f50991e58881bebc33383f9ab64",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -11010,7 +11010,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-context-toml",
       "kind": "context",
       "source_ref": "project_context/context.toml",
-      "sha256": "950346ceeac07e4ec3bb99f2b7644c83270e59356462b5cc6ea5c2f3e7bc1982",
+      "sha256": "5f2d97366b6a8e349502b9a7abb34c7627e6a5bc684ad0f179cf988790512e32",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"
@@ -11024,7 +11024,7 @@ Semantic completeness and implementation comparison cross a weak-observability b
       "key": "input.context.project_context-global-md",
       "kind": "context",
       "source_ref": "project_context/global.md",
-      "sha256": "8022d8187b69672f4da9c5ea564e8e87666e392ebd682a0043e5a2af258fc535",
+      "sha256": "2cab4a625046fead1b6f5aa59899350d80bb8505cfc2ad9047bbd5a98d0da677",
       "disposition": "non_ui_material",
       "fact_refs": [
         "fact.semantic-fact-completeness-result"

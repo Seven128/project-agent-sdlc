@@ -24,6 +24,7 @@
 - Read scope does not grant modification scope. Resolve intended workspaces from explicit user/product/path/repository facts; when materially different sibling targets remain ambiguous, clarify before product edits. Intentional cross-workspace targets and supporting/shared scope stay explicit.
 - In a monorepo, only Context-bearing code workspaces need a sparse `project_context/workspaces/<workspace-id>/**` mirror through existing Area fields. Cross-workspace facts remain top-level; unrepresented code workspaces need no empty directory.
 - `ty-context doctor` reports default file/byte footprint and Design Authority status as advisory maintenance information. Required recovery facts outrank the soft byte heuristic.
+- The current admitted static/process exact observer remains Level 3. This repository does not self-promote it through implementation or prose; Level 4 continues to require the unchanged complete total-cost ROI evidence and an independent capability audit with no open critical counterexample.
 
 ## Shared Engineering Quality Contract
 
@@ -40,7 +41,8 @@
 - Risk-triggered Build/Reuse/Buy judgment evaluates an allowed solution set, prohibited failure modes and required rationale/evidence. It preserves reasonable standard-library, installed-dependency, external-library, small-self-implementation and intentional-non-abstraction choices while rejecting duplicated owner-held rules, extension-point bypass, unjustified dependencies and second sources of truth.
 - Default Context keeps only near-universal responsibility, boundaries and routes. Low-frequency host adapters, exact proof machinery, migrations and history remain in existing on-demand Context/code/tests.
 - Static wording/parity tests prove distribution and known structure only. Real Agent recall, target choice and ROI claims require the existing frozen fresh-Agent paired benchmark and normalized traces.
-- Long-Task mechanism changes additionally preserve coverage, false-negative resistance, semantic granularity, proof/TCB strength, non-bypassable Authority/fail-closed current-snapshot proof and implementation freedom before comparing structural cost and total ROI.
+- Long-Task mechanism changes additionally preserve coverage, false-negative resistance, must-allow correctness, semantic granularity, proof/TCB strength, non-bypassable Authority/fail-closed current-snapshot proof and implementation freedom before comparing structural cost and complete total-cost ROI. Admission targets evidenced high ROI/high efficiency with a significant stable margin, not a global or local optimum.
+- After purpose validity, relative non-degradation, must-allow behavior, structural-cost limits and the applicable measured total-cost threshold are satisfied, the sufficiency rule stops further construction unless a new real counterexample, repeated material cost hot spot or evidence of significant additional net benefit appears. Machine-recomputed `observed_lifecycle_*` facts may guide that review but never supply governance admission or Level 4 promotion.
 
 Full Context and default-workflow admission logic lives in [Minimal Context rationale](harness-package/decision-rationale/minimal-context.md) and [Workflow Contract](harness-package/contracts/workflow-contract.md). Long-Task admission lives in [Long-Task rationale](harness-package/decision-rationale/long-task-workflow.md).
 
@@ -70,6 +72,7 @@ Exact implementation and test navigation belongs in [implementation index](harne
 - No Harness-prescribed implementation sequence, fixed phase/method permission Gate, per-edit verification mandate or agent allocation state.
 - No targeted/historical verification acceptance, silent risk/scope downgrade, user-file deletion or executing-Agent approval of protected Authority reduction.
 - No change to Long-Task Schema, Authority, Revision, Evidence Kernel, Final Gate, Stop/close, accepted terminal theorem or native-Goal separation without a separate explicit project-owner decision and replacement proof.
+- No broad `input_paths` role scan, file-extension argv dependency guess, generic argv dependency parser, output-flag allowlist, authored Global-Binding namespace change, second Binding registry or machine-authored high-ROI/Level-4 verdict.
 
 ## Role Context Map
 

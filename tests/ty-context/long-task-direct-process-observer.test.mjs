@@ -32,7 +32,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(check, authorities, [
       "product.mjs",
       "valid",
-      validLog,
+      path.basename(validLog),
     ]);
     const valid = await executeCheckRunner(
       check,
@@ -63,7 +63,7 @@ test("direct process observation captures one root stdout envelope and host atte
     assert.deepEqual(valid.host_execution_attestation.actual_argv, [
       "product.mjs",
       "valid",
-      validLog,
+      path.basename(validLog),
     ]);
     assert.deepEqual(
       valid.host_execution_attestation.declared_root_argv,
@@ -115,7 +115,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(grouped, groupedAuthorities, [
       "product.mjs",
       "valid",
-      groupedLog,
+      path.basename(groupedLog),
     ]);
     grouped.observation_authorities = [groupedAuthorities[0]];
     const groupedRaw = await executeCheckRunner(
@@ -132,7 +132,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(wrongIdentity, wrongIdentityAuthorities, [
       "product.mjs",
       "wrong-identity",
-      path.join(fixture.root, "wrong-identity.jsonl"),
+      "wrong-identity.jsonl",
     ]);
     const rejected = await executeCheckRunner(
       wrongIdentity,
@@ -149,7 +149,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(nonzero, nonzeroAuthorities, [
       "product.mjs",
       "nonzero",
-      path.join(fixture.root, "nonzero.jsonl"),
+      "nonzero.jsonl",
     ]);
     const nonzeroResult = await executeCheckRunner(
       nonzero,
@@ -186,7 +186,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(retry, retryAuthorities, [
       "product.mjs",
       "retry",
-      retryLog,
+      path.basename(retryLog),
     ]);
     const retried = await executeCheckRunner(
       retry,
@@ -208,7 +208,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(descendant, descendantAuthorities, [
       "product.mjs",
       "descendant",
-      descendantLog,
+      path.basename(descendantLog),
     ]);
     const descendantResult = await executeCheckRunner(
       descendant,
@@ -234,7 +234,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(timeoutTree, timeoutAuthorities, [
       "product.mjs",
       "timeout-tree",
-      timeoutLog,
+      path.basename(timeoutLog),
     ]);
     const timeoutStarted = Date.now();
     const timeoutResult = await executeCheckRunner(
@@ -254,7 +254,7 @@ test("direct process observation captures one root stdout envelope and host atte
     setProcessInvocation(wrapper, wrapperAuthorities, [
       "product.mjs",
       "valid",
-      path.join(fixture.root, "wrapper.jsonl"),
+      "wrapper.jsonl",
     ]);
     wrapper.runner.argv[1] = "wrong-wrapper-argv";
     const wrapperResult = await executeCheckRunner(
@@ -575,25 +575,34 @@ function setProcessInvocation(check, authorities, argv) {
     execution_target: executionTarget,
     observation_authorities: authorities,
     production_bindings: [
-      {
+      scopedBinding(check.outcome_key, {
         key: "product-root",
         kind: "file",
         target: check.runner.resolved_target,
         carrier_paths: [check.runner.resolved_target],
         existence: "existing",
-      },
-      {
+      }),
+      scopedBinding(check.outcome_key, {
         key: "product-module",
         kind: "file",
         target: "product.mjs",
         carrier_paths: ["product.mjs"],
         existence: "existing",
-      },
+      }),
     ],
     production_owner_paths: ["bin/**", "product.mjs"],
     source_backed_execution_target: sourceTarget,
     protected_authority_paths: ["source.md"],
   });
+}
+
+function scopedBinding(outcomeKey, binding) {
+  return {
+    outcome_key: outcomeKey,
+    local_key: binding.key,
+    binding_ref: `${outcomeKey}.${binding.key}`,
+    binding,
+  };
 }
 
 function executionContext(check, observationAuthorities = []) {

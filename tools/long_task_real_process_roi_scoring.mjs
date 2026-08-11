@@ -1,26 +1,39 @@
 import { createHash } from "node:crypto";
 import {
-  ADMISSION_THRESHOLDS,
   CASE_IDS,
   COUNTERFACTUAL_IDS,
+  FORMAL_TOTAL_COST_CATEGORIES,
+  FORMAL_TOTAL_COST_UNIT,
   KNOWN_B_FALSE_ACCEPT_CASE_IDS,
+  LEGACY_REAL_PROCESS_SCHEMAS,
+  MEASUREMENT_THRESHOLDS,
   NULLABLE_UNVERIFIED_METRICS,
   PHASE_COST_METRICS,
-  REAL_PROCESS_RUN_SCHEMA,
+  REAL_PROCESS_SCHEMAS,
   REPEAT_ORDERS,
   REQUIRED_METRICS,
-  REQUIRED_VERIFIED_METRICS,
   SIGNED_METRICS,
   VARIANT_IDS,
   repeatOrder,
   requiredWins,
 } from "./long_task_real_process_roi_policy.mjs";
 
+const {
+  REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+  REAL_PROCESS_RUN_SCHEMA,
+  REAL_PROCESS_SUMMARY_SCHEMA,
+} = REAL_PROCESS_SCHEMAS;
+
 const shaPattern = /^[a-f0-9]{64}$/u;
 const fullGitShaPattern = /^[a-f0-9]{40}$/u;
 
 export function validateRunRecord(run, frozenConfig) {
-  assert(run?.schema_version === REAL_PROCESS_RUN_SCHEMA, "run_schema");
+  assertCurrentEvidenceSchema(
+    run?.schema_version,
+    REAL_PROCESS_RUN_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.run,
+    "run_schema",
+  );
   assert(VARIANT_IDS.includes(run.variant_id), "run_variant");
   assert(
     Number.isInteger(run.repeat) &&
@@ -65,6 +78,7 @@ export function validateRunRecord(run, frozenConfig) {
   );
   assertTimestampOrder(run.started_at, run.completed_at, "run_time");
   validateMetricSet(run.metrics);
+  validateFormalTotalCostEvidence(run.formal_total_cost_evidence);
   assertSameSet(
     run.cases?.map((item) => item.case_id),
     CASE_IDS,
@@ -146,12 +160,118 @@ export function validateRunRecord(run, frozenConfig) {
 }
 
 export function deriveRealProcessRoiSummary(runs, frozenConfig) {
+  validateSummaryPolicy(frozenConfig);
+  const { repeats, grouped, perVariant } = prepareSummaryRuns(
+    runs,
+    frozenConfig,
+  );
+  const controls = deriveCandidateControlEvidence(grouped);
+  const observedLifecycleUnverifiedMetrics = unverifiedLifecycleMetrics(runs);
+  const aRoleHonest = isLegacyBaselineRoleHonest(grouped, frozenConfig);
+  const candidateSafetyFloor = meetsCandidateSafetyFloor(
+    aRoleHonest,
+    controls,
+    perVariant,
+  );
+  const observedLifecycle = deriveObservedLifecycleSummary({
+    runs,
+    frozenConfig,
+    repeats,
+    grouped,
+    aRoleHonest,
+    bKnownFalseAcceptanceReproduced:
+      controls.bKnownFalseAcceptanceReproduced,
+  });
+  const formalRoi = deriveFormalRoiConclusion({
+    grouped,
+    frozenConfig,
+    candidateSafetyFloor,
+    observedLifecycle,
+  });
+
+  return {
+    schema_version: REAL_PROCESS_SUMMARY_SCHEMA,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
+    repeats: repeats.length,
+    required_repeats: observedLifecycle.requiredRepeatCount,
+    required_wins: observedLifecycle.requiredWinCount,
+    expansion: observedLifecycle.expansion,
+    a_safety_eligible: false,
+    a_role_honest: aRoleHonest,
+    b_known_r9_r11_false_acceptance_reproduced:
+      controls.bKnownFalseAcceptanceReproduced,
+    observed_lifecycle_evidence_valid:
+      observedLifecycle.observedLifecycleEvidenceValid,
+    observed_lifecycle_known_path_floor_met: candidateSafetyFloor,
+    observed_lifecycle_known_attack_rejection: controls.cKnownAttackRejection,
+    observed_lifecycle_correct_controls: controls.cCorrectControls,
+    observed_lifecycle_counterfactual_controls: controls.cCounterfactuals,
+    observed_lifecycle_recovery_controls: controls.cRecoveryControls,
+    observed_lifecycle_unverified_metrics: observedLifecycleUnverifiedMetrics,
+    observed_lifecycle_paired_wins:
+      observedLifecycle.observedLifecyclePairedWins,
+    observed_lifecycle_thresholds_met:
+      observedLifecycle.observedLifecycleThresholdsMet,
+    per_variant: perVariant,
+    observed_lifecycle_paired_cost: observedLifecycle.paired,
+    observed_lifecycle_median_net_benefit_ms: median(
+      observedLifecycle.paired.map((item) => item.net_benefit_ms),
+    ),
+    observed_lifecycle_correct_path_cost_ratio:
+      observedLifecycle.correctPathRatio,
+    observed_lifecycle_phase_cost_ratios: observedLifecycle.phaseRatios,
+    formal_total_cost_categories: [...FORMAL_TOTAL_COST_CATEGORIES],
+    formal_total_cost_unit: FORMAL_TOTAL_COST_UNIT,
+    formal_total_cost_independent_evidence_ingestion:
+      frozenConfig.formal_total_cost_policy.independent_evidence_ingestion,
+    formal_total_cost_pairs: formalRoi.formalTotalCost.pairs,
+    formal_total_cost_paired_wins: formalRoi.formalTotalCost.paired_wins,
+    required_unverified_total_cost_evidence:
+      formalRoi.formalTotalCost.required_unverified,
+    total_roi_supported: formalRoi.totalRoiSupported,
+    total_roi_positive: formalRoi.totalRoiPositive,
+    report_status: formalRoi.reportStatus,
+  };
+}
+
+function validateSummaryPolicy(frozenConfig) {
+  assertCurrentEvidenceSchema(
+    frozenConfig?.schema_version,
+    REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.frozen_config,
+    "frozen_config_schema",
+  );
+  assertSameSet(
+    frozenConfig.formal_total_cost_policy?.categories,
+    FORMAL_TOTAL_COST_CATEGORIES,
+    "frozen_config_formal_total_cost_categories",
+  );
+  assert(
+    frozenConfig.formal_total_cost_policy?.normalized_unit ===
+        FORMAL_TOTAL_COST_UNIT &&
+      frozenConfig.formal_total_cost_policy?.theorem ===
+        "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs" &&
+      frozenConfig.formal_total_cost_policy?.independent_evidence_ingestion ===
+        "not_implemented" &&
+      frozenConfig.formal_total_cost_policy
+        ?.self_attested_verified_records_admitted === false &&
+      frozenConfig.formal_total_cost_policy?.governance_judgment_included ===
+        false &&
+      frozenConfig.formal_total_cost_policy
+        ?.level_4_requires_independent_capability_audit === true,
+    "frozen_config_formal_total_cost_policy",
+  );
+}
+
+function prepareSummaryRuns(runs, frozenConfig) {
   assert(Array.isArray(runs), "summary_runs");
   const repeats = uniqueSorted(runs.map((run) => run.repeat));
   assert(
     [
-      ADMISSION_THRESHOLDS.minimum_repeats,
-      ADMISSION_THRESHOLDS.expanded_repeats,
+      MEASUREMENT_THRESHOLDS.minimum_repeats,
+      MEASUREMENT_THRESHOLDS.expanded_repeats,
     ].includes(repeats.length),
     "summary_repeat_count",
   );
@@ -170,7 +290,6 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
       VARIANT_IDS,
       `summary_variants:${repeat}`,
     );
-
   const grouped = Object.fromEntries(
     VARIANT_IDS.map((variant) => [
       variant,
@@ -182,6 +301,11 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
   const perVariant = Object.fromEntries(
     VARIANT_IDS.map((variant) => [variant, variantSummary(grouped[variant])]),
   );
+
+  return { repeats, grouped, perVariant };
+}
+
+function deriveCandidateControlEvidence(grouped) {
   const bKnownFalseAcceptanceReproduced = grouped.b.every((run) =>
     KNOWN_B_FALSE_ACCEPT_CASE_IDS.every(
       (caseId) => caseById(run, caseId).workflow_status === "machine_accepted",
@@ -214,37 +338,106 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
           (control) =>
             control.passed === true &&
             control.workflow_observed_passed === true,
-        ),
+      ),
     ),
   );
-  const requiredUnverifiedMetrics = runs.flatMap((run) =>
-    REQUIRED_VERIFIED_METRICS.filter(
+
+  return {
+    bKnownFalseAcceptanceReproduced,
+    cKnownAttackRejection,
+    cCorrectControls,
+    cCounterfactuals,
+    cRecoveryControls,
+  };
+}
+
+function unverifiedLifecycleMetrics(runs) {
+  return runs.flatMap((run) =>
+    NULLABLE_UNVERIFIED_METRICS.filter(
       (name) => run.metrics[name]?.status !== "measured",
     ).map((name) => `${run.variant_id}:${run.repeat}:${name}`),
   );
-  const requiredMetricsVerified = requiredUnverifiedMetrics.length === 0;
-  const aRoleHonest =
+}
+
+function isLegacyBaselineRoleHonest(grouped, frozenConfig) {
+  return (
     frozenConfig.variants.a.safety_eligible === false &&
     grouped.a.every(
       (run) =>
         run.safety_eligible === false &&
         run.comparison_role === "cost-and-error-baseline-only",
+    )
+  );
+}
+
+function meetsCandidateSafetyFloor(aRoleHonest, controls, perVariant) {
+  return (
+    aRoleHonest &&
+    controls.bKnownFalseAcceptanceReproduced &&
+    controls.cKnownAttackRejection &&
+    controls.cCorrectControls &&
+    controls.cCounterfactuals &&
+    controls.cRecoveryControls &&
+    perVariant.c.false_completion_count ===
+      MEASUREMENT_THRESHOLDS.candidate_false_completions &&
+    perVariant.c.correct_accept_rate ===
+      MEASUREMENT_THRESHOLDS.candidate_correct_accept_rate &&
+    perVariant.c.counterfactual_pass_rate ===
+      MEASUREMENT_THRESHOLDS.candidate_counterfactual_pass_rate
+  );
+}
+
+function deriveObservedLifecycleSummary({
+  runs,
+  frozenConfig,
+  repeats,
+  grouped,
+  aRoleHonest,
+  bKnownFalseAcceptanceReproduced,
+}) {
+  const paired = pairObservedLifecycleCosts(grouped);
+  const observedLifecyclePairedWins = paired.filter(
+    (item) => item.net_benefit_ms > 0,
+  ).length;
+  const correctPathRatio = ratio(
+    median(grouped.c.map((run) => metricValue(run, "correct_path_total_ms"))),
+    median(grouped.b.map((run) => metricValue(run, "correct_path_total_ms"))),
+  );
+  const phaseRatios = observedLifecyclePhaseRatios(grouped);
+  const expansion = expansionDecision(runs, frozenConfig);
+  const requiredRepeatCount = expansion.required_repeats;
+  const requiredWinCount = requiredWins(repeats.length);
+  const completeRepeatSet = repeats.length === requiredRepeatCount;
+  const observedLifecycleThresholdsMet =
+    completeRepeatSet &&
+    observedLifecyclePairedWins >= requiredWinCount &&
+    median(paired.map((item) => item.net_benefit_ms)) > 0 &&
+    correctPathRatio <=
+      MEASUREMENT_THRESHOLDS.maximum_correct_path_cost_ratio &&
+    Object.values(phaseRatios).every(
+      (value) => value <= MEASUREMENT_THRESHOLDS.maximum_phase_cost_ratio,
     );
-  const candidateSafetyFloor =
+  const observedLifecycleEvidenceValid =
     aRoleHonest &&
     bKnownFalseAcceptanceReproduced &&
-    cKnownAttackRejection &&
-    cCorrectControls &&
-    cCounterfactuals &&
-    cRecoveryControls &&
-    perVariant.c.false_completion_count ===
-      ADMISSION_THRESHOLDS.candidate_false_completions &&
-    perVariant.c.correct_accept_rate ===
-      ADMISSION_THRESHOLDS.candidate_correct_accept_rate &&
-    perVariant.c.counterfactual_pass_rate ===
-      ADMISSION_THRESHOLDS.candidate_counterfactual_pass_rate;
+    runs.every((run) => run.provenance_doubt_reasons.length === 0);
 
-  const paired = grouped.c.map((candidateRun, index) => {
+  return {
+    paired,
+    observedLifecyclePairedWins,
+    correctPathRatio,
+    phaseRatios,
+    expansion,
+    requiredRepeatCount,
+    requiredWinCount,
+    completeRepeatSet,
+    observedLifecycleThresholdsMet,
+    observedLifecycleEvidenceValid,
+  };
+}
+
+function pairObservedLifecycleCosts(grouped) {
+  return grouped.c.map((candidateRun, index) => {
     const baselineRun = grouped.b[index];
     assert(
       baselineRun.repeat === candidateRun.repeat,
@@ -260,12 +453,10 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
       candidate_to_baseline_ratio: ratio(candidate, baseline),
     };
   });
-  const wins = paired.filter((item) => item.net_benefit_ms > 0).length;
-  const correctPathRatio = ratio(
-    median(grouped.c.map((run) => metricValue(run, "correct_path_total_ms"))),
-    median(grouped.b.map((run) => metricValue(run, "correct_path_total_ms"))),
-  );
-  const phaseRatios = Object.fromEntries(
+}
+
+function observedLifecyclePhaseRatios(grouped) {
+  return Object.fromEntries(
     PHASE_COST_METRICS.map((name) => [
       name,
       ratio(
@@ -274,72 +465,80 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
       ),
     ]),
   );
-  const expansion = expansionDecision(runs, frozenConfig);
-  const requiredRepeatCount = expansion.required_repeats;
-  const completeRepeatSet = repeats.length === requiredRepeatCount;
-  const costQualification =
-    completeRepeatSet &&
-    wins >= requiredWins(repeats.length) &&
-    median(paired.map((item) => item.net_benefit_ms)) > 0 &&
-    correctPathRatio <= ADMISSION_THRESHOLDS.maximum_correct_path_cost_ratio &&
-    Object.values(phaseRatios).every(
-      (value) => value <= ADMISSION_THRESHOLDS.maximum_phase_cost_ratio,
-    );
-  const evidenceValid =
-    aRoleHonest &&
-    bKnownFalseAcceptanceReproduced &&
-    requiredMetricsVerified &&
-    runs.every((run) => run.provenance_doubt_reasons.length === 0);
-  const totalRoiPositive =
-    evidenceValid && candidateSafetyFloor && costQualification;
+}
 
+function deriveFormalRoiConclusion({
+  grouped,
+  frozenConfig,
+  candidateSafetyFloor,
+  observedLifecycle,
+}) {
+  const formalTotalCost = deriveFormalTotalCostSummary(grouped);
+  const formalTotalCostEvidenceComplete =
+    formalTotalCost.required_unverified.length === 0;
+  const formalTotalCostIndependentEvidenceAdmitted =
+    frozenConfig.formal_total_cost_policy?.independent_evidence_ingestion ===
+    "verified";
+  const totalRoiSupported =
+    observedLifecycle.observedLifecycleEvidenceValid &&
+    candidateSafetyFloor &&
+    observedLifecycle.completeRepeatSet &&
+    formalTotalCostEvidenceComplete &&
+    formalTotalCostIndependentEvidenceAdmitted;
+  const totalRoiPositive =
+    totalRoiSupported &&
+    observedLifecycle.observedLifecycleThresholdsMet &&
+    formalTotalCost.paired_wins >= observedLifecycle.requiredWinCount &&
+    median(formalTotalCost.pairs.map((item) => item.net_benefit)) > 0;
   return {
-    schema_version: "long-task-real-process-roi-summary-v1",
-    repeats: repeats.length,
-    required_repeats: requiredRepeatCount,
-    required_wins: requiredWins(repeats.length),
-    wins,
-    expansion,
-    evidence_valid: evidenceValid,
-    a_safety_eligible: false,
-    a_role_honest: aRoleHonest,
-    b_known_r9_r11_false_acceptance_reproduced: bKnownFalseAcceptanceReproduced,
-    candidate_safety_floor: candidateSafetyFloor,
-    candidate_known_attack_rejection: cKnownAttackRejection,
-    candidate_correct_controls: cCorrectControls,
-    candidate_counterfactual_controls: cCounterfactuals,
-    candidate_recovery_controls: cRecoveryControls,
-    required_metrics_verified: requiredMetricsVerified,
-    required_unverified_metrics: requiredUnverifiedMetrics,
-    per_variant: perVariant,
-    paired_cost: paired,
-    median_net_benefit_ms: median(paired.map((item) => item.net_benefit_ms)),
-    correct_path_cost_ratio: correctPathRatio,
-    phase_cost_ratios: phaseRatios,
-    cost_qualification: costQualification,
-    total_roi_positive: totalRoiPositive,
-    admission_verdict: !evidenceValid
-      ? "invalid_evidence"
-      : !candidateSafetyFloor
-        ? "rejected_safety_floor"
-        : !completeRepeatSet
-          ? "requires_expanded_repeats"
-          : costQualification
-            ? "qualified_positive_roi"
-            : "rejected_non_positive_roi",
+    formalTotalCost,
+    totalRoiSupported,
+    totalRoiPositive,
+    reportStatus: realProcessRoiReportStatus({
+      observedLifecycleEvidenceValid:
+        observedLifecycle.observedLifecycleEvidenceValid,
+      candidateSafetyFloor,
+      completeRepeatSet: observedLifecycle.completeRepeatSet,
+      observedLifecycleThresholdsMet:
+        observedLifecycle.observedLifecycleThresholdsMet,
+      formalTotalCostEvidenceComplete,
+      formalTotalCostIndependentEvidenceAdmitted,
+      totalRoiPositive,
+    }),
   };
+}
+
+function realProcessRoiReportStatus({
+  observedLifecycleEvidenceValid,
+  candidateSafetyFloor,
+  completeRepeatSet,
+  observedLifecycleThresholdsMet,
+  formalTotalCostEvidenceComplete,
+  formalTotalCostIndependentEvidenceAdmitted,
+  totalRoiPositive,
+}) {
+  if (!observedLifecycleEvidenceValid) return "invalid_measurement_evidence";
+  if (!candidateSafetyFloor) return "known_path_floor_not_met";
+  if (!completeRepeatSet) return "requires_expanded_repeats";
+  if (!observedLifecycleThresholdsMet)
+    return "observed_lifecycle_thresholds_not_met";
+  if (!formalTotalCostEvidenceComplete)
+    return "total_cost_evidence_incomplete";
+  if (!formalTotalCostIndependentEvidenceAdmitted)
+    return "total_cost_evidence_unadmitted";
+  return totalRoiPositive ? "total_roi_positive" : "total_roi_non_positive";
 }
 
 export function expansionDecision(runs, frozenConfig) {
   const initial = runs.filter(
-    (run) => run.repeat <= ADMISSION_THRESHOLDS.minimum_repeats,
+    (run) => run.repeat <= MEASUREMENT_THRESHOLDS.minimum_repeats,
   );
   if (
     initial.length <
-    ADMISSION_THRESHOLDS.minimum_repeats * VARIANT_IDS.length
+    MEASUREMENT_THRESHOLDS.minimum_repeats * VARIANT_IDS.length
   )
     return {
-      required_repeats: ADMISSION_THRESHOLDS.minimum_repeats,
+      required_repeats: MEASUREMENT_THRESHOLDS.minimum_repeats,
       reasons: ["initial_repeat_set_incomplete"],
     };
   for (const run of initial) validateRunRecord(run, frozenConfig);
@@ -356,7 +555,7 @@ export function expansionDecision(runs, frozenConfig) {
     const cv = coefficientOfVariation(
       byVariant[variant].map((run) => metricValue(run, "total_elapsed_ms")),
     );
-    if (cv > ADMISSION_THRESHOLDS.maximum_coefficient_of_variation)
+    if (cv > MEASUREMENT_THRESHOLDS.maximum_coefficient_of_variation)
       reasons.push(`total_elapsed_cv:${variant}:${round(cv)}`);
   }
   const deltas = byVariant.c.map(
@@ -370,7 +569,10 @@ export function expansionDecision(runs, frozenConfig) {
     median(byVariant.c.map((run) => metricValue(run, "total_elapsed_ms"))),
     median(byVariant.b.map((run) => metricValue(run, "total_elapsed_ms"))),
   );
-  if (Math.abs(pairedTotalRatio - 1) <= ADMISSION_THRESHOLDS.threshold_nearness)
+  if (
+    Math.abs(pairedTotalRatio - 1) <=
+    MEASUREMENT_THRESHOLDS.threshold_nearness
+  )
     reasons.push("paired_total_ratio_near_break_even");
   const correctPathRatio = ratio(
     median(byVariant.c.map((run) => metricValue(run, "correct_path_total_ms"))),
@@ -378,8 +580,9 @@ export function expansionDecision(runs, frozenConfig) {
   );
   if (
     Math.abs(
-      correctPathRatio - ADMISSION_THRESHOLDS.maximum_correct_path_cost_ratio,
-    ) <= ADMISSION_THRESHOLDS.threshold_nearness
+      correctPathRatio -
+        MEASUREMENT_THRESHOLDS.maximum_correct_path_cost_ratio,
+    ) <= MEASUREMENT_THRESHOLDS.threshold_nearness
   )
     reasons.push("correct_path_ratio_near_threshold");
   for (const name of PHASE_COST_METRICS) {
@@ -388,8 +591,9 @@ export function expansionDecision(runs, frozenConfig) {
       median(byVariant.b.map((run) => metricValue(run, name))),
     );
     if (
-      Math.abs(phaseRatio - ADMISSION_THRESHOLDS.maximum_phase_cost_ratio) <=
-      ADMISSION_THRESHOLDS.threshold_nearness
+      Math.abs(
+        phaseRatio - MEASUREMENT_THRESHOLDS.maximum_phase_cost_ratio,
+      ) <= MEASUREMENT_THRESHOLDS.threshold_nearness
     )
       reasons.push(`phase_ratio_near_threshold:${name}`);
   }
@@ -397,8 +601,8 @@ export function expansionDecision(runs, frozenConfig) {
     reasons.push("environment_or_provenance_doubt");
   return {
     required_repeats: reasons.length
-      ? ADMISSION_THRESHOLDS.expanded_repeats
-      : ADMISSION_THRESHOLDS.minimum_repeats,
+      ? MEASUREMENT_THRESHOLDS.expanded_repeats
+      : MEASUREMENT_THRESHOLDS.minimum_repeats,
     reasons,
   };
 }
@@ -427,6 +631,35 @@ export function validateMetricSet(metrics) {
   }
 }
 
+export function validateFormalTotalCostEvidence(evidence) {
+  assert(
+    evidence && typeof evidence === "object" && !Array.isArray(evidence),
+    "formal_total_cost_evidence",
+  );
+  assert(evidence.unit === FORMAL_TOTAL_COST_UNIT, "formal_total_cost_unit");
+  assert(
+    evidence.categories &&
+      typeof evidence.categories === "object" &&
+      !Array.isArray(evidence.categories),
+    "formal_total_cost_categories",
+  );
+  for (const category of Object.keys(evidence.categories)) {
+    assert(
+      FORMAL_TOTAL_COST_CATEGORIES.includes(category),
+      `formal_total_cost_category_unknown:${category}`,
+    );
+    validateFormalTotalCostRecord(
+      evidence.categories[category],
+      `formal_total_cost_category:${category}`,
+    );
+  }
+  if (Object.hasOwn(evidence, "purpose_fulfillment_benefit"))
+    validateFormalTotalCostRecord(
+      evidence.purpose_fulfillment_benefit,
+      "formal_total_cost_purpose_benefit",
+    );
+}
+
 export function measuredMetric(value, unit, basis) {
   assert(Number.isFinite(value), "measured_metric_value");
   return { value: round(value), unit, status: "measured", basis };
@@ -434,6 +667,52 @@ export function measuredMetric(value, unit, basis) {
 
 export function unverifiedMetric(unit, basis) {
   return { value: null, unit, status: "unverified", basis };
+}
+
+export function verifiedFormalTotalCost(value, basis, evidenceRefs) {
+  assert(Number.isFinite(value) && value >= 0, "formal_total_cost_value");
+  assert(
+    typeof basis === "string" && basis.length > 0,
+    "formal_total_cost_basis",
+  );
+  assert(
+    Array.isArray(evidenceRefs) &&
+      evidenceRefs.length > 0 &&
+      evidenceRefs.every(
+        (reference) => typeof reference === "string" && reference.length > 0,
+      ),
+    "formal_total_cost_evidence_refs",
+  );
+  return {
+    value: round(value),
+    status: "verified",
+    basis,
+    evidence_refs: [...evidenceRefs],
+  };
+}
+
+export function unverifiedFormalTotalCost(basis) {
+  assert(
+    typeof basis === "string" && basis.length > 0,
+    "formal_total_cost_basis",
+  );
+  return {
+    value: null,
+    status: "unverified",
+    basis,
+    evidence_refs: [],
+  };
+}
+
+export function assertCurrentEvidenceSchema(
+  actual,
+  current,
+  legacy,
+  label,
+) {
+  if (actual === legacy)
+    throw new Error(`real_process_roi_invalid:${label}_v1_recollection_required`);
+  assert(actual === current, label);
 }
 
 export function canonical(value) {
@@ -472,8 +751,132 @@ export function assert(condition, code) {
   if (!condition) throw new Error(`real_process_roi_invalid:${code}`);
 }
 
+function deriveFormalTotalCostSummary(grouped) {
+  const requiredUnverified = [];
+  const pairs = grouped.c.map((candidateRun, index) => {
+    const baselineRun = grouped.b[index];
+    const pairMissing = [];
+    for (const run of [baselineRun, candidateRun]) {
+      for (const metric of NULLABLE_UNVERIFIED_METRICS)
+        if (run.metrics[metric]?.status !== "measured")
+          pairMissing.push(
+            `${run.variant_id}:${run.repeat}:${metric}:unverified`,
+          );
+      collectMissingFormalRecord(
+        run,
+        "purpose_fulfillment_benefit",
+        run.formal_total_cost_evidence.purpose_fulfillment_benefit,
+        pairMissing,
+      );
+      for (const category of FORMAL_TOTAL_COST_CATEGORIES)
+        collectMissingFormalRecord(
+          run,
+          category,
+          run.formal_total_cost_evidence.categories[category],
+          pairMissing,
+        );
+    }
+    requiredUnverified.push(...pairMissing);
+    if (pairMissing.length > 0)
+      return {
+        repeat: candidateRun.repeat,
+        supported: false,
+        required_unverified: pairMissing,
+        incremental_purpose_benefit: null,
+        incremental_costs: null,
+        total_incremental_cost: null,
+        net_benefit: null,
+      };
+    const incrementalPurposeBenefit = round(
+      candidateRun.formal_total_cost_evidence.purpose_fulfillment_benefit
+        .value -
+        baselineRun.formal_total_cost_evidence.purpose_fulfillment_benefit
+          .value,
+    );
+    const incrementalCosts = Object.fromEntries(
+      FORMAL_TOTAL_COST_CATEGORIES.map((category) => [
+        category,
+        round(
+          candidateRun.formal_total_cost_evidence.categories[category].value -
+            baselineRun.formal_total_cost_evidence.categories[category].value,
+        ),
+      ]),
+    );
+    const totalIncrementalCost = round(
+      Object.values(incrementalCosts).reduce(
+        (total, value) => total + value,
+        0,
+      ),
+    );
+    return {
+      repeat: candidateRun.repeat,
+      supported: true,
+      required_unverified: [],
+      incremental_purpose_benefit: incrementalPurposeBenefit,
+      incremental_costs: incrementalCosts,
+      total_incremental_cost: totalIncrementalCost,
+      net_benefit: round(incrementalPurposeBenefit - totalIncrementalCost),
+    };
+  });
+  return {
+    pairs,
+    paired_wins: pairs.filter(
+      (item) => item.supported && item.net_benefit > 0,
+    ).length,
+    required_unverified: [...new Set(requiredUnverified)].sort(),
+  };
+}
+
+function collectMissingFormalRecord(run, key, record, output) {
+  if (!record) {
+    output.push(`${run.variant_id}:${run.repeat}:${key}:absent`);
+    return;
+  }
+  if (record.status !== "verified")
+    output.push(`${run.variant_id}:${run.repeat}:${key}:unverified`);
+}
+
+function validateFormalTotalCostRecord(record, label) {
+  assert(record && typeof record === "object", label);
+  assert(
+    typeof record.basis === "string" && record.basis.length > 0,
+    `${label}:basis`,
+  );
+  assert(Array.isArray(record.evidence_refs), `${label}:evidence_refs`);
+  if (record.status === "unverified") {
+    assert(record.value === null, `${label}:unverified_value`);
+    assert(record.evidence_refs.length === 0, `${label}:unverified_refs`);
+    return;
+  }
+  assert(record.status === "verified", `${label}:status`);
+  assert(
+    Number.isFinite(record.value) && record.value >= 0,
+    `${label}:value`,
+  );
+  assert(
+    record.evidence_refs.length > 0 &&
+      record.evidence_refs.every(
+        (reference) => typeof reference === "string" && reference.length > 0,
+      ),
+    `${label}:verified_refs`,
+  );
+}
+
 function validateCaseRecord(item, variantId) {
   assert(CASE_IDS.includes(item?.case_id), "case_id");
+  validateCommittedCandidateIdentity(
+    item.committed_candidate_identity,
+    item.command_record_refs,
+    "case_committed_candidate_identity",
+  );
+  validateCaseShape(item);
+  validateCaseGold(item);
+  validateCaseExecution(item);
+  validateCaseCounterfactuals(item);
+  validateLegacyCaseBoundary(item, variantId);
+}
+
+function validateCaseShape(item) {
   assert(
     item.kind === (item.case_id === "correct-control" ? "control" : "attack"),
     `case_kind:${item.case_id}`,
@@ -486,6 +889,9 @@ function validateCaseRecord(item, variantId) {
     typeof item.workflow_status === "string" && item.workflow_status.length > 0,
     `case_workflow_status:${item.case_id}`,
   );
+}
+
+function validateCaseGold(item) {
   assert(
     item.gold?.schema_version === "long-task-real-process-gold-result-v1" &&
       item.gold.case_id === item.case_id &&
@@ -512,6 +918,9 @@ function validateCaseRecord(item, variantId) {
         (item.gold.semantic_conformant && item.gold.boundary_conformant),
     `case_gold_fact_count:${item.case_id}`,
   );
+}
+
+function validateCaseExecution(item) {
   assert(
     item.raw_execution?.maximum_envelopes_per_execution === 1,
     `case_single_envelope:${item.case_id}`,
@@ -527,6 +936,9 @@ function validateCaseRecord(item, variantId) {
       item.command_record_refs.length > 0,
     `case_command_refs:${item.case_id}`,
   );
+}
+
+function validateCaseCounterfactuals(item) {
   assert(
     Array.isArray(item.counterfactuals),
     `case_counterfactuals:${item.case_id}`,
@@ -558,6 +970,9 @@ function validateCaseRecord(item, variantId) {
       );
     }
   }
+}
+
+function validateLegacyCaseBoundary(item, variantId) {
   if (variantId === "a")
     assert(
       item.authority_boundary === "legacy-project-self-report",
@@ -570,10 +985,21 @@ function validateRecoveryRecord(item, attackCaseIds) {
     attackCaseIds.includes(item?.source_attack_case_id),
     "recovery_source_attack",
   );
+  validateCommittedCandidateIdentity(
+    item.committed_candidate_identity,
+    item.command_record_refs,
+    "recovery_committed_candidate_identity",
+  );
   assert(
     typeof item.workflow_status === "string" && item.workflow_status.length > 0,
     `recovery_terminal:${item.source_attack_case_id}`,
   );
+  validateRecoveryGold(item);
+  validateRecoveryExecution(item);
+  validateRecoveryCounterfactuals(item);
+}
+
+function validateRecoveryGold(item) {
   assert(
     item.gold?.schema_version === "long-task-real-process-gold-result-v1" &&
       item.gold.case_id === "correct-control" &&
@@ -590,6 +1016,9 @@ function validateRecoveryRecord(item, attackCaseIds) {
       item.gold.facts.every((fact) => fact.matches === true),
     `recovery_gold_facts:${item.source_attack_case_id}`,
   );
+}
+
+function validateRecoveryExecution(item) {
   assert(
     item.raw_execution?.maximum_envelopes_per_execution === 1 &&
       item.raw_execution?.minimum_observations_per_envelope >= 4 &&
@@ -602,6 +1031,9 @@ function validateRecoveryRecord(item, attackCaseIds) {
       item.command_record_refs.length > 0,
     `recovery_command_refs:${item.source_attack_case_id}`,
   );
+}
+
+function validateRecoveryCounterfactuals(item) {
   assertSameSet(
     item.counterfactuals?.map((control) => control.id),
     COUNTERFACTUAL_IDS,
@@ -621,6 +1053,27 @@ function validateRecoveryRecord(item, attackCaseIds) {
       `recovery_counterfactual:${item.source_attack_case_id}:${control.id}`,
     );
   }
+}
+
+function validateCommittedCandidateIdentity(identity, commandRefs, label) {
+  assert(
+    fullGitShaPattern.test(identity?.commit ?? "") &&
+      fullGitShaPattern.test(identity?.tree ?? "") &&
+      identity?.clean === true,
+    label,
+  );
+  assert(
+    Array.isArray(identity.command_record_refs) &&
+      identity.command_record_refs.length === 6 &&
+      new Set(identity.command_record_refs).size === 6 &&
+      identity.command_record_refs.every(
+        (reference) =>
+          typeof reference === "string" &&
+          reference.length > 0 &&
+          commandRefs?.includes(reference),
+      ),
+    `${label}:command_refs`,
+  );
 }
 
 function variantSummary(runs) {

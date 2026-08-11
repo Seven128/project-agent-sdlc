@@ -54,18 +54,7 @@ export function fixtureProcessExecutionTarget() {
 }
 
 export function fixtureProductRootArgv(script, argument, extraArguments = []) {
-  const commandArguments = [script, argument, ...extraArguments];
-  if (process.platform === "win32")
-    return [
-      "/d",
-      "/s",
-      "/c",
-      `node ${commandArguments.map(cmdToken).join(" ")}`,
-    ];
-  return [
-    "-c",
-    `${shellQuote(process.execPath)} ${commandArguments.map(shellQuote).join(" ")}`,
-  ];
+  return [script, argument, ...extraArguments];
 }
 
 export async function installPackageMachineFixture(root, manifest) {
@@ -107,10 +96,7 @@ export async function installPackageMachineFixture(root, manifest) {
     )}\n`,
   );
 
-  const executableSource =
-    process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
-  if (!executableSource)
-    throw new Error("package_machine_fixture_shell_unavailable");
+  const executableSource = process.execPath;
   const executablePath = path.join(
     root,
     ...fixtureProductRootPath().split("/"),
@@ -176,15 +162,4 @@ function packageStaticObservations(manifest, { value, relationApplicable }) {
       observations[assertion("first-architecture")] = value;
   }
   return observations;
-}
-
-function shellQuote(value) {
-  return `'${String(value).replaceAll("'", `'\\''`)}'`;
-}
-
-function cmdToken(value) {
-  const token = String(value);
-  if (!/^[A-Za-z0-9_./:-]+$/u.test(token))
-    throw new Error(`package_machine_fixture_cmd_token_unsafe:${token}`);
-  return token;
 }

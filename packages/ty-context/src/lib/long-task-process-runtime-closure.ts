@@ -2,17 +2,16 @@ import path from "node:path";
 import type {
   CompiledObservationAuthorityV2,
   CompiledProcessRuntimeClosureV2,
-  DeliveryBindingV2,
   DeliveryCheckV2,
   ExecutionTargetV2,
   FrozenRunnerV2,
   SourceBackedExecutionTargetV2,
 } from "./long-task-delivery-types.js";
 import {
-  classifyRepositoryPatternOverlap,
   matchesRepoPattern,
   normalizeRepositoryFile,
 } from "./long-task-paths.js";
+import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 
 export interface CompileProcessRuntimeClosureInput {
@@ -20,7 +19,7 @@ export interface CompileProcessRuntimeClosureInput {
   runner: FrozenRunnerV2;
   execution_target: ExecutionTargetV2;
   observation_authorities: readonly CompiledObservationAuthorityV2[];
-  production_bindings: readonly DeliveryBindingV2[];
+  production_bindings: readonly ScopedDeliveryBindingV2[];
   production_owner_paths: readonly string[];
   source_backed_execution_target: SourceBackedExecutionTargetV2 | null;
   protected_authority_paths: readonly string[];
@@ -45,7 +44,6 @@ export function compileProcessRuntimeClosure(
   );
   const productionBindings = [...input.production_bindings];
 
-  validateInputRoleSeparation(input);
   requireProductionOwnership(input, rootTarget, targetRef);
   const rootBindings = bindingsContaining(productionBindings, rootTarget);
   if (!rootBindings.length)
@@ -58,8 +56,9 @@ export function compileProcessRuntimeClosure(
     input.execution_target.root_argv ?? [],
     input.runner.resolved_cwd,
     productionBindings,
+    targetRef,
   );
-  const selectedBindings = new Map<string, DeliveryBindingV2>();
+  const selectedBindings = new Map<string, ScopedDeliveryBindingV2>();
   for (const binding of rootBindings) selectBinding(selectedBindings, binding);
   for (const argvFile of rootArgvFiles) {
     requireProductionOwnership(input, argvFile, targetRef);
@@ -77,10 +76,10 @@ export function compileProcessRuntimeClosure(
     (authority) => authority.carrier_refs,
   )) {
     const matchingBindings = productionBindings.filter(
-      (binding) =>
-        binding.key === carrierRef.binding_ref &&
+      (scoped) =>
+        scoped.binding_ref === carrierRef.binding_ref &&
         carrierRef.carrier_paths.every((carrierPath) =>
-          binding.carrier_paths.includes(carrierPath),
+          scoped.binding.carrier_paths.includes(carrierPath),
         ),
     );
     if (!matchingBindings.length)
@@ -127,42 +126,27 @@ export function compileProcessRuntimeClosure(
   } satisfies Omit<CompiledProcessRuntimeClosureV2, "closure_identity">;
   return {
     ...projection,
-    closure_identity: sha256Hex(canonicalValueJson(projection)),
+    closure_identity: sha256Hex(
+      canonicalValueJson(runtimeExecutionClosureProjection(projection)),
+    ),
   };
 }
 
-function validateInputRoleSeparation(
-  input: CompileProcessRuntimeClosureInput,
-): void {
-  for (const inputPattern of input.check.input_paths) {
-    const expected = firstOverlap(
-      inputPattern,
-      input.protected_authority_paths,
-    );
-    if (expected)
-      fail(
-        "process_runtime_input_expected_authority_forbidden",
-        `${input.check.key}:${inputPattern}:${expected}`,
-      );
-    const verification = firstOverlap(
-      inputPattern,
-      input.check.verification_inputs,
-    );
-    if (verification)
-      fail(
-        "process_runtime_input_verification_role_forbidden",
-        `${input.check.key}:${inputPattern}:${verification}`,
-      );
-    const evidence = firstOverlap(inputPattern, [
-      ...input.check.expected_output_paths,
-      ...input.check.artifact_globs,
-    ]);
-    if (evidence)
-      fail(
-        "process_runtime_input_evidence_role_forbidden",
-        `${input.check.key}:${inputPattern}:${evidence}`,
-      );
-  }
+function runtimeExecutionClosureProjection(
+  closure: Omit<CompiledProcessRuntimeClosureV2, "closure_identity">,
+): Omit<
+  CompiledProcessRuntimeClosureV2,
+  "closure_identity" | "production_binding_refs"
+> {
+  return {
+    target_ref: closure.target_ref,
+    source_target: closure.source_target,
+    root_target: closure.root_target,
+    root_argv_files: closure.root_argv_files,
+    production_carrier_files: closure.production_carrier_files,
+    allowed_runtime_files: closure.allowed_runtime_files,
+    forbidden_role_matches: closure.forbidden_role_matches,
+  };
 }
 
 function validateConcreteRoleSeparation(
@@ -212,137 +196,92 @@ function requireProductionOwnership(
 }
 
 function bindingsContaining(
-  bindings: readonly DeliveryBindingV2[],
+  bindings: readonly ScopedDeliveryBindingV2[],
   file: string,
-): DeliveryBindingV2[] {
-  return bindings.filter((binding) =>
-    binding.carrier_paths.some((pattern) => matchesRepoPattern(file, pattern)),
+): ScopedDeliveryBindingV2[] {
+  return bindings.filter((scoped) =>
+    scoped.binding.carrier_paths.some((pattern) =>
+      matchesRepoPattern(file, pattern),
+    ),
   );
 }
 
 function selectBinding(
-  selected: Map<string, DeliveryBindingV2>,
-  binding: DeliveryBindingV2,
+  selected: Map<string, ScopedDeliveryBindingV2>,
+  scoped: ScopedDeliveryBindingV2,
 ): void {
-  const existing = selected.get(binding.key);
-  if (existing && canonicalValueJson(existing) !== canonicalValueJson(binding))
+  const existing = selected.get(scoped.binding_ref);
+  if (existing && canonicalValueJson(existing) !== canonicalValueJson(scoped))
     fail(
       "process_root_production_binding_required",
-      `${binding.key}:ambiguous`,
+      `${scoped.binding_ref}:ambiguous`,
     );
-  selected.set(binding.key, binding);
+  selected.set(scoped.binding_ref, scoped);
 }
 
 function argvAttributedRepositoryFiles(
   argv: readonly string[],
   cwd: string,
-  bindings: readonly DeliveryBindingV2[],
-): string[] {
-  const candidates = new Set(lexicalRepositoryPathCandidates(argv, cwd));
-  for (const binding of bindings)
-    for (const candidate of exactBindingFiles(binding))
-      if (
-        argv.some((argument) =>
-          argumentReferencesArtifact(argument, candidate, cwd),
-        )
-      )
-        candidates.add(candidate);
-  return [...candidates].sort();
-}
-
-function exactBindingFiles(binding: DeliveryBindingV2): string[] {
-  const candidates = [
-    ...(binding.kind === "file" ? [binding.target] : []),
-    ...binding.carrier_paths,
-  ];
-  const result: string[] = [];
-  for (const candidate of candidates)
-    try {
-      result.push(normalizeRepositoryFile(candidate, `${binding.key}.carrier`));
-    } catch {
-      // A pattern Binding can own an exact attributed path without making the
-      // whole dynamic match set part of the stable runtime closure.
-    }
-  return [...new Set(result)].sort();
-}
-
-function lexicalRepositoryPathCandidates(
-  argv: readonly string[],
-  cwd: string,
+  bindings: readonly ScopedDeliveryBindingV2[],
+  targetRef: string,
 ): string[] {
   const result = new Set<string>();
   for (const argument of argv) {
-    const value = rootArgvFileToken(argument);
+    const value = rootArgvPathValue(argument);
     if (!value) continue;
-    const relative = value.startsWith("./") ? value.slice(2) : value;
-    const candidate =
-      cwd && !relative.startsWith(`${cwd}/`)
-        ? path.posix.join(cwd, relative)
-        : relative;
+    if (unsafeArgvPathValue(value))
+      fail("process_root_argv_unsafe", `${targetRef}:${argument}`);
+    const candidate = path.posix.join(cwd === "." ? "" : cwd, value);
+    let normalized: string;
     try {
-      result.add(normalizeRepositoryFile(candidate, "process_root_argv"));
+      normalized = normalizeRepositoryFile(candidate, "process_root_argv");
     } catch {
-      // Absolute, escaping and otherwise non-repository values are not paths
-      // in the admitted root-argv file-token subset.
+      fail("process_root_argv_unsafe", `${targetRef}:${argument}`);
     }
+    if (bindingsContaining(bindings, normalized).length) result.add(normalized);
   }
   return [...result].sort();
 }
 
-function rootArgvFileToken(argument: string): string | null {
-  const portable = argument.replace(/\\/gu, "/").trim();
-  if (!portable || /\s/u.test(portable)) return null;
+function rootArgvPathValue(argument: string): string | null {
+  const parsedArgument = unwrapCompleteQuoteLayer(
+    argument.replace(/\\/gu, "/"),
+  );
+  const portable = parsedArgument.value;
+  if (!portable) return null;
+  // A compound shell command is not one finite argv file token. In
+  // particular, do not search inside it for a path-shaped substring.
+  if (!parsedArgument.quoted && /\s/u.test(portable)) return null;
+  // A single-letter slash switch is an argv label (for example cmd.exe /d),
+  // not a repository path. Longer slash-prefixed values remain absolute and
+  // fail closed below.
+  if (/^\/[A-Za-z?]$/u.test(portable)) return null;
+  if (!portable.startsWith("--")) return portable;
   const separator = portable.indexOf("=");
-  const candidate = separator >= 0 ? portable.slice(separator + 1) : portable;
-  const unquoted = candidate.replace(/^(?:"([^"]+)"|'([^']+)')$/u, "$1$2");
-  if (
-    !unquoted ||
-    /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(unquoted) ||
-    /^[A-Za-z]:\//u.test(unquoted) ||
-    unquoted.startsWith("/") ||
-    unquoted.startsWith("../") ||
-    unquoted.includes("/../")
-  )
-    return null;
-  if (!isRecognizedRepositoryFileName(unquoted)) return null;
-  return unquoted;
+  if (separator <= 2 || separator === portable.length - 1) return null;
+  const parsedValue = unwrapCompleteQuoteLayer(portable.slice(separator + 1));
+  if (!parsedValue.value) return null;
+  if (!parsedValue.quoted && /\s/u.test(parsedValue.value)) return null;
+  return parsedValue.value;
 }
 
-function isRecognizedRepositoryFileName(value: string): boolean {
-  return /\.(?:json|ya?ml|toml|js|mjs|cjs|ts|tsx|jsx|css|html|txt|md|conf|config|ini)$/iu.test(
-    value,
-  );
+function unwrapCompleteQuoteLayer(value: string): {
+  value: string;
+  quoted: boolean;
+} {
+  const quote = value[0];
+  if ((quote === '"' || quote === "'") && value.at(-1) === quote)
+    return { value: value.slice(1, -1), quoted: true };
+  return { value, quoted: false };
 }
 
-function argumentReferencesArtifact(
-  argument: string,
-  artifactPath: string,
-  cwd: string,
-): boolean {
-  const normalizedArgument = portableArgument(argument);
-  const repositoryPath = portableArgument(artifactPath);
-  const relativeFromCwd = portableArgument(
-    path.posix.relative(cwd === "." ? "" : cwd, artifactPath),
-  );
-  return [repositoryPath, relativeFromCwd, `./${relativeFromCwd}`].some(
-    (candidate) => candidate !== "" && normalizedArgument.includes(candidate),
-  );
-}
-
-function portableArgument(value: string): string {
-  return value.replace(/\\/gu, "/").toLowerCase();
-}
-
-function firstOverlap(
-  candidate: string,
-  patterns: readonly string[],
-): string | null {
+function unsafeArgvPathValue(value: string): boolean {
   return (
-    patterns.find(
-      (pattern) =>
-        classifyRepositoryPatternOverlap(candidate, pattern).status ===
-        "proven_overlap",
-    ) ?? null
+    /["']/u.test(value) ||
+    value.startsWith("/") ||
+    /^[A-Za-z]:\//u.test(value) ||
+    /^file:/iu.test(value) ||
+    /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(value)
   );
 }
 

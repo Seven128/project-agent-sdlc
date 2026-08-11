@@ -312,7 +312,15 @@ test("implementation freedom removes method gates without weakening declared pro
   );
   assert.match(
     combined,
-    /new development-stage constraint[\s\S]{0,300}distinct path[\s\S]{0,300}(?:lighter project-owned check|lighter project check)[\s\S]{0,300}positive net ROI/iu,
+    /(?:new|proposed mandatory) development-stage constraint[\s\S]{0,300}distinct path[\s\S]{0,300}(?:lighter project-owned check|lighter project check)[\s\S]{0,300}positive net ROI[\s\S]{0,160}high total-cost ROI[\s\S]{0,120}high efficiency/iu,
+  );
+  assert.match(
+    combined,
+    /significant(?:,)? stable margin[\s\S]{0,160}(?:not|rather than)[\s\S]{0,80}(?:global|local) optimum/iu,
+  );
+  assert.match(
+    combined,
+    /sufficiency (?:rule|stop rule)[\s\S]{0,300}(?:new real counterexample|repeated material cost hot spot|significant additional net benefit)/iu,
   );
   assert.match(
     combined,

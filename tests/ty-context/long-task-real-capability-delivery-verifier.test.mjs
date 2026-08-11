@@ -34,11 +34,11 @@ const compileBoundaryDiagnostics = new Map([
   ["wrong.r6.verifier-wrapper", "process_observer_direct_root_required"],
   ["wrong.r6b.argv-wrapper", "process_observer_root_argv_mismatch"],
   [
-    "wrong.process-noncarrier-evidence-input",
+    "wrong.r9c.bound-evidence-input-closure-conflict",
     "process_runtime_input_evidence_role_forbidden",
   ],
   [
-    "wrong.process-noncarrier-verification-input",
+    "wrong.r10c.bound-verification-input-closure-conflict",
     "process_runtime_input_verification_role_forbidden",
   ],
   [
@@ -165,8 +165,9 @@ test("delivery verifier rejects fabricated or unbound Final Gate proof", () => {
   for (const mutate of [
     (proof) => (proof.invoked = false),
     (proof) => (proof.command_identity = "0".repeat(64)),
-    (proof) => (proof.candidate_identity = "0".repeat(64)),
-    (proof) => (proof.final_gate_diagnostic = "active_task_missing"),
+    (proof) => (proof.candidate.identity = "0".repeat(64)),
+    (proof) => (proof.diagnostic = "active_task_missing"),
+    (proof) => (proof.diagnostic = "dirty_candidate"),
   ]) {
     const fixture = validProofFixture();
     mutate(fixture.terminalReport.cases[0].final_gate);
@@ -176,10 +177,19 @@ test("delivery verifier rejects fabricated or unbound Final Gate proof", () => {
     );
   }
 
+  const wrongAuthorityBasis = validProofFixture();
+  wrongAuthorityBasis.terminalReport.cases.find(
+    (entry) => entry.case_id === "control.process",
+  ).final_gate.authority_basis = "legal_neighbor";
+  assert.throws(
+    () => validateBlackBoxMachineProof(wrongAuthorityBasis),
+    /real_capability_black_box_current_authority_invalid/u,
+  );
+
   const missingOwnerDiagnostic = validProofFixture();
   missingOwnerDiagnostic.terminalReport.cases.find(
     (entry) => entry.case_id === "wrong.r1.custom-oracle",
-  ).final_gate.owner_compile_diagnostic = null;
+  ).compile_attack.owner_diagnostic = null;
   assert.throws(
     () => validateBlackBoxMachineProof(missingOwnerDiagnostic),
     /real_capability_black_box_owner_compile_diagnostic_invalid/u,
@@ -188,10 +198,55 @@ test("delivery verifier rejects fabricated or unbound Final Gate proof", () => {
   const unexpectedOwnerDiagnostic = validProofFixture();
   unexpectedOwnerDiagnostic.terminalReport.cases.find(
     (entry) => entry.case_id === "control.process",
-  ).final_gate.owner_compile_diagnostic = "fabricated_owner_diagnostic";
+  ).compile_attack = structuredClone(
+    unexpectedOwnerDiagnostic.terminalReport.cases.find(
+      (entry) => entry.case_id === "wrong.r1.custom-oracle",
+    ).compile_attack,
+  );
   assert.throws(
     () => validateBlackBoxMachineProof(unexpectedOwnerDiagnostic),
     /real_capability_black_box_owner_compile_unexpected/u,
+  );
+});
+
+test("delivery verifier keeps Compile-owner and legal-neighbor Final-Gate proof independent", () => {
+  const targetCase = "wrong.r9c.bound-evidence-input-closure-conflict";
+
+  for (const mutate of [
+    (record) => (record.compile_attack.candidate.clean = false),
+    (record) => (record.compile_attack.candidate.identity = "0".repeat(64)),
+    (record) =>
+      (record.final_gate.candidate.identity = digest("different-candidate")),
+    (record) => (record.final_gate.authority_basis = "current_candidate"),
+    (record) =>
+      (record.final_gate.authority_candidate_identity =
+        record.final_gate.candidate.identity),
+    (record) =>
+      (record.final_gate.diagnostic =
+        record.compile_attack.owner_diagnostic),
+    (record) => (record.final_gate.diagnostic = "active_task_missing"),
+    (record) => (record.final_gate.diagnostic = "dirty_candidate"),
+  ]) {
+    const fixture = validProofFixture();
+    mutate(
+      fixture.terminalReport.cases.find(
+        (entry) => entry.case_id === targetCase,
+      ),
+    );
+    assert.throws(
+      () => validateBlackBoxMachineProof(fixture),
+      /real_capability_black_box_(?:case_record|compile_candidate|compile_final_candidate|legal_neighbor|final_gate_freshness)_invalid/u,
+    );
+  }
+});
+
+test("delivery verifier rejects the ambiguous v1 terminal-report shape", () => {
+  const fixture = validProofFixture();
+  fixture.terminalReport.schema_version =
+    "long-task-real-capability-black-box-terminal-report-v1";
+  assert.throws(
+    () => validateBlackBoxMachineProof(fixture),
+    /real_capability_black_box_terminal_report_invalid/u,
   );
 });
 
@@ -245,7 +300,7 @@ function validProofFixture() {
       })),
     },
     terminalReport: {
-      schema_version: "long-task-real-capability-black-box-terminal-report-v1",
+      schema_version: "long-task-real-capability-black-box-terminal-report-v2",
       invocation_id: invocationId,
       cases: DELIVERY_BLACK_BOX_CASE_POLICY.map((policy) => ({
         case_id: policy.case_id,
@@ -262,35 +317,64 @@ function validProofFixture() {
           result_status:
             policy.candidate_role === "wrong" ? "rejected" : "accepted",
         },
+        compile_attack: compileAttackProof(policy),
         final_gate: finalGateProof(policy),
       })),
     },
   };
 }
 
-function finalGateProof(policy) {
-  const command = "long-task final-gate";
+function compileAttackProof(policy) {
+  const ownerDiagnostic = compileBoundaryDiagnostics.get(policy.case_id);
+  if (!ownerDiagnostic) return null;
+  const command = "long-task compile --revise";
   const workdir_sha256 = digest(`workdir:${policy.case_id}`);
-  const candidate_head = digest(`head:${policy.case_id}`).slice(0, 40);
-  const candidate_tree = digest(`tree:${policy.case_id}`).slice(0, 40);
-  const contract_sha256 = digest(`contract:${policy.case_id}`);
+  const candidate = candidateProof(policy.case_id);
   return {
     invoked: true,
     command,
     workdir_sha256,
     command_identity: digest(JSON.stringify({ command, workdir_sha256 })),
-    candidate_head,
-    candidate_tree,
-    contract_sha256,
-    candidate_identity: digest(
-      JSON.stringify({ candidate_head, candidate_tree, contract_sha256 }),
-    ),
-    owner_compile_diagnostic:
-      compileBoundaryDiagnostics.get(policy.case_id) ?? null,
-    final_gate_diagnostic:
-      policy.candidate_role === "wrong"
-        ? `protected_candidate_revision_rejected:${policy.case_id}`
+    candidate,
+    owner_diagnostic: ownerDiagnostic,
+  };
+}
+
+function finalGateProof(policy) {
+  const command = "long-task final-gate";
+  const workdir_sha256 = digest(`workdir:${policy.case_id}`);
+  const candidate = candidateProof(policy.case_id);
+  const compileBoundary = compileBoundaryDiagnostics.has(policy.case_id);
+  return {
+    invoked: true,
+    command,
+    workdir_sha256,
+    command_identity: digest(JSON.stringify({ command, workdir_sha256 })),
+    authority_basis: compileBoundary ? "legal_neighbor" : "current_candidate",
+    authority_compiled_identity: digest(`authority:${policy.case_id}`),
+    authority_candidate_identity: compileBoundary
+      ? candidateProof(`legal-neighbor:${policy.case_id}`).identity
+      : candidate.identity,
+    candidate,
+    diagnostic: compileBoundary
+      ? `final_gate_protected_input_stale:delivery-contract.yaml:${policy.case_id}`
+      : policy.candidate_role === "wrong"
+        ? `final_gate_rejected:${policy.case_id}`
         : `final_gate_completed:${policy.case_id}`,
+  };
+}
+
+function candidateProof(identity) {
+  const head = digest(`head:${identity}`).slice(0, 40);
+  const tree = digest(`tree:${identity}`).slice(0, 40);
+  const contract_sha256 = digest(`contract:${identity}`);
+  const clean = true;
+  return {
+    head,
+    tree,
+    contract_sha256,
+    clean,
+    identity: digest(JSON.stringify({ head, tree, contract_sha256, clean })),
   };
 }
 

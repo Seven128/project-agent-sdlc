@@ -177,9 +177,7 @@ test("source, selected Context, verification inputs and verifier bundle stale au
 
 test("identical raw execution is deduplicated while artifacts remain per-Check", async () => {
   const fixture = await createDeliveryFixture();
-  const runCountFile = `${fixture.root}-run-count.txt`;
   try {
-    await writeFile(runCountFile, "0\n");
     await writeFile(path.join(fixture.root, "artifacts/a.json"), "");
     await writeFile(path.join(fixture.root, "artifacts/b.json"), "");
     fixture.contract.outcomes[0].technical.allowed_support_paths.push(
@@ -192,40 +190,27 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
     );
     const original = fixture.contract.outcomes[0].acceptance.checks[0];
     original.runner.effect = "test_sandbox";
-    original.runner.argv = fixtureProductRootArgv("tests/oracle.mjs", "first", [
-      runCountFile.replaceAll("\\", "/"),
-    ]);
+    original.runner.argv = fixtureProductRootArgv("tests/oracle.mjs", "first");
     fixture.contract.task.execution_targets[0].root_argv = [
       ...original.runner.argv,
     ];
     original.artifact_globs = ["artifacts/proof.json", "artifacts/a.json"];
     original.expected_output_paths = ["artifacts/a.json"];
-    original.positive_assertions.push({
-      key: "single-invocation",
-      criterion: "The shared Raw Execution is invoked exactly once.",
-      claims: [],
-      observation: "invocation_count",
-      evidence_capabilities: ["presence"],
-      operator: "equals",
-      expected: 1,
-    });
-    fixture.contract.outcomes[0].acceptance.counterfactual_controls[0].preserved_assertions.push(
-      "single-invocation",
-    );
-    fixture.contract.outcomes[0].acceptance.counterfactual_controls[1].preserved_assertions.push(
-      "single-invocation",
-    );
     const second = structuredClone(original);
     second.key = "same-execution-check";
     second.artifact_globs = ["artifacts/proof.json", "artifacts/b.json"];
     second.expected_output_paths = ["artifacts/b.json"];
-    second.positive_assertions = second.positive_assertions
-      .filter((assertion) => assertion.key === "single-invocation")
-      .map((assertion) => {
-        const claimless = { ...assertion, claims: [] };
-        delete claimless.applicability_ref;
-        return claimless;
-      });
+    second.positive_assertions = [
+      {
+        key: "shared-execution-visible",
+        criterion: "The shared Raw Execution remains observable.",
+        claims: [],
+        observation: "shared_execution_visible",
+        evidence_capabilities: ["presence"],
+        operator: "equals",
+        expected: true,
+      },
+    ];
     second.negative_assertions = [];
     fixture.contract.outcomes[0].acceptance.checks.push(second);
     await synchronizeFixtureExecutionTargetSource(
@@ -238,39 +223,41 @@ test("identical raw execution is deduplicated while artifacts remain per-Check",
     assert.match(productRootSource, /console\.log\(JSON\.stringify\(\{/u);
     await writeFile(
       productRootScript,
-      productRootSource
-        .replace(
-          'import { readFile } from "node:fs/promises";',
-          'import { readFile, writeFile } from "node:fs/promises";',
-        )
-        .replace(
-          "console.log(JSON.stringify({",
-          `const countFile = process.argv[3];
-const count = Number((await readFile(countFile, "utf8")).trim()) + 1;
-await writeFile(countFile, String(count));
-const firstCheckPrefix = "assertion.first.first-check.";
-const secondCheckPrefix = "assertion.first.same-execution-check.";
-const invocationCount =
-  observations[firstCheckPrefix + "first-result"] &&
-  !observations[firstCheckPrefix + "first-relations-na"]
-    ? count
-    : 1;
-observations[firstCheckPrefix + "single-invocation"] = invocationCount;
-observations[secondCheckPrefix + "single-invocation"] = invocationCount;
+      productRootSource.replace(
+        "console.log(JSON.stringify({",
+          `observations["assertion.first.same-execution-check.shared-execution-visible"] = true;
 console.log(JSON.stringify({`,
         ),
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const preview = await runCli(fixture.root, [
+      "long-task",
+      "verify",
+      fixture.workdir,
+      "--outcome",
+      "first",
+      "--explain",
+    ]);
+    assert.equal(preview.summary.selected_checks, 2);
+    assert.equal(preview.summary.unique_main_runner_invocations, 1);
+    assert.deepEqual(preview.main_raw_executions[0].check_refs, [
+      "first:first-check",
+      "first:same-execution-check",
+    ]);
     const accepted = await runCli(fixture.root, [
       "long-task",
       "final-gate",
       fixture.workdir,
     ]);
     assert.equal(accepted.workflow_status, "machine_accepted");
-    assert.deepEqual(
-      accepted.check_results.map((item) => item.observations.invocation_count),
-      [1, 1],
+    assert.equal(
+      accepted.check_results[1].observations.shared_execution_visible,
+      true,
+    );
+    assert.equal(
+      new Set(accepted.check_results.map((item) => item.execution_identity)).size,
+      1,
     );
     assert.deepEqual(Object.keys(accepted.check_results[0].artifact_hashes), [
       "artifacts/a.json",
@@ -282,7 +269,6 @@ console.log(JSON.stringify({`,
     ]);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
-    await rm(runCountFile, { force: true });
   }
 });
 

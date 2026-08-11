@@ -52,6 +52,8 @@
 - `long-task-workflow` is the only active Long-Task Skill. Retired compatibility names are isolated to versioned migrations, explicit non-executing command tombstones, corresponding tests and clearly historical/release material; they do not participate in active triggers or recommendation paths.
 - Open Design is an optional upstream generator. Its resources and audit output remain ordinary Source or non-authoritative diagnostics, not Context, Design Authority or acceptance. `design-resource-authoring` has one explicit narrow exception to the former absolute no-state boundary: when real cross-interruption recovery is needed it may persist a versioned, task-local, ignored checkpoint containing replay inputs only; the simple path creates none and the checkpoint never enters Long-Task or completion authority.
 - `ty-context doctor` reports deterministic default Context footprint and Design Authority diagnostics as advisory maintenance information, never acceptance state or an absolute byte Gate.
+- The admitted static/process exact observer remains a scoped Level 3 capability. Level 4 still requires the unchanged complete total-cost ROI theorem plus an independent capability audit; an `observed_lifecycle_*` measurement is a non-admission diagnostic and cannot substitute for unverified authoring, maintenance, adoption or migration cost.
+- Long-Task anti-degradation construction targets evidenced high ROI and high efficiency with a significant, stable margin rather than a global or local optimum. Once purpose validity, relative non-degradation, must-allow behavior, structural-cost limits and the applicable measured total-cost threshold are satisfied, further mechanism expansion stops unless a new real counterexample, repeated material cost hot spot or evidence of significant additional net benefit appears.
 
 ## Verification Entry Points
 
@@ -63,7 +65,7 @@
 - `node packages/ty-context/dist/cli.js package check-source`: managed/package parity.
 - `git diff --check`: patch hygiene.
 
-These checks prove only their declared properties. Prompt/Context/Skill distribution tests do not prove Agent adherence or optimal ROI; those claims require fixed independent fresh-Agent paired runs with normalized traces.
+These checks prove only their declared properties. Prompt/Context/Skill distribution tests do not prove Agent adherence or high ROI; those claims require fixed independent fresh-Agent paired runs with normalized traces and the complete cost evidence required by the owning admission theorem. No global-optimum claim is required or authorized.
 
 ## Next Safe Action
 

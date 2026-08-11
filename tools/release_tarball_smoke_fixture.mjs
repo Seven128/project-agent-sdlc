@@ -354,10 +354,7 @@ outcomes:
 }
 
 async function installProductRoot(root, relative) {
-  const executableSource =
-    process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
-  if (!executableSource)
-    throw new Error("release_tarball_product_root_shell_unavailable");
+  const executableSource = process.execPath;
   const executablePath = path.join(root, ...relative.split("/"));
   await mkdir(path.dirname(executablePath), { recursive: true });
   await copyFile(executableSource, executablePath);

@@ -4,6 +4,7 @@ import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import {
+  commitCandidate,
   createDeliveryFixture,
   parseCliJson,
   refreshFixtureSemanticManifest,
@@ -26,13 +27,27 @@ export async function createObserverTrustFixture(options = {}) {
 
 export async function executeObserverTrustWorkflow(fixture) {
   await runCli(fixture.root, ["enable", "long-task"]);
+  await commitCandidate(fixture.root);
+  const candidate = await captureCommittedCandidate(fixture);
   const compiled = await invoke(fixture.root, [
     "long-task",
     "compile",
     fixture.workdir,
   ]);
-  if (!compiled.ok) return { stage: "compile", result: compiled.result };
-  return executeObserverTrustFinalGate(fixture, null);
+  if (!compiled.ok)
+    return {
+      stage: "compile",
+      result: compiled.result,
+      compile_attack_proof: null,
+      final_gate_proof: null,
+    };
+  return executeObserverTrustFinalGate(fixture, {
+    authority_basis: "current_candidate",
+    authority_compiled_identity: compiledIdentity(compiled.result),
+    authority_candidate_identity: candidate.identity,
+    candidate,
+    compile_attack_proof: null,
+  });
 }
 
 export async function executeObserverTrustAttackAfterAuthority(
@@ -40,6 +55,8 @@ export async function executeObserverTrustAttackAfterAuthority(
   configureAttack,
 ) {
   await runCli(fixture.root, ["enable", "long-task"]);
+  await commitCandidate(fixture.root);
+  const authorityCandidate = await captureCommittedCandidate(fixture);
   const baseline = await invoke(fixture.root, [
     "long-task",
     "compile",
@@ -50,6 +67,8 @@ export async function executeObserverTrustAttackAfterAuthority(
       `observer_fixture_valid_authority_compile_failed:${JSON.stringify(baseline.result)}`,
     );
   await configureAttack();
+  await commitCandidate(fixture.root);
+  const attackCandidate = await captureCommittedCandidate(fixture);
   const ownerCompile = await invoke(fixture.root, [
     "long-task",
     "compile",
@@ -58,22 +77,29 @@ export async function executeObserverTrustAttackAfterAuthority(
   ]);
   if (ownerCompile.ok)
     throw new Error("observer_fixture_attack_compile_unexpectedly_succeeded");
-  return executeObserverTrustFinalGate(fixture, ownerCompile.result);
+  await assertCandidateUnchanged(fixture, attackCandidate, "compile");
+  return executeObserverTrustFinalGate(fixture, {
+    authority_basis: "legal_neighbor",
+    authority_compiled_identity: compiledIdentity(baseline.result),
+    authority_candidate_identity: authorityCandidate.identity,
+    candidate: attackCandidate,
+    compile_attack_proof: compileAttackProof(
+      fixture,
+      attackCandidate,
+      ownerCompile.result,
+    ),
+  });
 }
 
-async function executeObserverTrustFinalGate(fixture, ownerCompileResult) {
+async function executeObserverTrustFinalGate(fixture, proofContext) {
   const command = "long-task final-gate";
   const workdirSha256 = sha256(path.resolve(fixture.workdir));
   const final = await invoke(fixture.root, [
     "long-task",
     "final-gate",
     fixture.workdir,
-  ]);
-  const [candidateHead, candidateTree, contractBytes] = await Promise.all([
-    gitIdentity(fixture.root, ["rev-parse", "HEAD"]),
-    gitIdentity(fixture.root, ["rev-parse", "HEAD^{tree}"]),
-    readFile(path.join(fixture.workdir, "delivery-contract.yaml")),
-  ]);
+  ], { skipCandidateCommit: true });
+  await assertCandidateUnchanged(fixture, proofContext.candidate, "final-gate");
   const result =
     typeof final.result?.workflow_status === "string"
       ? final.result
@@ -82,6 +108,7 @@ async function executeObserverTrustFinalGate(fixture, ownerCompileResult) {
     stage: "final-gate",
     result,
     ok: final.ok,
+    compile_attack_proof: proofContext.compile_attack_proof,
     final_gate_proof: {
       invoked: true,
       command,
@@ -89,19 +116,11 @@ async function executeObserverTrustFinalGate(fixture, ownerCompileResult) {
       command_identity: sha256(
         JSON.stringify({ command, workdir_sha256: workdirSha256 }),
       ),
-      candidate_head: candidateHead,
-      candidate_tree: candidateTree,
-      contract_sha256: sha256(contractBytes),
-      candidate_identity: sha256(
-        JSON.stringify({
-          candidate_head: candidateHead,
-          candidate_tree: candidateTree,
-          contract_sha256: sha256(contractBytes),
-        }),
-      ),
-      owner_compile_diagnostic:
-        ownerCompileResult === null ? null : JSON.stringify(ownerCompileResult),
-      final_gate_diagnostic: JSON.stringify(final.result),
+      authority_basis: proofContext.authority_basis,
+      authority_compiled_identity: proofContext.authority_compiled_identity,
+      authority_candidate_identity: proofContext.authority_candidate_identity,
+      candidate: proofContext.candidate,
+      diagnostic: JSON.stringify(final.result),
     },
   };
 }
@@ -753,7 +772,15 @@ export async function configureMissingCounterfactualObservationAttack(fixture) {
   await writeFile(oraclePath, conditionalOutput);
 }
 
-export async function configureNonCarrierEvidenceInputAttack(fixture) {
+async function configureNonCarrierEvidenceInputAttack(fixture) {
+  await configureUnusedNonClosureEvidenceInput(fixture);
+  await rewriteProcessProductToUseLeakedExpected(
+    fixture,
+    "artifacts/expected-status.json",
+  );
+}
+
+async function configureUnusedNonClosureEvidenceInput(fixture) {
   const leakedExpectedPath = "artifacts/expected-status.json";
   await configurePackageObservationCase(fixture, {
     carrierPath: "src/state.json",
@@ -778,10 +805,17 @@ export async function configureNonCarrierEvidenceInputAttack(fixture) {
   outcome.product.owner.path_globs.push(leakedExpectedPath);
   outcome.technical.allowed_support_paths.push(leakedExpectedPath);
   await writeContract(fixture.workdir, fixture.contract);
-  await rewriteProcessProductToUseLeakedExpected(fixture, leakedExpectedPath);
 }
 
-export async function configureNonCarrierVerificationInputAttack(fixture) {
+async function configureNonCarrierVerificationInputAttack(fixture) {
+  await configureUnusedNonClosureVerificationInput(fixture);
+  await rewriteProcessProductToUseLeakedExpected(
+    fixture,
+    "tests/expected-map.json",
+  );
+}
+
+async function configureUnusedNonClosureVerificationInput(fixture) {
   const leakedExpectedPath = "tests/expected-map.json";
   await configurePackageObservationCase(fixture, {
     carrierPath: "src/state.json",
@@ -803,7 +837,23 @@ export async function configureNonCarrierVerificationInputAttack(fixture) {
   );
   check.verification_inputs.push(leakedExpectedPath);
   await writeContract(fixture.workdir, fixture.contract);
-  await rewriteProcessProductToUseLeakedExpected(fixture, leakedExpectedPath);
+}
+
+async function applyBoundEvidenceInputClosureConflict(fixture) {
+  await bindRoleInputIntoProcessClosure(fixture, {
+    path: "artifacts/expected-status.json",
+    bindingKey: "bound-evidence-input",
+  });
+}
+
+async function applyBoundVerificationInputClosureConflict(fixture) {
+  const outcome = fixture.contract.outcomes[0];
+  outcome.product.owner.path_globs.push("tests/expected-map.json");
+  outcome.technical.allowed_support_paths.push("tests/expected-map.json");
+  await bindRoleInputIntoProcessClosure(fixture, {
+    path: "tests/expected-map.json",
+    bindingKey: "bound-verification-input",
+  });
 }
 
 export async function configureExecutionTargetSourceDriftAttack(fixture) {
@@ -928,7 +978,7 @@ export async function configureVerificationInputStaticAttack(fixture) {
   await applyVerificationInputStaticConflict(fixture);
 }
 
-export async function configureVerificationInputStaticBase(fixture) {
+async function configureVerificationInputStaticBase(fixture) {
   const carrierPath = "expected/expected-static-actual.json";
   await configurePackageObservationCase(fixture, {
     carrierPath,
@@ -940,7 +990,7 @@ export async function configureVerificationInputStaticBase(fixture) {
   });
 }
 
-export async function applyVerificationInputStaticConflict(fixture) {
+async function applyVerificationInputStaticConflict(fixture) {
   const carrierPath = "expected/expected-static-actual.json";
   const staticCheck = requiredFixtureCheck(
     fixture.contract.outcomes[0],
@@ -955,7 +1005,7 @@ export async function configureEvidenceRoleStaticAttack(fixture) {
   await applyEvidenceRoleStaticConflict(fixture);
 }
 
-export async function configureEvidenceRoleStaticBase(fixture) {
+async function configureEvidenceRoleStaticBase(fixture) {
   const carrierPath = "artifacts/pre-existing-status-report.json";
   await configurePackageObservationCase(fixture, {
     carrierPath,
@@ -967,7 +1017,7 @@ export async function configureEvidenceRoleStaticBase(fixture) {
   });
 }
 
-export async function applyEvidenceRoleStaticConflict(fixture) {
+async function applyEvidenceRoleStaticConflict(fixture) {
   const carrierPath = "artifacts/pre-existing-status-report.json";
   const staticCheck = requiredFixtureCheck(
     fixture.contract.outcomes[0],
@@ -983,7 +1033,7 @@ export async function configureEvidenceRoleProcessAttack(fixture) {
   await applyEvidenceRoleProcessConflict(fixture);
 }
 
-export async function configureEvidenceRoleProcessBase(fixture) {
+async function configureEvidenceRoleProcessBase(fixture) {
   const carrierPath = "artifacts/pre-existing-process-status-report.json";
   await configurePackageObservationCase(fixture, {
     carrierPath,
@@ -997,7 +1047,7 @@ export async function configureEvidenceRoleProcessBase(fixture) {
   });
 }
 
-export async function applyEvidenceRoleProcessConflict(fixture) {
+async function applyEvidenceRoleProcessConflict(fixture) {
   const carrierPath = "artifacts/pre-existing-process-status-report.json";
   const processCheck = requiredFixtureCheck(
     fixture.contract.outcomes[0],
@@ -1008,9 +1058,24 @@ export async function applyEvidenceRoleProcessConflict(fixture) {
   await writeContract(fixture.workdir, fixture.contract);
 }
 
-async function invoke(cwd, args) {
+export const observerTrustRoleBoundaryCases = Object.freeze({
+  applyBoundEvidenceInputClosureConflict,
+  applyBoundVerificationInputClosureConflict,
+  applyEvidenceRoleProcessConflict,
+  applyEvidenceRoleStaticConflict,
+  applyVerificationInputStaticConflict,
+  configureEvidenceRoleProcessBase,
+  configureEvidenceRoleStaticBase,
+  configureNonCarrierEvidenceInputAttack,
+  configureNonCarrierVerificationInputAttack,
+  configureUnusedNonClosureEvidenceInput,
+  configureUnusedNonClosureVerificationInput,
+  configureVerificationInputStaticBase,
+});
+
+async function invoke(cwd, args, options = {}) {
   try {
-    return { ok: true, result: await runCli(cwd, args) };
+    return { ok: true, result: await runCli(cwd, args, options) };
   } catch (error) {
     const output = error?.stdout || error?.stderr;
     if (!output) throw error;
@@ -1021,6 +1086,64 @@ async function invoke(cwd, args) {
         : { status: "rejected", diagnostic: String(error.stderr).trim() },
     };
   }
+}
+
+function compileAttackProof(fixture, candidate, ownerCompileResult) {
+  const command = "long-task compile --revise";
+  const workdirSha256 = sha256(path.resolve(fixture.workdir));
+  return {
+    invoked: true,
+    command,
+    workdir_sha256: workdirSha256,
+    command_identity: sha256(
+      JSON.stringify({ command, workdir_sha256: workdirSha256 }),
+    ),
+    candidate,
+    owner_diagnostic: JSON.stringify(ownerCompileResult),
+  };
+}
+
+async function captureCommittedCandidate(fixture) {
+  const [head, tree, contractBytes, status] = await Promise.all([
+    gitIdentity(fixture.root, ["rev-parse", "HEAD"]),
+    gitIdentity(fixture.root, ["rev-parse", "HEAD^{tree}"]),
+    readFile(path.join(fixture.workdir, "delivery-contract.yaml")),
+    gitIdentity(fixture.root, [
+      "status",
+      "--porcelain=v1",
+      "--untracked-files=all",
+    ]),
+  ]);
+  const clean = status.length === 0;
+  if (!clean)
+    throw new Error(
+      `observer_fixture_candidate_not_clean:${status.replaceAll("\n", "|")}`,
+    );
+  const contract_sha256 = sha256(contractBytes);
+  return {
+    head,
+    tree,
+    contract_sha256,
+    clean,
+    identity: sha256(
+      JSON.stringify({ head, tree, contract_sha256, clean }),
+    ),
+  };
+}
+
+async function assertCandidateUnchanged(fixture, expected, stage) {
+  const current = await captureCommittedCandidate(fixture);
+  if (JSON.stringify(current) !== JSON.stringify(expected))
+    throw new Error(
+      `observer_fixture_candidate_changed_during_${stage}:${expected.identity}:${current.identity}`,
+    );
+}
+
+function compiledIdentity(result) {
+  const identity = result?.compiled_identity;
+  if (typeof identity !== "string" || !/^[a-f0-9]{64}$/u.test(identity))
+    throw new Error("observer_fixture_compiled_identity_missing");
+  return identity;
 }
 
 async function gitIdentity(cwd, args) {
@@ -1039,8 +1162,7 @@ async function installProjectProcessRoot(fixture, name) {
 }
 
 async function installProjectProcessExecutable(fixture, relativeBase) {
-  const source = process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
-  if (!source) throw new Error("observer_fixture_shell_unavailable");
+  const source = process.execPath;
   const extension = process.platform === "win32" ? ".exe" : "";
   const relative = `${relativeBase}${extension}`;
   const destination = path.join(fixture.root, ...relative.split("/"));
@@ -1065,17 +1187,32 @@ async function rewriteProcessProductToUseLeakedExpected(
   await writeFile(oraclePath, rewritten);
 }
 
-function projectBinaryArguments(script, argument) {
-  if (process.platform === "win32")
-    return ["/d", "/c", `${process.execPath} ${script} ${argument}`];
-  return [
-    "-c",
-    `${shellQuote(process.execPath)} ${shellQuote(script)} ${shellQuote(argument)}`,
-  ];
+async function bindRoleInputIntoProcessClosure(
+  fixture,
+  { path: relativePath, bindingKey },
+) {
+  const outcome = fixture.contract.outcomes[0];
+  outcome.technical.bindings.push({
+    key: bindingKey,
+    kind: "file",
+    target: relativePath,
+    carrier_paths: [relativePath],
+    existence: "existing",
+  });
+  const target = fixture.contract.task.execution_targets[0];
+  target.root_argv.push(relativePath);
+  const check = requiredFixtureCheck(outcome, "first-check");
+  check.runner.argv.push(relativePath);
+  await synchronizeFixtureExecutionTargetSource(
+    fixture.root,
+    fixture.contract,
+    target.key,
+  );
+  await writeContract(fixture.workdir, fixture.contract);
 }
 
-function shellQuote(value) {
-  return `'${String(value).replaceAll("'", `'\\''`)}'`;
+function projectBinaryArguments(script, argument) {
+  return [script, argument];
 }
 
 function repoOwnerPattern(relative) {

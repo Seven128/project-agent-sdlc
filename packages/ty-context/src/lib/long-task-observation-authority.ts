@@ -3,7 +3,6 @@ import type {
   CompiledObservationAuthorityKindV2,
   CompiledObservationAuthorityV2,
   DeliveryAssertionV2,
-  DeliveryBindingV2,
   DeliveryCheckV2,
   EvidenceCapabilityV2,
   ExecutionTargetV2,
@@ -18,6 +17,7 @@ import {
 } from "./long-task-json-pointer-observation.js";
 import { classifyMachineObservationCarrierRoleConflict } from "./long-task-admitted-observation.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
+import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
 import {
   classifyRepositoryPatternOverlap,
   normalizeRepositoryFile,
@@ -30,7 +30,7 @@ interface CompileObservationAuthorityPlanInput {
   execution_target: ExecutionTargetV2;
   design_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
-  production_bindings: DeliveryBindingV2[];
+  production_bindings: ScopedDeliveryBindingV2[];
   production_owner_paths: string[];
   source_backed_execution_target: SourceBackedExecutionTargetV2 | null;
   workspace_manifest: WorkspaceManifestV2;
@@ -315,6 +315,7 @@ function compileCandidate(
       expected_value_sha256: candidate.expected_value_sha256,
       comparison,
       actual_projection: candidate.actual_projection,
+      carrier_refs: carrierRefs,
     }),
   );
   return {
@@ -506,9 +507,9 @@ function productionCarrierRefs(
   input: CompileObservationAuthorityPlanInput,
 ): CompiledObservationAuthorityV2["carrier_refs"] {
   return input.production_bindings
-    .map((binding) => ({
-      binding_ref: binding.key,
-      carrier_paths: binding.carrier_paths
+    .map((scoped) => ({
+      binding_ref: scoped.binding_ref,
+      carrier_paths: scoped.binding.carrier_paths
         .filter((carrier) =>
           input.check.input_paths.some(
             (inputPath) =>

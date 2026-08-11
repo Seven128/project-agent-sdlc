@@ -94,15 +94,37 @@ export const DELIVERY_BLACK_BOX_CASE_POLICY = Object.freeze([
     "observer-trust.r8.empty-observation",
     "control.process",
   ),
+  controlProofCase(
+    "control.r9a.unused-nonclosure-evidence-input",
+    "observer-trust.r9a.unused-nonclosure-evidence-input",
+    "control",
+    "machine_accepted",
+  ),
   wrongProofCase(
     "wrong.process-noncarrier-evidence-input",
     "observer-trust.r9.process-noncarrier-evidence-input",
-    "control.process",
+    "control.r9a.unused-nonclosure-evidence-input",
+  ),
+  wrongProofCase(
+    "wrong.r9c.bound-evidence-input-closure-conflict",
+    "observer-trust.r9c.bound-evidence-input-closure-conflict",
+    "control.r9a.unused-nonclosure-evidence-input",
+  ),
+  controlProofCase(
+    "control.r10a.unused-nonclosure-verification-input",
+    "observer-trust.r10a.unused-nonclosure-verification-input",
+    "control",
+    "machine_accepted",
   ),
   wrongProofCase(
     "wrong.process-noncarrier-verification-input",
     "observer-trust.r10.process-noncarrier-verification-input",
-    "control.process",
+    "control.r10a.unused-nonclosure-verification-input",
+  ),
+  wrongProofCase(
+    "wrong.r10c.bound-verification-input-closure-conflict",
+    "observer-trust.r10c.bound-verification-input-closure-conflict",
+    "control.r10a.unused-nonclosure-verification-input",
   ),
   wrongProofCase(
     "wrong.execution-target-source-drift",
@@ -174,6 +196,17 @@ const allControlBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.filter(
 const allBlackBoxCases = DELIVERY_BLACK_BOX_CASE_POLICY.map(
   (entry) => entry.case_id,
 );
+const r9R10LayerCases = Object.freeze([
+  "control.r9a.unused-nonclosure-evidence-input",
+  "wrong.process-noncarrier-evidence-input",
+  "wrong.r9c.bound-evidence-input-closure-conflict",
+  "control.r10a.unused-nonclosure-verification-input",
+  "wrong.process-noncarrier-verification-input",
+  "wrong.r10c.bound-verification-input-closure-conflict",
+]);
+const r9R10WrongLayerCases = Object.freeze(
+  r9R10LayerCases.filter((caseId) => caseId.startsWith("wrong.")),
+);
 
 const compileBoundaryOwnerDiagnostics = new Map([
   ["wrong.r1.custom-oracle", ["custom_oracle_machine_completion_forbidden"]],
@@ -204,11 +237,11 @@ const compileBoundaryOwnerDiagnostics = new Map([
   ["wrong.r6.verifier-wrapper", ["process_observer_direct_root_required"]],
   ["wrong.r6b.argv-wrapper", ["process_observer_root_argv_mismatch"]],
   [
-    "wrong.process-noncarrier-evidence-input",
+    "wrong.r9c.bound-evidence-input-closure-conflict",
     ["process_runtime_input_evidence_role_forbidden"],
   ],
   [
-    "wrong.process-noncarrier-verification-input",
+    "wrong.r10c.bound-verification-input-closure-conflict",
     ["process_runtime_input_verification_role_forbidden"],
   ],
   [
@@ -230,8 +263,7 @@ const blackBoxFactCases = new Map([
       "wrong.r3.historical-runtime",
       "wrong.r7b.cross-execution-priming",
       "wrong.r8.empty-observation",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10WrongLayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
       ...allControlBlackBoxCases,
@@ -245,8 +277,7 @@ const blackBoxFactCases = new Map([
       "wrong.r3.historical-runtime",
       "wrong.r4.browser-native-proxy",
       "wrong.r6.verifier-wrapper",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10WrongLayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
       ...allControlBlackBoxCases,
@@ -257,8 +288,7 @@ const blackBoxFactCases = new Map([
     [
       "wrong.r1.custom-oracle",
       "wrong.r3.historical-runtime",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10LayerCases,
       "control.process",
     ],
   ],
@@ -287,8 +317,7 @@ const blackBoxFactCases = new Map([
       "wrong.r5.synthetic-status-binding",
       "wrong.r5b.evidence-role-static",
       "wrong.r5c.evidence-role-process",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10LayerCases,
       "control.static",
     ],
   ],
@@ -309,8 +338,7 @@ const blackBoxFactCases = new Map([
       "wrong.r6.verifier-wrapper",
       "wrong.r6b.argv-wrapper",
       "wrong.r7c.process-input-mutation",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10LayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
       "control.process",
@@ -324,8 +352,7 @@ const blackBoxFactCases = new Map([
       "wrong.r5c.evidence-role-process",
       "wrong.r7c.process-input-mutation",
       "wrong.r8.empty-observation",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10LayerCases,
       "control.process",
     ],
   ],
@@ -352,8 +379,7 @@ const blackBoxFactCases = new Map([
       "wrong.r1.custom-oracle",
       "wrong.r3.historical-runtime",
       "wrong.r6.verifier-wrapper",
-      "wrong.process-noncarrier-evidence-input",
-      "wrong.process-noncarrier-verification-input",
+      ...r9R10LayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
       "control.process",
@@ -427,7 +453,7 @@ async function main() {
 
   console.log(
     JSON.stringify({
-      schema_version: "long-task-real-capability-delivery-verifier-report-v1",
+      schema_version: "long-task-real-capability-delivery-verifier-report-v2",
       outcome_key: globalConformance ? "global-conformance" : outcomeKey,
       capability_level: 3,
       independent_capability_audit: "blocking",
@@ -792,7 +818,7 @@ export function validateBlackBoxMachineProof({
     !terminalReport ||
     !sameKeys(terminalReport, ["schema_version", "invocation_id", "cases"]) ||
     terminalReport.schema_version !==
-      "long-task-real-capability-black-box-terminal-report-v1" ||
+      "long-task-real-capability-black-box-terminal-report-v2" ||
     terminalReport.invocation_id !== invocationId ||
     !Array.isArray(terminalReport.cases)
   )
@@ -853,6 +879,7 @@ export function validateBlackBoxMachineProof({
         "control_case_id",
         "expected_relation",
         "terminal",
+        "compile_attack",
         "final_gate",
       ]) ||
       record.test_id !== policy.test_id ||
@@ -865,8 +892,7 @@ export function validateBlackBoxMachineProof({
         "workflow_status",
         "result_status",
       ]) ||
-      typeof record.terminal.stage !== "string" ||
-      record.terminal.stage === "unknown" ||
+      record.terminal.stage !== "final-gate" ||
       typeof record.terminal.workflow_status !== "string" ||
       record.terminal.workflow_status.length === 0 ||
       !(
@@ -878,7 +904,7 @@ export function validateBlackBoxMachineProof({
       throw new Error(
         `real_capability_black_box_case_record_invalid:${policy.case_id}`,
       );
-    validateOwnerCompileDiagnostic(policy.case_id, record.final_gate);
+    validateCaseProof(policy.case_id, record);
     assertExpectedTerminal(policy, record.terminal.workflow_status);
   }
 
@@ -897,7 +923,7 @@ export function validateBlackBoxMachineProof({
   }
 
   return {
-    schema_version: "long-task-real-capability-black-box-proof-v1",
+    schema_version: "long-task-real-capability-black-box-proof-v2",
     invocation_id: invocationId,
     cases: DELIVERY_BLACK_BOX_CASE_POLICY.map((policy) => ({
       case_id: policy.case_id,
@@ -917,24 +943,23 @@ function validFinalGateProof(proof) {
       "command",
       "workdir_sha256",
       "command_identity",
-      "candidate_head",
-      "candidate_tree",
-      "contract_sha256",
-      "candidate_identity",
-      "owner_compile_diagnostic",
-      "final_gate_diagnostic",
+      "authority_basis",
+      "authority_compiled_identity",
+      "authority_candidate_identity",
+      "candidate",
+      "diagnostic",
     ]) ||
     proof.invoked !== true ||
     proof.command !== "long-task final-gate" ||
     !sha256(proof.workdir_sha256) ||
     !sha256(proof.command_identity) ||
-    !gitObjectIdentity(proof.candidate_head) ||
-    !gitObjectIdentity(proof.candidate_tree) ||
-    !sha256(proof.contract_sha256) ||
-    !sha256(proof.candidate_identity) ||
-    typeof proof.final_gate_diagnostic !== "string" ||
-    proof.final_gate_diagnostic.length === 0 ||
-    proof.final_gate_diagnostic.includes("active_task_missing")
+    !["current_candidate", "legal_neighbor"].includes(proof.authority_basis) ||
+    !sha256(proof.authority_compiled_identity) ||
+    !sha256(proof.authority_candidate_identity) ||
+    !validCommittedCandidate(proof.candidate) ||
+    typeof proof.diagnostic !== "string" ||
+    proof.diagnostic.length === 0 ||
+    /active_task_missing|dirty_candidate/u.test(proof.diagnostic)
   )
     return false;
   const expectedCommandIdentity = sha256Text(
@@ -943,35 +968,122 @@ function validFinalGateProof(proof) {
       workdir_sha256: proof.workdir_sha256,
     }),
   );
-  const expectedCandidateIdentity = sha256Text(
-    JSON.stringify({
-      candidate_head: proof.candidate_head,
-      candidate_tree: proof.candidate_tree,
-      contract_sha256: proof.contract_sha256,
-    }),
-  );
-  return (
-    proof.command_identity === expectedCommandIdentity &&
-    proof.candidate_identity === expectedCandidateIdentity
-  );
+  return proof.command_identity === expectedCommandIdentity;
 }
 
-function validateOwnerCompileDiagnostic(caseId, proof) {
+function validateCaseProof(caseId, record) {
   const required = compileBoundaryOwnerDiagnostics.get(caseId);
   if (!required) {
-    if (proof.owner_compile_diagnostic !== null)
+    if (record.compile_attack !== null)
       throw new Error(
         `real_capability_black_box_owner_compile_unexpected:${caseId}`,
       );
+    if (
+      record.final_gate.authority_basis !== "current_candidate" ||
+      record.final_gate.authority_candidate_identity !==
+        record.final_gate.candidate.identity
+    )
+      throw new Error(
+        `real_capability_black_box_current_authority_invalid:${caseId}`,
+      );
     return;
   }
+  if (!validCompileAttackProof(record.compile_attack))
+    throw new Error(
+      `real_capability_black_box_compile_candidate_invalid:${caseId}`,
+    );
   if (
-    typeof proof.owner_compile_diagnostic !== "string" ||
-    !required.every((token) => proof.owner_compile_diagnostic.includes(token))
+    typeof record.compile_attack.owner_diagnostic !== "string" ||
+    !required.every((token) =>
+      record.compile_attack.owner_diagnostic.includes(token),
+    )
   )
     throw new Error(
       `real_capability_black_box_owner_compile_diagnostic_invalid:${caseId}`,
     );
+  if (
+    canonicalJson(record.compile_attack.candidate) !==
+    canonicalJson(record.final_gate.candidate)
+  )
+    throw new Error(
+      `real_capability_black_box_compile_final_candidate_invalid:${caseId}`,
+    );
+  if (
+    record.final_gate.authority_basis !== "legal_neighbor" ||
+    record.final_gate.authority_candidate_identity ===
+      record.final_gate.candidate.identity
+  )
+    throw new Error(
+      `real_capability_black_box_legal_neighbor_invalid:${caseId}`,
+    );
+  if (
+    !record.final_gate.diagnostic.includes(
+      "final_gate_protected_input_stale",
+    ) ||
+    required.some((token) => record.final_gate.diagnostic.includes(token))
+  )
+    throw new Error(
+      `real_capability_black_box_final_gate_freshness_invalid:${caseId}`,
+    );
+}
+
+function validCompileAttackProof(proof) {
+  if (
+    !proof ||
+    !sameKeys(proof, [
+      "invoked",
+      "command",
+      "workdir_sha256",
+      "command_identity",
+      "candidate",
+      "owner_diagnostic",
+    ]) ||
+    proof.invoked !== true ||
+    proof.command !== "long-task compile --revise" ||
+    !sha256(proof.workdir_sha256) ||
+    !sha256(proof.command_identity) ||
+    !validCommittedCandidate(proof.candidate)
+  )
+    return false;
+  return (
+    proof.command_identity ===
+    sha256Text(
+      JSON.stringify({
+        command: proof.command,
+        workdir_sha256: proof.workdir_sha256,
+      }),
+    )
+  );
+}
+
+function validCommittedCandidate(candidate) {
+  if (
+    !candidate ||
+    !sameKeys(candidate, [
+      "head",
+      "tree",
+      "contract_sha256",
+      "clean",
+      "identity",
+    ]) ||
+    !gitObjectIdentity(candidate.head) ||
+    !gitObjectIdentity(candidate.tree) ||
+    !sha256(candidate.contract_sha256) ||
+    candidate.clean !== true ||
+    !sha256(candidate.identity)
+  )
+    return false;
+  return (
+    candidate.identity ===
+    sha256Text(
+      JSON.stringify({
+        head: candidate.head,
+        tree: candidate.tree,
+        contract_sha256: candidate.contract_sha256,
+        clean: candidate.clean,
+      }),
+    )
+  );
 }
 
 function sha256(value) {

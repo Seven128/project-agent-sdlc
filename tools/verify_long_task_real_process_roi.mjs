@@ -1,17 +1,21 @@
 import { createHash } from "node:crypto";
+import { execFile } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import {
   BASELINE_A_COMMIT,
   CASE_IDS,
+  FORMAL_TOTAL_COST_CATEGORIES,
+  FORMAL_TOTAL_COST_UNIT,
   ISOLATED_ENVELOPE_B_COMMIT,
-  REAL_PROCESS_ATTESTATION_SCHEMA,
-  REAL_PROCESS_MANIFEST_SCHEMA,
-  REAL_PROCESS_ROI_SCHEMA,
+  LEGACY_REAL_PROCESS_SCHEMAS,
+  REAL_PROCESS_SCHEMAS,
 } from "./long_task_real_process_roi_policy.mjs";
 import {
   assert,
+  assertCurrentEvidenceSchema,
   canonical,
   deriveRealProcessRoiSummary,
   validateRunRecord,
@@ -23,7 +27,17 @@ import {
   realProcessRoiPaths,
 } from "./long_task_real_process_roi_runner.mjs";
 
+const {
+  REAL_PROCESS_ATTESTATION_SCHEMA,
+  REAL_PROCESS_COLLECTION_SCHEMA,
+  REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+  REAL_PROCESS_MANIFEST_SCHEMA,
+  REAL_PROCESS_ROI_SCHEMA,
+  REAL_PROCESS_VERIFICATION_SCHEMA,
+} = REAL_PROCESS_SCHEMAS;
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const execFileAsync = promisify(execFile);
 
 export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   const resolved = path.resolve(runSetRoot);
@@ -35,23 +49,39 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       readJson(path.join(resolved, "manifest.json")),
       readJson(path.join(resolved, "attestation.json")),
     ]);
-  assert(
-    aggregate.schema_version === REAL_PROCESS_ROI_SCHEMA,
+  assertCurrentEvidenceSchema(
+    aggregate.schema_version,
+    REAL_PROCESS_ROI_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.run_set,
     "aggregate_schema",
   );
   assert(
     manifest.schema_version === REAL_PROCESS_MANIFEST_SCHEMA,
     "manifest_schema",
   );
-  assert(
-    attestation.schema_version === REAL_PROCESS_ATTESTATION_SCHEMA,
+  assertCurrentEvidenceSchema(
+    attestation.schema_version,
+    REAL_PROCESS_ATTESTATION_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.attestation,
     "attestation_schema",
+  );
+  assertCurrentEvidenceSchema(
+    config.schema_version,
+    REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.frozen_config,
+    "frozen_config_schema",
   );
   assert(
     config.purpose === "real-process-lifecycle-roi-only",
     "config_purpose",
   );
   assert(config.safety_theorem_claimed === false, "config_safety_boundary");
+  assert(
+    config.capability_level === "level_3" &&
+      config.level_4_claimed === false &&
+      config.governance_judgment_included === false,
+    "config_level_boundary",
+  );
   assert(config.artifacts_are_non_authority === true, "config_non_authority");
   assert(
     config.candidate_must_equal_head === true &&
@@ -65,6 +95,22 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       config.authoring_token_policy.missing_value_status ===
         "required-unverified",
     "config_authoring_token_policy",
+  );
+  assert(
+    canonical(config.formal_total_cost_policy?.categories) ===
+        canonical(FORMAL_TOTAL_COST_CATEGORIES) &&
+      config.formal_total_cost_policy?.normalized_unit ===
+        FORMAL_TOTAL_COST_UNIT &&
+      config.formal_total_cost_policy?.theorem ===
+        "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs" &&
+      config.formal_total_cost_policy?.independent_evidence_ingestion ===
+        "not_implemented" &&
+      config.formal_total_cost_policy
+        ?.self_attested_verified_records_admitted === false &&
+      config.formal_total_cost_policy?.governance_judgment_included === false &&
+      config.formal_total_cost_policy
+        ?.level_4_requires_independent_capability_audit === true,
+    "config_formal_total_cost_policy",
   );
   assert(
     canonical(environment) === canonical(config.environment) &&
@@ -104,15 +150,41 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   );
   assert(config.variants.b.safety_eligible === false, "variant_b_role");
   assert(config.variants.c.safety_eligible === true, "variant_c_role");
-  if (options.expectedCandidate)
+  if (options.expectedCandidate) {
     assert(
       config.variants.c.commit === options.expectedCandidate,
       "candidate_identity",
     );
+    let resolvedCommit = null;
+    let resolvedTree = null;
+    try {
+      resolvedCommit = await gitText(root, [
+        "rev-parse",
+        `${options.expectedCandidate}^{commit}`,
+      ]);
+      resolvedTree = await gitText(root, [
+        "rev-parse",
+        `${options.expectedCandidate}^{tree}`,
+      ]);
+    } catch {
+      assert(false, "candidate_git_identity");
+    }
+    assert(
+      resolvedCommit === options.expectedCandidate &&
+        resolvedTree === config.candidate_tree,
+      "candidate_git_identity",
+    );
+  }
   assert(
     aggregate.candidate_identity.commit === config.variants.c.commit &&
       aggregate.candidate_identity.tree === config.candidate_tree,
     "aggregate_candidate_identity",
+  );
+  assert(
+    aggregate.capability_level === "level_3" &&
+      aggregate.level_4_claimed === false &&
+      aggregate.governance_judgment_included === false,
+    "aggregate_level_boundary",
   );
   const setupByVariant = await validateSetupRecords({
     runSetRoot: resolved,
@@ -159,7 +231,10 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   assert(
     attestation.a_safety_eligible === false &&
       attestation.artifacts_are_non_authority === true &&
-      attestation.raw_promoted_to_gate === false,
+      attestation.raw_promoted_to_gate === false &&
+      attestation.capability_level === "level_3" &&
+      attestation.level_4_claimed === false &&
+      attestation.governance_judgment_included === false,
     "attestation_authority_boundary",
   );
   assert(Array.isArray(aggregate.run_refs), "aggregate_run_refs");
@@ -191,12 +266,18 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     "summary_recomputation",
   );
   assert(
-    attestation.admission_verdict === summary.admission_verdict &&
+    attestation.report_status === summary.report_status &&
+      attestation.observed_lifecycle_evidence_valid ===
+        summary.observed_lifecycle_evidence_valid &&
+      attestation.total_roi_supported === summary.total_roi_supported &&
       attestation.total_roi_positive === summary.total_roi_positive,
-    "attestation_verdict",
+    "attestation_measurement_summary",
   );
   return {
-    schema_version: "long-task-real-process-roi-verification-v1",
+    schema_version: REAL_PROCESS_VERIFICATION_SCHEMA,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
     run_set_root: resolved,
     candidate_commit: config.variants.c.commit,
     candidate_tree: config.candidate_tree,
@@ -206,14 +287,18 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     a_safety_eligible: false,
     b_known_r9_r11_false_acceptance_reproduced:
       summary.b_known_r9_r11_false_acceptance_reproduced,
-    candidate_safety_floor: summary.candidate_safety_floor,
+    observed_lifecycle_evidence_valid:
+      summary.observed_lifecycle_evidence_valid,
+    observed_lifecycle_known_path_floor_met:
+      summary.observed_lifecycle_known_path_floor_met,
     metrics: Object.fromEntries(
       Object.entries(summary.per_variant).map(([variant, value]) => [
         variant,
         value,
       ]),
     ),
-    admission_verdict: summary.admission_verdict,
+    report_status: summary.report_status,
+    total_roi_supported: summary.total_roi_supported,
     total_roi_positive: summary.total_roi_positive,
     artifacts_are_non_authority: true,
   };
@@ -267,6 +352,8 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
       new Set(labels).size === labels.length,
       `setup_command_duplicates:${item.variant_id}`,
     );
+    const commandByLabel = new Map();
+    const stdoutByLabel = new Map();
     for (const command of item.setup_commands) {
       assert(
         command.schema_version === "long-task-real-process-host-command-v1" &&
@@ -280,6 +367,7 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
         canonical(commandRecord) === canonical(command),
         `setup_command_record:${item.variant_id}:${command.label}`,
       );
+      commandByLabel.set(command.label, command);
       for (const stream of ["stdout", "stderr"]) {
         const bytes = await readFile(
           resolveContained(setupRoot, `${command.label}.${stream}.log`),
@@ -289,7 +377,23 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
             digest(bytes) === command[`${stream}_sha256`],
           `setup_command_${stream}:${item.variant_id}:${command.label}`,
         );
+        if (stream === "stdout")
+          stdoutByLabel.set(command.label, bytes.toString("utf8"));
       }
+    }
+    for (const [label, args, expectedOutput] of [
+      ["candidate-head", ["rev-parse", "HEAD"], item.commit],
+      ["candidate-tree", ["rev-parse", "HEAD^{tree}"], item.tree],
+      ["candidate-status", ["status", "--short"], ""],
+    ]) {
+      const command = commandByLabel.get(label);
+      assert(
+        command &&
+          canonical(command.argv) === canonical(["git", ...args]) &&
+          command.cwd === commandByLabel.get("candidate-head")?.cwd &&
+          stdoutByLabel.get(label)?.trim() === expectedOutput,
+        `setup_candidate_identity_command:${item.variant_id}:${label}`,
+      );
     }
     byVariant.set(item.variant_id, item);
   }
@@ -311,6 +415,7 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
     new Set(commandRefs).size === commandRefs.length,
     `run_command_duplicates:${run.run_id}`,
   );
+  const commandEvidence = new Map();
   for (const command of commands) {
     assert(
       command.schema_version === "long-task-real-process-command-v1",
@@ -323,6 +428,7 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       canonical(persisted) === canonical(command),
       `run_command_record:${run.run_id}:${command.relative_path}`,
     );
+    let stdoutText = null;
     for (const stream of ["stdout", "stderr"]) {
       const bytes = await readFile(
         resolveContained(runRoot, command[`${stream}_path`]),
@@ -332,7 +438,9 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
           digest(bytes) === command[`${stream}_sha256`],
         `run_command_${stream}:${run.run_id}:${command.relative_path}`,
       );
+      if (stream === "stdout") stdoutText = bytes.toString("utf8");
     }
+    commandEvidence.set(command.relative_path, { command, stdoutText });
   }
   const referencedCommands = [
     ...run.cases.flatMap((item) => item.command_record_refs),
@@ -359,6 +467,11 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       canonical(persisted) === canonical(reported),
       `run_case_record:${run.run_id}:${caseId}`,
     );
+    validateFixtureCandidateCommandEvidence(
+      persisted.committed_candidate_identity,
+      commandEvidence,
+      `${run.run_id}:case:${caseId}`,
+    );
     cases.push(persisted);
   }
   const recoveries = [];
@@ -374,6 +487,11 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       canonical(persisted) === canonical(reported),
       `run_recovery_record:${run.run_id}:${caseId}`,
     );
+    validateFixtureCandidateCommandEvidence(
+      persisted.committed_candidate_identity,
+      commandEvidence,
+      `${run.run_id}:recovery:${caseId}`,
+    );
     recoveries.push(persisted);
   }
   assert(
@@ -388,6 +506,52 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       `run_raw_closure_escape:${run.run_id}`,
     );
   }
+}
+
+function validateFixtureCandidateCommandEvidence(identity, commandEvidence, label) {
+  const specs = [
+    ["candidate-before-head", ["rev-parse", "HEAD"], identity.commit],
+    ["candidate-before-tree", ["rev-parse", "HEAD^{tree}"], identity.tree],
+    ["candidate-before-status", ["status", "--short"], ""],
+    ["candidate-after-head", ["rev-parse", "HEAD"], identity.commit],
+    ["candidate-after-tree", ["rev-parse", "HEAD^{tree}"], identity.tree],
+    ["candidate-after-status", ["status", "--short"], ""],
+  ];
+  const records = identity.command_record_refs.map((reference) => {
+    const evidence = commandEvidence.get(reference);
+    assert(evidence, `fixture_candidate_command_ref:${label}:${reference}`);
+    return evidence;
+  });
+  const byLabel = new Map(records.map((evidence) => [evidence.command.label, evidence]));
+  assert(
+    byLabel.size === specs.length,
+    `fixture_candidate_command_set:${label}`,
+  );
+  const cwd = byLabel.get("candidate-before-head")?.command.cwd;
+  for (const [commandLabel, args, expectedOutput] of specs) {
+    const evidence = byLabel.get(commandLabel);
+    assert(
+      evidence &&
+        canonical(evidence.command.argv) === canonical(["git", ...args]) &&
+        evidence.command.cwd === cwd &&
+        evidence.command.status === 0 &&
+        evidence.command.signal === null &&
+        evidence.command.spawn_error === null &&
+        evidence.command.stderr_bytes === 0 &&
+        evidence.stdoutText.trim() === expectedOutput,
+      `fixture_candidate_command:${label}:${commandLabel}`,
+    );
+  }
+  const beforeIndices = specs
+    .slice(0, 3)
+    .map(([commandLabel]) => byLabel.get(commandLabel).command.index);
+  const afterIndices = specs
+    .slice(3)
+    .map(([commandLabel]) => byLabel.get(commandLabel).command.index);
+  assert(
+    Math.max(...beforeIndices) < Math.min(...afterIndices),
+    `fixture_candidate_command_order:${label}`,
+  );
 }
 
 async function main() {
@@ -411,10 +575,15 @@ async function main() {
     process.stdout.write(
       `${JSON.stringify(
         {
-          schema_version: "long-task-real-process-roi-collection-v1",
+          schema_version: REAL_PROCESS_COLLECTION_SCHEMA,
+          capability_level: "level_3",
+          level_4_claimed: false,
+          governance_judgment_included: false,
           run_set_root: result.runSetRoot,
           manifest_sha256: result.attestation.manifest_sha256,
-          admission_verdict: result.aggregate.summary.admission_verdict,
+          report_status: result.aggregate.summary.report_status,
+          total_roi_supported:
+            result.aggregate.summary.total_roi_supported,
           total_roi_positive: result.aggregate.summary.total_roi_positive,
         },
         null,
@@ -431,7 +600,17 @@ async function main() {
     expectedCandidate: args.candidate,
   });
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-  if (!result.total_roi_positive && !args.allowRejected) process.exitCode = 1;
+  if (!result.observed_lifecycle_evidence_valid && !args.allowRejected)
+    process.exitCode = 1;
+}
+
+async function gitText(cwd, args) {
+  const result = await execFileAsync("git", args, {
+    cwd,
+    windowsHide: true,
+    encoding: "utf8",
+  });
+  return result.stdout.trim();
 }
 
 function parseArgs(argv) {

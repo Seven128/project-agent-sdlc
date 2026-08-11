@@ -1116,7 +1116,7 @@ test("Mechanism Admission Rule is explicit and creates no registry", async () =>
   );
   assert.match(
     policy,
-    /Long-Task Workflow itself[\s\S]*(?:before mature longitudinal data existed|rather than mature longitudinal data)[\s\S]*(?:logic and basic validation|logic-and-basic-validation)/iu,
+    /Long-Task Workflow itself[\s\S]{0,160}(?:before mature longitudinal data existed|rather than mature longitudinal data)[\s\S]{0,160}(?:logic and basic validation|logic-and-basic-validation)/iu,
   );
   assert.match(
     policy,
@@ -1154,7 +1154,7 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   }
   assert.match(
     skill,
-    /total authoring, runtime, state, recovery, maintenance, test, process, adoption and migration cost/iu,
+    /total authoring, runtime, state, recovery, maintenance, test, process, introduction, adoption and migration cost/iu,
   );
   assert.match(
     skill,
@@ -1166,7 +1166,15 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   );
   assert.match(
     skill,
-    /positive net ROI admits consideration, never automatic adoption/iu,
+    /high total-cost ROI and high efficiency[\s\S]{0,160}admit consideration, never automatic adoption/iu,
+  );
+  assert.match(
+    skill,
+    /significant stable margin[\s\S]{0,120}(?:not|rather than) a global\/local optimum/iu,
+  );
+  assert.match(
+    skill,
+    /(?:sufficiency stop rule|Once purpose validity[\s\S]{0,220}stop construction)[\s\S]{0,240}(?:new real counterexample|repeated material cost hot spot|significant additional net benefit)/iu,
   );
   assert.match(
     skill,

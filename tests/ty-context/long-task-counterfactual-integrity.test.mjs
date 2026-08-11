@@ -250,6 +250,30 @@ test("process Counterfactual keeps the compiled closure identity and mutates onl
     const checks = compiled.outcomes.flatMap(
       (outcome) => outcome.acceptance.checks,
     );
+    assert.equal(checks.length, 2);
+    assert.equal(
+      new Set(
+        checks.map(
+          (candidate) => candidate.process_runtime_closure.closure_identity,
+        ),
+      ).size,
+      1,
+      "logical Outcome Binding refs must not split one physical runtime closure",
+    );
+    assert.deepEqual(
+      checks[0].process_runtime_closure.allowed_runtime_files,
+      checks[1].process_runtime_closure.allowed_runtime_files,
+    );
+    assert.ok(
+      checks[0].process_runtime_closure.production_binding_refs.every((ref) =>
+        ref.startsWith("first."),
+      ),
+    );
+    assert.ok(
+      checks[1].process_runtime_closure.production_binding_refs.every((ref) =>
+        ref.startsWith("second."),
+      ),
+    );
     const manifest = await captureWorkspaceManifest(
       fixture.root,
       fixture.workdir,

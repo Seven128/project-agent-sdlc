@@ -351,7 +351,7 @@ function refreshProcessRuntimeClosure(check, { rootArgv, productionFiles }) {
     execution_target: executionTarget,
     observation_authorities: check.observation_authorities,
     production_bindings: [
-      {
+      scopedBinding("fixture", {
         key: "binding:fixture",
         kind: "file",
         target: carrierPaths[0],
@@ -359,16 +359,18 @@ function refreshProcessRuntimeClosure(check, { rootArgv, productionFiles }) {
         existence: carrierPaths[0].startsWith("missing/")
           ? "planned"
           : "existing",
-      },
+      }),
       ...[rootTarget, ...runtimeFiles]
         .filter((carrierPath) => !carrierPaths.includes(carrierPath))
-        .map((carrierPath, index) => ({
-          key: `fixture-production-${index}`,
-          kind: "file",
-          target: carrierPath,
-          carrier_paths: [carrierPath],
-          existence: "existing",
-        })),
+        .map((carrierPath, index) =>
+          scopedBinding("fixture", {
+            key: `fixture-production-${index}`,
+            kind: "file",
+            target: carrierPath,
+            carrier_paths: [carrierPath],
+            existence: "existing",
+          }),
+        ),
     ],
     production_owner_paths: [
       "bin/**",
@@ -403,10 +405,21 @@ function observationAuthority({
     method: "exact_value",
     observation_identity,
     locator_policy: { kind: "fixed_json_pointer", value: "/value" },
-    carrier_refs: [{ binding_ref: "binding:fixture", carrier_paths }],
+    carrier_refs: [
+      { binding_ref: "fixture.binding:fixture", carrier_paths },
+    ],
     runtime_requirements: {
       declared_root_argv: [],
     },
+  };
+}
+
+function scopedBinding(outcomeKey, binding) {
+  return {
+    outcome_key: outcomeKey,
+    local_key: binding.key,
+    binding_ref: `${outcomeKey}.${binding.key}`,
+    binding,
   };
 }
 

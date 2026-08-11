@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-const REPORT_SCHEMA = "long-task-real-capability-black-box-terminal-report-v1";
+const REPORT_SCHEMA = "long-task-real-capability-black-box-terminal-report-v2";
 const candidateRoles = new Set(["wrong", "control", "external"]);
 const relationOperators = new Set(["equals", "not_equals"]);
 
@@ -40,6 +40,9 @@ export function createDeliveryTerminalReportRecorder({
           workflow_status: workflowStatus,
           result_status: resultStatus,
         },
+        compile_attack: normalizeCompileAttackProof(
+          execution?.compile_attack_proof,
+        ),
         final_gate: normalizeFinalGateProof(execution?.final_gate_proof),
       });
     },
@@ -59,6 +62,18 @@ export function createDeliveryTerminalReportRecorder({
   };
 }
 
+function normalizeCompileAttackProof(proof) {
+  if (!proof) return null;
+  return {
+    invoked: proof.invoked === true,
+    command: proof.command ?? null,
+    workdir_sha256: proof.workdir_sha256 ?? null,
+    command_identity: proof.command_identity ?? null,
+    candidate: normalizeCandidateProof(proof.candidate),
+    owner_diagnostic: proof.owner_diagnostic ?? null,
+  };
+}
+
 function normalizeFinalGateProof(proof) {
   if (!proof)
     return {
@@ -66,24 +81,32 @@ function normalizeFinalGateProof(proof) {
       command: null,
       workdir_sha256: null,
       command_identity: null,
-      candidate_head: null,
-      candidate_tree: null,
-      contract_sha256: null,
-      candidate_identity: null,
-      owner_compile_diagnostic: null,
-      final_gate_diagnostic: null,
+      authority_basis: null,
+      authority_compiled_identity: null,
+      authority_candidate_identity: null,
+      candidate: normalizeCandidateProof(null),
+      diagnostic: null,
     };
   return {
     invoked: proof.invoked === true,
     command: proof.command ?? null,
     workdir_sha256: proof.workdir_sha256 ?? null,
     command_identity: proof.command_identity ?? null,
-    candidate_head: proof.candidate_head ?? null,
-    candidate_tree: proof.candidate_tree ?? null,
-    contract_sha256: proof.contract_sha256 ?? null,
-    candidate_identity: proof.candidate_identity ?? null,
-    owner_compile_diagnostic: proof.owner_compile_diagnostic ?? null,
-    final_gate_diagnostic: proof.final_gate_diagnostic ?? null,
+    authority_basis: proof.authority_basis ?? null,
+    authority_compiled_identity: proof.authority_compiled_identity ?? null,
+    authority_candidate_identity: proof.authority_candidate_identity ?? null,
+    candidate: normalizeCandidateProof(proof.candidate),
+    diagnostic: proof.diagnostic ?? null,
+  };
+}
+
+function normalizeCandidateProof(candidate) {
+  return {
+    head: candidate?.head ?? null,
+    tree: candidate?.tree ?? null,
+    contract_sha256: candidate?.contract_sha256 ?? null,
+    clean: candidate?.clean === true,
+    identity: candidate?.identity ?? null,
   };
 }
 

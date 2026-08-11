@@ -58,6 +58,18 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
       check.process_runtime_closure.root_target,
       "bin/product-root.exe",
     );
+    assert.ok(
+      check.process_runtime_closure.production_binding_refs.every((ref) =>
+        ref.startsWith("first."),
+      ),
+    );
+    assert.ok(
+      check.observation_authorities.every((authority) =>
+        authority.carrier_refs.every((carrier) =>
+          carrier.binding_ref.startsWith("first."),
+        ),
+      ),
+    );
     assert.equal(check.process_runtime_closure.closure_identity.length, 64);
     assert.equal(compiled.source_hashes["source.md"].length, 64);
   } finally {
@@ -151,10 +163,12 @@ test("preflight rejects invalid Context, missing runner path and Outcome without
   }
 });
 
-test("Compile rejects a missing unbound repository file token in the complete product root argv", async () => {
+test("Compile ignores safe unmatched relative argv values instead of copying or role-classifying them", async () => {
   for (const token of [
     "tests/missing-runtime-config.json",
     "--config=tests/missing-runtime-config.json",
+    "runtime/extensionless-entry",
+    "--label=release/channel",
   ]) {
     const fixture = await createDeliveryFixture();
     try {
@@ -172,11 +186,24 @@ test("Compile rejects a missing unbound repository file token in the complete pr
       );
       await writeContract(fixture.workdir, fixture.contract);
 
-      await assert.rejects(
-        compileDeliveryContract(fixture.workdir, fixture.root, {
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        {
           require_completion_gate: false,
-        }),
-        /process_root_production_binding_required:fixture-app:tests\/missing-runtime-config\.json/u,
+        },
+      );
+      const closure = compiled.outcomes[0].acceptance.checks[0]
+        .process_runtime_closure;
+      assert.ok(closure);
+      assert.equal(
+        closure.root_argv_files.some(
+          (candidate) =>
+            candidate.includes("missing-runtime-config") ||
+            candidate.includes("extensionless-entry") ||
+            candidate.includes("release/channel"),
+        ),
+        false,
       );
     } finally {
       await rm(fixture.root, { recursive: true, force: true });
@@ -184,35 +211,39 @@ test("Compile rejects a missing unbound repository file token in the complete pr
   }
 });
 
-test("Compile does not reinterpret URL or slash-bearing label argv as repository files", async () => {
-  const fixture = await createDeliveryFixture();
-  try {
-    const target = fixture.contract.task.execution_targets[0];
-    const check = fixture.contract.outcomes[0].acceptance.checks[0];
-    const rootArgv = [
-      ...fixtureProductRootArgv("tests/oracle.mjs", "first"),
-      "https://example.test/runtime",
-      "--endpoint=https://example.test/runtime",
-      "C:/external/config.json",
-      "../external/config.json",
-      "feature/channel",
-      "--label=release/channel",
-    ];
-    target.root_argv = rootArgv;
-    check.runner.argv = [...rootArgv];
-    await synchronizeFixtureExecutionTargetSource(
-      fixture.root,
-      fixture.contract,
-    );
-    await writeContract(fixture.workdir, fixture.contract);
+test("Compile fails closed for absolute, escaping, file URL, and network URL argv values", async () => {
+  for (const unsafe of [
+    "https://example.test/runtime",
+    "--endpoint=https://example.test/runtime",
+    "file:///external/runtime.json",
+    "C:/external/config.json",
+    "../external/config.json",
+  ]) {
+    const fixture = await createDeliveryFixture();
+    try {
+      const target = fixture.contract.task.execution_targets[0];
+      const check = fixture.contract.outcomes[0].acceptance.checks[0];
+      const rootArgv = [
+        ...fixtureProductRootArgv("tests/oracle.mjs", "first"),
+        unsafe,
+      ];
+      target.root_argv = rootArgv;
+      check.runner.argv = [...rootArgv];
+      await synchronizeFixtureExecutionTargetSource(
+        fixture.root,
+        fixture.contract,
+      );
+      await writeContract(fixture.workdir, fixture.contract);
 
-    await assert.doesNotReject(
-      compileDeliveryContract(fixture.workdir, fixture.root, {
-        require_completion_gate: false,
-      }),
-    );
-  } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        /process_root_argv_unsafe/u,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
   }
 });
 

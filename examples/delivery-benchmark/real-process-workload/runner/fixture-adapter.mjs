@@ -10,10 +10,17 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
+  LEGACY_REAL_PROCESS_SCHEMAS,
+  REAL_PROCESS_SCHEMAS,
+} from "../../../../tools/long_task_real_process_roi_policy.mjs";
+import { assertCurrentEvidenceSchema } from "../../../../tools/long_task_real_process_roi_scoring.mjs";
+import {
   evaluateCounterfactualGold,
   evaluateIndependentGold,
   loadSemanticGold,
 } from "./gold.mjs";
+
+const { REAL_PROCESS_WORKLOAD_SCHEMA } = REAL_PROCESS_SCHEMAS;
 
 const workloadRoot = fileURLToPath(new URL("..", import.meta.url));
 const productSourcePath = path.join(workloadRoot, "product", "product.mjs");
@@ -44,6 +51,12 @@ export async function createWorkloadFixture({
   )
     state.pricing.currency = "USD";
 
+  const externalInput = await configureAttackInput(fixture.root, caseId);
+  if (externalInput)
+    state.runtime = {
+      external_input_path: externalInput,
+      missing_input_behavior: "preserve-product-state",
+    };
   const product = await installProduct(fixture.root, state);
   configureAssertions(fixture.contract);
   configureCounterfactuals(fixture.contract);
@@ -52,6 +65,7 @@ export async function createWorkloadFixture({
     variantId,
     caseId,
     product,
+    externalInput,
   });
   let migrationMs = 0;
   if (variantId === "c") {
@@ -81,6 +95,12 @@ export async function createWorkloadFixture({
     caseId,
   });
   const workload = JSON.parse(await readFile(workloadPath, "utf8"));
+  assertCurrentEvidenceSchema(
+    workload.schema_version,
+    REAL_PROCESS_WORKLOAD_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.workload,
+    "workload_schema",
+  );
   const counterfactuals = [];
   for (const mutation of workload.counterfactuals)
     counterfactuals.push(
@@ -133,10 +153,7 @@ async function installProduct(root, state) {
     ),
   ]);
   const rootPath = `bin/roi-product-root${process.platform === "win32" ? ".exe" : ""}`;
-  const executableSource =
-    process.platform === "win32" ? process.env.ComSpec : "/bin/sh";
-  if (!executableSource)
-    throw new Error("real_process_roi_product_shell_unavailable");
+  const executableSource = process.execPath;
   const rootTarget = path.join(root, ...rootPath.split("/"));
   await mkdir(path.dirname(rootTarget), { recursive: true });
   await copyFile(executableSource, rootTarget);
@@ -144,16 +161,20 @@ async function installProduct(root, state) {
   return { productPath, factsPath, statePath, rootPath };
 }
 
-async function configureProductTarget({ fixture, variantId, caseId, product }) {
+async function configureProductTarget({
+  fixture,
+  variantId,
+  caseId,
+  product,
+  externalInput,
+}) {
   const target = fixture.contract.task.execution_targets[0];
   target.role = "product";
   target.runtime_family = "process";
   target.root_entrypoint = product.rootPath;
   target.capabilities = ["process-runtime", "cold-start", "production-root"];
-  const externalInput = await configureAttackInput(fixture.root, caseId);
   const rootArgv = productRootArgv(product.productPath, "first", [
     `--facts=${product.factsPath}`,
-    ...(externalInput ? [`--external-input=${externalInput}`] : []),
   ]);
   if (variantId === "a") delete target.root_argv;
   else target.root_argv = rootArgv;
@@ -169,7 +190,6 @@ async function configureProductTarget({ fixture, variantId, caseId, product }) {
       product.productPath,
       product.factsPath,
       product.statePath,
-      ...(externalInput ? [externalInput] : []),
     ]);
     outcome.technical.expected_change_paths = [product.statePath];
     const retainedSupportPaths = outcome.technical.allowed_support_paths.filter(
@@ -180,7 +200,6 @@ async function configureProductTarget({ fixture, variantId, caseId, product }) {
       ...(variantId === "b"
         ? []
         : [product.rootPath, product.productPath, product.factsPath]),
-      ...(variantId === "c" && externalInput ? [externalInput] : []),
     ]);
     outcome.technical.bindings = currentClosure
       ? [
@@ -473,13 +492,7 @@ console.log(JSON.stringify(result));
 }
 
 function productRootArgv(script, scope, extra = []) {
-  const args = [script, scope, ...extra];
-  if (process.platform === "win32")
-    return ["/d", "/s", "/c", `node ${args.map(cmdToken).join(" ")}`];
-  return [
-    "-c",
-    `${shellQuote(process.execPath)} ${args.map(shellQuote).join(" ")}`,
-  ];
+  return [script, scope, ...extra];
 }
 
 function binding(key, relative) {
@@ -515,15 +528,4 @@ async function importFromHarness(harnessRoot, relative) {
 
 function countMatches(value, pattern) {
   return [...value.matchAll(pattern)].length;
-}
-
-function shellQuote(value) {
-  return `'${String(value).replaceAll("'", `'\\''`)}'`;
-}
-
-function cmdToken(value) {
-  const token = String(value);
-  if (!/^[A-Za-z0-9_./:=\-]+$/u.test(token))
-    throw new Error(`real_process_roi_cmd_token_unsafe:${token}`);
-  return token;
 }

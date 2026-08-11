@@ -4,7 +4,6 @@ import type {
   CompiledCheckV2,
   CompiledDesignTargetV2,
   DeliveryCheckV2,
-  DeliveryBindingV2,
   ExecutionTargetV2,
   FrozenRunnerV2,
   SemanticFactExpectationV2,
@@ -37,6 +36,7 @@ import {
 } from "./long-task-verifier-dependency-closure.js";
 import { compileObservationAuthorityPlan } from "./long-task-observation-authority.js";
 import { compileProcessRuntimeClosure } from "./long-task-process-runtime-closure.js";
+import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
 
 export async function freezeDeliveryCheck(
   check: DeliveryCheckV2,
@@ -47,7 +47,7 @@ export async function freezeDeliveryCheck(
   knownExecutionTargets: ExecutionTargetV2[],
   designConformanceTargets: CompiledDesignTargetV2[],
   semanticFactExpectations: SemanticFactExpectationV2[],
-  productionBindings: DeliveryBindingV2[],
+  productionBindings: ScopedDeliveryBindingV2[],
   productionOwnerPaths: string[],
   sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null,
   protectedAuthorityPaths: readonly string[] = [],
@@ -201,7 +201,7 @@ async function resolvedRunnerTarget(
   repository: string,
   cwd: string,
   executionTarget: ExecutionTargetV2,
-  productionBindings: DeliveryBindingV2[],
+  productionBindings: ScopedDeliveryBindingV2[],
   sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null,
 ): Promise<string> {
   if (check.runner.type === "package_script") {
@@ -253,15 +253,15 @@ async function resolvedRunnerTarget(
 }
 
 function plannedBindingMayProvideInput(
-  bindings: readonly DeliveryBindingV2[],
+  bindings: readonly ScopedDeliveryBindingV2[],
   inputPattern: string,
 ): boolean {
   return bindings.some(
-    (binding) =>
-      binding.existence === "planned" &&
-      binding.carrier_paths.some(
+    (scoped) =>
+      scoped.binding.existence === "planned" &&
+      scoped.binding.carrier_paths.some(
         (carrier) =>
-          isExactRepositoryFile(carrier, `${binding.key}.carrier`) &&
+          isExactRepositoryFile(carrier, `${scoped.binding_ref}.carrier`) &&
           proveRepositoryPatternSubset(carrier, inputPattern).status ===
             "proven_subset",
       ),
@@ -271,7 +271,7 @@ function plannedBindingMayProvideInput(
 function plannedDirectProductRoot(input: {
   check: DeliveryCheckV2;
   executionTarget: ExecutionTargetV2;
-  productionBindings: readonly DeliveryBindingV2[];
+  productionBindings: readonly ScopedDeliveryBindingV2[];
   sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null;
   relativeTarget: string;
 }): boolean {
@@ -284,11 +284,11 @@ function plannedDirectProductRoot(input: {
       input.executionTarget.key &&
     input.relativeTarget === input.executionTarget.root_entrypoint &&
     input.productionBindings.some(
-      (binding) =>
-        binding.existence === "planned" &&
-        binding.carrier_paths.some(
+      (scoped) =>
+        scoped.binding.existence === "planned" &&
+        scoped.binding.carrier_paths.some(
           (carrier) =>
-            isExactRepositoryFile(carrier, `${binding.key}.carrier`) &&
+            isExactRepositoryFile(carrier, `${scoped.binding_ref}.carrier`) &&
             carrier === input.relativeTarget,
         ),
     )

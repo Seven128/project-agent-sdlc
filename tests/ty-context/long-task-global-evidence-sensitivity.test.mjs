@@ -43,6 +43,105 @@ test("Global structured Claims require a same-Check Global Counterfactual", asyn
   }
 });
 
+test("Global Checks preserve Outcome-scoped Binding identity while deduplicating physical closure paths", async () => {
+  for (const [scenario, secondPath, expectedPhysicalPaths] of [
+    ["same physical path", "src/state.json", ["src/state.json"]],
+    [
+      "different physical paths",
+      "src/second-state.json",
+      ["src/second-state.json", "src/state.json"],
+    ],
+  ]) {
+    const fixture = await createDeliveryFixture({ twoOutcomes: true });
+    try {
+      await addGlobalClaim(fixture, { counterfactual: true });
+      const [first, second] = fixture.contract.outcomes;
+      const firstBinding = first.technical.bindings.find(
+        (binding) => binding.key === "state-first",
+      );
+      const secondBinding = second.technical.bindings.find(
+        (binding) => binding.key === "state-second",
+      );
+      assert.ok(firstBinding, `${scenario}: first state Binding is required`);
+      assert.ok(secondBinding, `${scenario}: second state Binding is required`);
+      first.technical.bindings.push({
+        ...structuredClone(firstBinding),
+        key: "shared-state",
+      });
+      second.technical.bindings.push({
+        ...structuredClone(secondBinding),
+        key: "shared-state",
+        target: secondPath,
+        carrier_paths: [secondPath],
+      });
+      fixture.contract.global.acceptance.counterfactual_controls[0].binding_ref =
+        "first.shared-state";
+      const authoredGlobalCheck =
+        fixture.contract.global.acceptance.checks.find(
+          (check) => check.key === "global-state-check",
+        );
+      assert.ok(authoredGlobalCheck);
+      if (!authoredGlobalCheck.input_paths.includes(secondPath))
+        authoredGlobalCheck.input_paths.push(secondPath);
+      if (secondPath !== "src/state.json")
+        await writeFile(
+          path.join(fixture.root, ...secondPath.split("/")),
+          '{"second":true}\n',
+        );
+      await writeContract(fixture.workdir, fixture.contract);
+
+      const compiled = await compileDeliveryContract(
+        fixture.workdir,
+        fixture.root,
+        { require_completion_gate: false },
+      );
+      const globalCheck = compiled.global.acceptance.checks.find(
+        (check) => check.key === "global-state-check",
+      );
+      assert.ok(globalCheck, `${scenario}: compiled Global Check is required`);
+      const scopedRefs = globalCheck.process_runtime_closure.production_binding_refs
+        .filter((bindingRef) => bindingRef.endsWith(".shared-state"))
+        .sort();
+      assert.deepEqual(scopedRefs, [
+        "first.shared-state",
+        "second.shared-state",
+      ]);
+      assert.deepEqual(
+        globalCheck.process_runtime_closure.production_carrier_files.filter(
+          (file) => file.startsWith("src/"),
+        ),
+        expectedPhysicalPaths,
+      );
+      for (const authority of globalCheck.observation_authorities)
+        assert.deepEqual(
+          authority.carrier_refs
+            .map((carrier) => carrier.binding_ref)
+            .filter((bindingRef) => bindingRef.endsWith(".shared-state"))
+            .sort(),
+          ["first.shared-state", "second.shared-state"],
+        );
+      assert.ok(
+        compiled.outcomes[0].acceptance.checks[0].observation_authorities.every(
+          (authority) =>
+            authority.carrier_refs.every((carrier) =>
+              carrier.binding_ref.startsWith("first."),
+            ),
+        ),
+      );
+      assert.ok(
+        compiled.outcomes[1].acceptance.checks[0].observation_authorities.every(
+          (authority) =>
+            authority.carrier_refs.every((carrier) =>
+              carrier.binding_ref.startsWith("second."),
+            ),
+        ),
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+});
+
 test("Outcome and other-Global Counterfactuals cannot cover a Global Check", async () => {
   const outcomeOnly = await createDeliveryFixture();
   try {

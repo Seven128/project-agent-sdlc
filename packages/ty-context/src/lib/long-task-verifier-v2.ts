@@ -410,7 +410,8 @@ function finalPathFindings(
             (authority) =>
               authority.authority === "package_static_json_exact" &&
               authority.carrier_refs.some(
-                (carrier) => carrier.binding_ref === binding.key,
+                (carrier) =>
+                  carrier.binding_ref === `${outcome.key}.${binding.key}`,
               ),
           ),
         )

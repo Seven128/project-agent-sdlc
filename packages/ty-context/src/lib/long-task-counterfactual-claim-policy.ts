@@ -5,6 +5,10 @@ import type {
   DeliveryOutcomeV2,
   GlobalCounterfactualControlV2,
 } from "./long-task-delivery-types.js";
+import {
+  scopeDeliveryBindings,
+  type ScopedDeliveryBindingV2,
+} from "./long-task-scoped-binding.js";
 
 export function validateCounterfactualBindingClaims(
   outcome: DeliveryOutcomeV2,
@@ -48,27 +52,31 @@ export function validateCounterfactualBindingClaims(
 export function resolveGlobalCounterfactualBinding(
   contract: DeliveryContractV2,
   control: GlobalCounterfactualControlV2,
-): { outcome: DeliveryOutcomeV2; binding: DeliveryBindingV2 } {
+): ScopedDeliveryBindingV2 & { outcome: DeliveryOutcomeV2 } {
   const [outcomeKey, bindingKey] = control.binding_ref.split(".");
   const outcome = contract.outcomes.find((item) => item.key === outcomeKey);
   if (!outcome)
     throw new Error(
       `global_counterfactual_binding_ref_invalid:${control.key}:${control.binding_ref}`,
     );
-  const binding = outcome.technical.bindings.find(
-    (item) => item.key === bindingKey,
+  const scoped = scopeDeliveryBindings(
+    outcome.key,
+    outcome.technical.bindings,
+  ).find(
+    (item) =>
+      item.binding_ref === control.binding_ref && item.local_key === bindingKey,
   );
-  if (!binding)
+  if (!scoped)
     throw new Error(
       `global_counterfactual_binding_unknown:${control.key}:${control.binding_ref}`,
     );
-  return { outcome, binding };
+  return { outcome, ...scoped };
 }
 
 export function validateGlobalCounterfactualBindingClaims(
   contract: DeliveryContractV2,
   control: GlobalCounterfactualControlV2,
-): { outcome: DeliveryOutcomeV2; binding: DeliveryBindingV2 } {
+): ScopedDeliveryBindingV2 & { outcome: DeliveryOutcomeV2 } {
   const resolved = resolveGlobalCounterfactualBinding(contract, control);
   const check = contract.global.acceptance.checks.find(
     (item) => item.key === control.check_key,

@@ -7,13 +7,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import {
-  ADMISSION_THRESHOLDS,
   BASELINE_A_COMMIT,
   CASE_IDS,
+  FORMAL_TOTAL_COST_CATEGORIES,
   ISOLATED_ENVELOPE_B_COMMIT,
-  REAL_PROCESS_ATTESTATION_SCHEMA,
-  REAL_PROCESS_ROI_SCHEMA,
-  REAL_PROCESS_RUN_SCHEMA,
+  MEASUREMENT_THRESHOLDS,
+  REAL_PROCESS_SCHEMAS,
   REQUIRED_METRICS,
   repeatOrder,
   variantDefinitions,
@@ -24,8 +23,10 @@ import {
   expansionDecision,
   measuredMetric,
   sha256,
+  unverifiedFormalTotalCost,
   unverifiedMetric,
   validateRunRecord,
+  verifiedFormalTotalCost,
 } from "../../tools/long_task_real_process_roi_scoring.mjs";
 import {
   buildArtifactManifest,
@@ -40,11 +41,22 @@ import {
   evaluateIndependentGold,
   loadSemanticGold,
 } from "../../examples/delivery-benchmark/real-process-workload/runner/gold.mjs";
-import { enableRealProcessRoiLongTaskProfile } from "../../examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs";
+import {
+  enableRealProcessRoiLongTaskProfile,
+  executeRealProcessRoiLifecycle,
+} from "../../examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs";
 import {
   createWorkloadFixture,
   removeFixture,
 } from "../../examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs";
+
+const {
+  REAL_PROCESS_ATTESTATION_SCHEMA,
+  REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+  REAL_PROCESS_ROI_SCHEMA,
+  REAL_PROCESS_RUN_SCHEMA,
+  REAL_PROCESS_SUMMARY_SCHEMA,
+} = REAL_PROCESS_SCHEMAS;
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const workloadRoot = path.join(
@@ -242,9 +254,40 @@ test("real process ROI adapters preserve each historical runtime authority bound
       ],
     );
     assert.equal(currentCheck.runner.retry_policy, "transient_once");
-    assert.ok(
+    assert.equal(
       current.target.root_argv.some((item) =>
-        item.includes("--external-input=tests/r10-runtime-input.json"),
+        item.includes("tests/r10-runtime-input.json"),
+      ),
+      false,
+    );
+    const currentState = JSON.parse(
+      await readFile(
+        path.join(current.root, "config", "state.json"),
+        "utf8",
+      ),
+    );
+    assert.equal(
+      currentState.runtime.external_input_path,
+      "tests/r10-runtime-input.json",
+    );
+    assert.equal(
+      currentOutcome.product.owner.path_globs.includes(
+        "tests/r10-runtime-input.json",
+      ),
+      false,
+    );
+    assert.equal(
+      currentOutcome.technical.allowed_support_paths.includes(
+        "tests/r10-runtime-input.json",
+      ),
+      false,
+    );
+    assert.ok(
+      currentCheck.input_paths.includes("tests/r10-runtime-input.json"),
+    );
+    assert.ok(
+      currentCheck.verification_inputs.includes(
+        "tests/r10-runtime-input.json",
       ),
     );
     assert.equal(
@@ -255,6 +298,90 @@ test("real process ROI adapters preserve each historical runtime authority bound
     );
   } finally {
     await Promise.all(fixtures.map((fixture) => removeFixture(fixture)));
+  }
+});
+
+test("R9/R10 workload cases reach the real Final Gate through non-closure input isolation", async () => {
+  for (const caseId of [
+    "r9-evidence-role-runtime-input",
+    "r10-verification-role-runtime-input",
+  ]) {
+    const fixture = await createWorkloadFixture({
+      harnessRoot: root,
+      variantId: "c",
+      caseId,
+      repeat: 1,
+    });
+    const outputDir = await mkdtemp(
+      path.join(os.tmpdir(), `ty-roi-${caseId.slice(0, 3)}-`),
+    );
+    const commandRecords = [];
+    try {
+      const productEnv = { ...process.env };
+      delete productEnv.TY_CONTEXT_FIXTURE_FIRST_SCOPE;
+      delete productEnv.TY_CONTEXT_FIXTURE_SECOND_SCOPE;
+      const directProduct = await execute(
+        process.execPath,
+        [
+          fixture.product.productPath,
+          "first",
+          `--facts=${fixture.product.factsPath}`,
+        ],
+        { cwd: fixture.root, env: productEnv },
+      );
+      assert.equal(directProduct.status, 0, directProduct.stderr);
+      const directEnvelope = JSON.parse(directProduct.stdout);
+      assert.equal(
+        directEnvelope.observations[
+          "assertion.first.first-check.pricing-currency-cny"
+        ],
+        true,
+      );
+      const lifecycle = await executeRealProcessRoiLifecycle({
+        harnessRoot: root,
+        fixture,
+        outputDir,
+        commandRecords,
+        relativeRoot: outputDir,
+        timeoutMs: 120000,
+        commitMessage: `roi-final-gate-${caseId}`,
+        snapshotLabel: `roi-final-gate-${caseId}`,
+      });
+      assert.equal(lifecycle.preflight.status, 0);
+      assert.equal(lifecycle.compile.status, 0);
+      assert.ok(lifecycle.final);
+      assert.notEqual(lifecycle.terminal, "machine_accepted");
+      assert.doesNotMatch(lifecycle.owner_diagnostic ?? "", /active_task_missing/u);
+      const checkResults = new Map(
+        lifecycle.parsed_final.check_results.map((result) => [
+          result.check_key,
+          result,
+        ]),
+      );
+      assert.equal(checkResults.get("first-check")?.status, "assertion_failed");
+      assert.ok(
+        checkResults
+          .get("first-check")
+          ?.findings.some(
+            (finding) => finding.assertion_key === "pricing-currency-cny",
+          ),
+      );
+      assert.equal(checkResults.get("second-check")?.status, "passed");
+      assert.doesNotMatch(
+        JSON.stringify(lifecycle.parsed_final),
+        /invalid_evidence|process_observation_identity_set_mismatch/u,
+      );
+      assert.match(lifecycle.committed_candidate_identity.commit, /^[a-f0-9]{40}$/u);
+      assert.match(lifecycle.committed_candidate_identity.tree, /^[a-f0-9]{40}$/u);
+      assert.equal(lifecycle.committed_candidate_identity.clean, true);
+      assert.equal(
+        lifecycle.committed_candidate_identity.command_record_refs.length,
+        6,
+      );
+    } finally {
+      await removeFixture(fixture);
+      await rm(outputDir, { recursive: true, force: true });
+    }
   }
 });
 
@@ -359,6 +486,7 @@ test("real process ROI policy permanently excludes A from safety and balances th
   assert.equal(variants.b.commit, ISOLATED_ENVELOPE_B_COMMIT);
   assert.equal(variants.b.safety_eligible, false);
   assert.equal(variants.c.safety_eligible, true);
+  assert.equal(variants.c.comparison_role, "measurement-candidate");
   assert.deepEqual(repeatOrder(1), ["a", "b", "c"]);
   assert.deepEqual(repeatOrder(2), ["b", "c", "a"]);
   assert.deepEqual(repeatOrder(3), ["c", "a", "b"]);
@@ -490,29 +618,118 @@ test("external gold independently detects wrong product and exact Counterfactual
   }
 });
 
-test("scorer applies the safety floor before ROI and qualifies a stable positive C result", () => {
+test("scorer preserves positive observed lifecycle diagnostics while total ROI stays unsupported", () => {
   const fixture = scoringFixture();
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
+  assert.equal(summary.schema_version, REAL_PROCESS_SUMMARY_SCHEMA);
   assert.equal(summary.a_safety_eligible, false);
   assert.equal(summary.b_known_r9_r11_false_acceptance_reproduced, true);
-  assert.equal(summary.candidate_safety_floor, true);
+  assert.equal(summary.observed_lifecycle_known_path_floor_met, true);
   assert.equal(summary.expansion.required_repeats, 3);
-  assert.equal(summary.wins, 3);
-  assert.equal(summary.total_roi_positive, true);
-  assert.equal(summary.admission_verdict, "qualified_positive_roi");
+  assert.equal(summary.observed_lifecycle_paired_wins, 3);
+  assert.equal(summary.observed_lifecycle_thresholds_met, true);
+  assert.equal(summary.observed_lifecycle_evidence_valid, true);
+  assert.equal(summary.total_roi_supported, false);
+  assert.equal(summary.total_roi_positive, false);
+  assert.equal(summary.report_status, "total_cost_evidence_incomplete");
+  assert.ok(summary.required_unverified_total_cost_evidence.length > 0);
+  assert.equal(summary.capability_level, "level_3");
+  assert.equal(summary.level_4_claimed, false);
+  assert.equal(summary.governance_judgment_included, false);
 });
 
-test("a missing authoritative authoring-token event blocks positive ROI without weakening the safety result", () => {
+test("self-attested formal-cost rows remain unsupported without independent evidence ingestion", () => {
+  const fixture = scoringFixture({ verifiedFormalCosts: true });
+  const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
+  assert.equal(summary.observed_lifecycle_known_path_floor_met, true);
+  assert.equal(summary.total_roi_supported, false);
+  assert.equal(summary.total_roi_positive, false);
+  assert.equal(summary.report_status, "total_cost_evidence_unadmitted");
+  assert.equal(
+    summary.formal_total_cost_independent_evidence_ingestion,
+    "not_implemented",
+  );
+  assert.equal(summary.governance_judgment_included, false);
+});
+
+test("every formal total-cost category is fail-closed when absent or unverified", () => {
+  for (const category of FORMAL_TOTAL_COST_CATEGORIES) {
+    const absent = scoringFixture({ verifiedFormalCosts: true });
+    const absentCandidate = absent.runs.find(
+      (run) => run.variant_id === "c" && run.repeat === 1,
+    );
+    delete absentCandidate.formal_total_cost_evidence.categories[category];
+    const absentSummary = deriveRealProcessRoiSummary(
+      absent.runs,
+      absent.config,
+    );
+    assert.equal(absentSummary.total_roi_supported, false, category);
+    assert.equal(absentSummary.total_roi_positive, false, category);
+    assert.ok(
+      absentSummary.required_unverified_total_cost_evidence.includes(
+        `c:1:${category}:absent`,
+      ),
+      category,
+    );
+
+    const unverified = scoringFixture({ verifiedFormalCosts: true });
+    const unverifiedCandidate = unverified.runs.find(
+      (run) => run.variant_id === "c" && run.repeat === 1,
+    );
+    unverifiedCandidate.formal_total_cost_evidence.categories[category] =
+      unverifiedFormalTotalCost(`no ${category} evidence`);
+    const unverifiedSummary = deriveRealProcessRoiSummary(
+      unverified.runs,
+      unverified.config,
+    );
+    assert.equal(unverifiedSummary.total_roi_supported, false, category);
+    assert.equal(unverifiedSummary.total_roi_positive, false, category);
+    assert.ok(
+      unverifiedSummary.required_unverified_total_cost_evidence.includes(
+        `c:1:${category}:unverified`,
+      ),
+      category,
+    );
+  }
+});
+
+test("formal purpose-fulfillment benefit is fail-closed when absent or unverified", () => {
+  for (const disposition of ["absent", "unverified"]) {
+    const fixture = scoringFixture({ verifiedFormalCosts: true });
+    const candidate = fixture.runs.find(
+      (run) => run.variant_id === "c" && run.repeat === 1,
+    );
+    if (disposition === "absent")
+      delete candidate.formal_total_cost_evidence.purpose_fulfillment_benefit;
+    else
+      candidate.formal_total_cost_evidence.purpose_fulfillment_benefit =
+        unverifiedFormalTotalCost("no independent purpose-benefit evidence");
+    const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
+    assert.equal(summary.total_roi_supported, false);
+    assert.equal(summary.total_roi_positive, false);
+    assert.ok(
+      summary.required_unverified_total_cost_evidence.includes(
+        `c:1:purpose_fulfillment_benefit:${disposition}`,
+      ),
+    );
+  }
+});
+
+test("a missing authoritative authoring-token event remains diagnostic and cannot manufacture total ROI", () => {
   const fixture = scoringFixture();
   fixture.runs[0].metrics.authoring_token_count = unverifiedMetric(
     "tokens",
     "no provider usage event",
   );
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
-  assert.equal(summary.candidate_safety_floor, true);
-  assert.equal(summary.required_metrics_verified, false);
+  assert.equal(summary.observed_lifecycle_known_path_floor_met, true);
+  assert.ok(
+    summary.observed_lifecycle_unverified_metrics.includes(
+      `${fixture.runs[0].variant_id}:${fixture.runs[0].repeat}:authoring_token_count`,
+    ),
+  );
   assert.equal(summary.total_roi_positive, false);
-  assert.equal(summary.admission_verdict, "invalid_evidence");
+  assert.equal(summary.total_roi_supported, false);
 });
 
 test("missing B false acceptance invalidates the evidence instead of making B look safer", () => {
@@ -527,8 +744,8 @@ test("missing B false acceptance invalidates the evidence instead of making B lo
     b.metrics.false_completion_count.value / 4;
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
   assert.equal(summary.b_known_r9_r11_false_acceptance_reproduced, false);
-  assert.equal(summary.evidence_valid, false);
-  assert.equal(summary.admission_verdict, "invalid_evidence");
+  assert.equal(summary.observed_lifecycle_evidence_valid, false);
+  assert.equal(summary.report_status, "invalid_measurement_evidence");
 });
 
 test("high variance or inconsistent direction expands three repeats to five", () => {
@@ -540,11 +757,17 @@ test("high variance or inconsistent direction expands three repeats to five", ()
   assert.ok(expansion.reasons.length > 0);
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
   assert.equal(summary.total_roi_positive, false);
-  assert.equal(summary.admission_verdict, "requires_expanded_repeats");
+  assert.equal(summary.report_status, "requires_expanded_repeats");
 });
 
 test("run validation rejects metric tampering, duplicate cases and promoted A authority", () => {
   const fixture = scoringFixture();
+  const legacy = structuredClone(fixture.runs[0]);
+  legacy.schema_version = "long-task-real-process-roi-run-v1";
+  assert.throws(
+    () => validateRunRecord(legacy, fixture.config),
+    /real_process_roi_invalid:run_schema_v1_recollection_required/u,
+  );
   const run = structuredClone(fixture.runs[0]);
   delete run.metrics.compile_wall_ms;
   assert.throws(
@@ -578,6 +801,12 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
   assert.equal(
     validateRunRecord(failedRecovery, fixture.config),
     failedRecovery,
+  );
+  const missingCommittedIdentity = structuredClone(fixture.runs[0]);
+  delete missingCommittedIdentity.cases[0].committed_candidate_identity;
+  assert.throws(
+    () => validateRunRecord(missingCommittedIdentity, fixture.config),
+    /real_process_roi_invalid:case_committed_candidate_identity/u,
   );
 });
 
@@ -615,6 +844,9 @@ test("report verifier recomputes raw SHA closure, summary and verdict", async ()
       run_set_id: "fixture-run-set",
       purpose: fixture.config.purpose,
       safety_theorem_claimed: false,
+      capability_level: "level_3",
+      level_4_claimed: false,
+      governance_judgment_included: false,
       artifacts_are_non_authority: true,
       candidate_identity: { commit: fakeCandidate, tree: fakeTree },
       workload_sha256: fixture.config.workload_sha256,
@@ -643,17 +875,40 @@ test("report verifier recomputes raw SHA closure, summary and verdict", async ()
       environment_identity: fixture.config.environment_identity,
       manifest_sha256: digest(manifestBytes),
       aggregate_sha256: digest(aggregateBytes),
-      admission_verdict: summary.admission_verdict,
-      total_roi_positive: true,
+      report_status: summary.report_status,
+      observed_lifecycle_evidence_valid:
+        summary.observed_lifecycle_evidence_valid,
+      total_roi_supported: summary.total_roi_supported,
+      total_roi_positive: summary.total_roi_positive,
+      capability_level: "level_3",
+      level_4_claimed: false,
+      governance_judgment_included: false,
       a_safety_eligible: false,
       artifacts_are_non_authority: true,
       raw_promoted_to_gate: false,
     });
-    const verified = await verifyRealProcessRoiReport(temporary, {
-      expectedCandidate: fakeCandidate,
-    });
-    assert.equal(verified.total_roi_positive, true);
+    await assert.rejects(
+      verifyRealProcessRoiReport(temporary, {
+        expectedCandidate: fakeCandidate,
+      }),
+      /real_process_roi_invalid:candidate_git_identity/u,
+    );
+    const verified = await verifyRealProcessRoiReport(temporary);
+    assert.equal(verified.total_roi_supported, false);
+    assert.equal(verified.total_roi_positive, false);
+    assert.equal(verified.observed_lifecycle_evidence_valid, true);
     assert.equal(verified.a_safety_eligible, false);
+
+    const aggregatePath = path.join(temporary, "aggregate.json");
+    const currentAggregate = await readFile(aggregatePath);
+    const legacyAggregate = JSON.parse(currentAggregate);
+    legacyAggregate.schema_version = "long-task-real-process-roi-run-set-v1";
+    await writeJson(aggregatePath, legacyAggregate);
+    await assert.rejects(
+      verifyRealProcessRoiReport(temporary),
+      /real_process_roi_invalid:aggregate_schema_v1_recollection_required/u,
+    );
+    await writeFile(aggregatePath, currentAggregate);
 
     const caseResultPath = path.join(
       temporary,
@@ -690,7 +945,7 @@ test("report verifier recomputes raw SHA closure, summary and verdict", async ()
   }
 });
 
-function scoringFixture() {
+function scoringFixture({ verifiedFormalCosts = false } = {}) {
   const variants = variantDefinitions(fakeCandidate);
   const workloadIdentity = sourceIdentityFixture("workload.json", "workload");
   const implementationIdentity = sourceIdentityFixture(
@@ -700,9 +955,12 @@ function scoringFixture() {
   const environment = { platform: process.platform };
   const environmentIdentity = sha256(canonical(environment));
   const config = {
-    schema_version: "long-task-real-process-roi-frozen-config-v1",
+    schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
     purpose: "real-process-lifecycle-roi-only",
     safety_theorem_claimed: false,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
     artifacts_are_non_authority: true,
     candidate_must_equal_head: true,
     candidate_is_head: true,
@@ -712,7 +970,7 @@ function scoringFixture() {
       authoritative_source: "fixture provider usage event",
       surrogate_tokenizer_permitted: false,
       missing_value_status: "required-unverified",
-      consequence: "positive ROI qualification is invalid",
+      consequence: "total ROI remains unsupported",
     },
     variants,
     candidate_tree: fakeTree,
@@ -721,7 +979,18 @@ function scoringFixture() {
     benchmark_implementation_identity: implementationIdentity,
     environment,
     environment_identity: environmentIdentity,
-    admission_thresholds: ADMISSION_THRESHOLDS,
+    measurement_thresholds: MEASUREMENT_THRESHOLDS,
+    formal_total_cost_policy: {
+      categories: FORMAL_TOTAL_COST_CATEGORIES,
+      normalized_unit: "normalized-cost-units",
+      theorem:
+        "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
+      missing_or_unverified_consequence: "total_roi_unsupported",
+      independent_evidence_ingestion: "not_implemented",
+      self_attested_verified_records_admitted: false,
+      governance_judgment_included: false,
+      level_4_requires_independent_capability_audit: true,
+    },
   };
   const runs = [];
   for (let repeat = 1; repeat <= 3; repeat += 1) {
@@ -734,6 +1003,7 @@ function scoringFixture() {
           position: position + 1,
           workloadSha256: config.workload_sha256,
           environmentIdentity,
+          verifiedFormalCosts,
           total:
             variantId === "a"
               ? 1600 + repeat * 10
@@ -752,6 +1022,7 @@ function runFixture({
   position,
   workloadSha256,
   environmentIdentity,
+  verifiedFormalCosts,
   total,
 }) {
   const cases = CASE_IDS.map((caseId) => caseFixture(variant.id, caseId));
@@ -804,7 +1075,13 @@ function runFixture({
     REQUIRED_METRICS.map((name) => [
       name,
       name === "maintenance_minutes"
-        ? unverifiedMetric("minutes", "fixture has no human time log")
+        ? verifiedFormalCosts
+          ? measuredMetric(
+              10,
+              "minutes",
+              "fixture independent human maintenance time log",
+            )
+          : unverifiedMetric("minutes", "fixture has no human time log")
         : name === "authoring_token_count"
           ? measuredMetric(
               metricValues[name],
@@ -842,6 +1119,11 @@ function runFixture({
     completed_at: "2026-08-10T00:01:00.000Z",
     provenance_doubt_reasons: [],
     metrics,
+    formal_total_cost_evidence: formalTotalCostFixture({
+      variantId: variant.id,
+      repeat,
+      verified: verifiedFormalCosts,
+    }),
     cases,
     recoveries,
     lifecycle_evidence: {
@@ -852,10 +1134,49 @@ function runFixture({
   };
 }
 
+function formalTotalCostFixture({ variantId, repeat, verified }) {
+  if (!verified)
+    return {
+      unit: "normalized-cost-units",
+      purpose_fulfillment_benefit: unverifiedFormalTotalCost(
+        "no independent purpose-benefit normalization",
+      ),
+      categories: Object.fromEntries(
+        FORMAL_TOTAL_COST_CATEGORIES.map((category) => [
+          category,
+          unverifiedFormalTotalCost(`no independently verified ${category} cost`),
+        ]),
+      ),
+    };
+  const isCandidate = variantId === "c";
+  return {
+    unit: "normalized-cost-units",
+    purpose_fulfillment_benefit: verifiedFormalTotalCost(
+      isCandidate ? 1000 + repeat : 0,
+      "independent fixture purpose-benefit normalization",
+      [`fixture://${variantId}/${repeat}/benefit`],
+    ),
+    categories: Object.fromEntries(
+      FORMAL_TOTAL_COST_CATEGORIES.map((category, index) => [
+        category,
+        verifiedFormalTotalCost(
+          isCandidate ? 40 + index : 50 + index,
+          `independent fixture ${category} cost normalization`,
+          [`fixture://${variantId}/${repeat}/${category}`],
+        ),
+      ]),
+    ),
+  };
+}
+
 function recoveryFixture(sourceAttackCaseId) {
   const control = caseFixture("c", "correct-control");
+  const committedCandidateIdentity = committedCandidateIdentityFixture(
+    `recovery-${sourceAttackCaseId}`,
+  );
   return {
     source_attack_case_id: sourceAttackCaseId,
+    committed_candidate_identity: committedCandidateIdentity,
     workflow_status: "machine_accepted",
     gold: control.gold,
     counterfactuals: control.counterfactuals,
@@ -869,12 +1190,16 @@ function recoveryFixture(sourceAttackCaseId) {
       total_ms: 100,
     },
     command_record_refs: [
+      ...committedCandidateIdentity.command_record_refs,
       `recoveries/after-${sourceAttackCaseId}/command.json`,
     ],
   };
 }
 
 function caseFixture(variantId, caseId) {
+  const committedCandidateIdentity = committedCandidateIdentityFixture(
+    `${variantId}-${caseId}`,
+  );
   const control = caseId === "correct-control";
   const machineAccepted =
     control ||
@@ -923,6 +1248,7 @@ function caseFixture(variantId, caseId) {
     : [];
   return {
     case_id: caseId,
+    committed_candidate_identity: committedCandidateIdentity,
     kind: control ? "control" : "attack",
     mode:
       caseId.includes("r9") || caseId.includes("r11") ? "degraded" : "normal",
@@ -953,8 +1279,27 @@ function caseFixture(variantId, caseId) {
       snapshot_ms: 2,
       total_ms: 100,
     },
-    command_record_refs: [`cases/${caseId}/command.json`],
+    command_record_refs: [
+      ...committedCandidateIdentity.command_record_refs,
+      `cases/${caseId}/command.json`,
+    ],
     final_result_sha256: "c".repeat(64),
+  };
+}
+
+function committedCandidateIdentityFixture(label) {
+  return {
+    commit: digest(`commit:${label}`).slice(0, 40),
+    tree: digest(`tree:${label}`).slice(0, 40),
+    clean: true,
+    command_record_refs: [
+      `identity/${label}/candidate-before-head.command.json`,
+      `identity/${label}/candidate-before-tree.command.json`,
+      `identity/${label}/candidate-before-status.command.json`,
+      `identity/${label}/candidate-after-head.command.json`,
+      `identity/${label}/candidate-after-tree.command.json`,
+      `identity/${label}/candidate-after-status.command.json`,
+    ],
   };
 }
 
@@ -1008,18 +1353,33 @@ async function writeSetupFixture(runSetRoot, config) {
     });
     await writeFile(path.join(runSetRoot, packagePath), packageBytes);
     const setupCommands = [];
-    for (const label of [
-      "git-worktree-add",
-      "npm-ci",
-      "package-build",
-      "package-pack",
+    for (const { label, argv, output } of [
+      { label: "git-worktree-add", argv: ["git-worktree-add"], output: "git-worktree-add" },
+      { label: "npm-ci", argv: ["npm-ci"], output: "npm-ci" },
+      { label: "package-build", argv: ["package-build"], output: "package-build" },
+      { label: "package-pack", argv: ["package-pack"], output: "package-pack" },
+      {
+        label: "candidate-head",
+        argv: ["git", "rev-parse", "HEAD"],
+        output: variant.commit,
+      },
+      {
+        label: "candidate-tree",
+        argv: ["git", "rev-parse", "HEAD^{tree}"],
+        output: fakeTree,
+      },
+      {
+        label: "candidate-status",
+        argv: ["git", "status", "--short"],
+        output: "",
+      },
     ]) {
-      const stdout = Buffer.from(`${label}\n`);
+      const stdout = Buffer.from(output ? `${output}\n` : "");
       const stderr = Buffer.alloc(0);
       const command = {
         schema_version: "long-task-real-process-host-command-v1",
         label,
-        argv: [label],
+        argv,
         cwd: runSetRoot,
         started_at: "2026-08-10T00:00:00.000Z",
         completed_at: "2026-08-10T00:00:01.000Z",
@@ -1079,19 +1439,36 @@ async function writeRunRawFixture(runSetRoot, runReference, run) {
     ...run.cases.flatMap((item) => item.command_record_refs),
     ...run.recoveries.flatMap((item) => item.command_record_refs),
   ];
+  const candidateIdentityByRef = new Map();
+  for (const item of [...run.cases, ...run.recoveries])
+    for (const reference of item.committed_candidate_identity.command_record_refs)
+      candidateIdentityByRef.set(reference, item.committed_candidate_identity);
   const commands = [];
   await mkdir(path.join(runRoot, "logs"), { recursive: true });
   for (const [index, reference] of commandRefs.entries()) {
-    const stdout = Buffer.from(`stdout-${index}\n`);
+    const candidateIdentity = candidateIdentityByRef.get(reference);
+    const label = path.basename(reference, ".command.json");
+    const identityCommand = candidateIdentity
+      ? fixtureIdentityCommand(label, candidateIdentity)
+      : null;
+    const stdout = Buffer.from(
+      identityCommand
+        ? identityCommand.stdout
+          ? `${identityCommand.stdout}\n`
+          : ""
+        : `stdout-${index}\n`,
+    );
     const stderr = Buffer.alloc(0);
     const stdoutPath = `logs/${String(index + 1).padStart(3, "0")}.stdout.log`;
     const stderrPath = `logs/${String(index + 1).padStart(3, "0")}.stderr.log`;
     const command = {
       schema_version: "long-task-real-process-command-v1",
       index: index + 1,
-      label: "fixture",
-      argv: [process.execPath, "fixture"],
-      cwd: runRoot,
+      label: identityCommand ? label : "fixture",
+      argv: identityCommand?.argv ?? [process.execPath, "fixture"],
+      cwd: candidateIdentity
+        ? path.join(runRoot, path.dirname(reference))
+        : runRoot,
       started_at: "2026-08-10T00:00:00.000Z",
       completed_at: "2026-08-10T00:00:01.000Z",
       duration_ms: 1,
@@ -1143,6 +1520,19 @@ async function writeRunRawFixture(runSetRoot, runReference, run) {
     `${commands.map((command) => JSON.stringify(command)).join("\n")}\n`,
   );
   await writeJson(path.join(runSetRoot, ...runReference.split("/")), run);
+}
+
+function fixtureIdentityCommand(label, identity) {
+  if (label.endsWith("-head"))
+    return { argv: ["git", "rev-parse", "HEAD"], stdout: identity.commit };
+  if (label.endsWith("-tree"))
+    return {
+      argv: ["git", "rev-parse", "HEAD^{tree}"],
+      stdout: identity.tree,
+    };
+  if (label.endsWith("-status"))
+    return { argv: ["git", "status", "--short"], stdout: "" };
+  throw new Error(`fixture_identity_command_unknown:${label}`);
 }
 
 function sourceIdentityFixture(file, contents) {

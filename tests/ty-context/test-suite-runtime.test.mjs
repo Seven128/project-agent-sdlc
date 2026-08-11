@@ -602,8 +602,12 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     "host-derived-target-runtime:R11b",
     "counterfactual-production-observation-impact:R5",
     "counterfactual-production-observation-impact:R5c",
+    "counterfactual-production-observation-impact:R10A",
     "counterfactual-production-observation-impact:R10",
+    "counterfactual-production-observation-impact:R10C",
+    "observer-admission-no-bypass:R9A",
     "observer-admission-no-bypass:R9",
+    "observer-admission-no-bypass:R9C",
   ])
     assert.ok(
       observerSource.includes(`[case:${caseId}]`),

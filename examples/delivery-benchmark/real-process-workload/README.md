@@ -30,9 +30,12 @@ all-errors-to-recovery cost, false completion/blocking, modification/rework,
 and frozen runtime/test file-and-LOC maintenance scale. Authoring tokens
 require an invocation-bound host/provider usage event; no surrogate tokenizer
 is accepted, so a missing event is recorded as `required-unverified` and
-prevents a positive ROI qualification. Human maintenance minutes likewise
+keeps complete total ROI unsupported. Human maintenance minutes likewise
 remain unverified when no independent time log exists, while objective
-file/LOC scale remains measured.
+file/LOC scale remains measured. All `observed_lifecycle_*` fields are
+diagnostic only: this v2 collector has no independent formal-cost ingestion and
+therefore cannot issue a governance verdict or promote Level 3, even when its
+observed lifecycle comparison is positive.
 
 Run `node tools/verify_long_task_real_process_roi.mjs --dry-run --candidate
 <commit>` before collection. A full collection intentionally waits for a clean

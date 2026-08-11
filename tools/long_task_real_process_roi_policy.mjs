@@ -1,9 +1,28 @@
-export const REAL_PROCESS_ROI_SCHEMA = "long-task-real-process-roi-run-set-v1";
-export const REAL_PROCESS_RUN_SCHEMA = "long-task-real-process-roi-run-v1";
-export const REAL_PROCESS_MANIFEST_SCHEMA =
-  "long-task-real-process-roi-manifest-v1";
-export const REAL_PROCESS_ATTESTATION_SCHEMA =
-  "long-task-real-process-roi-attestation-v1";
+export const REAL_PROCESS_SCHEMAS = Object.freeze({
+  REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v2",
+  REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v2",
+  REAL_PROCESS_MANIFEST_SCHEMA: "long-task-real-process-roi-manifest-v1",
+  REAL_PROCESS_ATTESTATION_SCHEMA:
+    "long-task-real-process-roi-attestation-v2",
+  REAL_PROCESS_FROZEN_CONFIG_SCHEMA:
+    "long-task-real-process-roi-frozen-config-v2",
+  REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v2",
+  REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v2",
+  REAL_PROCESS_COLLECTION_SCHEMA:
+    "long-task-real-process-roi-collection-v2",
+  REAL_PROCESS_VERIFICATION_SCHEMA:
+    "long-task-real-process-roi-verification-v2",
+  REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v2",
+});
+
+export const LEGACY_REAL_PROCESS_SCHEMAS = Object.freeze({
+  run_set: "long-task-real-process-roi-run-set-v1",
+  run: "long-task-real-process-roi-run-v1",
+  attestation: "long-task-real-process-roi-attestation-v1",
+  frozen_config: "long-task-real-process-roi-frozen-config-v1",
+  summary: "long-task-real-process-roi-summary-v1",
+  workload: "long-task-real-process-workload-v1",
+});
 
 export const BASELINE_A_COMMIT = "0f35e08aa4ed272c9d23df92c3fe4604194790df";
 export const ISOLATED_ENVELOPE_B_COMMIT =
@@ -62,7 +81,7 @@ export const REPEAT_ORDERS = Object.freeze([
   Object.freeze(["c", "b", "a"]),
 ]);
 
-export const ADMISSION_THRESHOLDS = Object.freeze({
+export const MEASUREMENT_THRESHOLDS = Object.freeze({
   minimum_repeats: 3,
   minimum_wins: 2,
   expanded_repeats: 5,
@@ -76,6 +95,21 @@ export const ADMISSION_THRESHOLDS = Object.freeze({
   candidate_counterfactual_pass_rate: 1,
   migration_amortization_horizon: 10,
 });
+
+export const FORMAL_TOTAL_COST_CATEGORIES = Object.freeze([
+  "authoring",
+  "runtime",
+  "state",
+  "recovery",
+  "maintenance",
+  "test",
+  "process",
+  "introduction",
+  "adoption",
+  "migration",
+]);
+
+export const FORMAL_TOTAL_COST_UNIT = "normalized-cost-units";
 
 export const REQUIRED_METRICS = Object.freeze([
   "authoring_active_ms",
@@ -122,10 +156,6 @@ export const NULLABLE_UNVERIFIED_METRICS = Object.freeze([
   "maintenance_minutes",
 ]);
 
-export const REQUIRED_VERIFIED_METRICS = Object.freeze([
-  "authoring_token_count",
-]);
-
 export const SIGNED_METRICS = Object.freeze(["counterfactual_incremental_ms"]);
 
 export const PHASE_COST_METRICS = Object.freeze([
@@ -159,7 +189,7 @@ export function variantDefinitions(candidateCommit) {
       id: "c",
       label: "source-backed-process-runtime-closure",
       commit: candidateCommit,
-      comparison_role: "admission-candidate",
+      comparison_role: "measurement-candidate",
       safety_eligible: true,
       expected_observation_boundary:
         "source-backed-isolated-product-stdout-envelope",
@@ -174,10 +204,10 @@ export function repeatOrder(repeat) {
 }
 
 export function requiredWins(repeats) {
-  if (repeats === ADMISSION_THRESHOLDS.minimum_repeats)
-    return ADMISSION_THRESHOLDS.minimum_wins;
-  if (repeats === ADMISSION_THRESHOLDS.expanded_repeats)
-    return ADMISSION_THRESHOLDS.expanded_wins;
+  if (repeats === MEASUREMENT_THRESHOLDS.minimum_repeats)
+    return MEASUREMENT_THRESHOLDS.minimum_wins;
+  if (repeats === MEASUREMENT_THRESHOLDS.expanded_repeats)
+    return MEASUREMENT_THRESHOLDS.expanded_wins;
   throw new Error(`real_process_roi_repeat_count_unsupported:${repeats}`);
 }
 

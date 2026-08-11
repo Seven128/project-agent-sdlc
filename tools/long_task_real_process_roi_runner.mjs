@@ -14,15 +14,17 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import {
-  ADMISSION_THRESHOLDS,
-  REAL_PROCESS_ATTESTATION_SCHEMA,
-  REAL_PROCESS_MANIFEST_SCHEMA,
-  REAL_PROCESS_ROI_SCHEMA,
+  FORMAL_TOTAL_COST_CATEGORIES,
+  FORMAL_TOTAL_COST_UNIT,
+  LEGACY_REAL_PROCESS_SCHEMAS,
+  MEASUREMENT_THRESHOLDS,
+  REAL_PROCESS_SCHEMAS,
   VARIANT_IDS,
   repeatOrder,
   variantDefinitions,
 } from "./long_task_real_process_roi_policy.mjs";
 import {
+  assertCurrentEvidenceSchema,
   canonical,
   deriveRealProcessRoiSummary,
   expansionDecision,
@@ -30,6 +32,15 @@ import {
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
 import { npmCommandSpec } from "./npm_command_spec.mjs";
+
+const {
+  REAL_PROCESS_ATTESTATION_SCHEMA,
+  REAL_PROCESS_DRY_RUN_SCHEMA,
+  REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+  REAL_PROCESS_MANIFEST_SCHEMA,
+  REAL_PROCESS_ROI_SCHEMA,
+  REAL_PROCESS_WORKLOAD_SCHEMA,
+} = REAL_PROCESS_SCHEMAS;
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workloadRoot = path.join(
@@ -90,6 +101,23 @@ export async function prepareRealProcessRoiPlan({
     repositoryRoot,
     workloadIdentityPaths,
   );
+  const workload = JSON.parse(await readFile(workloadPath, "utf8"));
+  assertCurrentEvidenceSchema(
+    workload.schema_version,
+    REAL_PROCESS_WORKLOAD_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.workload,
+    "workload_schema",
+  );
+  if (
+    workload.capability_level !== "level_3" ||
+    workload.level_4_claimed !== false ||
+    workload.governance_judgment_included !== false ||
+    workload.total_cost_theorem !==
+      "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs" ||
+    workload.level_4_requires_independent_capability_audit !== true ||
+    workload.fixture_candidate_identity?.required !== true
+  )
+    throw new Error("real_process_roi_workload_boundary_invalid");
   const benchmarkImplementationIdentity = await sourceIdentity(
     repositoryRoot,
     benchmarkImplementationPaths,
@@ -99,9 +127,12 @@ export async function prepareRealProcessRoiPlan({
   const environment = await environmentRecord(repositoryRoot);
   const environmentIdentity = sha256(canonical(environment));
   const frozenConfig = {
-    schema_version: "long-task-real-process-roi-frozen-config-v1",
+    schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
     purpose: "real-process-lifecycle-roi-only",
     safety_theorem_claimed: false,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
     candidate_must_be_clean_commit: true,
     candidate_must_equal_head: true,
     candidate_is_head: candidateIsHead,
@@ -114,19 +145,30 @@ export async function prepareRealProcessRoiPlan({
     semantic_gold_sha256: digest(goldBytes),
     environment,
     environment_identity: environmentIdentity,
-    admission_thresholds: ADMISSION_THRESHOLDS,
+    measurement_thresholds: MEASUREMENT_THRESHOLDS,
+    formal_total_cost_policy: {
+      categories: FORMAL_TOTAL_COST_CATEGORIES,
+      normalized_unit: FORMAL_TOTAL_COST_UNIT,
+      theorem:
+        "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
+      missing_or_unverified_consequence: "total_roi_unsupported",
+      independent_evidence_ingestion: "not_implemented",
+      self_attested_verified_records_admitted: false,
+      governance_judgment_included: false,
+      level_4_requires_independent_capability_audit: true,
+    },
     authoring_token_policy: {
       required_for_positive_roi: true,
       authoritative_source:
         "host/provider usage event bound to the exact authoring invocation",
       surrogate_tokenizer_permitted: false,
       missing_value_status: "required-unverified",
-      consequence: "positive ROI qualification is invalid",
+      consequence: "total ROI remains unsupported",
     },
-    initial_repeats: ADMISSION_THRESHOLDS.minimum_repeats,
-    maximum_repeats: ADMISSION_THRESHOLDS.expanded_repeats,
+    initial_repeats: MEASUREMENT_THRESHOLDS.minimum_repeats,
+    maximum_repeats: MEASUREMENT_THRESHOLDS.expanded_repeats,
     repeat_orders: Array.from(
-      { length: ADMISSION_THRESHOLDS.expanded_repeats },
+      { length: MEASUREMENT_THRESHOLDS.expanded_repeats },
       (_, index) => repeatOrder(index + 1),
     ),
     artifacts_are_non_authority: true,
@@ -147,7 +189,10 @@ export async function prepareRealProcessRoiPlan({
 export async function dryRunRealProcessRoi(options) {
   const plan = await prepareRealProcessRoiPlan(options);
   return {
-    schema_version: "long-task-real-process-roi-dry-run-v1",
+    schema_version: REAL_PROCESS_DRY_RUN_SCHEMA,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
     executable: plan.worktreeClean,
     reason: plan.worktreeClean
       ? null
@@ -163,10 +208,10 @@ export async function dryRunRealProcessRoi(options) {
     variants: plan.variants,
     initial_schedule: plan.frozenConfig.repeat_orders.slice(
       0,
-      ADMISSION_THRESHOLDS.minimum_repeats,
+      MEASUREMENT_THRESHOLDS.minimum_repeats,
     ),
     expansion_schedule: plan.frozenConfig.repeat_orders.slice(
-      ADMISSION_THRESHOLDS.minimum_repeats,
+      MEASUREMENT_THRESHOLDS.minimum_repeats,
     ),
     expansion_rule:
       "expand 3 to 5 for CV > 20%, inconsistent paired direction, a primary metric within 5 percentage points of threshold, or environment/provenance doubt",
@@ -229,18 +274,18 @@ export async function collectRealProcessRoi({
     }
     for (
       let repeat = 1;
-      repeat <= ADMISSION_THRESHOLDS.minimum_repeats;
+      repeat <= MEASUREMENT_THRESHOLDS.minimum_repeats;
       repeat += 1
     )
       await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
     const initialExpansion = expansionDecision(runs, plan.frozenConfig);
     if (
       initialExpansion.required_repeats ===
-      ADMISSION_THRESHOLDS.expanded_repeats
+      MEASUREMENT_THRESHOLDS.expanded_repeats
     )
       for (
-        let repeat = ADMISSION_THRESHOLDS.minimum_repeats + 1;
-        repeat <= ADMISSION_THRESHOLDS.expanded_repeats;
+        let repeat = MEASUREMENT_THRESHOLDS.minimum_repeats + 1;
+        repeat <= MEASUREMENT_THRESHOLDS.expanded_repeats;
         repeat += 1
       )
         await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
@@ -251,6 +296,9 @@ export async function collectRealProcessRoi({
       run_set_id: runSetId,
       purpose: plan.frozenConfig.purpose,
       safety_theorem_claimed: false,
+      capability_level: "level_3",
+      level_4_claimed: false,
+      governance_judgment_included: false,
       artifacts_are_non_authority: true,
       candidate_identity: {
         commit: plan.candidateCommit,
@@ -295,8 +343,14 @@ export async function collectRealProcessRoi({
       environment_identity: plan.environmentIdentity,
       manifest_sha256: digest(manifestBytes),
       aggregate_sha256: digest(aggregateBytes),
-      admission_verdict: summary.admission_verdict,
+      report_status: summary.report_status,
+      observed_lifecycle_evidence_valid:
+        summary.observed_lifecycle_evidence_valid,
+      total_roi_supported: summary.total_roi_supported,
       total_roi_positive: summary.total_roi_positive,
+      capability_level: "level_3",
+      level_4_claimed: false,
+      governance_judgment_included: false,
       a_safety_eligible: false,
       artifacts_are_non_authority: true,
       raw_promoted_to_gate: false,
@@ -501,13 +555,40 @@ async function prepareVariant({
       `real_process_roi_package_count:${variant.id}:${packages.length}`,
     );
   const packageBytes = await readFile(path.join(packDir, packages[0]));
-  const tree = await gitText(checkout, ["rev-parse", "HEAD^{tree}"]);
-  const status = await gitText(checkout, ["status", "--short"]);
+  for (const [label, args] of [
+    ["candidate-head", ["rev-parse", "HEAD"]],
+    ["candidate-tree", ["rev-parse", "HEAD^{tree}"]],
+    ["candidate-status", ["status", "--short"]],
+  ]) {
+    records.push(
+      await spawnCaptured("git", args, {
+        cwd: checkout,
+        timeoutMs: 10000,
+        outputDir,
+        label,
+      }),
+    );
+    if (records.at(-1).status !== 0)
+      throw new Error(`real_process_roi_candidate_identity_failed:${variant.id}`);
+  }
+  const head = (
+    await readFile(path.join(outputDir, "candidate-head.stdout.log"), "utf8")
+  ).trim();
+  const tree = (
+    await readFile(path.join(outputDir, "candidate-tree.stdout.log"), "utf8")
+  ).trim();
+  const status = (
+    await readFile(path.join(outputDir, "candidate-status.stdout.log"), "utf8")
+  ).trim();
+  if (head !== variant.commit)
+    throw new Error(`real_process_roi_prepared_head_drift:${variant.id}`);
+  if (!/^[a-f0-9]{40}$/u.test(tree))
+    throw new Error(`real_process_roi_prepared_tree_invalid:${variant.id}`);
   if (status !== "")
     throw new Error(`real_process_roi_prepared_worktree_dirty:${variant.id}`);
   const record = {
     variant_id: variant.id,
-    commit: variant.commit,
+    commit: head,
     tree,
     package_path: relative(outputDir, path.join(packDir, packages[0])),
     package_sha256: digest(packageBytes),

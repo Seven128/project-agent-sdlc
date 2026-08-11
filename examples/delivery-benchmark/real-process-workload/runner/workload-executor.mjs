@@ -6,14 +6,19 @@ import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   CASE_IDS,
+  FORMAL_TOTAL_COST_CATEGORIES,
+  FORMAL_TOTAL_COST_UNIT,
+  LEGACY_REAL_PROCESS_SCHEMAS,
   MAINTENANCE_RUNTIME_OWNER_PATHS,
   MAINTENANCE_TEST_PATHS,
-  REAL_PROCESS_RUN_SCHEMA,
+  REAL_PROCESS_SCHEMAS,
 } from "../../../../tools/long_task_real_process_roi_policy.mjs";
 import {
+  assertCurrentEvidenceSchema,
   canonical,
   measuredMetric,
   sha256,
+  unverifiedFormalTotalCost,
   unverifiedMetric,
 } from "../../../../tools/long_task_real_process_roi_scoring.mjs";
 import {
@@ -21,6 +26,9 @@ import {
   measureContractShape,
   removeFixture,
 } from "./fixture-adapter.mjs";
+
+const { REAL_PROCESS_RUN_SCHEMA, REAL_PROCESS_WORKLOAD_SCHEMA } =
+  REAL_PROCESS_SCHEMAS;
 
 const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
 const workloadPath = path.join(
@@ -45,207 +53,44 @@ export async function executeVariantRepeat(options) {
   const startedAt = new Date().toISOString();
   const started = performance.now();
   await mkdir(outputDir, { recursive: true });
-  const workload = JSON.parse(await readFile(workloadPath, "utf8"));
+  const workload = await loadWorkloadDefinition();
   const maintenance = await measureMaintenanceSurface(harnessRoot);
-  const cases = [];
-  const recoveries = [];
   const commandRecords = [];
-  let correctShape = null;
-  let compiledContractBytes = 0;
-  let migrationMs = 0;
-  let verifySnapshotMs = 0;
-  let finalSnapshotMs = 0;
-  let uniqueRawExecutionMs = 0;
-  let counterfactualWallMs = 0;
-  let preflightRepairRounds = 0;
-  let recoveryAuthoringMs = 0;
-  let closureCopyMs = 0;
-  let closureCopyBytes = 0;
-
-  for (const caseId of CASE_IDS) {
-    const caseOutput = path.join(outputDir, "cases", caseId);
-    await mkdir(caseOutput, { recursive: true });
-    const caseStarted = performance.now();
-    const fixture = await createWorkloadFixture({
-      harnessRoot,
-      variantId: variant.id,
-      caseId,
-      repeat,
-    });
-    migrationMs += fixture.migration_ms;
-    try {
-      if (caseId === "correct-control")
-        correctShape = await measureContractShape(fixture);
-      const lifecycle = await executeLifecycle({
-        harnessRoot,
-        fixture,
-        outputDir: caseOutput,
-        commandRecords,
-        relativeRoot: outputDir,
-        timeoutMs: workload.resource_limits.command_timeout_ms,
-        commitMessage: `roi-${variant.id}-${repeat}-${caseId}`,
-        snapshotLabel: `roi-${variant.id}-${repeat}-${caseId}`,
-      });
-      if (lifecycle.preflight.status !== 0) preflightRepairRounds += 1;
-      compiledContractBytes = Math.max(
-        compiledContractBytes,
-        lifecycle.compiled_contract_bytes,
-      );
-      verifySnapshotMs += lifecycle.snapshot?.preparation_ms ?? 0;
-      uniqueRawExecutionMs += lifecycle.runner_ms;
-      finalSnapshotMs += lifecycle.final_snapshot_ms;
-      counterfactualWallMs += lifecycle.counterfactual_upper_bound_ms;
-      closureCopyMs += lifecycle.closure_copy_ms;
-      closureCopyBytes += lifecycle.closure_copy_bytes;
-      const caseCommands = commandRecords.filter((record) =>
-        record.relative_path.startsWith(`cases/${caseId}/`),
-      );
-      const counterfactuals =
-        caseId === "correct-control"
-          ? fixture.counterfactuals.map((control) => ({
-              ...control,
-              workflow_observed_passed:
-                control.passed === true &&
-                lifecycle.terminal === "machine_accepted",
-            }))
-          : [];
-      const caseRecord = {
-        case_id: caseId,
-        kind: caseId === "correct-control" ? "control" : "attack",
-        mode: fixture.mode,
-        workflow_status: lifecycle.terminal,
-        authority_boundary:
-          variant.id === "a"
-            ? "legacy-project-self-report"
-            : variant.id === "b"
-              ? "isolated-envelope-with-contract-owned-runtime"
-              : "source-backed-isolated-process-runtime-closure",
-        owner_diagnostic: lifecycle.owner_diagnostic,
-        gold: fixture.gold,
-        counterfactuals,
-        raw_execution: {
-          maximum_envelopes_per_execution: 1,
-          minimum_observations_per_envelope: 6,
-          observed_main_execution_count: uniqueExecutionCount(
-            lifecycle.parsed_final?.check_results ??
-              lifecycle.verify?.parsed?.check_results,
-          ),
-        },
-        lifecycle: {
-          authoring_ms: round(fixture.authoring_ms),
-          preflight_ms: lifecycle.preflight.duration_ms,
-          compile_ms: lifecycle.compile.duration_ms,
-          verify_ms: lifecycle.verify?.duration_ms ?? 0,
-          final_gate_ms: lifecycle.final?.duration_ms ?? 0,
-          snapshot_ms: round(lifecycle.snapshot?.preparation_ms ?? 0),
-          measurement_overhead_ms: lifecycle.closure_copy_ms,
-          total_ms: round(
-            Math.max(
-              0,
-              performance.now() - caseStarted - lifecycle.closure_copy_ms,
-            ),
-          ),
-        },
-        command_record_refs: caseCommands.map((record) => record.relative_path),
-        final_result_sha256: sha256(canonical(lifecycle.parsed_final)),
-      };
-      await writeFile(
-        path.join(caseOutput, "case-result.json"),
-        `${JSON.stringify(caseRecord, null, 2)}\n`,
-      );
-      cases.push(caseRecord);
-    } finally {
-      await removeFixture(fixture);
-    }
-  }
-
-  for (const attack of cases.filter((item) => item.kind === "attack")) {
-    const recoveryOutput = path.join(
-      outputDir,
-      "recoveries",
-      `after-${attack.case_id}`,
-    );
-    await mkdir(recoveryOutput, { recursive: true });
-    const recoveryStarted = performance.now();
-    const fixture = await createWorkloadFixture({
-      harnessRoot,
-      variantId: variant.id,
-      caseId: "correct-control",
-      repeat,
-    });
-    recoveryAuthoringMs += fixture.authoring_ms;
-    migrationMs += fixture.migration_ms;
-    try {
-      const lifecycle = await executeLifecycle({
-        harnessRoot,
-        fixture,
-        outputDir: recoveryOutput,
-        commandRecords,
-        relativeRoot: outputDir,
-        timeoutMs: workload.resource_limits.command_timeout_ms,
-        commitMessage: `roi-${variant.id}-${repeat}-recovery-${attack.case_id}`,
-        snapshotLabel: `roi-${variant.id}-${repeat}-recovery-${attack.case_id}`,
-      });
-      if (lifecycle.preflight.status !== 0) preflightRepairRounds += 1;
-      compiledContractBytes = Math.max(
-        compiledContractBytes,
-        lifecycle.compiled_contract_bytes,
-      );
-      verifySnapshotMs += lifecycle.snapshot?.preparation_ms ?? 0;
-      uniqueRawExecutionMs += lifecycle.runner_ms;
-      finalSnapshotMs += lifecycle.final_snapshot_ms;
-      counterfactualWallMs += lifecycle.counterfactual_upper_bound_ms;
-      closureCopyMs += lifecycle.closure_copy_ms;
-      closureCopyBytes += lifecycle.closure_copy_bytes;
-      const commandPrefix = `recoveries/after-${attack.case_id}/`;
-      const recovery = {
-        source_attack_case_id: attack.case_id,
-        workflow_status: lifecycle.terminal,
-        gold: fixture.gold,
-        counterfactuals: fixture.counterfactuals.map((control) => ({
-          ...control,
-          workflow_observed_passed:
-            control.passed === true &&
-            lifecycle.terminal === "machine_accepted",
-        })),
-        raw_execution: {
-          maximum_envelopes_per_execution: 1,
-          minimum_observations_per_envelope: 6,
-          observed_main_execution_count: uniqueExecutionCount(
-            lifecycle.parsed_final?.check_results ??
-              lifecycle.verify?.parsed?.check_results,
-          ),
-        },
-        lifecycle: {
-          authoring_ms: round(fixture.authoring_ms),
-          preflight_ms: lifecycle.preflight.duration_ms,
-          compile_ms: lifecycle.compile.duration_ms,
-          verify_ms: lifecycle.verify?.duration_ms ?? 0,
-          final_gate_ms: lifecycle.final?.duration_ms ?? 0,
-          measurement_overhead_ms: lifecycle.closure_copy_ms,
-          total_ms: round(
-            Math.max(
-              0,
-              performance.now() - recoveryStarted - lifecycle.closure_copy_ms,
-            ),
-          ),
-        },
-        command_record_refs: commandRecords
-          .filter((record) => record.relative_path.startsWith(commandPrefix))
-          .map((record) => record.relative_path),
-      };
-      await writeFile(
-        path.join(recoveryOutput, "recovery-result.json"),
-        `${JSON.stringify(recovery, null, 2)}\n`,
-      );
-      recoveries.push(recovery);
-    } finally {
-      await removeFixture(fixture);
-    }
-  }
+  const measurements = createRepeatMeasurements();
+  const { cases, correctShape } = await executeRepeatCases({
+    harnessRoot,
+    outputDir,
+    repeat,
+    variant,
+    workload,
+    commandRecords,
+    measurements,
+  });
+  const recoveries = await executeRepeatRecoveries({
+    harnessRoot,
+    outputDir,
+    repeat,
+    variant,
+    workload,
+    commandRecords,
+    measurements,
+    cases,
+  });
 
   if (!correctShape)
     throw new Error("real_process_roi_correct_contract_shape_missing");
+  const {
+    compiledContractBytes,
+    migrationMs,
+    verifySnapshotMs,
+    finalSnapshotMs,
+    uniqueRawExecutionMs,
+    counterfactualWallMs,
+    preflightRepairRounds,
+    recoveryAuthoringMs,
+    closureCopyMs,
+    closureCopyBytes,
+  } = measurements;
   const falseCompletionCount = cases.filter(
     (item) =>
       item.kind === "attack" &&
@@ -467,6 +312,20 @@ export async function executeVariantRepeat(options) {
   const rawArtifactIdentity = sha256(
     canonical({ command_records: commandRecords, cases, recoveries }),
   );
+  const formalTotalCostEvidence = {
+    unit: FORMAL_TOTAL_COST_UNIT,
+    purpose_fulfillment_benefit: unverifiedFormalTotalCost(
+      "deterministic lifecycle replay does not independently normalize purpose-fulfillment benefit into a common total-cost unit",
+    ),
+    categories: Object.fromEntries(
+      FORMAL_TOTAL_COST_CATEGORIES.map((category) => [
+        category,
+        unverifiedFormalTotalCost(
+          `observed ${category} diagnostics are not independently attributable normalized total-cost evidence`,
+        ),
+      ]),
+    ),
+  };
   const result = {
     schema_version: REAL_PROCESS_RUN_SCHEMA,
     run_id: `${variant.id}-repeat-${String(repeat).padStart(2, "0")}`,
@@ -487,6 +346,7 @@ export async function executeVariantRepeat(options) {
     completed_at: new Date().toISOString(),
     provenance_doubt_reasons: [],
     metrics,
+    formal_total_cost_evidence: formalTotalCostEvidence,
     cases,
     recoveries,
     lifecycle_evidence: {
@@ -506,6 +366,253 @@ export async function executeVariantRepeat(options) {
   return result;
 }
 
+async function loadWorkloadDefinition() {
+  const workload = JSON.parse(await readFile(workloadPath, "utf8"));
+  assertCurrentEvidenceSchema(
+    workload.schema_version,
+    REAL_PROCESS_WORKLOAD_SCHEMA,
+    LEGACY_REAL_PROCESS_SCHEMAS.workload,
+    "workload_schema",
+  );
+  if (
+    workload.capability_level !== "level_3" ||
+    workload.level_4_claimed !== false ||
+    workload.governance_judgment_included !== false ||
+    workload.total_cost_theorem !==
+      "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs" ||
+    workload.level_4_requires_independent_capability_audit !== true ||
+    workload.fixture_candidate_identity?.required !== true
+  )
+    throw new Error("real_process_roi_workload_boundary_invalid");
+  return workload;
+}
+
+function createRepeatMeasurements() {
+  return {
+    compiledContractBytes: 0,
+    migrationMs: 0,
+    verifySnapshotMs: 0,
+    finalSnapshotMs: 0,
+    uniqueRawExecutionMs: 0,
+    counterfactualWallMs: 0,
+    preflightRepairRounds: 0,
+    recoveryAuthoringMs: 0,
+    closureCopyMs: 0,
+    closureCopyBytes: 0,
+  };
+}
+
+async function executeRepeatCases({
+  harnessRoot,
+  outputDir,
+  repeat,
+  variant,
+  workload,
+  commandRecords,
+  measurements,
+}) {
+  const cases = [];
+  let correctShape = null;
+  for (const caseId of CASE_IDS) {
+    const caseOutput = path.join(outputDir, "cases", caseId);
+    await mkdir(caseOutput, { recursive: true });
+    const caseStarted = performance.now();
+    const fixture = await createWorkloadFixture({
+      harnessRoot,
+      variantId: variant.id,
+      caseId,
+      repeat,
+    });
+    measurements.migrationMs += fixture.migration_ms;
+    try {
+      if (caseId === "correct-control")
+        correctShape = await measureContractShape(fixture);
+      const lifecycle = await executeRealProcessRoiLifecycle({
+        harnessRoot,
+        fixture,
+        outputDir: caseOutput,
+        commandRecords,
+        relativeRoot: outputDir,
+        timeoutMs: workload.resource_limits.command_timeout_ms,
+        commitMessage: `roi-${variant.id}-${repeat}-${caseId}`,
+        snapshotLabel: `roi-${variant.id}-${repeat}-${caseId}`,
+      });
+      recordLifecycleMeasurements(measurements, lifecycle);
+      const caseCommands = commandRecords.filter((record) =>
+        record.relative_path.startsWith(`cases/${caseId}/`),
+      );
+      const counterfactuals =
+        caseId === "correct-control"
+          ? observedCounterfactuals(fixture, lifecycle)
+          : [];
+      const caseRecord = {
+        case_id: caseId,
+        committed_candidate_identity: lifecycle.committed_candidate_identity,
+        kind: caseId === "correct-control" ? "control" : "attack",
+        mode: fixture.mode,
+        workflow_status: lifecycle.terminal,
+        authority_boundary: authorityBoundaryForVariant(variant.id),
+        owner_diagnostic: lifecycle.owner_diagnostic,
+        gold: fixture.gold,
+        counterfactuals,
+        raw_execution: {
+          maximum_envelopes_per_execution: 1,
+          minimum_observations_per_envelope: 6,
+          observed_main_execution_count: observedMainExecutionCount(lifecycle),
+        },
+        lifecycle: {
+          authoring_ms: round(fixture.authoring_ms),
+          preflight_ms: lifecycle.preflight.duration_ms,
+          compile_ms: lifecycle.compile.duration_ms,
+          verify_ms: lifecycle.verify?.duration_ms ?? 0,
+          final_gate_ms: lifecycle.final?.duration_ms ?? 0,
+          snapshot_ms: round(lifecycle.snapshot?.preparation_ms ?? 0),
+          measurement_overhead_ms: lifecycle.closure_copy_ms,
+          total_ms: round(
+            Math.max(
+              0,
+              performance.now() - caseStarted - lifecycle.closure_copy_ms,
+            ),
+          ),
+        },
+        command_record_refs: caseCommands.map((record) => record.relative_path),
+        final_result_sha256: sha256(canonical(lifecycle.parsed_final)),
+      };
+      await writeFile(
+        path.join(caseOutput, "case-result.json"),
+        `${JSON.stringify(caseRecord, null, 2)}\n`,
+      );
+      cases.push(caseRecord);
+    } finally {
+      await removeFixture(fixture);
+    }
+  }
+  return { cases, correctShape };
+}
+
+async function executeRepeatRecoveries({
+  harnessRoot,
+  outputDir,
+  repeat,
+  variant,
+  workload,
+  commandRecords,
+  measurements,
+  cases,
+}) {
+  const recoveries = [];
+  for (const attack of cases.filter((item) => item.kind === "attack")) {
+    const recoveryOutput = path.join(
+      outputDir,
+      "recoveries",
+      `after-${attack.case_id}`,
+    );
+    await mkdir(recoveryOutput, { recursive: true });
+    const recoveryStarted = performance.now();
+    const fixture = await createWorkloadFixture({
+      harnessRoot,
+      variantId: variant.id,
+      caseId: "correct-control",
+      repeat,
+    });
+    measurements.recoveryAuthoringMs += fixture.authoring_ms;
+    measurements.migrationMs += fixture.migration_ms;
+    try {
+      const lifecycle = await executeRealProcessRoiLifecycle({
+        harnessRoot,
+        fixture,
+        outputDir: recoveryOutput,
+        commandRecords,
+        relativeRoot: outputDir,
+        timeoutMs: workload.resource_limits.command_timeout_ms,
+        commitMessage: `roi-${variant.id}-${repeat}-recovery-${attack.case_id}`,
+        snapshotLabel: `roi-${variant.id}-${repeat}-recovery-${attack.case_id}`,
+      });
+      recordLifecycleMeasurements(measurements, lifecycle);
+      const commandPrefix = `recoveries/after-${attack.case_id}/`;
+      const recovery = {
+        source_attack_case_id: attack.case_id,
+        committed_candidate_identity: lifecycle.committed_candidate_identity,
+        workflow_status: lifecycle.terminal,
+        gold: fixture.gold,
+        counterfactuals: observedCounterfactuals(fixture, lifecycle),
+        raw_execution: {
+          maximum_envelopes_per_execution: 1,
+          minimum_observations_per_envelope: 6,
+          observed_main_execution_count: observedMainExecutionCount(lifecycle),
+        },
+        lifecycle: {
+          authoring_ms: round(fixture.authoring_ms),
+          preflight_ms: lifecycle.preflight.duration_ms,
+          compile_ms: lifecycle.compile.duration_ms,
+          verify_ms: lifecycle.verify?.duration_ms ?? 0,
+          final_gate_ms: lifecycle.final?.duration_ms ?? 0,
+          measurement_overhead_ms: lifecycle.closure_copy_ms,
+          total_ms: round(
+            Math.max(
+              0,
+              performance.now() - recoveryStarted - lifecycle.closure_copy_ms,
+            ),
+          ),
+        },
+        command_record_refs: commandRecords
+          .filter((record) => record.relative_path.startsWith(commandPrefix))
+          .map((record) => record.relative_path),
+      };
+      await writeFile(
+        path.join(recoveryOutput, "recovery-result.json"),
+        `${JSON.stringify(recovery, null, 2)}\n`,
+      );
+      recoveries.push(recovery);
+    } finally {
+      await removeFixture(fixture);
+    }
+  }
+  return recoveries;
+}
+
+function recordLifecycleMeasurements(measurements, lifecycle) {
+  if (!commandSucceeded(lifecycle.preflight))
+    measurements.preflightRepairRounds += 1;
+  measurements.compiledContractBytes = Math.max(
+    measurements.compiledContractBytes,
+    lifecycle.compiled_contract_bytes,
+  );
+  measurements.verifySnapshotMs += lifecycle.snapshot?.preparation_ms ?? 0;
+  measurements.uniqueRawExecutionMs += lifecycle.runner_ms;
+  measurements.finalSnapshotMs += lifecycle.final_snapshot_ms;
+  measurements.counterfactualWallMs += lifecycle.counterfactual_upper_bound_ms;
+  measurements.closureCopyMs += lifecycle.closure_copy_ms;
+  measurements.closureCopyBytes += lifecycle.closure_copy_bytes;
+}
+
+function observedCounterfactuals(fixture, lifecycle) {
+  return fixture.counterfactuals.map((control) => ({
+    ...control,
+    workflow_observed_passed:
+      control.passed === true && lifecycle.terminal === "machine_accepted",
+  }));
+}
+
+function observedMainExecutionCount(lifecycle) {
+  return uniqueExecutionCount(
+    lifecycle.parsed_final?.check_results ??
+      lifecycle.verify?.parsed?.check_results,
+  );
+}
+
+function authorityBoundaryForVariant(variantId) {
+  if (variantId === "a") return "legacy-project-self-report";
+  if (variantId === "b")
+    return "isolated-envelope-with-contract-owned-runtime";
+  return "source-backed-isolated-process-runtime-closure";
+}
+
+function commandSucceeded(command) {
+  const { status } = command;
+  return status === 0;
+}
+
 export async function enableRealProcessRoiLongTaskProfile(invoke, cli) {
   const enabled = await invoke("enable-long-task", process.execPath, [
     cli,
@@ -517,7 +624,7 @@ export async function enableRealProcessRoiLongTaskProfile(invoke, cli) {
   return enabled;
 }
 
-async function executeLifecycle({
+export async function executeRealProcessRoiLifecycle({
   harnessRoot,
   fixture,
   outputDir,
@@ -557,6 +664,10 @@ async function executeLifecycle({
   ]);
   if (committed.status !== 0)
     throw new Error(`real_process_roi_git_commit_failed:${committed.status}`);
+  const candidateBefore = await captureCommittedCandidateIdentity(
+    invoke,
+    "candidate-before",
+  );
 
   const preflight = await invoke("preflight", process.execPath, [
     cli,
@@ -570,7 +681,7 @@ async function executeLifecycle({
   let final = null;
   let compiledContractBytes = 0;
   let closureCopy = { duration_ms: 0, bytes: 0 };
-  if (preflight.status === 0) {
+  if (commandSucceeded(preflight)) {
     compile = await invoke("compile", process.execPath, [
       cli,
       "long-task",
@@ -578,7 +689,7 @@ async function executeLifecycle({
       fixture.workdir,
     ]);
   }
-  if (compile.status === 0) {
+  if (commandSucceeded(compile)) {
     compiledContractBytes = await compiledBytes(fixture.workdir);
     closureCopy = await measureCompiledProcessClosure({
       workdir: fixture.workdir,
@@ -604,6 +715,26 @@ async function executeLifecycle({
     ]);
   }
 
+  const candidateAfter = await captureCommittedCandidateIdentity(
+    invoke,
+    "candidate-after",
+  );
+  if (
+    candidateAfter.commit !== candidateBefore.commit ||
+    candidateAfter.tree !== candidateBefore.tree ||
+    candidateAfter.clean !== true
+  )
+    throw new Error("real_process_roi_candidate_changed_during_lifecycle");
+  const committedCandidateIdentity = {
+    commit: candidateBefore.commit,
+    tree: candidateBefore.tree,
+    clean: true,
+    command_record_refs: [
+      ...candidateBefore.command_record_refs,
+      ...candidateAfter.command_record_refs,
+    ],
+  };
+
   const parsedFinal = final?.parsed ?? verify?.parsed ?? null;
   const runnerMs = uniqueExecutionDurationMs(
     parsedFinal?.check_results ?? verify?.parsed?.check_results,
@@ -618,6 +749,7 @@ async function executeLifecycle({
     verify,
     final,
     snapshot,
+    committed_candidate_identity: committedCandidateIdentity,
     parsed_final: parsedFinal,
     compiled_contract_bytes: compiledContractBytes,
     closure_copy_ms: closureCopy.duration_ms,
@@ -625,7 +757,7 @@ async function executeLifecycle({
     runner_ms: runnerMs,
     final_snapshot_ms: numericField(parsedFinal, "snapshot_preparation_ms"),
     counterfactual_upper_bound_ms:
-      verify && verify.status === 0
+      verify && commandSucceeded(verify)
         ? round(
             Math.max(0, verify.duration_ms - verifySnapshotMs - verifyRunnerMs),
           )
@@ -633,6 +765,40 @@ async function executeLifecycle({
     terminal: workflowStatus({ preflight, compile, verify, final }),
     owner_diagnostic: ownerDiagnostic({ preflight, compile, verify, final }),
   };
+}
+
+async function captureCommittedCandidateIdentity(invoke, labelPrefix) {
+  const head = await invoke(`${labelPrefix}-head`, "git", [
+    "rev-parse",
+    "HEAD",
+  ]);
+  const tree = await invoke(`${labelPrefix}-tree`, "git", [
+    "rev-parse",
+    "HEAD^{tree}",
+  ]);
+  const status = await invoke(`${labelPrefix}-status`, "git", [
+    "status",
+    "--short",
+  ]);
+  if (head.status !== 0 || tree.status !== 0 || status.status !== 0)
+    throw new Error("real_process_roi_candidate_identity_failed");
+  const identity = {
+    commit: head.stdout_text.trim(),
+    tree: tree.stdout_text.trim(),
+    clean: status.stdout_text.trim() === "",
+    command_record_refs: [
+      head.relative_path,
+      tree.relative_path,
+      status.relative_path,
+    ],
+  };
+  if (
+    !/^[a-f0-9]{40}$/u.test(identity.commit) ||
+    !/^[a-f0-9]{40}$/u.test(identity.tree) ||
+    identity.clean !== true
+  )
+    throw new Error("real_process_roi_candidate_identity_invalid");
+  return identity;
 }
 
 function emptyCommandResult(label) {
@@ -745,7 +911,11 @@ async function executeCommand({
     `${JSON.stringify(record, null, 2)}\n`,
   );
   commandRecords.push(record);
-  return { ...record, parsed };
+  return {
+    ...record,
+    parsed,
+    stdout_text: stdoutBuffer.toString("utf8"),
+  };
 }
 
 async function measureWorkspaceSnapshot({ harnessRoot, fixture, label }) {
