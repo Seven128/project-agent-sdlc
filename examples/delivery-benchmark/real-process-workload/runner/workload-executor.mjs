@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -89,6 +89,7 @@ export async function executeVariantRepeat(options) {
     preflightRepairRounds,
     recoveryAuthoringMs,
     closureCopyMs,
+    closureCopyMeasurementOverheadMs,
     closureCopyBytes,
   } = measurements;
   const falseCompletionCount = cases.filter(
@@ -122,7 +123,10 @@ export async function executeVariantRepeat(options) {
     process.memoryUsage().rss,
     ...commandRecords.map((record) => record.peak_rss_bytes),
   );
-  const totalElapsed = Math.max(0, performance.now() - started - closureCopyMs);
+  const totalElapsed = Math.max(
+    0,
+    performance.now() - started - closureCopyMeasurementOverheadMs,
+  );
   const metrics = {
     authoring_active_ms: measuredMetric(
       sum(cases.map((item) => item.lifecycle.authoring_ms)) +
@@ -398,6 +402,7 @@ function createRepeatMeasurements() {
     preflightRepairRounds: 0,
     recoveryAuthoringMs: 0,
     closureCopyMs: 0,
+    closureCopyMeasurementOverheadMs: 0,
     closureCopyBytes: 0,
   };
 }
@@ -467,11 +472,14 @@ async function executeRepeatCases({
           verify_ms: lifecycle.verify?.duration_ms ?? 0,
           final_gate_ms: lifecycle.final?.duration_ms ?? 0,
           snapshot_ms: round(lifecycle.snapshot?.preparation_ms ?? 0),
-          measurement_overhead_ms: lifecycle.closure_copy_ms,
+          measurement_overhead_ms:
+            lifecycle.closure_copy_measurement_overhead_ms,
           total_ms: round(
             Math.max(
               0,
-              performance.now() - caseStarted - lifecycle.closure_copy_ms,
+              performance.now() -
+                caseStarted -
+                lifecycle.closure_copy_measurement_overhead_ms,
             ),
           ),
         },
@@ -547,11 +555,14 @@ async function executeRepeatRecoveries({
           compile_ms: lifecycle.compile.duration_ms,
           verify_ms: lifecycle.verify?.duration_ms ?? 0,
           final_gate_ms: lifecycle.final?.duration_ms ?? 0,
-          measurement_overhead_ms: lifecycle.closure_copy_ms,
+          measurement_overhead_ms:
+            lifecycle.closure_copy_measurement_overhead_ms,
           total_ms: round(
             Math.max(
               0,
-              performance.now() - recoveryStarted - lifecycle.closure_copy_ms,
+              performance.now() -
+                recoveryStarted -
+                lifecycle.closure_copy_measurement_overhead_ms,
             ),
           ),
         },
@@ -583,6 +594,8 @@ function recordLifecycleMeasurements(measurements, lifecycle) {
   measurements.finalSnapshotMs += lifecycle.final_snapshot_ms;
   measurements.counterfactualWallMs += lifecycle.counterfactual_upper_bound_ms;
   measurements.closureCopyMs += lifecycle.closure_copy_ms;
+  measurements.closureCopyMeasurementOverheadMs +=
+    lifecycle.closure_copy_measurement_overhead_ms;
   measurements.closureCopyBytes += lifecycle.closure_copy_bytes;
 }
 
@@ -680,7 +693,7 @@ export async function executeRealProcessRoiLifecycle({
   let verify = null;
   let final = null;
   let compiledContractBytes = 0;
-  let closureCopy = { duration_ms: 0, bytes: 0 };
+  let closureCopy = { duration_ms: 0, measurement_overhead_ms: 0, bytes: 0 };
   if (commandSucceeded(preflight)) {
     compile = await invoke("compile", process.execPath, [
       cli,
@@ -753,6 +766,8 @@ export async function executeRealProcessRoiLifecycle({
     parsed_final: parsedFinal,
     compiled_contract_bytes: compiledContractBytes,
     closure_copy_ms: closureCopy.duration_ms,
+    closure_copy_measurement_overhead_ms:
+      closureCopy.measurement_overhead_ms,
     closure_copy_bytes: closureCopy.bytes,
     runner_ms: runnerMs,
     final_snapshot_ms: numericField(parsedFinal, "snapshot_preparation_ms"),
@@ -966,30 +981,43 @@ async function measureCompiledProcessClosure({
     const value = JSON.parse(await readFile(file, "utf8"));
     collectClosureFiles(value, closureFiles);
   }
+  if (closureFiles.size === 0)
+    return { duration_ms: 0, measurement_overhead_ms: 0, bytes: 0 };
   const started = performance.now();
   let bytes = 0;
-  for (const relativePath of [...closureFiles].sort()) {
-    if (
-      path.isAbsolute(relativePath) ||
-      relativePath.split(/[\\/]/u).includes("..")
-    )
-      throw new Error(`real_process_roi_closure_path_invalid:${relativePath}`);
-    const source = path.resolve(repositoryRoot, ...relativePath.split("/"));
-    const target = path.resolve(outputDir, ...relativePath.split("/"));
-    const sourcePrefix =
-      `${path.resolve(repositoryRoot)}${path.sep}`.toLowerCase();
-    const targetPrefix = `${path.resolve(outputDir)}${path.sep}`.toLowerCase();
-    if (
-      !source.toLowerCase().startsWith(sourcePrefix) ||
-      !target.toLowerCase().startsWith(targetPrefix)
-    )
-      throw new Error(`real_process_roi_closure_path_escape:${relativePath}`);
-    const content = await readFile(source);
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, content);
-    bytes += content.length;
+  let durationMs = 0;
+  await mkdir(outputDir, { recursive: false });
+  try {
+    for (const relativePath of [...closureFiles].sort()) {
+      if (
+        path.isAbsolute(relativePath) ||
+        relativePath.split(/[\\/]/u).includes("..")
+      )
+        throw new Error(`real_process_roi_closure_path_invalid:${relativePath}`);
+      const source = path.resolve(repositoryRoot, ...relativePath.split("/"));
+      const target = path.resolve(outputDir, ...relativePath.split("/"));
+      const sourcePrefix =
+        `${path.resolve(repositoryRoot)}${path.sep}`.toLowerCase();
+      const targetPrefix = `${path.resolve(outputDir)}${path.sep}`.toLowerCase();
+      if (
+        !source.toLowerCase().startsWith(sourcePrefix) ||
+        !target.toLowerCase().startsWith(targetPrefix)
+      )
+        throw new Error(`real_process_roi_closure_path_escape:${relativePath}`);
+      const content = await readFile(source);
+      await mkdir(path.dirname(target), { recursive: true });
+      await writeFile(target, content);
+      bytes += content.length;
+    }
+    durationMs = round(performance.now() - started);
+  } finally {
+    await rm(outputDir, { recursive: true, force: true });
   }
-  return { duration_ms: round(performance.now() - started), bytes };
+  return {
+    duration_ms: durationMs,
+    measurement_overhead_ms: round(performance.now() - started),
+    bytes,
+  };
 }
 
 function collectClosureFiles(value, result) {

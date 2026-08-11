@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  stat,
+  truncate,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -378,6 +387,15 @@ test("R9/R10 workload cases reach the real Final Gate through non-closure input 
         lifecycle.committed_candidate_identity.command_record_refs.length,
         6,
       );
+      assert.ok(lifecycle.closure_copy_bytes > 0);
+      assert.ok(
+        lifecycle.closure_copy_measurement_overhead_ms >=
+          lifecycle.closure_copy_ms,
+      );
+      await assert.rejects(
+        stat(path.join(outputDir, "closure-copy-probe")),
+        { code: "ENOENT" },
+      );
     } finally {
       await removeFixture(fixture);
       await rm(outputDir, { recursive: true, force: true });
@@ -405,6 +423,21 @@ test("real process ROI setup routes every Windows npm command through ComSpec wi
       command: "C:\\Windows\\System32\\cmd.exe",
       args: ["/d", "/s", "/c", "call", "npm", ...args],
     });
+});
+
+test("real process ROI artifact manifest keeps its retained-file budget fail closed", async () => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-budget-"));
+  const oversized = path.join(temporary, "oversized.bin");
+  try {
+    await writeFile(oversized, "");
+    await truncate(oversized, 64 * 1024 * 1024 + 1);
+    await assert.rejects(
+      buildArtifactManifest(temporary),
+      /real_process_roi_artifact_file_budget:oversized\.bin/u,
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("partial real process ROI setup explicitly removes a registered dirty worktree", async () => {
