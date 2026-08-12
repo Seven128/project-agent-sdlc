@@ -24,7 +24,10 @@ import {
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
-import { fixtureProductRootArgv } from "./long-task-package-machine-fixture.mjs";
+import {
+  fixtureProductRootArgv,
+  fixtureProductRootPath,
+} from "./long-task-package-machine-fixture.mjs";
 
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
@@ -53,10 +56,10 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     assert.equal(compiled.claim_coverage.claims_total, 11);
     const check = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(check.runner.resolved_cwd, "");
-    assert.equal(check.runner.resolved_target, "bin/product-root.exe");
+    assert.equal(check.runner.resolved_target, fixtureProductRootPath());
     assert.equal(
       check.process_runtime_closure.root_target,
-      "bin/product-root.exe",
+      fixtureProductRootPath(),
     );
     assert.ok(
       check.process_runtime_closure.production_binding_refs.every((ref) =>

@@ -791,20 +791,28 @@ test("reviewed tier and hotspot budgets fail closed without limiting complete di
 
 test("[critical:controlled-budget-profile] suite wall-time budgets are named, environment-bound, and fail closed", () => {
   const environment = {
-    TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: "github-ubuntu-v1",
+    TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: "github-ubuntu-v2",
     GITHUB_ACTIONS: "true",
     RUNNER_OS: "Linux",
   };
   assert.equal(
-    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v1"].reviewed_on,
-    "2026-07-23",
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v2"].reviewed_on,
+    "2026-08-13",
   );
-  assert.equal(resolveSuiteWallTimeBudgetMs("default", environment), 120000);
+  assert.equal(resolveSuiteWallTimeBudgetMs("default", environment), 180000);
   assert.equal(
     resolveSuiteWallTimeBudgetMs("long-task-trust", environment),
-    240000,
+    540000,
   );
-  assert.equal(resolveSuiteWallTimeBudgetMs("long-task", environment), 600000);
+  assert.equal(resolveSuiteWallTimeBudgetMs("long-task", environment), 1200000);
+  assert.deepEqual(
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v1"].budgets_ms,
+    {
+      default: 120000,
+      "long-task-trust": 240000,
+      "long-task": 600000,
+    },
+  );
   assert.equal(resolveSuiteWallTimeBudgetMs("default", {}), null);
   assert.equal(suiteWallTimeBudgetStatus(120000, 120000), "within_budget");
   assert.equal(suiteWallTimeBudgetStatus(120001, 120000), "exceeded");

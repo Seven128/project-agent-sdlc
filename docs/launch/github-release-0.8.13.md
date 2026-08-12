@@ -70,6 +70,7 @@ Publishing a new npm version does not automatically migrate existing repositorie
 - Extends Long-Task machine observation with frozen static carriers and Harness-spawned direct-process JSON observation, binding execution roots, argv closure, runtime values and exact comparisons to current Source and production Bindings.
 - Hardens Counterfactual and observer trust boundaries against historical replay, verifier/evidence proxying, runner-mutated carriers, wrong execution roots and non-causal production observations while retaining admitted must-allow controls.
 - Adds the real-process workload and admission evidence lanes used to measure known-path lifecycle behavior and implementation cost without promoting the capability beyond Level 3 or claiming complete total-cost ROI.
+- Fixes the package compiler fixture's cross-platform product-root assertion and recalibrates controlled Ubuntu CI to the versioned `github-ubuntu-v2` catastrophic ceilings for the expanded complete test population without removing tests or weakening sentinel coverage.
 - Strengthens shared engineering guidance and regression routing while preserving one Context owner, one workflow conformance carrier and the existing `sync-only` consumer update path for this release.
 
 ## Boundary

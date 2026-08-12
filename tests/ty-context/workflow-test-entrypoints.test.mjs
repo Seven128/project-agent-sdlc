@@ -37,7 +37,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(
     pullRequestJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v1/,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v2/,
   );
   assert.match(
     pullRequestJob,
@@ -54,7 +54,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(mainJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(
     mainJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v1/,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v2/,
   );
   assert.doesNotMatch(packageWorkflow, /TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON/);
   assert.match(packageWorkflow, /set -o pipefail/);
@@ -167,7 +167,7 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   );
   assert.match(
     publishWorkflow,
-    /Complete package tests[\s\S]*TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v1/,
+    /Complete package tests[\s\S]*TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v2/,
   );
   assert.match(
     publishWorkflow,

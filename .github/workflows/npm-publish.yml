@@ -64,7 +64,7 @@ jobs:
       - name: Complete package tests
         env:
           TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/publish
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v1
+          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v2
         run: npm test --workspace project-tiny-context-harness
 
       - name: Upload package test timing

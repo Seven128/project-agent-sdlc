@@ -377,6 +377,20 @@ export const CONTROLLED_TEST_SUITE_BUDGET_PROFILES = Object.freeze({
     rationale:
       "Catastrophic regression ceilings for the repository's pinned GitHub-hosted Ubuntu package jobs; local and differently hosted runs remain diagnostic because wall time is not cross-machine evidence.",
   }),
+  "github-ubuntu-v2": Object.freeze({
+    expected_environment: Object.freeze({
+      GITHUB_ACTIONS: "true",
+      RUNNER_OS: "Linux",
+    }),
+    budgets_ms: Object.freeze({
+      default: 180_000,
+      "long-task-trust": 540_000,
+      "long-task": 1_200_000,
+    }),
+    reviewed_on: "2026-08-13",
+    rationale:
+      "Recalibrated catastrophic ceilings for the expanded 61-file default and 79-file Long-Task populations on pinned GitHub-hosted Ubuntu jobs; complete discovery, sentinel coverage, and functional pass requirements remain unchanged.",
+  }),
 });
 
 const longTaskPureFiles = new Set(LONG_TASK_PURE_TEST_FILES);
