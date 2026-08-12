@@ -87,3 +87,7 @@ Re-enter through the default Context set plus bounded search, select exactly one
 - [delivery benchmark](areas/delivery-benchmark.md)
 
 See `project_context/context.toml` for registered roles, triggers and read policies.
+
+## Context Graph
+
+- See `project_context/context.toml` for area/context_unit roles, read policy and boundary metadata.
