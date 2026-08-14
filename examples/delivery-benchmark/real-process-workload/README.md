@@ -21,9 +21,10 @@ wrong product value, and R9-R11. Raw evidence stays under
 `.artifacts/long-task-real-capability/real-process-workload/**` and is bound by
 the generated SHA-256 manifest.
 
-Three balanced repeats are mandatory. The runner expands to five when wall
-time CV exceeds 20%, paired direction is inconsistent, a primary ratio is
-within five percentage points of its threshold, or provenance is doubtful.
+V3 always runs all five frozen A/B/C repeat orders because formal accounting
+requires five B/C pairs. The initial-three CV, direction, threshold-nearness
+and provenance expansion decision remains in the summary as a diagnostic; it
+does not shorten collection.
 The report includes authoring/Compile/Verify/Counterfactual/Final-Gate timing,
 authority and closure-copy bytes, process counts, peak RSS, correct-path and
 all-errors-to-recovery cost, false completion/blocking, modification/rework,
@@ -33,10 +34,47 @@ is accepted, so a missing event is recorded as `required-unverified` and
 keeps complete total ROI unsupported. Human maintenance minutes likewise
 remain unverified when no independent time log exists, while objective
 file/LOC scale remains measured. All `observed_lifecycle_*` fields are
-diagnostic only: this v2 collector has no independent formal-cost ingestion and
-therefore cannot issue a governance verdict or promote Level 3, even when its
-observed lifecycle comparison is positive.
+diagnostic only. Collection cannot issue a governance verdict or promote
+Level 3 even when its observed lifecycle comparison is positive.
 
 Run `node tools/verify_long_task_real_process_roi.mjs --dry-run --candidate
-<commit>` before collection. A full collection intentionally waits for a clean
-final C commit and uses temporary detached worktrees for A, B, and C.
+<commit> --formal-evidence-plan <plan.json>` before formal collection. The
+plan directory must contain a sibling `sources/` tree whose sorted manifest
+freezes every collector, machine-readable invoice/official-price document and
+envelope, one fixed scenario catalog with its exact task/gold inputs, and any
+optional redaction rule. Collection materializes those exact
+bytes into the run set before execution; omitting the plan is allowed for
+diagnostic collection but makes any later formal packet unsupported. A full
+collection intentionally waits for a clean final C commit and uses temporary
+detached worktrees for A, B, and C.
+
+The plan has this fixed shape; `identity_sha256` is SHA-256 of canonical JSON
+for `{ frozen_at, entries }`, and entry roles are limited to `collector`,
+`price_document`, `price_source`, `redaction_rule`, `scenario_catalog`,
+`scenario_source`, and `scenario_gold`:
+
+```json
+{
+  "schema_version": "long-task-formal-total-cost-precollection-plan-v1",
+  "frozen_at": "<ISO-8601 UTC>",
+  "entries": [
+    { "path": "<sources-relative path>", "role": "<fixed role>", "bytes": 0, "sha256": "<64 hex>" }
+  ],
+  "identity_sha256": "<64 hex>"
+}
+```
+
+After collection, pass the independent packet only to `--report <run-set>
+--formal-evidence <packet.json>`. The packet must reuse the exact precollection
+inputs and bind all raw events to the run set and repeat. Provider usage is
+parsed from invocation-bound provider records; price conversion is derived
+from the frozen raw price document; controlled-incident loss is derived from
+raw human-time or metered-usage components. Submitted normalized rates,
+monetary incident totals, event IDs, verification flags, or ROI conclusions
+are rejected. Structured run-set and formal-source JSON must be strict UTF-8,
+duplicate-key-free and no deeper than the bounded decoder limit. The verifier
+remains the sole formal conclusion owner. Every event must also bind one unique
+raw `scenario_output`: cost-event B and C outputs must both equal their shared
+frozen gold, while controlled-incident B must differ and C must equal its gold.
+The fixed catalog covers the ten accounting categories plus the one controlled
+incident; it is deliberately not a general scenario registry.

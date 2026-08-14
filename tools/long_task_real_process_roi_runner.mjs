@@ -14,6 +14,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import {
+  FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
   FORMAL_TOTAL_COST_CATEGORIES,
   FORMAL_TOTAL_COST_UNIT,
   LEGACY_REAL_PROCESS_SCHEMAS,
@@ -23,11 +24,15 @@ import {
   repeatOrder,
   variantDefinitions,
 } from "./long_task_real_process_roi_policy.mjs";
+import { readFormalAccountingPolicy } from "./long_task_formal_total_cost_evidence.mjs";
+import {
+  materializeFormalPrecollectionInputs,
+  readFormalPrecollectionPlan,
+} from "./long_task_formal_total_cost_precollection.mjs";
 import {
   assertCurrentEvidenceSchema,
   canonical,
   deriveRealProcessRoiSummary,
-  expansionDecision,
   sha256,
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
@@ -60,9 +65,22 @@ const workloadIdentityPaths = Object.freeze([
   "examples/delivery-benchmark/real-process-workload/product/config/state.json",
 ]);
 const benchmarkImplementationPaths = Object.freeze([
+  "tools/npm_command_spec.mjs",
   "tools/long_task_real_process_roi_policy.mjs",
   "tools/long_task_real_process_roi_runner.mjs",
   "tools/long_task_real_process_roi_scoring.mjs",
+  "tools/long_task_formal_total_cost_evidence.mjs",
+  "tools/long_task_formal_total_cost_accounting.mjs",
+  "tools/long_task_formal_total_cost_accounting_policy.mjs",
+  "tools/long_task_formal_total_cost_events.mjs",
+  "tools/long_task_formal_total_cost_json.mjs",
+  "tools/long_task_formal_total_cost_measurements.mjs",
+  "tools/long_task_formal_total_cost_precollection.mjs",
+  "tools/long_task_formal_total_cost_prices.mjs",
+  "tools/long_task_formal_total_cost_retention.mjs",
+  "tools/long_task_formal_total_cost_scenarios.mjs",
+  "tools/long_task_formal_total_cost_shared.mjs",
+  "tools/long_task_formal_total_cost_source_bundle.mjs",
   "tools/verify_long_task_real_process_roi.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/gold.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs",
@@ -78,6 +96,7 @@ const defaultArtifactRoot = path.join(
 export async function prepareRealProcessRoiPlan({
   candidate,
   repositoryRoot = root,
+  formalEvidencePlan = null,
 }) {
   const candidateCommit = await resolveCommit(repositoryRoot, candidate);
   const variants = variantDefinitions(candidateCommit);
@@ -122,6 +141,21 @@ export async function prepareRealProcessRoiPlan({
     repositoryRoot,
     benchmarkImplementationPaths,
   );
+  const accountingPolicyPath = path.resolve(
+    repositoryRoot,
+    ...FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH.split("/"),
+  );
+  const { policy: accountingPolicy } =
+    await readFormalAccountingPolicy(accountingPolicyPath);
+  const accountingPolicyIdentity = await sourceIdentity(repositoryRoot, [
+    FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
+  ]);
+  const formalPrecollection = formalEvidencePlan
+    ? await readFormalPrecollectionPlan({
+        planPath: path.resolve(formalEvidencePlan),
+        limits: accountingPolicy.source_bundle_limits,
+      })
+    : null;
   const workloadSha256 = workloadIdentity.identity_sha256;
   const goldBytes = await readFile(semanticGoldPath);
   const environment = await environmentRecord(repositoryRoot);
@@ -142,6 +176,9 @@ export async function prepareRealProcessRoiPlan({
     workload_sha256: workloadSha256,
     workload_identity: workloadIdentity,
     benchmark_implementation_identity: benchmarkImplementationIdentity,
+    accounting_policy_identity: accountingPolicyIdentity,
+    formal_evidence_precollection_identity:
+      formalPrecollection?.identity ?? null,
     semantic_gold_sha256: digest(goldBytes),
     environment,
     environment_identity: environmentIdentity,
@@ -152,7 +189,12 @@ export async function prepareRealProcessRoiPlan({
       theorem:
         "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
       missing_or_unverified_consequence: "total_roi_unsupported",
-      independent_evidence_ingestion: "not_implemented",
+      formal_conclusion_owner: "verify_long_task_real_process_roi",
+      collection_formal_status: "not_evaluated",
+      independent_evidence_packet: "required",
+      accounting_population_status: "frozen",
+      accounting_policy_schema: accountingPolicy.schema_version,
+      accounting_policy_sha256: accountingPolicyIdentity.identity_sha256,
       self_attested_verified_records_admitted: false,
       governance_judgment_included: false,
       level_4_requires_independent_capability_audit: true,
@@ -183,6 +225,7 @@ export async function prepareRealProcessRoiPlan({
     environmentIdentity,
     variants,
     frozenConfig,
+    formalPrecollection,
   };
 }
 
@@ -193,6 +236,8 @@ export async function dryRunRealProcessRoi(options) {
     capability_level: "level_3",
     level_4_claimed: false,
     governance_judgment_included: false,
+    observed_lifecycle_status: "not_collected",
+    formal_status: "not_evaluated",
     executable: plan.worktreeClean,
     reason: plan.worktreeClean
       ? null
@@ -204,6 +249,11 @@ export async function dryRunRealProcessRoi(options) {
     workload_sha256: plan.workloadSha256,
     benchmark_implementation_sha256:
       plan.frozenConfig.benchmark_implementation_identity.identity_sha256,
+    accounting_policy_sha256:
+      plan.frozenConfig.accounting_policy_identity.identity_sha256,
+    formal_evidence_precollection_sha256:
+      plan.frozenConfig.formal_evidence_precollection_identity
+        ?.identity_sha256 ?? null,
     environment_identity: plan.environmentIdentity,
     variants: plan.variants,
     initial_schedule: plan.frozenConfig.repeat_orders.slice(
@@ -214,7 +264,7 @@ export async function dryRunRealProcessRoi(options) {
       MEASUREMENT_THRESHOLDS.minimum_repeats,
     ),
     expansion_rule:
-      "expand 3 to 5 for CV > 20%, inconsistent paired direction, a primary metric within 5 percentage points of threshold, or environment/provenance doubt",
+      "v3 always collects five repeats for formal accounting; the initial-three diagnostic records whether CV, paired direction, threshold nearness, or provenance would independently require expansion",
   };
 }
 
@@ -223,8 +273,13 @@ export async function collectRealProcessRoi({
   repositoryRoot = root,
   artifactRoot = defaultArtifactRoot,
   keepWorktrees = false,
+  formalEvidencePlan = null,
 }) {
-  const plan = await prepareRealProcessRoiPlan({ candidate, repositoryRoot });
+  const plan = await prepareRealProcessRoiPlan({
+    candidate,
+    repositoryRoot,
+    formalEvidencePlan,
+  });
   if (!plan.worktreeClean)
     throw new Error("real_process_roi_candidate_worktree_dirty");
   const runSetId = `${compactTimestamp()}-${plan.candidateCommit.slice(0, 12)}-${plan.workloadSha256.slice(0, 12)}`;
@@ -248,6 +303,16 @@ export async function collectRealProcessRoi({
       runSetRoot,
       prefix: "benchmark-implementation",
       identity: plan.frozenConfig.benchmark_implementation_identity,
+    }),
+    materializeSourceIdentity({
+      repositoryRoot,
+      runSetRoot,
+      prefix: "accounting-policy",
+      identity: plan.frozenConfig.accounting_policy_identity,
+    }),
+    materializeFormalPrecollectionInputs({
+      runSetRoot,
+      precollection: plan.formalPrecollection,
     }),
   ]);
   const temporaryRoot = await mkdtemp(
@@ -274,21 +339,10 @@ export async function collectRealProcessRoi({
     }
     for (
       let repeat = 1;
-      repeat <= MEASUREMENT_THRESHOLDS.minimum_repeats;
+      repeat <= MEASUREMENT_THRESHOLDS.expanded_repeats;
       repeat += 1
     )
       await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
-    const initialExpansion = expansionDecision(runs, plan.frozenConfig);
-    if (
-      initialExpansion.required_repeats ===
-      MEASUREMENT_THRESHOLDS.expanded_repeats
-    )
-      for (
-        let repeat = MEASUREMENT_THRESHOLDS.minimum_repeats + 1;
-        repeat <= MEASUREMENT_THRESHOLDS.expanded_repeats;
-        repeat += 1
-      )
-        await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
 
     const summary = deriveRealProcessRoiSummary(runs, plan.frozenConfig);
     const aggregate = {
@@ -307,6 +361,11 @@ export async function collectRealProcessRoi({
       workload_sha256: plan.workloadSha256,
       benchmark_implementation_sha256:
         plan.frozenConfig.benchmark_implementation_identity.identity_sha256,
+      accounting_policy_sha256:
+        plan.frozenConfig.accounting_policy_identity.identity_sha256,
+      formal_evidence_precollection_sha256:
+        plan.frozenConfig.formal_evidence_precollection_identity
+          ?.identity_sha256 ?? null,
       environment_identity: plan.environmentIdentity,
       setup: setupRecords,
       summary,
@@ -340,14 +399,18 @@ export async function collectRealProcessRoi({
       workload_sha256: plan.workloadSha256,
       benchmark_implementation_sha256:
         plan.frozenConfig.benchmark_implementation_identity.identity_sha256,
+      accounting_policy_sha256:
+        plan.frozenConfig.accounting_policy_identity.identity_sha256,
+      formal_evidence_precollection_sha256:
+        plan.frozenConfig.formal_evidence_precollection_identity
+          ?.identity_sha256 ?? null,
       environment_identity: plan.environmentIdentity,
       manifest_sha256: digest(manifestBytes),
       aggregate_sha256: digest(aggregateBytes),
-      report_status: summary.report_status,
+      observed_lifecycle_status: summary.observed_lifecycle_status,
       observed_lifecycle_evidence_valid:
         summary.observed_lifecycle_evidence_valid,
-      total_roi_supported: summary.total_roi_supported,
-      total_roi_positive: summary.total_roi_positive,
+      formal_status: "not_evaluated",
       capability_level: "level_3",
       level_4_claimed: false,
       governance_judgment_included: false,
@@ -569,7 +632,9 @@ async function prepareVariant({
       }),
     );
     if (records.at(-1).status !== 0)
-      throw new Error(`real_process_roi_candidate_identity_failed:${variant.id}`);
+      throw new Error(
+        `real_process_roi_candidate_identity_failed:${variant.id}`,
+      );
   }
   const head = (
     await readFile(path.join(outputDir, "candidate-head.stdout.log"), "utf8")

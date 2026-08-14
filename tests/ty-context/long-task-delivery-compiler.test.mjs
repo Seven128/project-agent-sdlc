@@ -171,7 +171,14 @@ test("Compile ignores safe unmatched relative argv values instead of copying or 
     "tests/missing-runtime-config.json",
     "--config=tests/missing-runtime-config.json",
     "runtime/extensionless-entry",
+    "runtime/file with spaces.json",
     "--label=release/channel",
+    "node:24",
+    "--mode=node:24",
+    "12:30",
+    "--time=12:30",
+    "--empty=",
+    "-d",
   ]) {
     const fixture = await createDeliveryFixture();
     try {
@@ -214,13 +221,45 @@ test("Compile ignores safe unmatched relative argv values instead of copying or 
   }
 });
 
-test("Compile fails closed for absolute, escaping, file URL, and network URL argv values", async () => {
+test("Compile fails closed for external, ambiguous, quoted, and unsupported compound argv values", async () => {
   for (const unsafe of [
+    "/outside/runtime",
+    "//outside/share/runtime",
+    "/d",
     "https://example.test/runtime",
     "--endpoint=https://example.test/runtime",
+    "scheme:sample/runtime",
+    "scheme:/sample/runtime",
+    "scheme://sample/runtime",
+    "mailto:123",
+    "urn:123",
+    "data:123",
+    "ws:80",
+    "runtime:24",
+    "Node:24",
+    "file:external/runtime.json",
     "file:///external/runtime.json",
     "C:/external/config.json",
+    "C:\\external\\config.json",
+    "C:relative/config.json",
+    "C:relative\\config.json",
     "../external/config.json",
+    "/outside/data file.json",
+    "scheme:sample/data file.json",
+    '"tests/oracle.mjs"',
+    '--config="tests/oracle.mjs"',
+    "--config=one=two",
+    "name=../external/config.json",
+    "-I../external/config.json",
+    "@../external/config.json",
+    "config/runtime && /outside/data.json",
+    "config/runtime;next",
+    "$(outside)/data.json",
+    "${OUTSIDE}/data.json",
+    "%USERPROFILE%/data.json",
+    "~/outside/data.json",
+    "*.json",
+    "--config=config/runtime|outside",
   ]) {
     const fixture = await createDeliveryFixture();
     try {

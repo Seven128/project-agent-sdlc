@@ -49,6 +49,7 @@ const compileBoundaryDiagnostics = new Map([
     "wrong.execution-target-unbound-argv",
     "process_root_production_binding_required",
   ],
+  ["wrong.r12.external-root-argv", "process_root_argv_unsafe"],
 ]);
 
 test("delivery verifier accepts one complete current-run terminal/control report", () => {

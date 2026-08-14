@@ -19,6 +19,7 @@ import {
 } from "./long_task_real_process_roi_policy.mjs";
 
 const {
+  FORMAL_TOTAL_COST_ACCOUNTING_POLICY_SCHEMA,
   REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
   REAL_PROCESS_RUN_SCHEMA,
   REAL_PROCESS_SUMMARY_SCHEMA,
@@ -34,7 +35,39 @@ export function validateRunRecord(run, frozenConfig) {
     LEGACY_REAL_PROCESS_SCHEMAS.run,
     "run_schema",
   );
+  assertNoFormalConclusionFields(
+    run,
+    "run_formal_conclusion_fields_prohibited",
+  );
+  assertSameSet(
+    Object.keys(run),
+    [
+      "candidate_identity",
+      "cases",
+      "comparison_role",
+      "completed_at",
+      "environment_identity",
+      "invocation_position",
+      "lifecycle_evidence",
+      "metrics",
+      "provenance_doubt_reasons",
+      "recoveries",
+      "repeat",
+      "run_id",
+      "safety_eligible",
+      "schema_version",
+      "started_at",
+      "variant_id",
+    ],
+    "run_field_set",
+  );
   assert(VARIANT_IDS.includes(run.variant_id), "run_variant");
+  assert(
+    typeof run.run_id === "string" &&
+      run.run_id.length > 0 &&
+      run.run_id.length <= 256,
+    "run_id",
+  );
   assert(
     Number.isInteger(run.repeat) &&
       run.repeat >= 1 &&
@@ -78,7 +111,6 @@ export function validateRunRecord(run, frozenConfig) {
   );
   assertTimestampOrder(run.started_at, run.completed_at, "run_time");
   validateMetricSet(run.metrics);
-  validateFormalTotalCostEvidence(run.formal_total_cost_evidence);
   assertSameSet(
     run.cases?.map((item) => item.case_id),
     CASE_IDS,
@@ -160,7 +192,7 @@ export function validateRunRecord(run, frozenConfig) {
 }
 
 export function deriveRealProcessRoiSummary(runs, frozenConfig) {
-  validateSummaryPolicy(frozenConfig);
+  validateRealProcessRoiPolicy(frozenConfig);
   const { repeats, grouped, perVariant } = prepareSummaryRuns(
     runs,
     frozenConfig,
@@ -179,14 +211,15 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
     repeats,
     grouped,
     aRoleHonest,
-    bKnownFalseAcceptanceReproduced:
-      controls.bKnownFalseAcceptanceReproduced,
+    bKnownFalseAcceptanceReproduced: controls.bKnownFalseAcceptanceReproduced,
   });
-  const formalRoi = deriveFormalRoiConclusion({
-    grouped,
-    frozenConfig,
+  const observedLifecycleStatus = realProcessObservedLifecycleStatus({
+    observedLifecycleEvidenceValid:
+      observedLifecycle.observedLifecycleEvidenceValid,
     candidateSafetyFloor,
-    observedLifecycle,
+    completeRepeatSet: observedLifecycle.completeRepeatSet,
+    observedLifecycleThresholdsMet:
+      observedLifecycle.observedLifecycleThresholdsMet,
   });
 
   return {
@@ -222,21 +255,12 @@ export function deriveRealProcessRoiSummary(runs, frozenConfig) {
     observed_lifecycle_correct_path_cost_ratio:
       observedLifecycle.correctPathRatio,
     observed_lifecycle_phase_cost_ratios: observedLifecycle.phaseRatios,
-    formal_total_cost_categories: [...FORMAL_TOTAL_COST_CATEGORIES],
-    formal_total_cost_unit: FORMAL_TOTAL_COST_UNIT,
-    formal_total_cost_independent_evidence_ingestion:
-      frozenConfig.formal_total_cost_policy.independent_evidence_ingestion,
-    formal_total_cost_pairs: formalRoi.formalTotalCost.pairs,
-    formal_total_cost_paired_wins: formalRoi.formalTotalCost.paired_wins,
-    required_unverified_total_cost_evidence:
-      formalRoi.formalTotalCost.required_unverified,
-    total_roi_supported: formalRoi.totalRoiSupported,
-    total_roi_positive: formalRoi.totalRoiPositive,
-    report_status: formalRoi.reportStatus,
+    observed_lifecycle_status: observedLifecycleStatus,
+    formal_status: "not_evaluated",
   };
 }
 
-function validateSummaryPolicy(frozenConfig) {
+export function validateRealProcessRoiPolicy(frozenConfig) {
   assertCurrentEvidenceSchema(
     frozenConfig?.schema_version,
     REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
@@ -248,25 +272,62 @@ function validateSummaryPolicy(frozenConfig) {
     FORMAL_TOTAL_COST_CATEGORIES,
     "frozen_config_formal_total_cost_categories",
   );
-  assert(
-    frozenConfig.formal_total_cost_policy?.normalized_unit ===
-        FORMAL_TOTAL_COST_UNIT &&
-      frozenConfig.formal_total_cost_policy?.theorem ===
-        "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs" &&
-      frozenConfig.formal_total_cost_policy?.independent_evidence_ingestion ===
-        "not_implemented" &&
-      frozenConfig.formal_total_cost_policy
-        ?.self_attested_verified_records_admitted === false &&
-      frozenConfig.formal_total_cost_policy?.governance_judgment_included ===
-        false &&
-      frozenConfig.formal_total_cost_policy
-        ?.level_4_requires_independent_capability_audit === true,
+  assertSameSet(
+    Object.keys(frozenConfig.formal_total_cost_policy ?? {}),
+    [
+      "accounting_population_status",
+      "accounting_policy_schema",
+      "accounting_policy_sha256",
+      "categories",
+      "collection_formal_status",
+      "formal_conclusion_owner",
+      "governance_judgment_included",
+      "independent_evidence_packet",
+      "level_4_requires_independent_capability_audit",
+      "missing_or_unverified_consequence",
+      "normalized_unit",
+      "self_attested_verified_records_admitted",
+      "theorem",
+    ],
     "frozen_config_formal_total_cost_policy",
+  );
+  const policy = frozenConfig.formal_total_cost_policy;
+  const expected = {
+    normalized_unit: FORMAL_TOTAL_COST_UNIT,
+    theorem:
+      "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
+    missing_or_unverified_consequence: "total_roi_unsupported",
+    formal_conclusion_owner: "verify_long_task_real_process_roi",
+    collection_formal_status: "not_evaluated",
+    independent_evidence_packet: "required",
+    accounting_population_status: "frozen",
+    accounting_policy_schema: FORMAL_TOTAL_COST_ACCOUNTING_POLICY_SCHEMA,
+    self_attested_verified_records_admitted: false,
+    governance_judgment_included: false,
+    level_4_requires_independent_capability_audit: true,
+  };
+  for (const [field, value] of Object.entries(expected))
+    assert(
+      policy[field] === value,
+      `frozen_config_formal_total_cost_policy:${field}`,
+    );
+  assert(
+    shaPattern.test(policy.accounting_policy_sha256),
+    "frozen_config_formal_total_cost_policy:accounting_policy_sha256",
+  );
+  assert(
+    policy.accounting_policy_sha256 ===
+      frozenConfig.accounting_policy_identity?.identity_sha256,
+    "frozen_config_formal_total_cost_policy:accounting_policy_identity",
   );
 }
 
 function prepareSummaryRuns(runs, frozenConfig) {
   assert(Array.isArray(runs), "summary_runs");
+  assert(
+    new Set(runs.map((run) => run.run_id)).size === runs.length,
+    "summary_run_id_duplicates",
+  );
   const repeats = uniqueSorted(runs.map((run) => run.repeat));
   assert(
     [
@@ -338,7 +399,7 @@ function deriveCandidateControlEvidence(grouped) {
           (control) =>
             control.passed === true &&
             control.workflow_observed_passed === true,
-      ),
+        ),
     ),
   );
 
@@ -407,7 +468,7 @@ function deriveObservedLifecycleSummary({
   const expansion = expansionDecision(runs, frozenConfig);
   const requiredRepeatCount = expansion.required_repeats;
   const requiredWinCount = requiredWins(repeats.length);
-  const completeRepeatSet = repeats.length === requiredRepeatCount;
+  const completeRepeatSet = repeats.length >= requiredRepeatCount;
   const observedLifecycleThresholdsMet =
     completeRepeatSet &&
     observedLifecyclePairedWins >= requiredWinCount &&
@@ -467,66 +528,18 @@ function observedLifecyclePhaseRatios(grouped) {
   );
 }
 
-function deriveFormalRoiConclusion({
-  grouped,
-  frozenConfig,
-  candidateSafetyFloor,
-  observedLifecycle,
-}) {
-  const formalTotalCost = deriveFormalTotalCostSummary(grouped);
-  const formalTotalCostEvidenceComplete =
-    formalTotalCost.required_unverified.length === 0;
-  const formalTotalCostIndependentEvidenceAdmitted =
-    frozenConfig.formal_total_cost_policy?.independent_evidence_ingestion ===
-    "verified";
-  const totalRoiSupported =
-    observedLifecycle.observedLifecycleEvidenceValid &&
-    candidateSafetyFloor &&
-    observedLifecycle.completeRepeatSet &&
-    formalTotalCostEvidenceComplete &&
-    formalTotalCostIndependentEvidenceAdmitted;
-  const totalRoiPositive =
-    totalRoiSupported &&
-    observedLifecycle.observedLifecycleThresholdsMet &&
-    formalTotalCost.paired_wins >= observedLifecycle.requiredWinCount &&
-    median(formalTotalCost.pairs.map((item) => item.net_benefit)) > 0;
-  return {
-    formalTotalCost,
-    totalRoiSupported,
-    totalRoiPositive,
-    reportStatus: realProcessRoiReportStatus({
-      observedLifecycleEvidenceValid:
-        observedLifecycle.observedLifecycleEvidenceValid,
-      candidateSafetyFloor,
-      completeRepeatSet: observedLifecycle.completeRepeatSet,
-      observedLifecycleThresholdsMet:
-        observedLifecycle.observedLifecycleThresholdsMet,
-      formalTotalCostEvidenceComplete,
-      formalTotalCostIndependentEvidenceAdmitted,
-      totalRoiPositive,
-    }),
-  };
-}
-
-function realProcessRoiReportStatus({
+function realProcessObservedLifecycleStatus({
   observedLifecycleEvidenceValid,
   candidateSafetyFloor,
   completeRepeatSet,
   observedLifecycleThresholdsMet,
-  formalTotalCostEvidenceComplete,
-  formalTotalCostIndependentEvidenceAdmitted,
-  totalRoiPositive,
 }) {
   if (!observedLifecycleEvidenceValid) return "invalid_measurement_evidence";
   if (!candidateSafetyFloor) return "known_path_floor_not_met";
   if (!completeRepeatSet) return "requires_expanded_repeats";
   if (!observedLifecycleThresholdsMet)
     return "observed_lifecycle_thresholds_not_met";
-  if (!formalTotalCostEvidenceComplete)
-    return "total_cost_evidence_incomplete";
-  if (!formalTotalCostIndependentEvidenceAdmitted)
-    return "total_cost_evidence_unadmitted";
-  return totalRoiPositive ? "total_roi_positive" : "total_roi_non_positive";
+  return "observed_lifecycle_thresholds_met";
 }
 
 export function expansionDecision(runs, frozenConfig) {
@@ -570,8 +583,7 @@ export function expansionDecision(runs, frozenConfig) {
     median(byVariant.b.map((run) => metricValue(run, "total_elapsed_ms"))),
   );
   if (
-    Math.abs(pairedTotalRatio - 1) <=
-    MEASUREMENT_THRESHOLDS.threshold_nearness
+    Math.abs(pairedTotalRatio - 1) <= MEASUREMENT_THRESHOLDS.threshold_nearness
   )
     reasons.push("paired_total_ratio_near_break_even");
   const correctPathRatio = ratio(
@@ -580,8 +592,7 @@ export function expansionDecision(runs, frozenConfig) {
   );
   if (
     Math.abs(
-      correctPathRatio -
-        MEASUREMENT_THRESHOLDS.maximum_correct_path_cost_ratio,
+      correctPathRatio - MEASUREMENT_THRESHOLDS.maximum_correct_path_cost_ratio,
     ) <= MEASUREMENT_THRESHOLDS.threshold_nearness
   )
     reasons.push("correct_path_ratio_near_threshold");
@@ -591,9 +602,8 @@ export function expansionDecision(runs, frozenConfig) {
       median(byVariant.b.map((run) => metricValue(run, name))),
     );
     if (
-      Math.abs(
-        phaseRatio - MEASUREMENT_THRESHOLDS.maximum_phase_cost_ratio,
-      ) <= MEASUREMENT_THRESHOLDS.threshold_nearness
+      Math.abs(phaseRatio - MEASUREMENT_THRESHOLDS.maximum_phase_cost_ratio) <=
+      MEASUREMENT_THRESHOLDS.threshold_nearness
     )
       reasons.push(`phase_ratio_near_threshold:${name}`);
   }
@@ -612,6 +622,11 @@ export function validateMetricSet(metrics) {
   for (const name of REQUIRED_METRICS) {
     const metric = metrics[name];
     assert(metric && typeof metric === "object", `metric_object:${name}`);
+    assertSameSet(
+      Object.keys(metric),
+      ["basis", "status", "unit", "value"],
+      `metric_field_set:${name}`,
+    );
     assert(
       typeof metric.unit === "string" && metric.unit.length > 0,
       `metric_unit:${name}`,
@@ -631,35 +646,6 @@ export function validateMetricSet(metrics) {
   }
 }
 
-export function validateFormalTotalCostEvidence(evidence) {
-  assert(
-    evidence && typeof evidence === "object" && !Array.isArray(evidence),
-    "formal_total_cost_evidence",
-  );
-  assert(evidence.unit === FORMAL_TOTAL_COST_UNIT, "formal_total_cost_unit");
-  assert(
-    evidence.categories &&
-      typeof evidence.categories === "object" &&
-      !Array.isArray(evidence.categories),
-    "formal_total_cost_categories",
-  );
-  for (const category of Object.keys(evidence.categories)) {
-    assert(
-      FORMAL_TOTAL_COST_CATEGORIES.includes(category),
-      `formal_total_cost_category_unknown:${category}`,
-    );
-    validateFormalTotalCostRecord(
-      evidence.categories[category],
-      `formal_total_cost_category:${category}`,
-    );
-  }
-  if (Object.hasOwn(evidence, "purpose_fulfillment_benefit"))
-    validateFormalTotalCostRecord(
-      evidence.purpose_fulfillment_benefit,
-      "formal_total_cost_purpose_benefit",
-    );
-}
-
 export function measuredMetric(value, unit, basis) {
   assert(Number.isFinite(value), "measured_metric_value");
   return { value: round(value), unit, status: "measured", basis };
@@ -669,49 +655,14 @@ export function unverifiedMetric(unit, basis) {
   return { value: null, unit, status: "unverified", basis };
 }
 
-export function verifiedFormalTotalCost(value, basis, evidenceRefs) {
-  assert(Number.isFinite(value) && value >= 0, "formal_total_cost_value");
-  assert(
-    typeof basis === "string" && basis.length > 0,
-    "formal_total_cost_basis",
-  );
-  assert(
-    Array.isArray(evidenceRefs) &&
-      evidenceRefs.length > 0 &&
-      evidenceRefs.every(
-        (reference) => typeof reference === "string" && reference.length > 0,
-      ),
-    "formal_total_cost_evidence_refs",
-  );
-  return {
-    value: round(value),
-    status: "verified",
-    basis,
-    evidence_refs: [...evidenceRefs],
-  };
-}
-
-export function unverifiedFormalTotalCost(basis) {
-  assert(
-    typeof basis === "string" && basis.length > 0,
-    "formal_total_cost_basis",
-  );
-  return {
-    value: null,
-    status: "unverified",
-    basis,
-    evidence_refs: [],
-  };
-}
-
-export function assertCurrentEvidenceSchema(
-  actual,
-  current,
-  legacy,
-  label,
-) {
-  if (actual === legacy)
-    throw new Error(`real_process_roi_invalid:${label}_v1_recollection_required`);
+export function assertCurrentEvidenceSchema(actual, current, legacy, label) {
+  const legacySchemas = Array.isArray(legacy) ? legacy : [legacy];
+  if (legacySchemas.includes(actual)) {
+    const version = /-v(?<version>[0-9]+)$/u.exec(actual)?.groups?.version;
+    throw new Error(
+      `real_process_roi_invalid:${label}_${version ? `v${version}` : "historical"}_recollection_required`,
+    );
+  }
   assert(actual === current, label);
 }
 
@@ -751,115 +702,31 @@ export function assert(condition, code) {
   if (!condition) throw new Error(`real_process_roi_invalid:${code}`);
 }
 
-function deriveFormalTotalCostSummary(grouped) {
-  const requiredUnverified = [];
-  const pairs = grouped.c.map((candidateRun, index) => {
-    const baselineRun = grouped.b[index];
-    const pairMissing = [];
-    for (const run of [baselineRun, candidateRun]) {
-      for (const metric of NULLABLE_UNVERIFIED_METRICS)
-        if (run.metrics[metric]?.status !== "measured")
-          pairMissing.push(
-            `${run.variant_id}:${run.repeat}:${metric}:unverified`,
-          );
-      collectMissingFormalRecord(
-        run,
-        "purpose_fulfillment_benefit",
-        run.formal_total_cost_evidence.purpose_fulfillment_benefit,
-        pairMissing,
-      );
-      for (const category of FORMAL_TOTAL_COST_CATEGORIES)
-        collectMissingFormalRecord(
-          run,
-          category,
-          run.formal_total_cost_evidence.categories[category],
-          pairMissing,
-        );
+function assertNoFormalConclusionFields(value, code) {
+  const prohibited = new Set([
+    "formal_total_cost_evidence",
+    "formal_total_cost_pairs",
+    "formal_blockers",
+    "formal_status",
+    "independent_evidence_admitted",
+    "normalized_total_cost",
+    "report_status",
+    "required_unverified_total_cost_evidence",
+    "total_roi_positive",
+    "total_roi_supported",
+  ]);
+  const visit = (candidate) => {
+    if (Array.isArray(candidate)) {
+      for (const item of candidate) visit(item);
+      return;
     }
-    requiredUnverified.push(...pairMissing);
-    if (pairMissing.length > 0)
-      return {
-        repeat: candidateRun.repeat,
-        supported: false,
-        required_unverified: pairMissing,
-        incremental_purpose_benefit: null,
-        incremental_costs: null,
-        total_incremental_cost: null,
-        net_benefit: null,
-      };
-    const incrementalPurposeBenefit = round(
-      candidateRun.formal_total_cost_evidence.purpose_fulfillment_benefit
-        .value -
-        baselineRun.formal_total_cost_evidence.purpose_fulfillment_benefit
-          .value,
-    );
-    const incrementalCosts = Object.fromEntries(
-      FORMAL_TOTAL_COST_CATEGORIES.map((category) => [
-        category,
-        round(
-          candidateRun.formal_total_cost_evidence.categories[category].value -
-            baselineRun.formal_total_cost_evidence.categories[category].value,
-        ),
-      ]),
-    );
-    const totalIncrementalCost = round(
-      Object.values(incrementalCosts).reduce(
-        (total, value) => total + value,
-        0,
-      ),
-    );
-    return {
-      repeat: candidateRun.repeat,
-      supported: true,
-      required_unverified: [],
-      incremental_purpose_benefit: incrementalPurposeBenefit,
-      incremental_costs: incrementalCosts,
-      total_incremental_cost: totalIncrementalCost,
-      net_benefit: round(incrementalPurposeBenefit - totalIncrementalCost),
-    };
-  });
-  return {
-    pairs,
-    paired_wins: pairs.filter(
-      (item) => item.supported && item.net_benefit > 0,
-    ).length,
-    required_unverified: [...new Set(requiredUnverified)].sort(),
+    if (!candidate || typeof candidate !== "object") return;
+    for (const [field, item] of Object.entries(candidate)) {
+      assert(!prohibited.has(field), code);
+      visit(item);
+    }
   };
-}
-
-function collectMissingFormalRecord(run, key, record, output) {
-  if (!record) {
-    output.push(`${run.variant_id}:${run.repeat}:${key}:absent`);
-    return;
-  }
-  if (record.status !== "verified")
-    output.push(`${run.variant_id}:${run.repeat}:${key}:unverified`);
-}
-
-function validateFormalTotalCostRecord(record, label) {
-  assert(record && typeof record === "object", label);
-  assert(
-    typeof record.basis === "string" && record.basis.length > 0,
-    `${label}:basis`,
-  );
-  assert(Array.isArray(record.evidence_refs), `${label}:evidence_refs`);
-  if (record.status === "unverified") {
-    assert(record.value === null, `${label}:unverified_value`);
-    assert(record.evidence_refs.length === 0, `${label}:unverified_refs`);
-    return;
-  }
-  assert(record.status === "verified", `${label}:status`);
-  assert(
-    Number.isFinite(record.value) && record.value >= 0,
-    `${label}:value`,
-  );
-  assert(
-    record.evidence_refs.length > 0 &&
-      record.evidence_refs.every(
-        (reference) => typeof reference === "string" && reference.length > 0,
-      ),
-    `${label}:verified_refs`,
-  );
+  visit(value);
 }
 
 function validateCaseRecord(item, variantId) {

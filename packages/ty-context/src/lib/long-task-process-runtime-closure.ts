@@ -227,62 +227,117 @@ function argvAttributedRepositoryFiles(
 ): string[] {
   const result = new Set<string>();
   for (const argument of argv) {
-    const value = rootArgvPathValue(argument);
-    if (!value) continue;
-    if (unsafeArgvPathValue(value))
-      fail("process_root_argv_unsafe", `${targetRef}:${argument}`);
-    const candidate = path.posix.join(cwd === "." ? "" : cwd, value);
+    const classification = classifyRootArgvToken(argument);
+    if (classification.kind === "label") continue;
+    if (classification.kind === "external_reference")
+      fail(
+        "process_root_argv_unsafe",
+        `${targetRef}:${argument}:${classification.reason}`,
+      );
+    const candidate = path.posix.join(
+      cwd === "." ? "" : cwd,
+      classification.value,
+    );
     let normalized: string;
     try {
       normalized = normalizeRepositoryFile(candidate, "process_root_argv");
     } catch {
-      fail("process_root_argv_unsafe", `${targetRef}:${argument}`);
+      fail(
+        "process_root_argv_unsafe",
+        `${targetRef}:${argument}:parent_escape`,
+      );
     }
     if (bindingsContaining(bindings, normalized).length) result.add(normalized);
   }
   return [...result].sort();
 }
 
-function rootArgvPathValue(argument: string): string | null {
-  const parsedArgument = unwrapCompleteQuoteLayer(
-    argument.replace(/\\/gu, "/"),
-  );
-  const portable = parsedArgument.value;
-  if (!portable) return null;
-  // A compound shell command is not one finite argv file token. In
-  // particular, do not search inside it for a path-shaped substring.
-  if (!parsedArgument.quoted && /\s/u.test(portable)) return null;
-  // A single-letter slash switch is an argv label (for example cmd.exe /d),
-  // not a repository path. Longer slash-prefixed values remain absolute and
-  // fail closed below.
-  if (/^\/[A-Za-z?]$/u.test(portable)) return null;
-  if (!portable.startsWith("--")) return portable;
-  const separator = portable.indexOf("=");
-  if (separator <= 2 || separator === portable.length - 1) return null;
-  const parsedValue = unwrapCompleteQuoteLayer(portable.slice(separator + 1));
-  if (!parsedValue.value) return null;
-  if (!parsedValue.quoted && /\s/u.test(parsedValue.value)) return null;
-  return parsedValue.value;
+type RootArgvClassification =
+  | { kind: "label" }
+  | { kind: "repository_candidate"; value: string }
+  | {
+      kind: "external_reference";
+      reason:
+        | "absolute"
+        | "drive_prefixed"
+        | "protocol_prefixed"
+        | "quote_ambiguous"
+        | "platform_ambiguous"
+        | "unsupported_compound";
+    };
+
+function classifyRootArgvToken(argument: string): RootArgvClassification {
+  if (!argument) return { kind: "label" };
+  if (hasUnsafeArgvControl(argument))
+    return externalArgvReference("unsupported_compound");
+  if (argument === "--") return { kind: "label" };
+  if (argument.startsWith("--")) {
+    const assignment = /^--[A-Za-z0-9][A-Za-z0-9_-]*=(.*)$/u.exec(argument);
+    if (assignment) {
+      const value = assignment[1];
+      if (!value) return { kind: "label" };
+      if (value.includes("="))
+        return externalArgvReference("unsupported_compound");
+      return classifyRootArgvValue(value);
+    }
+    if (/^--[A-Za-z0-9][A-Za-z0-9_-]*$/u.test(argument))
+      return { kind: "label" };
+    return externalArgvReference("unsupported_compound");
+  }
+  if (/^-[A-Za-z0-9?]$/u.test(argument)) return { kind: "label" };
+  if (/^-\d+(?:\.\d+)?$/u.test(argument)) return { kind: "label" };
+  if (argument.startsWith("-") || argument.startsWith("@"))
+    return externalArgvReference("unsupported_compound");
+  if (argument.includes("="))
+    return externalArgvReference("unsupported_compound");
+  return classifyRootArgvValue(argument);
 }
 
-function unwrapCompleteQuoteLayer(value: string): {
-  value: string;
-  quoted: boolean;
-} {
-  const quote = value[0];
-  if ((quote === '"' || quote === "'") && value.at(-1) === quote)
-    return { value: value.slice(1, -1), quoted: true };
-  return { value, quoted: false };
+function classifyRootArgvValue(value: string): RootArgvClassification {
+  if (!value) return { kind: "label" };
+  if (hasUnsafeArgvControl(value))
+    return externalArgvReference("unsupported_compound");
+  if (/["']/u.test(value)) return externalArgvReference("quote_ambiguous");
+  if (value.includes("\\")) return externalArgvReference("platform_ambiguous");
+  if (/^\/[A-Za-z?]$/u.test(value))
+    return externalArgvReference("platform_ambiguous");
+  if (value.startsWith("/")) return externalArgvReference("absolute");
+  if (/^[A-Za-z]:/u.test(value)) return externalArgvReference("drive_prefixed");
+  if (value.startsWith("@"))
+    return externalArgvReference("unsupported_compound");
+  if (hasUnsupportedArgvCompound(value))
+    return externalArgvReference("unsupported_compound");
+
+  if (/^node:\d+(?:\.\d+)?$/u.test(value)) return { kind: "label" };
+  if (/^[A-Za-z][A-Za-z0-9+.-]*:/u.test(value))
+    return externalArgvReference("protocol_prefixed");
+  if (value.includes(":"))
+    return /^\d{1,4}:\d{1,4}$/u.test(value)
+      ? { kind: "label" }
+      : externalArgvReference("unsupported_compound");
+
+  return { kind: "repository_candidate", value };
 }
 
-function unsafeArgvPathValue(value: string): boolean {
+function hasUnsafeArgvControl(value: string): boolean {
+  return /[\u0000-\u001f\u007f]/u.test(value);
+}
+
+function hasUnsupportedArgvCompound(value: string): boolean {
   return (
-    /["']/u.test(value) ||
-    value.startsWith("/") ||
-    /^[A-Za-z]:\//u.test(value) ||
-    /^file:/iu.test(value) ||
-    /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u.test(value)
+    value.trim() !== value ||
+    value.startsWith("~") ||
+    !/^[\p{L}\p{N}._+,: /-]+$/u.test(value)
   );
+}
+
+function externalArgvReference(
+  reason: Extract<
+    RootArgvClassification,
+    { kind: "external_reference" }
+  >["reason"],
+): RootArgvClassification {
+  return { kind: "external_reference", reason };
 }
 
 function firstMatchingPattern(

@@ -480,16 +480,23 @@ test("only actual argv closure members retain exact role-conflict rejection", ()
   }
 });
 
-test("finite argv-to-Binding admission supports cwd-relative glob, extensionless, standalone, and key-value paths", () => {
+test("finite argv-to-Binding admission preserves exact tokens and must-allow relative controls", () => {
   const input = processInput();
   input.runner.resolved_cwd = "apps/product";
   input.execution_target.root_argv = [
     "runtime/entry",
-    '"runtime/entry"',
     "--config=config/runtime.data",
-    '--quoted-config="config/runtime.data"',
+    "--secondary",
+    "config/runtime.data",
+    "config/runtime file",
+    "--spaced-config=config/runtime file",
     "unmatched/safe-label",
+    "--output=artifacts/result.json",
     "--label=release/channel",
+    "--mode=node:24",
+    "--time=12:30",
+    "--empty=",
+    "-d",
   ];
   input.check.runner.argv = [...input.execution_target.root_argv];
   input.runner.argv = [...input.execution_target.root_argv];
@@ -508,6 +515,27 @@ test("finite argv-to-Binding admission supports cwd-relative glob, extensionless
       carrier_paths: ["apps/product/config/*"],
       existence: "existing",
     }),
+    scopedBinding("OUTCOME", {
+      key: "runtime-config-space",
+      kind: "file",
+      target: "apps/product/config/runtime file",
+      carrier_paths: ["apps/product/config/runtime file"],
+      existence: "existing",
+    }),
+    scopedBinding("OUTCOME", {
+      key: "colon-scalar-node",
+      kind: "file",
+      target: "apps/product/node:24",
+      carrier_paths: ["apps/product/node:24"],
+      existence: "existing",
+    }),
+    scopedBinding("OUTCOME", {
+      key: "colon-scalar-time",
+      kind: "file",
+      target: "apps/product/12:30",
+      carrier_paths: ["apps/product/12:30"],
+      existence: "existing",
+    }),
   );
   input.production_owner_paths.push("apps/product/**");
 
@@ -517,6 +545,7 @@ test("finite argv-to-Binding admission supports cwd-relative glob, extensionless
   });
   assert.ok(closure);
   assert.deepEqual(closure.root_argv_files, [
+    "apps/product/config/runtime file",
     "apps/product/config/runtime.data",
     "apps/product/runtime/entry",
   ]);
@@ -524,7 +553,11 @@ test("finite argv-to-Binding admission supports cwd-relative glob, extensionless
     closure.production_binding_refs.filter((bindingRef) =>
       bindingRef.includes("runtime-"),
     ),
-    ["OUTCOME.runtime-config", "OUTCOME.runtime-entry"],
+    [
+      "OUTCOME.runtime-config",
+      "OUTCOME.runtime-config-space",
+      "OUTCOME.runtime-entry",
+    ],
   );
   assert.equal(
     closure.allowed_runtime_files.some((file) => file.includes("unmatched")),
@@ -534,18 +567,68 @@ test("finite argv-to-Binding admission supports cwd-relative glob, extensionless
     closure.allowed_runtime_files.some((file) => file.includes("release")),
     false,
   );
+  assert.equal(
+    closure.allowed_runtime_files.some((file) => file.includes("node:24")),
+    false,
+  );
+  assert.equal(
+    closure.allowed_runtime_files.some((file) => file.includes("12:30")),
+    false,
+  );
 });
 
-test("absolute, repository-escaping, file URL, and network URL argv values fail closed", () => {
+test("external, ambiguous, quoted, and unsupported compound argv values fail closed", () => {
   for (const unsafe of [
+    "/outside/data.json",
+    "//outside/share/data.json",
+    "/d",
     "C:/external/config.json",
+    "C:\\external\\config.json",
+    "C:relative/config.json",
+    "C:relative\\config.json",
     '"C:/external/config.json"',
     '--config="C:/external/config.json"',
     "../external/config.json",
+    "../../../external/config.json",
+    "file:external/config.json",
+    "file:123",
+    "file:/external/config.json",
     "file:///external/config.json",
     '--config="file:///external/config.json"',
+    "scheme:sample/path",
+    "scheme:/sample/path",
+    "scheme://sample/path",
+    "scheme:value",
+    "mailto:123",
+    "urn:123",
+    "data:123",
+    "ws:80",
+    "runtime:24",
+    "Node:24",
+    "./config/relative:name",
+    "mailto:user@example.test",
+    "urn:isbn:9780",
     "https://example.test/config.json",
+    "http:80",
     "--config='https://example.test/config.json'",
+    "/outside/data file.json",
+    "scheme:sample/data file.json",
+    "--config=/outside/data file.json",
+    "--config=scheme:sample/data file.json",
+    "--config=one=two",
+    "name=../external/config.json",
+    "-I../external/config.json",
+    "@../external/config.json",
+    "--config:../external/config.json",
+    "config/runtime && /outside/data.json",
+    "config/runtime;next",
+    "$(outside)/data.json",
+    "${OUTSIDE}/data.json",
+    "%USERPROFILE%/data.json",
+    "~/outside/data.json",
+    "*.json",
+    "label#fragment",
+    "--config=config/runtime|outside",
   ]) {
     const input = processInput();
     input.execution_target.root_argv = [unsafe];

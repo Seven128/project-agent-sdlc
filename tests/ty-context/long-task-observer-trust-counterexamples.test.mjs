@@ -158,6 +158,11 @@ const reportCases = Object.freeze({
     "observer-trust.r11b.execution-target-unbound-argv",
     "control.process",
   ),
+  r12: wrongCase(
+    "wrong.r12.external-root-argv",
+    "observer-trust.r12.external-root-argv",
+    "control.process",
+  ),
   staticControl: controlCase(
     "control.static",
     "observer-trust.control.static",
@@ -873,6 +878,35 @@ test(
         isSecurelyRejected(execution),
         true,
         `missing unbound root argv path escaped closure admission: ${executionLabel(execution)}`,
+      );
+    }),
+);
+
+test(
+  "[case:host-derived-target-runtime:R12] [real-capability:observer-trust.r12.external-root-argv] a protocol-shaped root argv token rejected from pre-repair e6941ed cannot create or reuse machine Authority",
+  { concurrency: false },
+  async () =>
+    withFixture({ twoOutcomes: true }, async (fixture) => {
+      await configureRepoProcessProductControl(fixture);
+      const execution = await executeObserverTrustAttackAfterAuthority(
+        fixture,
+        async () => {
+          const externalReference = "scheme:sample/runtime file.json";
+          const target = fixture.contract.task.execution_targets[0];
+          target.root_argv.push(externalReference);
+          for (const outcome of fixture.contract.outcomes)
+            outcome.acceptance.checks[0].runner.argv.push(externalReference);
+          await synchronizeFixtureExecutionTargetSource(
+            fixture.root,
+            fixture.contract,
+          );
+          await writeContract(fixture.workdir, fixture.contract);
+        },
+      );
+      terminalReport.record(reportCases.r12, execution);
+      assertCompileAttackAndLegalNeighborFreshness(
+        execution,
+        /process_root_argv_unsafe/u,
       );
     }),
 );

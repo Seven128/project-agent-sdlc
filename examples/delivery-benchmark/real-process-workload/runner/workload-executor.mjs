@@ -1,13 +1,18 @@
 import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   CASE_IDS,
-  FORMAL_TOTAL_COST_CATEGORIES,
-  FORMAL_TOTAL_COST_UNIT,
   LEGACY_REAL_PROCESS_SCHEMAS,
   MAINTENANCE_RUNTIME_OWNER_PATHS,
   MAINTENANCE_TEST_PATHS,
@@ -18,7 +23,6 @@ import {
   canonical,
   measuredMetric,
   sha256,
-  unverifiedFormalTotalCost,
   unverifiedMetric,
 } from "../../../../tools/long_task_real_process_roi_scoring.mjs";
 import {
@@ -316,20 +320,6 @@ export async function executeVariantRepeat(options) {
   const rawArtifactIdentity = sha256(
     canonical({ command_records: commandRecords, cases, recoveries }),
   );
-  const formalTotalCostEvidence = {
-    unit: FORMAL_TOTAL_COST_UNIT,
-    purpose_fulfillment_benefit: unverifiedFormalTotalCost(
-      "deterministic lifecycle replay does not independently normalize purpose-fulfillment benefit into a common total-cost unit",
-    ),
-    categories: Object.fromEntries(
-      FORMAL_TOTAL_COST_CATEGORIES.map((category) => [
-        category,
-        unverifiedFormalTotalCost(
-          `observed ${category} diagnostics are not independently attributable normalized total-cost evidence`,
-        ),
-      ]),
-    ),
-  };
   const result = {
     schema_version: REAL_PROCESS_RUN_SCHEMA,
     run_id: `${variant.id}-repeat-${String(repeat).padStart(2, "0")}`,
@@ -350,7 +340,6 @@ export async function executeVariantRepeat(options) {
     completed_at: new Date().toISOString(),
     provenance_doubt_reasons: [],
     metrics,
-    formal_total_cost_evidence: formalTotalCostEvidence,
     cases,
     recoveries,
     lifecycle_evidence: {
@@ -616,8 +605,7 @@ function observedMainExecutionCount(lifecycle) {
 
 function authorityBoundaryForVariant(variantId) {
   if (variantId === "a") return "legacy-project-self-report";
-  if (variantId === "b")
-    return "isolated-envelope-with-contract-owned-runtime";
+  if (variantId === "b") return "isolated-envelope-with-contract-owned-runtime";
   return "source-backed-isolated-process-runtime-closure";
 }
 
@@ -766,8 +754,7 @@ export async function executeRealProcessRoiLifecycle({
     parsed_final: parsedFinal,
     compiled_contract_bytes: compiledContractBytes,
     closure_copy_ms: closureCopy.duration_ms,
-    closure_copy_measurement_overhead_ms:
-      closureCopy.measurement_overhead_ms,
+    closure_copy_measurement_overhead_ms: closureCopy.measurement_overhead_ms,
     closure_copy_bytes: closureCopy.bytes,
     runner_ms: runnerMs,
     final_snapshot_ms: numericField(parsedFinal, "snapshot_preparation_ms"),
@@ -993,12 +980,15 @@ async function measureCompiledProcessClosure({
         path.isAbsolute(relativePath) ||
         relativePath.split(/[\\/]/u).includes("..")
       )
-        throw new Error(`real_process_roi_closure_path_invalid:${relativePath}`);
+        throw new Error(
+          `real_process_roi_closure_path_invalid:${relativePath}`,
+        );
       const source = path.resolve(repositoryRoot, ...relativePath.split("/"));
       const target = path.resolve(outputDir, ...relativePath.split("/"));
       const sourcePrefix =
         `${path.resolve(repositoryRoot)}${path.sep}`.toLowerCase();
-      const targetPrefix = `${path.resolve(outputDir)}${path.sep}`.toLowerCase();
+      const targetPrefix =
+        `${path.resolve(outputDir)}${path.sep}`.toLowerCase();
       if (
         !source.toLowerCase().startsWith(sourcePrefix) ||
         !target.toLowerCase().startsWith(targetPrefix)

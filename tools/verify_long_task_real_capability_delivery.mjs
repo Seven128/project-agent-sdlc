@@ -136,6 +136,11 @@ export const DELIVERY_BLACK_BOX_CASE_POLICY = Object.freeze([
     "observer-trust.r11b.execution-target-unbound-argv",
     "control.process",
   ),
+  wrongProofCase(
+    "wrong.r12.external-root-argv",
+    "observer-trust.r12.external-root-argv",
+    "control.process",
+  ),
   controlProofCase(
     "control.static",
     "observer-trust.control.static",
@@ -252,6 +257,7 @@ const compileBoundaryOwnerDiagnostics = new Map([
     "wrong.execution-target-unbound-argv",
     ["process_root_production_binding_required"],
   ],
+  ["wrong.r12.external-root-argv", ["process_root_argv_unsafe"]],
 ]);
 
 const blackBoxFactCases = new Map([
@@ -266,6 +272,7 @@ const blackBoxFactCases = new Map([
       ...r9R10WrongLayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
+      "wrong.r12.external-root-argv",
       ...allControlBlackBoxCases,
     ],
   ],
@@ -280,6 +287,7 @@ const blackBoxFactCases = new Map([
       ...r9R10WrongLayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
+      "wrong.r12.external-root-argv",
       ...allControlBlackBoxCases,
     ],
   ],
@@ -341,6 +349,7 @@ const blackBoxFactCases = new Map([
       ...r9R10LayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
+      "wrong.r12.external-root-argv",
       "control.process",
       "control.static",
     ],
@@ -365,6 +374,7 @@ const blackBoxFactCases = new Map([
       "wrong.r7c.process-input-mutation",
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
+      "wrong.r12.external-root-argv",
       "control.process",
       "control.external",
     ],
@@ -382,6 +392,7 @@ const blackBoxFactCases = new Map([
       ...r9R10LayerCases,
       "wrong.execution-target-source-drift",
       "wrong.execution-target-unbound-argv",
+      "wrong.r12.external-root-argv",
       "control.process",
     ],
   ],
