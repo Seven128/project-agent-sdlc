@@ -1,15 +1,17 @@
 import { createHash } from "node:crypto";
 import {
-  CASE_IDS,
-  COUNTERFACTUAL_IDS,
   FORMAL_TOTAL_COST_CATEGORIES,
   FORMAL_TOTAL_COST_UNIT,
-  KNOWN_B_FALSE_ACCEPT_CASE_IDS,
   LEGACY_REAL_PROCESS_SCHEMAS,
+  REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
+import {
+  CASE_IDS,
+  COUNTERFACTUAL_IDS,
+  KNOWN_B_FALSE_ACCEPT_CASE_IDS,
   MEASUREMENT_THRESHOLDS,
   NULLABLE_UNVERIFIED_METRICS,
   PHASE_COST_METRICS,
-  REAL_PROCESS_SCHEMAS,
   REPEAT_ORDERS,
   REQUIRED_METRICS,
   SIGNED_METRICS,
@@ -294,8 +296,7 @@ export function validateRealProcessRoiPolicy(frozenConfig) {
   const policy = frozenConfig.formal_total_cost_policy;
   const expected = {
     normalized_unit: FORMAL_TOTAL_COST_UNIT,
-    theorem:
-      "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
+    theorem: "incremental-purpose-benefit-exceeds-sum-of-all-incremental-costs",
     missing_or_unverified_consequence: "total_roi_unsupported",
     formal_conclusion_owner: "verify_long_task_real_process_roi",
     collection_formal_status: "not_evaluated",

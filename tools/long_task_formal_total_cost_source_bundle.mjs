@@ -1,5 +1,5 @@
 import path from "node:path";
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
+import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
 import {
   assert,
   canonical,
@@ -24,11 +24,7 @@ const {
   FORMAL_TOTAL_COST_SOURCE_MANIFEST_SCHEMA,
 } = REAL_PROCESS_SCHEMAS;
 
-export async function readFormalSourceBundle({
-  packetPath,
-  manifest,
-  limits,
-}) {
+export async function readFormalSourceBundle({ packetPath, manifest, limits }) {
   assertExactKeys(
     manifest,
     [
@@ -206,14 +202,23 @@ function validateManifestEntry(entry, limits, seen, allowedDirectories) {
   const segments = entry.path.split("/");
   for (let index = 1; index < segments.length; index += 1)
     allowedDirectories.add(segments.slice(0, index).join("/"));
-  assert(!seen.has(entry.path), `formal_evidence_source_duplicate:${entry.path}`);
+  assert(
+    !seen.has(entry.path),
+    `formal_evidence_source_duplicate:${entry.path}`,
+  );
   seen.add(entry.path);
-  assert(sourceRoles.includes(entry.role), `formal_evidence_source_role:${entry.path}`);
+  assert(
+    sourceRoles.includes(entry.role),
+    `formal_evidence_source_role:${entry.path}`,
+  );
   assert(
     Number.isInteger(entry.bytes) &&
       entry.bytes >= 0 &&
       entry.bytes <= limits.maximum_bytes_per_file,
     `formal_evidence_source_file_budget:${entry.path}`,
   );
-  assert(shaPattern.test(entry.sha256), `formal_evidence_source_sha:${entry.path}`);
+  assert(
+    shaPattern.test(entry.sha256),
+    `formal_evidence_source_sha:${entry.path}`,
+  );
 }

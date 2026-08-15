@@ -1,8 +1,8 @@
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
 import {
-  assert,
-  canonical,
-} from "./long_task_real_process_roi_scoring.mjs";
+  FORMAL_CLOCK_POLICY,
+  REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
+import { assert, canonical } from "./long_task_real_process_roi_scoring.mjs";
 import {
   assertExactKeys,
   assertSameSet,
@@ -11,6 +11,19 @@ import {
 } from "./long_task_formal_total_cost_shared.mjs";
 
 const { FORMAL_TOTAL_COST_SCENARIO_CATALOG_SCHEMA } = REAL_PROCESS_SCHEMAS;
+const profileKeys = Object.freeze([
+  "human_time",
+  "meters",
+  "provider_event",
+  "raw_prompt",
+]);
+const meterSourceKinds = Object.freeze({
+  provider_input_token: "invocation-correlated-provider-event-v1",
+  provider_output_token: "invocation-correlated-provider-event-v1",
+  provider_cached_input_token: "invocation-correlated-provider-event-v1",
+  compute_ms: "windows-job-object-accounting-v1",
+  storage_byte_hour: "runner-exact-byte-duration-v1",
+});
 
 export function validateFormalScenarioCatalog({
   bundle,
@@ -29,7 +42,7 @@ export function validateFormalScenarioCatalog({
   );
   assertExactKeys(
     catalog,
-    ["frozen_at", "scenarios", "schema_version"],
+    ["clock_policy", "frozen_at", "scenarios", "schema_version"],
     "formal_scenario_catalog_fields",
   );
   const frozenAt = assertTimestamp(
@@ -40,7 +53,8 @@ export function validateFormalScenarioCatalog({
     catalog.schema_version === FORMAL_TOTAL_COST_SCENARIO_CATALOG_SCHEMA &&
       frozenAt <= window.started &&
       (precollectionFrozenAt === null || frozenAt <= precollectionFrozenAt) &&
-      Array.isArray(catalog.scenarios),
+      Array.isArray(catalog.scenarios) &&
+      canonical(catalog.clock_policy) === canonical(FORMAL_CLOCK_POLICY),
     "formal_scenario_catalog",
   );
   const expected = expectedScenarioDefinitions(accountingPolicy);
@@ -57,11 +71,17 @@ export function validateFormalScenarioCatalog({
       scenario,
       [
         "aggregation",
+        "attempt_policy",
         "category",
+        "collector_id",
         "comparison_variants",
         "cycle_multiplier",
+        "execution_timeout_ms",
+        "external_source_requirement",
         "gold_source_ref",
         "kind",
+        "measurement_profile",
+        "output_protocol",
         "pair_count",
         "scenario_id",
         "scenario_kind",
@@ -70,10 +90,32 @@ export function validateFormalScenarioCatalog({
       ],
       `formal_scenario_fields:${scenario.scenario_id}`,
     );
+    const expectedBase = expected.get(scenario.scenario_id);
     assert(
-      canonical(scenario) === canonical(expected.get(scenario.scenario_id)),
+      canonical(pickScenarioAccountingFields(scenario)) ===
+        canonical(expectedBase) &&
+        typeof scenario.collector_id === "string" &&
+        scenario.collector_id.length > 0 &&
+        scenario.output_protocol === "runner-fresh-child-only-file-v1" &&
+        Number.isSafeInteger(scenario.execution_timeout_ms) &&
+        scenario.execution_timeout_ms > 0,
       `formal_scenario_definition:${scenario.scenario_id}`,
     );
+    assertExactKeys(
+      scenario.attempt_policy,
+      ["maximum_attempts", "selection"],
+      `formal_scenario_attempt_policy:${scenario.scenario_id}`,
+    );
+    assert(
+      scenario.attempt_policy.maximum_attempts === 1 &&
+        scenario.attempt_policy.selection === "only-attempt",
+      `formal_scenario_attempt_policy:${scenario.scenario_id}`,
+    );
+    validateMeasurementProfile(
+      scenario.measurement_profile,
+      scenario.scenario_id,
+    );
+    validateExternalSourceRequirement(scenario);
     const task = bundle.files.get(scenario.task_source_ref);
     const gold = bundle.files.get(scenario.gold_source_ref);
     assert(
@@ -85,7 +127,12 @@ export function validateFormalScenarioCatalog({
     );
     usedTaskSources.add(scenario.task_source_ref);
     usedGoldSources.add(scenario.gold_source_ref);
-    scenarios.set(scenario.scenario_id, { ...scenario, task, gold });
+    scenarios.set(scenario.scenario_id, {
+      ...scenario,
+      clock_policy: catalog.clock_policy,
+      task,
+      gold,
+    });
   }
   for (const [sourcePath, item] of bundle.files) {
     if (item.entry.role === "scenario_source")
@@ -100,6 +147,124 @@ export function validateFormalScenarioCatalog({
       );
   }
   return scenarios;
+}
+
+function validateMeasurementProfile(profile, scenarioId) {
+  assertExactKeys(
+    profile,
+    profileKeys,
+    `formal_scenario_measurement_profile_fields:${scenarioId}`,
+  );
+  validatePresence(
+    profile.human_time,
+    "runner-interaction-recorder-v1",
+    `${scenarioId}:human_time`,
+  );
+  assert(
+    profile.human_time.presence === "required",
+    `formal_scenario_human_time_required:${scenarioId}`,
+  );
+  validatePresence(
+    profile.raw_prompt,
+    "runner-captured-raw-prompt-v1",
+    `${scenarioId}:raw_prompt`,
+  );
+  validatePresence(
+    profile.provider_event,
+    "invocation-correlated-provider-event-v1",
+    `${scenarioId}:provider_event`,
+  );
+  assertExactKeys(
+    profile.meters,
+    Object.keys(meterSourceKinds),
+    `formal_scenario_meter_profile_fields:${scenarioId}`,
+  );
+  for (const [meter, sourceKind] of Object.entries(meterSourceKinds))
+    validatePresence(
+      profile.meters[meter],
+      sourceKind,
+      `${scenarioId}:${meter}`,
+    );
+  const providerRequired = profile.provider_event.presence === "required";
+  assert(
+    [
+      "provider_input_token",
+      "provider_output_token",
+      "provider_cached_input_token",
+    ].every(
+      (meter) =>
+        (profile.meters[meter].presence === "required") === providerRequired,
+    ) && (profile.raw_prompt.presence === "required") === providerRequired,
+    `formal_scenario_provider_profile_consistency:${scenarioId}`,
+  );
+}
+
+function validatePresence(value, requiredSourceKind, label) {
+  assert(
+    value && typeof value === "object" && !Array.isArray(value),
+    `formal_scenario_measurement_presence:${label}`,
+  );
+  assert(
+    value.presence === "required" || value.presence === "forbidden",
+    `formal_scenario_measurement_presence:${label}`,
+  );
+  if (value.presence === "required") {
+    assertExactKeys(
+      value,
+      ["presence", "source_kind"],
+      `formal_scenario_measurement_required_fields:${label}`,
+    );
+    assert(
+      value.source_kind === requiredSourceKind,
+      `formal_scenario_measurement_source_kind:${label}`,
+    );
+  } else
+    assertExactKeys(
+      value,
+      ["presence"],
+      `formal_scenario_measurement_forbidden_fields:${label}`,
+    );
+}
+
+function validateExternalSourceRequirement(scenario) {
+  if (scenario.kind === "cost") {
+    assert(
+      scenario.external_source_requirement === null,
+      `formal_scenario_external_source_cost:${scenario.scenario_id}`,
+    );
+    return;
+  }
+  assertExactKeys(
+    scenario.external_source_requirement,
+    ["bundle_schema", "required_components", "status"],
+    `formal_scenario_external_source_fields:${scenario.scenario_id}`,
+  );
+  assert(
+    scenario.external_source_requirement.status === "external_pending" &&
+      scenario.external_source_requirement.bundle_schema ===
+        "level4-controlled-incident-source-bundle-v1" &&
+      Array.isArray(scenario.external_source_requirement.required_components) &&
+      scenario.external_source_requirement.required_components.length > 0 &&
+      new Set(scenario.external_source_requirement.required_components).size ===
+        scenario.external_source_requirement.required_components.length,
+    `formal_scenario_external_source:${scenario.scenario_id}`,
+  );
+}
+
+function pickScenarioAccountingFields(scenario) {
+  return {
+    scenario_id: scenario.scenario_id,
+    kind: scenario.kind,
+    category: scenario.category,
+    stratum: scenario.stratum,
+    scenario_kind: scenario.scenario_kind,
+    comparison_variants: scenario.comparison_variants,
+    pair_count: scenario.pair_count,
+    aggregation: scenario.aggregation,
+    cycle_multiplier: scenario.cycle_multiplier,
+    task_source_ref: scenario.task_source_ref,
+    gold_source_ref: scenario.gold_source_ref,
+  };
 }
 
 export function validateFormalScenarioOutput({

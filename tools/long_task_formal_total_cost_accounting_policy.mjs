@@ -1,12 +1,10 @@
 import {
   FORMAL_TOTAL_COST_CATEGORIES,
   FORMAL_TOTAL_COST_UNIT,
+  FORMAL_EVIDENCE_CAPACITY,
   REAL_PROCESS_SCHEMAS,
-} from "./long_task_real_process_roi_policy.mjs";
-import {
-  assert,
-  canonical,
-} from "./long_task_real_process_roi_scoring.mjs";
+} from "./long_task_real_process_schema_policy.mjs";
+import { assert, canonical } from "./long_task_real_process_roi_scoring.mjs";
 import {
   assertExactKeys,
   assertSameSet,
@@ -35,6 +33,7 @@ export function validateFormalAccountingPolicy(policy) {
       "lifecycle_population",
       "normalized_unit",
       "retention",
+      "run_artifact_limits",
       "rounding_decimal_places",
       "schema_version",
       "scope",
@@ -73,6 +72,38 @@ export function validateFormalAccountingPolicy(policy) {
       policy.source_bundle_limits.maximum_bytes_per_file === 8 * 1024 * 1024 &&
       policy.source_bundle_limits.maximum_total_bytes === 64 * 1024 * 1024,
     "accounting_policy_source_limits",
+  );
+  assert(
+    canonical(policy.run_artifact_limits) ===
+      canonical({
+        expected_executions: FORMAL_EVIDENCE_CAPACITY.expected_execution_count,
+        expected_runner_files:
+          FORMAL_EVIDENCE_CAPACITY.expected_runner_artifact_count,
+        maximum_formal_files: FORMAL_EVIDENCE_CAPACITY.maximum_formal_files,
+        maximum_formal_total_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_formal_total_bytes,
+        maximum_run_set_files: FORMAL_EVIDENCE_CAPACITY.maximum_run_set_files,
+        maximum_run_set_total_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_run_set_total_bytes,
+        maximum_run_set_control_files:
+          FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_files,
+        maximum_run_set_control_total_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_total_bytes,
+        maximum_run_set_control_bytes_per_file:
+          FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_bytes_per_file,
+        maximum_scenario_output_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_scenario_output_bytes,
+        maximum_raw_prompt_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_raw_prompt_bytes,
+        maximum_combined_stream_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_combined_stream_bytes,
+        maximum_event_bytes: FORMAL_EVIDENCE_CAPACITY.maximum_event_bytes,
+        maximum_measurement_record_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_measurement_record_bytes,
+        maximum_lifecycle_file_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
+      }),
+    "accounting_policy_run_artifact_limits",
   );
   assert(
     canonical(policy.retention) === canonical(expectedRetention()),
@@ -156,20 +187,8 @@ function validateLifecyclePopulation(population) {
       "median-paired-delta",
       10,
     ),
-    stratum(
-      "maintenance_once",
-      ["maintenance"],
-      5,
-      "median-paired-delta",
-      1,
-    ),
-    stratum(
-      "recovery_once",
-      ["recovery"],
-      5,
-      "median-paired-delta",
-      1,
-    ),
+    stratum("maintenance_once", ["maintenance"], 5, "median-paired-delta", 1),
+    stratum("recovery_once", ["recovery"], 5, "median-paired-delta", 1),
     stratum(
       "one_time",
       ["introduction", "adoption", "migration"],

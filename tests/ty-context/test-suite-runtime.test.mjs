@@ -30,6 +30,10 @@ import {
   planLongTaskIsolationLanes,
 } from "../../tools/test_suite_policy.mjs";
 import {
+  LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
+  planLongTaskSuiteLanes,
+} from "../../tools/test_suite_lane_policy.mjs";
+import {
   createDeliveryFixture,
   prepareDeliveryFixtureSeed,
 } from "./long-task-delivery-fixtures.mjs";
@@ -362,9 +366,15 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 18);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 50);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 51);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
-  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 18);
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 19);
+  assert.equal(
+    LONG_TASK_TRUST_TEST_FILES.includes(
+      "long-task-level4-evidence-governance.test.mjs",
+    ),
+    true,
+  );
   assert.equal(
     LONG_TASK_TRUST_TEST_FILES.filter(
       (file) => file === "long-task-observer-trust-counterexamples.test.mjs",
@@ -442,6 +452,58 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     [...lanes.safe.files, ...lanes.exclusive.files].sort(),
     available,
   );
+
+  const suitePlan = planLongTaskSuiteLanes(available, "long-task", 1);
+  assert.deepEqual(
+    suitePlan.lanes.map((lane) => lane.key),
+    [
+      "trust-safe",
+      "trust-exclusive",
+      "remainder-safe-01",
+      "remainder-safe-02",
+      "remainder-safe-03",
+      "remainder-safe-04",
+      "remainder-exclusive",
+    ],
+  );
+  assert.equal(
+    suitePlan.lanes.every((lane) => lane.concurrency === 1),
+    true,
+  );
+  const planned = suitePlan.lanes.flatMap((lane) => lane.names);
+  assert.deepEqual([...planned].sort(), available);
+  assert.equal(new Set(planned).size, available.length);
+  assert.equal(
+    suitePlan.lanes.every(
+      (lane) => lane.names.length <= LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
+    ),
+    true,
+  );
+  assert.deepEqual(
+    suitePlan.lanes
+      .filter((lane) => lane.key.startsWith("trust-"))
+      .flatMap((lane) => lane.names)
+      .sort(),
+    [...LONG_TASK_TRUST_TEST_FILES].sort(),
+  );
+  const trustPlan = planLongTaskSuiteLanes(
+    LONG_TASK_TRUST_TEST_FILES,
+    "long-task-trust",
+    2,
+  );
+  assert.deepEqual(
+    trustPlan.lanes.map((lane) => lane.key),
+    ["safe", "exclusive"],
+  );
+  assert.throws(
+    () =>
+      planLongTaskSuiteLanes(
+        available.filter((file) => file !== LONG_TASK_TRUST_TEST_FILES[0]),
+        "long-task",
+        1,
+      ),
+    /missing Trust Boundary files/u,
+  );
 });
 
 test("file timing diagnostics retain one terminal record for every selected file", () => {
@@ -516,7 +578,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    26,
+    27,
   );
 
   const observerSentinelControls = new Map([

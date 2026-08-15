@@ -6,7 +6,6 @@ import {
   readFile,
   readdir,
   rm,
-  stat,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
@@ -15,11 +14,15 @@ import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import {
   FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
+  FORMAL_EVIDENCE_CAPACITY,
+  FORMAL_SCENARIO_CATALOG_REPOSITORY_PATH,
   FORMAL_TOTAL_COST_CATEGORIES,
   FORMAL_TOTAL_COST_UNIT,
   LEGACY_REAL_PROCESS_SCHEMAS,
-  MEASUREMENT_THRESHOLDS,
   REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
+import {
+  MEASUREMENT_THRESHOLDS,
   VARIANT_IDS,
   repeatOrder,
   variantDefinitions,
@@ -37,12 +40,17 @@ import {
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
 import { npmCommandSpec } from "./npm_command_spec.mjs";
+import {
+  buildRealProcessArtifactManifest,
+  readPackedPackageIdentity,
+} from "./long_task_real_process_artifacts.mjs";
+import { deriveFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
+import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
   REAL_PROCESS_DRY_RUN_SCHEMA,
   REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
-  REAL_PROCESS_MANIFEST_SCHEMA,
   REAL_PROCESS_ROI_SCHEMA,
   REAL_PROCESS_WORKLOAD_SCHEMA,
 } = REAL_PROCESS_SCHEMAS;
@@ -63,16 +71,45 @@ const workloadIdentityPaths = Object.freeze([
   "examples/delivery-benchmark/real-process-workload/product/facts.mjs",
   "examples/delivery-benchmark/real-process-workload/product/product.mjs",
   "examples/delivery-benchmark/real-process-workload/product/config/state.json",
+  FORMAL_SCENARIO_CATALOG_REPOSITORY_PATH,
 ]);
-const benchmarkImplementationPaths = Object.freeze([
+export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
+  "tools/level4_governance_protocol.mjs",
+  "tools/level4_governance_audit.mjs",
+  "tools/level4_governance_audit_findings.mjs",
+  "tools/level4_governance_shared.mjs",
+  "tools/level4_package_identity_comparator.mjs",
+  "tools/level4_promotion_evidence_validation.mjs",
+  "tools/verify_level4_governance_promotion.mjs",
   "tools/npm_command_spec.mjs",
   "tools/long_task_real_process_roi_policy.mjs",
+  "tools/long_task_real_process_schema_policy.mjs",
   "tools/long_task_real_process_roi_runner.mjs",
   "tools/long_task_real_process_roi_scoring.mjs",
+  "tools/long_task_real_process_artifacts.mjs",
+  "tools/long_task_real_process_artifact_roles.mjs",
+  "tools/long_task_packed_package_identity.mjs",
+  "tools/formal_process_supervisor.mjs",
+  "tools/formal_process_supervisor_protocol.mjs",
+  "tools/formal_process_supervisor_native_types.cs",
+  "tools/formal_process_supervisor_native_run.cs",
+  "tools/formal_process_supervisor_native_helpers.cs",
+  "tools/windows_job_process_supervisor.ps1",
   "tools/long_task_formal_total_cost_evidence.mjs",
   "tools/long_task_formal_total_cost_accounting.mjs",
   "tools/long_task_formal_total_cost_accounting_policy.mjs",
+  "tools/long_task_formal_total_cost_collectors.mjs",
+  "tools/long_task_formal_total_cost_collection.mjs",
+  "tools/long_task_formal_collection_io.mjs",
+  "tools/long_task_formal_scenario_collection.mjs",
+  "tools/long_task_formal_scenario_records.mjs",
   "tools/long_task_formal_total_cost_events.mjs",
+  "tools/long_task_formal_total_cost_execution.mjs",
+  "tools/long_task_formal_execution_artifacts.mjs",
+  "tools/long_task_formal_execution_identity.mjs",
+  "tools/long_task_formal_execution_invocation.mjs",
+  "tools/long_task_formal_execution_measurements.mjs",
+  "tools/long_task_formal_total_cost_incident.mjs",
   "tools/long_task_formal_total_cost_json.mjs",
   "tools/long_task_formal_total_cost_measurements.mjs",
   "tools/long_task_formal_total_cost_precollection.mjs",
@@ -81,6 +118,8 @@ const benchmarkImplementationPaths = Object.freeze([
   "tools/long_task_formal_total_cost_scenarios.mjs",
   "tools/long_task_formal_total_cost_shared.mjs",
   "tools/long_task_formal_total_cost_source_bundle.mjs",
+  "tools/long_task_formal_runtime_tcb.mjs",
+  "tools/long_task_formal_interaction_recorder.mjs",
   "tools/verify_long_task_real_process_roi.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/gold.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs",
@@ -139,7 +178,7 @@ export async function prepareRealProcessRoiPlan({
     throw new Error("real_process_roi_workload_boundary_invalid");
   const benchmarkImplementationIdentity = await sourceIdentity(
     repositoryRoot,
-    benchmarkImplementationPaths,
+    realProcessRoiBenchmarkImplementationPaths,
   );
   const accountingPolicyPath = path.resolve(
     repositoryRoot,
@@ -156,10 +195,27 @@ export async function prepareRealProcessRoiPlan({
         limits: accountingPolicy.source_bundle_limits,
       })
     : null;
+  if (formalPrecollection) {
+    const catalogSource = formalPrecollection.files.get(
+      "scenarios/catalog.json",
+    );
+    const canonicalCatalog = await readFile(
+      path.resolve(
+        repositoryRoot,
+        ...FORMAL_SCENARIO_CATALOG_REPOSITORY_PATH.split("/"),
+      ),
+    );
+    if (!catalogSource || !catalogSource.bytes.equals(canonicalCatalog))
+      throw new Error("formal_scenario_catalog_not_candidate_owned");
+  }
   const workloadSha256 = workloadIdentity.identity_sha256;
   const goldBytes = await readFile(semanticGoldPath);
   const environment = await environmentRecord(repositoryRoot);
   const environmentIdentity = sha256(canonical(environment));
+  const formalRuntimeTcbIdentity = deriveFormalRuntimeTcbIdentity({
+    environment,
+    benchmarkImplementationIdentity,
+  });
   const frozenConfig = {
     schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
     purpose: "real-process-lifecycle-roi-only",
@@ -182,6 +238,7 @@ export async function prepareRealProcessRoiPlan({
     semantic_gold_sha256: digest(goldBytes),
     environment,
     environment_identity: environmentIdentity,
+    formal_runtime_tcb_identity: formalRuntimeTcbIdentity,
     measurement_thresholds: MEASUREMENT_THRESHOLDS,
     formal_total_cost_policy: {
       categories: FORMAL_TOTAL_COST_CATEGORIES,
@@ -226,6 +283,7 @@ export async function prepareRealProcessRoiPlan({
     variants,
     frozenConfig,
     formalPrecollection,
+    accountingPolicy,
   };
 }
 
@@ -255,6 +313,8 @@ export async function dryRunRealProcessRoi(options) {
       plan.frozenConfig.formal_evidence_precollection_identity
         ?.identity_sha256 ?? null,
     environment_identity: plan.environmentIdentity,
+    formal_runtime_tcb_identity_sha256:
+      plan.frozenConfig.formal_runtime_tcb_identity.identity_sha256,
     variants: plan.variants,
     initial_schedule: plan.frozenConfig.repeat_orders.slice(
       0,
@@ -264,7 +324,7 @@ export async function dryRunRealProcessRoi(options) {
       MEASUREMENT_THRESHOLDS.minimum_repeats,
     ),
     expansion_rule:
-      "v3 always collects five repeats for formal accounting; the initial-three diagnostic records whether CV, paired direction, threshold nearness, or provenance would independently require expansion",
+      "v4 always collects five repeats for formal accounting; the initial-three diagnostic records whether CV, paired direction, threshold nearness, or provenance would independently require expansion",
   };
 }
 
@@ -274,6 +334,7 @@ export async function collectRealProcessRoi({
   artifactRoot = defaultArtifactRoot,
   keepWorktrees = false,
   formalEvidencePlan = null,
+  interactionRecorder = null,
 }) {
   const plan = await prepareRealProcessRoiPlan({
     candidate,
@@ -282,6 +343,8 @@ export async function collectRealProcessRoi({
   });
   if (!plan.worktreeClean)
     throw new Error("real_process_roi_candidate_worktree_dirty");
+  if (plan.formalPrecollection && !interactionRecorder)
+    throw new Error("formal_interaction_recorder_unavailable");
   const runSetId = `${compactTimestamp()}-${plan.candidateCommit.slice(0, 12)}-${plan.workloadSha256.slice(0, 12)}`;
   const runSetRoot = path.resolve(artifactRoot, runSetId);
   await mkdir(path.resolve(artifactRoot), { recursive: true });
@@ -344,6 +407,19 @@ export async function collectRealProcessRoi({
     )
       await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
 
+    const formalCollection = plan.formalPrecollection
+      ? await collectFormalTotalCostArtifacts({
+          runSetRoot,
+          runSetId,
+          runs,
+          preparedByVariant: prepared,
+          precollection: plan.formalPrecollection,
+          accountingPolicy: plan.accountingPolicy,
+          accountingPolicyIdentity:
+            plan.frozenConfig.accounting_policy_identity,
+          interactionRecorder,
+        })
+      : null;
     const summary = deriveRealProcessRoiSummary(runs, plan.frozenConfig);
     const aggregate = {
       schema_version: REAL_PROCESS_ROI_SCHEMA,
@@ -366,7 +442,12 @@ export async function collectRealProcessRoi({
       formal_evidence_precollection_sha256:
         plan.frozenConfig.formal_evidence_precollection_identity
           ?.identity_sha256 ?? null,
+      formal_evidence_index_ref: formalCollection
+        ? "formal-evidence-index.json"
+        : null,
       environment_identity: plan.environmentIdentity,
+      formal_runtime_tcb_identity_sha256:
+        plan.frozenConfig.formal_runtime_tcb_identity.identity_sha256,
       setup: setupRecords,
       summary,
       run_refs: runs.map((run) =>
@@ -404,7 +485,12 @@ export async function collectRealProcessRoi({
       formal_evidence_precollection_sha256:
         plan.frozenConfig.formal_evidence_precollection_identity
           ?.identity_sha256 ?? null,
+      formal_evidence_index_ref: formalCollection
+        ? "formal-evidence-index.json"
+        : null,
       environment_identity: plan.environmentIdentity,
+      formal_runtime_tcb_identity_sha256:
+        plan.frozenConfig.formal_runtime_tcb_identity.identity_sha256,
       manifest_sha256: digest(manifestBytes),
       aggregate_sha256: digest(aggregateBytes),
       observed_lifecycle_status: summary.observed_lifecycle_status,
@@ -419,7 +505,17 @@ export async function collectRealProcessRoi({
       raw_promoted_to_gate: false,
     };
     await writeJson(path.join(runSetRoot, "attestation.json"), attestation);
-    return { runSetRoot, aggregate, manifest, attestation };
+    const attestationBytes = await readFile(
+      path.join(runSetRoot, "attestation.json"),
+    );
+    assertRunSetControlBudget(manifestBytes, attestationBytes);
+    return {
+      runSetRoot,
+      aggregate,
+      manifest,
+      attestation,
+      formalCollection,
+    };
   } catch (error) {
     collectionError = error;
   } finally {
@@ -463,35 +559,7 @@ async function materializeSourceIdentity({
 }
 
 export async function buildArtifactManifest(runSetRoot) {
-  const excluded = new Set(
-    ["manifest.json", "attestation.json"].map((name) =>
-      path.resolve(runSetRoot, name),
-    ),
-  );
-  const files = (await listFiles(runSetRoot))
-    .filter((file) => !excluded.has(path.resolve(file)))
-    .sort();
-  const entries = [];
-  for (const file of files) {
-    const info = await stat(file);
-    if (info.size > 64 * 1024 * 1024)
-      throw new Error(
-        `real_process_roi_artifact_file_budget:${relative(runSetRoot, file)}`,
-      );
-    const bytes = await readFile(file);
-    entries.push({
-      path: relative(runSetRoot, file),
-      bytes: info.size,
-      sha256: digest(bytes),
-    });
-  }
-  return {
-    schema_version: REAL_PROCESS_MANIFEST_SCHEMA,
-    root: ".",
-    excludes: ["manifest.json", "attestation.json"],
-    entries,
-    materialized_set_sha256: sha256(canonical(entries)),
-  };
+  return buildRealProcessArtifactManifest(runSetRoot);
 }
 
 async function executeRepeat({ repeat, plan, prepared, runSetRoot, runs }) {
@@ -599,6 +667,7 @@ async function prepareVariant({
     "project-tiny-context-harness",
     "--pack-destination",
     packDir,
+    "--ignore-scripts",
   ]);
   records.push(
     await spawnCaptured(packagePack.command, packagePack.args, {
@@ -618,6 +687,7 @@ async function prepareVariant({
       `real_process_roi_package_count:${variant.id}:${packages.length}`,
     );
   const packageBytes = await readFile(path.join(packDir, packages[0]));
+  const packedPackage = readPackedPackageIdentity(packageBytes);
   for (const [label, args] of [
     ["candidate-head", ["rev-parse", "HEAD"]],
     ["candidate-tree", ["rev-parse", "HEAD^{tree}"]],
@@ -656,7 +726,8 @@ async function prepareVariant({
     commit: head,
     tree,
     package_path: relative(outputDir, path.join(packDir, packages[0])),
-    package_sha256: digest(packageBytes),
+    package_version: packedPackage.package_version,
+    package_sha256: packedPackage.package_sha256,
     setup_commands: records,
   };
   await writeJson(path.join(outputDir, "setup.json"), record);
@@ -664,6 +735,7 @@ async function prepareVariant({
     checkout,
     tree,
     package_sha256: record.package_sha256,
+    package_version: record.package_version,
     record,
   };
 }
@@ -903,19 +975,25 @@ export async function finalizeRealProcessRoiResources({
     );
 }
 
-async function listFiles(rootPath) {
-  const output = [];
-  for (const entry of await readdir(rootPath, { withFileTypes: true })) {
-    const target = path.join(rootPath, entry.name);
-    if (entry.isDirectory()) output.push(...(await listFiles(target)));
-    else if (entry.isFile()) output.push(target);
-  }
-  return output;
-}
-
 async function writeJson(file, value) {
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function assertRunSetControlBudget(manifestBytes, attestationBytes) {
+  const controls = [manifestBytes, attestationBytes];
+  if (
+    controls.length !==
+      FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_files ||
+    controls.some(
+      (bytes) =>
+        bytes.length >
+        FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_bytes_per_file,
+    ) ||
+    controls.reduce((total, bytes) => total + bytes.length, 0) >
+      FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_total_bytes
+  )
+    throw new Error("real_process_roi_control_artifact_capacity");
 }
 
 function digest(value) {

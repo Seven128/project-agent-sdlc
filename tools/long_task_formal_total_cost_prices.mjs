@@ -1,4 +1,4 @@
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
+import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
 import { assert } from "./long_task_real_process_roi_scoring.mjs";
 import {
   assertExactKeys,
@@ -76,12 +76,7 @@ function validatePriceSourceRecord({
 }) {
   assertExactKeys(
     record,
-    [
-      "currency",
-      "frozen_at",
-      "schema_version",
-      "source_document_ref",
-    ],
+    ["currency", "frozen_at", "schema_version", "source_document_ref"],
     `price_source_fields:${sourcePath}`,
   );
   assert(
@@ -104,12 +99,7 @@ function validatePriceSourceRecord({
   usedPriceDocuments.add(record.source_document_ref);
 }
 
-function readPriceDocument({
-  source,
-  sourcePath,
-  frozenAt,
-  accountingPolicy,
-}) {
+function readPriceDocument({ source, sourcePath, frozenAt, accountingPolicy }) {
   const document = parseJson(source.bytes, `price_document_json:${sourcePath}`);
   assertExactKeys(
     document,
@@ -185,13 +175,7 @@ function validateOfficialRate(rate, sourcePath, accountingPolicy) {
 function validateInvoiceRate(rate, sourcePath, accountingPolicy) {
   assertExactKeys(
     rate,
-    [
-      "basis",
-      "invoice_amount_cny",
-      "invoice_quantity",
-      "key",
-      "unit",
-    ],
+    ["basis", "invoice_amount_cny", "invoice_quantity", "key", "unit"],
     `price_source_invoice_rate_fields:${rate.key}`,
   );
   assert(
@@ -209,8 +193,7 @@ function validateInvoiceRate(rate, sourcePath, accountingPolicy) {
     unit: rate.unit,
     basis: rate.basis,
     ncu_per_unit:
-      (rate.invoice_amount_cny *
-        accountingPolicy.normalized_unit.ncu_per_cny) /
+      (rate.invoice_amount_cny * accountingPolicy.normalized_unit.ncu_per_cny) /
       rate.invoice_quantity,
     source_path: sourcePath,
   };

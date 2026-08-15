@@ -17,18 +17,21 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { gzipSync } from "node:zlib";
 import {
   BASELINE_A_COMMIT,
   CASE_IDS,
-  FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
-  FORMAL_TOTAL_COST_CATEGORIES,
   ISOLATED_ENVELOPE_B_COMMIT,
   MEASUREMENT_THRESHOLDS,
-  REAL_PROCESS_SCHEMAS,
   REQUIRED_METRICS,
   repeatOrder,
   variantDefinitions,
 } from "../../tools/long_task_real_process_roi_policy.mjs";
+import {
+  FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
+  FORMAL_TOTAL_COST_CATEGORIES,
+  REAL_PROCESS_SCHEMAS,
+} from "../../tools/long_task_real_process_schema_policy.mjs";
 import {
   canonical,
   deriveRealProcessRoiSummary,
@@ -44,12 +47,11 @@ import {
   finalizeRealProcessRoiResources,
   realProcessRoiNpmCommandSpec,
 } from "../../tools/long_task_real_process_roi_runner.mjs";
-import { evaluateFormalTotalCostEvidence } from "../../tools/long_task_formal_total_cost_evidence.mjs";
-import {
-  materializeFormalPrecollectionInputs,
-  readFormalPrecollectionPlan,
-} from "../../tools/long_task_formal_total_cost_precollection.mjs";
 import { verifyRealProcessRoiReport } from "../../tools/verify_long_task_real_process_roi.mjs";
+import {
+  deriveFormalRuntimeTcbIdentity,
+  formalProcessSupervisorTcbPaths,
+} from "../../tools/long_task_formal_runtime_tcb.mjs";
 import { evaluateProductFacts } from "../../examples/delivery-benchmark/real-process-workload/product/facts.mjs";
 import {
   evaluateCounterfactualGold,
@@ -97,7 +99,9 @@ test("real process ROI CLI fails closed when a path option has no value", async 
     "--formal-evidence-plan",
     "--artifact-root",
   ]) {
-    const result = await execute(process.execPath, [cli, option], { cwd: root });
+    const result = await execute(process.execPath, [cli, option], {
+      cwd: root,
+    });
     assert.notEqual(result.status, 0, option);
     assert.ok(
       result.stderr.includes(
@@ -120,11 +124,23 @@ test("real process ROI CLI rejects conflicting modes and ignored option scopes",
       "real_process_roi_formal_evidence_plan_requires_collection",
     ],
     [
-      ["--dry-run", "--candidate", fakeCandidate, "--formal-evidence", "packet.json"],
+      [
+        "--dry-run",
+        "--candidate",
+        fakeCandidate,
+        "--formal-evidence",
+        "packet.json",
+      ],
       "real_process_roi_formal_evidence_requires_report",
     ],
     [
-      ["--dry-run", "--candidate", fakeCandidate, "--artifact-root", "artifacts"],
+      [
+        "--dry-run",
+        "--candidate",
+        fakeCandidate,
+        "--artifact-root",
+        "artifacts",
+      ],
       "real_process_roi_artifact_root_requires_collection",
     ],
     [
@@ -136,7 +152,9 @@ test("real process ROI CLI rejects conflicting modes and ignored option scopes",
       "real_process_roi_allow_rejected_requires_report",
     ],
   ]) {
-    const result = await execute(process.execPath, [cli, ...args], { cwd: root });
+    const result = await execute(process.execPath, [cli, ...args], {
+      cwd: root,
+    });
     assert.notEqual(result.status, 0, args.join(" "));
     assert.ok(result.stderr.includes(diagnostic), result.stderr);
   }
@@ -494,13 +512,13 @@ test("real process ROI setup routes every Windows npm command through ComSpec wi
 
 test("real process ROI artifact manifest keeps its retained-file budget fail closed", async () => {
   const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-budget-"));
-  const oversized = path.join(temporary, "oversized.bin");
+  const oversized = path.join(temporary, "oversized.stdout.log");
   try {
     await writeFile(oversized, "");
     await truncate(oversized, 64 * 1024 * 1024 + 1);
     await assert.rejects(
       buildArtifactManifest(temporary),
-      /real_process_roi_artifact_file_budget:oversized\.bin/u,
+      /real_process_roi_artifact_capacity/u,
     );
   } finally {
     await rm(temporary, { recursive: true, force: true });
@@ -581,38 +599,46 @@ test("real process ROI finalization attempts every resource and preserves primar
 test("real process ROI policy permanently excludes A from safety and balances the first three repeats", () => {
   assert.deepEqual(REAL_PROCESS_SCHEMAS, {
     FORMAL_TOTAL_COST_ACCOUNTING_POLICY_SCHEMA:
-      "long-task-formal-total-cost-accounting-policy-v1",
+      "long-task-formal-total-cost-accounting-policy-v2",
     FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA:
-      "long-task-formal-total-cost-evidence-packet-v1",
+      "long-task-formal-total-cost-evidence-packet-v2",
     FORMAL_TOTAL_COST_PRECOLLECTION_PLAN_SCHEMA:
-      "long-task-formal-total-cost-precollection-plan-v1",
+      "long-task-formal-total-cost-precollection-plan-v2",
     FORMAL_TOTAL_COST_PRICE_DOCUMENT_SCHEMA:
       "long-task-formal-total-cost-price-document-v1",
     FORMAL_TOTAL_COST_PRICE_SOURCE_SCHEMA:
       "long-task-formal-total-cost-price-source-v1",
     FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA:
-      "long-task-formal-total-cost-provider-event-v1",
+      "long-task-formal-total-cost-provider-event-v2",
     FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA:
-      "long-task-formal-total-cost-raw-event-v1",
+      "long-task-formal-total-cost-raw-event-v2",
     FORMAL_TOTAL_COST_REDACTION_RULE_SCHEMA:
       "long-task-formal-total-cost-redaction-rule-v1",
     FORMAL_TOTAL_COST_SCENARIO_CATALOG_SCHEMA:
-      "long-task-formal-total-cost-scenario-catalog-v1",
+      "long-task-formal-total-cost-scenario-catalog-v2",
     FORMAL_TOTAL_COST_SOURCE_MANIFEST_SCHEMA:
-      "long-task-formal-total-cost-source-manifest-v1",
-    REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v3",
-    REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v3",
-    REAL_PROCESS_MANIFEST_SCHEMA: "long-task-real-process-roi-manifest-v1",
+      "long-task-formal-total-cost-source-manifest-v2",
+    FORMAL_TOTAL_COST_COLLECTOR_CATALOG_SCHEMA:
+      "long-task-formal-total-cost-collector-catalog-v1",
+    FORMAL_SCENARIO_EXECUTION_SCHEMA: "formal-scenario-execution-v1",
+    FORMAL_HUMAN_INTERACTION_TRACE_SCHEMA: "formal-runner-interaction-trace-v1",
+    FORMAL_PROCESS_ACCOUNTING_SCHEMA: "formal-process-tree-accounting-v1",
+    FORMAL_STORAGE_LEDGER_SCHEMA: "formal-runner-storage-ledger-v1",
+    LEVEL4_INDEPENDENT_AUDIT_SCHEMA: "level4-independent-capability-audit-v1",
+    LEVEL4_PROMOTION_RECORD_SCHEMA: "level4-governance-promotion-v1",
+    REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v4",
+    REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v4",
+    REAL_PROCESS_MANIFEST_SCHEMA: "long-task-real-process-roi-manifest-v2",
     REAL_PROCESS_ATTESTATION_SCHEMA:
-      "long-task-real-process-roi-attestation-v3",
+      "long-task-real-process-roi-attestation-v4",
     REAL_PROCESS_FROZEN_CONFIG_SCHEMA:
-      "long-task-real-process-roi-frozen-config-v3",
-    REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v3",
-    REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v3",
-    REAL_PROCESS_COLLECTION_SCHEMA: "long-task-real-process-roi-collection-v3",
+      "long-task-real-process-roi-frozen-config-v4",
+    REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v4",
+    REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v4",
+    REAL_PROCESS_COLLECTION_SCHEMA: "long-task-real-process-roi-collection-v4",
     REAL_PROCESS_VERIFICATION_SCHEMA:
-      "long-task-real-process-roi-verification-v3",
-    REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v3",
+      "long-task-real-process-roi-verification-v4",
+    REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v4",
   });
   const variants = variantDefinitions(fakeCandidate);
   assert.equal(variants.a.commit, BASELINE_A_COMMIT);
@@ -820,657 +846,6 @@ test("run records and frozen config cannot self-attest formal ROI evidence", () 
   );
 });
 
-test("formal evidence accounting applies the frozen ten-delivery and once-only strata", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant,
-  });
-  try {
-    const result = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-    assert.equal(result.admitted, true);
-    assert.equal(result.support_complete, true);
-    assert.deepEqual(result.blockers, []);
-    assert.equal(result.event_count, 86);
-    assert.equal(result.accounting.deliveries_per_cycle, 10);
-    assert.equal(
-      result.accounting.category_results.authoring.cycle_incremental_cost_ncu,
-      "1.000000",
-    );
-    assert.equal(
-      result.accounting.category_results.maintenance.cycle_incremental_cost_ncu,
-      "0.100000",
-    );
-    assert.equal(
-      result.accounting.category_results.migration.cycle_incremental_cost_ncu,
-      "0.100000",
-    );
-    assert.equal(result.accounting.positive_incremental_cost_ncu, "5.500000");
-    assert.equal(result.accounting.cost_reduction_ncu, "0.000000");
-    assert.equal(
-      result.accounting.purpose_benefit.cycle_purpose_benefit_ncu,
-      "10.000000",
-    );
-    assert.equal(
-      result.accounting.benefit_to_positive_incremental_cost_ratio,
-      "1.818182",
-    );
-    assert.equal(result.accounting.positive_pair_count, 5);
-    assert.equal(result.accounting.paired_net_benefit_sample_cv, "0.000000");
-    assert.equal(result.accounting.significant_stable_margin_met, true);
-
-    const unlocked = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-    });
-    assert.equal(unlocked.precollection_bound, false);
-    assert.equal(unlocked.support_complete, false);
-    assert.deepEqual(unlocked.blockers, [
-      "formal_evidence_precollection_lock_missing",
-    ]);
-    assert.equal(unlocked.accounting, null);
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("the runner precollection plan freezes and materializes every fixed external input", async () => {
-  const fixture = formalScoringFixture();
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant: setupMapFixture(fixture.config),
-  });
-  const planRoot = await mkdtemp(path.join(os.tmpdir(), "ty-formal-plan-"));
-  const runSetRoot = await mkdtemp(path.join(os.tmpdir(), "ty-formal-run-"));
-  try {
-    for (const entry of formal.precollectionIdentity.entries) {
-      const source = path.join(
-        formal.root,
-        "sources",
-        ...entry.path.split("/"),
-      );
-      const target = path.join(planRoot, "sources", ...entry.path.split("/"));
-      await mkdir(path.dirname(target), { recursive: true });
-      await writeFile(target, await readFile(source));
-    }
-    const planPath = path.join(planRoot, "precollection-plan.json");
-    await writeJson(planPath, formal.precollectionIdentity);
-    const precollection = await readFormalPrecollectionPlan({
-      planPath,
-      limits: JSON.parse(accountingPolicyText).source_bundle_limits,
-    });
-    assert.deepEqual(precollection.identity, formal.precollectionIdentity);
-    await materializeFormalPrecollectionInputs({
-      runSetRoot,
-      precollection,
-    });
-    for (const entry of formal.precollectionIdentity.entries) {
-      const materialized = await readFile(
-        path.join(
-          runSetRoot,
-          "inputs",
-          "formal-evidence-precollection",
-          ...entry.path.split("/"),
-        ),
-      );
-      assert.equal(materialized.length, entry.bytes);
-      assert.equal(digest(materialized), entry.sha256);
-    }
-  } finally {
-    await Promise.all(
-      [formal.root, planRoot, runSetRoot].map((target) =>
-        rm(target, { recursive: true, force: true }),
-      ),
-    );
-  }
-});
-
-test("formal evidence accepts a pre-collection actual-invoice price source", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant,
-    options: { priceSourceKind: "actual_invoice" },
-  });
-  try {
-    const result = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-    assert.equal(result.support_complete, true);
-    assert.equal(result.accounting.significant_stable_margin_met, true);
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal positivity does not use cost reductions to satisfy the 1.25 positive-cost margin", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant,
-    options: {
-      benefitDeltas: [5, 5, 5, 5, 5],
-      costActiveMs: {
-        process: { b: 360_000, c: 0 },
-      },
-    },
-  });
-  try {
-    const result = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-    assert.equal(result.support_complete, true);
-    assert.equal(result.accounting.positive_incremental_cost_ncu, "4.500000");
-    assert.equal(result.accounting.cost_reduction_ncu, "200.000000");
-    assert.equal(
-      result.accounting.benefit_to_positive_incremental_cost_ratio,
-      "1.111111",
-    );
-    assert.equal(
-      result.accounting.cost_reductions_offset_positive_cost_denominator,
-      false,
-    );
-    assert.equal(result.accounting.significant_stable_margin_met, false);
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal positivity requires four positive pairs and sample CV at most twenty percent", async () => {
-  for (const benefitDeltas of [
-    [10, 10, 10, -1, -1],
-    [8, 9, 10, 11, 30],
-  ]) {
-    const fixture = formalScoringFixture();
-    const setupByVariant = setupMapFixture(fixture.config);
-    const formal = await writeFormalEvidenceFixture({
-      fixture,
-      setupByVariant,
-      options: { benefitDeltas },
-    });
-    try {
-      const result = await evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      });
-      assert.equal(result.support_complete, true);
-      assert.equal(result.accounting.significant_stable_margin_met, false);
-      if (benefitDeltas[3] < 0)
-        assert.equal(result.accounting.positive_pair_count, 3);
-      else
-        assert.ok(
-          Number(result.accounting.paired_net_benefit_sample_cv) > 0.2,
-        );
-    } finally {
-      await rm(formal.root, { recursive: true, force: true });
-    }
-  }
-});
-
-test("formal evidence admission is verifier-derived and incomplete raw packets remain unsupported", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant,
-    options: { omitEvidenceKey: "cost:migration:once:c" },
-  });
-  try {
-    const result = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-    assert.equal(result.admitted, true);
-    assert.equal(result.support_complete, false);
-    assert.deepEqual(result.missing_event_keys, ["cost:migration:once:c"]);
-    assert.ok(result.blockers.includes("formal_evidence_event_set_incomplete"));
-    assert.equal(result.accounting, null);
-
-    const packet = JSON.parse(await readFile(formal.packetPath, "utf8"));
-    packet.verified = true;
-    await writeJson(formal.packetPath, packet);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      }),
-      /formal_evidence_packet_prohibited_field/u,
-    );
-
-    delete packet.verified;
-    await writeJson(formal.packetPath, packet);
-    const eventRelative = "events/cost-authoring-pair-01-b.json";
-    const eventPath = path.join(
-      formal.root,
-      "sources",
-      ...eventRelative.split("/"),
-    );
-    const event = JSON.parse(await readFile(eventPath, "utf8"));
-    event.event_id = "packet-authored-event-id";
-    await writeJson(eventPath, event);
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      }),
-      /raw_event_prohibited_field/u,
-    );
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal event identity prevents one invocation from owning two cost categories", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  try {
-    const runtimeRelative = "events/cost-runtime-pair-01-b.json";
-    const stateRelative = "events/cost-state-pair-01-b.json";
-    const runtime = JSON.parse(
-      await readFile(
-        path.join(formal.root, "sources", ...runtimeRelative.split("/")),
-        "utf8",
-      ),
-    );
-    const statePath = path.join(
-      formal.root,
-      "sources",
-      ...stateRelative.split("/"),
-    );
-    const state = JSON.parse(await readFile(statePath, "utf8"));
-    state.invocation_id = runtime.invocation_id;
-    await writeJson(statePath, state);
-    await resignFormalEvidenceSource(formal.packetPath, stateRelative);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      }),
-      /raw_event_identity/u,
-    );
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal scenarios derive same-quality cost and incident outcomes from raw outputs", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  const evaluate = () =>
-    evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-  const mutateOutput = async (relative, contents) => {
-    await writeFile(
-      path.join(formal.root, "sources", ...relative.split("/")),
-      contents,
-    );
-    await resignFormalEvidenceSource(formal.packetPath, relative);
-  };
-  try {
-    await mutateOutput("outputs/runtime-pair01-b.bin", "wrong-runtime\n");
-    await assert.rejects(evaluate(), /formal_scenario_cost_gold/u);
-    await mutateOutput(
-      "outputs/runtime-pair01-b.bin",
-      "gold:fixed-runtime-task\n",
-    );
-
-    await mutateOutput(
-      "outputs/incident-pair-01-b.bin",
-      "gold:fixed-controlled-incident\n",
-    );
-    await assert.rejects(evaluate(), /formal_scenario_incident_b_wrong/u);
-    await mutateOutput(
-      "outputs/incident-pair-01-b.bin",
-      "wrong:fixed-controlled-incident:pair-01\n",
-    );
-
-    await mutateOutput(
-      "outputs/incident-pair-01-c.bin",
-      "wrong:fixed-controlled-incident:pair-01\n",
-    );
-    await assert.rejects(evaluate(), /formal_scenario_incident_c_correct/u);
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal source bundles fail closed at file-count, per-file, and total-byte limits", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  const original = await readFile(formal.packetPath);
-  const evaluate = () =>
-    evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-  const writeMutatedPacket = async (mutate) => {
-    const packet = JSON.parse(original.toString("utf8"));
-    mutate(packet.source_bundle);
-    packet.source_bundle.entry_count = packet.source_bundle.entries.length;
-    packet.source_bundle.total_bytes = packet.source_bundle.entries.reduce(
-      (sum, entry) => sum + entry.bytes,
-      0,
-    );
-    packet.source_bundle.materialized_set_sha256 = sha256(
-      canonical(packet.source_bundle.entries),
-    );
-    await writeJson(formal.packetPath, packet);
-  };
-  try {
-    await writeMutatedPacket((manifest) => {
-      const template = manifest.entries[0];
-      manifest.entries = Array.from({ length: 257 }, (_, index) => ({
-        ...template,
-        path: `overflow/${String(index).padStart(3, "0")}.json`,
-      }));
-    });
-    await assert.rejects(evaluate(), /formal_evidence_source_file_count/u);
-
-    await writeMutatedPacket((manifest) => {
-      const event = manifest.entries.find((entry) => entry.role === "raw_event");
-      event.bytes = 8 * 1024 * 1024 + 1;
-    });
-    await assert.rejects(evaluate(), /formal_evidence_source_file_budget/u);
-
-    await writeMutatedPacket((manifest) => {
-      for (const event of manifest.entries
-        .filter((entry) => entry.role === "raw_event")
-        .slice(0, 9))
-        event.bytes = 8 * 1024 * 1024;
-    });
-    await assert.rejects(evaluate(), /formal_evidence_source_total_budget/u);
-  } finally {
-    await writeFile(formal.packetPath, original);
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal JSON sources reject duplicate keys and invalid UTF-8 bytes", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  const eventRelative = "events/cost-runtime-pair-01-b.json";
-  const eventPath = path.join(
-    formal.root,
-    "sources",
-    ...eventRelative.split("/"),
-  );
-  const original = await readFile(eventPath);
-  const evaluate = () =>
-    evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-  try {
-    const duplicate = original
-      .toString("utf8")
-      .replace(
-        '  "run_set_id": "fixture-run-set",',
-        '  "run_set_id": "fixture-run-set",\n  "run_set_id": "fixture-run-set",',
-      );
-    assert.notEqual(duplicate, original.toString("utf8"));
-    await writeFile(eventPath, duplicate);
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    await assert.rejects(evaluate(), /raw_event_json:.*:duplicate_key/u);
-
-    await writeFile(eventPath, Buffer.from([0xff]));
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    await assert.rejects(evaluate(), /raw_event_json:.*:utf8/u);
-  } finally {
-    await writeFile(eventPath, original);
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal evidence rejects post-collection price freezing and no-follow source links", async (t) => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const latePrice = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant,
-  });
-  try {
-    const priceRelative = "prices/official-price.json";
-    const pricePath = path.join(
-      latePrice.root,
-      "sources",
-      ...priceRelative.split("/"),
-    );
-    const price = JSON.parse(await readFile(pricePath, "utf8"));
-    price.frozen_at = "2026-08-11T00:30:00.000Z";
-    await writeJson(pricePath, price);
-    await resignFormalEvidenceSource(latePrice.packetPath, priceRelative);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: latePrice.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: latePrice.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: latePrice.precollectionIdentity,
-      }),
-      /formal_precollection_packet_binding/u,
-    );
-  } finally {
-    await rm(latePrice.root, { recursive: true, force: true });
-  }
-
-  const linked = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  try {
-    const eventRelative = "events/cost-authoring-pair-01-b.json";
-    const eventPath = path.join(
-      linked.root,
-      "sources",
-      ...eventRelative.split("/"),
-    );
-    const externalPath = path.join(linked.root, "outside-event.json");
-    await writeFile(externalPath, await readFile(eventPath));
-    await rm(eventPath, { force: true });
-    try {
-      await symlink(externalPath, eventPath, "file");
-    } catch (error) {
-      if (["EPERM", "EACCES"].includes(error?.code)) {
-        t.diagnostic("file symlink creation unavailable on this host");
-        return;
-      }
-      throw error;
-    }
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: linked.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: linked.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: linked.precollectionIdentity,
-      }),
-      /formal_evidence_source_link/u,
-    );
-  } finally {
-    await rm(linked.root, { recursive: true, force: true });
-  }
-});
-
-test("formal authoring usage is recomputed from the invocation-bound provider event", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  try {
-    const eventRelative = "events/cost-authoring-pair-01-b.json";
-    const eventPath = path.join(
-      formal.root,
-      "sources",
-      ...eventRelative.split("/"),
-    );
-    const event = JSON.parse(await readFile(eventPath, "utf8"));
-    event.measurements.find(
-      (measurement) => measurement.meter === "provider_input_token",
-    ).quantity += 1;
-    await writeJson(eventPath, event);
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      }),
-      /raw_event_provider_usage/u,
-    );
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("missing authoritative authoring usage produces an unsupported reportable result", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  try {
-    const eventRelative = "events/cost-authoring-pair-01-b.json";
-    const eventPath = path.join(
-      formal.root,
-      "sources",
-      ...eventRelative.split("/"),
-    );
-    const event = JSON.parse(await readFile(eventPath, "utf8"));
-    event.measurements = event.measurements.filter(
-      (measurement) => measurement.kind === "human_time",
-    );
-    await writeJson(eventPath, event);
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    const result = await evaluateFormalTotalCostEvidence({
-      packetPath: formal.packetPath,
-      accountingPolicy: JSON.parse(accountingPolicyText),
-      accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-      runSetId: formal.runSetId,
-      runs: fixture.runs,
-      setupByVariant,
-      precollectionIdentity: formal.precollectionIdentity,
-    });
-    assert.equal(result.admitted, true);
-    assert.equal(result.support_complete, false);
-    assert.deepEqual(result.missing_authoring_usage_keys, [
-      "cost:authoring:pair-01:b",
-    ]);
-    assert.ok(result.blockers.includes("formal_authoring_usage_incomplete"));
-    assert.equal(result.accounting, null);
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
-test("formal purpose benefit rejects packet-authored normalized loss values", async () => {
-  const fixture = formalScoringFixture();
-  const setupByVariant = setupMapFixture(fixture.config);
-  const formal = await writeFormalEvidenceFixture({ fixture, setupByVariant });
-  try {
-    const eventRelative =
-      "events/benefit-fixed-controlled-incident-pair-01-b.json";
-    const eventPath = path.join(
-      formal.root,
-      "sources",
-      ...eventRelative.split("/"),
-    );
-    const event = JSON.parse(await readFile(eventPath, "utf8"));
-    event.measurements = [{ kind: "incident_loss_cny", amount_cny: 100 }];
-    await writeJson(eventPath, event);
-    await resignFormalEvidenceSource(formal.packetPath, eventRelative);
-    await assert.rejects(
-      evaluateFormalTotalCostEvidence({
-        packetPath: formal.packetPath,
-        accountingPolicy: JSON.parse(accountingPolicyText),
-        accountingPolicyIdentity: fixture.config.accounting_policy_identity,
-        runSetId: formal.runSetId,
-        runs: fixture.runs,
-        setupByVariant,
-        precollectionIdentity: formal.precollectionIdentity,
-      }),
-      /raw_event_meter_fields/u,
-    );
-  } finally {
-    await rm(formal.root, { recursive: true, force: true });
-  }
-});
-
 test("a missing authoritative authoring-token event remains diagnostic and cannot manufacture total ROI", () => {
   const fixture = scoringFixture();
   fixture.runs[0].metrics.authoring_token_count = unverifiedMetric(
@@ -1535,6 +910,12 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
     () => validateRunRecord(legacyV2, fixture.config),
     /real_process_roi_invalid:run_schema_v2_recollection_required/u,
   );
+  const legacyV3 = structuredClone(fixture.runs[0]);
+  legacyV3.schema_version = "long-task-real-process-roi-run-v3";
+  assert.throws(
+    () => validateRunRecord(legacyV3, fixture.config),
+    /real_process_roi_invalid:run_schema_v3_recollection_required/u,
+  );
   const run = structuredClone(fixture.runs[0]);
   delete run.metrics.compile_wall_ms;
   assert.throws(
@@ -1551,10 +932,7 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
   duplicateRunIds.runs[1].run_id = duplicateRunIds.runs[0].run_id;
   assert.throws(
     () =>
-      deriveRealProcessRoiSummary(
-        duplicateRunIds.runs,
-        duplicateRunIds.config,
-      ),
+      deriveRealProcessRoiSummary(duplicateRunIds.runs, duplicateRunIds.config),
     /real_process_roi_invalid:summary_run_id_duplicates/u,
   );
   const promoted = structuredClone(
@@ -1589,20 +967,13 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
 
 test("report verifier recomputes raw SHA closure, summary and verdict", async () => {
   const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-report-"));
-  const auxiliaryRoots = [];
   try {
     const state = await materializeVerifierReportFixture(temporary);
-    auxiliaryRoots.push(state.formal.root);
     await assertVerifierFormalConclusions(temporary, state);
     await assertNonOwnerFormalFieldsRejected(temporary);
     await assertVerifierRawTamperingRejected(temporary, state);
   } finally {
     await rm(temporary, { recursive: true, force: true });
-    await Promise.all(
-      auxiliaryRoots.map((target) =>
-        rm(target, { recursive: true, force: true }),
-      ),
-    );
   }
 });
 
@@ -1610,12 +981,7 @@ async function materializeVerifierReportFixture(temporary) {
   const fixture = formalScoringFixture();
   for (const run of fixture.runs.filter((item) => item.variant_id === "c"))
     run.metrics.total_elapsed_ms.value += 1_000;
-  const formal = await writeFormalEvidenceFixture({
-    fixture,
-    setupByVariant: setupMapFixture(fixture.config),
-  });
-  fixture.config.formal_evidence_precollection_identity =
-    formal.precollectionIdentity;
+  fixture.config.formal_evidence_precollection_identity = null;
   await writeJson(path.join(temporary, "frozen-config.json"), fixture.config);
   await writeJson(
     path.join(temporary, "environment.json"),
@@ -1635,7 +1001,6 @@ async function materializeVerifierReportFixture(temporary) {
     ],
   ])
     await writeIdentityFixture(temporary, prefix, identity, contents);
-  await writePrecollectionIdentityFixture(temporary, formal);
   const runRefs = [];
   for (const run of fixture.runs) {
     const relative = `raw/${run.variant_id}/repeat-${String(run.repeat).padStart(2, "0")}/run.json`;
@@ -1659,9 +1024,11 @@ async function materializeVerifierReportFixture(temporary) {
       fixture.config.benchmark_implementation_identity.identity_sha256,
     accounting_policy_sha256:
       fixture.config.accounting_policy_identity.identity_sha256,
-    formal_evidence_precollection_sha256:
-      formal.precollectionIdentity.identity_sha256,
+    formal_evidence_precollection_sha256: null,
+    formal_evidence_index_ref: null,
     environment_identity: fixture.config.environment_identity,
+    formal_runtime_tcb_identity_sha256:
+      fixture.config.formal_runtime_tcb_identity.identity_sha256,
     setup,
     summary,
     run_refs: runRefs,
@@ -1669,7 +1036,7 @@ async function materializeVerifierReportFixture(temporary) {
   const manifest = await buildArtifactManifest(temporary);
   await writeJson(path.join(temporary, "manifest.json"), manifest);
   await writeVerifierAttestation(temporary, fixture, summary);
-  return { fixture, formal, runRefs, setup };
+  return { fixture, runRefs, setup };
 }
 
 async function writeVerifierAttestation(temporary, fixture, summary) {
@@ -1685,9 +1052,11 @@ async function writeVerifierAttestation(temporary, fixture, summary) {
       fixture.config.benchmark_implementation_identity.identity_sha256,
     accounting_policy_sha256:
       fixture.config.accounting_policy_identity.identity_sha256,
-    formal_evidence_precollection_sha256:
-      fixture.config.formal_evidence_precollection_identity.identity_sha256,
+    formal_evidence_precollection_sha256: null,
+    formal_evidence_index_ref: null,
     environment_identity: fixture.config.environment_identity,
+    formal_runtime_tcb_identity_sha256:
+      fixture.config.formal_runtime_tcb_identity.identity_sha256,
     manifest_sha256: digest(manifestBytes),
     aggregate_sha256: digest(aggregateBytes),
     observed_lifecycle_status: summary.observed_lifecycle_status,
@@ -1720,21 +1089,10 @@ async function assertVerifierFormalConclusions(temporary, state) {
     "observed_lifecycle_thresholds_not_met",
   );
   assert.equal(verified.a_safety_eligible, false);
-  const result = await verifyRealProcessRoiReport(temporary, {
-    formalEvidence: state.formal.packetPath,
-  });
-  assert.equal(result.formal_status, "total_roi_positive");
-  assert.equal(result.report_status, "total_roi_positive");
-  assert.equal(result.independent_evidence_admitted, true);
-  assert.equal(result.total_roi_supported, true);
-  assert.equal(result.total_roi_positive, true);
-  assert.deepEqual(result.formal_blockers, []);
   assert.equal(
-    result.observed_lifecycle_status,
-    "observed_lifecycle_thresholds_not_met",
+    verified.formal_conclusion_owner,
+    "verify_long_task_real_process_roi",
   );
-  assert.equal(result.formal_accounting.positive_incremental_cost_ncu, "5.500000");
-  assert.equal(result.formal_accounting.significant_stable_margin_met, true);
 }
 
 async function assertNonOwnerFormalFieldsRejected(temporary) {
@@ -1772,11 +1130,13 @@ async function assertNonOwnerFormalFieldsRejected(temporary) {
     );
   assert.notEqual(duplicateAggregate, originalAggregate.toString("utf8"));
   await writeFile(aggregatePath, duplicateAggregate);
+  await resignManifest(temporary);
   await assert.rejects(
     verifyRealProcessRoiReport(temporary),
     /run_set_json:aggregate\.json:duplicate_key/u,
   );
   await writeFile(aggregatePath, originalAggregate);
+  await resignManifest(temporary);
   await assertMutatedReportRejected({
     temporary,
     target: aggregatePath,
@@ -1798,8 +1158,12 @@ async function assertMutatedReportRejected(options) {
   const changed = JSON.parse(original);
   mutate(changed);
   await writeJson(target, changed);
+  if (path.basename(target) !== "attestation.json")
+    await resignManifest(temporary);
   await assert.rejects(verifyRealProcessRoiReport(temporary), diagnostic);
   await writeFile(target, original);
+  if (path.basename(target) !== "attestation.json")
+    await resignManifest(temporary);
 }
 
 async function assertVerifierRawTamperingRejected(temporary, state) {
@@ -1809,12 +1173,15 @@ async function assertVerifierRawTamperingRejected(temporary, state) {
   for (const [version, diagnostic] of [
     ["v1", /aggregate_schema_v1_recollection_required/u],
     ["v2", /aggregate_schema_v2_recollection_required/u],
+    ["v3", /aggregate_schema_v3_recollection_required/u],
   ]) {
     legacyAggregate.schema_version = `long-task-real-process-roi-run-set-${version}`;
     await writeJson(aggregatePath, legacyAggregate);
+    await resignManifest(temporary);
     await assert.rejects(verifyRealProcessRoiReport(temporary), diagnostic);
   }
   await writeFile(aggregatePath, currentAggregate);
+  await resignManifest(temporary);
   const caseResultPath = path.join(
     temporary,
     "raw",
@@ -1842,22 +1209,27 @@ async function assertVerifierRawTamperingRejected(temporary, state) {
   );
   await assert.rejects(
     verifyRealProcessRoiReport(temporary),
-    /real_process_roi_invalid:manifest_recomputation/u,
+    /real_process_roi_manifest_recomputation/u,
   );
 }
 
 function scoringFixture({ repeats = 3 } = {}) {
   const variants = variantDefinitions(fakeCandidate);
   const workloadIdentity = sourceIdentityFixture("workload.json", "workload");
-  const implementationIdentity = sourceIdentityFixture(
-    "runner.mjs",
+  const implementationIdentity = sourceIdentityMultiFixture(
+    formalProcessSupervisorTcbPaths,
     "implementation",
   );
   const accountingPolicyIdentity = sourceIdentityFixture(
     FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
     accountingPolicyText,
   );
-  const environment = { platform: process.platform };
+  const environment = {
+    platform: process.platform,
+    arch: process.arch,
+    node: process.version,
+    node_exec_path: process.execPath,
+  };
   const environmentIdentity = sha256(canonical(environment));
   const config = {
     schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
@@ -1889,6 +1261,10 @@ function scoringFixture({ repeats = 3 } = {}) {
     semantic_gold_sha256: digest("semantic-gold"),
     environment,
     environment_identity: environmentIdentity,
+    formal_runtime_tcb_identity: deriveFormalRuntimeTcbIdentity({
+      environment,
+      benchmarkImplementationIdentity: implementationIdentity,
+    }),
     measurement_thresholds: MEASUREMENT_THRESHOLDS,
     formal_total_cost_policy: {
       categories: FORMAL_TOTAL_COST_CATEGORIES,
@@ -2029,7 +1405,7 @@ function runFixture({
       commit: variant.commit,
       tree: fakeTree,
       clean: true,
-      package_sha256: digest(`package-${variant.id}`),
+      package_sha256: digest(packageTarballFixture("0.8.14")),
       workload_sha256: workloadSha256,
     },
     environment_identity: environmentIdentity,
@@ -2181,469 +1557,6 @@ function committedCandidateIdentityFixture(label) {
   };
 }
 
-function setupMapFixture(config) {
-  return new Map(
-    Object.values(config.variants).map((variant) => [
-      variant.id,
-      {
-        variant_id: variant.id,
-        commit: variant.commit,
-        tree: fakeTree,
-        package_sha256: digest(`package-${variant.id}`),
-      },
-    ]),
-  );
-}
-
-async function writeFormalEvidenceFixture({
-  fixture,
-  setupByVariant,
-  options = {},
-}) {
-  const formalRoot = await mkdtemp(path.join(os.tmpdir(), "ty-formal-roi-"));
-  const sourcesRoot = path.join(formalRoot, "sources");
-  await mkdir(sourcesRoot, { recursive: true });
-  const sourceRecords = [];
-  const addSource = async (relativePath, role, contents) => {
-    const bytes = Buffer.isBuffer(contents)
-      ? contents
-      : Buffer.from(
-          typeof contents === "string"
-            ? contents
-            : `${JSON.stringify(contents, null, 2)}\n`,
-        );
-    const target = path.join(sourcesRoot, ...relativePath.split("/"));
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, bytes);
-    sourceRecords.push({
-      path: relativePath,
-      role,
-      bytes: bytes.length,
-      sha256: digest(bytes),
-    });
-  };
-
-  await addSource(
-    "collector/collector.mjs",
-    "collector",
-    "export const collector = 'fixed-formal-roi-fixture';\n",
-  );
-  const priceSourcePath = "prices/official-price.json";
-  const priceDocumentPath = "prices/official-price-source.json";
-  const officialRates = [
-    ["provider_input_token", "token", 0.000001],
-    ["provider_output_token", "token", 0.000002],
-    ["provider_cached_input_token", "token", 0.0000005],
-    ["compute_ms", "millisecond", 0.000001],
-    ["storage_byte_hour", "byte-hour", 0.000001],
-  ];
-  const priceSourceKind = options.priceSourceKind ?? "official_price";
-  await addSource(priceDocumentPath, "price_document", {
-    schema_version:
-      REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PRICE_DOCUMENT_SCHEMA,
-    source_kind: priceSourceKind,
-    publisher: "fixture-official-provider",
-    source_locator: "fixture://official-provider/pricing/2026-08-10",
-    published_at: "2026-08-10T00:00:00.000Z",
-    currency: "CNY",
-    rates: officialRates.map(([key, unit, ncuPerUnit]) =>
-      priceSourceKind === "official_price"
-        ? {
-            key,
-            unit,
-            basis: "official_rate",
-            cny_per_unit: ncuPerUnit,
-          }
-        : {
-            key,
-            unit,
-            basis: "invoice_line",
-            invoice_quantity: 1_000_000,
-            invoice_amount_cny: ncuPerUnit * 1_000_000,
-        },
-    ),
-  });
-  await addSource(priceSourcePath, "price_source", {
-    schema_version: REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PRICE_SOURCE_SCHEMA,
-    source_document_ref: priceDocumentPath,
-    frozen_at: "2026-08-10T01:00:00.000Z",
-    currency: "CNY",
-  });
-
-  const policy = JSON.parse(accountingPolicyText);
-  const scenarioDefinitions = [];
-  const addScenario = async ({
-    scenarioId,
-    kind,
-    category,
-    stratum,
-    scenarioKind,
-    pairCount,
-    aggregation,
-    cycleMultiplier,
-  }) => {
-    const taskSourceRef = `scenarios/${scenarioId}/task.txt`;
-    const goldSourceRef = `scenarios/${scenarioId}/gold.bin`;
-    await addSource(taskSourceRef, "scenario_source", `task:${scenarioId}\n`);
-    await addSource(goldSourceRef, "scenario_gold", `gold:${scenarioId}\n`);
-    scenarioDefinitions.push({
-      scenario_id: scenarioId,
-      kind,
-      category,
-      stratum,
-      scenario_kind: scenarioKind,
-      comparison_variants: ["b", "c"],
-      pair_count: pairCount,
-      aggregation,
-      cycle_multiplier: cycleMultiplier,
-      task_source_ref: taskSourceRef,
-      gold_source_ref: goldSourceRef,
-    });
-  };
-  for (const stratum of policy.lifecycle_population.strata)
-    for (const category of stratum.categories)
-      await addScenario({
-        scenarioId: policy.lifecycle_population.scenario_ids[category],
-        kind: "cost",
-        category,
-        stratum: stratum.key,
-        scenarioKind: "fixed-b-c-same-quality-task",
-        pairCount: stratum.pair_count,
-        aggregation: stratum.aggregation,
-        cycleMultiplier: stratum.cycle_multiplier,
-      });
-  const purposeScenario = policy.lifecycle_population.purpose_benefit;
-  await addScenario({
-    scenarioId: purposeScenario.scenario_id,
-    kind: "purpose_benefit",
-    category: null,
-    stratum: "incident_once",
-    scenarioKind: purposeScenario.scenario_kind,
-    pairCount: purposeScenario.pair_count,
-    aggregation: purposeScenario.aggregation,
-    cycleMultiplier: purposeScenario.cycle_multiplier,
-  });
-  await addSource("scenarios/catalog.json", "scenario_catalog", {
-    schema_version:
-      REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_SCENARIO_CATALOG_SCHEMA,
-    frozen_at: "2026-08-10T02:00:00.000Z",
-    scenarios: scenarioDefinitions,
-  });
-  const runByVariantAndRepeat = new Map(
-    fixture.runs
-      .filter((run) => ["b", "c"].includes(run.variant_id))
-      .map((run) => [`${run.variant_id}:${run.repeat}`, run]),
-  );
-  const runForPair = (variantId, pairId) => {
-    const repeat = pairId === "once" ? 1 : Number(pairId.slice(-2));
-    const run = runByVariantAndRepeat.get(`${variantId}:${repeat}`);
-    assert.ok(run, `fixture run missing for ${variantId} ${pairId}`);
-    return run;
-  };
-  const notApplicable = () => ({
-    disposition: "not_applicable",
-    source_ref: null,
-    redaction_rule_ref: null,
-  });
-  const retained = (sourceRef) => ({
-    disposition: "retained",
-    source_ref: sourceRef,
-    redaction_rule_ref: null,
-  });
-  const defaultCostTime = (category, variantId) =>
-    options.costActiveMs?.[category]?.[variantId] ??
-    (variantId === "b" ? 3_600 : 5_400);
-  const writeCostEvent = async ({ category, stratum, pairId, variantId }) => {
-    const eventKey = `cost:${category}:${pairId}:${variantId}`;
-    if (options.omitEvidenceKey === eventKey) return;
-    const safePair = pairId.replaceAll("-", "");
-    const prefix = `${category}-${safePair}-${variantId}`;
-    const scenarioId = policy.lifecycle_population.scenario_ids[category];
-    const scenarioOutputRef = `outputs/${prefix}.bin`;
-    await addSource(
-      scenarioOutputRef,
-      "scenario_output",
-      `gold:${scenarioId}\n`,
-    );
-    let rawPrompt = notApplicable();
-    let providerEvent = notApplicable();
-    const measurements = [
-      {
-        kind: "human_time",
-        active_ms: defaultCostTime(category, variantId),
-        wait_ms: 0,
-      },
-    ];
-    if (category === "authoring") {
-      const promptPath = `prompts/${prefix}.txt`;
-      const providerPath = `provider-events/${prefix}.json`;
-      await addSource(promptPath, "raw_prompt", `prompt:${prefix}\n`);
-      await addSource(
-        providerPath,
-        "provider_event",
-        {
-          schema_version:
-            REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA,
-          invocation_id: `invocation:${eventKey}`,
-          provider: "fixture-provider",
-          model: "fixture-model",
-          recorded_at: "2026-08-11T00:30:00.000Z",
-          usage: {
-            input_tokens: 1000,
-            output_tokens: 100,
-            cached_input_tokens: 50,
-          },
-        },
-      );
-      rawPrompt = retained(promptPath);
-      providerEvent = retained(providerPath);
-      measurements.push(
-        {
-          kind: "metered_usage",
-          meter: "provider_input_token",
-          quantity: 1000,
-          unit: "token",
-          price_source_ref: priceSourcePath,
-        },
-        {
-          kind: "metered_usage",
-          meter: "provider_output_token",
-          quantity: 100,
-          unit: "token",
-          price_source_ref: priceSourcePath,
-        },
-        {
-          kind: "metered_usage",
-          meter: "provider_cached_input_token",
-          quantity: 50,
-          unit: "token",
-          price_source_ref: priceSourcePath,
-        },
-      );
-    }
-    if (category === "runtime")
-      measurements.push({
-        kind: "metered_usage",
-        meter: "compute_ms",
-        quantity: 1000,
-        unit: "millisecond",
-        price_source_ref: priceSourcePath,
-      });
-    if (category === "state")
-      measurements.push({
-        kind: "metered_usage",
-        meter: "storage_byte_hour",
-        quantity: 1000,
-        unit: "byte-hour",
-        price_source_ref: priceSourcePath,
-      });
-    await addSource(`events/${eventKey.replaceAll(":", "-")}.json`, "raw_event", {
-      schema_version: REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA,
-      run_set_id: "fixture-run-set",
-      run_id: runForPair(variantId, pairId).run_id,
-      variant_id: variantId,
-      pair_id: pairId,
-      invocation_id: `invocation:${eventKey}`,
-      observed_at: "2026-08-11T00:30:00.000Z",
-      scenario_output_ref: scenarioOutputRef,
-      subject: {
-        kind: "cost",
-        category,
-        scenario_id: scenarioId,
-        stratum,
-      },
-      measurements,
-      provenance: {
-        raw_prompt: rawPrompt,
-        provider_event: providerEvent,
-      },
-    });
-  };
-  for (const stratum of policy.lifecycle_population.strata) {
-    const pairs =
-      stratum.pair_count === 1
-        ? ["once"]
-        : ["pair-01", "pair-02", "pair-03", "pair-04", "pair-05"];
-    for (const category of stratum.categories)
-      for (const pairId of pairs)
-        for (const variantId of ["b", "c"])
-          await writeCostEvent({
-            category,
-            stratum: stratum.key,
-            pairId,
-            variantId,
-          });
-  }
-
-  const benefitDeltas = options.benefitDeltas ?? [10, 10, 10, 10, 10];
-  for (const [index, pairId] of [
-    "pair-01",
-    "pair-02",
-    "pair-03",
-    "pair-04",
-    "pair-05",
-  ].entries()) {
-    for (const variantId of ["b", "c"]) {
-      const eventKey = `benefit:fixed-controlled-incident:${pairId}:${variantId}`;
-      if (options.omitEvidenceKey === eventKey) continue;
-      const scenarioOutputRef = `outputs/incident-${pairId}-${variantId}.bin`;
-      await addSource(
-        scenarioOutputRef,
-        "scenario_output",
-        variantId === "c"
-          ? `gold:${purposeScenario.scenario_id}\n`
-          : `wrong:${purposeScenario.scenario_id}:${pairId}\n`,
-      );
-      await addSource(
-        `events/${eventKey.replaceAll(":", "-")}.json`,
-        "raw_event",
-        {
-          schema_version:
-            REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA,
-          run_set_id: "fixture-run-set",
-          run_id: runForPair(variantId, pairId).run_id,
-          variant_id: variantId,
-          pair_id: pairId,
-          invocation_id: `invocation:${eventKey}`,
-          observed_at: "2026-08-11T00:30:00.000Z",
-          scenario_output_ref: scenarioOutputRef,
-          subject: {
-            kind: "purpose_benefit",
-            scenario_id: "fixed-controlled-incident",
-            stratum: "incident_once",
-          },
-          measurements: [
-            {
-              kind: "human_time",
-              active_ms:
-                (variantId === "b" ? 100 : 100 - benefitDeltas[index]) *
-                18_000,
-              wait_ms: 0,
-            },
-          ],
-          provenance: {
-            raw_prompt: notApplicable(),
-            provider_event: notApplicable(),
-          },
-        },
-      );
-    }
-  }
-
-  const entries = sourceRecords.sort((left, right) =>
-    left.path.localeCompare(right.path),
-  );
-  const precollectionEntries = entries
-    .filter((entry) =>
-      [
-        "collector",
-        "price_document",
-        "price_source",
-        "redaction_rule",
-        "scenario_catalog",
-        "scenario_gold",
-        "scenario_source",
-      ].includes(entry.role),
-    )
-    .map((entry) => ({ ...entry }));
-  const precollectionFrozenAt = "2026-08-10T03:00:00.000Z";
-  const precollectionIdentity = {
-    schema_version:
-      REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PRECOLLECTION_PLAN_SCHEMA,
-    frozen_at: precollectionFrozenAt,
-    entries: precollectionEntries,
-    identity_sha256: sha256(
-      canonical({
-        frozen_at: precollectionFrozenAt,
-        entries: precollectionEntries,
-      }),
-    ),
-  };
-  const collectorEntries = entries
-    .filter((entry) => entry.role === "collector")
-    .map(({ path: sourcePath, bytes, sha256: sourceSha }) => ({
-      path: sourcePath,
-      bytes,
-      sha256: sourceSha,
-    }));
-  const runBindings = fixture.runs.map((run) => ({
-    run_id: run.run_id,
-    variant_id: run.variant_id,
-    repeat: run.repeat,
-    candidate_commit: run.candidate_identity.commit,
-    candidate_tree: run.candidate_identity.tree,
-    package_sha256: setupByVariant.get(run.variant_id).package_sha256,
-  }));
-  const packet = {
-    schema_version:
-      REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA,
-    run_set_id: "fixture-run-set",
-    created_at: "2026-08-11T02:00:00.000Z",
-    collection_window: {
-      started_at: "2026-08-11T00:00:00.000Z",
-      completed_at: "2026-08-11T01:00:00.000Z",
-    },
-    accounting_policy_identity: fixture.config.accounting_policy_identity,
-    candidate_identities: ["a", "b", "c"].map((variantId) => {
-      const setup = setupByVariant.get(variantId);
-      return {
-        variant_id: variantId,
-        commit: setup.commit,
-        tree: setup.tree,
-        package_sha256: setup.package_sha256,
-      };
-    }),
-    run_bindings: runBindings,
-    collector_identity: {
-      frozen_at: "2026-08-10T02:00:00.000Z",
-      entries: collectorEntries,
-      identity_sha256: sha256(canonical(collectorEntries)),
-    },
-    retention_policy: policy.retention,
-    source_bundle: {
-      schema_version:
-        REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_SOURCE_MANIFEST_SCHEMA,
-      root: "sources",
-      entries,
-      entry_count: entries.length,
-      total_bytes: entries.reduce((sum, entry) => sum + entry.bytes, 0),
-      materialized_set_sha256: sha256(canonical(entries)),
-    },
-  };
-  const packetPath = path.join(formalRoot, "packet.json");
-  await writeJson(packetPath, packet);
-  return {
-    root: formalRoot,
-    packetPath,
-    runSetId: packet.run_set_id,
-    precollectionIdentity,
-  };
-}
-
-async function resignFormalEvidenceSource(packetPath, relativePath) {
-  const packet = JSON.parse(await readFile(packetPath, "utf8"));
-  const target = path.join(
-    path.dirname(packetPath),
-    packet.source_bundle.root,
-    ...relativePath.split("/"),
-  );
-  const bytes = await readFile(target);
-  const entry = packet.source_bundle.entries.find(
-    (candidate) => candidate.path === relativePath,
-  );
-  assert.ok(entry, relativePath);
-  entry.bytes = bytes.length;
-  entry.sha256 = digest(bytes);
-  packet.source_bundle.total_bytes = packet.source_bundle.entries.reduce(
-    (sum, candidate) => sum + candidate.bytes,
-    0,
-  );
-  packet.source_bundle.materialized_set_sha256 = sha256(
-    canonical(packet.source_bundle.entries),
-  );
-  await writeJson(packetPath, packet);
-}
-
 async function execute(executable, args, options = {}) {
   const child = spawn(executable, args, {
     ...options,
@@ -2686,7 +1599,7 @@ async function resignManifest(runSetRoot) {
 async function writeSetupFixture(runSetRoot, config) {
   const records = [];
   for (const variant of Object.values(config.variants)) {
-    const packageBytes = Buffer.from(`package-${variant.id}`);
+    const packageBytes = packageTarballFixture("0.8.14");
     const packagePath = `setup/${variant.id}/pack/${variant.id}.tgz`;
     const setupRoot = path.join(runSetRoot, "setup", variant.id);
     await mkdir(path.dirname(path.join(runSetRoot, packagePath)), {
@@ -2751,6 +1664,7 @@ async function writeSetupFixture(runSetRoot, config) {
       commit: variant.commit,
       tree: fakeTree,
       package_path: `pack/${variant.id}.tgz`,
+      package_version: "0.8.14",
       package_sha256: digest(packageBytes),
       setup_commands: setupCommands,
     };
@@ -2761,38 +1675,17 @@ async function writeSetupFixture(runSetRoot, config) {
 }
 
 async function writeIdentityFixture(runSetRoot, prefix, identity, contents) {
-  assert.equal(identity.entries.length, 1);
-  const entry = identity.entries[0];
-  assert.equal(entry.bytes, Buffer.byteLength(contents));
-  assert.equal(entry.sha256, digest(contents));
-  const target = path.join(
-    runSetRoot,
-    "inputs",
-    prefix,
-    ...entry.path.split("/"),
-  );
-  await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, contents);
-}
-
-async function writePrecollectionIdentityFixture(runSetRoot, formal) {
-  for (const entry of formal.precollectionIdentity.entries) {
-    const source = path.join(
-      formal.root,
-      "sources",
-      ...entry.path.split("/"),
-    );
+  for (const entry of identity.entries) {
+    assert.equal(entry.bytes, Buffer.byteLength(contents));
+    assert.equal(entry.sha256, digest(contents));
     const target = path.join(
       runSetRoot,
       "inputs",
-      "formal-evidence-precollection",
+      prefix,
       ...entry.path.split("/"),
     );
-    const bytes = await readFile(source);
-    assert.equal(bytes.length, entry.bytes);
-    assert.equal(digest(bytes), entry.sha256);
     await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, bytes);
+    await writeFile(target, contents);
   }
 }
 
@@ -2918,4 +1811,44 @@ function sourceIdentityFixture(file, contents) {
     entries,
     identity_sha256: sha256(canonical(entries)),
   };
+}
+
+function sourceIdentityMultiFixture(files, contents) {
+  const entries = files.map((file) => ({
+    path: file,
+    bytes: Buffer.byteLength(contents),
+    sha256: digest(contents),
+  }));
+  return {
+    entries,
+    identity_sha256: sha256(canonical(entries)),
+  };
+}
+
+function packageTarballFixture(version) {
+  const body = Buffer.from(
+    `${JSON.stringify({
+      name: "project-tiny-context-harness",
+      version,
+    })}\n`,
+  );
+  const header = Buffer.alloc(512);
+  header.write("package/package.json", 0, "utf8");
+  header.write("0000644\0", 100, "ascii");
+  header.write("0000000\0", 108, "ascii");
+  header.write("0000000\0", 116, "ascii");
+  header.write(`${body.length.toString(8).padStart(11, "0")}\0`, 124, "ascii");
+  header.write("00000000000\0", 136, "ascii");
+  header.fill(0x20, 148, 156);
+  header.write("0", 156, "ascii");
+  header.write("ustar\0", 257, "ascii");
+  header.write("00", 263, "ascii");
+  const checksum = header.reduce((total, byte) => total + byte, 0);
+  header.write(`${checksum.toString(8).padStart(6, "0")}\0 `, 148, "ascii");
+  const padding = Buffer.alloc(
+    Math.ceil(body.length / 512) * 512 - body.length,
+  );
+  return gzipSync(Buffer.concat([header, body, padding, Buffer.alloc(1024)]), {
+    mtime: 0,
+  });
 }

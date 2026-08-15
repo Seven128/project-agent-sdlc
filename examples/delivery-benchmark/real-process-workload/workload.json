@@ -1,5 +1,5 @@
 {
-  "schema_version": "long-task-real-process-workload-v3",
+  "schema_version": "long-task-real-process-workload-v4",
   "workload_id": "source-backed-process-closure-v1",
   "purpose": "real-process-lifecycle-roi-only",
   "safety_theorem_claimed": false,

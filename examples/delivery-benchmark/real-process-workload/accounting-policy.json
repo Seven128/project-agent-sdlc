@@ -1,5 +1,5 @@
 {
-  "schema_version": "long-task-formal-total-cost-accounting-policy-v1",
+  "schema_version": "long-task-formal-total-cost-accounting-policy-v2",
   "key": "level-4-total-roi-2026-08-14",
   "scope": "this-delivery-only",
   "normalized_unit": {
@@ -32,42 +32,28 @@
     "strata": [
       {
         "key": "repeatable_delivery",
-        "categories": [
-          "authoring",
-          "runtime",
-          "state",
-          "test",
-          "process"
-        ],
+        "categories": ["authoring", "runtime", "state", "test", "process"],
         "pair_count": 5,
         "aggregation": "median-paired-delta",
         "cycle_multiplier": 10
       },
       {
         "key": "maintenance_once",
-        "categories": [
-          "maintenance"
-        ],
+        "categories": ["maintenance"],
         "pair_count": 5,
         "aggregation": "median-paired-delta",
         "cycle_multiplier": 1
       },
       {
         "key": "recovery_once",
-        "categories": [
-          "recovery"
-        ],
+        "categories": ["recovery"],
         "pair_count": 5,
         "aggregation": "median-paired-delta",
         "cycle_multiplier": 1
       },
       {
         "key": "one_time",
-        "categories": [
-          "introduction",
-          "adoption",
-          "migration"
-        ],
+        "categories": ["introduction", "adoption", "migration"],
         "pair_count": 1,
         "aggregation": "single-paired-delta",
         "cycle_multiplier": 1
@@ -91,10 +77,7 @@
       "compute_ms",
       "storage_byte_hour"
     ],
-    "allowed_source_kinds": [
-      "actual_invoice",
-      "official_price"
-    ],
+    "allowed_source_kinds": ["actual_invoice", "official_price"],
     "freeze_requirement": "source-frozen-and-hashed-before-collection",
     "missing_consequence": "total_roi_unsupported"
   },
@@ -102,6 +85,23 @@
     "maximum_files": 256,
     "maximum_bytes_per_file": 8388608,
     "maximum_total_bytes": 67108864
+  },
+  "run_artifact_limits": {
+    "expected_executions": 86,
+    "expected_runner_files": 576,
+    "maximum_formal_files": 640,
+    "maximum_formal_total_bytes": 402653184,
+    "maximum_run_set_files": 4096,
+    "maximum_run_set_total_bytes": 536870912,
+    "maximum_run_set_control_files": 2,
+    "maximum_run_set_control_total_bytes": 4194304,
+    "maximum_run_set_control_bytes_per_file": 2097152,
+    "maximum_scenario_output_bytes": 1048576,
+    "maximum_raw_prompt_bytes": 1048576,
+    "maximum_combined_stream_bytes": 2097152,
+    "maximum_event_bytes": 131072,
+    "maximum_measurement_record_bytes": 65536,
+    "maximum_lifecycle_file_bytes": 67108864
   },
   "retention": {
     "raw_prompt": "retained-or-precollection-rule-redacted",

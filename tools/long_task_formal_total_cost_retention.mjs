@@ -1,5 +1,8 @@
 import { assert } from "./long_task_real_process_roi_scoring.mjs";
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
+import {
+  FORMAL_EVIDENCE_CAPACITY,
+  REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
 import {
   assertExactKeys,
   assertTimestamp,
@@ -8,55 +11,120 @@ import {
 
 const { FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA } = REAL_PROCESS_SCHEMAS;
 
-export function validateFormalEventProvenance(options) {
-  const { provenance, subject, sourcePath, bundle } = options;
-  assertExactKeys(
-    provenance,
-    ["provider_event", "raw_prompt"],
-    `raw_event_provenance_fields:${sourcePath}`,
-  );
-  const rawPrompt = validateRetentionDisposition({
-    ...options,
-    value: provenance.raw_prompt,
+export async function validateFormalExecutionProvenance({
+  execution,
+  scenario,
+  runArtifactIndex,
+  consumedArtifacts,
+  redactionRules,
+  usedRedactionRules,
+  sourcePath,
+}) {
+  const rawPrompt = await consumeSensitiveArtifact({
+    reference: execution.sensitive_refs.raw_prompt,
+    required: scenario.measurement_profile.raw_prompt.presence === "required",
     role: "raw_prompt",
-    label: `${sourcePath}:raw_prompt`,
+    runArtifactIndex,
+    consumedArtifacts,
+    redactionRules,
+    usedRedactionRules,
+    sourcePath,
   });
-  const providerEvent = validateRetentionDisposition({
-    ...options,
-    value: provenance.provider_event,
+  const providerSource = await consumeSensitiveArtifact({
+    reference: execution.sensitive_refs.provider_event,
+    required:
+      scenario.measurement_profile.provider_event.presence === "required",
     role: "provider_event",
-    label: `${sourcePath}:provider_event`,
+    runArtifactIndex,
+    consumedArtifacts,
+    redactionRules,
+    usedRedactionRules,
+    sourcePath,
   });
-  const providerRecord =
-    providerEvent.disposition === "not_applicable"
-      ? null
-      : validateProviderEventRecord({
-          source: bundle.files.get(providerEvent.source_ref),
-          invocationId: options.invocationId,
-          observedAt: options.observedAt,
-          sourcePath: providerEvent.source_ref,
-        });
-  if (subject.kind === "cost" && subject.category === "authoring")
+  const providerRecord = providerSource
+    ? validateProviderEventRecord({
+        bytes: providerSource,
+        invocationId: execution.invocation_id,
+        clocks: execution.clocks,
+        clockPolicy: scenario.clock_policy,
+        sourcePath: execution.sensitive_refs.provider_event.artifact_ref,
+      })
+    : null;
+  return { rawPrompt, providerRecord };
+}
+
+export function assertFormalRedactionRulesConsumed({
+  bundle,
+  usedRedactionRules,
+}) {
+  for (const [sourcePath, source] of bundle.files)
+    if (source.entry.role === "redaction_rule")
+      assert(
+        usedRedactionRules.has(sourcePath),
+        `formal_evidence_redaction_rule_unused:${sourcePath}`,
+      );
+}
+
+async function consumeSensitiveArtifact(options) {
+  const {
+    reference,
+    required,
+    role,
+    runArtifactIndex,
+    consumedArtifacts,
+    redactionRules,
+    usedRedactionRules,
+    sourcePath,
+  } = options;
+  if (!required) {
+    assert(reference === null, `formal_${role}_forbidden:${sourcePath}`);
+    return null;
+  }
+  assert(reference, `formal_${role}_required:${sourcePath}`);
+  const artifactPath = reference.artifact_ref;
+  assert(
+    !consumedArtifacts.has(artifactPath),
+    `formal_execution_artifact_ref:${artifactPath}`,
+  );
+  const bytes = await runArtifactIndex.read(
+    artifactPath,
+    role,
+    role === "raw_prompt"
+      ? FORMAL_EVIDENCE_CAPACITY.maximum_raw_prompt_bytes
+      : FORMAL_EVIDENCE_CAPACITY.maximum_measurement_record_bytes,
+  );
+  consumedArtifacts.add(artifactPath);
+  if (reference.disposition === "redacted") {
     assert(
-      rawPrompt.disposition !== "not_applicable",
-      `raw_event_authoring_prompt:${sourcePath}`,
+      redactionRules.has(reference.redaction_rule_ref),
+      `formal_${role}_redaction_rule:${sourcePath}`,
     );
-  return { rawPrompt, providerEvent, providerRecord };
+    usedRedactionRules.add(reference.redaction_rule_ref);
+  } else
+    assert(
+      reference.redaction_rule_ref === null,
+      `formal_${role}_retained_rule:${sourcePath}`,
+    );
+  return bytes;
 }
 
 function validateProviderEventRecord({
-  source,
+  bytes,
   invocationId,
-  observedAt,
+  clocks,
+  clockPolicy,
   sourcePath,
 }) {
-  const record = parseJson(source.bytes, `provider_event_json:${sourcePath}`);
+  const record = parseJson(bytes, `provider_event_json:${sourcePath}`);
   assertExactKeys(
     record,
     [
+      "clock_id",
       "invocation_id",
       "model",
       "provider",
+      "provider_request_id",
+      "provider_response_id",
       "recorded_at",
       "schema_version",
       "usage",
@@ -74,12 +142,25 @@ function validateProviderEventRecord({
       typeof record.provider === "string" &&
       record.provider.length > 0 &&
       typeof record.model === "string" &&
-      record.model.length > 0,
+      record.model.length > 0 &&
+      typeof record.provider_request_id === "string" &&
+      record.provider_request_id.length > 0 &&
+      typeof record.provider_response_id === "string" &&
+      record.provider_response_id.length > 0 &&
+      record.provider_response_id !== record.provider_request_id &&
+      record.clock_id ===
+        `${clockPolicy.provider_clock_id_prefix}${record.provider}`,
     `provider_event_identity:${sourcePath}`,
   );
+  const recordedAt = assertTimestamp(
+    record.recorded_at,
+    `provider_event_time:${sourcePath}`,
+  );
   assert(
-    assertTimestamp(record.recorded_at, `provider_event_time:${sourcePath}`) ===
-      observedAt,
+    recordedAt >=
+      clocks.startedWall - clockPolicy.provider_wall_window_tolerance_ms &&
+      recordedAt <=
+        clocks.completedWall + clockPolicy.provider_wall_window_tolerance_ms,
     `provider_event_time_binding:${sourcePath}`,
   );
   for (const [field, value] of Object.entries(record.usage))
@@ -88,64 +169,4 @@ function validateProviderEventRecord({
       `provider_event_usage:${sourcePath}:${field}`,
     );
   return record;
-}
-
-export function assertFormalSensitiveSourcesConsumed(options) {
-  const { bundle, usedSensitiveSources, usedRedactionRules } = options;
-  for (const [sourcePath, source] of bundle.files) {
-    if (["raw_prompt", "provider_event"].includes(source.entry.role))
-      assert(
-        usedSensitiveSources.has(sourcePath),
-        `formal_evidence_sensitive_source_unused:${sourcePath}`,
-      );
-    if (source.entry.role === "redaction_rule")
-      assert(
-        usedRedactionRules.has(sourcePath),
-        `formal_evidence_redaction_rule_unused:${sourcePath}`,
-      );
-  }
-}
-
-function validateRetentionDisposition(options) {
-  const {
-    value,
-    role,
-    bundle,
-    redactionRules,
-    usedSensitiveSources,
-    usedRedactionRules,
-    label,
-  } = options;
-  assertExactKeys(
-    value,
-    ["disposition", "redaction_rule_ref", "source_ref"],
-    `retention_disposition_fields:${label}`,
-  );
-  assert(
-    ["not_applicable", "redacted", "retained"].includes(value.disposition),
-    `retention_disposition:${label}`,
-  );
-  if (value.disposition === "not_applicable") {
-    assert(
-      value.source_ref === null && value.redaction_rule_ref === null,
-      `retention_not_applicable:${label}`,
-    );
-    return value;
-  }
-  const source = bundle.files.get(value.source_ref);
-  assert(
-    source?.entry.role === role && !usedSensitiveSources.has(value.source_ref),
-    `retention_source_ref:${label}`,
-  );
-  usedSensitiveSources.add(value.source_ref);
-  if (value.disposition === "retained") {
-    assert(value.redaction_rule_ref === null, `retention_retained_rule:${label}`);
-    return value;
-  }
-  assert(
-    redactionRules.has(value.redaction_rule_ref),
-    `retention_redaction_rule:${label}`,
-  );
-  usedRedactionRules.add(value.redaction_rule_ref);
-  return value;
 }

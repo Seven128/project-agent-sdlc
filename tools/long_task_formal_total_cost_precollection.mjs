@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
+import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
 import {
   assert,
   canonical,
@@ -22,6 +22,7 @@ import {
 const { FORMAL_TOTAL_COST_PRECOLLECTION_PLAN_SCHEMA } = REAL_PROCESS_SCHEMAS;
 const precollectionRoles = Object.freeze([
   "collector",
+  "incident_source",
   "price_document",
   "price_source",
   "redaction_rule",
@@ -63,7 +64,8 @@ export async function readFormalPrecollectionPlan({ planPath, limits }) {
       limits.maximum_bytes_per_file,
     );
     assert(
-      sourceBytes.length === entry.bytes && sha256(sourceBytes) === entry.sha256,
+      sourceBytes.length === entry.bytes &&
+        sha256(sourceBytes) === entry.sha256,
       `formal_precollection_source_identity:${entry.path}`,
     );
     files.set(entry.path, { entry, bytes: sourceBytes });
@@ -94,7 +96,10 @@ export function validateFormalPrecollectionIdentity(identity, limits) {
       `formal_precollection_entry_fields:${entry.path}`,
     );
     assertSafeRelativePath(entry.path, "formal_precollection_entry_path");
-    assert(!seen.has(entry.path), `formal_precollection_entry_duplicate:${entry.path}`);
+    assert(
+      !seen.has(entry.path),
+      `formal_precollection_entry_duplicate:${entry.path}`,
+    );
     seen.add(entry.path);
     assert(
       precollectionRoles.includes(entry.role),
@@ -106,10 +111,16 @@ export function validateFormalPrecollectionIdentity(identity, limits) {
         entry.bytes <= limits.maximum_bytes_per_file,
       `formal_precollection_entry_bytes:${entry.path}`,
     );
-    assert(shaPattern.test(entry.sha256), `formal_precollection_entry_sha:${entry.path}`);
+    assert(
+      shaPattern.test(entry.sha256),
+      `formal_precollection_entry_sha:${entry.path}`,
+    );
     totalBytes += entry.bytes;
   }
-  assert(totalBytes <= limits.maximum_total_bytes, "formal_precollection_total_bytes");
+  assert(
+    totalBytes <= limits.maximum_total_bytes,
+    "formal_precollection_total_bytes",
+  );
   assert(
     canonical(identity.entries) ===
       canonical(
@@ -121,6 +132,7 @@ export function validateFormalPrecollectionIdentity(identity, limits) {
   );
   for (const requiredRole of [
     "collector",
+    "incident_source",
     "price_document",
     "price_source",
     "scenario_catalog",
@@ -193,6 +205,32 @@ export async function materializeFormalPrecollectionInputs({
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, source.bytes);
   }
+}
+
+export async function readMaterializedFormalPrecollection({
+  runArtifactIndex,
+  identity,
+  limits,
+}) {
+  validateFormalPrecollectionIdentity(identity, limits);
+  const files = new Map();
+  for (const entry of identity.entries) {
+    const artifactPath = `inputs/formal-evidence-precollection/${entry.path}`;
+    const bytes = await runArtifactIndex.read(
+      artifactPath,
+      "precollection_input",
+      limits.maximum_bytes_per_file,
+    );
+    assert(
+      bytes.length === entry.bytes && sha256(bytes) === entry.sha256,
+      `formal_precollection_run_artifact_identity:${entry.path}`,
+    );
+    files.set(entry.path, { entry, bytes, artifact_path: artifactPath });
+  }
+  return Object.freeze({
+    identity,
+    files,
+  });
 }
 
 function precollectionIdentitySha(identity) {

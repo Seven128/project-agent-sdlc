@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -8,9 +8,12 @@ import {
   BASELINE_A_COMMIT,
   CASE_IDS,
   ISOLATED_ENVELOPE_B_COMMIT,
+} from "./long_task_real_process_roi_policy.mjs";
+import {
+  FORMAL_EVIDENCE_CAPACITY,
   LEGACY_REAL_PROCESS_SCHEMAS,
   REAL_PROCESS_SCHEMAS,
-} from "./long_task_real_process_roi_policy.mjs";
+} from "./long_task_real_process_schema_policy.mjs";
 import {
   assert,
   assertCurrentEvidenceSchema,
@@ -20,17 +23,25 @@ import {
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
 import {
-  buildArtifactManifest,
   collectRealProcessRoi,
   dryRunRealProcessRoi,
   realProcessRoiPaths,
 } from "./long_task_real_process_roi_runner.mjs";
 import {
+  buildImmutableRunArtifactIndex,
+  readPackedPackageIdentity,
+} from "./long_task_real_process_artifacts.mjs";
+import {
   evaluateFormalTotalCostEvidence,
-  readFormalAccountingPolicy,
+  validateFormalAccountingPolicy,
 } from "./long_task_formal_total_cost_evidence.mjs";
 import { validateFormalPrecollectionIdentity } from "./long_task_formal_total_cost_precollection.mjs";
-import { parseJson as parseFormalJson } from "./long_task_formal_total_cost_shared.mjs";
+import {
+  parseJson as parseFormalJson,
+  readRegularFileNoFollow,
+} from "./long_task_formal_total_cost_shared.mjs";
+import { validateFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
+import { StdinFormalInteractionRecorder } from "./long_task_formal_interaction_recorder.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
@@ -46,14 +57,29 @@ const execFileAsync = promisify(execFile);
 
 export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   const resolved = path.resolve(runSetRoot);
-  const [config, environment, aggregate, manifest, attestation] =
-    await Promise.all([
-      readJson(path.join(resolved, "frozen-config.json")),
-      readJson(path.join(resolved, "environment.json")),
-      readJson(path.join(resolved, "aggregate.json")),
-      readJson(path.join(resolved, "manifest.json")),
-      readJson(path.join(resolved, "attestation.json")),
-    ]);
+  const manifestBytes = await readRegularFileNoFollow(
+    path.join(resolved, "manifest.json"),
+    FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_bytes_per_file,
+  );
+  const manifest = parseFormalJson(manifestBytes, "run_set_json:manifest.json");
+  const runArtifactIndex = await buildImmutableRunArtifactIndex({
+    runSetRoot: resolved,
+    manifest,
+  });
+  const [config, environment, aggregate, attestationBytes] = await Promise.all([
+    readIndexedJson(runArtifactIndex, "frozen-config.json", "frozen_config"),
+    readIndexedJson(runArtifactIndex, "environment.json", "environment"),
+    readIndexedJson(runArtifactIndex, "aggregate.json", "aggregate"),
+    readRegularFileNoFollow(
+      path.join(resolved, "attestation.json"),
+      FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_bytes_per_file,
+    ),
+  ]);
+  assertRunSetControlBudget(manifestBytes, attestationBytes);
+  const attestation = parseFormalJson(
+    attestationBytes,
+    "run_set_json:attestation.json",
+  );
   assertCurrentEvidenceSchema(
     aggregate.schema_version,
     REAL_PROCESS_ROI_SCHEMA,
@@ -73,7 +99,9 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       "candidate_identity",
       "capability_level",
       "environment_identity",
+      "formal_evidence_index_ref",
       "formal_evidence_precollection_sha256",
+      "formal_runtime_tcb_identity_sha256",
       "governance_judgment_included",
       "level_4_claimed",
       "purpose",
@@ -114,7 +142,9 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       "capability_level",
       "environment_identity",
       "formal_status",
+      "formal_evidence_index_ref",
       "formal_evidence_precollection_sha256",
+      "formal_runtime_tcb_identity_sha256",
       "governance_judgment_included",
       "level_4_claimed",
       "manifest_sha256",
@@ -152,6 +182,7 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       "environment_identity",
       "formal_total_cost_policy",
       "formal_evidence_precollection_identity",
+      "formal_runtime_tcb_identity",
       "governance_judgment_included",
       "initial_repeats",
       "level_4_claimed",
@@ -194,6 +225,12 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     "config_authoring_token_policy",
   );
   validateRealProcessRoiPolicy(config);
+  validateFormalRuntimeTcbIdentity({
+    identity: config.formal_runtime_tcb_identity,
+    environment: config.environment,
+    benchmarkImplementationIdentity: config.benchmark_implementation_identity,
+    requireCurrentRuntime: Boolean(options.formalEvidence),
+  });
   assert(
     canonical(environment) === canonical(config.environment) &&
       config.environment_identity === digest(canonical(environment)),
@@ -214,28 +251,36 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   );
   await Promise.all([
     validateMaterializedSourceIdentity(
-      resolved,
+      runArtifactIndex,
       "workload",
       config.workload_identity,
     ),
     validateMaterializedSourceIdentity(
-      resolved,
+      runArtifactIndex,
       "benchmark-implementation",
       config.benchmark_implementation_identity,
     ),
     validateMaterializedSourceIdentity(
-      resolved,
+      runArtifactIndex,
       "accounting-policy",
       config.accounting_policy_identity,
     ),
   ]);
+  if (options.formalEvidence)
+    await validateCurrentSourceIdentity(
+      config.benchmark_implementation_identity,
+    );
   const accountingPolicyEntry = config.accounting_policy_identity.entries[0];
-  const { policy: accountingPolicy } = await readFormalAccountingPolicy(
-    resolveContained(
-      resolved,
-      `inputs/accounting-policy/${accountingPolicyEntry.path}`,
-    ),
+  const accountingPolicyBytes = await runArtifactIndex.read(
+    `inputs/accounting-policy/${accountingPolicyEntry.path}`,
+    "frozen_input",
+    1024 * 1024,
   );
+  const accountingPolicy = parseFormalJson(
+    accountingPolicyBytes,
+    "accounting_policy_json",
+  );
+  validateFormalAccountingPolicy(accountingPolicy);
   if (config.formal_evidence_precollection_identity !== null) {
     validateFormalPrecollectionIdentity(
       config.formal_evidence_precollection_identity,
@@ -305,7 +350,7 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     "aggregate_level_boundary",
   );
   const setupByVariant = await validateSetupRecords({
-    runSetRoot: resolved,
+    runArtifactIndex,
     setup: aggregate.setup,
     config,
   });
@@ -318,19 +363,28 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       aggregate.formal_evidence_precollection_sha256 ===
         (config.formal_evidence_precollection_identity?.identity_sha256 ??
           null) &&
+      aggregate.formal_runtime_tcb_identity_sha256 ===
+        config.formal_runtime_tcb_identity.identity_sha256 &&
       aggregate.environment_identity === config.environment_identity,
     "aggregate_frozen_identity",
   );
-  const recomputedManifest = await buildArtifactManifest(resolved);
   assert(
-    canonical(recomputedManifest) === canonical(manifest),
-    "manifest_recomputation",
+    aggregate.formal_evidence_index_ref ===
+      attestation.formal_evidence_index_ref &&
+      (aggregate.formal_evidence_index_ref === null
+        ? config.formal_evidence_precollection_identity === null
+        : aggregate.formal_evidence_index_ref ===
+            "formal-evidence-index.json" &&
+          runArtifactIndex.get(aggregate.formal_evidence_index_ref)?.role ===
+            "formal_evidence_index"),
+    "formal_evidence_index_binding",
   );
   validateManifestPaths(resolved, manifest);
-  const [manifestBytes, aggregateBytes] = await Promise.all([
-    readFile(path.join(resolved, "manifest.json")),
-    readFile(path.join(resolved, "aggregate.json")),
-  ]);
+  const aggregateBytes = await runArtifactIndex.read(
+    "aggregate.json",
+    "aggregate",
+    FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
+  );
   assert(
     attestation.manifest_sha256 === digest(manifestBytes),
     "attestation_manifest_identity",
@@ -353,6 +407,8 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       attestation.formal_evidence_precollection_sha256 ===
         (config.formal_evidence_precollection_identity?.identity_sha256 ??
           null) &&
+      attestation.formal_runtime_tcb_identity_sha256 ===
+        config.formal_runtime_tcb_identity.identity_sha256 &&
       attestation.environment_identity === config.environment_identity,
     "attestation_frozen_identity",
   );
@@ -372,8 +428,11 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
   );
   const runs = [];
   for (const reference of aggregate.run_refs) {
-    const target = resolveContained(resolved, reference);
-    const run = await readJson(target);
+    const run = await readIndexedJson(
+      runArtifactIndex,
+      reference,
+      "run_record",
+    );
     validateRunRecord(run, config);
     const setup = setupByVariant.get(run.variant_id);
     assert(
@@ -382,8 +441,8 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
       `run_setup_identity:${run.run_id}`,
     );
     await validateRunRawClosure({
-      runSetRoot: resolved,
-      runRoot: path.dirname(target),
+      runArtifactIndex,
+      runRoot: path.posix.dirname(reference),
       run,
     });
     runs.push(run);
@@ -409,8 +468,9 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
         runSetId: aggregate.run_set_id,
         runs,
         setupByVariant,
-        precollectionIdentity:
-          config.formal_evidence_precollection_identity,
+        precollectionIdentity: config.formal_evidence_precollection_identity,
+        runArtifactIndex,
+        runtimeTcbIdentity: config.formal_runtime_tcb_identity,
       })
     : null;
   const formalConclusion = deriveVerifierFormalRoiConclusion({
@@ -422,14 +482,16 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     capability_level: "level_3",
     level_4_claimed: false,
     governance_judgment_included: false,
+    formal_conclusion_owner: "verify_long_task_real_process_roi",
     run_set_root: resolved,
     candidate_commit: config.variants.c.commit,
     candidate_tree: config.candidate_tree,
     manifest_sha256: attestation.manifest_sha256,
-    accounting_policy_sha256:
-      config.accounting_policy_identity.identity_sha256,
+    accounting_policy_sha256: config.accounting_policy_identity.identity_sha256,
     formal_evidence_precollection_sha256:
       config.formal_evidence_precollection_identity?.identity_sha256 ?? null,
+    formal_runtime_tcb_identity_sha256:
+      config.formal_runtime_tcb_identity.identity_sha256,
     repeats: summary.repeats,
     expansion: summary.expansion,
     a_safety_eligible: false,
@@ -458,22 +520,20 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
         ? null
         : {
             packet_sha256: formalEvidence.packet_sha256,
-            source_bundle_identity_sha256:
-              formalEvidence.source_bundle_identity_sha256,
-            collector_identity_sha256:
-              formalEvidence.collector_identity_sha256,
+            run_artifact_index_identity_sha256:
+              formalEvidence.run_artifact_index_identity_sha256,
+            collector_identity_sha256: formalEvidence.collector_identity_sha256,
             precollection_identity_sha256:
               formalEvidence.precollection_identity_sha256,
             precollection_bound: formalEvidence.precollection_bound,
             event_count: formalEvidence.event_count,
-            event_identity_set_sha256:
-              formalEvidence.event_identity_set_sha256,
+            event_identity_set_sha256: formalEvidence.event_identity_set_sha256,
+            execution_identity_set_sha256:
+              formalEvidence.execution_identity_set_sha256,
+            incident_evidence_class: formalEvidence.incident_evidence_class,
             missing_event_keys: formalEvidence.missing_event_keys,
-            missing_price_rate_keys:
-              formalEvidence.missing_price_rate_keys,
+            missing_price_rate_keys: formalEvidence.missing_price_rate_keys,
             missing_meter_keys: formalEvidence.missing_meter_keys,
-            missing_authoring_usage_keys:
-              formalEvidence.missing_authoring_usage_keys,
             unpriced_event_keys: formalEvidence.unpriced_event_keys,
             support_complete: formalEvidence.support_complete,
           },
@@ -520,7 +580,7 @@ function deriveVerifierFormalRoiConclusion({ summary, formalEvidence }) {
   };
 }
 
-async function validateSetupRecords({ runSetRoot, setup, config }) {
+async function validateSetupRecords({ runArtifactIndex, setup, config }) {
   assert(Array.isArray(setup), "setup_records");
   assert(
     setup.length === 3 &&
@@ -529,11 +589,26 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
   );
   const byVariant = new Map();
   for (const item of setup) {
+    assertExactKeys(
+      item,
+      [
+        "commit",
+        "package_path",
+        "package_sha256",
+        "package_version",
+        "setup_commands",
+        "tree",
+        "variant_id",
+      ],
+      `setup_fields:${item.variant_id}`,
+    );
     const expected = config.variants[item.variant_id];
     assert(expected, `setup_variant:${item.variant_id}`);
     assert(
       item.commit === expected.commit &&
         /^[a-f0-9]{40}$/u.test(item.tree ?? "") &&
+        typeof item.package_version === "string" &&
+        item.package_version.length > 0 &&
         /^[a-f0-9]{64}$/u.test(item.package_sha256 ?? ""),
       `setup_identity:${item.variant_id}`,
     );
@@ -543,22 +618,31 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
       typeof item.package_path === "string" && item.package_path.length > 0,
       `setup_package_path:${item.variant_id}`,
     );
-    const packageBytes = await readFile(
-      resolveContained(
-        runSetRoot,
-        `setup/${item.variant_id}/${item.package_path}`,
-      ),
+    const packageBytes = await runArtifactIndex.read(
+      `setup/${item.variant_id}/${item.package_path}`,
+      "package_tarball",
+      FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
     );
     assert(
       digest(packageBytes) === item.package_sha256,
       `setup_package_sha:${item.variant_id}`,
     );
+    const packedPackage = readPackedPackageIdentity(packageBytes);
+    assert(
+      packedPackage.package_version === item.package_version &&
+        packedPackage.package_sha256 === item.package_sha256,
+      `setup_package_identity:${item.variant_id}`,
+    );
     assert(
       Array.isArray(item.setup_commands) && item.setup_commands.length >= 4,
       `setup_commands:${item.variant_id}`,
     );
-    const setupRoot = resolveContained(runSetRoot, `setup/${item.variant_id}`);
-    const persisted = await readJson(resolveContained(setupRoot, "setup.json"));
+    const setupRoot = `setup/${item.variant_id}`;
+    const persisted = await readIndexedJson(
+      runArtifactIndex,
+      `${setupRoot}/setup.json`,
+      "setup_record",
+    );
     assert(
       canonical(persisted) === canonical(item),
       `setup_record:${item.variant_id}`,
@@ -576,8 +660,10 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
           command.status === 0,
         `setup_command_status:${item.variant_id}:${command.label}`,
       );
-      const commandRecord = await readJson(
-        resolveContained(setupRoot, `${command.label}.command.json`),
+      const commandRecord = await readIndexedJson(
+        runArtifactIndex,
+        `${setupRoot}/${command.label}.command.json`,
+        "command_record",
       );
       assert(
         canonical(commandRecord) === canonical(command),
@@ -585,8 +671,10 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
       );
       commandByLabel.set(command.label, command);
       for (const stream of ["stdout", "stderr"]) {
-        const bytes = await readFile(
-          resolveContained(setupRoot, `${command.label}.${stream}.log`),
+        const bytes = await runArtifactIndex.read(
+          `${setupRoot}/${command.label}.${stream}.log`,
+          stream,
+          FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
         );
         assert(
           bytes.length === command[`${stream}_bytes`] &&
@@ -616,9 +704,15 @@ async function validateSetupRecords({ runSetRoot, setup, config }) {
   return byVariant;
 }
 
-async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
-  const commandsPath = resolveContained(runRoot, "commands.ndjson");
-  const commandLines = (await readFile(commandsPath, "utf8"))
+async function validateRunRawClosure({ runArtifactIndex, runRoot, run }) {
+  const commandsPath = `${runRoot}/commands.ndjson`;
+  const commandsBytes = await runArtifactIndex.read(
+    commandsPath,
+    "command_index",
+    FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
+  );
+  const commandLines = commandsBytes
+    .toString("utf8")
     .split(/\r?\n/u)
     .filter((line) => line.trim().length > 0);
   const commands = commandLines.map((line, index) =>
@@ -642,8 +736,10 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       command.schema_version === "long-task-real-process-command-v1",
       `run_command_schema:${run.run_id}`,
     );
-    const persisted = await readJson(
-      resolveContained(runRoot, command.relative_path),
+    const persisted = await readIndexedJson(
+      runArtifactIndex,
+      `${runRoot}/${command.relative_path}`,
+      "command_record",
     );
     assert(
       canonical(persisted) === canonical(command),
@@ -651,8 +747,10 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
     );
     let stdoutText = null;
     for (const stream of ["stdout", "stderr"]) {
-      const bytes = await readFile(
-        resolveContained(runRoot, command[`${stream}_path`]),
+      const bytes = await runArtifactIndex.read(
+        `${runRoot}/${command[`${stream}_path`]}`,
+        stream,
+        FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
       );
       assert(
         bytes.length === command[`${stream}_bytes`] &&
@@ -680,8 +778,10 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
 
   const cases = [];
   for (const caseId of CASE_IDS) {
-    const persisted = await readJson(
-      resolveContained(runRoot, `cases/${caseId}/case-result.json`),
+    const persisted = await readIndexedJson(
+      runArtifactIndex,
+      `${runRoot}/cases/${caseId}/case-result.json`,
+      "case_result",
     );
     const reported = run.cases.find((item) => item.case_id === caseId);
     assert(
@@ -698,11 +798,10 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
   const recoveries = [];
   for (const reported of run.recoveries) {
     const caseId = reported.source_attack_case_id;
-    const persisted = await readJson(
-      resolveContained(
-        runRoot,
-        `recoveries/after-${caseId}/recovery-result.json`,
-      ),
+    const persisted = await readIndexedJson(
+      runArtifactIndex,
+      `${runRoot}/recoveries/after-${caseId}/recovery-result.json`,
+      "recovery_result",
     );
     assert(
       canonical(persisted) === canonical(reported),
@@ -720,13 +819,6 @@ async function validateRunRawClosure({ runSetRoot, runRoot, run }) {
       digest(canonical({ command_records: commands, cases, recoveries })),
     `run_raw_artifact_identity:${run.run_id}`,
   );
-  for (const file of [commandsPath]) {
-    const relative = path.relative(runSetRoot, file).replaceAll("\\", "/");
-    assert(
-      !relative.startsWith("../") && relative !== "..",
-      `run_raw_closure_escape:${run.run_id}`,
-    );
-  }
 }
 
 function validateFixtureCandidateCommandEvidence(
@@ -793,14 +885,32 @@ async function main() {
     return;
   }
   if (args.collect) {
-    const result = await collectRealProcessRoi({
-      candidate: args.candidate,
-      repositoryRoot: root,
-      artifactRoot:
-        args.artifactRoot ?? realProcessRoiPaths.default_artifact_root,
-      keepWorktrees: args.keepWorktrees,
-      formalEvidencePlan: args.formalEvidencePlan,
-    });
+    const interactionRecorder = args.formalInteractionStdin
+      ? new StdinFormalInteractionRecorder()
+      : null;
+    let result;
+    let primaryError = null;
+    try {
+      result = await collectRealProcessRoi({
+        candidate: args.candidate,
+        repositoryRoot: root,
+        artifactRoot:
+          args.artifactRoot ?? realProcessRoiPaths.default_artifact_root,
+        keepWorktrees: args.keepWorktrees,
+        formalEvidencePlan: args.formalEvidencePlan,
+        interactionRecorder,
+      });
+    } catch (error) {
+      primaryError = error;
+    } finally {
+      try {
+        interactionRecorder?.close();
+      } catch (error) {
+        if (primaryError) primaryError.cause ??= error;
+        else primaryError = error;
+      }
+    }
+    if (primaryError) throw primaryError;
     process.stdout.write(
       `${JSON.stringify(
         {
@@ -810,10 +920,10 @@ async function main() {
           governance_judgment_included: false,
           run_set_root: result.runSetRoot,
           manifest_sha256: result.attestation.manifest_sha256,
-          accounting_policy_sha256:
-            result.attestation.accounting_policy_sha256,
+          accounting_policy_sha256: result.attestation.accounting_policy_sha256,
           formal_evidence_precollection_sha256:
             result.attestation.formal_evidence_precollection_sha256,
+          formal_evidence_index: result.formalCollection?.packet_path ?? null,
           observed_lifecycle_status:
             result.aggregate.summary.observed_lifecycle_status,
           formal_status: "not_evaluated",
@@ -826,7 +936,7 @@ async function main() {
   }
   if (!args.report)
     throw new Error(
-      "real_process_roi_usage:--dry-run --candidate <commit> [--formal-evidence-plan <plan>] | --collect --candidate <commit> [--formal-evidence-plan <plan>] | --report <run-set> [--formal-evidence <packet>]",
+      "real_process_roi_usage:--dry-run --candidate <commit> [--formal-evidence-plan <plan>] | --collect --candidate <commit> [--formal-evidence-plan <plan> --formal-interaction-stdin] | --report <run-set> [--formal-evidence <packet>]",
     );
   const result = await verifyRealProcessRoiReport(args.report, {
     expectedCandidate: args.candidate,
@@ -888,12 +998,14 @@ function parseArgs(argv) {
     artifactRoot: null,
     keepWorktrees: false,
     allowRejected: false,
+    formalInteractionStdin: false,
   };
   const booleanOptions = new Map([
     ["--dry-run", "dryRun"],
     ["--collect", "collect"],
     ["--keep-worktrees", "keepWorktrees"],
     ["--allow-rejected", "allowRejected"],
+    ["--formal-interaction-stdin", "formalInteractionStdin"],
   ]);
   const valueOptions = new Map([
     ["--candidate", "candidate"],
@@ -925,21 +1037,31 @@ function parseArgs(argv) {
 
 function validateParsedArgs(result) {
   const modeCount =
-    Number(result.dryRun) + Number(result.collect) + Number(Boolean(result.report));
-  if (modeCount > 1)
-    throw new Error("real_process_roi_mode_conflict");
+    Number(result.dryRun) +
+    Number(result.collect) +
+    Number(Boolean(result.report));
+  if (modeCount > 1) throw new Error("real_process_roi_mode_conflict");
   if ((result.dryRun || result.collect) && !result.candidate)
     throw new Error("real_process_roi_candidate_required");
   if (result.formalEvidence && !result.report)
     throw new Error("real_process_roi_formal_evidence_requires_report");
   if (result.formalEvidencePlan && !(result.dryRun || result.collect))
-    throw new Error("real_process_roi_formal_evidence_plan_requires_collection");
+    throw new Error(
+      "real_process_roi_formal_evidence_plan_requires_collection",
+    );
   if (result.artifactRoot && !result.collect)
     throw new Error("real_process_roi_artifact_root_requires_collection");
   if (result.keepWorktrees && !result.collect)
     throw new Error("real_process_roi_keep_worktrees_requires_collection");
   if (result.allowRejected && !result.report)
     throw new Error("real_process_roi_allow_rejected_requires_report");
+  if (
+    result.formalInteractionStdin !==
+    Boolean(result.collect && result.formalEvidencePlan)
+  )
+    throw new Error(
+      "real_process_roi_formal_interaction_stdin_requires_formal_collection",
+    );
   return result;
 }
 
@@ -984,17 +1106,29 @@ function validateSourceIdentity(identity, label) {
 }
 
 async function validateMaterializedSourceIdentity(
-  runSetRoot,
+  runArtifactIndex,
   prefix,
   identity,
 ) {
   for (const entry of identity.entries) {
-    const bytes = await readFile(
-      resolveContained(runSetRoot, `inputs/${prefix}/${entry.path}`),
+    const bytes = await runArtifactIndex.read(
+      `inputs/${prefix}/${entry.path}`,
+      "frozen_input",
+      FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
     );
     assert(
       bytes.length === entry.bytes && digest(bytes) === entry.sha256,
       `materialized_source_identity:${prefix}:${entry.path}`,
+    );
+  }
+}
+
+async function validateCurrentSourceIdentity(identity) {
+  for (const entry of identity.entries) {
+    const bytes = await readFile(resolveContained(root, entry.path));
+    assert(
+      bytes.length === entry.bytes && digest(bytes) === entry.sha256,
+      `current_benchmark_implementation_identity:${entry.path}`,
     );
   }
 }
@@ -1012,10 +1146,28 @@ function resolveContained(rootPath, relative) {
   return resolved;
 }
 
-async function readJson(file) {
-  return parseFormalJson(
-    await readFile(file),
-    `run_set_json:${path.basename(file)}`,
+async function readIndexedJson(runArtifactIndex, relativePath, expectedRole) {
+  const bytes = await runArtifactIndex.read(
+    relativePath,
+    expectedRole,
+    FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
+  );
+  return parseFormalJson(bytes, `run_set_json:${relativePath}`);
+}
+
+function assertRunSetControlBudget(manifestBytes, attestationBytes) {
+  const controls = [manifestBytes, attestationBytes];
+  assert(
+    controls.length ===
+      FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_files &&
+      controls.every(
+        (bytes) =>
+          bytes.length <=
+          FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_bytes_per_file,
+      ) &&
+      controls.reduce((total, bytes) => total + bytes.length, 0) <=
+        FORMAL_EVIDENCE_CAPACITY.maximum_run_set_control_total_bytes,
+    "real_process_roi_control_artifact_capacity",
   );
 }
 

@@ -1,26 +1,37 @@
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
-import { assert, canonical, sha256 } from "./long_task_real_process_roi_scoring.mjs";
+import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
+import path from "node:path";
+import {
+  assert,
+  canonical,
+  sha256,
+} from "./long_task_real_process_roi_scoring.mjs";
 import { deriveFormalTotalCostAccounting } from "./long_task_formal_total_cost_accounting.mjs";
-import { readFormalAccountingPolicy, validateFormalAccountingPolicy } from "./long_task_formal_total_cost_accounting_policy.mjs";
-import { expectedFormalEvidenceKeys, validateFormalRawEvents } from "./long_task_formal_total_cost_events.mjs";
+import {
+  readFormalAccountingPolicy,
+  validateFormalAccountingPolicy,
+} from "./long_task_formal_total_cost_accounting_policy.mjs";
+import {
+  expectedFormalEvidenceKeys,
+  validateFormalRawEvents,
+} from "./long_task_formal_total_cost_events.mjs";
 import { validateFormalPriceSources } from "./long_task_formal_total_cost_prices.mjs";
-import { validateFormalPrecollectionBinding } from "./long_task_formal_total_cost_precollection.mjs";
+import {
+  readMaterializedFormalPrecollection,
+  validateFormalPrecollectionBinding,
+} from "./long_task_formal_total_cost_precollection.mjs";
 import { validateFormalScenarioCatalog } from "./long_task_formal_total_cost_scenarios.mjs";
+import { validateFormalCollectorCatalog } from "./long_task_formal_total_cost_collectors.mjs";
+import { validateControlledIncidentBundle } from "./long_task_formal_total_cost_incident.mjs";
 import {
   assertExactKeys,
   assertSameSet,
   assertTimestamp,
   gitShaPattern,
   parseJson,
-  readRegularFileNoFollow,
   rejectProhibitedFields,
   shaPattern,
 } from "./long_task_formal_total_cost_shared.mjs";
-import {
-  readFormalSourceBundle,
-  validateFormalCollectorIdentity,
-  validateFormalRedactionRules,
-} from "./long_task_formal_total_cost_source_bundle.mjs";
+import { validateFormalRedactionRules } from "./long_task_formal_total_cost_source_bundle.mjs";
 
 const { FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA } = REAL_PROCESS_SCHEMAS;
 
@@ -33,11 +44,24 @@ export async function evaluateFormalTotalCostEvidence({
   runSetId,
   runs,
   setupByVariant,
-  precollectionIdentity = null,
+  precollectionIdentity,
+  runArtifactIndex,
+  runtimeTcbIdentity,
 }) {
   validateFormalAccountingPolicy(accountingPolicy);
-  const packetBytes = await readRegularFileNoFollow(
-    packetPath,
+  assert(runArtifactIndex, "formal_evidence_run_artifact_index_missing");
+  const indexedPacketPath = path.resolve(
+    runArtifactIndex.run_set_root,
+    "formal-evidence-index.json",
+  );
+  assert(
+    normalizeHostPath(path.resolve(packetPath)) ===
+      normalizeHostPath(indexedPacketPath),
+    "formal_evidence_packet_index_path",
+  );
+  const packetBytes = await runArtifactIndex.read(
+    "formal-evidence-index.json",
+    "formal_evidence_index",
     accountingPolicy.source_bundle_limits.maximum_bytes_per_file,
   );
   const packet = parseJson(packetBytes, "formal_evidence_packet_json");
@@ -49,6 +73,12 @@ export async function evaluateFormalTotalCostEvidence({
       canonical(accountingPolicyIdentity),
     "formal_evidence_accounting_policy_identity",
   );
+  assert(
+    precollectionIdentity &&
+      packet.precollection_identity_sha256 ===
+        precollectionIdentity.identity_sha256,
+    "formal_evidence_precollection_identity",
+  );
   const window = validateCollectionWindow(packet);
   validateCandidateBindings(packet.candidate_identities, setupByVariant);
   const runBindingById = validateRunBindings(
@@ -57,58 +87,73 @@ export async function evaluateFormalTotalCostEvidence({
     setupByVariant,
   );
   assert(
-    canonical(packet.retention_policy) === canonical(accountingPolicy.retention),
+    canonical(packet.retention_policy) ===
+      canonical(accountingPolicy.retention),
     "formal_evidence_retention_policy",
   );
-  const bundle = await readFormalSourceBundle({
-    packetPath,
-    manifest: packet.source_bundle,
+  const precollectionBundle = await readMaterializedFormalPrecollection({
+    runArtifactIndex,
+    identity: precollectionIdentity,
     limits: accountingPolicy.source_bundle_limits,
   });
   const precollection = validateFormalPrecollectionBinding({
     identity: precollectionIdentity,
-    bundle,
+    bundle: precollectionBundle,
     window,
     limits: accountingPolicy.source_bundle_limits,
   });
-  const precollectionFrozenAt = precollectionIdentity
-    ? assertTimestamp(
-        precollectionIdentity.frozen_at,
-        "formal_precollection_frozen_at",
-      )
-    : null;
-  validateFormalCollectorIdentity(
-    packet.collector_identity,
-    bundle,
-    window,
-    precollectionFrozenAt,
+  const precollectionFrozenAt = assertTimestamp(
+    precollectionIdentity.frozen_at,
+    "formal_precollection_frozen_at",
   );
   const redactionRules = validateFormalRedactionRules(
-    bundle,
+    precollectionBundle,
     window,
     precollectionFrozenAt,
   );
   const priceResult = validateFormalPriceSources({
-    bundle,
+    bundle: precollectionBundle,
     window,
     accountingPolicy,
     precollectionFrozenAt,
   });
   const scenarios = validateFormalScenarioCatalog({
-    bundle,
+    bundle: precollectionBundle,
     window,
     accountingPolicy,
     precollectionFrozenAt,
   });
-  const eventResult = validateFormalRawEvents({
-    bundle,
+  const collectors = validateFormalCollectorCatalog({
+    bundle: precollectionBundle,
+    window,
+    precollectionFrozenAt,
+    scenarios,
+  });
+  const incident = validateControlledIncidentBundle({
+    bundle: precollectionBundle,
+    scenarios,
+    precollectionFrozenAt,
+  });
+  const artifactBindings = validateArtifactBindings(
+    packet.artifact_bindings,
+    accountingPolicy,
+    runArtifactIndex,
+  );
+  const eventResult = await validateFormalRawEvents({
+    artifactBindings,
+    runArtifactIndex,
     window,
     runSetId,
     runBindingById,
+    setupByVariant,
+    precollectionIdentity,
     accountingPolicy,
     redactionRules,
     priceRates: priceResult.rates,
     scenarios,
+    collectors,
+    precollectionBundle,
+    runtimeTcbIdentity,
   });
   return formalEvidenceResult({
     packet,
@@ -118,7 +163,14 @@ export async function evaluateFormalTotalCostEvidence({
     priceRates: priceResult.rates,
     precollection,
     precollectionIdentity,
+    runArtifactIndex,
+    collectors,
+    incident,
   });
+}
+
+function normalizeHostPath(value) {
+  return process.platform === "win32" ? value.toLowerCase() : value;
 }
 
 function formalEvidenceResult(options) {
@@ -130,49 +182,60 @@ function formalEvidenceResult(options) {
     priceRates,
     precollection,
     precollectionIdentity,
+    runArtifactIndex,
+    collectors,
+    incident,
   } = options;
   const expectedKeys = expectedFormalEvidenceKeys(accountingPolicy);
-  for (const key of eventResult.byKey.keys())
-    assert(expectedKeys.has(key), `formal_evidence_event_unexpected:${key}`);
   const missingEventKeys = [...expectedKeys]
     .filter((key) => !eventResult.byKey.has(key))
     .sort();
-  const requiredMeters = accountingPolicy.external_price_sources.required_meters;
+  const requiredMeters =
+    accountingPolicy.external_price_sources.required_meters;
   const missingPriceRateKeys = requiredMeters.filter(
     (key) => !priceRates.has(key),
   );
   const missingMeterKeys = requiredMeters.filter(
     (key) => !eventResult.usedMeters.has(key),
   );
-  const blockers = [...precollection.blockers];
+  const blockers = [...precollection.blockers, ...incident.blockers];
   if (missingEventKeys.length > 0)
     blockers.push("formal_evidence_event_set_incomplete");
   if (missingPriceRateKeys.length > 0)
     blockers.push("formal_price_source_incomplete");
-  if (missingMeterKeys.length > 0)
-    blockers.push("formal_metered_usage_incomplete");
-  if (eventResult.missingAuthoringUsageKeys.length > 0)
-    blockers.push("formal_authoring_usage_incomplete");
   if (eventResult.unpricedEventKeys.length > 0)
     blockers.push("formal_evidence_event_unpriced");
   const supportComplete = blockers.length === 0;
   return {
     admitted: true,
     packet_sha256: sha256(packetBytes),
-    source_bundle_identity_sha256:
-      packet.source_bundle.materialized_set_sha256,
-    collector_identity_sha256: packet.collector_identity.identity_sha256,
-    precollection_identity_sha256:
-      precollectionIdentity?.identity_sha256 ?? null,
+    run_artifact_index_identity_sha256:
+      runArtifactIndex.materialized_set_sha256,
+    collector_identity_sha256: sha256(
+      canonical(
+        [...collectors.values()]
+          .map((collector) => ({
+            collector_id: collector.collector_id,
+            implementation_sha256: collector.implementation_sha256,
+          }))
+          .sort((left, right) =>
+            left.collector_id.localeCompare(right.collector_id),
+          ),
+      ),
+    ),
+    precollection_identity_sha256: precollectionIdentity.identity_sha256,
     precollection_bound: precollection.bound,
     event_count: eventResult.byKey.size,
+    execution_identity_set_sha256: sha256(
+      canonical([...eventResult.executionIds].sort()),
+    ),
     event_identity_set_sha256: sha256(
       canonical([...eventResult.eventIds].sort()),
     ),
+    incident_evidence_class: incident.evidence_class,
     missing_event_keys: missingEventKeys,
     missing_price_rate_keys: missingPriceRateKeys,
     missing_meter_keys: missingMeterKeys,
-    missing_authoring_usage_keys: eventResult.missingAuthoringUsageKeys,
     unpriced_event_keys: eventResult.unpricedEventKeys,
     support_complete: supportComplete,
     blockers,
@@ -187,25 +250,24 @@ function validatePacketShape(packet) {
     packet,
     [
       "accounting_policy_identity",
+      "artifact_bindings",
       "candidate_identities",
       "collection_window",
-      "collector_identity",
       "created_at",
+      "precollection_identity_sha256",
       "retention_policy",
       "run_bindings",
       "run_set_id",
       "schema_version",
-      "source_bundle",
     ],
     "formal_evidence_packet_field_set",
   );
   assert(
-    packet.schema_version === FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA,
-    "formal_evidence_packet_schema",
-  );
-  assert(
-    typeof packet.run_set_id === "string" && packet.run_set_id.length > 0,
-    "formal_evidence_packet_run_set",
+    packet.schema_version === FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA &&
+      typeof packet.run_set_id === "string" &&
+      packet.run_set_id.length > 0 &&
+      shaPattern.test(packet.precollection_identity_sha256),
+    "formal_evidence_packet",
   );
   assertTimestamp(packet.created_at, "formal_evidence_packet_created_at");
   assertExactKeys(
@@ -233,7 +295,10 @@ function validateCollectionWindow(packet) {
     packet.created_at,
     "formal_evidence_packet_created_at",
   );
-  assert(started <= completed && completed <= created, "formal_evidence_time_order");
+  assert(
+    started <= completed && completed <= created,
+    "formal_evidence_time_order",
+  );
   return { started, completed };
 }
 
@@ -247,7 +312,7 @@ function validateCandidateBindings(candidateIdentities, setupByVariant) {
   for (const item of candidateIdentities) {
     assertExactKeys(
       item,
-      ["commit", "package_sha256", "tree", "variant_id"],
+      ["commit", "package_sha256", "package_version", "tree", "variant_id"],
       `formal_evidence_candidate_fields:${item.variant_id}`,
     );
     const setup = setupByVariant.get(item.variant_id);
@@ -255,9 +320,12 @@ function validateCandidateBindings(candidateIdentities, setupByVariant) {
       setup &&
         item.commit === setup.commit &&
         item.tree === setup.tree &&
+        item.package_version === setup.package_version &&
         item.package_sha256 === setup.package_sha256 &&
         gitShaPattern.test(item.commit) &&
         gitShaPattern.test(item.tree) &&
+        typeof item.package_version === "string" &&
+        item.package_version.length > 0 &&
         shaPattern.test(item.package_sha256),
       `formal_evidence_candidate_identity:${item.variant_id}`,
     );
@@ -272,6 +340,7 @@ function validateRunBindings(runBindings, runs, setupByVariant) {
     repeat: run.repeat,
     candidate_commit: run.candidate_identity.commit,
     candidate_tree: run.candidate_identity.tree,
+    package_version: setupByVariant.get(run.variant_id).package_version,
     package_sha256: setupByVariant.get(run.variant_id).package_sha256,
   }));
   for (const item of runBindings)
@@ -281,6 +350,7 @@ function validateRunBindings(runBindings, runs, setupByVariant) {
         "candidate_commit",
         "candidate_tree",
         "package_sha256",
+        "package_version",
         "repeat",
         "run_id",
         "variant_id",
@@ -295,4 +365,38 @@ function validateRunBindings(runBindings, runs, setupByVariant) {
     "formal_evidence_run_binding_set",
   );
   return new Map(actual.map((item) => [item.run_id, item]));
+}
+
+function validateArtifactBindings(
+  bindings,
+  accountingPolicy,
+  runArtifactIndex,
+) {
+  assert(Array.isArray(bindings), "formal_evidence_artifact_bindings");
+  const expected = expectedFormalEvidenceKeys(accountingPolicy);
+  const byKey = new Map();
+  const paths = new Set();
+  for (const item of bindings) {
+    assertExactKeys(
+      item,
+      ["event_path", "evidence_key"],
+      `formal_evidence_artifact_binding_fields:${item.evidence_key}`,
+    );
+    const entry = runArtifactIndex.get(item.event_path);
+    assert(
+      expected.has(item.evidence_key) &&
+        !byKey.has(item.evidence_key) &&
+        !paths.has(item.event_path) &&
+        entry?.role === "raw_event",
+      `formal_evidence_artifact_binding:${item.evidence_key}`,
+    );
+    byKey.set(item.evidence_key, item.event_path);
+    paths.add(item.event_path);
+  }
+  assertSameSet(
+    [...byKey.keys()],
+    [...expected],
+    "formal_evidence_artifact_binding_set",
+  );
+  return byKey;
 }

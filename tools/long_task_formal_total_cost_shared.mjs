@@ -1,17 +1,15 @@
 import { constants as fsConstants } from "node:fs";
 import { lstat, open, readdir, realpath } from "node:fs/promises";
 import path from "node:path";
-import {
-  assert,
-  canonical,
-} from "./long_task_real_process_roi_scoring.mjs";
+import { assert, canonical } from "./long_task_real_process_roi_scoring.mjs";
 export { parseStrictJson as parseJson } from "./long_task_formal_total_cost_json.mjs";
 
 export const shaPattern = /^[a-f0-9]{64}$/u;
 export const gitShaPattern = /^[a-f0-9]{40}$/u;
 export const pairIds = Object.freeze(
-  Array.from({ length: 5 }, (_, index) =>
-    `pair-${String(index + 1).padStart(2, "0")}`,
+  Array.from(
+    { length: 5 },
+    (_, index) => `pair-${String(index + 1).padStart(2, "0")}`,
   ),
 );
 export const meterUnits = Object.freeze({
@@ -23,6 +21,7 @@ export const meterUnits = Object.freeze({
 });
 export const sourceRoles = Object.freeze([
   "collector",
+  "incident_source",
   "price_document",
   "price_source",
   "provider_event",
@@ -74,8 +73,7 @@ export async function readRegularFileNoFollow(target, maximumBytes) {
     assert(
       after.size === opened.size &&
         after.dev === opened.dev &&
-        after.ino === opened.ino &&
-        after.mtimeMs === opened.mtimeMs,
+        after.ino === opened.ino,
       `formal_evidence_file_identity_after:${target}`,
     );
     return bytes;
@@ -84,11 +82,7 @@ export async function readRegularFileNoFollow(target, maximumBytes) {
   }
 }
 
-export async function walkRegularFiles(
-  root,
-  maximumFiles,
-  allowedDirectories,
-) {
+export async function walkRegularFiles(root, maximumFiles, allowedDirectories) {
   const files = [];
   async function walk(current, prefix) {
     const entries = await readdir(current, { withFileTypes: true });
@@ -176,7 +170,10 @@ export function rejectProhibitedFields(value, code, trail = "$") {
 export function assertTimestamp(value, code) {
   assert(typeof value === "string", code);
   const parsed = Date.parse(value);
-  assert(Number.isFinite(parsed) && new Date(parsed).toISOString() === value, code);
+  assert(
+    Number.isFinite(parsed) && new Date(parsed).toISOString() === value,
+    code,
+  );
   return parsed;
 }
 

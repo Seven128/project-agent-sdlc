@@ -13,12 +13,12 @@ import { fileURLToPath } from "node:url";
 import {
   LONG_TASK_TRUST_TEST_FILES,
   criticalSentinelsForSuite,
-  planLongTaskIsolationLanes,
   resolveLongTaskIsolatedConcurrency,
   resolveTestTimingOutput,
   resolveSuiteWallTimeBudgetMs,
   suiteWallTimeBudgetStatus,
 } from "../../tools/test_suite_policy.mjs";
+import { planLongTaskSuiteLanes } from "../../tools/test_suite_lane_policy.mjs";
 import { prepareDeliveryFixtureSeed } from "./long-task-delivery-fixtures.mjs";
 import { buildFileTimingReport } from "./test-suite-file-reporter.mjs";
 
@@ -60,9 +60,9 @@ const isolatedConcurrency = longTaskTestName.test(names[0] ?? "")
   ? resolveLongTaskIsolatedConcurrency()
   : 1;
 const lanePolicy = longTaskTestName.test(names[0] ?? "")
-  ? planLongTaskIsolationLanes(names, isolatedConcurrency)
+  ? planLongTaskSuiteLanes(names, suite, isolatedConcurrency)
   : null;
-const lanes = executionLanes(names, lanePolicy, isolatedConcurrency);
+const lanes = lanePolicy?.lanes ?? [{ key: "serial", names, concurrency: 1 }];
 const execution = {
   mode:
     lanePolicy && isolatedConcurrency > 1
@@ -99,7 +99,7 @@ try {
   }
 } catch (error) {
   executionError =
-    error instanceof Error ? error.stack ?? error.message : String(error);
+    error instanceof Error ? (error.stack ?? error.message) : String(error);
 } finally {
   try {
     if (fixtureSeed) await fixtureSeed.cleanup();
@@ -114,7 +114,8 @@ try {
 }
 
 const wallTimeMs = Math.round(performance.now() - startedAt);
-const completionSignal = completions.find((entry) => entry.signal)?.signal ?? null;
+const completionSignal =
+  completions.find((entry) => entry.signal)?.signal ?? null;
 const completionFailed =
   executionError !== null ||
   completions.length !== lanes.length ||
@@ -159,19 +160,6 @@ else if (timing.test_status !== "passed") {
     `${suite} package suite exceeded the controlled CI wall-time budget: ${wallTimeMs}ms > ${wallTimeBudgetMs}ms. Coverage was not reduced; inspect the timing artifact and update the reviewed budget only with evidence.`,
   );
   process.exitCode = 1;
-}
-
-function executionLanes(selectedNames, policy, concurrency) {
-  if (!policy || concurrency === 1)
-    return [{ key: "serial", names: selectedNames, concurrency: 1 }];
-  return [
-    { key: "safe", names: policy.safe.files, concurrency: policy.safe.concurrency },
-    {
-      key: "exclusive",
-      names: policy.exclusive.files,
-      concurrency: policy.exclusive.concurrency,
-    },
-  ].filter((lane) => lane.names.length > 0);
 }
 
 async function runLane(lane, eventFile, fixtureSeedRoot) {

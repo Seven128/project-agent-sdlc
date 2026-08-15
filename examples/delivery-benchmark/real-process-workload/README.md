@@ -21,7 +21,7 @@ wrong product value, and R9-R11. Raw evidence stays under
 `.artifacts/long-task-real-capability/real-process-workload/**` and is bound by
 the generated SHA-256 manifest.
 
-V3 always runs all five frozen A/B/C repeat orders because formal accounting
+V4 always runs all five frozen A/B/C repeat orders because formal accounting
 requires five B/C pairs. The initial-three CV, direction, threshold-nearness
 and provenance expansion decision remains in the summary as a diagnostic; it
 does not shorten collection.
@@ -41,8 +41,8 @@ Run `node tools/verify_long_task_real_process_roi.mjs --dry-run --candidate
 <commit> --formal-evidence-plan <plan.json>` before formal collection. The
 plan directory must contain a sibling `sources/` tree whose sorted manifest
 freezes every collector, machine-readable invoice/official-price document and
-envelope, one fixed scenario catalog with its exact task/gold inputs, and any
-optional redaction rule. Collection materializes those exact
+envelope, one fixed scenario catalog with its exact task/gold inputs, and every
+redaction rule required by qualified sanitized material. Collection materializes those exact
 bytes into the run set before execution; omitting the plan is allowed for
 diagnostic collection but makes any later formal packet unsupported. A full
 collection intentionally waits for a clean final C commit and uses temporary
@@ -55,18 +55,24 @@ for `{ frozen_at, entries }`, and entry roles are limited to `collector`,
 
 ```json
 {
-  "schema_version": "long-task-formal-total-cost-precollection-plan-v1",
+  "schema_version": "long-task-formal-total-cost-precollection-plan-v2",
   "frozen_at": "<ISO-8601 UTC>",
   "entries": [
-    { "path": "<sources-relative path>", "role": "<fixed role>", "bytes": 0, "sha256": "<64 hex>" }
+    {
+      "path": "<sources-relative path>",
+      "role": "<fixed role>",
+      "bytes": 0,
+      "sha256": "<64 hex>"
+    }
   ],
   "identity_sha256": "<64 hex>"
 }
 ```
 
 After collection, pass the independent packet only to `--report <run-set>
---formal-evidence <packet.json>`. The packet must reuse the exact precollection
-inputs and bind all raw events to the run set and repeat. Provider usage is
+--formal-evidence <packet.json>`. The v2 packet maps expected evidence keys to
+runner-owned indexed paths; it copies no event/output/prompt/telemetry bytes and
+provides no digest, role, identity or comparison authority. Provider usage is
 parsed from invocation-bound provider records; price conversion is derived
 from the frozen raw price document; controlled-incident loss is derived from
 raw human-time or metered-usage components. Submitted normalized rates,

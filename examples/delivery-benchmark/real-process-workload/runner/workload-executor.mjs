@@ -13,11 +13,13 @@ import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   CASE_IDS,
-  LEGACY_REAL_PROCESS_SCHEMAS,
   MAINTENANCE_RUNTIME_OWNER_PATHS,
   MAINTENANCE_TEST_PATHS,
-  REAL_PROCESS_SCHEMAS,
 } from "../../../../tools/long_task_real_process_roi_policy.mjs";
+import {
+  LEGACY_REAL_PROCESS_SCHEMAS,
+  REAL_PROCESS_SCHEMAS,
+} from "../../../../tools/long_task_real_process_schema_policy.mjs";
 import {
   assertCurrentEvidenceSchema,
   canonical,

@@ -1,68 +1,3 @@
-export const REAL_PROCESS_SCHEMAS = Object.freeze({
-  FORMAL_TOTAL_COST_ACCOUNTING_POLICY_SCHEMA:
-    "long-task-formal-total-cost-accounting-policy-v1",
-  FORMAL_TOTAL_COST_EVIDENCE_PACKET_SCHEMA:
-    "long-task-formal-total-cost-evidence-packet-v1",
-  FORMAL_TOTAL_COST_PRECOLLECTION_PLAN_SCHEMA:
-    "long-task-formal-total-cost-precollection-plan-v1",
-  FORMAL_TOTAL_COST_PRICE_DOCUMENT_SCHEMA:
-    "long-task-formal-total-cost-price-document-v1",
-  FORMAL_TOTAL_COST_PRICE_SOURCE_SCHEMA:
-    "long-task-formal-total-cost-price-source-v1",
-  FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA:
-    "long-task-formal-total-cost-provider-event-v1",
-  FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA:
-    "long-task-formal-total-cost-raw-event-v1",
-  FORMAL_TOTAL_COST_REDACTION_RULE_SCHEMA:
-    "long-task-formal-total-cost-redaction-rule-v1",
-  FORMAL_TOTAL_COST_SCENARIO_CATALOG_SCHEMA:
-    "long-task-formal-total-cost-scenario-catalog-v1",
-  FORMAL_TOTAL_COST_SOURCE_MANIFEST_SCHEMA:
-    "long-task-formal-total-cost-source-manifest-v1",
-  REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v3",
-  REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v3",
-  REAL_PROCESS_MANIFEST_SCHEMA: "long-task-real-process-roi-manifest-v1",
-  REAL_PROCESS_ATTESTATION_SCHEMA: "long-task-real-process-roi-attestation-v3",
-  REAL_PROCESS_FROZEN_CONFIG_SCHEMA:
-    "long-task-real-process-roi-frozen-config-v3",
-  REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v3",
-  REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v3",
-  REAL_PROCESS_COLLECTION_SCHEMA: "long-task-real-process-roi-collection-v3",
-  REAL_PROCESS_VERIFICATION_SCHEMA:
-    "long-task-real-process-roi-verification-v3",
-  REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v3",
-});
-
-export const LEGACY_REAL_PROCESS_SCHEMAS = Object.freeze({
-  run_set: Object.freeze([
-    "long-task-real-process-roi-run-set-v1",
-    "long-task-real-process-roi-run-set-v2",
-  ]),
-  run: Object.freeze([
-    "long-task-real-process-roi-run-v1",
-    "long-task-real-process-roi-run-v2",
-  ]),
-  attestation: Object.freeze([
-    "long-task-real-process-roi-attestation-v1",
-    "long-task-real-process-roi-attestation-v2",
-  ]),
-  frozen_config: Object.freeze([
-    "long-task-real-process-roi-frozen-config-v1",
-    "long-task-real-process-roi-frozen-config-v2",
-  ]),
-  summary: Object.freeze([
-    "long-task-real-process-roi-summary-v1",
-    "long-task-real-process-roi-summary-v2",
-  ]),
-  dry_run: Object.freeze(["long-task-real-process-roi-dry-run-v2"]),
-  collection: Object.freeze(["long-task-real-process-roi-collection-v2"]),
-  verification: Object.freeze(["long-task-real-process-roi-verification-v2"]),
-  workload: Object.freeze([
-    "long-task-real-process-workload-v1",
-    "long-task-real-process-workload-v2",
-  ]),
-});
-
 export const BASELINE_A_COMMIT = "0f35e08aa4ed272c9d23df92c3fe4604194790df";
 export const ISOLATED_ENVELOPE_B_COMMIT =
   "808efa9e9a6cfea7e12bde48cd18dc7c87cb7e70";
@@ -134,24 +69,6 @@ export const MEASUREMENT_THRESHOLDS = Object.freeze({
   candidate_counterfactual_pass_rate: 1,
   migration_amortization_horizon: 10,
 });
-
-export const FORMAL_TOTAL_COST_CATEGORIES = Object.freeze([
-  "authoring",
-  "runtime",
-  "state",
-  "recovery",
-  "maintenance",
-  "test",
-  "process",
-  "introduction",
-  "adoption",
-  "migration",
-]);
-
-export const FORMAL_TOTAL_COST_UNIT = "normalized-cost-units";
-
-export const FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH =
-  "examples/delivery-benchmark/real-process-workload/accounting-policy.json";
 
 export const REQUIRED_METRICS = Object.freeze([
   "authoring_active_ms",

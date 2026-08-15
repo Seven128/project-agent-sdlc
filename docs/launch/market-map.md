@@ -15,8 +15,8 @@ Public state after the repository rename, checked against public GitHub and npm 
 | GitHub description / license | `Minimal project memory and validation harness for AI coding agents.`, MIT detected |
 | GitHub homepage | `https://www.npmjs.com/package/project-tiny-context-harness` |
 | GitHub topics | `agent-context`, `agent-memory`, `agents-md`, `ai-agents`, `ai-coding`, `claude-code`, `cli`, `codex`, `coding-agent`, `context-engineering`, `context-management`, `cursor`, `developer-productivity`, `developer-tools`, `gemini-cli`, `opencode`, `project-memory`, `ty-context`, `workflow` |
-| GitHub release | Latest release is `Project Tiny Context Harness 0.8.13` |
-| npm package | `project-tiny-context-harness@0.8.13` is published and installable through `@latest` |
+| GitHub release | Latest release is `Project Tiny Context Harness 0.8.14` |
+| npm package | `project-tiny-context-harness@0.8.14` is published and installable through `@latest` |
 | npm public metadata | Live npm package metadata |
 | npm downloads | Renamed package download window is not available yet through the npm downloads API; legacy package last-week downloads remain useful only as historical distribution telemetry |
 | Launch readiness | Local `npm run launch:check` and strict external check pass; the first public Show HN post and first regular HN comment are live |

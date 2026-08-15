@@ -87,6 +87,13 @@ modularity:
       reason: The independently authored delivery verifier is frozen as one self-contained Authority snapshot so its semantic, population, cost and single-aggregate oracle cannot acquire implementation-carrier dependencies after Authority Lock.
       tracking_issue: test-suite-roi-antidegradation-verifier-retirement
       expiry_condition: Remove this waiver when the delivery verifier is retired; before adding behavior, adopt a protected Authority Revision and split the verifier below the project limits.
+    - path: tests/ty-context/long-task-level4-evidence-governance.test.mjs
+      category: fixture_snapshot
+      owner: harness-maintainers
+      introduced_at: "2026-08-14"
+      reason: The complete 576-file closed-world Level 4 evidence fixture intentionally colocates its population builder, attack references and governance mutations so the exact artifact census cannot drift across independently edited test carriers.
+      tracking_issue: level4-evidence-fixture-builder-modularity
+      expiry_condition: Replace the hand-authored fixture with a schema-driven reusable builder, then split process, formal-evidence and governance tests while preserving the exact 576-artifact population and every mutation reference.
 managed_files:
   - path: AGENTS.md
     strategy: merge-block

@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   LEGACY_REAL_PROCESS_SCHEMAS,
   REAL_PROCESS_SCHEMAS,
-} from "../../../../tools/long_task_real_process_roi_policy.mjs";
+} from "../../../../tools/long_task_real_process_schema_policy.mjs";
 import { assertCurrentEvidenceSchema } from "../../../../tools/long_task_real_process_roi_scoring.mjs";
 import {
   evaluateCounterfactualGold,

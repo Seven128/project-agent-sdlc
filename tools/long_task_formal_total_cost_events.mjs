@@ -1,104 +1,82 @@
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_roi_policy.mjs";
+import {
+  FORMAL_EVIDENCE_CAPACITY,
+  REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
 import {
   assert,
   canonical,
   sha256,
 } from "./long_task_real_process_roi_scoring.mjs";
-import { validateFormalEventMeasurements } from "./long_task_formal_total_cost_measurements.mjs";
-import {
-  assertFormalScenarioOutputsConsumed,
-  validateFormalScenarioOutput,
-} from "./long_task_formal_total_cost_scenarios.mjs";
-import {
-  assertFormalSensitiveSourcesConsumed,
-  validateFormalEventProvenance,
-} from "./long_task_formal_total_cost_retention.mjs";
 import {
   assertExactKeys,
   assertTimestamp,
-  meterUnits,
   pairIds,
   parseJson,
-  rejectProhibitedFields,
 } from "./long_task_formal_total_cost_shared.mjs";
+import { validateFormalExecutionRecord } from "./long_task_formal_total_cost_execution.mjs";
+import { validateFormalEventMeasurements } from "./long_task_formal_total_cost_measurements.mjs";
+import {
+  assertFormalRedactionRulesConsumed,
+  validateFormalExecutionProvenance,
+} from "./long_task_formal_total_cost_retention.mjs";
 
 const { FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA } = REAL_PROCESS_SCHEMAS;
 
-export function validateFormalRawEvents({
-  bundle,
+export async function validateFormalRawEvents({
+  artifactBindings,
+  runArtifactIndex,
   window,
   runSetId,
   runBindingById,
+  setupByVariant,
+  precollectionIdentity,
   accountingPolicy,
   redactionRules,
   priceRates,
   scenarios,
+  collectors,
+  precollectionBundle,
+  runtimeTcbIdentity,
 }) {
   const byKey = new Map();
   const eventIds = new Set();
+  const executionIds = new Set();
   const invocationIds = new Set();
   const usedMeters = new Set();
-  const usedSensitiveSources = new Set();
-  const usedRedactionRules = new Set();
-  const usedScenarioOutputs = new Set();
   const unpricedEventKeys = [];
-  const missingAuthoringUsageKeys = [];
-  for (const [sourcePath, source] of bundle.files) {
-    if (source.entry.role !== "raw_event") continue;
-    const event = parseJson(source.bytes, `raw_event_json:${sourcePath}`);
-    rejectProhibitedFields(event, `raw_event_prohibited_field:${sourcePath}`);
-    validateRawEventShape(event, sourcePath, runSetId, invocationIds);
-    const observedAt = assertTimestamp(
-      event.observed_at,
-      `raw_event_time:${sourcePath}`,
-    );
+  const consumedArtifacts = new Set();
+  const usedRedactionRules = new Set();
+
+  for (const [bindingKey, eventPath] of artifactBindings) {
     assert(
-      observedAt >= window.started && observedAt <= window.completed,
-      `raw_event_collection_window:${sourcePath}`,
+      !consumedArtifacts.has(eventPath),
+      `formal_evidence_event_artifact_duplicate:${eventPath}`,
     );
+    const eventBytes = await runArtifactIndex.read(
+      eventPath,
+      "raw_event",
+      FORMAL_EVIDENCE_CAPACITY.maximum_event_bytes,
+    );
+    consumedArtifacts.add(eventPath);
+    const event = parseJson(eventBytes, `raw_event_json:${eventPath}`);
+    validateRawEventShape(event, eventPath, runSetId, invocationIds);
     const runBinding = runBindingById.get(event.run_id);
     assert(
-      runBinding && runBinding.variant_id === event.variant_id,
-      `raw_event_run_binding:${sourcePath}`,
+      runBinding &&
+        runBinding.variant_id === event.variant_id &&
+        runBinding.repeat === pairRepeat(event.pair_id),
+      `raw_event_run_binding:${eventPath}`,
     );
-    const subject = validateEventSubject(event.subject, accountingPolicy, sourcePath);
-    const expectedPairs = subject.pairCount === 1 ? ["once"] : pairIds;
-    assert(expectedPairs.includes(event.pair_id), `raw_event_pair:${sourcePath}`);
-    const expectedRepeat =
-      event.pair_id === "once" ? 1 : Number(event.pair_id.slice(-2));
+    const setup = setupByVariant.get(event.variant_id);
     assert(
-      runBinding.repeat === expectedRepeat,
-      `raw_event_pair_run_binding:${sourcePath}`,
+      setup && setup.commit === runBinding.candidate_commit,
+      `raw_event_candidate_binding:${eventPath}`,
     );
-    const provenance = validateFormalEventProvenance({
-      provenance: event.provenance,
-      subject,
-      invocationId: event.invocation_id,
-      observedAt,
-      bundle,
-      redactionRules,
-      usedSensitiveSources,
-      usedRedactionRules,
-      sourcePath,
-    });
-    validateFormalScenarioOutput({
-      bundle,
-      sourceRef: event.scenario_output_ref,
-      subject,
-      variantId: event.variant_id,
-      scenarios,
-      usedOutputs: usedScenarioOutputs,
-      sourcePath,
-    });
-    const measurement = validateFormalEventMeasurements({
-      event,
-      subject,
-      priceRates,
-      usedMeters,
-      provenance,
-      sourcePath,
+    const subject = validateEventSubject(
+      event.subject,
       accountingPolicy,
-    });
+      eventPath,
+    );
     const key = evidenceKey({
       kind: subject.kind,
       category: subject.category,
@@ -106,45 +84,110 @@ export function validateFormalRawEvents({
       pairId: event.pair_id,
       variantId: event.variant_id,
     });
-    assert(!byKey.has(key), `raw_event_subject_duplicate:${key}`);
+    assert(
+      bindingKey === key && !byKey.has(key),
+      `raw_event_subject_binding:${key}`,
+    );
+    const scenario = scenarios.get(subject.scenarioId);
+    const collector = scenario ? collectors.get(scenario.collector_id) : null;
+    assert(scenario && collector, `raw_event_scenario:${eventPath}`);
+    const execution = await validateFormalExecutionRecord({
+      record: event.execution_record,
+      event,
+      scenario,
+      collector,
+      runBinding,
+      setup,
+      precollectionIdentity,
+      runtimeTcbIdentity,
+      runArtifactIndex,
+      consumedArtifacts,
+      collectionWindow: window,
+    });
+    assert(
+      !executionIds.has(event.execution_record.execution_id),
+      `formal_execution_identity_duplicate:${eventPath}`,
+    );
+    executionIds.add(event.execution_record.execution_id);
+    const observedAt = assertTimestamp(
+      event.observed_at,
+      `raw_event_time:${eventPath}`,
+    );
+    assert(
+      observedAt === execution.clocks.completedWall &&
+        observedAt >= window.started &&
+        observedAt <= window.completed,
+      `raw_event_time_window:${eventPath}`,
+    );
+    const outputBytes = await runArtifactIndex.read(
+      event.scenario_output_ref,
+      "scenario_output",
+      FORMAL_EVIDENCE_CAPACITY.maximum_scenario_output_bytes,
+    );
+    validateScenarioOutputBytes({
+      outputBytes,
+      scenario,
+      subject,
+      variantId: event.variant_id,
+      eventPath,
+    });
+    const provenance = await validateFormalExecutionProvenance({
+      execution,
+      scenario,
+      runArtifactIndex,
+      consumedArtifacts,
+      redactionRules,
+      usedRedactionRules,
+      sourcePath: eventPath,
+    });
+    const measurement = validateFormalEventMeasurements({
+      scenario,
+      execution,
+      providerRecord: provenance.providerRecord,
+      priceRates,
+      usedMeters,
+      sourcePath: eventPath,
+      accountingPolicy,
+    });
+    const eventEntry = runArtifactIndex.get(eventPath);
     const eventId = sha256(
       canonical({
-        source_relative_path: sourcePath,
-        source_sha256: source.entry.sha256,
+        run_artifact_path: eventPath,
+        run_artifact_sha256: eventEntry.sha256,
         invocation_id: event.invocation_id,
       }),
     );
-    assert(!eventIds.has(eventId), `raw_event_identity_duplicate:${sourcePath}`);
+    assert(!eventIds.has(eventId), `raw_event_identity_duplicate:${eventPath}`);
     eventIds.add(eventId);
-    if (
-      subject.kind === "cost" &&
-      subject.category === "authoring" &&
-      Object.keys(meterUnits)
-        .filter((meter) => meter.startsWith("provider_"))
-        .some((meter) => !measurement.meters.has(meter))
-    )
-      missingAuthoringUsageKeys.push(key);
     if (measurement.value === null) unpricedEventKeys.push(key);
     byKey.set(key, {
       key,
       eventId,
+      executionId: event.execution_record.execution_id,
       pairId: event.pair_id,
       variantId: event.variant_id,
       subject,
       value: measurement.value,
     });
   }
-  assertFormalSensitiveSourcesConsumed({
-    bundle,
-    usedSensitiveSources,
+  assertFormalRedactionRulesConsumed({
+    bundle: precollectionBundle,
     usedRedactionRules,
   });
-  assertFormalScenarioOutputsConsumed(bundle, usedScenarioOutputs);
+  const formalPaths = runArtifactIndex
+    .paths()
+    .filter((item) => item.startsWith("formal-evidence/"));
+  assert(
+    formalPaths.length <= FORMAL_EVIDENCE_CAPACITY.maximum_formal_files &&
+      formalPaths.every((item) => consumedArtifacts.has(item)) &&
+      consumedArtifacts.size === formalPaths.length,
+    "formal_execution_artifact_set",
+  );
   return {
     byKey,
     eventIds,
+    executionIds,
     usedMeters,
-    missingAuthoringUsageKeys: missingAuthoringUsageKeys.sort(),
     unpricedEventKeys: unpricedEventKeys.sort(),
   };
 }
@@ -156,9 +199,7 @@ export function expectedFormalEvidenceKeys(accountingPolicy) {
     for (const category of stratum.categories)
       for (const pairId of pairs)
         for (const variantId of ["b", "c"])
-          keys.add(
-            evidenceKey({ kind: "cost", category, pairId, variantId }),
-          );
+          keys.add(evidenceKey({ kind: "cost", category, pairId, variantId }));
   }
   const benefit = accountingPolicy.lifecycle_population.purpose_benefit;
   for (const pairId of pairIds)
@@ -184,40 +225,44 @@ export function formalEvidenceKey({
   return evidenceKey({ kind, category, scenarioId, pairId, variantId });
 }
 
-function validateRawEventShape(event, sourcePath, runSetId, invocationIds) {
+function validateRawEventShape(event, eventPath, runSetId, invocationIds) {
   assertExactKeys(
     event,
     [
+      "execution_record",
       "invocation_id",
-      "measurements",
       "observed_at",
       "pair_id",
-      "provenance",
       "run_id",
       "run_set_id",
-      "schema_version",
       "scenario_output_ref",
+      "schema_version",
       "subject",
       "variant_id",
     ],
-    `raw_event_fields:${sourcePath}`,
+    `raw_event_fields:${eventPath}`,
   );
   assert(
     event.schema_version === FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA &&
       event.run_set_id === runSetId &&
       ["b", "c"].includes(event.variant_id) &&
+      typeof event.run_id === "string" &&
+      event.run_id.length > 0 &&
       typeof event.invocation_id === "string" &&
-      event.invocation_id.length > 0 &&
+      /^[a-f0-9]{64}$/u.test(event.invocation_id) &&
       typeof event.scenario_output_ref === "string" &&
-      event.scenario_output_ref.length > 0 &&
+      event.scenario_output_ref.startsWith("formal-evidence/") &&
       !invocationIds.has(event.invocation_id),
-    `raw_event_identity:${sourcePath}`,
+    `raw_event_identity:${eventPath}`,
   );
   invocationIds.add(event.invocation_id);
 }
 
 function validateEventSubject(subject, accountingPolicy, sourcePath) {
-  assert(subject && typeof subject === "object", `raw_event_subject:${sourcePath}`);
+  assert(
+    subject && typeof subject === "object",
+    `raw_event_subject:${sourcePath}`,
+  );
   if (subject.kind === "cost") {
     assertExactKeys(
       subject,
@@ -260,6 +305,28 @@ function validateEventSubject(subject, accountingPolicy, sourcePath) {
     stratum: subject.stratum,
     pairCount: benefit.pair_count,
   };
+}
+
+function validateScenarioOutputBytes({
+  outputBytes,
+  scenario,
+  subject,
+  variantId,
+  eventPath,
+}) {
+  assert(outputBytes.length > 0, `formal_scenario_output_empty:${eventPath}`);
+  const matchesGold = outputBytes.equals(scenario.gold.bytes);
+  if (subject.kind === "cost")
+    assert(matchesGold, `formal_scenario_cost_gold:${eventPath}`);
+  else if (variantId === "b")
+    assert(!matchesGold, `formal_scenario_incident_b_wrong:${eventPath}`);
+  else assert(matchesGold, `formal_scenario_incident_c_correct:${eventPath}`);
+}
+
+function pairRepeat(pairId) {
+  if (pairId === "once") return 1;
+  assert(pairIds.includes(pairId), `raw_event_pair:${pairId}`);
+  return Number.parseInt(pairId.slice(-2), 10);
 }
 
 function evidenceKey({ kind, category, scenarioId, pairId, variantId }) {

@@ -1,0 +1,417 @@
+{
+  "schema_version": "long-task-formal-total-cost-scenario-catalog-v2",
+  "frozen_at": "2026-08-14T00:00:00.000Z",
+  "clock_policy": {
+    "monotonic_clock_id": "runner-monotonic-hrtime-v1",
+    "wall_clock_id": "runner-wall-utc-v1",
+    "provider_clock_id_prefix": "provider-recorded-at-v1:",
+    "wall_monotonic_elapsed_tolerance_ms": 250,
+    "provider_wall_window_tolerance_ms": 5000
+  },
+  "scenarios": [
+    {
+      "scenario_id": "fixed-authoring-task",
+      "kind": "cost",
+      "category": "authoring",
+      "stratum": "repeatable_delivery",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 10,
+      "task_source_ref": "scenarios/fixed-authoring-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-authoring-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": {
+          "presence": "required",
+          "source_kind": "runner-captured-raw-prompt-v1"
+        },
+        "provider_event": {
+          "presence": "required",
+          "source_kind": "invocation-correlated-provider-event-v1"
+        },
+        "meters": {
+          "provider_input_token": {
+            "presence": "required",
+            "source_kind": "invocation-correlated-provider-event-v1"
+          },
+          "provider_output_token": {
+            "presence": "required",
+            "source_kind": "invocation-correlated-provider-event-v1"
+          },
+          "provider_cached_input_token": {
+            "presence": "required",
+            "source_kind": "invocation-correlated-provider-event-v1"
+          },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-runtime-task",
+      "kind": "cost",
+      "category": "runtime",
+      "stratum": "repeatable_delivery",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 10,
+      "task_source_ref": "scenarios/fixed-runtime-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-runtime-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": {
+            "presence": "required",
+            "source_kind": "windows-job-object-accounting-v1"
+          },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-state-task",
+      "kind": "cost",
+      "category": "state",
+      "stratum": "repeatable_delivery",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 10,
+      "task_source_ref": "scenarios/fixed-state-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-state-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": {
+            "presence": "required",
+            "source_kind": "runner-exact-byte-duration-v1"
+          }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-recovery-task",
+      "kind": "cost",
+      "category": "recovery",
+      "stratum": "recovery_once",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-recovery-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-recovery-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": {
+            "presence": "required",
+            "source_kind": "windows-job-object-accounting-v1"
+          },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-maintenance-task",
+      "kind": "cost",
+      "category": "maintenance",
+      "stratum": "maintenance_once",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-maintenance-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-maintenance-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-test-task",
+      "kind": "cost",
+      "category": "test",
+      "stratum": "repeatable_delivery",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 10,
+      "task_source_ref": "scenarios/fixed-test-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-test-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": {
+            "presence": "required",
+            "source_kind": "windows-job-object-accounting-v1"
+          },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-process-task",
+      "kind": "cost",
+      "category": "process",
+      "stratum": "repeatable_delivery",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-delta",
+      "cycle_multiplier": 10,
+      "task_source_ref": "scenarios/fixed-process-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-process-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-introduction-task",
+      "kind": "cost",
+      "category": "introduction",
+      "stratum": "one_time",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 1,
+      "aggregation": "single-paired-delta",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-introduction-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-introduction-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-adoption-task",
+      "kind": "cost",
+      "category": "adoption",
+      "stratum": "one_time",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 1,
+      "aggregation": "single-paired-delta",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-adoption-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-adoption-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-migration-task",
+      "kind": "cost",
+      "category": "migration",
+      "stratum": "one_time",
+      "scenario_kind": "fixed-b-c-same-quality-task",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 1,
+      "aggregation": "single-paired-delta",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-migration-task/task.txt",
+      "gold_source_ref": "scenarios/fixed-migration-task/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": null
+    },
+    {
+      "scenario_id": "fixed-controlled-incident",
+      "kind": "purpose_benefit",
+      "category": null,
+      "stratum": "incident_once",
+      "scenario_kind": "controlled-real-or-sanitized-real-incident",
+      "comparison_variants": ["b", "c"],
+      "pair_count": 5,
+      "aggregation": "median-paired-b-minus-c-loss",
+      "cycle_multiplier": 1,
+      "task_source_ref": "scenarios/fixed-controlled-incident/task.txt",
+      "gold_source_ref": "scenarios/fixed-controlled-incident/gold.bin",
+      "collector_id": "external-real-scenario-collector-v1",
+      "attempt_policy": { "maximum_attempts": 1, "selection": "only-attempt" },
+      "execution_timeout_ms": 3600000,
+      "output_protocol": "runner-fresh-child-only-file-v1",
+      "measurement_profile": {
+        "human_time": {
+          "presence": "required",
+          "source_kind": "runner-interaction-recorder-v1"
+        },
+        "raw_prompt": { "presence": "forbidden" },
+        "provider_event": { "presence": "forbidden" },
+        "meters": {
+          "provider_input_token": { "presence": "forbidden" },
+          "provider_output_token": { "presence": "forbidden" },
+          "provider_cached_input_token": { "presence": "forbidden" },
+          "compute_ms": { "presence": "forbidden" },
+          "storage_byte_hour": { "presence": "forbidden" }
+        }
+      },
+      "external_source_requirement": {
+        "status": "external_pending",
+        "bundle_schema": "level4-controlled-incident-source-bundle-v1",
+        "required_components": [
+          "original-manifest-and-digests",
+          "sanitized-manifest-and-digests",
+          "complete-original-to-sanitized-mapping",
+          "redaction-and-exclusion-dispositions",
+          "incident-provenance",
+          "task-and-gold-derivation",
+          "design-and-runtime-evidence",
+          "authorization-owner-scope-date",
+          "retention-and-publication-terms"
+        ]
+      }
+    }
+  ]
+}

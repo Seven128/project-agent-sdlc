@@ -1,119 +1,71 @@
 import { assert } from "./long_task_real_process_roi_scoring.mjs";
-import {
-  assertExactKeys,
-  meterUnits,
-} from "./long_task_formal_total_cost_shared.mjs";
+import { meterUnits } from "./long_task_formal_total_cost_shared.mjs";
 
 export function validateFormalEventMeasurements({
-  event,
+  scenario,
+  execution,
+  providerRecord,
   priceRates,
   usedMeters,
-  provenance,
   sourcePath,
   accountingPolicy,
 }) {
-  assert(
-    Array.isArray(event.measurements) &&
-      event.measurements.length > 0 &&
-      event.measurements.length <= 16,
-    `raw_event_measurements:${sourcePath}`,
-  );
-  return validateCostMeasurements({
-    measurements: event.measurements,
-    priceRates,
-    usedMeters,
-    provenance,
-    sourcePath,
-    accountingPolicy,
-  });
-}
+  const rawMeters = new Map();
+  if (providerRecord)
+    for (const [meter, field] of [
+      ["provider_input_token", "input_tokens"],
+      ["provider_output_token", "output_tokens"],
+      ["provider_cached_input_token", "cached_input_tokens"],
+    ])
+      rawMeters.set(meter, providerRecord.usage[field]);
+  if (execution.processAccounting)
+    rawMeters.set("compute_ms", execution.processAccounting.compute_ms);
+  if (execution.storage)
+    rawMeters.set("storage_byte_hour", execution.storage.storage_byte_hour);
 
-function validateCostMeasurements({
-  measurements,
-  priceRates,
-  usedMeters,
-  provenance,
-  sourcePath,
-  accountingPolicy,
-}) {
-  let value = 0;
+  let value = humanTimeValue(execution.human, sourcePath, accountingPolicy);
   let priced = true;
-  let humanTimeSeen = false;
   const eventMeters = new Set();
-  for (const measurement of measurements) {
-    if (measurement.kind === "human_time") {
-      assert(!humanTimeSeen, `raw_event_human_time_duplicate:${sourcePath}`);
-      humanTimeSeen = true;
-      value += humanTimeValue(measurement, sourcePath, accountingPolicy);
-      continue;
-    }
-    validateMeteredUsage(measurement, sourcePath, eventMeters);
-    usedMeters.add(measurement.meter);
-    const rate = priceRates.get(measurement.meter);
+  for (const [meter, expectedUnit] of Object.entries(meterUnits)) {
+    const profile = scenario.measurement_profile.meters[meter];
+    const present = rawMeters.has(meter);
+    assert(
+      (profile.presence === "required") === present,
+      `raw_event_measurement_profile:${sourcePath}:${meter}`,
+    );
+    if (!present) continue;
+    const quantity = rawMeters.get(meter);
+    assert(
+      Number.isFinite(quantity) &&
+        quantity >= 0 &&
+        quantity <= Number.MAX_SAFE_INTEGER,
+      `raw_event_meter_quantity:${sourcePath}:${meter}`,
+    );
+    const rate = priceRates.get(meter);
+    eventMeters.add(meter);
+    usedMeters.add(meter);
     if (!rate) {
       priced = false;
       continue;
     }
     assert(
-      measurement.price_source_ref === rate.source_path,
-      `raw_event_price_source_ref:${sourcePath}:${measurement.meter}`,
+      rate.unit === expectedUnit,
+      `raw_event_price_source:${sourcePath}:${meter}`,
     );
-    value += measurement.quantity * rate.ncu_per_unit;
+    value += quantity * rate.ncu_per_unit;
   }
-  if ([...eventMeters].some((meter) => meter.startsWith("provider_")))
-    validateProviderUsage({
-      measurements,
-      eventMeters,
-      provenance,
-      sourcePath,
-    });
-  return { value: priced ? value : null, meters: eventMeters };
-}
-
-function validateProviderUsage({
-  measurements,
-  eventMeters,
-  provenance,
-  sourcePath,
-}) {
-  assert(
-    provenance.providerEvent.disposition !== "not_applicable" &&
-      provenance.providerRecord,
-    `raw_event_provider_retention:${sourcePath}`,
-  );
-  const expected = new Map([
-    ["provider_input_token", provenance.providerRecord.usage.input_tokens],
-    ["provider_output_token", provenance.providerRecord.usage.output_tokens],
-    [
-      "provider_cached_input_token",
-      provenance.providerRecord.usage.cached_input_tokens,
-    ],
-  ]);
-  assert(
-    [...eventMeters]
-      .filter((meter) => meter.startsWith("provider_"))
-      .every((meter) => expected.has(meter)),
-    `raw_event_provider_meter_set:${sourcePath}`,
-  );
-  for (const measurement of measurements) {
-    if (!expected.has(measurement.meter)) continue;
-    assert(
-      measurement.quantity === expected.get(measurement.meter),
-      `raw_event_provider_usage:${sourcePath}:${measurement.meter}`,
-    );
-  }
+  return {
+    value: priced && Number.isFinite(value) ? value : null,
+    meters: eventMeters,
+  };
 }
 
 function humanTimeValue(measurement, sourcePath, accountingPolicy) {
-  assertExactKeys(
-    measurement,
-    ["active_ms", "kind", "wait_ms"],
-    `raw_event_human_time_fields:${sourcePath}`,
-  );
   assert(
-    Number.isSafeInteger(measurement.active_ms) &&
+    measurement &&
+      Number.isFinite(measurement.active_ms) &&
       measurement.active_ms >= 0 &&
-      Number.isSafeInteger(measurement.wait_ms) &&
+      Number.isFinite(measurement.wait_ms) &&
       measurement.wait_ms >= 0,
     `raw_event_human_time:${sourcePath}`,
   );
@@ -123,22 +75,4 @@ function humanTimeValue(measurement, sourcePath, accountingPolicy) {
     (measurement.wait_ms / 3_600_000) *
       accountingPolicy.human_time_rates.wait_cny_per_hour
   );
-}
-
-function validateMeteredUsage(measurement, sourcePath, eventMeters) {
-  assertExactKeys(
-    measurement,
-    ["kind", "meter", "price_source_ref", "quantity", "unit"],
-    `raw_event_meter_fields:${sourcePath}`,
-  );
-  assert(
-    measurement.kind === "metered_usage" &&
-      meterUnits[measurement.meter] === measurement.unit &&
-      Number.isFinite(measurement.quantity) &&
-      measurement.quantity >= 0 &&
-      measurement.quantity <= Number.MAX_SAFE_INTEGER &&
-      !eventMeters.has(measurement.meter),
-    `raw_event_meter:${sourcePath}`,
-  );
-  eventMeters.add(measurement.meter);
 }
