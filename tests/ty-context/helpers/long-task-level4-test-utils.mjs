@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import {
   buildImmutableRunArtifactIndex,
@@ -135,4 +136,60 @@ export function toBytes(value) {
 
 export function digest(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function assertClosedProcessTree(result, minimumProcesses = 1) {
+  assert.equal(result.descendants_cleaned, true);
+  assert.equal(result.active_processes_at_result, 0);
+  assert.ok(result.total_processes >= minimumProcesses);
+}
+
+export function assertCanonicalTimestamp(value) {
+  assert.match(value, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u);
+}
+
+export function runRealChainChild(helper, repositoryRoot) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [helper, repositoryRoot], {
+      cwd: repositoryRoot,
+      windowsHide: true,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    const stdout = [];
+    const diagnostics = [];
+    let interactionCount = 0;
+    child.stdout.on("data", (chunk) => stdout.push(Buffer.from(chunk)));
+    const lines = createInterface({ input: child.stderr, crlfDelay: Infinity });
+    lines.on("line", (line) => {
+      try {
+        const message = JSON.parse(line);
+        if (message.type !== "formal-interaction-start") return;
+        interactionCount += 1;
+        child.stdin.write(
+          `${JSON.stringify({
+            invocation_id: message.invocation_id,
+            state: "active",
+          })}\n`,
+        );
+      } catch {
+        diagnostics.push(line);
+      }
+    });
+    child.once("error", reject);
+    child.once("close", (code, signal) => {
+      if (code !== 0 || interactionCount !== 1) {
+        reject(
+          new Error(
+            `level4_real_chain_child:${code}:${signal}:${diagnostics.join("\n")}`,
+          ),
+        );
+        return;
+      }
+      try {
+        resolve(JSON.parse(Buffer.concat(stdout).toString("utf8")));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
 }

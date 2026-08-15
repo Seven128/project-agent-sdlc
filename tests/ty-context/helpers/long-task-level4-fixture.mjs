@@ -27,9 +27,19 @@ import {
 } from "./long-task-level4-test-utils.mjs";
 
 const runSetId = "fixture-run-set-v4";
-const frozenAt = "2026-08-16T00:30:00.000Z";
+const defaultSourceTimeline = Object.freeze({
+  catalogFrozenAt: "2026-08-16T00:00:00.000Z",
+  collectorFrozenAt: "2026-08-16T00:05:00.000Z",
+  pricePublishedAt: "2026-08-15T00:00:00.000Z",
+  priceFrozenAt: "2026-08-16T00:10:00.000Z",
+  authorizationGrantedAt: "2026-08-15T00:00:00.000Z",
+  precollectionFrozenAt: "2026-08-16T00:30:00.000Z",
+});
 
-export async function createLevel4FormalEvidenceFixture(repositoryRoot) {
+export async function createLevel4FormalEvidenceFixture(
+  repositoryRoot,
+  { sourceTimeline = defaultSourceTimeline } = {},
+) {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-formal-"));
   try {
     const retentionSourceBytes = Buffer.from(
@@ -49,11 +59,16 @@ export async function createLevel4FormalEvidenceFixture(repositoryRoot) {
         "utf8",
       ),
     );
+    catalog.frozen_at = sourceTimeline.catalogFrozenAt;
     const { sources, collectorRef } = buildLevel4FixtureSources({
       catalog,
       retentionSourceBytes,
+      sourceTimeline,
     });
-    const precollectionIdentity = buildPrecollectionIdentity(sources);
+    const precollectionIdentity = buildPrecollectionIdentity(
+      sources,
+      sourceTimeline.precollectionFrozenAt,
+    );
     const precollection = { identity: precollectionIdentity, files: sources };
     await materializeFormalPrecollectionInputs({
       runSetRoot: root,
@@ -157,7 +172,7 @@ function accountingIdentity(accountingPolicy) {
   };
 }
 
-function buildPrecollectionIdentity(sources) {
+function buildPrecollectionIdentity(sources, frozenAt) {
   const entries = [...sources.values()]
     .map(({ entry }) => entry)
     .sort((left, right) => left.path.localeCompare(right.path));

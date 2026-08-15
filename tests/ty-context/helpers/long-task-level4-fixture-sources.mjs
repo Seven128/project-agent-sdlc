@@ -1,8 +1,15 @@
 import { REAL_PROCESS_SCHEMAS } from "../../../tools/long_task_real_process_schema_policy.mjs";
-import { canonical, sha256 } from "../../../tools/long_task_real_process_roi_scoring.mjs";
+import {
+  canonical,
+  sha256,
+} from "../../../tools/long_task_real_process_roi_scoring.mjs";
 import { digest, toBytes } from "./long-task-level4-test-utils.mjs";
 
-export function buildLevel4FixtureSources({ catalog, retentionSourceBytes }) {
+export function buildLevel4FixtureSources({
+  catalog,
+  retentionSourceBytes,
+  sourceTimeline,
+}) {
   const sources = new Map();
   const add = (relative, role, value) => {
     const bytes = toBytes(value);
@@ -30,11 +37,33 @@ export function buildLevel4FixtureSources({ catalog, retentionSourceBytes }) {
     );
   }
   const collectorRef = "collectors/external-real-collector.mjs";
-  add(collectorRef, "collector", "export const fixture = true;\n");
+  add(
+    collectorRef,
+    "collector",
+    `import { writeFile } from "node:fs/promises";
+
+const argv = process.argv.slice(2);
+const readArgument = (name) => {
+  const indexes = argv.flatMap((value, index) => value === name ? [index] : []);
+  if (indexes.length !== 1 || indexes[0] + 1 >= argv.length)
+    throw new Error(\`fixture_collector_argument:\${name}\`);
+  return argv[indexes[0] + 1];
+};
+const output = readArgument("--output");
+const invocationId = readArgument("--invocation-id");
+const scenarioId = readArgument("--scenario-id");
+readArgument("--candidate-package");
+readArgument("--task");
+readArgument("--variant-id");
+if (!/^[a-f0-9]{64}$/u.test(invocationId))
+  throw new Error("fixture_collector_invocation");
+await writeFile(output, Buffer.from(\`gold:\${scenarioId}\\n\`), { flag: "wx" });
+`,
+  );
   add("collectors/catalog.json", "collector", {
     schema_version:
       REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_COLLECTOR_CATALOG_SCHEMA,
-    frozen_at: "2026-08-16T00:05:00.000Z",
+    frozen_at: sourceTimeline.collectorFrozenAt,
     collectors: [
       {
         collector_id: "external-real-scenario-collector-v1",
@@ -51,17 +80,17 @@ export function buildLevel4FixtureSources({ catalog, retentionSourceBytes }) {
       },
     ],
   });
-  addPriceSources(add);
+  addPriceSources(add, sourceTimeline);
   add(
     "state/retention-source.txt",
     "state_retention_source",
     retentionSourceBytes,
   );
-  addIncidentSources(add, sources, catalog);
+  addIncidentSources(add, sources, catalog, sourceTimeline);
   return { sources, collectorRef };
 }
 
-function addPriceSources(add) {
+function addPriceSources(add, sourceTimeline) {
   const documentRef = "prices/official-price-document.json";
   add(documentRef, "price_document", {
     schema_version:
@@ -69,7 +98,7 @@ function addPriceSources(add) {
     source_kind: "official_price",
     publisher: "fixture-provider",
     source_locator: "fixture://provider/prices/2026-08-15",
-    published_at: "2026-08-15T00:00:00.000Z",
+    published_at: sourceTimeline.pricePublishedAt,
     currency: "CNY",
     rates: [
       ["provider_input_token", "token", 0.000001],
@@ -87,18 +116,14 @@ function addPriceSources(add) {
   add("prices/official-price-source.json", "price_source", {
     schema_version: REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PRICE_SOURCE_SCHEMA,
     source_document_ref: documentRef,
-    frozen_at: "2026-08-16T00:10:00.000Z",
+    frozen_at: sourceTimeline.priceFrozenAt,
     currency: "CNY",
   });
 }
 
-function addIncidentSources(add, sources, catalog) {
+function addIncidentSources(add, sources, catalog, sourceTimeline) {
   const manifests = {};
-  const roles = [
-    "incident_design",
-    "incident_provenance",
-    "incident_runtime",
-  ];
+  const roles = ["incident_design", "incident_provenance", "incident_runtime"];
   for (const kind of ["original", "sanitized"]) {
     const entries = [];
     for (const role of roles) {
@@ -135,7 +160,7 @@ function addIncidentSources(add, sources, catalog) {
     })),
     authorization: {
       authorization_id: "synthetic-fixture-authorization",
-      granted_at: "2026-08-15T00:00:00.000Z",
+      granted_at: sourceTimeline.authorizationGrantedAt,
       owner: "fixture-owner",
       scope: "synthetic-structure-only",
       permitted_uses: [

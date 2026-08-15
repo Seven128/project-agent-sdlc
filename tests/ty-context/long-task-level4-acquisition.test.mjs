@@ -10,9 +10,15 @@ import {
 } from "../../tools/long_task_formal_acquisition_runtime.mjs";
 import { formalCollectorEnvironment } from "../../tools/long_task_formal_collection_io.mjs";
 import { collectFormalTotalCostArtifacts } from "../../tools/long_task_formal_total_cost_collection.mjs";
+import { collectRealProcessRoi } from "../../tools/long_task_real_process_roi_runner.mjs";
 import { FormalProcessSupervisor } from "../../tools/formal_process_supervisor.mjs";
 import { createLevel4FormalEvidenceFixture } from "./helpers/long-task-level4-fixture.mjs";
 import { buildLevel4RuntimeTcbIdentity } from "./helpers/long-task-level4-runtime-identity.mjs";
+import {
+  assertCanonicalTimestamp,
+  assertClosedProcessTree,
+  runRealChainChild,
+} from "./helpers/long-task-level4-test-utils.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 let identity;
@@ -80,6 +86,14 @@ test("formal collection rejects fake recorder/supervisor injection and external-
       collectFormalTotalCostArtifacts({ ...options, processSupervisor: {} }),
     /formal_collection_options/u,
   );
+  for (const injected of [
+    { interactionRecorder: {} },
+    { supervisorFactory: () => ({}) },
+  ])
+    await assert.rejects(
+      () => collectRealProcessRoi({ candidate: "HEAD", ...injected }),
+      /real_process_roi_collection_options/u,
+    );
   const realNow = Date.now;
   Date.now = () => Date.parse("2026-08-16T04:00:00.000Z");
   try {
@@ -130,8 +144,7 @@ test(
         'quote"token',
       ]);
       assert.equal(exactOutput.secret, null);
-      assert.equal(exact.descendants_cleaned, true);
-      assert.equal(exact.active_processes_at_result, 0);
+      assertClosedProcessTree(exact);
       assert.ok(exact.total_cpu_100ns > 0);
       assert.equal(
         exact.process_monotonic_clock_id,
@@ -143,6 +156,14 @@ test(
           BigInt(exact.process_monotonic_started_ns),
       );
       assert.ok(Date.parse(exact.completed_at) >= Date.parse(exact.started_at));
+      assertCanonicalTimestamp(exact.started_at);
+      assertCanonicalTimestamp(exact.completed_at);
+
+      const fastParent = await run("fast-parent-grandchild", [
+        "-e",
+        "require('node:child_process').spawn(process.execPath,['-e','setTimeout(()=>process.exit(0),150)'],{stdio:'ignore'}).unref()",
+      ]);
+      assertClosedProcessTree(fastParent, 2);
 
       const timed = await run(
         "descendant-timeout",
@@ -153,8 +174,7 @@ test(
         400,
       );
       assert.equal(timed.timed_out, true);
-      assert.equal(timed.descendants_cleaned, true);
-      assert.equal(timed.active_processes_at_result, 0);
+      assertClosedProcessTree(timed, 2);
       assert.ok(timed.total_processes >= 2);
 
       const overflow = await run(
@@ -164,8 +184,16 @@ test(
         1024,
       );
       assert.equal(overflow.output_overflow, true);
-      assert.equal(overflow.descendants_cleaned, true);
-      assert.equal(overflow.active_processes_at_result, 0);
+      assertClosedProcessTree(overflow);
+
+      const stderrOverflow = await run(
+        "stderr-overflow",
+        ["-e", "process.stderr.write(Buffer.alloc(65536,120))"],
+        10_000,
+        1024,
+      );
+      assert.equal(stderrOverflow.output_overflow, true);
+      assertClosedProcessTree(stderrOverflow);
 
       await writeFile(path.join(root, "preexisting.stdout.log"), "stale");
       await assert.rejects(
@@ -198,5 +226,34 @@ test(
       () => new FormalProcessSupervisor(digestDrift),
       /formal_process_supervisor_runtime_tcb/u,
     );
+  },
+);
+
+test(
+  "real Windows Job execution reaches event, manifest v2, immutable index, execution validation, and an external-pending evaluator result",
+  { skip: process.platform !== "win32", timeout: 180_000 },
+  async () => {
+    const helper = path.join(
+      repositoryRoot,
+      "tests",
+      "ty-context",
+      "helpers",
+      "long-task-level4-real-chain-child.mjs",
+    );
+    const result = await runRealChainChild(helper, repositoryRoot);
+    assert.match(
+      result.event_path,
+      /^formal-evidence\/[a-f0-9]{64}\/event\.json$/u,
+    );
+    assert.equal(
+      result.manifest_schema,
+      "long-task-real-process-roi-manifest-v2",
+    );
+    assert.ok(result.indexed_files >= 586);
+    assert.match(result.execution_id, /^[a-f0-9]{64}$/u);
+    assert.match(result.runtime_tcb_identity_sha256, /^[a-f0-9]{64}$/u);
+    assert.equal(result.admitted, true);
+    assert.equal(result.support_complete, false);
+    assert.deepEqual(result.blockers, ["controlled_incident_external_pending"]);
   },
 );

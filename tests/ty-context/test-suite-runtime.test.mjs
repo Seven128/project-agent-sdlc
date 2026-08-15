@@ -366,13 +366,74 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 18);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 55);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 56);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
-  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 23);
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 24);
+  const longTaskCriticalCount = criticalSentinelsForSuite("long-task").length;
+  const defaultCriticalCount = criticalSentinelsForSuite("default").length;
+  const [roiDesign, authoringGovernance, deliveryBenchmarkContext] =
+    await Promise.all([
+      readFile(
+        path.join(repositoryRoot, "docs", "test-suite-roi-redesign.md"),
+        "utf8",
+      ),
+      readFile(
+        path.join(
+          repositoryRoot,
+          ".codex",
+          "skills",
+          "authoring",
+          "harness_package_design",
+          "references",
+          "test-and-benchmark-governance.md",
+        ),
+        "utf8",
+      ),
+      readFile(
+        path.join(
+          repositoryRoot,
+          "project_context",
+          "areas",
+          "delivery-benchmark.md",
+        ),
+        "utf8",
+      ),
+    ]);
+  assert.match(
+    roiDesign,
+    new RegExp(
+      `${CRITICAL_TEST_SENTINELS.length} stable critical-semantic[\\s\\S]*current ${CRITICAL_TEST_SENTINELS.length} records derive ${LONG_TASK_TRUST_TEST_FILES.length} unique Trust files`,
+      "u",
+    ),
+  );
+  assert.match(
+    roiDesign,
+    new RegExp(
+      `${LONG_TASK_PURE_TEST_FILES.length}-pure/${LONG_TASK_ISOLATED_TEST_FILES.length}-isolated[\\s\\S]*${LONG_TASK_EXCLUSIVE_TEST_FILES.length} exclusive`,
+      "u",
+    ),
+  );
+  assert.match(
+    authoringGovernance,
+    new RegExp(
+      `${LONG_TASK_PURE_TEST_FILES.length} pure, ${LONG_TASK_ISOLATED_TEST_FILES.length} isolated and ${LONG_TASK_EXCLUSIVE_TEST_FILES.length} exclusive[\\s\\S]*${CRITICAL_TEST_SENTINELS.length} critical sentinels deriving ${LONG_TASK_TRUST_TEST_FILES.length} unique Trust files`,
+      "u",
+    ),
+  );
+  assert.equal(longTaskCriticalCount + defaultCriticalCount, 32);
+  assert.match(
+    deliveryBenchmarkContext,
+    /long-task-level4-source-readiness\.test\.mjs/u,
+  );
+  assert.match(
+    deliveryBenchmarkContext,
+    /long-task-level4-measurement-integrity\.test\.mjs/u,
+  );
   for (const file of [
     "long-task-level4-acquisition.test.mjs",
     "long-task-level4-formal-accounting.test.mjs",
     "long-task-level4-governance.test.mjs",
+    "long-task-level4-measurement-integrity.test.mjs",
     "long-task-level4-package-promotion.test.mjs",
     "long-task-level4-source-readiness.test.mjs",
   ])
@@ -581,7 +642,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    31,
+    32,
   );
 
   const observerSentinelControls = new Map([

@@ -21,6 +21,7 @@ export async function writeFormalScenarioRecords(options) {
     argv,
     supervised,
     humanTrace,
+    runtimeTcbIdentity,
     before,
     after,
   } = options;
@@ -47,6 +48,8 @@ export async function writeFormalScenarioRecords(options) {
     refs,
     argv,
     supervised,
+    humanTrace,
+    runtimeTcbIdentity,
     ...measurementFlags,
   });
   const event = {

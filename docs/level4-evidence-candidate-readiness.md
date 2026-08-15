@@ -56,6 +56,34 @@ invalidates the evidence and requires recollection and independent reaudit.
 - R12 remains outside real-process ROI `CASE_IDS`; no Delivery Contract, Active
   Authority, Final Receipt or Long-Task Workflow self-bootstrap was added.
 
+## Restored Dynamic-Test Mapping
+
+The plan's twenty enumerated attack/control assertions are preserved in the
+following fourteen behavior cases. These are executable tests, not static
+source-string substitutes.
+
+| Original behavior case | Current test file / test name | Preserved attack or control meaning |
+| --- | --- | --- |
+| 1. duplicate-key / invalid UTF-8 | `long-task-level4-measurement-integrity.test.mjs` — `formal source bundles preserve ... strict JSON ...` | The strict parser rejects duplicate keys, invalid UTF-8 and excessive JSON depth. |
+| 2. no-follow Source | same test | A symlink or hardlink cannot replace a frozen precollection Source. |
+| 3. Source file/byte fuses | same test | File-count, per-file and aggregate Source overflows fail closed. |
+| 4. precollection materialization | `long-task-level4-formal-accounting.test.mjs` — `the runner precollection plan freezes and materializes every fixed external input` | Every frozen entry is materialized with exact bytes and digest before collection. |
+| 5. invocation-bound Provider usage | `long-task-level4-measurement-integrity.test.mjs` — `Provider identities, prompts, usage, correlation IDs, reuse, and cached zero remain verifier-bound` | Provider/model/adapter/invocation/bridge/prompt/usage correlation is recomputed; cached zero remains an explicit Provider value. |
+| 6. one invocation, one category | `long-task-level4-measurement-integrity.test.mjs` — `[critical:level4-measurement-integrity-boundary] ... cross-category invocation reuse fail closed` | One invocation cannot own two formal categories. |
+| 7. missing authoritative Authoring usage | same file — `missing authoritative authoring usage produces an unsupported reportable result` | Removing the required Provider event cannot be replaced by another meter or packet assertion. |
+| 8. post-collection price Source | same file — `formal source bundles preserve ... pre-collection prices` | A price frozen after collection start is rejected. |
+| 9. packet normalized-value self-report | same file — `formal purpose benefit rejects packet-authored normalized loss values` | Packet-authored comparison/normalized authority is rejected. |
+| 10. actual invoice | `long-task-level4-formal-accounting.test.mjs` — `formal evidence accepts a pre-collection actual-invoice price source` | Invoice quantity and amount yield verifier-owned per-unit rates. |
+| 11. ten-delivery / once-only strata | same file — `formal evidence accounting applies the frozen ten-delivery and once-only strata` | Repeatable and once-only lifecycle costs retain their distinct multipliers. |
+| 12. incomplete packet unsupported | `long-task-level4-measurement-integrity.test.mjs` — the critical incomplete-packet case | A missing raw binding fails admission rather than being defaulted. |
+| 13. positivity theorem | `long-task-level4-formal-accounting.test.mjs` — the cost-reduction and four-positive-pairs/CV tests | Cost reductions do not offset the 1.25 denominator; at least 4/5 pairs and sample CV at most 20% remain mandatory. |
+| 14. raw scenario/output reconstruction | `long-task-level4-measurement-integrity.test.mjs` — `formal scenarios derive same-quality cost and incident outcomes from raw outputs` plus the complete synthetic control | Cost B/C must both equal gold, incident B must be wrong and C correct, output stays execution-bound, and purpose benefit is reconstructed from the complete raw event set. |
+
+Additional dynamic boundaries cover fake acquisition injection, real Windows
+Job timestamp propagation, runtime-TCB drift, exact-one runner Provider bridge,
+Provider child self-report, State swaps and ledger recomputation, every zero
+policy, real package reproduction/mutation, and direct-child governance rules.
+
 ## Derived Capacity
 
 The source of truth is the frozen scenario catalog plus
@@ -92,12 +120,12 @@ cost observations rather than formal evidence.
 
 | Scope | Files | Added lines | Deleted lines | Net lines | Git blob byte delta |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Production tools + frozen real-process inputs | 40 | 2,891 | 1,031 | +1,860 | +64,922 |
-| Tests and shared test helpers | 16 | 2,348 | 1,674 | +674 | +30,974 |
+| Production tools + frozen real-process inputs | 40 | 2,901 | 1,031 | +1,870 | +65,503 |
+| Tests and shared test helpers | 21 | 3,839 | 1,672 | +2,167 | +71,045 |
 | Level-4 modularity configuration | 1 | 0 | 7 | -7 | -725 |
 
 Seven bounded production owners were added. The former 1,634-line monolithic
-Level-4 fixture test was removed and replaced by five boundary tests plus shared
+Level-4 fixture test was removed and replaced by six boundary tests plus shared
 catalog-driven helpers. Every new source/test carrier is below the touched-source
 300-line threshold, and the prior `fixture_snapshot` modularity waiver was
 removed. The extra production bytes map to distinct new trust boundaries rather
@@ -109,9 +137,9 @@ These results exercise implementation shape only. They are not bound real
 evidence and do not satisfy Level 4:
 
 - A complete synthetic 86-execution structure produced 586 formal files,
-  625 indexed files, 500,378 run-set bytes and 452,193 formal bytes. Index
-  construction took 1,591.825 ms; formal evaluation took 415.713 ms; combined
-  time was 2,007.539 ms. Node reported peak RSS 61,526,016 bytes. The result was
+  625 indexed files, 501,108 run-set bytes and 452,193 formal bytes. Index
+  construction took 833.466 ms; formal evaluation took 376.673 ms; combined
+  time was 1,210.139 ms. Node reported peak RSS 62,423,040 bytes. The result was
   deliberately `support_complete=false`, `accounting=null` and
   `controlled_incident_external_pending`.
 - The package materializer reproduced baseline commit
@@ -122,11 +150,18 @@ evidence and do not satisfy Level 4:
   `8a2e082afd5d40bb314bc2a7e6693c8682608f93437eb8a53609a5ef48cdf105`.
   This proves the materializer test path for that baseline only; exact Evidence
   Candidate materialization must be captured after its commit exists.
-- The five split boundary suites and the real-process/suite-policy regressions
-  passed together as 69 tests in approximately 236 seconds with reviewed
-  concurrency two on the current Windows host. This includes two real package
-  materializations and real process-tree exercises. It is a local diagnostic
-  without a cross-host performance claim.
+- The six split boundary suites, real-process regression and suite-policy
+  regression passed as 70 tests in approximately 322 seconds across their
+  current Windows runs. The boundary run used reviewed concurrency two and
+  included four real package materializations plus real process-tree exercises;
+  the existing real-process and policy owners retained their required serial
+  execution. This is a local diagnostic without a cross-host performance claim.
+- The Job control batch, including fast-parent/grandchild closure, timeout and
+  independent stdout/stderr overflow cleanup, completed in 2,463.265 ms. The
+  loopback Provider exact-one/attack batch completed in 118.858 ms without an
+  external API call. The State capture/link/proxy/empty control batch completed
+  in 28.769 ms. These are failure-path and local mechanism costs, not production
+  workload or Provider-price measurements.
 - The State control reconstructed the exact sorted `betaalpha` payload at nine
   bytes and rejected empty, symlink, reparse/hardlink and package-proxy inputs.
   Its 24-hour retention basis is explicitly test-only. No production retention
@@ -144,7 +179,7 @@ evidence and do not satisfy Level 4:
 | Fixed Provider bridge and two Authoring artifacts per execution | Rejects child-authored usage, account-level estimates, missing request correlation and credential leakage into the child. |
 | State ledger plus payload and a 4-MiB payload fuse | Rejects package-as-State, mtime/sampling proxies, unrecomputable byte-hours and link-based substitution. |
 | Immutable 586-artifact formal closure and unique consumption | Rejects packet comparison authority, cross-execution reuse and post-index mutation. |
-| Five boundary tests and shared helpers | Separately localizes accounting, process acquisition, source/State/Provider readiness, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
+| Six boundary tests and shared helpers | Separately localize accounting, measurement integrity, process acquisition, source/State/Provider readiness, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
 
 ## External Inputs Required Before Collection
 

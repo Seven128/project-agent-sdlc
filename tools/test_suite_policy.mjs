@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 23,
+    max_files: 24,
     reviewed_on: "2026-08-16",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, measurement integrity, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -178,6 +178,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-level4-formal-accounting.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves the 11-scenario required/forbidden measurement owner, catalog-derived exact 86-execution/586-file immutable evidence closure, pre-spawn invocation and post-exit execution identities, restored dynamic source/accounting/output controls, schema-family fail-closed behavior and synthetic external-pending non-promotion while verify_long_task_real_process_roi remains the sole formal conclusion owner.",
+  ),
+  criticalSentinel(
+    "level4-measurement-integrity-boundary",
+    "long-task-level4-measurement-integrity.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves incomplete packets, cross-category invocation reuse, source parsing/fuses, raw output binding, Provider correlation/usage, State payload/ledger recomputation and per-scenario zero policies fail closed while the complete synthetic control remains external-pending.",
   ),
   criticalSentinel(
     "level4-acquisition-runtime-boundary",
@@ -351,6 +357,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-level4-acquisition.test.mjs",
   "long-task-level4-formal-accounting.test.mjs",
   "long-task-level4-governance.test.mjs",
+  "long-task-level4-measurement-integrity.test.mjs",
   "long-task-level4-package-promotion.test.mjs",
   "long-task-level4-source-readiness.test.mjs",
   "long-task-execution-observation.test.mjs",
@@ -622,11 +629,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 55 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 56 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/55/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/56/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 
