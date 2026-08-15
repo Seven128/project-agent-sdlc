@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 22,
+    max_files: 23,
     reviewed_on: "2026-08-16",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, sealed acquisition, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -183,7 +183,13 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "level4-acquisition-runtime-boundary",
     "long-task-level4-acquisition.test.mjs",
     ["long-task", "long-task-trust"],
-    "Proves the private branded acquisition runtime cannot accept recorder/supervisor injection; the Windows Job owner preserves exact argv, full-tree containment/cleanup, cumulative CPU, split clocks, timeout and bounded streams; State uses exact payload/retention; Provider and unavailable external Sources fail closed.",
+    "Proves the private branded acquisition runtime cannot accept recorder/supervisor injection and the Windows Job owner preserves exact argv, full-tree containment/cleanup, cumulative CPU, split clocks, timeout and bounded streams.",
+  ),
+  criticalSentinel(
+    "level4-source-readiness-boundary",
+    "long-task-level4-source-readiness.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves dry-run and formal collection share fail-closed source readiness, every accounting-policy price meter is required, State uses exact delivery-scoped payload/retention, Provider availability remains parent-owned, and only the sole verifier emits false pre-evidence ROI Booleans.",
   ),
   criticalSentinel(
     "level4-package-promotion-boundary",
@@ -346,6 +352,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-level4-formal-accounting.test.mjs",
   "long-task-level4-governance.test.mjs",
   "long-task-level4-package-promotion.test.mjs",
+  "long-task-level4-source-readiness.test.mjs",
   "long-task-execution-observation.test.mjs",
   "long-task-model-choice-checkpoint.test.mjs",
   "long-task-non-completing-source.test.mjs",
@@ -615,11 +622,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 54 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 55 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/54/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/55/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

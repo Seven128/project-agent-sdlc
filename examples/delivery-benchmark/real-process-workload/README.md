@@ -67,17 +67,26 @@ Run `node tools/verify_long_task_real_process_roi.mjs --dry-run --candidate
 <commit> --formal-evidence-plan <plan.json>` before formal collection. The
 plan directory must contain a sibling `sources/` tree whose sorted manifest
 freezes every collector, machine-readable invoice/official-price document and
-envelope, one fixed scenario catalog with its exact task/gold inputs, and every
-redaction rule required by qualified sanitized material. Collection materializes those exact
-bytes into the run set before execution; omitting the plan is allowed for
-diagnostic collection but makes any later formal packet unsupported. A full
+envelope, the controlled-incident bundle and all original/sanitized material,
+one fixed scenario catalog with its exact task/gold inputs, the delivery-scoped
+State-retention Source, and every redaction rule required by qualified sanitized
+material. Dry-run reports `lifecycle_collection_executable` separately from
+`formal_collection_executable`; no plan leaves the former dependent on the clean
+candidate but forces the latter false with bounded `external_pending` reasons.
+The sole verifier also reports `total_roi_supported = false` and
+`total_roi_positive = false` because a dry-run contains no real evidence.
+Collection applies the same source preflight before any A/B/C package
+materialization and materializes the exact frozen bytes into the run set before
+formal execution. Omitting the plan remains allowed only for diagnostic
+lifecycle collection and makes any later formal packet unsupported. A full
 collection intentionally waits for a clean final C commit and uses temporary
 detached worktrees for A, B, and C.
 
 The plan has this fixed shape; `identity_sha256` is SHA-256 of canonical JSON
 for `{ frozen_at, entries }`, and entry roles are limited to `collector`,
-`price_document`, `price_source`, `redaction_rule`, `scenario_catalog`,
-`scenario_source`, and `scenario_gold`:
+`incident_source`, `price_document`, `price_source`, `redaction_rule`,
+`scenario_catalog`, `scenario_source`, `scenario_gold`, and
+`state_retention_source`:
 
 ```json
 {

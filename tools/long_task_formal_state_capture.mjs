@@ -8,7 +8,10 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
-import { FORMAL_EVIDENCE_CAPACITY, REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
+import {
+  FORMAL_EVIDENCE_CAPACITY,
+  REAL_PROCESS_SCHEMAS,
+} from "./long_task_real_process_schema_policy.mjs";
 import {
   readFreshFormalFile,
   writeFormalJson,
@@ -188,6 +191,7 @@ function toExecutionRelative(executionRoot, target, invocationId) {
 function validateRetention(value) {
   if (
     value?.status !== "frozen_supported" ||
+    value.scope !== "this-delivery-precollection-proxy-only" ||
     !Number.isSafeInteger(value.retention_hours) ||
     value.retention_hours <= 0 ||
     value.retention_hours >

@@ -52,6 +52,21 @@ export function withoutDerivedExecutionFields(record) {
   return projected;
 }
 
+export function clonePrecollection(precollection) {
+  return {
+    identity: structuredClone(precollection.identity),
+    files: new Map(
+      [...precollection.files].map(([key, source]) => [
+        key,
+        {
+          entry: structuredClone(source.entry),
+          bytes: Buffer.from(source.bytes),
+        },
+      ]),
+    ),
+  };
+}
+
 export async function writeArtifact(root, relative, value) {
   const target = path.join(root, ...relative.split("/"));
   await mkdir(path.dirname(target), { recursive: true });

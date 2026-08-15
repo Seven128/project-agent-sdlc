@@ -66,11 +66,7 @@ export class FormalProviderCaptureAdapter {
   }
 
   assertAvailable() {
-    if (
-      this.#identity.support.model_configured !== true ||
-      typeof this.#credential !== "string" ||
-      this.#credential.length === 0
-    )
+    if (!providerSourceAvailable(this.#identity, this.#credential))
       throw new Error("formal_provider_source_unavailable");
   }
 
@@ -171,8 +167,7 @@ export class FormalProviderCaptureAdapter {
   }
 
   async #invoke(prompt) {
-    if (prompt.length === 0)
-      throw new Error("formal_provider_prompt_empty");
+    if (prompt.length === 0) throw new Error("formal_provider_prompt_empty");
     let promptText;
     try {
       promptText = new TextDecoder("utf-8", { fatal: true }).decode(prompt);
@@ -228,6 +223,17 @@ export class FormalProviderCaptureAdapter {
   }
 }
 
+export function formalProviderSourceAvailability(identity) {
+  assertProviderIdentity(identity);
+  const credential = process.env.OPENAI_API_KEY ?? null;
+  return Object.freeze({
+    model_configured: identity.support.model_configured === true,
+    credential_configured:
+      typeof credential === "string" && credential.length > 0,
+    available: providerSourceAvailable(identity, credential),
+  });
+}
+
 function assertProviderIdentity(identity) {
   assert(
     identity?.adapter_id === FORMAL_PROVIDER_ADAPTER_ID &&
@@ -235,6 +241,14 @@ function assertProviderIdentity(identity) {
       identity.endpoint === endpoint &&
       /^[a-f0-9]{64}$/u.test(identity.identity_sha256 ?? ""),
     "formal_provider_adapter_identity",
+  );
+}
+
+function providerSourceAvailable(identity, credential) {
+  return (
+    identity.support.model_configured === true &&
+    typeof credential === "string" &&
+    credential.length > 0
   );
 }
 

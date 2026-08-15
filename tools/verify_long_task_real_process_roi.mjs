@@ -925,7 +925,17 @@ async function main() {
       repositoryRoot: root,
       formalEvidencePlan: args.formalEvidencePlan,
     });
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          ...result,
+          total_roi_supported: false,
+          total_roi_positive: false,
+        },
+        null,
+        2,
+      )}\n`,
+    );
     return;
   }
   if (args.collect) {

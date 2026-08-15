@@ -366,14 +366,15 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 18);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 54);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 55);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
-  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 22);
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 23);
   for (const file of [
     "long-task-level4-acquisition.test.mjs",
     "long-task-level4-formal-accounting.test.mjs",
     "long-task-level4-governance.test.mjs",
     "long-task-level4-package-promotion.test.mjs",
+    "long-task-level4-source-readiness.test.mjs",
   ])
     assert.equal(LONG_TASK_TRUST_TEST_FILES.includes(file), true);
   assert.equal(
@@ -580,7 +581,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    30,
+    31,
   );
 
   const observerSentinelControls = new Map([

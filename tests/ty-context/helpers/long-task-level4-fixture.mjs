@@ -20,7 +20,11 @@ import { materializeFormalPrecollectionInputs } from "../../../tools/long_task_f
 import { expectedFormalEvidenceKeys } from "../../../tools/long_task_formal_total_cost_events.mjs";
 import { buildLevel4FixtureSources } from "./long-task-level4-fixture-sources.mjs";
 import { materializeLevel4FixtureEvents } from "./long-task-level4-fixture-events.mjs";
-import { digest, toBytes, writeArtifact } from "./long-task-level4-test-utils.mjs";
+import {
+  digest,
+  toBytes,
+  writeArtifact,
+} from "./long-task-level4-test-utils.mjs";
 
 const runSetId = "fixture-run-set-v4";
 const frozenAt = "2026-08-16T00:30:00.000Z";
@@ -129,6 +133,7 @@ async function readFixtureAccountingPolicy(repositoryRoot, retentionBytes) {
     ),
   );
   policy.state_storage_retention = {
+    scope: "this-delivery-precollection-proxy-only",
     status: "frozen_supported",
     retention_hours: 24,
     basis: "fixture-only-exact-retention-contract",
@@ -206,8 +211,10 @@ function buildRuns(setupByVariant) {
 
 function assertFixtureEventPopulation(result, accountingPolicy) {
   if (
-    result.executionIndex !== FORMAL_EVIDENCE_CAPACITY.expected_execution_count ||
-    result.artifactBindings.length !== expectedFormalEvidenceKeys(accountingPolicy).size
+    result.executionIndex !==
+      FORMAL_EVIDENCE_CAPACITY.expected_execution_count ||
+    result.artifactBindings.length !==
+      expectedFormalEvidenceKeys(accountingPolicy).size
   )
     throw new Error("level4_fixture_event_population");
 }
@@ -224,7 +231,8 @@ function buildPacket(options) {
       completed_at: "2026-08-16T02:00:00.000Z",
     },
     accounting_policy_identity: options.accountingPolicyIdentity,
-    precollection_identity_sha256: options.precollectionIdentity.identity_sha256,
+    precollection_identity_sha256:
+      options.precollectionIdentity.identity_sha256,
     candidate_identities: ["a", "b", "c"].map((variantId) => ({
       variant_id: variantId,
       commit: setupByVariant.get(variantId).commit,

@@ -1,12 +1,6 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
@@ -27,6 +21,7 @@ import {
   variantDefinitions,
 } from "./long_task_real_process_roi_policy.mjs";
 import { readFormalAccountingPolicy } from "./long_task_formal_total_cost_evidence.mjs";
+import { assessFormalCollectionReadiness } from "./long_task_formal_collection_readiness.mjs";
 import {
   materializeFormalPrecollectionInputs,
   readFormalPrecollectionPlan,
@@ -38,12 +33,11 @@ import {
   sha256,
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
-import {
-  buildRealProcessArtifactManifest,
-} from "./long_task_real_process_artifacts.mjs";
+import { buildRealProcessArtifactManifest } from "./long_task_real_process_artifacts.mjs";
 import { materializeLongTaskPackage } from "./long_task_package_materialization.mjs";
 import { deriveFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
 import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
+import { formalProviderSourceAvailability } from "./long_task_formal_provider_capture.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
@@ -102,6 +96,7 @@ export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
   "tools/long_task_formal_total_cost_accounting.mjs",
   "tools/long_task_formal_total_cost_accounting_policy.mjs",
   "tools/long_task_formal_total_cost_collectors.mjs",
+  "tools/long_task_formal_collection_readiness.mjs",
   "tools/long_task_formal_total_cost_collection.mjs",
   "tools/long_task_formal_collection_io.mjs",
   "tools/long_task_formal_scenario_collection.mjs",
@@ -219,6 +214,22 @@ export async function prepareRealProcessRoiPlan({
     environment,
     benchmarkImplementationIdentity,
   });
+  const validationTimestamp = Date.now();
+  const sourceReadiness = assessFormalCollectionReadiness({
+    precollection: formalPrecollection,
+    accountingPolicy,
+    validationWindow: {
+      started: validationTimestamp,
+      completed: validationTimestamp,
+    },
+  });
+  const providerAvailability = formalProviderSourceAvailability(
+    formalRuntimeTcbIdentity.provider_adapter,
+  );
+  const formalCollectionReadiness = combineFormalCollectionReadiness(
+    sourceReadiness,
+    providerAvailability,
+  );
   const frozenConfig = {
     schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
     purpose: "real-process-lifecycle-roi-only",
@@ -287,6 +298,7 @@ export async function prepareRealProcessRoiPlan({
     frozenConfig,
     formalPrecollection,
     accountingPolicy,
+    formalCollectionReadiness,
   };
 }
 
@@ -299,12 +311,26 @@ export async function dryRunRealProcessRoi(options) {
     governance_judgment_included: false,
     observed_lifecycle_status: "not_collected",
     formal_status: "not_evaluated",
-    executable: plan.worktreeClean,
-    reason: plan.worktreeClean
+    lifecycle_collection_executable: plan.worktreeClean,
+    lifecycle_collection_blocker: plan.worktreeClean
       ? null
       : plan.candidateIsHead
         ? "candidate_head_worktree_dirty"
         : "candidate_must_equal_clean_head",
+    formal_collection_executable:
+      plan.worktreeClean && plan.formalCollectionReadiness.executable,
+    formal_collection_blockers: Object.freeze([
+      ...(plan.worktreeClean
+        ? []
+        : [
+            plan.candidateIsHead
+              ? "candidate_head_worktree_dirty"
+              : "candidate_must_equal_clean_head",
+          ]),
+      ...plan.formalCollectionReadiness.blockers,
+    ]),
+    external_pending: plan.formalCollectionReadiness.external_pending,
+    missing_price_meters: plan.formalCollectionReadiness.missing_price_meters,
     candidate_commit: plan.candidateCommit,
     candidate_tree: plan.candidateTree,
     workload_sha256: plan.workloadSha256,
@@ -348,6 +374,8 @@ export async function collectRealProcessRoi(options) {
   });
   if (!plan.worktreeClean)
     throw new Error("real_process_roi_candidate_worktree_dirty");
+  if (plan.formalPrecollection && !plan.formalCollectionReadiness.executable)
+    throw new Error(plan.formalCollectionReadiness.blockers[0]);
   if (plan.formalPrecollection && formalInteractionStdin !== true)
     throw new Error("formal_interaction_recorder_unavailable");
   const runSetId = `${compactTimestamp()}-${plan.candidateCommit.slice(0, 12)}-${plan.workloadSha256.slice(0, 12)}`;
@@ -423,8 +451,7 @@ export async function collectRealProcessRoi(options) {
           accountingPolicyIdentity:
             plan.frozenConfig.accounting_policy_identity,
           formalInteractionStdin,
-          runtimeTcbIdentity:
-            plan.frozenConfig.formal_runtime_tcb_identity,
+          runtimeTcbIdentity: plan.frozenConfig.formal_runtime_tcb_identity,
         })
       : null;
     const summary = deriveRealProcessRoiSummary(runs, plan.frozenConfig);
@@ -535,6 +562,24 @@ export async function collectRealProcessRoi(options) {
       });
   }
   throw collectionError;
+}
+
+function combineFormalCollectionReadiness(
+  sourceReadiness,
+  providerAvailability,
+) {
+  const blockers = [...sourceReadiness.blockers];
+  const externalPending = [...sourceReadiness.external_pending];
+  if (!providerAvailability.available) {
+    blockers.push("formal_provider_source_unavailable");
+    externalPending.push("provider_invocation_source");
+  }
+  return Object.freeze({
+    executable: blockers.length === 0,
+    blockers: Object.freeze(blockers),
+    external_pending: Object.freeze([...new Set(externalPending)]),
+    missing_price_meters: sourceReadiness.missing_price_meters,
+  });
 }
 
 function assertAllowedCollectionOptions(value) {

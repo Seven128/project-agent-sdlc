@@ -92,12 +92,12 @@ cost observations rather than formal evidence.
 
 | Scope | Files | Added lines | Deleted lines | Net lines | Git blob byte delta |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Production tools + frozen real-process inputs | 39 | 2,656 | 939 | +1,717 | +59,702 |
-| Tests and shared test helpers | 15 | 2,139 | 1,674 | +465 | +26,158 |
+| Production tools + frozen real-process inputs | 40 | 2,891 | 1,031 | +1,860 | +64,922 |
+| Tests and shared test helpers | 16 | 2,348 | 1,674 | +674 | +30,974 |
 | Level-4 modularity configuration | 1 | 0 | 7 | -7 | -725 |
 
-Six bounded production owners were added. The former 1,634-line monolithic
-Level-4 fixture test was removed and replaced by four boundary tests plus shared
+Seven bounded production owners were added. The former 1,634-line monolithic
+Level-4 fixture test was removed and replaced by five boundary tests plus shared
 catalog-driven helpers. Every new source/test carrier is below the touched-source
 300-line threshold, and the prior `fixture_snapshot` modularity waiver was
 removed. The extra production bytes map to distinct new trust boundaries rather
@@ -122,12 +122,11 @@ evidence and do not satisfy Level 4:
   `8a2e082afd5d40bb314bc2a7e6693c8682608f93437eb8a53609a5ef48cdf105`.
   This proves the materializer test path for that baseline only; exact Evidence
   Candidate materialization must be captured after its commit exists.
-- The split boundary suites took approximately 15.2 seconds (formal
-  accounting), 6.5 seconds (acquisition), 40.2 seconds (two real package
-  materializations and promotion controls) and 1.95 seconds (governance) on the
-  current Windows host. The complete real-process ROI regression took about
-  206.7 seconds; the suite-policy regression took about 17 seconds. These are
-  local diagnostics without a cross-host performance claim.
+- The five split boundary suites and the real-process/suite-policy regressions
+  passed together as 69 tests in approximately 236 seconds with reviewed
+  concurrency two on the current Windows host. This includes two real package
+  materializations and real process-tree exercises. It is a local diagnostic
+  without a cross-host performance claim.
 - The State control reconstructed the exact sorted `betaalpha` payload at nine
   bytes and rejected empty, symlink, reparse/hardlink and package-proxy inputs.
   Its 24-hour retention basis is explicitly test-only. No production retention
@@ -145,7 +144,7 @@ evidence and do not satisfy Level 4:
 | Fixed Provider bridge and two Authoring artifacts per execution | Rejects child-authored usage, account-level estimates, missing request correlation and credential leakage into the child. |
 | State ledger plus payload and a 4-MiB payload fuse | Rejects package-as-State, mtime/sampling proxies, unrecomputable byte-hours and link-based substitution. |
 | Immutable 586-artifact formal closure and unique consumption | Rejects packet comparison authority, cross-execution reuse and post-index mutation. |
-| Four boundary tests and shared helpers | Separately localizes accounting, acquisition, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
+| Five boundary tests and shared helpers | Separately localizes accounting, process acquisition, source/State/Provider readiness, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
 
 ## External Inputs Required Before Collection
 
@@ -175,6 +174,16 @@ supplied and authorized:
 No default zero, estimated account usage, wall time, package tarball size,
 execution-duration retention or unbounded-error sampling may substitute for a
 missing source.
+
+The current dry-run reports diagnostic lifecycle collection separately from
+formal collection. Without the complete precollection lock, incident, required
+price meters and delivery-scoped State-retention Source, formal collection is
+false and the sole verifier emits only `total_roi_supported = false` and
+`total_roi_positive = false`. The same source preflight runs before any A/B/C
+materialization. State retention uses scope
+`this-delivery-precollection-proxy-only`; a real positive duration, basis and
+Source digest must replace the pending nulls in a newly committed candidate
+before real collection.
 
 ## Independent Audit And Promotion Readiness
 

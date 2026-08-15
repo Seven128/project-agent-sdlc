@@ -1,0 +1,212 @@
+import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import {
+  link,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { after, before, test } from "node:test";
+import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
+import { assessFormalCollectionReadiness } from "../../tools/long_task_formal_collection_readiness.mjs";
+import { FormalProviderCaptureAdapter } from "../../tools/long_task_formal_provider_capture.mjs";
+import { FormalStateCapture } from "../../tools/long_task_formal_state_capture.mjs";
+import {
+  canonical,
+  sha256,
+} from "../../tools/long_task_real_process_roi_scoring.mjs";
+import { createLevel4FormalEvidenceFixture } from "./helpers/long-task-level4-fixture.mjs";
+import { clonePrecollection } from "./helpers/long-task-level4-test-utils.mjs";
+
+const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
+const invocationId = "a".repeat(64);
+const execFileAsync = promisify(execFile);
+let fixture;
+before(async () => {
+  fixture = await createLevel4FormalEvidenceFixture(repositoryRoot);
+});
+after(async () => fixture?.remove());
+
+test("[critical:level4-source-readiness-boundary] sole-verifier dry-run keeps missing real Sources formal-inexecutable and ROI false", async () => {
+  const cli = path.join(
+    repositoryRoot,
+    "tools",
+    "verify_long_task_real_process_roi.mjs",
+  );
+  const { stdout } = await execFileAsync(
+    process.execPath,
+    [cli, "--dry-run", "--candidate", "HEAD"],
+    { cwd: repositoryRoot, maxBuffer: 4 * 1024 * 1024 },
+  );
+  const report = JSON.parse(stdout);
+  assert.equal(report.formal_status, "not_evaluated");
+  assert.equal(report.formal_collection_executable, false);
+  assert.equal(report.total_roi_supported, false);
+  assert.equal(report.total_roi_positive, false);
+  assert.equal(Object.hasOwn(report, "executable"), false);
+  for (const pending of [
+    "formal_evidence_precollection",
+    "controlled_incident",
+    "provider_compute_storage_prices",
+    "state_retention",
+  ])
+    assert.ok(report.external_pending.includes(pending), pending);
+});
+
+test("formal source preflight derives missing price meters and enforces delivery-scoped State retention", () => {
+  assert.equal(
+    fixture.accountingPolicy.state_storage_retention.scope,
+    "this-delivery-precollection-proxy-only",
+  );
+  const precollection = clonePrecollection(fixture.precollection);
+  const documentPath = "prices/official-price-document.json";
+  const documentSource = precollection.files.get(documentPath);
+  const document = JSON.parse(documentSource.bytes.toString("utf8"));
+  document.rates = document.rates.filter((rate) => rate.key !== "compute_ms");
+  documentSource.bytes = Buffer.from(`${JSON.stringify(document, null, 2)}\n`);
+  documentSource.entry.bytes = documentSource.bytes.length;
+  documentSource.entry.sha256 = sha256(documentSource.bytes);
+  const identityEntry = precollection.identity.entries.find(
+    (entry) => entry.path === documentPath,
+  );
+  Object.assign(identityEntry, documentSource.entry);
+  precollection.identity.identity_sha256 = sha256(
+    canonical({
+      frozen_at: precollection.identity.frozen_at,
+      entries: precollection.identity.entries,
+    }),
+  );
+  const readiness = assessFormalCollectionReadiness({
+    precollection,
+    accountingPolicy: fixture.accountingPolicy,
+    validationWindow: {
+      started: Date.parse("2026-08-16T01:00:00.000Z"),
+      completed: Date.parse("2026-08-16T02:00:00.000Z"),
+    },
+  });
+  assert.equal(readiness.executable, false);
+  assert.deepEqual(readiness.missing_price_meters, ["compute_ms"]);
+  assert.ok(
+    readiness.blockers.includes("formal_collection_price_source_incomplete"),
+  );
+});
+
+test("runner-owned State payload is sorted, exact, retained, and package-proxy/hardlink/empty sources fail closed", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-state-"));
+  const executionRoot = path.join(root, "formal-evidence", invocationId);
+  const retention = {
+    scope: "this-delivery-precollection-proxy-only",
+    status: "frozen_supported",
+    retention_hours: 24,
+    basis: "test-contract",
+    source_sha256: "b".repeat(64),
+  };
+  await mkdir(executionRoot, { recursive: true });
+  try {
+    const capture = await FormalStateCapture.create({
+      executionRoot,
+      invocationId,
+    });
+    await mkdir(path.join(capture.root, "nested"));
+    await writeFile(path.join(capture.root, "b.bin"), "beta");
+    await writeFile(path.join(capture.root, "nested", "a.bin"), "alpha");
+    const payloadPath = path.join(executionRoot, "state-payload.bin");
+    const ledgerPath = path.join(executionRoot, "storage-ledger.json");
+    const result = await capture.finalize({
+      payloadPath,
+      ledgerPath,
+      retention,
+    });
+    assert.equal(await readFile(payloadPath, "utf8"), "betaalpha");
+    assert.equal(result.payload_bytes, 9);
+    const ledger = JSON.parse(await readFile(ledgerPath, "utf8"));
+    assert.deepEqual(
+      ledger.entries.map((entry) => entry.path),
+      ["b.bin", "nested/a.bin"],
+    );
+    assert.equal(ledger.retention_hours, 24);
+
+    const empty = await FormalStateCapture.create({
+      executionRoot,
+      invocationId,
+    });
+    await assert.rejects(
+      () =>
+        empty.finalize({
+          payloadPath: path.join(executionRoot, "empty-payload.bin"),
+          ledgerPath: path.join(executionRoot, "empty-ledger.json"),
+          retention,
+        }),
+      /formal_state_payload_empty_file_set/u,
+    );
+    await empty.abort();
+
+    const proxy = await FormalStateCapture.create({
+      executionRoot,
+      invocationId,
+    });
+    const packagePath = path.join(root, "candidate.tgz");
+    await writeFile(packagePath, "package-is-not-state");
+    await link(packagePath, path.join(proxy.root, "candidate.tgz"));
+    await assert.rejects(
+      () =>
+        proxy.finalize({
+          payloadPath: path.join(executionRoot, "proxy-payload.bin"),
+          ledgerPath: path.join(executionRoot, "proxy-ledger.json"),
+          retention,
+        }),
+      /formal_state_not_regular/u,
+    );
+    await proxy.abort();
+
+    const linked = await FormalStateCapture.create({
+      executionRoot,
+      invocationId,
+    });
+    try {
+      await symlink(packagePath, path.join(linked.root, "linked.bin"), "file");
+      await assert.rejects(
+        () =>
+          linked.finalize({
+            payloadPath: path.join(executionRoot, "link-payload.bin"),
+            ledgerPath: path.join(executionRoot, "link-ledger.json"),
+            retention,
+          }),
+        /formal_state_link/u,
+      );
+    } catch (error) {
+      if (!["EPERM", "EACCES"].includes(error?.code)) throw error;
+      t.diagnostic(
+        "file symlink creation unavailable; hardlink rejection remained exercised",
+      );
+    } finally {
+      await linked.abort();
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("fixed Provider adapter is invocation-bound and fails closed when model or parent credential is unavailable", async () => {
+  const adapter = new FormalProviderCaptureAdapter({
+    adapter_id: "openai-responses-loopback-v1",
+    provider: "openai",
+    endpoint: "https://api.openai.com/v1/responses",
+    identity_sha256: "c".repeat(64),
+    support: { model_configured: false },
+  });
+  assert.throws(
+    () => adapter.assertAvailable(),
+    /formal_provider_source_unavailable/u,
+  );
+  await assert.rejects(
+    () => adapter.openOneShotBridge({ invocationId }),
+    /formal_provider_source_unavailable/u,
+  );
+});

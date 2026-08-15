@@ -80,12 +80,10 @@ export function validateFormalAccountingPolicy(policy) {
         expected_executions: FORMAL_EVIDENCE_CAPACITY.expected_execution_count,
         expected_runner_files:
           FORMAL_EVIDENCE_CAPACITY.expected_runner_artifact_count,
-        formal_file_headroom:
-          FORMAL_EVIDENCE_CAPACITY.formal_file_headroom,
+        formal_file_headroom: FORMAL_EVIDENCE_CAPACITY.formal_file_headroom,
         formal_worst_case_bytes:
           FORMAL_EVIDENCE_CAPACITY.formal_worst_case_bytes,
-        formal_byte_headroom:
-          FORMAL_EVIDENCE_CAPACITY.formal_byte_headroom,
+        formal_byte_headroom: FORMAL_EVIDENCE_CAPACITY.formal_byte_headroom,
         maximum_formal_files: FORMAL_EVIDENCE_CAPACITY.maximum_formal_files,
         maximum_formal_total_bytes:
           FORMAL_EVIDENCE_CAPACITY.maximum_formal_total_bytes,
@@ -311,6 +309,7 @@ function validateStateStorageRetention(retention) {
       "basis",
       "missing_consequence",
       "retention_hours",
+      "scope",
       "source_sha256",
       "status",
       "universal_standard_claimed",
@@ -319,6 +318,7 @@ function validateStateStorageRetention(retention) {
   );
   assert(
     retention.missing_consequence === "formal_collection_fail_closed" &&
+      retention.scope === "this-delivery-precollection-proxy-only" &&
       retention.universal_standard_claimed === false,
     "accounting_policy_state_retention_boundary",
   );

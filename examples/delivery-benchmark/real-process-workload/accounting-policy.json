@@ -125,6 +125,7 @@
     "not_applicable_requires_no_source": true
   },
   "state_storage_retention": {
+    "scope": "this-delivery-precollection-proxy-only",
     "status": "external_pending",
     "retention_hours": null,
     "basis": null,
