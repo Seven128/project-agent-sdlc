@@ -14,6 +14,8 @@ export function readPackedPackageIdentity(tarballBytes) {
     throw new Error("real_process_roi_package_tarball_gzip", { cause: error });
   }
   let packageJson = null;
+  const packageFiles = [];
+  const seenPaths = new Set();
   for (let offset = 0; offset + 512 <= archive.length;) {
     const header = archive.subarray(offset, offset + 512);
     if (header.every((value) => value === 0)) break;
@@ -25,6 +27,17 @@ export function readPackedPackageIdentity(tarballBytes) {
     const bodyEnd = bodyStart + size;
     if (bodyEnd > archive.length)
       throw new Error("real_process_roi_package_tarball_truncated");
+    const type = tarText(header.subarray(156, 157));
+    if ((type === "" || type === "0") && relative.startsWith("package/")) {
+      if (seenPaths.has(relative))
+        throw new Error("real_process_roi_package_file_duplicate");
+      seenPaths.add(relative);
+      packageFiles.push({
+        path: relative,
+        bytes: size,
+        sha256: digest(archive.subarray(bodyStart, bodyEnd)),
+      });
+    }
     if (relative === "package/package.json") {
       if (packageJson !== null)
         throw new Error("real_process_roi_package_manifest_duplicate");
@@ -49,10 +62,14 @@ export function readPackedPackageIdentity(tarballBytes) {
     !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u.test(packageJson.version)
   )
     throw new Error("real_process_roi_package_manifest_identity");
+  packageFiles.sort((left, right) => left.path.localeCompare(right.path));
+  if (packageFiles.length === 0)
+    throw new Error("real_process_roi_package_file_set_empty");
   return Object.freeze({
     package_name: packageJson.name,
     package_version: packageJson.version,
     package_sha256: digest(tarballBytes),
+    package_file_set_sha256: digest(JSON.stringify(packageFiles)),
   });
 }
 

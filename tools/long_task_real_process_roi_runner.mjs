@@ -4,7 +4,6 @@ import {
   mkdir,
   mkdtemp,
   readFile,
-  readdir,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -39,11 +38,10 @@ import {
   sha256,
   validateRunRecord,
 } from "./long_task_real_process_roi_scoring.mjs";
-import { npmCommandSpec } from "./npm_command_spec.mjs";
 import {
   buildRealProcessArtifactManifest,
-  readPackedPackageIdentity,
 } from "./long_task_real_process_artifacts.mjs";
+import { materializeLongTaskPackage } from "./long_task_package_materialization.mjs";
 import { deriveFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
 import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
 
@@ -81,9 +79,14 @@ export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
   "tools/level4_package_identity_comparator.mjs",
   "tools/level4_promotion_evidence_validation.mjs",
   "tools/verify_level4_governance_promotion.mjs",
-  "tools/npm_command_spec.mjs",
+  "tools/long_task_package_materialization.mjs",
+  "tools/long_task_package_materialization_commands.mjs",
   "tools/long_task_real_process_roi_policy.mjs",
   "tools/long_task_real_process_schema_policy.mjs",
+  "tools/long_task_formal_artifact_budget.mjs",
+  "tools/long_task_formal_provider_capture.mjs",
+  "tools/long_task_formal_acquisition_runtime.mjs",
+  "tools/long_task_formal_state_capture.mjs",
   "tools/long_task_real_process_roi_runner.mjs",
   "tools/long_task_real_process_roi_scoring.mjs",
   "tools/long_task_real_process_artifacts.mjs",
@@ -212,7 +215,7 @@ export async function prepareRealProcessRoiPlan({
   const goldBytes = await readFile(semanticGoldPath);
   const environment = await environmentRecord(repositoryRoot);
   const environmentIdentity = sha256(canonical(environment));
-  const formalRuntimeTcbIdentity = deriveFormalRuntimeTcbIdentity({
+  const formalRuntimeTcbIdentity = await deriveFormalRuntimeTcbIdentity({
     environment,
     benchmarkImplementationIdentity,
   });
@@ -328,14 +331,16 @@ export async function dryRunRealProcessRoi(options) {
   };
 }
 
-export async function collectRealProcessRoi({
-  candidate,
-  repositoryRoot = root,
-  artifactRoot = defaultArtifactRoot,
-  keepWorktrees = false,
-  formalEvidencePlan = null,
-  interactionRecorder = null,
-}) {
+export async function collectRealProcessRoi(options) {
+  assertAllowedCollectionOptions(options);
+  const {
+    candidate,
+    repositoryRoot = root,
+    artifactRoot = defaultArtifactRoot,
+    keepWorktrees = false,
+    formalEvidencePlan = null,
+    formalInteractionStdin = false,
+  } = options;
   const plan = await prepareRealProcessRoiPlan({
     candidate,
     repositoryRoot,
@@ -343,7 +348,7 @@ export async function collectRealProcessRoi({
   });
   if (!plan.worktreeClean)
     throw new Error("real_process_roi_candidate_worktree_dirty");
-  if (plan.formalPrecollection && !interactionRecorder)
+  if (plan.formalPrecollection && formalInteractionStdin !== true)
     throw new Error("formal_interaction_recorder_unavailable");
   const runSetId = `${compactTimestamp()}-${plan.candidateCommit.slice(0, 12)}-${plan.workloadSha256.slice(0, 12)}`;
   const runSetRoot = path.resolve(artifactRoot, runSetId);
@@ -417,7 +422,9 @@ export async function collectRealProcessRoi({
           accountingPolicy: plan.accountingPolicy,
           accountingPolicyIdentity:
             plan.frozenConfig.accounting_policy_identity,
-          interactionRecorder,
+          formalInteractionStdin,
+          runtimeTcbIdentity:
+            plan.frozenConfig.formal_runtime_tcb_identity,
         })
       : null;
     const summary = deriveRealProcessRoiSummary(runs, plan.frozenConfig);
@@ -530,6 +537,25 @@ export async function collectRealProcessRoi({
   throw collectionError;
 }
 
+function assertAllowedCollectionOptions(value) {
+  const allowed = new Set([
+    "artifactRoot",
+    "candidate",
+    "formalEvidencePlan",
+    "formalInteractionStdin",
+    "keepWorktrees",
+    "repositoryRoot",
+  ]);
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    typeof value.candidate !== "string" ||
+    Object.keys(value).some((key) => !allowed.has(key))
+  )
+    throw new Error("real_process_roi_collection_options");
+}
+
 async function materializeSourceIdentity({
   repositoryRoot,
   runSetRoot,
@@ -615,133 +641,27 @@ async function prepareVariant({
   outputDir,
   registeredCheckouts,
 }) {
-  await mkdir(outputDir, { recursive: true });
-  const records = [];
-  records.push(
-    await spawnCaptured(
-      "git",
-      ["worktree", "add", "--detach", checkout, variant.commit],
-      {
-        cwd: repositoryRoot,
-        timeoutMs: 120000,
-        outputDir,
-        label: "git-worktree-add",
-      },
-    ),
-  );
-  if (records.at(-1).status !== 0)
-    throw new Error(`real_process_roi_worktree_add_failed:${variant.id}`);
+  const materialized = await materializeLongTaskPackage({
+    repositoryRoot,
+    commit: variant.commit,
+    checkout,
+    outputDir,
+  });
   registeredCheckouts.add(checkout);
-  const npmCi = realProcessRoiNpmCommandSpec(["ci"]);
-  records.push(
-    await spawnCaptured(npmCi.command, npmCi.args, {
-      cwd: checkout,
-      timeoutMs: 10 * 60 * 1000,
-      outputDir,
-      label: "npm-ci",
-    }),
-  );
-  if (records.at(-1).status !== 0)
-    throw new Error(`real_process_roi_npm_ci_failed:${variant.id}`);
-  const packageBuild = realProcessRoiNpmCommandSpec([
-    "run",
-    "build",
-    "--workspace",
-    "project-tiny-context-harness",
-  ]);
-  records.push(
-    await spawnCaptured(packageBuild.command, packageBuild.args, {
-      cwd: checkout,
-      timeoutMs: 10 * 60 * 1000,
-      outputDir,
-      label: "package-build",
-    }),
-  );
-  if (records.at(-1).status !== 0)
-    throw new Error(`real_process_roi_build_failed:${variant.id}`);
-  const packDir = path.join(outputDir, "pack");
-  await mkdir(packDir, { recursive: true });
-  const packagePack = realProcessRoiNpmCommandSpec([
-    "pack",
-    "--workspace",
-    "project-tiny-context-harness",
-    "--pack-destination",
-    packDir,
-    "--ignore-scripts",
-  ]);
-  records.push(
-    await spawnCaptured(packagePack.command, packagePack.args, {
-      cwd: checkout,
-      timeoutMs: 10 * 60 * 1000,
-      outputDir,
-      label: "package-pack",
-    }),
-  );
-  if (records.at(-1).status !== 0)
-    throw new Error(`real_process_roi_pack_failed:${variant.id}`);
-  const packages = (await readdir(packDir)).filter((name) =>
-    name.endsWith(".tgz"),
-  );
-  if (packages.length !== 1)
-    throw new Error(
-      `real_process_roi_package_count:${variant.id}:${packages.length}`,
-    );
-  const packageBytes = await readFile(path.join(packDir, packages[0]));
-  const packedPackage = readPackedPackageIdentity(packageBytes);
-  for (const [label, args] of [
-    ["candidate-head", ["rev-parse", "HEAD"]],
-    ["candidate-tree", ["rev-parse", "HEAD^{tree}"]],
-    ["candidate-status", ["status", "--short"]],
-  ]) {
-    records.push(
-      await spawnCaptured("git", args, {
-        cwd: checkout,
-        timeoutMs: 10000,
-        outputDir,
-        label,
-      }),
-    );
-    if (records.at(-1).status !== 0)
-      throw new Error(
-        `real_process_roi_candidate_identity_failed:${variant.id}`,
-      );
-  }
-  const head = (
-    await readFile(path.join(outputDir, "candidate-head.stdout.log"), "utf8")
-  ).trim();
-  const tree = (
-    await readFile(path.join(outputDir, "candidate-tree.stdout.log"), "utf8")
-  ).trim();
-  const status = (
-    await readFile(path.join(outputDir, "candidate-status.stdout.log"), "utf8")
-  ).trim();
-  if (head !== variant.commit)
-    throw new Error(`real_process_roi_prepared_head_drift:${variant.id}`);
-  if (!/^[a-f0-9]{40}$/u.test(tree))
-    throw new Error(`real_process_roi_prepared_tree_invalid:${variant.id}`);
-  if (status !== "")
-    throw new Error(`real_process_roi_prepared_worktree_dirty:${variant.id}`);
+  const packagePath = relative(outputDir, materialized.tarball_path);
   const record = {
+    ...materialized.record,
     variant_id: variant.id,
-    commit: head,
-    tree,
-    package_path: relative(outputDir, path.join(packDir, packages[0])),
-    package_version: packedPackage.package_version,
-    package_sha256: packedPackage.package_sha256,
-    setup_commands: records,
+    package_path: packagePath,
   };
   await writeJson(path.join(outputDir, "setup.json"), record);
   return {
     checkout,
-    tree,
+    tree: record.tree,
     package_sha256: record.package_sha256,
     package_version: record.package_version,
     record,
   };
-}
-
-export function realProcessRoiNpmCommandSpec(args, options = {}) {
-  return npmCommandSpec(args, options);
 }
 
 async function spawnCaptured(executable, args, options) {

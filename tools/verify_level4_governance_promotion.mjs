@@ -10,6 +10,7 @@ import {
   validateLevel4OwnerDecision,
   validateLevel4PromotionRecord,
 } from "./level4_governance_protocol.mjs";
+import { readFile } from "node:fs/promises";
 import { readPackedPackageIdentity } from "./long_task_packed_package_identity.mjs";
 import { realProcessRoiBenchmarkImplementationPaths } from "./long_task_real_process_roi_runner.mjs";
 import { validateFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
@@ -23,25 +24,36 @@ import { comparePackedPackages } from "./level4_package_identity_comparator.mjs"
 import {
   parseAndValidateLevel4FormalReport,
   parseAndValidateLevel4FrozenCandidate,
+  parseAndValidateLevel4RunSetManifest,
   validateLevel4ExternalArtifacts,
 } from "./level4_promotion_evidence_validation.mjs";
-
-export { comparePackedPackages } from "./level4_package_identity_comparator.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-export async function verifyLevel4GovernancePromotion({
-  repositoryRoot = root,
-  promotionCommit = "HEAD",
-  evidenceRoot,
-  packageIdentityComparator = comparePackedPackages,
-}) {
-  const repository = path.resolve(repositoryRoot);
+export async function verifyLevel4GovernancePromotion(options) {
+  assertExactPromotionOptions(options);
+  const repository = path.resolve(options.repositoryRoot);
+  const evidenceRoot = options.evidenceRoot;
   const promotion = await gitText(repository, [
     "rev-parse",
-    `${promotionCommit}^{commit}`,
+    `${options.promotionCommit}^{commit}`,
   ]);
+  const promotionTree = await gitText(repository, [
+    "rev-parse",
+    `${promotion}^{tree}`,
+  ]);
+  const [currentHead, currentTree, currentStatus] = await Promise.all([
+    gitText(repository, ["rev-parse", "HEAD"]),
+    gitText(repository, ["rev-parse", "HEAD^{tree}"]),
+    gitBytes(repository, ["status", "--porcelain=v1", "-z"]),
+  ]);
+  assert(
+    currentHead === promotion &&
+      currentTree === promotionTree &&
+      currentStatus.length === 0,
+    "level4_promotion_current_checkout_identity",
+  );
   const parents = (
     await gitText(repository, ["rev-list", "--parents", "-n", "1", promotion])
   ).split(/\s+/u);
@@ -116,7 +128,27 @@ export async function verifyLevel4GovernancePromotion({
     evidenceArtifacts.get("run-set-frozen-config"),
     evidenceReference,
   );
-  const [candidateBenchmark, promotionBenchmark] = await Promise.all([
+  const manifestBytes = evidenceArtifacts.get("run-set-manifest");
+  assert(
+    digest(manifestBytes) === formalReport.manifest_sha256,
+    "level4_promotion_report_manifest_identity",
+  );
+  const runSetManifest = parseAndValidateLevel4RunSetManifest(manifestBytes);
+  const candidatePackageEntries = runSetManifest.entries.filter(
+    (entry) =>
+      entry.role === "package_tarball" &&
+      /^setup\/c\/.+\.tgz$/u.test(entry.path),
+  );
+  assert(
+    candidatePackageEntries.length === 1 &&
+      candidatePackageEntries[0].sha256 ===
+        formalReport.candidate_package.package_sha256 &&
+      candidatePackageEntries[0].bytes ===
+        evidenceArtifacts.get("candidate-package-tarball").length,
+    "level4_promotion_run_set_candidate_package",
+  );
+  const [candidateBenchmark, promotionBenchmark, currentBenchmark] =
+    await Promise.all([
     sourceIdentityAtCommit(
       repository,
       candidateCommit,
@@ -127,9 +159,14 @@ export async function verifyLevel4GovernancePromotion({
       promotion,
       realProcessRoiBenchmarkImplementationPaths,
     ),
-  ]);
+      sourceIdentityAtWorkingTree(
+        repository,
+        realProcessRoiBenchmarkImplementationPaths,
+      ),
+    ]);
   assert(
     canonical(candidateBenchmark) === canonical(promotionBenchmark) &&
+      canonical(promotionBenchmark) === canonical(currentBenchmark) &&
       candidateBenchmark.identity_sha256 ===
         evidenceReference.benchmark_implementation_identity_sha256 &&
       canonical(frozenConfig.benchmark_implementation_identity) ===
@@ -138,12 +175,12 @@ export async function verifyLevel4GovernancePromotion({
         evidenceReference.runtime_tcb_identity_sha256,
     "level4_promotion_benchmark_runtime_tcb_identity",
   );
-  validateFormalRuntimeTcbIdentity({
+  await validateFormalRuntimeTcbIdentity({
     identity: frozenConfig.formal_runtime_tcb_identity,
     environment: frozenConfig.environment,
     benchmarkImplementationIdentity: candidateBenchmark,
   });
-  const packageComparison = await packageIdentityComparator({
+  const packageComparison = await comparePackedPackages({
     repositoryRoot: repository,
     candidateCommit,
     promotionCommit: promotion,
@@ -156,7 +193,13 @@ export async function verifyLevel4GovernancePromotion({
       packageComparison.candidate.package_version ===
         evidenceReference.candidate.package_version &&
       packageComparison.promotion.package_version ===
-        evidenceReference.candidate.package_version,
+        evidenceReference.candidate.package_version &&
+      packageComparison.candidate.package_name ===
+        formalReport.candidate_package.package_name &&
+      packageComparison.promotion.package_name ===
+        formalReport.candidate_package.package_name &&
+      evidencePackage.package_sha256 ===
+        candidatePackageEntries[0].sha256,
     "level4_promotion_package_identity",
   );
   return {
@@ -227,6 +270,24 @@ async function sourceIdentityAtCommit(repository, commit, paths) {
   };
 }
 
+async function sourceIdentityAtWorkingTree(repository, paths) {
+  const entries = [];
+  for (const relative of paths) {
+    const bytes = await readFile(
+      path.resolve(repository, ...relative.split("/")),
+    );
+    entries.push({
+      path: relative,
+      bytes: bytes.length,
+      sha256: digest(bytes),
+    });
+  }
+  return {
+    entries,
+    identity_sha256: sha256(canonical(entries)),
+  };
+}
+
 async function gitText(cwd, args) {
   return (await gitBytes(cwd, args)).toString("utf8").trim();
 }
@@ -268,8 +329,25 @@ function parseArgs(argv) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const result = await verifyLevel4GovernancePromotion(options);
+  const result = await verifyLevel4GovernancePromotion({
+    repositoryRoot: root,
+    ...options,
+  });
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
+
+function assertExactPromotionOptions(options) {
+  assert(
+    options &&
+      typeof options === "object" &&
+      !Array.isArray(options) &&
+      Object.keys(options).sort().join(",") ===
+        "evidenceRoot,promotionCommit,repositoryRoot" &&
+      typeof options.repositoryRoot === "string" &&
+      typeof options.promotionCommit === "string" &&
+      typeof options.evidenceRoot === "string",
+    "level4_promotion_options",
+  );
+}

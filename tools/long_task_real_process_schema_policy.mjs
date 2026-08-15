@@ -1,3 +1,5 @@
+import { CURRENT_FORMAL_ARTIFACT_BUDGET } from "./long_task_formal_artifact_budget.mjs";
+
 export const REAL_PROCESS_SCHEMAS = Object.freeze({
   FORMAL_TOTAL_COST_ACCOUNTING_POLICY_SCHEMA:
     "long-task-formal-total-cost-accounting-policy-v2",
@@ -168,28 +170,13 @@ export const FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH =
 export const FORMAL_SCENARIO_CATALOG_REPOSITORY_PATH =
   "examples/delivery-benchmark/real-process-workload/formal-scenario-catalog.json";
 
-export const FORMAL_EVIDENCE_CAPACITY = Object.freeze({
-  expected_execution_count: 86,
-  expected_runner_artifact_count: 576,
-  maximum_formal_files: 640,
-  maximum_formal_total_bytes: 384 * 1024 * 1024,
-  maximum_run_set_files: 4096,
-  maximum_run_set_total_bytes: 512 * 1024 * 1024,
-  maximum_run_set_control_files: 2,
-  maximum_run_set_control_total_bytes: 4 * 1024 * 1024,
-  maximum_run_set_control_bytes_per_file: 2 * 1024 * 1024,
-  maximum_scenario_output_bytes: 1024 * 1024,
-  maximum_raw_prompt_bytes: 1024 * 1024,
-  maximum_combined_stream_bytes: 2 * 1024 * 1024,
-  maximum_event_bytes: 128 * 1024,
-  maximum_measurement_record_bytes: 64 * 1024,
-  maximum_lifecycle_file_bytes: 64 * 1024 * 1024,
-});
+export const FORMAL_EVIDENCE_CAPACITY = CURRENT_FORMAL_ARTIFACT_BUDGET;
 
 export const FORMAL_CLOCK_POLICY = Object.freeze({
-  monotonic_clock_id: "runner-monotonic-hrtime-v1",
-  wall_clock_id: "runner-wall-utc-v1",
-  provider_clock_id_prefix: "provider-recorded-at-v1:",
+  human_monotonic_clock_id: "node-hrtime-v1",
+  process_monotonic_clock_id: "windows-stopwatch-qpc-v1",
+  wall_clock_id: "unix-epoch-ms-v1",
+  provider_clock_id_prefix: "provider-unix-epoch-ms-v1:",
   wall_monotonic_elapsed_tolerance_ms: 250,
   provider_wall_window_tolerance_ms: 5000,
 });

@@ -2,9 +2,10 @@ import {
   FORMAL_EVIDENCE_CAPACITY,
   REAL_PROCESS_SCHEMAS,
 } from "./long_task_real_process_schema_policy.mjs";
-import { assert } from "./long_task_real_process_roi_scoring.mjs";
+import { assert, sha256 } from "./long_task_real_process_roi_scoring.mjs";
 import {
   assertExactKeys,
+  assertSafeRelativePath,
   parseJson,
 } from "./long_task_formal_total_cost_shared.mjs";
 import { consumeFormalExecutionArtifact } from "./long_task_formal_execution_artifacts.mjs";
@@ -31,7 +32,17 @@ export async function validateFormalHumanTrace(options) {
   );
   assertExactKeys(
     trace,
-    ["clock_id", "invocation_id", "records", "schema_version", "source_kind"],
+    [
+      "clock_id",
+      "completed_at",
+      "invocation_id",
+      "monotonic_completed_ns",
+      "monotonic_started_ns",
+      "records",
+      "schema_version",
+      "source_kind",
+      "started_at",
+    ],
     `formal_human_trace_fields:${reference}`,
   );
   assert(
@@ -39,7 +50,11 @@ export async function validateFormalHumanTrace(options) {
       REAL_PROCESS_SCHEMAS.FORMAL_HUMAN_INTERACTION_TRACE_SCHEMA &&
       trace.source_kind === "runner-interaction-recorder-v1" &&
       trace.invocation_id === invocationId &&
-      trace.clock_id === clocks.monotonic_clock_id &&
+      trace.clock_id === clocks.human_monotonic_clock_id &&
+      trace.monotonic_started_ns === clocks.human_monotonic_started_ns &&
+      trace.monotonic_completed_ns === clocks.human_monotonic_completed_ns &&
+      trace.started_at === clocks.human_started_at &&
+      trace.completed_at === clocks.human_completed_at &&
       Array.isArray(trace.records) &&
       trace.records.length > 0 &&
       trace.records.length <= 1024,
@@ -47,7 +62,7 @@ export async function validateFormalHumanTrace(options) {
   );
   let activeNs = 0n;
   let waitNs = 0n;
-  let previous = clocks.startedNs;
+  let previous = clocks.humanStartedNs;
   for (const [index, interval] of trace.records.entries()) {
     const measured = validateHumanInterval(
       interval,
@@ -61,7 +76,9 @@ export async function validateFormalHumanTrace(options) {
     previous = measured.completed;
   }
   assert(
-    previous === clocks.completedNs && activeNs + waitNs === clocks.durationNs,
+    previous === clocks.humanCompletedNs &&
+      activeNs + waitNs === clocks.humanDurationNs &&
+      activeNs > 0n,
     `formal_human_trace_coverage:${reference}`,
   );
   return {
@@ -106,9 +123,9 @@ export async function validateFormalProcessAccounting(options) {
       REAL_PROCESS_SCHEMAS.FORMAL_PROCESS_ACCOUNTING_SCHEMA &&
       record.source_kind === "windows-job-object-accounting-v1" &&
       record.invocation_id === invocationId &&
-      record.clock_id === clocks.monotonic_clock_id &&
-      record.started_ns === clocks.monotonic_started_ns &&
-      record.completed_ns === clocks.monotonic_completed_ns &&
+      record.clock_id === clocks.process_monotonic_clock_id &&
+      record.started_ns === clocks.process_monotonic_started_ns &&
+      record.completed_ns === clocks.process_monotonic_completed_ns &&
       record.active_processes_at_result === 0 &&
       Number.isSafeInteger(record.total_processes) &&
       record.total_processes >= 1 &&
@@ -117,30 +134,62 @@ export async function validateFormalProcessAccounting(options) {
       Number.isSafeInteger(record.kernel_cpu_100ns) &&
       record.kernel_cpu_100ns >= 0 &&
       record.total_cpu_100ns ===
-        record.user_cpu_100ns + record.kernel_cpu_100ns,
+        record.user_cpu_100ns + record.kernel_cpu_100ns &&
+      record.total_cpu_100ns > 0,
     `formal_process_accounting:${reference}`,
   );
   return { compute_ms: record.total_cpu_100ns / 10_000 };
 }
 
 export async function validateFormalStorageLedger(options) {
-  const { reference, required, invocationId, clocks, expectedScopeRef } =
-    options;
+  const {
+    reference,
+    statePayloadReference,
+    required,
+    invocationId,
+    expectedRetention,
+  } = options;
   if (!required) {
-    assert(reference === null, "formal_storage_ledger_forbidden");
+    assert(
+      reference === null && statePayloadReference === null,
+      "formal_storage_ledger_forbidden",
+    );
     return null;
   }
   assert(
     reference === `formal-evidence/${invocationId}/storage-ledger.json`,
     "formal_storage_ledger_ref",
   );
+  assert(
+    statePayloadReference ===
+      `formal-evidence/${invocationId}/state-payload.bin`,
+    "formal_state_payload_ref",
+  );
   const ledger = parseJson(
     await consumeMeasurement(options, "storage_ledger"),
     `formal_storage_ledger_json:${reference}`,
   );
-  validateStorageLedgerShape(ledger, options, expectedScopeRef);
+  const payload = await consumeFormalExecutionArtifact(
+    options.runArtifactIndex,
+    options.consumedArtifacts,
+    statePayloadReference,
+    "state_payload",
+    FORMAL_EVIDENCE_CAPACITY.maximum_state_payload_bytes,
+  );
+  validateStorageLedgerShape(
+    ledger,
+    options,
+    statePayloadReference,
+    expectedRetention,
+    payload,
+  );
+  const quantity = payload.length * expectedRetention.retention_hours;
+  assert(
+    Number.isSafeInteger(quantity) && quantity > 0,
+    `formal_storage_quantity:${reference}`,
+  );
   return {
-    storage_byte_hour: storageByteHours(ledger, options),
+    storage_byte_hour: quantity,
   };
 }
 
@@ -162,78 +211,82 @@ function validateHumanInterval(interval, index, reference, previous, clocks) {
     ["active", "wait"].includes(interval.state) &&
       started === previous &&
       completed > started &&
-      completed <= clocks.completedNs,
+      completed <= clocks.humanCompletedNs,
     `formal_human_interval:${reference}:${index}`,
   );
   return { completed, duration: completed - started };
 }
 
-function validateStorageLedgerShape(ledger, options, expectedScopeRef) {
-  const { reference, invocationId, clocks, runArtifactIndex } = options;
+function validateStorageLedgerShape(
+  ledger,
+  options,
+  expectedPayloadRef,
+  expectedRetention,
+  payload,
+) {
+  const { reference, invocationId } = options;
   assertExactKeys(
     ledger,
     [
-      "clock_id",
-      "completed_ns",
-      "events",
+      "entries",
       "invocation_id",
+      "payload_bytes",
+      "retention_basis",
+      "retention_hours",
+      "retention_source_sha256",
       "schema_version",
-      "scope_ref",
       "source_kind",
-      "started_ns",
+      "state_payload_ref",
+      "state_payload_sha256",
     ],
     `formal_storage_ledger_fields:${reference}`,
   );
   assert(
     ledger.schema_version ===
       REAL_PROCESS_SCHEMAS.FORMAL_STORAGE_LEDGER_SCHEMA &&
-      ledger.source_kind === "runner-exact-byte-duration-v1" &&
+      ledger.source_kind ===
+        "runner-exact-state-payload-retention-v1" &&
       ledger.invocation_id === invocationId &&
-      ledger.clock_id === clocks.monotonic_clock_id &&
-      ledger.started_ns === clocks.monotonic_started_ns &&
-      ledger.completed_ns === clocks.monotonic_completed_ns &&
-      ledger.scope_ref === expectedScopeRef &&
-      runArtifactIndex.get(ledger.scope_ref)?.role === "package_tarball" &&
-      Array.isArray(ledger.events) &&
-      ledger.events.length === 1,
+      ledger.state_payload_ref === expectedPayloadRef &&
+      ledger.state_payload_sha256 === sha256(payload) &&
+      ledger.payload_bytes === payload.length &&
+      payload.length > 0 &&
+      expectedRetention?.status === "frozen_supported" &&
+      ledger.retention_hours === expectedRetention.retention_hours &&
+      ledger.retention_basis === expectedRetention.basis &&
+      ledger.retention_source_sha256 === expectedRetention.source_sha256 &&
+      Array.isArray(ledger.entries) &&
+      ledger.entries.length > 0 &&
+      ledger.entries.length <=
+        FORMAL_EVIDENCE_CAPACITY.maximum_state_source_files,
     `formal_storage_ledger:${reference}`,
   );
-}
-
-function storageByteHours(ledger, options) {
-  const { reference, clocks, runArtifactIndex } = options;
-  let previous = clocks.startedNs;
-  let previousBytes = null;
-  let byteNanoseconds = 0n;
-  for (const [index, event] of ledger.events.entries()) {
+  const paths = new Set();
+  let offset = 0;
+  for (const [index, event] of ledger.entries.entries()) {
     assertExactKeys(
       event,
-      ["at_ns", "bytes"],
+      ["bytes", "offset", "path", "sha256"],
       `formal_storage_event_fields:${reference}:${index}`,
     );
-    const at = decimalBigInt(
-      event.at_ns,
-      `formal_storage_event_time:${reference}:${index}`,
+    assertSafeRelativePath(
+      event.path,
+      `formal_storage_event_path:${reference}:${index}`,
     );
     assert(
-      at >= previous &&
-        at < clocks.completedNs &&
+      !paths.has(event.path) &&
+        event.offset === offset &&
         Number.isSafeInteger(event.bytes) &&
-        event.bytes >= 0,
+        event.bytes >= 0 &&
+        offset + event.bytes <= payload.length &&
+        event.sha256 ===
+          sha256(payload.subarray(offset, offset + event.bytes)),
       `formal_storage_event:${reference}:${index}`,
     );
-    if (index === 0)
-      assert(
-        at === clocks.startedNs &&
-          event.bytes === runArtifactIndex.get(ledger.scope_ref).bytes,
-        `formal_storage_start:${reference}`,
-      );
-    else byteNanoseconds += BigInt(previousBytes) * (at - previous);
-    previous = at;
-    previousBytes = event.bytes;
+    paths.add(event.path);
+    offset += event.bytes;
   }
-  byteNanoseconds += BigInt(previousBytes) * (clocks.completedNs - previous);
-  return Number(byteNanoseconds) / 3_600_000_000_000;
+  assert(offset === payload.length, `formal_storage_payload_coverage:${reference}`);
 }
 
 async function consumeMeasurement(options, role) {

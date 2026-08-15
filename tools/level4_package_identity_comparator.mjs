@@ -1,19 +1,15 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { readPackedPackageIdentity } from "./long_task_packed_package_identity.mjs";
-import { assert } from "./long_task_real_process_roi_scoring.mjs";
-import { npmCommandSpec } from "./npm_command_spec.mjs";
+import { materializeLongTaskPackage } from "./long_task_package_materialization.mjs";
 
 const execFileAsync = promisify(execFile);
 
-export async function comparePackedPackages({
-  repositoryRoot,
-  candidateCommit,
-  promotionCommit,
-}) {
+export async function comparePackedPackages(options) {
+  assertExactOptions(options);
+  const repositoryRoot = path.resolve(options.repositoryRoot);
   const temporaryRoot = await mkdtemp(
     path.join(os.tmpdir(), "ty-level4-promotion-"),
   );
@@ -21,59 +17,40 @@ export async function comparePackedPackages({
   try {
     const results = {};
     for (const [label, commit] of [
-      ["candidate", candidateCommit],
-      ["promotion", promotionCommit],
+      ["candidate", options.candidateCommit],
+      ["promotion", options.promotionCommit],
     ]) {
       const checkout = path.join(temporaryRoot, label);
-      await execChecked(
-        "git",
-        ["worktree", "add", "--detach", checkout, commit],
-        {
-          cwd: repositoryRoot,
-          timeout: 120_000,
-        },
-      );
+      const materialized = await materializeLongTaskPackage({
+        repositoryRoot,
+        commit,
+        checkout,
+        outputDir: path.join(temporaryRoot, `${label}-materialization`),
+      });
       checkouts.push(checkout);
-      results[label] = await packIdentity(checkout, temporaryRoot, label);
+      results[label] = materialized.record;
     }
-    return results;
+    return Object.freeze(results);
   } finally {
     await cleanupComparison(repositoryRoot, temporaryRoot, checkouts);
   }
-}
-
-async function packIdentity(checkout, temporaryRoot, label) {
-  const output = path.join(temporaryRoot, `${label}-pack`);
-  await mkdir(output);
-  const packCommand = npmCommandSpec([
-    "pack",
-    "--workspace",
-    "project-tiny-context-harness",
-    "--pack-destination",
-    output,
-    "--ignore-scripts",
-  ]);
-  await execChecked(packCommand.command, packCommand.args, {
-    cwd: checkout,
-    timeout: 120_000,
-  });
-  const tarballs = (await readdir(output)).filter((name) =>
-    name.endsWith(".tgz"),
-  );
-  assert(tarballs.length === 1, `level4_promotion_pack_count:${label}`);
-  return readPackedPackageIdentity(
-    await readFile(path.join(output, tarballs[0])),
-  );
 }
 
 async function cleanupComparison(repositoryRoot, temporaryRoot, checkouts) {
   const cleanupErrors = [];
   for (const checkout of checkouts)
     try {
-      await execChecked("git", ["worktree", "remove", "--force", checkout], {
-        cwd: repositoryRoot,
-        timeout: 120_000,
-      });
+      await execFileAsync(
+        "git",
+        ["worktree", "remove", "--force", checkout],
+        {
+          cwd: repositoryRoot,
+          timeout: 120_000,
+          windowsHide: true,
+          encoding: "buffer",
+          maxBuffer: 16 * 1024 * 1024,
+        },
+      );
     } catch (error) {
       cleanupErrors.push(error);
     }
@@ -86,11 +63,13 @@ async function cleanupComparison(repositoryRoot, temporaryRoot, checkouts) {
     throw new AggregateError(cleanupErrors, "level4_promotion_package_cleanup");
 }
 
-async function execChecked(command, args, options) {
-  await execFileAsync(command, args, {
-    ...options,
-    windowsHide: true,
-    encoding: "buffer",
-    maxBuffer: 16 * 1024 * 1024,
-  });
+function assertExactOptions(options) {
+  if (
+    !options ||
+    typeof options !== "object" ||
+    Array.isArray(options) ||
+    Object.keys(options).sort().join(",") !==
+      "candidateCommit,promotionCommit,repositoryRoot"
+  )
+    throw new Error("level4_package_comparison_options");
 }

@@ -41,7 +41,6 @@ import {
   readRegularFileNoFollow,
 } from "./long_task_formal_total_cost_shared.mjs";
 import { validateFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
-import { StdinFormalInteractionRecorder } from "./long_task_formal_interaction_recorder.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
@@ -225,11 +224,10 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     "config_authoring_token_policy",
   );
   validateRealProcessRoiPolicy(config);
-  validateFormalRuntimeTcbIdentity({
+  await validateFormalRuntimeTcbIdentity({
     identity: config.formal_runtime_tcb_identity,
     environment: config.environment,
     benchmarkImplementationIdentity: config.benchmark_implementation_identity,
-    requireCurrentRuntime: Boolean(options.formalEvidence),
   });
   assert(
     canonical(environment) === canonical(config.environment) &&
@@ -486,6 +484,11 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
     run_set_root: resolved,
     candidate_commit: config.variants.c.commit,
     candidate_tree: config.candidate_tree,
+    candidate_package: Object.freeze({
+      package_name: setupByVariant.get("c").package_name,
+      package_version: setupByVariant.get("c").package_version,
+      package_sha256: setupByVariant.get("c").package_sha256,
+    }),
     manifest_sha256: attestation.manifest_sha256,
     accounting_policy_sha256: config.accounting_policy_identity.identity_sha256,
     formal_evidence_precollection_sha256:
@@ -592,11 +595,19 @@ async function validateSetupRecords({ runArtifactIndex, setup, config }) {
     assertExactKeys(
       item,
       [
+        "command_records",
         "commit",
+        "lockfile_sha256",
+        "node_executable_sha256",
+        "node_version",
+        "npm_version",
+        "package_file_set_sha256",
+        "package_name",
         "package_path",
         "package_sha256",
         "package_version",
-        "setup_commands",
+        "protocol",
+        "schema_version",
         "tree",
         "variant_id",
       ],
@@ -607,9 +618,21 @@ async function validateSetupRecords({ runArtifactIndex, setup, config }) {
     assert(
       item.commit === expected.commit &&
         /^[a-f0-9]{40}$/u.test(item.tree ?? "") &&
+        item.schema_version === "long-task-package-materialization-v1" &&
+        item.package_name === "project-tiny-context-harness" &&
         typeof item.package_version === "string" &&
         item.package_version.length > 0 &&
-        /^[a-f0-9]{64}$/u.test(item.package_sha256 ?? ""),
+        item.protocol === "npm-ci-build-check-source-pack-v1" &&
+        [
+          item.package_sha256,
+          item.package_file_set_sha256,
+          item.lockfile_sha256,
+          item.node_executable_sha256,
+        ].every((value) => /^[a-f0-9]{64}$/u.test(value ?? "")) &&
+        typeof item.node_version === "string" &&
+        item.node_version.length > 0 &&
+        typeof item.npm_version === "string" &&
+        item.npm_version.length > 0,
       `setup_identity:${item.variant_id}`,
     );
     if (item.variant_id === "c")
@@ -629,12 +652,14 @@ async function validateSetupRecords({ runArtifactIndex, setup, config }) {
     );
     const packedPackage = readPackedPackageIdentity(packageBytes);
     assert(
-      packedPackage.package_version === item.package_version &&
-        packedPackage.package_sha256 === item.package_sha256,
+      packedPackage.package_name === item.package_name &&
+        packedPackage.package_version === item.package_version &&
+        packedPackage.package_sha256 === item.package_sha256 &&
+        packedPackage.package_file_set_sha256 === item.package_file_set_sha256,
       `setup_package_identity:${item.variant_id}`,
     );
     assert(
-      Array.isArray(item.setup_commands) && item.setup_commands.length >= 4,
+      Array.isArray(item.command_records) && item.command_records.length === 9,
       `setup_commands:${item.variant_id}`,
     );
     const setupRoot = `setup/${item.variant_id}`;
@@ -647,16 +672,31 @@ async function validateSetupRecords({ runArtifactIndex, setup, config }) {
       canonical(persisted) === canonical(item),
       `setup_record:${item.variant_id}`,
     );
-    const labels = item.setup_commands.map((command) => command.label);
+    const labels = item.command_records.map((command) => command.label);
     assert(
-      new Set(labels).size === labels.length,
+      new Set(labels).size === labels.length &&
+        canonical([...labels].sort()) ===
+          canonical(
+            [
+              "candidate-head",
+              "candidate-status",
+              "candidate-tree",
+              "git-worktree-add",
+              "npm-ci",
+              "npm-version",
+              "package-build",
+              "package-check-source",
+              "package-pack",
+            ].sort(),
+          ),
       `setup_command_duplicates:${item.variant_id}`,
     );
     const commandByLabel = new Map();
     const stdoutByLabel = new Map();
-    for (const command of item.setup_commands) {
+    for (const command of item.command_records) {
       assert(
-        command.schema_version === "long-task-real-process-host-command-v1" &&
+        command.schema_version ===
+          "long-task-package-materialization-command-v1" &&
           command.status === 0,
         `setup_command_status:${item.variant_id}:${command.label}`,
       );
@@ -688,7 +728,11 @@ async function validateSetupRecords({ runArtifactIndex, setup, config }) {
     for (const [label, args, expectedOutput] of [
       ["candidate-head", ["rev-parse", "HEAD"], item.commit],
       ["candidate-tree", ["rev-parse", "HEAD^{tree}"], item.tree],
-      ["candidate-status", ["status", "--short"], ""],
+      [
+        "candidate-status",
+        ["status", "--porcelain=v1", "--untracked-files=no"],
+        "",
+      ],
     ]) {
       const command = commandByLabel.get(label);
       assert(
@@ -885,32 +929,15 @@ async function main() {
     return;
   }
   if (args.collect) {
-    const interactionRecorder = args.formalInteractionStdin
-      ? new StdinFormalInteractionRecorder()
-      : null;
-    let result;
-    let primaryError = null;
-    try {
-      result = await collectRealProcessRoi({
-        candidate: args.candidate,
-        repositoryRoot: root,
-        artifactRoot:
-          args.artifactRoot ?? realProcessRoiPaths.default_artifact_root,
-        keepWorktrees: args.keepWorktrees,
-        formalEvidencePlan: args.formalEvidencePlan,
-        interactionRecorder,
-      });
-    } catch (error) {
-      primaryError = error;
-    } finally {
-      try {
-        interactionRecorder?.close();
-      } catch (error) {
-        if (primaryError) primaryError.cause ??= error;
-        else primaryError = error;
-      }
-    }
-    if (primaryError) throw primaryError;
+    const result = await collectRealProcessRoi({
+      candidate: args.candidate,
+      repositoryRoot: root,
+      artifactRoot:
+        args.artifactRoot ?? realProcessRoiPaths.default_artifact_root,
+      keepWorktrees: args.keepWorktrees,
+      formalEvidencePlan: args.formalEvidencePlan,
+      formalInteractionStdin: args.formalInteractionStdin,
+    });
     process.stdout.write(
       `${JSON.stringify(
         {

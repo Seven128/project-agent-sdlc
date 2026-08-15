@@ -1,11 +1,7 @@
-import {
-  FORMAL_EVIDENCE_CAPACITY,
-  REAL_PROCESS_SCHEMAS,
-} from "./long_task_real_process_schema_policy.mjs";
+import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
 import { finalizeFormalExecutionRecord } from "./long_task_formal_total_cost_execution.mjs";
 import { formalEvidenceKey } from "./long_task_formal_total_cost_events.mjs";
 import {
-  readFreshFormalFile,
   resolveFormalArtifact,
   sensitiveFormalArtifactRef,
   writeFormalJson,
@@ -75,8 +71,8 @@ export async function writeFormalScenarioRecords(options) {
       variantId,
     }),
     event_path: refs.event,
-    started_at: supervised.started_at,
-    completed_at: supervised.completed_at,
+    started_at: humanTrace.started_at,
+    completed_at: humanTrace.completed_at,
   };
 }
 
@@ -91,9 +87,9 @@ async function writeMeasurementRecords(options) {
         schema_version: REAL_PROCESS_SCHEMAS.FORMAL_PROCESS_ACCOUNTING_SCHEMA,
         invocation_id: invocationId,
         source_kind: supervised.accounting_source_kind,
-        clock_id: supervised.monotonic_clock_id,
-        started_ns: supervised.monotonic_started_ns,
-        completed_ns: supervised.monotonic_completed_ns,
+        clock_id: supervised.process_monotonic_clock_id,
+        started_ns: supervised.process_monotonic_started_ns,
+        completed_ns: supervised.process_monotonic_completed_ns,
         user_cpu_100ns: supervised.user_cpu_100ns,
         kernel_cpu_100ns: supervised.kernel_cpu_100ns,
         total_cpu_100ns: supervised.total_cpu_100ns,
@@ -104,36 +100,7 @@ async function writeMeasurementRecords(options) {
   const storageRequired =
     scenario.measurement_profile.meters.storage_byte_hour.presence ===
     "required";
-  if (storageRequired) await writeStorageRecord(options);
   return { processAccountingRequired, storageRequired };
-}
-
-async function writeStorageRecord(options) {
-  const { resolvedRoot, setup, variantId, invocationId, refs, supervised } =
-    options;
-  const packageRef = `setup/${variantId}/${setup.record.package_path}`;
-  const packageBytes = await readFreshFormalFile(
-    resolveFormalArtifact(resolvedRoot, packageRef),
-    FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
-  );
-  await writeFormalJson(
-    resolveFormalArtifact(resolvedRoot, refs.storageLedger),
-    {
-      schema_version: REAL_PROCESS_SCHEMAS.FORMAL_STORAGE_LEDGER_SCHEMA,
-      invocation_id: invocationId,
-      source_kind: "runner-exact-byte-duration-v1",
-      clock_id: supervised.monotonic_clock_id,
-      started_ns: supervised.monotonic_started_ns,
-      completed_ns: supervised.monotonic_completed_ns,
-      scope_ref: packageRef,
-      events: [
-        {
-          at_ns: supervised.monotonic_started_ns,
-          bytes: packageBytes.length,
-        },
-      ],
-    },
-  );
 }
 
 function buildExecutionRecord(options) {
@@ -144,26 +111,33 @@ function buildExecutionRecord(options) {
     refs,
     argv,
     supervised,
+    humanTrace,
     processAccountingRequired,
     storageRequired,
+    runtimeTcbIdentity,
   } = options;
   return finalizeFormalExecutionRecord({
     schema_version: REAL_PROCESS_SCHEMAS.FORMAL_SCENARIO_EXECUTION_SCHEMA,
     invocation_id: invocationId,
     attempt: 1,
     exact_invocation: {
-      executable: process.execPath,
+      executable: runtimeTcbIdentity.runtime.node_exec_path,
       argv,
       cwd: resolvedRoot,
       shell: false,
     },
     clocks: {
-      monotonic_clock_id: supervised.monotonic_clock_id,
-      monotonic_started_ns: supervised.monotonic_started_ns,
-      monotonic_completed_ns: supervised.monotonic_completed_ns,
+      human_monotonic_clock_id: humanTrace.clock_id,
+      human_monotonic_started_ns: humanTrace.monotonic_started_ns,
+      human_monotonic_completed_ns: humanTrace.monotonic_completed_ns,
+      human_started_at: humanTrace.started_at,
+      human_completed_at: humanTrace.completed_at,
+      process_monotonic_clock_id: supervised.process_monotonic_clock_id,
+      process_monotonic_started_ns: supervised.process_monotonic_started_ns,
+      process_monotonic_completed_ns: supervised.process_monotonic_completed_ns,
+      process_started_at: supervised.started_at,
+      process_completed_at: supervised.completed_at,
       wall_clock_id: supervised.wall_clock_id,
-      started_at: supervised.started_at,
-      completed_at: supervised.completed_at,
     },
     exit: {
       exit_code: supervised.exit_code,
@@ -185,6 +159,7 @@ function buildExecutionRecord(options) {
         ? refs.processAccounting
         : null,
       storage_ledger: storageRequired ? refs.storageLedger : null,
+      state_payload: storageRequired ? refs.statePayload : null,
       raw_prompt:
         scenario.measurement_profile.raw_prompt.presence === "required"
           ? sensitiveFormalArtifactRef(refs.rawPrompt)

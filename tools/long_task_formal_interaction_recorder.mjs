@@ -10,7 +10,9 @@ export class RunnerInteractionSession {
     assertInvocationId(invocationId);
     assertState(initialState);
     this.#invocationId = invocationId;
-    this.#events = [{ at: process.hrtime.bigint(), state: initialState }];
+    this.#events = [
+      { at: process.hrtime.bigint(), wallMs: Date.now(), state: initialState },
+    ];
   }
 
   mark(state) {
@@ -21,32 +23,20 @@ export class RunnerInteractionSession {
     const now = process.hrtime.bigint();
     if (now <= previous.at)
       throw new Error("formal_interaction_clock_not_monotonic");
-    this.#events.push({ at: now, state });
+    this.#events.push({ at: now, wallMs: Date.now(), state });
   }
 
-  complete({ startedNs, completedNs }) {
+  complete() {
     if (this.#closed) throw new Error("formal_interaction_session_closed");
     this.#closed = true;
-    const started = decimalBigInt(startedNs, "formal_interaction_started");
-    const completed = decimalBigInt(
-      completedNs,
-      "formal_interaction_completed",
-    );
+    const started = this.#events[0].at;
     const sealedAt = process.hrtime.bigint();
-    if (
-      completed <= started ||
-      this.#events[0].at > started ||
-      sealedAt < completed
-    )
+    const completed = sealedAt;
+    const completedWallMs = Date.now();
+    if (completed <= started)
       throw new Error("formal_interaction_execution_window");
     let state = this.#events[0].state;
-    for (const event of this.#events) {
-      if (event.at > started) break;
-      state = event.state;
-    }
-    const boundaries = this.#events.filter(
-      (event) => event.at > started && event.at < completed,
-    );
+    const boundaries = this.#events.slice(1);
     const records = [];
     let cursor = started;
     for (const boundary of boundaries) {
@@ -68,7 +58,11 @@ export class RunnerInteractionSession {
         REAL_PROCESS_SCHEMAS.FORMAL_HUMAN_INTERACTION_TRACE_SCHEMA,
       invocation_id: this.#invocationId,
       source_kind: "runner-interaction-recorder-v1",
-      clock_id: "runner-monotonic-hrtime-v1",
+      clock_id: "node-hrtime-v1",
+      started_at: new Date(this.#events[0].wallMs).toISOString(),
+      completed_at: new Date(completedWallMs).toISOString(),
+      monotonic_started_ns: started.toString(),
+      monotonic_completed_ns: completed.toString(),
       records,
     };
   }
@@ -207,10 +201,4 @@ function assertState(value) {
 function assertInvocationId(value) {
   if (typeof value !== "string" || !/^[a-f0-9]{64}$/u.test(value))
     throw new Error("formal_interaction_invocation_id");
-}
-
-function decimalBigInt(value, code) {
-  if (typeof value !== "string" || !/^[0-9]+$/u.test(value))
-    throw new Error(code);
-  return BigInt(value);
 }

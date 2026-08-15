@@ -12,8 +12,8 @@ public sealed class FormalProcessSupervisorResult
     public bool DescendantsCleaned { get; set; }
     public long StdoutBytes { get; set; }
     public long StderrBytes { get; set; }
-    public string StartedAt { get; set; }
-    public string CompletedAt { get; set; }
+    public long StartedUnixMs { get; set; }
+    public long CompletedUnixMs { get; set; }
     public string MonotonicStartedNs { get; set; }
     public string MonotonicCompletedNs { get; set; }
     public string MonotonicClockId { get; set; }

@@ -18,11 +18,18 @@ const profileKeys = Object.freeze([
   "raw_prompt",
 ]);
 const meterSourceKinds = Object.freeze({
-  provider_input_token: "invocation-correlated-provider-event-v1",
-  provider_output_token: "invocation-correlated-provider-event-v1",
-  provider_cached_input_token: "invocation-correlated-provider-event-v1",
+  provider_input_token: "runner-provider-bridge-capture-v1",
+  provider_output_token: "runner-provider-bridge-capture-v1",
+  provider_cached_input_token: "runner-provider-bridge-capture-v1",
   compute_ms: "windows-job-object-accounting-v1",
-  storage_byte_hour: "runner-exact-byte-duration-v1",
+  storage_byte_hour: "runner-exact-state-payload-retention-v1",
+});
+const meterQuantityRules = Object.freeze({
+  provider_input_token: "positive",
+  provider_output_token: "positive",
+  provider_cached_input_token: "explicit-nonnegative-provider-value",
+  compute_ms: "positive",
+  storage_byte_hour: "positive",
 });
 
 export function validateFormalScenarioCatalog({
@@ -158,6 +165,7 @@ function validateMeasurementProfile(profile, scenarioId) {
   validatePresence(
     profile.human_time,
     "runner-interaction-recorder-v1",
+    "positive-active-nonnegative-wait",
     `${scenarioId}:human_time`,
   );
   assert(
@@ -166,12 +174,14 @@ function validateMeasurementProfile(profile, scenarioId) {
   );
   validatePresence(
     profile.raw_prompt,
-    "runner-captured-raw-prompt-v1",
+    "runner-provider-bridge-exact-prompt-v1",
+    "positive-bytes",
     `${scenarioId}:raw_prompt`,
   );
   validatePresence(
     profile.provider_event,
-    "invocation-correlated-provider-event-v1",
+    "runner-provider-bridge-capture-v1",
+    "exactly-one-invocation-correlated-event",
     `${scenarioId}:provider_event`,
   );
   assertExactKeys(
@@ -183,6 +193,7 @@ function validateMeasurementProfile(profile, scenarioId) {
     validatePresence(
       profile.meters[meter],
       sourceKind,
+      meterQuantityRules[meter],
       `${scenarioId}:${meter}`,
     );
   const providerRequired = profile.provider_event.presence === "required";
@@ -199,7 +210,7 @@ function validateMeasurementProfile(profile, scenarioId) {
   );
 }
 
-function validatePresence(value, requiredSourceKind, label) {
+function validatePresence(value, requiredSourceKind, quantityRule, label) {
   assert(
     value && typeof value === "object" && !Array.isArray(value),
     `formal_scenario_measurement_presence:${label}`,
@@ -211,11 +222,12 @@ function validatePresence(value, requiredSourceKind, label) {
   if (value.presence === "required") {
     assertExactKeys(
       value,
-      ["presence", "source_kind"],
+      ["presence", "quantity_rule", "source_kind"],
       `formal_scenario_measurement_required_fields:${label}`,
     );
     assert(
-      value.source_kind === requiredSourceKind,
+      value.source_kind === requiredSourceKind &&
+        value.quantity_rule === quantityRule,
       `formal_scenario_measurement_source_kind:${label}`,
     );
   } else
@@ -265,42 +277,6 @@ function pickScenarioAccountingFields(scenario) {
     task_source_ref: scenario.task_source_ref,
     gold_source_ref: scenario.gold_source_ref,
   };
-}
-
-export function validateFormalScenarioOutput({
-  bundle,
-  sourceRef,
-  subject,
-  variantId,
-  scenarios,
-  usedOutputs,
-  sourcePath,
-}) {
-  const scenario = scenarios.get(subject.scenarioId);
-  const output = bundle.files.get(sourceRef);
-  assert(
-    scenario &&
-      output?.entry.role === "scenario_output" &&
-      output.bytes.length > 0 &&
-      !usedOutputs.has(sourceRef),
-    `formal_scenario_output:${sourcePath}`,
-  );
-  usedOutputs.add(sourceRef);
-  const matchesGold = output.bytes.equals(scenario.gold.bytes);
-  if (subject.kind === "cost")
-    assert(matchesGold, `formal_scenario_cost_gold:${sourcePath}`);
-  else if (variantId === "b")
-    assert(!matchesGold, `formal_scenario_incident_b_wrong:${sourcePath}`);
-  else assert(matchesGold, `formal_scenario_incident_c_correct:${sourcePath}`);
-}
-
-export function assertFormalScenarioOutputsConsumed(bundle, usedOutputs) {
-  for (const [sourcePath, source] of bundle.files)
-    if (source.entry.role === "scenario_output")
-      assert(
-        usedOutputs.has(sourcePath),
-        `formal_scenario_output_unused:${sourcePath}`,
-      );
 }
 
 function expectedScenarioDefinitions(accountingPolicy) {

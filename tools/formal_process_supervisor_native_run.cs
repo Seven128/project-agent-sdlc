@@ -39,7 +39,7 @@ public static partial class FormalProcessSupervisor
         Task<long> stdoutTask = null;
         Task<long> stderrTask = null;
         bool timedOut = false;
-        string startedAt = null;
+        long startedUnixMs = 0;
         long startedTicks = 0;
         try
         {
@@ -97,7 +97,7 @@ public static partial class FormalProcessSupervisor
             stderrTask = CaptureAsync(stderrRead, stderrPath, captureState);
             stderrRead = IntPtr.Zero;
 
-            startedAt = DateTime.UtcNow.ToString("O");
+            startedUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             startedTicks = Stopwatch.GetTimestamp();
             if (ResumeThread(process.hThread) == UInt32.MaxValue)
                 ThrowLastError("resume_process");
@@ -133,7 +133,7 @@ public static partial class FormalProcessSupervisor
                 throw new InvalidOperationException("formal_process_supervisor_descendants_alive");
             Task.WaitAll(stdoutTask, stderrTask);
             long completedTicks = Stopwatch.GetTimestamp();
-            string completedAt = DateTime.UtcNow.ToString("O");
+            long completedUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             uint rawExitCode;
             Check(GetExitCodeProcess(process.hProcess, out rawExitCode), "process_exit_code");
             if (rawExitCode == STILL_ACTIVE)
@@ -148,12 +148,12 @@ public static partial class FormalProcessSupervisor
                 DescendantsCleaned = accounting.ActiveProcesses == 0,
                 StdoutBytes = stdoutTask.Result,
                 StderrBytes = stderrTask.Result,
-                StartedAt = startedAt,
-                CompletedAt = completedAt,
+                StartedUnixMs = startedUnixMs,
+                CompletedUnixMs = completedUnixMs,
                 MonotonicStartedNs = TicksToNanoseconds(startedTicks).ToString(),
                 MonotonicCompletedNs = TicksToNanoseconds(completedTicks).ToString(),
-                MonotonicClockId = "runner-monotonic-hrtime-v1",
-                WallClockId = "runner-wall-utc-v1",
+                MonotonicClockId = "windows-stopwatch-qpc-v1",
+                WallClockId = "unix-epoch-ms-v1",
                 UserCpu100Ns = accounting.TotalUserTime,
                 KernelCpu100Ns = accounting.TotalKernelTime,
                 TotalCpu100Ns = checked(accounting.TotalUserTime + accounting.TotalKernelTime),

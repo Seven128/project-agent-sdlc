@@ -39,6 +39,7 @@ export function validateFormalAccountingPolicy(policy) {
       "scope",
       "significant_stable_margin",
       "source_bundle_limits",
+      "state_storage_retention",
     ],
     "accounting_policy_field_set",
   );
@@ -79,6 +80,12 @@ export function validateFormalAccountingPolicy(policy) {
         expected_executions: FORMAL_EVIDENCE_CAPACITY.expected_execution_count,
         expected_runner_files:
           FORMAL_EVIDENCE_CAPACITY.expected_runner_artifact_count,
+        formal_file_headroom:
+          FORMAL_EVIDENCE_CAPACITY.formal_file_headroom,
+        formal_worst_case_bytes:
+          FORMAL_EVIDENCE_CAPACITY.formal_worst_case_bytes,
+        formal_byte_headroom:
+          FORMAL_EVIDENCE_CAPACITY.formal_byte_headroom,
         maximum_formal_files: FORMAL_EVIDENCE_CAPACITY.maximum_formal_files,
         maximum_formal_total_bytes:
           FORMAL_EVIDENCE_CAPACITY.maximum_formal_total_bytes,
@@ -95,6 +102,10 @@ export function validateFormalAccountingPolicy(policy) {
           FORMAL_EVIDENCE_CAPACITY.maximum_scenario_output_bytes,
         maximum_raw_prompt_bytes:
           FORMAL_EVIDENCE_CAPACITY.maximum_raw_prompt_bytes,
+        maximum_state_payload_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_state_payload_bytes,
+        maximum_state_source_files:
+          FORMAL_EVIDENCE_CAPACITY.maximum_state_source_files,
         maximum_combined_stream_bytes:
           FORMAL_EVIDENCE_CAPACITY.maximum_combined_stream_bytes,
         maximum_event_bytes: FORMAL_EVIDENCE_CAPACITY.maximum_event_bytes,
@@ -102,6 +113,23 @@ export function validateFormalAccountingPolicy(policy) {
           FORMAL_EVIDENCE_CAPACITY.maximum_measurement_record_bytes,
         maximum_lifecycle_file_bytes:
           FORMAL_EVIDENCE_CAPACITY.maximum_lifecycle_file_bytes,
+        maximum_package_tarball_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_package_tarball_bytes,
+        maximum_materialization_command_output_bytes:
+          FORMAL_EVIDENCE_CAPACITY.maximum_materialization_command_output_bytes,
+        budget_protocol: "catalog-artifact-roles-worst-case-v1",
+        lifecycle_run_count: FORMAL_EVIDENCE_CAPACITY.lifecycle_run_count,
+        lifecycle_commands_per_run:
+          FORMAL_EVIDENCE_CAPACITY.lifecycle_commands_per_run,
+        lifecycle_maximum_files_per_run:
+          FORMAL_EVIDENCE_CAPACITY.lifecycle_maximum_files_per_run,
+        lifecycle_maximum_files:
+          FORMAL_EVIDENCE_CAPACITY.lifecycle_maximum_files,
+        setup_maximum_files: FORMAL_EVIDENCE_CAPACITY.setup_maximum_files,
+        precollection_maximum_files:
+          FORMAL_EVIDENCE_CAPACITY.precollection_maximum_files,
+        frozen_input_maximum_files:
+          FORMAL_EVIDENCE_CAPACITY.frozen_input_maximum_files,
       }),
     "accounting_policy_run_artifact_limits",
   );
@@ -109,6 +137,7 @@ export function validateFormalAccountingPolicy(policy) {
     canonical(policy.retention) === canonical(expectedRetention()),
     "accounting_policy_retention",
   );
+  validateStateStorageRetention(policy.state_storage_retention);
   assert(
     canonical(policy.event_ownership) ===
       canonical({
@@ -138,6 +167,26 @@ export function validateFormalAccountingPolicy(policy) {
   );
   assert(policy.rounding_decimal_places === 6, "accounting_policy_rounding");
   return policy;
+}
+
+export function validateFormalStateRetentionSource({
+  accountingPolicy,
+  bundle,
+}) {
+  const retention = accountingPolicy.state_storage_retention;
+  validateStateStorageRetention(retention);
+  if (retention.status === "external_pending")
+    throw new Error("formal_collection_state_retention_external_pending");
+  const sources = [...bundle.files.values()].filter(
+    ({ entry }) => entry.role === "state_retention_source",
+  );
+  assert(
+    sources.length === 1 &&
+      sources[0].entry.sha256 === retention.source_sha256 &&
+      sources[0].entry.bytes > 0,
+    "formal_collection_state_retention_source",
+  );
+  return Object.freeze({ ...retention });
 }
 
 function validateHumanRates(rates) {
@@ -253,6 +302,49 @@ function expectedRetention() {
     sensitive_payload_transport: "local-only",
     not_applicable_requires_no_source: true,
   };
+}
+
+function validateStateStorageRetention(retention) {
+  assertExactKeys(
+    retention,
+    [
+      "basis",
+      "missing_consequence",
+      "retention_hours",
+      "source_sha256",
+      "status",
+      "universal_standard_claimed",
+    ],
+    "accounting_policy_state_retention_fields",
+  );
+  assert(
+    retention.missing_consequence === "formal_collection_fail_closed" &&
+      retention.universal_standard_claimed === false,
+    "accounting_policy_state_retention_boundary",
+  );
+  if (retention.status === "external_pending") {
+    assert(
+      retention.retention_hours === null &&
+        retention.basis === null &&
+        retention.source_sha256 === null,
+      "accounting_policy_state_retention_pending",
+    );
+    return;
+  }
+  assert(
+    retention.status === "frozen_supported" &&
+      Number.isSafeInteger(retention.retention_hours) &&
+      retention.retention_hours > 0 &&
+      retention.retention_hours <=
+        Math.floor(
+          Number.MAX_SAFE_INTEGER /
+            FORMAL_EVIDENCE_CAPACITY.maximum_state_payload_bytes,
+        ) &&
+      typeof retention.basis === "string" &&
+      retention.basis.length > 0 &&
+      /^[a-f0-9]{64}$/u.test(retention.source_sha256),
+    "accounting_policy_state_retention_supported",
+  );
 }
 
 function stratum(key, categories, pairCount, aggregation, cycleMultiplier) {

@@ -19,21 +19,6 @@ export const meterUnits = Object.freeze({
   compute_ms: "millisecond",
   storage_byte_hour: "byte-hour",
 });
-export const sourceRoles = Object.freeze([
-  "collector",
-  "incident_source",
-  "price_document",
-  "price_source",
-  "provider_event",
-  "raw_event",
-  "raw_prompt",
-  "redaction_rule",
-  "scenario_catalog",
-  "scenario_gold",
-  "scenario_output",
-  "scenario_source",
-]);
-
 const prohibitedPacketFields = new Set([
   "event_id",
   "exclusive_event_id",

@@ -20,11 +20,11 @@ export function normalizeFormalProcessResult(raw, requestId) {
     descendants_cleaned: raw.DescendantsCleaned,
     stdout_bytes: raw.StdoutBytes,
     stderr_bytes: raw.StderrBytes,
-    started_at: raw.StartedAt,
-    completed_at: raw.CompletedAt,
-    monotonic_started_ns: raw.MonotonicStartedNs,
-    monotonic_completed_ns: raw.MonotonicCompletedNs,
-    monotonic_clock_id: raw.MonotonicClockId,
+    started_at: canonicalUnixMilliseconds(raw.StartedUnixMs),
+    completed_at: canonicalUnixMilliseconds(raw.CompletedUnixMs),
+    process_monotonic_started_ns: raw.MonotonicStartedNs,
+    process_monotonic_completed_ns: raw.MonotonicCompletedNs,
+    process_monotonic_clock_id: raw.MonotonicClockId,
     wall_clock_id: raw.WallClockId,
     user_cpu_100ns: raw.UserCpu100Ns,
     kernel_cpu_100ns: raw.KernelCpu100Ns,
@@ -156,14 +156,30 @@ function validateResultProcess(result, requestId) {
 
 function validateResultClocks(result) {
   if (
-    !/^[0-9]+$/u.test(result.monotonic_started_ns ?? "") ||
-    !/^[0-9]+$/u.test(result.monotonic_completed_ns ?? "") ||
-    BigInt(result.monotonic_completed_ns) <
-      BigInt(result.monotonic_started_ns) ||
-    result.monotonic_clock_id !== "runner-monotonic-hrtime-v1" ||
-    result.wall_clock_id !== "runner-wall-utc-v1"
+    !/^[0-9]+$/u.test(result.process_monotonic_started_ns ?? "") ||
+    !/^[0-9]+$/u.test(result.process_monotonic_completed_ns ?? "") ||
+    BigInt(result.process_monotonic_completed_ns) <
+      BigInt(result.process_monotonic_started_ns) ||
+    result.process_monotonic_clock_id !== "windows-stopwatch-qpc-v1" ||
+    result.wall_clock_id !== "unix-epoch-ms-v1" ||
+    !isCanonicalTimestamp(result.started_at) ||
+    !isCanonicalTimestamp(result.completed_at) ||
+    Date.parse(result.completed_at) < Date.parse(result.started_at)
   )
     throw new Error("formal_process_supervisor_result_invalid");
+}
+
+function canonicalUnixMilliseconds(value) {
+  if (!Number.isSafeInteger(value) || value < 0)
+    throw new Error("formal_process_supervisor_result_invalid");
+  return new Date(value).toISOString();
+}
+
+function isCanonicalTimestamp(value) {
+  const milliseconds = Date.parse(value);
+  return (
+    Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value
+  );
 }
 
 function validateResultAccounting(result) {

@@ -15,6 +15,7 @@ const formalRoles = new Map([
   ["human.json", "human_interaction_trace"],
   ["process-accounting.json", "process_accounting"],
   ["storage-ledger.json", "storage_ledger"],
+  ["state-payload.bin", "state_payload"],
   ["provider-event.json", "provider_event"],
   ["raw-prompt.bin", "raw_prompt"],
   ["candidate-observation.json", "candidate_observation"],

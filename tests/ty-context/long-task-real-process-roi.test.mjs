@@ -45,13 +45,15 @@ import {
   buildArtifactManifest,
   cleanupRealProcessRoiWorktrees,
   finalizeRealProcessRoiResources,
-  realProcessRoiNpmCommandSpec,
 } from "../../tools/long_task_real_process_roi_runner.mjs";
+import { npmCommandSpec } from "../../tools/npm_command_spec.mjs";
 import { verifyRealProcessRoiReport } from "../../tools/verify_long_task_real_process_roi.mjs";
 import {
   deriveFormalRuntimeTcbIdentity,
   formalProcessSupervisorTcbPaths,
 } from "../../tools/long_task_formal_runtime_tcb.mjs";
+import { FORMAL_PROVIDER_ADAPTER_PATH } from "../../tools/long_task_formal_provider_capture.mjs";
+import { readPackedPackageIdentity } from "../../tools/long_task_packed_package_identity.mjs";
 import { evaluateProductFacts } from "../../examples/delivery-benchmark/real-process-workload/product/facts.mjs";
 import {
   evaluateCounterfactualGold,
@@ -504,7 +506,7 @@ test("real process ROI setup routes every Windows npm command through ComSpec wi
       "C:\\tmp\\pack",
     ],
   ])
-    assert.deepEqual(realProcessRoiNpmCommandSpec(args, options), {
+    assert.deepEqual(npmCommandSpec(args, options), {
       command: "C:\\Windows\\System32\\cmd.exe",
       args: ["/d", "/s", "/c", "call", "npm", ...args],
     });
@@ -779,8 +781,8 @@ test("external gold independently detects wrong product and exact Counterfactual
   }
 });
 
-test("collection summary owns observed lifecycle facts and never a formal ROI conclusion", () => {
-  const fixture = scoringFixture();
+test("collection summary owns observed lifecycle facts and never a formal ROI conclusion", async () => {
+  const fixture = await scoringFixture();
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
   assert.equal(summary.schema_version, REAL_PROCESS_SUMMARY_SCHEMA);
   assert.equal(summary.a_safety_eligible, false);
@@ -809,8 +811,8 @@ test("collection summary owns observed lifecycle facts and never a formal ROI co
   assert.equal(summary.governance_judgment_included, false);
 });
 
-test("the five-repeat formal population remains complete when three repeats satisfy diagnostics", () => {
-  const fixture = formalScoringFixture();
+test("the five-repeat formal population remains complete when three repeats satisfy diagnostics", async () => {
+  const fixture = await formalScoringFixture();
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
   assert.equal(summary.repeats, 5);
   assert.equal(summary.expansion.required_repeats, 3);
@@ -822,8 +824,8 @@ test("the five-repeat formal population remains complete when three repeats sati
   );
 });
 
-test("run records and frozen config cannot self-attest formal ROI evidence", () => {
-  const runFixture = scoringFixture();
+test("run records and frozen config cannot self-attest formal ROI evidence", async () => {
+  const runFixture = await scoringFixture();
   runFixture.runs[0].formal_total_cost_evidence = {
     verified: true,
   };
@@ -831,14 +833,14 @@ test("run records and frozen config cannot self-attest formal ROI evidence", () 
     () => validateRunRecord(runFixture.runs[0], runFixture.config),
     /real_process_roi_invalid:run_formal_conclusion_fields_prohibited/u,
   );
-  const renamedConclusion = scoringFixture();
+  const renamedConclusion = await scoringFixture();
   renamedConclusion.runs[0].formal_status = "verified";
   assert.throws(
     () =>
       validateRunRecord(renamedConclusion.runs[0], renamedConclusion.config),
     /real_process_roi_invalid:run_formal_conclusion_fields_prohibited/u,
   );
-  const configFixture = scoringFixture();
+  const configFixture = await scoringFixture();
   configFixture.config.formal_total_cost_policy.independent_evidence_admitted = true;
   assert.throws(
     () => deriveRealProcessRoiSummary(configFixture.runs, configFixture.config),
@@ -846,8 +848,8 @@ test("run records and frozen config cannot self-attest formal ROI evidence", () 
   );
 });
 
-test("a missing authoritative authoring-token event remains diagnostic and cannot manufacture total ROI", () => {
-  const fixture = scoringFixture();
+test("a missing authoritative authoring-token event remains diagnostic and cannot manufacture total ROI", async () => {
+  const fixture = await scoringFixture();
   fixture.runs[0].metrics.authoring_token_count = unverifiedMetric(
     "tokens",
     "no provider usage event",
@@ -864,8 +866,8 @@ test("a missing authoritative authoring-token event remains diagnostic and canno
   assert.equal(Object.hasOwn(summary, "total_roi_positive"), false);
 });
 
-test("missing B false acceptance invalidates the evidence instead of making B look safer", () => {
-  const fixture = scoringFixture();
+test("missing B false acceptance invalidates the evidence instead of making B look safer", async () => {
+  const fixture = await scoringFixture();
   const b = fixture.runs.find((run) => run.variant_id === "b");
   const r9 = b.cases.find(
     (item) => item.case_id === "r9-evidence-role-runtime-input",
@@ -884,8 +886,8 @@ test("missing B false acceptance invalidates the evidence instead of making B lo
   assert.equal(summary.formal_status, "not_evaluated");
 });
 
-test("high variance or inconsistent direction expands three repeats to five", () => {
-  const fixture = scoringFixture();
+test("high variance or inconsistent direction expands three repeats to five", async () => {
+  const fixture = await scoringFixture();
   const cRuns = fixture.runs.filter((run) => run.variant_id === "c");
   cRuns[1].metrics.total_elapsed_ms.value = 3000;
   const expansion = expansionDecision(fixture.runs, fixture.config);
@@ -896,8 +898,8 @@ test("high variance or inconsistent direction expands three repeats to five", ()
   assert.equal(summary.observed_lifecycle_status, "requires_expanded_repeats");
 });
 
-test("run validation rejects metric tampering, duplicate cases and promoted A authority", () => {
-  const fixture = scoringFixture();
+test("run validation rejects metric tampering, duplicate cases and promoted A authority", async () => {
+  const fixture = await scoringFixture();
   const legacy = structuredClone(fixture.runs[0]);
   legacy.schema_version = "long-task-real-process-roi-run-v1";
   assert.throws(
@@ -928,7 +930,7 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
     () => validateRunRecord(duplicate, fixture.config),
     /real_process_roi_invalid:run_case_set/u,
   );
-  const duplicateRunIds = scoringFixture();
+  const duplicateRunIds = await scoringFixture();
   duplicateRunIds.runs[1].run_id = duplicateRunIds.runs[0].run_id;
   assert.throws(
     () =>
@@ -978,7 +980,7 @@ test("report verifier recomputes raw SHA closure, summary and verdict", async ()
 });
 
 async function materializeVerifierReportFixture(temporary) {
-  const fixture = formalScoringFixture();
+  const fixture = await formalScoringFixture();
   for (const run of fixture.runs.filter((item) => item.variant_id === "c"))
     run.metrics.total_elapsed_ms.value += 1_000;
   fixture.config.formal_evidence_precollection_identity = null;
@@ -1213,11 +1215,11 @@ async function assertVerifierRawTamperingRejected(temporary, state) {
   );
 }
 
-function scoringFixture({ repeats = 3 } = {}) {
+async function scoringFixture({ repeats = 3 } = {}) {
   const variants = variantDefinitions(fakeCandidate);
   const workloadIdentity = sourceIdentityFixture("workload.json", "workload");
   const implementationIdentity = sourceIdentityMultiFixture(
-    formalProcessSupervisorTcbPaths,
+    [...formalProcessSupervisorTcbPaths, FORMAL_PROVIDER_ADAPTER_PATH],
     "implementation",
   );
   const accountingPolicyIdentity = sourceIdentityFixture(
@@ -1261,7 +1263,7 @@ function scoringFixture({ repeats = 3 } = {}) {
     semantic_gold_sha256: digest("semantic-gold"),
     environment,
     environment_identity: environmentIdentity,
-    formal_runtime_tcb_identity: deriveFormalRuntimeTcbIdentity({
+    formal_runtime_tcb_identity: await deriveFormalRuntimeTcbIdentity({
       environment,
       benchmarkImplementationIdentity: implementationIdentity,
     }),
@@ -1313,7 +1315,7 @@ function scoringFixture({ repeats = 3 } = {}) {
   return { config, runs };
 }
 
-function formalScoringFixture() {
+async function formalScoringFixture() {
   return scoringFixture({ repeats: 5 });
 }
 
@@ -1600,13 +1602,14 @@ async function writeSetupFixture(runSetRoot, config) {
   const records = [];
   for (const variant of Object.values(config.variants)) {
     const packageBytes = packageTarballFixture("0.8.14");
+    const packed = readPackedPackageIdentity(packageBytes);
     const packagePath = `setup/${variant.id}/pack/${variant.id}.tgz`;
     const setupRoot = path.join(runSetRoot, "setup", variant.id);
     await mkdir(path.dirname(path.join(runSetRoot, packagePath)), {
       recursive: true,
     });
     await writeFile(path.join(runSetRoot, packagePath), packageBytes);
-    const setupCommands = [];
+    const commandRecords = [];
     for (const { label, argv, output } of [
       {
         label: "git-worktree-add",
@@ -1619,7 +1622,13 @@ async function writeSetupFixture(runSetRoot, config) {
         argv: ["package-build"],
         output: "package-build",
       },
+      {
+        label: "package-check-source",
+        argv: ["package-check-source"],
+        output: "package-check-source",
+      },
       { label: "package-pack", argv: ["package-pack"], output: "package-pack" },
+      { label: "npm-version", argv: ["npm", "--version"], output: "10.0.0" },
       {
         label: "candidate-head",
         argv: ["git", "rev-parse", "HEAD"],
@@ -1632,14 +1641,14 @@ async function writeSetupFixture(runSetRoot, config) {
       },
       {
         label: "candidate-status",
-        argv: ["git", "status", "--short"],
+        argv: ["git", "status", "--porcelain=v1", "--untracked-files=no"],
         output: "",
       },
     ]) {
       const stdout = Buffer.from(output ? `${output}\n` : "");
       const stderr = Buffer.alloc(0);
       const command = {
-        schema_version: "long-task-real-process-host-command-v1",
+        schema_version: "long-task-package-materialization-command-v1",
         label,
         argv,
         cwd: runSetRoot,
@@ -1657,16 +1666,24 @@ async function writeSetupFixture(runSetRoot, config) {
       await writeFile(path.join(setupRoot, `${label}.stdout.log`), stdout);
       await writeFile(path.join(setupRoot, `${label}.stderr.log`), stderr);
       await writeJson(path.join(setupRoot, `${label}.command.json`), command);
-      setupCommands.push(command);
+      commandRecords.push(command);
     }
     const record = {
       variant_id: variant.id,
+      schema_version: "long-task-package-materialization-v1",
       commit: variant.commit,
       tree: fakeTree,
+      package_name: packed.package_name,
       package_path: `pack/${variant.id}.tgz`,
       package_version: "0.8.14",
       package_sha256: digest(packageBytes),
-      setup_commands: setupCommands,
+      package_file_set_sha256: packed.package_file_set_sha256,
+      lockfile_sha256: digest("fixture-lockfile"),
+      node_version: process.version,
+      node_executable_sha256: digest("fixture-node"),
+      npm_version: "10.0.0",
+      protocol: "npm-ci-build-check-source-pack-v1",
+      command_records: commandRecords,
     };
     await writeJson(path.join(setupRoot, "setup.json"), record);
     records.push(record);

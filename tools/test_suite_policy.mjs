@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 19,
-    reviewed_on: "2026-08-14",
+    max_files: 22,
+    reviewed_on: "2026-08-16",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family, including the Level 4 immutable run-index, whole-process-tree measurement, external-pending and direct-child governance-promotion controls; no duplicate formal conclusion owner is added.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, sealed acquisition, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -175,9 +175,27 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
   ),
   criticalSentinel(
     "level4-evidence-governance-boundary",
-    "long-task-level4-evidence-governance.test.mjs",
+    "long-task-level4-formal-accounting.test.mjs",
     ["long-task", "long-task-trust"],
-    "Proves the 11-scenario required/forbidden measurement owner, exact 86-execution/576-file immutable evidence closure, pre-spawn invocation and post-exit execution identities, real Windows Job containment and bounded streams, external-pending non-promotion, independent-audit binding, and direct-child governance-only promotion while verify_long_task_real_process_roi remains the sole formal conclusion owner.",
+    "Proves the 11-scenario required/forbidden measurement owner, catalog-derived exact 86-execution/586-file immutable evidence closure, pre-spawn invocation and post-exit execution identities, restored dynamic source/accounting/output controls, schema-family fail-closed behavior and synthetic external-pending non-promotion while verify_long_task_real_process_roi remains the sole formal conclusion owner.",
+  ),
+  criticalSentinel(
+    "level4-acquisition-runtime-boundary",
+    "long-task-level4-acquisition.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves the private branded acquisition runtime cannot accept recorder/supervisor injection; the Windows Job owner preserves exact argv, full-tree containment/cleanup, cumulative CPU, split clocks, timeout and bounded streams; State uses exact payload/retention; Provider and unavailable external Sources fail closed.",
+  ),
+  criticalSentinel(
+    "level4-package-promotion-boundary",
+    "long-task-level4-package-promotion.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves two detached exact-HEAD npm-ci/build/check-source/pack materializations reproduce package and file-set identities, fake materializers/comparators are rejected, package/report mismatch fails, and only manifest v2 participates in promotion comparison.",
+  ),
+  criticalSentinel(
+    "level4-governance-audit-boundary",
+    "long-task-level4-governance.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves independent audit identity and participation, complete digested inputs, current commands/results, findings and conclusion remain bound without becoming a verifier; direct-child governance-only additions pass the commit boundary and any candidate/TCB-surface mutation fails before external evidence use.",
   ),
   criticalSentinel(
     "critical-policy-continuity",
@@ -324,7 +342,10 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-global-blocked-status.test.mjs",
   "long-task-global-claim-coverage.test.mjs",
   "long-task-global-evidence-sensitivity.test.mjs",
-  "long-task-level4-evidence-governance.test.mjs",
+  "long-task-level4-acquisition.test.mjs",
+  "long-task-level4-formal-accounting.test.mjs",
+  "long-task-level4-governance.test.mjs",
+  "long-task-level4-package-promotion.test.mjs",
   "long-task-execution-observation.test.mjs",
   "long-task-model-choice-checkpoint.test.mjs",
   "long-task-non-completing-source.test.mjs",
@@ -594,11 +615,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 51 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 54 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/51/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/54/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

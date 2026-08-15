@@ -1,12 +1,13 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { FormalProcessSupervisor } from "./formal_process_supervisor.mjs";
 import {
   FORMAL_EVIDENCE_CAPACITY,
   REAL_PROCESS_SCHEMAS,
 } from "./long_task_real_process_schema_policy.mjs";
 import { validateFormalScenarioCatalog } from "./long_task_formal_total_cost_scenarios.mjs";
 import { validateFormalCollectorCatalog } from "./long_task_formal_total_cost_collectors.mjs";
+import { createFormalAcquisitionRuntime } from "./long_task_formal_acquisition_runtime.mjs";
+import { validateFormalStateRetentionSource } from "./long_task_formal_total_cost_accounting_policy.mjs";
 import { validateControlledIncidentBundle } from "./long_task_formal_total_cost_incident.mjs";
 import { validateFormalPriceSources } from "./long_task_formal_total_cost_prices.mjs";
 import { validateFormalPrecollectionBinding } from "./long_task_formal_total_cost_precollection.mjs";
@@ -21,74 +22,87 @@ import {
 } from "./long_task_formal_collection_io.mjs";
 import { collectFormalScenarioExecution } from "./long_task_formal_scenario_collection.mjs";
 
-export { collectFormalScenarioExecution } from "./long_task_formal_scenario_collection.mjs";
-
-export async function collectFormalTotalCostArtifacts({
-  runSetRoot,
-  runSetId,
-  runs,
-  preparedByVariant,
-  precollection,
-  accountingPolicy,
-  accountingPolicyIdentity,
-  interactionRecorder,
-  supervisorFactory = () => new FormalProcessSupervisor(),
-}) {
-  assertCollectionDependencies(precollection, interactionRecorder);
-  const resolvedRoot = path.resolve(runSetRoot);
-  const formalRoot = path.join(resolvedRoot, "formal-evidence");
-  const validationWindow = { started: Date.now(), completed: Date.now() };
-  const precollectionFrozenAt = Date.parse(precollection.identity.frozen_at);
-  const { scenarios, collectors } = validateCollectionSources({
-    precollection,
-    accountingPolicy,
-    validationWindow,
-    precollectionFrozenAt,
-  });
-  await mkdir(formalRoot, { recursive: false });
-  const runByVariantRepeat = new Map(
-    runs.map((run) => [`${run.variant_id}:${run.repeat}`, run]),
-  );
-  const supervisor = supervisorFactory();
-  const collected = await collectScenarioPopulation({
-    resolvedRoot,
-    formalRoot,
-    runSetId,
-    scenarios,
-    collectors,
-    runByVariantRepeat,
-    preparedByVariant,
-    precollection,
-    interactionRecorder,
-    supervisor,
-  });
-  validateCollectedPopulation(
-    collected.artifactBindings,
-    expectedFormalEvidenceKeys(accountingPolicy),
-  );
-  const packet = buildFormalPacket({
+export async function collectFormalTotalCostArtifacts(options) {
+  assertExactCollectionOptions(options);
+  const {
+    runSetRoot,
     runSetId,
     runs,
     preparedByVariant,
     precollection,
     accountingPolicy,
     accountingPolicyIdentity,
-    ...collected,
-  });
-  const packetPath = path.join(resolvedRoot, "formal-evidence-index.json");
-  await writeFormalJson(packetPath, packet);
-  return Object.freeze({
-    packet_path: packetPath,
-    artifact_count: collected.artifactBindings.length,
-    collection_window: packet.collection_window,
-  });
-}
-
-function assertCollectionDependencies(precollection, interactionRecorder) {
+    formalInteractionStdin,
+    runtimeTcbIdentity,
+  } = options;
   if (!precollection)
     throw new Error("formal_collection_precollection_required");
-  if (!interactionRecorder || typeof interactionRecorder.begin !== "function")
-    throw new Error("formal_interaction_recorder_unavailable");
+  const resolvedRoot = path.resolve(runSetRoot);
+  const formalRoot = path.join(resolvedRoot, "formal-evidence");
+  let primaryError = null;
+  let acquisitionRuntime = null;
+  try {
+    const validationWindow = { started: Date.now(), completed: Date.now() };
+    const precollectionFrozenAt = Date.parse(precollection.identity.frozen_at);
+    const { scenarios, collectors, stateRetention } =
+      validateCollectionSources({
+        precollection,
+        accountingPolicy,
+        validationWindow,
+        precollectionFrozenAt,
+      });
+    acquisitionRuntime = createFormalAcquisitionRuntime({
+      formalInteractionStdin,
+      runtimeTcbIdentity,
+    });
+    await mkdir(formalRoot, { recursive: false });
+    const runByVariantRepeat = new Map(
+      runs.map((run) => [`${run.variant_id}:${run.repeat}`, run]),
+    );
+    const collected = await collectScenarioPopulation({
+      resolvedRoot,
+      formalRoot,
+      runSetId,
+      scenarios,
+      collectors,
+      runByVariantRepeat,
+      preparedByVariant,
+      precollection,
+      acquisitionRuntime,
+      runtimeTcbIdentity,
+      stateRetention,
+    });
+    validateCollectedPopulation(
+      collected.artifactBindings,
+      expectedFormalEvidenceKeys(accountingPolicy),
+    );
+    const packet = buildFormalPacket({
+      runSetId,
+      runs,
+      preparedByVariant,
+      precollection,
+      accountingPolicy,
+      accountingPolicyIdentity,
+      ...collected,
+    });
+    const packetPath = path.join(resolvedRoot, "formal-evidence-index.json");
+    await writeFormalJson(packetPath, packet);
+    return Object.freeze({
+      packet_path: packetPath,
+      artifact_count: collected.artifactBindings.length,
+      collection_window: packet.collection_window,
+    });
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    try {
+      await acquisitionRuntime?.close();
+    } catch (error) {
+      if (primaryError) primaryError.cause ??= error;
+      else primaryError = error;
+    }
+  }
+  throw primaryError;
 }
 
 function validateCollectionSources({
@@ -133,16 +147,18 @@ function validateCollectionSources({
   });
   if (!incident.promotion_eligible)
     throw new Error("formal_collection_controlled_incident_external_pending");
-  return { scenarios, collectors };
+  const stateRetention = validateFormalStateRetentionSource({
+    accountingPolicy,
+    bundle: precollection,
+  });
+  return { scenarios, collectors, stateRetention };
 }
 
 async function collectScenarioPopulation(options) {
   const artifactBindings = [];
   let collectionStartedAt = null;
   let collectionCompletedAt = null;
-  let primaryError = null;
-  try {
-    for (const scenario of options.scenarios.values()) {
+  for (const scenario of options.scenarios.values()) {
       const pairs = scenario.pair_count === 1 ? ["once"] : pairIds;
       for (const pairId of pairs)
         for (const variantId of scenario.comparison_variants) {
@@ -176,22 +192,32 @@ async function collectScenarioPopulation(options) {
             event_path: result.event_path,
           });
         }
-    }
-  } catch (error) {
-    primaryError = error;
-  } finally {
-    try {
-      await options.supervisor.close();
-    } catch (error) {
-      if (primaryError) primaryError.cause ??= error;
-      else primaryError = error;
-    }
   }
-  if (primaryError) throw primaryError;
   artifactBindings.sort((left, right) =>
     left.evidence_key.localeCompare(right.evidence_key),
   );
   return { artifactBindings, collectionStartedAt, collectionCompletedAt };
+}
+
+function assertExactCollectionOptions(value) {
+  const expected = [
+    "accountingPolicy",
+    "accountingPolicyIdentity",
+    "formalInteractionStdin",
+    "precollection",
+    "preparedByVariant",
+    "runSetId",
+    "runSetRoot",
+    "runs",
+    "runtimeTcbIdentity",
+  ];
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).sort().join(",") !== expected.sort().join(",")
+  )
+    throw new Error("formal_collection_options");
 }
 
 function validateCollectedPopulation(artifactBindings, expectedKeys) {

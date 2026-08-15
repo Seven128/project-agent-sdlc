@@ -1,8 +1,13 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
-import { assert } from "./long_task_real_process_roi_scoring.mjs";
 import {
+  assert,
+  canonical,
+  sha256,
+} from "./long_task_real_process_roi_scoring.mjs";
+import {
+  assertExactKeys,
   parseJson,
   readRegularFileNoFollow,
 } from "./long_task_formal_total_cost_shared.mjs";
@@ -27,6 +32,11 @@ export async function validateLevel4ExternalArtifacts(evidenceRoot, entries) {
 
 export function parseAndValidateLevel4FormalReport(bytes, evidenceReference) {
   const report = parseJson(bytes, "level4_formal_report_json");
+  assertExactKeys(
+    report.candidate_package,
+    ["package_name", "package_sha256", "package_version"],
+    "level4_formal_report_candidate_package_fields",
+  );
   assert(
     report.schema_version ===
       REAL_PROCESS_SCHEMAS.REAL_PROCESS_VERIFICATION_SCHEMA &&
@@ -39,8 +49,14 @@ export function parseAndValidateLevel4FormalReport(bytes, evidenceReference) {
       report.formal_status === "total_roi_positive" &&
       report.total_roi_supported === true &&
       report.total_roi_positive === true &&
-      report.formal_runtime_tcb_identity_sha256 ===
-        evidenceReference.runtime_tcb_identity_sha256 &&
+       report.formal_runtime_tcb_identity_sha256 ===
+         evidenceReference.runtime_tcb_identity_sha256 &&
+      report.candidate_package.package_name ===
+        "project-tiny-context-harness" &&
+      report.candidate_package.package_version ===
+        evidenceReference.candidate.package_version &&
+      report.candidate_package.package_sha256 ===
+        evidenceReference.candidate.package_sha256 &&
       Array.isArray(report.formal_blockers) &&
       report.formal_blockers.length === 0 &&
       report.formal_accounting?.significant_stable_margin_met === true &&
@@ -50,6 +66,57 @@ export function parseAndValidateLevel4FormalReport(bytes, evidenceReference) {
     "level4_promotion_formal_report",
   );
   return report;
+}
+
+export function parseAndValidateLevel4RunSetManifest(bytes) {
+  const manifest = parseJson(bytes, "level4_run_set_manifest_json");
+  assertExactKeys(
+    manifest,
+    [
+      "entries",
+      "entry_count",
+      "excludes",
+      "materialized_set_sha256",
+      "root",
+      "schema_version",
+      "total_bytes",
+    ],
+    "level4_run_set_manifest_fields",
+  );
+  assert(
+    manifest.schema_version ===
+      REAL_PROCESS_SCHEMAS.REAL_PROCESS_MANIFEST_SCHEMA &&
+      manifest.root === "." &&
+      canonical(manifest.excludes) ===
+        canonical(["attestation.json", "manifest.json"]) &&
+      Array.isArray(manifest.entries) &&
+      manifest.entry_count === manifest.entries.length &&
+      manifest.total_bytes ===
+        manifest.entries.reduce((total, entry) => total + entry.bytes, 0) &&
+      manifest.materialized_set_sha256 === sha256(canonical(manifest.entries)),
+    "level4_run_set_manifest",
+  );
+  const paths = new Set();
+  for (const entry of manifest.entries) {
+    assertExactKeys(
+      entry,
+      ["bytes", "path", "role", "sha256"],
+      `level4_run_set_manifest_entry_fields:${entry?.path}`,
+    );
+    assert(
+      typeof entry.path === "string" &&
+        entry.path.length > 0 &&
+        !paths.has(entry.path) &&
+        typeof entry.role === "string" &&
+        entry.role.length > 0 &&
+        Number.isSafeInteger(entry.bytes) &&
+        entry.bytes >= 0 &&
+        /^[a-f0-9]{64}$/u.test(entry.sha256 ?? ""),
+      `level4_run_set_manifest_entry:${entry.path}`,
+    );
+    paths.add(entry.path);
+  }
+  return manifest;
 }
 
 export function parseAndValidateLevel4FrozenCandidate(

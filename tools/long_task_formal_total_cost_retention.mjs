@@ -1,4 +1,4 @@
-import { assert } from "./long_task_real_process_roi_scoring.mjs";
+import { assert, sha256 } from "./long_task_real_process_roi_scoring.mjs";
 import {
   FORMAL_EVIDENCE_CAPACITY,
   REAL_PROCESS_SCHEMAS,
@@ -19,6 +19,8 @@ export async function validateFormalExecutionProvenance({
   redactionRules,
   usedRedactionRules,
   sourcePath,
+  runtimeTcbIdentity,
+  providerCorrelationIds,
 }) {
   const rawPrompt = await consumeSensitiveArtifact({
     reference: execution.sensitive_refs.raw_prompt,
@@ -48,8 +50,17 @@ export async function validateFormalExecutionProvenance({
         clocks: execution.clocks,
         clockPolicy: scenario.clock_policy,
         sourcePath: execution.sensitive_refs.provider_event.artifact_ref,
+        rawPrompt,
+        providerBridge: execution.provider_bridge,
+        runtimeTcbIdentity,
+        providerCorrelationIds,
       })
     : null;
+  if (!providerSource)
+    assert(
+      execution.provider_bridge === null,
+      `formal_provider_bridge_forbidden:${sourcePath}`,
+    );
   return { rawPrompt, providerRecord };
 }
 
@@ -114,17 +125,25 @@ function validateProviderEventRecord({
   clocks,
   clockPolicy,
   sourcePath,
+  rawPrompt,
+  providerBridge,
+  runtimeTcbIdentity,
+  providerCorrelationIds,
 }) {
   const record = parseJson(bytes, `provider_event_json:${sourcePath}`);
   assertExactKeys(
     record,
     [
       "clock_id",
+      "adapter_id",
+      "adapter_identity_sha256",
+      "bridge_session_sha256",
       "invocation_id",
       "model",
       "provider",
-      "provider_request_id",
-      "provider_response_id",
+      "provider_request_or_session_id",
+      "raw_prompt_sha256",
+      "raw_response_sha256",
       "recorded_at",
       "schema_version",
       "usage",
@@ -139,15 +158,21 @@ function validateProviderEventRecord({
   assert(
     record.schema_version === FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA &&
       record.invocation_id === invocationId &&
-      typeof record.provider === "string" &&
-      record.provider.length > 0 &&
-      typeof record.model === "string" &&
-      record.model.length > 0 &&
-      typeof record.provider_request_id === "string" &&
-      record.provider_request_id.length > 0 &&
-      typeof record.provider_response_id === "string" &&
-      record.provider_response_id.length > 0 &&
-      record.provider_response_id !== record.provider_request_id &&
+      record.adapter_id === runtimeTcbIdentity.provider_adapter.adapter_id &&
+      record.adapter_identity_sha256 ===
+        runtimeTcbIdentity.provider_adapter.identity_sha256 &&
+      record.provider === runtimeTcbIdentity.provider_adapter.provider &&
+      record.model === runtimeTcbIdentity.provider_adapter.model &&
+      providerBridge !== null &&
+      record.bridge_session_sha256 ===
+        providerBridge.bridge_session_sha256 &&
+      typeof record.provider_request_or_session_id === "string" &&
+      record.provider_request_or_session_id.length > 0 &&
+      !providerCorrelationIds.has(record.provider_request_or_session_id) &&
+      Buffer.isBuffer(rawPrompt) &&
+      rawPrompt.length > 0 &&
+      record.raw_prompt_sha256 === sha256(rawPrompt) &&
+      /^[a-f0-9]{64}$/u.test(record.raw_response_sha256) &&
       record.clock_id ===
         `${clockPolicy.provider_clock_id_prefix}${record.provider}`,
     `provider_event_identity:${sourcePath}`,
@@ -158,15 +183,22 @@ function validateProviderEventRecord({
   );
   assert(
     recordedAt >=
-      clocks.startedWall - clockPolicy.provider_wall_window_tolerance_ms &&
+      clocks.processStartedWall -
+        clockPolicy.provider_wall_window_tolerance_ms &&
       recordedAt <=
-        clocks.completedWall + clockPolicy.provider_wall_window_tolerance_ms,
+        clocks.processCompletedWall +
+          clockPolicy.provider_wall_window_tolerance_ms,
     `provider_event_time_binding:${sourcePath}`,
   );
-  for (const [field, value] of Object.entries(record.usage))
-    assert(
-      Number.isSafeInteger(value) && value >= 0,
-      `provider_event_usage:${sourcePath}:${field}`,
-    );
+  assert(
+    Number.isSafeInteger(record.usage.input_tokens) &&
+      record.usage.input_tokens > 0 &&
+      Number.isSafeInteger(record.usage.output_tokens) &&
+      record.usage.output_tokens > 0 &&
+      Number.isSafeInteger(record.usage.cached_input_tokens) &&
+      record.usage.cached_input_tokens >= 0,
+    `provider_event_usage:${sourcePath}`,
+  );
+  providerCorrelationIds.add(record.provider_request_or_session_id);
   return record;
 }

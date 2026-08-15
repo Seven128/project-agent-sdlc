@@ -39,6 +39,7 @@ export async function validateFormalExecutionRecord({
   setup,
   precollectionIdentity,
   runtimeTcbIdentity,
+  accountingPolicy,
   runArtifactIndex,
   consumedArtifacts,
   collectionWindow,
@@ -75,7 +76,7 @@ export async function validateFormalExecutionRecord({
     collector,
     precollectionIdentity,
   });
-  validateFormalExactInvocation({
+  const invocation = validateFormalExactInvocation({
     invocation: record.exact_invocation,
     collector,
     runBinding,
@@ -125,10 +126,11 @@ export async function validateFormalExecutionRecord({
   const storage = await validateFormalStorageLedger({
     ...measurementOptions,
     reference: record.measurement_refs.storage_ledger,
+    statePayloadReference: record.measurement_refs.state_payload,
     required:
       scenario.measurement_profile.meters.storage_byte_hour.presence ===
       "required",
-    expectedScopeRef: `setup/${runBinding.variant_id}/${setup.package_path}`,
+    expectedRetention: accountingPolicy.state_storage_retention,
   });
   const rawPrompt = validateFormalSensitiveArtifactReference(
     record.measurement_refs.raw_prompt,
@@ -152,6 +154,7 @@ export async function validateFormalExecutionRecord({
       provider_event: providerEvent,
       raw_prompt: rawPrompt,
     },
+    provider_bridge: invocation.providerBridge,
   };
 }
 
@@ -251,6 +254,7 @@ async function validateExecutionOutputs({
       "process_accounting",
       "provider_event",
       "raw_prompt",
+      "state_payload",
       "storage_ledger",
     ],
     `formal_execution_measurement_refs:${record.execution_id}`,

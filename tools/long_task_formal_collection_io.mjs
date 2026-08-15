@@ -8,6 +8,24 @@ import { isFormalProcessEnvironmentKey } from "./formal_process_supervisor_proto
 import { pairIds } from "./long_task_formal_total_cost_shared.mjs";
 
 const execFileAsync = promisify(execFile);
+const formalEnvironmentAllowlist = new Set(
+  [
+    "CI",
+    "COMSPEC",
+    "LANG",
+    "LC_ALL",
+    "NUMBER_OF_PROCESSORS",
+    "OS",
+    "PATH",
+    "PATHEXT",
+    "PROCESSOR_ARCHITECTURE",
+    "SYSTEMDRIVE",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "WINDIR",
+  ].map((value) => value.toUpperCase()),
+);
 
 export function formalArtifactRefs(invocationId) {
   const prefix = `formal-evidence/${invocationId}`;
@@ -19,6 +37,8 @@ export function formalArtifactRefs(invocationId) {
     human: `${prefix}/human.json`,
     candidateObservation: `${prefix}/candidate-observation.json`,
     processAccounting: `${prefix}/process-accounting.json`,
+    stateRoot: `${prefix}/state-root`,
+    statePayload: `${prefix}/state-payload.bin`,
     storageLedger: `${prefix}/storage-ledger.json`,
     rawPrompt: `${prefix}/raw-prompt.bin`,
     providerEvent: `${prefix}/provider-event.json`,
@@ -71,7 +91,9 @@ export function formalCollectorEnvironment(environment = process.env) {
   return Object.fromEntries(
     Object.entries(environment).filter(
       ([key, value]) =>
-        typeof value === "string" && isFormalProcessEnvironmentKey(key),
+        typeof value === "string" &&
+        isFormalProcessEnvironmentKey(key) &&
+        formalEnvironmentAllowlist.has(key.toUpperCase()),
     ),
   );
 }

@@ -46,6 +46,7 @@ export async function validateFormalRawEvents({
   const unpricedEventKeys = [];
   const consumedArtifacts = new Set();
   const usedRedactionRules = new Set();
+  const providerCorrelationIds = new Set();
 
   for (const [bindingKey, eventPath] of artifactBindings) {
     assert(
@@ -100,6 +101,7 @@ export async function validateFormalRawEvents({
       setup,
       precollectionIdentity,
       runtimeTcbIdentity,
+      accountingPolicy,
       runArtifactIndex,
       consumedArtifacts,
       collectionWindow: window,
@@ -114,7 +116,7 @@ export async function validateFormalRawEvents({
       `raw_event_time:${eventPath}`,
     );
     assert(
-      observedAt === execution.clocks.completedWall &&
+      observedAt === execution.clocks.processCompletedWall &&
         observedAt >= window.started &&
         observedAt <= window.completed,
       `raw_event_time_window:${eventPath}`,
@@ -139,6 +141,8 @@ export async function validateFormalRawEvents({
       redactionRules,
       usedRedactionRules,
       sourcePath: eventPath,
+      runtimeTcbIdentity,
+      providerCorrelationIds,
     });
     const measurement = validateFormalEventMeasurements({
       scenario,

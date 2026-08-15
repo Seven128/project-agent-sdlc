@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync, realpathSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import {
@@ -23,9 +25,10 @@ export class FormalProcessSupervisor {
   #closed;
   #exited = null;
 
-  constructor({ powershell = "pwsh.exe" } = {}) {
+  constructor(runtimeTcbIdentity) {
     if (process.platform !== "win32")
       throw new Error("formal_process_supervisor_platform_unsupported");
+    const powershell = validateFrozenRuntime(runtimeTcbIdentity);
     this.#child = spawn(
       powershell,
       ["-NoLogo", "-NoProfile", "-NonInteractive", "-File", helperPath],
@@ -194,24 +197,34 @@ export class FormalProcessSupervisor {
   }
 }
 
-export async function superviseFormalProcess(options) {
-  const supervisor = new FormalProcessSupervisor(options.supervisorOptions);
-  let primary = null;
-  try {
-    return await supervisor.run(options);
-  } catch (error) {
-    primary = error;
-    throw error;
-  } finally {
-    try {
-      await supervisor.close();
-    } catch (error) {
-      if (primary) primary.cause ??= error;
-      else throw error;
-    }
-  }
-}
-
 function message(error) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function validateFrozenRuntime(identity) {
+  const executable = identity?.powershell?.executable_path;
+  if (
+    identity?.schema_version !== "formal-runtime-tcb-identity-v1" ||
+    typeof executable !== "string" ||
+    !pathIsAbsolute(executable) ||
+    identity.runtime?.node !== process.version ||
+    normalizePath(identity.runtime?.node_exec_path) !== normalizePath(process.execPath) ||
+    identity.runtime?.node_executable_sha256 !== digest(readFileSync(process.execPath)) ||
+    normalizePath(realpathSync(executable)) !== normalizePath(executable) ||
+    identity.powershell.executable_sha256 !== digest(readFileSync(executable))
+  )
+    throw new Error("formal_process_supervisor_runtime_tcb");
+  return executable;
+}
+
+function pathIsAbsolute(value) {
+  return /^[A-Za-z]:[\\/]/u.test(value);
+}
+
+function normalizePath(value) {
+  return typeof value === "string" ? value.replaceAll("/", "\\").toLowerCase() : "";
+}
+
+function digest(value) {
+  return createHash("sha256").update(value).digest("hex");
 }

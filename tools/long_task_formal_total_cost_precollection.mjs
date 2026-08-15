@@ -29,6 +29,7 @@ const precollectionRoles = Object.freeze([
   "scenario_catalog",
   "scenario_gold",
   "scenario_source",
+  "state_retention_source",
 ]);
 
 export async function readFormalPrecollectionPlan({ planPath, limits }) {

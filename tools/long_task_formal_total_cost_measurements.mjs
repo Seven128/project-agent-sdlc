@@ -37,8 +37,8 @@ export function validateFormalEventMeasurements({
     const quantity = rawMeters.get(meter);
     assert(
       Number.isFinite(quantity) &&
-        quantity >= 0 &&
-        quantity <= Number.MAX_SAFE_INTEGER,
+        quantity <= Number.MAX_SAFE_INTEGER &&
+        quantityConforms(profile.quantity_rule, quantity),
       `raw_event_meter_quantity:${sourcePath}:${meter}`,
     );
     const rate = priceRates.get(meter);
@@ -60,11 +60,17 @@ export function validateFormalEventMeasurements({
   };
 }
 
+function quantityConforms(rule, quantity) {
+  if (rule === "positive") return quantity > 0;
+  if (rule === "explicit-nonnegative-provider-value") return quantity >= 0;
+  return false;
+}
+
 function humanTimeValue(measurement, sourcePath, accountingPolicy) {
   assert(
     measurement &&
       Number.isFinite(measurement.active_ms) &&
-      measurement.active_ms >= 0 &&
+      measurement.active_ms > 0 &&
       Number.isFinite(measurement.wait_ms) &&
       measurement.wait_ms >= 0,
     `raw_event_human_time:${sourcePath}`,

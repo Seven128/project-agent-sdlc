@@ -9,6 +9,7 @@ import { deriveFormalTotalCostAccounting } from "./long_task_formal_total_cost_a
 import {
   readFormalAccountingPolicy,
   validateFormalAccountingPolicy,
+  validateFormalStateRetentionSource,
 } from "./long_task_formal_total_cost_accounting_policy.mjs";
 import {
   expectedFormalEvidenceKeys,
@@ -101,6 +102,10 @@ export async function evaluateFormalTotalCostEvidence({
     bundle: precollectionBundle,
     window,
     limits: accountingPolicy.source_bundle_limits,
+  });
+  validateFormalStateRetentionSource({
+    accountingPolicy,
+    bundle: precollectionBundle,
   });
   const precollectionFrozenAt = assertTimestamp(
     precollectionIdentity.frozen_at,

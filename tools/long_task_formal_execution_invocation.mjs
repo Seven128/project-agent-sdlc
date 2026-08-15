@@ -30,7 +30,7 @@ export function validateFormalExactInvocation({
   const implementationRef = `inputs/formal-evidence-precollection/${collector.implementation_ref}`;
   const taskRef = `inputs/formal-evidence-precollection/${scenario.task_source_ref}`;
   const packageRef = `setup/${runBinding.variant_id}/${setup.package_path}`;
-  const expectedArgv = [
+  const expectedPrefix = [
     implementationRef,
     "--candidate-package",
     packageRef,
@@ -45,13 +45,49 @@ export function validateFormalExactInvocation({
     "--variant-id",
     runBinding.variant_id,
   ];
-  if (scenario.measurement_profile.raw_prompt.presence === "required")
-    expectedArgv.push("--raw-prompt", `${prefix}/raw-prompt.bin`);
-  if (scenario.measurement_profile.provider_event.presence === "required")
-    expectedArgv.push("--provider-event", `${prefix}/provider-event.json`);
+  let cursor = expectedPrefix.length;
+  let providerBridge = null;
+  if (scenario.measurement_profile.provider_event.presence === "required") {
+    const endpoint = invocation.argv[cursor + 1];
+    const token = invocation.argv[cursor + 3];
+    assert(
+      invocation.argv[cursor] === "--provider-bridge" &&
+        /^http:\/\/127\.0\.0\.1:(?:[1-9][0-9]{0,4})\/invoke$/u.test(
+          endpoint ?? "",
+        ) &&
+        Number(new URL(endpoint).port) <= 65_535 &&
+        invocation.argv[cursor + 2] === "--provider-bridge-token" &&
+        /^[a-f0-9]{64}$/u.test(token ?? ""),
+      "formal_execution_provider_bridge_invocation",
+    );
+    providerBridge = Object.freeze({
+      endpoint,
+      bridge_session_sha256: sha256(
+        canonical({
+          invocation_id: record.invocation_id,
+          endpoint,
+          token_sha256: sha256(token),
+        }),
+      ),
+    });
+    cursor += 4;
+  }
+  if (
+    scenario.measurement_profile.meters.storage_byte_hour.presence ===
+    "required"
+  ) {
+    assert(
+      invocation.argv[cursor] === "--state-root" &&
+        invocation.argv[cursor + 1] === `${prefix}/state-root`,
+      "formal_execution_state_locator",
+    );
+    cursor += 2;
+  }
   assert(
     invocation.executable === runtimeTcbIdentity.runtime.node_exec_path &&
-      canonical(invocation.argv) === canonical(expectedArgv) &&
+      canonical(invocation.argv.slice(0, expectedPrefix.length)) ===
+        canonical(expectedPrefix) &&
+      invocation.argv.length === cursor &&
       invocation.cwd === runArtifactIndex.run_set_root &&
       invocation.shell === false &&
       collector.runtime_kind === "node-direct" &&
@@ -62,6 +98,7 @@ export function validateFormalExactInvocation({
       runArtifactIndex.get(packageRef)?.sha256 === setup.package_sha256,
     "formal_execution_exact_invocation",
   );
+  return Object.freeze({ providerBridge });
 }
 
 export async function validateFormalCandidateObservation({
@@ -117,52 +154,92 @@ export function validateFormalClocks(clocks, policy, collectionWindow) {
   assertExactKeys(
     clocks,
     [
-      "completed_at",
-      "monotonic_clock_id",
-      "monotonic_completed_ns",
-      "monotonic_started_ns",
-      "started_at",
+      "human_completed_at",
+      "human_monotonic_clock_id",
+      "human_monotonic_completed_ns",
+      "human_monotonic_started_ns",
+      "human_started_at",
+      "process_completed_at",
+      "process_monotonic_clock_id",
+      "process_monotonic_completed_ns",
+      "process_monotonic_started_ns",
+      "process_started_at",
       "wall_clock_id",
     ],
     "formal_execution_clock_fields",
   );
-  const startedWall = assertTimestamp(
-    clocks.started_at,
-    "formal_execution_wall_started",
+  const humanStartedWall = assertTimestamp(
+    clocks.human_started_at,
+    "formal_execution_human_wall_started",
   );
-  const completedWall = assertTimestamp(
-    clocks.completed_at,
-    "formal_execution_wall_completed",
+  const humanCompletedWall = assertTimestamp(
+    clocks.human_completed_at,
+    "formal_execution_human_wall_completed",
   );
-  const startedNs = decimalBigInt(
-    clocks.monotonic_started_ns,
-    "formal_execution_monotonic_started",
+  const processStartedWall = assertTimestamp(
+    clocks.process_started_at,
+    "formal_execution_process_wall_started",
   );
-  const completedNs = decimalBigInt(
-    clocks.monotonic_completed_ns,
-    "formal_execution_monotonic_completed",
+  const processCompletedWall = assertTimestamp(
+    clocks.process_completed_at,
+    "formal_execution_process_wall_completed",
   );
-  const durationNs = completedNs - startedNs;
-  const wallDurationNs = BigInt(completedWall - startedWall) * 1_000_000n;
+  const humanStartedNs = decimalBigInt(
+    clocks.human_monotonic_started_ns,
+    "formal_execution_human_monotonic_started",
+  );
+  const humanCompletedNs = decimalBigInt(
+    clocks.human_monotonic_completed_ns,
+    "formal_execution_human_monotonic_completed",
+  );
+  const processStartedNs = decimalBigInt(
+    clocks.process_monotonic_started_ns,
+    "formal_execution_process_monotonic_started",
+  );
+  const processCompletedNs = decimalBigInt(
+    clocks.process_monotonic_completed_ns,
+    "formal_execution_process_monotonic_completed",
+  );
+  const humanDurationNs = humanCompletedNs - humanStartedNs;
+  const processDurationNs = processCompletedNs - processStartedNs;
+  const humanWallDurationNs =
+    BigInt(humanCompletedWall - humanStartedWall) * 1_000_000n;
+  const processWallDurationNs =
+    BigInt(processCompletedWall - processStartedWall) * 1_000_000n;
   const toleranceNs =
     BigInt(policy.wall_monotonic_elapsed_tolerance_ms) * 1_000_000n;
   assert(
-    clocks.monotonic_clock_id === policy.monotonic_clock_id &&
+    clocks.human_monotonic_clock_id === policy.human_monotonic_clock_id &&
+      clocks.process_monotonic_clock_id ===
+        policy.process_monotonic_clock_id &&
       clocks.wall_clock_id === policy.wall_clock_id &&
-      completedNs > startedNs &&
-      completedWall >= startedWall &&
-      absoluteBigInt(durationNs - wallDurationNs) <= toleranceNs &&
-      startedWall >= collectionWindow.started &&
-      completedWall <= collectionWindow.completed,
+      humanCompletedNs > humanStartedNs &&
+      processCompletedNs > processStartedNs &&
+      humanCompletedWall >= humanStartedWall &&
+      processCompletedWall >= processStartedWall &&
+      absoluteBigInt(humanDurationNs - humanWallDurationNs) <= toleranceNs &&
+      absoluteBigInt(processDurationNs - processWallDurationNs) <=
+        toleranceNs &&
+      processStartedWall >= humanStartedWall -
+        policy.wall_monotonic_elapsed_tolerance_ms &&
+      processCompletedWall <=
+        humanCompletedWall + policy.wall_monotonic_elapsed_tolerance_ms &&
+      humanStartedWall >= collectionWindow.started &&
+      humanCompletedWall <= collectionWindow.completed,
     "formal_execution_clock_relation",
   );
   return {
     ...clocks,
-    startedWall,
-    completedWall,
-    startedNs,
-    completedNs,
-    durationNs,
+    humanStartedWall,
+    humanCompletedWall,
+    processStartedWall,
+    processCompletedWall,
+    humanStartedNs,
+    humanCompletedNs,
+    processStartedNs,
+    processCompletedNs,
+    humanDurationNs,
+    processDurationNs,
   };
 }
 
