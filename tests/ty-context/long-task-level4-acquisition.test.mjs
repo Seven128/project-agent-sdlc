@@ -19,6 +19,11 @@ import {
   assertClosedProcessTree,
   runRealChainChild,
 } from "./helpers/long-task-level4-test-utils.mjs";
+import {
+  assertHelperCrashAndCloseControls,
+  assertNestedJobAndBreakawayControls,
+  assertUnsupportedPlatform,
+} from "./helpers/long-task-level4-supervisor-controls.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 let identity;
@@ -227,6 +232,28 @@ test(
       /formal_process_supervisor_runtime_tcb/u,
     );
   },
+);
+
+test(
+  "Windows Job rejects nested breakaway and assignment attacks",
+  { skip: process.platform !== "win32", timeout: 60_000 },
+  async () => {
+    await assertNestedJobAndBreakawayControls({ identity, repositoryRoot });
+  },
+);
+
+test(
+  "Windows Job close kills an ignore-terminate descendant when the helper crashes",
+  { skip: process.platform !== "win32", timeout: 60_000 },
+  async () => {
+    await assertHelperCrashAndCloseControls(identity);
+  },
+);
+
+test(
+  "formal supervisor rejects an unsupported platform before helper launch",
+  { skip: process.platform !== "win32" },
+  () => assertUnsupportedPlatform(identity),
 );
 
 test(

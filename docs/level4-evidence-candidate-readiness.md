@@ -62,27 +62,33 @@ The plan's twenty enumerated attack/control assertions are preserved in the
 following fourteen behavior cases. These are executable tests, not static
 source-string substitutes.
 
-| Original behavior case | Current test file / test name | Preserved attack or control meaning |
-| --- | --- | --- |
-| 1. duplicate-key / invalid UTF-8 | `long-task-level4-measurement-integrity.test.mjs` — `formal source bundles preserve ... strict JSON ...` | The strict parser rejects duplicate keys, invalid UTF-8 and excessive JSON depth. |
-| 2. no-follow Source | same test | A symlink or hardlink cannot replace a frozen precollection Source. |
-| 3. Source file/byte fuses | same test | File-count, per-file and aggregate Source overflows fail closed. |
-| 4. precollection materialization | `long-task-level4-formal-accounting.test.mjs` — `the runner precollection plan freezes and materializes every fixed external input` | Every frozen entry is materialized with exact bytes and digest before collection. |
-| 5. invocation-bound Provider usage | `long-task-level4-measurement-integrity.test.mjs` — `Provider identities, prompts, usage, correlation IDs, reuse, and cached zero remain verifier-bound` | Provider/model/adapter/invocation/bridge/prompt/usage correlation is recomputed; cached zero remains an explicit Provider value. |
-| 6. one invocation, one category | `long-task-level4-measurement-integrity.test.mjs` — `[critical:level4-measurement-integrity-boundary] ... cross-category invocation reuse fail closed` | One invocation cannot own two formal categories. |
-| 7. missing authoritative Authoring usage | same file — `missing authoritative authoring usage produces an unsupported reportable result` | Removing the required Provider event cannot be replaced by another meter or packet assertion. |
-| 8. post-collection price Source | same file — `formal source bundles preserve ... pre-collection prices` | A price frozen after collection start is rejected. |
-| 9. packet normalized-value self-report | same file — `formal purpose benefit rejects packet-authored normalized loss values` | Packet-authored comparison/normalized authority is rejected. |
-| 10. actual invoice | `long-task-level4-formal-accounting.test.mjs` — `formal evidence accepts a pre-collection actual-invoice price source` | Invoice quantity and amount yield verifier-owned per-unit rates. |
-| 11. ten-delivery / once-only strata | same file — `formal evidence accounting applies the frozen ten-delivery and once-only strata` | Repeatable and once-only lifecycle costs retain their distinct multipliers. |
-| 12. incomplete packet unsupported | `long-task-level4-measurement-integrity.test.mjs` — the critical incomplete-packet case | A missing raw binding fails admission rather than being defaulted. |
-| 13. positivity theorem | `long-task-level4-formal-accounting.test.mjs` — the cost-reduction and four-positive-pairs/CV tests | Cost reductions do not offset the 1.25 denominator; at least 4/5 pairs and sample CV at most 20% remain mandatory. |
-| 14. raw scenario/output reconstruction | `long-task-level4-measurement-integrity.test.mjs` — `formal scenarios derive same-quality cost and incident outcomes from raw outputs` plus the complete synthetic control | Cost B/C must both equal gold, incident B must be wrong and C correct, output stays execution-bound, and purpose benefit is reconstructed from the complete raw event set. |
+| Original behavior case                   | Current test file / test name                                                                                                                                              | Preserved attack or control meaning                                                                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. duplicate-key / invalid UTF-8         | `long-task-level4-measurement-integrity.test.mjs` — `formal source bundles preserve ... strict JSON ...`                                                                   | The strict parser rejects duplicate keys, invalid UTF-8 and excessive JSON depth.                                                                                          |
+| 2. no-follow Source                      | same test                                                                                                                                                                  | A symlink or hardlink cannot replace a frozen precollection Source.                                                                                                        |
+| 3. Source file/byte fuses                | same test                                                                                                                                                                  | File-count, per-file and aggregate Source overflows fail closed.                                                                                                           |
+| 4. precollection materialization         | `long-task-level4-formal-accounting.test.mjs` — `the runner precollection plan freezes and materializes every fixed external input`                                        | Every frozen entry is materialized with exact bytes and digest before collection.                                                                                          |
+| 5. invocation-bound Provider usage       | `long-task-level4-measurement-integrity.test.mjs` — `Provider identities, prompts, usage, correlation IDs, reuse, and cached zero remain verifier-bound`                   | Provider/model/adapter/invocation/bridge/prompt/usage correlation is recomputed; cached zero remains an explicit Provider value.                                           |
+| 6. one invocation, one category          | `long-task-level4-measurement-integrity.test.mjs` — `[critical:level4-measurement-integrity-boundary] ... cross-category invocation reuse fail closed`                     | One invocation cannot own two formal categories.                                                                                                                           |
+| 7. missing authoritative Authoring usage | same file — `missing authoritative authoring usage produces an unsupported reportable result`                                                                              | Removing the required Provider event cannot be replaced by another meter or packet assertion.                                                                              |
+| 8. post-collection price Source          | same file — `formal source bundles preserve ... pre-collection prices`                                                                                                     | A price frozen after collection start is rejected.                                                                                                                         |
+| 9. packet normalized-value self-report   | same file — `formal purpose benefit rejects packet-authored normalized loss values`                                                                                        | Packet-authored comparison/normalized authority is rejected.                                                                                                               |
+| 10. actual invoice                       | `long-task-level4-formal-accounting.test.mjs` — `formal evidence accepts a pre-collection actual-invoice price source`                                                     | Invoice quantity and amount yield verifier-owned per-unit rates.                                                                                                           |
+| 11. ten-delivery / once-only strata      | same file — `formal evidence accounting applies the frozen ten-delivery and once-only strata`                                                                              | Repeatable and once-only lifecycle costs retain their distinct multipliers.                                                                                                |
+| 12. incomplete packet unsupported        | `long-task-level4-measurement-integrity.test.mjs` — the critical incomplete-packet case                                                                                    | A missing raw binding fails admission rather than being defaulted.                                                                                                         |
+| 13. positivity theorem                   | `long-task-level4-formal-accounting.test.mjs` — the cost-reduction and four-positive-pairs/CV tests                                                                        | Cost reductions do not offset the 1.25 denominator; at least 4/5 pairs and sample CV at most 20% remain mandatory.                                                         |
+| 14. raw scenario/output reconstruction   | `long-task-level4-measurement-integrity.test.mjs` — `formal scenarios derive same-quality cost and incident outcomes from raw outputs` plus the complete synthetic control | Cost B/C must both equal gold, incident B must be wrong and C correct, output stays execution-bound, and purpose benefit is reconstructed from the complete raw event set. |
 
 Additional dynamic boundaries cover fake acquisition injection, real Windows
-Job timestamp propagation, runtime-TCB drift, exact-one runner Provider bridge,
-Provider child self-report, State swaps and ledger recomputation, every zero
-policy, real package reproduction/mutation, and direct-child governance rules.
+Job timestamp propagation, runtime-TCB drift, nested membership, denied
+breakaway, actual assignment failure, ignore-terminate cleanup after helper
+death, helper-close and unsupported-platform failure, exact-one runner Provider
+bridge, Provider child self-report, State swaps and ledger recomputation,
+root/nested-junction escape, every zero policy, mixed legacy/current schema,
+eight real package materializations, an unbuilt tarball and the complete
+five-way/direct-child Promotion authority path. The transient Promotion-positive
+shape is deleted with its temporary worktrees and is only a structural test; it
+is not retained or represented as formal evidence.
 
 ## Derived Capacity
 
@@ -90,21 +96,21 @@ The source of truth is the frozen scenario catalog plus
 `tools/long_task_formal_artifact_budget.mjs`; the policy must match its derived
 result before collection.
 
-| Quantity | Derived value |
-| --- | ---: |
-| Formal executions | 86 |
-| Base event/output/stdout/stderr/human/candidate-observation files | 516 |
-| Compute records | 30 |
-| State ledgers + exact payloads | 10 + 10 |
-| Prompts + Provider events | 10 + 10 |
-| Expected formal files | 586 |
-| Formal worst case + headroom | 332.625 + 32 MiB |
-| Maximum formal files / bytes | 650 / 364.625 MiB |
-| Precollection / frozen-input maxima | 256 / 256 files; 64 / 64 MiB |
-| Setup maximum | 87 files; 157.6875 MiB |
-| Lifecycle maximum | 3,060 files; 240 MiB |
-| Complete run-set maximum | 4,379 files; 974.3125 MiB |
-| Excluded self-referential controls | 2 files; 4 MiB total |
+| Quantity                                                          |                Derived value |
+| ----------------------------------------------------------------- | ---------------------------: |
+| Formal executions                                                 |                           86 |
+| Base event/output/stdout/stderr/human/candidate-observation files |                          516 |
+| Compute records                                                   |                           30 |
+| State ledgers + exact payloads                                    |                      10 + 10 |
+| Prompts + Provider events                                         |                      10 + 10 |
+| Expected formal files                                             |                          586 |
+| Formal worst case + headroom                                      |             332.625 + 32 MiB |
+| Maximum formal files / bytes                                      |            650 / 364.625 MiB |
+| Precollection / frozen-input maxima                               | 256 / 256 files; 64 / 64 MiB |
+| Setup maximum                                                     |       87 files; 157.6875 MiB |
+| Lifecycle maximum                                                 |         3,060 files; 240 MiB |
+| Complete run-set maximum                                          |    4,379 files; 974.3125 MiB |
+| Excluded self-referential controls                                |         2 files; 4 MiB total |
 
 The run-set maximum is exactly `586 + 256 + 256 + 87 + 3,060 + 4 +
 128 + 2 = 4,379` files. The byte maximum is exactly `364.625 + 64 + 64 +
@@ -118,11 +124,11 @@ tree with baseline commit `2fb64588c3f1fdde1134ae4bb466ca406a220208`.
 They exclude this document and generated README asset copies, and are structural
 cost observations rather than formal evidence.
 
-| Scope | Files | Added lines | Deleted lines | Net lines | Git blob byte delta |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Production tools + frozen real-process inputs | 40 | 2,901 | 1,031 | +1,870 | +65,503 |
-| Tests and shared test helpers | 21 | 3,839 | 1,672 | +2,167 | +71,045 |
-| Level-4 modularity configuration | 1 | 0 | 7 | -7 | -725 |
+| Scope                                         | Files | Added lines | Deleted lines | Net lines | Git blob byte delta |
+| --------------------------------------------- | ----: | ----------: | ------------: | --------: | ------------------: |
+| Production tools + frozen real-process inputs |    40 |       2,901 |         1,031 |    +1,870 |             +65,503 |
+| Tests and shared test helpers                 |    26 |       4,786 |         1,672 |    +3,114 |            +101,948 |
+| Level-4 modularity configuration              |     1 |           0 |             7 |        -7 |                -725 |
 
 Seven bounded production owners were added. The former 1,634-line monolithic
 Level-4 fixture test was removed and replaced by six boundary tests plus shared
@@ -150,20 +156,23 @@ evidence and do not satisfy Level 4:
   `8a2e082afd5d40bb314bc2a7e6693c8682608f93437eb8a53609a5ef48cdf105`.
   This proves the materializer test path for that baseline only; exact Evidence
   Candidate materialization must be captured after its commit exists.
-- The six split boundary suites, real-process regression and suite-policy
-  regression passed as 70 tests in approximately 322 seconds across their
-  current Windows runs. The boundary run used reviewed concurrency two and
-  included four real package materializations plus real process-tree exercises;
-  the existing real-process and policy owners retained their required serial
-  execution. This is a local diagnostic without a cross-host performance claim.
-- The Job control batch, including fast-parent/grandchild closure, timeout and
-  independent stdout/stderr overflow cleanup, completed in 2,463.265 ms. The
+- The complete focused working-tree aggregate passed 76 of 76 tests in
+  461.347 seconds. It covered all six Level-4 boundaries, the real-process ROI
+  verifier and the test-suite policy. A commit-bound canonical aggregate is
+  still required after the final Evidence Candidate exists. The package cases
+  performed eight real package materializations plus one deliberately unbuilt
+  `npm pack`; this is a local diagnostic without a cross-host performance claim.
+- The full Job/acquisition batch, including nested membership, denied breakaway,
+  actual assignment-limit failure, helper-crash Job-close cleanup,
+  fast-parent/grandchild closure, timeout and independent stdout/stderr overflow
+  cleanup plus the real external-pending E2E, completed in 16,206.557 ms. The
   loopback Provider exact-one/attack batch completed in 118.858 ms without an
   external API call. The State capture/link/proxy/empty control batch completed
   in 28.769 ms. These are failure-path and local mechanism costs, not production
   workload or Provider-price measurements.
 - The State control reconstructed the exact sorted `betaalpha` payload at nine
-  bytes and rejected empty, symlink, reparse/hardlink and package-proxy inputs.
+  bytes and rejected empty, symlink, junction/reparse/hardlink, root escape and
+  package-proxy inputs.
   Its 24-hour retention basis is explicitly test-only. No production retention
   duration or storage price has been inferred.
 - The real Provider route was intentionally not used as evidence. Actual API
@@ -172,14 +181,14 @@ evidence and do not satisfy Level 4:
 
 ## Cost-To-Protection Mapping
 
-| Incremental cost | Independent protection it supplies |
-| --- | --- |
-| Detached install/build/parity/pack and nine bounded command records | Rejects callback-injected or locally repacked package identity and makes candidate/promotion comparison mechanical. |
-| Job Object helper, runtime probes and bounded streaming | Rejects uncontained descendants, child-only cleanup claims, wall-as-CPU substitution, timeout leakage and silent stream truncation. |
-| Fixed Provider bridge and two Authoring artifacts per execution | Rejects child-authored usage, account-level estimates, missing request correlation and credential leakage into the child. |
-| State ledger plus payload and a 4-MiB payload fuse | Rejects package-as-State, mtime/sampling proxies, unrecomputable byte-hours and link-based substitution. |
-| Immutable 586-artifact formal closure and unique consumption | Rejects packet comparison authority, cross-execution reuse and post-index mutation. |
-| Six boundary tests and shared helpers | Separately localize accounting, measurement integrity, process acquisition, source/State/Provider readiness, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
+| Incremental cost                                                    | Independent protection it supplies                                                                                                                                                                            |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Detached install/build/parity/pack and nine bounded command records | Rejects callback-injected or locally repacked package identity and makes candidate/promotion comparison mechanical.                                                                                           |
+| Job Object helper, runtime probes and bounded streaming             | Rejects uncontained descendants, child-only cleanup claims, wall-as-CPU substitution, timeout leakage and silent stream truncation.                                                                           |
+| Fixed Provider bridge and two Authoring artifacts per execution     | Rejects child-authored usage, account-level estimates, missing request correlation and credential leakage into the child.                                                                                     |
+| State ledger plus payload and a 4-MiB payload fuse                  | Rejects package-as-State, mtime/sampling proxies, unrecomputable byte-hours and link-based substitution.                                                                                                      |
+| Immutable 586-artifact formal closure and unique consumption        | Rejects packet comparison authority, cross-execution reuse and post-index mutation.                                                                                                                           |
+| Six boundary tests and shared helpers                               | Separately localize accounting, measurement integrity, process acquisition, source/State/Provider readiness, package/promotion and audit/governance regressions while removing the monolithic-fixture waiver. |
 
 ## External Inputs Required Before Collection
 

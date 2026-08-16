@@ -163,4 +163,25 @@ test("legacy, mixed, and unknown-newer formal packet schemas fail closed", async
       },
       /formal_evidence_packet/u,
     );
+
+  for (const [relative, schema, diagnostic] of [
+    [
+      fixture.attackPaths.runtimeEvent,
+      LEGACY_FORMAL_EVIDENCE_SCHEMAS.raw_event[0],
+      /raw_event_identity/u,
+    ],
+    [
+      fixture.attackPaths.provider,
+      LEGACY_FORMAL_EVIDENCE_SCHEMAS.provider_event[0],
+      /provider_event/u,
+    ],
+  ])
+    await assertJsonMutationRejected(
+      fixture,
+      relative,
+      (record) => {
+        record.schema_version = schema;
+      },
+      diagnostic,
+    );
 });

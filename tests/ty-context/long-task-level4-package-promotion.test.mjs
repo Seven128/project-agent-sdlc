@@ -20,6 +20,7 @@ import {
   sha256,
 } from "../../tools/long_task_real_process_roi_scoring.mjs";
 import { assertPackageChildBoundaries } from "./helpers/long-task-level4-package-controls.mjs";
+import { assertPromotionArtifactControls } from "./helpers/long-task-level4-promotion-controls.mjs";
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -111,6 +112,18 @@ test(
     await assertPackageChildBoundaries({
       repositoryRoot,
       baselineRecord: reproducedRecord,
+    });
+  },
+);
+
+test(
+  "the authoritative Promotion verifier closes five-way package identity, unbuilt tarballs, and governance-only direct-child rules",
+  { timeout: 1_200_000 },
+  async () => {
+    await assertPromotionArtifactControls({
+      repositoryRoot,
+      candidateRecord: reproducedRecord,
+      candidateTarball: reproducedTarball,
     });
   },
 );

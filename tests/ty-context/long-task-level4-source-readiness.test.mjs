@@ -198,6 +198,64 @@ test("runner-owned State payload is sorted, exact, retained, and package-proxy/h
   }
 });
 
+test("runner-owned State capture rejects a replaced root and nested junction escape", async (t) => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-level4-state-junction-"),
+  );
+  const executionRoot = path.join(root, "formal-evidence", invocationId);
+  const outside = path.join(root, "outside-state");
+  const retention = {
+    scope: "this-delivery-precollection-proxy-only",
+    status: "frozen_supported",
+    retention_hours: 24,
+    basis: "test-contract",
+    source_sha256: "b".repeat(64),
+  };
+  await mkdir(executionRoot, { recursive: true });
+  await mkdir(outside);
+  await writeFile(path.join(outside, "escaped.bin"), "escaped-state");
+  try {
+    for (const placement of ["root", "nested"]) {
+      const capture = await FormalStateCapture.create({
+        executionRoot,
+        invocationId,
+      });
+      try {
+        if (placement === "root") {
+          await rm(capture.root, { recursive: true });
+          await symlink(
+            outside,
+            capture.root,
+            process.platform === "win32" ? "junction" : "dir",
+          );
+        } else {
+          await symlink(
+            outside,
+            path.join(capture.root, "escaped"),
+            process.platform === "win32" ? "junction" : "dir",
+          );
+        }
+        await assert.rejects(
+          () =>
+            capture.finalize({
+              payloadPath: path.join(executionRoot, `${placement}-payload.bin`),
+              ledgerPath: path.join(executionRoot, `${placement}-ledger.json`),
+              retention,
+            }),
+          /formal_state_(?:root_closed|link|reparse)/u,
+        );
+      } catch (error) {
+        if (!["EPERM", "EACCES"].includes(error?.code)) throw error;
+        t.diagnostic(`${placement} junction creation unavailable`);
+      } finally {
+        await capture.abort();
+      }
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("runner-owned output locators stay inside the run root and post-close reads reject linked files", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-output-"));
   try {

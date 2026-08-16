@@ -918,6 +918,12 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
     () => validateRunRecord(legacyV3, fixture.config),
     /real_process_roi_invalid:run_schema_v3_recollection_required/u,
   );
+  const unknownNewer = structuredClone(fixture.runs[0]);
+  unknownNewer.schema_version = "long-task-real-process-roi-run-v999";
+  assert.throws(
+    () => validateRunRecord(unknownNewer, fixture.config),
+    /real_process_roi_invalid:run_schema/u,
+  );
   const run = structuredClone(fixture.runs[0]);
   delete run.metrics.compile_wall_ms;
   assert.throws(
