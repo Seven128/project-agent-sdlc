@@ -434,7 +434,7 @@ export function deliveryContract(options = {}) {
       target: fixtureProductRootPath(),
       argv: fixtureProductRootArgv("tests/oracle.mjs", argument),
       cwd: ".",
-      timeout_ms: 30000,
+      timeout_ms: options.checkTimeoutMs ?? 30000,
       effect: "read_only",
       retry_policy: "none",
       idempotent: true,

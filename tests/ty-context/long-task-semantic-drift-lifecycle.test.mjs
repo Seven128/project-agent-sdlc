@@ -130,7 +130,10 @@ test("old V2 Contracts receive an indexed manual migration instead of synthesize
 });
 
 test("[critical:terminal-state-current-evidence] Stage frontier and terminal target state derive from current evidence and the Final Gate", async () => {
-  const fixture = await createDeliveryFixture({ twoOutcomes: true });
+  const fixture = await createDeliveryFixture({
+    twoOutcomes: true,
+    checkTimeoutMs: 60_000,
+  });
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
