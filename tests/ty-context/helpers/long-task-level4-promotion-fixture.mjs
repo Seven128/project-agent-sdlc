@@ -114,7 +114,13 @@ export async function runPromotionCase(options) {
     promotionCommit,
     evidenceRoot,
   });
-  return { ...result, records, evidenceRoot };
+  return {
+    ...result,
+    records,
+    evidenceRoot,
+    checkout,
+    promotionCommit,
+  };
 }
 
 export async function assertPromotionMutationRejected(options) {

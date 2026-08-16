@@ -53,6 +53,11 @@ export async function assertProviderBridgeControls() {
         providerResponse.usage.input_tokens_details.cached_tokens,
     });
     assert.equal(event.provider_request_or_session_id, providerResponse.id);
+    assert.equal(
+      event.recorded_at,
+      new Date(providerResponse.created_at * 1000).toISOString(),
+    );
+    assert.equal(event.clock_id, "provider-unix-epoch-ms-v1:openai");
     assert.equal(event.raw_prompt_sha256, digest(prompt));
     assert.equal(persisted.raw_prompt_sha256, digest(prompt));
     assert.equal(providerCalls.length, 1);
@@ -132,6 +137,23 @@ export async function assertProviderBridgeControls() {
             providerEventPath: path.join(root, `${invalidIndex}-event.json`),
           }),
         /formal_provider_response_identity_usage/u,
+      );
+    }
+    for (const createdAt of [undefined, 0, 1.5, Number.MAX_SAFE_INTEGER]) {
+      providerResponse = { ...validProviderResponse(), created_at: createdAt };
+      invalidIndex += 1;
+      const bridge = await openBridge();
+      assert.equal(
+        (await invokeBridge(realFetch, bridge.argv, prompt)).status,
+        502,
+      );
+      await assert.rejects(
+        () =>
+          bridge.closeAndPersist({
+            rawPromptPath: path.join(root, `${invalidIndex}-prompt.bin`),
+            providerEventPath: path.join(root, `${invalidIndex}-event.json`),
+          }),
+        /formal_provider_response_timestamp/u,
       );
     }
   } finally {
@@ -237,6 +259,7 @@ function validProviderResponse() {
   return {
     id: "response-fixture-001",
     model: "fixture-model",
+    created_at: 1_786_838_400,
     usage: {
       input_tokens: 101,
       output_tokens: 17,

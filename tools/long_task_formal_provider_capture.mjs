@@ -38,7 +38,7 @@ export function deriveFormalProviderAdapterIdentity({
       bytes: implementation.bytes,
       sha256: implementation.sha256,
     },
-    parser: "openai-responses-usage-v1",
+    parser: "openai-responses-usage-created-at-v1",
     runtime: { node: process.version },
     support: {
       model_configured: typeof model === "string" && model.length > 0,
@@ -134,7 +134,7 @@ export class FormalProviderCaptureAdapter {
           provider: "openai",
           model: capture.model,
           provider_request_or_session_id: capture.providerId,
-          recorded_at: new Date(capture.recordedUnixMs).toISOString(),
+          recorded_at: new Date(capture.providerCreatedUnixMs).toISOString(),
           clock_id: "provider-unix-epoch-ms-v1:openai",
           raw_prompt_sha256: digest(capture.prompt),
           raw_response_sha256: digest(capture.response),
@@ -209,11 +209,13 @@ export class FormalProviderCaptureAdapter {
       !nonnegativeInteger(cached)
     )
       throw new Error("formal_provider_response_identity_usage");
+    if (!providerTimestampSeconds(value.created_at))
+      throw new Error("formal_provider_response_timestamp");
     return {
       response: responseBytes,
       providerId: value.id,
       model: value.model,
-      recordedUnixMs: Date.now(),
+      providerCreatedUnixMs: value.created_at * 1000,
       usage: {
         input_tokens: value.usage.input_tokens,
         output_tokens: value.usage.output_tokens,
@@ -286,6 +288,10 @@ function positiveInteger(value) {
 
 function nonnegativeInteger(value) {
   return Number.isSafeInteger(value) && value >= 0;
+}
+
+function providerTimestampSeconds(value) {
+  return Number.isSafeInteger(value) && value > 0 && value <= 8_640_000_000_000;
 }
 
 function digest(value) {

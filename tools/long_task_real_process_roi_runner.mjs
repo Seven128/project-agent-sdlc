@@ -35,7 +35,10 @@ import {
 } from "./long_task_real_process_roi_scoring.mjs";
 import { buildRealProcessArtifactManifest } from "./long_task_real_process_artifacts.mjs";
 import { materializeLongTaskPackage } from "./long_task_package_materialization.mjs";
-import { deriveFormalRuntimeTcbIdentity } from "./long_task_formal_runtime_tcb.mjs";
+import {
+  deriveFormalRuntimeTcbIdentity,
+  validateFormalRuntimeTcbIdentity,
+} from "./long_task_formal_runtime_tcb.mjs";
 import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
 import { formalProviderSourceAvailability } from "./long_task_formal_provider_capture.mjs";
 
@@ -378,6 +381,11 @@ export async function collectRealProcessRoi(options) {
     throw new Error(plan.formalCollectionReadiness.blockers[0]);
   if (plan.formalPrecollection && formalInteractionStdin !== true)
     throw new Error("formal_interaction_recorder_unavailable");
+  if (plan.formalPrecollection)
+    await validateFormalCollectionRuntimeBoundary({
+      repositoryRoot,
+      frozenConfig: plan.frozenConfig,
+    });
   const runSetId = `${compactTimestamp()}-${plan.candidateCommit.slice(0, 12)}-${plan.workloadSha256.slice(0, 12)}`;
   const runSetRoot = path.resolve(artifactRoot, runSetId);
   await mkdir(path.resolve(artifactRoot), { recursive: true });
@@ -440,6 +448,11 @@ export async function collectRealProcessRoi(options) {
     )
       await executeRepeat({ repeat, plan, prepared, runSetRoot, runs });
 
+    if (plan.formalPrecollection)
+      await validateFormalCollectionRuntimeBoundary({
+        repositoryRoot,
+        frozenConfig: plan.frozenConfig,
+      });
     const formalCollection = plan.formalPrecollection
       ? await collectFormalTotalCostArtifacts({
           runSetRoot,
@@ -562,6 +575,36 @@ export async function collectRealProcessRoi(options) {
       });
   }
   throw collectionError;
+}
+
+export async function validateFormalCollectionRuntimeBoundary(options) {
+  if (
+    !options ||
+    typeof options !== "object" ||
+    Array.isArray(options) ||
+    Object.keys(options).sort().join(",") !== "frozenConfig,repositoryRoot" ||
+    typeof options.repositoryRoot !== "string" ||
+    !options.frozenConfig ||
+    typeof options.frozenConfig !== "object"
+  )
+    throw new Error("formal_collection_runtime_boundary_options");
+  const frozen = options.frozenConfig.benchmark_implementation_identity;
+  const [candidateWorkingTree, executing] = await Promise.all([
+    sourceIdentity(
+      options.repositoryRoot,
+      realProcessRoiBenchmarkImplementationPaths,
+    ),
+    sourceIdentity(root, realProcessRoiBenchmarkImplementationPaths),
+  ]);
+  if (canonical(candidateWorkingTree) !== canonical(frozen))
+    throw new Error("formal_collection_candidate_benchmark_identity_changed");
+  if (canonical(executing) !== canonical(frozen))
+    throw new Error("formal_collection_executing_benchmark_identity_changed");
+  await validateFormalRuntimeTcbIdentity({
+    identity: options.frozenConfig.formal_runtime_tcb_identity,
+    environment: options.frozenConfig.environment,
+    benchmarkImplementationIdentity: executing,
+  });
 }
 
 function combineFormalCollectionReadiness(

@@ -21,6 +21,8 @@ export function validateLevel4CurrentCandidateResults(
     ],
     "level4_audit_current_results_fields",
   );
+  const formalReport = inputsById.get(results.formal_report_input_id);
+  const formalVerifier = commandsById.get(results.formal_verifier_command_id);
   assert(
     results.candidate_commit === evidenceReference.candidate.commit &&
       results.candidate_tree === evidenceReference.candidate.tree &&
@@ -29,9 +31,13 @@ export function validateLevel4CurrentCandidateResults(
         evidenceReference.benchmark_implementation_identity_sha256 &&
       results.runtime_tcb_identity_sha256 ===
         evidenceReference.runtime_tcb_identity_sha256 &&
-      inputsById.get(results.formal_report_input_id)?.role ===
-        "formal-verifier-report" &&
-      commandsById.get(results.formal_verifier_command_id)?.exit_code === 0 &&
+      formalReport?.role === "formal-verifier-report" &&
+      formalVerifier?.exit_code === 0 &&
+      formalVerifier.stdout_sha256 === formalReport.sha256 &&
+      isFormalVerifierCommand(
+        formalVerifier.argv,
+        evidenceReference.candidate.commit,
+      ) &&
       Array.isArray(results.validation_command_ids) &&
       results.validation_command_ids.length > 0 &&
       new Set(results.validation_command_ids).size ===
@@ -40,6 +46,35 @@ export function validateLevel4CurrentCandidateResults(
         (id) => commandsById.get(id)?.exit_code === 0,
       ),
     "level4_audit_current_results",
+  );
+}
+
+function isFormalVerifierCommand(argv, candidateCommit) {
+  if (
+    !Array.isArray(argv) ||
+    argv.length !== 8 ||
+    !/(?:^|[\\/])node(?:\.exe)?$/iu.test(argv[0]) ||
+    !/(?:^|[\\/])verify_long_task_real_process_roi\.mjs$/u.test(argv[1])
+  )
+    return false;
+  const allowed = new Set(["--candidate", "--formal-evidence", "--report"]);
+  const values = new Map();
+  for (let index = 2; index < argv.length; index += 2) {
+    const option = argv[index];
+    const value = argv[index + 1];
+    if (
+      !allowed.has(option) ||
+      values.has(option) ||
+      typeof value !== "string" ||
+      value.length === 0 ||
+      value.startsWith("--")
+    )
+      return false;
+    values.set(option, value);
+  }
+  return (
+    values.size === allowed.size &&
+    values.get("--candidate") === candidateCommit
   );
 }
 

@@ -14,10 +14,15 @@ export async function buildLevel4RuntimeTcbIdentity(
 ) {
   const entries = [];
   for (const relative of realProcessRoiBenchmarkImplementationPaths) {
-    const bytes = await readFile(path.join(repositoryRoot, ...relative.split("/")));
-    entries.push({ path: relative, bytes: bytes.length, sha256: digest(bytes) });
+    const bytes = await readFile(
+      path.join(repositoryRoot, ...relative.split("/")),
+    );
+    entries.push({
+      path: relative,
+      bytes: bytes.length,
+      sha256: digest(bytes),
+    });
   }
-  entries.sort((left, right) => left.path.localeCompare(right.path));
   const benchmarkImplementationIdentity = {
     entries,
     identity_sha256: sha256(canonical(entries)),

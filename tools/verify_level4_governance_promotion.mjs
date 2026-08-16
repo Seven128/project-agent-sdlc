@@ -147,8 +147,12 @@ export async function verifyLevel4GovernancePromotion(options) {
         evidenceArtifacts.get("candidate-package-tarball").length,
     "level4_promotion_run_set_candidate_package",
   );
-  const [candidateBenchmark, promotionBenchmark, currentBenchmark] =
-    await Promise.all([
+  const [
+    candidateBenchmark,
+    promotionBenchmark,
+    currentBenchmark,
+    executingBenchmark,
+  ] = await Promise.all([
     sourceIdentityAtCommit(
       repository,
       candidateCommit,
@@ -159,11 +163,19 @@ export async function verifyLevel4GovernancePromotion(options) {
       promotion,
       realProcessRoiBenchmarkImplementationPaths,
     ),
-      sourceIdentityAtWorkingTree(
-        repository,
-        realProcessRoiBenchmarkImplementationPaths,
-      ),
-    ]);
+    sourceIdentityAtWorkingTree(
+      repository,
+      realProcessRoiBenchmarkImplementationPaths,
+    ),
+    sourceIdentityAtWorkingTree(
+      root,
+      realProcessRoiBenchmarkImplementationPaths,
+    ),
+  ]);
+  assert(
+    canonical(executingBenchmark) === canonical(candidateBenchmark),
+    "level4_promotion_executing_benchmark_identity",
+  );
   assert(
     canonical(candidateBenchmark) === canonical(promotionBenchmark) &&
       canonical(promotionBenchmark) === canonical(currentBenchmark) &&
@@ -198,8 +210,7 @@ export async function verifyLevel4GovernancePromotion(options) {
         formalReport.candidate_package.package_name &&
       packageComparison.promotion.package_name ===
         formalReport.candidate_package.package_name &&
-      evidencePackage.package_sha256 ===
-        candidatePackageEntries[0].sha256,
+      evidencePackage.package_sha256 === candidatePackageEntries[0].sha256,
     "level4_promotion_package_identity",
   );
   return {

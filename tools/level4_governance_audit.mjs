@@ -38,6 +38,12 @@ export const LEVEL4_AUDIT_REQUIRED_INPUT_ROLES = Object.freeze([
   "validation-results",
 ]);
 
+const LEVEL4_AUDIT_EVIDENCE_BOUND_ROLES = Object.freeze([
+  "candidate-package-tarball",
+  "formal-evidence-packet",
+  "formal-verifier-report",
+]);
+
 export function validateLevel4IndependentAuditRecord(
   record,
   evidenceReference,
@@ -90,6 +96,7 @@ export function validateLevel4IndependentAuditRecord(
     LEVEL4_AUDIT_REQUIRED_INPUT_ROLES,
     "level4_audit_input_role_census",
   );
+  validateEvidenceArtifactBindings(record.inputs, evidenceReference.artifacts);
   const commandsById = validateAuditCommands(record.commands);
   validateLevel4CurrentCandidateResults(
     record.current_candidate_results,
@@ -100,6 +107,26 @@ export function validateLevel4IndependentAuditRecord(
   validateLevel4Findings(record.findings, inputsById, commandsById);
   validateLevel4AuditConclusion(record.audit_conclusion, record.findings);
   return record;
+}
+
+function validateEvidenceArtifactBindings(inputs, evidenceArtifacts) {
+  const auditByRole = new Map(inputs.map((entry) => [entry.role, entry]));
+  const evidenceByRole = new Map(
+    evidenceArtifacts.map((entry) => [entry.role, entry]),
+  );
+  assert(
+    LEVEL4_AUDIT_EVIDENCE_BOUND_ROLES.every((role) => {
+      const audit = auditByRole.get(role);
+      const evidence = evidenceByRole.get(role);
+      return (
+        audit &&
+        evidence &&
+        audit.bytes === evidence.bytes &&
+        audit.sha256 === evidence.sha256
+      );
+    }),
+    "level4_audit_evidence_artifact_binding",
+  );
 }
 
 function validateAuditor(auditor) {

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { formalProcessSupervisorTcbPaths } from "./formal_process_supervisor_protocol.mjs";
 import { FORMAL_CLOCK_POLICY } from "./long_task_real_process_schema_policy.mjs";
 import {
   deriveFormalProviderAdapterIdentity,
@@ -20,14 +21,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-export const formalProcessSupervisorTcbPaths = Object.freeze([
-  "tools/formal_process_supervisor.mjs",
-  "tools/formal_process_supervisor_protocol.mjs",
-  "tools/formal_process_supervisor_native_types.cs",
-  "tools/formal_process_supervisor_native_run.cs",
-  "tools/formal_process_supervisor_native_helpers.cs",
-  "tools/windows_job_process_supervisor.ps1",
-]);
+export { formalProcessSupervisorTcbPaths };
 
 export async function deriveFormalRuntimeTcbIdentity({
   environment,
@@ -40,7 +34,8 @@ export async function deriveFormalRuntimeTcbIdentity({
       environment.platform === process.platform &&
       environment.arch === process.arch &&
       environment.node === process.version &&
-      normalizePath(environment.node_exec_path) === normalizePath(process.execPath),
+      normalizePath(environment.node_exec_path) ===
+        normalizePath(process.execPath),
     "formal_runtime_tcb_environment",
   );
   const supervisorEntries = selectSupervisorEntries(

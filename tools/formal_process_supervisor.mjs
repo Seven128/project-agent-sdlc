@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
+import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import {
   assertFreshSupervisorTarget,
+  formalProcessSupervisorTcbPaths,
   formalProcessDigest,
   normalizeFormalProcessResult,
   readFreshSupervisorFile,
@@ -14,6 +16,7 @@ import {
 const helperPath = fileURLToPath(
   new URL("./windows_job_process_supervisor.ps1", import.meta.url),
 );
+const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const helperDiagnosticLimit = 1024 * 1024;
 
 export class FormalProcessSupervisor {
@@ -208,13 +211,43 @@ function validateFrozenRuntime(identity) {
     typeof executable !== "string" ||
     !pathIsAbsolute(executable) ||
     identity.runtime?.node !== process.version ||
-    normalizePath(identity.runtime?.node_exec_path) !== normalizePath(process.execPath) ||
-    identity.runtime?.node_executable_sha256 !== digest(readFileSync(process.execPath)) ||
+    normalizePath(identity.runtime?.node_exec_path) !==
+      normalizePath(process.execPath) ||
+    identity.runtime?.node_executable_sha256 !==
+      digest(readFileSync(process.execPath)) ||
     normalizePath(realpathSync(executable)) !== normalizePath(executable) ||
     identity.powershell.executable_sha256 !== digest(readFileSync(executable))
   )
     throw new Error("formal_process_supervisor_runtime_tcb");
+  validateFrozenSupervisorSources(identity);
   return executable;
+}
+
+function validateFrozenSupervisorSources(identity) {
+  const entries = identity?.supervisor_entries;
+  const expectedPaths = [...formalProcessSupervisorTcbPaths].sort();
+  if (
+    !Array.isArray(entries) ||
+    entries.length !== expectedPaths.length ||
+    entries
+      .map((entry) => entry?.path)
+      .sort()
+      .some((value, index) => value !== expectedPaths[index])
+  )
+    throw new Error("formal_process_supervisor_source_tcb");
+  for (const entry of entries) {
+    const target = path.resolve(repositoryRoot, ...entry.path.split("/"));
+    const relative = path.relative(repositoryRoot, target);
+    if (path.isAbsolute(relative) || relative.split(path.sep).includes(".."))
+      throw new Error("formal_process_supervisor_source_tcb");
+    const bytes = readFileSync(target);
+    if (
+      !Number.isSafeInteger(entry.bytes) ||
+      entry.bytes !== bytes.length ||
+      entry.sha256 !== digest(bytes)
+    )
+      throw new Error("formal_process_supervisor_source_tcb");
+  }
 }
 
 function pathIsAbsolute(value) {
@@ -222,7 +255,9 @@ function pathIsAbsolute(value) {
 }
 
 function normalizePath(value) {
-  return typeof value === "string" ? value.replaceAll("/", "\\").toLowerCase() : "";
+  return typeof value === "string"
+    ? value.replaceAll("/", "\\").toLowerCase()
+    : "";
 }
 
 function digest(value) {

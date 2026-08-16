@@ -1,9 +1,17 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import {
+  appendFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { pathToFileURL } from "node:url";
 import { prepareRealProcessRoiPlan } from "../../../tools/long_task_real_process_roi_runner.mjs";
 import { npmCommandSpec } from "../../../tools/npm_command_spec.mjs";
 import {
@@ -106,6 +114,41 @@ export async function assertPromotionArtifactControls({
     assert.equal(positive.governance_promotion_verified, true);
     assert.equal(positive.candidate_commit, candidateRecord.commit);
     assert.equal(positive.package_sha256, candidateRecord.package_sha256);
+
+    const alteredVerifierCheckout = path.join(
+      temporary,
+      "altered-executing-verifier",
+    );
+    await git(repositoryRoot, [
+      "worktree",
+      "add",
+      "--detach",
+      alteredVerifierCheckout,
+      candidateRecord.commit,
+    ]);
+    registered.push(alteredVerifierCheckout);
+    const alteredVerifierPath = path.join(
+      alteredVerifierCheckout,
+      "tools",
+      "verify_level4_governance_promotion.mjs",
+    );
+    await appendFile(
+      alteredVerifierPath,
+      "\n// synthetic modified executing verifier\n",
+      "utf8",
+    );
+    const alteredVerifier = await import(
+      `${pathToFileURL(alteredVerifierPath).href}?modified=${Date.now()}`
+    );
+    await assert.rejects(
+      () =>
+        alteredVerifier.verifyLevel4GovernancePromotion({
+          repositoryRoot: positive.checkout,
+          promotionCommit: positive.promotionCommit,
+          evidenceRoot: positive.evidenceRoot,
+        }),
+      /level4_promotion_executing_benchmark_identity/u,
+    );
 
     for (const mutation of [
       "packages/ty-context/README.md",

@@ -2,6 +2,15 @@ import { createHash } from "node:crypto";
 import { lstat, open, realpath } from "node:fs/promises";
 import path from "node:path";
 
+export const formalProcessSupervisorTcbPaths = Object.freeze([
+  "tools/formal_process_supervisor.mjs",
+  "tools/formal_process_supervisor_protocol.mjs",
+  "tools/formal_process_supervisor_native_types.cs",
+  "tools/formal_process_supervisor_native_run.cs",
+  "tools/formal_process_supervisor_native_helpers.cs",
+  "tools/windows_job_process_supervisor.ps1",
+]);
+
 export function validateFormalProcessRequest(value) {
   validateRequestIdentity(value);
   validateRequestPaths(value);
@@ -178,7 +187,8 @@ function canonicalUnixMilliseconds(value) {
 function isCanonicalTimestamp(value) {
   const milliseconds = Date.parse(value);
   return (
-    Number.isFinite(milliseconds) && new Date(milliseconds).toISOString() === value
+    Number.isFinite(milliseconds) &&
+    new Date(milliseconds).toISOString() === value
   );
 }
 

@@ -12,6 +12,10 @@ import {
 } from "../../tools/level4_governance_protocol.mjs";
 import { verifyLevel4GovernancePromotion } from "../../tools/verify_level4_governance_promotion.mjs";
 import {
+  canonical,
+  sha256,
+} from "../../tools/long_task_real_process_roi_scoring.mjs";
+import {
   buildLevel4GovernanceRecords,
   digestEntry,
 } from "./helpers/long-task-level4-governance-fixture.mjs";
@@ -86,6 +90,40 @@ test("dependent auditors, incomplete or altered inputs, stale commands, and hidd
   ).exit_code = 1;
   assert.throws(
     () => validateLevel4IndependentAuditRecord(failed, evidenceReference),
+    /level4_audit_current_results/u,
+  );
+  const unrelatedReport = structuredClone(auditRecord);
+  const reportInput = unrelatedReport.inputs.find(
+    (item) => item.role === "formal-verifier-report",
+  );
+  reportInput.sha256 = "1".repeat(64);
+  unrelatedReport.input_census_identity_sha256 = sha256(
+    canonical(unrelatedReport.inputs),
+  );
+  assert.throws(
+    () =>
+      validateLevel4IndependentAuditRecord(unrelatedReport, evidenceReference),
+    /level4_audit_evidence_artifact_binding/u,
+  );
+  const unrelatedCommandOutput = structuredClone(auditRecord);
+  unrelatedCommandOutput.commands.find(
+    (item) => item.command_id === "formal-verifier",
+  ).stdout_sha256 = "2".repeat(64);
+  assert.throws(
+    () =>
+      validateLevel4IndependentAuditRecord(
+        unrelatedCommandOutput,
+        evidenceReference,
+      ),
+    /level4_audit_current_results/u,
+  );
+  const unrelatedCommand = structuredClone(auditRecord);
+  unrelatedCommand.commands.find(
+    (item) => item.command_id === "formal-verifier",
+  ).argv = ["node", "tools/print_prebuilt_report.mjs"];
+  assert.throws(
+    () =>
+      validateLevel4IndependentAuditRecord(unrelatedCommand, evidenceReference),
     /level4_audit_current_results/u,
   );
   const hidden = structuredClone(auditRecord);

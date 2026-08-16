@@ -22,18 +22,7 @@ if (process.platform !== "win32")
   throw new Error("level4_real_chain_windows_required");
 
 const sourceAnchor = Date.now();
-const sourceTime = (offsetMs) =>
-  new Date(sourceAnchor + offsetMs).toISOString();
-const fixture = await createLevel4FormalEvidenceFixture(repositoryRoot, {
-  sourceTimeline: {
-    catalogFrozenAt: sourceTime(-60 * 60 * 1000),
-    collectorFrozenAt: sourceTime(-55 * 60 * 1000),
-    pricePublishedAt: sourceTime(-2 * 60 * 60 * 1000),
-    priceFrozenAt: sourceTime(-50 * 60 * 1000),
-    authorizationGrantedAt: sourceTime(-2 * 60 * 60 * 1000),
-    precollectionFrozenAt: sourceTime(-45 * 60 * 1000),
-  },
-});
+const fixture = await createLevel4FormalEvidenceFixture(repositoryRoot);
 const checkout = await mkdtemp(
   path.join(os.tmpdir(), "ty-level4-real-chain-checkout-"),
 );
@@ -48,7 +37,7 @@ try {
   await alignFixtureProviderIdentity(fixture, runtimeTcbIdentity);
 
   const validationWindow = {
-    started: Date.parse("2026-08-16T01:00:00.000Z"),
+    started: sourceAnchor - 30 * 60 * 1000,
     completed: Date.now(),
   };
   const scenarios = validateFormalScenarioCatalog({

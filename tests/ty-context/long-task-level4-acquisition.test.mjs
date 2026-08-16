@@ -10,7 +10,10 @@ import {
 } from "../../tools/long_task_formal_acquisition_runtime.mjs";
 import { formalCollectorEnvironment } from "../../tools/long_task_formal_collection_io.mjs";
 import { collectFormalTotalCostArtifacts } from "../../tools/long_task_formal_total_cost_collection.mjs";
-import { collectRealProcessRoi } from "../../tools/long_task_real_process_roi_runner.mjs";
+import {
+  collectRealProcessRoi,
+  validateFormalCollectionRuntimeBoundary,
+} from "../../tools/long_task_real_process_roi_runner.mjs";
 import { FormalProcessSupervisor } from "../../tools/formal_process_supervisor.mjs";
 import { createLevel4FormalEvidenceFixture } from "./helpers/long-task-level4-fixture.mjs";
 import { buildLevel4RuntimeTcbIdentity } from "./helpers/long-task-level4-runtime-identity.mjs";
@@ -230,6 +233,53 @@ test(
     assert.throws(
       () => new FormalProcessSupervisor(digestDrift),
       /formal_process_supervisor_runtime_tcb/u,
+    );
+    const sourceDrift = structuredClone(identity);
+    sourceDrift.supervisor_entries.find(
+      (entry) => entry.path === "tools/formal_process_supervisor.mjs",
+    ).sha256 = "0".repeat(64);
+    assert.throws(
+      () => new FormalProcessSupervisor(sourceDrift),
+      /formal_process_supervisor_source_tcb/u,
+    );
+  },
+);
+
+test(
+  "formal collection boundary rechecks candidate bytes, executing bytes, and the complete host/runtime TCB",
+  { skip: process.platform !== "win32" },
+  async () => {
+    const current = await buildLevel4RuntimeTcbIdentity(repositoryRoot);
+    const frozenConfig = {
+      benchmark_implementation_identity:
+        current.benchmarkImplementationIdentity,
+      formal_runtime_tcb_identity: current.runtimeTcbIdentity,
+      environment: current.environment,
+    };
+    await validateFormalCollectionRuntimeBoundary({
+      repositoryRoot,
+      frozenConfig,
+    });
+    const candidateSourceDrift = structuredClone(frozenConfig);
+    candidateSourceDrift.benchmark_implementation_identity.entries[0].sha256 =
+      "0".repeat(64);
+    await assert.rejects(
+      () =>
+        validateFormalCollectionRuntimeBoundary({
+          repositoryRoot,
+          frozenConfig: candidateSourceDrift,
+        }),
+      /formal_collection_candidate_benchmark_identity_changed/u,
+    );
+    const hostDrift = structuredClone(frozenConfig);
+    hostDrift.formal_runtime_tcb_identity.windows.build += 1;
+    await assert.rejects(
+      () =>
+        validateFormalCollectionRuntimeBoundary({
+          repositoryRoot,
+          frozenConfig: hostDrift,
+        }),
+      /formal_runtime_tcb_identity/u,
     );
   },
 );

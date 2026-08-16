@@ -28,12 +28,27 @@ export function buildLevel4GovernanceRecords({
     ...evidenceBase,
     identity_sha256: sha256(canonical(evidenceBase)),
   };
+  const inputs = [...auditInputs].sort(byId);
+  const formalReport = inputs.find(
+    (entry) => entry.role === "formal-verifier-report",
+  );
   const commands = [
-    auditCommand("formal-verifier", ["node", "verify_long_task_real_process_roi.mjs"]),
+    auditCommand(
+      "formal-verifier",
+      [
+        "node",
+        "tools/verify_long_task_real_process_roi.mjs",
+        "--report",
+        "current-run-set",
+        "--formal-evidence",
+        "formal-evidence-index.json",
+        "--candidate",
+        candidate.commit,
+      ],
+      formalReport.sha256,
+    ),
     auditCommand("validation", ["make", "validate-harness"]),
   ];
-  const inputs = [...auditInputs].sort(byId);
-  const formalReport = inputs.find((entry) => entry.role === "formal-verifier-report");
   const auditRecord = {
     schema_version: REAL_PROCESS_SCHEMAS.LEVEL4_INDEPENDENT_AUDIT_SCHEMA,
     audit_id: "independent-audit-structural-fixture",
@@ -67,7 +82,8 @@ export function buildLevel4GovernanceRecords({
         finding_id: "structural-controls-closed",
         severity: "note",
         status: "closed",
-        summary: "Current candidate identities and current command results agree.",
+        summary:
+          "Current candidate identities and current command results agree.",
         input_refs: [formalReport.id],
         command_refs: ["formal-verifier"],
       },
@@ -107,7 +123,11 @@ export function buildLevel4GovernanceRecords({
   return { evidenceReference, auditRecord, ownerDecision, promotionRecord };
 }
 
-function auditCommand(commandId, argv) {
+function auditCommand(
+  commandId,
+  argv,
+  stdoutSha256 = digest(`${commandId}:stdout`),
+) {
   return {
     command_id: commandId,
     argv,
@@ -115,7 +135,7 @@ function auditCommand(commandId, argv) {
     started_at: "2026-08-16T03:00:00.000Z",
     completed_at: "2026-08-16T03:01:00.000Z",
     exit_code: 0,
-    stdout_sha256: digest(`${commandId}:stdout`),
+    stdout_sha256: stdoutSha256,
     stderr_sha256: digest(`${commandId}:stderr`),
   };
 }
