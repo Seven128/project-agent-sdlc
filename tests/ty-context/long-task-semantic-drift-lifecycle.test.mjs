@@ -182,11 +182,11 @@ test("[critical:terminal-state-current-evidence] Stage frontier and terminal tar
       })}\n`,
     );
     await commitCandidate(fixture.root);
-    const accepted = await runCli(fixture.root, [
-      "long-task",
-      "final-gate",
-      fixture.workdir,
-    ]);
+    const accepted = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
     assert.equal(accepted.workflow_status, "machine_accepted");
     assert.equal(accepted.target_state, "target_profile_usable");
     assert.deepEqual(accepted.stage_results, { first: "passed", second: "passed" });
