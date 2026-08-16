@@ -189,9 +189,17 @@ the six affected files pass a concurrency-two shared-seed probe.
   policy maps tag ID to file and rationale; English test wording, line number, test
   count, and assertion layout remain free to evolve.
 - `packages/ty-context/src/lib/long-task-status-v2.ts` owns `resume` coordination.
-  `packages/ty-context/src/lib/long-task-workspace.ts` owns workspace fingerprint
-  and Git-state primitives. The coordinator must not start another observation of
-  the same repository until the fingerprint's index-writing phase has completed.
+  `packages/ty-context/src/lib/long-task-workspace.ts` preserves the public facade;
+  `long-task-git.ts` owns Git process/state primitives,
+  `long-task-workspace-manifest.ts` owns workspace fingerprint/manifest semantics,
+  and `long-task-workspace-snapshot.ts` owns fresh-root materialization and cleanup.
+  The coordinator must not start another observation of the same repository until
+  the fingerprint's index-writing phase has completed. Snapshot materialization
+  includes skip-worktree entries. It may retry exactly once into a distinct fresh
+  root only after an exit-one `checkout-index` failure with no signal and empty
+  stdout/stderr, successful partial-root cleanup, and an unchanged fingerprint.
+  Diagnosed failures, every `index.lock` failure, candidate drift, cleanup failure
+  and the second attempt remain fail-closed.
 
 The dependency direction is static policy -> runner -> current-run report -> CI
 artifact. Test source supplies observable tagged events to that chain. No report,

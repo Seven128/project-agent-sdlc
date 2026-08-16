@@ -15,6 +15,7 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { assertWorkspaceSnapshotExtractionControls } from "./helpers/long-task-workspace-snapshot-controls.mjs";
 
 test("workspace scope classifies every changed path with forbidden precedence", () => {
   const classification = classifyWorkspaceScope(
@@ -60,6 +61,10 @@ test("workspace scope classifies every changed path with forbidden precedence", 
   ]);
 });
 
+test("workspace snapshots recover only an unchanged no-diagnostic checkout and retain sparse entries", async (t) => {
+  await assertWorkspaceSnapshotExtractionControls(t);
+});
+
 test("first-lock bootstrap admits only a validated regular exact Codex worker profile", async () => {
   const fixture = await createDeliveryFixture();
   const profile = ".codex/agents/long-task-implementation.toml";
@@ -88,7 +93,7 @@ test("first-lock bootstrap admits only a validated regular exact Codex worker pr
 
     await writeFile(
       profileFile,
-      "# ty-context:managed:long-task-implementation-worker\nname = \"long_task_implementation\"\n",
+      '# ty-context:managed:long-task-implementation-worker\nname = "long_task_implementation"\n',
     );
     assert.deepEqual(
       await firstLockManagedWorkspacePaths(fixture.root, [profile]),
@@ -185,9 +190,7 @@ test("[critical:first-lock-workspace-scope] first-lock Preflight and direct Comp
         .flatMap((item) => item.refs),
       [".codex/agents/user-worker.toml"],
     );
-    await rm(
-      path.join(fixture.root, ".codex", "agents", "user-worker.toml"),
-    );
+    await rm(path.join(fixture.root, ".codex", "agents", "user-worker.toml"));
 
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
