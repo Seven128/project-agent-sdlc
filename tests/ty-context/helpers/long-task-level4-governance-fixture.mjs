@@ -3,7 +3,8 @@ import {
   canonical,
   sha256,
 } from "../../../tools/long_task_real_process_roi_scoring.mjs";
-import { digest } from "./long-task-level4-test-utils.mjs";
+import { LEVEL4_AUDIT_REQUIRED_INPUT_ROLES } from "../../../tools/level4_governance_protocol.mjs";
+import { digest, writeArtifact } from "./long-task-level4-test-utils.mjs";
 
 export function digestEntry(id, role, locator, bytes) {
   return { id, role, locator, bytes: bytes.length, sha256: digest(bytes) };
@@ -121,6 +122,53 @@ export function buildLevel4GovernanceRecords({
     owner_decision_sha256: sha256(canonical(ownerDecision)),
   };
   return { evidenceReference, auditRecord, ownerDecision, promotionRecord };
+}
+
+export function createLevel4GovernanceFixture({ commit, tree }) {
+  const candidate = {
+    commit,
+    tree,
+    package_version: "0.8.14",
+    package_sha256: "c".repeat(64),
+  };
+  const evidenceArtifacts = [
+    ["candidate-package", "candidate-package-tarball", "candidate.tgz"],
+    ["formal-packet", "formal-evidence-packet", "formal-evidence-index.json"],
+    ["formal-report", "formal-verifier-report", "formal-report.json"],
+    ["frozen-config", "run-set-frozen-config", "frozen-config.json"],
+    ["manifest", "run-set-manifest", "manifest.json"],
+  ].map(([id, role, locator]) =>
+    digestEntry(id, role, locator, Buffer.from(`${role}\n`)),
+  );
+  const auditInputs = LEVEL4_AUDIT_REQUIRED_INPUT_ROLES.map((role) =>
+    digestEntry(
+      `audit-${role}`,
+      role,
+      `audit/${role}.bin`,
+      Buffer.from(`${role}\n`),
+    ),
+  );
+  return buildLevel4GovernanceRecords({
+    candidate,
+    benchmarkIdentitySha256: "d".repeat(64),
+    runtimeTcbIdentitySha256: "e".repeat(64),
+    evidenceArtifacts,
+    auditInputs,
+  });
+}
+
+export async function writeLevel4GovernanceRecords(
+  repository,
+  governanceRoot,
+  records,
+) {
+  for (const [name, record] of [
+    ["evidence-reference.json", records.evidenceReference],
+    ["independent-audit.json", records.auditRecord],
+    ["owner-decision.json", records.ownerDecision],
+    ["promotion-record.json", records.promotionRecord],
+  ])
+    await writeArtifact(repository, `${governanceRoot}/${name}`, record);
 }
 
 function auditCommand(

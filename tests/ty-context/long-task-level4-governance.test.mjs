@@ -16,13 +16,13 @@ import {
   sha256,
 } from "../../tools/long_task_real_process_roi_scoring.mjs";
 import {
-  buildLevel4GovernanceRecords,
-  digestEntry,
+  createLevel4GovernanceFixture,
+  writeLevel4GovernanceRecords,
 } from "./helpers/long-task-level4-governance-fixture.mjs";
 import { git, writeArtifact } from "./helpers/long-task-level4-test-utils.mjs";
 
 test("[critical:level4-governance-audit-boundary] audit binds independence, complete input census, current commands/results, findings, and sole formal owner", () => {
-  const fixture = governanceFixture({
+  const fixture = createLevel4GovernanceFixture({
     commit: "a".repeat(40),
     tree: "b".repeat(40),
   });
@@ -61,7 +61,7 @@ test("[critical:level4-governance-audit-boundary] audit binds independence, comp
 });
 
 test("dependent auditors, incomplete or altered inputs, stale commands, and hidden findings fail closed", () => {
-  const { evidenceReference, auditRecord } = governanceFixture({
+  const { evidenceReference, auditRecord } = createLevel4GovernanceFixture({
     commit: "a".repeat(40),
     tree: "b".repeat(40),
   });
@@ -150,7 +150,7 @@ test("dependent auditors, incomplete or altered inputs, stale commands, and hidd
 
 test("owner approval and promotion records cannot drift package, benchmark, runtime, audit, or candidate identities", () => {
   const { evidenceReference, auditRecord, ownerDecision, promotionRecord } =
-    governanceFixture({
+    createLevel4GovernanceFixture({
       commit: "a".repeat(40),
       tree: "b".repeat(40),
     });
@@ -198,9 +198,9 @@ test("direct-child governance-only additions pass the commit boundary, while any
     await git(repository, ["commit", "-m", "evidence candidate"]);
     const commit = await git(repository, ["rev-parse", "HEAD"]);
     const tree = await git(repository, ["rev-parse", "HEAD^{tree}"]);
-    const records = governanceFixture({ commit, tree });
+    const records = createLevel4GovernanceFixture({ commit, tree });
     const governanceRoot = `governance/level4-promotion/${commit}`;
-    await writeGovernanceRecords(repository, governanceRoot, records);
+    await writeLevel4GovernanceRecords(repository, governanceRoot, records);
     await git(repository, ["add", "."]);
     await git(repository, ["commit", "-m", "governance promotion boundary"]);
     const promotion = await git(repository, ["rev-parse", "HEAD"]);
@@ -236,7 +236,7 @@ test("direct-child governance-only additions pass the commit boundary, while any
     );
 
     await git(repository, ["switch", "--detach", commit]);
-    await writeGovernanceRecords(repository, governanceRoot, records);
+    await writeLevel4GovernanceRecords(repository, governanceRoot, records);
     await writeArtifact(
       repository,
       "PROJECT_SPEC.md",
@@ -258,46 +258,3 @@ test("direct-child governance-only additions pass the commit boundary, while any
     await rm(temporary, { recursive: true, force: true });
   }
 });
-
-function governanceFixture({ commit, tree }) {
-  const candidate = {
-    commit,
-    tree,
-    package_version: "0.8.14",
-    package_sha256: "c".repeat(64),
-  };
-  const evidenceArtifacts = [
-    ["candidate-package", "candidate-package-tarball", "candidate.tgz"],
-    ["formal-packet", "formal-evidence-packet", "formal-evidence-index.json"],
-    ["formal-report", "formal-verifier-report", "formal-report.json"],
-    ["frozen-config", "run-set-frozen-config", "frozen-config.json"],
-    ["manifest", "run-set-manifest", "manifest.json"],
-  ].map(([id, role, locator]) =>
-    digestEntry(id, role, locator, Buffer.from(`${role}\n`)),
-  );
-  const auditInputs = LEVEL4_AUDIT_REQUIRED_INPUT_ROLES.map((role) =>
-    digestEntry(
-      `audit-${role}`,
-      role,
-      `audit/${role}.bin`,
-      Buffer.from(`${role}\n`),
-    ),
-  );
-  return buildLevel4GovernanceRecords({
-    candidate,
-    benchmarkIdentitySha256: "d".repeat(64),
-    runtimeTcbIdentitySha256: "e".repeat(64),
-    evidenceArtifacts,
-    auditInputs,
-  });
-}
-
-async function writeGovernanceRecords(repository, governanceRoot, records) {
-  for (const [name, record] of [
-    ["evidence-reference.json", records.evidenceReference],
-    ["independent-audit.json", records.auditRecord],
-    ["owner-decision.json", records.ownerDecision],
-    ["promotion-record.json", records.promotionRecord],
-  ])
-    await writeArtifact(repository, `${governanceRoot}/${name}`, record);
-}

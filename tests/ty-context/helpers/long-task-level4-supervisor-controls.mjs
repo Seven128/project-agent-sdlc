@@ -1,14 +1,111 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { formalCollectorEnvironment } from "../../../tools/long_task_formal_collection_io.mjs";
 import { FormalProcessSupervisor } from "../../../tools/formal_process_supervisor.mjs";
-import { assertClosedProcessTree } from "./long-task-level4-test-utils.mjs";
+import {
+  assertCanonicalTimestamp,
+  assertClosedProcessTree,
+} from "./long-task-level4-test-utils.mjs";
 
 const execFileAsync = promisify(execFile);
+
+export async function assertSupervisorRuntimeControls(identity) {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-supervisor-"));
+  const supervisor = new FormalProcessSupervisor(identity);
+  const run = (name, argv, timeoutMs = 10_000, limit = 64 * 1024) =>
+    supervisor.run({
+      requestId: name,
+      executable: process.execPath,
+      argv,
+      cwd: root,
+      stdoutPath: path.join(root, `${name}.stdout.log`),
+      stderrPath: path.join(root, `${name}.stderr.log`),
+      timeoutMs,
+      combinedOutputLimitBytes: limit,
+      environment: formalCollectorEnvironment({
+        ...process.env,
+        OPENAI_API_KEY: "must-not-cross-process-boundary",
+      }),
+    });
+  try {
+    const exact = await run("exact-argv", [
+      "-e",
+      "let x=0;for(let i=0;i<2e7;i++)x+=i;process.stdout.write(JSON.stringify({argv:process.argv.slice(1),secret:process.env.OPENAI_API_KEY??null,x:x>0}))",
+      "token with spaces",
+      "literal&token",
+      'quote"token',
+    ]);
+    const exactOutput = JSON.parse(
+      await readFile(path.join(root, "exact-argv.stdout.log"), "utf8"),
+    );
+    assert.deepEqual(exactOutput.argv, [
+      "token with spaces",
+      "literal&token",
+      'quote"token',
+    ]);
+    assert.equal(exactOutput.secret, null);
+    assertClosedProcessTree(exact);
+    assert.ok(exact.total_cpu_100ns > 0);
+    assert.equal(exact.process_monotonic_clock_id, "windows-stopwatch-qpc-v1");
+    assert.equal(exact.wall_clock_id, "unix-epoch-ms-v1");
+    assert.ok(
+      BigInt(exact.process_monotonic_completed_ns) >=
+        BigInt(exact.process_monotonic_started_ns),
+    );
+    assert.ok(Date.parse(exact.completed_at) >= Date.parse(exact.started_at));
+    assertCanonicalTimestamp(exact.started_at);
+    assertCanonicalTimestamp(exact.completed_at);
+
+    const fastParent = await run("fast-parent-grandchild", [
+      "-e",
+      "require('node:child_process').spawn(process.execPath,['-e','setTimeout(()=>process.exit(0),150)'],{stdio:'ignore'}).unref()",
+    ]);
+    assertClosedProcessTree(fastParent, 2);
+
+    const timed = await run(
+      "descendant-timeout",
+      [
+        "-e",
+        "require('node:child_process').spawn(process.execPath,['-e','setInterval(()=>{},1000)']);setInterval(()=>{},1000)",
+      ],
+      400,
+    );
+    assert.equal(timed.timed_out, true);
+    assertClosedProcessTree(timed, 2);
+    assert.ok(timed.total_processes >= 2);
+
+    const overflow = await run(
+      "stream-overflow",
+      ["-e", "process.stdout.write(Buffer.alloc(65536,120))"],
+      10_000,
+      1024,
+    );
+    assert.equal(overflow.output_overflow, true);
+    assertClosedProcessTree(overflow);
+
+    const stderrOverflow = await run(
+      "stderr-overflow",
+      ["-e", "process.stderr.write(Buffer.alloc(65536,120))"],
+      10_000,
+      1024,
+    );
+    assert.equal(stderrOverflow.output_overflow, true);
+    assertClosedProcessTree(stderrOverflow);
+
+    await writeFile(path.join(root, "preexisting.stdout.log"), "stale");
+    await assert.rejects(
+      () => run("preexisting", ["-e", "process.exit(0)"]),
+      /formal_process_supervisor_stdout_preexisting/u,
+    );
+  } finally {
+    await supervisor.close();
+    await rm(root, { recursive: true, force: true });
+  }
+}
 
 export async function assertNestedJobAndBreakawayControls({
   identity,
