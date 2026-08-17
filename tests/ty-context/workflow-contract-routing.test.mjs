@@ -588,10 +588,10 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     guidance,
     /After the first Authority Lock,[\s\S]*terminal-turn boundary/iu,
   );
-  assert.match(guidance, /处理好模型更换之后，请发送【继续】。/u);
+  assert.match(guidance, /处理好模型更换后，请仅回复：模型切换卡点解除，继续/u);
   assert.match(
     guidance,
-    /After handling the model change, send \[continue\]\./iu,
+    /After handling the model change, reply exactly: model checkpoint cleared, continue/iu,
   );
   assert.match(
     guidance,
@@ -902,7 +902,7 @@ test("long-task Skill is the only active long-task workflow", async () => {
     /Outcome decomposes execution and diagnosis, not completion authority/iu,
   );
   assert.match(active, /execution_model_checkpoint\.required: true/iu);
-  assert.match(active, /处理好模型更换之后，请发送【继续】。/u);
+  assert.match(active, /处理好模型更换后，请仅回复：模型切换卡点解除，继续/u);
   assert.match(active, /Later Compile returns `required: false`/iu);
   assert.match(
     active,

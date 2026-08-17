@@ -124,6 +124,13 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
       "export {};\n",
     );
     await writeFile(path.join(fixture.root, "tests/fixture.json"), "{}\n");
+    await mkdir(path.join(fixture.root, "tests/routes/(map)"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(fixture.root, "tests/routes/(map)/fixture.json"),
+      "{}\n",
+    );
     await writeFile(
       path.join(fixture.root, "tests/ui.spec.mjs"),
       `// [ac:first-result]
@@ -159,6 +166,7 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
     check.verification_inputs = [
       "tests/helper.mjs",
       "tests/fixture.json",
+      "tests/routes/(map)/fixture.json",
       "tests/semantic-false.json",
     ];
     outcome.acceptance.checks.push(check);
@@ -173,6 +181,7 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
     for (const file of [
       "tests/helper.mjs",
       "tests/fixture.json",
+      "tests/routes/(map)/fixture.json",
       "tests/ui.spec.mjs",
       "playwright.config.mjs",
       "package.json",
@@ -183,6 +192,7 @@ test("helper, fixture, Playwright config, package script and lockfile are frozen
     for (const file of [
       "tests/helper.mjs",
       "tests/fixture.json",
+      "tests/routes/(map)/fixture.json",
       "playwright.config.mjs",
       "package-lock.json",
     ]) {

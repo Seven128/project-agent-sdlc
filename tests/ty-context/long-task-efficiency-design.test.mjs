@@ -182,15 +182,15 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   for (const expected of [
     "execution_model_checkpoint",
     "change_model_in_host_then_continue",
-    "resume_token: continue",
+    "resume_token: model checkpoint cleared, continue",
     "required: false",
     "first Authority Lock",
   ])
     assert.match(combined, new RegExp(expected, "iu"), expected);
-  assert.match(combined, /After handling the model change, send \[continue\]\./u);
+  assert.match(combined, /After handling the model change, reply exactly: model checkpoint cleared, continue/iu);
   assert.match(combined, /unconditionally|always ends? the current turn/iu);
   assert.match(combined, /prior[\s\S]{0,120}(?:never skips|cannot skip)/iu);
-  assert.match(combined, /generic_continue_satisfies"?\s*:\s*true/iu);
+  assert.match(combined, /generic_continue_satisfies"?\s*:\s*false/iu);
   assert.match(combined, /model_change_observable_by_harness"?\s*:\s*false/iu);
   assert.match(
     combined,
@@ -227,7 +227,7 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   assert.match(managedAgentProfile, /^enabled = false$/mu);
   assert.doesNotMatch(
     combined,
-    /continue_current_model|switch_model_then_resume|generic_continue_satisfies:\s*false/iu,
+    /continue_current_model|switch_model_then_resume|generic_continue_satisfies:\s*true/iu,
   );
 
   const affirmativeModelRoutingClaims = combined
@@ -336,7 +336,7 @@ test("implementation freedom removes method gates without weakening declared pro
   );
   assert.match(combined, /execution_model_checkpoint\.required: true/iu);
   assert.match(combined, /change_model_in_host_then_continue/iu);
-  assert.match(combined, /generic_continue_satisfies"?\s*:\s*true/iu);
+  assert.match(combined, /generic_continue_satisfies"?\s*:\s*false/iu);
   assert.doesNotMatch(
     combined,
     /continue_current_model|switch_model_then_resume/iu,

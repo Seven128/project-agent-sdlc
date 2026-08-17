@@ -29,6 +29,10 @@ import {
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
 
+const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-root-constraint";
+const DESIGN_ROOT_CLAIM = "control.main.location";
+const DESIGN_ROOT_STATEMENT = "main content";
+
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
   try {
@@ -625,6 +629,48 @@ test("Long-Task Compile binds every declared design verification method to an in
   }
 });
 
+test("design binding covers method Source Claims through separate single-Claim root and method Assertions", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(fixture, {
+      splitRootAndMethodClaim: true,
+    });
+    const outcome = fixture.contract.outcomes[0];
+    const target = outcome.product.surface_bindings[0].design_targets[0];
+    const check = outcome.acceptance.checks.find(
+      (candidate) => candidate.key === target.conformance_check_ref,
+    );
+    const rootAssertion = check.positive_assertions.find(
+      (assertion) => assertion.key === target.conformance_assertion_ref,
+    );
+    const methodAssertion = check.positive_assertions.find(
+      (assertion) =>
+        assertion.key === target.verification_method_bindings[0].assertion_ref,
+    );
+    assert.deepEqual(rootAssertion.claims, [DESIGN_ROOT_CLAIM]);
+    assert.deepEqual(methodAssertion.claims, ["requirement.design-handoff"]);
+    for (const assertion of [
+      ...check.positive_assertions,
+      ...check.negative_assertions,
+    ])
+      assert.ok(
+        assertion.claims.length <= 1,
+        `${assertion.key} must remain claimless or single-Claim`,
+      );
+
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.equal(preflight.status, "ready");
+    const consumer = createLongTaskDesignHandoffConsumer(fixture.contract);
+    consumer.consume(preflight);
+    assert.doesNotThrow(() => consumer.finish());
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("Long-Task Compile rejects every exact design-fact binding drift", async () => {
   const cases = [
     [
@@ -1081,8 +1127,36 @@ function replaceExactStringMap(value, mapping) {
   }
 }
 
-async function attachDesignResourceHandoff(fixture) {
-  const { handoff } = await writeDesignResourceHandoffFixture(fixture.root);
+async function attachDesignResourceHandoff(
+  fixture,
+  { splitRootAndMethodClaim = false } = {},
+) {
+  const { handoff } = await writeDesignResourceHandoffFixture(
+    fixture.root,
+    splitRootAndMethodClaim
+      ? (candidate) => {
+          const fact = candidate.facts.find((item) =>
+            item.source_item_refs.includes(DESIGN_SOURCE_ITEM_KEY),
+          );
+          assert.ok(fact);
+          fact.source_item_refs.push(DESIGN_ROOT_SOURCE_ITEM_KEY);
+          for (const coverage of candidate.coverage)
+            if (coverage.fact_refs.includes(fact.key))
+              coverage.source_item_refs.push(DESIGN_ROOT_SOURCE_ITEM_KEY);
+        }
+      : undefined,
+    splitRootAndMethodClaim
+      ? {
+          additionalSourceItems: [
+            {
+              key: DESIGN_ROOT_SOURCE_ITEM_KEY,
+              kind: "control",
+              statement: DESIGN_ROOT_STATEMENT,
+            },
+          ],
+        }
+      : {},
+  );
   await writeFile(
     path.join(fixture.root, "tests", "ui.spec.mjs"),
     "export const designHandoffFixture = true;\n",
@@ -1258,6 +1332,16 @@ async function attachDesignResourceHandoff(fixture) {
       refs: ["first.requirement.design-handoff"],
     },
   });
+  if (splitRootAndMethodClaim)
+    fixture.contract.source_claims.push({
+      key: DESIGN_ROOT_SOURCE_ITEM_KEY,
+      source_ref: `${DESIGN_HANDOFF_PATH}#main-design`,
+      statement: DESIGN_ROOT_STATEMENT,
+      disposition: {
+        type: "claim",
+        refs: [`first.${DESIGN_ROOT_CLAIM}`],
+      },
+    });
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   return handoff;
 }
