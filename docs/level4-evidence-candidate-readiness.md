@@ -1,10 +1,17 @@
 # Level 4 Evidence Candidate Readiness And Structural Cost
 
-Date: 2026-08-16
+Date: 2026-08-17
 
 Status: implementation readiness record; non-formal diagnostic; `external_pending`
 
 Current capability claim: Level 3; `level_4_claimed = false`
+
+Current-candidate verification boundary: the frozen 0.8.15 development plan
+forbids tests, builds, Provider calls, evidence collection and Promotion. This
+revision therefore uses source/static conformance only. The test timings,
+synthetic-run measurements and package reproductions retained later in this
+document belong to the earlier diagnostic snapshot that names its own baseline;
+they were not rerun and are not current-candidate evidence.
 
 ## Authority Boundary
 
@@ -31,6 +38,18 @@ invalidates the evidence and requires recollection and independent reaudit.
 - One module-private-branded acquisition runtime constructs the runner-owned
   interaction recorder, Windows Job supervisor, fixed Provider adapter and
   State capture. Authoritative callers cannot replace those owners or clocks.
+- The parent Provider bridge captures the exact prompt and launches only the
+  candidate-owned isolated Node worker with a sanitized environment, empty
+  `execArgv`, bounded pipes and exact worker/root argv. The worker alone owns
+  `node:https`, bounded response streaming and the fixed parser. Protocol-owned
+  request/response/stdout/stderr/deadline/abort/output-token limits, forced
+  termination and complete temporary-root cleanup fail closed and enter runtime
+  TCB v2. The retained event binds response digest plus parser/worker identities;
+  no raw Provider response is retained for independent verifier reparsing.
+- The benchmark implementation identity includes the npm command owner,
+  Provider protocol/worker and an owner-local finite dependency checker.
+  Working-tree, Git-object, collection and Promotion paths rerun closure and
+  require execution from the exact repository checkout.
 - The frozen eleven-scenario catalog is the sole scenario/source/zero-policy
   owner. Collectors declare capabilities only; every source is exactly
   `required` or `forbidden`.
@@ -48,15 +67,37 @@ invalidates the evidence and requires recollection and independent reaudit.
 - The top verifier validates actual manifest/file bytes and constructs the
   immutable run artifact index. The packet maps paths only and supplies no byte,
   digest, role, event, normalized-value or comparison authority.
-- Formal v2, real-process v4 and manifest v2 are current. Formal v1,
-  real-process v1-v3 and manifest v1 are legacy and recollection-required.
+- Accounting-policy, evidence-packet, precollection-plan, raw-event,
+  scenario-catalog and source-manifest are current v2; Provider event is current
+  v3 because its exact shape binds parser and worker identities; real-process is
+  current v5 and manifest is current v2. Provider-event v1-v2, the other listed
+  formal v1 schemas, real-process v1-v4 and manifest v1 are legacy and
+  recollection-required. `next` remains unassigned.
 - The independent audit record binds auditor independence, a complete input
   census, exact commands and output digests, current-candidate results and all
   findings, while explicitly declining formal conclusion ownership.
 - R12 remains outside real-process ROI `CASE_IDS`; no Delivery Contract, Active
   Authority, Final Receipt or Long-Task Workflow self-bootstrap was added.
+- Package `0.8.15` completes only the scoped Level-4 mechanism logic. Capability
+  remains Level 3, `level_4_claimed=false`, real evidence remains
+  `external_pending`, and no formal-positive result or Promotion was created.
 
-## Restored Dynamic-Test Mapping
+## Current Source-Only Conformance
+
+- The production dependency-closure check resolves 68 explicitly admitted
+  implementation paths and 61 unique repository-local dependencies, with no
+  unlisted dependency.
+- Release-version source surfaces agree on package `0.8.15`; the root English
+  and Chinese READMEs are byte-identical to their managed asset copies.
+- The authoritative Provider path contains no global Fetch transport or
+  unbounded `arrayBuffer()` path. The isolated worker uses `node:https`, and
+  every retained Provider event binds the current parser and worker identities.
+- All new/split Provider and dependency-closure modules remain below 300 lines.
+- These are source/static observations only. No test, build, Provider request,
+  formal collection, audit, owner approval or Promotion was run or created for
+  this candidate.
+
+## Existing Dynamic-Test Mapping (Not Executed For 0.8.15)
 
 The plan's twenty enumerated attack/control assertions are preserved in the
 following fourteen behavior cases. These are executable tests, not static
@@ -117,7 +158,7 @@ The run-set maximum is exactly `586 + 256 + 256 + 87 + 3,060 + 4 +
 157.6875 + 240 + 16 + 64 + 4 = 974.3125 MiB`. These are capacity fuses,
 not expected ordinary consumption and not evidence of ROI.
 
-## Current Structural Delta
+## Historical Structural Delta (Not Refreshed For 0.8.15)
 
 The following Git-index diagnostics compare the implementation-ready working
 tree with baseline commit `2fb64588c3f1fdde1134ae4bb466ca406a220208`.
@@ -137,7 +178,7 @@ catalog-driven helpers. Every new source/test carrier is below the touched-sourc
 removed. The extra production bytes map to distinct new trust boundaries rather
 than copied scenario mappings or repeated trusted identities.
 
-## Non-Formal Diagnostic Measurements
+## Historical Non-Formal Diagnostic Measurements
 
 These results exercise implementation shape only. They are not bound real
 evidence and do not satisfy Level 4:

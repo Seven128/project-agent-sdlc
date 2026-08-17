@@ -37,10 +37,13 @@ file/LOC scale remains measured. All `observed_lifecycle_*` fields are
 diagnostic only. Collection cannot issue a governance verdict or promote
 Level 3 even when its observed lifecycle comparison is positive.
 
-The current family is formal v2, real-process v4 and run-set manifest v2.
-Formal v1, real-process v1-v3 and manifest v1 are diagnostic legacy inputs that
-require recollection; they cannot be mixed with or reinterpreted as current
-evidence. The one scenario catalog owns all eleven scenario-to-collector source
+The current exact matrix is accounting-policy, evidence-packet,
+precollection-plan, raw-event, scenario-catalog and source-manifest v2;
+Provider event v3; real-process v5; and run-set manifest v2. Provider-event
+v1-v2, the other listed formal v1 schemas, real-process v1-v4 and manifest v1
+are diagnostic legacy inputs that require recollection; they cannot be mixed
+with or reinterpreted as current evidence. `next` remains unassigned. The one
+scenario catalog owns all eleven scenario-to-collector source
 profiles and their zero policy. Collectors declare capabilities only, and every
 source is exactly `required` or `forbidden`; there is no `optional` source in
 this revision.

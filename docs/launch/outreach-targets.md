@@ -13,7 +13,7 @@ Ready now:
 - GitHub description, MIT license and discovery topics are visible.
 - `project-tiny-context-harness` is published on npm and installable through `@latest`.
 - GitHub repository homepage points to the npm package page; the primary public post should still link to the GitHub repository.
-- `v0.8.14` is published on npm through Trusted Publishing, and the current latest GitHub Release is `Project Tiny Context Harness 0.8.14`.
+- `v0.8.15` is published on npm through Trusted Publishing, and the current latest GitHub Release is `Project Tiny Context Harness 0.8.15`.
 - Adoption handoff issue #4 is pinned; starter issues #6-#8 remain open for follow-up docs/examples/benchmark work, and #5 is closed after the repo-hosted demo packet landed.
 - Repo-hosted launch media exists: README GIF, two Product Hunt gallery PNGs and a 240x240 thumbnail.
 - Trust surface exists: `SECURITY.md`, Dependabot, OpenSSF Scorecard workflow, OpenSSF Best Practices self-assessment prep and issue templates.
