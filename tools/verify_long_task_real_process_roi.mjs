@@ -547,6 +547,7 @@ export async function verifyRealProcessRoiReport(runSetRoot, options = {}) {
 
 function deriveVerifierFormalRoiConclusion({ summary, formalEvidence }) {
   const blockers = [];
+  const packetStructureAdmitted = formalEvidence?.admitted === true;
   if (formalEvidence === null)
     blockers.push("independent_evidence_packet_missing");
   else blockers.push(...formalEvidence.blockers);
@@ -577,7 +578,7 @@ function deriveVerifierFormalRoiConclusion({ summary, formalEvidence }) {
             ? "total_roi_positive"
             : "total_roi_not_positive",
     formal_blockers: [...new Set(blockers)],
-    independent_evidence_admitted: formalEvidence?.admitted === true,
+    independent_evidence_admitted: packetStructureAdmitted,
     total_roi_supported: supported,
     total_roi_positive: positive,
   };

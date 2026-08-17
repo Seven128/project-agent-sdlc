@@ -62,7 +62,10 @@ export async function collectFormalScenarioExecution(options) {
   let primaryError = null;
   try {
     const providerArgv = providerRequired
-      ? await acquisitionRuntime.openProviderCapture({ invocationId })
+      ? await acquisitionRuntime.openProviderCapture({
+          invocationId,
+          scenarioTimeoutMs: scenario.execution_timeout_ms,
+        })
       : [];
     providerOpened = providerRequired;
     const stateArgv = stateRequired
@@ -146,7 +149,7 @@ export async function collectFormalScenarioExecution(options) {
       try {
         await acquisitionRuntime.abortProviderCapture(invocationId);
       } catch (error) {
-        primaryError ??= error;
+        primaryError = error;
       }
     if (stateOpened)
       try {

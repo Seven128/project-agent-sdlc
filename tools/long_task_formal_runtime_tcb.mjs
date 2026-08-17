@@ -4,6 +4,15 @@ import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { formalProcessSupervisorTcbPaths } from "./formal_process_supervisor_protocol.mjs";
+import {
+  FORMAL_NODE_LAUNCH_POLICY,
+  FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL,
+  FORMAL_PROVIDER_PROTOCOL_PATH,
+  FORMAL_PROVIDER_RESPONSE_PATH,
+  FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+  FORMAL_PROVIDER_WORKER_PATH,
+  assertFormalProviderLaunchEnvelope,
+} from "./long_task_formal_provider_protocol.mjs";
 import { FORMAL_CLOCK_POLICY } from "./long_task_real_process_schema_policy.mjs";
 import {
   deriveFormalProviderAdapterIdentity,
@@ -18,17 +27,15 @@ import {
   assertExactKeys,
   shaPattern,
 } from "./long_task_formal_total_cost_shared.mjs";
-
 const execFileAsync = promisify(execFile);
-
 export { formalProcessSupervisorTcbPaths };
-
 export async function deriveFormalRuntimeTcbIdentity({
   environment,
   benchmarkImplementationIdentity,
   providerModel = process.env.TY_CONTEXT_FORMAL_OPENAI_MODEL ?? null,
 }) {
   const host = await probeFormalWindowsHost();
+  const launchEnvelope = assertFormalProviderLaunchEnvelope();
   assert(
     environment.platform === "win32" &&
       environment.platform === process.platform &&
@@ -47,14 +54,45 @@ export async function deriveFormalRuntimeTcbIdentity({
       TY_CONTEXT_FORMAL_OPENAI_MODEL: providerModel,
     },
   });
+  const providerWorker = selectImplementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_WORKER_PATH,
+  );
+  const providerProtocol = selectImplementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_PROTOCOL_PATH,
+  );
+  const providerResponse = selectImplementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_RESPONSE_PATH,
+  );
   const projection = {
-    schema_version: "formal-runtime-tcb-identity-v1",
+    schema_version: "formal-runtime-tcb-identity-v2",
     runtime: {
       platform: environment.platform,
       arch: environment.arch,
       node: environment.node,
       node_exec_path: environment.node_exec_path,
       node_executable_sha256: host.node_executable_sha256,
+      node_launch: {
+        policy: FORMAL_NODE_LAUNCH_POLICY,
+        protocol: FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL,
+        exec_argv: Object.freeze([]),
+        unsupported_environment_keys_absent:
+          launchEnvelope.unsupported_environment_keys_absent,
+        provider_worker: {
+          executable_path: process.execPath,
+          executable_sha256: host.node_executable_sha256,
+          worker_path: providerWorker.path,
+          worker_sha256: providerWorker.sha256,
+          response_path: providerResponse.path,
+          response_sha256: providerResponse.sha256,
+          protocol_path: providerProtocol.path,
+          protocol_sha256: providerProtocol.sha256,
+          shell: false,
+          environment_policy: FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+        },
+      },
     },
     powershell: host.powershell,
     dotnet: host.dotnet,
@@ -79,7 +117,6 @@ export async function deriveFormalRuntimeTcbIdentity({
     identity_sha256: sha256(canonical(projection)),
   });
 }
-
 export async function validateFormalRuntimeTcbIdentity({
   identity,
   environment,
@@ -116,7 +153,6 @@ export async function validateFormalRuntimeTcbIdentity({
   );
   return identity;
 }
-
 export async function probeFormalWindowsHost() {
   if (process.platform !== "win32")
     throw new Error("formal_process_supervisor_platform_unsupported");
@@ -227,6 +263,30 @@ function selectSupervisorEntries(identity) {
     "formal_runtime_tcb_supervisor_entries",
   );
   return entries;
+}
+
+function selectImplementationEntry(identity, repositoryPath) {
+  assert(
+    identity &&
+      Array.isArray(identity.entries) &&
+      shaPattern.test(identity.identity_sha256 ?? ""),
+    "formal_runtime_tcb_benchmark_identity",
+  );
+  const entry = identity.entries.find(
+    (candidate) => candidate.path === repositoryPath,
+  );
+  assert(
+    entry &&
+      Number.isSafeInteger(entry.bytes) &&
+      entry.bytes > 0 &&
+      shaPattern.test(entry.sha256),
+    "formal_runtime_tcb_provider_entry",
+  );
+  return Object.freeze({
+    path: entry.path,
+    bytes: entry.bytes,
+    sha256: entry.sha256,
+  });
 }
 
 function normalizePath(value) {

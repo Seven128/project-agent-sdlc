@@ -6,6 +6,7 @@ import {
   MEASUREMENT_THRESHOLDS,
   VARIANT_IDS,
 } from "./long_task_real_process_roi_policy.mjs";
+import { FORMAL_PROVIDER_LIMITS } from "./long_task_formal_provider_protocol.mjs";
 
 const MiB = 1024 * 1024;
 const canonicalCatalogPath = path.resolve(
@@ -58,7 +59,7 @@ export function deriveExpectedFormalArtifactBudget(catalog) {
     providerArtifactCount;
   const maximums = {
     maximum_scenario_output_bytes: MiB,
-    maximum_raw_prompt_bytes: MiB,
+    maximum_raw_prompt_bytes: FORMAL_PROVIDER_LIMITS.maximum_prompt_bytes,
     maximum_state_payload_bytes: 4 * MiB,
     maximum_state_source_files: 128,
     maximum_combined_stream_bytes: 2 * MiB,

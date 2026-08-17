@@ -63,13 +63,18 @@ class FormalAcquisitionFacade {
     return this.#processSupervisor.run(request);
   }
 
-  async openProviderCapture({ invocationId }) {
+  async openProviderCapture(options) {
     this.#assertOpen();
+    assertExactOptions(options, ["invocationId", "scenarioTimeoutMs"]);
+    const { invocationId, scenarioTimeoutMs } = options;
     assertInvocationId(invocationId);
+    if (!Number.isSafeInteger(scenarioTimeoutMs) || scenarioTimeoutMs <= 0)
+      throw new Error("formal_provider_capture_scenario_timeout");
     if (this.#providerBridges.has(invocationId))
       throw new Error("formal_provider_capture_duplicate");
     const bridge = await this.#providerAdapter.openOneShotBridge({
       invocationId,
+      scenarioTimeoutMs,
     });
     this.#providerBridges.set(invocationId, bridge);
     return bridge.argv;
@@ -83,8 +88,14 @@ class FormalAcquisitionFacade {
     this.#assertOpen();
     const bridge = this.#providerBridges.get(invocationId);
     if (!bridge) throw new Error("formal_provider_capture_missing");
-    this.#providerBridges.delete(invocationId);
-    return bridge.closeAndPersist({ rawPromptPath, providerEventPath });
+    try {
+      return await bridge.closeAndPersist({
+        rawPromptPath,
+        providerEventPath,
+      });
+    } finally {
+      this.#providerBridges.delete(invocationId);
+    }
   }
 
   async abortProviderCapture(invocationId) {
@@ -176,7 +187,7 @@ async function closeOwnedResources(resources) {
 
 function assertRuntimeIdentity(runtimeTcbIdentity) {
   if (
-    runtimeTcbIdentity?.schema_version !== "formal-runtime-tcb-identity-v1" ||
+    runtimeTcbIdentity?.schema_version !== "formal-runtime-tcb-identity-v2" ||
     !/^[a-f0-9]{64}$/u.test(runtimeTcbIdentity.identity_sha256 ?? "")
   )
     throw new Error("formal_acquisition_runtime_tcb_identity");

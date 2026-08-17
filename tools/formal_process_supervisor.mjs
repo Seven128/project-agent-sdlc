@@ -12,6 +12,10 @@ import {
   readFreshSupervisorFile,
   validateFormalProcessRequest,
 } from "./formal_process_supervisor_protocol.mjs";
+import {
+  FORMAL_NODE_LAUNCH_POLICY,
+  FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+} from "./long_task_formal_provider_protocol.mjs";
 
 const helperPath = fileURLToPath(
   new URL("./windows_job_process_supervisor.ps1", import.meta.url),
@@ -206,8 +210,10 @@ function message(error) {
 
 function validateFrozenRuntime(identity) {
   const executable = identity?.powershell?.executable_path;
+  const nodeLaunch = identity?.runtime?.node_launch;
+  const providerWorker = nodeLaunch?.provider_worker;
   if (
-    identity?.schema_version !== "formal-runtime-tcb-identity-v1" ||
+    identity?.schema_version !== "formal-runtime-tcb-identity-v2" ||
     typeof executable !== "string" ||
     !pathIsAbsolute(executable) ||
     identity.runtime?.node !== process.version ||
@@ -215,6 +221,18 @@ function validateFrozenRuntime(identity) {
       normalizePath(process.execPath) ||
     identity.runtime?.node_executable_sha256 !==
       digest(readFileSync(process.execPath)) ||
+    nodeLaunch?.policy !== FORMAL_NODE_LAUNCH_POLICY ||
+    !Array.isArray(nodeLaunch.exec_argv) ||
+    nodeLaunch.exec_argv.length !== 0 ||
+    nodeLaunch.unsupported_environment_keys_absent !== true ||
+    typeof providerWorker?.executable_path !== "string" ||
+    normalizePath(providerWorker?.executable_path) !==
+      normalizePath(process.execPath) ||
+    providerWorker?.executable_sha256 !==
+      identity.runtime.node_executable_sha256 ||
+    providerWorker?.shell !== false ||
+    providerWorker?.environment_policy !==
+      FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY ||
     normalizePath(realpathSync(executable)) !== normalizePath(executable) ||
     identity.powershell.executable_sha256 !== digest(readFileSync(executable))
   )

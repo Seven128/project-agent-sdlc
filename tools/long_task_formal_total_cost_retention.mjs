@@ -140,6 +140,7 @@ function validateProviderEventRecord({
       "bridge_session_sha256",
       "invocation_id",
       "model",
+      "parser_id",
       "provider",
       "provider_request_or_session_id",
       "raw_prompt_sha256",
@@ -147,6 +148,7 @@ function validateProviderEventRecord({
       "recorded_at",
       "schema_version",
       "usage",
+      "worker_identity_sha256",
     ],
     `provider_event_fields:${sourcePath}`,
   );
@@ -163,6 +165,9 @@ function validateProviderEventRecord({
         runtimeTcbIdentity.provider_adapter.identity_sha256 &&
       record.provider === runtimeTcbIdentity.provider_adapter.provider &&
       record.model === runtimeTcbIdentity.provider_adapter.model &&
+      record.parser_id === runtimeTcbIdentity.provider_adapter.parser_id &&
+      record.worker_identity_sha256 ===
+        runtimeTcbIdentity.provider_adapter.worker_identity_sha256 &&
       providerBridge !== null &&
       record.bridge_session_sha256 ===
         providerBridge.bridge_session_sha256 &&

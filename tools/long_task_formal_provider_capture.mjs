@@ -1,44 +1,81 @@
-import { createHash, randomBytes } from "node:crypto";
-import { createServer } from "node:http";
-import { writeFile } from "node:fs/promises";
-import { REAL_PROCESS_SCHEMAS } from "./long_task_real_process_schema_policy.mjs";
-import { readFreshFormalFile } from "./long_task_formal_collection_io.mjs";
+import {
+  FORMAL_NODE_LAUNCH_POLICY,
+  FORMAL_PROVIDER_ENDPOINT,
+  FORMAL_PROVIDER_LIMITS,
+  FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL,
+  FORMAL_PROVIDER_PARSER_ID,
+  FORMAL_PROVIDER_PROTOCOL_ID,
+  FORMAL_PROVIDER_PROTOCOL_PATH,
+  FORMAL_PROVIDER_RESPONSE_PATH,
+  FORMAL_PROVIDER_TRANSPORT_ID,
+  FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+  FORMAL_PROVIDER_WORKER_PATH,
+  formalProviderLaunchEnvelopeStatus,
+} from "./long_task_formal_provider_protocol.mjs";
+import { openFormalProviderCaptureSession } from "./long_task_formal_provider_session.mjs";
 import {
   assert,
   canonical,
   sha256,
 } from "./long_task_real_process_roi_scoring.mjs";
 
-export const FORMAL_PROVIDER_ADAPTER_ID = "openai-responses-loopback-v1";
+export const FORMAL_PROVIDER_ADAPTER_ID =
+  "openai-responses-isolated-worker-v2";
 export const FORMAL_PROVIDER_ADAPTER_PATH =
   "tools/long_task_formal_provider_capture.mjs";
-const endpoint = "https://api.openai.com/v1/responses";
+export const FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS = Object.freeze([
+  FORMAL_PROVIDER_ADAPTER_PATH,
+  "tools/long_task_formal_provider_session.mjs",
+  "tools/long_task_formal_provider_worker_host.mjs",
+  "tools/long_task_formal_provider_worker_host_io.mjs",
+  "tools/long_task_formal_provider_capture_io.mjs",
+]);
 
 export function deriveFormalProviderAdapterIdentity({
   benchmarkImplementationIdentity,
   environment = process.env,
 }) {
-  const implementation = benchmarkImplementationIdentity.entries?.find(
-    (entry) => entry.path === FORMAL_PROVIDER_ADAPTER_PATH,
+  const parentBridge = FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS.map((entry) =>
+    implementationEntry(benchmarkImplementationIdentity, entry),
   );
-  assert(
-    implementation && /^[a-f0-9]{64}$/u.test(implementation.sha256),
-    "formal_provider_adapter_implementation",
+  const worker = implementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_WORKER_PATH,
+  );
+  const response = implementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_RESPONSE_PATH,
+  );
+  const protocol = implementationEntry(
+    benchmarkImplementationIdentity,
+    FORMAL_PROVIDER_PROTOCOL_PATH,
   );
   const model = environment.TY_CONTEXT_FORMAL_OPENAI_MODEL ?? null;
+  const workerProjection = {
+    implementation: { worker, response, protocol },
+    parser_id: FORMAL_PROVIDER_PARSER_ID,
+    transport_id: FORMAL_PROVIDER_TRANSPORT_ID,
+    limits: FORMAL_PROVIDER_LIMITS,
+    environment_policy: FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+    node_launch_policy: FORMAL_NODE_LAUNCH_POLICY,
+    node_launch_protocol: FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL,
+    node: process.version,
+  };
   const projection = {
-    schema_version: "formal-provider-adapter-identity-v1",
+    schema_version: "formal-provider-adapter-identity-v2",
     adapter_id: FORMAL_PROVIDER_ADAPTER_ID,
-    protocol: "one-shot-loopback-raw-prompt-v1",
+    protocol_id: FORMAL_PROVIDER_PROTOCOL_ID,
     provider: "openai",
-    endpoint,
+    endpoint: FORMAL_PROVIDER_ENDPOINT,
     model,
-    implementation: {
-      path: implementation.path,
-      bytes: implementation.bytes,
-      sha256: implementation.sha256,
-    },
-    parser: "openai-responses-usage-created-at-v1",
+    implementation: { parent_bridge: parentBridge, worker, response, protocol },
+    parser_id: FORMAL_PROVIDER_PARSER_ID,
+    transport_id: FORMAL_PROVIDER_TRANSPORT_ID,
+    limits: FORMAL_PROVIDER_LIMITS,
+    worker_environment_policy: FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY,
+    node_launch_policy: FORMAL_NODE_LAUNCH_POLICY,
+    node_launch_protocol: FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL,
+    worker_identity_sha256: sha256(canonical(workerProjection)),
     runtime: { node: process.version },
     support: {
       model_configured: typeof model === "string" && model.length > 0,
@@ -53,247 +90,95 @@ export function deriveFormalProviderAdapterIdentity({
 
 export class FormalProviderCaptureAdapter {
   #identity;
-  #credential;
 
   constructor(identity) {
     assertProviderIdentity(identity);
     this.#identity = identity;
-    this.#credential = process.env.OPENAI_API_KEY ?? null;
   }
 
   get identity() {
     return this.#identity;
   }
 
-  assertAvailable() {
-    if (!providerSourceAvailable(this.#identity, this.#credential))
-      throw new Error("formal_provider_source_unavailable");
+  assertReadyForAttempt() {
+    if (!formalProviderSourceReadiness(this.#identity).ready_for_attempt)
+      throw new Error("formal_provider_source_not_ready_for_attempt");
   }
 
-  async openOneShotBridge({ invocationId }) {
-    this.assertAvailable();
+  async openOneShotBridge({ invocationId, scenarioTimeoutMs }) {
+    this.assertReadyForAttempt();
     assert(/^[a-f0-9]{64}$/u.test(invocationId), "formal_provider_invocation");
-    const identity = this.#identity;
-    const token = randomBytes(32).toString("hex");
-    let requestCount = 0;
-    let capture = null;
-    let failure = null;
-    const server = createServer(async (request, response) => {
-      try {
-        if (
-          request.method !== "POST" ||
-          request.url !== "/invoke" ||
-          request.headers.authorization !== `Bearer ${token}` ||
-          requestCount !== 0
-        )
-          throw new Error("formal_provider_bridge_request");
-        requestCount += 1;
-        const prompt = await readBoundedRequest(request, 1024 * 1024);
-        const invoked = await this.#invoke(prompt);
-        capture = { prompt, ...invoked };
-        response.writeHead(200, {
-          "content-type": "application/json",
-          "content-length": capture.response.length,
-        });
-        response.end(capture.response);
-      } catch (error) {
-        failure = error;
-        response.writeHead(502, { "content-type": "text/plain" });
-        response.end("formal_provider_bridge_failed");
-      }
-    });
-    await listenLoopback(server);
-    const address = server.address();
-    const bridgeEndpoint = `http://127.0.0.1:${address.port}/invoke`;
-    const bridgeSessionSha256 = sha256(
-      canonical({
-        invocation_id: invocationId,
-        endpoint: bridgeEndpoint,
-        token_sha256: digest(token),
-      }),
+    assert(
+      Number.isSafeInteger(scenarioTimeoutMs) && scenarioTimeoutMs > 0,
+      "formal_provider_scenario_timeout",
     );
-    return Object.freeze({
-      argv: Object.freeze([
-        "--provider-bridge",
-        bridgeEndpoint,
-        "--provider-bridge-token",
-        token,
-      ]),
-      async closeAndPersist({ rawPromptPath, providerEventPath }) {
-        await closeServer(server);
-        if (failure) throw failure;
-        if (requestCount !== 1 || !capture)
-          throw new Error("formal_provider_bridge_exactly_one_request");
-        const event = {
-          schema_version:
-            REAL_PROCESS_SCHEMAS.FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA,
-          invocation_id: invocationId,
-          adapter_id: FORMAL_PROVIDER_ADAPTER_ID,
-          adapter_identity_sha256: identity.identity_sha256,
-          bridge_session_sha256: bridgeSessionSha256,
-          provider: "openai",
-          model: capture.model,
-          provider_request_or_session_id: capture.providerId,
-          recorded_at: new Date(capture.providerCreatedUnixMs).toISOString(),
-          clock_id: "provider-unix-epoch-ms-v1:openai",
-          raw_prompt_sha256: digest(capture.prompt),
-          raw_response_sha256: digest(capture.response),
-          usage: capture.usage,
-        };
-        const eventBytes = Buffer.from(`${JSON.stringify(event, null, 2)}\n`);
-        await Promise.all([
-          writeFile(rawPromptPath, capture.prompt, { flag: "wx" }),
-          writeFile(providerEventPath, eventBytes, { flag: "wx" }),
-        ]);
-        const [promptReadback, eventReadback] = await Promise.all([
-          readFreshFormalFile(rawPromptPath, 1024 * 1024),
-          readFreshFormalFile(providerEventPath, 64 * 1024),
-        ]);
-        if (
-          digest(promptReadback) !== digest(capture.prompt) ||
-          digest(eventReadback) !== digest(eventBytes)
-        )
-          throw new Error("formal_provider_artifact_readback");
-        return Object.freeze({
-          raw_prompt_sha256: digest(promptReadback),
-          provider_event_sha256: digest(eventReadback),
-          provider_request_or_session_id: capture.providerId,
-        });
-      },
-      async abort() {
-        await closeServer(server);
-      },
+    return openFormalProviderCaptureSession({
+      identity: this.#identity,
+      invocationId,
+      scenarioTimeoutMs,
     });
-  }
-
-  async #invoke(prompt) {
-    if (prompt.length === 0) throw new Error("formal_provider_prompt_empty");
-    let promptText;
-    try {
-      promptText = new TextDecoder("utf-8", { fatal: true }).decode(prompt);
-    } catch (error) {
-      throw new Error("formal_provider_prompt_utf8", { cause: error });
-    }
-    if (!Buffer.from(promptText, "utf8").equals(prompt))
-      throw new Error("formal_provider_prompt_roundtrip");
-    const body = Buffer.from(
-      JSON.stringify({
-        model: this.#identity.model,
-        input: promptText,
-      }),
-    );
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${this.#credential}`,
-        "content-type": "application/json",
-      },
-      body,
-    });
-    const responseBytes = Buffer.from(await response.arrayBuffer());
-    if (!response.ok)
-      throw new Error(`formal_provider_http_status:${response.status}`);
-    let value;
-    try {
-      value = JSON.parse(responseBytes.toString("utf8"));
-    } catch (error) {
-      throw new Error("formal_provider_response_json", { cause: error });
-    }
-    const cached = value.usage?.input_tokens_details?.cached_tokens;
-    if (
-      typeof value.id !== "string" ||
-      value.id.length === 0 ||
-      value.model !== this.#identity.model ||
-      !positiveInteger(value.usage?.input_tokens) ||
-      !positiveInteger(value.usage?.output_tokens) ||
-      !nonnegativeInteger(cached)
-    )
-      throw new Error("formal_provider_response_identity_usage");
-    if (!providerTimestampSeconds(value.created_at))
-      throw new Error("formal_provider_response_timestamp");
-    return {
-      response: responseBytes,
-      providerId: value.id,
-      model: value.model,
-      providerCreatedUnixMs: value.created_at * 1000,
-      usage: {
-        input_tokens: value.usage.input_tokens,
-        output_tokens: value.usage.output_tokens,
-        cached_input_tokens: cached,
-      },
-    };
   }
 }
 
-export function formalProviderSourceAvailability(identity) {
+export function formalProviderSourceReadiness(identity) {
   assertProviderIdentity(identity);
   const credential = process.env.OPENAI_API_KEY ?? null;
+  const launch = formalProviderLaunchEnvelopeStatus();
+  const configured = identity.support.model_configured === true;
+  const credentialPresent =
+    typeof credential === "string" && credential.length > 0;
   return Object.freeze({
-    model_configured: identity.support.model_configured === true,
-    credential_configured:
-      typeof credential === "string" && credential.length > 0,
-    available: providerSourceAvailable(identity, credential),
+    configured,
+    credential_present: credentialPresent,
+    launch_envelope_supported: launch.supported,
+    ready_for_attempt: configured && credentialPresent && launch.supported,
   });
 }
 
 function assertProviderIdentity(identity) {
+  if (!identity || typeof identity !== "object" || Array.isArray(identity))
+    throw new Error("formal_provider_adapter_identity");
+  const { identity_sha256: identitySha256, ...projection } = identity;
+  const parentPaths = identity.implementation?.parent_bridge?.map(
+    (entry) => entry.path,
+  );
   assert(
-    identity?.adapter_id === FORMAL_PROVIDER_ADAPTER_ID &&
+    identity.schema_version === "formal-provider-adapter-identity-v2" &&
+      identity.adapter_id === FORMAL_PROVIDER_ADAPTER_ID &&
+      identity.protocol_id === FORMAL_PROVIDER_PROTOCOL_ID &&
       identity.provider === "openai" &&
-      identity.endpoint === endpoint &&
-      /^[a-f0-9]{64}$/u.test(identity.identity_sha256 ?? ""),
+      identity.endpoint === FORMAL_PROVIDER_ENDPOINT &&
+      identity.parser_id === FORMAL_PROVIDER_PARSER_ID &&
+      identity.transport_id === FORMAL_PROVIDER_TRANSPORT_ID &&
+      identity.worker_environment_policy ===
+        FORMAL_PROVIDER_WORKER_ENVIRONMENT_POLICY &&
+      identity.node_launch_policy === FORMAL_NODE_LAUNCH_POLICY &&
+      identity.node_launch_protocol === FORMAL_PROVIDER_NODE_LAUNCH_PROTOCOL &&
+      canonical(identity.limits) === canonical(FORMAL_PROVIDER_LIMITS) &&
+      canonical(parentPaths) ===
+        canonical(FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS) &&
+      identity.implementation?.worker?.path === FORMAL_PROVIDER_WORKER_PATH &&
+      identity.implementation?.response?.path === FORMAL_PROVIDER_RESPONSE_PATH &&
+      identity.implementation?.protocol?.path === FORMAL_PROVIDER_PROTOCOL_PATH &&
+      /^[a-f0-9]{64}$/u.test(identity.worker_identity_sha256 ?? "") &&
+      /^[a-f0-9]{64}$/u.test(identitySha256 ?? "") &&
+      identitySha256 === sha256(canonical(projection)),
     "formal_provider_adapter_identity",
   );
 }
 
-function providerSourceAvailable(identity, credential) {
-  return (
-    identity.support.model_configured === true &&
-    typeof credential === "string" &&
-    credential.length > 0
+function implementationEntry(identity, repositoryPath) {
+  const entry = identity.entries?.find((candidate) => candidate.path === repositoryPath);
+  assert(
+    entry &&
+      Number.isSafeInteger(entry.bytes) &&
+      entry.bytes > 0 &&
+      /^[a-f0-9]{64}$/u.test(entry.sha256),
+    "formal_provider_adapter_implementation",
   );
-}
-
-async function readBoundedRequest(request, maximum) {
-  const chunks = [];
-  let bytes = 0;
-  for await (const chunk of request) {
-    bytes += chunk.length;
-    if (bytes > maximum) throw new Error("formal_provider_prompt_limit");
-    chunks.push(Buffer.from(chunk));
-  }
-  return Buffer.concat(chunks);
-}
-
-function listenLoopback(server) {
-  return new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      server.off("error", reject);
-      resolve();
-    });
+  return Object.freeze({
+    path: entry.path,
+    bytes: entry.bytes,
+    sha256: entry.sha256,
   });
-}
-
-function closeServer(server) {
-  return new Promise((resolve, reject) => {
-    if (!server.listening) return resolve();
-    server.close((error) => (error ? reject(error) : resolve()));
-  });
-}
-
-function positiveInteger(value) {
-  return Number.isSafeInteger(value) && value > 0;
-}
-
-function nonnegativeInteger(value) {
-  return Number.isSafeInteger(value) && value >= 0;
-}
-
-function providerTimestampSeconds(value) {
-  return Number.isSafeInteger(value) && value > 0 && value <= 8_640_000_000_000;
-}
-
-function digest(value) {
-  return createHash("sha256").update(value).digest("hex");
 }

@@ -40,7 +40,8 @@ import {
   validateFormalRuntimeTcbIdentity,
 } from "./long_task_formal_runtime_tcb.mjs";
 import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
-import { formalProviderSourceAvailability } from "./long_task_formal_provider_capture.mjs";
+import { formalProviderSourceReadiness } from "./long_task_formal_provider_capture.mjs";
+import { assertBenchmarkImplementationClosureAtWorkingTree } from "./long_task_benchmark_implementation_closure.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
@@ -78,10 +79,21 @@ export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
   "tools/verify_level4_governance_promotion.mjs",
   "tools/long_task_package_materialization.mjs",
   "tools/long_task_package_materialization_commands.mjs",
+  "tools/npm_command_spec.mjs",
+  "tools/long_task_benchmark_implementation_closure.mjs",
+  "tools/long_task_benchmark_implementation_closure_dependencies.mjs",
+  "tools/long_task_benchmark_implementation_closure_lexer.mjs",
   "tools/long_task_real_process_roi_policy.mjs",
   "tools/long_task_real_process_schema_policy.mjs",
   "tools/long_task_formal_artifact_budget.mjs",
   "tools/long_task_formal_provider_capture.mjs",
+  "tools/long_task_formal_provider_session.mjs",
+  "tools/long_task_formal_provider_worker_host.mjs",
+  "tools/long_task_formal_provider_worker_host_io.mjs",
+  "tools/long_task_formal_provider_capture_io.mjs",
+  "tools/long_task_formal_provider_protocol.mjs",
+  "tools/long_task_formal_provider_worker.mjs",
+  "tools/long_task_formal_provider_response.mjs",
   "tools/long_task_formal_acquisition_runtime.mjs",
   "tools/long_task_formal_state_capture.mjs",
   "tools/long_task_real_process_roi_runner.mjs",
@@ -125,6 +137,7 @@ export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
   "examples/delivery-benchmark/real-process-workload/runner/gold.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs",
   "examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs",
+  "examples/delivery-benchmark/real-process-workload/semantic-gold.json",
 ]);
 const defaultArtifactRoot = path.join(
   root,
@@ -156,7 +169,7 @@ export async function prepareRealProcessRoiPlan({
   const worktreeClean =
     candidateIsHead &&
     (await gitText(repositoryRoot, ["status", "--short"])) === "";
-  const workloadIdentity = await sourceIdentity(
+  const workloadIdentity = await sourceIdentityAtWorkingTree(
     repositoryRoot,
     workloadIdentityPaths,
   );
@@ -177,7 +190,11 @@ export async function prepareRealProcessRoiPlan({
     workload.fixture_candidate_identity?.required !== true
   )
     throw new Error("real_process_roi_workload_boundary_invalid");
-  const benchmarkImplementationIdentity = await sourceIdentity(
+  await assertBenchmarkImplementationClosureAtWorkingTree({
+    repositoryRoot,
+    implementationPaths: realProcessRoiBenchmarkImplementationPaths,
+  });
+  const benchmarkImplementationIdentity = await sourceIdentityAtWorkingTree(
     repositoryRoot,
     realProcessRoiBenchmarkImplementationPaths,
   );
@@ -187,7 +204,7 @@ export async function prepareRealProcessRoiPlan({
   );
   const { policy: accountingPolicy } =
     await readFormalAccountingPolicy(accountingPolicyPath);
-  const accountingPolicyIdentity = await sourceIdentity(repositoryRoot, [
+  const accountingPolicyIdentity = await sourceIdentityAtWorkingTree(repositoryRoot, [
     FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH,
   ]);
   const formalPrecollection = formalEvidencePlan
@@ -226,12 +243,12 @@ export async function prepareRealProcessRoiPlan({
       completed: validationTimestamp,
     },
   });
-  const providerAvailability = formalProviderSourceAvailability(
+  const providerReadiness = formalProviderSourceReadiness(
     formalRuntimeTcbIdentity.provider_adapter,
   );
   const formalCollectionReadiness = combineFormalCollectionReadiness(
     sourceReadiness,
-    providerAvailability,
+    providerReadiness,
   );
   const frozenConfig = {
     schema_version: REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
@@ -356,7 +373,7 @@ export async function dryRunRealProcessRoi(options) {
       MEASUREMENT_THRESHOLDS.minimum_repeats,
     ),
     expansion_rule:
-      "v4 always collects five repeats for formal accounting; the initial-three diagnostic records whether CV, paired direction, threshold nearness, or provenance would independently require expansion",
+      "v5 always collects five repeats for formal accounting; the initial-three diagnostic records whether CV, paired direction, threshold nearness, or provenance would independently require expansion",
   };
 }
 
@@ -588,13 +605,19 @@ export async function validateFormalCollectionRuntimeBoundary(options) {
     typeof options.frozenConfig !== "object"
   )
     throw new Error("formal_collection_runtime_boundary_options");
+  if (normalizePath(root) !== normalizePath(options.repositoryRoot))
+    throw new Error("formal_collection_executing_source_root");
+  await assertBenchmarkImplementationClosureAtWorkingTree({
+    repositoryRoot: options.repositoryRoot,
+    implementationPaths: realProcessRoiBenchmarkImplementationPaths,
+  });
   const frozen = options.frozenConfig.benchmark_implementation_identity;
   const [candidateWorkingTree, executing] = await Promise.all([
-    sourceIdentity(
+    sourceIdentityAtWorkingTree(
       options.repositoryRoot,
       realProcessRoiBenchmarkImplementationPaths,
     ),
-    sourceIdentity(root, realProcessRoiBenchmarkImplementationPaths),
+    sourceIdentityAtWorkingTree(root, realProcessRoiBenchmarkImplementationPaths),
   ]);
   if (canonical(candidateWorkingTree) !== canonical(frozen))
     throw new Error("formal_collection_candidate_benchmark_identity_changed");
@@ -609,12 +632,12 @@ export async function validateFormalCollectionRuntimeBoundary(options) {
 
 function combineFormalCollectionReadiness(
   sourceReadiness,
-  providerAvailability,
+  providerReadiness,
 ) {
   const blockers = [...sourceReadiness.blockers];
   const externalPending = [...sourceReadiness.external_pending];
-  if (!providerAvailability.available) {
-    blockers.push("formal_provider_source_unavailable");
+  if (!providerReadiness.ready_for_attempt) {
+    blockers.push("formal_provider_source_not_ready_for_attempt");
     externalPending.push("provider_invocation_source");
   }
   return Object.freeze({
@@ -864,7 +887,12 @@ async function environmentRecord(repositoryRoot) {
   };
 }
 
-async function sourceIdentity(repositoryRoot, paths) {
+async function sourceIdentityAtWorkingTree(repositoryRoot, paths) {
+  if (paths === realProcessRoiBenchmarkImplementationPaths)
+    await assertBenchmarkImplementationClosureAtWorkingTree({
+      repositoryRoot,
+      implementationPaths: paths,
+    });
   const entries = [];
   for (const relativePath of paths) {
     const bytes = await readFile(
@@ -1006,6 +1034,11 @@ function assertRunSetControlBudget(manifestBytes, attestationBytes) {
 
 function digest(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function normalizePath(value) {
+  const resolved = path.resolve(value);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
 function relative(rootPath, target) {
