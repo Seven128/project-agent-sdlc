@@ -128,7 +128,7 @@ export function createLevel4GovernanceFixture({ commit, tree }) {
   const candidate = {
     commit,
     tree,
-    package_version: "0.8.14",
+    package_version: "0.8.15",
     package_sha256: "c".repeat(64),
   };
   const evidenceArtifacts = [

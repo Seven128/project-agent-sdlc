@@ -20,10 +20,12 @@ export function fixtureRuntimeTcbIdentity() {
   return {
     runtime: { node_exec_path: process.execPath },
     provider_adapter: {
-      adapter_id: "openai-responses-loopback-v1",
+      adapter_id: "openai-responses-isolated-worker-v2",
       identity_sha256: "4".repeat(64),
       provider: "openai",
       model: "fixture-model",
+      parser_id: "openai-responses-usage-created-at-v2",
+      worker_identity_sha256: "5".repeat(64),
     },
   };
 }
@@ -126,6 +128,9 @@ export async function writeFixtureProviderArtifacts(root, refs, context) {
     clock_id: "provider-unix-epoch-ms-v1:openai",
     raw_prompt_sha256: digest(prompt),
     raw_response_sha256: digest(`response:${context.invocationId}`),
+    parser_id: context.runtimeTcbIdentity.provider_adapter.parser_id,
+    worker_identity_sha256:
+      context.runtimeTcbIdentity.provider_adapter.worker_identity_sha256,
     usage: {
       input_tokens: 1000,
       output_tokens: 100,

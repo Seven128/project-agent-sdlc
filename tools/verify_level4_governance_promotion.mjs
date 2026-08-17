@@ -22,6 +22,10 @@ import {
 import { parseJson } from "./long_task_formal_total_cost_shared.mjs";
 import { comparePackedPackages } from "./level4_package_identity_comparator.mjs";
 import {
+  assertBenchmarkImplementationClosureAtCommit,
+  assertBenchmarkImplementationClosureAtWorkingTree,
+} from "./long_task_benchmark_implementation_closure.mjs";
+import {
   parseAndValidateLevel4FormalReport,
   parseAndValidateLevel4FrozenCandidate,
   parseAndValidateLevel4RunSetManifest,
@@ -34,6 +38,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export async function verifyLevel4GovernancePromotion(options) {
   assertExactPromotionOptions(options);
   const repository = path.resolve(options.repositoryRoot);
+  assert(
+    normalizePath(root) === normalizePath(repository),
+    "level4_promotion_executing_source_root",
+  );
   const evidenceRoot = options.evidenceRoot;
   const promotion = await gitText(repository, [
     "rev-parse",
@@ -147,6 +155,10 @@ export async function verifyLevel4GovernancePromotion(options) {
         evidenceArtifacts.get("candidate-package-tarball").length,
     "level4_promotion_run_set_candidate_package",
   );
+  await assertBenchmarkImplementationClosureAtWorkingTree({
+    repositoryRoot: repository,
+    implementationPaths: realProcessRoiBenchmarkImplementationPaths,
+  });
   const [
     candidateBenchmark,
     promotionBenchmark,
@@ -266,6 +278,11 @@ async function validatePromotionDiff({
 }
 
 async function sourceIdentityAtCommit(repository, commit, paths) {
+  await assertBenchmarkImplementationClosureAtCommit({
+    repositoryRoot: repository,
+    commit,
+    implementationPaths: paths,
+  });
   const entries = [];
   for (const relative of paths) {
     const bytes = await gitBytes(repository, ["show", `${commit}:${relative}`]);
@@ -282,6 +299,10 @@ async function sourceIdentityAtCommit(repository, commit, paths) {
 }
 
 async function sourceIdentityAtWorkingTree(repository, paths) {
+  await assertBenchmarkImplementationClosureAtWorkingTree({
+    repositoryRoot: repository,
+    implementationPaths: paths,
+  });
   const entries = [];
   for (const relative of paths) {
     const bytes = await readFile(
@@ -316,6 +337,11 @@ async function gitBytes(cwd, args) {
 
 function digest(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function normalizePath(value) {
+  const resolved = path.resolve(value);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
 function parseArgs(argv) {

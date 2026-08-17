@@ -52,7 +52,14 @@ import {
   deriveFormalRuntimeTcbIdentity,
   formalProcessSupervisorTcbPaths,
 } from "../../tools/long_task_formal_runtime_tcb.mjs";
-import { FORMAL_PROVIDER_ADAPTER_PATH } from "../../tools/long_task_formal_provider_capture.mjs";
+import {
+  FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS,
+} from "../../tools/long_task_formal_provider_capture.mjs";
+import {
+  FORMAL_PROVIDER_PROTOCOL_PATH,
+  FORMAL_PROVIDER_RESPONSE_PATH,
+  FORMAL_PROVIDER_WORKER_PATH,
+} from "../../tools/long_task_formal_provider_protocol.mjs";
 import { readPackedPackageIdentity } from "../../tools/long_task_packed_package_identity.mjs";
 import { evaluateProductFacts } from "../../examples/delivery-benchmark/real-process-workload/product/facts.mjs";
 import {
@@ -611,7 +618,7 @@ test("real process ROI policy permanently excludes A from safety and balances th
     FORMAL_TOTAL_COST_PRICE_SOURCE_SCHEMA:
       "long-task-formal-total-cost-price-source-v1",
     FORMAL_TOTAL_COST_PROVIDER_EVENT_SCHEMA:
-      "long-task-formal-total-cost-provider-event-v2",
+      "long-task-formal-total-cost-provider-event-v3",
     FORMAL_TOTAL_COST_RAW_EVENT_SCHEMA:
       "long-task-formal-total-cost-raw-event-v2",
     FORMAL_TOTAL_COST_REDACTION_RULE_SCHEMA:
@@ -628,19 +635,19 @@ test("real process ROI policy permanently excludes A from safety and balances th
     FORMAL_STORAGE_LEDGER_SCHEMA: "formal-runner-storage-ledger-v1",
     LEVEL4_INDEPENDENT_AUDIT_SCHEMA: "level4-independent-capability-audit-v1",
     LEVEL4_PROMOTION_RECORD_SCHEMA: "level4-governance-promotion-v1",
-    REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v4",
-    REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v4",
+    REAL_PROCESS_ROI_SCHEMA: "long-task-real-process-roi-run-set-v5",
+    REAL_PROCESS_RUN_SCHEMA: "long-task-real-process-roi-run-v5",
     REAL_PROCESS_MANIFEST_SCHEMA: "long-task-real-process-roi-manifest-v2",
     REAL_PROCESS_ATTESTATION_SCHEMA:
-      "long-task-real-process-roi-attestation-v4",
+      "long-task-real-process-roi-attestation-v5",
     REAL_PROCESS_FROZEN_CONFIG_SCHEMA:
-      "long-task-real-process-roi-frozen-config-v4",
-    REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v4",
-    REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v4",
-    REAL_PROCESS_COLLECTION_SCHEMA: "long-task-real-process-roi-collection-v4",
+      "long-task-real-process-roi-frozen-config-v5",
+    REAL_PROCESS_SUMMARY_SCHEMA: "long-task-real-process-roi-summary-v5",
+    REAL_PROCESS_DRY_RUN_SCHEMA: "long-task-real-process-roi-dry-run-v5",
+    REAL_PROCESS_COLLECTION_SCHEMA: "long-task-real-process-roi-collection-v5",
     REAL_PROCESS_VERIFICATION_SCHEMA:
-      "long-task-real-process-roi-verification-v4",
-    REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v4",
+      "long-task-real-process-roi-verification-v5",
+    REAL_PROCESS_WORKLOAD_SCHEMA: "long-task-real-process-workload-v5",
   });
   const variants = variantDefinitions(fakeCandidate);
   assert.equal(variants.a.commit, BASELINE_A_COMMIT);
@@ -1225,7 +1232,13 @@ async function scoringFixture({ repeats = 3 } = {}) {
   const variants = variantDefinitions(fakeCandidate);
   const workloadIdentity = sourceIdentityFixture("workload.json", "workload");
   const implementationIdentity = sourceIdentityMultiFixture(
-    [...formalProcessSupervisorTcbPaths, FORMAL_PROVIDER_ADAPTER_PATH],
+    [
+      ...formalProcessSupervisorTcbPaths,
+      ...FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS,
+      FORMAL_PROVIDER_WORKER_PATH,
+      FORMAL_PROVIDER_RESPONSE_PATH,
+      FORMAL_PROVIDER_PROTOCOL_PATH,
+    ],
     "implementation",
   );
   const accountingPolicyIdentity = sourceIdentityFixture(
@@ -1413,7 +1426,7 @@ function runFixture({
       commit: variant.commit,
       tree: fakeTree,
       clean: true,
-      package_sha256: digest(packageTarballFixture("0.8.14")),
+      package_sha256: digest(packageTarballFixture("0.8.15")),
       workload_sha256: workloadSha256,
     },
     environment_identity: environmentIdentity,
@@ -1607,7 +1620,7 @@ async function resignManifest(runSetRoot) {
 async function writeSetupFixture(runSetRoot, config) {
   const records = [];
   for (const variant of Object.values(config.variants)) {
-    const packageBytes = packageTarballFixture("0.8.14");
+    const packageBytes = packageTarballFixture("0.8.15");
     const packed = readPackedPackageIdentity(packageBytes);
     const packagePath = `setup/${variant.id}/pack/${variant.id}.tgz`;
     const setupRoot = path.join(runSetRoot, "setup", variant.id);
@@ -1681,7 +1694,7 @@ async function writeSetupFixture(runSetRoot, config) {
       tree: fakeTree,
       package_name: packed.package_name,
       package_path: `pack/${variant.id}.tgz`,
-      package_version: "0.8.14",
+      package_version: "0.8.15",
       package_sha256: digest(packageBytes),
       package_file_set_sha256: packed.package_file_set_sha256,
       lockfile_sha256: digest("fixture-lockfile"),

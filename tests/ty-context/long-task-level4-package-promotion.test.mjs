@@ -61,7 +61,7 @@ test(
         await gitText(repositoryRoot, ["rev-parse", `${commit}^{tree}`]),
       );
       assert.equal(first.package_name, "project-tiny-context-harness");
-      assert.equal(first.package_version, "0.8.14");
+      assert.equal(first.package_version, "0.8.15");
       assert.match(first.package_sha256, /^[a-f0-9]{64}$/u);
       assert.match(first.package_file_set_sha256, /^[a-f0-9]{64}$/u);
       assert.equal(first.package_sha256, second.package_sha256);
@@ -174,7 +174,7 @@ test("package mutation and formal report package mismatch fail closed", async ()
     candidate: {
       commit: "a".repeat(40),
       tree: "b".repeat(40),
-      package_version: "0.8.14",
+      package_version: "0.8.15",
       package_sha256: "c".repeat(64),
     },
     runtime_tcb_identity_sha256: "d".repeat(64),
@@ -194,7 +194,7 @@ test("package mutation and formal report package mismatch fail closed", async ()
       evidenceReference.runtime_tcb_identity_sha256,
     candidate_package: {
       package_name: "project-tiny-context-harness",
-      package_version: "0.8.14",
+      package_version: "0.8.15",
       package_sha256: "e".repeat(64),
     },
     formal_blockers: [],

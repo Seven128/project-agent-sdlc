@@ -26,7 +26,10 @@ import {
   sha256,
 } from "../../tools/long_task_real_process_roi_scoring.mjs";
 import { createLevel4FormalEvidenceFixture } from "./helpers/long-task-level4-fixture.mjs";
-import { assertProviderBridgeControls } from "./helpers/long-task-level4-provider-controls.mjs";
+import {
+  assertProviderBridgeControls,
+  fixtureProviderIdentity,
+} from "./helpers/long-task-level4-provider-controls.mjs";
 import { clonePrecollection } from "./helpers/long-task-level4-test-utils.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -277,23 +280,23 @@ test("runner-owned output locators stay inside the run root and post-close reads
 });
 
 test("fixed Provider adapter is invocation-bound and fails closed when model or parent credential is unavailable", async () => {
-  const adapter = new FormalProviderCaptureAdapter({
-    adapter_id: "openai-responses-loopback-v1",
-    provider: "openai",
-    endpoint: "https://api.openai.com/v1/responses",
-    identity_sha256: "c".repeat(64),
-    support: { model_configured: false },
-  });
+  const adapter = new FormalProviderCaptureAdapter(
+    await fixtureProviderIdentity(null),
+  );
   assert.throws(
-    () => adapter.assertAvailable(),
-    /formal_provider_source_unavailable/u,
+    () => adapter.assertReadyForAttempt(),
+    /formal_provider_source_not_ready_for_attempt/u,
   );
   await assert.rejects(
-    () => adapter.openOneShotBridge({ invocationId }),
-    /formal_provider_source_unavailable/u,
+    () =>
+      adapter.openOneShotBridge({
+        invocationId,
+        scenarioTimeoutMs: 1_000,
+      }),
+    /formal_provider_source_not_ready_for_attempt/u,
   );
 });
 
-test("runner-owned Provider bridge enforces exact-one request, create-new artifacts, frozen identity, and response-derived usage", async () => {
+test("runner-owned Provider acquisition source fixes isolated transport, bounded protocol, sanitized launch, and frozen identity", async () => {
   await assertProviderBridgeControls();
 });

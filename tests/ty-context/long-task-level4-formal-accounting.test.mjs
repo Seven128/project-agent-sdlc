@@ -85,8 +85,19 @@ test("[critical:level4-evidence-governance-boundary] Level 4 schema families and
   );
   assert.equal(REAL_PROCESS_SCHEMA_FAMILY_TABLE.formal_evidence.next, null);
   assert.equal(
+    REAL_PROCESS_SCHEMA_FAMILY_TABLE.formal_evidence.current.provider_event,
+    "long-task-formal-total-cost-provider-event-v3",
+  );
+  assert.deepEqual(
+    REAL_PROCESS_SCHEMA_FAMILY_TABLE.formal_evidence.legacy.provider_event,
+    [
+      "long-task-formal-total-cost-provider-event-v1",
+      "long-task-formal-total-cost-provider-event-v2",
+    ],
+  );
+  assert.equal(
     REAL_PROCESS_SCHEMA_FAMILY_TABLE.real_process.current.run_set,
-    "long-task-real-process-roi-run-set-v4",
+    "long-task-real-process-roi-run-set-v5",
   );
   assert.equal(
     REAL_PROCESS_SCHEMA_FAMILY_TABLE.real_process.current.manifest,

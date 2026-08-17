@@ -189,13 +189,13 @@ async function writeSetups(root) {
   const setupByVariant = new Map();
   const preparedByVariant = {};
   for (const [index, variantId] of ["a", "b", "c"].entries()) {
-    const packageBytes = Buffer.from(`package:${variantId}:0.8.14\n`);
+    const packageBytes = Buffer.from(`package:${variantId}:0.8.15\n`);
     const record = {
       variant_id: variantId,
       commit: variantId.repeat(40),
       tree: String(index + 1).repeat(40),
       package_path: "candidate.tgz",
-      package_version: "0.8.14",
+      package_version: "0.8.15",
       package_sha256: digest(packageBytes),
     };
     setupByVariant.set(variantId, record);
