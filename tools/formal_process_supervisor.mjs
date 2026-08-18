@@ -33,8 +33,7 @@ export class FormalProcessSupervisor {
   #exited = null;
 
   constructor(runtimeTcbIdentity) {
-    if (process.platform !== "win32")
-      throw new Error("formal_process_supervisor_platform_unsupported");
+    assertFormalProcessSupervisorPlatform();
     const powershell = validateFrozenRuntime(runtimeTcbIdentity);
     this.#child = spawn(
       powershell,
@@ -202,6 +201,11 @@ export class FormalProcessSupervisor {
   #diagnostic() {
     return Buffer.concat(this.#helperStderr).toString("utf8").trim();
   }
+}
+
+export function assertFormalProcessSupervisorPlatform() {
+  if (process.platform !== "win32")
+    throw new Error("formal_process_supervisor_platform_unsupported");
 }
 
 function message(error) {

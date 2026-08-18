@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
+import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { LEVEL4_AUDIT_REQUIRED_INPUT_ROLES } from "../../../tools/level4_governance_protocol.mjs";
 import { readPackedPackageIdentity } from "../../../tools/long_task_packed_package_identity.mjs";
 import { REAL_PROCESS_SCHEMAS } from "../../../tools/long_task_real_process_schema_policy.mjs";
@@ -8,7 +9,6 @@ import {
   canonical,
   sha256,
 } from "../../../tools/long_task_real_process_roi_scoring.mjs";
-import { verifyLevel4GovernancePromotion } from "../../../tools/verify_level4_governance_promotion.mjs";
 import {
   buildLevel4GovernanceRecords,
   digestEntry,
@@ -109,6 +109,7 @@ export async function runPromotionCase(options) {
     records,
   });
   const promotionCommit = await git(checkout, ["rev-parse", "HEAD"]);
+  const verifyLevel4GovernancePromotion = await verifierAtCheckout(checkout);
   const result = await verifyLevel4GovernancePromotion({
     repositoryRoot: checkout,
     promotionCommit,
@@ -125,14 +126,22 @@ export async function runPromotionCase(options) {
 
 export async function assertPromotionMutationRejected(options) {
   const checkout = await createPromotionCommit(options);
-  await writeArtifact(
-    checkout,
-    options.mutation,
-    "forbidden promotion mutation\n",
-  );
+  if (options.mutation.endsWith(".mjs"))
+    await appendFile(
+      path.join(checkout, ...options.mutation.split("/")),
+      "\n// forbidden promotion mutation\n",
+      "utf8",
+    );
+  else
+    await writeArtifact(
+      checkout,
+      options.mutation,
+      "forbidden promotion mutation\n",
+    );
   await git(checkout, ["add", "."]);
   await git(checkout, ["commit", "--amend", "--no-edit"]);
   const promotionCommit = await git(checkout, ["rev-parse", "HEAD"]);
+  const verifyLevel4GovernancePromotion = await verifierAtCheckout(checkout);
   await assert.rejects(
     () =>
       verifyLevel4GovernancePromotion({
@@ -142,6 +151,16 @@ export async function assertPromotionMutationRejected(options) {
       }),
     /level4_promotion_diff_allowlist/u,
   );
+}
+
+async function verifierAtCheckout(checkout) {
+  const modulePath = path.join(
+    checkout,
+    "tools",
+    "verify_level4_governance_promotion.mjs",
+  );
+  const module = await import(pathToFileURL(modulePath).href);
+  return module.verifyLevel4GovernancePromotion;
 }
 
 export function packageControl(bytes) {

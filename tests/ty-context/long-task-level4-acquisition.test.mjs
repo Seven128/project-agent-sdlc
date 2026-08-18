@@ -34,79 +34,87 @@ before(async () => {
 after(async () => fixture?.remove());
 
 test(
-  "[critical:level4-acquisition-runtime-boundary] acquisition authority is private, branded, and non-injectable",
-  { skip: process.platform !== "win32" },
+  "[critical:level4-acquisition-runtime-boundary] acquisition authority is private, non-injectable, source-gated, and platform fail-closed",
   async () => {
+    const runtimeTcbIdentity = identity ?? fixture.runtimeTcbIdentity;
     assert.throws(
-      () => assertAuthoritativeFormalAcquisitionRuntime({}, identity),
+      () => assertAuthoritativeFormalAcquisitionRuntime({}, runtimeTcbIdentity),
       /formal_acquisition_runtime_authority/u,
     );
     assert.throws(
       () =>
         createFormalAcquisitionRuntime({
           formalInteractionStdin: true,
-          runtimeTcbIdentity: identity,
+          runtimeTcbIdentity,
           interactionRecorder: {},
         }),
       /formal_acquisition_runtime_options/u,
     );
-    const runtime = createFormalAcquisitionRuntime({
+    const options = {
+      runSetRoot: fixture.root,
+      runSetId: "fixture-run-set-v4",
+      runs: fixture.runs,
+      preparedByVariant: fixture.preparedByVariant,
+      precollection: fixture.precollection,
+      accountingPolicy: fixture.accountingPolicy,
+      accountingPolicyIdentity: fixture.accountingPolicyIdentity,
       formalInteractionStdin: true,
-      runtimeTcbIdentity: identity,
-    });
-    assert.equal(
-      assertAuthoritativeFormalAcquisitionRuntime(runtime, identity),
-      runtime,
+      runtimeTcbIdentity,
+    };
+    await assert.rejects(
+      () =>
+        collectFormalTotalCostArtifacts({ ...options, interactionRecorder: {} }),
+      /formal_collection_options/u,
     );
-    await runtime.close();
-    assert.throws(
-      () => runtime.runProcess({}),
-      /formal_acquisition_runtime_closed/u,
+    await assert.rejects(
+      () =>
+        collectFormalTotalCostArtifacts({ ...options, processSupervisor: {} }),
+      /formal_collection_options/u,
     );
+    for (const injected of [
+      { interactionRecorder: {} },
+      { supervisorFactory: () => ({}) },
+    ])
+      await assert.rejects(
+        () => collectRealProcessRoi({ candidate: "HEAD", ...injected }),
+        /real_process_roi_collection_options/u,
+      );
+    const realNow = Date.now;
+    Date.now = () => Date.parse("2026-08-16T04:00:00.000Z");
+    try {
+      await assert.rejects(
+        () => collectFormalTotalCostArtifacts(options),
+        /formal_collection_controlled_incident_external_pending/u,
+      );
+    } finally {
+      Date.now = realNow;
+    }
+
+    if (process.platform === "win32") {
+      const runtime = createFormalAcquisitionRuntime({
+        formalInteractionStdin: true,
+        runtimeTcbIdentity,
+      });
+      assert.equal(
+        assertAuthoritativeFormalAcquisitionRuntime(runtime, runtimeTcbIdentity),
+        runtime,
+      );
+      await runtime.close();
+      assert.throws(
+        () => runtime.runProcess({}),
+        /formal_acquisition_runtime_closed/u,
+      );
+    } else
+      assert.throws(
+        () =>
+          createFormalAcquisitionRuntime({
+            formalInteractionStdin: true,
+            runtimeTcbIdentity,
+          }),
+        /formal_process_supervisor_platform_unsupported/u,
+      );
   },
 );
-
-test("formal collection rejects fake recorder/supervisor injection and external-pending incident input", async () => {
-  const options = {
-    runSetRoot: fixture.root,
-    runSetId: "fixture-run-set-v4",
-    runs: fixture.runs,
-    preparedByVariant: fixture.preparedByVariant,
-    precollection: fixture.precollection,
-    accountingPolicy: fixture.accountingPolicy,
-    accountingPolicyIdentity: fixture.accountingPolicyIdentity,
-    formalInteractionStdin: true,
-    runtimeTcbIdentity: identity ?? fixture.runtimeTcbIdentity,
-  };
-  await assert.rejects(
-    () =>
-      collectFormalTotalCostArtifacts({ ...options, interactionRecorder: {} }),
-    /formal_collection_options/u,
-  );
-  await assert.rejects(
-    () =>
-      collectFormalTotalCostArtifacts({ ...options, processSupervisor: {} }),
-    /formal_collection_options/u,
-  );
-  for (const injected of [
-    { interactionRecorder: {} },
-    { supervisorFactory: () => ({}) },
-  ])
-    await assert.rejects(
-      () => collectRealProcessRoi({ candidate: "HEAD", ...injected }),
-      /real_process_roi_collection_options/u,
-    );
-  const realNow = Date.now;
-  Date.now = () => Date.parse("2026-08-16T04:00:00.000Z");
-  try {
-    await assert.rejects(
-      () => collectFormalTotalCostArtifacts(options),
-      /formal_collection_controlled_incident_external_pending/u,
-    );
-  } finally {
-    Date.now = realNow;
-  }
-});
 
 test(
   "Windows Job supervision preserves argv, child secret exclusion, full-tree cleanup, clocks, CPU, timeout, and overflow",

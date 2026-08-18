@@ -52,9 +52,7 @@ import {
   deriveFormalRuntimeTcbIdentity,
   formalProcessSupervisorTcbPaths,
 } from "../../tools/long_task_formal_runtime_tcb.mjs";
-import {
-  FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS,
-} from "../../tools/long_task_formal_provider_capture.mjs";
+import { FORMAL_PROVIDER_PARENT_IMPLEMENTATION_PATHS } from "../../tools/long_task_formal_provider_capture.mjs";
 import {
   FORMAL_PROVIDER_PROTOCOL_PATH,
   FORMAL_PROVIDER_RESPONSE_PATH,
@@ -980,7 +978,14 @@ test("run validation rejects metric tampering, duplicate cases and promoted A au
   );
 });
 
-test("report verifier recomputes raw SHA closure, summary and verdict", async () => {
+test("report verifier is Windows-TCB-bound and recomputes raw SHA closure, summary and verdict", async () => {
+  if (process.platform !== "win32") {
+    await assert.rejects(
+      () => formalScoringFixture({ includeRuntimeTcb: true }),
+      /formal_process_supervisor_platform_unsupported/u,
+    );
+    return;
+  }
   const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-report-"));
   try {
     const state = await materializeVerifierReportFixture(temporary);
@@ -993,7 +998,7 @@ test("report verifier recomputes raw SHA closure, summary and verdict", async ()
 });
 
 async function materializeVerifierReportFixture(temporary) {
-  const fixture = await formalScoringFixture();
+  const fixture = await formalScoringFixture({ includeRuntimeTcb: true });
   for (const run of fixture.runs.filter((item) => item.variant_id === "c"))
     run.metrics.total_elapsed_ms.value += 1_000;
   fixture.config.formal_evidence_precollection_identity = null;
@@ -1228,7 +1233,7 @@ async function assertVerifierRawTamperingRejected(temporary, state) {
   );
 }
 
-async function scoringFixture({ repeats = 3 } = {}) {
+async function scoringFixture({ repeats = 3, includeRuntimeTcb = false } = {}) {
   const variants = variantDefinitions(fakeCandidate);
   const workloadIdentity = sourceIdentityFixture("workload.json", "workload");
   const implementationIdentity = sourceIdentityMultiFixture(
@@ -1282,10 +1287,12 @@ async function scoringFixture({ repeats = 3 } = {}) {
     semantic_gold_sha256: digest("semantic-gold"),
     environment,
     environment_identity: environmentIdentity,
-    formal_runtime_tcb_identity: await deriveFormalRuntimeTcbIdentity({
-      environment,
-      benchmarkImplementationIdentity: implementationIdentity,
-    }),
+    formal_runtime_tcb_identity: includeRuntimeTcb
+      ? await deriveFormalRuntimeTcbIdentity({
+          environment,
+          benchmarkImplementationIdentity: implementationIdentity,
+        })
+      : null,
     measurement_thresholds: MEASUREMENT_THRESHOLDS,
     formal_total_cost_policy: {
       categories: FORMAL_TOTAL_COST_CATEGORIES,
@@ -1334,8 +1341,8 @@ async function scoringFixture({ repeats = 3 } = {}) {
   return { config, runs };
 }
 
-async function formalScoringFixture() {
-  return scoringFixture({ repeats: 5 });
+async function formalScoringFixture({ includeRuntimeTcb = false } = {}) {
+  return scoringFixture({ repeats: 5, includeRuntimeTcb });
 }
 
 function runFixture({

@@ -3,8 +3,8 @@
   "package_name": "project-tiny-context-harness",
   "version": "0.8.16",
   "filename": "project-tiny-context-harness-0.8.16.tgz",
-  "sha256": "b3eeca05468cc4a5de94e29d3653d7d6f758f26b8e51d6294bc1262a2e76be66",
-  "node_version": "v24.16.0",
-  "npm_version": "11.13.0",
+  "sha256": "867a87ffdb4d336a21675c07688d85b7ec82768e051c797c9df76bb3f477806e",
+  "node_version": "v24.18.0",
+  "npm_version": "12.0.1",
   "lockfile_sha256": "8ea1f8d54b1cca25e99a40fe02df5d606a9fc806af3fe2ab0cfbb517a55f00d5"
 }

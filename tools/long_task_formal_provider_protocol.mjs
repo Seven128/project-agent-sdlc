@@ -80,7 +80,7 @@ const resultSchema = "formal-provider-worker-result-v1";
 const errorSchema = "formal-provider-worker-error-v1";
 const shaPattern = /^[a-f0-9]{64}$/u;
 export function formalProviderLaunchEnvelopeStatus({
-  execArgv = process.execArgv,
+  execArgv = [], // The worker spawn does not inherit parent process.execArgv.
   environment = process.env,
 } = {}) {
   const unsupportedEnvironmentKeys = presentEnvironmentKeys(

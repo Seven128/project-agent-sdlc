@@ -40,7 +40,10 @@ import {
   validateFormalRuntimeTcbIdentity,
 } from "./long_task_formal_runtime_tcb.mjs";
 import { collectFormalTotalCostArtifacts } from "./long_task_formal_total_cost_collection.mjs";
-import { formalProviderSourceReadiness } from "./long_task_formal_provider_capture.mjs";
+import {
+  deriveFormalProviderAdapterIdentity,
+  formalProviderSourceReadiness,
+} from "./long_task_formal_provider_capture.mjs";
 import { assertBenchmarkImplementationClosureAtWorkingTree } from "./long_task_benchmark_implementation_closure.mjs";
 
 const {
@@ -75,6 +78,7 @@ export const realProcessRoiBenchmarkImplementationPaths = Object.freeze([
   "tools/level4_governance_audit_findings.mjs",
   "tools/level4_governance_shared.mjs",
   "tools/level4_package_identity_comparator.mjs",
+  "tools/level4_promotion_commit_boundary.mjs",
   "tools/level4_promotion_evidence_validation.mjs",
   "tools/verify_level4_governance_promotion.mjs",
   "tools/long_task_package_materialization.mjs",
@@ -147,6 +151,20 @@ const defaultArtifactRoot = path.join(
 );
 
 export async function prepareRealProcessRoiPlan({
+  candidate,
+  repositoryRoot = root,
+  formalEvidencePlan = null,
+}) {
+  return completeRealProcessRoiPlan(
+    await prepareRealProcessRoiStaticPlan({
+      candidate,
+      repositoryRoot,
+      formalEvidencePlan,
+    }),
+  );
+}
+
+async function prepareRealProcessRoiStaticPlan({
   candidate,
   repositoryRoot = root,
   formalEvidencePlan = null,
@@ -230,8 +248,7 @@ export async function prepareRealProcessRoiPlan({
   const goldBytes = await readFile(semanticGoldPath);
   const environment = await environmentRecord(repositoryRoot);
   const environmentIdentity = sha256(canonical(environment));
-  const formalRuntimeTcbIdentity = await deriveFormalRuntimeTcbIdentity({
-    environment,
+  const formalProviderAdapterIdentity = deriveFormalProviderAdapterIdentity({
     benchmarkImplementationIdentity,
   });
   const validationTimestamp = Date.now();
@@ -244,7 +261,7 @@ export async function prepareRealProcessRoiPlan({
     },
   });
   const providerReadiness = formalProviderSourceReadiness(
-    formalRuntimeTcbIdentity.provider_adapter,
+    formalProviderAdapterIdentity,
   );
   const formalCollectionReadiness = combineFormalCollectionReadiness(
     sourceReadiness,
@@ -272,7 +289,7 @@ export async function prepareRealProcessRoiPlan({
     semantic_gold_sha256: digest(goldBytes),
     environment,
     environment_identity: environmentIdentity,
-    formal_runtime_tcb_identity: formalRuntimeTcbIdentity,
+    formal_runtime_tcb_identity: null,
     measurement_thresholds: MEASUREMENT_THRESHOLDS,
     formal_total_cost_policy: {
       categories: FORMAL_TOTAL_COST_CATEGORIES,
@@ -318,12 +335,42 @@ export async function prepareRealProcessRoiPlan({
     frozenConfig,
     formalPrecollection,
     accountingPolicy,
+    formalProviderAdapterIdentity,
     formalCollectionReadiness,
   };
 }
 
+async function completeRealProcessRoiPlan(staticPlan) {
+  const formalRuntimeTcbIdentity = await deriveFormalRuntimeTcbIdentity({
+    environment: staticPlan.frozenConfig.environment,
+    benchmarkImplementationIdentity:
+      staticPlan.frozenConfig.benchmark_implementation_identity,
+  });
+  if (
+    canonical(formalRuntimeTcbIdentity.provider_adapter) !==
+    canonical(staticPlan.formalProviderAdapterIdentity)
+  )
+    throw new Error("formal_provider_adapter_identity_changed_during_planning");
+  return {
+    ...staticPlan,
+    frozenConfig: {
+      ...staticPlan.frozenConfig,
+      formal_runtime_tcb_identity: formalRuntimeTcbIdentity,
+    },
+  };
+}
+
 export async function dryRunRealProcessRoi(options) {
-  const plan = await prepareRealProcessRoiPlan(options);
+  let plan = await prepareRealProcessRoiStaticPlan(options);
+  const runtimeBlockers = [];
+  if (plan.worktreeClean && plan.formalCollectionReadiness.executable)
+    try {
+      plan = await completeRealProcessRoiPlan(plan);
+    } catch (error) {
+      if (error?.message !== "formal_process_supervisor_platform_unsupported")
+        throw error;
+      runtimeBlockers.push(error.message);
+    }
   return {
     schema_version: REAL_PROCESS_DRY_RUN_SCHEMA,
     capability_level: "level_3",
@@ -338,7 +385,9 @@ export async function dryRunRealProcessRoi(options) {
         ? "candidate_head_worktree_dirty"
         : "candidate_must_equal_clean_head",
     formal_collection_executable:
-      plan.worktreeClean && plan.formalCollectionReadiness.executable,
+      plan.worktreeClean &&
+      plan.formalCollectionReadiness.executable &&
+      runtimeBlockers.length === 0,
     formal_collection_blockers: Object.freeze([
       ...(plan.worktreeClean
         ? []
@@ -348,6 +397,7 @@ export async function dryRunRealProcessRoi(options) {
               : "candidate_must_equal_clean_head",
           ]),
       ...plan.formalCollectionReadiness.blockers,
+      ...runtimeBlockers,
     ]),
     external_pending: plan.formalCollectionReadiness.external_pending,
     missing_price_meters: plan.formalCollectionReadiness.missing_price_meters,
@@ -363,7 +413,7 @@ export async function dryRunRealProcessRoi(options) {
         ?.identity_sha256 ?? null,
     environment_identity: plan.environmentIdentity,
     formal_runtime_tcb_identity_sha256:
-      plan.frozenConfig.formal_runtime_tcb_identity.identity_sha256,
+      plan.frozenConfig.formal_runtime_tcb_identity?.identity_sha256 ?? null,
     variants: plan.variants,
     initial_schedule: plan.frozenConfig.repeat_orders.slice(
       0,

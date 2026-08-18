@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -40,7 +40,9 @@ export async function createLevel4FormalEvidenceFixture(
   repositoryRoot,
   { sourceTimeline = defaultSourceTimeline } = {},
 ) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-formal-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-formal-")),
+  );
   try {
     const retentionSourceBytes = Buffer.from(
       "fixture-only retention basis: 24 hours\n",

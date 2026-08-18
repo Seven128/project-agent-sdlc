@@ -55,9 +55,13 @@ const trustedPublishWorkflow = readFileSync(
   "utf8",
 );
 const trustedPublishPrepareJob = trustedPublishWorkflow.match(
-  /jobs:\s*\r?\n  prepare:[\s\S]*?\r?\n  publish:/u,
+  /\r?\n  prepare:[\s\S]*?\r?\n  publish:/u,
 )?.[0];
 assert.ok(trustedPublishPrepareJob, "trusted publish prepare job must exist");
+assert.match(
+  trustedPublishPrepareJob,
+  /needs:\s*windows-level4-runtime/u,
+);
 assert.match(
   trustedPublishPrepareJob,
   /actions\/checkout@[a-f0-9]{40}[\s\S]*?fetch-depth: 0/u,
