@@ -8,6 +8,26 @@ import {
 
 export const LONG_TASK_MAX_FILES_PER_TEST_PROCESS = 16;
 
+export function selectPackageSuiteFileNames(availableFiles, suite) {
+  if (!["default", "long-task", "long-task-trust"].includes(suite))
+    throw new Error(`Unsupported package test suite: ${suite}.`);
+  const available = [...availableFiles].sort();
+  if (suite === "long-task-trust") {
+    const availableSet = new Set(available);
+    const missing = LONG_TASK_TRUST_TEST_FILES.filter(
+      (name) => !availableSet.has(name),
+    );
+    if (missing.length > 0)
+      throw new Error(
+        `Missing Trust Boundary test files: ${missing.join(", ")}`,
+      );
+    return [...LONG_TASK_TRUST_TEST_FILES];
+  }
+  return available.filter(
+    (name) => /^long-task-/u.test(name) === (suite === "long-task"),
+  );
+}
+
 export function planLongTaskSuiteLanes(
   availableFiles,
   suite,

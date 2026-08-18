@@ -152,6 +152,35 @@ jobs:
           path: .artifacts/structural-closure-cost/report.json
           if-no-files-found: error
           retention-days: 30
+      - name: Collect self-hosting cost diagnostics
+        if: always()
+        continue-on-error: true
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.base_ref }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          report_args=(--artifact .artifacts/self-hosting-cost/report.json --structural-report .artifacts/structural-closure-cost/report.json)
+          for timing in .artifacts/test-timing/pull-request/*.json; do
+            if [ -f "$timing" ]; then
+              report_args+=(--timing "$timing")
+            fi
+          done
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$PR_BASE_REF" ]; then
+            report_args+=(--base-ref "origin/$PR_BASE_REF")
+          elif git cat-file -e "${PUSH_BASE_SHA}^{commit}" 2>/dev/null; then
+            report_args+=(--base-ref "$PUSH_BASE_SHA")
+          fi
+          npm run report:self-hosting-cost -- "${report_args[@]}"
+      - name: Upload self-hosting cost diagnostics
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: self-hosting-cost-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/self-hosting-cost/report.json
+          if-no-files-found: ignore
+          retention-days: 30
       - name: Check package canonical source drift
         run: node packages/ty-context/dist/cli.js package check-source
       - name: Validate Context and touched-source modularity
@@ -225,6 +254,32 @@ jobs:
           name: structural-closure-cost-main-${{ github.run_id }}-${{ github.run_attempt }}
           path: .artifacts/structural-closure-cost/report.json
           if-no-files-found: error
+          retention-days: 30
+      - name: Collect self-hosting cost diagnostics
+        if: always()
+        continue-on-error: true
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+        run: |
+          report_args=(--artifact .artifacts/self-hosting-cost/report.json --structural-report .artifacts/structural-closure-cost/report.json)
+          for timing in .artifacts/test-timing/main/*.json; do
+            if [ -f "$timing" ]; then
+              report_args+=(--timing "$timing")
+            fi
+          done
+          if [ "$EVENT_NAME" = "push" ] && git cat-file -e "${PUSH_BASE_SHA}^{commit}" 2>/dev/null; then
+            report_args+=(--base-ref "$PUSH_BASE_SHA")
+          fi
+          npm run report:self-hosting-cost -- "${report_args[@]}"
+      - name: Upload self-hosting cost diagnostics
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: self-hosting-cost-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/self-hosting-cost/report.json
+          if-no-files-found: ignore
           retention-days: 30
       - name: Check package canonical source drift
         run: node packages/ty-context/dist/cli.js package check-source

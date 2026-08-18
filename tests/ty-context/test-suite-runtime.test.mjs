@@ -32,6 +32,7 @@ import {
 import {
   LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
   planLongTaskSuiteLanes,
+  selectPackageSuiteFileNames,
 } from "../../tools/test_suite_lane_policy.mjs";
 import {
   createDeliveryFixture,
@@ -369,6 +370,26 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 56);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 24);
+  assert.deepEqual(
+    selectPackageSuiteFileNames(["default-one.test.mjs", ...available], "default"),
+    ["default-one.test.mjs"],
+  );
+  assert.deepEqual(
+    selectPackageSuiteFileNames(["default-one.test.mjs", ...available], "long-task"),
+    available,
+  );
+  assert.deepEqual(
+    selectPackageSuiteFileNames(available, "long-task-trust"),
+    LONG_TASK_TRUST_TEST_FILES,
+  );
+  assert.throws(
+    () =>
+      selectPackageSuiteFileNames(
+        available.filter((file) => file !== LONG_TASK_TRUST_TEST_FILES[0]),
+        "long-task-trust",
+      ),
+    /Missing Trust Boundary test files/u,
+  );
   const longTaskCriticalCount = criticalSentinelsForSuite("long-task").length;
   const defaultCriticalCount = criticalSentinelsForSuite("default").length;
   const [roiDesign, authoringGovernance, deliveryBenchmarkContext] =

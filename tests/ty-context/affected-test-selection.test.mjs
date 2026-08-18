@@ -397,6 +397,7 @@ test("Trust widening retains affected tests that the canonical gate does not con
   assert.equal(selection.mode, "trust-boundary");
   assert.deepEqual(selection.tests, [
     "tests/ty-context/long-task-delivery-parser.test.mjs",
+    "tests/ty-context/self-hosting-cost-report.test.mjs",
   ]);
 });
 
@@ -598,23 +599,70 @@ test("explicit scopes are deterministic and no-change auto mode stays useful", (
 });
 
 test("affected tooling changes select discovery, selection, and entry-point coverage", () => {
+  const reportInputs = new Set([
+    "tools/affected_change_discovery.mjs",
+    "tools/test_suite_policy.mjs",
+    "tools/test_suite_lane_policy.mjs",
+  ]);
   for (const file of [
     "tools/affected_change_discovery.mjs",
     "tools/affected_test_selection.mjs",
     "tools/run_affected_tests.mjs",
     "tools/test_suite_policy.mjs",
+    "tools/test_suite_lane_policy.mjs",
   ]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "selected", file);
-    assert.deepEqual(
-      selection.tests,
-      [
-        "tests/ty-context/affected-change-discovery.test.mjs",
-        "tests/ty-context/affected-test-selection.test.mjs",
-        "tests/ty-context/workflow-test-entrypoints.test.mjs",
-      ],
+    const expected = [
+      "tests/ty-context/affected-change-discovery.test.mjs",
+      "tests/ty-context/affected-test-selection.test.mjs",
+      "tests/ty-context/workflow-test-entrypoints.test.mjs",
+    ];
+    if (reportInputs.has(file))
+      expected.push("tests/ty-context/self-hosting-cost-report.test.mjs");
+    assert.deepEqual(selection.tests, expected.toSorted(), file);
+  }
+});
+
+test("self-hosting report inputs retain report coverage through existing owners", () => {
+  for (const file of [
+    "tests/ty-context/run-package-suite.mjs",
+    "tests/ty-context/test-suite-file-reporter.mjs",
+    "tools/affected_change_discovery.mjs",
+    "tools/package_build_fingerprint.mjs",
+    "tools/release_publish_helpers.mjs",
+    "tools/test_suite_lane_policy.mjs",
+    "tools/test_suite_policy.mjs",
+  ]) {
+    assert.ok(
+      selectAffectedTests([file]).tests.includes(
+        "tests/ty-context/self-hosting-cost-report.test.mjs",
+      ),
       file,
     );
+  }
+});
+
+test("self-hosting owners select exact host-trace, model, and report checks", () => {
+  const hostTrace = "tests/ty-context/self-hosting-cost-host-trace.test.mjs";
+  const model = "tests/ty-context/self-hosting-cost-model.test.mjs";
+  const report = "tests/ty-context/self-hosting-cost-report.test.mjs";
+  const cases = [
+    ["tools/self_hosting_cost_model.mjs", [hostTrace, model, report]],
+    ["tools/normalized_host_trace.mjs", [hostTrace, report]],
+    ["tools/self_hosting_cost_trace_paths.mjs", [hostTrace, report]],
+    ["tools/self_hosting_cost_repository.mjs", [hostTrace, report]],
+    ["tools/self_hosting_cost_report.mjs", [hostTrace, report]],
+    ["tools/self_hosting_cost_collectors.mjs", [report]],
+    ["tools/self_hosting_cost_install_collectors.mjs", [report]],
+    ["tools/self_hosting_cost_hotspots.mjs", [report]],
+    ["tools/self_hosting_cost_metrics.mjs", [report]],
+    ["tests/ty-context/fixtures/self-hosting-cost-baseline.json", [report]],
+  ];
+  for (const [file, expected] of cases) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.mode, "selected", file);
+    assert.deepEqual(selection.tests, expected, file);
   }
 });
 
@@ -633,6 +681,7 @@ test("direct test edits stay selected while deleted direct tests fail safe to th
   assert.equal(direct.mode, "selected");
   assert.deepEqual(direct.tests, [
     "tests/ty-context/long-task-context-evolution.test.mjs",
+    "tests/ty-context/self-hosting-cost-report.test.mjs",
   ]);
 
   for (const file of [
@@ -710,6 +759,10 @@ test("package scripts expose affected and focused developer loops", async () => 
   assert.equal(
     packageJson.scripts["test:delivery-contract:focused"],
     "node tools/run_affected_tests.mjs --scope delivery-contract",
+  );
+  assert.equal(
+    packageJson.scripts["report:self-hosting-cost"],
+    "node tools/self_hosting_cost_report.mjs",
   );
   assert.equal(
     packageJson.scripts["smoke:open-design"],

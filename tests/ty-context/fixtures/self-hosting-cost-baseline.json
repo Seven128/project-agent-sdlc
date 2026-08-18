@@ -1,0 +1,238 @@
+{
+  "schema_version": "self-hosting-cost-baseline-v1",
+  "purpose": "measurement_only_diagnostic_snapshot",
+  "environment": {
+    "node_version": "v24.16.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "npm_version": "11.13.0",
+    "git_version": "git version 2.54.0.windows.1"
+  },
+  "metrics": [
+    {
+      "key": "declared.minimum_context",
+      "unit": "bytes",
+      "value": 8095
+    },
+    {
+      "key": "declared.route.authority_lifecycle",
+      "unit": "bytes",
+      "value": 34634
+    },
+    {
+      "key": "declared.route.contract_authoring",
+      "unit": "bytes",
+      "value": 56420
+    },
+    {
+      "key": "declared.route.evidence_design",
+      "unit": "bytes",
+      "value": 46367
+    },
+    {
+      "key": "declared.route.main_skill",
+      "unit": "bytes",
+      "value": 15980
+    },
+    {
+      "key": "declared.route.source_authoring",
+      "unit": "bytes",
+      "value": 34980
+    },
+    {
+      "key": "declared.skill_components",
+      "unit": "bytes",
+      "value": 124461
+    },
+    {
+      "key": "fixed.default_context",
+      "unit": "bytes",
+      "value": 8095
+    },
+    {
+      "key": "fixed.default_workflow_prompt",
+      "unit": "bytes",
+      "value": 6296
+    },
+    {
+      "key": "fixed.injected_agents",
+      "unit": "bytes",
+      "value": 25790
+    },
+    {
+      "key": "fixed.installed_surface",
+      "unit": "bytes",
+      "value": 242174
+    },
+    {
+      "key": "maintenance.npm_unpacked",
+      "unit": "bytes",
+      "value": 3471244
+    },
+    {
+      "key": "maintenance.source_mappings.canonical_source",
+      "unit": "bytes",
+      "value": 594133
+    },
+    {
+      "key": "maintenance.source_mappings.projected_actual",
+      "unit": "bytes",
+      "value": 594133
+    },
+    {
+      "key": "maintenance.source_mappings.projected_expected",
+      "unit": "bytes",
+      "value": 594133
+    },
+    {
+      "key": "declared.minimum_context",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "declared.route.authority_lifecycle",
+      "unit": "files",
+      "value": 2
+    },
+    {
+      "key": "declared.route.contract_authoring",
+      "unit": "files",
+      "value": 2
+    },
+    {
+      "key": "declared.route.evidence_design",
+      "unit": "files",
+      "value": 2
+    },
+    {
+      "key": "declared.route.main_skill",
+      "unit": "files",
+      "value": 1
+    },
+    {
+      "key": "declared.route.source_authoring",
+      "unit": "files",
+      "value": 2
+    },
+    {
+      "key": "declared.skill_components",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "fixed.default_context",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "fixed.installed_surface",
+      "unit": "files",
+      "value": 36
+    },
+    {
+      "key": "maintenance.npm_unpacked",
+      "unit": "files",
+      "value": 841
+    },
+    {
+      "key": "maintenance.source_mappings.canonical_source",
+      "unit": "files",
+      "value": 37
+    },
+    {
+      "key": "maintenance.source_mappings.projected_actual",
+      "unit": "files",
+      "value": 37
+    },
+    {
+      "key": "maintenance.source_mappings.projected_expected",
+      "unit": "files",
+      "value": 37
+    },
+    {
+      "key": "maintenance.suite.default",
+      "unit": "files",
+      "value": 64
+    },
+    {
+      "key": "maintenance.suite.default.serial",
+      "unit": "files",
+      "value": 64
+    },
+    {
+      "key": "maintenance.suite.long-task",
+      "unit": "files",
+      "value": 85
+    },
+    {
+      "key": "maintenance.suite.long-task-trust",
+      "unit": "files",
+      "value": 24
+    },
+    {
+      "key": "maintenance.suite.long-task-trust.exclusive",
+      "unit": "files",
+      "value": 3
+    },
+    {
+      "key": "maintenance.suite.long-task-trust.safe-01",
+      "unit": "files",
+      "value": 16
+    },
+    {
+      "key": "maintenance.suite.long-task-trust.safe-02",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "maintenance.suite.long-task.remainder-exclusive",
+      "unit": "files",
+      "value": 8
+    },
+    {
+      "key": "maintenance.suite.long-task.remainder-safe-01",
+      "unit": "files",
+      "value": 16
+    },
+    {
+      "key": "maintenance.suite.long-task.remainder-safe-02",
+      "unit": "files",
+      "value": 16
+    },
+    {
+      "key": "maintenance.suite.long-task.remainder-safe-03",
+      "unit": "files",
+      "value": 16
+    },
+    {
+      "key": "maintenance.suite.long-task.remainder-safe-04",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "maintenance.suite.long-task.trust-exclusive",
+      "unit": "files",
+      "value": 3
+    },
+    {
+      "key": "maintenance.suite.long-task.trust-safe-01",
+      "unit": "files",
+      "value": 16
+    },
+    {
+      "key": "maintenance.suite.long-task.trust-safe-02",
+      "unit": "files",
+      "value": 5
+    },
+    {
+      "key": "maintenance.source_mappings",
+      "unit": "mappings",
+      "value": 9
+    },
+    {
+      "key": "declared.reference_routes",
+      "unit": "routes",
+      "value": 4
+    }
+  ]
+}

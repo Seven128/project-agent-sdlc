@@ -67,6 +67,35 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(packageWorkflow, /tee package-test\.log/);
   assert.match(packageWorkflow, /Upload package test diagnostics/);
   assert.match(packageWorkflow, /Upload package test timing/);
+  assert.match(
+    pullRequestJob,
+    /Collect self-hosting cost diagnostics[\s\S]*--base-ref "origin\/\$PR_BASE_REF"/u,
+  );
+  assert.match(
+    mainJob,
+    /Collect self-hosting cost diagnostics[\s\S]*EVENT_NAME" = "push"[\s\S]*--base-ref "\$PUSH_BASE_SHA"/u,
+  );
+  assert.match(packageWorkflow, /Upload self-hosting cost diagnostics/g);
+  assert.equal(
+    packageWorkflow.match(
+      /Collect self-hosting cost diagnostics\s+if: always\(\)\s+continue-on-error: true/gu,
+    )?.length,
+    2,
+  );
+  assert.equal(
+    packageWorkflow.match(
+      /Upload self-hosting cost diagnostics\s+if: always\(\)\s+continue-on-error: true/gu,
+    )?.length,
+    2,
+  );
+  assert.match(
+    packageWorkflow,
+    /npm run report:self-hosting-cost -- "\$\{report_args\[@\]\}"/u,
+  );
+  assert.doesNotMatch(
+    packageWorkflow,
+    /report_args\+=\(--base-ref[^\r\n]*git merge-base/u,
+  );
   assert.match(packageWorkflow, /uses: actions\/upload-artifact@[a-f0-9]{40}/);
   assert.match(packageWorkflow, /if-no-files-found: ignore/);
   assert.doesNotMatch(packageWorkflow, /npm run test:long-task-workflow/);
@@ -138,11 +167,12 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.equal(packageJson.scripts["test:composite-workflow"], undefined);
 
   const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
+  const suiteLanePolicy = read("tools/test_suite_lane_policy.mjs");
   const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
-  assert.match(suiteRunner, /longTaskTestName/);
-  assert.match(suiteRunner, /\(selectedSuite === "long-task"\)/);
-  assert.match(suiteRunner, /\^long-task-/);
-  assert.match(suiteRunner, /LONG_TASK_TRUST_TEST_FILES/);
+  assert.match(suiteRunner, /selectPackageSuiteFileNames/);
+  assert.match(suiteLanePolicy, /suite === "long-task"/);
+  assert.match(suiteLanePolicy, /\^long-task-/);
+  assert.match(suiteLanePolicy, /LONG_TASK_TRUST_TEST_FILES/);
   assert.match(suiteRunner, /long-task-trust/);
   assert.match(suiteRunner, /test-suite-file-reporter/);
   assert.match(suiteReporter, /test-suite-timing-v2/);

@@ -29,6 +29,17 @@ const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "tools/verify_semantic_fact_completeness_delivery.mjs",
 ]);
 
+const SELF_HOSTING_REPORT_TEST = "self-hosting-cost-report.test.mjs";
+const SELF_HOSTING_REPORT_INPUTS = new Set([
+  "tests/ty-context/run-package-suite.mjs",
+  "tests/ty-context/test-suite-file-reporter.mjs",
+  "tools/affected_change_discovery.mjs",
+  "tools/package_build_fingerprint.mjs",
+  "tools/release_publish_helpers.mjs",
+  "tools/test_suite_lane_policy.mjs",
+  "tools/test_suite_policy.mjs",
+]);
+
 const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/symbolic-denotation-",
   "packages/ty-context/src/lib/design-resource-symbolic-",
@@ -823,6 +834,9 @@ export function selectAffectedTests(changedPaths, options = {}) {
   let mode = "selected";
 
   for (const file of normalized) {
+    if (SELF_HOSTING_REPORT_INPUTS.has(file)) {
+      tests.add(testPath(SELF_HOSTING_REPORT_TEST));
+    }
     if (
       file === "tests/ty-context/run-package-suite.mjs" ||
       file === "tests/ty-context/test-suite-file-reporter.mjs"
@@ -833,10 +847,19 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
+    if (
+      file === "tests/ty-context/fixtures/self-hosting-cost-baseline.json"
+    ) {
+      tests.add(testPath("self-hosting-cost-report.test.mjs"));
+      reasons.push(`${file}:self_hosting_cost_measurement`);
+      continue;
+    }
+
     if (file.startsWith(`${TEST_ROOT}/`)) {
       if (file.endsWith(".test.mjs")) {
         if (pathExists(file)) {
           tests.add(file);
+          tests.add(testPath(SELF_HOSTING_REPORT_TEST));
           reasons.push(`${file}:direct_test`);
         } else {
           mode = widen(mode, "full-suite");
@@ -876,12 +899,22 @@ export function selectAffectedTests(changedPaths, options = {}) {
 
     if (symbolicTests.length > 0 && !isSymbolicGuidancePath(file)) continue;
 
+    const selfHostingTests = selfHostingAffectedTests(file);
+    if (selfHostingTests) {
+      for (const selfHostingTest of selfHostingTests) {
+        tests.add(testPath(selfHostingTest));
+      }
+      reasons.push(`${file}:self_hosting_cost_measurement`);
+      continue;
+    }
+
     if (
       file === "tools/package_build_fingerprint.mjs" ||
       file === "tools/affected_change_discovery.mjs" ||
       file === "tools/affected_test_selection.mjs" ||
       file === "tools/run_affected_tests.mjs" ||
-      file === "tools/test_suite_policy.mjs"
+      file === "tools/test_suite_policy.mjs" ||
+      file === "tools/test_suite_lane_policy.mjs"
     ) {
       tests.add(testPath("affected-change-discovery.test.mjs"));
       tests.add(testPath("affected-test-selection.test.mjs"));
@@ -1099,6 +1132,25 @@ function isSymbolicGuidancePath(file) {
     file.startsWith("packages/ty-context/assets/skills/long-task-workflow/") ||
     file.endsWith("design-resource-authoring/references/downstream-handoff.md")
   );
+}
+
+function selfHostingAffectedTests(file) {
+  const model = "self-hosting-cost-model.test.mjs";
+  const hostTrace = "self-hosting-cost-host-trace.test.mjs";
+  const report = SELF_HOSTING_REPORT_TEST;
+  if (file === "tools/self_hosting_cost_model.mjs") {
+    return [model, hostTrace, report];
+  }
+  if (
+    file === "tools/normalized_host_trace.mjs" ||
+    file === "tools/self_hosting_cost_trace_paths.mjs" ||
+    file === "tools/self_hosting_cost_repository.mjs" ||
+    file === "tools/self_hosting_cost_report.mjs"
+  ) {
+    return [hostTrace, report];
+  }
+  if (file.startsWith("tools/self_hosting_cost_")) return [report];
+  return null;
 }
 
 function plan(mode, tests, requiresBuild, reasons) {
