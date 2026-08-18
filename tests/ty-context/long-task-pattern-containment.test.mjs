@@ -27,6 +27,8 @@ test("conservative repository pattern containment proves only supported subsets"
     ["src/a?.ts", "**"],
     ["src/**/*.ts", "src/**/*.ts"],
     ["src\\safe\\a.ts", "src/safe/**"],
+    ["apps/mobile/app/(map)/_layout.tsx", "apps/mobile/app/(map)/**"],
+    ["apps/mobile/app/(map)/**", "apps/mobile/**"],
   ];
   for (const [candidate, owner] of proven)
     assert.equal(
@@ -40,6 +42,7 @@ test("conservative repository pattern containment proves only supported subsets"
     ["src/safe/**", "src/safe/*"],
     ["src/safe/*", "src/safe/*.ts"],
     ["src-other/**", "src/**"],
+    ["apps/mobile/app/(map)/**", "apps/mobile/app/(settings)/**"],
   ];
   for (const [candidate, owner] of rejected)
     assert.equal(

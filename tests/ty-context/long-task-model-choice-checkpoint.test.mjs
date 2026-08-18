@@ -17,7 +17,7 @@ const expectedCheckpoint = {
   required: true,
   phase: "post_authority_lock_pre_implementation",
   action: "change_model_in_host_then_continue",
-  resume_token: "continue",
+  resume_token: "model checkpoint cleared, continue",
   turn_boundary: "end_current_turn",
   blocked_until_resume: [
     "product_implementation",
@@ -27,9 +27,9 @@ const expectedCheckpoint = {
   ],
   model_change_owner: "host_or_user",
   model_change_observable_by_harness: false,
-  generic_continue_satisfies: true,
+  generic_continue_satisfies: false,
   message:
-    "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. After handling the model change, send [continue]. Harness cannot observe or verify the model change.",
+    "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. After handling the model change, reply exactly: model checkpoint cleared, continue. This is package-managed prompt guidance; Harness cannot observe the next host message or verify the model change.",
 };
 
 test("first Authority Lock emits one execution-model checkpoint and later Compile does not repeat it", async () => {
@@ -60,8 +60,9 @@ test("first Authority Lock emits one execution-model checkpoint and later Compil
     assert.equal(first.native_goal_effect, "none");
     assert.match(first.next_action, /End this turn now/iu);
     assert.match(first.next_action, /Do not implement, edit files, build, or test/iu);
-    assert.match(first.next_action, /wait for \[continue\]/iu);
-    assert.match(first.next_action, /cannot observe or verify the model change/iu);
+    assert.match(first.next_action, /reply exactly: model checkpoint cleared, continue/iu);
+    assert.match(first.next_action, /cannot observe the next host message/iu);
+    assert.match(first.next_action, /cannot .*verify the model change/iu);
     assert.doesNotMatch(first.next_action, /begin rolling implementation/iu);
 
     const repeated = await runCli(fixture.root, [
@@ -106,7 +107,8 @@ test("current checkpoint surfaces expose only the host-change continuation proto
     content,
     /continue_current_model|switch_model_then_resume/iu,
   );
-  assert.match(content, /处理好模型更换之后，请发送【继续】。/u);
-  assert.match(content, /After handling the model change, send \[continue\]\./u);
-  assert.match(content, /cannot observe or verify/iu);
+  assert.match(content, /处理好模型更换后，请仅回复：模型切换卡点解除，继续/u);
+  assert.match(content, /reply exactly:? `?model checkpoint cleared, continue`?/iu);
+  assert.match(content, /generic_continue_satisfies`?[:=]\s*false/iu);
+  assert.match(content, /cannot observe (?:the )?next host message/iu);
 });

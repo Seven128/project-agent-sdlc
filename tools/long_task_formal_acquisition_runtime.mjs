@@ -1,5 +1,8 @@
 import path from "node:path";
-import { FormalProcessSupervisor } from "./formal_process_supervisor.mjs";
+import {
+  assertFormalProcessSupervisorPlatform,
+  FormalProcessSupervisor,
+} from "./formal_process_supervisor.mjs";
 import { StdinFormalInteractionRecorder } from "./long_task_formal_interaction_recorder.mjs";
 import { FormalProviderCaptureAdapter } from "./long_task_formal_provider_capture.mjs";
 import { FormalStateCapture } from "./long_task_formal_state_capture.mjs";
@@ -11,6 +14,7 @@ export function createFormalAcquisitionRuntime(options) {
   assertExactOptions(options, ["formalInteractionStdin", "runtimeTcbIdentity"]);
   if (options.formalInteractionStdin !== true)
     throw new Error("formal_interaction_recorder_unavailable");
+  assertFormalProcessSupervisorPlatform();
   assertRuntimeIdentity(options.runtimeTcbIdentity);
   const facade = Object.freeze(
     new FormalAcquisitionFacade(options.runtimeTcbIdentity),

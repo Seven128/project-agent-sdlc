@@ -326,6 +326,8 @@ test("decision brief names verifier, runner, and risk changes without raw payloa
       context_authority_changed: false,
       acceptance_or_proof_weakened: false,
       verifier_or_runner_changed: true,
+      verifier_content_changed: false,
+      verifier_files_changed: [],
       write_scope_expanded: false,
       risk_changed: true,
       external_confirmations_changed: false,
@@ -338,6 +340,8 @@ test("decision brief names verifier, runner, and risk changes without raw payloa
       expanded_owner_paths: [],
       expanded_expected_change_paths: [],
       expanded_allowed_support_paths: [],
+      user_decision_reasons: [],
+      mechanically_bounded_reasons: [],
       protected_reasons: [
         "runner_definition_changed",
         "risk_changed_requires_review",

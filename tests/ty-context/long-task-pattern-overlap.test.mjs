@@ -42,7 +42,6 @@ test("unsupported repository pattern syntax is rejected by the shared parser", (
   for (const pattern of [
     "src/[ab].ts",
     "src/{a,b}.ts",
-    "src/@(a).ts",
     "src/**suffix",
     "src/prefix**",
   ])
@@ -53,7 +52,7 @@ test("unsupported repository pattern syntax is rejected by the shared parser", (
     );
 });
 
-test("literal route-group parentheses are allowed only in repository files and cwd", () => {
+test("literal route-group parentheses share the safe file, cwd, and pattern grammar", () => {
   const route = "apps/mobile/app/(map)/_layout.tsx";
   assert.equal(normalizeRepositoryFile(route), route);
   assert.equal(
@@ -61,10 +60,25 @@ test("literal route-group parentheses are allowed only in repository files and c
     "apps/mobile/app/(map)",
   );
   assert.equal(matchesRepoPattern(route, "apps/mobile/**"), true);
-  assert.throws(
-    () => parseRepositoryPattern(route),
-    /unsupported_repository_pattern_syntax/u,
+  assert.equal(parseRepositoryPattern(route).normalized, route);
+  assert.equal(matchesRepoPattern(route, route), true);
+  assert.equal(
+    matchesRepoPattern(route, "apps/mobile/app/(settings)/**"),
+    false,
   );
+  for (const literal of ["@(map)", "+(map)", "!(map)"]) {
+    const pattern = `apps/mobile/app/${literal}/**`;
+    assert.equal(parseRepositoryPattern(pattern).normalized, pattern);
+    assert.equal(
+      matchesRepoPattern(`apps/mobile/app/${literal}/index.tsx`, pattern),
+      true,
+    );
+    assert.equal(
+      matchesRepoPattern("apps/mobile/app/map/index.tsx", pattern),
+      false,
+      `${literal} must remain literal rather than extglob`,
+    );
+  }
   for (const unsafe of [
     "apps/mobile/app/*/_layout.tsx",
     "apps/mobile/app/[map]/_layout.tsx",
@@ -169,12 +183,7 @@ function addMissingOutputDiagnosticCheck(contract, inputPath, outputPattern) {
 }
 
 test("unsupported patterns fail during compile instead of reaching a divergent matcher", async () => {
-  for (const pattern of [
-    "src/[ab].ts",
-    "src/{a,b}.ts",
-    "src/@(a).ts",
-    "src/**suffix",
-  ]) {
+  for (const pattern of ["src/[ab].ts", "src/{a,b}.ts", "src/**suffix"]) {
     const fixture = await createDeliveryFixture();
     try {
       fixture.contract.outcomes[0].product.owner.path_globs = ["src/**"];

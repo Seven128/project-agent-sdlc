@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -14,7 +14,9 @@ import {
 const execFileAsync = promisify(execFile);
 
 export async function assertSupervisorRuntimeControls(identity) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-supervisor-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-supervisor-")),
+  );
   const supervisor = new FormalProcessSupervisor(identity);
   const run = (name, argv, timeoutMs = 10_000, limit = 64 * 1024) =>
     supervisor.run({
@@ -111,7 +113,9 @@ export async function assertNestedJobAndBreakawayControls({
   identity,
   repositoryRoot,
 }) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-job-probe-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-job-probe-")),
+  );
   const supervisor = new FormalProcessSupervisor(identity);
   try {
     const result = await supervisor.run({
@@ -156,7 +160,9 @@ export async function assertNestedJobAndBreakawayControls({
 }
 
 export async function assertHelperCrashAndCloseControls(identity) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-helper-crash-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-helper-crash-")),
+  );
   const pidPath = path.join(root, "product.pid");
   const supervisor = new FormalProcessSupervisor(identity);
   let helperPid = null;

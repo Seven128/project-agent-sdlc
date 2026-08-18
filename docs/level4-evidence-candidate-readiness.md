@@ -1,17 +1,19 @@
 # Level 4 Evidence Candidate Readiness And Structural Cost
 
-Date: 2026-08-17
+Date: 2026-08-18
 
 Status: implementation readiness record; non-formal diagnostic; `external_pending`
 
 Current capability claim: Level 3; `level_4_claimed = false`
 
-Current-candidate verification boundary: the frozen 0.8.15 development plan
-forbids tests, builds, Provider calls, evidence collection and Promotion. This
-revision therefore uses source/static conformance only. The test timings,
+Current-candidate verification boundary: package `0.8.15` is the historical
+frozen Level-4 Evidence Candidate identity. Package `0.8.16` is the current
+Level-3 package candidate and inherits none of the historical package,
+benchmark or runtime/TCB identities. Any later formal evidence requires fresh
+exact-candidate collection and independent reaudit. The test timings,
 synthetic-run measurements and package reproductions retained later in this
 document belong to the earlier diagnostic snapshot that names its own baseline;
-they were not rerun and are not current-candidate evidence.
+they are not formal evidence for 0.8.16.
 
 ## Authority Boundary
 
@@ -35,6 +37,11 @@ invalidates the evidence and requires recollection and independent reaudit.
 - One non-injectable package materializer owns detached checkout, `npm ci`,
   package build, source-parity verification, script-disabled pack, command
   records, runtime/lockfile identity and tracked-clean closure.
+- Active promotion tests derive the package version from the exact candidate
+  commit, obtain record/tarball/cleanup from one memoized reproduction fixture
+  and retain a second independent exact-HEAD materialization in the critical
+  sentinel; no active version pin or cross-test initialization dependency
+  remains.
 - One module-private-branded acquisition runtime constructs the runner-owned
   interaction recorder, Windows Job supervisor, fixed Provider adapter and
   State capture. Authoritative callers cannot replace those owners or clocks.
@@ -76,28 +83,39 @@ invalidates the evidence and requires recollection and independent reaudit.
 - The independent audit record binds auditor independence, a complete input
   census, exact commands and output digests, current-candidate results and all
   findings, while explicitly declining formal conclusion ownership.
+- One production `assertLevel4PromotionCommitBoundary` helper owns the direct
+  single-parent and exact four add-only candidate-rooted governance diff. The
+  full verifier preserves its executing-source-root lock and consumes the same
+  helper before evidence; temporary-repository tests call the helper directly.
+- Ubuntu Trust proves missing-Source classification and unsupported-platform
+  fail-closed behavior. Package CI and Trusted Publishing separately require a
+  non-advisory Windows Node 24 job that builds once and serially runs the
+  acquisition and package-promotion boundary files for the real Job/runtime-TCB
+  positive path.
 - R12 remains outside real-process ROI `CASE_IDS`; no Delivery Contract, Active
   Authority, Final Receipt or Long-Task Workflow self-bootstrap was added.
-- Package `0.8.15` completes only the scoped Level-4 mechanism logic. Capability
-  remains Level 3, `level_4_claimed=false`, real evidence remains
-  `external_pending`, and no formal-positive result or Promotion was created.
+- Package `0.8.16` is the current Level-3 package candidate. Package `0.8.15`
+  remains only the historical frozen Evidence Candidate identity and cannot be
+  reused for 0.8.16. Capability remains Level 3, `level_4_claimed=false`, real
+  evidence remains `external_pending`, and no formal-positive result or
+  Promotion was created.
 
-## Current Source-Only Conformance
+## Current Candidate Identity And Static Conformance
 
-- The production dependency-closure check resolves 68 explicitly admitted
-  implementation paths and 61 unique repository-local dependencies, with no
-  unlisted dependency.
-- Release-version source surfaces agree on package `0.8.15`; the root English
+- The production dependency-closure owner includes the shared Level-4 Promotion
+  commit-boundary helper and rejects unlisted repository-local dependencies.
+- Release-version source surfaces agree on package `0.8.16`; the root English
   and Chinese READMEs are byte-identical to their managed asset copies.
 - The authoritative Provider path contains no global Fetch transport or
   unbounded `arrayBuffer()` path. The isolated worker uses `node:https`, and
   every retained Provider event binds the current parser and worker identities.
 - All new/split Provider and dependency-closure modules remain below 300 lines.
-- These are source/static observations only. No test, build, Provider request,
-  formal collection, audit, owner approval or Promotion was run or created for
-  this candidate.
+- Project tests and CI remain the verification owners; this document does not
+  convert any local or CI result into formal evidence. No Provider request,
+  formal collection, independent audit, owner approval or Promotion was run or
+  created for this candidate.
 
-## Existing Dynamic-Test Mapping (Not Executed For 0.8.15)
+## Existing Dynamic-Test Mapping (Historical 0.8.15 Snapshot)
 
 The plan's twenty enumerated attack/control assertions are preserved in the
 following fourteen behavior cases. These are executable tests, not static
@@ -261,11 +279,16 @@ execution-duration retention or unbounded-error sampling may substitute for a
 missing source.
 
 The current dry-run reports diagnostic lifecycle collection separately from
-formal collection. Without the complete precollection lock, incident, required
-price meters and delivery-scoped State-retention Source, formal collection is
-false and the sole verifier emits only `total_roi_supported = false` and
-`total_roi_positive = false`. The same source preflight runs before any A/B/C
-materialization. State retention uses scope
+formal collection. It completes candidate/workload/benchmark/accounting,
+precollection Source and Provider readiness before any Windows runtime probe.
+Without the complete precollection lock, incident, required price meters and
+delivery-scoped State-retention Source, formal collection is false, runtime-TCB
+identity remains absent and the sole verifier emits only
+`total_roi_supported = false` and `total_roi_positive = false`. A statically
+complete plan on an unsupported host reports
+`formal_process_supervisor_platform_unsupported`; formal collection and
+Promotion still require the complete selected Windows TCB. The same source
+preflight runs before any A/B/C materialization. State retention uses scope
 `this-delivery-precollection-proxy-only`; a real positive duration, basis and
 Source digest must replace the pending nulls in a newly committed candidate
 before real collection.

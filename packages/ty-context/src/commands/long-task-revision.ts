@@ -24,7 +24,7 @@ type ExecutionModelCheckpoint =
       required: true;
       phase: "post_authority_lock_pre_implementation";
       action: "change_model_in_host_then_continue";
-      resume_token: "continue";
+      resume_token: "model checkpoint cleared, continue";
       turn_boundary: "end_current_turn";
       blocked_until_resume: [
         "product_implementation",
@@ -34,7 +34,7 @@ type ExecutionModelCheckpoint =
       ];
       model_change_owner: "host_or_user";
       model_change_observable_by_harness: false;
-      generic_continue_satisfies: true;
+      generic_continue_satisfies: false;
       message: string;
     }
   | { required: false };
@@ -143,7 +143,7 @@ function printCompileResult(
         ? projectAuthorityRevisionDecision(revisionProposal)
         : null,
       next_action: firstAuthorityLock
-        ? "End this turn now. Do not implement, edit files, build, or test. After the user handles the model change in the host, wait for [continue]. Harness cannot observe or verify the model change."
+        ? "End this turn now. Do not implement, edit files, build, or test. After the user handles the model change in the host, ask them to reply exactly: model checkpoint cleared, continue. This is package-managed prompt guidance; Harness cannot observe the next host message or verify the model change."
         : authorityChanged
           ? "Run status or resume, then continue rolling implementation or repair under the adopted Authority Revision."
           : "Continue rolling implementation or repair under the active Authority.",
@@ -230,7 +230,7 @@ function executionModelCheckpoint(
     required: true,
     phase: "post_authority_lock_pre_implementation",
     action: "change_model_in_host_then_continue",
-    resume_token: "continue",
+    resume_token: "model checkpoint cleared, continue",
     turn_boundary: "end_current_turn",
     blocked_until_resume: [
       "product_implementation",
@@ -240,9 +240,9 @@ function executionModelCheckpoint(
     ],
     model_change_owner: "host_or_user",
     model_change_observable_by_harness: false,
-    generic_continue_satisfies: true,
+    generic_continue_satisfies: false,
     message:
-      "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. After handling the model change, send [continue]. Harness cannot observe or verify the model change.",
+      "Authority Lock created. End the current turn before product implementation, file edits, builds, or tests. After handling the model change, reply exactly: model checkpoint cleared, continue. This is package-managed prompt guidance; Harness cannot observe the next host message or verify the model change.",
   };
 }
 

@@ -75,7 +75,7 @@ ty-context enable long-task
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过独立的中间 authoring 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
-5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换之后，请发送【继续】。`。此前任何模型策略文字都不能跳过该边界，Harness 也不能观察模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；只有宿主显式选择精确 `long_task_implementation` 时才把独立有界工作交给它，否则不启动 generic 替代项而由父 Goal 执行。Authority、架构、Context、集成、当前候选检查与正式验证始终由父 Goal 持有。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换后，请仅回复：模型切换卡点解除，继续`。普通“继续”不满足 managed prompt protocol；此前任何模型策略文字都不能跳过该边界，Harness 也不能观察下一条宿主消息或模型是否真的改变。用户恢复后，父 Goal 执行内部 Delegation Suitability 判断；只有宿主显式选择精确 `long_task_implementation` 时才把独立有界工作交给它，否则不启动 generic 替代项而由父 Goal 执行。Authority、架构、Context、集成、当前候选检查与正式验证始终由父 Goal 持有。
 
 一组可以直接改写使用的调用顺序如下：
 
@@ -229,6 +229,10 @@ provider-neutral handoff 是残余语义与绑定层，不是 CSS 文本副本�
 
 只要是已经选定、准备进入实现的设计资源，DSA 先用 `ty-context design-resource bundle` 发布精确 target 集；两种开发路径再对每个已发布 handoff 运行 `ty-context design-resource preflight <handoff.md>`。取得不完整、缺少或多出未声明依赖/target、target 重复、不安全路径、manifest/文件 digest 过期、虚构 locator、Census 未冻结/不完整、生成被抽样/截断、轴值被聚合、Expected/Canonical/Handoff Fact 集不相等、required method 缺失、comparator/Oracle/environment 绑定无效、design-system lineage 未解析、适用 cell 未覆盖、exact target 缺 full-target layout/pixel Fact、证据不受支持或含义未决都 fail closed。preflight 只证明设计输入语义完整且资源身份正确；开发流程仍必须打开真实资源，并从生产入口证明当前实现。
 
+Long-Task 投影继续要求每个 Claim-bearing Assertion 只绑定一个 Claim。对每个 selected-design verification method，target 的 root conformance Assertion 与该方法的独立 Assertion 以并集覆盖其 Fact/Rule 引用的 Source Claims；该并集只补齐覆盖，不合并方法 capability、证据、结果或失败归因。
+
+repository pattern 只把圆括号作为经过转义的 route-group 字面字符，不把它们解释成正则分组或 extglob；现有 `*`、`**`、`?` 语义保持不变，`[]`/`{}` 仍不受支持。
+
 对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个受影响的 selected target 和声明 condition 追踪到生产 route/component owner、冷启动真实用户旅程及适用的渲染/交互检查。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。Source 已明确要求的组合不能静默删减，但默认路线应报告未被证据建立的条件，而不是声称精确机器闭包。资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
 
 显式 Long-Task 是同一共享义务的强权威载体。它在 Compile 前解决缺失/冲突的 UI 权威，并用 `field_coverage` 闭合每个真实 Product Control 的全部 22 个 canonical 字段；这条产品语义投影与更细的 design Fact universe 相互独立，绝不构成粒度上限。选定 target 冻结 canonical manifest identity/digest，并把每个原子 Fact/required-method 对投影为一个 `fact_expectations` row，其中包含 subject/target/condition/variation/property identity、expected located-value digest、comparator/parameter/tolerance/mask、Oracle identity/capability、environment 和 sensitivity。只有 package-admitted observer 能提供匹配的 `fact_results` Actual/comparison row。当前 slice 中，项目 `design_conformance`、`design_method` 与 `fact_results` record 只作诊断；受影响的 UI/design obligation 必须保留阻断性 External Confirmation，不能成为 machine proof。Product `surface_bindings`、Control Claims/relations 与 root-entry journey 继续承载产品语义，已有 Claim、Assertion、Check、Stage、Binding、revision 与 Final Gate 仍是唯一 Long-Task 生命周期和 closure。每个 blocker 保留精确 Source-item/method/capability lineage，不能在 Contract 内自行豁免；缩减范围必须修订 Source/Contract 权威。
@@ -310,20 +314,20 @@ Direct-process observer 提供的是受限 containment，不是针对恶意代�
     "required": true,
     "phase": "post_authority_lock_pre_implementation",
     "action": "change_model_in_host_then_continue",
-    "resume_token": "continue",
+    "resume_token": "model checkpoint cleared, continue",
     "turn_boundary": "end_current_turn",
     "blocked_until_resume": ["product_implementation", "file_edits", "build", "test_execution"],
     "model_change_owner": "host_or_user",
     "model_change_observable_by_harness": false,
-    "generic_continue_satisfies": true,
-    "message": "处理好模型更换之后，请发送【继续】。"
+    "generic_continue_satisfies": false,
+    "message": "处理好模型更换后，请仅回复：模型切换卡点解除，继续"
   }
 }
 ```
 
-这是无条件的终止当前回合边界。Agent 在该结果后不得继续产品实现、文件编辑、构建或测试，必须输出 `处理好模型更换之后，请发送【继续】。` 并结束当前回合；用户此前写过任何模型策略都不能跳过。之后用户发送普通“继续”即可恢复，Harness 不观察、不验证宿主模型是否改变。后续 `compile --revise` 返回 `required: false`，不会重复暂停。Harness 不会自动切换模型，也不持久化 acknowledgement、model route 或 checkpoint state；该检查点不是验收证据。
+这是无条件的终止当前回合边界。Agent 在该结果后不得继续产品实现、文件编辑、构建或测试，必须输出 `处理好模型更换后，请仅回复：模型切换卡点解除，继续` 并结束当前回合；用户此前写过任何模型策略都不能跳过，普通“继续”不满足 managed prompt protocol。它仍是人工宿主提示，不是 Harness 强制执行的解锁：Harness 不观察下一条宿主消息，也不验证模型是否改变。后续 `compile --revise` 返回 `required: false`，不会重复暂停。Harness 不会自动切换模型，也不持久化 acknowledgement、model route 或 checkpoint state；该检查点不是验收证据。
 
-锁定后的修订把“Authority 有变化”和“需要用户决策”分开：单调增强、锁定 Claims/targets/proof obligations 不变的 Source/Context snapshot 更新、Runner/input 实装修复、repo-bound scope 扩展、风险增强，以及 carrier、mutation、Check 相同且 Claim/预期失败断言覆盖不减少的等价 Counterfactual 覆盖可自动采用；产品/Source Claim/target/external-confirmation 变化，丢失 scenario/Claim/Evidence Capability/失败拦截，移除 forbidden/owner Context，runner type/effect、verifier kernel 或未知 reason 则只预览并等待精确 identity，风险降级直接拒绝。`diagnose-revision` 无副作用，撤回/替换候选只在同一 `delivery-contract.yaml` 合并，不产生询问。最终 pending brief 先解释 Authority Revision 是什么，再区分 `user_decision_reasons` 与机械边界变化。必须先展示 brief；若当前任务已有明确指令精确覆盖全部决策 reason，可机械转录而不二次询问，泛化“继续”、一揽子批准、建议或 Agent 推断不算。每次采用都保留 exact identity、旧 Authority 连续性、证据失效和完整 Final Gate，并返回滚动实现，绝不表示完成。
+锁定后的修订把“Authority 有变化”和“需要用户决策”分开：单调增强、锁定 Claims/targets/proof obligations 不变的 Source/Context snapshot 更新、Runner/input 实装修复、repo-bound scope 扩展、风险增强，以及 carrier、mutation、Check 相同且 Claim/预期失败断言覆盖不减少的等价 Counterfactual 覆盖可自动采用；产品/Source Claim/target/external-confirmation 变化，丢失 scenario/Claim/Evidence Capability/失败拦截，移除 forbidden/owner Context，runner type/effect、verifier kernel 或未知 reason 则只预览并等待精确 identity，风险降级直接拒绝。verifier 内容 identity 变化会使旧证据失效；没有旧 Authority 或可信发布来源提供的独立保持证明时仍保持 fail-closed，但 digest 变化本身不再被误报为已经证实的 acceptance/proof reduction，brief 会列出变化文件并明确“语义保持尚未独立建立”。`diagnose-revision` 无副作用，撤回/替换候选只在同一 `delivery-contract.yaml` 合并，不产生询问。最终 pending brief 先解释 Authority Revision 是什么，再区分 `user_decision_reasons` 与机械边界变化。必须先展示 brief；若当前任务已有明确指令精确覆盖全部决策 reason，可机械转录而不二次询问，泛化“继续”、一揽子批准、建议或 Agent 推断不算。每次采用都保留 exact identity、旧 Authority 连续性、证据失效和完整 Final Gate，并返回滚动实现，绝不表示完成。
 
 Long-Task Skill 采用渐进读取：主 `SKILL.md` 只保留目标、硬边界和路由；Draft 输入/Contract Authoring、Evidence Design 与 Authority Lifecycle 细节按当前活动读取一层 reference，其中 Draft 输入与 Contract mapping 同时进行。这只是指令组织，不产生第二权威。共享 Architecture Deliberation 与适用质量路由在 Source-bound Draft authoring 中完成；material 且可独立证伪的架构/工程质量不变量使用已有 Source-backed obligations/constraints/forbidden shortcuts、owner/path/Binding、项目原生 executable Checks，以及功能行为可独立通过时的单独 Assertion。Final Gate 是唯一的 Long-Task Engineering Quality/Architecture Conformance 承载点，只证明该声明、项目检查绑定的集合。
 
@@ -345,7 +349,7 @@ Formal collection 的 11-scenario catalog 是 scenario/source/zero policy 的唯
 
 Catalog 派生 86 次 execution 与 586 个 formal artifact：516 个 base file、30 个 compute record、10 个 State ledger 加 10 个 payload、10 个 prompt 加 10 个 Provider event。Formal fuse 为 650 files/364.625 MiB，完整 run-set fuse 为 4,379 files/974.3125 MiB。Evidence Candidate 冻结全部 code/schema/Context/test/package-version/protocol bytes；Promotion Commit 必须是其直接子提交，只新增四个 package-/TCB-external governance record，并保持 materialized-package、benchmark 与 runtime/TCB identities 不变，否则重新采集与审计。 Runtime TCB v2 绑定 clean Node launch、executable path/hash、worker/protocol、parser/transport 与 limits。Benchmark implementation identity 纳入 `npm_command_spec.mjs`、Provider protocol/worker 与有限 local-dependency closure checker；working-tree、Git object、collection 与 Promotion 路径都重算闭包并绑定实际执行源码根。
 
-真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。 Package 0.8.15 只表示“Level 4 机制逻辑开发完成”；`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
+真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.16 是当前 Level-3 package candidate，不继承其 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
 
 Formal collection 还会在执行前锁定一个固定 scenario catalog，覆盖十类成本和一个 controlled incident 的 exact task/gold bytes。每个 event 绑定唯一 raw output：成本 B/C 都必须命中共同 gold；事故 B 必须错误而 C 必须命中它。这样只提交时间/usage 不能制造 purpose benefit，也不会新增通用 scenario registry。
 

@@ -830,7 +830,7 @@ test("Source, specification, Context and public docs expose the new resource con
     assert.match(content, /\$long-task-workflow/u);
     assert.match(
       content,
-      /After handling the model change, send \[continue\]\.|处理好模型更换之后，请发送【继续】。/iu,
+      /After handling the model change, reply exactly: model checkpoint cleared, continue|处理好模型更换后，请仅回复：模型切换卡点解除，继续/iu,
     );
   }
   assert.match(profile, /"design-resource-authoring"/u);

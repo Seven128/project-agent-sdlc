@@ -156,6 +156,8 @@ The gate should contain one canonical end-to-end proof for each independent high
 
 The canonical list lives once in `tools/test_suite_policy.mjs` and is exercised by both the runner and selection tests. Its reviewed file-count budget is an explicit change-review trigger: a new independent invariant may raise the budget with rationale, but a maintainer must not remove a sentinel merely to fit it. The complete Long-Task suite remains independently auto-discovered and uncapped.
 
+The Level-4 acquisition and package-promotion sentinels have one additional platform-targeted execution boundary. Ubuntu Trust must execute them to prove Source-first readiness and explicit unsupported-platform failure without claiming a Windows positive path. A non-advisory `windows-level4-runtime` job on Node 24 builds once and serially runs exactly those two files to prove the selected Windows Job/runtime-TCB positive path. This is platform coverage inside existing package verification, not a new acceptance Authority or reusable result state.
+
 Trigger:
 
 - once after implementation, Context, generated surfaces, and review are complete and the candidate diff is frozen;
@@ -257,13 +259,14 @@ Workspace snapshot and fingerprint capture must finish the single index-writing 
 
 ## `TS-RELEASE-HANDOFF` — One Verified Artifact
 
-Trusted Publishing uses a two-job graph inside one workflow run:
+Trusted Publishing uses a three-job graph inside one workflow run:
 
-1. `prepare` runs the complete package suite once, then packs once and runs exact-tarball smoke once;
-2. it uploads the tarball plus a runtime attestation bound to the dispatch commit, stable lockfile identity and tarball SHA-256;
-3. after the protected environment gate, `publish` downloads and verifies those exact bytes;
-4. `publish` does not install dependencies, build, test, repack or repeat smoke;
-5. a retry may skip npm publication only when the registry version and integrity already match the prepared artifact exactly.
+1. `windows-level4-runtime` builds once on Node 24 and serially runs exactly the acquisition and package-promotion boundary files without advisory skips;
+2. Ubuntu `prepare` requires that Windows job, runs the complete package suite once, then packs once and runs exact-tarball smoke once;
+3. it uploads the tarball plus a runtime attestation bound to the dispatch commit, stable lockfile identity and tarball SHA-256;
+4. after the protected environment gate, `publish` downloads and verifies those exact bytes;
+5. `publish` does not install dependencies, build, test, repack or repeat smoke;
+6. a retry may skip npm publication only when the registry version and integrity already match the prepared artifact exactly.
 
 `dry_run: true` executes only step 1 and artifact upload as an optional diagnostic. It is not required before `dry_run: false`, because a real run already performs the same prepare gate before publication. Node/npm versions are recorded as provenance but are not equality gates for the non-building publisher job. Lockfile hashing normalizes CRLF/LF only, so cross-worktree line endings do not cause false drift while semantic changes still block.
 

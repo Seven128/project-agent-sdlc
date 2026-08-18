@@ -70,7 +70,6 @@ const PROOF_REDUCTION_REASONS = new Set([
   "rollback_or_recovery_weakened",
   "counterfactual_removed",
   "population_weakened",
-  "verifier_content_changed",
   "acceptance_not_monotonic",
 ]);
 
@@ -176,6 +175,8 @@ export function summarizeAuthorityRevision(
       diff.verifier_content_changed ||
       diff.verifier_runtime_locator_changed ||
       diff.runner_definitions_changed.length > 0,
+    verifier_content_changed: diff.verifier_content_changed,
+    verifier_files_changed: uniqueSorted(diff.verifier_files_changed),
     write_scope_expanded: diff.owner_or_path_boundary_changed,
     risk_changed: diff.risk_changed,
     external_confirmations_changed: diff.external_confirmations_changed,
@@ -255,6 +256,10 @@ export function projectAuthorityRevisionDecision(value: {
     ? {
         ...computedSummary,
         ...storedSummary,
+        acceptance_or_proof_weakened:
+          computedSummary.acceptance_or_proof_weakened,
+        verifier_content_changed: computedSummary.verifier_content_changed,
+        verifier_files_changed: computedSummary.verifier_files_changed,
         semantic_fields_changed:
           storedSummary.semantic_fields_changed ??
           computedSummary.semantic_fields_changed,
@@ -264,8 +269,7 @@ export function projectAuthorityRevisionDecision(value: {
         product_claim_changes:
           storedSummary.product_claim_changes ??
           computedSummary.product_claim_changes,
-        proof_reductions:
-          storedSummary.proof_reductions ?? computedSummary.proof_reductions,
+        proof_reductions: computedSummary.proof_reductions,
         external_confirmation_changes:
           storedSummary.external_confirmation_changes ??
           computedSummary.external_confirmation_changes,

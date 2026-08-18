@@ -32,7 +32,7 @@ export function parseRepositoryPattern(
   label = "repository_pattern",
 ): RepositoryPatternAst {
   const normalized = canonicalRepositoryPath(value, label, "pattern");
-  if (/[\[\]{}()]/u.test(normalized))
+  if (/[\[\]{}]/u.test(normalized))
     throw new Error(`unsupported_repository_pattern_syntax:${label}:${value}`);
   const segments = normalized.split("/").map((segment) => {
     if (segment === "**") return { kind: "recursive", raw: "**" } as const;

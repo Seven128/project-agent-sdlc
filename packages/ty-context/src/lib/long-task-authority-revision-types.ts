@@ -18,6 +18,8 @@ export interface AuthorityRevisionApprovalSummaryV2 {
   context_authority_changed: boolean;
   acceptance_or_proof_weakened: boolean;
   verifier_or_runner_changed: boolean;
+  verifier_content_changed: boolean;
+  verifier_files_changed: string[];
   write_scope_expanded: boolean;
   risk_changed: boolean;
   external_confirmations_changed: boolean;

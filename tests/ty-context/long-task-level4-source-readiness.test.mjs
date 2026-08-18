@@ -16,6 +16,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { assessFormalCollectionReadiness } from "../../tools/long_task_formal_collection_readiness.mjs";
 import { FormalProviderCaptureAdapter } from "../../tools/long_task_formal_provider_capture.mjs";
+import { formalProviderWorkerEnvironment } from "../../tools/long_task_formal_provider_protocol.mjs";
 import { FormalStateCapture } from "../../tools/long_task_formal_state_capture.mjs";
 import {
   readFreshFormalFile,
@@ -57,6 +58,13 @@ test("[critical:level4-source-readiness-boundary] sole-verifier dry-run keeps mi
   assert.equal(report.formal_collection_executable, false);
   assert.equal(report.total_roi_supported, false);
   assert.equal(report.total_roi_positive, false);
+  assert.equal(report.formal_runtime_tcb_identity_sha256, null);
+  assert.equal(
+    report.formal_collection_blockers.includes(
+      "formal_process_supervisor_platform_unsupported",
+    ),
+    false,
+  );
   assert.equal(Object.hasOwn(report, "executable"), false);
   for (const pending of [
     "formal_evidence_precollection",
@@ -298,5 +306,16 @@ test("fixed Provider adapter is invocation-bound and fails closed when model or 
 });
 
 test("runner-owned Provider acquisition source fixes isolated transport, bounded protocol, sanitized launch, and frozen identity", async () => {
+  const parentExecArgv = [...process.execArgv];
+  process.execArgv.splice(0, process.execArgv.length, "--synthetic-parent-only");
+  try {
+    assert.deepEqual(formalProviderWorkerEnvironment({}), {});
+  } finally {
+    process.execArgv.splice(0, process.execArgv.length, ...parentExecArgv);
+  }
+  assert.throws(
+    () => formalProviderWorkerEnvironment({ NODE_OPTIONS: "--require=x" }),
+    /formal_provider_launch_envelope_unsupported/u,
+  );
   await assertProviderBridgeControls();
 });

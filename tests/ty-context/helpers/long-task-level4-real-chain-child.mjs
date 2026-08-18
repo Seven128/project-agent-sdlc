@@ -221,9 +221,16 @@ async function alignFixtureProviderIdentity(fixtureValue, runtimeTcbIdentity) {
     const reference =
       event.execution_record.measurement_refs.provider_event.artifact_ref;
     const providerEvent = await readJson(fixtureValue.root, reference);
-    providerEvent.adapter_identity_sha256 =
-      runtimeTcbIdentity.provider_adapter.identity_sha256;
-    providerEvent.model = runtimeTcbIdentity.provider_adapter.model;
+    Object.assign(providerEvent, {
+      adapter_id: runtimeTcbIdentity.provider_adapter.adapter_id,
+      adapter_identity_sha256:
+        runtimeTcbIdentity.provider_adapter.identity_sha256,
+      provider: runtimeTcbIdentity.provider_adapter.provider,
+      model: runtimeTcbIdentity.provider_adapter.model,
+      parser_id: runtimeTcbIdentity.provider_adapter.parser_id,
+      worker_identity_sha256:
+        runtimeTcbIdentity.provider_adapter.worker_identity_sha256,
+    });
     await writeJson(
       path.join(fixtureValue.root, ...reference.split("/")),
       providerEvent,

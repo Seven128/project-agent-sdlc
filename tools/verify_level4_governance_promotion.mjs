@@ -31,6 +31,7 @@ import {
   parseAndValidateLevel4RunSetManifest,
   validateLevel4ExternalArtifacts,
 } from "./level4_promotion_evidence_validation.mjs";
+import { assertLevel4PromotionCommitBoundary } from "./level4_promotion_commit_boundary.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,22 +63,13 @@ export async function verifyLevel4GovernancePromotion(options) {
       currentStatus.length === 0,
     "level4_promotion_current_checkout_identity",
   );
-  const parents = (
-    await gitText(repository, ["rev-list", "--parents", "-n", "1", promotion])
-  ).split(/\s+/u);
-  assert(parents.length === 2, "level4_promotion_single_parent");
-  const candidateCommit = parents[1];
-  const candidateTree = await gitText(repository, [
-    "rev-parse",
-    `${candidateCommit}^{tree}`,
-  ]);
-  const governanceRoot = `governance/level4-promotion/${candidateCommit}`;
-  await validatePromotionDiff({
-    repository,
-    candidateCommit,
-    promotion,
-    governanceRoot,
+  const commitBoundary = await assertLevel4PromotionCommitBoundary({
+    repositoryRoot: repository,
+    promotionCommit: promotion,
   });
+  const candidateCommit = commitBoundary.candidate_commit;
+  const candidateTree = commitBoundary.candidate_tree;
+  const governanceRoot = commitBoundary.governance_root;
   const records = {};
   for (const name of LEVEL4_GOVERNANCE_RECORD_NAMES) {
     const bytes = await gitBytes(repository, [
@@ -245,36 +237,6 @@ export async function verifyLevel4GovernancePromotion(options) {
     promotion_record_sha256: sha256(canonical(promotionRecord)),
     governance_promotion_verified: true,
   };
-}
-
-async function validatePromotionDiff({
-  repository,
-  candidateCommit,
-  promotion,
-  governanceRoot,
-}) {
-  const output = await gitText(repository, [
-    "diff",
-    "--name-status",
-    "--no-renames",
-    candidateCommit,
-    promotion,
-    "--",
-  ]);
-  const rows = output
-    .split(/\r?\n/u)
-    .filter(Boolean)
-    .map((line) => line.split("\t"));
-  const expectedPaths = LEVEL4_GOVERNANCE_RECORD_NAMES.map(
-    (name) => `${governanceRoot}/${name}`,
-  ).sort();
-  assert(
-    rows.length === expectedPaths.length &&
-      rows.every(([status]) => status === "A") &&
-      canonical(rows.map(([, file]) => file).sort()) ===
-        canonical(expectedPaths),
-    "level4_promotion_diff_allowlist",
-  );
 }
 
 async function sourceIdentityAtCommit(repository, commit, paths) {

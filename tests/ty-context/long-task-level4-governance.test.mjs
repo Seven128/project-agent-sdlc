@@ -11,6 +11,7 @@ import {
   validateLevel4PromotionRecord,
 } from "../../tools/level4_governance_protocol.mjs";
 import { verifyLevel4GovernancePromotion } from "../../tools/verify_level4_governance_promotion.mjs";
+import { assertLevel4PromotionCommitBoundary } from "../../tools/level4_promotion_commit_boundary.mjs";
 import {
   canonical,
   sha256,
@@ -181,7 +182,58 @@ test("owner approval and promotion records cannot drift package, benchmark, runt
   }
 });
 
-test("direct-child governance-only additions pass the commit boundary, while any candidate/TCB-surface mutation fails before evidence use", async () => {
+test("the production commit-boundary owner accepts only a direct child with four candidate-bound add-only governance records", async () => {
+  const fixture = await createPromotionBoundaryRepository();
+  try {
+    const boundary = await assertLevel4PromotionCommitBoundary({
+      repositoryRoot: fixture.repository,
+      promotionCommit: fixture.promotion,
+    });
+    assert.equal(boundary.promotion_commit, fixture.promotion);
+    assert.equal(boundary.candidate_commit, fixture.commit);
+    assert.equal(boundary.candidate_tree, fixture.tree);
+    assert.equal(
+      boundary.governance_root,
+      `governance/level4-promotion/${fixture.commit}`,
+    );
+
+    for (const mutation of [
+      "PROJECT_SPEC.md",
+      "tools/formal_process_supervisor.mjs",
+    ]) {
+      const invalid = await createInvalidPromotion(fixture, mutation);
+      await assert.rejects(
+        () =>
+          assertLevel4PromotionCommitBoundary({
+            repositoryRoot: fixture.repository,
+            promotionCommit: invalid,
+          }),
+        /level4_promotion_diff_allowlist/u,
+      );
+    }
+  } finally {
+    await fixture.remove();
+  }
+});
+
+test("the full Promotion verifier preserves its executing-source-root lock for a temporary repository", async () => {
+  const fixture = await createPromotionBoundaryRepository();
+  try {
+    await assert.rejects(
+      () =>
+        verifyLevel4GovernancePromotion({
+          repositoryRoot: fixture.repository,
+          promotionCommit: fixture.promotion,
+          evidenceRoot: fixture.evidenceRoot,
+        }),
+      /level4_promotion_executing_source_root/u,
+    );
+  } finally {
+    await fixture.remove();
+  }
+});
+
+async function createPromotionBoundaryRepository() {
   const temporary = await mkdtemp(
     path.join(os.tmpdir(), "ty-level4-governance-"),
   );
@@ -204,57 +256,36 @@ test("direct-child governance-only additions pass the commit boundary, while any
     await git(repository, ["add", "."]);
     await git(repository, ["commit", "-m", "governance promotion boundary"]);
     const promotion = await git(repository, ["rev-parse", "HEAD"]);
-    assert.equal(await git(repository, ["rev-parse", `${promotion}^`]), commit);
-    await assert.rejects(
-      () =>
-        verifyLevel4GovernancePromotion({
-          repositoryRoot: repository,
-          promotionCommit: promotion,
-          evidenceRoot,
-        }),
-      /ENOENT|formal_evidence_regular_file/u,
-    );
-    await writeArtifact(repository, "dirty.tmp", "dirty checkout\n");
-    await assert.rejects(
-      () =>
-        verifyLevel4GovernancePromotion({
-          repositoryRoot: repository,
-          promotionCommit: promotion,
-          evidenceRoot,
-        }),
-      /level4_promotion_current_checkout_identity/u,
-    );
-    await rm(path.join(repository, "dirty.tmp"));
-    await assert.rejects(
-      () =>
-        verifyLevel4GovernancePromotion({
-          repositoryRoot: repository,
-          promotionCommit: commit,
-          evidenceRoot,
-        }),
-      /level4_promotion_current_checkout_identity/u,
-    );
-
-    await git(repository, ["switch", "--detach", commit]);
-    await writeLevel4GovernanceRecords(repository, governanceRoot, records);
-    await writeArtifact(
+    return {
+      temporary,
       repository,
-      "PROJECT_SPEC.md",
-      "forbidden promotion mutation\n",
-    );
-    await git(repository, ["add", "."]);
-    await git(repository, ["commit", "-m", "invalid promotion mutation"]);
-    const invalid = await git(repository, ["rev-parse", "HEAD"]);
-    await assert.rejects(
-      () =>
-        verifyLevel4GovernancePromotion({
-          repositoryRoot: repository,
-          promotionCommit: invalid,
-          evidenceRoot,
-        }),
-      /level4_promotion_diff_allowlist/u,
-    );
-  } finally {
+      evidenceRoot,
+      commit,
+      tree,
+      records,
+      governanceRoot,
+      promotion,
+      remove: () => rm(temporary, { recursive: true, force: true }),
+    };
+  } catch (error) {
     await rm(temporary, { recursive: true, force: true });
+    throw error;
   }
-});
+}
+
+async function createInvalidPromotion(fixture, mutation) {
+  await git(fixture.repository, ["switch", "--detach", fixture.commit]);
+  await writeLevel4GovernanceRecords(
+    fixture.repository,
+    fixture.governanceRoot,
+    fixture.records,
+  );
+  await writeArtifact(
+    fixture.repository,
+    mutation,
+    "forbidden promotion mutation\n",
+  );
+  await git(fixture.repository, ["add", "."]);
+  await git(fixture.repository, ["commit", "-m", `invalid ${mutation}`]);
+  return git(fixture.repository, ["rev-parse", "HEAD"]);
+}

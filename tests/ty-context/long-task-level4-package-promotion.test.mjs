@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import test from "node:test";
+import { after, test } from "node:test";
 import { promisify } from "node:util";
 import { materializeLongTaskPackage } from "../../tools/long_task_package_materialization.mjs";
 import { readPackedPackageIdentity } from "../../tools/long_task_packed_package_identity.mjs";
@@ -24,44 +24,43 @@ import { assertPromotionArtifactControls } from "./helpers/long-task-level4-prom
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
-let reproducedTarball;
-let reproducedRecord;
+let reproducedPackagePromise;
+
+after(async () => {
+  const fixture = await reproducedPackagePromise?.catch(() => null);
+  await fixture?.cleanup();
+});
 
 test(
   "[critical:level4-package-promotion-boundary] the unique materializer reproduces exact HEAD package bytes and the five-way identity",
   { timeout: 300_000 },
   async () => {
+    const fixture = await reproducedPackageFixture();
     const temporary = await mkdtemp(
       path.join(os.tmpdir(), "ty-level4-package-"),
     );
-    const commit = await gitText(repositoryRoot, ["rev-parse", "HEAD"]);
-    const results = [];
+    const checkout = path.join(temporary, "independent-checkout");
+    let independent;
     try {
-      for (const label of ["first", "second"]) {
-        const checkout = path.join(temporary, `${label}-checkout`);
-        const result = await materializeLongTaskPackage({
-          repositoryRoot,
-          commit,
-          checkout,
-          outputDir: path.join(temporary, `${label}-materialization`),
-        });
-        results.push(result);
-        await gitText(repositoryRoot, [
-          "worktree",
-          "remove",
-          "--force",
-          checkout,
-        ]);
-      }
-      const [first, second] = results.map((item) => item.record);
-      reproducedRecord = first;
-      assert.equal(first.commit, commit);
+      independent = await materializeLongTaskPackage({
+        repositoryRoot,
+        commit: fixture.commit,
+        checkout,
+        outputDir: path.join(temporary, "independent-materialization"),
+      });
+      const first = fixture.record;
+      const second = independent.record;
+      assert.equal(first.commit, fixture.commit);
       assert.equal(
         first.tree,
-        await gitText(repositoryRoot, ["rev-parse", `${commit}^{tree}`]),
+        await gitText(repositoryRoot, [
+          "rev-parse",
+          `${fixture.commit}^{tree}`,
+        ]),
       );
       assert.equal(first.package_name, "project-tiny-context-harness");
-      assert.equal(first.package_version, "0.8.15");
+      assert.equal(first.package_version, fixture.expectedPackageVersion);
+      assert.equal(second.package_version, fixture.expectedPackageVersion);
       assert.match(first.package_sha256, /^[a-f0-9]{64}$/u);
       assert.match(first.package_file_set_sha256, /^[a-f0-9]{64}$/u);
       assert.equal(first.package_sha256, second.package_sha256);
@@ -85,20 +84,19 @@ test(
           "candidate-status",
         ],
       );
-      const packed = readPackedPackageIdentity(results[0].tarball_bytes);
+      const packed = readPackedPackageIdentity(fixture.tarball);
       assert.equal(packed.package_sha256, first.package_sha256);
       assert.equal(
         packed.package_file_set_sha256,
         first.package_file_set_sha256,
       );
-      reproducedTarball = Buffer.from(results[0].tarball_bytes);
     } finally {
-      for (const result of results)
+      if (independent)
         await gitText(repositoryRoot, [
           "worktree",
           "remove",
           "--force",
-          result.checkout,
+          independent.checkout,
         ]).catch(() => {});
       await rm(temporary, { recursive: true, force: true });
     }
@@ -109,9 +107,10 @@ test(
   "governance-only direct-child bytes preserve the package while a packed-source mutation changes it",
   { timeout: 600_000 },
   async () => {
+    const fixture = await reproducedPackageFixture();
     await assertPackageChildBoundaries({
       repositoryRoot,
-      baselineRecord: reproducedRecord,
+      baselineRecord: fixture.record,
     });
   },
 );
@@ -120,11 +119,19 @@ test(
   "the authoritative Promotion verifier closes five-way package identity, unbuilt tarballs, and governance-only direct-child rules",
   { timeout: 1_200_000 },
   async () => {
-    await assertPromotionArtifactControls({
-      repositoryRoot,
-      candidateRecord: reproducedRecord,
-      candidateTarball: reproducedTarball,
-    });
+    const fixture = await reproducedPackageFixture();
+    const verify = () =>
+      assertPromotionArtifactControls({
+        repositoryRoot,
+        candidateRecord: fixture.record,
+        candidateTarball: fixture.tarball,
+      });
+    if (process.platform === "win32") await verify();
+    else
+      await assert.rejects(
+        verify,
+        /formal_process_supervisor_platform_unsupported/u,
+      );
   },
 );
 
@@ -164,7 +171,8 @@ test("materialization, comparator, and promotion reject injected runners or fake
 });
 
 test("package mutation and formal report package mismatch fail closed", async () => {
-  const mutated = Buffer.from(reproducedTarball);
+  const fixture = await reproducedPackageFixture();
+  const mutated = Buffer.from(fixture.tarball);
   mutated[mutated.length - 1] ^= 0xff;
   assert.throws(
     () => readPackedPackageIdentity(mutated),
@@ -174,7 +182,7 @@ test("package mutation and formal report package mismatch fail closed", async ()
     candidate: {
       commit: "a".repeat(40),
       tree: "b".repeat(40),
-      package_version: "0.8.15",
+      package_version: fixture.expectedPackageVersion,
       package_sha256: "c".repeat(64),
     },
     runtime_tcb_identity_sha256: "d".repeat(64),
@@ -194,7 +202,7 @@ test("package mutation and formal report package mismatch fail closed", async ()
       evidenceReference.runtime_tcb_identity_sha256,
     candidate_package: {
       package_name: "project-tiny-context-harness",
-      package_version: "0.8.15",
+      package_version: fixture.expectedPackageVersion,
       package_sha256: "e".repeat(64),
     },
     formal_blockers: [],
@@ -245,6 +253,64 @@ test("manifest v2 is exact and legacy, mixed, or unknown-newer manifest families
       /level4_run_set_manifest/u,
     );
 });
+
+function reproducedPackageFixture() {
+  reproducedPackagePromise ??= createReproducedPackageFixture();
+  return reproducedPackagePromise;
+}
+
+async function createReproducedPackageFixture() {
+  const temporary = await mkdtemp(
+    path.join(os.tmpdir(), "ty-level4-package-shared-"),
+  );
+  const checkout = path.join(temporary, "checkout");
+  let materialized;
+  try {
+    const commit = await gitText(repositoryRoot, ["rev-parse", "HEAD"]);
+    const packageJson = JSON.parse(
+      await gitText(repositoryRoot, [
+        "show",
+        `${commit}:packages/ty-context/package.json`,
+      ]),
+    );
+    if (typeof packageJson.version !== "string" || !packageJson.version)
+      throw new Error("level4_package_candidate_version");
+    materialized = await materializeLongTaskPackage({
+      repositoryRoot,
+      commit,
+      checkout,
+      outputDir: path.join(temporary, "materialization"),
+    });
+    await gitText(repositoryRoot, [
+      "worktree",
+      "remove",
+      "--force",
+      materialized.checkout,
+    ]);
+    let cleaned = false;
+    return Object.freeze({
+      commit,
+      expectedPackageVersion: packageJson.version,
+      record: materialized.record,
+      tarball: Buffer.from(materialized.tarball_bytes),
+      cleanup: async () => {
+        if (cleaned) return;
+        cleaned = true;
+        await rm(temporary, { recursive: true, force: true });
+      },
+    });
+  } catch (error) {
+    if (materialized)
+      await gitText(repositoryRoot, [
+        "worktree",
+        "remove",
+        "--force",
+        materialized.checkout,
+      ]).catch(() => {});
+    await rm(temporary, { recursive: true, force: true });
+    throw error;
+  }
+}
 
 async function gitText(cwd, args) {
   const result = await execFileAsync("git", args, {

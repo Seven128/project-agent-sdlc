@@ -161,20 +161,38 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
   await mkdir(path.dirname(path.join(root, handoffPath)), { recursive: true });
   await writeFile(
     path.join(root, handoffPath),
-    renderDesignResourceHandoffMarkdown(renderedHandoff),
+    renderDesignResourceHandoffMarkdown(
+      renderedHandoff,
+      options.additionalSourceItems,
+    ),
   );
 }
 
-export function renderDesignResourceHandoffMarkdown(handoff) {
-  const sourceStatement =
-    "The main surface must conform to every declared atomic observable design Fact.";
+export function renderDesignResourceHandoffMarkdown(
+  handoff,
+  additionalSourceItems = [],
+) {
+  const sourceItems = [
+    {
+      key: DESIGN_SOURCE_ITEM_KEY,
+      kind: "requirement",
+      statement:
+        "The main surface must conform to every declared atomic observable design Fact.",
+    },
+    ...additionalSourceItems,
+  ];
+  const sourceBlocks = sourceItems
+    .map(
+      (item) => `<!-- ty-source-item:start key=${item.key} kind=${item.kind} -->
+${item.statement}
+<!-- ty-source-item:end -->`,
+    )
+    .join("\n\n");
   return `<!-- ty-source-background:start key=design-handoff-heading reason=markdown-structure -->
 <a id="main-design"></a>
 <!-- ty-source-background:end -->
 
-<!-- ty-source-item:start key=${DESIGN_SOURCE_ITEM_KEY} kind=requirement -->
-${sourceStatement}
-<!-- ty-source-item:end -->
+${sourceBlocks}
 
 \`\`\`yaml design-resource-handoff-v1
 ${YAML.stringify(JSON.parse(JSON.stringify(handoff)), { lineWidth: 0 }).trimEnd()}

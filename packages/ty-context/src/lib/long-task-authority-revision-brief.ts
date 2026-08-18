@@ -58,7 +58,12 @@ export function buildAuthorityRevisionDecisionBrief(
   addCategory(
     summary.verifier_or_runner_changed,
     "verifier/runner",
-    "Verifier or runner authority changed.",
+    summary.verifier_content_changed
+      ? detail(
+          "Verifier content changed; prior evidence is invalid and semantic preservation is not independently established",
+          summary.verifier_files_changed,
+        )
+      : "Verifier or runner authority changed.",
   );
   addCategory(
     summary.write_scope_expanded,

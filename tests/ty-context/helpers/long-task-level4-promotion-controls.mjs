@@ -5,8 +5,10 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   readdir,
   rm,
+  writeFile,
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -28,8 +30,8 @@ export async function assertPromotionArtifactControls({
   candidateRecord,
   candidateTarball,
 }) {
-  const temporary = await mkdtemp(
-    path.join(os.tmpdir(), "ty-level4-promotion-control-"),
+  const temporary = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-promotion-control-")),
   );
   const registered = [];
   try {
@@ -115,40 +117,43 @@ export async function assertPromotionArtifactControls({
     assert.equal(positive.candidate_commit, candidateRecord.commit);
     assert.equal(positive.package_sha256, candidateRecord.package_sha256);
 
-    const alteredVerifierCheckout = path.join(
-      temporary,
-      "altered-executing-verifier",
-    );
-    await git(repositoryRoot, [
-      "worktree",
-      "add",
-      "--detach",
-      alteredVerifierCheckout,
-      candidateRecord.commit,
-    ]);
-    registered.push(alteredVerifierCheckout);
     const alteredVerifierPath = path.join(
-      alteredVerifierCheckout,
+      positive.checkout,
       "tools",
       "verify_level4_governance_promotion.mjs",
     );
-    await appendFile(
-      alteredVerifierPath,
-      "\n// synthetic modified executing verifier\n",
-      "utf8",
-    );
-    const alteredVerifier = await import(
-      `${pathToFileURL(alteredVerifierPath).href}?modified=${Date.now()}`
-    );
-    await assert.rejects(
-      () =>
-        alteredVerifier.verifyLevel4GovernancePromotion({
-          repositoryRoot: positive.checkout,
-          promotionCommit: positive.promotionCommit,
-          evidenceRoot: positive.evidenceRoot,
-        }),
-      /level4_promotion_executing_benchmark_identity/u,
-    );
+    const originalVerifier = await readFile(alteredVerifierPath);
+    await git(positive.checkout, [
+      "update-index",
+      "--assume-unchanged",
+      "tools/verify_level4_governance_promotion.mjs",
+    ]);
+    try {
+      await appendFile(
+        alteredVerifierPath,
+        "\n// synthetic modified executing verifier\n",
+        "utf8",
+      );
+      const alteredVerifier = await import(
+        pathToFileURL(alteredVerifierPath).href
+      );
+      await assert.rejects(
+        () =>
+          alteredVerifier.verifyLevel4GovernancePromotion({
+            repositoryRoot: positive.checkout,
+            promotionCommit: positive.promotionCommit,
+            evidenceRoot: positive.evidenceRoot,
+          }),
+        /level4_promotion_executing_benchmark_identity/u,
+      );
+    } finally {
+      await writeFile(alteredVerifierPath, originalVerifier);
+      await git(positive.checkout, [
+        "update-index",
+        "--no-assume-unchanged",
+        "tools/verify_level4_governance_promotion.mjs",
+      ]);
+    }
 
     for (const mutation of [
       "packages/ty-context/README.md",

@@ -12,9 +12,15 @@ const repoRoot = path.resolve(
 test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from complete regression and preserves same-run diagnostics", () => {
   const packageWorkflow = read(".github/workflows/package.yml");
   const packageJson = JSON.parse(read("packages/ty-context/package.json"));
+  const windowsLevel4Job = section(
+    packageWorkflow,
+    "windows-level4-runtime",
+    "pull-request",
+  );
   const pullRequestJob = section(packageWorkflow, "pull-request", "main");
   const mainJob = section(packageWorkflow, "main");
 
+  assertWindowsLevel4RuntimeJob(windowsLevel4Job);
   assert.match(packageWorkflow, /Typecheck package and build once/);
   assert.match(
     packageWorkflow,
@@ -157,7 +163,15 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   const tarballSmoke = read("tools/release_tarball_smoke.mjs");
   const releasePrepare = read("tools/release_prepare.mjs");
   const releasePublish = read("tools/release_publish.mjs");
+  const windowsLevel4Job = section(
+    publishWorkflow,
+    "windows-level4-runtime",
+    "prepare",
+  );
+  const publishPrepareJob = section(publishWorkflow, "prepare", "publish");
 
+  assertWindowsLevel4RuntimeJob(windowsLevel4Job);
+  assert.match(publishPrepareJob, /needs:\s*windows-level4-runtime/u);
   assert.match(publishWorkflow, /Build package/);
   assert.match(publishWorkflow, /npm install -g npm@12\.0\.1/);
   assert.doesNotMatch(publishWorkflow, /npm@latest/);
@@ -306,4 +320,19 @@ function section(source, start, end) {
   const endIndex = source.indexOf(`  ${end}:`, startIndex + startMarker.length);
   assert.notEqual(endIndex, -1, `missing workflow section: ${end}`);
   return source.slice(startIndex, endIndex);
+}
+
+function assertWindowsLevel4RuntimeJob(job) {
+  assert.match(job, /runs-on:\s*windows-latest/u);
+  assert.match(job, /fetch-depth:\s*0/u);
+  assert.match(job, /node-version:\s*"24"/u);
+  assert.deepEqual(
+    [...job.matchAll(/^\s+run:\s*(.+)$/gmu)].map((match) => match[1]),
+    [
+      "npm ci",
+      "npm run build --workspace project-tiny-context-harness",
+      "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
+    ],
+  );
+  assert.doesNotMatch(job, /continue-on-error|\bif:\s*/u);
 }
