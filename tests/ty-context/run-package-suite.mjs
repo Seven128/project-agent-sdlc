@@ -28,10 +28,11 @@ const suite = process.argv[2];
 if (
   suite !== "default" &&
   suite !== "long-task" &&
+  suite !== "long-task-level4" &&
   suite !== "long-task-trust"
 ) {
   throw new Error(
-    "Usage: run-package-suite.mjs <default|long-task|long-task-trust> [node-test options]",
+    "Usage: run-package-suite.mjs <default|long-task|long-task-level4|long-task-trust> [node-test options]",
   );
 }
 

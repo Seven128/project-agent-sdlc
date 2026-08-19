@@ -3,6 +3,13 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { validateLevel4PromotionRecord } from "../../tools/level4_governance_protocol.mjs";
+import { parseAndValidateLevel4FrozenCandidate } from "../../tools/level4_promotion_evidence_validation.mjs";
+import {
+  canonical,
+  sha256,
+} from "../../tools/long_task_real_process_roi_scoring.mjs";
+import { REAL_PROCESS_SCHEMAS } from "../../tools/long_task_real_process_schema_policy.mjs";
 
 const repo = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -479,6 +486,100 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
       [managedSkill, managedLifecycle, readme, packageReadme].join("\n"),
       obsolete,
     );
+});
+
+test("[critical:level4-claim-boundary] current Level-3 declarations cannot self-promote through frozen or governance inputs", async () => {
+  const workload = JSON.parse(
+    await read("examples/delivery-benchmark/real-process-workload/workload.json"),
+  );
+  assert.equal(workload.capability_level, "level_3");
+  assert.equal(workload.level_4_claimed, false);
+  assert.equal(workload.governance_judgment_included, false);
+
+  const candidate = {
+    commit: "a".repeat(40),
+    package_sha256: "c".repeat(64),
+    tree: "b".repeat(40),
+  };
+  const evidenceReference = {
+    benchmark_implementation_identity_sha256: "d".repeat(64),
+    candidate,
+    runtime_tcb_identity_sha256: "e".repeat(64),
+  };
+  const frozenConfig = {
+    schema_version: REAL_PROCESS_SCHEMAS.REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
+    variants: { c: { commit: candidate.commit } },
+    candidate_tree: candidate.tree,
+    capability_level: "level_3",
+    level_4_claimed: false,
+    governance_judgment_included: false,
+    formal_runtime_tcb_identity: {
+      identity_sha256: evidenceReference.runtime_tcb_identity_sha256,
+    },
+  };
+  assert.equal(
+    parseAndValidateLevel4FrozenCandidate(
+      new TextEncoder().encode(`${JSON.stringify(frozenConfig)}\n`),
+      evidenceReference,
+    ).capability_level,
+    "level_3",
+  );
+  assert.throws(
+    () =>
+      parseAndValidateLevel4FrozenCandidate(
+        new TextEncoder().encode(
+          JSON.stringify({
+            ...frozenConfig,
+            capability_level: "level_4",
+            level_4_claimed: true,
+          }),
+        ),
+        evidenceReference,
+      ),
+    /level4_promotion_frozen_candidate/u,
+  );
+
+  const auditRecord = { audit_conclusion: { governance_audit_passed: true } };
+  const ownerDecision = { decision: "promote-level-4" };
+  const promotionRecord = {
+    schema_version: REAL_PROCESS_SCHEMAS.LEVEL4_PROMOTION_RECORD_SCHEMA,
+    promotion_kind: "direct-child-governance-records-only",
+    capability_level: "level_4",
+    level_4_claimed: true,
+    formal_conclusion_owner: "verify_long_task_real_process_roi",
+    candidate,
+    package_sha256: candidate.package_sha256,
+    benchmark_implementation_identity_sha256:
+      evidenceReference.benchmark_implementation_identity_sha256,
+    runtime_tcb_identity_sha256:
+      evidenceReference.runtime_tcb_identity_sha256,
+    evidence_reference_sha256: sha256(canonical(evidenceReference)),
+    audit_record_sha256: sha256(canonical(auditRecord)),
+    owner_decision_sha256: sha256(canonical(ownerDecision)),
+  };
+  assert.equal(
+    validateLevel4PromotionRecord(
+      promotionRecord,
+      evidenceReference,
+      auditRecord,
+      ownerDecision,
+    ),
+    promotionRecord,
+  );
+  assert.throws(
+    () =>
+      validateLevel4PromotionRecord(
+        {
+          ...promotionRecord,
+          capability_level: "level_3",
+          level_4_claimed: false,
+        },
+        evidenceReference,
+        auditRecord,
+        ownerDecision,
+      ),
+    /level4_promotion_record/u,
+  );
 });
 
 test("target-runtime feedback stays live, rolling, and state-free", async () => {

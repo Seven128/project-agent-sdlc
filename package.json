@@ -15,6 +15,7 @@
     "test": "npm test --workspace project-tiny-context-harness",
     "test:affected": "node tools/run_affected_tests.mjs",
     "test:affected:list": "node tools/run_affected_tests.mjs --list",
+    "test:long-task:level4": "npm run test:long-task-level4 --workspace project-tiny-context-harness",
     "test:long-task:trust": "node tools/run_affected_tests.mjs --scope trust",
     "test:long-task:focused": "node tools/run_affected_tests.mjs --scope long-task",
     "test:delivery-contract:focused": "node tools/run_affected_tests.mjs --scope delivery-contract",

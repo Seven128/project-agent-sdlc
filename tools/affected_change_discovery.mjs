@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { normalizeRepositoryPath } from "./test_suite_policy.mjs";
+import { normalizeRepositoryPath } from "./test_suite_path_policy.mjs";
 
 const exec = promisify(execFile);
 
@@ -105,6 +105,7 @@ function createGitDiscoveryClient(repository) {
     async workingTreeChanges() {
       const tracked = await gitLines(repository, [
         "diff",
+        "--no-renames",
         "--name-only",
         "--diff-filter=ACMRTD",
         "HEAD",
@@ -119,6 +120,7 @@ function createGitDiscoveryClient(repository) {
     async comparisonPaths(base) {
       return gitLines(repository, [
         "diff",
+        "--no-renames",
         "--name-only",
         "--diff-filter=ACMRTD",
         `${base}...HEAD`,

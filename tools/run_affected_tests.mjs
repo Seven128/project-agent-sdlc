@@ -26,7 +26,7 @@ const selection = selectAffectedTests(changedPaths, {
 console.log(
   JSON.stringify(
     {
-      schema_version: "affected-test-plan-v2",
+      schema_version: "affected-test-plan-v3",
       discovery: changes.discovery,
       changed_paths: changedPaths,
       ...selection,
@@ -80,6 +80,15 @@ if (selection.mode === "full-suite") {
     "--test",
     "--test-concurrency=1",
     ...selection.tests,
+  ]);
+}
+
+if (selection.level4.execution === "separate_required") {
+  await runNpm([
+    "run",
+    "test:long-task-level4:built",
+    "--workspace",
+    "project-tiny-context-harness",
   ]);
 }
 

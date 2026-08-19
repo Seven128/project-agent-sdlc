@@ -11,7 +11,15 @@ const repoRoot = path.resolve(
 
 test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from complete regression and preserves same-run diagnostics", () => {
   const packageWorkflow = read(".github/workflows/package.yml");
-  const packageJson = JSON.parse(read("packages/ty-context/package.json"));
+  const eventTriggers = packageWorkflow.slice(
+    0,
+    packageWorkflow.indexOf("\njobs:"),
+  );
+  const level4RoutingJob = section(
+    packageWorkflow,
+    "level4-routing",
+    "windows-level4-runtime",
+  );
   const windowsLevel4Job = section(
     packageWorkflow,
     "windows-level4-runtime",
@@ -20,7 +28,12 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   const pullRequestJob = section(packageWorkflow, "pull-request", "main");
   const mainJob = section(packageWorkflow, "main");
 
-  assertWindowsLevel4RuntimeJob(windowsLevel4Job);
+  assert.match(eventTriggers, /\n  pull_request:\s*\n/u);
+  assert.match(eventTriggers, /\n  push:\s*\n/u);
+  assert.match(eventTriggers, /\n      - main\s*\n/u);
+  assert.doesNotMatch(eventTriggers, /\n\s+paths(?:-ignore)?:/u);
+  assertLevel4RoutingJob(level4RoutingJob);
+  assertWindowsLevel4RuntimeJob(windowsLevel4Job, { conditional: true });
   assert.match(packageWorkflow, /Typecheck package and build once/);
   assert.match(
     packageWorkflow,
@@ -39,7 +52,8 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   );
   assert.match(pullRequestJob, /git merge-base HEAD origin\/main/);
   assert.match(pullRequestJob, /--base "\$modularity_base"/);
-  assert.match(pullRequestJob, /Trust boundary package tests/);
+  assert.match(pullRequestJob, /Core Trust package tests/);
+  assert.match(pullRequestJob, /Level 4 routed package tests/);
   assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(
     pullRequestJob,
@@ -48,6 +62,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(
     pullRequestJob,
     /npm run test:trust:built --workspace project-tiny-context-harness --ignore-scripts/,
+  );
+  assert.match(
+    pullRequestJob,
+    /npm run test:level4:built --workspace project-tiny-context-harness --ignore-scripts/,
+  );
+  assert.match(
+    pullRequestJob,
+    /needs\.level4-routing\.outputs\.required == 'true'/u,
   );
   assert.doesNotMatch(
     pullRequestJob,
@@ -101,7 +123,10 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.doesNotMatch(packageWorkflow, /npm run test:long-task-workflow/);
   assert.match(packageWorkflow, /node tools\/quickstart_smoke\.mjs/);
   assert.match(packageWorkflow, /npm run preview:pack/);
+});
 
+test("package scripts and the suite runner retain the reviewed aggregate boundaries", () => {
+  const packageJson = JSON.parse(read("packages/ty-context/package.json"));
   assert.equal(
     packageJson.scripts["test:default:built"],
     "node ../../tests/ty-context/run-package-suite.mjs default",
@@ -113,6 +138,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.equal(
     packageJson.scripts["test:built"],
     "npm run test:default:built && npm run test:long-task-workflow:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:level4:built"],
+    "npm run test:trust:built && npm run test:long-task-level4:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:level4"],
+    "npm run build && npm run test:level4:built",
   );
   assert.equal(
     packageJson.scripts["test:trust:built"],
@@ -131,6 +164,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.equal(
     packageJson.scripts["test:long-task-workflow"],
     "npm run build && npm run test:long-task-workflow:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-level4:built"],
+    "node ../../tests/ty-context/run-package-suite.mjs long-task-level4",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-level4"],
+    "npm run build && npm run test:long-task-level4:built",
   );
   assert.equal(
     packageJson.scripts["test:long-task-trust:built"],
@@ -306,10 +347,11 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   assert.match(tarballSmoke, /if \(!portableOnly\)/);
 });
 
-test("pull-request template follows affected, Trust, and conditional complete routing", () => {
+test("pull-request template follows affected, core Trust, Level-4, and conditional complete routing", () => {
   const template = read(".github/PULL_REQUEST_TEMPLATE.md");
   assert.match(template, /npm run test:affected/u);
   assert.match(template, /npm run test:long-task:trust/u);
+  assert.match(template, /npm run test:long-task:level4/u);
   assert.match(
     template,
     /npm test --workspace project-tiny-context-harness` only when/u,
@@ -332,6 +374,9 @@ test("affected-test launcher stays portable and has a Windows gate", () => {
     /Verify Windows npm subprocess launch[\s\S]*node --test tests\/ty-context\/affected-test-portable-command\.test\.mjs/,
   );
   assert.match(affectedRunner, /npmCommandSpec/);
+  assert.match(affectedRunner, /affected-test-plan-v3/u);
+  assert.match(affectedRunner, /selection\.level4\.execution/u);
+  assert.match(affectedRunner, /test:long-task-level4:built/u);
   assert.doesNotMatch(affectedRunner, /npm\.cmd/);
   assert.match(npmCommandSpec, /ComSpec/);
   assert.match(npmCommandSpec, /cmd\.exe/);
@@ -352,7 +397,22 @@ function section(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
-function assertWindowsLevel4RuntimeJob(job) {
+function assertLevel4RoutingJob(job) {
+  assert.match(job, /runs-on:\s*ubuntu-latest/u);
+  assert.match(job, /fetch-depth:\s*0/u);
+  assert.match(job, /node-version:\s*"24"/u);
+  assert.doesNotMatch(job, /npm ci/u);
+  assert.match(job, /PR_BASE_REF: \$\{\{ github\.base_ref \}\}/u);
+  assert.match(job, /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/u);
+  assert.match(job, /route_base="origin\/\$PR_BASE_REF"/u);
+  assert.match(job, /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/u);
+  assert.match(job, /git merge-base HEAD origin\/main/u);
+  assert.match(job, /run_affected_tests\.mjs --list --base "\$route_base"/u);
+  assert.match(job, /jq -r '\.level4\.required'/u);
+  assert.match(job, /required=\$required/u);
+}
+
+function assertWindowsLevel4RuntimeJob(job, options = {}) {
   assert.match(job, /runs-on:\s*windows-latest/u);
   assert.match(job, /fetch-depth:\s*0/u);
   assert.match(job, /node-version:\s*"24"/u);
@@ -364,5 +424,12 @@ function assertWindowsLevel4RuntimeJob(job) {
       "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
     ],
   );
-  assert.doesNotMatch(job, /continue-on-error|\bif:\s*/u);
+  assert.doesNotMatch(job, /continue-on-error/u);
+  if (options.conditional) {
+    assert.match(job, /needs:\s*level4-routing/u);
+    assert.match(
+      job,
+      /if:\s*\$\{\{ needs\.level4-routing\.outputs\.required == 'true' \}\}/u,
+    );
+  } else assert.doesNotMatch(job, /\bif:\s*/u);
 }

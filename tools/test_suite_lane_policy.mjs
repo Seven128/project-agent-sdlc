@@ -2,6 +2,7 @@ import path from "node:path";
 
 import {
   LONG_TASK_DEFAULT_ISOLATED_CONCURRENCY,
+  LONG_TASK_LEVEL4_TEST_FILES,
   LONG_TASK_TRUST_TEST_FILES,
   planLongTaskIsolationLanes,
 } from "./test_suite_policy.mjs";
@@ -9,19 +10,28 @@ import {
 export const LONG_TASK_MAX_FILES_PER_TEST_PROCESS = 16;
 
 export function selectPackageSuiteFileNames(availableFiles, suite) {
-  if (!["default", "long-task", "long-task-trust"].includes(suite))
+  if (
+    ![
+      "default",
+      "long-task",
+      "long-task-level4",
+      "long-task-trust",
+    ].includes(suite)
+  )
     throw new Error(`Unsupported package test suite: ${suite}.`);
   const available = [...availableFiles].sort();
-  if (suite === "long-task-trust") {
+  if (suite === "long-task-trust" || suite === "long-task-level4") {
+    const requiredFiles =
+      suite === "long-task-trust"
+        ? LONG_TASK_TRUST_TEST_FILES
+        : LONG_TASK_LEVEL4_TEST_FILES;
+    const label =
+      suite === "long-task-trust" ? "Trust Boundary" : "Level-4 lane";
     const availableSet = new Set(available);
-    const missing = LONG_TASK_TRUST_TEST_FILES.filter(
-      (name) => !availableSet.has(name),
-    );
+    const missing = requiredFiles.filter((name) => !availableSet.has(name));
     if (missing.length > 0)
-      throw new Error(
-        `Missing Trust Boundary test files: ${missing.join(", ")}`,
-      );
-    return [...LONG_TASK_TRUST_TEST_FILES];
+      throw new Error(`Missing ${label} test files: ${missing.join(", ")}`);
+    return [...requiredFiles];
   }
   return available.filter(
     (name) => /^long-task-/u.test(name) === (suite === "long-task"),
@@ -33,19 +43,25 @@ export function planLongTaskSuiteLanes(
   suite,
   safeConcurrency = LONG_TASK_DEFAULT_ISOLATED_CONCURRENCY,
 ) {
-  if (suite !== "long-task" && suite !== "long-task-trust")
+  if (
+    suite !== "long-task" &&
+    suite !== "long-task-trust" &&
+    suite !== "long-task-level4"
+  )
     throw new Error(`Unsupported Long-Task lane suite: ${suite}.`);
   const policy = planLongTaskIsolationLanes(availableFiles, safeConcurrency);
   const normalized = availableFiles.map((file) => path.basename(file));
   const trustFiles = new Set(LONG_TASK_TRUST_TEST_FILES);
+  const level4Files = new Set(LONG_TASK_LEVEL4_TEST_FILES);
   if (suite === "long-task") {
     const selected = new Set(normalized);
-    const missing = LONG_TASK_TRUST_TEST_FILES.filter(
-      (file) => !selected.has(file),
-    );
+    const missing = [
+      ...LONG_TASK_TRUST_TEST_FILES,
+      ...LONG_TASK_LEVEL4_TEST_FILES,
+    ].filter((file) => !selected.has(file));
     if (missing.length > 0)
       throw new Error(
-        `Complete Long-Task suite is missing Trust Boundary files: ${missing.join(", ")}`,
+        `Complete Long-Task suite is missing protected lane files: ${missing.join(", ")}`,
       );
   }
   const partitions =
@@ -56,8 +72,14 @@ export function planLongTaskSuiteLanes(
             files: normalized.filter((file) => trustFiles.has(file)),
           },
           {
+            key: "level4",
+            files: normalized.filter((file) => level4Files.has(file)),
+          },
+          {
             key: "remainder",
-            files: normalized.filter((file) => !trustFiles.has(file)),
+            files: normalized.filter(
+              (file) => !trustFiles.has(file) && !level4Files.has(file),
+            ),
           },
         ]
       : [{ key: null, files: normalized }];

@@ -67,7 +67,7 @@
     {
       "key": "maintenance.npm_unpacked",
       "unit": "bytes",
-      "value": 3474762
+      "value": 3475109
     },
     {
       "key": "maintenance.source_mappings.canonical_source",
@@ -167,7 +167,7 @@
     {
       "key": "maintenance.suite.long-task-trust",
       "unit": "files",
-      "value": 24
+      "value": 18
     },
     {
       "key": "maintenance.suite.long-task-trust.exclusive",
@@ -175,14 +175,14 @@
       "value": 3
     },
     {
-      "key": "maintenance.suite.long-task-trust.safe-01",
+      "key": "maintenance.suite.long-task-trust.safe",
       "unit": "files",
-      "value": 16
+      "value": 15
     },
     {
-      "key": "maintenance.suite.long-task-trust.safe-02",
+      "key": "maintenance.suite.long-task.level4-safe",
       "unit": "files",
-      "value": 5
+      "value": 7
     },
     {
       "key": "maintenance.suite.long-task.remainder-exclusive",
@@ -207,7 +207,7 @@
     {
       "key": "maintenance.suite.long-task.remainder-safe-04",
       "unit": "files",
-      "value": 7
+      "value": 6
     },
     {
       "key": "maintenance.suite.long-task.trust-exclusive",
@@ -215,14 +215,9 @@
       "value": 3
     },
     {
-      "key": "maintenance.suite.long-task.trust-safe-01",
+      "key": "maintenance.suite.long-task.trust-safe",
       "unit": "files",
-      "value": 16
-    },
-    {
-      "key": "maintenance.suite.long-task.trust-safe-02",
-      "unit": "files",
-      "value": 5
+      "value": 15
     },
     {
       "key": "maintenance.source_mappings",

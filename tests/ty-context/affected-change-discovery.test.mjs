@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
+import { promisify } from "node:util";
 import { resolveAffectedChanges } from "../../tools/affected_change_discovery.mjs";
+
+const exec = promisify(execFile);
 
 test("explicit paths bypass Git discovery and normalize cross-platform separators", async () => {
   const changes = await resolveAffectedChanges({
@@ -152,6 +159,36 @@ test("explicit base is exact, includes current worktree changes, and fails close
   );
 });
 
+test("working-tree and base discovery preserve both endpoints of a Git rename", async () => {
+  const repository = await mkdtemp(
+    path.join(tmpdir(), "ty-context-affected-rename-"),
+  );
+  const oldPath = "tests/ty-context/long-task-level4-acquisition.test.mjs";
+  const newPath = "notes/ordinary.mjs";
+  try {
+    await git(repository, ["init"]);
+    await git(repository, ["config", "user.email", "tests@example.invalid"]);
+    await git(repository, ["config", "user.name", "Tiny Context Tests"]);
+    await git(repository, ["config", "diff.renames", "true"]);
+    await mkdir(path.join(repository, "tests/ty-context"), { recursive: true });
+    await mkdir(path.join(repository, "notes"), { recursive: true });
+    await writeFile(path.join(repository, oldPath), "export const level4 = true;\n");
+    await git(repository, ["add", "."]);
+    await git(repository, ["commit", "-m", "seed protected path"]);
+    await git(repository, ["mv", oldPath, newPath]);
+
+    const working = await resolveAffectedChanges({ repository, environment: {} });
+    assert.deepEqual(working.paths, [newPath, oldPath].sort());
+
+    await git(repository, ["commit", "-am", "move protected path"]);
+    const committed = await resolveAffectedChanges({ repository, environment: {} });
+    assert.deepEqual(committed.paths, [newPath, oldPath].sort());
+    assert.equal(committed.discovery.source, "local-head-parent");
+  } finally {
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
 function fakeGit(options = {}) {
   const refs = new Set(options.refs ?? []);
   const comparisons = options.comparisons ?? {};
@@ -183,4 +220,8 @@ function failIfCalled() {
       },
     },
   );
+}
+
+async function git(repository, arguments_) {
+  await exec("git", arguments_, { cwd: repository, windowsHide: true });
 }

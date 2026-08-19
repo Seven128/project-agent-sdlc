@@ -1,18 +1,28 @@
 import path from "node:path";
+import {
+  normalizeRepositoryPath,
+  testPath,
+} from "./test_suite_path_policy.mjs";
 
-export const TEST_ROOT = "tests/ty-context";
 const SUPPORTED_TEST_SUITES = new Set([
   "default",
   "long-task",
+  "long-task-level4",
   "long-task-trust",
 ]);
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 24,
-    reviewed_on: "2026-08-16",
+    max_files: 18,
+    reviewed_on: "2026-08-19",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, measurement integrity, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
+      "Core Trust retains every reviewed Level-3 false-completion invariant plus one lightweight current-Level-3 and fail-closed Promotion-entry boundary; the formal Level-4 workload and six split boundaries derive into their own complete lane from this same registry.",
+  }),
+  long_task_level4: Object.freeze({
+    max_files: 7,
+    reviewed_on: "2026-08-19",
+    rationale:
+      "The complete project-self-promotion lane contains the independently failing real-process ROI workload plus formal accounting, measurement integrity, sealed acquisition, external-source readiness, exact package reproduction and independent governance boundaries. It remains path-triggered in PR feedback and exhaustive in main/publish coverage.",
   }),
   long_task_focused: Object.freeze({
     max_files: 27,
@@ -174,39 +184,51 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "Proves that Goal-owned order/method/cadence remain outside Harness development Gates while the owner-selected positive-default delegation candidate stays isolated from the conditional public behavior until same-digest admission, with no scheduler, delegation state or proof and one unchanged Final Gate.",
   ),
   criticalSentinel(
+    "level4-claim-boundary",
+    "long-task-design-context.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Lightweight core control: the current workload remains Level 3 with no Level-4 claim, the frozen-candidate validator accepts only that pre-promotion declaration and the Promotion-record validator requires an explicit Level-4 record. It does not prove formal evidence, independent audit, Windows acquisition or Promotion eligibility; those remain in the separate complete Level-4 lane.",
+  ),
+  criticalSentinel(
+    "level4-real-process-workload-boundary",
+    "long-task-real-process-roi.test.mjs",
+    ["long-task", "long-task-level4"],
+    "Proves the frozen A/B/C real-process workload, current schema/report boundary, all five orders, external-pending dry run and collection-summary non-authority; observed lifecycle facts cannot self-promote formal ROI or Level 4.",
+  ),
+  criticalSentinel(
     "level4-evidence-governance-boundary",
     "long-task-level4-formal-accounting.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves the 11-scenario required/forbidden measurement owner, catalog-derived exact 86-execution/586-file immutable evidence closure, pre-spawn invocation and post-exit execution identities, restored dynamic source/accounting/output controls, schema-family fail-closed behavior and synthetic external-pending non-promotion while verify_long_task_real_process_roi remains the sole formal conclusion owner.",
   ),
   criticalSentinel(
     "level4-measurement-integrity-boundary",
     "long-task-level4-measurement-integrity.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves incomplete packets, cross-category invocation reuse, source parsing/fuses, raw output binding, Provider correlation/usage, State payload/ledger recomputation and per-scenario zero policies fail closed while the complete synthetic control remains external-pending.",
   ),
   criticalSentinel(
     "level4-acquisition-runtime-boundary",
     "long-task-level4-acquisition.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves the private branded acquisition runtime cannot accept recorder/supervisor injection and the Windows Job owner preserves exact argv, full-tree containment/cleanup, cumulative CPU, split clocks, timeout and bounded streams.",
   ),
   criticalSentinel(
     "level4-source-readiness-boundary",
     "long-task-level4-source-readiness.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves dry-run and formal collection share fail-closed source readiness, every accounting-policy price meter is required, State uses exact delivery-scoped payload/retention, Provider availability remains parent-owned, and only the sole verifier emits false pre-evidence ROI Booleans.",
   ),
   criticalSentinel(
     "level4-package-promotion-boundary",
     "long-task-level4-package-promotion.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves two detached exact-HEAD npm-ci/build/check-source/pack materializations reproduce package and file-set identities, fake materializers/comparators are rejected, package/report mismatch fails, and only manifest v2 participates in promotion comparison.",
   ),
   criticalSentinel(
     "level4-governance-audit-boundary",
     "long-task-level4-governance.test.mjs",
-    ["long-task", "long-task-trust"],
+    ["long-task", "long-task-level4"],
     "Proves independent audit identity and participation, complete digested inputs, current commands/results, findings and conclusion remain bound without becoming a verifier; direct-child governance-only additions pass the commit boundary and any candidate/TCB-surface mutation fails before external evidence use.",
   ),
   criticalSentinel(
@@ -241,6 +263,18 @@ export const LONG_TASK_TRUST_TEST_FILES = Object.freeze([
 
 export const LONG_TASK_TRUST_TESTS = Object.freeze(
   LONG_TASK_TRUST_TEST_FILES.map(testPath),
+);
+
+export const LONG_TASK_LEVEL4_TEST_FILES = Object.freeze([
+  ...new Set(
+    CRITICAL_TEST_SENTINELS.filter((entry) =>
+      entry.required_suites.includes("long-task-level4"),
+    ).map((entry) => entry.file),
+  ),
+]);
+
+export const LONG_TASK_LEVEL4_TESTS = Object.freeze(
+  LONG_TASK_LEVEL4_TEST_FILES.map(testPath),
 );
 
 export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
@@ -430,12 +464,13 @@ export const CONTROLLED_TEST_SUITE_BUDGET_PROFILES = Object.freeze({
     }),
     budgets_ms: Object.freeze({
       default: 180_000,
+      "long-task-level4": 1_200_000,
       "long-task-trust": 540_000,
       "long-task": 1_200_000,
     }),
-    reviewed_on: "2026-08-13",
+    reviewed_on: "2026-08-19",
     rationale:
-      "Recalibrated catastrophic ceilings for the expanded 61-file default and 79-file Long-Task populations on pinned GitHub-hosted Ubuntu jobs; complete discovery, sentinel coverage, and functional pass requirements remain unchanged.",
+      "The historical 61-default/79-Long-Task calibration remains the evidence source for the 180/540/1200-second catastrophic ceilings. The current 64-default/87-Long-Task populations and the seven-file Level-4 projection use those ceilings conservatively; this is not a new timing calibration, and complete discovery, sentinel coverage, and functional pass requirements remain unchanged.",
   }),
 });
 
@@ -449,6 +484,11 @@ assertReviewedTestList(
   "Long-Task Trust Boundary Gate",
   LONG_TASK_TRUST_TESTS,
   TEST_TIER_REVIEW_BUDGETS.long_task_trust,
+);
+assertReviewedTestList(
+  "Long-Task Level-4 lane",
+  LONG_TASK_LEVEL4_TESTS,
+  TEST_TIER_REVIEW_BUDGETS.long_task_level4,
 );
 assertReviewedTestList(
   "Long-Task focused tier",
@@ -486,15 +526,6 @@ export function assertHotspotTestFanoutBudget(entries) {
         `Affected-test hotspot ${sourcePath} maps to ${tests.length} tests, above its reviewed maximum ${budget.max_tests_per_path}. Remap the owner or update TEST_TIER_REVIEW_BUDGETS with an explicit rationale; do not remove coverage merely to fit the budget.`,
       );
   }
-}
-
-export function normalizeRepositoryPath(value) {
-  return value
-    .split(path.sep)
-    .join("/")
-    .replace(/\\/gu, "/")
-    .replace(/^\.\//u, "")
-    .trim();
 }
 
 export function classifyLongTaskTestFile(value) {
@@ -611,10 +642,6 @@ export function suiteWallTimeBudgetStatus(wallTimeMs, budgetMs) {
   return wallTimeMs <= budgetMs ? "within_budget" : "exceeded";
 }
 
-export function testPath(name) {
-  return `${TEST_ROOT}/${name}`;
-}
-
 function resolveFromRepository(repositoryRoot, value) {
   return path.isAbsolute(value) ? value : path.resolve(repositoryRoot, value);
 }
@@ -686,6 +713,20 @@ function assertCriticalTestSentinels() {
     )
       throw new Error(
         `Trust sentinel ${entry.id} must also run in the complete Long-Task suite.`,
+      );
+    if (
+      entry.required_suites.includes("long-task-level4") &&
+      !entry.required_suites.includes("long-task")
+    )
+      throw new Error(
+        `Level-4 sentinel ${entry.id} must also run in the complete Long-Task suite.`,
+      );
+    if (
+      entry.required_suites.includes("long-task-trust") &&
+      entry.required_suites.includes("long-task-level4")
+    )
+      throw new Error(
+        `Critical sentinel ${entry.id} cannot duplicate execution across core Trust and Level-4 lanes.`,
       );
     if (typeof entry.rationale !== "string" || entry.rationale.length <= 40)
       throw new Error(

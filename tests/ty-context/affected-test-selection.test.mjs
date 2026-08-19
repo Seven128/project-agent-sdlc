@@ -6,9 +6,11 @@ import { fileURLToPath } from "node:url";
 import {
   DELIVERY_CONTRACT_FOCUSED_TESTS,
   LONG_TASK_FOCUSED_TESTS,
+  LONG_TASK_LEVEL4_TESTS,
   LONG_TASK_TRUST_TESTS,
   selectAffectedTests,
 } from "../../tools/affected_test_selection.mjs";
+import { realProcessRoiBenchmarkImplementationPaths } from "../../tools/long_task_real_process_roi_runner.mjs";
 import {
   CONTROLLED_TEST_SUITE_BUDGET_PROFILES,
   assertHotspotTestFanoutBudget,
@@ -410,15 +412,24 @@ test("Trust widening retains affected tests that the canonical gate does not con
   ]);
 });
 
-test("shared package runtime and dependency changes fail safe to the full suite", () => {
-  for (const file of [
+test("ordinary package runtime stays on core feedback while dependency and unknown changes fail safe", () => {
+  const ordinary = selectAffectedTests([
     "packages/ty-context/src/lib/shared-runtime.ts",
-    "package-lock.json",
-    "unknown.bin",
-  ]) {
+  ]);
+  assert.equal(ordinary.mode, "trust-boundary");
+  assert.equal(ordinary.level4.required, false);
+  assert.equal(ordinary.level4.execution, "not_required");
+
+  for (const file of ["package-lock.json", "unknown.bin"]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "full-suite", file);
     assert.deepEqual(selection.tests, [], file);
+    assert.equal(selection.level4.required, true, file);
+    assert.equal(
+      selection.level4.execution,
+      "contained_by_selected_aggregate",
+      file,
+    );
   }
 });
 
@@ -427,6 +438,7 @@ test("explicit work-product paths remain fail-safe selection inputs", () => {
     ".work_products/skill-validator-python/yaml.py",
   ]);
   assert.equal(selection.mode, "full-suite");
+  assert.equal(selection.level4.required, true);
   assert.match(selection.reasons[0], /unclassified_fail_safe/u);
 });
 
@@ -435,16 +447,14 @@ test("guidance-only changes select static consistency checks", () => {
     ".codex/skills/long-task-workflow/SKILL.md",
     "PROJECT_SPEC.md",
   ]);
-  assert.equal(selection.mode, "selected");
+  assert.equal(selection.mode, "trust-boundary");
   assert.equal(selection.requires_build, true);
   assert.deepEqual(selection.tests, [
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
     "tests/ty-context/long-task-delegation-benchmark.test.mjs",
     "tests/ty-context/long-task-delegation-evidence.test.mjs",
-    "tests/ty-context/long-task-design-context.test.mjs",
     "tests/ty-context/long-task-efficiency-design.test.mjs",
-    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
     "tests/ty-context/retired-authoring-migration.test.mjs",
     "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
@@ -614,6 +624,7 @@ test("explicit scopes are deterministic and no-change auto mode stays useful", (
 test("affected tooling changes select discovery, selection, and entry-point coverage", () => {
   const reportInputs = new Set([
     "tools/affected_change_discovery.mjs",
+    "tools/test_suite_path_policy.mjs",
     "tools/test_suite_policy.mjs",
     "tools/test_suite_lane_policy.mjs",
   ]);
@@ -621,11 +632,15 @@ test("affected tooling changes select discovery, selection, and entry-point cove
     "tools/affected_change_discovery.mjs",
     "tools/affected_test_selection.mjs",
     "tools/run_affected_tests.mjs",
+    "tools/test_suite_path_policy.mjs",
     "tools/test_suite_policy.mjs",
     "tools/test_suite_lane_policy.mjs",
   ]) {
     const selection = selectAffectedTests([file]);
-    assert.equal(selection.mode, "selected", file);
+    assert.equal(selection.mode, "trust-boundary", file);
+    assert.equal(selection.level4.required, true, file);
+    assert.deepEqual(selection.level4.trigger_paths, [file], file);
+    assert.equal(selection.level4.execution, "separate_required", file);
     const expected = [
       "tests/ty-context/affected-change-discovery.test.mjs",
       "tests/ty-context/affected-test-selection.test.mjs",
@@ -634,6 +649,7 @@ test("affected tooling changes select discovery, selection, and entry-point cove
     if (reportInputs.has(file))
       expected.push("tests/ty-context/self-hosting-cost-report.test.mjs");
     if (
+      file === "tools/test_suite_path_policy.mjs" ||
       file === "tools/test_suite_policy.mjs" ||
       file === "tools/test_suite_lane_policy.mjs"
     )
@@ -755,6 +771,7 @@ test("self-hosting report inputs retain report coverage through existing owners"
     "tools/package_build_fingerprint.mjs",
     "tools/release_publish_helpers.mjs",
     "tools/test_suite_lane_policy.mjs",
+    "tools/test_suite_path_policy.mjs",
     "tools/test_suite_policy.mjs",
   ]) {
     assert.ok(
@@ -797,12 +814,52 @@ test("self-hosting owners select exact host-trace, model, and report checks", ()
   }
 });
 
-test("pull-request template changes select workflow policy coverage", () => {
+test("pull-request template changes select workflow and Level-4 routing coverage", () => {
   const selection = selectAffectedTests([".github/PULL_REQUEST_TEMPLATE.md"]);
-  assert.equal(selection.mode, "selected");
+  assert.equal(selection.mode, "trust-boundary");
+  assert.equal(selection.level4.required, true);
+  assert.equal(selection.level4.execution, "separate_required");
   assert.deepEqual(selection.tests, [
     "tests/ty-context/workflow-test-entrypoints.test.mjs",
   ]);
+});
+
+test("Level-4 trigger closure covers the frozen implementation identity and fails unknown paths closed", () => {
+  for (const file of realProcessRoiBenchmarkImplementationPaths) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.level4.required, true, file);
+    assert.deepEqual(selection.level4.trigger_paths, [file], file);
+    assert.notEqual(selection.level4.execution, "not_required", file);
+  }
+
+  for (const file of [
+    "tests/ty-context/long-task-real-process-roi.test.mjs",
+    "tests/ty-context/long-task-level4-governance.test.mjs",
+    "tests/ty-context/helpers/long-task-level4-test-utils.mjs",
+    "examples/delivery-benchmark/real-process-workload/workload.json",
+    "tools/test_suite_path_policy.mjs",
+    "tools/test_suite_policy.mjs",
+    ".github/workflows/package.yml",
+    "packages/ty-context/package.json",
+    "project_context/areas/delivery-benchmark.md",
+  ]) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.level4.required, true, file);
+    assert.ok(selection.level4.trigger_paths.includes(file), file);
+  }
+
+  const ordinary = selectAffectedTests([
+    "packages/ty-context/src/lib/default-context.ts",
+  ]);
+  assert.equal(ordinary.level4.required, false);
+  assert.equal(ordinary.level4.execution, "not_required");
+  const unknown = selectAffectedTests(["future/unclassified-owner.bin"]);
+  assert.equal(unknown.mode, "full-suite");
+  assert.equal(unknown.level4.required, true);
+  assert.equal(
+    unknown.level4.execution,
+    "contained_by_selected_aggregate",
+  );
 });
 
 test("direct test edits stay selected while deleted direct tests fail safe to the full suite", () => {
@@ -880,6 +937,10 @@ test("package scripts expose affected and focused developer loops", async () => 
     "node tools/run_affected_tests.mjs --list",
   );
   assert.equal(
+    packageJson.scripts["test:long-task:level4"],
+    "npm run test:long-task-level4 --workspace project-tiny-context-harness",
+  );
+  assert.equal(
     packageJson.scripts["test:long-task:trust"],
     "node tools/run_affected_tests.mjs --scope trust",
   );
@@ -927,6 +988,10 @@ test("reviewed tier and hotspot budgets fail closed without limiting complete di
   assert.equal(
     LONG_TASK_TRUST_TESTS.length,
     TEST_TIER_REVIEW_BUDGETS.long_task_trust.max_files,
+  );
+  assert.equal(
+    LONG_TASK_LEVEL4_TESTS.length,
+    TEST_TIER_REVIEW_BUDGETS.long_task_level4.max_files,
   );
   assert.equal(
     LONG_TASK_FOCUSED_TESTS.length,
@@ -981,12 +1046,16 @@ test("[critical:controlled-budget-profile] suite wall-time budgets are named, en
   };
   assert.equal(
     CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v2"].reviewed_on,
-    "2026-08-13",
+    "2026-08-19",
   );
   assert.equal(resolveSuiteWallTimeBudgetMs("default", environment), 180000);
   assert.equal(
     resolveSuiteWallTimeBudgetMs("long-task-trust", environment),
     540000,
+  );
+  assert.equal(
+    resolveSuiteWallTimeBudgetMs("long-task-level4", environment),
+    1200000,
   );
   assert.equal(resolveSuiteWallTimeBudgetMs("long-task", environment), 1200000);
   assert.deepEqual(
