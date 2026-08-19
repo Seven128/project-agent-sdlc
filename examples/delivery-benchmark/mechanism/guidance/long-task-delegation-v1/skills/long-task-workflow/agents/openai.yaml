@@ -1,0 +1,6 @@
+interface:
+  display_name: "Long-Task Workflow"
+  short_description: "Run one Delivery Contract in the current native Goal"
+  default_prompt: "Use $long-task-workflow for one Canonical Delivery Contract. After the first-Authority-Lock checkpoint, actively identify safely independent bounded packets. If at least two have positive expected parallel benefit, are disjoint by owner/path/source of truth, and the exact long_task_implementation profile plus host capacity are available, create multiple exact workers; otherwise execute in the parent and state one allowed solo reason. Never set service_tier or use a generic substitute. Keep Source, Contract, Authority, architecture, Context, integration, current-candidate checks, formal verification, Final Gate, close and completion in the parent Goal."
+policy:
+  allow_implicit_invocation: false

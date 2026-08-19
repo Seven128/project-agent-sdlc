@@ -15,10 +15,10 @@ export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
       "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, measurement integrity, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
   }),
   long_task_focused: Object.freeze({
-    max_files: 25,
-    reviewed_on: "2026-08-03",
+    max_files: 27,
+    reviewed_on: "2026-08-19",
     rationale:
-      "Bound the default Long-Task edit loop while retaining authority, Context, semantic, selected-design, compact-carrier exact-closure and fixed structural-cost coverage without removing prior regressions.",
+      "Bound the default Long-Task edit loop while retaining authority, Context, semantic, selected-design, compact-carrier exact-closure and fixed structural-cost coverage, plus independently owned delegation bundle/isolation and fail-closed untrusted-host actor-evidence boundaries, without removing prior regressions.",
   }),
   delivery_contract_focused: Object.freeze({
     max_files: 14,
@@ -171,7 +171,7 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "implementation-freedom-boundary",
     "long-task-design-context.test.mjs",
     ["long-task", "long-task-trust"],
-    "Proves that Goal-owned order/method/cadence and optional multiple-agent implementation remain outside Harness development Gates, scheduling, delegation state and proof while all outputs converge for the unchanged Final Gate.",
+    "Proves that Goal-owned order/method/cadence remain outside Harness development Gates while the owner-selected positive-default delegation candidate stays isolated from the conditional public behavior until same-digest admission, with no scheduler, delegation state or proof and one unchanged Final Gate.",
   ),
   criticalSentinel(
     "level4-evidence-governance-boundary",
@@ -255,6 +255,8 @@ export const LONG_TASK_FOCUSED_TESTS = Object.freeze(
     "long-task-compact-semantic-carrier.test.mjs",
     "long-task-context-authority-topology.test.mjs",
     "long-task-context-evolution.test.mjs",
+    "long-task-delegation-benchmark.test.mjs",
+    "long-task-delegation-evidence.test.mjs",
     "long-task-design-context.test.mjs",
     "long-task-efficiency-design.test.mjs",
     "long-task-model-choice-checkpoint.test.mjs",
@@ -344,6 +346,8 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-context-evolution.test.mjs",
   "long-task-corrupt-state-abandon.test.mjs",
   "long-task-counterfactual-integrity.test.mjs",
+  "long-task-delegation-benchmark.test.mjs",
+  "long-task-delegation-evidence.test.mjs",
   "long-task-direct-process-observer.test.mjs",
   "long-task-evidence-kernel.test.mjs",
   "long-task-evidence-sensitivity-policy.test.mjs",
@@ -629,11 +633,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 56 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 58 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/56/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 18/58/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

@@ -108,7 +108,14 @@ test("fresh-Agent admission inputs, runners and runbook select the frozen protoc
     assert.equal(selection.mode, "selected", source);
     assert.deepEqual(
       selection.tests,
-      ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
+      source.endsWith("/RUNBOOK.md")
+        ? [
+            "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
+            "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
+            "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+            "tests/ty-context/long-task-delegation-evidence.test.mjs",
+          ]
+        : ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
       source,
     );
   }
@@ -355,6 +362,8 @@ test("static Codex implementation profile owner selects sync, collision and scop
   ]);
   assert.equal(selection.mode, "selected");
   assert.deepEqual(selection.tests, [
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/long-task-workspace-scope.test.mjs",
     "tests/ty-context/sync-init-doctor.test.mjs",
@@ -431,6 +440,8 @@ test("guidance-only changes select static consistency checks", () => {
   assert.deepEqual(selection.tests, [
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
     "tests/ty-context/long-task-design-context.test.mjs",
     "tests/ty-context/long-task-efficiency-design.test.mjs",
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
@@ -451,6 +462,8 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.deepEqual(profile.tests, [
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/sync-init-doctor.test.mjs",
   ]);
@@ -620,8 +633,118 @@ test("affected tooling changes select discovery, selection, and entry-point cove
     ];
     if (reportInputs.has(file))
       expected.push("tests/ty-context/self-hosting-cost-report.test.mjs");
+    if (
+      file === "tools/test_suite_policy.mjs" ||
+      file === "tools/test_suite_lane_policy.mjs"
+    )
+      expected.push("tests/ty-context/test-suite-runtime.test.mjs");
     assert.deepEqual(selection.tests, expected.toSorted(), file);
   }
+});
+
+test("delegation candidate owners, frozen inputs, and shared runners select exact coverage", () => {
+  const specific = selectAffectedTests([
+    "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
+  ]);
+  assert.equal(specific.mode, "selected");
+  assert.deepEqual(specific.tests, [
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
+  ]);
+
+  const sharedExpected = [
+    "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
+  ];
+  for (const sharedOwner of [
+    "examples/delivery-benchmark/mechanism/runner/prepare.mjs",
+    "examples/delivery-benchmark/mechanism/runner/preparation-workspace.mjs",
+    "examples/delivery-benchmark/mechanism/runner/owned-run-directory.mjs",
+    "examples/delivery-benchmark/mechanism/runner/comparison-aggregate.mjs",
+    "examples/delivery-benchmark/mechanism/runner/score-common.mjs",
+  ]) {
+    const selection = selectAffectedTests([sharedOwner]);
+    assert.equal(selection.mode, "selected", sharedOwner);
+    assert.deepEqual(selection.tests, sharedExpected, sharedOwner);
+  }
+  for (const mechanismOwner of [
+    "examples/delivery-benchmark/mechanism/runner/comparison-cost-metrics.mjs",
+    "examples/delivery-benchmark/mechanism/runner/comparison-metrics.mjs",
+    "examples/delivery-benchmark/mechanism/runner/score-standard.mjs",
+  ]) {
+    const selection = selectAffectedTests([mechanismOwner]);
+    assert.equal(selection.mode, "selected", mechanismOwner);
+    assert.deepEqual(
+      selection.tests,
+      ["tests/ty-context/delivery-mechanism-benchmark.test.mjs"],
+      mechanismOwner,
+    );
+  }
+
+  for (const dependency of [
+    "packages/ty-context/src/lib/long-task-hook-install.ts",
+    "tools/package_build_fingerprint.mjs",
+    "tools/self_hosting_cost_repository.mjs",
+  ]) {
+    const dependencySelection = selectAffectedTests([dependency]);
+    for (const expected of [
+      "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+      "tests/ty-context/long-task-delegation-evidence.test.mjs",
+    ])
+      assert.ok(
+        dependencySelection.tests.includes(expected),
+        `${dependency}:${expected}`,
+      );
+  }
+
+  for (const surface of [
+    ".codex/agents/long-task-implementation.toml",
+    ".codex/skills/long-task-workflow/SKILL.md",
+    ".codex/skills/long-task-workflow/agents/openai.yaml",
+    ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+    ".codex/ty-context-managed/agents/long-task-implementation.toml",
+    ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
+    ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
+    "packages/ty-context/assets/agents/AGENTS_CORE.md",
+    "packages/ty-context/assets/agents/long-task-implementation.toml",
+    "packages/ty-context/assets/skills/long-task-workflow/SKILL.md",
+    "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
+  ]) {
+    const surfaceSelection = selectAffectedTests([surface]);
+    for (const expected of [
+      "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+      "tests/ty-context/long-task-delegation-evidence.test.mjs",
+    ])
+      assert.ok(surfaceSelection.tests.includes(expected), `${surface}:${expected}`);
+    if (surface.endsWith("long-task-implementation.toml"))
+      assert.ok(
+        surfaceSelection.tests.includes(
+          "tests/ty-context/long-task-profile-hook.test.mjs",
+        ),
+        `${surface}:profile-hook`,
+      );
+  }
+
+  const operatorDocs = selectAffectedTests([
+    "examples/delivery-benchmark/mechanism/RUNBOOK.md",
+  ]);
+  assert.deepEqual(operatorDocs.tests, [
+    "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
+    "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
+  ]);
+
+  const owner = selectAffectedTests([
+    "project_context/areas/harness-package/implementation-index.md",
+  ]);
+  for (const expected of [
+    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+    "tests/ty-context/long-task-delegation-evidence.test.mjs",
+    "tests/ty-context/test-suite-runtime.test.mjs",
+  ])
+    assert.ok(owner.tests.includes(expected), expected);
 });
 
 test("self-hosting report inputs retain report coverage through existing owners", () => {
@@ -651,7 +774,15 @@ test("self-hosting owners select exact host-trace, model, and report checks", ()
     ["tools/self_hosting_cost_model.mjs", [hostTrace, model, report]],
     ["tools/normalized_host_trace.mjs", [hostTrace, report]],
     ["tools/self_hosting_cost_trace_paths.mjs", [hostTrace, report]],
-    ["tools/self_hosting_cost_repository.mjs", [hostTrace, report]],
+    [
+      "tools/self_hosting_cost_repository.mjs",
+      [
+        "tests/ty-context/long-task-delegation-benchmark.test.mjs",
+        "tests/ty-context/long-task-delegation-evidence.test.mjs",
+        hostTrace,
+        report,
+      ],
+    ],
     ["tools/self_hosting_cost_report.mjs", [hostTrace, report]],
     ["tools/self_hosting_cost_collectors.mjs", [report]],
     ["tools/self_hosting_cost_install_collectors.mjs", [report]],

@@ -1,0 +1,23 @@
+{
+  "id": "long-task-disjoint-money-health",
+  "title": "Complete two disjoint money and health contracts through one Long-Task Final Gate",
+  "category": "long_task_delegation",
+  "prompt": "Use the complete Long-Task lifecycle with plans/long-task-disjoint-money-health.md as authoritative Source. Fix the existing positive-money half-up edge cases in src/billing/money.mjs with focused tests/money.test.mjs. Independently add the Source-declared degraded-component projection to src/health.mjs with focused tests/health.test.mjs while preserving the exact no-argument healthy result. Update the two named owning Context files in the parent. The money and health code/test packets are intentionally disjoint, but Source, Contract, Context, integration, verification and Final Gate remain parent-owned. Do not simulate delegation or write host evidence.",
+  "paths": [
+    "plans/long-task-disjoint-money-health.md",
+    "src/billing/money.mjs",
+    "src/health.mjs",
+    "tests/money.test.mjs",
+    "tests/health.test.mjs"
+  ],
+  "terms": [
+    "half-up rounding",
+    "degraded health",
+    "independent packets",
+    "current Final Gate"
+  ],
+  "facets": ["contract", "verification", "deployment"],
+  "expected_context_delta": "required",
+  "probe": "long-task-disjoint-money-health.mjs",
+  "track_family": "long-task-delegation"
+}

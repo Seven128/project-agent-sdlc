@@ -67,22 +67,22 @@
     {
       "key": "maintenance.npm_unpacked",
       "unit": "bytes",
-      "value": 3471244
+      "value": 3474762
     },
     {
       "key": "maintenance.source_mappings.canonical_source",
       "unit": "bytes",
-      "value": 594133
+      "value": 594800
     },
     {
       "key": "maintenance.source_mappings.projected_actual",
       "unit": "bytes",
-      "value": 594133
+      "value": 594800
     },
     {
       "key": "maintenance.source_mappings.projected_expected",
       "unit": "bytes",
-      "value": 594133
+      "value": 594800
     },
     {
       "key": "declared.minimum_context",
@@ -162,7 +162,7 @@
     {
       "key": "maintenance.suite.long-task",
       "unit": "files",
-      "value": 85
+      "value": 87
     },
     {
       "key": "maintenance.suite.long-task-trust",
@@ -207,7 +207,7 @@
     {
       "key": "maintenance.suite.long-task.remainder-safe-04",
       "unit": "files",
-      "value": 5
+      "value": 7
     },
     {
       "key": "maintenance.suite.long-task.trust-exclusive",

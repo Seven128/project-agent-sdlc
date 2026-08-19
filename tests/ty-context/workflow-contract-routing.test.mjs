@@ -136,10 +136,22 @@ test("default Context routing combines manifest candidates with bounded search",
     managed,
     /active Long-Task instead projects the exact obligation[\s\S]*Final Gate[\s\S]*never also runs a default closure/iu,
   );
-  assert.match(managed, /Default work identifies material requirements[\s\S]*risk-proportional depth[\s\S]*reports anything not established/iu);
-  assert.match(managed, /does not maintain stable Fact\/Obligation identities, exact set equality[\s\S]*complete result ledger/iu);
-  const defaultSection = /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(managed)?.[0] ?? "";
-  assert.doesNotMatch(defaultSection, /Expected Semantic Facts\s*=|Fact × required-method obligations|per-Fact-by-method result rows|revision digest|machine accepted/iu);
+  assert.match(
+    managed,
+    /Default work identifies material requirements[\s\S]*risk-proportional depth[\s\S]*reports anything not established/iu,
+  );
+  assert.match(
+    managed,
+    /does not maintain stable Fact\/Obligation identities, exact set equality[\s\S]*complete result ledger/iu,
+  );
+  const defaultSection =
+    /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(
+      managed,
+    )?.[0] ?? "";
+  assert.doesNotMatch(
+    defaultSection,
+    /Expected Semantic Facts\s*=|Fact × required-method obligations|per-Fact-by-method result rows|revision digest|machine accepted/iu,
+  );
   assert.match(managed, /low-frequency rules in this startup router/iu);
   assert.match(
     `${longTask}\n${contractAuthoring}`,
@@ -149,11 +161,14 @@ test("default Context routing combines manifest candidates with bounded search",
 
 test("default Contract Conformance is material and risk-proportional while Long-Task retains exact closure", async () => {
   const [workflow, managed] = await Promise.all([
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
   ]);
   const conformance =
-    /## Contract Conformance[\s\S]*?(?=\n## Non-Goals)/u.exec(workflow)?.[0] ?? "";
+    /## Contract Conformance[\s\S]*?(?=\n## Non-Goals)/u.exec(workflow)?.[0] ??
+    "";
   for (const boundary of [
     /material Source\/Context requirement/iu,
     /applicable conditions and edge cases/iu,
@@ -173,7 +188,9 @@ test("default Contract Conformance is material and risk-proportional while Long-
   );
 
   const longTask =
-    /## Single-Goal Long-Task Workflow[\s\S]*?(?=\n## Contract Conformance)/u.exec(workflow)?.[0] ?? "";
+    /## Single-Goal Long-Task Workflow[\s\S]*?(?=\n## Contract Conformance)/u.exec(
+      workflow,
+    )?.[0] ?? "";
   assert.match(
     longTask,
     /Expected Semantic Facts[\s\S]*set-equal[\s\S]*current results/iu,
@@ -264,12 +281,27 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     );
   }
   assert.match(rationale, /project_context\/workspaces\/<workspace-id>/iu);
-  assert.match(rationale, /maps one code root through existing manifest fields/iu);
-  assert.match(rationale, /unrepresented code workspaces need no placeholder/iu);
-  assert.match(rationale, /starting set rather than a maximum readable set or access-control boundary/iu);
+  assert.match(
+    rationale,
+    /maps one code root through existing manifest fields/iu,
+  );
+  assert.match(
+    rationale,
+    /unrepresented code workspaces need no placeholder/iu,
+  );
+  assert.match(
+    rationale,
+    /starting set rather than a maximum readable set or access-control boundary/iu,
+  );
   assert.match(rationale, /Read scope answers what must be understood/iu);
-  assert.match(rationale, /intended workspace\/change scope answers what the user authorized/iu);
-  assert.match(rationale, /adds no workspace schema, topology scanner, registry, migration/iu);
+  assert.match(
+    rationale,
+    /intended workspace\/change scope answers what the user authorized/iu,
+  );
+  assert.match(
+    rationale,
+    /adds no workspace schema, topology scanner, registry, migration/iu,
+  );
   assert.match(
     rootAgents,
     /separate the expandable read scope from the task-local intended workspace/iu,
@@ -280,7 +312,10 @@ test("sparse Context workspace guidance keeps reads expandable and change target
   );
   assert.match(managed, /Enumerate intentional multi-workspace targets/iu);
   assert.match(managed, /Do not make the full Context graph the default/iu);
-  assert.match(managed, /required Context directory for every package-manager workspace/iu);
+  assert.match(
+    managed,
+    /required Context directory for every package-manager workspace/iu,
+  );
   assert.match(managed, /automatic topology scan/iu);
   assert.match(managed, /duplicate Long-Task scope classifier/iu);
   assert.match(
@@ -295,8 +330,14 @@ test("sparse Context workspace guidance keeps reads expandable and change target
   assert.match(development, /expandable read scope/iu);
   assert.match(development, /intended\/supporting workspaces/iu);
   assert.match(development, /rather than edit authorization or read ACLs/iu);
-  assert.match(development, /workspace registries, topology scans or empty Context mirrors/iu);
-  assert.match(manifestTemplate, /project_context\/workspaces\/<workspace-id>/iu);
+  assert.match(
+    development,
+    /workspace registries, topology scans or empty Context mirrors/iu,
+  );
+  assert.match(
+    manifestTemplate,
+    /project_context\/workspaces\/<workspace-id>/iu,
+  );
   assert.match(manifestTemplate, /maps one code root/iu);
   assert.match(manifestTemplate, /do not create empty/iu);
   assert.match(manifestTemplate, /repository-common default Area/iu);
@@ -308,14 +349,23 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     /workspace-local Area belongs under `project_context\/workspaces\/<workspace-id>\/areas/iu,
   );
   assert.match(areaTemplate, /Cross-workspace Areas stay under top-level/iu);
-  assert.match(architectureTemplate, /each represented `project_context\/workspaces/iu);
-  assert.match(architectureTemplate, /no durable Context merely to complete a mirror/iu);
+  assert.match(
+    architectureTemplate,
+    /each represented `project_context\/workspaces/iu,
+  );
+  assert.match(
+    architectureTemplate,
+    /no durable Context merely to complete a mirror/iu,
+  );
   assert.match(
     verificationTemplate,
     /changed-path\/target-scope verifier[\s\S]*intended workspace\(s\)[\s\S]*task-attributable paths/iu,
   );
   for (const publicEnglish of [readme, packageReadme]) {
-    assert.match(publicEnglish, /project_context\/workspaces\/<workspace-id>/iu);
+    assert.match(
+      publicEnglish,
+      /project_context\/workspaces\/<workspace-id>/iu,
+    );
     assert.match(
       publicEnglish,
       /expandable starting set|expandable working set/iu,
@@ -324,22 +374,34 @@ test("sparse Context workspace guidance keeps reads expandable and change target
     assert.match(publicEnglish, /Single-workspace and non-monorepo/iu);
     assert.match(publicEnglish, /repository-common default Area/iu);
     assert.match(publicEnglish, /workspace-local Context `on-demand`/iu);
-    assert.match(publicEnglish, /Root `DESIGN\.md` remains the current shared project Design Authority/iu);
+    assert.match(
+      publicEnglish,
+      /Root `DESIGN\.md` remains the current shared project Design Authority/iu,
+    );
     assert.match(publicEnglish, /changed-path|target-scope/iu);
   }
   assert.match(sample, /## Sparse Context Workspace \/ Monorepo Variant/iu);
-  assert.match(sample, /project_context\/workspaces\/mobile\/areas\/product\.md/iu);
+  assert.match(
+    sample,
+    /project_context\/workspaces\/mobile\/areas\/product\.md/iu,
+  );
   assert.match(sample, /id = "repository"[\s\S]*default = true/iu);
   assert.doesNotMatch(
     sample,
     /id = "mobile-product"[\s\S]*?default = true[\s\S]*?\[\[areas\]\][\s\S]*?id = "miniapp-product"/iu,
   );
   assert.match(sample, /initial Context working set/iu);
-  assert.match(sample, /packages\/eslint-config[\s\S]*without any Context directory/iu);
+  assert.match(
+    sample,
+    /packages\/eslint-config[\s\S]*without any Context directory/iu,
+  );
   assert.match(sample, /adds no `\[\[workspaces\]\]` schema/iu);
   assert.match(sample, /changed-path scope verifier/iu);
   assert.match(chineseReadme, /### 稀疏 Context Workspace 与 Monorepo/u);
-  assert.match(chineseReadme, /没有耐久 Context 的 package-manager workspace 不创建空目录/u);
+  assert.match(
+    chineseReadme,
+    /没有耐久 Context 的 package-manager workspace 不创建空目录/u,
+  );
   assert.match(chineseReadme, /不是读取 ACL、最大集合/u);
   assert.match(chineseReadme, /单 workspace\/非 monorepo 项目保持原有/u);
   assert.match(
@@ -556,9 +618,18 @@ test("shared engineering quality is observable, risk-proportional, and single-ca
     /no quality artifact\/matrix, second `Context Delta`, Contract, Source aspect, Claim\/risk kind, Authority, Gate, state, scheduler, broad quality Boolean or language-generic analyzer/iu,
   );
   assert.match(authoring, /^## Engineering-quality carrier$/mu);
-  assert.match(authoring, /Architecture Deliberation remains universal and risk-proportional/iu);
-  assert.match(authoring, /Default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers/iu);
-  assert.match(authoring, /Unsupported modularity metrics remain `null`\/`n\/a`/iu);
+  assert.match(
+    authoring,
+    /Architecture Deliberation remains universal and risk-proportional/iu,
+  );
+  assert.match(
+    authoring,
+    /Default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers/iu,
+  );
+  assert.match(
+    authoring,
+    /Unsupported modularity metrics remain `null`\/`n\/a`/iu,
+  );
 });
 
 test("CLI and managed guidance route only explicit or active work to long-task", async () => {
@@ -567,7 +638,10 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     "help",
   ]);
   assert.match(stdout, /long-task <subcommand>/);
-  assert.match(stdout, /Install Long-Task Skill, lifecycle Hooks, templates and optional Codex worker/);
+  assert.match(
+    stdout,
+    /Install Long-Task Skill, lifecycle Hooks, templates and optional Codex worker/,
+  );
   assert.doesNotMatch(
     stdout,
     /validate-plan-contract|validate-plan-acceptance/,
@@ -601,7 +675,10 @@ test("CLI and managed guidance route only explicit or active work to long-task",
     guidance,
     /`ty-context enable long-task` installs the sole Long-Task Workflow Skill and package-owned lifecycle Hooks/iu,
   );
-  assert.match(guidance, /Retired standalone authoring pointers are not installed/iu);
+  assert.match(
+    guidance,
+    /Retired standalone authoring pointers are not installed/iu,
+  );
   assert.match(guidance, /`design-system-authoring` is explicit-only/iu);
 });
 
@@ -618,9 +695,15 @@ test("complexity, workflow assurance, and Long-Task proof floor remain orthogona
     source,
   ] = await Promise.all([
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
-    read(".codex/ty-context-managed/skills/context_development_engineer/SKILL.md"),
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
-    read("project_context/areas/harness-package/decision-rationale/long-task-workflow.md"),
+    read(
+      ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
+    ),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
     read("PROJECT_SPEC.md"),
     read("README.md"),
     read("README.zh-CN.md"),
@@ -628,27 +711,70 @@ test("complexity, workflow assurance, and Long-Task proof floor remain orthogona
     read("docs/workflow-assurance-boundary.md"),
   ]);
 
-  for (const content of [managed, workflow, specification, readme, packageReadme, source]) {
-    assert.match(content, /any complexity|regardless of duration, complexity or file count/iu);
+  for (const content of [
+    managed,
+    workflow,
+    specification,
+    readme,
+    packageReadme,
+    source,
+  ]) {
+    assert.match(
+      content,
+      /any complexity|regardless of duration, complexity or file count/iu,
+    );
     assert.match(content, /completion authority[\s\S]*recoverab/iu);
-    assert.match(content, /complexity[\s\S]*execution and verification depth/iu);
+    assert.match(
+      content,
+      /complexity[\s\S]*execution and verification depth/iu,
+    );
   }
   assert.match(chineseReadme, /复杂度决定执行与验证深度/u);
   assert.match(chineseReadme, /完成权威与恢复能力决定工作流路线/u);
   assert.match(development, /not the default implementation workflow/iu);
   assert.match(managed, /Route by required assurance, not task size/iu);
-  assert.match(managed, /A small consequential rule may use it and a complex cross-module change may remain default/iu);
+  assert.match(
+    managed,
+    /A small consequential rule may use it and a complex cross-module change may remain default/iu,
+  );
   assert.match(rationale, /removes the former L0 eligibility barrier only/iu);
-  assert.match(rationale, /auto \| standard \| strict[\s\S]*remain unchanged/iu);
-  assert.match(specification, /This route keeps the existing Source, Contract, Authority Lock, protected Revision, Fact\/Obligation, Evidence Kernel, repair\/reverification, External Confirmation, Final Gate and no-drift logic unchanged/iu);
-  assert.match(source, /does not revise Long-Task's internal workflow, proof model, schema or runtime/iu);
+  assert.match(
+    rationale,
+    /auto \| standard \| strict[\s\S]*remain unchanged/iu,
+  );
+  assert.match(
+    specification,
+    /This route keeps the existing Source, Contract, Authority Lock, protected Revision, Fact\/Obligation, Evidence Kernel, repair\/reverification, External Confirmation, Final Gate and no-drift logic unchanged/iu,
+  );
+  assert.match(
+    source,
+    /does not revise Long-Task's internal workflow, proof model, schema or runtime/iu,
+  );
 
-  const defaultManaged = /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(managed)?.[0] ?? "";
-  assert.doesNotMatch(defaultManaged, /Expected Semantic Facts\s*=|Fact × required-method obligations|stable Fact Key|Obligation Key|revision digest|Final Gate|machine accepted/iu);
-  assert.match(development, /Exact non-UI semantic facts remain owned by Source\/Context/iu);
-  assert.match(managed, /After the last relevant code, configuration, Source or controlling-Context change, rerun every affected check/iu);
-  assert.match(managed, /localize it to the requirement\/owner\/module\/check, repair it and rerun affected checks/iu);
-  assert.match(managed, /Report `Implemented`, `Verified`, `Unverified`, `Blocked \/ decision required`/iu);
+  const defaultManaged =
+    /## Default Workflow Contract[\s\S]*?(?=## Non-UI Source And Assurance Boundary)/u.exec(
+      managed,
+    )?.[0] ?? "";
+  assert.doesNotMatch(
+    defaultManaged,
+    /Expected Semantic Facts\s*=|Fact × required-method obligations|stable Fact Key|Obligation Key|revision digest|Final Gate|machine accepted/iu,
+  );
+  assert.match(
+    development,
+    /Exact non-UI semantic facts remain owned by Source\/Context/iu,
+  );
+  assert.match(
+    managed,
+    /After the last relevant code, configuration, Source or controlling-Context change, rerun every affected check/iu,
+  );
+  assert.match(
+    managed,
+    /localize it to the requirement\/owner\/module\/check, repair it and rerun affected checks/iu,
+  );
+  assert.match(
+    managed,
+    /Report `Implemented`, `Verified`, `Unverified`, `Blocked \/ decision required`/iu,
+  );
 });
 
 test("Goal ownership, active recovery, and explicit Codex invocation stay independent", async () => {
@@ -661,7 +787,10 @@ test("Goal ownership, active recovery, and explicit Codex invocation stay indepe
   ]);
 
   for (const content of [agents, workflow, skill]) {
-    assert.match(content, /selected and owned by the host\/user|host\/user-selected/iu);
+    assert.match(
+      content,
+      /selected and owned by the host\/user|host\/user-selected/iu,
+    );
     assert.match(
       content,
       /does not create, persist or reconnect (?:a |that )?(?:native )?Goal identifier/iu,
@@ -785,6 +914,8 @@ test("long-task Skill is the only active long-task workflow", async () => {
     contractAuthoring,
     evidenceDesign,
     authorityLifecycle,
+    delegationManifestText,
+    sourceMappings,
   ] = await Promise.all([
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
     read(".codex/skills/long-task-workflow/SKILL.md"),
@@ -808,6 +939,10 @@ test("long-task Skill is the only active long-task workflow", async () => {
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
     ),
+    read(
+      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
+    ),
+    read("packages/ty-context/source-mappings.yaml"),
   ]);
   assert.equal(generated, active, "source-workspace long-task Skill drift");
   assert.equal(packaged, active, "package long-task Skill drift");
@@ -837,6 +972,17 @@ test("long-task Skill is the only active long-task workflow", async () => {
     YAML.parse(codexMetadata).policy.allow_implicit_invocation,
     false,
   );
+  const delegationManifest = JSON.parse(delegationManifestText);
+  assert.equal(delegationManifest.status, "experimental_pending_admission");
+  assert.equal(
+    delegationManifest.promotion.canonical_behavior_before_promotion,
+    "conditional_delegation",
+  );
+  assert.equal(
+    delegationManifest.promotion.source_mapping_membership_before_promotion,
+    false,
+  );
+  assert.doesNotMatch(sourceMappings, /long-task-delegation-v1/u);
   const detailedAuthoring = `${sourceAuthoring}\n${contractAuthoring}`;
   assert.match(
     detailedAuthoring,
@@ -867,7 +1013,10 @@ test("long-task Skill is the only active long-task workflow", async () => {
     detailedAuthoring,
     /Conflicting authority, an explicitly user-reserved choice, a missing material preference or the absence of a defensible recommendation remains `decision_required`/is,
   );
-  assert.match(detailedAuthoring, /Draft decomposition and repository binding/is);
+  assert.match(
+    detailedAuthoring,
+    /Draft decomposition and repository binding/is,
+  );
   assert.match(detailedAuthoring, /evidence-backed repository facts/is);
   assert.match(
     detailedAuthoring,
@@ -909,15 +1058,9 @@ test("long-task Skill is the only active long-task workflow", async () => {
     /neither switches nor verifies[\s\S]*persists checkpoint\/acknowledgement\/route state[\s\S]*nor creates[\s\S]*automatic switch/iu,
   );
   assert.match(active, /second Contract plan/);
-  assert.match(
-    active,
-    /Each worker receives only its bounded packet/iu,
-  );
+  assert.match(active, /Each worker receives only its bounded packet/iu);
   assert.match(active, /parent reviews and integrates every report/iu);
-  assert.match(
-    active,
-    /Delegation Suitability/iu,
-  );
+  assert.match(active, /Delegation Suitability/iu);
   assert.match(active, /reports are not Progress, Evidence or proof/iu);
   assert.match(active, /converge into the selected verification workspace/iu);
   assert.ok(
@@ -973,139 +1116,140 @@ test("long-task Skill is the only active long-task workflow", async () => {
   );
 });
 
-const retiredTestOrFixture = /^tests\/ty-context\/(?:affected-test-selection|long-task-authority-lifecycle-smoke|long-task-design-context|long-task-profile-hook|long-task-workflow-black-box|orientation-fast-path|retired-authoring-migration|retired-workflow-migration|sync-init-doctor|upgrade|workflow-contract-routing|workflow-test-entrypoints)\.(?:test\.)?mjs$|^tests\/ty-context\/fixtures\/removed-source-plan-authoring-SKILL\.md$/u;
+const retiredTestOrFixture =
+  /^tests\/ty-context\/(?:affected-test-selection|long-task-authority-lifecycle-smoke|long-task-design-context|long-task-profile-hook|long-task-workflow-black-box|orientation-fast-path|retired-authoring-migration|retired-workflow-migration|sync-init-doctor|upgrade|workflow-contract-routing|workflow-test-entrypoints)\.(?:test\.)?mjs$|^tests\/ty-context\/fixtures\/removed-source-plan-authoring-SKILL\.md$/u;
 const retiredReleaseHistory = /^docs\/launch\//u;
 const retiredSemanticPolicies = [
-    {
-      key: "source-plan-authoring",
-      search: "source-plan-authoring",
-      pattern: /source-plan-authoring/iu,
+  {
+    key: "source-plan-authoring",
+    search: "source-plan-authoring",
+    pattern: /source-plan-authoring/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      /^docs\/design-resource-authoring-implementation-source\.md$/u,
+      /^PROJECT_SPEC\.md$/u,
+      /^\.work_products\/(?:design-fact-universe-closure|symbolic-denotation-efficiency)\/delivery-contract\.yaml$/u,
+      /^tools\/(?:affected_test_selection|release_tarball_smoke|sync_release_version|test_suite_policy)\.mjs$/u,
+      retiredReleaseHistory,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "source-plan",
+    search: "source plan",
+    pattern: /\bsource plan\b/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      /^README\.md$/u,
+      /^PROJECT_SPEC\.md$/u,
+      /^packages\/ty-context\/(?:assets\/)?README\.md$/u,
+      /^docs\/(?:design-resource-authoring-implementation-source|page-level-uiux-authority-design-source)\.md$/u,
+      /^tools\/(?:release_tarball_smoke|sync_release_version)\.mjs$/u,
+      retiredReleaseHistory,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "normal-long-task",
+    search: "normal-long-task",
+    pattern: /normal-long-task/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      /^PROJECT_SPEC\.md$/u,
+      retiredReleaseHistory,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "composite-codex",
+    search: "composite-codex",
+    pattern: /composite-codex/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "prepare-composite-long-task",
+    search: "prepare-composite-long-task",
+    pattern: /prepare-composite-long-task/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      /^tools\/release_tarball_smoke\.mjs$/u,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "composite-long-task-workflow",
+    search: "composite-long-task-workflow",
+    pattern: /composite-long-task-workflow/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      /^tools\/release_tarball_smoke\.mjs$/u,
+      retiredReleaseHistory,
+      retiredTestOrFixture,
+    ],
+  },
+  {
+    key: "long-task-delivery-v1",
+    search: "long-task-delivery-v1",
+    pattern: /long-task-delivery-v1/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/long-task-delivery-parser\.ts$/u,
+      /^tools\/release_tarball_smoke\.mjs$/u,
+      /^tests\/ty-context\/(?:long-task-delivery-parser|workflow-contract-routing)\.test\.mjs$/u,
+    ],
+  },
+  {
+    key: "v1-repo-local-hook",
+    search: "v1 repo-local hook",
+    pattern: /\bv1 repo-local hook\b/iu,
+    allowed: [
+      /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+      retiredTestOrFixture,
+    ],
+  },
+  ...["delivery-set", "composite-long-task", "composite-campaign"].map(
+    (key) => ({
+      key,
+      search: key,
+      pattern: new RegExp(key, "iu"),
       allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^docs\/design-resource-authoring-implementation-source\.md$/u,
-        /^PROJECT_SPEC\.md$/u,
-        /^\.work_products\/(?:design-fact-universe-closure|symbolic-denotation-efficiency)\/delivery-contract\.yaml$/u,
-        /^tools\/(?:affected_test_selection|release_tarball_smoke|sync_release_version|test_suite_policy)\.mjs$/u,
-        retiredReleaseHistory,
-        retiredTestOrFixture,
-      ],
-    },
-    {
-      key: "source-plan",
-      search: "source plan",
-      pattern: /\bsource plan\b/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^README\.md$/u,
-        /^PROJECT_SPEC\.md$/u,
-        /^packages\/ty-context\/(?:assets\/)?README\.md$/u,
-        /^docs\/(?:design-resource-authoring-implementation-source|page-level-uiux-authority-design-source)\.md$/u,
-        /^tools\/(?:release_tarball_smoke|sync_release_version)\.mjs$/u,
-        retiredReleaseHistory,
-        retiredTestOrFixture,
-      ],
-    },
-    {
-      key: "normal-long-task",
-      search: "normal-long-task",
-      pattern: /normal-long-task/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^PROJECT_SPEC\.md$/u,
-        retiredReleaseHistory,
-        retiredTestOrFixture,
-      ],
-    },
-    {
-      key: "composite-codex",
-      search: "composite-codex",
-      pattern: /composite-codex/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        retiredTestOrFixture,
-      ],
-    },
-    {
-      key: "prepare-composite-long-task",
-      search: "prepare-composite-long-task",
-      pattern: /prepare-composite-long-task/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
+        /^packages\/ty-context\/src\/commands\/(?:index|composite-long-task|composite-campaign)\.ts$/u,
+        /^packages\/ty-context\/src\/lib\/(?:long-task-verifier-identity|migrations)\.ts$/u,
+        /^(?:README|PROJECT_SPEC)\.md$/u,
+        /^packages\/ty-context\/assets\/README\.md$/u,
         /^tools\/release_tarball_smoke\.mjs$/u,
-        retiredTestOrFixture,
-      ],
-    },
-    {
-      key: "composite-long-task-workflow",
-      search: "composite-long-task-workflow",
-      pattern: /composite-long-task-workflow/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        /^tools\/release_tarball_smoke\.mjs$/u,
         retiredReleaseHistory,
         retiredTestOrFixture,
       ],
-    },
-    {
-      key: "long-task-delivery-v1",
-      search: "long-task-delivery-v1",
-      pattern: /long-task-delivery-v1/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/long-task-delivery-parser\.ts$/u,
-        /^tools\/release_tarball_smoke\.mjs$/u,
-        /^tests\/ty-context\/(?:long-task-delivery-parser|workflow-contract-routing)\.test\.mjs$/u,
-      ],
-    },
-    {
-      key: "v1-repo-local-hook",
-      search: "v1 repo-local hook",
-      pattern: /\bv1 repo-local hook\b/iu,
-      allowed: [
-        /^packages\/ty-context\/src\/lib\/migrations\.ts$/u,
-        retiredTestOrFixture,
-      ],
-    },
-    ...["delivery-set", "composite-long-task", "composite-campaign"].map(
-      (key) => ({
-        key,
-        search: key,
-        pattern: new RegExp(key, "iu"),
-        allowed: [
-          /^packages\/ty-context\/src\/commands\/(?:index|composite-long-task|composite-campaign)\.ts$/u,
-          /^packages\/ty-context\/src\/lib\/(?:long-task-verifier-identity|migrations)\.ts$/u,
-          /^(?:README|PROJECT_SPEC)\.md$/u,
-          /^packages\/ty-context\/assets\/README\.md$/u,
-          /^tools\/release_tarball_smoke\.mjs$/u,
-          retiredReleaseHistory,
-          retiredTestOrFixture,
-        ],
-      }),
-    ),
-    {
-      key: "source-unit",
-      search: "source unit",
-      pattern: /\bsource unit (?:inventor(?:y|ies)|schema|artifact|workflow)\b/iu,
-      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
-    },
-    {
-      key: "multi-sfc",
-      search: "multi-sfc",
-      pattern: /multi-sfc/iu,
-      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
-    },
-    {
-      key: "campaign-runtime",
-      search: "campaign runtime",
-      pattern: /\bcampaign runtime\b/iu,
-      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
-    },
-    {
-      key: "packet-chain",
-      search: "packet chain",
-      pattern: /\bpacket chain\b/iu,
-      allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
-    },
-  ];
+    }),
+  ),
+  {
+    key: "source-unit",
+    search: "source unit",
+    pattern: /\bsource unit (?:inventor(?:y|ies)|schema|artifact|workflow)\b/iu,
+    allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
+  },
+  {
+    key: "multi-sfc",
+    search: "multi-sfc",
+    pattern: /multi-sfc/iu,
+    allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
+  },
+  {
+    key: "campaign-runtime",
+    search: "campaign runtime",
+    pattern: /\bcampaign runtime\b/iu,
+    allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
+  },
+  {
+    key: "packet-chain",
+    search: "packet chain",
+    pattern: /\bpacket chain\b/iu,
+    allowed: [/^PROJECT_SPEC\.md$/u, retiredTestOrFixture],
+  },
+];
 
 function unclassifiedRetiredSemanticKeys(file, content) {
   return retiredSemanticPolicies
@@ -1166,7 +1310,9 @@ test("retired semantic census permits only isolated migration, tombstone, histor
   for (const { key, pattern } of retiredSemanticPolicies)
     assert.doesNotMatch(active, pattern, `${key}: active routing residue`);
 
-  const historical = await read("docs/design-resource-authoring-implementation-source.md");
+  const historical = await read(
+    "docs/design-resource-authoring-implementation-source.md",
+  );
   assert.match(
     historical.slice(0, 800),
     /Status:.*dated ordinary Source.*provenance.*not an active Skill/isu,

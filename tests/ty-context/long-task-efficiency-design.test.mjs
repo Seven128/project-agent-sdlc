@@ -148,13 +148,9 @@ test("first-lock host checkpoint creates no model routing state", async () => {
     read(
       "project_context/areas/harness-package/contracts/workflow-contract.md",
     ),
-    read(
-      ".codex/ty-context-managed/agents/long-task-implementation.toml",
-    ),
+    read(".codex/ty-context-managed/agents/long-task-implementation.toml"),
     read(".codex/agents/long-task-implementation.toml"),
-    read(
-      "packages/ty-context/assets/agents/long-task-implementation.toml",
-    ),
+    read("packages/ty-context/assets/agents/long-task-implementation.toml"),
     read("PROJECT_SPEC.md"),
     read(
       "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
@@ -187,7 +183,10 @@ test("first-lock host checkpoint creates no model routing state", async () => {
     "first Authority Lock",
   ])
     assert.match(combined, new RegExp(expected, "iu"), expected);
-  assert.match(combined, /After handling the model change, reply exactly: model checkpoint cleared, continue/iu);
+  assert.match(
+    combined,
+    /After handling the model change, reply exactly: model checkpoint cleared, continue/iu,
+  );
   assert.match(combined, /unconditionally|always ends? the current turn/iu);
   assert.match(combined, /prior[\s\S]{0,120}(?:never skips|cannot skip)/iu);
   assert.match(combined, /generic_continue_satisfies"?\s*:\s*false/iu);
@@ -200,14 +199,14 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   assert.match(combined, /does not switch|cannot switch/iu);
   assert.match(combined, /not proof|not acceptance evidence/iu);
   assert.match(combined, /long_task_implementation/iu);
-  assert.match(
-    combined,
-    /after .*checkpoint|after .*resume|post-checkpoint/iu,
-  );
+  assert.match(combined, /after .*checkpoint|after .*resume|post-checkpoint/iu);
   assert.match(combined, /Delegation Suitability/iu);
   assert.match(combined, /benefit[\s\S]{0,120}coordination cost/iu);
   assert.match(combined, /multiple disjoint/iu);
-  assert.match(combined, /parent[\s\S]{0,200}(?:Source|Authority)[\s\S]{0,240}Final Gate/iu);
+  assert.match(
+    combined,
+    /parent[\s\S]{0,200}(?:Source|Authority)[\s\S]{0,240}Final Gate/iu,
+  );
   assert.match(
     combined,
     /absence.*acceptance|unavailable.*formal acceptance|cannot affect .*acceptance/iu,
@@ -258,9 +257,13 @@ test("implementation freedom removes method gates without weakening declared pro
     uiux,
     publicReadme,
     packageReadme,
+    candidateSkill,
+    candidateManifestText,
   ] = await Promise.all([
     read("PROJECT_SPEC.md"),
-    read("project_context/areas/harness-package/contracts/workflow-contract.md"),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
     read(
       "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
     ),
@@ -275,6 +278,12 @@ test("implementation freedom removes method gates without weakening declared pro
     read(".codex/ty-context-managed/skills/context_uiux_design/SKILL.md"),
     read("README.md"),
     read("packages/ty-context/README.md"),
+    read(
+      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/skills/long-task-workflow/SKILL.md",
+    ),
+    read(
+      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
+    ),
   ]);
   const combined = [
     specification,
@@ -289,22 +298,50 @@ test("implementation freedom removes method gates without weakening declared pro
     packageReadme,
   ].join("\n");
 
-  assert.match(
-    combined,
-    /Goal-owned adaptive (?:technical )?implementation/iu,
-  );
+  assert.match(combined, /Goal-owned adaptive (?:technical )?implementation/iu);
   assert.match(
     combined,
     /Frontier[\s\S]{0,240}(?:not an implementation gate|does not (?:authorize|prohibit|restrict|gate))/iu,
   );
   assert.match(
-    combined,
-    /platform-native (?:internal |opaque )?delegation[\s\S]{0,280}(?:no .*scheduler|non-authoritative|not .*proof|converge)/iu,
+    [specification, workflow, rationale].join("\n"),
+    /current canonical\/public carrier remains optional[\s\S]{0,260}Owner-selected replacement requires multiple exact workers/iu,
   );
   assert.match(combined, /Implementation Freedom Boundary/iu);
+  assert.match(combined, /one or multiple platform-native agents\/subagents/iu);
+  assert.doesNotMatch(skill, /must create multiple exact workers/iu);
   assert.match(
-    combined,
-    /one or multiple platform-native agents\/subagents/iu,
+    [specification, workflow, rationale].join("\n"),
+    /(?:current )?canonical(?:\/package-installed)? Skill[^\n]{0,180}(?:retains|remain)[^\n]{0,80}conditional/iu,
+  );
+  assert.match(candidateSkill, /must create multiple exact workers/iu);
+  assert.match(
+    candidateSkill,
+    /at least two packets[^\n]{0,240}positive expected parallel benefit[^\n]{0,240}owner\/path\/source of truth[^\n]{0,240}exact package-managed `long_task_implementation` profile[^\n]{0,240}sufficient current capacity/iu,
+  );
+  const candidateManifest = JSON.parse(candidateManifestText);
+  assert.equal(candidateManifest.delegation_policy.fixed_worker_count, null);
+  assert.deepEqual(candidateManifest.delegation_policy.qualifying_predicates, [
+    "independently_safe",
+    "positive_expected_parallel_benefit",
+    "owner_path_source_of_truth_disjoint",
+    "exact_profile_available",
+    "sufficient_current_host_capacity",
+  ]);
+  assert.deepEqual(candidateManifest.delegation_policy.solo_reason_ids, [
+    "insufficient_qualifying_packets",
+    "exact_profile_unavailable",
+    "insufficient_host_capacity",
+    "owner_or_path_conflict",
+    "coordination_cost_exceeds_benefit",
+  ]);
+  assert.match(
+    candidateSkill,
+    /parent Goal owns Source, Contract, Authority[^\n]*Context writeback[^\n]*integration[^\n]*current-candidate checks[^\n]*Final Gate/iu,
+  );
+  assert.match(
+    candidateSkill,
+    /Worker count is never fixed[^\n]*Add no development phase\/method Gate[^\n]*agent allocator\/scheduler[^\n]*persistent delegation state/iu,
   );
   assert.match(
     combined,

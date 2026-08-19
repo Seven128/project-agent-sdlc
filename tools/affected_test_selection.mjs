@@ -40,6 +40,80 @@ const SELF_HOSTING_REPORT_INPUTS = new Set([
   "tools/test_suite_policy.mjs",
 ]);
 
+const DELEGATION_BENCHMARK_TESTS = Object.freeze([
+  "long-task-delegation-benchmark.test.mjs",
+  "long-task-delegation-evidence.test.mjs",
+]);
+
+const DELEGATION_OWNER_PATHS = new Set([
+  "PROJECT_SPEC.md",
+  "project_context/areas/delivery-benchmark.md",
+  "project_context/areas/harness-package.md",
+  "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+  "project_context/areas/harness-package/contracts/workflow-contract.md",
+  "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+  "project_context/areas/harness-package/implementation-index.md",
+  "project_context/areas/harness-package/verification.md",
+]);
+
+const DELEGATION_SHARED_MECHANISM_PATHS = new Set([
+  "examples/delivery-benchmark/mechanism/README.md",
+  "examples/delivery-benchmark/mechanism/RUNBOOK.md",
+  "examples/delivery-benchmark/mechanism/experiment-set.json",
+  "examples/delivery-benchmark/mechanism/runner/compare.mjs",
+  "examples/delivery-benchmark/mechanism/runner/comparison-aggregate.mjs",
+  "examples/delivery-benchmark/mechanism/runner/guidance.mjs",
+  "examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs",
+  "examples/delivery-benchmark/mechanism/runner/metrics.mjs",
+  "examples/delivery-benchmark/mechanism/runner/owned-run-directory.mjs",
+  "examples/delivery-benchmark/mechanism/runner/preparation-workspace.mjs",
+  "examples/delivery-benchmark/mechanism/runner/prepare.mjs",
+  "examples/delivery-benchmark/mechanism/runner/score-common.mjs",
+  "examples/delivery-benchmark/mechanism/runner/score.mjs",
+  "examples/delivery-benchmark/mechanism/runner/shared.mjs",
+]);
+
+const MECHANISM_BENCHMARK_OWNER_PATHS = new Set([
+  "examples/delivery-benchmark/mechanism/runner/comparison-cost-metrics.mjs",
+  "examples/delivery-benchmark/mechanism/runner/comparison-metrics.mjs",
+  "examples/delivery-benchmark/mechanism/runner/score-standard.mjs",
+]);
+
+const DELEGATION_TRANSITIVE_OWNER_PATHS = new Set([
+  "packages/ty-context/src/lib/long-task-hook-install.ts",
+  "tools/package_build_fingerprint.mjs",
+  "tools/self_hosting_cost_repository.mjs",
+]);
+
+const DELEGATION_PROMOTION_SURFACES = new Set([
+  "AGENTS.md",
+  ".codex/agents/long-task-implementation.toml",
+  ".codex/skills/long-task-workflow/SKILL.md",
+  ".codex/skills/long-task-workflow/agents/openai.yaml",
+  ".codex/ty-context-managed/agents/AGENTS_CORE.md",
+  ".codex/ty-context-managed/agents/long-task-implementation.toml",
+  ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
+  ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
+  "packages/ty-context/assets/agents/AGENTS_CORE.md",
+  "packages/ty-context/assets/agents/long-task-implementation.toml",
+  "packages/ty-context/assets/skills/long-task-workflow/SKILL.md",
+  "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
+]);
+
+const DELEGATION_FIXTURE_PATHS = new Set([
+  "examples/delivery-benchmark/mechanism/fixture/plans/long-task-disjoint-money-health.md",
+  "examples/delivery-benchmark/mechanism/gold/long-task-disjoint-money-health.json",
+  "examples/delivery-benchmark/mechanism/hidden/long-task-disjoint-money-health.mjs",
+  "examples/delivery-benchmark/mechanism/tasks/long-task-disjoint-money-health.json",
+]);
+
+const SUITE_POLICY_DOCUMENT_PATHS = new Set([
+  ".codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md",
+  "docs/test-suite-roi-redesign.md",
+  "project_context/areas/harness-package/implementation-index.md",
+  "project_context/areas/harness-package/verification.md",
+]);
+
 const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/symbolic-denotation-",
   "packages/ty-context/src/lib/design-resource-symbolic-",
@@ -253,6 +327,8 @@ const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/lib/long-task-codex-agent-profile.ts",
     [
+      "long-task-delegation-benchmark.test.mjs",
+      "long-task-delegation-evidence.test.mjs",
       "long-task-profile-hook.test.mjs",
       "long-task-workspace-scope.test.mjs",
       "sync-init-doctor.test.mjs",
@@ -263,6 +339,8 @@ const HOTSPOT_TESTS = new Map([
     [
       "design-system-authoring-skill.test.mjs",
       "design-resource-authoring-skill.test.mjs",
+      "long-task-delegation-benchmark.test.mjs",
+      "long-task-delegation-evidence.test.mjs",
       "sync-init-doctor.test.mjs",
       "long-task-profile-hook.test.mjs",
     ],
@@ -837,6 +915,26 @@ export function selectAffectedTests(changedPaths, options = {}) {
     if (SELF_HOSTING_REPORT_INPUTS.has(file)) {
       tests.add(testPath(SELF_HOSTING_REPORT_TEST));
     }
+    if (DELEGATION_OWNER_PATHS.has(file)) {
+      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
+        tests.add(test),
+      );
+      reasons.push(`${file}:delegation_candidate_owner`);
+    }
+    if (
+      DELEGATION_TRANSITIVE_OWNER_PATHS.has(file) ||
+      DELEGATION_PROMOTION_SURFACES.has(file)
+    ) {
+      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
+        tests.add(test),
+      );
+      if (file.endsWith("long-task-implementation.toml"))
+        tests.add(testPath("long-task-profile-hook.test.mjs"));
+      reasons.push(`${file}:delegation_candidate_dependency`);
+    }
+    if (SUITE_POLICY_DOCUMENT_PATHS.has(file)) {
+      tests.add(testPath("test-suite-runtime.test.mjs"));
+    }
     if (
       file === "tests/ty-context/run-package-suite.mjs" ||
       file === "tests/ty-context/test-suite-file-reporter.mjs"
@@ -847,11 +945,39 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
-    if (
-      file === "tests/ty-context/fixtures/self-hosting-cost-baseline.json"
-    ) {
+    if (file === "tests/ty-context/fixtures/self-hosting-cost-baseline.json") {
       tests.add(testPath("self-hosting-cost-report.test.mjs"));
       reasons.push(`${file}:self_hosting_cost_measurement`);
+      continue;
+    }
+
+    if (MECHANISM_BENCHMARK_OWNER_PATHS.has(file)) {
+      tests.add(testPath("delivery-mechanism-benchmark.test.mjs"));
+      reasons.push(`${file}:delivery_mechanism_owner`);
+      continue;
+    }
+
+    const delegationShared = DELEGATION_SHARED_MECHANISM_PATHS.has(file);
+    const delegationSpecific =
+      DELEGATION_FIXTURE_PATHS.has(file) ||
+      file.startsWith(
+        "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/",
+      ) ||
+      file.startsWith(
+        "examples/delivery-benchmark/mechanism/runner/delegation-",
+      );
+    if (delegationShared || delegationSpecific) {
+      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
+        tests.add(test),
+      );
+      if (delegationShared)
+        tests.add(testPath("delivery-mechanism-benchmark.test.mjs"));
+      if (
+        file === "examples/delivery-benchmark/mechanism/README.md" ||
+        file === "examples/delivery-benchmark/mechanism/RUNBOOK.md"
+      )
+        tests.add(testPath("fresh-agent-admission-benchmark.test.mjs"));
+      reasons.push(`${file}:long_task_delegation_benchmark`);
       continue;
     }
 
@@ -918,7 +1044,11 @@ export function selectAffectedTests(changedPaths, options = {}) {
     ) {
       tests.add(testPath("affected-change-discovery.test.mjs"));
       tests.add(testPath("affected-test-selection.test.mjs"));
-      if (file === "tools/package_build_fingerprint.mjs")
+      if (
+        file === "tools/package_build_fingerprint.mjs" ||
+        file === "tools/test_suite_policy.mjs" ||
+        file === "tools/test_suite_lane_policy.mjs"
+      )
         tests.add(testPath("test-suite-runtime.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);

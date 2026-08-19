@@ -34,6 +34,13 @@ export type LongTaskCodexAgentProfileValidation =
   | { valid: true; profile: LongTaskCodexAgentProfile }
   | { valid: false; errors: string[] };
 
+export type LongTaskCodexAgentProfileAvailability =
+  | {
+      available: true;
+      relativePath: typeof LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH;
+    }
+  | { available: false; reason: string };
+
 export interface LongTaskCodexAgentProfileFileOperations {
   lstat(target: string): Promise<Stats>;
   realpath(target: string): Promise<string>;
@@ -197,10 +204,31 @@ export async function longTaskCodexAgentProfileBootstrapPaths(
   enabled: boolean,
   fileOperations: Partial<LongTaskCodexAgentProfileFileOperations> = {},
 ): Promise<string[]> {
-  if (!enabled || resolvedHarnessRoot !== ".codex") return [];
+  const availability = await inspectLongTaskCodexAgentProfileAvailability(
+    projectRoot,
+    resolvedHarnessRoot,
+    enabled,
+    fileOperations,
+  );
+  return availability.available ? [availability.relativePath] : [];
+}
+
+export async function inspectLongTaskCodexAgentProfileAvailability(
+  projectRoot: string,
+  resolvedHarnessRoot: string,
+  enabled: boolean,
+  fileOperations: Partial<LongTaskCodexAgentProfileFileOperations> = {},
+): Promise<LongTaskCodexAgentProfileAvailability> {
+  if (!enabled) return { available: false, reason: "profile_disabled" };
+  if (resolvedHarnessRoot !== ".codex")
+    return { available: false, reason: "unsupported_harness_root" };
   const operations = operationsWith(fileOperations);
   const asset = await readValidPackageProfile(operations);
-  if (!asset.valid) return [];
+  if (!asset.valid)
+    return {
+      available: false,
+      reason: `package_asset_${normalizeReason(asset.reason)}`,
+    };
   const destination = path.join(
     projectRoot,
     LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
@@ -210,12 +238,26 @@ export async function longTaskCodexAgentProfileBootstrapPaths(
     destination,
     operations,
   );
-  if (inspected.kind !== "regular") return [];
+  if (inspected.kind === "absent")
+    return { available: false, reason: "installed_profile_missing" };
+  if (inspected.kind === "conflict")
+    return {
+      available: false,
+      reason: `installed_profile_conflict:${inspected.reason}`,
+    };
   const existing = await operations.readFile(destination, "utf8");
-  return existing === asset.content &&
-    parseAndValidateLongTaskCodexAgentProfile(existing).valid
-    ? [LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH]
-    : [];
+  const validation = parseAndValidateLongTaskCodexAgentProfile(existing);
+  if (!validation.valid)
+    return {
+      available: false,
+      reason: `installed_profile_invalid:${validation.errors.join(",")}`,
+    };
+  if (existing !== asset.content)
+    return { available: false, reason: "installed_profile_outdated" };
+  return {
+    available: true,
+    relativePath: LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
+  };
 }
 
 export function isManagedLongTaskCodexAgentProfile(content: string): boolean {
@@ -403,4 +445,8 @@ function code(error: unknown): string {
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function normalizeReason(reason: string): string {
+  return reason.replace(/[^a-z0-9:_-]+/giu, "_").replace(/^_+|_+$/gu, "");
 }

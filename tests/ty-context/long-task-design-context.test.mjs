@@ -263,6 +263,9 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     managedAgents,
     managedSkill,
     managedLifecycle,
+    candidateSkill,
+    candidateManifestText,
+    sourceMappings,
     readme,
     readmeZh,
     packageReadme,
@@ -288,6 +291,13 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
     ),
+    read(
+      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/skills/long-task-workflow/SKILL.md",
+    ),
+    read(
+      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
+    ),
+    read("packages/ty-context/source-mappings.yaml"),
     read("README.md"),
     read("README.zh-CN.md"),
     read("packages/ty-context/README.md"),
@@ -404,6 +414,44 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   assert.match(
     [spec, globalContext, workflow, rationale, authoringSkill].join("\n"),
     /explicit project-owner design-purpose decision/iu,
+  );
+
+  const ownerDecision = [spec, areaRoot, workflow, rationale].join("\n");
+  assert.match(
+    ownerDecision,
+    /owner[^\n]{0,120}selected[^\n]{0,120}positive-default|selected replacement target/iu,
+  );
+  assert.match(
+    ownerDecision,
+    /(?:current )?canonical(?:\/package-installed)? Skill[^\n]{0,180}(?:retains|remain)[^\n]{0,80}conditional/iu,
+  );
+  assert.doesNotMatch(managedSkill, /must create multiple exact workers/iu);
+  assert.match(candidateSkill, /must create multiple exact workers/iu);
+  assert.match(candidateSkill, /service_tier_inheritance_unverified/u);
+  const candidateManifest = JSON.parse(candidateManifestText);
+  assert.equal(
+    candidateManifest.delegation_policy.minimum_qualifying_packets,
+    2,
+  );
+  assert.equal(candidateManifest.delegation_policy.fixed_worker_count, null);
+  assert.deepEqual(candidateManifest.delegation_policy.qualifying_predicates, [
+    "independently_safe",
+    "positive_expected_parallel_benefit",
+    "owner_path_source_of_truth_disjoint",
+    "exact_profile_available",
+    "sufficient_current_host_capacity",
+  ]);
+  assert.deepEqual(candidateManifest.delegation_policy.solo_reason_ids, [
+    "insufficient_qualifying_packets",
+    "exact_profile_unavailable",
+    "insufficient_host_capacity",
+    "owner_or_path_conflict",
+    "coordination_cost_exceeds_benefit",
+  ]);
+  assert.doesNotMatch(sourceMappings, /long-task-delegation-v1/u);
+  assert.match(
+    [spec, workflow, rationale].join("\n"),
+    /every (?:active-binding )?(?:exact )?spawn attempt[\s\S]{0,300}(?:byte-identical|byte identical)[\s\S]{0,180}package asset[\s\S]{0,300}parent execution/iu,
   );
 
   for (const trigger of [
@@ -818,7 +866,10 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   assert.match(rationale, /atomic Claim × applicability × proof surface/iu);
   assert.doesNotMatch(globalContext, /accepted-terminal-state safety/iu);
   assert.match(globalContext, /\[Long-Task rationale\]/iu);
-  assert.match(rationale, /prevent false completion[\s\S]*accepted-terminal-state safety/iu);
+  assert.match(
+    rationale,
+    /prevent false completion[\s\S]*accepted-terminal-state safety/iu,
+  );
   assert.match(verification, /Long-Task design consistency/iu);
 });
 
@@ -834,7 +885,10 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
   ]);
   const combined = `${spec}\n${rationale}\n${dra}`;
 
-  assert.match(combined, /protected Long-Task `P\/K\/R1\/R2\/B\/F\/E` model.*remain unchanged/isu);
+  assert.match(
+    combined,
+    /protected Long-Task `P\/K\/R1\/R2\/B\/F\/E` model.*remain unchanged/isu,
+  );
   for (const refinement of [
     "Semantic Granularity",
     "Semantic Fidelity",
@@ -845,7 +899,10 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
   assert.match(combined, /Granularity refines `K`.*`B`.*`R1`/isu);
   assert.match(combined, /Fidelity refines `K`.*`B`.*`R1`/isu);
   assert.match(combined, /Delegated-Choice Validity refines `K`.*`B`.*`R1`/isu);
-  assert.match(combined, /not replacement responsibilities or extra theorem premises/iu);
+  assert.match(
+    combined,
+    /not replacement responsibilities or extra theorem premises/iu,
+  );
   assert.match(
     combined,
     /`R2` remains exactly the Source\/Contract continuity, Authority, observer, repair-localization, freshness and sole current-snapshot Final-Gate responsibility/iu,
@@ -855,8 +912,14 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
     /AcceptedDeliveryTerminal\(current snapshot\).*DeclaredObservableDrift = empty/isu,
   );
   assert.match(combined, /Final Gate cannot prove Provider history/iu);
-  assert.match(combined, /checkpoints\/audits\/reconciliation are never completion evidence/iu);
-  assert.match(combined, /selected resource may uniquely own exact visual values/iu);
+  assert.match(
+    combined,
+    /checkpoints\/audits\/reconciliation are never completion evidence/iu,
+  );
+  assert.match(
+    combined,
+    /selected resource may uniquely own exact visual values/iu,
+  );
   assert.match(combined, /selection cannot authorize the reason/iu);
 });
 
@@ -932,19 +995,19 @@ test("revision diagnosis stays one-Contract and non-authoritative while decision
 test("blocker revisions use causal evidence without adding completion state", async () => {
   const [skill, contractAuthoring, evidence, contract, rationale] =
     await Promise.all([
-    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
-    read(
-      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
-    ),
-    read(
-      ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
-    ),
-    read(
-      "project_context/areas/harness-package/contracts/workflow-contract.md",
-    ),
-    read(
-      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-    ),
+      read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+      read(
+        ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+      ),
+      read(
+        ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+      ),
+      read(
+        "project_context/areas/harness-package/contracts/workflow-contract.md",
+      ),
+      read(
+        "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+      ),
     ]);
   const combined = [
     skill,
@@ -1023,10 +1086,7 @@ test("Long-Task carries shared engineering quality once through Final Gate", asy
     lifecycle,
     /sole Long-Task `Engineering Quality Conformance`\/`Architecture Conformance` carrier/iu,
   );
-  assert.match(
-    skill,
-    /no separate default Contract Conformance closure/iu,
-  );
+  assert.match(skill, /no separate default Contract Conformance closure/iu);
   assert.match(
     workflow,
     /Do not run a separate default Contract Conformance closure before or after it/iu,
@@ -1044,7 +1104,10 @@ test("Long-Task carries shared engineering quality once through Final Gate", asy
     /proves (?:exactly |only )?(?:that |the )?declared[\s\S]{0,120}(?:not|never) overall code quality/iu,
   );
   assert.match(guidance, /independent Assertion|separate Assertion/iu);
-  assert.doesNotMatch(guidance, /quality_conformance_state|quality_gate_receipt/iu);
+  assert.doesNotMatch(
+    guidance,
+    /quality_conformance_state|quality_gate_receipt/iu,
+  );
   assert.match(
     guidance,
     /changed candidate|candidate change|later candidate.*invalidates/iu,

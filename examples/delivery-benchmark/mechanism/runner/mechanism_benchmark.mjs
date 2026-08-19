@@ -29,7 +29,7 @@ async function main(argv = process.argv.slice(2)) {
 }
 
 function printHelp() {
-  console.log(`mechanism_benchmark.mjs\n\nCommands:\n  list\n  prepare --task <id> --variant <id> --pair-id <id> --replicate <n> --model <id> --reasoning <level> --out-dir <dir> [--harness-cli <file>] [--skip-harness-init] [--force]\n  prompt --run-dir <dir>\n  score --run-dir <dir> [--trace <normalized-trace.json>] [--out <score.json>]\n  compare --baseline-score <score.json> --candidate-score <score.json> [--out <comparison.json>]\n  aggregate --score <comparison.json> [--score <comparison.json> ...] [--out <aggregate.json>]\n`);
+  console.log(`mechanism_benchmark.mjs\n\nCommands:\n  list\n  prepare --task <id> --variant <id> --pair-id <id> --replicate <n> --model <id> --reasoning <level> [--provider <id>] --out-dir <dir> [--harness-cli <file>] [--skip-harness-init] [--force]\n  prompt --run-dir <dir>\n  score --run-dir <dir> [--trace <normalized-trace.json>] [--out <score.json>]\n  compare --baseline-score <score.json> --candidate-score <score.json> [--out <comparison.json>]\n  aggregate --score <comparison.json> [--score <comparison.json> ...] [--out <aggregate.json>]\n`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

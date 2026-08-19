@@ -14,9 +14,9 @@ import { contextSelection } from "./context-read-selection.mjs";
 export async function changedPaths(runDir, initialCommit) {
   const values = new Set();
   for (const args of [
-    ["diff", "--name-only", `${initialCommit}..HEAD`],
-    ["diff", "--name-only"],
-    ["diff", "--cached", "--name-only"],
+    ["diff", "--no-renames", "--name-only", `${initialCommit}..HEAD`],
+    ["diff", "--no-renames", "--name-only"],
+    ["diff", "--no-renames", "--cached", "--name-only"],
     ["ls-files", "--others", "--exclude-standard"]
   ]) {
     const result = run("git", args, { cwd: runDir, allowFailure: true });
