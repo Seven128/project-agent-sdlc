@@ -172,6 +172,18 @@ const SUITE_POLICY_DOCUMENT_PATHS = new Set([
   "project_context/areas/harness-package/verification.md",
 ]);
 
+const PROCESS_TREE_OWNER_PATHS = new Set([
+  "packages/ty-context/src/lib/long-task-check-runner.ts",
+  "packages/ty-context/src/lib/long-task-process-tree.ts",
+  "packages/ty-context/src/lib/long-task-process-tree-runtime.ts",
+  "packages/ty-context/src/lib/long-task-process-tree-windows.ts",
+]);
+
+const PROCESS_TREE_TESTS = Object.freeze([
+  "long-task-direct-process-observer.test.mjs",
+  "long-task-population-environment.test.mjs",
+]);
+
 const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/symbolic-denotation-",
   "packages/ty-context/src/lib/design-resource-symbolic-",
@@ -221,6 +233,10 @@ const SYMBOLIC_GUIDANCE_PATHS = new Set([
 ]);
 
 const HOTSPOT_TESTS = new Map([
+  ...[...PROCESS_TREE_OWNER_PATHS].map((sourcePath) => [
+    sourcePath,
+    PROCESS_TREE_TESTS,
+  ]),
   [
     "packages/ty-context/src/commands/design-resource.ts",
     ["design-resource-handoff.test.mjs"],
@@ -341,7 +357,6 @@ const HOTSPOT_TESTS = new Map([
     ],
   ]),
   ...[
-    "packages/ty-context/src/commands/long-task-authoring.ts",
     "packages/ty-context/src/lib/long-task-authoring-authority-preview.ts",
     "packages/ty-context/src/lib/long-task-claims.ts",
     "packages/ty-context/src/lib/long-task-delivery-parser.ts",
@@ -360,6 +375,16 @@ const HOTSPOT_TESTS = new Map([
       "long-task-semantic-fact-closure.test.mjs",
     ],
   ]),
+  [
+    "packages/ty-context/src/commands/long-task-authoring.ts",
+    [
+      "long-task-authoring-preflight.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-delivery-parser.test.mjs",
+      "long-task-schema-parser-parity.test.mjs",
+      "long-task-semantic-fact-closure.test.mjs",
+    ],
+  ],
   [
     "packages/ty-context/src/lib/long-task-runner-freeze.ts",
     [
@@ -1048,6 +1073,16 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
+    if (
+      file ===
+      "tests/ty-context/helpers/long-task-process-tree-controls.mjs"
+    ) {
+      mode = widen(mode, "trust-boundary");
+      PROCESS_TREE_TESTS.map(testPath).forEach((test) => tests.add(test));
+      reasons.push(`${file}:process_tree_test_owner`);
+      continue;
+    }
+
     if (file.startsWith(`${TEST_ROOT}/`)) {
       if (file.endsWith(".test.mjs")) {
         if (pathExists(file)) {
@@ -1087,6 +1122,8 @@ export function selectAffectedTests(changedPaths, options = {}) {
     if (symbolicTests.length > 0)
       reasons.push(`${file}:symbolic_design_denotation`);
 
+    if (PROCESS_TREE_OWNER_PATHS.has(file))
+      mode = widen(mode, "trust-boundary");
     const hotspot = HOTSPOT_TESTS.get(file);
     if (hotspot) {
       hotspot.map(testPath).forEach((test) => tests.add(test));

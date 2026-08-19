@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { evaluatePopulation } from "../../packages/ty-context/dist/lib/long-task-assertions-v2.js";
 import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
+import { assertProcessTreeIdentityControls } from "./helpers/long-task-process-tree-controls.mjs";
 
 const population = {
   check_key: "population",
@@ -77,6 +78,10 @@ test("Population V2 validates exact entity sets", () => {
       name,
     );
   }
+});
+
+test("Windows process-tree cleanup binds exact process instances", async () => {
+  await assertProcessTreeIdentityControls();
 });
 
 test("Environment probes block before runner start and support executable/file/env/loopback", async () => {

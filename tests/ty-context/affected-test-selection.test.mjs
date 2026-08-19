@@ -319,6 +319,41 @@ test("Context authority topology changes use focused selection and freshness cov
   ]);
 });
 
+test("Long-Task init template changes retain the authoring lifecycle regression", () => {
+  const selection = selectAffectedTests([
+    "packages/ty-context/src/commands/long-task-authoring.ts",
+  ]);
+  assert.equal(selection.mode, "selected");
+  assert.deepEqual(selection.tests, [
+    "tests/ty-context/long-task-authoring-preflight.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-delivery-parser.test.mjs",
+    "tests/ty-context/long-task-schema-parser-parity.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
+  ]);
+});
+
+test("process-tree owners retain Trust plus direct identity and lifecycle controls", () => {
+  for (const file of [
+    "packages/ty-context/src/lib/long-task-check-runner.ts",
+    "packages/ty-context/src/lib/long-task-process-tree.ts",
+    "packages/ty-context/src/lib/long-task-process-tree-runtime.ts",
+    "packages/ty-context/src/lib/long-task-process-tree-windows.ts",
+    "tests/ty-context/helpers/long-task-process-tree-controls.mjs",
+  ]) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.mode, "trust-boundary", file);
+    assert.deepEqual(
+      selection.tests,
+      [
+        "tests/ty-context/long-task-direct-process-observer.test.mjs",
+        "tests/ty-context/long-task-population-environment.test.mjs",
+      ],
+      file,
+    );
+  }
+});
+
 test("Preflight repair-diagnostic changes stay on focused Authoring coverage", () => {
   for (const file of [
     "packages/ty-context/src/lib/long-task-authoring-preflight-repair-order.ts",

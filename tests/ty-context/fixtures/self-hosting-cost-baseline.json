@@ -67,7 +67,7 @@
     {
       "key": "maintenance.npm_unpacked",
       "unit": "bytes",
-      "value": 3475109
+      "value": 3491394
     },
     {
       "key": "maintenance.source_mappings.canonical_source",
@@ -132,7 +132,7 @@
     {
       "key": "maintenance.npm_unpacked",
       "unit": "files",
-      "value": 841
+      "value": 847
     },
     {
       "key": "maintenance.source_mappings.canonical_source",

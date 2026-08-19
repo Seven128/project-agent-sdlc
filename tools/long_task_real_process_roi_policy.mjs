@@ -22,6 +22,9 @@ export const COUNTERFACTUAL_IDS = Object.freeze([
 
 export const MAINTENANCE_RUNTIME_OWNER_PATHS = Object.freeze([
   "packages/ty-context/src/lib/long-task-check-runner.ts",
+  "packages/ty-context/src/lib/long-task-process-tree.ts",
+  "packages/ty-context/src/lib/long-task-process-tree-runtime.ts",
+  "packages/ty-context/src/lib/long-task-process-tree-windows.ts",
   "packages/ty-context/src/lib/long-task-evidence-capability-runtime.ts",
   "packages/ty-context/src/lib/long-task-evidence-v2.ts",
   "packages/ty-context/src/lib/long-task-verifier-v2.ts",

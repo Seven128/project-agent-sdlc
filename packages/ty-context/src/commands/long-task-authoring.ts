@@ -147,7 +147,7 @@ outcomes:
               claims: [result]
               applicability_ref: root-success
               observation: result
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: replace-semantic-fact
@@ -163,7 +163,7 @@ outcomes:
               claims: [requirement.replace-requirement]
               applicability_ref: root-success
               observation: requirement_result
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: replace-architecture
@@ -171,7 +171,7 @@ outcomes:
               claims: [obligation.architecture]
               applicability_ref: root-success
               observation: architecture_result
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
             - key: replace-liveness
@@ -187,7 +187,7 @@ outcomes:
               claims: [control_relation_closure]
               applicability_ref: root-success
               observation: relations_applicable
-              evidence_capabilities: [state_delta, target_runtime]
+              evidence_capabilities: [target_runtime]
               operator: equals
               expected: false
       counterfactual_controls:

@@ -29,8 +29,11 @@ test("self-hosting report is deterministic, provenance-bound, and measurement-on
     assert.deepEqual(first.hotspots, second.hotspots);
     assert.equal(first.comparison.availability, "available");
     assert.equal(first.comparison.value.requested_ref, "HEAD");
-    assert.equal(first.comparison.value.includes_worktree, true);
-    assert.equal(first.candidate.working_tree.clean, false);
+    assert.equal(typeof first.candidate.working_tree.clean, "boolean");
+    assert.equal(
+      first.comparison.value.includes_worktree,
+      !first.candidate.working_tree.clean,
+    );
     assert.match(first.candidate.working_tree.digest, /^[a-f0-9]{64}$/u);
 
     const classes = first.cost_classes;

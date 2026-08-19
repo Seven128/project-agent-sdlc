@@ -51,7 +51,7 @@ async function assertValidProcessObservation(fixture, authorities, check) {
     executionContext(check),
   );
 
-  assert.equal(valid.execution_status, "completed");
+  assert.equal(valid.execution_status, "completed", JSON.stringify(valid));
   assert.equal(valid.exit_code, 0);
   assert.deepEqual(valid.observations, {});
   assert.equal(valid.package_observations.length, 2);

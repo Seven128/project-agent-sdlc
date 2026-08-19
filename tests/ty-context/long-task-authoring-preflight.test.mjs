@@ -345,6 +345,7 @@ test("init template is inline Compact V2 and at least 35 percent shorter", () =>
   const expanded = YAML.stringify(parsed, { lineWidth: 0 });
   assert.equal(parsed.outcomes.length, 1);
   assert.equal(template.includes("outcome_files"), false);
+  assert.equal(template.includes("state_delta"), false);
   assert.deepEqual(parseDeliveryContractText(expanded), parsed);
   assert.ok(
     lineCount(template) <= Math.floor(lineCount(expanded) * 0.65),
@@ -398,13 +399,6 @@ test("init template runs through Preflight, Compile and package-observed Final G
     check.verification_inputs = ["tests/replace-semantic-failure.ts"];
     check.expected_output_paths = [];
     contract.outcomes[0].technical.bindings[0].existence = "existing";
-    for (const assertion of [
-      ...check.positive_assertions,
-      ...check.negative_assertions,
-    ])
-      assertion.evidence_capabilities = assertion.evidence_capabilities.filter(
-        (capability) => capability !== "state_delta",
-      );
     contract.outcomes[0].product.owner.path_globs.push(
       "bin/**",
       "tests/replace-oracle.mjs",
