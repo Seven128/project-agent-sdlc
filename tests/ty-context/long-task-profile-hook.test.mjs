@@ -61,6 +61,8 @@ test("Codex worker profile validator derives one static leaf configuration from 
     ),
     "utf8",
   );
+  assert.match(canonical, /^description = "Package-owned implementation worker/mu);
+  assert.doesNotMatch(canonical, /^description = ".*\bOptional\b/mu);
   const valid = parseAndValidateLongTaskCodexAgentProfile(canonical);
   assert.equal(valid.valid, true, JSON.stringify(valid));
   const currentModel = canonical.match(/^model = "([^"\r\n]+)"$/mu)?.[1];
@@ -264,8 +266,8 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
     assert.equal(await readFile(destination, "utf8"), desired);
 
     const prior = desired.replace(
-      "Optional implementation worker",
-      "Prior valid optional implementation worker",
+      "Package-owned implementation worker",
+      "Prior valid package-owned implementation worker",
     );
     assert.equal(
       parseAndValidateLongTaskCodexAgentProfile(prior).valid,

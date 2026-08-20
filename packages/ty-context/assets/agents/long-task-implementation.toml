@@ -1,6 +1,6 @@
 # ty-context:managed:long-task-implementation-worker
 name = "long_task_implementation"
-description = "Optional implementation worker for bounded Long-Task rolling code and repair after the parent Goal satisfies the execution-model checkpoint."
+description = "Package-owned implementation worker for bounded Long-Task rolling code and repair after the parent Goal satisfies the execution-model checkpoint."
 model = "gpt-5.6-luna"
 model_reasoning_effort = "max"
 developer_instructions = """

@@ -210,6 +210,14 @@ test("first-lock host checkpoint creates no model routing state", async () => {
   );
   assert.match(skill, /actual host (?:calls|attempts)[\s\S]{0,160}multiple exact/iu);
   assert.match(skill, /`agent_type: long_task_implementation`/u);
+  assert.match(
+    skill,
+    /ordered first-match rule:[\s\S]{0,400}policy prohibition -> insufficient base candidates -> disjointness conflict -> coordination cost -> actual exact-spawn capacity failure -> other exact-worker unavailability/iu,
+  );
+  assert.match(
+    skill,
+    /Once any exact worker starts[\s\S]{0,160}partial delegation rather than a parent-only reason/iu,
+  );
   assert.doesNotMatch(
     skill,
     /at least two qualifying packets, an exact selectable `long_task_implementation` profile and sufficient host capacity/iu,

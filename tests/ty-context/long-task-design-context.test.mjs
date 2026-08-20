@@ -353,7 +353,7 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   );
   assert.match(
     workflow,
-    /`insufficient_qualifying_packets`[\s\S]{0,300}`exact_profile_unavailable`[\s\S]{0,300}`host_capacity_insufficient`[\s\S]{0,300}`owner_path_or_source_of_truth_conflict`[\s\S]{0,300}`coordination_cost_exceeds_expected_benefit`[\s\S]{0,300}`explicit_user_or_host_policy`/u,
+    /ordered first match[\s\S]*`explicit_user_or_host_policy`[\s\S]*base candidates using only `independently_safe`, `bounded_input_and_output` and `parent_integratable`[\s\S]*`insufficient_qualifying_packets`[\s\S]*`owner_path_or_source_of_truth_conflict`[\s\S]*`coordination_cost_exceeds_expected_benefit`[\s\S]*Real exact-spawn results[\s\S]*`host_capacity_insufficient`[\s\S]*`exact_profile_unavailable`/u,
   );
   assert.match(
     workflow,
