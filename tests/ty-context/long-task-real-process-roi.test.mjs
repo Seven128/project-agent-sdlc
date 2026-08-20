@@ -786,7 +786,7 @@ test("external gold independently detects wrong product and exact Counterfactual
   }
 });
 
-test("[critical:level4-real-process-workload-boundary] collection summary owns observed lifecycle facts and never a formal ROI conclusion", async () => {
+test("collection summary owns observed lifecycle facts and never a formal ROI conclusion", async () => {
   const fixture = await scoringFixture();
   const summary = deriveRealProcessRoiSummary(fixture.runs, fixture.config);
   assert.equal(summary.schema_version, REAL_PROCESS_SUMMARY_SCHEMA);

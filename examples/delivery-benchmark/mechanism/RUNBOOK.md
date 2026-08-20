@@ -12,7 +12,6 @@
 - Do not publish numbers until at least three eligible paired runs support the same result.
 - For Workflow Assurance, freeze the pair policy before execution: three eligible pairs normally, five when a declared cost metric is near threshold or has the declared high-variance range.
 - Before Workflow Assurance preparation, ensure both declared guidance commits are available in the source repository. The runner reads each commit's canonical managed `AGENTS_CORE.md` Git object, verifies its blob/full-file/measured-section identities and fails closed rather than falling back when a shallow checkout lacks the object.
-- For Long-Task delegation, ensure baseline commit `b83a9ee3836ff8fc8b7d4db9d29de2546df2a314` is available. Preparation verifies all four baseline Git blobs plus the tracked candidate bundle, exact task/gold/hidden-probe bytes and their aggregate digest, then injects only the isolated run. Do not edit canonical managed/package/public surfaces to simulate promotion.
 
 For the separate DRA and Build / Reuse / Buy admission tracks, run `admission_benchmark.mjs freeze-check` before the first candidate invocation. It must report zero freeze failures plus one global execution-envelope digest and one digest per track. Then run its deterministic command set once on the exact current candidate and retain the resulting report. The admission runner itself launches each baseline/candidate session independently with the exact frozen requested model/reasoning/Provider/environment and alternates order by replicate; do not paste extra guidance or reuse a session. It records effective model, reasoning effort and Provider only when authoritative Codex execution events expose them. Any missing or mismatched effective field is `unverified`/doubt, expands the unchanged run to five pairs and remains an explicit aggregate qualification; the requested configuration is never copied into the effective observation. Cases and policy guidance enter the prompt, but `hidden/*.json`, another result and aggregate state do not.
 
@@ -39,7 +38,6 @@ pair_id
 replicate
 model
 reasoning
-provider
 fixture_sha256
 experiment_set_sha256
 baseline_commit
@@ -49,8 +47,6 @@ The comparison command rejects a pair when any fixed identity differs.
 Aggregation also rejects mixed fixed identities and duplicate `pair_id` plus `replicate` inputs.
 
 The baseline and candidate intentionally have different `workflow_guidance_source.commit` values. Each prepared run must exactly match its own variant declaration; pair compatibility does not require those two guidance commits to be equal. Inspect `.benchmark/mechanism-run.json` for the prepare-derived kind, commit, path, blob oid, full-file SHA-256 and measured-section SHA-256. Formal preparation preserves marker-external fixture overlay and replaces the complete managed protocol; missing, duplicated or damaged markers fail closed.
-
-When preparation runs inside the source repository, use only `.artifacts/mechanism/runs/<run-name>`. The runner writes an exact ownership marker on first creation. `--force` may rebuild only that same no-link marked directory; it refuses repository/mechanism roots and ancestors, protected system/home/current paths, legacy or unmarked directories and links before recursive removal. Inspect legacy output manually and choose a new empty path rather than treating `--force` as general cleanup.
 
 ## 3. Start external observation
 
@@ -82,7 +78,6 @@ For each run:
 6. Use `node tools/ty-context.mjs` for package CLI commands when present; it pins the run to the preparing checkout.
 7. Require one clean product/Context commit for Context/Workflow tasks.
 8. For Authoring tasks, stop after ready Preflight and first formal Compile; product implementation and Final Gate are out of scope.
-9. For the delegation task, execute the complete active Long-Task lifecycle. End the first Compile turn at the required checkpoint, provide only the exact resume reply in the later host turn, and let the parent own Source/Contract/Context/integration/current checks/Final Gate. A detached spawn, one-turn checkpoint bypass or worker completion claim invalidates the run.
 
 The Agent writes `.benchmark/agent-result.json`. Its Context-read and Conformance fields remain diagnostic unless confirmed by a host trace. `tools/ty-context.mjs` independently records actual Preflight/Compile invocations under `.benchmark/ty-context-events.ndjson`; scoring prefers those records over Agent-copied JSON.
 
@@ -117,12 +112,6 @@ For Workflow Assurance, count every host-recorded tool call once. `pre_implement
 
 Without this trace, the pair may still validate hidden quality, Git Context correctness, and deterministic resolver candidate recall, but it is calibration-only for actual read cost.
 
-### Delegation host trace
-
-The delegation track does not reuse `tiny-context-host-trace-v1` or the self-hosting cost trace. Its `tiny-context-long-task-delegation-host-trace-v1` record binds the prepared run/guidance/profile/Hook digests, pre-spawn and final candidate, exact packet owners/paths, observed host capacity, guard probe, parent and worker actors, effective agent/model/reasoning/tier, actor-scoped mutations, ordered lifecycle and parent/child cost. Starting capacity must be observed before a host-owned `delegation_decision_at_ms`, and that decision must precede every worker start; the same pre-decision anchor is required for a zero-worker capacity fallback. The candidate must use at least two distinct exact workers when the frozen task and observed capacity satisfy the predicate. Parent mutation of worker packet paths, generic or mismatched execution, requested tier override, overlap/unmapped paths, stale Final Gate or missing current-candidate closure makes the pair ineligible.
-
-The JSON file is raw observed material, not proof of its own provenance. A future host integration would need to attest its digest and Hook-guard, effective-execution, capacity, actor-mutation, lifecycle and cost capabilities through a separate trusted channel. It must also own the exact set of every started/failed attempt, bind immutable prepare/run-input/initial-candidate identity before execution and let comparison be recomputed from raw score/trace identities. No such integration, attempt-set owner or immutable prepare receipt is wired today: the file-only CLI cannot manufacture them, ignored `.benchmark` metadata remains operator-editable, and an arbitrary caller-supplied object shaped like `host_owned_delegation_trace_v1` remains untrusted. `score` therefore returns `host_provenance_unverified` for every current repository-supplied trace/envelope pair. Worker path reports, requested profile values and a `source: host_tool_trace` string never fill the gap. Observable parent tier and starting capacity are pair-environment identities; if child inheritance is not observable, retain `service_tier_inheritance_unverified` and expand to five rather than claiming equality. An observed mismatch is an integration failure.
-
 ## 6. Score and compare
 
 `score` runs the hidden task probe and project-native checks itself, reads Git changes, reads the Agent result, and derives Authority/YAML metrics when applicable.
@@ -151,11 +140,9 @@ A Long-Task Authoring hard gate requires:
 
 Only after those gates may cost metrics be compared; unequal fingerprints leave every Authoring cost field unavailable.
 
-A Long-Task delegation pair additionally requires the same hidden quality, Context, scope and honest-handoff gates plus a host-attested complete active lifecycle, exact effective Luna/Max workers, closed disjoint actor attribution, accepted current Final Gate and complete parent/child cost fields. The gold fixture separately owns critical, major and must-allow checks; Final Gate acceptance is not substituted for those results. Three independent eligible pairs are the initial minimum. Coefficient of variation above 20%, inconsistent direction, a primary result within five percentage points of its threshold, or host/provider/provenance instability expands the frozen requirement to five. Any independently observed formal quality, policy or Gate failure must remain in the host-owned attempt set and block admission even when that run is not otherwise eligible, so it cannot be discarded and replaced by a rerun. In the current repository, aggregation revalidates variant/track/policy/source identities but treats every derived comparison JSON as unattested diagnostic input and always returns `DELEGATION_PROMOTION_BLOCKED_TRUSTED_HOST_AND_ATTEMPT_SET_UNAVAILABLE`. It never promotes or edits canonical guidance; B2 cannot begin until the trusted-host, exact-attempt-set and immutable-prepare boundaries above exist.
-
 ## 7. Decision thresholds
 
-Ordinary Context/Workflow track thresholds are stored in `experiment-set.json`. The Long-Task delegation pair policy and thresholds are owned only by the frozen guidance `manifest.json`; `experiment-set.json` carries its digest-bound pointer and does not duplicate those values.
+Thresholds are stored in `experiment-set.json`.
 
 Important boundaries:
 

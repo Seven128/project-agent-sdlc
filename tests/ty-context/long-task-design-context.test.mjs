@@ -3,13 +3,6 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { validateLevel4PromotionRecord } from "../../tools/level4_governance_protocol.mjs";
-import { parseAndValidateLevel4FrozenCandidate } from "../../tools/level4_promotion_evidence_validation.mjs";
-import {
-  canonical,
-  sha256,
-} from "../../tools/long_task_real_process_roi_scoring.mjs";
-import { REAL_PROCESS_SCHEMAS } from "../../tools/long_task_real_process_schema_policy.mjs";
 
 const repo = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -270,9 +263,6 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     managedAgents,
     managedSkill,
     managedLifecycle,
-    candidateSkill,
-    candidateManifestText,
-    sourceMappings,
     readme,
     readmeZh,
     packageReadme,
@@ -298,13 +288,6 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     read(
       ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
     ),
-    read(
-      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/skills/long-task-workflow/SKILL.md",
-    ),
-    read(
-      "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
-    ),
-    read("packages/ty-context/source-mappings.yaml"),
     read("README.md"),
     read("README.zh-CN.md"),
     read("packages/ty-context/README.md"),
@@ -364,6 +347,18 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     spec,
     /`F` is a protected efficiency and anti-process-bloat boundary, not a third implementation responsibility or another premise/iu,
   );
+  assert.match(
+    spec,
+    /`independently_safe`[\s\S]{0,160}`positive_expected_parallel_benefit`[\s\S]{0,160}`bounded_input_and_output`[\s\S]{0,120}`parent_integratable`[\s\S]{0,160}`owner_disjoint`[\s\S]{0,80}`path_disjoint`[\s\S]{0,80}`source_of_truth_disjoint`/u,
+  );
+  assert.match(
+    workflow,
+    /`insufficient_qualifying_packets`[\s\S]{0,300}`exact_profile_unavailable`[\s\S]{0,300}`host_capacity_insufficient`[\s\S]{0,300}`owner_path_or_source_of_truth_conflict`[\s\S]{0,300}`coordination_cost_exceeds_expected_benefit`[\s\S]{0,300}`explicit_user_or_host_policy`/u,
+  );
+  assert.match(
+    workflow,
+    /partial delegation[\s\S]{0,240}retain the started worker[\s\S]{0,240}remaining packets to the parent[\s\S]{0,240}(?:do not substitute|retry loop)/iu,
+  );
   assert.match(spec, /Realizes\(I_current, R1 ∧ R2\) ∧ K ∧ B => P/iu);
   assert.match(
     rationale,
@@ -399,8 +394,16 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     packageReadme,
   ].join("\n");
   assert.match(
-    executionGuidance,
-    /one or multiple platform-native agents\/subagents/iu,
+    managedSkill,
+    /packet containing its goal[\s\S]{0,180}allowed owners and paths[\s\S]{0,100}forbidden paths[\s\S]{0,160}Source, Contract and Context references[\s\S]{0,180}implementation entrypoints[\s\S]{0,120}checks[\s\S]{0,120}expected return format[\s\S]{0,140}dependency\/integration risk/iu,
+  );
+  assert.match(
+    managedSkill,
+    /`git status --short`[\s\S]{0,100}`git diff --name-only`[\s\S]*actual changed paths[\s\S]{0,180}final working-tree diff[\s\S]{0,180}union of packet envelopes[\s\S]{0,180}path-envelope conformance, not per-line actor attribution/iu,
+  );
+  assert.match(
+    managedSkill,
+    /parent Goal (?:exclusively )?owns Source, Contract, Authority,[\s\S]{0,240}Final Gate,[\s\S]{0,120}(?:close|completion)/iu,
   );
   assert.match(
     executionGuidance,
@@ -423,44 +426,6 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
     /explicit project-owner design-purpose decision/iu,
   );
 
-  const ownerDecision = [spec, areaRoot, workflow, rationale].join("\n");
-  assert.match(
-    ownerDecision,
-    /owner[^\n]{0,120}selected[^\n]{0,120}positive-default|selected replacement target/iu,
-  );
-  assert.match(
-    ownerDecision,
-    /(?:current )?canonical(?:\/package-installed)? Skill[^\n]{0,180}(?:retains|remain)[^\n]{0,80}conditional/iu,
-  );
-  assert.doesNotMatch(managedSkill, /must create multiple exact workers/iu);
-  assert.match(candidateSkill, /must create multiple exact workers/iu);
-  assert.match(candidateSkill, /service_tier_inheritance_unverified/u);
-  const candidateManifest = JSON.parse(candidateManifestText);
-  assert.equal(
-    candidateManifest.delegation_policy.minimum_qualifying_packets,
-    2,
-  );
-  assert.equal(candidateManifest.delegation_policy.fixed_worker_count, null);
-  assert.deepEqual(candidateManifest.delegation_policy.qualifying_predicates, [
-    "independently_safe",
-    "positive_expected_parallel_benefit",
-    "owner_path_source_of_truth_disjoint",
-    "exact_profile_available",
-    "sufficient_current_host_capacity",
-  ]);
-  assert.deepEqual(candidateManifest.delegation_policy.solo_reason_ids, [
-    "insufficient_qualifying_packets",
-    "exact_profile_unavailable",
-    "insufficient_host_capacity",
-    "owner_or_path_conflict",
-    "coordination_cost_exceeds_benefit",
-  ]);
-  assert.doesNotMatch(sourceMappings, /long-task-delegation-v1/u);
-  assert.match(
-    [spec, workflow, rationale].join("\n"),
-    /every (?:active-binding )?(?:exact )?spawn attempt[\s\S]{0,300}(?:byte-identical|byte identical)[\s\S]{0,180}package asset[\s\S]{0,300}parent execution/iu,
-  );
-
   for (const trigger of [
     "implementation freedom boundary",
     "development-stage restriction",
@@ -476,110 +441,28 @@ test("[critical:implementation-freedom-boundary] Goal-owned implementation freed
   assert.match(implementationIndex, /implementation-freedom-boundary/iu);
   assert.match(verification, /\[critical:implementation-freedom-boundary\]/u);
   assert.match(readmeZh, /实现自由边界/u);
-  assert.match(readmeZh, /单 agent\/多 agent|多开平台原生 agent/u);
+  assert.match(readmeZh, /必须实际调用多个精确(?: Worker| `long_task_implementation`)/u);
 
   for (const obsolete of [
     /Implement only Outcomes in the derived current Stage frontier/iu,
     /Never proactively spawn, assign or coordinate parallel subagents/iu,
+    /may optionally use one or multiple/iu,
+    /optional (?:platform-native )?one(?:-|\/)agent (?:or |\/)multi(?:-|\/)agent/iu,
+    /可按 ROI 选择单 agent/iu,
+    /可选的单 agent\/多 agent/iu,
   ])
     assert.doesNotMatch(
-      [managedSkill, managedLifecycle, readme, packageReadme].join("\n"),
+      [
+        spec,
+        authoringSkill,
+        managedSkill,
+        managedLifecycle,
+        readme,
+        readmeZh,
+        packageReadme,
+      ].join("\n"),
       obsolete,
     );
-});
-
-test("[critical:level4-claim-boundary] current Level-3 declarations cannot self-promote through frozen or governance inputs", async () => {
-  const workload = JSON.parse(
-    await read("examples/delivery-benchmark/real-process-workload/workload.json"),
-  );
-  assert.equal(workload.capability_level, "level_3");
-  assert.equal(workload.level_4_claimed, false);
-  assert.equal(workload.governance_judgment_included, false);
-
-  const candidate = {
-    commit: "a".repeat(40),
-    package_sha256: "c".repeat(64),
-    tree: "b".repeat(40),
-  };
-  const evidenceReference = {
-    benchmark_implementation_identity_sha256: "d".repeat(64),
-    candidate,
-    runtime_tcb_identity_sha256: "e".repeat(64),
-  };
-  const frozenConfig = {
-    schema_version: REAL_PROCESS_SCHEMAS.REAL_PROCESS_FROZEN_CONFIG_SCHEMA,
-    variants: { c: { commit: candidate.commit } },
-    candidate_tree: candidate.tree,
-    capability_level: "level_3",
-    level_4_claimed: false,
-    governance_judgment_included: false,
-    formal_runtime_tcb_identity: {
-      identity_sha256: evidenceReference.runtime_tcb_identity_sha256,
-    },
-  };
-  assert.equal(
-    parseAndValidateLevel4FrozenCandidate(
-      new TextEncoder().encode(`${JSON.stringify(frozenConfig)}\n`),
-      evidenceReference,
-    ).capability_level,
-    "level_3",
-  );
-  assert.throws(
-    () =>
-      parseAndValidateLevel4FrozenCandidate(
-        new TextEncoder().encode(
-          JSON.stringify({
-            ...frozenConfig,
-            capability_level: "level_4",
-            level_4_claimed: true,
-          }),
-        ),
-        evidenceReference,
-      ),
-    /level4_promotion_frozen_candidate/u,
-  );
-
-  const auditRecord = { audit_conclusion: { governance_audit_passed: true } };
-  const ownerDecision = { decision: "promote-level-4" };
-  const promotionRecord = {
-    schema_version: REAL_PROCESS_SCHEMAS.LEVEL4_PROMOTION_RECORD_SCHEMA,
-    promotion_kind: "direct-child-governance-records-only",
-    capability_level: "level_4",
-    level_4_claimed: true,
-    formal_conclusion_owner: "verify_long_task_real_process_roi",
-    candidate,
-    package_sha256: candidate.package_sha256,
-    benchmark_implementation_identity_sha256:
-      evidenceReference.benchmark_implementation_identity_sha256,
-    runtime_tcb_identity_sha256:
-      evidenceReference.runtime_tcb_identity_sha256,
-    evidence_reference_sha256: sha256(canonical(evidenceReference)),
-    audit_record_sha256: sha256(canonical(auditRecord)),
-    owner_decision_sha256: sha256(canonical(ownerDecision)),
-  };
-  assert.equal(
-    validateLevel4PromotionRecord(
-      promotionRecord,
-      evidenceReference,
-      auditRecord,
-      ownerDecision,
-    ),
-    promotionRecord,
-  );
-  assert.throws(
-    () =>
-      validateLevel4PromotionRecord(
-        {
-          ...promotionRecord,
-          capability_level: "level_3",
-          level_4_claimed: false,
-        },
-        evidenceReference,
-        auditRecord,
-        ownerDecision,
-      ),
-    /level4_promotion_record/u,
-  );
 });
 
 test("target-runtime feedback stays live, rolling, and state-free", async () => {
@@ -967,10 +850,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   assert.match(rationale, /atomic Claim × applicability × proof surface/iu);
   assert.doesNotMatch(globalContext, /accepted-terminal-state safety/iu);
   assert.match(globalContext, /\[Long-Task rationale\]/iu);
-  assert.match(
-    rationale,
-    /prevent false completion[\s\S]*accepted-terminal-state safety/iu,
-  );
+  assert.match(rationale, /prevent false completion[\s\S]*accepted-terminal-state safety/iu);
   assert.match(verification, /Long-Task design consistency/iu);
 });
 
@@ -986,10 +866,7 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
   ]);
   const combined = `${spec}\n${rationale}\n${dra}`;
 
-  assert.match(
-    combined,
-    /protected Long-Task `P\/K\/R1\/R2\/B\/F\/E` model.*remain unchanged/isu,
-  );
+  assert.match(combined, /protected Long-Task `P\/K\/R1\/R2\/B\/F\/E` model.*remain unchanged/isu);
   for (const refinement of [
     "Semantic Granularity",
     "Semantic Fidelity",
@@ -1000,10 +877,7 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
   assert.match(combined, /Granularity refines `K`.*`B`.*`R1`/isu);
   assert.match(combined, /Fidelity refines `K`.*`B`.*`R1`/isu);
   assert.match(combined, /Delegated-Choice Validity refines `K`.*`B`.*`R1`/isu);
-  assert.match(
-    combined,
-    /not replacement responsibilities or extra theorem premises/iu,
-  );
+  assert.match(combined, /not replacement responsibilities or extra theorem premises/iu);
   assert.match(
     combined,
     /`R2` remains exactly the Source\/Contract continuity, Authority, observer, repair-localization, freshness and sole current-snapshot Final-Gate responsibility/iu,
@@ -1013,14 +887,8 @@ test("DRA semantic precision refines K B and R1 without rewriting R2 or terminal
     /AcceptedDeliveryTerminal\(current snapshot\).*DeclaredObservableDrift = empty/isu,
   );
   assert.match(combined, /Final Gate cannot prove Provider history/iu);
-  assert.match(
-    combined,
-    /checkpoints\/audits\/reconciliation are never completion evidence/iu,
-  );
-  assert.match(
-    combined,
-    /selected resource may uniquely own exact visual values/iu,
-  );
+  assert.match(combined, /checkpoints\/audits\/reconciliation are never completion evidence/iu);
+  assert.match(combined, /selected resource may uniquely own exact visual values/iu);
   assert.match(combined, /selection cannot authorize the reason/iu);
 });
 
@@ -1096,19 +964,19 @@ test("revision diagnosis stays one-Contract and non-authoritative while decision
 test("blocker revisions use causal evidence without adding completion state", async () => {
   const [skill, contractAuthoring, evidence, contract, rationale] =
     await Promise.all([
-      read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
-      read(
-        ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
-      ),
-      read(
-        ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
-      ),
-      read(
-        "project_context/areas/harness-package/contracts/workflow-contract.md",
-      ),
-      read(
-        "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-      ),
+    read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/contract-authoring.md",
+    ),
+    read(
+      ".codex/ty-context-managed/skills/long-task-workflow/references/evidence-design.md",
+    ),
+    read(
+      "project_context/areas/harness-package/contracts/workflow-contract.md",
+    ),
+    read(
+      "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+    ),
     ]);
   const combined = [
     skill,
@@ -1187,7 +1055,10 @@ test("Long-Task carries shared engineering quality once through Final Gate", asy
     lifecycle,
     /sole Long-Task `Engineering Quality Conformance`\/`Architecture Conformance` carrier/iu,
   );
-  assert.match(skill, /no separate default Contract Conformance closure/iu);
+  assert.match(
+    skill,
+    /no separate default Contract Conformance closure/iu,
+  );
   assert.match(
     workflow,
     /Do not run a separate default Contract Conformance closure before or after it/iu,
@@ -1205,10 +1076,7 @@ test("Long-Task carries shared engineering quality once through Final Gate", asy
     /proves (?:exactly |only )?(?:that |the )?declared[\s\S]{0,120}(?:not|never) overall code quality/iu,
   );
   assert.match(guidance, /independent Assertion|separate Assertion/iu);
-  assert.doesNotMatch(
-    guidance,
-    /quality_conformance_state|quality_gate_receipt/iu,
-  );
+  assert.doesNotMatch(guidance, /quality_conformance_state|quality_gate_receipt/iu);
   assert.match(
     guidance,
     /changed candidate|candidate change|later candidate.*invalidates/iu,

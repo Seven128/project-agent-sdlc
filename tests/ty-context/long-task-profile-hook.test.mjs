@@ -15,7 +15,6 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import {
   LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
-  inspectLongTaskCodexAgentProfileAvailability,
   longTaskCodexAgentProfileBootstrapPaths,
   parseAndValidateLongTaskCodexAgentProfile,
   syncLongTaskCodexAgentProfile,
@@ -70,9 +69,6 @@ test("Codex worker profile validator derives one static leaf configuration from 
   )?.[1];
   assert.ok(currentModel);
   assert.ok(currentEffort);
-  assert.equal(currentModel, "gpt-5.6-luna");
-  assert.equal(currentEffort, "max");
-  assert.doesNotMatch(canonical, /^service_tier\s*=/mu);
   assert.equal(valid.profile.model, currentModel);
   assert.equal(valid.profile.model_reasoning_effort, currentEffort);
   assert.equal(valid.profile.agents.enabled, false);
@@ -102,10 +98,6 @@ test("Codex worker profile validator derives one static leaf configuration from 
     ),
     canonical.replace(/\r?\n\[agents\][\s\S]*$/u, "\n"),
     `${canonical}\nmodel_route = "automatic"\n`,
-    canonical.replace(
-      /\r?\n\[agents\]/u,
-      '\nservice_tier = "priority"\n\n[agents]',
-    ),
     `${canonical}\n[agents.registry]\nworker = "nested"\n`,
     `${canonical}\nthis = [\n`,
   ]) {
@@ -163,19 +155,30 @@ test("Codex worker profile sync is symlink-safe and never reads an external targ
     await writeFile(externalFile, canonical);
     await symlink(externalFile, destination, "file");
     const linked = report();
-    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, linked, {
-      readFile: async (target, encoding) => {
-        assert.notEqual(path.resolve(target), path.resolve(externalFile));
-        return readFile(target, encoding);
+    await syncLongTaskCodexAgentProfile(
+      fixture.root,
+      ".codex",
+      true,
+      linked,
+      {
+        readFile: async (target, encoding) => {
+          assert.notEqual(path.resolve(target), path.resolve(externalFile));
+          return readFile(target, encoding);
+        },
       },
-    });
+    );
     assert.match(linked.skipped.join("\n"), /destination_symlink/u);
     assert.equal(await readFile(externalFile, "utf8"), canonical);
 
     await rm(destination, { force: true });
     await symlink(`${externalFile}.missing`, destination, "file");
     const dangling = report();
-    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, dangling);
+    await syncLongTaskCodexAgentProfile(
+      fixture.root,
+      ".codex",
+      true,
+      dangling,
+    );
     assert.match(dangling.skipped.join("\n"), /destination_symlink/u);
 
     await rm(destination, { force: true });
@@ -215,7 +218,12 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
   const report = () => ({ changed: [], skipped: [], blocked: [] });
   try {
     const first = report();
-    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, first);
+    await syncLongTaskCodexAgentProfile(
+      fixture.root,
+      ".codex",
+      true,
+      first,
+    );
     assert.deepEqual(first.changed, [
       LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
     ]);
@@ -226,7 +234,12 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
     );
 
     const second = report();
-    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, second);
+    await syncLongTaskCodexAgentProfile(
+      fixture.root,
+      ".codex",
+      true,
+      second,
+    );
     assert.deepEqual(second.changed, []);
     assert.ok(
       second.skipped.includes(LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH),
@@ -254,7 +267,10 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
       "Optional implementation worker",
       "Prior valid optional implementation worker",
     );
-    assert.equal(parseAndValidateLongTaskCodexAgentProfile(prior).valid, true);
+    assert.equal(
+      parseAndValidateLongTaskCodexAgentProfile(prior).valid,
+      true,
+    );
     await writeFile(destination, prior);
     const writeFailed = report();
     await syncLongTaskCodexAgentProfile(
@@ -388,7 +404,12 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
     assert.equal(await pathExists(destination), false);
 
     const portable = report();
-    await syncLongTaskCodexAgentProfile(fixture.root, ".agent", true, portable);
+    await syncLongTaskCodexAgentProfile(
+      fixture.root,
+      ".agent",
+      true,
+      portable,
+    );
     assert.deepEqual(portable, { changed: [], skipped: [], blocked: [] });
     assert.equal(await pathExists(destination), false);
     assert.equal((await lstat(stale)).isFile(), true);
@@ -445,10 +466,7 @@ test("Hook config install blocks invalid JSON and link traversal", async () => {
     );
     const parentReport = freshSyncReport();
     await installLongTaskHooks(linkedParent.root, parentReport);
-    assert.match(
-      parentReport.blocked.join("\n"),
-      /parent_symlink_or_junction/u,
-    );
+    assert.match(parentReport.blocked.join("\n"), /parent_symlink_or_junction/u);
     assert.deepEqual(await readdir(externalCodex), []);
 
     const legacyDirectory = path.join(legacyParent.root, ".codex/hooks");
@@ -534,10 +552,7 @@ test("Hook config publication is atomic, concurrent-change safe and idempotent",
         throw new Error("injected_hook_write_failure");
       },
     });
-    assert.match(
-      writeFailed.blocked.join("\n"),
-      /injected_hook_write_failure/u,
-    );
+    assert.match(writeFailed.blocked.join("\n"), /injected_hook_write_failure/u);
     assert.equal(await readFile(configFile, "utf8"), concurrentBase);
     await assertNoHookTemps(fixture.root);
 
@@ -615,7 +630,10 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
-        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
       ),
       true,
     );
@@ -685,7 +703,10 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
-        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
       ),
       false,
     );
@@ -733,7 +754,10 @@ test("non-Codex long-task root omits the worker without changing formal acceptan
     await runCli(fixture.root, ["enable", "long-task"]);
     assert.equal(
       await pathExists(
-        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
       ),
       false,
     );
@@ -772,7 +796,10 @@ test("non-Codex long-task root omits the worker without changing formal acceptan
     await runCli(fixture.root, ["disable", "long-task"]);
     assert.equal(
       await pathExists(
-        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
+        path.join(
+          fixture.root,
+          ".codex/agents/long-task-implementation.toml",
+        ),
       ),
       false,
     );
@@ -901,6 +928,28 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
   const fixture = await createDeliveryFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
+    const profileDestination = path.join(
+      fixture.root,
+      LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
+    );
+    const profileTarget = path.join(fixture.root, "worker-profile-target.toml");
+    const canonicalProfile = await readFile(
+      path.join(
+        repoRoot,
+        "packages/ty-context/assets/agents/long-task-implementation.toml",
+      ),
+      "utf8",
+    );
+    const restoreProfile = async () => {
+      await rm(profileDestination, { recursive: true, force: true });
+      await mkdir(path.dirname(profileDestination), { recursive: true });
+      await writeFile(profileDestination, canonicalProfile);
+    };
+    const spawnExact = () =>
+      invokeHook(fixture.root, "PreToolUse", {
+        tool_name: "spawn_agent",
+        tool_input: { agent_type: "long_task_implementation" },
+      });
     assert.deepEqual(await invokeHook(fixture.root, "Stop"), {});
     for (const agentType of ["worker", "long_task_implementation"])
       assert.deepEqual(
@@ -910,6 +959,9 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
         }),
         {},
       );
+    await rm(profileDestination);
+    assert.deepEqual(await spawnExact(), {});
+    await restoreProfile();
 
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const record = await activeRecordPath(fixture.root);
@@ -927,13 +979,7 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
       session.hookSpecificOutput.additionalContext,
       /long-task resume/,
     );
-    assert.deepEqual(
-      await invokeHook(fixture.root, "PreToolUse", {
-        tool_name: "spawn_agent",
-        tool_input: { agent_type: "long_task_implementation" },
-      }),
-      {},
-    );
+    assert.deepEqual(await spawnExact(), {});
     assert.deepEqual(
       await invokeHook(fixture.root, "PreToolUse", {
         tool_name: "Agent",
@@ -977,6 +1023,44 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
       });
     }
     assert.equal(await readFile(record, "utf8"), recordBeforeDeniedSpawns);
+    await writeFile(profileTarget, canonicalProfile);
+    const profileCases = [
+      ["missing", () => rm(profileDestination)],
+      ["invalid", () => writeFile(profileDestination, "bad = [\n")],
+      [
+        "outdated",
+        () =>
+          writeFile(
+            profileDestination,
+            canonicalProfile.replace(
+              /^model = "[^"\r\n]+"$/mu,
+              'model = "future-static-model"',
+            ),
+          ),
+      ],
+      [
+        "symlink",
+        async () => {
+          await rm(profileDestination);
+          await symlink(profileTarget, profileDestination, "file");
+        },
+      ],
+      [
+        "non-regular",
+        async () => {
+          await rm(profileDestination);
+          await mkdir(profileDestination);
+        },
+      ],
+    ];
+    for (const [label, mutate] of profileCases) {
+      await restoreProfile();
+      await mutate();
+      assertProfileUnavailableSpawnDenied(await spawnExact(), label);
+    }
+    await restoreProfile();
+    await rm(profileTarget);
+    assert.deepEqual(await spawnExact(), {});
     const worker = await invokeHook(fixture.root, "SubagentStart", {
       agent_type: "long_task_implementation",
       agent_id: "agent-fixture",
@@ -986,10 +1070,7 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
       worker.hookSpecificOutput.additionalContext,
       /delegated rolling implementation worker, not the parent Long-Task Goal/iu,
     );
-    assert.match(
-      worker.hookSpecificOutput.additionalContext,
-      /bounded packet/iu,
-    );
+    assert.match(worker.hookSpecificOutput.additionalContext, /bounded packet/iu);
     assert.match(
       worker.hookSpecificOutput.additionalContext,
       /Do not run long-task resume, Preflight, Compile, Authority Revision/iu,
@@ -1036,114 +1117,6 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
   }
 });
 
-test("active Agent spawn revalidates the exact installed profile and inactive work stays unrestricted", async () => {
-  const fixture = await createDeliveryFixture();
-  const destination = path.join(
-    fixture.root,
-    LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
-  );
-  const externalProfile = path.join(
-    path.dirname(fixture.root),
-    `${path.basename(fixture.root)}-hook-profile.toml`,
-  );
-  const canonical = await readFile(
-    path.join(
-      repoRoot,
-      "packages/ty-context/assets/agents/long-task-implementation.toml",
-    ),
-    "utf8",
-  );
-  const restoreCanonical = async () => {
-    await rm(destination, { recursive: true, force: true });
-    await mkdir(path.dirname(destination), { recursive: true });
-    await writeFile(destination, canonical);
-  };
-  try {
-    await runCli(fixture.root, ["enable", "long-task"]);
-    assert.equal(
-      (
-        await inspectLongTaskCodexAgentProfileAvailability(
-          fixture.root,
-          ".codex",
-          true,
-        )
-      ).available,
-      true,
-    );
-
-    await rm(destination);
-    assert.deepEqual(
-      await invokeHook(fixture.root, "PreToolUse", {
-        tool_name: "spawn_agent",
-        tool_input: { agent_type: "long_task_implementation" },
-      }),
-      {},
-    );
-    await restoreCanonical();
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-
-    const cases = [
-      {
-        reason: /installed_profile_missing/u,
-        mutate: () => rm(destination),
-      },
-      {
-        reason: /installed_profile_invalid/u,
-        mutate: () => writeFile(destination, "invalid = [\n"),
-      },
-      {
-        reason: /installed_profile_outdated/u,
-        mutate: () =>
-          writeFile(
-            destination,
-            canonical.replace(
-              /^model = "[^"\r\n]+"$/mu,
-              'model = "future-static-model"',
-            ),
-          ),
-      },
-      {
-        reason: /installed_profile_conflict:destination_symlink/u,
-        mutate: async () => {
-          await writeFile(externalProfile, canonical);
-          await rm(destination);
-          await symlink(externalProfile, destination, "file");
-        },
-      },
-      {
-        reason: /installed_profile_conflict:destination_not_regular_file/u,
-        mutate: async () => {
-          await rm(destination, { recursive: true, force: true });
-          await mkdir(destination);
-        },
-      },
-    ];
-    for (const scenario of cases) {
-      await restoreCanonical();
-      await scenario.mutate();
-      assertProfileUnavailableSpawnDenied(
-        await invokeHook(fixture.root, "PreToolUse", {
-          tool_name: "spawn_agent",
-          tool_input: { agent_type: "long_task_implementation" },
-        }),
-        scenario.reason,
-      );
-    }
-
-    await restoreCanonical();
-    assert.deepEqual(
-      await invokeHook(fixture.root, "PreToolUse", {
-        tool_name: "spawn_agent",
-        tool_input: { agent_type: "long_task_implementation" },
-      }),
-      {},
-    );
-  } finally {
-    await rm(fixture.root, { recursive: true, force: true });
-    await rm(externalProfile, { force: true });
-  }
-});
-
 test("Agent spawn Hook fails closed on corrupt active state without gating unrelated tools", async () => {
   const fixture = await createDeliveryFixture();
   try {
@@ -1174,10 +1147,14 @@ test("Agent spawn Hook fails closed on corrupt active state without gating unrel
     invalidSnapshotHash.authority_snapshot_sha256 = "0".repeat(64);
     const corruptRecord = `${JSON.stringify(invalidSnapshotHash)}\n`;
     await writeFile(record, corruptRecord);
-    const deniedInvalidSnapshot = await invokeHook(fixture.root, "PreToolUse", {
-      tool_name: "Agent",
-      tool_input: { agent_type: "worker" },
-    });
+    const deniedInvalidSnapshot = await invokeHook(
+      fixture.root,
+      "PreToolUse",
+      {
+        tool_name: "Agent",
+        tool_input: { agent_type: "worker" },
+      },
+    );
     assertCorruptSpawnDenied(deniedInvalidSnapshot);
     assert.match(
       deniedInvalidSnapshot.hookSpecificOutput.permissionDecisionReason,
@@ -1345,18 +1322,13 @@ function assertCorruptSpawnDenied(result) {
   assert.equal(Object.hasOwn(result, "stopReason"), false);
 }
 
-function assertProfileUnavailableSpawnDenied(result, reason) {
-  assert.deepEqual(Object.keys(result), ["hookSpecificOutput"]);
-  assert.equal(result.hookSpecificOutput.hookEventName, "PreToolUse");
-  assert.equal(result.hookSpecificOutput.permissionDecision, "deny");
-  assert.match(result.hookSpecificOutput.permissionDecisionReason, reason);
+function assertProfileUnavailableSpawnDenied(result, label) {
+  assert.equal(result.hookSpecificOutput.hookEventName, "PreToolUse", label);
+  assert.equal(result.hookSpecificOutput.permissionDecision, "deny", label);
   assert.match(
     result.hookSpecificOutput.permissionDecisionReason,
-    /Do not spawn a substitute agent/iu,
-  );
-  assert.match(
-    result.hookSpecificOutput.permissionDecisionReason,
-    /parent Goal/iu,
+    /profile is unavailable, invalid, outdated or conflicting[\s\S]*Do not spawn a substitute agent[\s\S]*parent Goal/iu,
+    label,
   );
 }
 
@@ -1369,11 +1341,9 @@ function assertEnabledHookEventsForDirectInstall(config) {
     "SubagentStart",
   ]) {
     const groups = config.hooks[event];
-    const managed = groups
-      .flatMap((group) => group.hooks)
-      .filter((hook) =>
-        String(hook.command ?? "").includes("long-task-hook.js"),
-      );
+    const managed = groups.flatMap((group) => group.hooks).filter((hook) =>
+      String(hook.command ?? "").includes("long-task-hook.js"),
+    );
     assert.equal(managed.length, 1, event);
     const group = groups.find((candidate) =>
       candidate.hooks.includes(managed[0]),
@@ -1388,10 +1358,7 @@ function assertEnabledHookEventsForDirectInstall(config) {
 
 async function assertNoHookTemps(root) {
   const names = await readdir(path.join(root, ".codex"));
-  assert.equal(
-    names.some((name) => name.startsWith("hooks.json.tmp-")),
-    false,
-  );
+  assert.equal(names.some((name) => name.startsWith("hooks.json.tmp-")), false);
 }
 
 async function currentCanonicalModel() {

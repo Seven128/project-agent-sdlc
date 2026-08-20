@@ -1,26 +1,17 @@
 import { createHash } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { ensureDir, listFiles, readText, writeTextIfChanged } from "./fs.js";
-import { AGENTS_BLOCK_MARKERS } from "./managed-file.js";
 import {
-  inspectRenderedPackageSourceMapping,
-  inspectRenderedPackageSourceMappings,
-  type PackageSourceInspectionInput,
-  type PackageSourceMappingsInspection,
-} from "./package-source-inspection.js";
+  ensureDir,
+  listFiles,
+  pathExists,
+  readText,
+  writeTextIfChanged,
+} from "./fs.js";
+import { AGENTS_BLOCK_MARKERS } from "./managed-file.js";
 import { SOURCE_MAPPINGS_PATH } from "./paths.js";
 import type { SourceMapping, SourceMappingsFile } from "./types.js";
 import { parseYaml } from "./yaml.js";
-
-export type {
-  PackageSourceFileMeasurement,
-  PackageSourceFileTotals,
-  PackageSourceMappingInspection,
-  PackageSourceMappingsInspection,
-  PackageSourceProjectionMeasurement,
-  PackageSourceProjectionStatus,
-} from "./package-source-inspection.js";
 
 export interface PackageSourceSyncReport {
   changed: string[];
@@ -46,53 +37,38 @@ export async function checkSource(
 ): Promise<PackageSourceCheckReport> {
   const drift: string[] = [];
   for (const mapping of await readSourceMappings(projectRoot)) {
-    const inspection = await inspectRenderedPackageSourceMapping(
-      projectRoot,
-      { mapping, rendered: await renderMapping(projectRoot, mapping) },
-      contentMatches,
-      { sortPaths: false },
-    );
-    drift.push(
-      ...inspection.drift.map((driftPath) =>
-        legacyCheckDriftPath(mapping, driftPath),
-      ),
-    );
+    const expected = await renderMapping(projectRoot, mapping);
+    const target = path.join(projectRoot, mapping.target);
+    if (typeof expected === "string") {
+      const existing = (await pathExists(target)) ? await readText(target) : "";
+      if (normalize(existing) !== normalize(expected)) {
+        drift.push(mapping.target);
+      }
+      continue;
+    }
+    const sourceHashes = new Map<string, string>();
+    for (const item of expected) {
+      sourceHashes.set(item.relative, hash(item.content));
+      const targetFile = path.join(target, item.relative);
+      const existing = (await pathExists(targetFile))
+        ? await readText(targetFile)
+        : "";
+      if (hash(existing) !== hash(item.content)) {
+        drift.push(`${mapping.target}/${item.relative}`);
+      }
+    }
+    const targetFiles = await listFiles(target);
+    for (const targetFile of targetFiles) {
+      if (path.basename(targetFile) === ".gitkeep") {
+        continue;
+      }
+      const relative = path.relative(target, targetFile);
+      if (!sourceHashes.has(relative)) {
+        drift.push(`${mapping.target}/${relative}`);
+      }
+    }
   }
   return { drift };
-}
-
-export async function inspectPackageSourceMappings(
-  projectRoot: string,
-): Promise<PackageSourceMappingsInspection> {
-  const inputs: PackageSourceInspectionInput[] = [];
-  for (const mapping of await readSourceMappings(projectRoot)) {
-    inputs.push({
-      mapping,
-      rendered: await renderMapping(projectRoot, mapping),
-    });
-  }
-  return inspectRenderedPackageSourceMappings(
-    projectRoot,
-    inputs,
-    contentMatches,
-  );
-}
-
-function contentMatches(actual: string, expected: string): boolean {
-  return hash(actual) === hash(expected);
-}
-
-function legacyCheckDriftPath(
-  mapping: SourceMapping,
-  repositoryPath: string,
-): string {
-  if (mapping.mode !== "copy-tree") return mapping.target;
-  const target = mapping.target
-    .replace(/\\/gu, "/")
-    .replace(/^\.\//u, "")
-    .replace(/\/$/u, "");
-  const relative = repositoryPath.slice(`${target}/`.length);
-  return `${mapping.target}/${relative.replace(/\//gu, path.sep)}`;
 }
 
 async function readSourceMappings(

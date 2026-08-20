@@ -235,16 +235,6 @@ function localChecks() {
   const outreachTargets = read("docs/launch/outreach-targets.md");
   const sourceWorkflow = read(".github/workflows/harness.yml");
   const maintainerWorkflow = read(".github/workflows/package.yml");
-  const maintainerWorkflowTriggers = maintainerWorkflow.slice(
-    0,
-    maintainerWorkflow.indexOf("\njobs:"),
-  );
-  const maintainerWorkflowCoversAllRepositoryPaths =
-    contains(maintainerWorkflowTriggers, /\n  pull_request:\s*\n/) &&
-    contains(maintainerWorkflowTriggers, /\n  push:\s*\n/) &&
-    contains(maintainerWorkflowTriggers, /\n      - main\s*\n/) &&
-    contains(maintainerWorkflowTriggers, /\n      - "codex\/\*\*"\s*\n/) &&
-    !contains(maintainerWorkflowTriggers, /\n\s+paths(?:-ignore)?:/);
   const npmTrustedPublishWorkflow = read(".github/workflows/npm-publish.yml");
   const scorecardWorkflow = read(".github/workflows/scorecard.yml");
   const issueTemplateConfig = read(".github/ISSUE_TEMPLATE/config.yml");
@@ -549,8 +539,7 @@ function localChecks() {
       contains(privateReview, codespacesUrlPattern) &&
       contains(launchProfile, codespacesUrlPattern) &&
       contains(launchKit, codespacesUrlPattern) &&
-      (maintainerWorkflowCoversAllRepositoryPaths ||
-        contains(maintainerWorkflow, /\.devcontainer\/\*\*/)),
+      contains(maintainerWorkflow, /\.devcontainer\/\*\*/),
     "Codespaces source preview gives private reviewers and package developers a no-local-setup path."
   );
   addCheck(
@@ -1727,7 +1716,8 @@ function localChecks() {
   addCheck(
     checks,
     "maintainer-workflow",
-    maintainerWorkflowCoversAllRepositoryPaths &&
+    contains(maintainerWorkflow, /\.github\/workflows\/npm-publish\.yml/) &&
+      contains(maintainerWorkflow, /\.github\/workflows\/scorecard\.yml/) &&
       contains(maintainerWorkflow, /uses: actions\/checkout@[a-f0-9]{40}/) &&
       contains(maintainerWorkflow, /uses: actions\/setup-node@[a-f0-9]{40}/) &&
       contains(maintainerWorkflow, /Check package canonical source drift/) &&

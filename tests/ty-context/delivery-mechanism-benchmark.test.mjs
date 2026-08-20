@@ -19,9 +19,9 @@ const mechanismRoot = path.join(repoRoot, "examples", "delivery-benchmark", "mec
 test("mechanism benchmark fixes baseline, tracks, tasks, gold, and hidden boundaries", async () => {
   const experiments = JSON.parse(await readFile(path.join(mechanismRoot, "experiment-set.json"), "utf8"));
   assert.equal(experiments.baseline_commit, "c030d02eee315d2860c6a2ff01c22887690f3684");
-  assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "long-task-delegation", "workflow-assurance", "workflow-expression"]);
+  assert.deepEqual(Object.keys(experiments.tracks).sort(), ["context-routing", "long-task-authoring", "workflow-assurance", "workflow-expression"]);
   const taskIds = [...new Set(Object.values(experiments.tracks).flatMap((track) => track.tasks))];
-  assert.equal(taskIds.length, 13);
+  assert.equal(taskIds.length, 12);
   for (const id of taskIds) {
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "tasks", `${id}.json`), "utf8"));
     await assert.doesNotReject(readFile(path.join(mechanismRoot, "gold", `${id}.json`), "utf8"));
@@ -364,14 +364,8 @@ test("UIUX recovery benchmark preserves selected-source closure and one canonica
     assert.match(hidden, new RegExp(`UIUX-${String(index).padStart(3, "0")}`, "u"));
   }
   assert.match(hidden, /event\.command === "design-resource preflight"/u);
-  const preparationWorkspace = await readFile(
-    path.join(mechanismRoot, "runner", "preparation-workspace.mjs"),
-    "utf8",
-  );
-  assert.match(
-    preparationWorkspace,
-    /args\[0\] === "design-resource" && args\[1\] === "preflight"/u,
-  );
+  const prepare = await readFile(path.join(mechanismRoot, "runner", "prepare.mjs"), "utf8");
+  assert.match(prepare, /args\[0\] === "design-resource" && args\[1\] === "preflight"/u);
 });
 
 test("prepare keeps hidden/gold outside the run and records strict pair identity", async () => {

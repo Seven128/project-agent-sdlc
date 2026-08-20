@@ -11,16 +11,14 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  LONG_TASK_TRUST_TEST_FILES,
   criticalSentinelsForSuite,
   resolveLongTaskIsolatedConcurrency,
   resolveTestTimingOutput,
   resolveSuiteWallTimeBudgetMs,
   suiteWallTimeBudgetStatus,
 } from "../../tools/test_suite_policy.mjs";
-import {
-  planLongTaskSuiteLanes,
-  selectPackageSuiteFileNames,
-} from "../../tools/test_suite_lane_policy.mjs";
+import { planLongTaskSuiteLanes } from "../../tools/test_suite_lane_policy.mjs";
 import { prepareDeliveryFixtureSeed } from "./long-task-delivery-fixtures.mjs";
 import { buildFileTimingReport } from "./test-suite-file-reporter.mjs";
 
@@ -28,11 +26,10 @@ const suite = process.argv[2];
 if (
   suite !== "default" &&
   suite !== "long-task" &&
-  suite !== "long-task-level4" &&
   suite !== "long-task-trust"
 ) {
   throw new Error(
-    "Usage: run-package-suite.mjs <default|long-task|long-task-level4|long-task-trust> [node-test options]",
+    "Usage: run-package-suite.mjs <default|long-task|long-task-trust> [node-test options]",
   );
 }
 
@@ -42,10 +39,11 @@ const reporterModule = new URL(
   "./test-suite-file-reporter.mjs",
   import.meta.url,
 ).href;
+const longTaskTestName = /^long-task-/u;
 const availableNames = (await readdir(testRoot))
   .filter((name) => name.endsWith(".test.mjs"))
   .sort();
-const names = selectPackageSuiteFileNames(availableNames, suite);
+const names = selectNames(availableNames, suite);
 const files = names.map((name) => path.join(testRoot, name));
 const requiredCriticalSentinels = criticalSentinelsForSuite(suite);
 const wallTimeBudgetMs = resolveSuiteWallTimeBudgetMs(suite);
@@ -58,10 +56,10 @@ assertRunnerOwnsConcurrency(forwardedOptions);
 const timingTemporaryRoot = await mkdtemp(
   path.join(os.tmpdir(), `ty-context-${suite}-timing-`),
 );
-const isolatedConcurrency = suite !== "default"
+const isolatedConcurrency = longTaskTestName.test(names[0] ?? "")
   ? resolveLongTaskIsolatedConcurrency()
   : 1;
-const lanePolicy = suite !== "default"
+const lanePolicy = longTaskTestName.test(names[0] ?? "")
   ? planLongTaskSuiteLanes(names, suite, isolatedConcurrency)
   : null;
 const lanes = lanePolicy?.lanes ?? [{ key: "serial", names, concurrency: 1 }];
@@ -231,4 +229,21 @@ function assertRunnerOwnsConcurrency(options) {
     throw new Error(
       "run-package-suite owns --test-concurrency through the reviewed isolation policy; use TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1 for serial rollback.",
     );
+}
+
+function selectNames(available, selectedSuite) {
+  if (selectedSuite === "long-task-trust") {
+    const availableSet = new Set(available);
+    const missing = LONG_TASK_TRUST_TEST_FILES.filter(
+      (name) => !availableSet.has(name),
+    );
+    if (missing.length > 0)
+      throw new Error(
+        `Missing Trust Boundary test files: ${missing.join(", ")}`,
+      );
+    return [...LONG_TASK_TRUST_TEST_FILES];
+  }
+  return available.filter(
+    (name) => longTaskTestName.test(name) === (selectedSuite === "long-task"),
+  );
 }

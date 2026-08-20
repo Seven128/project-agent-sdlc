@@ -23,7 +23,6 @@ import {
   CRITICAL_TEST_SENTINELS,
   LONG_TASK_EXCLUSIVE_TEST_FILES,
   LONG_TASK_ISOLATED_TEST_FILES,
-  LONG_TASK_LEVEL4_TEST_FILES,
   LONG_TASK_PURE_TEST_FILES,
   LONG_TASK_TRUST_TEST_FILES,
   classifyLongTaskTestFile,
@@ -33,7 +32,6 @@ import {
 import {
   LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
   planLongTaskSuiteLanes,
-  selectPackageSuiteFileNames,
 } from "../../tools/test_suite_lane_policy.mjs";
 import {
   createDeliveryFixture,
@@ -368,48 +366,9 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(new Set(classified).size, classified.length);
   assert.deepEqual([...classified].sort(), available);
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 18);
-  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 58);
+  assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 56);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
-  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 18);
-  assert.equal(LONG_TASK_LEVEL4_TEST_FILES.length, 7);
-  assert.deepEqual(
-    selectPackageSuiteFileNames(
-      ["default-one.test.mjs", ...available],
-      "default",
-    ),
-    ["default-one.test.mjs"],
-  );
-  assert.deepEqual(
-    selectPackageSuiteFileNames(
-      ["default-one.test.mjs", ...available],
-      "long-task",
-    ),
-    available,
-  );
-  assert.deepEqual(
-    selectPackageSuiteFileNames(available, "long-task-trust"),
-    LONG_TASK_TRUST_TEST_FILES,
-  );
-  assert.deepEqual(
-    selectPackageSuiteFileNames(available, "long-task-level4"),
-    LONG_TASK_LEVEL4_TEST_FILES,
-  );
-  assert.throws(
-    () =>
-      selectPackageSuiteFileNames(
-        available.filter((file) => file !== LONG_TASK_TRUST_TEST_FILES[0]),
-        "long-task-trust",
-      ),
-    /Missing Trust Boundary test files/u,
-  );
-  assert.throws(
-    () =>
-      selectPackageSuiteFileNames(
-        available.filter((file) => file !== LONG_TASK_LEVEL4_TEST_FILES[0]),
-        "long-task-level4",
-      ),
-    /Missing Level-4 lane test files/u,
-  );
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 24);
   const longTaskCriticalCount = criticalSentinelsForSuite("long-task").length;
   const defaultCriticalCount = criticalSentinelsForSuite("default").length;
   const [roiDesign, authoringGovernance, deliveryBenchmarkContext] =
@@ -443,7 +402,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.match(
     roiDesign,
     new RegExp(
-      `${CRITICAL_TEST_SENTINELS.length} stable critical-semantic[\\s\\S]*current ${CRITICAL_TEST_SENTINELS.length} records derive ${LONG_TASK_TRUST_TEST_FILES.length} unique core Trust files and ${LONG_TASK_LEVEL4_TEST_FILES.length} unique Level-4 files`,
+      `${CRITICAL_TEST_SENTINELS.length} stable critical-semantic[\\s\\S]*current ${CRITICAL_TEST_SENTINELS.length} records derive ${LONG_TASK_TRUST_TEST_FILES.length} unique Trust files`,
       "u",
     ),
   );
@@ -457,11 +416,11 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.match(
     authoringGovernance,
     new RegExp(
-      `${LONG_TASK_PURE_TEST_FILES.length} pure, ${LONG_TASK_ISOLATED_TEST_FILES.length} isolated and ${LONG_TASK_EXCLUSIVE_TEST_FILES.length} exclusive[\\s\\S]*${CRITICAL_TEST_SENTINELS.length} critical sentinels deriving ${LONG_TASK_TRUST_TEST_FILES.length} unique core Trust files and ${LONG_TASK_LEVEL4_TEST_FILES.length} unique Level-4 files`,
+      `${LONG_TASK_PURE_TEST_FILES.length} pure, ${LONG_TASK_ISOLATED_TEST_FILES.length} isolated and ${LONG_TASK_EXCLUSIVE_TEST_FILES.length} exclusive[\\s\\S]*${CRITICAL_TEST_SENTINELS.length} critical sentinels deriving ${LONG_TASK_TRUST_TEST_FILES.length} unique Trust files`,
       "u",
     ),
   );
-  assert.equal(longTaskCriticalCount + defaultCriticalCount, 34);
+  assert.equal(longTaskCriticalCount + defaultCriticalCount, 32);
   assert.match(
     deliveryBenchmarkContext,
     /long-task-level4-source-readiness\.test\.mjs/u,
@@ -478,17 +437,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     "long-task-level4-package-promotion.test.mjs",
     "long-task-level4-source-readiness.test.mjs",
   ])
-    assert.equal(LONG_TASK_LEVEL4_TEST_FILES.includes(file), true);
-  assert.equal(
-    LONG_TASK_LEVEL4_TEST_FILES.includes("long-task-real-process-roi.test.mjs"),
-    true,
-  );
-  assert.equal(
-    LONG_TASK_LEVEL4_TEST_FILES.some((file) =>
-      LONG_TASK_TRUST_TEST_FILES.includes(file),
-    ),
-    false,
-  );
+    assert.equal(LONG_TASK_TRUST_TEST_FILES.includes(file), true);
   assert.equal(
     LONG_TASK_TRUST_TEST_FILES.filter(
       (file) => file === "long-task-observer-trust-counterexamples.test.mjs",
@@ -571,9 +520,9 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.deepEqual(
     suitePlan.lanes.map((lane) => lane.key),
     [
-      "trust-safe",
+      "trust-safe-01",
+      "trust-safe-02",
       "trust-exclusive",
-      "level4-safe",
       "remainder-safe-01",
       "remainder-safe-02",
       "remainder-safe-03",
@@ -608,14 +557,8 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   );
   assert.deepEqual(
     trustPlan.lanes.map((lane) => lane.key),
-    ["safe", "exclusive"],
+    ["safe-01", "safe-02", "exclusive"],
   );
-  const level4Plan = planLongTaskSuiteLanes(
-    LONG_TASK_LEVEL4_TEST_FILES,
-    "long-task-level4",
-    2,
-  );
-  assert.deepEqual(level4Plan.lanes.map((lane) => lane.key), ["safe"]);
   assert.throws(
     () =>
       planLongTaskSuiteLanes(
@@ -623,7 +566,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
         "long-task",
         1,
       ),
-    /missing protected lane files/u,
+    /missing Trust Boundary files/u,
   );
 });
 
@@ -699,7 +642,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    34,
+    32,
   );
 
   const observerSentinelControls = new Map([

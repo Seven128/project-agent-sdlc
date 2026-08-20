@@ -8,8 +8,6 @@ c030d02eee315d2860c6a2ff01c22887690f3684
 
 That baseline is the Long-Task Compact Carrier baseline. It includes bounded Context search, the default route's exact ephemeral non-UI and selected-design accounting, Compact V2 authoring, conservative Preflight repair ordering, Context retrieval/Authority projection separation, the unconditional post-Authority-Lock host-change continuation checkpoint and the selected-design fact-closure boundary. Any benchmark-listed resolver, workflow replacement or Authoring candidate still requires the formal paired evidence below before a measured mechanism claim.
 
-The separate Long-Task delegation track freezes its own later baseline at `b83a9ee3836ff8fc8b7d4db9d29de2546df2a314`; it does not reinterpret the older Context/Workflow experiment baseline.
-
 No benchmark result is committed here. A prepared run, calibration run, or single pair is not evidence that a mechanism has positive ROI.
 
 ## Tracks
@@ -37,15 +35,6 @@ Both variants load the complete canonical `.codex/ty-context-managed/agents/AGEN
 
 This track holds Long-Task internals fixed. It tests only whether removing the default route's exact ephemeral production ledger lowers repeated execution cost without reducing hidden quality, Context and selected-source recall, project verification, owner/change-scope correctness, route correctness or completion honesty. A seventh small-but-high-assurance task checks that task size does not prevent selecting Long-Task; it selects a route only and never activates or executes Long-Task.
 
-### Long-Task delegation
-
-- `long-task-delegation-conditional`: the exact conditional-delegation bytes from the closed PR-A baseline.
-- `long-task-delegation-positive-default`: the Owner-selected candidate that requires multiple exact workers for at least two safe, positive-benefit, disjoint packets when the exact profile and capacity are available; solo execution has one of five frozen reasons.
-
-`guidance/long-task-delegation-v1/manifest.json` binds four complete eventual-promotion files: managed AGENTS core, fixed Luna-Max/no-tier leaf profile, main Long-Task Skill and its OpenAI metadata. A stable content digest covers only ordered promotion targets, byte lengths and content hashes; a separate provenance digest covers the baseline Git blobs and tracked candidate sources. Formal prepare first enables Long-Task, then overwrites only the isolated run's managed AGENTS block, installed Skill/metadata and installed profile. The bundle is deliberately absent from package source mappings, npm assets, consumer sync and release defaults. Promotion is byte-for-byte only and remains blocked until a later aggregate admits the same candidate content digest.
-
-The fixed task has two code/test packets with disjoint owners and parent-owned Source, Contract, Context, integration and Final Gate. The track freezes the exact task, gold and hidden-probe bytes before preparation and binds their aggregate digest into run, pair and host-trace identity, so later scoring cannot reinterpret an older run with changed benchmark inputs. A conclusion-grade run must traverse the real Source/Contract → Preflight → Compile → checkpoint → delegation → parent integration → current verification → Final Gate lifecycle. `tiny-context-long-task-delegation-host-trace-v1` keeps requested fields separate from effective model/reasoning/tier, binds capacity, actor-scoped mutations, candidate identity and parent/child cost, and rejects generic workers, overlaps, stale Gates and unclosed attribution. A trace file cannot attest its own origin. This repository currently has no trusted host integration: even a caller-supplied object shaped like a host envelope remains `host_provenance_unverified`, so every such pair is ineligible. A future host-owned channel must be wired independently rather than relaxing the file parser. Unobservable tier remains exactly `service_tier_inheritance_unverified` and expands an otherwise trusted run to five; it is never filled from the request.
-
 ### Long-Task authoring
 
 - `authoring-compact-v2`: current Compact V2 baseline.
@@ -66,13 +55,12 @@ Both tracks start at three eligible pairs and require `2/3` wins. A primary-metr
 ## Fixed Assets
 
 ```text
-experiment-set.json       variants, tracks, ordinary-track thresholds, delegation policy pointer
+experiment-set.json       variants, tracks, baseline and thresholds
 fixture/**                 one deterministic product/Context repository
 tasks/*.json               prompts and fixed task inputs
 gold/*.json                operator-held Context/Authority expectations
 hidden/*.mjs               product probes, never copied into run repositories
 runner/**                  prepare, score, compare and aggregate tools
-guidance/**                digest-frozen source-workspace experiment inputs
 admission-set.json         independently frozen DRA/Build-Reuse-Buy protocol
 admission/**               public cases and strict result schemas
 agent-result.schema.json   diagnostic Agent handoff shape
@@ -88,8 +76,6 @@ The six implementation Context/Workflow tasks cover:
 6. fresh-agent UI/UX Context, canonical-target and selected-handoff recovery.
 
 The Workflow Assurance track adds one route-only task for a small billing rule that explicitly requires machine-traceable, recoverable and auditable acceptance.
-
-The delegation track adds one active Long-Task task with independent money and health packets; its preparation and deterministic verifier tests are not a substitute for host-owned paired execution.
 
 The five Authoring tasks cover structured JSON, UI/Playwright, Population, security/migration, and external pending.
 
@@ -110,7 +96,6 @@ Conclusion-grade:
 - trace-derived total, pre-implementation and formal-enumeration tool calls for Workflow Assurance;
 - prepare-derived frozen Git guidance provenance for each Workflow Assurance variant;
 - structured completion handoff checked against the machine-observed outcome.
-- host-attested active lifecycle, effective worker identity/capability, capacity and actor-scoped shared-tree mutations for Long-Task delegation.
 
 Diagnostic only:
 
@@ -119,7 +104,6 @@ Diagnostic only:
 - one calibration run;
 - resolver candidates without evidence that the Agent actually read them;
 - YAML size before both Contracts compile to equal Authority.
-- a delegation JSON trace whose origin/capabilities are only self-declared, or a detached spawn smoke outside the active lifecycle.
 
 A Context/Workflow pair remains calibration-only without a normalized host trace for both paths. The deterministic resolver result can prove candidate recall, but not actual Agent reading cost. The UI/UX task additionally requires trace-confirmed reads of every gold-selected design source; Agent self-report alone is diagnostic. A Workflow Assurance pair additionally requires trace-derived tool-call counts and observer elapsed time for both variants. Token counts are compared when the host exposes them, but are not silently inferred.
 
@@ -141,8 +125,8 @@ node examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs prepar
   --replicate 1 \
   --model <exact-model-id> \
   --reasoning <exact-reasoning-level> \
-  --provider <provider-id> \
-  --out-dir .artifacts/mechanism/runs/rounding-01-baseline
+  --out-dir .artifacts/mechanism/rounding-01/baseline \
+  --force
 ```
 
 Prepare the paired candidate with the same pair/model/reasoning/replicate:
@@ -155,11 +139,9 @@ node examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs prepar
   --replicate 1 \
   --model <exact-model-id> \
   --reasoning <exact-reasoning-level> \
-  --provider <provider-id> \
-  --out-dir .artifacts/mechanism/runs/rounding-01-candidate
+  --out-dir .artifacts/mechanism/rounding-01/candidate \
+  --force
 ```
-
-Inside the source repository, prepared runs are allowed only below `.artifacts/mechanism/runs/<run-name>`. A first prepare creates a runner-owned marker. Add `--force` only to rebuild that same marked directory; a legacy, unmarked, linked or otherwise non-owned directory is never removed automatically, so inspect it and choose a new empty run path instead. Repository roots, the mechanism source tree, filesystem/home/current-directory ancestors and other protected targets fail before deletion.
 
 Open each prepared directory as an independent Codex root and give it only `.benchmark/prompt.md`.
 
@@ -167,7 +149,7 @@ After each measured run, score it from the source checkout:
 
 ```sh
 node examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs score \
-  --run-dir .artifacts/mechanism/runs/rounding-01-baseline \
+  --run-dir .artifacts/mechanism/rounding-01/baseline \
   --trace .artifacts/mechanism/rounding-01/baseline-trace.json \
   --out .artifacts/mechanism/rounding-01/baseline-score.json
 ```

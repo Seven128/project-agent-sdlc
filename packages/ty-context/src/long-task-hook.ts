@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readConfig } from "./lib/config.js";
 import { harnessRoot } from "./lib/harness-root.js";
-import { inspectLongTaskCodexAgentProfileAvailability } from "./lib/long-task-codex-agent-profile.js";
+import { longTaskCodexAgentProfileBootstrapPaths } from "./lib/long-task-codex-agent-profile.js";
 import { isProfileEnabled } from "./lib/profiles.js";
 import { readActiveLongTaskBinding } from "./lib/long-task-state.js";
 import { stopCheckDeliveryTask } from "./lib/long-task-status-v2.js";
@@ -31,8 +31,8 @@ const LONG_TASK_IMPLEMENTATION_BOUNDARY = [
 const AGENT_SPAWN_TOOLS = new Set(["spawn_agent", "Agent"]);
 const EXACT_WORKER_REQUIRED =
   "Active Tiny Context Long-Task permits delegation only to the exact custom agent long_task_implementation. The current host request does not explicitly select it. Do not substitute a generic worker; complete this packet in the parent Goal.";
-const unavailableExactWorker = (reason: string): string =>
-  `Active Tiny Context Long-Task cannot use the exact custom agent long_task_implementation because its current package-managed profile is unavailable (${reason}). Do not spawn a substitute agent; complete this packet in the parent Goal.`;
+const EXACT_WORKER_UNAVAILABLE =
+  "Active Tiny Context Long-Task cannot use the exact custom agent long_task_implementation because its current package-managed profile is unavailable, invalid, outdated or conflicting. Do not spawn a substitute agent; complete this packet in the parent Goal.";
 
 const input = await readStdin();
 const isAgentSpawnPreToolUse =
@@ -48,13 +48,12 @@ try {
     if (selectedAgentType(input.tool_input) !== LONG_TASK_IMPLEMENTATION_AGENT)
       denyAgentSpawn(EXACT_WORKER_REQUIRED);
     const rootConfig = await readConfig(root);
-    const availability = await inspectLongTaskCodexAgentProfileAvailability(
+    const profilePaths = await longTaskCodexAgentProfileBootstrapPaths(
       root,
       await harnessRoot(root),
       isProfileEnabled(rootConfig, "long-task"),
     );
-    if (!availability.available)
-      denyAgentSpawn(unavailableExactWorker(availability.reason));
+    if (profilePaths.length === 0) denyAgentSpawn(EXACT_WORKER_UNAVAILABLE);
     output({});
   }
   if (input.hook_event_name === "SubagentStart")

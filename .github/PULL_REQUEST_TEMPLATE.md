@@ -14,7 +14,6 @@
 
 - [ ] `npm run test:affected` (or the exact focused tests listed in Notes)
 - [ ] `npm run test:long-task:trust` after freezing a Long-Task/authority candidate, when applicable
-- [ ] `npm run test:long-task:level4` when the affected plan reports `level4.required = true`
 - [ ] `npm test --workspace project-tiny-context-harness` only when affected routing selects complete coverage, a shared package/dependency boundary changed, or this is a release rehearsal
 - [ ] `node packages/ty-context/dist/cli.js package sync-source`
 - [ ] `node packages/ty-context/dist/cli.js package check-source`

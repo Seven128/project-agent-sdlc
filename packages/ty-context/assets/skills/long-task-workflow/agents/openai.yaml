@@ -1,6 +1,6 @@
 interface:
   display_name: "Long-Task Workflow"
   short_description: "Run one Delivery Contract in the current native Goal"
-  default_prompt: "Use $long-task-workflow for one Canonical Delivery Contract. After the first-Authority-Lock checkpoint, proactively delegate independent bounded packets only to the exact custom agent long_task_implementation, using multiple instances for disjoint workstreams when beneficial. If the host cannot explicitly select that custom agent, do not spawn a generic substitute; execute in the parent. Keep Source, Contract, Authority, Context, integration and formal verification in the parent Goal."
+  default_prompt: "Use $long-task-workflow for one Canonical Delivery Contract. After the first-Authority-Lock checkpoint, identify qualifying bounded packets before profile/capacity; absent an explicit policy prohibition, make actual calls for multiple exact long_task_implementation workers and let host results determine zero-start or partial fallback. Never infer unavailability, use a generic substitute or fix the count. Keep Source, Contract, Authority, architecture, Context, packet selection, integration and formal verification in the parent Goal."
 policy:
   allow_implicit_invocation: false

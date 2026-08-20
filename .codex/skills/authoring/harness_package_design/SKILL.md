@@ -18,6 +18,10 @@ This authoring Skill is repository-local. Never copy `.codex/skills/authoring/**
 5. Keep public package surfaces English-complete. Non-English triggers/examples are additive and require an equivalent narrow English path plus drift coverage.
 6. Make mechanism changes in the mechanism owner and prove them with current-candidate project checks. Documentation and tests cannot jointly redefine absent runtime behavior.
 
+## Scope / Cost Drift Stop
+
+During Long-Task mechanism work, refresh Architecture Deliberation and stop expansion immediately if an unplanned runtime owner, Schema/Authority/Gate/persistent state, benchmark/fixture/suite/lane, another independent PR, test/proof system larger than the core change, order-of-magnitude diff growth, duplicated semantic owner or ROI-governance cost greater than the cost being removed appears. Classify the affected work `keep | shrink | defer | remove` and return scope to the original Goal before continuing. This is an existing deliberation refresh rule, not a Gate, artifact or workflow state.
+
 ## Progressive references
 
 Read only the references relevant to the change, but read every selected reference completely:

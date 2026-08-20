@@ -40,10 +40,7 @@
       }
     },
     "workflow-assurance": {
-      "variants": [
-        "workflow-exact-ephemeral-baseline",
-        "workflow-assurance-split"
-      ],
+      "variants": ["workflow-exact-ephemeral-baseline", "workflow-assurance-split"],
       "tasks": [
         "local-rounding-bug",
         "cross-module-receipt-event",
@@ -83,38 +80,6 @@
         "honest_handoff_rate": 1,
         "instruction_bytes_reduction": 0.2,
         "total_tool_call_reduction": 0
-      }
-    },
-    "long-task-delegation": {
-      "variants": [
-        "long-task-delegation-conditional",
-        "long-task-delegation-positive-default"
-      ],
-      "tasks": ["long-task-disjoint-money-health"],
-      "benchmark_inputs": [
-        {
-          "role": "task",
-          "path": "examples/delivery-benchmark/mechanism/tasks/long-task-disjoint-money-health.json",
-          "byte_length": 1336,
-          "sha256": "267a5576c9e82f6d808c056f81b4196c6d67f2a3e39ec19277c2dd8eabe03f24"
-        },
-        {
-          "role": "gold",
-          "path": "examples/delivery-benchmark/mechanism/gold/long-task-disjoint-money-health.json",
-          "byte_length": 2405,
-          "sha256": "2a1b0838cd1ae4bee487baf2760cec2948aefb4288195a5ba0322f351683e1cf"
-        },
-        {
-          "role": "hidden_probe",
-          "path": "examples/delivery-benchmark/mechanism/hidden/long-task-disjoint-money-health.mjs",
-          "byte_length": 1656,
-          "sha256": "b754faffc76295921b5c7400a0fc1fa0c5d22c9230f7648038bae2aa9cf4f525"
-        }
-      ],
-      "admission_policy_source": {
-        "kind": "delegation_guidance_manifest_v1",
-        "manifest": "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
-        "policy_sha256": "1df19e3c777b64a538a9f0412987d26fc1a4f6151456d2c52942b319dd41dc22"
       }
     },
     "long-task-authoring": {
@@ -195,26 +160,6 @@
           "end_heading": "## Long-Task Routing",
           "sha256": "b1ea56a5287440d0f30eec9503399ae7e3a92786022c3afcb258e92745c932ff"
         }
-      }
-    },
-    "long-task-delegation-conditional": {
-      "track": "long-task-delegation",
-      "role": "baseline",
-      "description": "Frozen PR-A baseline guidance with conditional optional delegation.",
-      "guidance_source": {
-        "kind": "long_task_delegation_bundle_v1",
-        "manifest": "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
-        "content_bundle_sha256": "19986898b0f799dfaf57ea938534a1721d46bb7414c4c6f00db6eb5b806045d6"
-      }
-    },
-    "long-task-delegation-positive-default": {
-      "track": "long-task-delegation",
-      "role": "candidate",
-      "description": "Owner-selected positive-default parallel candidate isolated from package publication pending paired admission.",
-      "guidance_source": {
-        "kind": "long_task_delegation_bundle_v1",
-        "manifest": "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
-        "content_bundle_sha256": "727ec5fd4b0c26ee8b8d288bad879d052dbc0cf1ec77b0882e22df137f0b9934"
       }
     },
     "authoring-compact-v2": {

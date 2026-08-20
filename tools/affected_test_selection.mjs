@@ -3,75 +3,18 @@ import {
   assertHotspotTestFanoutBudget,
   DELIVERY_CONTRACT_FOCUSED_TESTS,
   LONG_TASK_FOCUSED_TESTS,
-  LONG_TASK_LEVEL4_TESTS,
   LONG_TASK_TRUST_TESTS,
-  STATIC_TESTS,
-} from "./test_suite_policy.mjs";
-import {
   normalizeRepositoryPath,
+  STATIC_TESTS,
   TEST_ROOT,
   testPath,
-} from "./test_suite_path_policy.mjs";
+} from "./test_suite_policy.mjs";
 
 export {
   DELIVERY_CONTRACT_FOCUSED_TESTS,
   LONG_TASK_FOCUSED_TESTS,
-  LONG_TASK_LEVEL4_TESTS,
   LONG_TASK_TRUST_TESTS,
 } from "./test_suite_policy.mjs";
-
-const LEVEL4_DIRECT_OWNER_PATHS = new Set([
-  ".codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md",
-  ".github/PULL_REQUEST_TEMPLATE.md",
-  ".github/workflows/npm-publish.yml",
-  ".github/workflows/package.yml",
-  "AGENTS.md",
-  "PROJECT_SPEC.md",
-  "docs/level4-evidence-candidate-readiness.md",
-  "docs/test-suite-roi-redesign.md",
-  "package-lock.json",
-  "package.json",
-  "packages/ty-context/package.json",
-  "project_context/architecture.md",
-  "project_context/areas/delivery-benchmark.md",
-  "project_context/areas/harness-package.md",
-  "project_context/areas/harness-package/contracts/workflow-contract.md",
-  "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-  "project_context/areas/harness-package/implementation-index.md",
-  "project_context/areas/harness-package/verification.md",
-  "project_context/context.toml",
-  "project_context/global.md",
-  "tests/ty-context/affected-test-selection.test.mjs",
-  "tests/ty-context/run-package-suite.mjs",
-  "tests/ty-context/test-suite-file-reporter.mjs",
-  "tests/ty-context/test-suite-runtime.test.mjs",
-  "tests/ty-context/workflow-test-entrypoints.test.mjs",
-  "tools/affected_change_discovery.mjs",
-  "tools/affected_test_selection.mjs",
-  "tools/npm_command_spec.mjs",
-  "tools/package_build_fingerprint.mjs",
-  "tools/run_affected_tests.mjs",
-  "tools/test_suite_lane_policy.mjs",
-  "tools/test_suite_path_policy.mjs",
-  "tools/test_suite_policy.mjs",
-  "tools/verify_level4_governance_promotion.mjs",
-  "tools/verify_long_task_real_process_roi.mjs",
-  "tools/windows_job_process_supervisor.ps1",
-]);
-
-const LEVEL4_OWNER_PREFIXES = Object.freeze([
-  "examples/delivery-benchmark/real-process-workload/",
-  "packages/ty-context/tsconfig",
-  "tests/ty-context/helpers/long-task-level4-",
-  "tests/ty-context/long-task-level4-",
-  "tools/formal_process_supervisor",
-  "tools/level4_",
-  "tools/long_task_benchmark_implementation_closure",
-  "tools/long_task_formal_",
-  "tools/long_task_package_materialization",
-  "tools/long_task_real_process_",
-  "tools/release_",
-]);
 
 const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/compact-authoring-support.ts",
@@ -84,104 +27,6 @@ const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "tools/structural_closure_cost_",
   "tools/semantic_fact_delivery_",
   "tools/verify_semantic_fact_completeness_delivery.mjs",
-]);
-
-const SELF_HOSTING_REPORT_TEST = "self-hosting-cost-report.test.mjs";
-const SELF_HOSTING_REPORT_INPUTS = new Set([
-  "tests/ty-context/run-package-suite.mjs",
-  "tests/ty-context/test-suite-file-reporter.mjs",
-  "tools/affected_change_discovery.mjs",
-  "tools/package_build_fingerprint.mjs",
-  "tools/release_publish_helpers.mjs",
-  "tools/test_suite_lane_policy.mjs",
-  "tools/test_suite_path_policy.mjs",
-  "tools/test_suite_policy.mjs",
-]);
-
-const DELEGATION_BENCHMARK_TESTS = Object.freeze([
-  "long-task-delegation-benchmark.test.mjs",
-  "long-task-delegation-evidence.test.mjs",
-]);
-
-const DELEGATION_OWNER_PATHS = new Set([
-  "PROJECT_SPEC.md",
-  "project_context/areas/delivery-benchmark.md",
-  "project_context/areas/harness-package.md",
-  "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
-  "project_context/areas/harness-package/contracts/workflow-contract.md",
-  "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-  "project_context/areas/harness-package/implementation-index.md",
-  "project_context/areas/harness-package/verification.md",
-]);
-
-const DELEGATION_SHARED_MECHANISM_PATHS = new Set([
-  "examples/delivery-benchmark/mechanism/README.md",
-  "examples/delivery-benchmark/mechanism/RUNBOOK.md",
-  "examples/delivery-benchmark/mechanism/experiment-set.json",
-  "examples/delivery-benchmark/mechanism/runner/compare.mjs",
-  "examples/delivery-benchmark/mechanism/runner/comparison-aggregate.mjs",
-  "examples/delivery-benchmark/mechanism/runner/guidance.mjs",
-  "examples/delivery-benchmark/mechanism/runner/mechanism_benchmark.mjs",
-  "examples/delivery-benchmark/mechanism/runner/metrics.mjs",
-  "examples/delivery-benchmark/mechanism/runner/owned-run-directory.mjs",
-  "examples/delivery-benchmark/mechanism/runner/preparation-workspace.mjs",
-  "examples/delivery-benchmark/mechanism/runner/prepare.mjs",
-  "examples/delivery-benchmark/mechanism/runner/score-common.mjs",
-  "examples/delivery-benchmark/mechanism/runner/score.mjs",
-  "examples/delivery-benchmark/mechanism/runner/shared.mjs",
-]);
-
-const MECHANISM_BENCHMARK_OWNER_PATHS = new Set([
-  "examples/delivery-benchmark/mechanism/runner/comparison-cost-metrics.mjs",
-  "examples/delivery-benchmark/mechanism/runner/comparison-metrics.mjs",
-  "examples/delivery-benchmark/mechanism/runner/score-standard.mjs",
-]);
-
-const DELEGATION_TRANSITIVE_OWNER_PATHS = new Set([
-  "packages/ty-context/src/lib/long-task-hook-install.ts",
-  "tools/package_build_fingerprint.mjs",
-  "tools/self_hosting_cost_repository.mjs",
-]);
-
-const DELEGATION_PROMOTION_SURFACES = new Set([
-  "AGENTS.md",
-  ".codex/agents/long-task-implementation.toml",
-  ".codex/skills/long-task-workflow/SKILL.md",
-  ".codex/skills/long-task-workflow/agents/openai.yaml",
-  ".codex/ty-context-managed/agents/AGENTS_CORE.md",
-  ".codex/ty-context-managed/agents/long-task-implementation.toml",
-  ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
-  ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
-  "packages/ty-context/assets/agents/AGENTS_CORE.md",
-  "packages/ty-context/assets/agents/long-task-implementation.toml",
-  "packages/ty-context/assets/skills/long-task-workflow/SKILL.md",
-  "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
-]);
-
-const DELEGATION_FIXTURE_PATHS = new Set([
-  "examples/delivery-benchmark/mechanism/fixture/plans/long-task-disjoint-money-health.md",
-  "examples/delivery-benchmark/mechanism/gold/long-task-disjoint-money-health.json",
-  "examples/delivery-benchmark/mechanism/hidden/long-task-disjoint-money-health.mjs",
-  "examples/delivery-benchmark/mechanism/tasks/long-task-disjoint-money-health.json",
-]);
-
-const SUITE_POLICY_DOCUMENT_PATHS = new Set([
-  ".codex/skills/authoring/harness_package_design/references/test-and-benchmark-governance.md",
-  "docs/test-suite-roi-redesign.md",
-  "project_context/areas/harness-package/implementation-index.md",
-  "project_context/areas/harness-package/verification.md",
-]);
-
-const PROCESS_TREE_OWNER_PATHS = new Set([
-  "packages/ty-context/src/lib/long-task-check-runner.ts",
-  "packages/ty-context/src/lib/long-task-process-tree.ts",
-  "packages/ty-context/src/lib/long-task-process-tree-runtime.ts",
-  "packages/ty-context/src/lib/long-task-process-tree-windows.ts",
-]);
-
-const PROCESS_TREE_TESTS = Object.freeze([
-  "long-task-direct-process-observer.test.mjs",
-  "long-task-population-environment.test.mjs",
 ]);
 
 const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
@@ -233,10 +78,6 @@ const SYMBOLIC_GUIDANCE_PATHS = new Set([
 ]);
 
 const HOTSPOT_TESTS = new Map([
-  ...[...PROCESS_TREE_OWNER_PATHS].map((sourcePath) => [
-    sourcePath,
-    PROCESS_TREE_TESTS,
-  ]),
   [
     "packages/ty-context/src/commands/design-resource.ts",
     ["design-resource-handoff.test.mjs"],
@@ -357,6 +198,7 @@ const HOTSPOT_TESTS = new Map([
     ],
   ]),
   ...[
+    "packages/ty-context/src/commands/long-task-authoring.ts",
     "packages/ty-context/src/lib/long-task-authoring-authority-preview.ts",
     "packages/ty-context/src/lib/long-task-claims.ts",
     "packages/ty-context/src/lib/long-task-delivery-parser.ts",
@@ -375,16 +217,6 @@ const HOTSPOT_TESTS = new Map([
       "long-task-semantic-fact-closure.test.mjs",
     ],
   ]),
-  [
-    "packages/ty-context/src/commands/long-task-authoring.ts",
-    [
-      "long-task-authoring-preflight.test.mjs",
-      "long-task-delivery-compiler.test.mjs",
-      "long-task-delivery-parser.test.mjs",
-      "long-task-schema-parser-parity.test.mjs",
-      "long-task-semantic-fact-closure.test.mjs",
-    ],
-  ],
   [
     "packages/ty-context/src/lib/long-task-runner-freeze.ts",
     [
@@ -410,8 +242,6 @@ const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/lib/long-task-codex-agent-profile.ts",
     [
-      "long-task-delegation-benchmark.test.mjs",
-      "long-task-delegation-evidence.test.mjs",
       "long-task-profile-hook.test.mjs",
       "long-task-workspace-scope.test.mjs",
       "sync-init-doctor.test.mjs",
@@ -422,8 +252,6 @@ const HOTSPOT_TESTS = new Map([
     [
       "design-system-authoring-skill.test.mjs",
       "design-resource-authoring-skill.test.mjs",
-      "long-task-delegation-benchmark.test.mjs",
-      "long-task-delegation-evidence.test.mjs",
       "sync-init-doctor.test.mjs",
       "long-task-profile-hook.test.mjs",
     ],
@@ -970,11 +798,7 @@ assertHotspotTestFanoutBudget(HOTSPOT_TESTS);
 export function selectAffectedTests(changedPaths, options = {}) {
   const scope = options.scope ?? "auto";
   const pathExists = options.pathExists ?? (() => true);
-  if (scope === "all")
-    return plan("full-suite", [], true, ["scope:all"], {
-      required: true,
-      triggerPaths: [],
-    });
+  if (scope === "all") return plan("full-suite", [], true, ["scope:all"]);
   if (scope === "trust")
     return plan("trust-boundary", [], true, ["scope:trust"]);
   if (scope === "long-task")
@@ -996,37 +820,9 @@ export function selectAffectedTests(changedPaths, options = {}) {
 
   const tests = new Set();
   const reasons = [];
-  const level4TriggerPaths = new Set(
-    normalized.filter(isLevel4TriggerPath),
-  );
   let mode = "selected";
 
   for (const file of normalized) {
-    if (level4TriggerPaths.has(file))
-      mode = widen(mode, "trust-boundary");
-    if (SELF_HOSTING_REPORT_INPUTS.has(file)) {
-      tests.add(testPath(SELF_HOSTING_REPORT_TEST));
-    }
-    if (DELEGATION_OWNER_PATHS.has(file)) {
-      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
-        tests.add(test),
-      );
-      reasons.push(`${file}:delegation_candidate_owner`);
-    }
-    if (
-      DELEGATION_TRANSITIVE_OWNER_PATHS.has(file) ||
-      DELEGATION_PROMOTION_SURFACES.has(file)
-    ) {
-      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
-        tests.add(test),
-      );
-      if (file.endsWith("long-task-implementation.toml"))
-        tests.add(testPath("long-task-profile-hook.test.mjs"));
-      reasons.push(`${file}:delegation_candidate_dependency`);
-    }
-    if (SUITE_POLICY_DOCUMENT_PATHS.has(file)) {
-      tests.add(testPath("test-suite-runtime.test.mjs"));
-    }
     if (
       file === "tests/ty-context/run-package-suite.mjs" ||
       file === "tests/ty-context/test-suite-file-reporter.mjs"
@@ -1037,72 +833,21 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
-    if (file === "tests/ty-context/fixtures/self-hosting-cost-baseline.json") {
-      tests.add(testPath("self-hosting-cost-report.test.mjs"));
-      reasons.push(`${file}:self_hosting_cost_measurement`);
-      continue;
-    }
-
-    if (MECHANISM_BENCHMARK_OWNER_PATHS.has(file)) {
-      tests.add(testPath("delivery-mechanism-benchmark.test.mjs"));
-      reasons.push(`${file}:delivery_mechanism_owner`);
-      continue;
-    }
-
-    const delegationShared = DELEGATION_SHARED_MECHANISM_PATHS.has(file);
-    const delegationSpecific =
-      DELEGATION_FIXTURE_PATHS.has(file) ||
-      file.startsWith(
-        "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/",
-      ) ||
-      file.startsWith(
-        "examples/delivery-benchmark/mechanism/runner/delegation-",
-      );
-    if (delegationShared || delegationSpecific) {
-      DELEGATION_BENCHMARK_TESTS.map(testPath).forEach((test) =>
-        tests.add(test),
-      );
-      if (delegationShared)
-        tests.add(testPath("delivery-mechanism-benchmark.test.mjs"));
-      if (
-        file === "examples/delivery-benchmark/mechanism/README.md" ||
-        file === "examples/delivery-benchmark/mechanism/RUNBOOK.md"
-      )
-        tests.add(testPath("fresh-agent-admission-benchmark.test.mjs"));
-      reasons.push(`${file}:long_task_delegation_benchmark`);
-      continue;
-    }
-
-    if (
-      file ===
-      "tests/ty-context/helpers/long-task-process-tree-controls.mjs"
-    ) {
-      mode = widen(mode, "trust-boundary");
-      PROCESS_TREE_TESTS.map(testPath).forEach((test) => tests.add(test));
-      reasons.push(`${file}:process_tree_test_owner`);
-      continue;
-    }
-
     if (file.startsWith(`${TEST_ROOT}/`)) {
       if (file.endsWith(".test.mjs")) {
         if (pathExists(file)) {
           tests.add(file);
-          tests.add(testPath(SELF_HOSTING_REPORT_TEST));
           reasons.push(`${file}:direct_test`);
         } else {
           mode = widen(mode, "full-suite");
           reasons.push(`${file}:deleted_direct_test_full_suite`);
         }
       } else {
-        if (level4TriggerPaths.has(file)) {
-          reasons.push(`${file}:level4_test_support`);
-        } else {
-          const suite = path.basename(file).startsWith("long-task-")
-            ? "long-task-suite"
-            : "full-suite";
-          mode = widen(mode, suite);
-          reasons.push(`${file}:shared_test_support`);
-        }
+        const suite = path.basename(file).startsWith("long-task-")
+          ? "long-task-suite"
+          : "full-suite";
+        mode = widen(mode, suite);
+        reasons.push(`${file}:shared_test_support`);
       }
       continue;
     }
@@ -1122,8 +867,6 @@ export function selectAffectedTests(changedPaths, options = {}) {
     if (symbolicTests.length > 0)
       reasons.push(`${file}:symbolic_design_denotation`);
 
-    if (PROCESS_TREE_OWNER_PATHS.has(file))
-      mode = widen(mode, "trust-boundary");
     const hotspot = HOTSPOT_TESTS.get(file);
     if (hotspot) {
       hotspot.map(testPath).forEach((test) => tests.add(test));
@@ -1133,32 +876,16 @@ export function selectAffectedTests(changedPaths, options = {}) {
 
     if (symbolicTests.length > 0 && !isSymbolicGuidancePath(file)) continue;
 
-    const selfHostingTests = selfHostingAffectedTests(file);
-    if (selfHostingTests) {
-      for (const selfHostingTest of selfHostingTests) {
-        tests.add(testPath(selfHostingTest));
-      }
-      reasons.push(`${file}:self_hosting_cost_measurement`);
-      continue;
-    }
-
     if (
       file === "tools/package_build_fingerprint.mjs" ||
       file === "tools/affected_change_discovery.mjs" ||
       file === "tools/affected_test_selection.mjs" ||
       file === "tools/run_affected_tests.mjs" ||
-      file === "tools/test_suite_path_policy.mjs" ||
-      file === "tools/test_suite_policy.mjs" ||
-      file === "tools/test_suite_lane_policy.mjs"
+      file === "tools/test_suite_policy.mjs"
     ) {
       tests.add(testPath("affected-change-discovery.test.mjs"));
       tests.add(testPath("affected-test-selection.test.mjs"));
-      if (
-        file === "tools/package_build_fingerprint.mjs" ||
-        file === "tools/test_suite_path_policy.mjs" ||
-        file === "tools/test_suite_policy.mjs" ||
-        file === "tools/test_suite_lane_policy.mjs"
-      )
+      if (file === "tools/package_build_fingerprint.mjs")
         tests.add(testPath("test-suite-runtime.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);
@@ -1214,8 +941,8 @@ export function selectAffectedTests(changedPaths, options = {}) {
     }
 
     if (file.startsWith("packages/ty-context/src/")) {
-      mode = widen(mode, "trust-boundary");
-      reasons.push(`${file}:shared_package_runtime_core`);
+      mode = "full-suite";
+      reasons.push(`${file}:shared_package_runtime`);
       continue;
     }
 
@@ -1288,11 +1015,6 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
-    if (level4TriggerPaths.has(file)) {
-      reasons.push(`${file}:level4_trigger_closure`);
-      continue;
-    }
-
     if (file === "tools/open_design_live_smoke.mjs") {
       tests.add(testPath("design-system-authoring-skill.test.mjs"));
       tests.add(testPath("design-resource-authoring-provider.test.mjs"));
@@ -1314,32 +1036,16 @@ export function selectAffectedTests(changedPaths, options = {}) {
     }
 
     mode = "full-suite";
-    level4TriggerPaths.add(file);
     reasons.push(`${file}:unclassified_fail_safe`);
   }
 
   if (mode === "long-task-suite" || mode === "full-suite") tests.clear();
-  if (mode === "trust-boundary") {
+  if (mode === "trust-boundary")
     LONG_TASK_TRUST_TESTS.forEach((test) => tests.delete(test));
-    if (level4TriggerPaths.size > 0)
-      LONG_TASK_LEVEL4_TESTS.forEach((test) => tests.delete(test));
-  }
   const selected = [...tests].sort();
   const requiresBuild =
     mode !== "selected" || selected.some((test) => !STATIC_TESTS.has(test));
-  return plan(mode, selected, requiresBuild, reasons, {
-    required: level4TriggerPaths.size > 0,
-    triggerPaths: [...level4TriggerPaths],
-  });
-}
-
-function isLevel4TriggerPath(file) {
-  return (
-    LEVEL4_DIRECT_OWNER_PATHS.has(file) ||
-    file === "tests/ty-context/long-task-real-process-roi.test.mjs" ||
-    file === "tools/long_task_packed_package_identity.mjs" ||
-    LEVEL4_OWNER_PREFIXES.some((prefix) => file.startsWith(prefix))
-  );
+  return plan(mode, selected, requiresBuild, reasons);
 }
 
 function symbolicAffectedTests(file) {
@@ -1395,33 +1101,7 @@ function isSymbolicGuidancePath(file) {
   );
 }
 
-function selfHostingAffectedTests(file) {
-  const model = "self-hosting-cost-model.test.mjs";
-  const hostTrace = "self-hosting-cost-host-trace.test.mjs";
-  const report = SELF_HOSTING_REPORT_TEST;
-  if (file === "tools/self_hosting_cost_model.mjs") {
-    return [model, hostTrace, report];
-  }
-  if (
-    file === "tools/normalized_host_trace.mjs" ||
-    file === "tools/self_hosting_cost_trace_paths.mjs" ||
-    file === "tools/self_hosting_cost_repository.mjs" ||
-    file === "tools/self_hosting_cost_report.mjs"
-  ) {
-    return [hostTrace, report];
-  }
-  if (file.startsWith("tools/self_hosting_cost_")) return [report];
-  return null;
-}
-
-function plan(
-  mode,
-  tests,
-  requiresBuild,
-  reasons,
-  level4 = { required: false, triggerPaths: [] },
-) {
-  const required = level4.required === true;
+function plan(mode, tests, requiresBuild, reasons) {
   return {
     mode,
     tier: tierForMode(mode),
@@ -1430,15 +1110,6 @@ function plan(
     tests: [...new Set(tests)].sort(),
     requires_build: requiresBuild,
     reasons: [...new Set(reasons)].sort(),
-    level4: {
-      required,
-      trigger_paths: [...new Set(level4.triggerPaths)].sort(),
-      execution: !required
-        ? "not_required"
-        : mode === "full-suite" || mode === "long-task-suite"
-          ? "contained_by_selected_aggregate"
-          : "separate_required",
-    },
   };
 }
 

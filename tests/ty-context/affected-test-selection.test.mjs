@@ -6,11 +6,9 @@ import { fileURLToPath } from "node:url";
 import {
   DELIVERY_CONTRACT_FOCUSED_TESTS,
   LONG_TASK_FOCUSED_TESTS,
-  LONG_TASK_LEVEL4_TESTS,
   LONG_TASK_TRUST_TESTS,
   selectAffectedTests,
 } from "../../tools/affected_test_selection.mjs";
-import { realProcessRoiBenchmarkImplementationPaths } from "../../tools/long_task_real_process_roi_runner.mjs";
 import {
   CONTROLLED_TEST_SUITE_BUDGET_PROFILES,
   assertHotspotTestFanoutBudget,
@@ -110,14 +108,7 @@ test("fresh-Agent admission inputs, runners and runbook select the frozen protoc
     assert.equal(selection.mode, "selected", source);
     assert.deepEqual(
       selection.tests,
-      source.endsWith("/RUNBOOK.md")
-        ? [
-            "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
-            "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-            "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-            "tests/ty-context/long-task-delegation-evidence.test.mjs",
-          ]
-        : ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
+      ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
       source,
     );
   }
@@ -319,41 +310,6 @@ test("Context authority topology changes use focused selection and freshness cov
   ]);
 });
 
-test("Long-Task init template changes retain the authoring lifecycle regression", () => {
-  const selection = selectAffectedTests([
-    "packages/ty-context/src/commands/long-task-authoring.ts",
-  ]);
-  assert.equal(selection.mode, "selected");
-  assert.deepEqual(selection.tests, [
-    "tests/ty-context/long-task-authoring-preflight.test.mjs",
-    "tests/ty-context/long-task-delivery-compiler.test.mjs",
-    "tests/ty-context/long-task-delivery-parser.test.mjs",
-    "tests/ty-context/long-task-schema-parser-parity.test.mjs",
-    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
-  ]);
-});
-
-test("process-tree owners retain Trust plus direct identity and lifecycle controls", () => {
-  for (const file of [
-    "packages/ty-context/src/lib/long-task-check-runner.ts",
-    "packages/ty-context/src/lib/long-task-process-tree.ts",
-    "packages/ty-context/src/lib/long-task-process-tree-runtime.ts",
-    "packages/ty-context/src/lib/long-task-process-tree-windows.ts",
-    "tests/ty-context/helpers/long-task-process-tree-controls.mjs",
-  ]) {
-    const selection = selectAffectedTests([file]);
-    assert.equal(selection.mode, "trust-boundary", file);
-    assert.deepEqual(
-      selection.tests,
-      [
-        "tests/ty-context/long-task-direct-process-observer.test.mjs",
-        "tests/ty-context/long-task-population-environment.test.mjs",
-      ],
-      file,
-    );
-  }
-});
-
 test("Preflight repair-diagnostic changes stay on focused Authoring coverage", () => {
   for (const file of [
     "packages/ty-context/src/lib/long-task-authoring-preflight-repair-order.ts",
@@ -399,8 +355,6 @@ test("static Codex implementation profile owner selects sync, collision and scop
   ]);
   assert.equal(selection.mode, "selected");
   assert.deepEqual(selection.tests, [
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/long-task-workspace-scope.test.mjs",
     "tests/ty-context/sync-init-doctor.test.mjs",
@@ -443,28 +397,18 @@ test("Trust widening retains affected tests that the canonical gate does not con
   assert.equal(selection.mode, "trust-boundary");
   assert.deepEqual(selection.tests, [
     "tests/ty-context/long-task-delivery-parser.test.mjs",
-    "tests/ty-context/self-hosting-cost-report.test.mjs",
   ]);
 });
 
-test("ordinary package runtime stays on core feedback while dependency and unknown changes fail safe", () => {
-  const ordinary = selectAffectedTests([
+test("shared package runtime and dependency changes fail safe to the full suite", () => {
+  for (const file of [
     "packages/ty-context/src/lib/shared-runtime.ts",
-  ]);
-  assert.equal(ordinary.mode, "trust-boundary");
-  assert.equal(ordinary.level4.required, false);
-  assert.equal(ordinary.level4.execution, "not_required");
-
-  for (const file of ["package-lock.json", "unknown.bin"]) {
+    "package-lock.json",
+    "unknown.bin",
+  ]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "full-suite", file);
     assert.deepEqual(selection.tests, [], file);
-    assert.equal(selection.level4.required, true, file);
-    assert.equal(
-      selection.level4.execution,
-      "contained_by_selected_aggregate",
-      file,
-    );
   }
 });
 
@@ -473,7 +417,6 @@ test("explicit work-product paths remain fail-safe selection inputs", () => {
     ".work_products/skill-validator-python/yaml.py",
   ]);
   assert.equal(selection.mode, "full-suite");
-  assert.equal(selection.level4.required, true);
   assert.match(selection.reasons[0], /unclassified_fail_safe/u);
 });
 
@@ -482,14 +425,14 @@ test("guidance-only changes select static consistency checks", () => {
     ".codex/skills/long-task-workflow/SKILL.md",
     "PROJECT_SPEC.md",
   ]);
-  assert.equal(selection.mode, "trust-boundary");
+  assert.equal(selection.mode, "selected");
   assert.equal(selection.requires_build, true);
   assert.deepEqual(selection.tests, [
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
+    "tests/ty-context/long-task-design-context.test.mjs",
     "tests/ty-context/long-task-efficiency-design.test.mjs",
+    "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
     "tests/ty-context/retired-authoring-migration.test.mjs",
     "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
@@ -507,8 +450,6 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.deepEqual(profile.tests, [
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/sync-init-doctor.test.mjs",
   ]);
@@ -657,244 +598,32 @@ test("explicit scopes are deterministic and no-change auto mode stays useful", (
 });
 
 test("affected tooling changes select discovery, selection, and entry-point coverage", () => {
-  const reportInputs = new Set([
-    "tools/affected_change_discovery.mjs",
-    "tools/test_suite_path_policy.mjs",
-    "tools/test_suite_policy.mjs",
-    "tools/test_suite_lane_policy.mjs",
-  ]);
   for (const file of [
     "tools/affected_change_discovery.mjs",
     "tools/affected_test_selection.mjs",
     "tools/run_affected_tests.mjs",
-    "tools/test_suite_path_policy.mjs",
     "tools/test_suite_policy.mjs",
-    "tools/test_suite_lane_policy.mjs",
   ]) {
     const selection = selectAffectedTests([file]);
-    assert.equal(selection.mode, "trust-boundary", file);
-    assert.equal(selection.level4.required, true, file);
-    assert.deepEqual(selection.level4.trigger_paths, [file], file);
-    assert.equal(selection.level4.execution, "separate_required", file);
-    const expected = [
-      "tests/ty-context/affected-change-discovery.test.mjs",
-      "tests/ty-context/affected-test-selection.test.mjs",
-      "tests/ty-context/workflow-test-entrypoints.test.mjs",
-    ];
-    if (reportInputs.has(file))
-      expected.push("tests/ty-context/self-hosting-cost-report.test.mjs");
-    if (
-      file === "tools/test_suite_path_policy.mjs" ||
-      file === "tools/test_suite_policy.mjs" ||
-      file === "tools/test_suite_lane_policy.mjs"
-    )
-      expected.push("tests/ty-context/test-suite-runtime.test.mjs");
-    assert.deepEqual(selection.tests, expected.toSorted(), file);
-  }
-});
-
-test("delegation candidate owners, frozen inputs, and shared runners select exact coverage", () => {
-  const specific = selectAffectedTests([
-    "examples/delivery-benchmark/mechanism/guidance/long-task-delegation-v1/manifest.json",
-  ]);
-  assert.equal(specific.mode, "selected");
-  assert.deepEqual(specific.tests, [
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
-  ]);
-
-  const sharedExpected = [
-    "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
-  ];
-  for (const sharedOwner of [
-    "examples/delivery-benchmark/mechanism/runner/prepare.mjs",
-    "examples/delivery-benchmark/mechanism/runner/preparation-workspace.mjs",
-    "examples/delivery-benchmark/mechanism/runner/owned-run-directory.mjs",
-    "examples/delivery-benchmark/mechanism/runner/comparison-aggregate.mjs",
-    "examples/delivery-benchmark/mechanism/runner/score-common.mjs",
-  ]) {
-    const selection = selectAffectedTests([sharedOwner]);
-    assert.equal(selection.mode, "selected", sharedOwner);
-    assert.deepEqual(selection.tests, sharedExpected, sharedOwner);
-  }
-  for (const mechanismOwner of [
-    "examples/delivery-benchmark/mechanism/runner/comparison-cost-metrics.mjs",
-    "examples/delivery-benchmark/mechanism/runner/comparison-metrics.mjs",
-    "examples/delivery-benchmark/mechanism/runner/score-standard.mjs",
-  ]) {
-    const selection = selectAffectedTests([mechanismOwner]);
-    assert.equal(selection.mode, "selected", mechanismOwner);
+    assert.equal(selection.mode, "selected", file);
     assert.deepEqual(
       selection.tests,
-      ["tests/ty-context/delivery-mechanism-benchmark.test.mjs"],
-      mechanismOwner,
-    );
-  }
-
-  for (const dependency of [
-    "packages/ty-context/src/lib/long-task-hook-install.ts",
-    "tools/package_build_fingerprint.mjs",
-    "tools/self_hosting_cost_repository.mjs",
-  ]) {
-    const dependencySelection = selectAffectedTests([dependency]);
-    for (const expected of [
-      "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-      "tests/ty-context/long-task-delegation-evidence.test.mjs",
-    ])
-      assert.ok(
-        dependencySelection.tests.includes(expected),
-        `${dependency}:${expected}`,
-      );
-  }
-
-  for (const surface of [
-    ".codex/agents/long-task-implementation.toml",
-    ".codex/skills/long-task-workflow/SKILL.md",
-    ".codex/skills/long-task-workflow/agents/openai.yaml",
-    ".codex/ty-context-managed/agents/AGENTS_CORE.md",
-    ".codex/ty-context-managed/agents/long-task-implementation.toml",
-    ".codex/ty-context-managed/skills/long-task-workflow/SKILL.md",
-    ".codex/ty-context-managed/skills/long-task-workflow/agents/openai.yaml",
-    "packages/ty-context/assets/agents/AGENTS_CORE.md",
-    "packages/ty-context/assets/agents/long-task-implementation.toml",
-    "packages/ty-context/assets/skills/long-task-workflow/SKILL.md",
-    "packages/ty-context/assets/skills/long-task-workflow/agents/openai.yaml",
-  ]) {
-    const surfaceSelection = selectAffectedTests([surface]);
-    for (const expected of [
-      "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-      "tests/ty-context/long-task-delegation-evidence.test.mjs",
-    ])
-      assert.ok(surfaceSelection.tests.includes(expected), `${surface}:${expected}`);
-    if (surface.endsWith("long-task-implementation.toml"))
-      assert.ok(
-        surfaceSelection.tests.includes(
-          "tests/ty-context/long-task-profile-hook.test.mjs",
-        ),
-        `${surface}:profile-hook`,
-      );
-  }
-
-  const operatorDocs = selectAffectedTests([
-    "examples/delivery-benchmark/mechanism/RUNBOOK.md",
-  ]);
-  assert.deepEqual(operatorDocs.tests, [
-    "tests/ty-context/delivery-mechanism-benchmark.test.mjs",
-    "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
-  ]);
-
-  const owner = selectAffectedTests([
-    "project_context/areas/harness-package/implementation-index.md",
-  ]);
-  for (const expected of [
-    "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-    "tests/ty-context/long-task-delegation-evidence.test.mjs",
-    "tests/ty-context/test-suite-runtime.test.mjs",
-  ])
-    assert.ok(owner.tests.includes(expected), expected);
-});
-
-test("self-hosting report inputs retain report coverage through existing owners", () => {
-  for (const file of [
-    "tests/ty-context/run-package-suite.mjs",
-    "tests/ty-context/test-suite-file-reporter.mjs",
-    "tools/affected_change_discovery.mjs",
-    "tools/package_build_fingerprint.mjs",
-    "tools/release_publish_helpers.mjs",
-    "tools/test_suite_lane_policy.mjs",
-    "tools/test_suite_path_policy.mjs",
-    "tools/test_suite_policy.mjs",
-  ]) {
-    assert.ok(
-      selectAffectedTests([file]).tests.includes(
-        "tests/ty-context/self-hosting-cost-report.test.mjs",
-      ),
+      [
+        "tests/ty-context/affected-change-discovery.test.mjs",
+        "tests/ty-context/affected-test-selection.test.mjs",
+        "tests/ty-context/workflow-test-entrypoints.test.mjs",
+      ],
       file,
     );
   }
 });
 
-test("self-hosting owners select exact host-trace, model, and report checks", () => {
-  const hostTrace = "tests/ty-context/self-hosting-cost-host-trace.test.mjs";
-  const model = "tests/ty-context/self-hosting-cost-model.test.mjs";
-  const report = "tests/ty-context/self-hosting-cost-report.test.mjs";
-  const cases = [
-    ["tools/self_hosting_cost_model.mjs", [hostTrace, model, report]],
-    ["tools/normalized_host_trace.mjs", [hostTrace, report]],
-    ["tools/self_hosting_cost_trace_paths.mjs", [hostTrace, report]],
-    [
-      "tools/self_hosting_cost_repository.mjs",
-      [
-        "tests/ty-context/long-task-delegation-benchmark.test.mjs",
-        "tests/ty-context/long-task-delegation-evidence.test.mjs",
-        hostTrace,
-        report,
-      ],
-    ],
-    ["tools/self_hosting_cost_report.mjs", [hostTrace, report]],
-    ["tools/self_hosting_cost_collectors.mjs", [report]],
-    ["tools/self_hosting_cost_install_collectors.mjs", [report]],
-    ["tools/self_hosting_cost_hotspots.mjs", [report]],
-    ["tools/self_hosting_cost_metrics.mjs", [report]],
-    ["tests/ty-context/fixtures/self-hosting-cost-baseline.json", [report]],
-  ];
-  for (const [file, expected] of cases) {
-    const selection = selectAffectedTests([file]);
-    assert.equal(selection.mode, "selected", file);
-    assert.deepEqual(selection.tests, expected, file);
-  }
-});
-
-test("pull-request template changes select workflow and Level-4 routing coverage", () => {
+test("pull-request template changes select workflow policy coverage", () => {
   const selection = selectAffectedTests([".github/PULL_REQUEST_TEMPLATE.md"]);
-  assert.equal(selection.mode, "trust-boundary");
-  assert.equal(selection.level4.required, true);
-  assert.equal(selection.level4.execution, "separate_required");
+  assert.equal(selection.mode, "selected");
   assert.deepEqual(selection.tests, [
     "tests/ty-context/workflow-test-entrypoints.test.mjs",
   ]);
-});
-
-test("Level-4 trigger closure covers the frozen implementation identity and fails unknown paths closed", () => {
-  for (const file of realProcessRoiBenchmarkImplementationPaths) {
-    const selection = selectAffectedTests([file]);
-    assert.equal(selection.level4.required, true, file);
-    assert.deepEqual(selection.level4.trigger_paths, [file], file);
-    assert.notEqual(selection.level4.execution, "not_required", file);
-  }
-
-  for (const file of [
-    "tests/ty-context/long-task-real-process-roi.test.mjs",
-    "tests/ty-context/long-task-level4-governance.test.mjs",
-    "tests/ty-context/helpers/long-task-level4-test-utils.mjs",
-    "examples/delivery-benchmark/real-process-workload/workload.json",
-    "tools/test_suite_path_policy.mjs",
-    "tools/test_suite_policy.mjs",
-    ".github/workflows/package.yml",
-    "packages/ty-context/package.json",
-    "project_context/areas/delivery-benchmark.md",
-  ]) {
-    const selection = selectAffectedTests([file]);
-    assert.equal(selection.level4.required, true, file);
-    assert.ok(selection.level4.trigger_paths.includes(file), file);
-  }
-
-  const ordinary = selectAffectedTests([
-    "packages/ty-context/src/lib/default-context.ts",
-  ]);
-  assert.equal(ordinary.level4.required, false);
-  assert.equal(ordinary.level4.execution, "not_required");
-  const unknown = selectAffectedTests(["future/unclassified-owner.bin"]);
-  assert.equal(unknown.mode, "full-suite");
-  assert.equal(unknown.level4.required, true);
-  assert.equal(
-    unknown.level4.execution,
-    "contained_by_selected_aggregate",
-  );
 });
 
 test("direct test edits stay selected while deleted direct tests fail safe to the full suite", () => {
@@ -904,7 +633,6 @@ test("direct test edits stay selected while deleted direct tests fail safe to th
   assert.equal(direct.mode, "selected");
   assert.deepEqual(direct.tests, [
     "tests/ty-context/long-task-context-evolution.test.mjs",
-    "tests/ty-context/self-hosting-cost-report.test.mjs",
   ]);
 
   for (const file of [
@@ -972,10 +700,6 @@ test("package scripts expose affected and focused developer loops", async () => 
     "node tools/run_affected_tests.mjs --list",
   );
   assert.equal(
-    packageJson.scripts["test:long-task:level4"],
-    "npm run test:long-task-level4 --workspace project-tiny-context-harness",
-  );
-  assert.equal(
     packageJson.scripts["test:long-task:trust"],
     "node tools/run_affected_tests.mjs --scope trust",
   );
@@ -986,10 +710,6 @@ test("package scripts expose affected and focused developer loops", async () => 
   assert.equal(
     packageJson.scripts["test:delivery-contract:focused"],
     "node tools/run_affected_tests.mjs --scope delivery-contract",
-  );
-  assert.equal(
-    packageJson.scripts["report:self-hosting-cost"],
-    "node tools/self_hosting_cost_report.mjs",
   );
   assert.equal(
     packageJson.scripts["smoke:open-design"],
@@ -1023,10 +743,6 @@ test("reviewed tier and hotspot budgets fail closed without limiting complete di
   assert.equal(
     LONG_TASK_TRUST_TESTS.length,
     TEST_TIER_REVIEW_BUDGETS.long_task_trust.max_files,
-  );
-  assert.equal(
-    LONG_TASK_LEVEL4_TESTS.length,
-    TEST_TIER_REVIEW_BUDGETS.long_task_level4.max_files,
   );
   assert.equal(
     LONG_TASK_FOCUSED_TESTS.length,
@@ -1081,16 +797,12 @@ test("[critical:controlled-budget-profile] suite wall-time budgets are named, en
   };
   assert.equal(
     CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v2"].reviewed_on,
-    "2026-08-19",
+    "2026-08-13",
   );
   assert.equal(resolveSuiteWallTimeBudgetMs("default", environment), 180000);
   assert.equal(
     resolveSuiteWallTimeBudgetMs("long-task-trust", environment),
     540000,
-  );
-  assert.equal(
-    resolveSuiteWallTimeBudgetMs("long-task-level4", environment),
-    1200000,
   );
   assert.equal(resolveSuiteWallTimeBudgetMs("long-task", environment), 1200000);
   assert.deepEqual(
