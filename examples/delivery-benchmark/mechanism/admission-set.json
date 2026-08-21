@@ -180,13 +180,13 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "f4f4306c80a30b2067126d4bc09e00e0854c29ef08ef82ef1a0d11a728230241",
+              "bundle_sha256": "d1aa441755f263f32eb4e56adedccada2ce6bdbae9910c650e08db86cf714721",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "9e26e8e04eee8701e75c2a68c74799b87fb5cce7abe29d3934417d76bb320811"
+                  "content_sha256": "0c73923fb99e0b2e3309c327bf64787b6af681783946b944300aae9366313622"
                 },
                 {
                   "kind": "worktree",
@@ -203,13 +203,13 @@
               ]
             },
             "simple": {
-              "bundle_sha256": "91c3716218709e3efdcb282eb684ed1c1eb495444fbc0c7ee3b89127c989ab66",
+              "bundle_sha256": "6dfd4ebb6db0c91ffcc907117e89dfc44769ebd48257583cde4979a857b8aab8",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "9e26e8e04eee8701e75c2a68c74799b87fb5cce7abe29d3934417d76bb320811"
+                  "content_sha256": "0c73923fb99e0b2e3309c327bf64787b6af681783946b944300aae9366313622"
                 }
               ]
             }

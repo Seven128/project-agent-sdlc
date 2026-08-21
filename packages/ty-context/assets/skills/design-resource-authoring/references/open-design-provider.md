@@ -73,11 +73,26 @@ For configured style-bearing work:
 
 Never silently use the provider's default or a different system. A provider-side mismatch is a synchronization/rebinding issue; it does not erase the canonical project `DESIGN.md`.
 
+## Pre-run style-application closure
+
+Before submitting a commission or calling `start_run` for any style-bearing generation or material revision, require the task-local closure defined by [resource-selection.md](resource-selection.md). Every applicable current-slice dimension must be `existing-covered`, `projected` or `not-applicable`. A `decision-required`, undispositioned dimension or Source conflict blocks the run before Provider execution; preserve the concrete diagnostic instead of launching a speculative candidate.
+
+Validate each disposition at the adapter boundary:
+
+- `existing-covered` meaning must arrive through the current commission's existing `inputs.exact_targets`, `inputs.constraints` or corresponding input binding and must match the exact target, slice and declared conditions;
+- only `projected` meaning enters the existing `style_application` object;
+- `not-applicable` stays a reasoned task-local judgment and creates no empty field; and
+- `decision-required` stays unresolved and never becomes Provider-authored application meaning.
+
+A verified `designSystemId`, exact-value Token lineage or generic instruction to follow the system proves system binding only. It cannot prove that the current slice's hierarchy, density, container, visible-versus-hit geometry, preservation or prohibited-pattern meaning reached the Provider. The Provider must not complete missing application meaning from a feature list, route tree, generic system, component inventory, screenshot, inspiration, background or task-level UI/UX analysis.
+
+Repeat the closure immediately before each material-revision run, using the existing material-revision definition. After the resulting candidate is acquired, rerun the applicable Design suitability subchecks as the independent post-generation review. A packaging, rename or byte-only export proved equivalent to the same canonical source creates neither a new Provider run nor a new design decision. This is a fail-closed adapter precondition inside the existing commission action, not a schema, state, Authority, Gate, readiness result or Provider lifecycle.
+
 ## Structured commission sequence
 
 1. Record provider version, selected agent/model, reasoning effort and service tier when exposed, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
 2. Reuse an existing task-local project only when its scope, prior inputs and required design-system binding match; otherwise create a bounded project. For style-bearing work, pass `designSystem` and verify `get_project.designSystemId` before the run.
-3. Start a run with the product-specific commission envelope, including any minimal Source-bound `style_application`, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output. `style_application` is commission content, not a separate persistent Projection or provider state.
+3. Only after the pre-run style-application closure allows execution, start a run with the product-specific commission envelope, including exactly its Source-bound `projected` `style_application` fields, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. Fully current input-bound `existing-covered` meaning permits the object to be omitted; `not-applicable` and `decision-required` never become empty or invented fields. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output. `style_application` is commission content, not a separate persistent Projection or provider state.
 4. Poll with a bounded cadence. During a long run, report meaningful progress at least once per minute without flooding the user.
 5. Preserve run IDs and the latest provider diagnostic. Support cancellation when the user requests it and the provider exposes it.
 6. Resolve the actual entry explicitly, retrieve the artifact/source, inspect it according to intent and preserve its immutable identity before later iterations or handoff.

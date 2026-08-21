@@ -237,6 +237,203 @@ test("incremental DRA review reuses existing owners without widening scope or au
   );
 });
 
+test("style-bearing DRA closes application dimensions before provider execution", async () => {
+  const [skill, selection, provider] = await Promise.all([
+    copies("SKILL.md").then((items) => items[0]),
+    copies("references/resource-selection.md").then((items) => items[0]),
+    copies("references/open-design-provider.md").then((items) => items[0]),
+  ]);
+
+  const workflowMatch = skill.match(
+    /^## Workflow\r?\n([\s\S]*?)(?=^## Conditional Design Authority stop$)/mu,
+  );
+  assert.ok(workflowMatch);
+  const workflow = workflowMatch[1];
+  assert.deepEqual(
+    [...workflow.matchAll(/^(\d+)\. /gmu)].map((match) => Number(match[1])),
+    [1, 2, 3, 4, 5, 6, 7, 8],
+  );
+  const skillClosureAt = workflow.indexOf(
+    "Before every style-bearing generation or material revision",
+  );
+  assert.ok(skillClosureAt > workflow.indexOf("4. For style-bearing work"));
+  assert.ok(skillClosureAt < workflow.indexOf("5. Discover only"));
+  assert.match(
+    workflow,
+    /No applicable dimension may be silently omitted; `decision-required`, an undispositioned dimension or Source conflict blocks the Provider run/iu,
+  );
+  assert.match(
+    workflow,
+    /Complete current input-bound coverage permits omitting `style_application`[\s\S]*actual envelope contains only `projected` fields/iu,
+  );
+
+  const closureMatch = selection.match(
+    /^### Pre-generation style-application closure\r?\n([\s\S]*?)(?=^## 4\. Derive development-corresponding coverage$)/mu,
+  );
+  assert.ok(closureMatch);
+  const closure = closureMatch[1];
+  const rows = [
+    ...closure.matchAll(
+      /^\| `(existing-covered|projected|not-applicable|decision-required)` \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gmu,
+    ),
+  ];
+  assert.deepEqual(
+    rows.map((row) => row[1]),
+    [
+      "existing-covered",
+      "projected",
+      "not-applicable",
+      "decision-required",
+    ],
+  );
+  const disposition = new Map(
+    rows.map((row) => [
+      row[1],
+      {
+        condition: row[2],
+        envelope: row[3],
+        provider: row[4],
+      },
+    ]),
+  );
+  assert.match(
+    disposition.get("existing-covered").condition,
+    /Current controlling Source.*selected `exact-target`\/`constraint`.*exact target, slice and declared conditions.*existing input binding/iu,
+  );
+  assert.match(
+    disposition.get("existing-covered").envelope,
+    /do not duplicate it in `style_application`/iu,
+  );
+  assert.match(
+    disposition.get("projected").condition,
+    /Source and Design Authority.*determine.*slice-specific application.*does not directly and completely express/iu,
+  );
+  assert.match(
+    disposition.get("projected").envelope,
+    /only the necessary current-slice field/iu,
+  );
+  assert.match(
+    disposition.get("not-applicable").envelope,
+    /task-local.*no empty or placeholder field/iu,
+  );
+  assert.match(
+    disposition.get("decision-required").provider,
+    /Blocks the Provider run/iu,
+  );
+
+  for (const dimension of [
+    "primary_content_priority",
+    "density",
+    "container_treatment",
+    "visible_vs_hit_geometry",
+    "preserve",
+    "prohibited_patterns",
+  ])
+    assert.ok(closure.includes(`\`${dimension}\``), dimension);
+  assert.match(
+    closure,
+    /Provider run is allowed if and only if every applicable dimension is `existing-covered`, `projected` or `not-applicable`/iu,
+  );
+  assert.match(
+    closure,
+    /Any `decision-required`, undispositioned dimension or Source conflict blocks commission submission and Provider execution/iu,
+  );
+  assert.match(
+    closure,
+    /Design System identity, generic Tokens[\s\S]*do not by themselves establish `existing-covered`/iu,
+  );
+  assert.match(
+    closure,
+    /Current implementation may support `preserve` only when controlling Source explicitly makes.*a preservation constraint/iu,
+  );
+  assert.match(
+    closure,
+    /actual commission envelope contains exactly the `projected` fields[\s\S]*omit `existing-covered` fields[\s\S]*never encode `decision-required` as a placeholder/iu,
+  );
+  assert.match(
+    closure,
+    /simple high-fidelity preview[\s\S]*adds no Provider generation, tool action, file, checkpoint, persistent state, fixed user pause, required extra conversation turn, formal handoff, manifest, bundle, preflight or complete Fact Universe/iu,
+  );
+
+  const providerClosureMatch = provider.match(
+    /^## Pre-run style-application closure\r?\n([\s\S]*?)(?=^## Structured commission sequence$)/mu,
+  );
+  assert.ok(providerClosureMatch);
+  const providerClosure = providerClosureMatch[1];
+  assert.ok(
+    provider.indexOf("## Pre-run style-application closure") <
+      provider.indexOf("## Structured commission sequence"),
+  );
+  assert.match(
+    providerClosure,
+    /Before submitting a commission or calling `start_run`[\s\S]*`decision-required`, undispositioned dimension or Source conflict blocks the run before Provider execution/iu,
+  );
+  assert.match(
+    providerClosure,
+    /`existing-covered` meaning must arrive through.*existing `inputs\.exact_targets`, `inputs\.constraints` or corresponding input binding/iu,
+  );
+  assert.match(
+    providerClosure,
+    /only `projected` meaning enters the existing `style_application` object[\s\S]*`not-applicable` stays.*task-local[\s\S]*`decision-required` stays unresolved/iu,
+  );
+  assert.match(
+    providerClosure,
+    /verified `designSystemId`[\s\S]*generic instruction to follow the system[\s\S]*cannot prove.*current slice/iu,
+  );
+  assert.match(
+    providerClosure,
+    /Repeat the closure immediately before each material-revision run[\s\S]*After the resulting candidate.*rerun the applicable Design suitability subchecks/iu,
+  );
+  assert.match(
+    providerClosure,
+    /packaging, rename or byte-only export proved equivalent[\s\S]*neither a new Provider run nor a new design decision/iu,
+  );
+  assert.match(
+    providerClosure,
+    /not a schema, state, Authority, Gate, readiness result or Provider lifecycle/iu,
+  );
+
+  const examplesAt = selection.indexOf(
+    "### Style-application worked examples",
+  );
+  assert.notEqual(examplesAt, -1);
+  const examples = selection.slice(examplesAt);
+  const mustBlock = examples.match(
+    /^#### Example A — must block\r?\n([\s\S]*?)(?=^#### Example B)/mu,
+  );
+  const mustAllow = examples.match(
+    /^#### Example B — complete existing coverage may omit projection\r?\n([\s\S]*?)(?=^#### Example C)/mu,
+  );
+  const mixed = examples.match(
+    /^#### Example C — mixed closure projects only the gaps\r?\n([\s\S]*)$/mu,
+  );
+  assert.ok(mustBlock);
+  assert.ok(mustAllow);
+  assert.ok(mixed);
+  assert.match(
+    mustBlock[1],
+    /configured Design Authority[\s\S]*only generic Tokens[\s\S]*No selected `exact-target` or `constraint`[\s\S]*`decision-required`[\s\S]*Provider run must not start/iu,
+  );
+  assert.match(
+    mustAllow[1],
+    /every applicable style-application dimension[\s\S]*existing exact-target input binding[\s\S]*Every dimension is `existing-covered`[\s\S]*omit `style_application`[\s\S]*allow the Provider run/iu,
+  );
+  const mixedEnvelopeMatch = mixed[1].match(
+    /```yaml\r?\n([\s\S]*?)\r?\n```/u,
+  );
+  assert.ok(mixedEnvelopeMatch);
+  const mixedEnvelope = YAML.parse(mixedEnvelopeMatch[1]);
+  assert.deepEqual(Object.keys(mixedEnvelope.style_application).sort(), [
+    "container_treatment",
+    "density",
+    "prohibited_patterns",
+  ]);
+  assert.match(
+    mixed[1],
+    /All applicable dimensions are closed, so the Provider run is allowed[\s\S]*If any one.*unresolved, stale or conflicting[\s\S]*`decision-required` and the run is blocked/iu,
+  );
+});
+
 test("resource selection preserves the smallest sufficient scoped commission", async () => {
   const [skill, selection] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),

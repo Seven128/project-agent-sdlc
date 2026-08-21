@@ -303,3 +303,49 @@ The touched debt is the current mixing of suitability subchecks and human select
 Correctness and maintainability are always applicable. Compatibility is preserved by adding no schema/status/CLI/state. Recovery and resource lifecycle reuse existing checkpoint/CAS rules. Performance is preserved structurally on the simple path—no added persisted bytes or tool action—but no runtime improvement or overhead result is claimed. Operability/testability is established only for the declared static distribution and project-check boundary.
 
 `Context Delta: required` because the selected behavior changes durable DRA responsibility and review semantics. The owning Context must change before the package-managed Skill implementation.
+
+## 2026-08-22 Pre-Provider Style-Application Closure Amendment
+
+### Indexed input and baseline
+
+- `S3` — Web GPT Pro remaining-P1 audit and complete supplemental development plan: `C:\Users\777\.codex\attachments\232a6fa2-9499-48b7-afdd-39361d17ebd0\pasted-text.txt`.
+- `B2` — required development baseline: `1451e156320481017592bce08fc95939e9ec78ed`.
+- The native Goal indexes `S3`, `B2`, this Source, the DRA Contract, canonical managed Skill, `resource-selection.md`, `open-design-provider.md`, the DRA test and the existing admission binding. Compaction recovery must reread `S3`; this amendment deliberately does not duplicate its full normative text.
+- The delivery remains on the Default Workflow Contract. Long-Task bootstrap, activation, recovery and mechanism changes are explicitly excluded.
+
+### Remaining P1 and root cause
+
+The prior delivery gave `style_application` the right task-local content and authority boundary but described the envelope as something style-bearing work *may* carry. That left a pre-generation distortion path: an Agent could bind only the adopted Design System ID and generic Tokens, decide that no slice projection was needed and start the Provider before page-specific hierarchy, density, container, geometry, preservation or prohibited-pattern meaning reached the commission. Post-generation Design suitability could detect a bad result but could not prove that the Provider received the required input.
+
+### Selected correction
+
+For every style-bearing Provider generation or material revision, including a simple high-fidelity preview, evaluate at least `primary_content_priority`, `density`, `container_treatment`, `visible_vs_hit_geometry`, `preserve` and `prohibited_patterns`, plus any other slice-specific dimension which materially changes output. Each applicable dimension receives exactly one task-local disposition:
+
+- `existing-covered` only when current controlling Source or a selected `exact-target`/`constraint` explicitly covers the exact target, slice and conditions and is actually carried through existing Provider input bindings;
+- `projected` when current Source and Design Authority determine the slice application but the selected input does not directly express it, in which case only that field enters the existing `style_application` envelope;
+- `not-applicable` only when the dimension has no material effect, with a task-local reason and no persisted empty field; or
+- the existing `decision-required` when Source is missing, conflicting, outside delegation or requires a durable owner decision.
+
+Provider execution is allowed only when all applicable dimensions are `existing-covered`, `projected` or `not-applicable`. `decision-required`, Source conflict or silent/undispositioned remainder blocks before commission submission. Design System identity, generic Tokens, inspiration, background, Provider output, an unselected candidate, a default-only screenshot or current implementation without a controlling preservation rule cannot establish `existing-covered`.
+
+The actual envelope contains only `projected` fields. Fully input-bound exact coverage may omit `style_application`; material revisions rerun the same closure before generation; canonical-equivalent packaging/export does not create a new design decision. The existing post-generation Design suitability subchecks remain independent and rerun after a material revision produces a candidate.
+
+### Non-mechanism and light-path decision
+
+The correction reuses the always-read Source/inventory step, the existing commission envelope and the current owner-first route. It adds no closure schema, status file, dimension registry, persistent Projection, approval, `review_set_id`, Gate, Authority, lifecycle, readiness, recovery field, audit type, formal condition, Long-Task logic, DRA reference, benchmark track/case/threshold/result, second Design suitability or second Proposal reconciliation.
+
+Non-fidelity work, pure IA/low-fidelity/semantic-state studies, non-generating reads and proven canonical-equivalent packaging are outside the closure trigger. A simple high-fidelity preview performs the judgment in the same read/build action and adds no Provider generation, tool call, file, checkpoint, fixed pause, forced conversation turn, manifest, bundle, preflight or Fact Universe.
+
+### Implementation and evidence routing
+
+- Durable semantics: `project_context/areas/harness-package/contracts/design-resource-authoring.md`.
+- Compact workflow route: canonical `design-resource-authoring/SKILL.md`.
+- Four-disposition rules and must-block/must-allow/mixed examples: `references/resource-selection.md`.
+- Provider adapter enforcement and pre/post separation: `references/open-design-provider.md`.
+- Causal guidance and parity proof: `tests/ty-context/design-resource-authoring-skill.test.mjs`.
+- Package and installed copies: existing source mappings and workspace sync only.
+- Admission: only existing candidate source/bundle digests may change mechanically; no benchmark meaning or result is updated.
+
+Static guidance/parity tests prove the declared owner, ordering, opposite paths and distribution only. They do not prove Agent adherence, visual-quality improvement, actual Provider effect, ROI or token/time benefit. A real Provider smoke remains an opt-in diagnostic and is reported as unexecuted when the required environment is absent.
+
+The intended delivery commit message is `fix: close DRA style application before provider run`. Its exact commit and tree SHA are reported in the final handoff and Git history; a commit cannot embed its own future SHA without changing that SHA.

@@ -59,6 +59,35 @@ Preserve each supplied item's actual role:
 
 An optional pre-existing planning document is one possible input. Raw notes or an initial proposal are equally valid. Never require a special intermediary format merely to make another input usable.
 
+### Pre-generation style-application closure
+
+Before every style-bearing Provider generation or material revision—including a simple high-fidelity preview—evaluate every current-slice style-application dimension which can materially change the output. Reuse the Provider reference's existing material-revision definition; do not create another revision classification. This closure does not apply to non-fidelity work, pure IA/flow topology, low-fidelity structure, a semantics-only state study, a read which starts no new generation, or packaging, renaming or byte-only export proved equivalent to the same canonical source.
+
+At minimum evaluate `primary_content_priority`, `density`, `container_treatment`, `visible_vs_hit_geometry`, `preserve` and `prohibited_patterns`, plus any other obvious slice-specific style-application dimension which materially affects Provider output. These are task-local judgments, not a fixed visual-property matrix or a copy of the formal handoff Fact Universe. Every applicable dimension has exactly one of these dispositions:
+
+| Disposition | Legal condition | Commission representation | Provider effect |
+| --- | --- | --- | --- |
+| `existing-covered` | Current controlling Source or a selected `exact-target`/`constraint` completely governs the exact target, slice and declared conditions and reaches the Provider through an existing input binding | Keep that Source in its existing input binding; do not duplicate it in `style_application` | Contributes to a closed commission |
+| `projected` | Current controlling Source and Design Authority already determine the slice-specific application, but selected input does not directly and completely express it | Put only the necessary current-slice field in the existing `style_application` envelope | Contributes to a closed commission |
+| `not-applicable` | The dimension has no material effect on this resource and the task-local reason is explicit | Keep the reason task-local; emit no empty or placeholder field | Contributes to a closed commission |
+| `decision-required` | Source is missing, stale, conflicting or ambiguous; a user choice is needed; delegation is insufficient; or resolution requires a durable owner change | Give the concrete natural-language reason through the existing disposition; emit no invented application meaning | Blocks the Provider run |
+
+Use `existing-covered` only when all of the following hold:
+
+1. current controlling Source or a selected `exact-target`/`constraint` explicitly specifies the dimension;
+2. the specification applies to the exact target, slice and declared conditions;
+3. the Source remains current after any owner update;
+4. the Provider commission actually carries it through existing `inputs.exact_targets`, `inputs.constraints` or the corresponding current input binding; and
+5. the conclusion requires no Agent inference from a generic style, name or visual impression.
+
+Design System identity, generic Tokens, “follow the design system”, inspiration, background, an unselected candidate, Provider output, a default-only static screenshot and current-implementation evidence do not by themselves establish `existing-covered`. Current implementation may support `preserve` only when controlling Source explicitly makes the observed behavior or visual fact a preservation constraint. A Provider must not infer missing application meaning from any of these inputs, a feature list, route tree, component inventory or task-level UI/UX analysis.
+
+For `projected`, derive only meaning already authorized by current Source and Design Authority. Do not invent product, business, interaction or design-system semantics, paste complete Tokens, copy a Provider prompt or create a persistent Projection. The actual commission envelope contains exactly the `projected` fields: omit `existing-covered` fields, keep `not-applicable` reasons task-local and never encode `decision-required` as a placeholder.
+
+The Provider run is allowed if and only if every applicable dimension is `existing-covered`, `projected` or `not-applicable`. Any `decision-required`, undispositioned dimension or Source conflict blocks commission submission and Provider execution. When resolution changes durable Product/Surface/Screen/Design meaning, use the existing owner-first route above, reread current Source and repeat this closure before resuming DRA. Post-generation Design suitability cannot retroactively repair a commission which skipped this closure.
+
+This judgment occurs inside the existing Source read and commission-envelope action. For a simple high-fidelity preview it adds no Provider generation, tool action, file, checkpoint, persistent state, fixed user pause, required extra conversation turn, formal handoff, manifest, bundle, preflight or complete Fact Universe. When all dimensions close, the same turn may still generate, perform minimal sanity/suitability review, show the candidate and receive a user choice. “Closure required” never means “emit a closure record.”
+
 ## 4. Derive development-corresponding coverage
 
 For an implementation handoff, use this task-local equation:
@@ -204,3 +233,37 @@ During simple iteration, keep accepted, rejected and unresolved implications in 
 - **Three-screen interaction flow:** select a low-fi flow and an interactive high-fi prototype only if topology and interaction/visual behavior are independently unresolved.
 - **Local style fix with exact target:** select no new design resource and route to implementation.
 - **Initial proposal before execution:** iterate only requested candidates, keep one task-local delta buffer, then after selection reconcile accepted decisions once. Pass the revised proposal plus selected immutable resources directly to the default Goal or `long-task-workflow`.
+
+### Style-application worked examples
+
+#### Example A — must block
+
+A one-page high-fidelity preview has configured Design Authority but only generic Tokens. No selected `exact-target` or `constraint` specifies the page's primary-content priority, density or container treatment, and the commission has no corresponding projected fields. Generic system binding cannot fill those application decisions. Result: use the existing `decision-required` with concrete missing-Source reasons; the Provider run must not start.
+
+#### Example B — complete existing coverage may omit projection
+
+A local style-bearing revision has a current selected `exact-target` which explicitly specifies every applicable style-application dimension for the exact target and conditions, and that Source is carried through the Provider's existing exact-target input binding. Every dimension is `existing-covered`. Result: omit `style_application` rather than copying the Source, and allow the Provider run.
+
+#### Example C — mixed closure projects only the gaps
+
+The task-local dispositions are:
+
+```text
+primary_content_priority: existing-covered
+density: projected
+container_treatment: projected
+visible_vs_hit_geometry: not-applicable
+preserve: existing-covered
+prohibited_patterns: projected
+```
+
+The illustrative actual envelope contains only the three projected fields; these placeholder values stand for the current task's Source-derived instructions, not defaults:
+
+```yaml
+style_application:
+  density: task-local-projected-density
+  container_treatment: task-local-projected-container-treatment
+  prohibited_patterns: task-local-projected-prohibited-patterns
+```
+
+All applicable dimensions are closed, so the Provider run is allowed. If any one of them instead becomes unresolved, stale or conflicting, its disposition becomes `decision-required` and the run is blocked.
