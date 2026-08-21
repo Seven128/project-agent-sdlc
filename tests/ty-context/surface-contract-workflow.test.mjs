@@ -136,6 +136,23 @@ assert.match(sourceUiuxSkill, /immutable path\/URI and digest/iu);
 assert.match(sourceUiuxSkill, /editable upstream owner\/locator\/update route/iu);
 assert.match(sourceUiuxSkill, /non-authoritative/iu);
 assert.match(sourceUiuxSkill, /Product\/Surface\/Screen Source owns/iu);
+assert.match(sourceUiuxSkill, /page duty[\s\S]*interaction-topology facts/iu);
+assert.match(
+  sourceUiuxSkill,
+  /A conflicting candidate cannot proceed to resource generation or implementation/iu,
+);
+assert.match(
+  sourceUiuxSkill,
+  /Skill activation, analysis, audit or candidate comparison alone authorizes no durable write/iu,
+);
+assert.match(
+  sourceUiuxSkill,
+  /current Goal independently finds a durable Surface\/Screen change, update the smallest owning Surface Context/iu,
+);
+assert.doesNotMatch(
+  sourceUiuxSkill,
+  /Product\/Surface\/Screen\/UIUX (?:Source|constraints)/iu,
+);
 
 assert.match(sourceDevelopmentSkill, /Durable main\/drilldown\/surface/iu);
 assert.match(sourceDevelopmentSkill, /context_surface_contract/iu);
@@ -227,6 +244,19 @@ assert.match(packageManagedSurfaces, /screen-contract\.md/);
 assert.match(packageManagedSurfaces, /There is no `uiux_delivery` block/);
 assert.match(packageManagedSurfaces, /Context-reachable Source/iu);
 assert.match(packageManagedSurfaces, /index presence alone is not consumption/iu);
+assert.match(
+  packageManagedSurfaces,
+  /`context_surface_contract` remains the sole durable owner[\s\S]*page duty and interaction topology/iu,
+);
+assert.match(
+  packageManagedSurfaces,
+  /non-authoritative task-level UI\/UX analysis method across both existing execution routes/iu,
+);
+assert.match(
+  packageManagedSurfaces,
+  /candidate that conflicts with controlling Product\/Surface\/Screen\/Design Source cannot proceed/iu,
+);
+assert.match(packageManagedSurfaces, /Skill activation grants no Context write authority/iu);
 
 for (const role of ["surface-contract", "product-surface", "web-contract", "app-contract", "game-surface", "screen", "design"]) {
   assert.doesNotMatch(validators, new RegExp(`["']${role}["']\\s*:`));

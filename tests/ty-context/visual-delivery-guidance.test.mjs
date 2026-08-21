@@ -97,6 +97,19 @@ test("visual design and implementation guidance reaches every managed copy", asy
   assert.match(uiux, /task-uiux-analysis\.md/iu);
   assert.match(uiux, /non-authoritative/iu);
   assert.match(uiux, /Surface\/Screen Source owns/iu);
+  assert.match(
+    uiux,
+    /When a valid Long-Task binding is active[\s\S]*`long-task-workflow` alone owns Source\/Contract lifecycle, formal verification, Final Gate and completion/iu,
+  );
+  assert.match(
+    uiux,
+    /may contribute non-authoritative task-level UI\/UX analysis and Design Authority closure/iu,
+  );
+  assert.match(
+    uiux,
+    /creates no second plan, lifecycle, Authority, Gate or acceptance path/iu,
+  );
+  assert.doesNotMatch(uiux, /contributes authority closure only/iu);
   assert.match(uiux, /Skill activation, analysis, audit or candidate comparison alone authorizes no durable write/iu);
   assert.match(uiux, /root `DESIGN\.md`/u);
   assert.match(uiux, /exact-value token source\/generation direction/iu);

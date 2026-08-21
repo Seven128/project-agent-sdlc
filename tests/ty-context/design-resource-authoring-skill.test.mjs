@@ -125,8 +125,27 @@ test("resource selection preserves the smallest sufficient scoped commission", a
   assert.match(combined, /primary task outcome, primary work object and shortest task loop/iu);
   assert.match(combined, /operation–affected-object–feedback relationships/iu);
   assert.match(combined, /critical context, state, recovery and accessibility constraints/iu);
-  assert.match(combined, /Provider must not infer missing product meaning/iu);
-  assert.match(combined, /feature list, screenshot or component inventory/iu);
+  assert.match(
+    combined,
+    /controlling Product\/Surface\/Screen Source[\s\S]*target user\/context[\s\S]*page duty[\s\S]*primary task outcome[\s\S]*primary work object\/task loop[\s\S]*operation-object-feedback[\s\S]*state\/recovery\/accessibility meaning/iu,
+  );
+  assert.match(
+    combined,
+    /`DESIGN\.md` and selected exact-target\/constraint Source for visual-system and selected-design conditions/iu,
+  );
+  assert.match(
+    combined,
+    /Non-authoritative task-level UI\/UX analysis may inform candidate comparison but cannot supply missing product or surface meaning/iu,
+  );
+  assert.match(combined, /A Provider must not infer that meaning/iu);
+  assert.match(
+    combined,
+    /feature list, screenshot, route tree, component inventory or analysis output/iu,
+  );
+  assert.doesNotMatch(
+    combined,
+    /Product\/Surface\/Screen\/UIUX (?:Source|constraints)/iu,
+  );
   assert.match(combined, /product_surface_constraints/iu);
   assert.match(combined, /decision-required.*owning Source update/isu);
   for (const disposition of [

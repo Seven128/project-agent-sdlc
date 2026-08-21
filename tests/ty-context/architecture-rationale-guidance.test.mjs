@@ -242,6 +242,58 @@ test("public docs and spec frame one shared engineering obligation without a pro
   );
 });
 
+test("UI/UX analysis keeps one durable owner chain across governed surfaces", () => {
+  const englishSurfaces = [
+    read(
+      ".codex/skills/authoring/harness_package_design/references/default-skill-governance.md",
+    ),
+    read(
+      "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+    ),
+    read("PROJECT_SPEC.md"),
+    read("README.md"),
+    read("packages/ty-context/README.md"),
+  ];
+
+  for (const content of englishSurfaces) {
+    assert.match(content, /non-authoritative[\s\S]{0,100}(?:UI\/UX|task-analysis)/iu);
+    assert.match(content, /Product\/Surface\/Screen Source/iu);
+    assert.match(content, /page duty|page-duty/iu);
+    assert.match(content, /interaction topology|interaction-topology/iu);
+    assert.match(
+      content,
+      /`DESIGN\.md`[\s\S]{0,240}selected exact-target\/constraint Source/iu,
+    );
+    assert.match(
+      content,
+      /`long-task-workflow` alone owns Source\/Contract lifecycle, formal verification, Final Gate and completion/iu,
+    );
+    assert.match(
+      content,
+      /not (?:real )?host (?:Skill )?activation|do not prove that a host actually activated a Skill/iu,
+    );
+    assert.match(content, /quality/iu);
+    assert.match(content, /ROI/u);
+    assert.doesNotMatch(
+      content,
+      /Product\/Surface\/Screen\/UIUX (?:Source|constraints)/iu,
+    );
+  }
+
+  const chinese = read("README.zh-CN.md");
+  assert.match(chinese, /非权威 task-level UI\/UX analysis/u);
+  assert.match(chinese, /Product\/Surface\/Screen Source 继续唯一拥有页面职责/u);
+  assert.match(chinese, /`DESIGN\.md` 和 selected exact-target\/constraint Source/u);
+  assert.match(chinese, /`long-task-workflow` 仍唯一拥有 Source\/Contract 生命周期、正式验证、Final Gate 和完成权/u);
+  assert.match(chinese, /不能证明宿主真实激活了 Skill/u);
+  assert.match(chinese, /地图设计质量/u);
+  assert.match(chinese, /ROI/u);
+  assert.doesNotMatch(
+    chinese,
+    /Product\/Surface\/Screen\/UIUX (?:Source|constraints)/iu,
+  );
+});
+
 test("Long-Task reuses existing authority and limits its quality claim", () => {
   const sources = [
     read(".codex/ty-context-managed/skills/long-task-workflow/SKILL.md"),

@@ -16,7 +16,8 @@ Commission the smallest sufficient resource set for the user's explicit output/d
 - Never mutate `project_context/**`, `DESIGN.md`, a Delivery Contract, production code or tests as a resource-authoring side effect.
 - Do not require a prototype, fidelity pair, provider-native file, fixed directory, variant count, resource pack or one artifact per control. Reuse selected component families and group repeated controls.
 - Visual resources may express user-visible interaction/presentation but cannot invent or become sole owner of business, data, permission or algorithmic rules.
-- Before commissioning a page, flow or complex control, consume available Product/Surface/Screen/UIUX Source for target user/context, client/host, page duty, primary task outcome, primary work object/task loop and operation-object-feedback relationship. A Provider must not infer missing product meaning from a feature list, screenshot or component inventory.
+- Before commissioning a page, flow or complex control, consume controlling Product/Surface/Screen Source for target user/context, client/host, page duty, primary task outcome, primary work object/task loop, operation-object-feedback and applicable state/recovery/accessibility meaning. Separately consume `DESIGN.md` and selected exact-target/constraint Source for visual-system and selected-design conditions.
+- Non-authoritative task-level UI/UX analysis may inform candidate comparison but cannot supply missing product or surface meaning. A Provider must not infer that meaning from a feature list, screenshot, route tree, component inventory or analysis output.
 - Do not install/configure MCP, plugins, authentication or disclosure paths without separate authorization. Create no provider registry, global workflow state, authority lifecycle, scheduler or acceptance record.
 
 ## Progressive references
@@ -30,7 +31,7 @@ For simple-preview overhead accounting, the requested preview is neither additio
 
 ## Workflow
 
-1. Name in-scope surfaces/flows/regions/component families/unique controls, conditions, necessary context, exclusions and intent: `exploration`, `handoff` or `selected-source-preparation`. For a page, flow or complex control, first resolve the available owner-held user/context, client/host, page-duty, primary-task, primary-work-object/task-loop and operation-object-feedback constraints; keep missing product meaning unresolved.
+1. Name in-scope surfaces/flows/regions/component families/unique controls, conditions, necessary context, exclusions and intent: `exploration`, `handoff` or `selected-source-preparation`. For a page, flow or complex control, first resolve controlling Product/Surface/Screen user/context, client/host, page-duty, primary-task, primary-work-object/task-loop, operation-object-feedback and applicable state/recovery/accessibility meaning; separately resolve `DESIGN.md` and selected-target visual conditions, and keep missing product or surface meaning unresolved rather than filling it from task analysis.
 2. Inventory every input as `exact-target`, `constraint`, `inspiration`, current-implementation evidence or background. Report unreadable/unused material.
 3. Classify the commission `style-bearing` or `non-fidelity`. Style-bearing means high fidelity/brand/visual direction/typography/color/density/component treatment/production-style prototype. IA/flow topology, low-fidelity structure and semantics-only state studies are non-fidelity.
 4. For style-bearing work, read configured Design Authority and its exact-value token source. If unconfigured, stop before provider project/run creation and route the user to explicit `$design-system-authoring`; never invoke it automatically. Non-fidelity work remains allowed.

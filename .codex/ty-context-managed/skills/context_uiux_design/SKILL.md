@@ -11,7 +11,7 @@ Own durable Design Authority only: root `DESIGN.md`, visual identity and exact-v
 
 This Skill does not own product goals/business rules/acceptance (`context_product_plan`), information/action/feedback and main/drilldown responsibility (`context_surface_contract`), resource generation (`design-resource-authoring`), implementation, or acceptance. Route rather than duplicate those owners.
 
-Project-specific UI/UX rules may live in `<harnessRoot>/skills/uiux_design/SKILL.md`; durable facts remain in `DESIGN.md` and owning `project_context/**`. Active Long-Task retains its one Source/Contract lifecycle and Final Gate; this Skill contributes authority closure only.
+Project-specific UI/UX rules may live in `<harnessRoot>/skills/uiux_design/SKILL.md`; durable facts remain in `DESIGN.md` and owning `project_context/**`. When a valid Long-Task binding is active, `long-task-workflow` alone owns Source/Contract lifecycle, formal verification, Final Gate and completion. This Skill may contribute non-authoritative task-level UI/UX analysis and Design Authority closure, but creates no second plan, lifecycle, Authority, Gate or acceptance path.
 
 ## Task-level analysis adapter
 

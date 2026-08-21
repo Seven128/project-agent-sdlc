@@ -24,7 +24,7 @@ For page, flow or complex-control generation, recover the available authoritativ
 - material operation–affected-object–feedback relationships; and
 - critical context, state, recovery and accessibility constraints.
 
-These remain owned by Product/Surface/Screen/UIUX Source. The commission references them without becoming their owner. A feature list, screenshot, route tree or component inventory cannot fill a missing product fact; if the missing meaning materially changes the resource, return `decision-required` or request the owning Source update before Provider execution.
+These product and surface facts remain owned by controlling Product/Surface/Screen Source. The commission references them without becoming their owner. Separately consume `DESIGN.md` and selected exact-target/constraint Source for visual-system and selected-design conditions. Non-authoritative task-level UI/UX analysis may inform candidate comparison but cannot supply missing product or surface meaning. A feature list, screenshot, route tree, component inventory or analysis output cannot fill a missing product or surface fact; if the missing meaning materially changes the resource, return `decision-required` or request the owning Source update before Provider execution.
 
 ## 2. Choose the intent
 
