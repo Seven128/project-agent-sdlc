@@ -8,7 +8,7 @@ Project Tiny Context Harness 是给 AI coding agents 用的轻量项目记忆层
 
 ## 为什么存在
 
-编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及在交付确实需要时可恢复、可审计、可机器复验的完成检查。
+编码 Agent 同时需要两类能力：跨会话仍然可靠的少量项目事实，以及在交付确实需要时可恢复、可审计、可机器复验的完成检查。Tiny Context 的设计目的，是通过可恢复的真实归属和与交付需要相称的保障，减少大方案、耐久项目事实、设计意图、实现与证明之间的漂移；这不是未经基准验证的效果声明。
 
 Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次实现前、风险比例化的 Architecture Deliberation 与适用质量路由，实施过程保留 Goal 自主但遵守边界型实现质量 guardrails，项目验证后只由一个 carrier 对当前候选执行包含 Architecture Conformance 的 Engineering Quality Conformance。
 
@@ -257,6 +257,8 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。生成 page/flow/complex control 之前，必须分别消费：controlling Product/Surface/Screen Source 中的 target user/context、client/host、页面职责、主任务结果、主工作对象/任务闭环、operation-object-feedback 以及适用的 state/recovery/accessibility 含义；`DESIGN.md` 和 selected exact-target/constraint Source 中的视觉系统及选定设计条件。非权威 task-level UI/UX analysis 只能帮助比较候选，不能提供缺失的产品或 Surface 含义；Provider 也不得从功能列表、截图、route tree、component inventory 或 analysis output 发明这些含义。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
 
+在 ceiling 内，DRA 会记录已有选定资源的覆盖、新缺口和 preservation 义务。发现 ceiling 外影响时只返回现有 `decision-required`，理由为 `scope-expansion-required`；只有用户可以扩大 ceiling。需要改变耐久 Product/Surface/Screen/Design 含义时，必须先更新真实 owner，重新读取后再恢复生成。style-bearing commission 可以在现有任务局部 envelope 中携带最小 `style_application`，表达当前切片的优先级、密度、容器/几何处理、保留项和禁用模式；它不是文件、状态或 Authority。
+
 正式首次生成、重大设计修订和关键重新生成使用实时发现后满足工具、视觉/上下文能力、认证与数据边界的最高能力模型，以及该模型实际支持的最高 reasoning effort。排序只能依据 provider 明确的能力等级、推荐替换关系或唯一且有版本依据的 provider-local fallback；不得从价格、模型名、发布时间或列表顺序猜测。多个 eligible model 无法排序时以 `highest_performance_unverified` fail closed；provider 不可控制或不能回报实际 model/effort 时也必须保留同一限定，不能声称已执行最高档。该策略不创建 model registry、scheduler 或持久 routing state。
 
 正式 Web/App implementation output 中，“完整”默认就是上文的范围内最细可观察 Fact 粒度。Skill 在委托生成前先构造 Expected Fact Universe 与冻结 Inspector/Census 义务，把它们连同已采纳 design-system identity 一起传给 Open Design，并要求返回的 canonical source/manifest 表达每个适用 cell；不能等下游实现时才发现或自行补设计 anatomy-part、状态、响应式/平台/text-scale、动效、无障碍或资产事实。
@@ -267,7 +269,9 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 面向 Web/App 实现时，Skill 必须取得上文所述完整 canonical entry/dependency set 与可寻址事实。Figma 适合已经存在的设计团队权威，需要原生 Components/Variables/Variants、共享库、Dev Mode 或 Code Connect 的场景；Penpot 适合明确需要开放、自托管多人设计基础设施的场景；OpenPencil 可作为本地静态布局 sidecar，但当前 prototype/motion 模型仍不完整。把完整 Open Design Source 默认转换为另一种表示会增加同步和运维成本，却不会关闭新的 enforcement gap，因此三者都不是默认依赖。
 
-探索模式只做最小完整性检查并尽快展示指定候选，不需要 handoff schema。明确或受托最终选择且资源将进入实现时，Skill 只做一次合并、幂等的初始方案回改，并在任意获准的项目路径按 target 写 provider-neutral、带 Source marker、且只含一个严格 manifest-backed `design-resource-handoff-v1` block 的 Markdown。canonical manifest 保留完整 Inspector/Census/Fact/proof universe；小 YAML 只记录其不可变 resource/target 绑定及 residual 产品/coverage/Source/proposal 含义。共享 preflight 还原同一个完整校验对象，不能把取得不完整、不可寻址、`decision_required`、`unavailable`、证据不成立或过期的输入称为 ready。这里没有固定目录、provider pack 或逐控件一份稿；适配器只是普通 Source，不是 Design Authority 或验收结果。除唯一被明确授权的 Proposal 写回目标外，Skill 不会修改调用方已有计划/提案 Source、`project_context/**`、`DESIGN.md`、生产代码或 Delivery Contract。
+Provider execution、Artifact readiness 与 Design suitability 保持分离。Suitability 会按意图深度检查 scope/Source、机械完整性、Design-System 应用、视觉语言、state/condition 覆盖和 preservation，并在每次材料性修订后重审；它不能替代人工选择，也不能单独产生 readiness。
+
+探索模式只做最小完整性检查并尽快展示指定候选，不需要 handoff schema。`Design Resource Review & Selection Stop` 允许用户修正、选择、拒绝、保留未决、扩大范围或路由耐久 owner 变化；它不是批准记录、Gate、验收或正式完整性声明。普通对话式选择不创建持久状态；需要确定性跨中断恢复时，只复用现有 marked Source、authority、selected-source 和 recovery checkpoint owner。选择身份绑定 canonical selected-source digest、target、声明 conditions 以及 controlling Source/Design-Authority identity；被证明等价的派生导出不会使选择失效，可见或语义差异则回到 suitability 与审查。选定 formal Web/App 方向完成 canonical source/dependency/Census/manifest/preflight 闭包后，任何新可见决定都返回同一停点；只有稳定闭包之后才做一次合并、幂等的初始 Proposal reconciliation 并生成 provider-neutral marked handoff。共享 preflight 不能把取得不完整、不可寻址、`decision_required`、`unavailable`、证据不成立或过期的输入称为 ready。除唯一被明确授权的 Proposal 写回目标外，Skill 不会修改调用方已有计划/提案 Source、`project_context/**`、`DESIGN.md`、生产代码或 Delivery Contract。
 
 材料性的 DRA 修订循环只从绑定 raw-byte digest 的 Base 与完整有序 Delta 语义重放。确定性 accepted authority 还必须在同一个、受文本 digest 覆盖的 marked Source Item 内提供严格 `ty-dra-authority-v1` 投影：explicit choice 精确绑定 target/kind/origin/meaning digest，delegation 只绑定其选择范围，绝不会自动成为非视觉 meaning Source。每个 semantic target 最多只有一个 active accepted Delta owner；rejected、unresolved 与 superseded Delta 组成精确 leakage 全集。单一 v3 audit-expectations catalog 冻结 changed/unchanged/resource-decision/blast-radius/leakage rows 与 selected-resource conditions，当前审计必须 set-equal 且不得有重复 identity。exact-patch-v2 把每个 active non-preserve `Delta × target` 恰好一次绑定到 Proposal 文本区间与语义 digest；每个 binding 恰有一个 `proposal-written` owner，或一个结构化且仓库可读取的 `resource-owned-exact-visual` owner。只有真实跨中断需求才可显式 `create` 一个 ignored、任务局部、非权威 checkpoint；`update` 只能通过调用方给出的 checkpoint digest CAS 替换，`inspect`/`preview` 重新派生当前状态。`apply` 使用写前/写后 raw-byte CAS 与写后重读对账，只报告 applied、idempotent、blocked 或 external-resource revalidation pending，而不报告 handoff readiness。`remove` 仅在目录清单证明其中只有 digest 匹配的 helper checkpoint 时完整删除；否则返回 `partial` 并保留非 helper 内容。简单 preview 不创建 checkpoint、持久字节、暂停、Provider run、正式 handoff、Proposal 写回或 helper transaction。checkpoint 与 reconciliation 只是上游恢复/诊断数据，绝不是 Design Authority、Long-Task Source/Evidence 或完成证明。
 

@@ -10,17 +10,27 @@ Generated resources remain ordinary external Source. Preserve enough identity an
 
 This Skill may preserve an input already classified `exact-target`; it cannot promote its own candidate. Unknown coverage remains unknown. Resource hashes, provider success and previews establish neither selection nor production conformance.
 
+A selection binds the canonical selected-source digest, target identity, declared conditions and controlling Source/Design-Authority identity. Preview URLs, names, PNGs, export archives and wrappers are derived artifacts, not the selection identity. A derived artifact proved equivalent to that canonical source under the bound target/conditions preserves selection; a visible or semantic difference requires fresh Design suitability review and another user choice.
+
 ## Development-scope coverage
 
 For every material in-scope surface/flow/region/component/control condition, record selected existing Source, newly generated Source, `not-applicable`, `excluded-by-scope`, `decision-required` or `unavailable`. Include only necessary context and explicit exclusions. One addressable artifact may cover several items; a static/default frame covers only what it actually shows.
 
 Design resources may show user-visible triggers, transitions, states, feedback and rule presentation. Product/technical Source still owns business, data, permission and algorithmic rules.
 
+## Design Resource Review & Selection Stop
+
+Use this explicit interaction point when direction review, correction or candidate selection is material. Show the addressable candidate plus the scope ceiling/necessary context/exclusions, selected existing and generated coverage, preservation obligations, Provider/Artifact qualifiers, Design suitability findings, unchecked conditions, outside-ceiling effects and unresolved choices.
+
+The user may correct design execution, change a requirement, select/reject a candidate, leave a choice unresolved, explicitly expand scope or request a durable Product/Surface/Screen/Design owner change. Route durable meaning to its actual owner and reread it before DRA resumes. Design suitability never performs selection.
+
+This stop is not an approval record, `review_set_id`, registry, persisted status, Gate, acceptance, readiness or formal-completeness claim. It is not a required extra turn when a small request can generate, review and select in one turn. Ordinary conversational selection creates no persistent state or deterministic cross-session promise and must be reconfirmed if lost. When deterministic cross-interruption recovery is required, load [recovery-and-writeback.md](recovery-and-writeback.md) and use only its existing marked-Source, authority, selected-source and conditional-checkpoint route.
+
 ## Reconcile the initial proposal once
 
 During a simple iteration, keep a task-local buffer of selection basis, selected immutable/editable identities, accepted decisions, rejected alternatives, unresolved choices and affected product/surface/control/state/interaction/visual keys. This is reasoning, not a schema or required file. If the loop is material enough to require replayable Delta, a file writeback or interruption recovery, stop and read [recovery-and-writeback.md](recovery-and-writeback.md); do not approximate safe recovery/CAS from this lightweight reference.
 
-After final selection:
+After selection—and, for a formal Web/App handoff, only after its complete closure produces no new visible decision:
 
 1. confirm the selection basis and immutable identity;
 2. consolidate duplicate/intermediate notes;
@@ -30,9 +40,9 @@ After final selection:
 6. make reruns idempotent by updating the existing decision/reference;
 7. edit the authorized writable initial-proposal file, or return one complete revised proposal when it exists only in conversation.
 
-Never mutate other caller-owned Source, Context, `DESIGN.md`, Contract, production code or tests. If no selection occurs, return candidates and the pending delta without changing the proposal.
+Never mutate other caller-owned Source, Context, `DESIGN.md`, Contract, production code or tests. If no selection occurs, return candidates and the pending delta without changing the proposal. If formal closure exposes a new state, resource, condition, visible/semantic change or `decision-required` choice, return to the Review & Selection Stop before reconciliation.
 
-Small requests may complete generation, selection and reconciliation in one turn; “once” describes the semantic writeback, not a required pause.
+Non-formal small requests may complete generation, selection and reconciliation in one turn; “once” describes the semantic writeback, not a required pause. Formal Web/App work defers its one reconciliation until direction selection plus stable formal closure.
 
 ## Intent-sized handoff
 
@@ -40,7 +50,7 @@ Exploration returns the visible candidate, scope, dispositions, obvious limitati
 
 A non-formal selected-source handoff preserves target/resource classification, conditions, immutable identity, editable-upstream route, coverage/limitations and proposal identity in a project-native location authorized by the user. It remains ordinary Source.
 
-For an explicitly selected Web/App implementation handoff, stop here and read [formal-selected-web-app-handoff.md](formal-selected-web-app-handoff.md). UI symbolic V2 is explicit opt-in; V1 remains the default. That reference alone owns the strict manifest-backed V1/symbolic V2, Census/Fact/method, bundle/preflight and downstream Long-Task projection rules. Do not approximate those rules from this lightweight reference.
+For an explicitly selected Web/App implementation handoff, stop here and read [formal-selected-web-app-handoff.md](formal-selected-web-app-handoff.md). UI symbolic V2 is explicit opt-in; V1 remains the default. That reference alone owns the strict manifest-backed V1/symbolic V2, Census/Fact/method and bundle/preflight rules. If closure exposes a new visible decision, return here for suitability review and the Review & Selection Stop; only stable closure returns for the one Proposal reconciliation. Do not approximate formal rules from this lightweight reference.
 
 ## Downstream routing
 

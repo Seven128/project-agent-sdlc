@@ -16,6 +16,10 @@ Expected Fact Universe
 
 Product Controls and the eight reporting dimensions are roll-ups, not the Fact ceiling. Never sample, truncate, summarize a remainder, use pairwise coverage, infer an implicit default, broaden exclusions or let `all-states`/`complete` labels stand for atomic identities. File/model/parser/memory limits cannot weaken the universe; incompatible capacity fails closed.
 
+## Review-return boundary
+
+The prior direction selection authorizes formal preparation; it does not claim this closure is already complete. If complete universe derivation, canonical acquisition, dependency/Census inspection, manifest proof or preflight exposes a new state, component part, resource, condition, unavailable observation, visible/semantic design difference or `decision-required` choice, stop publication and return to the downstream `Design Resource Review & Selection Stop`. Re-run applicable Design suitability before asking for another selection. Only closure which introduces no new visible decision returns downstream for the one consolidated Proposal reconciliation.
+
 ## Derive the complete universe
 
 Enumerate stable subjects and hierarchy for every in-scope Surface, flow, region, overlay/system UI, component family and instance, Control, Anatomy Part/slot, primitive, text, icon, media, asset and typed multi-subject relation. Preserve parent/instance/family/override/slot/portal/presence/population/Census lineage so a family or one instance cannot hide internal/repeated subjects.
@@ -31,6 +35,8 @@ The exact universe is every applicable `subject × target × condition × variat
 Bind style-bearing work to the adopted design-system snapshot and verify the provider project reports the same identity. Commission the complete obligation universe through structured provider capability. If the provider cannot emit/read a required family, keep it blocking rather than narrowing scope.
 
 Acquire every selected file without truncation, preserve exact bytes/digests and record `implementation_web` or `implementation_app` with `acquisition: complete`. The canonical entry and all local source, token, SVG, font, image, media, worker and asset dependencies must resolve inside the frozen set. A screenshot, URL, preview or prose spec is insufficient.
+
+The selected identity is the canonical source digest plus target, declared conditions and controlling Source/Design-Authority identity. A PNG, archive, renamed copy or wrapper is a derived artifact: verified equivalence to the canonical source under those bindings preserves selection, while a visible or semantic difference activates the review-return boundary above.
 
 The one per-target `design-resource-observable-fact-manifest-v1` freezes:
 
@@ -94,3 +100,5 @@ The default Workflow opens actual resources and conditions, routes them through 
 An active Long-Task projects exact target Facts and Fact × method obligations into its existing Source/Claims/Assertions/bindings, `fact_expectations`, current typed `fact_results` and sole Final Gate; every result stores the actual observation and pass/fail verdict. Every marked handoff/resource/manifest belongs in `task.source_paths` and applicable Check `verification_inputs`; Source Items map through `source_claims` to a root conformance Assertion, and each method × condition evidence cell binds the exact handoff `fact_refs`. Missing, extra, duplicate, failed, stale, authority-drifted or indistinguishable rows fail. Target-local blockers retain Source-item/method/required-capability lineage into a machine Claim or target-blocking External Confirmation.
 
 Selected resources remain Context-reachable through existing owners. Adoption never overwrites an accepted baseline: create a new immutable version and update its canonical record. This Skill creates no Contract Draft, Outcome, Progress, Evidence, Receipt, Check result or Gate.
+
+Passing closure does not itself reconcile the Proposal. Return the stable formal handoff, canonical resources and closure result to the downstream owner, which performs the sole consolidated idempotent reconciliation after confirming that no new visible decision remains.

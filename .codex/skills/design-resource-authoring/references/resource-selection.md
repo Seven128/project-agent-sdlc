@@ -15,6 +15,8 @@ Extract the smallest explicit output or development boundary before interpreting
 
 Rich background improves a bounded artifact. It never authorizes more artifacts. Necessary surrounding context may show where a partial feature lives, but it does not place the rest of that page or product in scope. If the user supplies a complete app plan but asks to preview one button, generate at most the one-control resource. If the user asks for design resources for one development slice, cover that slice through its material controls and conditions, not the whole background product.
 
+When an in-scope decision exposes an outside-ceiling effect, assess and explain that effect without generating or revising the outside subjects. Return the existing `decision-required` disposition with `reason: scope-expansion-required`. The user may choose an in-scope alternative or explicitly expand scope; only then recompute the ceiling and coverage. The reason is not a new status, approval or workflow state.
+
 For page, flow or complex-control generation, recover the available authoritative constraints before deriving a commission:
 
 - target user/role and usage context reference;
@@ -25,6 +27,8 @@ For page, flow or complex-control generation, recover the available authoritativ
 - critical context, state, recovery and accessibility constraints.
 
 These product and surface facts remain owned by controlling Product/Surface/Screen Source. The commission references them without becoming their owner. Separately consume `DESIGN.md` and selected exact-target/constraint Source for visual-system and selected-design conditions. Non-authoritative task-level UI/UX analysis may inform candidate comparison but cannot supply missing product or surface meaning. A feature list, screenshot, route tree, component inventory or analysis output cannot fill a missing product or surface fact; if the missing meaning materially changes the resource, return `decision-required` or request the owning Source update before Provider execution.
+
+If the desired candidate changes durable product goals/rules/capability, page duty, primary work object/task loop, information/action/feedback placement, interaction topology, Design Authority, tokens or component-family grammar, stop and route the change to the actual Product/Surface/Screen/Design owner. Reread the updated owner before resuming selection or generation. A candidate execution defect stays within DRA and does not by itself justify a durable owner change.
 
 ## 2. Choose the intent
 
@@ -67,6 +71,8 @@ resources to commission
 
 A decision is material when changing it would materially change what the user sees, understands, can do or receives as feedback. Pure code structure and non-user-visible implementation choices are not design gaps.
 
+For each selected existing mapping, also name the applicable target/conditions and the meaning that must be preserved. Preservation includes current product/surface meaning, exact resource-owned visual facts, state/condition coverage and component-family or Design-System lineage which the requested change does not authorize altering. Do not treat an unchanged-looking default frame as proof that its hidden states, responsive variants or inherited dependencies are preserved.
+
 Account for the applicable meaning at each level; do not require filler for non-applicable dimensions:
 
 | Coverage level | Material UI/UX meaning |
@@ -83,6 +89,8 @@ Account for the applicable meaning at each level; do not require filler for non-
 For every material in-scope item, record one task-local disposition: `existing-covered`, `new-resource-needed`, `not-applicable`, `excluded-by-scope`, `decision-required` or `unavailable`. This accounting is reasoning/handoff metadata, not a required file, persistent coverage registry, Design Authority or acceptance result.
 
 Existing coverage is sufficient only for the conditions it explicitly specifies or demonstrates. Seeing a control in one default page frame does not cover its variants, dynamic states, feedback, motion, responsive behavior or accessibility. Conversely, a selected component source may cover many control instances, so do not commission duplicate designs merely because several stable control keys map to it.
+
+Impact assurance has two strengths. A material/recoverable loop may use the complete current `audit_expectations`, bidirectional resource bindings, explicitly unchanged universe, blast-radius universe and inactive-Delta leakage catalog owned by [recovery-and-writeback.md](recovery-and-writeback.md). An ordinary loop without those complete bindings performs only conservative impact analysis from readable Source: mark the unverified remainder, conservatively regenerate within the ceiling or return `decision-required`. Never claim that only identified resources are affected, and never expand outside the ceiling for safety.
 
 Design resources express user-visible interaction semantics and the presentation of product rules. Business, data, permission and algorithmic rules remain owned by product/technical Source; reference those rules and show their visible consequences without inventing them or making a visual artifact their sole owner.
 
@@ -149,6 +157,7 @@ coverage:
   material_needs: []
   observable_fact_families: []
   existing_mappings: []
+  preserve: []
   required_content_visual: []
   required_components_states: []
   required_interactions_motion: []
@@ -159,6 +168,13 @@ inputs:
   constraints: []
   inspiration: []
   background: []
+style_application:
+  primary_content_priority: task-local-or-not-applicable
+  density: task-local-or-not-applicable
+  container_treatment: task-local-or-not-applicable
+  visible_vs_hit_geometry: task-local-or-not-applicable
+  preserve: []
+  prohibited_patterns: []
 selected_capability:
   kind: runtime-discovered-kind
   id: runtime-discovered-id
@@ -166,17 +182,17 @@ expected_entry: known-or-provider-native
 review_promise: minimal-sanity | handoff-checks | selected-source-snapshot
 ```
 
-This is an explanatory shape, not a required file or schema. Never paste or paraphrase the Open Design capability's own seed/template prompt into it.
+This is an explanatory shape, not a required file or schema. Include `style_application` only when material to a style-bearing commission and bind its values to current Design Authority, selected Source and the explicit slice. It is not a persisted Application Projection, Authority, state or acceptance record. A simple high-fidelity preview does not gain another tool action or persisted side effect from these fields. Never paste or paraphrase the Open Design capability's own seed/template prompt into it.
 
 ## 9. Iterate and stop
 
-- Keep each revision inside the original scope ceiling unless the user explicitly expands it.
+- Keep each revision inside the original scope ceiling unless the user explicitly expands it; otherwise use `decision-required` with reason `scope-expansion-required`.
 - Reuse the current Open Design project when that preserves context and provenance; preserve the prior artifact hash before overwriting a selected candidate.
 - Do not create low-fi, high-fi, component boards or native-platform copies merely because a process diagram lists them.
 - For exploration, stop as soon as the requested decision is supported.
 - For a final-selected formal Web/App implementation handoff, apply the dedicated formal reference's exact stop conditions. Honest `decision_required`, `unavailable` or capability gaps remain blocking; they cannot be called ready or authorize fidelity work.
 
-During simple iteration, keep accepted, rejected and unresolved implications in a task-local delta buffer. Do not require or emit an interim delta after every iteration and never continuously synchronize the initial proposal. If the loop requires durable semantic replay, a selected-Proposal file writeback or cross-interruption recovery, load [recovery-and-writeback.md](recovery-and-writeback.md) and use its independent origin/decision-authority/evidence/status model plus package helper; prompt prose alone cannot establish CAS or deterministic recovery. After explicit human selection or explicitly delegated selection, consolidate the buffer once and reconcile only accepted decisions into the initial proposal. If it exists only in conversation and safe materialization was not explicitly authorized, return one complete revised proposal and report cross-session deterministic recovery unavailable. Never create another intermediary planning document or mutate Context, `DESIGN.md`, code, tests or Contract.
+During simple iteration, keep accepted, rejected and unresolved implications in a task-local delta buffer. Do not require or emit an interim delta after every iteration and never continuously synchronize the initial proposal. If the loop requires durable semantic replay, a selected-Proposal file writeback or cross-interruption recovery, load [recovery-and-writeback.md](recovery-and-writeback.md) and use its independent origin/decision-authority/evidence/status model plus package helper; prompt prose alone cannot establish CAS or deterministic recovery. Ordinary conversational selection creates no approval record or deterministic cross-session promise; if it is lost before authorized materialization, reconfirm it. For a non-formal small request, explicit human selection or explicitly delegated selection may be consolidated and reconciled once in the same turn. For a selected formal Web/App handoff, defer reconciliation until the formal owner completes canonical closure and no newly visible decision returns to review. Reconcile only accepted decisions. If the Proposal exists only in conversation and safe materialization was not explicitly authorized, return one complete revised proposal and report cross-session deterministic recovery unavailable. Never create another intermediary planning document or mutate Context, `DESIGN.md`, code, tests or Contract.
 
 ## Worked scope examples
 

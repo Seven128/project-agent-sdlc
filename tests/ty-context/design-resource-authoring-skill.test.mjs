@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -91,6 +91,152 @@ test("design-resource-authoring has one exact managed/generated/package source",
   assert.match(metadata.description, /生成设计资源/u);
 });
 
+test("incremental DRA review reuses existing owners without widening scope or authority", async () => {
+  const [skill, selection, provider, downstream, recovery, formal] =
+    await Promise.all([
+      copies("SKILL.md").then((items) => items[0]),
+      copies("references/resource-selection.md").then((items) => items[0]),
+      copies("references/open-design-provider.md").then((items) => items[0]),
+      copies("references/downstream-handoff.md").then((items) => items[0]),
+      copies("references/recovery-and-writeback.md").then((items) => items[0]),
+      copies("references/formal-selected-web-app-handoff.md").then(
+        (items) => items[0],
+      ),
+    ]);
+  const combined = [
+    skill,
+    selection,
+    provider,
+    downstream,
+    recovery,
+    formal,
+  ].join("\n");
+
+  assert.match(
+    selection,
+    /outside-ceiling effect[\s\S]*`decision-required`[\s\S]*`reason: scope-expansion-required`[\s\S]*only then recompute the ceiling/iu,
+  );
+  assert.match(
+    selection,
+    /user may choose an in-scope alternative or explicitly expand scope/iu,
+  );
+  assert.match(
+    selection,
+    /stop and route the change to the actual Product\/Surface\/Screen\/Design owner[\s\S]*Reread the updated owner before resuming/iu,
+  );
+  assert.match(
+    selection,
+    /candidate execution defect stays within DRA[\s\S]*does not.*durable owner change/iu,
+  );
+
+  for (const field of [
+    "style_application:",
+    "primary_content_priority:",
+    "density:",
+    "container_treatment:",
+    "visible_vs_hit_geometry:",
+    "preserve:",
+    "prohibited_patterns:",
+  ])
+    assert.ok(selection.includes(field), field);
+  assert.match(
+    selection,
+    /not a persisted Application Projection, Authority, state or acceptance record/iu,
+  );
+  assert.match(
+    selection,
+    /simple high-fidelity preview does not gain another tool action or persisted side effect/iu,
+  );
+
+  assert.match(
+    selection,
+    /material\/recoverable loop[\s\S]*`audit_expectations`[\s\S]*explicitly unchanged universe[\s\S]*blast-radius universe/iu,
+  );
+  assert.match(
+    selection,
+    /ordinary loop without those complete bindings[\s\S]*conservative impact analysis[\s\S]*Never claim that only identified resources are affected/iu,
+  );
+  assert.match(
+    recovery,
+    /change and preservation claims remain bounded to its exact Requirements-to-Resource, Resource-to-Requirements[\s\S]*inactive-leakage universes/iu,
+  );
+
+  assert.match(
+    provider,
+    /scope and Source suitability[\s\S]*mechanical checks[\s\S]*Design-System application checks[\s\S]*visual-language checks[\s\S]*state\/condition coverage checks[\s\S]*preservation checks/iu,
+  );
+  assert.match(
+    provider,
+    /Design suitability is one freshly derived umbrella review[\s\S]*never human selection/iu,
+  );
+  assert.match(
+    provider,
+    /After every material revision, rerun every applicable suitability subcheck/iu,
+  );
+  assert.match(
+    provider,
+    /visual-language or mechanical pass cannot independently establish Artifact readiness, selection, formal completeness, handoff readiness/iu,
+  );
+
+  assert.match(downstream, /^## Design Resource Review & Selection Stop$/mu);
+  assert.match(
+    downstream,
+    /not an approval record, `review_set_id`, registry, persisted status, Gate, acceptance, readiness or formal-completeness claim/iu,
+  );
+  assert.match(
+    downstream,
+    /not a required extra turn[\s\S]*small request.*one turn/iu,
+  );
+  assert.match(
+    recovery,
+    /Ordinary conversational review and selection[\s\S]*no approval record or persistent selection state/iu,
+  );
+  assert.match(
+    recovery,
+    /Deterministic cross-interruption selection uses only the existing raw-digest-bound marked Source, `ty-dra-authority-v1`, selected-resource binding and conditional checkpoint/iu,
+  );
+
+  assert.match(
+    downstream,
+    /selection binds the canonical selected-source digest, target identity, declared conditions and controlling Source\/Design-Authority identity/iu,
+  );
+  assert.match(
+    downstream,
+    /derived artifact proved equivalent[\s\S]*preserves selection[\s\S]*visible or semantic difference[\s\S]*another user choice/iu,
+  );
+  assert.match(formal, /^## Review-return boundary$/mu);
+  assert.match(
+    formal,
+    /exposes a new state[\s\S]*visible\/semantic design difference[\s\S]*return to the downstream `Design Resource Review & Selection Stop`/iu,
+  );
+  assert.match(
+    formal,
+    /Only closure which introduces no new visible decision[\s\S]*one consolidated Proposal reconciliation/iu,
+  );
+  assert.match(
+    downstream,
+    /Formal Web\/App work defers its one reconciliation until direction selection plus stable formal closure/iu,
+  );
+
+  const references = await readdir(
+    path.join(
+      repo,
+      ".codex/ty-context-managed/skills/design-resource-authoring/references",
+    ),
+  );
+  assert.deepEqual(references.sort(), [
+    "downstream-handoff.md",
+    "formal-selected-web-app-handoff.md",
+    "open-design-provider.md",
+    "recovery-and-writeback.md",
+    "resource-selection.md",
+  ]);
+  assert.doesNotMatch(
+    combined,
+    /references\/design-application-and-review\.md/iu,
+  );
+});
+
 test("resource selection preserves the smallest sufficient scoped commission", async () => {
   const [skill, selection] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
@@ -122,9 +268,15 @@ test("resource selection preserves the smallest sufficient scoped commission", a
   assert.match(combined, /target user\/role and usage context reference/iu);
   assert.match(combined, /client\/host\/platform/iu);
   assert.match(combined, /Surface\/Screen duty/iu);
-  assert.match(combined, /primary task outcome, primary work object and shortest task loop/iu);
+  assert.match(
+    combined,
+    /primary task outcome, primary work object and shortest task loop/iu,
+  );
   assert.match(combined, /operation–affected-object–feedback relationships/iu);
-  assert.match(combined, /critical context, state, recovery and accessibility constraints/iu);
+  assert.match(
+    combined,
+    /critical context, state, recovery and accessibility constraints/iu,
+  );
   assert.match(
     combined,
     /controlling Product\/Surface\/Screen Source[\s\S]*target user\/context[\s\S]*page duty[\s\S]*primary task outcome[\s\S]*primary work object\/task loop[\s\S]*operation-object-feedback[\s\S]*state\/recovery\/accessibility meaning/iu,
@@ -724,38 +876,50 @@ test("handoff preserves immutable resource identity and direct downstream routin
 });
 
 test("Source, specification, Context and public docs expose the new resource contract", async () => {
-  const [plan, factCompleteness, spec, contexts, readmes, profile, manifest] =
-    await Promise.all([
-      read("docs/design-resource-authoring-implementation-source.md"),
-      read("docs/design-fact-completeness.md"),
-      read("PROJECT_SPEC.md"),
-      Promise.all([
-        read("project_context/global.md"),
-        read("project_context/architecture.md"),
-        read("project_context/areas/harness-package.md"),
-        read(
-          "project_context/areas/harness-package/contracts/workflow-contract.md",
-        ),
-        read(
-          "project_context/areas/harness-package/contracts/design-resource-handoff.md",
-        ),
-        read(
-          "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
-        ),
-        read(
-          "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
-        ),
-        read("project_context/areas/harness-package/implementation-index.md"),
-        read("project_context/areas/harness-package/verification.md"),
-      ]).then((items) => items.join("\n")),
-      Promise.all([
-        read("README.md"),
-        read("README.zh-CN.md"),
-        read("packages/ty-context/README.md"),
-      ]).then((items) => items.join("\n")),
-      read("packages/ty-context/src/lib/profiles.ts"),
-      read("project_context/context.toml"),
-    ]);
+  const [
+    plan,
+    incrementalSource,
+    factCompleteness,
+    spec,
+    contexts,
+    readmes,
+    profile,
+    manifest,
+  ] = await Promise.all([
+    read("docs/design-resource-authoring-implementation-source.md"),
+    read("docs/dra-incremental-authoring-review-development-source.md"),
+    read("docs/design-fact-completeness.md"),
+    read("PROJECT_SPEC.md"),
+    Promise.all([
+      read("project_context/global.md"),
+      read("project_context/architecture.md"),
+      read("project_context/areas/harness-package.md"),
+      read(
+        "project_context/areas/harness-package/contracts/workflow-contract.md",
+      ),
+      read(
+        "project_context/areas/harness-package/contracts/design-resource-handoff.md",
+      ),
+      read(
+        "project_context/areas/harness-package/contracts/design-resource-authoring.md",
+      ),
+      read(
+        "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+      ),
+      read(
+        "project_context/areas/harness-package/decision-rationale/long-task-workflow.md",
+      ),
+      read("project_context/areas/harness-package/implementation-index.md"),
+      read("project_context/areas/harness-package/verification.md"),
+    ]).then((items) => items.join("\n")),
+    Promise.all([
+      read("README.md"),
+      read("README.zh-CN.md"),
+      read("packages/ty-context/README.md"),
+    ]).then((items) => items.join("\n")),
+    read("packages/ty-context/src/lib/profiles.ts"),
+    read("project_context/context.toml"),
+  ]);
   assert.match(plan, /Plan key: `PLAN-DRA-001`/u);
   assert.match(plan, /^## 2026-07-22 Workflow And Provider Amendment$/mu);
   assert.match(
@@ -774,6 +938,30 @@ test("Source, specification, Context and public docs expose the new resource con
   assert.match(plan, /IN-DRA-USER-004/u);
   assert.match(plan, /REQ-DRA-053/u);
   assert.match(plan, /AC-DRA-028/u);
+  assert.match(incrementalSource, /^## Indexed Inputs And Owners$/mu);
+  assert.match(incrementalSource, /S1.*555a8095-effe-404c-a2c9-4e9363c545c8/u);
+  assert.match(incrementalSource, /S2.*9ed6ff3f-2736-4b58-9235-01e8076f228e/u);
+  assert.match(incrementalSource, /Default Workflow Contract/iu);
+  assert.match(incrementalSource, /explicitly excluded Long-Task Workflow/iu);
+  assert.match(incrementalSource, /`Context Delta: required`/u);
+  assert.match(
+    spec,
+    /Underlying Engineering Problem[\s\S]*designed to reduce that drift/iu,
+  );
+  assert.match(
+    spec,
+    /docs\/dra-incremental-authoring-review-development-source\.md/u,
+  );
+  for (const content of [spec, contexts, readmes]) {
+    assert.match(content, /scope-expansion-required/u);
+    assert.match(content, /style_application/u);
+    assert.match(content, /Design Resource Review & Selection Stop/u);
+    assert.match(content, /Design suitability/iu);
+    assert.match(
+      content,
+      /canonical selected-source digest|canonical source digest|canonical selected source/iu,
+    );
+  }
   for (const content of [spec, contexts, readmes]) {
     assert.match(content, /design-resource-authoring/u);
     assert.match(content, /style-bearing/iu);

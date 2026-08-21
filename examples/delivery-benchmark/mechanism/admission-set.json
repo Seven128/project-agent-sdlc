@@ -180,36 +180,36 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "9c594911107e56ad481a8394dff0be66ad005d28d24ad03f2699b764a8f09497",
+              "bundle_sha256": "f4f4306c80a30b2067126d4bc09e00e0854c29ef08ef82ef1a0d11a728230241",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "a94f7b3fc2753c1e1163b5a8357de438775fde2d88cb0f082147ad1f835a66b3"
+                  "content_sha256": "9e26e8e04eee8701e75c2a68c74799b87fb5cce7abe29d3934417d76bb320811"
                 },
                 {
                   "kind": "worktree",
                   "label": "dra_down_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
-                  "content_sha256": "c8311abec3561223abfdb1f54b1531b74cba4aa4263746886e7cce8bcfa507a4"
+                  "content_sha256": "c30b0b12364a618e16f8bcc9b82dd4ee894cebeb311de4a5b643c10689c6ac1f"
                 },
                 {
                   "kind": "worktree",
                   "label": "dra_recovery_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/recovery-and-writeback.md",
-                  "content_sha256": "4e7a717c9eb460886e0e457610f7f5c6ae8ff7367b744cd0a969e460c3372a74"
+                  "content_sha256": "ff6e25332e16ab6369aa8885e755db691c2c7ee0360e6dde4d724209f4d0c226"
                 }
               ]
             },
             "simple": {
-              "bundle_sha256": "be0d276db36d3a5d5bd1d06d66cc6e39bbc88493e0311ab444f3a981a1777280",
+              "bundle_sha256": "91c3716218709e3efdcb282eb684ed1c1eb495444fbc0c7ee3b89127c989ab66",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "a94f7b3fc2753c1e1163b5a8357de438775fde2d88cb0f082147ad1f835a66b3"
+                  "content_sha256": "9e26e8e04eee8701e75c2a68c74799b87fb5cce7abe29d3934417d76bb320811"
                 }
               ]
             }

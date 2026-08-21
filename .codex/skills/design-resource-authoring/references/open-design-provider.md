@@ -77,7 +77,7 @@ Never silently use the provider's default or a different system. A provider-side
 
 1. Record provider version, selected agent/model, reasoning effort and service tier when exposed, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
 2. Reuse an existing task-local project only when its scope, prior inputs and required design-system binding match; otherwise create a bounded project. For style-bearing work, pass `designSystem` and verify `get_project.designSystemId` before the run.
-3. Start a run with the product-specific commission envelope, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output.
+3. Start a run with the product-specific commission envelope, including any minimal Source-bound `style_application`, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output. `style_application` is commission content, not a separate persistent Projection or provider state.
 4. Poll with a bounded cadence. During a long run, report meaningful progress at least once per minute without flooding the user.
 5. Preserve run IDs and the latest provider diagnostic. Support cancellation when the user requests it and the provider exposes it.
 6. Resolve the actual entry explicitly, retrieve the artifact/source, inspect it according to intent and preserve its immutable identity before later iterations or handoff.
@@ -96,9 +96,20 @@ Examples: missing, partial, corrupt, retrievable, rendered or snapshot-preserved
 
 ### Design suitability
 
-Examples: unreviewed, scope-sane, handoff-checked, human-selected or rejected.
+Design suitability is one freshly derived umbrella review, not another state machine and never human selection. Review the applicable subchecks at intent-proportional depth:
+
+- **scope and Source suitability:** the candidate stays within the hard ceiling and follows current controlling Product/Surface/Screen/Design Source; an outside effect is reported, not generated;
+- **mechanical checks:** promised files/entries are readable, structurally usable and free of obvious corruption, broken references or intent-material runtime defects;
+- **Design-System application checks:** the verified adopted identity, exact-value/token lineage and applicable component-family rules are used rather than merely named;
+- **visual-language checks:** hierarchy, emphasis, density, container treatment, typography, color, spacing, component treatment and other material relationships cohere with the selected Source-bound direction;
+- **state/condition coverage checks:** credit only demonstrated states, variations, interactions, viewports, input/accessibility conditions and assets; and
+- **preservation checks:** explicitly preserved Source meaning, exact visual facts and unaffected bindings remain unchanged.
+
+Report applicable checked and unchecked conditions. A grounded conflict blocks; an ungrounded aesthetic preference is a candidate-comparison observation, not a fabricated Source rule. Examples of derived suitability outcomes may include `unreviewed`, `scope-source-conflict`, `revision-required` or `suitable-for-user-review`; none means selected, formally complete or handoff-ready.
 
 Never collapse these into one “success.” A provider success does not prove a good design; a complete artifact can exist even when a provider run later fails.
+
+After every material revision, rerun every applicable suitability subcheck against current Source and bytes. A material revision changes the selected visual direction or design system, cross-surface information architecture, primary interaction model, declared state/condition coverage, preservation obligation or enough canonical source/Fact meaning to invalidate the reviewed candidate. A byte-only packaging/export change proven equivalent to the same canonical source does not create a new design decision; a visible or semantic difference does.
 
 Use these qualifiers when needed:
 
@@ -140,11 +151,11 @@ A preview URL is mutable navigation, not immutable identity. It may be reported 
 
 ## Review proportional to intent
 
-- **Exploration:** open/render the requested entry, confirm artifact count/scope and obvious corruption, then show it. Do not launch a packaging or validator sequence.
-- **Handoff:** additionally perform the method-proportional source QA above, including relevant structure, states/transitions, viewport behavior, accessibility semantics, assets, obvious console/runtime errors and requested interaction hooks. State exactly what was and was not checked.
-- **Selected-source preparation:** require explicit human selection basis, preserve identity/snapshot, and prepare downstream metadata. It still does not verify production behavior.
+- **Exploration:** open/render the requested entry, confirm artifact count/scope and obvious corruption, perform only the decision-material suitability subchecks, then show it. Do not launch a packaging or validator sequence.
+- **Handoff:** additionally perform the method-proportional source QA above, including relevant structure, states/transitions, viewport behavior, accessibility semantics, assets, obvious console/runtime errors, requested interaction hooks, Design-System application, visual language and preservation. State exactly what was and was not checked.
+- **Selected-source preparation:** require an independent explicit human selection basis, preserve identity/snapshot and prepare downstream metadata. Suitability informs that decision but never makes it, and still does not verify production behavior.
 
-Provider self-checks, outer artifact sanity review and downstream project verification are separate evidence layers. Never claim native rendering, accessibility, responsive coverage, product correctness or acceptance unless the appropriate downstream project checks actually prove them.
+Provider self-checks, outer artifact sanity review, user selection, formal source closure and downstream project verification are separate evidence layers. A visual-language or mechanical pass cannot independently establish Artifact readiness, selection, formal completeness, handoff readiness, native rendering, accessibility, responsive coverage, product correctness or acceptance.
 
 ## Specialist paths
 
