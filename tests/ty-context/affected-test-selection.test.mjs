@@ -428,6 +428,8 @@ test("guidance-only changes select static consistency checks", () => {
   assert.equal(selection.mode, "selected");
   assert.equal(selection.requires_build, true);
   assert.deepEqual(selection.tests, [
+    "tests/ty-context/architecture-rationale-guidance.test.mjs",
+    "tests/ty-context/context-development-skill-delivery.test.mjs",
     "tests/ty-context/design-resource-authoring-skill.test.mjs",
     "tests/ty-context/design-system-authoring-skill.test.mjs",
     "tests/ty-context/long-task-design-context.test.mjs",
@@ -435,10 +437,72 @@ test("guidance-only changes select static consistency checks", () => {
     "tests/ty-context/long-task-semantic-fact-closure.test.mjs",
     "tests/ty-context/package-source.test.mjs",
     "tests/ty-context/retired-authoring-migration.test.mjs",
+    "tests/ty-context/surface-contract-workflow.test.mjs",
     "tests/ty-context/symbolic-denotation-efficiency-guidance.test.mjs",
     "tests/ty-context/visual-delivery-guidance.test.mjs",
     "tests/ty-context/workflow-contract-routing.test.mjs",
   ]);
+});
+
+test("default role guidance changes select owner-specific regressions before broad managed guidance", () => {
+  const cases = [
+    {
+      file: ".codex/ty-context-managed/skills/context_development_engineer/references/engineering-design-reasoning.md",
+      reason: /engineering_role_guidance/u,
+      tests: [
+        "tests/ty-context/architecture-rationale-guidance.test.mjs",
+        "tests/ty-context/context-development-skill-delivery.test.mjs",
+        "tests/ty-context/package-source.test.mjs",
+      ],
+    },
+    {
+      file: "packages/ty-context/assets/skills/context_uiux_design/references/task-uiux-analysis.md",
+      reason: /uiux_role_guidance/u,
+      tests: [
+        "tests/ty-context/package-source.test.mjs",
+        "tests/ty-context/surface-contract-workflow.test.mjs",
+        "tests/ty-context/visual-delivery-guidance.test.mjs",
+      ],
+    },
+    {
+      file: ".codex/ty-context-managed/context_templates/screen-contract.md",
+      reason: /surface_role_guidance/u,
+      tests: [
+        "tests/ty-context/architecture-rationale-guidance.test.mjs",
+        "tests/ty-context/package-source.test.mjs",
+        "tests/ty-context/surface-contract-workflow.test.mjs",
+        "tests/ty-context/visual-delivery-guidance.test.mjs",
+      ],
+    },
+    {
+      file: ".codex/ty-context-managed/skills/design-resource-authoring/references/resource-selection.md",
+      reason: /design_resource_role_guidance/u,
+      tests: [
+        "tests/ty-context/design-resource-authoring-provider.test.mjs",
+        "tests/ty-context/design-resource-authoring-skill.test.mjs",
+        "tests/ty-context/package-source.test.mjs",
+      ],
+    },
+    {
+      file: ".codex/skills/authoring/harness_package_design/references/default-skill-governance.md",
+      reason: /default_skill_authoring_governance/u,
+      tests: [
+        "tests/ty-context/architecture-rationale-guidance.test.mjs",
+        "tests/ty-context/context-development-skill-delivery.test.mjs",
+        "tests/ty-context/design-resource-authoring-skill.test.mjs",
+        "tests/ty-context/surface-contract-workflow.test.mjs",
+        "tests/ty-context/visual-delivery-guidance.test.mjs",
+      ],
+    },
+  ];
+
+  for (const fixture of cases) {
+    const selection = selectAffectedTests([fixture.file]);
+    assert.equal(selection.mode, "selected", fixture.file);
+    assert.equal(selection.requires_build, true, fixture.file);
+    assert.deepEqual(selection.tests, fixture.tests, fixture.file);
+    assert.match(selection.reasons[0], fixture.reason, fixture.file);
+  }
 });
 
 test("design authoring profile and provider changes select focused coverage", () => {

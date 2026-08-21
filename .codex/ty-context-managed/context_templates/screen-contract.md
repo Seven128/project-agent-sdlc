@@ -24,7 +24,11 @@ If these owners conflict, update the stale owner or retain a genuine decision. D
 - Surface / Route / Command:
 - Platform:
 - Owning Product Domain:
+- Target User / Usage Context Reference:
 - Primary User Question:
+- Primary Task Outcome:
+- Primary Work Object:
+- Primary Task Loop:
 - In-Scope User Tasks:
 - Explicit Non-Goals:
 
@@ -49,6 +53,7 @@ Record semantic order and responsibility, not pixel coordinates.
 4. Secondary actions:
 5. Drilldown / evidence / diagnostics:
 6. Information forbidden from permanent main-surface placement:
+7. Critical context that must remain visible while acting:
 
 ## Layout Contract
 
@@ -67,6 +72,16 @@ Record semantic order and responsibility, not pixel coordinates.
 - Map / canvas / media visible-area contract:
 - Keyboard / input-method behavior:
 - Gesture competition / pointer ownership:
+- Repeated-scroll / navigation / context-switch boundary:
+- Client / host constraints:
+
+## Task Loop And Feedback
+
+- Primary operation sequence:
+- Operation–affected-object relationship:
+- Progress / success / failure feedback relationship:
+- Commit / cancel / retry / undo / recovery:
+- Work-object visibility and focus/selection restoration:
 
 ## Control Inventory
 
@@ -113,6 +128,7 @@ Describe composition or responsibility changes, not one-off screenshots.
 ## Responsive, Mode And Content Variants
 
 - Viewport / size-class boundaries:
+- Size-class interaction topology (remain / reflow / collapse / sheet / sidebar / modal / separate surface):
 - Orientation / window-resize behavior:
 - Theme / product-mode differences:
 - Text scaling / localization / long-content behavior:

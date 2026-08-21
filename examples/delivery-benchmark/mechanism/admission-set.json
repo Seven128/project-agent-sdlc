@@ -180,13 +180,13 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "82454aca56a5ea3a26c3aaf1c9560f1fce4ee9a42fa1a93f3c16baac0ce92a96",
+              "bundle_sha256": "585d4c18382868e94981071f4eeb1e8bceda257345dd1e0f52e170a518d361f3",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "37f5f54ef53abc3802dab82024543123ef0f36dcfbd40feeac71620c0cdc2dba"
+                  "content_sha256": "e1c261ff790f4a198b65338cdfa84997f67672fad29f374225e1afc72e2f9050"
                 },
                 {
                   "kind": "worktree",
@@ -203,13 +203,13 @@
               ]
             },
             "simple": {
-              "bundle_sha256": "d9db34d427883fc13abbf970d7193949b4bf732cc0cfa9f9c89a73be0324a430",
+              "bundle_sha256": "8a2ae2bbab0f569ae310d1e64cffb2c5f4219dfb3b80e72c7ca164688fff61b6",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "37f5f54ef53abc3802dab82024543123ef0f36dcfbd40feeac71620c0cdc2dba"
+                  "content_sha256": "e1c261ff790f4a198b65338cdfa84997f67672fad29f374225e1afc72e2f9050"
                 }
               ]
             }
@@ -315,7 +315,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "ef3c131c8bd561406650e91f32bebda57ef7fd1924360e9694d1f7b1ba5c661f",
+              "bundle_sha256": "1037f213c1af356d2057d4759046ac896ffbc99bdad3ea55b7867d1c719ffa9d",
               "sources": [
                 {
                   "kind": "worktree",
@@ -331,7 +331,7 @@
                   "kind": "worktree",
                   "label": "engineer_candidate",
                   "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
-                  "content_sha256": "e7cf5083b7b4db4011171fa2a3b49a6cc8e0fc99def38d3a08e9a1f5e861be40"
+                  "content_sha256": "a4c52f9244f6c5df22c968e9712abe35b3c121013b9e9f647ee8aa91c327e9d0"
                 }
               ]
             }

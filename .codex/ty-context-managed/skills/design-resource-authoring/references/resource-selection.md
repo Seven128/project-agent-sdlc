@@ -15,6 +15,17 @@ Extract the smallest explicit output or development boundary before interpreting
 
 Rich background improves a bounded artifact. It never authorizes more artifacts. Necessary surrounding context may show where a partial feature lives, but it does not place the rest of that page or product in scope. If the user supplies a complete app plan but asks to preview one button, generate at most the one-control resource. If the user asks for design resources for one development slice, cover that slice through its material controls and conditions, not the whole background product.
 
+For page, flow or complex-control generation, recover the available authoritative constraints before deriving a commission:
+
+- target user/role and usage context reference;
+- client/host/platform, input method and relevant size classes;
+- owning Surface/Screen duty and main-versus-drilldown boundary;
+- primary task outcome, primary work object and shortest task loop;
+- material operation–affected-object–feedback relationships; and
+- critical context, state, recovery and accessibility constraints.
+
+These remain owned by Product/Surface/Screen/UIUX Source. The commission references them without becoming their owner. A feature list, screenshot, route tree or component inventory cannot fill a missing product fact; if the missing meaning materially changes the resource, return `decision-required` or request the owning Source update before Provider execution.
+
 ## 2. Choose the intent
 
 | Intent | User decision being supported | Default stopping point |
@@ -143,6 +154,7 @@ coverage:
   required_interactions_motion: []
   required_adaptation_accessibility: []
 inputs:
+  product_surface_constraints: []
   exact_targets: []
   constraints: []
   inspiration: []

@@ -59,6 +59,14 @@ Small changes use a concise preservation finding instead of skipping. Material c
 
 The result is task-local unless it changes durable facts. Stable ownership, boundary, interface/state/recovery, dependency, verification or long-lived tradeoff decisions update their owning Context before code. No architecture plan, matrix, ADR or second delta is required.
 
+## Content-Sensitive Reasoning Adapters
+
+The package-managed engineering and UI/UX Skills route by material task content rather than requiring one exact request phrase. `context_development_engineer` activates when a task genuinely needs owner/source-of-truth, architecture/dependency, API/schema/data/state/lifecycle, material-alternative, concurrency/recovery, external-integration/shared-abstraction, performance/security/compatibility/migration or architecture-audit judgment. Generic implementation, fix, refactor, package/release, role and agent wording does not activate it merely by itself; small explicit-owner changes, tests, documentation and styling stay lightweight.
+
+Its on-demand engineering-design reference structures deeper analysis as facts/constraints/assumptions/unknowns, drivers and path dependence, the smallest material alternative set, steelmanning, counterfactual/failure paths, risk-triggered methods, a minimum experiment when uncertainty is material, and concrete owner/interface/data/state/lifecycle/failure/verification mapping. These are selectable methods, not a universal checklist, required artifact or second lifecycle.
+
+For material page/flow/complex-control, hierarchy/topology, task-feedback loop, client adaptation, navigation/recovery/state/accessibility or UI/UX audit work, `context_uiux_design` may load one non-authoritative task-analysis reference. Durable Design Authority remains that Skill's only owner role; Product/Surface/Screen Sources retain product meaning, page duty and information/action/feedback/topology facts, and the current Goal owns candidate selection under those constraints. Skill activation alone never authorizes a durable write. Static routing/parity tests establish only instruction presence and distribution, not real host activation, decision quality, runtime cost or ROI.
+
 ## Implementation Quality Discipline
 
 Implementation order, method and feedback cadence remain Goal-owned. Within declared Source/Context, architecture, safety and external-action boundaries:

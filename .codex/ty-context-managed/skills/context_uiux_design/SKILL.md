@@ -1,6 +1,6 @@
 ---
 name: context_uiux_design
-description: Use when the user explicitly asks to establish, adopt or repair durable UI/UX Design Authority, DESIGN.md, design-system governance, visual tokens/rationale, adopted target interpretation, UI Authority Closure, selected-design alignment, or durable visual standards in a Minimal Context Harness project. Do not trigger for product/surface responsibility, design-resource generation, ordinary UI implementation, local CSS/UI fixes, copy edits, or an unselected visual exploration.
+description: Use when the user explicitly asks to establish, adopt or repair durable UI/UX Design Authority, DESIGN.md, design-system governance, visual tokens/rationale, adopted target interpretation, UI Authority Closure, selected-design alignment or durable visual standards; or when actual task content requires material UI/UX analysis or audit for a new page/flow/complex control, information hierarchy, fixed/scroll/overlay/sheet/sidebar/modal topology, map/canvas/editor work, primary task and feedback loop, client adaptation, navigation/recovery/states or accessibility in a Minimal Context Harness project. Do not trigger merely for product/surface responsibility, design-resource generation, ordinary local UI implementation, CSS/copy/icon/image fixes, local exact-target alignment, a single-control visual preview or an unselected visual exploration.
 ---
 
 # Context UI/UX Design
@@ -13,6 +13,10 @@ This Skill does not own product goals/business rules/acceptance (`context_produc
 
 Project-specific UI/UX rules may live in `<harnessRoot>/skills/uiux_design/SKILL.md`; durable facts remain in `DESIGN.md` and owning `project_context/**`. Active Long-Task retains its one Source/Contract lifecycle and Final Gate; this Skill contributes authority closure only.
 
+## Task-level analysis adapter
+
+For a material task-analysis trigger, read [task-uiux-analysis.md](references/task-uiux-analysis.md) completely and apply only the relevant methods. This adapter is non-authoritative: Product/Surface/Screen Source owns the user, page duty, primary task/work object, information/action/feedback and interaction-topology facts; this Skill still owns durable Design Authority only. The current Goal may compare and select implementation candidates under those constraints. A conflicting candidate cannot proceed to resource generation or implementation until the stale owner is authoritatively updated or a genuine decision is obtained.
+
 ## UI Authority Closure
 
 1. Read core/default and owning surface/interaction Context, root `DESIGN.md`, its authored token source/generation direction, existing production route/components and every affected selected `exact-target` or `constraint` through its immutable locator. Run `ty-context design-resource preflight <handoff.md>` before treating a formal handoff as input.
@@ -23,7 +27,7 @@ Project-specific UI/UX rules may live in `<harnessRoot>/skills/uiux_design/SKILL
    - screen/interaction targets are fully owned by the owning Screen Contract, with `DESIGN.md` keeping only the stable key and owner/anchor;
    - the record preserves interpretation, selection basis, immutable path/URI and digest, applicable conditions and editable upstream owner/locator/update route.
 5. Never overwrite an adopted baseline. Create a new immutable version/digest, review it deliberately and update the unique canonical record. An implementation render/diff is evidence and cannot become the target it claims to match.
-6. Decide exactly one `Context Delta: none|required`. Durable visual-system, token, rationale, adopted interpretation, owner/anchor or verification-route change is `required`; ordinary UI/CSS fixes that preserve authority are `none`.
+6. Decide exactly one `Context Delta: none|required`. Skill activation, analysis, audit or candidate comparison alone authorizes no durable write. Durable visual-system, token, rationale, adopted interpretation, owner/anchor or verification-route change is `required`; ordinary UI/CSS fixes that preserve authority are `none`. When product/UI implementation is already authorized and the current Goal independently finds a durable Surface/Screen change, update the smallest owning Surface Context before code or return `decision-required`.
 7. Route unresolved surface placement to `context_surface_contract`; route any request to generate/iterate a wireframe, prototype, visual candidate, state study or handoff to `design-resource-authoring`. Do not invoke resource generation implicitly.
 
 ## Selected-design alignment

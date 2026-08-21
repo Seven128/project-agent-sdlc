@@ -179,6 +179,8 @@ Shared Engineering Quality 在不增加工作流的前提下扩展原有架构�
 
 实现顺序、方法和反馈节奏仍由 Goal 决定。轻量纪律只要求复用 owning service/facade/adapter 与唯一 source of truth，做最小而完整的变化，保留明确 failure/resource 语义，并仅为稳定概念或有证据的变化轴增加抽象。精确产品/技术谓词继续由 Semantic Facts 拥有，精确选定 UI/UX 值由 selected-design closure 拥有。
 
+`context_development_engineer` 按任务实质而不是通用编码动词触发：只有 material 的 owner/source-of-truth、architecture/dependency、API/schema/data/state/lifecycle、复杂替代、concurrency/recovery、external integration/shared abstraction、performance/security/compatibility/migration 或 architecture audit 判断才加载按需工程推理；单凭 implement/fix/refactor、角色/agent 字样以及普通局部代码、测试、文档或样式工作不会触发。reference 会区分事实/约束/假设/未知、驱动与路径依赖、材料性替代、反证和最小实验，再把决策投影到具体 owner、接口、data/state/lifecycle/failure 与检查；它不是强制方法清单或第二工作流。
+
 实现和项目验证之后，`Engineering Quality Conformance` 包含 `Architecture Conformance`，对当前候选快照检查 scope/path escape、owner/dependency 违规或 bypass、重复 truth、未声明 boundary/lifecycle 变化、silent failure、适用 resource/concurrency/security/compatibility/operability 缺陷、无证据性能声称、缺失声明检查和新增/加重技术债。性能声称必须绑定 workload、metric、baseline 或 budget、environment、comparator/tolerance 和项目原生 benchmark/probe；静态形状不证明运行时性能。候选或 controlling input 再变化就使结果失效。默认路线把它放在 Contract Conformance 内；Long-Task 用已有 Source-backed obligation/constraint/forbidden shortcut、owner/path/Binding、executable Check，以及功能 pass 时仍可能独立失败的 Assertion 表达不变量。Final Gate 是唯一 Long-Task carrier，只证明该声明、可证伪、项目检查绑定的集合，不证明整体代码质量；同一候选不会执行两套 carrier。
 
 Contract Conformance 主要检查当前 Source/Context 是否到达实现和验证；单独命名的 Context drift check 反向检查实现或新决策是否让耐久 Context 过时。新增或加重技术债默认阻塞，除非项目有带 owner、rationale、tracking 和 removal condition 的显式 bounded exception。无关 legacy debt 不自动扩张任务范围，但本次触达、依赖或加重的债不能隐藏。
@@ -191,7 +193,7 @@ Harness 只路由仓库原生 type/compiler/lint/AST/dependency/contract/behavio
 
 ### Product Surface 与 Screen Contract
 
-`context_surface_contract` 继续使用现有 `contract`、area/subdomain 和 verification 角色。`product-surface-contract.md` 负责跨页面、主层/下钻与共享职责；可选且按需读取的 `screen-contract.md` 负责单屏 entry/exit/shared state、信息层级、语义区域、导航/变体、material controls 和 target/verification 引用。它们不新增 `design`、`screen` 或 product-surface Context role，局部样式修复也不要求补建 Screen Contract。
+`context_surface_contract` 继续使用现有 `contract`、area/subdomain 和 verification 角色。`product-surface-contract.md` 负责跨页面、主层/下钻与共享职责；可选且按需读取的 `screen-contract.md` 还负责单屏 target user/usage context 引用、主任务结果/工作对象/闭环、operation-object-feedback 关系、必须持续可见的关键上下文、entry/exit/shared state、信息层级、语义区域、重复滚动/上下文切换边界、client/size-class topology、导航/变体、material controls 和 target/verification 引用。`context_uiux_design` 可以为 material 的新页面/流程/复杂控件、层级/拓扑、任务反馈、客户端适配、恢复/状态/无障碍或 UI/UX 审计加载非权威任务分析，但其 durable owner 仍只有 Design Authority，页面职责仍归 Surface/Screen Source。分析或 Skill 激活本身不授权写入；只有产品/UI 实现已经获准且当前 Goal 独立判断 `Context Delta: required` 时，才更新最小 Surface owner。局部 CSS/文案/icon/image、exact-target 局部对齐和单控件预览仍保持轻量。
 
 material UI 在实现前执行 **UI Authority Closure**：每个稳定 surface/control/target key 必须归类为现有 Context 已覆盖、需要 Context 更新、task-local、显式 out-of-scope 或真正 decision-required。Design Source Projection 把长期 surface/flow/Screen/Control/state 含义放入既有 Surface 或 Screen/interaction Context，把视觉系统/token/motion policy/rationale 放入 `DESIGN.md`，把精确构图/数值/条件/asset 留在 versioned target，把可重复证明路径放入 verification Context，而 delivery-local coverage/provenance/blocker 留在任务或 Contract Source。出现冲突时 fail closed；当前代码、时间戳、YAML 或实现截图不能静默胜出。
 
@@ -233,7 +235,7 @@ Long-Task 投影继续要求每个 Claim-bearing Assertion 只绑定一个 Claim
 
 repository pattern 只把圆括号作为经过转义的 route-group 字面字符，不把它们解释成正则分组或 extglob；现有 `*`、`**`、`?` 语义保持不变，`[]`/`{}` 仍不受支持。
 
-对 material 工作，`context_uiux_design` 应用上面的投影规则并让风险比例化 coverage reasoning 保持 task-local。`context_development_engineer` 用稳定 surface/control key 把每个受影响的 selected target 和声明 condition 追踪到生产 route/component owner、冷启动真实用户旅程及适用的渲染/交互检查。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。Source 已明确要求的组合不能静默删减，但默认路线应报告未被证据建立的条件，而不是声称精确机器闭包。资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
+对 material 工作，`context_uiux_design` 只用非权威 task-level UI/UX 方法比较候选，并保持 durable Design Authority owner 不变；`context_surface_contract`/Screen Source 继续拥有页面职责与信息/操作/反馈/拓扑。`context_development_engineer` 用稳定 surface/control key 把每个受影响的 selected target 和声明 condition 追踪到生产 route/component owner、冷启动真实用户旅程及适用的渲染/交互检查。候选若与 controlling Product/Surface/Screen/Design Source 冲突，就不能进入资源生成或实现，必须先在已有授权下更新 stale owner，或返回 genuine decision-required。第一个有价值的可运行纵向切片只是建议性的真实入口反馈点，不是实现门禁；最终候选仍必须重跑受影响的冷启动旅程。Source 已明确要求的组合不能静默删减，但默认路线应报告未被证据建立的条件，而不是声称精确机器闭包。资源哈希、manifest 和数量只证明资源完整性，实现截图既不能成为自己的目标，也不能单独证明实现一致性。
 
 显式 Long-Task 是同一共享义务的强权威载体。它在 Compile 前解决缺失/冲突的 UI 权威，并用 `field_coverage` 闭合每个真实 Product Control 的全部 22 个 canonical 字段；这条产品语义投影与更细的 design Fact universe 相互独立，绝不构成粒度上限。选定 target 冻结 canonical manifest identity/digest，并把每个原子 Fact/required-method 对投影为一个 `fact_expectations` row，其中包含 subject/target/condition/variation/property identity、expected located-value digest、comparator/parameter/tolerance/mask、Oracle identity/capability、environment 和 sensitivity。只有 package-admitted observer 能提供匹配的 `fact_results` Actual/comparison row。当前 slice 中，项目 `design_conformance`、`design_method` 与 `fact_results` record 只作诊断；受影响的 UI/design obligation 必须保留阻断性 External Confirmation，不能成为 machine proof。Product `surface_bindings`、Control Claims/relations 与 root-entry journey 继续承载产品语义，已有 Claim、Assertion、Check、Stage、Binding、revision 与 Final Gate 仍是唯一 Long-Task 生命周期和 closure。每个 blocker 保留精确 Source-item/method/capability lineage，不能在 Contract 内自行豁免；缩减范围必须修订 Source/Contract 权威。
 
@@ -241,7 +243,7 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 `ty-context doctor` 保留兼容的项目级 `missing | unconfigured | configured` 状态，并增加 Design Authority Index、token source 和已分类 reference 的 advisory 信号。它明确不推断页面实现就绪；material surface 仍需 owning Screen/Control meaning、selected target/constraints 与项目自己的验证路径。
 
-静态 guidance 测试只能证明分发、投影与 canonical ownership 文案存在，不能证明 Agent 实际恢复了全部 UI/UX 信息。可选 delivery-mechanism benchmark 提供固定 fresh-agent UI/UX Context/target recovery task、routing gold 和隐藏 production oracle；只有独立配对运行才可以支持 effectiveness/ROI 结论。
+静态 guidance 测试只能证明路由文案、正负分析规则、分发、投影与 canonical ownership，不能证明宿主真实激活了 Skill、Agent 遵循程度、地图设计质量、运行成本、性能或 ROI。可选 delivery-mechanism benchmark 提供固定 fresh-agent UI/UX Context/target recovery task、routing gold 和隐藏 production oracle；只有独立配对运行才可以支持 effectiveness/ROI 结论。
 
 ### 显式 Design System Authoring
 
@@ -253,7 +255,7 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 只有在用户明确要求生成、迭代、准备独立设计资源、为一段明确开发内容准备设计资源或使用 Open Design 时，才使用 `design-resource-authoring`。输入可以是零散笔记或初始方案、产品/技术方案、专门视觉 brief、截图、已有资源或其他已有计划文档。独立的中间 authoring 文档不是前置项，也不再是推荐步骤。
 
-Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
+Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。生成 page/flow/complex control 之前，必须先消费 Product/Surface/Screen/UIUX Source 中已有的 target user/context、client/host、页面职责、主任务结果、主工作对象/任务闭环、operation-object-feedback、关键 state/recovery 与 accessibility 约束；Provider 不得从功能列表、截图、route tree 或 component inventory 发明缺失的产品含义。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
 
 正式首次生成、重大设计修订和关键重新生成使用实时发现后满足工具、视觉/上下文能力、认证与数据边界的最高能力模型，以及该模型实际支持的最高 reasoning effort。排序只能依据 provider 明确的能力等级、推荐替换关系或唯一且有版本依据的 provider-local fallback；不得从价格、模型名、发布时间或列表顺序猜测。多个 eligible model 无法排序时以 `highest_performance_unverified` fail closed；provider 不可控制或不能回报实际 model/effort 时也必须保留同一限定，不能声称已执行最高档。该策略不创建 model registry、scheduler 或持久 routing state。
 

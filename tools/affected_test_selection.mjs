@@ -77,6 +77,78 @@ const SYMBOLIC_GUIDANCE_PATHS = new Set([
   "tools/verify_symbolic_denotation_efficiency_delivery.mjs",
 ]);
 
+const ROLE_GUIDANCE_TEST_GROUPS = Object.freeze([
+  {
+    reason: "engineering_role_guidance",
+    prefixes: [
+      ".codex/ty-context-managed/skills/context_development_engineer/",
+      ".codex/skills/context_development_engineer/",
+      "packages/ty-context/assets/skills/context_development_engineer/",
+    ],
+    tests: [
+      "architecture-rationale-guidance.test.mjs",
+      "context-development-skill-delivery.test.mjs",
+      "package-source.test.mjs",
+    ],
+  },
+  {
+    reason: "uiux_role_guidance",
+    prefixes: [
+      ".codex/ty-context-managed/skills/context_uiux_design/",
+      ".codex/skills/context_uiux_design/",
+      "packages/ty-context/assets/skills/context_uiux_design/",
+    ],
+    tests: [
+      "package-source.test.mjs",
+      "surface-contract-workflow.test.mjs",
+      "visual-delivery-guidance.test.mjs",
+    ],
+  },
+  {
+    reason: "surface_role_guidance",
+    prefixes: [
+      ".codex/ty-context-managed/skills/context_surface_contract/",
+      ".codex/skills/context_surface_contract/",
+      "packages/ty-context/assets/skills/context_surface_contract/",
+      ".codex/ty-context-managed/context_templates/screen-contract.md",
+      ".codex/context_templates/screen-contract.md",
+      "packages/ty-context/assets/context_templates/screen-contract.md",
+    ],
+    tests: [
+      "architecture-rationale-guidance.test.mjs",
+      "package-source.test.mjs",
+      "surface-contract-workflow.test.mjs",
+      "visual-delivery-guidance.test.mjs",
+    ],
+  },
+  {
+    reason: "design_resource_role_guidance",
+    prefixes: [
+      ".codex/ty-context-managed/skills/design-resource-authoring/",
+      ".codex/skills/design-resource-authoring/",
+      "packages/ty-context/assets/skills/design-resource-authoring/",
+    ],
+    tests: [
+      "design-resource-authoring-provider.test.mjs",
+      "design-resource-authoring-skill.test.mjs",
+      "package-source.test.mjs",
+    ],
+  },
+  {
+    reason: "default_skill_authoring_governance",
+    prefixes: [
+      ".codex/skills/authoring/harness_package_design/references/default-skill-governance.md",
+    ],
+    tests: [
+      "architecture-rationale-guidance.test.mjs",
+      "context-development-skill-delivery.test.mjs",
+      "design-resource-authoring-skill.test.mjs",
+      "surface-contract-workflow.test.mjs",
+      "visual-delivery-guidance.test.mjs",
+    ],
+  },
+]);
+
 const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/commands/design-resource.ts",
@@ -946,6 +1018,15 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
+    const roleGuidance = ROLE_GUIDANCE_TEST_GROUPS.find(({ prefixes }) =>
+      prefixes.some((prefix) => file.startsWith(prefix)),
+    );
+    if (roleGuidance) {
+      roleGuidance.tests.map(testPath).forEach((test) => tests.add(test));
+      reasons.push(`${file}:${roleGuidance.reason}`);
+      continue;
+    }
+
     if (
       file.startsWith(".codex/") ||
       file.startsWith("packages/ty-context/assets/")
@@ -968,6 +1049,18 @@ export function selectAffectedTests(changedPaths, options = {}) {
     }
 
     if (file.startsWith("project_context/")) {
+      if (
+        file === "project_context/context.toml" ||
+        file.endsWith("/contracts/package-managed-surfaces.md") ||
+        file.endsWith("/decision-rationale/architecture-quality.md") ||
+        file.endsWith("/foundation/context-model.md") ||
+        file.endsWith("/implementation-index.md") ||
+        file.endsWith("/verification.md")
+      ) {
+        tests.add(testPath("architecture-rationale-guidance.test.mjs"));
+        tests.add(testPath("context-development-skill-delivery.test.mjs"));
+        tests.add(testPath("surface-contract-workflow.test.mjs"));
+      }
       if (
         file.includes("design-resource-authoring") ||
         file.includes("temporary-content-governance")
@@ -993,6 +1086,8 @@ export function selectAffectedTests(changedPaths, options = {}) {
       file === "packages/ty-context/README.md" ||
       /^README(?:\.zh-CN)?\.md$/u.test(file)
     ) {
+      tests.add(testPath("architecture-rationale-guidance.test.mjs"));
+      tests.add(testPath("context-development-skill-delivery.test.mjs"));
       tests.add(testPath("design-system-authoring-skill.test.mjs"));
       tests.add(testPath("design-resource-authoring-skill.test.mjs"));
       tests.add(testPath("long-task-design-context.test.mjs"));
@@ -1000,6 +1095,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("long-task-semantic-fact-closure.test.mjs"));
       tests.add(testPath("package-source.test.mjs"));
       tests.add(testPath("retired-authoring-migration.test.mjs"));
+      tests.add(testPath("surface-contract-workflow.test.mjs"));
       tests.add(testPath("visual-delivery-guidance.test.mjs"));
       reasons.push(`${file}:public_design_surface`);
       continue;

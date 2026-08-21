@@ -17,6 +17,13 @@ const skillCopies = (name) =>
     read(`packages/ty-context/assets/skills/${name}/SKILL.md`),
   ]);
 
+const skillReferenceCopies = (skill, name) =>
+  Promise.all([
+    read(`.codex/ty-context-managed/skills/${skill}/references/${name}`),
+    read(`.codex/skills/${skill}/references/${name}`),
+    read(`packages/ty-context/assets/skills/${skill}/references/${name}`),
+  ]);
+
 const referenceCopies = (name) =>
   Promise.all([
     read(
@@ -60,8 +67,9 @@ test("page-level UI authority historical design Source is indexed without becomi
 });
 
 test("visual design and implementation guidance reaches every managed copy", async () => {
-  const [uiuxCopies, developmentCopies, agents, formalHandoff] = await Promise.all([
+  const [uiuxCopies, uiuxTaskCopies, developmentCopies, agents, formalHandoff] = await Promise.all([
     skillCopies("context_uiux_design"),
+    skillReferenceCopies("context_uiux_design", "task-uiux-analysis.md"),
     skillCopies("context_development_engineer"),
     read(".codex/ty-context-managed/agents/AGENTS_CORE.md"),
     read(
@@ -69,7 +77,7 @@ test("visual design and implementation guidance reaches every managed copy", asy
     ),
   ]);
 
-  for (const copies of [uiuxCopies, developmentCopies]) {
+  for (const copies of [uiuxCopies, uiuxTaskCopies, developmentCopies]) {
     assert.equal(copies[1], copies[0]);
     assert.equal(copies[2], copies[0]);
   }
@@ -79,6 +87,17 @@ test("visual design and implementation guidance reaches every managed copy", asy
   assert.match(uiux, /^## UI Authority Closure$/mu);
   assert.match(uiux, /^## Selected-design alignment$/mu);
   assert.match(uiux, /Own durable Design Authority only/iu);
+  assert.match(uiux, /actual task content requires material UI\/UX analysis/iu);
+  assert.match(uiux, /new page\/flow\/complex control/iu);
+  assert.match(uiux, /fixed\/scroll\/overlay\/sheet\/sidebar\/modal topology/iu);
+  assert.match(uiux, /map\/canvas\/editor/iu);
+  assert.match(uiux, /Do not trigger merely[\s\S]*CSS\/copy\/icon\/image fixes/iu);
+  assert.match(uiux, /single-control visual preview/iu);
+  assert.match(uiux, /^## Task-level analysis adapter$/mu);
+  assert.match(uiux, /task-uiux-analysis\.md/iu);
+  assert.match(uiux, /non-authoritative/iu);
+  assert.match(uiux, /Surface\/Screen Source owns/iu);
+  assert.match(uiux, /Skill activation, analysis, audit or candidate comparison alone authorizes no durable write/iu);
   assert.match(uiux, /root `DESIGN\.md`/u);
   assert.match(uiux, /exact-value token source\/generation direction/iu);
   assert.match(uiux, /exactly one canonical adoption record per adopted target/iu);
@@ -93,6 +112,20 @@ test("visual design and implementation guidance reaches every managed copy", asy
   assert.match(uiux, /resource integrity\/preflight is not production conformance/iu);
   assert.match(uiux, /Do not create a UI lifecycle[\s\S]*second Authority\/Gate/iu);
   assert.ok(Buffer.byteLength(uiux, "utf8") < 8_000, "compact authority owner");
+
+  const uiuxTask = uiuxTaskCopies[0];
+  assert.match(uiuxTask, /target user or role and usage context/iu);
+  assert.match(uiuxTask, /primary work object and task loop/iu);
+  assert.match(uiuxTask, /operation, affected object and feedback/iu);
+  assert.match(uiuxTask, /information hierarchy and topology/iu);
+  assert.match(uiuxTask, /cognitive walkthrough/iu);
+  assert.match(uiuxTask, /repeated scrolling or cross-surface switching/iu);
+  assert.match(uiuxTask, /hidden, collapsed or displaced primary work object/iu);
+  assert.match(uiuxTask, /keyboard or IME obscuring/iu);
+  assert.match(uiuxTask, /no understandable recovery path/iu);
+  assert.match(uiuxTask, /shrinking desktop regions/iu);
+  assert.match(uiuxTask, /update the smallest owning Product Surface\/Screen Context only when writes are already authorized/iu);
+  assert.match(uiuxTask, /Do not create a required UI plan/iu);
 
   const development = developmentCopies[0];
   assert.match(development, /Design Authority[\s\S]*belong to `context_uiux_design`/iu);

@@ -5,17 +5,25 @@ Use this reference whenever a package-managed default Skill's trigger, workflow,
 ## Ownership
 
 - `context_product_plan` owns goals, scope, users, business/product rules, user flows, product feedback and acceptance meaning. It routes durable Product Surface responsibility to `context_surface_contract`; it is not the surface compiler.
-- `context_surface_contract` is the sole owner of durable main/drilldown/surface responsibility, information/action/feedback placement and cross-surface ownership. It does not own visual values, resource generation, implementation acceptance or a Gate.
-- `context_uiux_design` owns durable Design Authority: root `DESIGN.md`, tokens, visual rationale, adopted target interpretation, adoption records, UI Authority Closure and selected-design alignment. It routes surface responsibility to `context_surface_contract` and resource creation to `design-resource-authoring`; it does not generate resources.
-- `context_development_engineer` adds explicit engineering-design/architecture judgment to the default Workflow Contract. It is not a generic coding trigger, implementation runner, agent allocator or second plan.
-- `design-resource-authoring` commissions task-local resources and prepares a selected implementation handoff. It owns neither Design Authority nor product acceptance.
+- `context_surface_contract` is the sole owner of durable main/drilldown/surface responsibility, page duty, information/action/feedback placement, Screen/Control behavior and interaction topology. It does not own visual values, resource generation, implementation acceptance or a Gate.
+- `context_uiux_design` owns durable Design Authority: root `DESIGN.md`, tokens, visual rationale, adopted target interpretation, adoption records, UI Authority Closure and selected-design alignment. Its on-demand task-analysis method may compare UI/UX candidates under Product/Surface/Screen authority, but creates no task-level durable owner. It routes surface responsibility to `context_surface_contract` and resource creation to `design-resource-authoring`; it does not generate resources.
+- `context_development_engineer` adds material engineering-design/architecture judgment to the default Workflow Contract when task content actually requires owner/source-of-truth, boundary, alternative, lifecycle, recovery or quality reasoning. It is not a generic coding trigger, implementation runner, agent allocator or second plan.
+- `design-resource-authoring` commissions task-local resources and prepares a selected implementation handoff. Page/flow/complex-control commissions consume already-owned Product/Surface/Screen/UIUX user, client, page-duty, primary-task and primary-work-object constraints; a Provider cannot infer product meaning from a feature list. It owns neither Design Authority nor product acceptance.
 - `long-task-workflow` alone owns Long-Task lifecycle, Source/Contract machine authority and Final Gate when explicitly selected or validly resumed.
 
 ## Trigger discipline
 
-Descriptions are executable routing policy. Prefer narrow, explicit intent over role names or ubiquitous verbs. Generic `implement`, coding, bug-fix, refactor, package/release, `subagent`, `multi-agent` and role-only mentions must not activate the development design Skill. Resource generation, durable authority adoption, surface ownership and ordinary implementation route to their respective owners.
+Descriptions are executable routing policy. Route by the material content of the task, not only by an explicit Skill name and not by role names or ubiquitous verbs. Generic `implement`, coding, bug-fix, refactor, package/release, `subagent`, `multi-agent` and role-only mentions must not activate the development design Skill merely by themselves; a request whose actual substance requires material architecture, API/data/state/lifecycle, dependency, complex-alternative, concurrency/recovery, external-integration, shared-abstraction, performance, security, compatibility/migration or architecture-audit judgment may activate it even when phrased as implementation. Small explicit-owner changes, tests, documentation and styling remain lightweight.
+
+Material new-page/flow/complex-control, information hierarchy, interaction topology, task/feedback loop, client adaptation, navigation/recovery/state/accessibility or UI/UX audit content may activate the UI/UX Skill's non-authoritative task-analysis reference. Local CSS/copy/icon/image changes, local exact-target alignment and a single-control visual preview remain lightweight unless durable Design Authority or Surface responsibility is actually at issue. Resource generation, durable authority adoption, surface ownership and ordinary implementation still route to their respective owners.
 
 When triggers change, update the managed source, installed/package copies through source sync, root routing language if applicable, `PROJECT_SPEC.md` design reason/anti-goals, owning Context and activation/negative tests. Every localized trigger needs an equivalent narrow English trigger.
+
+Frontmatter and static tests can establish routing text, positive/negative analysis rules and distribution parity. They do not prove that a host actually activated a Skill, that a model produced high-quality architecture/UI decisions, or that the change improved runtime cost or ROI. Such claims require separate attributable observation and remain unverified otherwise.
+
+## Context write authorization
+
+Skill activation is never edit authorization. Audit, analysis, candidate comparison and resource exploration do not write durable Context by default. When the user already authorized product/UI implementation and the current Goal independently decides `Context Delta: required`, it may update the smallest owning Product Surface/Screen Context before implementation. A conflict between a task-local candidate and controlling Product/Surface/Screen/Design Source blocks that candidate until the stale owner is authoritatively updated or a genuine decision is obtained.
 
 ## Project-local specialization
 

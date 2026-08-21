@@ -45,7 +45,7 @@ Use the narrowest mode that matches the request:
 
 - Audit Mode: inspect whether existing surfaces have clear responsibility.
 - Compile Mode: turn audit findings or user decisions into Context candidates.
-- Apply Mode: write durable Context only when the user explicitly allows durable writes.
+- Apply Mode: write durable Context only when the user explicitly allows durable writes, or when already-authorized product/UI implementation independently yields `Context Delta: required` in the current Goal.
 - Conformance Mode: check implementation against an existing Product Surface Contract.
 
 Do not run implementation, long validation, browser smoke, app smoke or CLI smoke unless the user explicitly asks for execution.
@@ -85,7 +85,7 @@ Do not assume business responsibilities from current code shape alone. Ask for c
 
 ## Apply Mode
 
-Use only when the user explicitly allows durable writes.
+Use only when the user explicitly allows durable writes, or when product/UI implementation is already authorized and the current Goal independently decides that durable Surface/Screen responsibility changed. Skill activation, analysis, audit, candidate comparison or resource generation alone never grants write authority.
 
 Allowed writes:
 
@@ -126,7 +126,13 @@ For each touched surface, answer only what is relevant:
 
 - What surface is being touched?
 - What platform shape does it have?
+- Which authoritative target-user and usage-context reference applies?
 - What primary user question does it answer?
+- What primary task outcome, primary work object and shortest task loop does it support?
+- Which critical context must remain visible while the user acts?
+- How are each material operation, affected object and feedback related?
+- Does the task force repeated scrolling, navigation or context switching to make one judgment?
+- Which client/host, input-method and size-class constraints change the interaction topology?
 - What belongs on the main surface?
 - What must move to drilldown, diagnostics, operations, evidence or technical detail?
 - Which long-running or mutating actions require task id, progress, retry, import, recovery or history?
@@ -138,6 +144,7 @@ When screen depth is material, also answer only the applicable questions:
 
 - What stable surface/route key, entry context, exit outcome, inherited state and committed state identify the screen?
 - What is the semantic information order and which regions are fixed, scrolling or overlay-owned?
+- Across supported size classes, which regions remain, reflow, collapse, become sheets/sidebars/modals or move to another surface, and how is the primary work object preserved?
 - Which navigation, back/cancel, focus restoration, interruption and responsive/mode/state variants are durable?
 - For each material stable control key, what are its region/location, type/label, user task, visibility/availability, trigger/input/validation/default, interaction/navigation, loading/empty/success/failure/recovery/permission/feedback and accessibility semantics?
 - Which exact-target/constraint/inspiration IDs govern which declared conditions, and which verification path proves each independent claim?
@@ -158,6 +165,10 @@ For any task touching user-facing surfaces, information placement, forms, filter
 - Surface Platform: `<web | mobile | desktop | game | cli-tui | extension | embedded | mixed>`
 - Owning Product Domain: `<area / subdomain>`
 - Primary User Question: `<one concrete user judgment>`
+- Primary Task Outcome / Work Object / Loop: `<outcome; object; orient-act-feedback-finish loop>`
+- Critical Context Kept Visible: `<context required while acting>`
+- Operation–Object–Feedback: `<material relationship>`
+- Client / Size-Class Topology: `<host/input constraints and region changes>`
 - Main Surface Allows: `<durable visible information and actions>`
 - Main Surface Forbids: `<backend fields, raw payloads, diagnostics, debug ids, fake states, etc.>`
 - Drilldown Ownership: `<details / evidence / operations / diagnostics / technical details>`

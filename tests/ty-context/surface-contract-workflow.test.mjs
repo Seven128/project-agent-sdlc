@@ -19,6 +19,7 @@ const [
   packageContext,
   workflowContract,
   packageManagedSurfaces,
+  verificationContext,
   validators,
   sourceProductSkill,
   sourceUiuxSkill,
@@ -40,6 +41,7 @@ const [
   read("project_context/areas/harness-package.md"),
   read("project_context/areas/harness-package/contracts/workflow-contract.md"),
   read("project_context/areas/harness-package/contracts/package-managed-surfaces.md"),
+  read("project_context/areas/harness-package/verification.md"),
   read("packages/ty-context/src/lib/validators.ts"),
   read(".codex/ty-context-managed/skills/context_product_plan/SKILL.md"),
   read(".codex/ty-context-managed/skills/context_uiux_design/SKILL.md"),
@@ -79,6 +81,8 @@ for (const content of [sourceSkill, generatedSkill, packagedSkill]) {
   assert.match(content, /Audit Mode/);
   assert.match(content, /Compile Mode/);
   assert.match(content, /Apply Mode/);
+  assert.match(content, /already-authorized product\/UI implementation independently yields `Context Delta: required`/iu);
+  assert.match(content, /Skill activation, analysis, audit, candidate comparison or resource generation alone never grants write authority/iu);
   assert.match(content, /Conformance Mode/);
   assert.match(content, /Allowed writes/);
   assert.match(content, /Forbidden writes/);
@@ -86,6 +90,12 @@ for (const content of [sourceSkill, generatedSkill, packagedSkill]) {
   assert.match(content, /repo-local Skill/i);
   assert.match(content, /Internal source classification/);
   assert.match(content, /implementation alignment status/);
+  assert.match(content, /target-user and usage-context reference/iu);
+  assert.match(content, /primary task outcome, primary work object and shortest task loop/iu);
+  assert.match(content, /critical context must remain visible/iu);
+  assert.match(content, /operation, affected object and feedback/iu);
+  assert.match(content, /repeated scrolling, navigation or context switching/iu);
+  assert.match(content, /client\/host, input-method and size-class constraints/iu);
   assert.match(content, /Do not create a fixed `plan\.md`/);
   assert.doesNotMatch(content, forbiddenBusinessExamples);
   assert.doesNotMatch(
@@ -124,6 +134,8 @@ assert.match(sourceUiuxSkill, /does not own product goals/iu);
 assert.match(sourceUiuxSkill, /exact-target.*constraint.*inspiration/isu);
 assert.match(sourceUiuxSkill, /immutable path\/URI and digest/iu);
 assert.match(sourceUiuxSkill, /editable upstream owner\/locator\/update route/iu);
+assert.match(sourceUiuxSkill, /non-authoritative/iu);
+assert.match(sourceUiuxSkill, /Product\/Surface\/Screen Source owns/iu);
 
 assert.match(sourceDevelopmentSkill, /Durable main\/drilldown\/surface/iu);
 assert.match(sourceDevelopmentSkill, /context_surface_contract/iu);
@@ -146,6 +158,16 @@ for (const content of [sourceScreenTemplate, packagedScreenTemplate]) {
   assert.match(content, /^## Entry, Exit And Shared State$/mu);
   assert.match(content, /^## Information Hierarchy$/mu);
   assert.match(content, /^## Layout Contract$/mu);
+  assert.match(content, /Target User \/ Usage Context Reference/iu);
+  assert.match(content, /Primary Task Outcome/iu);
+  assert.match(content, /Primary Work Object/iu);
+  assert.match(content, /Primary Task Loop/iu);
+  assert.match(content, /Critical context that must remain visible while acting/iu);
+  assert.match(content, /^## Task Loop And Feedback$/mu);
+  assert.match(content, /Operation–affected-object relationship/iu);
+  assert.match(content, /Repeated-scroll \/ navigation \/ context-switch boundary/iu);
+  assert.match(content, /Client \/ host constraints/iu);
+  assert.match(content, /Size-class interaction topology/iu);
   assert.match(content, /^## Control Inventory$/mu);
   assert.match(content, /Control Type/);
   assert.match(content, /Visibility/);
@@ -179,6 +201,15 @@ assert.match(publicSurfaceGuidance, /screen-contract\.md/);
 assert.match(publicSurfaceGuidance, /UI Authority Closure/);
 assert.match(publicSurfaceGuidance, /Source-to-Context (?:judgment|table|表)/);
 assert.match(publicSurfaceGuidance, /(?:Context-to-Implementation|Contract Conformance)/);
+assert.match(publicSurfaceGuidance, /primary (?:task outcome|work object)/iu);
+assert.match(publicSurfaceGuidance, /operation-object-feedback/iu);
+assert.match(publicSurfaceGuidance, /non-authoritative task-analysis/iu);
+assert.match(publicSurfaceGuidance, /Skill activation alone grants no write authority|Skill activation alone authorizes no durable write|Skill activation.*grants no write authority/iu);
+assert.match(publicSurfaceGuidance, /real host Skill activation|宿主真实激活了 Skill/iu);
+assert.match(publicSurfaceGuidance, /map-design quality|地图设计质量/iu);
+assert.match(publicSurfaceGuidance, /runtime cost.*ROI|运行成本.*ROI/isu);
+assert.match(verificationContext, /static instruction evidence/iu);
+assert.match(verificationContext, /do not prove real host Skill activation/iu);
 
 assert.match(packageContext, /Product Surface\/Screen Contract workflow is prompt-level and project-owned/);
 assert.match(packageContext, /must not add a surface-specific Context role/);

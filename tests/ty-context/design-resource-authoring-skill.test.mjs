@@ -118,6 +118,17 @@ test("resource selection preserves the smallest sufficient scoped commission", a
     /static\/default.*unseen|static frame (?:cannot claim unseen|covers only conditions it actually shows)/isu,
   );
   assert.match(combined, /business.*data.*permission.*algorithmic/isu);
+  assert.match(combined, /page, flow or complex control/iu);
+  assert.match(combined, /target user\/role and usage context reference/iu);
+  assert.match(combined, /client\/host\/platform/iu);
+  assert.match(combined, /Surface\/Screen duty/iu);
+  assert.match(combined, /primary task outcome, primary work object and shortest task loop/iu);
+  assert.match(combined, /operation–affected-object–feedback relationships/iu);
+  assert.match(combined, /critical context, state, recovery and accessibility constraints/iu);
+  assert.match(combined, /Provider must not infer missing product meaning/iu);
+  assert.match(combined, /feature list, screenshot or component inventory/iu);
+  assert.match(combined, /product_surface_constraints/iu);
+  assert.match(combined, /decision-required.*owning Source update/isu);
   for (const disposition of [
     "selected",
     "optional",

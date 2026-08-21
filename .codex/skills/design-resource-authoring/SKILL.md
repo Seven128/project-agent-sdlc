@@ -16,11 +16,12 @@ Commission the smallest sufficient resource set for the user's explicit output/d
 - Never mutate `project_context/**`, `DESIGN.md`, a Delivery Contract, production code or tests as a resource-authoring side effect.
 - Do not require a prototype, fidelity pair, provider-native file, fixed directory, variant count, resource pack or one artifact per control. Reuse selected component families and group repeated controls.
 - Visual resources may express user-visible interaction/presentation but cannot invent or become sole owner of business, data, permission or algorithmic rules.
+- Before commissioning a page, flow or complex control, consume available Product/Surface/Screen/UIUX Source for target user/context, client/host, page duty, primary task outcome, primary work object/task loop and operation-object-feedback relationship. A Provider must not infer missing product meaning from a feature list, screenshot or component inventory.
 - Do not install/configure MCP, plugins, authentication or disclosure paths without separate authorization. Create no provider registry, global workflow state, authority lifecycle, scheduler or acceptance record.
 
 ## Progressive references
 
-1. Always read [resource-selection.md](references/resource-selection.md) to fix the scope ceiling, intent, input roles, style dependency and minimum commission.
+1. Always read [resource-selection.md](references/resource-selection.md) to fix the scope ceiling, authoritative product/surface inputs, intent, input roles, style dependency and minimum commission.
 2. Read [open-design-provider.md](references/open-design-provider.md) only before live capability discovery, provider execution, Design Authority binding, source acquisition or recovery.
 3. Read [downstream-handoff.md](references/downstream-handoff.md) only when selection, proposal reconciliation or downstream handoff is material. A simple unselected preview may stop without it.
 4. Read [formal-selected-web-app-handoff.md](references/formal-selected-web-app-handoff.md) completely only for an explicitly final selected Web/App implementation handoff. Exploration, unselected previews, reference-only resources and non-Web/App commissions never load this reference.
@@ -29,7 +30,7 @@ For simple-preview overhead accounting, the requested preview is neither additio
 
 ## Workflow
 
-1. Name in-scope surfaces/flows/regions/component families/unique controls, conditions, necessary context, exclusions and intent: `exploration`, `handoff` or `selected-source-preparation`.
+1. Name in-scope surfaces/flows/regions/component families/unique controls, conditions, necessary context, exclusions and intent: `exploration`, `handoff` or `selected-source-preparation`. For a page, flow or complex control, first resolve the available owner-held user/context, client/host, page-duty, primary-task, primary-work-object/task-loop and operation-object-feedback constraints; keep missing product meaning unresolved.
 2. Inventory every input as `exact-target`, `constraint`, `inspiration`, current-implementation evidence or background. Report unreadable/unused material.
 3. Classify the commission `style-bearing` or `non-fidelity`. Style-bearing means high fidelity/brand/visual direction/typography/color/density/component treatment/production-style prototype. IA/flow topology, low-fidelity structure and semantics-only state studies are non-fidelity.
 4. For style-bearing work, read configured Design Authority and its exact-value token source. If unconfigured, stop before provider project/run creation and route the user to explicit `$design-system-authoring`; never invoke it automatically. Non-fidelity work remains allowed.

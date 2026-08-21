@@ -17,8 +17,15 @@ test("shared engineering quality is visible while routing questions stay interna
   const packagedDevelopment = read(
     "packages/ty-context/assets/skills/context_development_engineer/SKILL.md",
   );
+  const developmentReasoning = read(
+    ".codex/ty-context-managed/skills/context_development_engineer/references/engineering-design-reasoning.md",
+  );
+  const packagedDevelopmentReasoning = read(
+    "packages/ty-context/assets/skills/context_development_engineer/references/engineering-design-reasoning.md",
+  );
   assert.equal(packagedAgents, agents);
   assert.equal(packagedDevelopment, developmentSkill);
+  assert.equal(packagedDevelopmentReasoning, developmentReasoning);
 
   for (const content of [agents, packagedAgents]) {
     assert.match(content, /Architecture Deliberation/);
@@ -66,6 +73,20 @@ test("shared engineering quality is visible while routing questions stay interna
     developmentSkill,
     /Architecture Context Hit|Modularity Check:/,
   );
+  assert.match(developmentSkill, /engineering-design-reasoning\.md/);
+  assert.match(
+    developmentReasoning,
+    /Facts:[\s\S]*Constraints:[\s\S]*Assumptions:[\s\S]*Unknowns:/u,
+  );
+  assert.match(developmentReasoning, /path dependence/iu);
+  assert.match(developmentReasoning, /Steelman every material alternative/iu);
+  assert.match(developmentReasoning, /counterfactuals and failure paths/iu);
+  assert.match(developmentReasoning, /minimum architecture experiment/iu);
+  assert.match(
+    developmentReasoning,
+    /owner\/interface\/data\/state\/lifecycle\/failure\/verification|owning modules[\s\S]*public\/internal interfaces[\s\S]*data and state owner[\s\S]*runtime\/resource lifecycle/iu,
+  );
+  assert.match(developmentReasoning, /creates neither/iu);
 });
 
 test("templates keep rationale durable, optional and evidence-free", () => {
