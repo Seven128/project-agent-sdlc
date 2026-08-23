@@ -5,7 +5,6 @@ import type {
   DesignResourceTechnicalSourceRecordV1,
 } from "./design-resource-implementation-feasibility-types.js";
 import {
-  assertNoExactVisualValues,
   invalidFeasibility,
   requireAtLeastOneSourceRole,
   requireKnownRefs,
@@ -13,11 +12,23 @@ import {
   unique,
 } from "./design-resource-implementation-feasibility-validation-support.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
+import {
+  DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA,
+  requireExactFeasibilityDecisionProjection,
+  type DesignResourceFeasibilityDecisionSourceIndex,
+} from "./design-resource-implementation-feasibility-source-decision.js";
 
 export async function validateFeasibleRealization(
   repository: string,
   realization: DesignResourceFeasibleRealizationV1,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
+  componentOwnerRoots: string[],
+  scope: {
+    target_ref: string;
+    component_family_ref: string;
+    condition_scope_sha256: string;
+  },
 ): Promise<void> {
   if (!realization.strategy_steps.length)
     invalidFeasibility("realization_strategy_steps_required", realization.key);
@@ -59,12 +70,16 @@ export async function validateFeasibleRealization(
     "realization_observed_risk_duplicate",
     realization.key,
   );
-  assertNoExactVisualValues(
-    [...realization.observed_costs, ...realization.observed_risks],
-    realization.key,
-  );
   for (const owner of realization.owner_candidates)
-    await validateOwnerCandidate(repository, realization.key, owner, sources);
+    await validateOwnerCandidate(
+      repository,
+      realization.key,
+      owner,
+      sources,
+      decisionSources,
+      componentOwnerRoots,
+      scope,
+    );
 }
 
 function validateFeasibilityBasis(
@@ -108,6 +123,13 @@ async function validateOwnerCandidate(
   realizationKey: string,
   owner: DesignResourceFeasibleRealizationV1["owner_candidates"][number],
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
+  componentOwnerRoots: string[],
+  scope: {
+    target_ref: string;
+    component_family_ref: string;
+    condition_scope_sha256: string;
+  },
 ): Promise<void> {
   if (owner.kind === "existing_path") {
     await assertProtectedRepositoryFile(
@@ -115,6 +137,17 @@ async function validateOwnerCandidate(
       path.resolve(repository, ...owner.locator.split("/")),
       `design_resource_feasibility_owner:${realizationKey}`,
     );
+    if (
+      componentOwnerRoots.length > 0 &&
+      !componentOwnerRoots.some(
+        (root) =>
+          owner.locator === root || owner.locator.startsWith(`${root}/`),
+      )
+    )
+      invalidFeasibility(
+        "existing_owner_outside_component_roots",
+        `${realizationKey}:${owner.locator}`,
+      );
     return;
   }
   if (!owner.authorization_source_refs.length)
@@ -131,11 +164,28 @@ async function validateOwnerCandidate(
     "planned_owner_authorization_invalid",
     realizationKey,
   );
+  requireExactFeasibilityDecisionProjection(
+    owner.authorization_source_refs,
+    decisionSources,
+    {
+      schema_version: DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA,
+      mode: "planned_owner_authorization",
+      ...scope,
+      owner_locator: owner.locator,
+    },
+    `planned_owner:${realizationKey}:${owner.locator}`,
+    {
+      allReferencesMustBeSourceItems: true,
+      allowedItemKinds: ["technical_obligation"],
+    },
+  );
 }
 
 export function validateRequiredRealization(
   cell: DesignResourceImplementationFeasibilityCellV1,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
+  conditionScopeSha256: string,
 ): void {
   const required = cell.required_realization;
   unique(
@@ -165,5 +215,22 @@ export function validateRequiredRealization(
     "technical_authority",
     "required_realization_authority_invalid",
     cell.key,
+  );
+  requireExactFeasibilityDecisionProjection(
+    required.technical_authority_source_refs,
+    decisionSources,
+    {
+      schema_version: DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA,
+      mode: "required_realization",
+      target_ref: cell.target_ref,
+      component_family_ref: cell.component_family_ref,
+      condition_scope_sha256: conditionScopeSha256,
+      realization_ref: required.realization_ref,
+    },
+    `required_realization:${cell.key}`,
+    {
+      allReferencesMustBeSourceItems: true,
+      allowedItemKinds: ["technical_obligation"],
+    },
   );
 }

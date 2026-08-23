@@ -184,6 +184,7 @@ async function addSymbolicImplementationFeasibility(
     "export const routeOwner = 'fixture-symbolic-route';",
     "",
   ].join("\n");
+  await mkdir(path.dirname(path.join(root, sourcePath)), { recursive: true });
   await writeFile(path.join(root, sourcePath), technicalSource);
   const sourceKey = "technical.symbolic-substrate";
   const document = {
@@ -230,11 +231,13 @@ async function addSymbolicImplementationFeasibility(
         "component_owner_roots",
         "fixture-symbolic-components",
         sourceKey,
+        directory,
       ),
       symbolicObservation(
         "route_owner_roots",
         "fixture-symbolic-routes",
         sourceKey,
+        directory,
       ),
     ],
     condition_model: {
@@ -264,7 +267,15 @@ async function addSymbolicImplementationFeasibility(
   return document;
 }
 
-function symbolicObservation(kind, name, sourceRef) {
+function symbolicObservation(kind, name, sourceRef, ownerRoot = null) {
+  if (["component_owner_roots", "route_owner_roots"].includes(kind))
+    return {
+      kind,
+      disposition: "observed",
+      value: { kind: "repository_paths", paths: [ownerRoot] },
+      source_record_refs: [sourceRef],
+      reason: null,
+    };
   return {
     kind,
     disposition: "observed",

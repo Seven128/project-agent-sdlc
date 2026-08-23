@@ -137,10 +137,12 @@ function parseSourceRecords(value: unknown, label: string) {
       "locator",
       "roles",
     ]);
-    const locator = object(row.locator, `${itemLabel}.locator`, [
-      "kind",
-      "value",
-    ]);
+    const locator = object(
+      row.locator,
+      `${itemLabel}.locator`,
+      ["kind", "value"],
+      ["text_sha256"],
+    );
     const kind = literal(
       locator.kind,
       [
@@ -148,6 +150,7 @@ function parseSourceRecords(value: unknown, label: string) {
         "json_pointer",
         "markdown_anchor",
         "source_anchor",
+        "source_item",
       ] as const,
       `${itemLabel}.locator.kind`,
     );
@@ -167,7 +170,21 @@ function parseSourceRecords(value: unknown, label: string) {
         ? ({ kind, value: "." } as const)
         : kind === "json_pointer"
           ? ({ kind, value: locatorValue } as const)
-          : ({ kind, value: locatorValue } as const);
+          : kind === "source_item"
+            ? ({
+                kind,
+                value: stableKey(locatorValue, `${itemLabel}.locator.value`),
+                text_sha256: sha256(
+                  locator.text_sha256,
+                  `${itemLabel}.locator.text_sha256`,
+                ),
+              } as const)
+            : ({ kind, value: locatorValue } as const);
+    if (kind !== "source_item" && locator.text_sha256 !== undefined)
+      invalidFeasibility(
+        `${itemLabel}.locator.text_sha256`,
+        "only_source_item_may_declare_text_sha256",
+      );
     return {
       key: stableKey(row.key, `${itemLabel}.key`),
       path: repositoryFile(row.path, `${itemLabel}.path`),

@@ -173,6 +173,26 @@ test("formal Web/App authoring carries real-substrate feasibility without anothe
     /Create no implementation registry, readiness flag, workflow state, second Design Authority, new Gate or production acceptance record/iu,
   );
   assert.match(
+    feasibility,
+    /Planned-owner authorization, required-realization authority and blocker authority[\s\S]*"kind":"source_item"[\s\S]*"text_sha256"/iu,
+  );
+  assert.match(
+    feasibility,
+    /ty-design-feasibility-decision-v1[\s\S]*condition_scope_sha256/iu,
+  );
+  assert.match(
+    feasibility,
+    /family subject closure[\s\S]*until stable[\s\S]*Anatomy Parts[\s\S]*assets/iu,
+  );
+  assert.match(
+    feasibility,
+    /current component bindings must uniquely derive one allowed realization for each candidate-bearing cell[\s\S]*blocker-only cell[\s\S]*Every component binding ref must still be consumed/iu,
+  );
+  assert.match(
+    feasibility,
+    /Each blocker item maps either to `decision_required`[\s\S]*target-blocking External Confirmation/iu,
+  );
+  assert.match(
     downstream,
     /Multiple feasible candidates remain allowed[\s\S]*DRA selects none unless current technical authority already requires one/iu,
   );
@@ -731,7 +751,7 @@ test("implementation output uses complete canonical source plus residual handoff
   );
   assert.match(
     handoff,
-    /Fact × (?:property-)?required(?: verification)? method[\s\S]*Source-item\/method\/required-capability lineage[\s\S]*machine Claim or target-blocking External Confirmation/isu,
+    /Fact × (?:property-)?required(?: verification)? method[\s\S]*Blockers compile only as `decision_required` or an existing target-blocking External Confirmation/isu,
   );
   assert.match(
     handoff,

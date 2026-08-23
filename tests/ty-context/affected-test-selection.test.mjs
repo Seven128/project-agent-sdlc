@@ -89,6 +89,9 @@ test("DRA recovery owners and shared path safety select their focused boundaries
   assert.equal(pathSafety.mode, "selected");
   assert.deepEqual(pathSafety.tests, [
     "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v1-integrity.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v2.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility.test.mjs",
     "tests/ty-context/design-resource-recovery-safety.test.mjs",
     "tests/ty-context/long-task-profile-hook.test.mjs",
     "tests/ty-context/long-task-workspace-scope.test.mjs",
@@ -623,6 +626,36 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.ok(
     feasibility.tests.includes(
       "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
+    ),
+  );
+
+  const feasibilityDecision = selectAffectedTests([
+    "packages/ty-context/src/lib/design-resource-implementation-feasibility-source-decision.ts",
+  ]);
+  assert.equal(feasibilityDecision.mode, "selected");
+  assert.ok(
+    feasibilityDecision.tests.includes(
+      "tests/ty-context/design-resource-implementation-feasibility.test.mjs",
+    ),
+  );
+  assert.ok(
+    feasibilityDecision.tests.includes(
+      "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    ),
+  );
+
+  const longTaskFeasibilityBinding = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-design-feasibility-binding.ts",
+  ]);
+  assert.equal(longTaskFeasibilityBinding.mode, "selected");
+  assert.ok(
+    longTaskFeasibilityBinding.tests.includes(
+      "tests/ty-context/design-resource-implementation-feasibility-v2.test.mjs",
+    ),
+  );
+  assert.ok(
+    longTaskFeasibilityBinding.tests.includes(
+      "tests/ty-context/long-task-delivery-compiler.test.mjs",
     ),
   );
 

@@ -114,7 +114,11 @@ export async function validateContractForActivation(options: {
     return items;
   });
   await attempt(mode, diagnostics, () =>
-    validateLongTaskDesignResourceHandoffs(contract, repository),
+    validateLongTaskDesignResourceHandoffs(
+      contract,
+      repository,
+      sourceItems ?? [],
+    ),
   );
   const risk = await attempt(mode, diagnostics, () => {
     const decision = classifyLongTaskRisk(contract);

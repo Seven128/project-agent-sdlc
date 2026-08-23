@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
+import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import {
   SYMBOLIC_HANDOFF_PATH,
+  SYMBOLIC_TARGET_KEY,
   writeDesignResourceSymbolicHandoffFixture,
 } from "./design-resource-symbolic-handoff-fixture.mjs";
 import { buildSymbolicFixtureModel } from "./design-resource-symbolic-handoff-fixture-model.mjs";
@@ -128,7 +130,44 @@ test("Symbolic V2 family cells bind the complete intersecting Rule set", async (
           preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH),
           /cell_design_rule_set_mismatch/u,
         );
-      else await preflightDesignResourceHandoff(root, SYMBOLIC_HANDOFF_PATH);
+      else {
+        const preflight = await preflightDesignResourceHandoff(
+          root,
+          SYMBOLIC_HANDOFF_PATH,
+        );
+        const binding = {
+          key: "symbolic-component",
+          kind: "file",
+          target: "design/technical-source.ts",
+          carrier_paths: ["design/technical-source.ts"],
+          existence: "existing",
+        };
+        assert.doesNotThrow(() =>
+          validateLongTaskDesignFeasibilityBindings(
+            {
+              task: { source_paths: [] },
+              source_claims: [],
+              global: { acceptance: { external_confirmations: [] } },
+              outcomes: [
+                {
+                  key: "symbolic-outcome",
+                  technical: { bindings: [binding] },
+                },
+              ],
+            },
+            {
+              outcome_key: "symbolic-outcome",
+              binding: {
+                route_binding_ref: binding.key,
+                component_binding_refs: [binding.key],
+              },
+              target: { key: SYMBOLIC_TARGET_KEY, claim_refs: [] },
+            },
+            preflight,
+            [],
+          ),
+        );
+      }
     });
   }
 });

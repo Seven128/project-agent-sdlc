@@ -221,6 +221,18 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
     const reported = JSON.parse(stdout);
     assert.equal(reported.status, "ready");
     assert.equal(reported.handoff.targets[0].key, "main-default");
+    const human = await exec(
+      process.execPath,
+      [cli, "design-resource", "preflight", DESIGN_HANDOFF_PATH],
+      { cwd: root, maxBuffer: 16 * 1024 * 1024 },
+    );
+    assert.match(human.stdout, /Design resource handoff preflight valid/u);
+    assert.match(human.stdout, /Input closure: valid/u);
+    assert.match(human.stdout, /Technical feasibility inputs: 0/u);
+    assert.match(human.stdout, /Technical feasibility cells: 0/u);
+    assert.match(human.stdout, /Technical feasibility blockers: 0/u);
+    assert.match(human.stdout, /Production conformance: not evaluated/u);
+    assert.doesNotMatch(human.stdout, /handoff ready|production ready|accepted/iu);
   });
 });
 
@@ -341,6 +353,24 @@ test("DSA bundle publication validates the frozen manifest and feasibility set a
     assert.equal(result.handoffs.length, 1);
     assert.equal(result.handoffs[0].target_key, "main-default");
     assert.equal(result.manifests[0].collections.length, 19);
+    const human = await exec(
+      process.execPath,
+      [
+        cli,
+        "design-resource",
+        "bundle",
+        "draft",
+        "handoffs/human-bundle",
+        "--manifest",
+        "design/observable-facts.json",
+        "--max-handoff-bytes",
+        "1048576",
+      ],
+      { cwd: root, maxBuffer: 16 * 1024 * 1024 },
+    );
+    assert.match(human.stdout, /Design resource Source bundle published/u);
+    assert.match(human.stdout, /Production readiness: not evaluated/u);
+    assert.doesNotMatch(human.stdout, /handoff ready|production ready|accepted/iu);
     assert.equal(
       result.manifests[0].collections.find(
         (collection) => collection.name === "fact_cells",
@@ -398,7 +428,7 @@ test("DSA bundle publication validates the frozen manifest and feasibility set a
     );
     assert.deepEqual(
       (await readdir(path.join(root, "handoffs"))).sort(),
-      ["selected-bundle"],
+      ["human-bundle", "selected-bundle"],
     );
   }, { feasibility: true });
 });

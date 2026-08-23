@@ -7,6 +7,11 @@ import type {
 } from "./design-resource-implementation-feasibility-types.js";
 import type { DesignResourceImplementationFeasibilityTargetModel } from "./design-resource-implementation-feasibility-model.js";
 import { parseDesignResourceImplementationFeasibilityJson } from "./design-resource-implementation-feasibility-shape.js";
+import {
+  loadDesignResourceFeasibilityDecisionSource,
+  type DesignResourceFeasibilityDecisionSourceIndex,
+  type LoadedDesignResourceFeasibilityDecisionSource,
+} from "./design-resource-implementation-feasibility-source-decision.js";
 import { validateFeasibilityDocument } from "./design-resource-implementation-feasibility-validation-document.js";
 import {
   invalidFeasibility,
@@ -79,7 +84,7 @@ export async function readAndValidateDesignResourceImplementationFeasibility(
         "input_target_mismatch",
         `${input.target_ref}:${document.target_ref}`,
       );
-    await validateTechnicalSourceRecords(
+    const decisionSources = await validateTechnicalSourceRecords(
       repository,
       handoffPath,
       input.path,
@@ -87,7 +92,12 @@ export async function readAndValidateDesignResourceImplementationFeasibility(
       canonicalResourcePaths,
       sourcePathIdentities,
     );
-    await validateFeasibilityDocument(repository, document, model);
+    await validateFeasibilityDocument(
+      repository,
+      document,
+      model,
+      decisionSources,
+    );
     loaded.push({
       index: input,
       document,
@@ -129,7 +139,9 @@ async function validateTechnicalSourceRecords(
   records: DesignResourceTechnicalSourceRecordV1[],
   canonicalResourcePaths: Set<string>,
   sharedPathIdentities: Map<string, string>,
-): Promise<void> {
+): Promise<DesignResourceFeasibilityDecisionSourceIndex> {
+  const decisionSources: DesignResourceFeasibilityDecisionSourceIndex =
+    new Map();
   unique(
     records.map((item) => item.key),
     "source_record_key_duplicate",
@@ -173,8 +185,10 @@ async function validateTechnicalSourceRecords(
         "source_record_digest_mismatch",
         `${record.key}:${record.sha256}:${digest}`,
       );
-    validateSourceLocator(record, bytes);
+    const decisionSource = validateSourceLocator(record, bytes);
+    if (decisionSource) decisionSources.set(record.key, decisionSource);
   }
+  return decisionSources;
 }
 
 function validateSharedSourceIdentity(
@@ -191,20 +205,23 @@ function validateSharedSourceIdentity(
 function validateSourceLocator(
   record: DesignResourceTechnicalSourceRecordV1,
   bytes: Buffer,
-): void {
-  if (record.locator.kind === "whole_resource") return;
+): LoadedDesignResourceFeasibilityDecisionSource | null {
+  if (record.locator.kind === "whole_resource") return null;
   const content = bytes.toString("utf8");
   if (!Buffer.from(content, "utf8").equals(bytes))
     invalidFeasibility("source_record_utf8_invalid", record.key);
+  if (record.locator.kind === "source_item")
+    return loadDesignResourceFeasibilityDecisionSource(record, content);
   if (record.locator.kind === "json_pointer") {
     validateJsonPointer(record, content);
-    return;
+    return null;
   }
   if (!content.includes(record.locator.value))
     invalidFeasibility(
       "source_record_locator_unresolved",
       `${record.key}:${record.locator.value}`,
     );
+  return null;
 }
 
 function validateJsonPointer(

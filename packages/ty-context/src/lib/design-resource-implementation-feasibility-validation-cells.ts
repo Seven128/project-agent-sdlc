@@ -10,13 +10,18 @@ import {
   validateRequiredRealization,
 } from "./design-resource-implementation-feasibility-validation-realizations.js";
 import {
-  assertNoExactVisualValues,
   assertSameSet,
   cellPair,
   invalidFeasibility,
   requireKnownRefs,
   unique,
 } from "./design-resource-implementation-feasibility-validation-support.js";
+import {
+  DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA,
+  deriveDesignResourceFeasibilityConditionScopeSha256,
+  requireExactFeasibilityDecisionProjection,
+  type DesignResourceFeasibilityDecisionSourceIndex,
+} from "./design-resource-implementation-feasibility-source-decision.js";
 
 export async function validateFeasibilityCells(
   repository: string,
@@ -24,6 +29,7 @@ export async function validateFeasibilityCells(
   model: DesignResourceImplementationFeasibilityTargetModel,
   profileRefs: Set<string>,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
 ): Promise<void> {
   unique(
     document.component_family_cells.map((item) => item.key),
@@ -35,6 +41,13 @@ export async function validateFeasibilityCells(
   );
   const families = new Set(model.component_family_refs);
   const blockers = new Map(document.blockers.map((item) => [item.key, item]));
+  const componentOwnerObservation = document.substrate_observations.find(
+    (observation) => observation.kind === "component_owner_roots",
+  );
+  const componentOwnerRoots =
+    componentOwnerObservation?.value?.kind === "repository_paths"
+      ? componentOwnerObservation.value.paths
+      : [];
   const usedBlockers = new Set<string>();
   const cellPairs: string[] = [];
   const realizationKeys: string[] = [];
@@ -50,6 +63,8 @@ export async function validateFeasibilityCells(
       families,
       profileRefs,
       sources,
+      decisionSources,
+      componentOwnerRoots,
       blockers,
       usedBlockers,
       realizationKeys,
@@ -67,7 +82,15 @@ export async function validateFeasibilityCells(
       "component_family_condition_cell_set_mismatch",
     );
   }
-  validateBlockers(document, families, profileRefs, sources, usedBlockers);
+  validateBlockers(
+    document,
+    model,
+    families,
+    profileRefs,
+    sources,
+    decisionSources,
+    usedBlockers,
+  );
 }
 
 async function validateCell(
@@ -78,6 +101,8 @@ async function validateCell(
   families: Set<string>,
   profileRefs: Set<string>,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
+  componentOwnerRoots: string[],
   blockers: Map<
     string,
     DesignResourceImplementationFeasibilityV1["blockers"][number]
@@ -93,6 +118,12 @@ async function validateCell(
   )
     invalidFeasibility("cell_design_fact_refs_required", cell.key);
   validateDesignFactRefs(cell, model, document);
+  const conditionScopeSha256 =
+    deriveDesignResourceFeasibilityConditionScopeSha256(
+      document,
+      model,
+      cell.condition_profile_ref,
+    );
   validateCellBlockers(cell, blockers, usedBlockers);
   if (!cell.feasible_realizations.length && !cell.blocker_refs.length)
     invalidFeasibility("cell_candidate_or_blocker_required", cell.key);
@@ -103,9 +134,25 @@ async function validateCell(
   );
   for (const realization of cell.feasible_realizations) {
     realizationKeys.push(realization.key);
-    await validateFeasibleRealization(repository, realization, sources);
+    await validateFeasibleRealization(
+      repository,
+      realization,
+      sources,
+      decisionSources,
+      componentOwnerRoots,
+      {
+        target_ref: cell.target_ref,
+        component_family_ref: cell.component_family_ref,
+        condition_scope_sha256: conditionScopeSha256,
+      },
+    );
   }
-  validateRequiredRealization(cell, sources);
+  validateRequiredRealization(
+    cell,
+    sources,
+    decisionSources,
+    conditionScopeSha256,
+  );
 }
 
 function validateCellBlockers(
@@ -136,9 +183,11 @@ function validateCellBlockers(
 
 function validateBlockers(
   document: DesignResourceImplementationFeasibilityV1,
+  model: DesignResourceImplementationFeasibilityTargetModel,
   families: Set<string>,
   profileRefs: Set<string>,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
   usedBlockers: Set<string>,
 ): void {
   for (const blocker of document.blockers) {
@@ -150,13 +199,34 @@ function validateBlockers(
       invalidFeasibility("blocker_condition_profile_unknown", blocker.key);
     if (!blocker.source_record_refs.length)
       invalidFeasibility("blocker_source_required", blocker.key);
-    assertNoExactVisualValues([blocker.description], blocker.key);
     unique(blocker.source_record_refs, "blocker_source_duplicate", blocker.key);
     requireKnownRefs(
       blocker.source_record_refs,
       sources,
       "blocker_source_unknown",
       blocker.key,
+    );
+    requireExactFeasibilityDecisionProjection(
+      blocker.source_record_refs,
+      decisionSources,
+      {
+        schema_version: DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA,
+        mode: "feasibility_blocker",
+        target_ref: blocker.target_ref,
+        component_family_ref: blocker.component_family_ref,
+        condition_scope_sha256:
+          deriveDesignResourceFeasibilityConditionScopeSha256(
+            document,
+            model,
+            blocker.condition_profile_ref,
+          ),
+        blocker_ref: blocker.key,
+      },
+      `blocker:${blocker.key}`,
+      {
+        allReferencesMustBeSourceItems: false,
+        allowedItemKinds: ["decision", "external_confirmation"],
+      },
     );
     if (!usedBlockers.has(blocker.key))
       invalidFeasibility("blocker_unreferenced", blocker.key);

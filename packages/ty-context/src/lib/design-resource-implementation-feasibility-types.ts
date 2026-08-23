@@ -47,7 +47,8 @@ export interface DesignResourceTechnicalSourceRecordV1 {
   locator:
     | { kind: "whole_resource"; value: "." }
     | { kind: "json_pointer"; value: string }
-    | { kind: "markdown_anchor" | "source_anchor"; value: string };
+    | { kind: "markdown_anchor" | "source_anchor"; value: string }
+    | { kind: "source_item"; value: string; text_sha256: string };
   roles: DesignResourceTechnicalSourceRole[];
 }
 

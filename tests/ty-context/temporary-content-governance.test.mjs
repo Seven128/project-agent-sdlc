@@ -74,8 +74,13 @@ test("tracked work products remain Contract/Source classes, not inferred cache",
     { cwd: repo, windowsHide: true },
   );
   const tracked = stdout.trim().split(/\r?\n/u).filter(Boolean);
-  assert.ok(tracked.length > 0);
-  assert.ok(tracked.every((file) => file.endsWith("/delivery-contract.yaml")));
+  assert.deepEqual(tracked.sort(), [
+    ".work_products/design-fact-universe-closure/delivery-contract.yaml",
+    ".work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md",
+    ".work_products/dra-production-handoff-closure/RECOVERY_INDEX.md",
+    ".work_products/long-task-real-capability/delivery-contract.yaml",
+    ".work_products/symbolic-denotation-efficiency/delivery-contract.yaml",
+  ]);
   const contract = await read(
     "project_context/areas/harness-package/contracts/temporary-content-governance.md",
   );
@@ -83,6 +88,11 @@ test("tracked work products remain Contract/Source classes, not inferred cache",
     contract,
     /Tracked `.work_products\/\*\*\/delivery-contract\.yaml`[\s\S]*User\/Long-Task Source and Contract owners/iu,
   );
+  assert.match(
+    contract,
+    /dra-production-handoff-closure\/EXECUTION_SOURCE\.md` and `RECOVERY_INDEX\.md`[\s\S]*User\/native-Goal Source and recovery-locator owners/iu,
+  );
+  assert.match(contract, /Exact-path allowlist only/iu);
   assert.match(contract, /Never blanket-cleaned/iu);
 });
 

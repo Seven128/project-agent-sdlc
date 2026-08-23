@@ -12,6 +12,13 @@ import {
   unique,
 } from "./design-resource-implementation-feasibility-validation-support.js";
 import { createSymbolicDenotationCompilationSession } from "./symbolic-denotation-engine.js";
+import type { DesignResourceFeasibilityDecisionSourceIndex } from "./design-resource-implementation-feasibility-source-decision.js";
+import { validateNoExactVisualValueCarriers } from "./design-resource-implementation-feasibility-validation-support.js";
+import {
+  assertProtectedRepositoryDirectory,
+  assertProtectedRepositoryPath,
+} from "./repository-path-safety.js";
+import path from "node:path";
 
 const OBSERVATION_SOURCE_ROLES = {
   platform: "technical_platform",
@@ -26,6 +33,7 @@ export async function validateFeasibilityDocument(
   repository: string,
   document: DesignResourceImplementationFeasibilityV1,
   model: DesignResourceImplementationFeasibilityTargetModel,
+  decisionSources: DesignResourceFeasibilityDecisionSourceIndex,
 ): Promise<void> {
   if (document.target_ref !== model.target_ref)
     invalidFeasibility(
@@ -51,7 +59,8 @@ export async function validateFeasibilityDocument(
   const sources = new Map(
     document.source_records.map((item) => [item.key, item]),
   );
-  validateObservations(document, sources);
+  validateNoExactVisualValueCarriers(document);
+  await validateObservations(repository, document, sources);
   const profileRefs = validateConditionModel(document, model);
   await validateFeasibilityCells(
     repository,
@@ -59,13 +68,15 @@ export async function validateFeasibilityDocument(
     model,
     profileRefs,
     sources,
+    decisionSources,
   );
 }
 
-function validateObservations(
+async function validateObservations(
+  repository: string,
   document: DesignResourceImplementationFeasibilityV1,
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
-): void {
+): Promise<void> {
   unique(
     document.substrate_observations.map((item) => item.kind),
     "substrate_observation_kind_duplicate",
@@ -103,7 +114,32 @@ function validateObservations(
         );
     }
     validateObservationValue(observation, sources);
+    if (observation.value?.kind === "repository_paths")
+      for (const repositoryPath of observation.value.paths)
+        await (
+          observation.kind === "component_owner_roots" ||
+            observation.kind === "route_owner_roots"
+            ? assertProtectedRepositoryDirectory
+            : assertProtectedRepositoryPath
+        )(
+          repository,
+          path.resolve(repository, ...repositoryPath.split("/")),
+          `design_resource_feasibility_repository_path:${observation.kind}`,
+        );
   }
+  if (
+    document.realization_mode !== "reference" &&
+    document.substrate_observations.some(
+      (observation) =>
+        observation.disposition === "decision_required" ||
+        observation.disposition === "unavailable",
+    ) &&
+    !document.component_family_cells.some((cell) => cell.blocker_refs.length)
+  )
+    invalidFeasibility(
+      "unresolved_substrate_blocker_required",
+      document.target_ref,
+    );
 }
 
 function validateObservedSubstrate(
@@ -132,6 +168,23 @@ function validateObservationValue(
   observation: DesignResourceImplementationFeasibilityV1["substrate_observations"][number],
   sources: Map<string, DesignResourceTechnicalSourceRecordV1>,
 ): void {
+  if (!observation.value) return;
+  if (
+    ["platform", "framework_runtime", "ui_system"].includes(observation.kind) &&
+    observation.value.kind !== "identifier"
+  )
+    invalidFeasibility(
+      "observation_value_kind_invalid",
+      `${observation.kind}:${observation.value.kind}`,
+    );
+  if (
+    ["component_owner_roots", "route_owner_roots"].includes(observation.kind) &&
+    observation.value.kind !== "repository_paths"
+  )
+    invalidFeasibility(
+      "observation_value_kind_invalid",
+      `${observation.kind}:${observation.value.kind}`,
+    );
   if (observation.value?.kind === "identifier") {
     const versionRef = observation.value.version_source_ref;
     if (versionRef && !sources.has(versionRef))

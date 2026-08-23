@@ -21,10 +21,13 @@ import {
   type IndexedSymbolicHandoffTarget,
   validateVerificationMethodBindings,
 } from "./long-task-design-resource-method-binding.js";
-import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import type {
+  CompiledSourceItemV2,
+  DeliveryContractV2,
+} from "./long-task-delivery-types.js";
 import { validateLongTaskDesignTargetCapabilities } from "./long-task-design-target-capabilities.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
-import { matchesRepoPattern } from "./long-task-paths.js";
+import { validateLongTaskDesignFeasibilityBindings } from "./long-task-design-feasibility-binding.js";
 
 export interface ContractDesignTarget {
   outcome_key: string;
@@ -48,8 +51,9 @@ export interface LongTaskDesignHandoffConsumer {
 export async function validateLongTaskDesignResourceHandoffs(
   contract: DeliveryContractV2,
   repository: string,
+  sourceItems: CompiledSourceItemV2[],
 ): Promise<void> {
-  const consumer = createLongTaskDesignHandoffConsumer(contract);
+  const consumer = createLongTaskDesignHandoffConsumer(contract, sourceItems);
   for (const sourcePath of contract.task.source_paths) {
     if (!sourcePath.toLowerCase().endsWith(".md")) continue;
     const file = await assertProtectedRepositoryFile(
@@ -71,6 +75,7 @@ export async function validateLongTaskDesignResourceHandoffs(
 
 export function createLongTaskDesignHandoffConsumer(
   contract: DeliveryContractV2,
+  sourceItems: CompiledSourceItemV2[] = [],
 ): LongTaskDesignHandoffConsumer {
   const contractTargets = contract.outcomes.flatMap((outcome) =>
     outcome.product.surface_bindings.flatMap((binding) =>
@@ -147,10 +152,11 @@ export function createLongTaskDesignHandoffConsumer(
               target,
             };
             validateSymbolicTargetIdentity(contractTarget, indexedTarget);
-            validateRequiredFeasibilityBindings(
+            validateLongTaskDesignFeasibilityBindings(
               contract,
               contractTarget,
               preflight,
+              sourceItems,
             );
             validateSymbolicCoverageClaims(
               contract,
@@ -164,10 +170,11 @@ export function createLongTaskDesignHandoffConsumer(
               target: target as DesignResourceHandoffTargetV1,
             };
             validateTargetIdentity(contractTarget, indexedTarget);
-            validateRequiredFeasibilityBindings(
+            validateLongTaskDesignFeasibilityBindings(
               contract,
               contractTarget,
               preflight,
+              sourceItems,
             );
             validateLongTaskDesignTargetCapabilities(
               contract,
@@ -196,76 +203,6 @@ export function createLongTaskDesignHandoffConsumer(
       if (unbound.length) invalid("handoff_target_unbound", unbound[0]);
     },
   };
-}
-
-function validateRequiredFeasibilityBindings(
-  contract: DeliveryContractV2,
-  contractTarget: ContractDesignTarget,
-  preflight:
-    DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2,
-): void {
-  const document = preflight.technical_feasibility_documents.find(
-    (item) => item.target_ref === contractTarget.target.key,
-  );
-  if (!document) return;
-  const sources = new Map(
-    document.source_records.map((item) => [item.key, item]),
-  );
-  const outcome = contract.outcomes.find(
-    (item) => item.key === contractTarget.outcome_key,
-  )!;
-  const bindingRefs = new Set([
-    contractTarget.binding.route_binding_ref,
-    ...contractTarget.binding.component_binding_refs,
-  ]);
-  const bindings = outcome.technical.bindings.filter((item) =>
-    bindingRefs.has(item.key),
-  );
-  for (const cell of document.component_family_cells) {
-    const requiredRef = cell.required_realization.realization_ref;
-    if (!requiredRef) continue;
-    for (const sourceRef of cell.required_realization
-      .technical_authority_source_refs) {
-      const source = sources.get(sourceRef)!;
-      if (!contract.task.source_paths.includes(source.path))
-        invalid(
-          "required_realization_authority_source_not_declared",
-          `${cell.key}:${source.path}`,
-        );
-      if (
-        !contract.source_claims.some(
-          (claim) => claim.source_ref.split("#")[0] === source.path,
-        )
-      )
-        invalid(
-          "required_realization_authority_claim_missing",
-          `${cell.key}:${source.path}`,
-        );
-    }
-    const realization = cell.feasible_realizations.find(
-      (item) => item.key === requiredRef,
-    )!;
-    const bound = realization.owner_candidates.some((owner) =>
-      bindings.some((binding) => {
-        if (binding.existence !== owner.existence) return false;
-        if (owner.kind === "planned_logical_owner")
-          return (
-            binding.key === owner.locator || binding.target === owner.locator
-          );
-        return (
-          (binding.kind === "file" && binding.target === owner.locator) ||
-          binding.carrier_paths.some((pattern) =>
-            matchesRepoPattern(owner.locator, pattern),
-          )
-        );
-      }),
-    );
-    if (!bound)
-      invalid(
-        "required_realization_technical_binding_missing",
-        `${cell.key}:${requiredRef}`,
-      );
-  }
 }
 
 function validateSymbolicCoverageClaims(

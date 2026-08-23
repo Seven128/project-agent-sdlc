@@ -55,7 +55,7 @@ export function createV1ImplementationFeasibilityTargetModel(
     target_ref: target.key,
     source_profile_kind: target.source_profile.kind,
     component_family_refs: componentFamilies.map((subject) => subject.key),
-    component_family_subject_refs: familySubjectRefs(
+    component_family_subject_refs: deriveComponentFamilySubjectClosure(
       componentFamilies.map((subject) => subject.key),
       handoff.subjects,
     ),
@@ -87,7 +87,7 @@ export function createV2ImplementationFeasibilityTargetModel(
     target_ref: target.key,
     source_profile_kind: target.source_profile.kind,
     component_family_refs: componentFamilies.map((subject) => subject.key),
-    component_family_subject_refs: familySubjectRefs(
+    component_family_subject_refs: deriveComponentFamilySubjectClosure(
       componentFamilies.map((subject) => subject.key),
       manifest.subjects,
     ),
@@ -97,27 +97,46 @@ export function createV2ImplementationFeasibilityTargetModel(
   };
 }
 
-function familySubjectRefs(
+export function deriveComponentFamilySubjectClosure(
   familyRefs: string[],
   subjects: Array<{
     key: string;
     family_ref: string | null;
+    parent_ref: string | null;
     instance_of_ref: string | null;
+    override_of_ref: string | null;
   }>,
 ): Map<string, Set<string>> {
-  return new Map(
-    familyRefs.map((familyRef) => [
-      familyRef,
-      new Set(
-        subjects
-          .filter(
-            (subject) =>
-              subject.key === familyRef ||
-              subject.family_ref === familyRef ||
-              subject.instance_of_ref === familyRef,
-          )
-          .map((subject) => subject.key),
-      ),
-    ]),
-  );
+  const result = new Map<string, Set<string>>();
+  for (const familyRef of familyRefs) {
+    const closure = new Set(
+      subjects
+        .filter(
+          (subject) =>
+            subject.key === familyRef ||
+            subject.family_ref === familyRef ||
+            subject.instance_of_ref === familyRef,
+        )
+        .map((subject) => subject.key),
+    );
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const subject of subjects) {
+        if (closure.has(subject.key)) continue;
+        if (
+          (subject.parent_ref !== null && closure.has(subject.parent_ref)) ||
+          (subject.instance_of_ref !== null &&
+            closure.has(subject.instance_of_ref)) ||
+          (subject.override_of_ref !== null &&
+            closure.has(subject.override_of_ref))
+        ) {
+          closure.add(subject.key);
+          changed = true;
+        }
+      }
+    }
+    result.set(familyRef, closure);
+  }
+  return result;
 }

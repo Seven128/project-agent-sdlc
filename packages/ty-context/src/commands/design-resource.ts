@@ -41,7 +41,10 @@ export async function designResource(args: string[]): Promise<void> {
     process.stdout.write(canonicalJson(result));
     return;
   }
-  console.log(`Design resource handoff ready: ${result.handoff_path}`);
+  console.log(
+    `Design resource handoff preflight valid: ${result.handoff_path}`,
+  );
+  console.log("Input closure: valid");
   console.log(`Scope: ${result.handoff.scope.key}`);
   console.log(
     `Targets: ${result.handoff.targets.map((item) => item.key).join(", ")}`,
@@ -49,8 +52,16 @@ export async function designResource(args: string[]): Promise<void> {
   console.log(
     `Technical feasibility inputs: ${result.technical_feasibility_identities.length}`,
   );
-  for (const limitation of result.limitations)
-    console.log(`Limitation: ${limitation}`);
+  console.log(
+    `Technical feasibility cells: ${result.technical_feasibility_identities.reduce((total, item) => total + item.component_family_cells, 0)}`,
+  );
+  console.log(
+    `Technical feasibility blockers: ${result.technical_feasibility_identities.reduce((total, item) => total + item.blockers, 0)}`,
+  );
+  console.log(
+    `Limitations: ${result.limitations.length ? result.limitations.join("; ") : "none"}`,
+  );
+  console.log("Production conformance: not evaluated");
   if ("metrics" in result) {
     console.log(
       `Coverage: ${result.manifest.subjects.length} subjects x ${result.manifest.properties.length} atomic properties (${result.rule_projections.length} symbolic Rules)`,
@@ -126,8 +137,9 @@ async function bundle(args: string[]): Promise<void> {
     return;
   }
   console.log(
-    `Design resource handoff bundle published: ${result.output_directory}`,
+    `Design resource Source bundle published: ${result.output_directory}`,
   );
+  console.log("Production readiness: not evaluated");
   console.log(`Handoffs: ${result.handoffs.length}`);
   console.log(
     `Targets: ${result.handoffs.map((item) => item.target_key).join(", ")}`,

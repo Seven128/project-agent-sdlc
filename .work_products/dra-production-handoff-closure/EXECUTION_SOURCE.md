@@ -482,3 +482,545 @@ Completion requires all of the following:
 11. visual diagnostics remain opt-in, descriptive and non-admission;
 12. portability/history changes are owner-scoped and preserve intentional history/fixtures;
 13. current-candidate checks, architecture/engineering conformance and Context drift are reported without overclaim.
+
+## 17. S4 controlling amendment — remaining production-handoff closure
+
+### 17.1 Identity, precedence and fixed baseline
+
+This amendment is the durable execution projection of the user-provided plan titled `DRA Production-Handoff Closure 补开发方案`. It is S4 and has precedence over Sections 1–16 wherever it is stricter. The implementation baseline is fixed at Git commit `c46e1f59961e8735b2ac76d0534a1d0995f05323`.
+
+The amendment closes the remaining 2 P0, 2 P1 and 1 P2 findings and, because they share the same false-completion boundary, also closes both adjacent defects:
+
+- an unresolved substrate observation must create a real blocker;
+- component-owner and route-owner roots must be verifiable current repository paths rather than arbitrary identifiers.
+
+The existing independent feasibility Source, V1/V2 compatibility, canonical-resource separation and Long-Task Source ingestion remain in place. This amendment only closes the remaining chain from technical-feasibility input through the actual downstream selection to Long-Task machine completion authority.
+
+The Single Goal is:
+
+> Without adding a Design/Technical Authority, production Binding type, Gate, Registry, readiness state machine or independent workflow, make every formal Web/App target's `component family × target × condition` feasibility cell close uniquely and verifiably against the current Long-Task component Bindings; bind every blocker, planned owner and required realization to an exact marked Technical Source Item; conserve every transitive family-descendant Fact/Rule; prevent every feasibility free-text carrier from copying exact visual values; and keep Preflight/CLI wording from implying production conformance or release readiness.
+
+No Long-Task workflow is created, enabled, resumed or used to execute this amendment. Long-Task is an affected interoperability and test surface only.
+
+### 17.2 Architecture that must remain unchanged
+
+The intended flow remains:
+
+```text
+Product / Surface / Screen Source
++ Design Authority
++ real Technical Source
+  -> canonical design resources
+     + design-resource-implementation-feasibility-v1
+  -> Preflight: design input, technical Source, candidate-set and reference closure only
+  -> Default Workflow / Long-Task selects actual production owner and realization
+  -> project-native current-candidate checks
+  -> Default Verified / Unverified or the sole Long-Task Final Gate
+```
+
+Do not add any production-binding schema, Contract field family, Claim type, Gate, Authority, readiness state, Provider Registry or DRA workflow. The feasibility file remains ordinary Source; canonical resources remain the sole owner of exact design values; actual route/component ownership remains in existing `technical.bindings`, `surface_bindings` and Architecture Deliberation.
+
+### 17.3 Exact marked Technical Source Item authority
+
+#### Locator extension
+
+Add this strict locator member to `DesignResourceTechnicalSourceRecordV1.locator`:
+
+```json
+{
+  "kind": "source_item",
+  "value": "<marked Source Item key>",
+  "text_sha256": "<current normalized Source Item SHA-256>"
+}
+```
+
+Retain `whole_resource`, `json_pointer`, `markdown_anchor` and `source_anchor`. The following roles must use `source_item`:
+
+- `planned_owner_authorization`;
+- `technical_authority`;
+- the authority basis of every feasibility blocker.
+
+Ordinary substrate observations and capability basis may continue to use the existing locator kinds.
+
+#### Strict decision projection
+
+An authoritative marked Source Item carries one or more strict JSON comments of this form:
+
+```html
+<!-- ty-design-feasibility-decision-v1 {"schema_version":"design-resource-feasibility-decision-v1","mode":"required_realization","target_ref":"target.main","component_family_ref":"family.button","condition_scope_sha256":"...","realization_ref":"reuse-project-button"} -->
+```
+
+Use exactly one schema, `design-resource-feasibility-decision-v1`, with these three modes and fields:
+
+```json
+{
+  "schema_version": "design-resource-feasibility-decision-v1",
+  "mode": "required_realization",
+  "target_ref": "...",
+  "component_family_ref": "...",
+  "condition_scope_sha256": "...",
+  "realization_ref": "..."
+}
+```
+
+```json
+{
+  "schema_version": "design-resource-feasibility-decision-v1",
+  "mode": "planned_owner_authorization",
+  "target_ref": "...",
+  "component_family_ref": "...",
+  "condition_scope_sha256": "...",
+  "owner_locator": "planned-shared-button"
+}
+```
+
+```json
+{
+  "schema_version": "design-resource-feasibility-decision-v1",
+  "mode": "feasibility_blocker",
+  "target_ref": "...",
+  "component_family_ref": "...",
+  "condition_scope_sha256": "...",
+  "blocker_ref": "blocker.button-owner-missing"
+}
+```
+
+The projection is not a new Technical Authority. Authority remains the conjunction of:
+
+- the marked Source Item;
+- the Source Item kind;
+- the current digest of its Source file;
+- the Source Item `text_sha256`;
+- and, for Long-Task, the exact Source Claim.
+
+Reuse the owner-local strict JSON, Source Item digest, unique-projection and exact-set pattern already used by `ty-dra-authority-v1` recovery. Do not build a generic projection/parser framework.
+
+#### Applicability identity
+
+Use one condition-scope identity:
+
+- V1: SHA-256 of canonical JSON for lexicographically sorted `condition_refs`;
+- V2: the current canonical compiled SHA-256 of `profile.region`.
+
+The projection therefore binds actual applicability and is not weakened by renaming a profile key.
+
+#### Preflight exact matching
+
+For each referenced `planned_logical_owner`, Preflight requires exactly one projection whose mode, target, family, condition-scope digest and `owner_locator` all match.
+
+For each non-null `required_realization`, Preflight requires exactly one projection whose mode, target, family, condition-scope digest and `realization_ref` all match. A `technical_authority` role label alone is insufficient.
+
+Every blocker must reference at least one exact `source_item` technical Source record and have a matching `feasibility_blocker` projection.
+
+#### Long-Task exact Source Claim
+
+Remove path-only matching such as:
+
+```text
+claim.source_ref.split("#")[0] === source.path
+```
+
+Require exact equality:
+
+```text
+claim.source_ref = <source path>#<source item key>
+```
+
+Also require:
+
+- the Source file is present in `task.source_paths`;
+- the current Source Item `text_sha256` equals the feasibility declaration;
+- a required-realization Source Claim enters the current Outcome Claim set or Global Constraint;
+- the selected planned-owner authorization Source Claim enters the current Contract;
+- no unrelated item, same-file Claim or path-only Claim can substitute.
+
+### 17.4 Long-Task allowed-realization and existing-Binding closure
+
+Derive `Feasibility Cell -> Existing Technical Binding Closure` ephemerally. It is not a Contract field and does not persist a selected realization.
+
+Use only:
+
+- `outcome.technical.bindings`;
+- `surface_binding.component_binding_refs`;
+- `surface_binding.route_binding_ref`.
+
+Do not add `selected_realization_ref`, `component_family_binding` or `feasibility_binding`.
+
+#### Candidate matching
+
+An `existing_path` owner matches a Binding exactly when:
+
+- `binding.existence = existing`; and
+- either `binding.kind = file` and `binding.target = owner.locator`, or a `binding.carrier_paths` pattern matches `owner.locator`.
+
+A `planned_logical_owner` matches exactly when:
+
+- `binding.existence = planned`; and
+- either `binding.key = owner.locator` or `binding.target = owner.locator`;
+- and the exact planned-owner Source Item authorization from Section 17.3 is satisfied.
+
+#### Deterministic selection per cell
+
+For each cell, `matching realizations` is the set of feasible realizations for which at least one current component Binding matches an owner.
+
+- With `required_realization`, the matching set must equal exactly that one realization; otherwise fail closed.
+- Without `required_realization`, zero matches fails as `feasibility_realization_binding_missing`.
+- Without `required_realization`, more than one match fails as `feasibility_realization_binding_ambiguous`.
+- Exactly one match is the ephemeral actual Long-Task selection.
+
+Multiple feasibility candidates remain legal. Uniqueness is required only when current Long-Task machine authority is compiled. The Default Workflow continues to select through Architecture Deliberation and reports its verification boundary honestly.
+
+#### Bidirectional closure
+
+Every `surface_binding.component_binding_refs` member must be consumed by at least one feasibility cell for the current target. Otherwise fail as `feasibility_component_binding_unattributed`.
+
+One shared Binding may serve multiple condition cells for the same family or multiple families that each explicitly list that owner. An extra page-level or style Binding cannot pass merely because another legal component Binding exists.
+
+`route_binding_ref` does not select a component-family realization, but its owner must be inside observed `route_owner_roots`. Every existing component-owner candidate and every matched existing component Binding must be inside observed `component_owner_roots`. Thus declared real substrate and actual Long-Task bindings use the same substrate boundary.
+
+### 17.5 Feasibility blockers in the Long-Task completion boundary
+
+Any current feasibility blocker means Source has not established a complete implementable path for that `family × target × condition`. A normal machine Claim cannot make an old blocker pass. Resolution requires updating technical Source, updating feasibility, removing or revising the blocker and rerunning Preflight/Compile.
+
+Every blocker's exact marked Source Item must map through existing Contract carriers to one of:
+
+- `decision_required`, which blocks Compile directly; or
+- `external_confirmation`, where the exact Source Claim disposition references an existing External Confirmation with `blocks_target = true` and `impact_claims` containing the affected Claim for the current target.
+
+Do not add a blocker schema. Reuse Source Claim, External Confirmation, target blocking and Final Gate.
+
+A cell may contain both feasible realizations and blocker refs. The realization still must match one current component Binding uniquely, and every blocker must still reach `decision_required` or blocking External Confirmation. A partial candidate never suppresses a blocker.
+
+While the corresponding blocking External Confirmation remains open, Final Gate cannot return `machine_accepted`. Historical Preflight, Provider results or DRA summaries cannot substitute.
+
+### 17.6 Transitive component-family subject closure
+
+Add one owner-local helper, `deriveComponentFamilySubjectClosure(...)`.
+
+Seed it with:
+
+- the component-family subject itself;
+- every subject with `family_ref = family`;
+- every subject with `instance_of_ref = family`.
+
+Then repeatedly add every subject whose `parent_ref`, `instance_of_ref` or `override_of_ref` points at any current member until the set stabilizes. Use `visited` so malformed cycles terminate safely.
+
+The resulting closure includes the family, instances, variants/overrides, Anatomy Parts, slot content, primitives, text, icons, media, assets and any other subject owned through the parent chain.
+
+For V1, each cell's `design_fact_refs` must equal the complete Fact set for:
+
+```text
+transitive family subject closure × target × condition profile
+```
+
+For V2, the cell's Rule set must equal the complete intersecting Rule set for:
+
+```text
+transitive family subject closure × target × profile region intersection
+```
+
+In particular, an Anatomy Part whose `parent_ref` points to a component instance and whose `family_ref` is null must still be included. Missing it fails as `cell_design_fact_set_mismatch` or `cell_design_rule_set_mismatch`.
+
+### 17.7 One exact-visual-value smuggling validator
+
+Add one owner-local entry, `validateNoExactVisualValueCarriers(document)`, and use it for all feasibility human free-text fields:
+
+- `substrate_observations[].reason`;
+- `feasible_realizations[].observed_costs[]`;
+- `feasible_realizations[].observed_risks[]`;
+- `blockers[].description`.
+
+Do not maintain separate regex/rule copies in multiple validators.
+
+The validator must reject exact visual values including colors (Hex/RGB/HSL), `px`/`rem`, CSS declarations, CSS custom properties, font/size/spacing/radius/shadow/duration values and equivalent existing protected patterns. At minimum all of these fail:
+
+```text
+Use border-radius: 12px
+Fallback color is #ffffff
+Needs 16px padding
+Could override --brand-color: red
+Requires font-size: 14px
+```
+
+Do not scan SHA-256 values, repository paths, Source Item keys, logical primitive IDs, JSON Pointers or canonical design resources themselves.
+
+### 17.8 Substrate observation and owner-root closure
+
+Enforce observation kind/value-kind pairs:
+
+- `platform`, `framework_runtime`, `ui_system`: `identifier` only;
+- `component_owner_roots`, `route_owner_roots`: `repository_paths` only;
+- token/theming adapter: `identifier` or `repository_paths`.
+
+Every repository path must be repository-relative, currently exist, remain contained under no-follow validation and satisfy the declared value-kind rules. Every component/route owner root must be a directory; a symlink or junction is invalid. Arbitrary identifiers such as `components` or `routes` cannot stand in for roots.
+
+Every observation whose status is `decision_required` or `unavailable` for a formal implementation target must have at least one affected feasibility cell referencing a Source-backed blocker. A declaration such as `ui_system = unavailable` cannot coexist with every cell claiming complete implementability and no blocker. `not_applicable` requires a non-empty reason but no blocker.
+
+### 17.9 CLI and human-visible semantics
+
+Keep the existing Preflight JSON field `status: ready` for compatibility. It means only that validation completed successfully; add no new status values.
+
+Replace human wording `Design resource handoff ready` with:
+
+```text
+Design resource handoff preflight valid
+Input closure: valid
+Technical feasibility inputs: N
+Technical feasibility cells: N
+Technical feasibility blockers: N
+Limitations: ...
+Production conformance: not evaluated
+```
+
+Bundle wording becomes:
+
+```text
+Design resource Source bundle published
+Production readiness: not evaluated
+```
+
+A structurally valid input with limitations or blockers still exits zero. Structural or closure validation failure exits nonzero. Add no warning/readiness state machine. Publishing a bundle that honestly contains blockers does not mean the target is implementable.
+
+### 17.10 Code ownership and bounded new modules
+
+Modify the current feasibility model owners under `packages/ty-context/src/lib/`:
+
+- `design-resource-implementation-feasibility-types.ts`;
+- `design-resource-implementation-feasibility-shape.ts`;
+- `design-resource-implementation-feasibility-shape-sections.ts`;
+- `design-resource-implementation-feasibility-model.ts`;
+- `design-resource-implementation-feasibility-validation.ts`;
+- `design-resource-implementation-feasibility-validation-document.ts`;
+- `design-resource-implementation-feasibility-validation-cells.ts`;
+- `design-resource-implementation-feasibility-validation-realizations.ts`;
+- `design-resource-implementation-feasibility-validation-facts.ts`;
+- `design-resource-implementation-feasibility-validation-support.ts`.
+
+Add `design-resource-implementation-feasibility-source-decision.ts` only for source-item locator handling, Source Item loading, `text_sha256`, strict `ty-design-feasibility-decision-v1` parsing, condition-scope digest and exact planned-owner/required-realization/blocker projection matching. Do not put those responsibilities in the main validator or expose the internal parser publicly unless an existing real public call requires it.
+
+Modify Long-Task interoperability only in the existing owners:
+
+- `long-task-design-resource-handoff.ts`;
+- `long-task-design-resource-method-binding.ts`.
+
+If needed, add `long-task-design-feasibility-binding.ts` only for ephemeral cell→realization→current Binding and blocker→exact Source Claim/External Confirmation validation. It must not define a Contract type.
+
+Modify CLI wording in `packages/ty-context/src/commands/design-resource.ts`. Synchronize public types/exports in `packages/ty-context/src/index.ts` and `public-types.ts` only when existing public boundaries require it.
+
+### 17.11 Durable Context and DRA Skill impact
+
+Update only the existing Context roles:
+
+- `contracts/design-resource-authoring.md`;
+- `contracts/design-resource-handoff.md`;
+- `contracts/workflow-contract.md`;
+- `implementation-index.md`;
+- `verification.md`.
+
+Record exact marked Technical Source Item authority, Long-Task allowed-set derivation, blocker target-blocking behavior, family transitive closure and Preflight wording. Add no Context role.
+
+Update the canonical DRA owner under `.codex/ty-context-managed/skills/design-resource-authoring/`, especially:
+
+- `SKILL.md`;
+- `references/implementation-feasibility.md`;
+- `references/formal-selected-web-app-handoff.md`;
+- `references/downstream-handoff.md`;
+- `references/open-design-provider.md`.
+
+Then synchronize `.codex/skills/design-resource-authoring/**` and `packages/ty-context/assets/skills/design-resource-authoring/**` through the existing source-mapping owner and retain byte parity.
+
+### 17.12 Required tests
+
+#### A. Technical Source Item authority
+
+Must block:
+
+1. `technical_authority` uses an ordinary `source_anchor` rather than a marked Source Item.
+2. Source Item key is absent.
+3. `text_sha256` is stale.
+4. Source Item kind is wrong.
+5. projection mode is wrong.
+6. target differs.
+7. family differs.
+8. condition-scope digest differs.
+9. realization ref differs.
+10. only an unrelated same-file Source Claim exists.
+11. Source Claim matches only path, not `path#item-key`.
+12. a planned owner has no exact authorization projection.
+13. a blocker has no exact blocker projection.
+
+Must allow:
+
+- multiple non-conflicting exact projections in one marked Source Item;
+- different Source Items in one technical file authorizing different families;
+- planned-owner authorization without forcing selection;
+- a required realization backed by one exact technical decision Source.
+
+#### B. Long-Task allowed set
+
+Must block:
+
+1. `required_realization = null` and the actual Binding belongs to no candidate.
+2. two candidates both match current Bindings.
+3. required realization does not match the current Binding.
+4. a component Binding is consumed by no cell.
+5. an existing owner Binding is outside component-owner roots.
+6. the route Binding is outside route-owner roots.
+7. a planned-owner Binding exists but its authority Source is absent from `task.source_paths`.
+8. an exact authority Source Item lacks the exact Source Claim.
+
+Must allow:
+
+- multiple feasibility candidates with one uniquely matching current Binding;
+- one shared Binding for multiple condition cells of one family;
+- one shared owner explicitly allowed by multiple families;
+- V1 and Symbolic V2 through the same derived algorithm;
+- both existing and planned owner routes;
+- a composite realization with multiple primitives carried by one shared owner Binding.
+
+#### C. Blockers
+
+Must block:
+
+1. a blocker-only cell has no Source Claim.
+2. the blocker Source Claim is a normal completing Claim.
+3. referenced External Confirmation is absent.
+4. `blocks_target = false`.
+5. impact Claims omit the current target's affected Claim.
+6. a candidate and blocker coexist but the blocker is ignored.
+7. blocker Source Item digest is stale.
+
+Must allow:
+
+- blocker mapped to `decision_required`;
+- blocker mapped to a target-blocking External Confirmation;
+- successful Compile after technical Source revision removes the blocker.
+
+#### D. Transitive family closure
+
+Build `component_family -> component_instance -> anatomy_part -> text` plus an asset, with descendant `family_ref = null`. Prove complete V1 Facts pass; missing Anatomy Part or Asset Facts fail; missing intersecting V2 Rule fails; and an anomalous cycle terminates through `visited` and fails safely rather than looping.
+
+#### E. Exact visual values
+
+Parameterize all four free-text field families across Hex, RGB/HSL, pixel/rem, CSS declaration, CSS custom property, motion duration and shadow values. Every carrier must fail.
+
+#### F. Observations and roots
+
+Must block component roots represented as identifier, absent roots, file roots, symlink/junction roots, candidate owners outside roots, unavailable observation without a blocker, and decision-required observation combined with full unblocked implementability.
+
+Must allow token adapter as identifier or repository path, route `not_applicable` for a component workbench with reason, and multiple valid component roots.
+
+#### G. CLI
+
+Human output must not contain `handoff ready`, `production ready` or `accepted`; it must contain `preflight valid`, `Technical feasibility blockers` and `Production conformance: not evaluated`. JSON output remains compatible.
+
+### 17.13 Mandatory regression preservation
+
+After the amendment, rerun and preserve:
+
+- the complete default affected suite;
+- the complete Long-Task suite and all critical sentinels;
+- V1 embedded and manifest-backed paths;
+- Symbolic V2;
+- bundle and CLI;
+- legacy limitation behavior;
+- canonical resource equality;
+- source parity and managed/package/workspace parity;
+- active-source portability;
+- affected-test selection;
+- existing visual-diagnostic and portability positive behavior.
+
+V1 and V2 continue to share one feasibility validator, and canonical resource equality remains untouched.
+
+### 17.14 Implementation order and release boundary
+
+1. Append this S4 amendment to S3 and update `RECOVERY_INDEX.md` with the new digest; do not create a third plan document.
+2. Update owning Context first for Source Item authority, allowed-set closure, blocker completion effect, family closure and Preflight wording.
+3. Implement Source Item locator, strict parser, digest, projection matcher and direct unit tests.
+4. Implement transitive family closure before Long-Task integration.
+5. Implement Long-Task candidate matching, ambiguity, unattributed Binding, exact Source Claim and blocker External Confirmation closure.
+6. Add one exact-value validator and one observation/root validator rather than duplicate rules.
+7. Correct CLI human wording without changing JSON compatibility.
+8. Sync Skills, Context, docs and release packet. Because `0.8.17` is not published and no GitHub Release exists, keep version `0.8.17` and update that release packet rather than bumping to `0.8.18`.
+9. Run all full verification once on the frozen final candidate. Any later code, Context, Contract-fixture or release-document change invalidates the affected result and requires rerun.
+
+Do not npm publish or create a GitHub Release.
+
+### 17.15 Completion theorem
+
+For every formal implementation target `T` and every feasibility cell `C`, completion requires:
+
+```text
+C target/family/condition scope is complete and exact
+AND C binds the complete V1 Facts or intersecting V2 Rules
+AND (
+  C has no blocker
+  AND the current component Bindings uniquely match one allowed realization
+)
+OR (
+  every C blocker is exactly bound to a marked Technical Source Item
+  AND enters decision_required or target-blocking External Confirmation
+)
+AND every planned-owner authorization comes from an exact Source Item projection
+AND every required realization comes from an exact Source Item projection
+AND every component Binding is attributed to at least one cell
+AND canonical design values do not enter feasibility
+AND Preflight states only input closure
+AND only project-native current-candidate evidence proves production implementation
+```
+
+The Boolean grouping above is interpreted with the global conjunctions applying to both blocker and non-blocker branches. A candidate-plus-blocker cell must satisfy both unique realization derivation and blocker handling as specified in Section 17.5.
+
+### 17.16 Explicitly non-blocking, unverified external scope
+
+These are not machine-development completion conditions:
+
+- live Open Design discovery smoke;
+- actual multi-route visual comparison;
+- npm publish;
+- GitHub Release;
+- real-project production adoption of `0.8.17`.
+
+The final report must still distinguish:
+
+- mechanism implementation and machine constraints: verified when the declared checks pass;
+- actual Open Design visual-quality improvement: unverified;
+- real-project production effect: unverified.
+
+### 17.17 Required final handoff shape
+
+Only after all current-candidate checks pass may the handoff state:
+
+```text
+Implementation:
+- exact technical Source Item decision projection implemented
+- Long-Task allowed-realization closure implemented
+- feasibility blocker completion boundary implemented
+- transitive component-family Fact/Rule closure implemented
+- complete feasibility prose visual-value protection implemented
+- CLI preflight wording corrected
+
+Verification:
+- affected/default: all passed
+- Long-Task: all passed
+- critical sentinels: all passed
+- V1/V2/bundle/legacy/CLI: all passed
+- format/typecheck/build/validate-harness/parity/portability/pack/smoke: all passed
+
+Engineering / Architecture Conformance:
+- no second Design or Technical Authority
+- no new Contract binding type
+- no new Gate, Registry, state machine or workflow
+- canonical design closure unchanged
+- feasibility remains ordinary Source
+- Long-Task sole Final Gate unchanged
+
+Not verified:
+- Live Open Design visual-generation quality
+- multi-route visual diagnostic results
+- real product adoption
+
+Context Delta: required
+```
+
+This amendment is complete only when the prior Long-Task false-completion paths are actually rejected without turning DRA into a technical architecture selector or production acceptance system.

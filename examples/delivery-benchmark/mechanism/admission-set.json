@@ -180,19 +180,19 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "0772e734f76f8f62624a6e7e5b0da074ee731936635040db47e406674ad603da",
+              "bundle_sha256": "1385a429f12d2e342f4185ff8420439baad4364c5d961a1c42bb86eabd925183",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "9fbd1f72e2c686cfb04e0ea28b74b41801cce2f4166bf67876ac41822e234601"
+                  "content_sha256": "45931e553bfa2973d703fbb9fdfe052b8c9b676afa2cd0832323d38a132fa905"
                 },
                 {
                   "kind": "worktree",
                   "label": "dra_down_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/references/downstream-handoff.md",
-                  "content_sha256": "0b07dd36640e9e8facfe562a5af12a979226eb319ca84e6049654de90c529ea0"
+                  "content_sha256": "88e28260fb807aee37693a35ef90fd3b0b556ae735261d1e26a2c65615d154f2"
                 },
                 {
                   "kind": "worktree",
@@ -203,13 +203,13 @@
               ]
             },
             "simple": {
-              "bundle_sha256": "f0b72a525cf452310e5d442c2f68e901c9f71060f0e089e3866155f4bd167d0b",
+              "bundle_sha256": "77fd80af44ca6ba1ad030c2e6735eefcb558a8e647087a2263da3210c88d4e9b",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "9fbd1f72e2c686cfb04e0ea28b74b41801cce2f4166bf67876ac41822e234601"
+                  "content_sha256": "45931e553bfa2973d703fbb9fdfe052b8c9b676afa2cd0832323d38a132fa905"
                 }
               ]
             }

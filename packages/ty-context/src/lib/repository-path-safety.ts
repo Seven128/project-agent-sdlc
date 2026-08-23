@@ -48,6 +48,64 @@ export async function assertProtectedRepositoryFile(
   return resolved;
 }
 
+export async function assertProtectedRepositoryDirectory(
+  repositoryInput: string,
+  directoryInput: string,
+  label: string,
+): Promise<string> {
+  const repositoryPath = path.resolve(repositoryInput);
+  const repository = await realpath(repositoryPath);
+  const candidate = path.resolve(directoryInput);
+  assertInside(repositoryPath, candidate, label, directoryInput);
+  await assertExistingParents(repositoryPath, repository, candidate, label);
+  const info = await lstatOrNull(candidate);
+  if (!info)
+    throw new Error(
+      `protected_input_not_found:${label}:${display(directoryInput)}`,
+    );
+  if (info.isSymbolicLink())
+    throw new Error(
+      `protected_input_symlink_not_allowed:${label}:${display(directoryInput)}`,
+    );
+  if (!info.isDirectory())
+    throw new Error(
+      `protected_input_not_directory:${label}:${display(directoryInput)}`,
+    );
+  const resolved = await realpath(candidate);
+  assertInside(repository, resolved, label, directoryInput);
+  return resolved;
+}
+
+export async function assertProtectedRepositoryPath(
+  repositoryInput: string,
+  pathInput: string,
+  label: string,
+): Promise<string> {
+  const repositoryPath = path.resolve(repositoryInput);
+  const repository = await realpath(repositoryPath);
+  const candidate = path.resolve(pathInput);
+  assertInside(repositoryPath, candidate, label, pathInput);
+  await assertExistingParents(repositoryPath, repository, candidate, label);
+  const info = await lstatOrNull(candidate);
+  if (!info)
+    throw new Error(`protected_input_not_found:${label}:${display(pathInput)}`);
+  if (info.isSymbolicLink())
+    throw new Error(
+      `protected_input_symlink_not_allowed:${label}:${display(pathInput)}`,
+    );
+  if (!info.isFile() && !info.isDirectory())
+    throw new Error(
+      `protected_input_not_file_or_directory:${label}:${display(pathInput)}`,
+    );
+  if (info.isFile() && typeof info.nlink === "number" && info.nlink > 1)
+    throw new Error(
+      `protected_input_hardlink_not_allowed:${label}:${display(pathInput)}`,
+    );
+  const resolved = await realpath(candidate);
+  assertInside(repository, resolved, label, pathInput);
+  return resolved;
+}
+
 export async function assertSafeRepositoryFilePath(
   repositoryInput: string,
   relativeInput: string,

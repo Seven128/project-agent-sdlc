@@ -4,6 +4,7 @@ import path from "node:path";
 import YAML from "yaml";
 import { DESIGN_RESOURCE_STANDARD_PROPERTIES } from "../../packages/ty-context/dist/lib/design-resource-fact-manifest-catalog.js";
 import { DESIGN_RESOURCE_MANIFEST_COLLECTIONS } from "../../packages/ty-context/dist/lib/design-resource-fact-manifest-types.js";
+import { normalizeSourceItemText } from "../../packages/ty-context/dist/lib/long-task-source-item-parser.js";
 
 export const DESIGN_HANDOFF_PATH = "design/handoff.md";
 export const DESIGN_RESOURCE_PATH = "design/page.html";
@@ -300,17 +301,13 @@ export async function addDesignResourceImplementationFeasibility(
         target_ref: DESIGN_TARGET_KEY,
         condition_profile_ref: "desktop-all-inputs",
         design_fact_refs: handoff.facts
-          .filter((fact) => {
-            const subject = handoff.subjects.find(
-              (item) => item.key === fact.subject_ref,
-            );
-            return (
+          .filter(
+            (fact) =>
               fact.target_ref === DESIGN_TARGET_KEY &&
-              (fact.subject_ref === familyRef ||
-                subject?.family_ref === familyRef ||
-                subject?.instance_of_ref === familyRef)
-            );
-          })
+              transitiveFamilySubjectRefs(handoff.subjects, familyRef).has(
+                fact.subject_ref,
+              ),
+          )
           .map((fact) => fact.key),
         feasible_realizations: [
           {
@@ -342,7 +339,7 @@ export async function addDesignResourceImplementationFeasibility(
     ],
     blockers: [],
   };
-  mutate?.(feasibility);
+  await mutate?.(feasibility, root);
   const content = `${JSON.stringify(feasibility, null, 2)}\n`;
   await writeFile(path.join(root, DESIGN_FEASIBILITY_PATH), content);
   handoff.technical_feasibility_inputs = [
@@ -357,7 +354,66 @@ export async function addDesignResourceImplementationFeasibility(
   return feasibility;
 }
 
+export async function addV1FeasibilityDecisionSource(
+  root,
+  document,
+  {
+    recordKey,
+    itemKey,
+    itemKind,
+    roles,
+    projections,
+  },
+) {
+  const sourcePath = `src/${recordKey}.md`;
+  const body = [
+    `Technical feasibility decision source for ${recordKey}.`,
+    ...projections.map(
+      (projection) =>
+        `<!-- ty-design-feasibility-decision-v1 ${JSON.stringify({
+          schema_version: "design-resource-feasibility-decision-v1",
+          ...projection,
+        })} -->`,
+    ),
+  ].join("\n");
+  const content = `<!-- ty-source-item:start key=${itemKey} kind=${itemKind} -->\n${body}\n<!-- ty-source-item:end -->\n`;
+  await writeFile(path.join(root, sourcePath), content);
+  document.source_records.push({
+    key: recordKey,
+    path: sourcePath,
+    media_type: "text/markdown",
+    sha256: sha256(content),
+    locator: {
+      kind: "source_item",
+      value: itemKey,
+      text_sha256: sha256(normalizeSourceItemText(body)),
+    },
+    roles: [...roles],
+  });
+  return {
+    recordRef: recordKey,
+    sourcePath,
+    itemKey,
+    normalizedText: normalizeSourceItemText(body),
+  };
+}
+
+export function v1FeasibilityConditionScopeSha256(document, profileRef) {
+  const profile = document.condition_model.profiles.find(
+    (candidate) => candidate.key === profileRef,
+  );
+  return sha256(JSON.stringify([...profile.condition_refs].sort()));
+}
+
 function observation(kind, name, sourceRef) {
+  if (["component_owner_roots", "route_owner_roots"].includes(kind))
+    return {
+      kind,
+      disposition: "observed",
+      value: { kind: "repository_paths", paths: ["src"] },
+      source_record_refs: [sourceRef],
+      reason: null,
+    };
   return {
     kind,
     disposition: "observed",
@@ -369,6 +425,35 @@ function observation(kind, name, sourceRef) {
     source_record_refs: [sourceRef],
     reason: null,
   };
+}
+
+function transitiveFamilySubjectRefs(subjects, familyRef) {
+  const refs = new Set(
+    subjects
+      .filter(
+        (subject) =>
+          subject.key === familyRef ||
+          subject.family_ref === familyRef ||
+          subject.instance_of_ref === familyRef,
+      )
+      .map((subject) => subject.key),
+  );
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const subject of subjects) {
+      if (refs.has(subject.key)) continue;
+      if (
+        [subject.parent_ref, subject.instance_of_ref, subject.override_of_ref]
+          .filter(Boolean)
+          .some((ref) => refs.has(ref))
+      ) {
+        refs.add(subject.key);
+        changed = true;
+      }
+    }
+  }
+  return refs;
 }
 
 export async function writeDesignResourceFactManifest(

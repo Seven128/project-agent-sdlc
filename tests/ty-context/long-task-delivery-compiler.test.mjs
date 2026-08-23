@@ -6,7 +6,9 @@ import test from "node:test";
 import YAML from "yaml";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
+import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
 import {
   addProductionControlBinding,
   completeControl,
@@ -25,6 +27,8 @@ import {
   DESIGN_TARGET_KEY,
   DESIGN_TECHNICAL_SOURCE_PATH,
   addDesignResourceImplementationFeasibility,
+  addV1FeasibilityDecisionSource,
+  v1FeasibilityConditionScopeSha256,
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
@@ -211,8 +215,8 @@ test("Compile ignores safe unmatched relative argv values instead of copying or 
           require_completion_gate: false,
         },
       );
-      const closure = compiled.outcomes[0].acceptance.checks[0]
-        .process_runtime_closure;
+      const closure =
+        compiled.outcomes[0].acceptance.checks[0].process_runtime_closure;
       assert.ok(closure);
       assert.equal(
         closure.root_argv_files.some(
@@ -532,32 +536,53 @@ test("Long-Task binds a required realization through existing Source and technic
   try {
     const handoff = await attachDesignResourceHandoff(fixture);
     await writeContract(fixture.workdir, fixture.contract);
-    const source = await readFile(path.join(fixture.root, "source.md"));
     await addDesignResourceImplementationFeasibility(
       fixture.root,
       handoff,
-      (document) => {
-        document.source_records.push({
-          key: "technical.fixture-authority",
-          path: "source.md",
-          media_type: "text/markdown",
-          sha256: createHash("sha256").update(source).digest("hex"),
-          locator: { kind: "whole_resource", value: "." },
-          roles: ["technical_authority"],
+      async (document) => {
+        const cell = document.component_family_cells[0];
+        const authority = await addV1FeasibilityDecisionSource(
+          fixture.root,
+          document,
+          {
+            recordKey: "technical.fixture-authority",
+            itemKey: "fixture-feasibility-authority",
+            itemKind: "technical_obligation",
+            roles: ["technical_authority"],
+            projections: [
+              {
+                mode: "required_realization",
+                target_ref: cell.target_ref,
+                component_family_ref: cell.component_family_ref,
+                condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+                  document,
+                  cell.condition_profile_ref,
+                ),
+                realization_ref: "reuse-project-card",
+              },
+            ],
+          },
+        );
+        fixture.contract.task.source_paths.push(authority.sourcePath);
+        fixture.contract.source_claims.push({
+          key: authority.itemKey,
+          source_ref: `${authority.sourcePath}#${authority.itemKey}`,
+          statement: authority.normalizedText,
+          disposition: {
+            type: "claim",
+            refs: ["first.obligation.architecture-first"],
+          },
         });
-        document.component_family_cells[0].required_realization = {
+        cell.required_realization = {
           realization_ref: "reuse-project-card",
-          technical_authority_source_refs: [
-            "technical.fixture-authority",
-          ],
+          technical_authority_source_refs: [authority.recordRef],
         };
       },
     );
     await writeDesignResourceHandoff(fixture.root, handoff);
 
     const outcome = fixture.contract.outcomes[0];
-    const target =
-      outcome.product.surface_bindings[0].design_targets[0];
+    const target = outcome.product.surface_bindings[0].design_targets[0];
     target.source_paths.push(DESIGN_FEASIBILITY_PATH);
     outcome.acceptance.checks[0].verification_inputs.push(
       DESIGN_FEASIBILITY_PATH,
@@ -571,50 +596,479 @@ test("Long-Task binds a required realization through existing Source and technic
       fixture.root,
       DESIGN_HANDOFF_PATH,
     );
-    const positive = createLongTaskDesignHandoffConsumer(fixture.contract);
+    const sourceItems = await compileSourceInventory(
+      fixture.root,
+      fixture.contract.task.source_paths,
+    );
+    const positive = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+      sourceItems,
+    );
     positive.consume(preflight);
     assert.doesNotThrow(() => positive.finish());
 
+    assertOptionalFeasibilityBindingClosure(fixture, preflight, sourceItems);
+
+    const unattributedContract = structuredClone(fixture.contract);
+    unattributedContract.outcomes[0].technical.bindings.push({
+      key: "extra-page-style",
+      kind: "file",
+      target: "src/state.json",
+      carrier_paths: ["src/state.json"],
+      existence: "existing",
+    });
+    unattributedContract.outcomes[0].product.surface_bindings[0].component_binding_refs.push(
+      "extra-page-style",
+    );
+    const unattributed = createLongTaskDesignHandoffConsumer(
+      unattributedContract,
+      sourceItems,
+    );
+    unattributed.consume(preflight);
+    assert.throws(
+      () => unattributed.finish(),
+      /feasibility_component_binding_unattributed/u,
+    );
+
+    const outsideComponentContract = structuredClone(fixture.contract);
+    const outsideComponent =
+      outsideComponentContract.outcomes[0].technical.bindings.find(
+        (item) => item.key === "state-first",
+      );
+    outsideComponent.target = DESIGN_RESOURCE_PATH;
+    outsideComponent.carrier_paths = [DESIGN_RESOURCE_PATH];
+    const outsideComponentConsumer = createLongTaskDesignHandoffConsumer(
+      outsideComponentContract,
+      sourceItems,
+    );
+    outsideComponentConsumer.consume(preflight);
+    assert.throws(
+      () => outsideComponentConsumer.finish(),
+      /feasibility_component_binding_outside_owner_roots/u,
+    );
+
+    const outsideRouteContract = structuredClone(fixture.contract);
+    outsideRouteContract.outcomes[0].technical.bindings.push({
+      key: "outside-route",
+      kind: "file",
+      target: DESIGN_RESOURCE_PATH,
+      carrier_paths: [DESIGN_RESOURCE_PATH],
+      existence: "existing",
+    });
+    outsideRouteContract.outcomes[0].product.surface_bindings[0].route_binding_ref =
+      "outside-route";
+    const outsideRoute = createLongTaskDesignHandoffConsumer(
+      outsideRouteContract,
+      sourceItems,
+    );
+    outsideRoute.consume(preflight);
+    assert.throws(
+      () => outsideRoute.finish(),
+      /feasibility_route_binding_outside_owner_roots/u,
+    );
+
+    const pathOnlyClaimContract = structuredClone(fixture.contract);
+    pathOnlyClaimContract.source_claims.find(
+      (claim) => claim.key === "fixture-feasibility-authority",
+    ).source_ref = "src/technical.fixture-authority.md";
+    const pathOnlyClaim = createLongTaskDesignHandoffConsumer(
+      pathOnlyClaimContract,
+      sourceItems,
+    );
+    pathOnlyClaim.consume(preflight);
+    assert.throws(
+      () => pathOnlyClaim.finish(),
+      /feasibility_authority_claim_count/u,
+    );
+
     const undeclaredSource = structuredClone(fixture.contract);
     undeclaredSource.task.source_paths =
-      undeclaredSource.task.source_paths.filter((item) => item !== "source.md");
-    const undeclared = createLongTaskDesignHandoffConsumer(undeclaredSource);
+      undeclaredSource.task.source_paths.filter(
+        (item) => item !== "src/technical.fixture-authority.md",
+      );
+    const undeclared = createLongTaskDesignHandoffConsumer(
+      undeclaredSource,
+      sourceItems,
+    );
     undeclared.consume(preflight);
     assert.throws(
       () => undeclared.finish(),
-      /required_realization_authority_source_not_declared/u,
+      /feasibility_authority_source_not_declared/u,
     );
 
     const missingClaimContract = structuredClone(fixture.contract);
     missingClaimContract.source_claims =
       missingClaimContract.source_claims.filter(
-        (claim) => claim.source_ref.split("#")[0] !== "source.md",
+        (claim) =>
+          claim.source_ref !==
+          "src/technical.fixture-authority.md#fixture-feasibility-authority",
       );
     const missingClaim = createLongTaskDesignHandoffConsumer(
       missingClaimContract,
+      sourceItems,
     );
     missingClaim.consume(preflight);
     assert.throws(
       () => missingClaim.finish(),
-      /required_realization_authority_claim_missing/u,
+      /feasibility_authority_claim_count/u,
     );
 
     const wrongBindingContract = structuredClone(fixture.contract);
-    const wrongBinding = wrongBindingContract.outcomes[0].technical.bindings.find(
-      (item) => item.key === "state-first",
-    );
+    const wrongBinding =
+      wrongBindingContract.outcomes[0].technical.bindings.find(
+        (item) => item.key === "state-first",
+      );
     wrongBinding.target = "src/state.json";
     wrongBinding.carrier_paths = ["src/state.json"];
     const wrongBindingConsumer = createLongTaskDesignHandoffConsumer(
       wrongBindingContract,
+      sourceItems,
     );
     wrongBindingConsumer.consume(preflight);
     assert.throws(
       () => wrongBindingConsumer.finish(),
-      /required_realization_technical_binding_missing/u,
+      /feasibility_required_realization_binding_mismatch/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task derives an authorized planned owner from existing bindings", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const handoff = await attachDesignResourceHandoff(fixture);
+    let authority;
+    await addDesignResourceImplementationFeasibility(
+      fixture.root,
+      handoff,
+      async (document) => {
+        const cell = document.component_family_cells[0];
+        authority = await addV1FeasibilityDecisionSource(
+          fixture.root,
+          document,
+          {
+            recordKey: "technical.planned-card-authority",
+            itemKey: "planned-card-authority",
+            itemKind: "technical_obligation",
+            roles: ["planned_owner_authorization"],
+            projections: [
+              {
+                mode: "planned_owner_authorization",
+                target_ref: cell.target_ref,
+                component_family_ref: cell.component_family_ref,
+                condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+                  document,
+                  cell.condition_profile_ref,
+                ),
+                owner_locator: "planned-card-owner",
+              },
+            ],
+          },
+        );
+        cell.feasible_realizations = [
+          {
+            ...cell.feasible_realizations[0],
+            key: "create-planned-card",
+            strategy_steps: ["create_shared_component"],
+            owner_candidates: [
+              {
+                kind: "planned_logical_owner",
+                locator: "planned-card-owner",
+                existence: "planned",
+                authorization_source_refs: [authority.recordRef],
+              },
+            ],
+          },
+        ];
+      },
+    );
+    await writeDesignResourceHandoff(fixture.root, handoff);
+    fixture.contract.task.source_paths.push(authority.sourcePath);
+    fixture.contract.source_claims.push({
+      key: authority.itemKey,
+      source_ref: `${authority.sourcePath}#${authority.itemKey}`,
+      statement: authority.normalizedText,
+      disposition: {
+        type: "claim",
+        refs: ["first.obligation.architecture-first"],
+      },
+    });
+    const outcome = fixture.contract.outcomes[0];
+    const surface = outcome.product.surface_bindings[0];
+    surface.design_targets[0].source_paths.push(DESIGN_FEASIBILITY_PATH);
+    outcome.acceptance.checks[0].verification_inputs.push(
+      DESIGN_FEASIBILITY_PATH,
+    );
+    const component = outcome.technical.bindings.find(
+      (item) => item.key === "state-first",
+    );
+    component.existence = "planned";
+    component.target = "planned-card-owner";
+    component.carrier_paths = [];
+    outcome.technical.bindings.push({
+      key: "design-route-owner",
+      kind: "file",
+      target: DESIGN_TECHNICAL_SOURCE_PATH,
+      carrier_paths: [DESIGN_TECHNICAL_SOURCE_PATH],
+      existence: "existing",
+    });
+    surface.route_binding_ref = "design-route-owner";
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    const sourceItems = await compileSourceInventory(
+      fixture.root,
+      fixture.contract.task.source_paths,
+    );
+    const positive = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+      sourceItems,
+    );
+    positive.consume(preflight);
+    assert.doesNotThrow(() => positive.finish());
+
+    const missingSource = structuredClone(fixture.contract);
+    missingSource.task.source_paths = missingSource.task.source_paths.filter(
+      (sourcePath) => sourcePath !== authority.sourcePath,
+    );
+    const missingSourceConsumer = createLongTaskDesignHandoffConsumer(
+      missingSource,
+      sourceItems,
+    );
+    missingSourceConsumer.consume(preflight);
+    assert.throws(
+      () => missingSourceConsumer.finish(),
+      /feasibility_authority_source_not_declared/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task permits one shared binding across complete condition cells", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const handoff = await attachDesignResourceHandoff(fixture);
+    await addDesignResourceImplementationFeasibility(
+      fixture.root,
+      handoff,
+      (document) => {
+        const baseCell = document.component_family_cells[0];
+        const facts = new Map(handoff.facts.map((fact) => [fact.key, fact]));
+        document.condition_model.profiles = DESIGN_CONDITION_KEYS.map(
+          (conditionRef) => ({
+            key: `profile-${conditionRef}`,
+            condition_refs: [conditionRef],
+          }),
+        );
+        document.component_family_cells = DESIGN_CONDITION_KEYS.map(
+          (conditionRef) => ({
+            ...structuredClone(baseCell),
+            key: `card-${conditionRef}`,
+            condition_profile_ref: `profile-${conditionRef}`,
+            design_fact_refs: baseCell.design_fact_refs.filter(
+              (factRef) => facts.get(factRef)?.condition_ref === conditionRef,
+            ),
+            feasible_realizations: baseCell.feasible_realizations.map(
+              (realization) => ({
+                ...structuredClone(realization),
+                key: `${realization.key}-${conditionRef}`,
+              }),
+            ),
+          }),
+        );
+      },
+    );
+    await writeDesignResourceHandoff(fixture.root, handoff);
+    const outcome = fixture.contract.outcomes[0];
+    outcome.product.surface_bindings[0].design_targets[0].source_paths.push(
+      DESIGN_FEASIBILITY_PATH,
+    );
+    outcome.acceptance.checks[0].verification_inputs.push(
+      DESIGN_FEASIBILITY_PATH,
+    );
+    const sharedBinding = outcome.technical.bindings.find(
+      (item) => item.key === "state-first",
+    );
+    sharedBinding.target = DESIGN_TECHNICAL_SOURCE_PATH;
+    sharedBinding.carrier_paths = [DESIGN_TECHNICAL_SOURCE_PATH];
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.equal(
+      preflight.technical_feasibility_documents[0].component_family_cells
+        .length,
+      2,
+    );
+    const sourceItems = await compileSourceInventory(
+      fixture.root,
+      fixture.contract.task.source_paths,
+    );
+    const consumer = createLongTaskDesignHandoffConsumer(
+      fixture.contract,
+      sourceItems,
+    );
+    consumer.consume(preflight);
+    assert.doesNotThrow(() => consumer.finish());
+
+    const sharedFamilyPreflight = structuredClone(preflight);
+    const sharedFamilyDocument =
+      sharedFamilyPreflight.technical_feasibility_documents[0];
+    const secondaryCell = structuredClone(
+      sharedFamilyDocument.component_family_cells[0],
+    );
+    secondaryCell.key = "secondary-card-shared-owner";
+    secondaryCell.component_family_ref = "component-family.secondary-card";
+    sharedFamilyDocument.component_family_cells.push(secondaryCell);
+    const familySubject = sharedFamilyPreflight.handoff.subjects.find(
+      (subject) => subject.kind === "component_family",
+    );
+    sharedFamilyPreflight.handoff.subjects.push({
+      ...structuredClone(familySubject),
+      key: "component-family.secondary-card",
+    });
+    const surface = outcome.product.surface_bindings[0];
+    assert.doesNotThrow(() =>
+      validateLongTaskDesignFeasibilityBindings(
+        fixture.contract,
+        {
+          outcome_key: outcome.key,
+          binding: surface,
+          target: surface.design_targets[0],
+        },
+        sharedFamilyPreflight,
+        sourceItems,
+      ),
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task carries feasibility blockers through existing completion boundaries", async () => {
+  const external = await createFeasibilityBlockerFixture(
+    "external_confirmation",
+  );
+  try {
+    const positive = createLongTaskDesignHandoffConsumer(
+      external.fixture.contract,
+      external.sourceItems,
+    );
+    positive.consume(external.preflight);
+    assert.doesNotThrow(() => positive.finish());
+
+    const ordinaryClaim = structuredClone(external.fixture.contract);
+    ordinaryClaim.source_claims.find(
+      (claim) => claim.key === external.authority.itemKey,
+    ).disposition = {
+      type: "claim",
+      refs: ["first.obligation.architecture-first"],
+    };
+    const ordinary = createLongTaskDesignHandoffConsumer(
+      ordinaryClaim,
+      external.sourceItems,
+    );
+    ordinary.consume(external.preflight);
+    assert.throws(
+      () => ordinary.finish(),
+      /feasibility_blocker_external_confirmation_required/u,
+    );
+
+    for (const [name, mutate, expected] of [
+      [
+        "missing",
+        (contract) => {
+          contract.global.acceptance.external_confirmations = [];
+        },
+        /feasibility_blocker_confirmation_unknown/u,
+      ],
+      [
+        "nonblocking",
+        (contract) => {
+          contract.global.acceptance.external_confirmations[0].blocks_target = false;
+        },
+        /feasibility_blocker_confirmation_not_blocking/u,
+      ],
+      [
+        "wrong impact",
+        (contract) => {
+          contract.global.acceptance.external_confirmations[0].impact_claims = [
+            "first.requirement.observe-first",
+          ];
+        },
+        /feasibility_blocker_confirmation_target_claim_missing/u,
+      ],
+    ]) {
+      const contract = structuredClone(external.fixture.contract);
+      mutate(contract);
+      const consumer = createLongTaskDesignHandoffConsumer(
+        contract,
+        external.sourceItems,
+      );
+      consumer.consume(external.preflight);
+      assert.throws(() => consumer.finish(), expected, name);
+    }
+
+    const staleItems = structuredClone(external.sourceItems);
+    staleItems.find(
+      (item) => item.key === external.authority.itemKey,
+    ).text_sha256 = "0".repeat(64);
+    const stale = createLongTaskDesignHandoffConsumer(
+      external.fixture.contract,
+      staleItems,
+    );
+    stale.consume(external.preflight);
+    assert.throws(
+      () => stale.finish(),
+      /feasibility_source_item_digest_mismatch/u,
+    );
+  } finally {
+    await rm(external.fixture.root, { recursive: true, force: true });
+  }
+
+  const blockerOnly = await createFeasibilityBlockerFixture(
+    "external_confirmation",
+    { blockerOnly: true },
+  );
+  try {
+    const positive = createLongTaskDesignHandoffConsumer(
+      blockerOnly.fixture.contract,
+      blockerOnly.sourceItems,
+    );
+    positive.consume(blockerOnly.preflight);
+    assert.doesNotThrow(() => positive.finish());
+
+    const missingClaimContract = structuredClone(blockerOnly.fixture.contract);
+    missingClaimContract.source_claims =
+      missingClaimContract.source_claims.filter(
+        (claim) => claim.key !== blockerOnly.authority.itemKey,
+      );
+    const missingClaim = createLongTaskDesignHandoffConsumer(
+      missingClaimContract,
+      blockerOnly.sourceItems,
+    );
+    missingClaim.consume(blockerOnly.preflight);
+    assert.throws(
+      () => missingClaim.finish(),
+      /feasibility_authority_claim_count/u,
+    );
+  } finally {
+    await rm(blockerOnly.fixture.root, { recursive: true, force: true });
+  }
+
+  const decision = await createFeasibilityBlockerFixture("decision");
+  try {
+    const consumer = createLongTaskDesignHandoffConsumer(
+      decision.fixture.contract,
+      decision.sourceItems,
+    );
+    consumer.consume(decision.preflight);
+    assert.doesNotThrow(() => consumer.finish());
+  } finally {
+    await rm(decision.fixture.root, { recursive: true, force: true });
   }
 });
 
@@ -1439,6 +1893,169 @@ async function attachDesignResourceHandoff(
     });
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   return handoff;
+}
+
+function assertOptionalFeasibilityBindingClosure(
+  fixture,
+  preflight,
+  sourceItems,
+) {
+  const optionalPreflight = structuredClone(preflight);
+  const optionalCell =
+    optionalPreflight.technical_feasibility_documents[0]
+      .component_family_cells[0];
+  optionalCell.required_realization = {
+    realization_ref: null,
+    technical_authority_source_refs: [],
+  };
+  optionalCell.feasible_realizations.push({
+    ...structuredClone(optionalCell.feasible_realizations[0]),
+    key: "reuse-state-card",
+    owner_candidates: [
+      {
+        kind: "existing_path",
+        locator: "src/state.json",
+        existence: "existing",
+      },
+    ],
+  });
+  const uniqueOptional = createLongTaskDesignHandoffConsumer(
+    fixture.contract,
+    sourceItems,
+  );
+  uniqueOptional.consume(optionalPreflight);
+  assert.doesNotThrow(() => uniqueOptional.finish());
+
+  const missingOptionalContract = structuredClone(fixture.contract);
+  const missingOptionalBinding =
+    missingOptionalContract.outcomes[0].technical.bindings.find(
+      (item) => item.key === "state-first",
+    );
+  missingOptionalBinding.target = "src/unrelated.json";
+  missingOptionalBinding.carrier_paths = ["src/unrelated.json"];
+  const missingOptional = createLongTaskDesignHandoffConsumer(
+    missingOptionalContract,
+    sourceItems,
+  );
+  missingOptional.consume(optionalPreflight);
+  assert.throws(
+    () => missingOptional.finish(),
+    /feasibility_realization_binding_missing/u,
+  );
+
+  const ambiguousPreflight = structuredClone(optionalPreflight);
+  ambiguousPreflight.technical_feasibility_documents[0].component_family_cells[0].feasible_realizations.push(
+    {
+      ...structuredClone(optionalCell.feasible_realizations[0]),
+      key: "reuse-project-card-again",
+    },
+  );
+  const ambiguous = createLongTaskDesignHandoffConsumer(
+    fixture.contract,
+    sourceItems,
+  );
+  ambiguous.consume(ambiguousPreflight);
+  assert.throws(
+    () => ambiguous.finish(),
+    /feasibility_realization_binding_ambiguous/u,
+  );
+}
+
+async function createFeasibilityBlockerFixture(
+  itemKind,
+  { blockerOnly = false } = {},
+) {
+  const fixture = await createDeliveryFixture();
+  const handoff = await attachDesignResourceHandoff(fixture);
+  let authority;
+  const itemKindSlug = itemKind.replaceAll("_", "-");
+  await addDesignResourceImplementationFeasibility(
+    fixture.root,
+    handoff,
+    async (document) => {
+      const cell = document.component_family_cells[0];
+      authority = await addV1FeasibilityDecisionSource(fixture.root, document, {
+        recordKey: `technical.card-blocker-${itemKindSlug}`,
+        itemKey: `card-blocker-${itemKindSlug}`,
+        itemKind,
+        roles: ["feasibility_basis"],
+        projections: [
+          {
+            mode: "feasibility_blocker",
+            target_ref: cell.target_ref,
+            component_family_ref: cell.component_family_ref,
+            condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+              document,
+              cell.condition_profile_ref,
+            ),
+            blocker_ref: "blocker.card-owner",
+          },
+        ],
+      });
+      if (blockerOnly) cell.feasible_realizations = [];
+      cell.blocker_refs = ["blocker.card-owner"];
+      document.blockers = [
+        {
+          key: "blocker.card-owner",
+          component_family_ref: cell.component_family_ref,
+          target_ref: cell.target_ref,
+          condition_profile_ref: cell.condition_profile_ref,
+          source_record_refs: [authority.recordRef],
+          description: "The production component owner remains unresolved.",
+        },
+      ];
+    },
+  );
+  await writeDesignResourceHandoff(fixture.root, handoff);
+  fixture.contract.task.source_paths.push(authority.sourcePath);
+  fixture.contract.source_claims.push({
+    key: authority.itemKey,
+    source_ref: `${authority.sourcePath}#${authority.itemKey}`,
+    statement: authority.normalizedText,
+    disposition:
+      itemKind === "decision"
+        ? {
+            type: "decision_required",
+            reason:
+              "The production component owner requires a project decision.",
+          }
+        : {
+            type: "external_confirmation",
+            refs: ["confirm-card-owner"],
+          },
+  });
+  if (itemKind === "external_confirmation")
+    fixture.contract.global.acceptance.external_confirmations.push({
+      key: "confirm-card-owner",
+      description: "Confirm the production component owner.",
+      owner: "project-owner",
+      kind: "expert_authority",
+      impact_claims: ["first.control.main.location"],
+      blocks_target: true,
+    });
+  const outcome = fixture.contract.outcomes[0];
+  if (blockerOnly)
+    outcome.product.surface_bindings[0].component_binding_refs = [];
+  outcome.product.surface_bindings[0].design_targets[0].source_paths.push(
+    DESIGN_FEASIBILITY_PATH,
+  );
+  outcome.acceptance.checks[0].verification_inputs.push(
+    DESIGN_FEASIBILITY_PATH,
+  );
+  const component = outcome.technical.bindings.find(
+    (item) => item.key === "state-first",
+  );
+  component.target = DESIGN_TECHNICAL_SOURCE_PATH;
+  component.carrier_paths = [DESIGN_TECHNICAL_SOURCE_PATH];
+  const preflight = await preflightDesignResourceHandoff(
+    fixture.root,
+    DESIGN_HANDOFF_PATH,
+  );
+  const sourceItems = await compileSourceInventory(
+    fixture.root,
+    fixture.contract.task.source_paths,
+  );
+  return { fixture, authority, preflight, sourceItems };
 }
 
 function designFactExpectation(handoff, proof) {

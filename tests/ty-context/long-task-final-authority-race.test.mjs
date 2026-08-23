@@ -82,8 +82,8 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
       activeB.active_authority_identity,
     );
   } finally {
-    await rm(signal.folder, { recursive: true, force: true });
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
   }
 });
 
@@ -197,8 +197,8 @@ test("Final Gate rejects protected inputs and current-candidate runtime files ch
           JSON.stringify(receipt.findings),
         );
       } finally {
-        await rm(signal.folder, { recursive: true, force: true });
-        await rm(fixture.root, { recursive: true, force: true });
+        await removeTemporary(signal.folder);
+        await removeTemporary(fixture.root);
       }
     });
 });
@@ -237,8 +237,8 @@ test("targeted verify writes no progress for an Authority that became stale", as
     );
     assert.deepEqual(await readProgressRecords(fixture.workdir), {});
   } finally {
-    await rm(signal.folder, { recursive: true, force: true });
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
   }
 });
 
@@ -300,9 +300,18 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
       revisionB.compiled_identity,
     );
   } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(fixture.root);
   }
 });
+
+async function removeTemporary(target) {
+  await rm(target, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
+}
 
 function addProof(contract, key) {
   contract.outcomes[0].acceptance.checks[0].positive_assertions.push({

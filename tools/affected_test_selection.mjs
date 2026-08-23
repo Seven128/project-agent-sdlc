@@ -36,6 +36,8 @@ const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
 
 const IMPLEMENTATION_FEASIBILITY_SOURCE_PATHS = Object.freeze([
   "packages/ty-context/src/lib/design-resource-implementation-feasibility-model.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-source-decision.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-source-decision-projection.ts",
   "packages/ty-context/src/lib/design-resource-implementation-feasibility-shape-sections.ts",
   "packages/ty-context/src/lib/design-resource-implementation-feasibility-shape.ts",
   "packages/ty-context/src/lib/design-resource-implementation-feasibility-types.ts",
@@ -68,6 +70,9 @@ const SYMBOLIC_DESIGN_HANDOFF_PATHS = new Set([
 const SYMBOLIC_LONG_TASK_PATHS = new Set([
   "packages/ty-context/src/lib/long-task-authority-policy.ts",
   "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
+  "packages/ty-context/src/lib/long-task-design-feasibility-binding.ts",
+  "packages/ty-context/src/lib/long-task-design-feasibility-binding-owners.ts",
+  "packages/ty-context/src/lib/long-task-design-feasibility-source-closure.ts",
   "packages/ty-context/src/lib/long-task-design-resource-method-binding.ts",
   "packages/ty-context/src/lib/long-task-evidence-capability-codec.ts",
   "packages/ty-context/src/lib/long-task-evidence-capability-policy.ts",
@@ -281,6 +286,9 @@ const HOTSPOT_TESTS = new Map([
   ]),
   ...[
     "packages/ty-context/src/lib/design-resource-handoff-set-integrity.ts",
+    "packages/ty-context/src/lib/long-task-design-feasibility-binding.ts",
+    "packages/ty-context/src/lib/long-task-design-feasibility-binding-owners.ts",
+    "packages/ty-context/src/lib/long-task-design-feasibility-source-closure.ts",
     "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
     "packages/ty-context/src/lib/long-task-design-resource-method-binding.ts",
     "packages/ty-context/src/lib/long-task-design-target-capabilities.ts",
@@ -863,6 +871,7 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/repository-path-safety.ts",
     [
       "design-resource-handoff.test.mjs",
+      ...IMPLEMENTATION_FEASIBILITY_TESTS,
       "design-resource-recovery-safety.test.mjs",
       "long-task-profile-hook.test.mjs",
       "long-task-workspace-scope.test.mjs",
