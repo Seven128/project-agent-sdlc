@@ -123,6 +123,8 @@ Impact assurance has two strengths. A material/recoverable loop may use the comp
 
 Design resources express user-visible interaction semantics and the presentation of product rules. Business, data, permission and algorithmic rules remain owned by product/technical Source; reference those rules and show their visible consequences without inventing them or making a visual artifact their sole owner.
 
+For a Web/App implementation handoff, visual coverage alone is insufficient. Read [implementation-feasibility.md](implementation-feasibility.md) and inspect the current platform, framework/runtime, UI system, token/theming adapter, component owners and route owners. Every material component-family × target × condition profile needs a Source-backed candidate realization or blocker before formal publication. This does not make implementation structure a design decision or put exact design values into technical Source.
+
 ### Formal selected Web/App handoff
 
 When—and only when—the direction is final-selected for a formal Web/App implementation handoff, load [formal-selected-web-app-handoff.md](formal-selected-web-app-handoff.md). That reference owns the complete atomic Expected Fact Universe, canonical acquisition, Inspector/Census, Fact × method proof and publication rules. Exploration never loads or approximates them.
@@ -193,17 +195,33 @@ coverage:
   required_adaptation_accessibility: []
 inputs:
   product_surface_constraints: []
+  technical_sources: []
   exact_targets: []
   constraints: []
   inspiration: []
   background: []
 style_application:
-  primary_content_priority: task-local-or-not-applicable
-  density: task-local-or-not-applicable
-  container_treatment: task-local-or-not-applicable
-  visible_vs_hit_geometry: task-local-or-not-applicable
-  preserve: []
-  prohibited_patterns: []
+  primary_content_priority: results-table-is-primary-work-object
+  density: compact-working-density-for-results-table
+  container_treatment: one-flat-table-surface-without-card-wrapper
+  preserve: [selected-header-hierarchy]
+  prohibited_patterns: [nested-cards-around-the-primary-results-table]
+quality_commission:
+  artifact_archetype: dashboard-data-workbench
+  primary_design_challenges: [task-hierarchy, component-reuse, dense-data-legibility]
+  visual_character:
+    desired: [calm, precise, product-specific]
+    avoid: [generic-ai-gradient, excessive-cards, arbitrary-glow]
+  content:
+    real_copy_required: true
+    realistic_data_required: true
+    placeholder_final_content_forbidden: true
+  reference_roles:
+    - { ref: selected-density-reference, role: information-density }
+  component_authoring:
+    shared_families_required: true
+    repeated_instance_specific_styling_forbidden_by_design: true
+  substrate_input_refs: [dashboard-web-feasibility]
 selected_capability:
   kind: runtime-discovered-kind
   id: runtime-discovered-id
@@ -211,7 +229,9 @@ expected_entry: known-or-provider-native
 review_promise: minimal-sanity | handoff-checks | selected-source-snapshot
 ```
 
-This is an explanatory shape, not a required file or schema. Include `style_application` only when material to a style-bearing commission and bind its values to current Design Authority, selected Source and the explicit slice. It is not a persisted Application Projection, Authority, state or acceptance record. A simple high-fidelity preview does not gain another tool action or persisted side effect from these fields. Never paste or paraphrase the Open Design capability's own seed/template prompt into it.
+This is an explanatory shape, not a required file or schema; its concrete dashboard values illustrate Source-derived content and are not defaults. Include `style_application` only when material to a style-bearing commission and bind its actual values to current Design Authority, selected Source and the explicit slice. It is not a persisted Application Projection, Authority, state or acceptance record. For style-bearing generation, add an archetype-specific `quality_commission`: name the main design challenges, desired/avoided visual character, real-content obligations, the distinct role of each selected reference, design-side shared-family expectations and applicable feasibility Source. Omit irrelevant keys instead of emitting placeholders.
+
+`repeated_instance_specific_styling_forbidden_by_design` means repeated controls in the selected resource share one component-family grammar rather than being drawn as unrelated instances. It does not assert that later production code already reuses one component. `quality_commission` is Provider input, not a persisted quality score, Authority, Gate, routing record or acceptance result. A simple high-fidelity preview does not gain another tool action or persisted side effect from these fields. Never paste or paraphrase the Open Design capability's own seed/template prompt into it.
 
 ## 9. Iterate and stop
 
@@ -257,13 +277,14 @@ preserve: existing-covered
 prohibited_patterns: projected
 ```
 
-The illustrative actual envelope contains only the three projected fields; these placeholder values stand for the current task's Source-derived instructions, not defaults:
+Assume current Screen Source says the results table is the page's primary work object, current Design Authority calls for compact working density, and an adopted constraint forbids nested cards. The illustrative actual envelope contains only those three Source-derived fields:
 
 ```yaml
 style_application:
-  density: task-local-projected-density
-  container_treatment: task-local-projected-container-treatment
-  prohibited_patterns: task-local-projected-prohibited-patterns
+  density: compact-working-density-for-results-table
+  container_treatment: one-flat-table-surface-without-card-wrapper
+  prohibited_patterns:
+    - nested-cards-around-the-primary-results-table
 ```
 
 All applicable dimensions are closed, so the Provider run is allowed. If any one of them instead becomes unresolved, stale or conflicting, its disposition becomes `decision-required` and the run is blocked.

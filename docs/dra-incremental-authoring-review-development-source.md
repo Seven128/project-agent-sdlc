@@ -12,8 +12,8 @@ The delivery uses the Default Workflow Contract. The user explicitly excluded Lo
 
 ### Conversation inputs
 
-- `S1` — original development proposal: `C:\Users\777\.codex\attachments\555a8095-effe-404c-a2c9-4e9363c545c8\pasted-text.txt`
-- `S2` — Web GPT Pro response accepting and refining the Codex audit: `C:\Users\777\.codex\attachments\9ed6ff3f-2736-4b58-9235-01e8076f228e\pasted-text.txt`
+- `S1` — original development proposal: historical non-resolvable locator `attachment-provenance://555a8095-effe-404c-a2c9-4e9363c545c8/pasted-text.txt`
+- `S2` — Web GPT Pro response accepting and refining the Codex audit: historical non-resolvable locator `attachment-provenance://9ed6ff3f-2736-4b58-9235-01e8076f228e/pasted-text.txt`
 - `G1` — the active native Goal objective indexes `S1`, `S2`, this file and the controlling repository owners.
 
 ### Controlling repository owners
@@ -308,7 +308,7 @@ Correctness and maintainability are always applicable. Compatibility is preserve
 
 ### Indexed input and baseline
 
-- `S3` — Web GPT Pro remaining-P1 audit and complete supplemental development plan: `C:\Users\777\.codex\attachments\232a6fa2-9499-48b7-afdd-39361d17ebd0\pasted-text.txt`.
+- `S3` — Web GPT Pro remaining-P1 audit and complete supplemental development plan: historical non-resolvable locator `attachment-provenance://232a6fa2-9499-48b7-afdd-39361d17ebd0/pasted-text.txt`.
 - `B2` — required development baseline: `1451e156320481017592bce08fc95939e9ec78ed`.
 - The native Goal indexes `S3`, `B2`, this Source, the DRA Contract, canonical managed Skill, `resource-selection.md`, `open-design-provider.md`, the DRA test and the existing admission binding. Compaction recovery must reread `S3`; this amendment deliberately does not duplicate its full normative text.
 - The delivery remains on the Default Workflow Contract. Long-Task bootstrap, activation, recovery and mechanism changes are explicitly excluded.

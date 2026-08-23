@@ -18,6 +18,7 @@
     "test:long-task:trust": "node tools/run_affected_tests.mjs --scope trust",
     "test:long-task:focused": "node tools/run_affected_tests.mjs --scope long-task",
     "test:delivery-contract:focused": "node tools/run_affected_tests.mjs --scope delivery-contract",
+    "verify:active-source-portability": "node tools/verify_active_source_portability.mjs",
     "test:structural-cost": "node tools/structural_closure_cost_gate.mjs --artifact .artifacts/structural-closure-cost/report.json",
     "launch:check": "node tools/launch_readiness_check.mjs --offline",
     "launch:strict-external": "node tools/launch_readiness_check.mjs --strict-external",

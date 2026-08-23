@@ -36,6 +36,11 @@ export type {
   DesignResourceHandoffV1,
 } from "./lib/design-resource-handoff-types.js";
 export type {
+  DesignResourceImplementationFeasibilityIdentityV1,
+  DesignResourceImplementationFeasibilityV1,
+  DesignResourceTechnicalFeasibilityInputV1,
+} from "./lib/design-resource-implementation-feasibility-types.js";
+export type {
   DesignResourceHandoffPreflightV2,
   DesignResourceHandoffV2,
   DesignResourceObservableRuleManifestV2,

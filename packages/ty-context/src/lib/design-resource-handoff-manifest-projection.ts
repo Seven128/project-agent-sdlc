@@ -21,6 +21,7 @@ export function hydrateManifestBackedDesignResourceHandoff(
     intent: descriptor.intent,
     scope: descriptor.scope,
     provenance: descriptor.provenance,
+    technical_feasibility_inputs: descriptor.technical_feasibility_inputs,
     resources: descriptor.resources,
     axis_dispositions: manifest.axis_dispositions,
     condition_exclusions: manifest.condition_exclusions,

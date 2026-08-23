@@ -12,6 +12,9 @@ export const DESIGN_SPEC_PATH = "design/design-spec.md";
 export const DESIGN_COMPONENT_SPEC_PATH = "design/component-spec.json";
 export const DESIGN_SUPPORT_PATH = "design/supporting-notes.txt";
 export const DESIGN_FACT_MANIFEST_PATH = "design/observable-facts.json";
+export const DESIGN_FEASIBILITY_PATH =
+  "design/implementation-feasibility.json";
+export const DESIGN_TECHNICAL_SOURCE_PATH = "src/ui-system.ts";
 export const DESIGN_RESOURCE_PATHS = [
   DESIGN_RESOURCE_PATH,
   DESIGN_TOKEN_PATH,
@@ -128,6 +131,12 @@ export async function writeDesignResourceHandoffFixture(
   bundles.set(bundle.handoff, bundle);
   mutate?.(bundle.handoff, bundle.manifest);
   await writeFixtureResources(root, bundle);
+  if (options.feasibility)
+    await addDesignResourceImplementationFeasibility(
+      root,
+      bundle.handoff,
+      options.mutateFeasibility,
+    );
   await writeDesignResourceHandoff(root, bundle.handoff, options);
   return {
     handoff: bundle.handoff,
@@ -207,11 +216,158 @@ export function manifestBackedDesignResourceHandoff(handoff) {
     intent: handoff.intent,
     scope: structuredClone(handoff.scope),
     provenance: structuredClone(handoff.provenance),
+    ...(handoff.technical_feasibility_inputs
+      ? {
+          technical_feasibility_inputs: structuredClone(
+            handoff.technical_feasibility_inputs,
+          ),
+        }
+      : {}),
     resources: structuredClone(handoff.resources),
     targets: structuredClone(handoff.targets),
     resource_fact_closure: structuredClone(handoff.resource_fact_closure),
     coverage: structuredClone(handoff.coverage),
     proposal: structuredClone(handoff.proposal),
+  };
+}
+
+export async function addDesignResourceImplementationFeasibility(
+  root,
+  handoff,
+  mutate,
+) {
+  const technicalSource = [
+    "export const platform = 'desktop-web';",
+    "export const frameworkRuntime = 'fixture-framework';",
+    "export const uiSystem = 'fixture-ui-system';",
+    "export const tokenAdapter = 'fixture-token-adapter';",
+    "export const Card = 'project-card';",
+    "export const routeOwner = 'main-route';",
+    "",
+  ].join("\n");
+  await mkdir(path.join(root, "src"), { recursive: true });
+  await writeFile(
+    path.join(root, DESIGN_TECHNICAL_SOURCE_PATH),
+    technicalSource,
+  );
+  const sourceKey = "technical.fixture-substrate";
+  const familyRef = "component-family.card";
+  const feasibility = {
+    schema_version: "design-resource-implementation-feasibility-v1",
+    key: "main-default-feasibility",
+    target_ref: DESIGN_TARGET_KEY,
+    realization_mode: "native_substrate",
+    source_records: [
+      {
+        key: sourceKey,
+        path: DESIGN_TECHNICAL_SOURCE_PATH,
+        media_type: "text/typescript",
+        sha256: sha256(technicalSource),
+        locator: { kind: "source_anchor", value: "export const Card" },
+        roles: [
+          "technical_platform",
+          "framework_runtime",
+          "ui_system",
+          "token_theming_adapter",
+          "component_owner",
+          "route_owner",
+          "capability_basis",
+          "feasibility_basis",
+        ],
+      },
+    ],
+    substrate_observations: [
+      observation("platform", "desktop-web", sourceKey),
+      observation("framework_runtime", "fixture-framework", sourceKey),
+      observation("ui_system", "fixture-ui-system", sourceKey),
+      observation("token_theming_adapter", "fixture-token-adapter", sourceKey),
+      observation("component_owner_roots", "fixture-components", sourceKey),
+      observation("route_owner_roots", "fixture-routes", sourceKey),
+    ],
+    condition_model: {
+      kind: "explicit_conditions_v1",
+      profiles: [
+        {
+          key: "desktop-all-inputs",
+          condition_refs: [...DESIGN_CONDITION_KEYS],
+        },
+      ],
+    },
+    component_family_cells: [
+      {
+        key: "card-main-all-inputs",
+        component_family_ref: familyRef,
+        target_ref: DESIGN_TARGET_KEY,
+        condition_profile_ref: "desktop-all-inputs",
+        design_fact_refs: handoff.facts
+          .filter((fact) => {
+            const subject = handoff.subjects.find(
+              (item) => item.key === fact.subject_ref,
+            );
+            return (
+              fact.target_ref === DESIGN_TARGET_KEY &&
+              (fact.subject_ref === familyRef ||
+                subject?.family_ref === familyRef ||
+                subject?.instance_of_ref === familyRef)
+            );
+          })
+          .map((fact) => fact.key),
+        feasible_realizations: [
+          {
+            key: "reuse-project-card",
+            strategy_steps: ["reuse_existing", "theme_with_tokens"],
+            primitive_refs: ["project-card", "project-theme"],
+            owner_candidates: [
+              {
+                kind: "existing_path",
+                locator: DESIGN_TECHNICAL_SOURCE_PATH,
+                existence: "existing",
+              },
+            ],
+            supported_customization_surfaces: [
+              "theme_tokens",
+              "component_variant",
+            ],
+            feasibility_basis_refs: [sourceKey],
+            observed_costs: [],
+            observed_risks: [],
+          },
+        ],
+        required_realization: {
+          realization_ref: null,
+          technical_authority_source_refs: [],
+        },
+        blocker_refs: [],
+      },
+    ],
+    blockers: [],
+  };
+  mutate?.(feasibility);
+  const content = `${JSON.stringify(feasibility, null, 2)}\n`;
+  await writeFile(path.join(root, DESIGN_FEASIBILITY_PATH), content);
+  handoff.technical_feasibility_inputs = [
+    {
+      key: feasibility.key,
+      target_ref: feasibility.target_ref,
+      path: DESIGN_FEASIBILITY_PATH,
+      media_type: "application/json",
+      sha256: sha256(content),
+    },
+  ];
+  return feasibility;
+}
+
+function observation(kind, name, sourceRef) {
+  return {
+    kind,
+    disposition: "observed",
+    value: {
+      kind: "identifier",
+      name,
+      version_source_ref: sourceRef,
+    },
+    source_record_refs: [sourceRef],
+    reason: null,
   };
 }
 

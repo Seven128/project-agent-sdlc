@@ -38,9 +38,13 @@ export function validateTargetIdentity(
       indexed.preflight.handoff.resources.find((item) => item.key === ref)!
         .path,
   );
+  const feasibilityPaths =
+    indexed.preflight.handoff.technical_feasibility_inputs
+      .filter((item) => item.target_ref === handoffTarget.key)
+      .map((item) => item.path);
   assertSameSet(
     target.source_paths,
-    [indexed.preflight.handoff_path, ...resourcePaths],
+    [indexed.preflight.handoff_path, ...resourcePaths, ...feasibilityPaths],
     "target_source_paths_mismatch",
     target.key,
   );
@@ -73,9 +77,13 @@ export function validateSymbolicTargetIdentity(
       indexed.preflight.handoff.resources.find((item) => item.key === ref)!
         .path,
   );
+  const feasibilityPaths =
+    indexed.preflight.handoff.technical_feasibility_inputs
+      .filter((item) => item.target_ref === handoffTarget.key)
+      .map((item) => item.path);
   assertSameSet(
     target.source_paths,
-    [indexed.preflight.handoff_path, ...resourcePaths],
+    [indexed.preflight.handoff_path, ...resourcePaths, ...feasibilityPaths],
     "target_source_paths_mismatch",
     target.key,
   );

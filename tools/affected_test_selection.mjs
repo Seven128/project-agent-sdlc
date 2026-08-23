@@ -34,6 +34,25 @@ const SYMBOLIC_DESIGN_ENGINE_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/design-resource-symbolic-",
 ]);
 
+const IMPLEMENTATION_FEASIBILITY_SOURCE_PATHS = Object.freeze([
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-model.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-shape-sections.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-shape.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-types.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-cells.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-document.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-facts.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-realizations.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-support.ts",
+  "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation.ts",
+]);
+
+const IMPLEMENTATION_FEASIBILITY_TESTS = Object.freeze([
+  "design-resource-implementation-feasibility.test.mjs",
+  "design-resource-implementation-feasibility-v1-integrity.test.mjs",
+  "design-resource-implementation-feasibility-v2.test.mjs",
+]);
+
 const SYMBOLIC_DESIGN_HANDOFF_PATHS = new Set([
   "packages/ty-context/src/commands/design-resource.ts",
   "packages/ty-context/src/lib/design-resource-handoff-input-types.ts",
@@ -42,6 +61,7 @@ const SYMBOLIC_DESIGN_HANDOFF_PATHS = new Set([
   "packages/ty-context/src/lib/design-resource-handoff-snapshot.ts",
   "packages/ty-context/src/lib/design-resource-handoff-validation.ts",
   "packages/ty-context/src/lib/design-resource-handoff-web-dependency-validation.ts",
+  ...IMPLEMENTATION_FEASIBILITY_SOURCE_PATHS,
   "packages/ty-context/src/lib/long-task-source-item-parser.ts",
 ]);
 
@@ -249,10 +269,12 @@ const HOTSPOT_TESTS = new Map([
     "packages/ty-context/src/lib/design-resource-handoff-validation-facts.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-proofs.ts",
     "packages/ty-context/src/lib/design-resource-handoff-validation-resource-closure.ts",
+    ...IMPLEMENTATION_FEASIBILITY_SOURCE_PATHS,
   ].map((sourcePath) => [
     sourcePath,
     [
       "design-resource-handoff.test.mjs",
+      ...IMPLEMENTATION_FEASIBILITY_TESTS,
       "design-resource-handoff-capacity-probe.test.mjs",
       "long-task-delivery-compiler.test.mjs",
     ],
@@ -266,6 +288,7 @@ const HOTSPOT_TESTS = new Map([
     sourcePath,
     [
       "design-resource-handoff.test.mjs",
+      ...IMPLEMENTATION_FEASIBILITY_TESTS,
       "long-task-delivery-compiler.test.mjs",
     ],
   ]),
@@ -850,6 +873,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "design-resource-handoff.test.mjs",
       "design-resource-handoff-capacity-probe.test.mjs",
+      ...IMPLEMENTATION_FEASIBILITY_TESTS,
       "design-resource-recovery.test.mjs",
       "design-resource-recovery-safety.test.mjs",
       "long-task-delivery-compiler.test.mjs",
@@ -961,6 +985,25 @@ export function selectAffectedTests(changedPaths, options = {}) {
         tests.add(testPath("test-suite-runtime.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);
+      continue;
+    }
+
+    if (file === "tools/verify_active_source_portability.mjs") {
+      tests.add(testPath("active-source-portability.test.mjs"));
+      tests.add(testPath("affected-test-selection.test.mjs"));
+      reasons.push(`${file}:active_source_portability`);
+      continue;
+    }
+
+    if (
+      file.startsWith(
+        "examples/delivery-benchmark/mechanism/visual-diagnostic/",
+      ) ||
+      file ===
+        "examples/delivery-benchmark/mechanism/runner/visual_diagnostic.mjs"
+    ) {
+      tests.add(testPath("dra-visual-diagnostic.test.mjs"));
+      reasons.push(`${file}:dra_visual_diagnostic_non_admission`);
       continue;
     }
 

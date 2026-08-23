@@ -185,7 +185,7 @@ npm ci
 npm run smoke:quickstart
 npm run preview:pack
 cd /path/to/your/test-repo
-npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.16.tgz
+npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.17.tgz
 npx --no-install ty-context init --adopt
 make validate-context
 ```

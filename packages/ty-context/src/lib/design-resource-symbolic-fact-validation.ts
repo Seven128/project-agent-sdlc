@@ -16,6 +16,8 @@ import {
 } from "./design-resource-symbolic-validation-support.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import { sha256Hex } from "./strict-codec.js";
+import { createV2ImplementationFeasibilityTargetModel } from "./design-resource-implementation-feasibility-model.js";
+import { readAndValidateDesignResourceImplementationFeasibility } from "./design-resource-implementation-feasibility-validation.js";
 
 export {
   designResourceSymbolicCertificateKey,
@@ -93,12 +95,31 @@ export async function preflightParsedDesignResourceSymbolicHandoff(
     contents,
   );
   validateSymbolicCoverage(parsed, manifest);
+  const feasibility =
+    await readAndValidateDesignResourceImplementationFeasibility(
+      repository,
+      parsed.handoff_path,
+      handoff.technical_feasibility_inputs,
+      new Map([
+        [
+          target.key,
+          createV2ImplementationFeasibilityTargetModel(target, manifest),
+        ],
+      ]),
+      new Set(handoff.resources.map((resource) => resource.path)),
+    );
   return {
     ...parsed,
     preflight_schema_version: "design-resource-handoff-preflight-v2",
     status: "ready",
     manifest,
     resource_hashes: resourceHashes,
+    technical_feasibility_documents: feasibility.map((item) => item.document),
+    technical_feasibility_identities: feasibility.map((item) => item.identity),
+    limitations:
+      target.source_profile.kind !== "reference" && !feasibility.length
+        ? ["technical feasibility not declared"]
+        : [],
     rule_projections: validated.ruleProjections,
     metrics: validated.metrics,
   };

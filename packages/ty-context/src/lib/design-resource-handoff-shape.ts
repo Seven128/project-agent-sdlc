@@ -5,6 +5,7 @@ import type {
 import type { DesignResourceHandoffInput } from "./design-resource-handoff-input-types.js";
 import { parseDesignResourceSymbolicHandoffShape } from "./design-resource-symbolic-fact-shape.js";
 import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
+import { parseDesignResourceTechnicalFeasibilityInputs } from "./design-resource-implementation-feasibility-shape.js";
 import {
   parseDesignResourceAssetBindings,
   parseDesignResourceAxisDispositions,
@@ -74,34 +75,39 @@ export function parseAnyDesignResourceHandoffInputShape(
 export function parseDesignResourceHandoffShape(
   value: unknown,
 ): DesignResourceHandoffV1 {
-  const root = object(value, "design_resource_handoff", [
-    "schema_version",
-    "intent",
-    "scope",
-    "provenance",
-    "resources",
-    "axis_dispositions",
-    "condition_exclusions",
-    "conditions",
-    "subjects",
-    "variation_axis_dispositions",
-    "variation_exclusions",
-    "variations",
-    "properties",
-    "lineage_nodes",
-    "targets",
-    "evidence",
-    "fact_cells",
-    "facts",
-    "proof_obligations",
-    "oracles",
-    "environments",
-    "asset_bindings",
-    "resource_fact_closure",
-    "coverage",
-    "acceptance_blockers",
-    "proposal",
-  ]);
+  const root = object(
+    value,
+    "design_resource_handoff",
+    [
+      "schema_version",
+      "intent",
+      "scope",
+      "provenance",
+      "resources",
+      "axis_dispositions",
+      "condition_exclusions",
+      "conditions",
+      "subjects",
+      "variation_axis_dispositions",
+      "variation_exclusions",
+      "variations",
+      "properties",
+      "lineage_nodes",
+      "targets",
+      "evidence",
+      "fact_cells",
+      "facts",
+      "proof_obligations",
+      "oracles",
+      "environments",
+      "asset_bindings",
+      "resource_fact_closure",
+      "coverage",
+      "acceptance_blockers",
+      "proposal",
+    ],
+    ["technical_feasibility_inputs"],
+  );
   const scope = object(root.scope, "design_resource_handoff.scope", [
     "key",
     "style_dependency",
@@ -190,6 +196,9 @@ export function parseDesignResourceHandoffShape(
         "design_resource_handoff.provenance.design_system_id",
       ),
     },
+    technical_feasibility_inputs: parseDesignResourceTechnicalFeasibilityInputs(
+      root.technical_feasibility_inputs ?? [],
+    ),
     resources: parseDesignResourceHandoffResources(root.resources),
     axis_dispositions: parseDesignResourceAxisDispositions(
       root.axis_dispositions,
@@ -246,23 +255,29 @@ export function parseDesignResourceHandoffShape(
 function parseManifestBackedDesignResourceHandoffShape(
   value: unknown,
 ): DesignResourceHandoffManifestBackedV1 {
-  const root = object(value, "design_resource_handoff", [
-    "schema_version",
-    "representation",
-    "intent",
-    "scope",
-    "provenance",
-    "resources",
-    "targets",
-    "resource_fact_closure",
-    "coverage",
-    "proposal",
-  ]);
+  const root = object(
+    value,
+    "design_resource_handoff",
+    [
+      "schema_version",
+      "representation",
+      "intent",
+      "scope",
+      "provenance",
+      "resources",
+      "targets",
+      "resource_fact_closure",
+      "coverage",
+      "proposal",
+    ],
+    ["technical_feasibility_inputs"],
+  );
   const parsed = parseDesignResourceHandoffShape({
     schema_version: root.schema_version,
     intent: root.intent,
     scope: root.scope,
     provenance: root.provenance,
+    technical_feasibility_inputs: root.technical_feasibility_inputs ?? [],
     resources: root.resources,
     axis_dispositions: [],
     condition_exclusions: [],
@@ -296,6 +311,7 @@ function parseManifestBackedDesignResourceHandoffShape(
     intent: parsed.intent,
     scope: parsed.scope,
     provenance: parsed.provenance,
+    technical_feasibility_inputs: parsed.technical_feasibility_inputs,
     resources: parsed.resources,
     targets: parsed.targets,
     resource_fact_closure: parsed.resource_fact_closure,

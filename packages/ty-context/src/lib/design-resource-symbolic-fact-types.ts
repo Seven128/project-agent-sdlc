@@ -24,6 +24,11 @@ import type {
   SymbolicExtensionalPointV1,
 } from "./symbolic-denotation-types.js";
 import type { DesignResourceSymbolicNoninterferenceCertificateV2 } from "./design-resource-symbolic-noninterference-types.js";
+import type {
+  DesignResourceImplementationFeasibilityIdentityV1,
+  DesignResourceImplementationFeasibilityV1,
+  DesignResourceTechnicalFeasibilityInputV1,
+} from "./design-resource-implementation-feasibility-types.js";
 
 export type {
   DesignResourceSymbolicNoninterferenceArtifactV2,
@@ -221,6 +226,7 @@ export interface DesignResourceHandoffV2 {
     model: string;
     design_system_id: string;
   };
+  technical_feasibility_inputs: DesignResourceTechnicalFeasibilityInputV1[];
   resources: DesignResourceHandoffResourceV1[];
   targets: DesignResourceSymbolicHandoffTargetV2[];
   coverage: DesignResourceSymbolicHandoffCoverageV2[];
@@ -248,6 +254,9 @@ export interface DesignResourceHandoffPreflightV2 extends ParsedDesignResourceHa
   status: "ready";
   manifest: DesignResourceObservableRuleManifestV2;
   resource_hashes: Record<string, string>;
+  technical_feasibility_documents: DesignResourceImplementationFeasibilityV1[];
+  technical_feasibility_identities: DesignResourceImplementationFeasibilityIdentityV1[];
+  limitations: string[];
   rule_projections: DesignResourceSymbolicRuleProjectionV2[];
   metrics: {
     semantic_obligations: number;

@@ -182,6 +182,10 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
       DESIGN_HANDOFF_PATH,
     );
     assert.equal(result.status, "ready");
+    assert.deepEqual(result.technical_feasibility_identities, []);
+    assert.deepEqual(result.limitations, [
+      "technical feasibility not declared",
+    ]);
     assert.equal(result.counts.subjects, result.handoff.subjects.length);
     assert.ok(result.counts.subjects >= 6);
     assert.equal(result.counts.conditions, 2);
@@ -309,7 +313,7 @@ test("the same V1 marker can hydrate a lossless manifest-backed handoff", async 
   });
 });
 
-test("DSA bundle publication validates the frozen manifest set and is atomic", async () => {
+test("DSA bundle publication validates the frozen manifest and feasibility set and is atomic", async () => {
   await withFixture(async (root, handoff) => {
     const descriptor = manifestBackedDesignResourceHandoff(handoff);
     await writeDesignResourceHandoff(root, descriptor, {
@@ -396,7 +400,7 @@ test("DSA bundle publication validates the frozen manifest set and is atomic", a
       (await readdir(path.join(root, "handoffs"))).sort(),
       ["selected-bundle"],
     );
-  });
+  }, { feasibility: true });
 });
 
 test("missing, duplicate, unresolved and unknown coverage fail closed", async () => {

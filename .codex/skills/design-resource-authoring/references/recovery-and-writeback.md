@@ -184,7 +184,7 @@ When no binding is `proposal-written`, omit writeback and do not invent an empty
 ty-context design-resource recovery reconcile <session> --audit <audit.json>
 ```
 
-Recovery uses only generic repository snapshot/source-record identity. It does not accept a `formal-handoff-target` label or duplicate the formal handoff parser; formal Web/App handoff readiness remains owned by `ty-context design-resource preflight`.
+Recovery uses only generic repository snapshot/source-record identity. It does not accept a `formal-handoff-target` label, an implementation-feasibility-readiness label, duplicate either formal parser, or persist a selected production strategy. Formal Web/App input closure remains owned by `ty-context design-resource preflight`, while production ownership remains downstream.
 
 A valid resource-owned-only case may be `allow` plus `reconciliation-balanced` with `write_action: none`, but the helper-level `handoff_ready` projection remains false. Any later readiness claim waits for the Skill-owned composition of current Provider/resource revalidation, durable final ownership and applicable formal preflight; never infer readiness merely from a balanced read-only reconcile.
 

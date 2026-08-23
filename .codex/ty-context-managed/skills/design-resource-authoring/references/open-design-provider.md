@@ -21,6 +21,8 @@ Discover rather than remember:
 - specialist paths such as collaborative design platforms, image, video or 3D/WebGL;
 - supported project creation, run, cancellation, file and artifact operations.
 
+When live behavior or CLI/MCP semantics materially control the commission, retain the exact provider version and, when available, the released tag/commit plus authoritative documentation locator used for capability interpretation. A mutable default branch, remembered UI behavior or unpinned local checkout is not durable protocol evidence.
+
 Current structured tool names may include `list_agents`, `list_skills`, `list_plugins`, `create_project`, `get_project`, `get_active_context`, `start_run`, `get_run`, `cancel_run`, `list_files`, `get_file` and `get_artifact`. Feature-detect them; tool names and provider versions may evolve.
 
 Functional skills and rendering templates are different registries. Finding `frontend-design` does not prove that a `mobile-app` or `wireframe-mobile-flow` template is installed, and a remembered template ID is not live capability evidence.
@@ -55,6 +57,12 @@ Prefer, in order:
 5. an honest `unavailable` or degraded-discovery result.
 
 Never vendor a fallback template catalogue or guess a template ID from prior runs. Do not implement a transport helper unless the live host truly lacks a safe structured path; any helper may normalize metadata and transport only.
+
+### Resource-type capability matching
+
+Match the requested artifact archetype to demonstrated live capability rather than a Skill name. Distinguish at least landing/brand pages, dashboards/data workbenches, dense tables/filters/forms, mobile multi-screen flows, component workbenches, complex interaction, formal Web/App handoff and icon/illustration/media work. For every considered capability, establish the target resource type, platform, surface count, state/interaction support, real-render support, bounded revision support, canonical-source retrieval and formal-handoff coverage.
+
+A single-frame HTML phone mockup cannot claim a native mobile-App or multi-screen formal handoff. A visually strong capability without retrievable canonical Source may support exploration but not a formal implementation handoff. Give unsupported candidates `unavailable` or `not-needed`; do not wrap a partial output in a stronger profile. This matching is task-local provider adaptation, not a registry or durable ranking.
 
 ## Conditional Design Authority gate and binding
 
@@ -92,7 +100,7 @@ Repeat the closure immediately before each material-revision run, using the exis
 
 1. Record provider version, selected agent/model, reasoning effort and service tier when exposed, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
 2. Reuse an existing task-local project only when its scope, prior inputs and required design-system binding match; otherwise create a bounded project. For style-bearing work, pass `designSystem` and verify `get_project.designSystemId` before the run.
-3. Only after the pre-run style-application closure allows execution, start a run with the product-specific commission envelope, including exactly its Source-bound `projected` `style_application` fields, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe. Fully current input-bound `existing-covered` meaning permits the object to be omitted; `not-applicable` and `decision-required` never become empty or invented fields. That universe is based on requested scope, product semantics, adopted design system and target environments; it must not be inferred only from provider output. `style_application` is commission content, not a separate persistent Projection or provider state.
+3. Only after the pre-run style-application closure allows execution, start a run with the product-specific commission envelope, including exactly its Source-bound `projected` `style_application` fields, archetype-specific `quality_commission`, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe plus current implementation-substrate observations and allowed realization boundaries from [implementation-feasibility.md](implementation-feasibility.md). Fully current input-bound `existing-covered` meaning permits the style object to be omitted; `not-applicable` and `decision-required` never become empty or invented fields. The quality commission states real-copy/data needs, primary challenges, desired/avoided character, reference roles and design-side shared-family reuse without claiming production reuse. That universe is based on requested scope, product semantics, adopted design system, real technical Source and target environments; it must not be inferred only from provider output. Both application and quality fields are commission content, not a separate persistent Projection, Authority, state, routing record or Provider score.
 4. Poll with a bounded cadence. During a long run, report meaningful progress at least once per minute without flooding the user.
 5. Preserve run IDs and the latest provider diagnostic. Support cancellation when the user requests it and the provider exposes it.
 6. Resolve the actual entry explicitly, retrieve the artifact/source, inspect it according to intent and preserve its immutable identity before later iterations or handoff.
@@ -116,15 +124,17 @@ Design suitability is one freshly derived umbrella review, not another state mac
 - **scope and Source suitability:** the candidate stays within the hard ceiling and follows current controlling Product/Surface/Screen/Design Source; an outside effect is reported, not generated;
 - **mechanical checks:** promised files/entries are readable, structurally usable and free of obvious corruption, broken references or intent-material runtime defects;
 - **Design-System application checks:** the verified adopted identity, exact-value/token lineage and applicable component-family rules are used rather than merely named;
-- **visual-language checks:** hierarchy, emphasis, density, container treatment, typography, color, spacing, component treatment and other material relationships cohere with the selected Source-bound direction;
+- **visual-language checks:** composition, hierarchy, typography, visual rhythm, density, container treatment, color, spacing, content realism, component treatment and other material relationships cohere with the selected Source-bound direction;
+- **distinctiveness and component-authoring checks:** the result answers the product-specific challenges without unsupported template mannerisms, and repeated controls use a coherent design-side component family rather than unrelated per-instance styling;
 - **state/condition coverage checks:** credit only demonstrated states, variations, interactions, viewports, input/accessibility conditions and assets; and
 - **preservation checks:** explicitly preserved Source meaning, exact visual facts and unaffected bindings remain unchanged.
+- **implementation-feasibility checks for formal Web/App handoff:** each material component-family × target × condition profile has at least one real-substrate realization or a Source-backed blocker, without copying exact design values into the technical feasibility document.
 
 Report applicable checked and unchecked conditions. A grounded conflict blocks; an ungrounded aesthetic preference is a candidate-comparison observation, not a fabricated Source rule. Examples of derived suitability outcomes may include `unreviewed`, `scope-source-conflict`, `revision-required` or `suitable-for-user-review`; none means selected, formally complete or handoff-ready.
 
 Never collapse these into one “success.” A provider success does not prove a good design; a complete artifact can exist even when a provider run later fails.
 
-After every material revision, rerun every applicable suitability subcheck against current Source and bytes. A material revision changes the selected visual direction or design system, cross-surface information architecture, primary interaction model, declared state/condition coverage, preservation obligation or enough canonical source/Fact meaning to invalidate the reviewed candidate. A byte-only packaging/export change proven equivalent to the same canonical source does not create a new design decision; a visible or semantic difference does.
+After every material revision, rerun every applicable suitability subcheck against current Source and bytes. A material revision changes the selected visual direction or design system, cross-surface information architecture, primary interaction model, declared state/condition coverage, preservation obligation or enough canonical source/Fact meaning to invalidate the reviewed candidate. A byte-only packaging/export change proven equivalent to the same canonical source does not create a new design decision; a visible or semantic difference does. Always inspect the actual rendered candidate when the resource is renderable. If the first candidate has no material Source, feasibility, mechanical or suitability defect, it may proceed directly to user selection; never manufacture a revision quota. When repair is needed, request the smallest defect-localizing revision that preserves unaffected meaning, then reacquire and review the complete current candidate.
 
 Use these qualifiers when needed:
 
@@ -148,6 +158,8 @@ Open Design has demonstrated that a complex Web page can emit a machine-readable
 9. exercise every property-required verification method against the canonical entry under each claimed condition. A Fact may require multiple independent methods—for example token plus pixel—and each obligation binds method-compatible evidence, comparator parameters, exact/tolerance mode, any narrow authoritative mask, Oracle identity/version/digest and frozen render environment. Compare repeated facts across code, specifications, tokens and asset manifests. Refine any mismatch; if it cannot be resolved, keep the exact Fact Cell `decision_required`/`unavailable` with a blocker;
 10. mark protected observations before downstream use. Sensitive raw UI values must not be persisted in Contract/runtime evidence: the canonical source remains the value owner while later evidence carries an attributable digest-only or redacted representation and policy reference.
 
+Alongside, author one separate `design-resource-implementation-feasibility-v1` input per target from real repository technical Source. It must cover all material component-family × condition profiles with feasible multi-step/multi-primitive realizations or explicit blockers, retain candidate costs/risks and customization surfaces, and leave the required realization unselected unless current technical authority requires one. Never put this document or its technical Source records into the canonical resource closure.
+
 The authoring Skill then projects the exact manifest identities into the residual handoff and shared preflight enforces `Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts`. This is authoring source QA, never production acceptance. If the live Open Design capability cannot generate, expose or retrieve this profile, report the missing capability and keep the formal handoff blocked; provider success does not authorize a coarser replacement.
 
 A PNG may be a useful derived visual baseline, but it cannot be the sole source for implementation-level state, interaction, adaptation, accessibility or motion facts. Non-Web resources use the `reference` profile; do not manufacture HTML merely to satisfy this profile.
@@ -167,14 +179,14 @@ A preview URL is mutable navigation, not immutable identity. It may be reported 
 ## Review proportional to intent
 
 - **Exploration:** open/render the requested entry, confirm artifact count/scope and obvious corruption, perform only the decision-material suitability subchecks, then show it. Do not launch a packaging or validator sequence.
-- **Handoff:** additionally perform the method-proportional source QA above, including relevant structure, states/transitions, viewport behavior, accessibility semantics, assets, obvious console/runtime errors, requested interaction hooks, Design-System application, visual language and preservation. State exactly what was and was not checked.
+- **Handoff:** additionally perform the method-proportional source QA above, including relevant structure, states/transitions, viewport behavior, accessibility semantics, assets, obvious console/runtime errors, requested interaction hooks, Design-System application, visual language, preservation and real-substrate implementation feasibility. State exactly what was and was not checked.
 - **Selected-source preparation:** require an independent explicit human selection basis, preserve identity/snapshot and prepare downstream metadata. Suitability informs that decision but never makes it, and still does not verify production behavior.
 
 Provider self-checks, outer artifact sanity review, user selection, formal source closure and downstream project verification are separate evidence layers. A visual-language or mechanical pass cannot independently establish Artifact readiness, selection, formal completeness, handoff readiness, native rendering, accessibility, responsive coverage, product correctness or acceptance.
 
 ## Specialist paths
 
-Figma, Penpot, OpenPencil, image, video, 3D/WebGL and other providers are optional upstream producers. Use one only when its collaboration/editability or native inspection value is material and its connector/auth/read/export path is operational. A listed plugin, URL, thumbnail or metadata response is not proof of usable native input. If a requested provider is unavailable, report the missing capability precisely, offer another artifact only when it preserves the requested design decision, and never relabel an export as native editable design. Every selected provider still emits repository-readable immutable resources through the same provider-neutral handoff.
+Figma, Penpot, OpenPencil, image, video, 3D/WebGL and other providers are optional upstream producers. A Direct Agent authoring the resource is also a legal other Provider when current evidence shows that it satisfies the same bounded archetype, render, revision, canonical-source and formal-handoff capabilities; it receives no exemption from Source, Design suitability or handoff closure. Use any provider only when its collaboration/editability or native inspection value is material and its connector/auth/read/export path is operational. A listed plugin, URL, thumbnail or metadata response is not proof of usable native input. If a requested provider is unavailable, report the missing capability precisely, offer another artifact only when it preserves the requested design decision, and never relabel an export as native editable design. Every selected provider still emits repository-readable immutable resources through the same provider-neutral handoff.
 
 ## Failure and recovery
 

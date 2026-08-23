@@ -246,7 +246,7 @@ The history therefore shows real maintenance pressure: several default snapshots
 
 ### `IN-DRA-EXT-001` — Original 1,077-line external UI/UX upgrade proposal
 
-- Authoring-time path: `C:\Users\777\.codex\attachments\adc1c9bf-c698-46ae-b6bc-819752ba43fb\pasted-text.txt`.
+- Historical authoring locator: `attachment-provenance://adc1c9bf-c698-46ae-b6bc-819752ba43fb/pasted-text.txt` (deliberately non-resolvable).
 - Role: external proposal/problem evidence, not automatically authoritative project fact.
 - Adopted meaning:
   - distinguish product/surface meaning, visual-system authority, concrete targets, implementation and evidence;

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
@@ -16,11 +17,14 @@ import {
 import {
   DESIGN_CONDITION_KEY,
   DESIGN_CONDITION_KEYS,
+  DESIGN_FEASIBILITY_PATH,
   DESIGN_HANDOFF_PATH,
   DESIGN_RESOURCE_PATH,
   DESIGN_RESOURCE_PATHS,
   DESIGN_SOURCE_ITEM_KEY,
   DESIGN_TARGET_KEY,
+  DESIGN_TECHNICAL_SOURCE_PATH,
+  addDesignResourceImplementationFeasibility,
   writeDesignResourceHandoff,
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
@@ -517,6 +521,97 @@ test("Long-Task consumes target handoffs in either order and rejects missing, ex
     assert.throws(
       () => duplicateSource.finish(),
       /design_resource_handoff_set_source_item_duplicate:/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task binds a required realization through existing Source and technical owners", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const handoff = await attachDesignResourceHandoff(fixture);
+    await writeContract(fixture.workdir, fixture.contract);
+    const source = await readFile(path.join(fixture.root, "source.md"));
+    await addDesignResourceImplementationFeasibility(
+      fixture.root,
+      handoff,
+      (document) => {
+        document.source_records.push({
+          key: "technical.fixture-authority",
+          path: "source.md",
+          media_type: "text/markdown",
+          sha256: createHash("sha256").update(source).digest("hex"),
+          locator: { kind: "whole_resource", value: "." },
+          roles: ["technical_authority"],
+        });
+        document.component_family_cells[0].required_realization = {
+          realization_ref: "reuse-project-card",
+          technical_authority_source_refs: [
+            "technical.fixture-authority",
+          ],
+        };
+      },
+    );
+    await writeDesignResourceHandoff(fixture.root, handoff);
+
+    const outcome = fixture.contract.outcomes[0];
+    const target =
+      outcome.product.surface_bindings[0].design_targets[0];
+    target.source_paths.push(DESIGN_FEASIBILITY_PATH);
+    outcome.acceptance.checks[0].verification_inputs.push(
+      DESIGN_FEASIBILITY_PATH,
+    );
+    const binding = outcome.technical.bindings.find(
+      (item) => item.key === "state-first",
+    );
+    binding.target = DESIGN_TECHNICAL_SOURCE_PATH;
+    binding.carrier_paths = [DESIGN_TECHNICAL_SOURCE_PATH];
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    const positive = createLongTaskDesignHandoffConsumer(fixture.contract);
+    positive.consume(preflight);
+    assert.doesNotThrow(() => positive.finish());
+
+    const undeclaredSource = structuredClone(fixture.contract);
+    undeclaredSource.task.source_paths =
+      undeclaredSource.task.source_paths.filter((item) => item !== "source.md");
+    const undeclared = createLongTaskDesignHandoffConsumer(undeclaredSource);
+    undeclared.consume(preflight);
+    assert.throws(
+      () => undeclared.finish(),
+      /required_realization_authority_source_not_declared/u,
+    );
+
+    const missingClaimContract = structuredClone(fixture.contract);
+    missingClaimContract.source_claims =
+      missingClaimContract.source_claims.filter(
+        (claim) => claim.source_ref.split("#")[0] !== "source.md",
+      );
+    const missingClaim = createLongTaskDesignHandoffConsumer(
+      missingClaimContract,
+    );
+    missingClaim.consume(preflight);
+    assert.throws(
+      () => missingClaim.finish(),
+      /required_realization_authority_claim_missing/u,
+    );
+
+    const wrongBindingContract = structuredClone(fixture.contract);
+    const wrongBinding = wrongBindingContract.outcomes[0].technical.bindings.find(
+      (item) => item.key === "state-first",
+    );
+    wrongBinding.target = "src/state.json";
+    wrongBinding.carrier_paths = ["src/state.json"];
+    const wrongBindingConsumer = createLongTaskDesignHandoffConsumer(
+      wrongBindingContract,
+    );
+    wrongBindingConsumer.consume(preflight);
+    assert.throws(
+      () => wrongBindingConsumer.finish(),
+      /required_realization_technical_binding_missing/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

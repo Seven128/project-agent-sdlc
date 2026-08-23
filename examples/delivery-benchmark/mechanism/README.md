@@ -52,6 +52,12 @@ The freeze uses one global execution-envelope digest plus one track-local frozen
 
 Both tracks start at three eligible pairs and require `2/3` wins. A primary-metric coefficient of variation above 20%, mixed pair direction, a result within five percentage points of threshold or environment/Provider trace doubt expands the frozen requirement to five pairs and `3/5` wins. No critical category may regress; targeted critical-plus-major defects must fall by at least 25%; must-allow false blocking is zero and other false blocking cannot exceed baseline. DRA additionally requires zero simple-path side effects/tool calls and no more than 10% median token or wall overhead. A zero-defect baseline produces no invented improvement claim.
 
+### Opt-in DRA visual diagnostic
+
+`visual-diagnostic/protocol.json` is a descriptive diagnostic inside the existing DRA benchmark owner, not a third admission track. It freezes eight archetypes, five generation routes, ten review dimensions, at least three repeats and blinded randomized display. Every actual route binding must pin Provider, version, model/reasoning, capability evidence and implementation tag/commit. The helper produces a public blind-review schedule and a separate private key; it produces no score, winner, threshold, Provider ranking, automatic route or publication decision.
+
+No visual diagnostic result affects the DRA/Build-Reuse-Buy aggregate above. Observations apply only to the executed cases and must retain raw limitations. A durable routing policy would require a separate owner change with evaluators, order, baseline, threshold and expiry frozen before collection.
+
 ## Fixed Assets
 
 ```text
@@ -63,6 +69,7 @@ hidden/*.mjs               product probes, never copied into run repositories
 runner/**                  prepare, score, compare and aggregate tools
 admission-set.json         independently frozen DRA/Build-Reuse-Buy protocol
 admission/**               public cases and strict result schemas
+visual-diagnostic/**       opt-in fixed visual cases and non-admission protocol
 agent-result.schema.json   diagnostic Agent handoff shape
 ```
 

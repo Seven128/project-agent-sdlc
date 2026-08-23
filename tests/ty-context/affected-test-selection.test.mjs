@@ -114,6 +114,36 @@ test("fresh-Agent admission inputs, runners and runbook select the frozen protoc
   }
 });
 
+test("opt-in DRA visual diagnostic stays on its descriptive non-admission test", () => {
+  for (const source of [
+    "examples/delivery-benchmark/mechanism/visual-diagnostic/protocol.json",
+    "examples/delivery-benchmark/mechanism/visual-diagnostic/README.md",
+    "examples/delivery-benchmark/mechanism/runner/visual_diagnostic.mjs",
+  ]) {
+    const selection = selectAffectedTests([source]);
+    assert.equal(selection.mode, "selected", source);
+    assert.deepEqual(
+      selection.tests,
+      ["tests/ty-context/dra-visual-diagnostic.test.mjs"],
+      source,
+    );
+    assert.match(selection.reasons[0], /non_admission/u, source);
+  }
+});
+
+test("active Source portability owner selects only its checker and routing test", () => {
+  const selection = selectAffectedTests([
+    "tools/verify_active_source_portability.mjs",
+  ]);
+  assert.equal(selection.mode, "selected");
+  assert.equal(selection.requires_build, true);
+  assert.deepEqual(selection.tests, [
+    "tests/ty-context/active-source-portability.test.mjs",
+    "tests/ty-context/affected-test-selection.test.mjs",
+  ]);
+  assert.match(selection.reasons[0], /active_source_portability/u);
+});
+
 test("shared Source line scanning selects handoff and both formal Source consumers", () => {
   const selection = selectAffectedTests([
     "packages/ty-context/src/lib/source-line-scanner.ts",
@@ -563,10 +593,38 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.deepEqual(adapter.tests, [
     "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
     "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v1-integrity.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v2.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
     "tests/ty-context/long-task-schema-parser-parity.test.mjs",
     "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ]);
+
+  const feasibility = selectAffectedTests([
+    "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-cells.ts",
+  ]);
+  assert.equal(feasibility.mode, "selected");
+  assert.ok(
+    feasibility.tests.includes(
+      "tests/ty-context/design-resource-implementation-feasibility.test.mjs",
+    ),
+  );
+  assert.ok(
+    feasibility.tests.includes(
+      "tests/ty-context/design-resource-implementation-feasibility-v1-integrity.test.mjs",
+    ),
+  );
+  assert.ok(
+    feasibility.tests.includes(
+      "tests/ty-context/design-resource-implementation-feasibility-v2.test.mjs",
+    ),
+  );
+  assert.ok(
+    feasibility.tests.includes(
+      "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
+    ),
+  );
 
   const splitManifest = selectAffectedTests([
     "packages/ty-context/src/lib/design-resource-fact-universe-inspector.ts",
@@ -577,6 +635,9 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.deepEqual(splitManifest.tests, [
     "tests/ty-context/design-resource-handoff-capacity-probe.test.mjs",
     "tests/ty-context/design-resource-handoff.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v1-integrity.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility-v2.test.mjs",
+    "tests/ty-context/design-resource-implementation-feasibility.test.mjs",
     "tests/ty-context/long-task-delivery-compiler.test.mjs",
   ]);
 

@@ -6,6 +6,7 @@ import {
   stableKeys,
 } from "./design-resource-handoff-shape-primitives.js";
 import type { DesignResourceHandoffV2 } from "./design-resource-symbolic-fact-types.js";
+import { parseDesignResourceTechnicalFeasibilityInputs } from "./design-resource-implementation-feasibility-shape.js";
 import {
   array,
   literal,
@@ -24,17 +25,22 @@ export function parseDesignResourceSymbolicHandoffShape(
   value: unknown,
 ): DesignResourceHandoffV2 {
   const label = "design_resource_handoff_v2";
-  const root = object(value, label, [
-    "schema_version",
-    "representation",
-    "intent",
-    "scope",
-    "provenance",
-    "resources",
-    "targets",
-    "coverage",
-    "proposal",
-  ]);
+  const root = object(
+    value,
+    label,
+    [
+      "schema_version",
+      "representation",
+      "intent",
+      "scope",
+      "provenance",
+      "resources",
+      "targets",
+      "coverage",
+      "proposal",
+    ],
+    ["technical_feasibility_inputs"],
+  );
   return {
     schema_version: literal(
       root.schema_version,
@@ -53,6 +59,10 @@ export function parseDesignResourceSymbolicHandoffShape(
     ),
     scope: parseScope(root.scope, label),
     provenance: parseProvenance(root.provenance, label),
+    technical_feasibility_inputs: parseDesignResourceTechnicalFeasibilityInputs(
+      root.technical_feasibility_inputs ?? [],
+      `${label}.technical_feasibility_inputs`,
+    ),
     resources: parseDesignResourceHandoffResources(root.resources),
     targets: parseTargets(root.targets, label),
     coverage: parseCoverage(root.coverage, label),

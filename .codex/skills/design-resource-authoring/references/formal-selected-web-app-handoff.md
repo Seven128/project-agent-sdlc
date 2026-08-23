@@ -4,7 +4,7 @@ Read this reference only after a Web/App direction is final-selected for impleme
 
 ## Admission and invariant
 
-The target needs one completely acquired machine-readable canonical entry, its exact locally resolvable dependency closure and one frozen-Inspector observable-Fact manifest. Derive the Expected Fact Universe before generation; initially rendered output cannot define its own obligations.
+The target needs one completely acquired machine-readable canonical entry, its exact locally resolvable dependency closure, one frozen-Inspector observable-Fact manifest and one separate real-substrate implementation-feasibility input. Derive the Expected Fact Universe and inspect current technical Source before generation; initially rendered output cannot define its own obligations or production architecture.
 
 For every selected target, establish:
 
@@ -18,7 +18,7 @@ Product Controls and the eight reporting dimensions are roll-ups, not the Fact c
 
 ## Review-return boundary
 
-The prior direction selection authorizes formal preparation; it does not claim this closure is already complete. If complete universe derivation, canonical acquisition, dependency/Census inspection, manifest proof or preflight exposes a new state, component part, resource, condition, unavailable observation, visible/semantic design difference or `decision-required` choice, stop publication and return to the downstream `Design Resource Review & Selection Stop`. Re-run applicable Design suitability before asking for another selection. Only closure which introduces no new visible decision returns downstream for the one consolidated Proposal reconciliation.
+The prior direction selection authorizes formal preparation; it does not claim this closure is already complete. If complete universe derivation, canonical acquisition, dependency/Census inspection, implementation-feasibility inspection, manifest proof or preflight exposes a new state, component part, resource, condition, unavailable observation, visible/semantic design difference or `decision-required` choice, stop publication and return to the downstream `Design Resource Review & Selection Stop`. Re-run applicable Design suitability before asking for another selection. A technical choice among already allowed candidates stays with downstream Architecture Deliberation and does not force another visual selection. Only closure which introduces no new visible decision returns downstream for the one consolidated Proposal reconciliation.
 
 ## Derive the complete universe
 
@@ -34,7 +34,7 @@ The exact universe is every applicable `subject × target × condition × variat
 
 Bind style-bearing work to the adopted design-system snapshot and verify the provider project reports the same identity. Commission the complete obligation universe through structured provider capability. If the provider cannot emit/read a required family, keep it blocking rather than narrowing scope.
 
-Acquire every selected file without truncation, preserve exact bytes/digests and record `implementation_web` or `implementation_app` with `acquisition: complete`. The canonical entry and all local source, token, SVG, font, image, media, worker and asset dependencies must resolve inside the frozen set. A screenshot, URL, preview or prose spec is insufficient.
+Acquire every selected file without truncation, preserve exact bytes/digests and record `implementation_web` or `implementation_app` with `acquisition: complete`. The canonical entry and all local source, token, SVG, font, image, media, worker and asset dependencies must resolve inside the frozen set. A screenshot, URL, preview or prose spec is insufficient. Technical Source and the feasibility document remain separate indexed inputs and never enter this canonical dependency set.
 
 The selected identity is the canonical source digest plus target, declared conditions and controlling Source/Design-Authority identity. A PNG, archive, renamed copy or wrapper is a derived artifact: verified equivalence to the canonical source under those bindings preserves selection, while a visible or semantic difference activates the review-return boundary above.
 
@@ -63,9 +63,17 @@ For every `exact_target` condition include one `full_target` `layout_geometry` F
 
 Asset bindings identify asset subject, immutable resource, target/condition Facts, consumer subjects and density/platform/theme/mode/locale variants plus crop/focal/mask/placeholder/error/decode/fallback behavior.
 
+## Real-substrate implementation feasibility
+
+Read [implementation-feasibility.md](implementation-feasibility.md) and author one `design-resource-implementation-feasibility-v1` JSON document per target before publication. Freeze repository-relative technical Source records for platform, framework/runtime, UI system, token/theming adapter, component-owner roots and route-owner roots. Keep canonical design values exclusively in the design resources and manifest.
+
+For V1, partition the exact target condition set into non-overlapping explicit profiles. For V2, use reachable, pairwise-disjoint symbolic regions whose union equals the target's complete reachable region. Create exactly one cell for every material component family × condition profile, bind its matching V1 Facts or V2 Fact Rules, and supply at least one Source-backed feasible realization or an explicit Source-backed blocker. Realizations may be composite and use several primitives; record ordered reuse/compose/extend/theme/create steps, existing or authorized planned owner candidates, supported customization surfaces, observed costs/risks and feasibility basis.
+
+Leave `required_realization` unset when more than one design-compatible implementation remains allowed. Selecting it requires separate current technical-authority Source; DRA preference, Provider output and preflight cannot create that authority. A formal `implementation_web` or `implementation_app` target cannot use descriptive `reference` mode.
+
 ## Residual manifest-backed V1 publication
 
-Keep the canonical manifest as the sole complete collection index. For each target, create one small project-native Markdown draft containing readable, uniquely keyed target-attributed `ty-source-item` facts and exactly one fenced `design-resource-handoff-v1` block with `representation: manifest_backed`. The block carries residual scope/provenance, resource identities, exactly one target/profile, `resource_fact_closure`, coverage and proposal binding; it never repeats manifest-owned arrays. A material resource cannot be hidden as `supporting_only`.
+Keep the canonical manifest as the sole complete collection index for design Facts. For each target, create one small project-native Markdown draft containing readable, uniquely keyed target-attributed `ty-source-item` facts and exactly one fenced `design-resource-handoff-v1` block with `representation: manifest_backed`. The block carries residual scope/provenance, resource identities, exactly one target/profile, `resource_fact_closure`, one `technical_feasibility_inputs` index entry, coverage and proposal binding; it never repeats manifest-owned arrays. A material resource cannot be hidden as `supporting_only`.
 
 Freeze the explicit manifest path set, target/scope identities, SHA-256 values and per-collection counts/identity digests. Choose a truthful UTF-8 byte ceiling before draft generation and ensure the authorized output parent exists. Then publish the entire target set:
 
@@ -77,7 +85,7 @@ ty-context design-resource bundle <draft-dir> <new-output-dir> \
 
 The command must reject embedded/full-array or multi-target drafts, over-budget descriptors, missing/extra/duplicate targets, manifest/SHA or collection-digest drift and every normalized preflight failure. It processes one target at a time in a same-volume exclusive temporary directory and atomically renames the complete set to a previously nonexistent final directory. Failure cleans only command-owned temporary data; drafts and existing/adopted handoffs remain unchanged. Validation checks an already compact representation; it never post-hoc splits a semantic target.
 
-Preflight hydrates omitted collections directly from the declared manifest bytes and runs the same full semantic validator. Unknown fields, missing/extra/duplicate Facts/proofs, unreadable resources, invalid locators, unresolved rows, blockers, stale digests, unsupported methods or unequal sets fail closed. `ty-context design-resource preflight <handoff.md>` remains available for inspection and older embedded-V1 read compatibility, but new authoring uses `bundle`.
+Preflight hydrates omitted collections directly from the declared manifest bytes and runs the same full semantic validator. It also reads the indexed feasibility document and current technical Source without following links, verifies digests/locators, target/family/condition/Fact coverage, V1 or V2 condition closure, owner existence/authorization and required-realization authority, and rejects any mixing with canonical resources. Unknown fields, missing/extra/duplicate Facts/proofs, unreadable resources, invalid locators, unresolved rows, blockers, stale digests, unsupported methods or unequal sets fail closed. `ty-context design-resource preflight <handoff.md>` remains available for inspection and older embedded-V1 read compatibility; an omitted feasibility index normalizes to `[]` and is reported as a limitation. New V1 bundle authoring requires exactly one valid feasibility input for each implementation target.
 
 ## Optional symbolic V2
 
@@ -95,9 +103,9 @@ The V1 bundle remains V1-only; directly preflight explicit V2 until a separately
 
 Passing bundle/preflight proves input acquisition, integrity and exact declared-universe closure relative to the frozen Inspector/Oracle TCB—not production conformance.
 
-The default Workflow opens actual resources and conditions, routes them through surface/Design Authority, implements on the real production owner and performs attributable visual/interaction/accessibility/runtime checks on the final candidate. It reports unestablished conditions without reconstructing retained per-Fact result rows.
+The default Workflow opens actual resources, feasibility Source and conditions, routes design meaning through surface/Design Authority, chooses among allowed realization candidates in Architecture Deliberation, implements on the real production owner and performs attributable visual/interaction/accessibility/runtime checks on the final candidate. It reports blockers and unestablished conditions without reconstructing retained per-Fact result rows.
 
-An active Long-Task projects exact target Facts and Fact × method obligations into its existing Source/Claims/Assertions/bindings, `fact_expectations`, current typed `fact_results` and sole Final Gate; every result stores the actual observation and pass/fail verdict. Every marked handoff/resource/manifest belongs in `task.source_paths` and applicable Check `verification_inputs`; Source Items map through `source_claims` to a root conformance Assertion, and each method × condition evidence cell binds the exact handoff `fact_refs`. Missing, extra, duplicate, failed, stale, authority-drifted or indistinguishable rows fail. Target-local blockers retain Source-item/method/required-capability lineage into a machine Claim or target-blocking External Confirmation.
+An active Long-Task projects exact target Facts and Fact × method obligations into its existing Source/Claims/Assertions/bindings, `fact_expectations`, current typed `fact_results` and sole Final Gate; every result stores the actual observation and pass/fail verdict. Every marked handoff/resource/manifest is in `task.source_paths` and the applicable Check `verification_inputs`; each feasibility input follows the same existing source/check path closure, while cited authoritative technical Source belongs in `task.source_paths` and has a Source Claim. Source Items map through `source_claims` to a root conformance Assertion, and each method × condition evidence cell binds the exact handoff `fact_refs`. A required realization additionally maps its selected owner to an existing technical or surface binding. Missing, extra, duplicate, failed, stale, authority-drifted or indistinguishable rows fail. Target-local blockers retain Source-item/method/required-capability lineage into a machine Claim or target-blocking External Confirmation. This uses existing Contract fields and the sole Final Gate; it creates no feasibility Claim type, binding field or Gate.
 
 Selected resources remain Context-reachable through existing owners. Adoption never overwrites an accepted baseline: create a new immutable version and update its canonical record. This Skill creates no Contract Draft, Outcome, Progress, Evidence, Receipt, Check result or Gate.
 

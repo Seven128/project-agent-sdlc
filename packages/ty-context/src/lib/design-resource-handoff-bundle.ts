@@ -147,6 +147,16 @@ export async function publishDesignResourceHandoffBundle(
         repository,
         parsed,
       );
+      const publishedTarget = preflight.handoff.targets[0];
+      if (
+        (publishedTarget.source_profile.kind === "implementation_web" ||
+          publishedTarget.source_profile.kind === "implementation_app") &&
+        preflight.technical_feasibility_identities.length !== 1
+      )
+        invalid(
+          "implementation_feasibility_input_required",
+          `${publishedTarget.key}:${preflight.technical_feasibility_identities.length}`,
+        );
       handoffSetIntegrity.consume(preflight);
       const targetKey = preflight.handoff.targets[0].key;
       if (seenTargets.has(targetKey)) invalid("target_duplicate", targetKey);

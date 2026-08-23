@@ -53,7 +53,7 @@ The implementation will not add a generic `design` Context role, a `uiux_deliver
 
 ### `IN-EXT-001` — Attached external proposal
 
-- Path at authoring time: `C:\Users\777\.codex\attachments\adc1c9bf-c698-46ae-b6bc-819752ba43fb\pasted-text.txt`
+- Historical authoring locator: `attachment-provenance://adc1c9bf-c698-46ae-b6bc-819752ba43fb/pasted-text.txt` (deliberately non-resolvable)
 - Role: external proposal and problem evidence, not automatically authoritative project fact.
 - Adopted meaning:
   - material production UI needs page responsibility, information hierarchy, layout regions, controls, state variants, navigation, selected targets and verification bindings;

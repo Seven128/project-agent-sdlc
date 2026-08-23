@@ -12,7 +12,10 @@ import {
   DESIGN_RESOURCE_SYMBOLIC_SOURCE_IR_SCHEMA_VERSION,
 } from "../../packages/ty-context/dist/lib/design-resource-symbolic-source-ir-types.js";
 import { compileSymbolicDenotation } from "../../packages/ty-context/dist/lib/symbolic-denotation-engine.js";
-import { canonicalJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import {
+  canonicalJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   SYMBOLIC_HANDOFF_PATH,
   SYMBOLIC_MANIFEST_PATH,
@@ -38,6 +41,8 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     pageSuffix = "",
     mutateSourceIr,
     afterProofArtifacts,
+    feasibility = false,
+    mutateFeasibility,
   } = {},
 ) {
   const handoffPath = `${directory}/symbolic-handoff.md`;
@@ -129,6 +134,15 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     manifest,
     certificate,
   );
+  let feasibilityDocument = null;
+  if (feasibility)
+    feasibilityDocument = await addSymbolicImplementationFeasibility(
+      root,
+      directory,
+      handoff,
+      manifest,
+      mutateFeasibility,
+    );
   const markdown = `<!-- ty-source-item:start key=${SYMBOLIC_SOURCE_ITEM_KEY} kind=requirement -->
 The symbolic fixture preserves every declared atomic design rule.
 <!-- ty-source-item:end -->
@@ -148,6 +162,119 @@ ${YAML.stringify(handoff, { lineWidth: 0 }).trimEnd()}
     handoffPath,
     manifestPath,
     sourceIrPath: sourceIrResource?.resource.path ?? null,
+    feasibility: feasibilityDocument,
+  };
+}
+
+async function addSymbolicImplementationFeasibility(
+  root,
+  directory,
+  handoff,
+  manifest,
+  mutateFeasibility,
+) {
+  const sourcePath = `${directory}/technical-source.ts`;
+  const feasibilityPath = `${directory}/implementation-feasibility.json`;
+  const technicalSource = [
+    "export const platform = 'web';",
+    "export const frameworkRuntime = 'fixture-symbolic-runtime';",
+    "export const uiSystem = 'fixture-symbolic-ui';",
+    "export const tokenAdapter = 'fixture-symbolic-theme';",
+    "export const componentOwner = 'fixture-symbolic-components';",
+    "export const routeOwner = 'fixture-symbolic-route';",
+    "",
+  ].join("\n");
+  await writeFile(path.join(root, sourcePath), technicalSource);
+  const sourceKey = "technical.symbolic-substrate";
+  const document = {
+    schema_version: "design-resource-implementation-feasibility-v1",
+    key: "symbolic-target-feasibility",
+    target_ref: SYMBOLIC_TARGET_KEY,
+    realization_mode: "mapped_substrate",
+    source_records: [
+      {
+        key: sourceKey,
+        path: sourcePath,
+        media_type: "text/typescript",
+        sha256: sha256Hex(technicalSource),
+        locator: {
+          kind: "source_anchor",
+          value: "export const componentOwner",
+        },
+        roles: [
+          "technical_platform",
+          "framework_runtime",
+          "ui_system",
+          "token_theming_adapter",
+          "component_owner",
+          "route_owner",
+          "capability_basis",
+          "feasibility_basis",
+        ],
+      },
+    ],
+    substrate_observations: [
+      symbolicObservation("platform", "web", sourceKey),
+      symbolicObservation(
+        "framework_runtime",
+        "fixture-symbolic-runtime",
+        sourceKey,
+      ),
+      symbolicObservation("ui_system", "fixture-symbolic-ui", sourceKey),
+      symbolicObservation(
+        "token_theming_adapter",
+        "fixture-symbolic-theme",
+        sourceKey,
+      ),
+      symbolicObservation(
+        "component_owner_roots",
+        "fixture-symbolic-components",
+        sourceKey,
+      ),
+      symbolicObservation(
+        "route_owner_roots",
+        "fixture-symbolic-routes",
+        sourceKey,
+      ),
+    ],
+    condition_model: {
+      kind: "symbolic_regions_v2",
+      profiles: [
+        {
+          key: "all-reachable",
+          region: structuredClone(manifest.reachable_region),
+        },
+      ],
+    },
+    component_family_cells: [],
+    blockers: [],
+  };
+  mutateFeasibility?.(document);
+  const content = `${JSON.stringify(document, null, 2)}\n`;
+  await writeFile(path.join(root, feasibilityPath), content);
+  handoff.technical_feasibility_inputs = [
+    {
+      key: document.key,
+      target_ref: document.target_ref,
+      path: feasibilityPath,
+      media_type: "application/json",
+      sha256: sha256Hex(content),
+    },
+  ];
+  return document;
+}
+
+function symbolicObservation(kind, name, sourceRef) {
+  return {
+    kind,
+    disposition: "observed",
+    value: {
+      kind: "identifier",
+      name,
+      version_source_ref: sourceRef,
+    },
+    source_record_refs: [sourceRef],
+    reason: null,
   };
 }
 

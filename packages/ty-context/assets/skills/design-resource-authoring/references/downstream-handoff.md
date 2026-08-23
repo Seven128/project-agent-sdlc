@@ -18,6 +18,8 @@ For every material in-scope surface/flow/region/component/control condition, rec
 
 Design resources may show user-visible triggers, transitions, states, feedback and rule presentation. Product/technical Source still owns business, data, permission and algorithmic rules.
 
+For a Web/App implementation handoff, also return the separate implementation-feasibility Source described in [implementation-feasibility.md](implementation-feasibility.md): real substrate observations plus complete component-family × target × condition candidates/blockers. Exact selected design values remain canonical-resource owned. Multiple feasible candidates remain allowed; DRA selects none unless current technical authority already requires one.
+
 ## Design Resource Review & Selection Stop
 
 Use this explicit interaction point when direction review, correction or candidate selection is material. Show the addressable candidate plus the scope ceiling/necessary context/exclusions, selected existing and generated coverage, preservation obligations, Provider/Artifact qualifiers, Design suitability findings, unchecked conditions, outside-ceiling effects and unresolved choices.
@@ -50,12 +52,12 @@ Exploration returns the visible candidate, scope, dispositions, obvious limitati
 
 A non-formal selected-source handoff preserves target/resource classification, conditions, immutable identity, editable-upstream route, coverage/limitations and proposal identity in a project-native location authorized by the user. It remains ordinary Source.
 
-For an explicitly selected Web/App implementation handoff, stop here and read [formal-selected-web-app-handoff.md](formal-selected-web-app-handoff.md). UI symbolic V2 is explicit opt-in; V1 remains the default. That reference alone owns the strict manifest-backed V1/symbolic V2, Census/Fact/method and bundle/preflight rules. If closure exposes a new visible decision, return here for suitability review and the Review & Selection Stop; only stable closure returns for the one Proposal reconciliation. Do not approximate formal rules from this lightweight reference.
+For an explicitly selected Web/App implementation handoff, stop here and read [implementation-feasibility.md](implementation-feasibility.md) followed by [formal-selected-web-app-handoff.md](formal-selected-web-app-handoff.md). UI symbolic V2 is explicit opt-in; V1 remains the default. Those references own the real-substrate feasibility Source, strict manifest-backed V1/symbolic V2, Census/Fact/method and bundle/preflight rules. If closure exposes a new visible decision, return here for suitability review and the Review & Selection Stop; only stable closure returns for the one Proposal reconciliation. Do not approximate formal rules from this lightweight reference.
 
 ## Downstream routing
 
-The default Workflow opens every affected selected `exact-target` or `constraint`, routes it through owning surface/Design Authority and real production entry, runs applicable current-candidate checks, and reports unestablished conditions. It does not rebuild a per-Fact proof ledger.
+The default Workflow opens every affected selected `exact-target` or `constraint` plus current feasibility Source, routes design meaning through owning surface/Design Authority, selects an allowed implementation strategy during Architecture Deliberation, implements through the real production entry, runs applicable current-candidate checks, and reports blockers or unestablished conditions. When no reliable project-native check observes a production claim, report it as `Unverified`; preflight or model judgment cannot promote it. It does not rebuild a per-Fact proof ledger.
 
-An active Long-Task uses its one Source/Contract/Authority/Final Gate lifecycle. The resource handoff is Source; this Skill creates no Contract Draft, Outcome, Progress, Evidence, Receipt, Check result or Gate.
+An active Long-Task uses its one Source/Contract/Authority/Final Gate lifecycle. The resource handoff, feasibility document and controlling technical authority are Source and bind only through existing Contract surfaces; this Skill creates no Contract Draft, Outcome, Progress, Evidence, Receipt, Check result or Gate. Historical Provider, preflight, DRA-audit or project-check results never replace current-candidate evidence in the existing Final Gate.
 
 Never infer that a generated resource is selected/authoritative/accepted, covers undeclared states or targets, is native implementation because a preview renders, changed durable authority, or proves production fidelity, tests or release readiness.

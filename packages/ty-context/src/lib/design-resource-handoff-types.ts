@@ -18,6 +18,11 @@ import type {
   DesignResourceVariationAxisDispositionV1,
   DesignResourceVariationCombinationDispositionV1,
 } from "./design-resource-fact-manifest-types.js";
+import type {
+  DesignResourceImplementationFeasibilityIdentityV1,
+  DesignResourceImplementationFeasibilityV1,
+  DesignResourceTechnicalFeasibilityInputV1,
+} from "./design-resource-implementation-feasibility-types.js";
 
 export const DESIGN_RESOURCE_DIMENSIONS = [
   "surface_flow",
@@ -133,6 +138,7 @@ export interface DesignResourceHandoffV1 {
     model: string;
     design_system_id: string;
   };
+  technical_feasibility_inputs: DesignResourceTechnicalFeasibilityInputV1[];
   resources: DesignResourceHandoffResourceV1[];
   axis_dispositions: DesignResourceAxisDispositionV1[];
   condition_exclusions: DesignResourceConditionCombinationDispositionV1[];
@@ -334,6 +340,9 @@ export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHa
   schema_version: "design-resource-handoff-preflight-v1";
   status: "ready";
   resource_hashes: Record<string, string>;
+  technical_feasibility_documents: DesignResourceImplementationFeasibilityV1[];
+  technical_feasibility_identities: DesignResourceImplementationFeasibilityIdentityV1[];
+  limitations: string[];
   manifest_identities: Array<{
     resource_ref: string;
     path: string;

@@ -46,6 +46,11 @@ export async function designResource(args: string[]): Promise<void> {
   console.log(
     `Targets: ${result.handoff.targets.map((item) => item.key).join(", ")}`,
   );
+  console.log(
+    `Technical feasibility inputs: ${result.technical_feasibility_identities.length}`,
+  );
+  for (const limitation of result.limitations)
+    console.log(`Limitation: ${limitation}`);
   if ("metrics" in result) {
     console.log(
       `Coverage: ${result.manifest.subjects.length} subjects x ${result.manifest.properties.length} atomic properties (${result.rule_projections.length} symbolic Rules)`,

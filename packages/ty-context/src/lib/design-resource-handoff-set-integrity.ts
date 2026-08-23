@@ -69,6 +69,11 @@ export function createDesignResourceHandoffSetIntegrity(
       sharedHeader(scope, "proposal", handoff.proposal);
 
       sharedCollection(scope, "resources", handoff.resources);
+      sharedCollection(
+        scope,
+        "technical_feasibility_inputs",
+        handoff.technical_feasibility_inputs,
+      );
       sharedCollection(scope, "conditions", handoff.conditions);
       sharedCollection(scope, "properties", handoff.properties);
       sharedCollection(

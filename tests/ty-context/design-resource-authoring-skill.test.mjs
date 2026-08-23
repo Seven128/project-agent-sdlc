@@ -72,6 +72,7 @@ test("design-resource-authoring has one exact managed/generated/package source",
     "references/resource-selection.md",
     "references/open-design-provider.md",
     "references/downstream-handoff.md",
+    "references/implementation-feasibility.md",
     "references/recovery-and-writeback.md",
     "references/formal-selected-web-app-handoff.md",
   ]) {
@@ -89,6 +90,104 @@ test("design-resource-authoring has one exact managed/generated/package source",
   assert.match(metadata.description, /Open Design/iu);
   assert.match(metadata.description, /implementation handoff/iu);
   assert.match(metadata.description, /生成设计资源/u);
+});
+
+test("formal Web/App authoring carries real-substrate feasibility without another authority", async () => {
+  const [skill, selection, provider, downstream, feasibility, formal] =
+    await Promise.all([
+      copies("SKILL.md").then((items) => items[0]),
+      copies("references/resource-selection.md").then((items) => items[0]),
+      copies("references/open-design-provider.md").then((items) => items[0]),
+      copies("references/downstream-handoff.md").then((items) => items[0]),
+      copies("references/implementation-feasibility.md").then(
+        (items) => items[0],
+      ),
+      copies("references/formal-selected-web-app-handoff.md").then(
+        (items) => items[0],
+      ),
+    ]);
+
+  assert.match(skill, /read \[implementation-feasibility\.md\][\s\S]*real repository substrate/iu);
+  assert.match(
+    selection,
+    /every material component-family × target × condition profile[\s\S]*Source-backed candidate realization or blocker/iu,
+  );
+  assert.match(
+    selection,
+    /quality_commission[\s\S]*main design challenges[\s\S]*desired\/avoided visual character[\s\S]*real-content obligations[\s\S]*distinct role of each selected reference[\s\S]*shared-family expectations/iu,
+  );
+  assert.match(
+    provider,
+    /Always inspect the actual rendered candidate[\s\S]*never manufacture a revision quota/iu,
+  );
+  assert.match(
+    provider,
+    /single-frame HTML phone mockup cannot claim a native mobile-App or multi-screen formal handoff/iu,
+  );
+  assert.match(
+    provider,
+    /first candidate has no material Source, feasibility, mechanical or suitability defect[\s\S]*proceed directly[\s\S]*smallest defect-localizing revision/iu,
+  );
+  assert.match(
+    provider,
+    /Direct Agent authoring the resource is also a legal other Provider[\s\S]*same bounded archetype, render, revision, canonical-source and formal-handoff capabilities/iu,
+  );
+  assert.match(
+    provider,
+    /separate `design-resource-implementation-feasibility-v1` input per target[\s\S]*Never put this document or its technical Source records into the canonical resource closure/iu,
+  );
+  assert.match(
+    feasibility,
+    /canonical design resources and observable-Fact manifest remain the sole owners of exact selected design values/iu,
+  );
+  assert.match(
+    feasibility,
+    /Default Workflow chooses among still-allowed candidates in its Architecture Deliberation[\s\S]*Long-Task projects the document only through existing `task\.source_paths`, Source claims, technical\/surface bindings, Checks and Assertions/iu,
+  );
+  assert.match(
+    feasibility,
+    /Leave `required_realization\.realization_ref` null[\s\S]*current technical authority requires a specific candidate/iu,
+  );
+  assert.match(
+    feasibility,
+    /every non-observed disposition carries a concrete non-empty reason[\s\S]*no value/iu,
+  );
+  assert.match(
+    feasibility,
+    /complete matching canonical V1 Fact set or intersecting V2 Fact Rule set[\s\S]*neither omissions nor extras/iu,
+  );
+  assert.match(
+    feasibility,
+    /Browser HTML\/CSS capability alone cannot support a native-App or React Native realization[\s\S]*mapped_substrate[\s\S]*blocker/iu,
+  );
+  assert.match(
+    feasibility,
+    /Different platform\/condition profiles for the same component family may carry different candidate sets, primitives, costs, risks or blockers/iu,
+  );
+  assert.match(
+    feasibility,
+    /preflight validates input closure only[\s\S]*never proves that production uses the candidate, renders correctly or passes acceptance/iu,
+  );
+  assert.match(
+    feasibility,
+    /Create no implementation registry, readiness flag, workflow state, second Design Authority, new Gate or production acceptance record/iu,
+  );
+  assert.match(
+    downstream,
+    /Multiple feasible candidates remain allowed[\s\S]*DRA selects none unless current technical authority already requires one/iu,
+  );
+  assert.match(
+    downstream,
+    /no reliable project-native check[\s\S]*report it as `Unverified`[\s\S]*preflight or model judgment cannot promote it/iu,
+  );
+  assert.match(
+    downstream,
+    /Historical Provider, preflight, DRA-audit or project-check results never replace current-candidate evidence/iu,
+  );
+  assert.match(
+    formal,
+    /one `design-resource-implementation-feasibility-v1` JSON document per target[\s\S]*Keep canonical design values exclusively in the design resources and manifest/iu,
+  );
 });
 
 test("incremental DRA review reuses existing owners without widening scope or authority", async () => {
@@ -227,6 +326,7 @@ test("incremental DRA review reuses existing owners without widening scope or au
   assert.deepEqual(references.sort(), [
     "downstream-handoff.md",
     "formal-selected-web-app-handoff.md",
+    "implementation-feasibility.md",
     "open-design-provider.md",
     "recovery-and-writeback.md",
     "resource-selection.md",
@@ -251,13 +351,13 @@ test("style-bearing DRA closes application dimensions before provider execution"
   const workflow = workflowMatch[1];
   assert.deepEqual(
     [...workflow.matchAll(/^(\d+)\. /gmu)].map((match) => Number(match[1])),
-    [1, 2, 3, 4, 5, 6, 7, 8],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
   );
   const skillClosureAt = workflow.indexOf(
     "Before every style-bearing generation or material revision",
   );
   assert.ok(skillClosureAt > workflow.indexOf("4. For style-bearing work"));
-  assert.ok(skillClosureAt < workflow.indexOf("5. Discover only"));
+  assert.ok(skillClosureAt < workflow.indexOf("6. Discover only"));
   assert.match(
     workflow,
     /No applicable dimension may be silently omitted; `decision-required`, an undispositioned dimension or Source conflict blocks the Provider run/iu,

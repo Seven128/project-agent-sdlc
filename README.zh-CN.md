@@ -74,8 +74,8 @@ ty-context enable long-task
 1. **只启用一次 Long-Task。** 选择工作流 Skill 前先运行 `ty-context enable long-task`。
 2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过独立的中间 authoring 阶段。
-4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。它会输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest 和 dependencies，以及通过校验的残余 `design-resource-handoff-v1`。
-5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换后，请仅回复：模型切换卡点解除，继续`。普通“继续”不满足 managed prompt protocol；此前任何模型策略文字都不能跳过该边界，Harness 也不能观察下一条宿主消息或模型是否真的改变。用户恢复后，父 Goal 先识别合格的有界工作包，再判断 profile/capacity；没有用户或宿主显式禁止时，合格集合必须实际调用多个精确 `long_task_implementation`，由宿主结果进入六理由 zero-start 或 partial delegation。数量保持动态，禁止 generic 替代项；Source、Contract、Authority、架构、Context、工作包选择、集成、当前候选检查、正式验证、Final Gate、close 与 completion 始终只由父 Goal 持有。
+4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。正式 Web/App 工作会先读取真实技术 Source，再输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest/dependencies、独立 implementation-feasibility input，以及通过校验的残余 `design-resource-handoff-v1`。
+5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff、implementation-feasibility input 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换后，请仅回复：模型切换卡点解除，继续`。普通“继续”不满足 managed prompt protocol；此前任何模型策略文字都不能跳过该边界，Harness 也不能观察下一条宿主消息或模型是否真的改变。用户恢复后，父 Goal 先识别合格的有界工作包，再判断 profile/capacity；没有用户或宿主显式禁止时，合格集合必须实际调用多个精确 `long_task_implementation`，由宿主结果进入六理由 zero-start 或 partial delegation。数量保持动态，禁止 generic 替代项；Source、Contract、Authority、架构、Context、工作包选择、集成、当前候选检查、正式验证、Final Gate、close 与 completion 始终只由父 Goal 持有。
 
 一组可以直接改写使用的调用顺序如下：
 
@@ -84,9 +84,9 @@ $design-system-authoring 为这个 style-bearing 范围生成、选择并采用�
 
 为 <交付范围> 在 docs/initial-proposal.md 准备一份可写、项目原生的初始方案。
 
-$design-resource-authoring 使用 docs/initial-proposal.md，覆盖 <精确开发范围和目标>。返回完成回改的方案路径、通过校验的 design-resource-handoff-v1 路径，以及选定的不可变规范资源、manifest 和 dependency 路径。
+$design-resource-authoring 使用 docs/initial-proposal.md，覆盖 <精确开发范围和目标>。返回完成回改的方案路径、通过校验的 design-resource-handoff-v1 路径、implementation-feasibility Source 路径，以及选定的不可变规范资源、manifest 和 dependency 路径。
 
-$long-task-workflow 将 docs/initial-proposal.md、<handoff.md> 以及选定的规范资源、manifest 和 dependencies 作为 Source，完成一次完整实现交付。
+$long-task-workflow 将 docs/initial-proposal.md、<handoff.md>、<feasibility.json> 以及选定的规范资源、manifest 和 dependencies 作为 Source，完成一次完整实现交付。
 ```
 
 上面的路径只是示例，不是固定目录。候选图片或可编辑探索本身不构成保真实现权威；下游实现使用选定的不可变规范资源及其已校验 handoff。
@@ -213,11 +213,13 @@ Long-Task Source authoring 必须完整索引 material 请求片段、附件、c
 
 ### 视觉交付指导
 
-两种开发路径共享选定设计 Source 权威，但不共享形式化证明等级。正式 handoff 仍必须提供机器可读的完整输入并通过精确 preflight；默认路线随后打开受影响 target/condition，路由到生产 owner 和最终候选项目检查，并报告未被检查建立的条件；Long-Task 额外提供逐 Fact/Rule 的精确机器闭包。两者都不授权从静态图推断未表达交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；进入 `ready` 前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
+两种开发路径共享选定设计 Source 权威，但不共享形式化证明等级。正式 handoff 仍必须提供机器可读的完整输入并通过精确 preflight；默认路线随后打开受影响 target/condition 与真实载体 feasibility Source，在 Architecture Deliberation 中选择生产策略，再路由到最终候选项目检查并报告未被检查建立的条件；Long-Task 通过现有 Source、binding 与唯一 Final Gate 额外提供逐 Fact/Rule 的精确机器闭包。两者都不授权从静态图推断未表达交互，也不能证明用户没有遗漏要求。Open Design 有能力输出实现级 HTML/CSS/JS、spec、token 与 asset，但“有能力”不等于每次都产出：选定 Web/App 实现 handoff 时，`design-resource-authoring` 必须显式委托并完整取得一个机器可读 canonical entry 及其精确 dependency closure，逐文件冻结 digest，并暴露稳定的 typed locator；正式发布前，还要在这些不可变字节上逐项执行声明的 verification method，无法消除的 code/spec/token/asset 冲突保持未决/不可用并阻塞。这是源资源 QA，不是生产验收。PNG 只能作为派生视觉基线，不能成为唯一实现源。
 
 provider-neutral handoff 是残余语义与绑定层，不是 CSS 文本副本、第二份数值权威或第二份完整 Fact 索引。正式 Web/App 生成前，`design-resource-authoring` 必须从明确 scope、已采纳 Design Authority 与冻结的 Inspector/Census 义务中先推导 Expected Fact Universe。原子单元是每个适用的 `subject × selected target × condition combination × variation combination × property` Fact Cell。subject 一等覆盖 surface、region、overlay、component family/instance、control、每个 anatomy part/slot/primitive、text、icon、media、asset 与 relation；condition 一等覆盖 33 个标准 condition axes，包括 platform/runtime/device/viewport/density/safe area/window/fold/display/color/localization/content/data/text scale/input/assistive 与无障碍偏好/system UI/IME/permission/capability/connectivity/lifecycle；variation 一等覆盖 5 个 variation axes：`variant`、`state`、`interaction_phase`、`presence_phase` 与 `instance_case`。property 使用 geometry、layout、scroll、typography、color、decoration、content、icon、media、interaction/navigation、motion/feedback、responsive、accessibility、asset、system、relation 共 217 个标准原子属性键，并允许显式声明 custom property。
 
 生成的 canonical implementation source 仍是精确值的唯一 owner。其 dependency closure 内含 `design-resource-observable-fact-manifest-v1`：稳定 subject/property/Fact ID、typed locator、定位值 digest、单位/舍入/pixel snapping、token/effective-value lineage、dynamic population/relation/asset、required proof method、comparator parameter/tolerance/mask、Oracle identity/capability 与 render environment。冻结 Inspector 必须完整枚举 resource/node/declaration/token/asset/relation/custom-property/variant/state/interaction/dynamic-population Census；complete-generation count 与 digest 证明没有抽样或截断。每个适用 Fact Cell 要么由一个原子 Fact 覆盖，要么有带 Source/basis/rationale 的显式 blocking/non-applicable disposition。“all states”等聚合字符串不能冒充原子值，也不能用 default 页面或 shared style 推断其他适用组合。
+
+正式 Web/App handoff 还为每个 target 索引一份独立的 `design-resource-implementation-feasibility-v1` JSON Source。它记录当前 platform、framework/runtime、UI system、token/theming adapter、component-owner roots 与 route-owner roots；非 observed disposition 必须给出理由，不能伪造值。每个 material component-family × target × condition profile 必须精确绑定完整匹配的 V1 Fact 或相交的 V2 Rule 集，并提供一条或多条同时有 capability/feasibility Source 支撑的 reuse/compose/extend/theme/create 候选，或显式 blocker；组合多个 Primitive、按平台使用不同候选和已授权 planned owner 都合法。仅有 Browser 能力时不能冒充 native-App/React Native substrate。精确视觉值仍只属于 canonical resources，也不得塞入 feasibility 自由文本；没有独立 technical authority 时，DRA 不能指定 required production realization。V1 使用精确 condition partition，Symbolic V2 使用 reachable、互斥且穷尽的 regions。新 V1 bundle 发布要求该输入；direct preflight 继续读取 legacy implementation handoff，并在缺失时明确报告 `technical feasibility not declared`，而 `reference` target 可以如实省略且不产生该限制。
 
 `ready` 必须满足精确集合等式：`Expected Fact Universe = Canonical Resource Facts = Handoff Indexed Facts`，并闭合每个资源为 material-with-facts 或真实 supporting-only。canonical per-target manifest 是完整 Fact/Census/proof 索引的唯一 owner；同一个已发布的 `design-resource-handoff-v1` 标识下，新文件用 `representation: manifest_backed` 只保存 Source/scope/resource/target/closure/coverage/proposal 绑定，preflight 从冻结 manifest 直接还原原有完整 V1 对象。旧的嵌入式 V1 只保留读取兼容。UI symbolic V2 仍是显式 opt-in，V1 仍是默认；V2 可以保留旧式精确 remainder rows，也可以用 package-owned property profiles、冻结 Inspector custom-property closure 和唯一 instance exceptions 消除物理 N/A 矩阵，但每个逻辑 subject-property 点仍必须得到唯一 disposition。Rule 省略轴时，Source-side 与 production-side 都必须由冻结闭世界静态依赖闭包、受限 IR 精确等价或有限完整域真实穷举等价之一证明；动态加载、反射、未冻结隐式输入、外部设备、代表点与抽样均阻断。`exact_target` 的每个适用 condition 还必须分别闭合 full-target layout 与 pixel Facts。preflight 会在不可变本地资源上解析 manifest 与全部 typed locator，校验 dependency/Census/Fact/proof closure，并拒绝 missing、duplicate、unresolved、unsupported、stale、media 不兼容或数值冲突；探索候选仍不需要 schema。
 
@@ -257,11 +259,11 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。生成 page/flow/complex control 之前，必须分别消费：controlling Product/Surface/Screen Source 中的 target user/context、client/host、页面职责、主任务结果、主工作对象/任务闭环、operation-object-feedback 以及适用的 state/recovery/accessibility 含义；`DESIGN.md` 和 selected exact-target/constraint Source 中的视觉系统及选定设计条件。非权威 task-level UI/UX analysis 只能帮助比较候选，不能提供缺失的产品或 Surface 含义；Provider 也不得从功能列表、截图、route tree、component inventory 或 analysis output 发明这些含义。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
 
-在 ceiling 内，DRA 会记录已有选定资源的覆盖、新缺口和 preservation 义务。发现 ceiling 外影响时只返回现有 `decision-required`，理由为 `scope-expansion-required`；只有用户可以扩大 ceiling。需要改变耐久 Product/Surface/Screen/Design 含义时，必须先更新真实 owner，重新读取后再恢复生成。style-bearing commission 可以在现有任务局部 envelope 中携带最小 `style_application`，表达当前切片的优先级、密度、容器/几何处理、保留项和禁用模式；它不是文件、状态或 Authority。
+在 ceiling 内，DRA 会记录已有选定资源的覆盖、新缺口和 preservation 义务。发现 ceiling 外影响时只返回现有 `decision-required`，理由为 `scope-expansion-required`；只有用户可以扩大 ceiling。需要改变耐久 Product/Surface/Screen/Design 含义时，必须先更新真实 owner，重新读取后再恢复生成。style-bearing commission 只携带确有 Source 的 `style_application` 字段，并增加按资源 archetype 定义的 `quality_commission`：主要设计挑战、希望/避免的视觉特征、真实 copy/data、每个参考的角色，以及设计侧 shared-family reuse。它们只是任务局部 Provider 输入，不是文件、状态、分数、Authority 或 routing record。
 
 正式首次生成、重大设计修订和关键重新生成使用实时发现后满足工具、视觉/上下文能力、认证与数据边界的最高能力模型，以及该模型实际支持的最高 reasoning effort。排序只能依据 provider 明确的能力等级、推荐替换关系或唯一且有版本依据的 provider-local fallback；不得从价格、模型名、发布时间或列表顺序猜测。多个 eligible model 无法排序时以 `highest_performance_unverified` fail closed；provider 不可控制或不能回报实际 model/effort 时也必须保留同一限定，不能声称已执行最高档。该策略不创建 model registry、scheduler 或持久 routing state。
 
-正式 Web/App implementation output 中，“完整”默认就是上文的范围内最细可观察 Fact 粒度。Skill 在委托生成前先构造 Expected Fact Universe 与冻结 Inspector/Census 义务，把它们连同已采纳 design-system identity 一起传给 Open Design，并要求返回的 canonical source/manifest 表达每个适用 cell；不能等下游实现时才发现或自行补设计 anatomy-part、状态、响应式/平台/text-scale、动效、无障碍或资产事实。
+正式 Web/App implementation output 中，“完整”默认就是上文的范围内最细可观察 Fact 粒度。Skill 在委托生成前先构造 Expected Fact Universe、冻结 Inspector/Census 义务，并读取真实技术 Source 中的平台、framework/runtime、UI system、token/theming adapter、component owner 与 route owner；随后按资源 archetype 匹配实时 Provider 能力，把这些约束连同已采纳 design-system identity 一起传给 Open Design，并要求返回的 canonical source/manifest 表达每个适用 cell。Skill 另行生成上述 feasibility Source，每个 material family/condition 必须有候选或 blocker，而 production-owner 选择仍归下游；不能等下游实现时才发现或自行补设计 anatomy-part、状态、响应式/平台/text-scale、动效、无障碍、资产或基本可实施性。
 
 Skill 会先分类 visual-style dependency。高保真/品牌化输出、视觉方向、字体/颜色/密度、组件视觉处理和 production-style prototype 属于 style-bearing：若 `DESIGN.md` 未配置或没有唯一 authored token source/direction，Skill 必须在创建 provider project/run 前停下，并提示用户显式选择 `design-system-authoring`，绝不自动初始化。低保真结构、IA/flow topology 和纯语义 behavior/state study 属于 non-fidelity。style-bearing 工作必须把已采纳 provider ID 传给 MCP `create_project.designSystem`，并用 `get_project.designSystemId` 验证一致。
 
@@ -269,7 +271,7 @@ Skill 只通过结构化 MCP（必要时有限使用 CLI/daemon/UI fallback）�
 
 面向 Web/App 实现时，Skill 必须取得上文所述完整 canonical entry/dependency set 与可寻址事实。Figma 适合已经存在的设计团队权威，需要原生 Components/Variables/Variants、共享库、Dev Mode 或 Code Connect 的场景；Penpot 适合明确需要开放、自托管多人设计基础设施的场景；OpenPencil 可作为本地静态布局 sidecar，但当前 prototype/motion 模型仍不完整。把完整 Open Design Source 默认转换为另一种表示会增加同步和运维成本，却不会关闭新的 enforcement gap，因此三者都不是默认依赖。
 
-Provider execution、Artifact readiness 与 Design suitability 保持分离。Suitability 会按意图深度检查 scope/Source、机械完整性、Design-System 应用、视觉语言、state/condition 覆盖和 preservation，并在每次材料性修订后重审；它不能替代人工选择，也不能单独产生 readiness。
+Provider execution、Artifact readiness 与 Design suitability 保持分离。正式高保真工作至少检查一次真实渲染；Suitability 会按意图深度检查 scope/Source、机械完整性、Design-System 应用、visual craft/language、产品辨识度、内容真实性、设计侧组件复用、技术可实施性、state/condition 覆盖和 preservation。首个候选没有 material grounded defect 时可直接进入选择；存在缺陷时只修最高影响问题的最小范围，然后重新渲染并重审受影响项，不设美容式修订次数。它不能替代人工选择，也不能单独产生 readiness。持久依赖的 Provider 行为必须固定到 immutable version/tag/commit，而不是浮动 branch。
 
 探索模式只做最小完整性检查并尽快展示指定候选，不需要 handoff schema。`Design Resource Review & Selection Stop` 允许用户修正、选择、拒绝、保留未决、扩大范围或路由耐久 owner 变化；它不是批准记录、Gate、验收或正式完整性声明。普通对话式选择不创建持久状态；需要确定性跨中断恢复时，只复用现有 marked Source、authority、selected-source 和 recovery checkpoint owner。选择身份绑定 canonical selected-source digest、target、声明 conditions 以及 controlling Source/Design-Authority identity；被证明等价的派生导出不会使选择失效，可见或语义差异则回到 suitability 与审查。选定 formal Web/App 方向完成 canonical source/dependency/Census/manifest/preflight 闭包后，任何新可见决定都返回同一停点；只有稳定闭包之后才做一次合并、幂等的初始 Proposal reconciliation 并生成 provider-neutral marked handoff。共享 preflight 不能把取得不完整、不可寻址、`decision_required`、`unavailable`、证据不成立或过期的输入称为 ready。除唯一被明确授权的 Proposal 写回目标外，Skill 不会修改调用方已有计划/提案 Source、`project_context/**`、`DESIGN.md`、生产代码或 Delivery Contract。
 
@@ -277,7 +279,7 @@ Provider execution、Artifact readiness 与 Design suitability 保持分离。Su
 
 实际生成仍由已配置的 Open Design/Product Design、Figma、图片生成、原型工具或人工设计流程负责。这些输出以普通 external Source 进入默认 Workflow 或 Long-Task。candidate 与 inspiration 不授权 fidelity；adopted exact target/constraint 作为 Context-reachable Source，由 owning Context/`DESIGN.md` 把稳定 key 连接到覆盖条件、不可变身份/digest 和 editable upstream owner/locator/update route。`context_uiux_design` 在下游执行 UI Authority Closure，只把耐久事实采纳到 Context/`DESIGN.md`；实现截图与 diff 仍是证据 artifact，不能自我授权为目标。
 
-维护者可以设置 `TY_CONTEXT_OPEN_DESIGN_MCP_COMMAND` 与可选 `TY_CONTEXT_OPEN_DESIGN_MCP_ARGS_JSON`，运行 `npm run smoke:open-design` 做显式启用、只读的 discovery smoke。正常测试使用本地 mock MCP，不依赖 Open Design、登录、付费能力或不确定的设计输出。
+维护者可以设置 `TY_CONTEXT_OPEN_DESIGN_MCP_COMMAND` 与可选 `TY_CONTEXT_OPEN_DESIGN_MCP_ARGS_JSON`，运行 `npm run smoke:open-design` 做显式启用、只读的 discovery smoke。现有 delivery-benchmark owner 还包含一个 opt-in DRA visual diagnostic：8 个固定 case、5 条固定身份 route、随机盲评与重复的描述性观察；它不影响 admission、发布、排名、路由或设计选择。正常测试使用本地 mock MCP，不依赖 Open Design、登录、付费能力或不确定的设计输出。
 
 ### 退役独立 Authoring 兼容
 
@@ -355,7 +357,7 @@ Formal collection 的 11-scenario catalog 是 scenario/source/zero policy 的唯
 
 Catalog 派生 86 次 execution 与 586 个 formal artifact：516 个 base file、30 个 compute record、10 个 State ledger 加 10 个 payload、10 个 prompt 加 10 个 Provider event。Formal fuse 为 650 files/364.625 MiB，完整 run-set fuse 为 4,379 files/974.3125 MiB。Evidence Candidate 冻结全部 code/schema/Context/test/package-version/protocol bytes；Promotion Commit 必须是其直接子提交，只新增四个 package-/TCB-external governance record，并保持 materialized-package、benchmark 与 runtime/TCB identities 不变，否则重新采集与审计。 Runtime TCB v2 绑定 clean Node launch、executable path/hash、worker/protocol、parser/transport 与 limits。Benchmark implementation identity 纳入 `npm_command_spec.mjs`、Provider protocol/worker 与有限 local-dependency closure checker；working-tree、Git object、collection 与 Promotion 路径都重算闭包并绑定实际执行源码根。
 
-真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.16 是当前 Level-3 package candidate，不继承其 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
+真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.17 是当前 Level-3 package candidate，不继承其 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
 
 Formal collection 还会在执行前锁定一个固定 scenario catalog，覆盖十类成本和一个 controlled incident 的 exact task/gold bytes。每个 event 绑定唯一 raw output：成本 B/C 都必须命中共同 gold；事故 B 必须错误而 C 必须命中它。这样只提交时间/usage 不能制造 purpose benefit，也不会新增通用 scenario registry。
 
@@ -456,6 +458,7 @@ npm run typecheck --workspace project-tiny-context-harness
 npm run build --workspace project-tiny-context-harness
 npm run test:affected:list
 npm run test:affected
+npm run verify:active-source-portability
 npm run test:long-task:trust
 npm run test:long-task-performance --workspace project-tiny-context-harness
 npm test
@@ -467,6 +470,8 @@ make validate-harness
 ```
 
 `test:affected` 用于日常修改和修复循环；本地推断只会报告并略过未跟踪的 `.work_products/**`，tracked 与显式路径仍按 fail-safe 路由。`test:long-task:trust` 是冻结候选版本后的高风险边界门，也是 PR CI 使用的层级；经审阅的 Trust/focused/hotspot 预算防止反馈层静默膨胀，但完整套件发现不设裁剪上限。`npm test` 是 `main` 和发布保留的完整发布回归，不应在每次小修复后重跑。受控 Ubuntu CI 使用有充分余量的分层灾难性耗时上限，本地耗时仍只做诊断。Delivery Contract 和完整 Long-Task 门仍可通过 package workspace scripts 显式执行。
+
+`verify:active-source-portability` 只扫描声明的当前 owner：managed guidance/assets、公开可执行文档、durable Context、source mappings 与 runtime-resolved Source。当前交付文件可用 `-- --active-source <仓库相对文件>` 精确加入。它会拒绝真实机器的用户主目录 locator，但不会枚举全部 Git 文件、改写冻结 Contract/Receipt/fixture 或删除内容。
 
 模块化门禁是 capability-aware 的 `ty-context check-modularity`；例外必须包含 `owner`、`introduced_at`、`reason`、`tracking_issue` 和 `expiry_condition`，不支持指标不会以零值制造通过假象。
 
