@@ -4,6 +4,7 @@ import {
   createProcessTreeObserver,
   type ProcessTreeObserver,
 } from "./long-task-process-tree.js";
+import { spawnWindowsJobCommandOnce } from "./long-task-windows-job-supervisor.js";
 
 const OUTPUT_LIMIT = 2 * 1024 * 1024;
 const PROCESS_TREE_GRACE_MS = 1_000;
@@ -45,6 +46,15 @@ export function spawnCommandOnce(
   environment: NodeJS.ProcessEnv,
   containProcessTree: boolean,
 ): Promise<SpawnedCommandExecution> {
+  if (containProcessTree && process.platform === "win32")
+    return spawnWindowsJobCommandOnce(
+      executable,
+      argv,
+      cwd,
+      timeoutMs,
+      environment,
+      OUTPUT_LIMIT,
+    );
   return new Promise((resolve, reject) => {
     const child = spawn(executable, argv, {
       cwd,

@@ -11,10 +11,12 @@ import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/i
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { validateDeliveryContractStructure } from "../../packages/ty-context/dist/lib/long-task-delivery-validation.js";
+import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/long-task-freshness.js";
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
 import { npxCliPath } from "../../packages/ty-context/dist/lib/long-task-runner-files.js";
+import { canonicalValueJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   addProductionControlBinding,
   commitCandidate,
@@ -1461,6 +1463,250 @@ test("Long-Task closes componentless mixed design targets only when every target
   }
 });
 
+test("Long-Task full Compile rejects a legacy target laundering an extra modern-surface Binding", async () => {
+  const mixed = await createFeasibilityBlockerFixture("external_confirmation");
+  try {
+    const { preflight, mapping } = await writeLegacySecondaryHandoff(mixed);
+    attachSecondaryDesignTarget(mixed.fixture.contract, preflight, mapping);
+    isolateSecondaryTargetAssertions(mixed.fixture.contract);
+    const outcome = mixed.fixture.contract.outcomes[0];
+    const surface = outcome.product.surface_bindings[0];
+    surface.component_binding_refs.push("legacy-only-owner");
+    outcome.technical.bindings.push({
+      key: "legacy-only-owner",
+      kind: "file",
+      target: "src/legacy-only-owner.ts",
+      carrier_paths: ["src/legacy-only-owner.ts"],
+      existence: "existing",
+    });
+    await writeFile(
+      path.join(mixed.fixture.root, "src", "legacy-only-owner.ts"),
+      "export const legacyOnlyOwner = true;\n",
+    );
+    await writeContract(mixed.fixture.workdir, mixed.fixture.contract);
+    await assert.rejects(
+      compileDeliveryContract(mixed.fixture.workdir, mixed.fixture.root, {
+        require_completion_gate: false,
+      }),
+      /feasibility_component_binding_unattributed:.*legacy-only-owner/u,
+    );
+  } finally {
+    await rm(mixed.fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task full Compile preserves pure legacy compatibility and enforces the complete mixed legacy matrix", async () => {
+  const allowedMixed = await createLegacyMixedCompileFixture();
+  try {
+    const contractPath = path.join(
+      allowedMixed.fixture.workdir,
+      "delivery-contract.yaml",
+    );
+    await writeContract(
+      allowedMixed.fixture.workdir,
+      allowedMixed.fixture.contract,
+    );
+    const rawBefore = await readFile(contractPath, "utf8");
+    const compiled = await compileDeliveryContract(
+      allowedMixed.fixture.workdir,
+      allowedMixed.fixture.root,
+      { require_completion_gate: false },
+    );
+    assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+    assert.equal(await readFile(contractPath, "utf8"), rawBefore);
+    assert.equal(
+      compiled.contract_sha256,
+      sha256Text(canonicalValueJson(parseDeliveryContractText(rawBefore))),
+    );
+    await writeFile(
+      contractPath,
+      `${rawBefore}\ninvalid_s6_contract_drift: true\n`,
+      "utf8",
+    );
+    assert.ok(
+      (await deliveryCompileFreshness(compiled)).some((finding) =>
+        finding.startsWith("contract_changed_after_compile:"),
+      ),
+    );
+    await writeFile(contractPath, rawBefore, "utf8");
+  } finally {
+    await rm(allowedMixed.fixture.root, { recursive: true, force: true });
+  }
+
+  const blockerAndLegacy = await createLegacyMixedCompileFixture({
+    blockerOnly: true,
+  });
+  try {
+    await writeContract(
+      blockerAndLegacy.fixture.workdir,
+      blockerAndLegacy.fixture.contract,
+    );
+    await assert.rejects(
+      compileDeliveryContract(
+        blockerAndLegacy.fixture.workdir,
+        blockerAndLegacy.fixture.root,
+        { require_completion_gate: false },
+      ),
+      /componentless_surface_requires_blocker_only_feasibility/u,
+    );
+  } finally {
+    await rm(blockerAndLegacy.fixture.root, {
+      recursive: true,
+      force: true,
+    });
+  }
+
+  const candidateAndLegacy = await createLegacyMixedCompileFixture();
+  try {
+    candidateAndLegacy.fixture.contract.outcomes[0].product.surface_bindings[0].component_binding_refs =
+      [];
+    await writeContract(
+      candidateAndLegacy.fixture.workdir,
+      candidateAndLegacy.fixture.contract,
+    );
+    await assert.rejects(
+      compileDeliveryContract(
+        candidateAndLegacy.fixture.workdir,
+        candidateAndLegacy.fixture.root,
+        { require_completion_gate: false },
+      ),
+      /feasibility_component_binding_required/u,
+    );
+  } finally {
+    await rm(candidateAndLegacy.fixture.root, {
+      recursive: true,
+      force: true,
+    });
+  }
+
+  const pureLegacy = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(pureLegacy);
+    addTargetBlockingDesignConfirmation(pureLegacy.contract, {
+      key: "confirm-pure-legacy-design",
+    });
+    await writeContract(pureLegacy.workdir, pureLegacy.contract);
+    const compiled = await compileDeliveryContract(
+      pureLegacy.workdir,
+      pureLegacy.root,
+      { require_completion_gate: false },
+    );
+    assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+
+    pureLegacy.contract.outcomes[0].product.surface_bindings[0].component_binding_refs =
+      [];
+    await writeContract(pureLegacy.workdir, pureLegacy.contract);
+    await assert.rejects(
+      compileDeliveryContract(pureLegacy.workdir, pureLegacy.root, {
+        require_completion_gate: false,
+      }),
+      /(?:ui_surface_binding_component_ref_required|componentless_surface_requires_blocker_only_feasibility)/u,
+    );
+  } finally {
+    await rm(pureLegacy.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task full Compile attributes shared modern Bindings and preserves a modern blocker boundary", async () => {
+  const sharedModern = await createFeasibilityBlockerFixture(
+    "external_confirmation",
+  );
+  try {
+    await writeModernSecondaryHandoff(sharedModern);
+    refreshFixtureExternalConfirmationImpacts(sharedModern.fixture.contract);
+    await writeContract(
+      sharedModern.fixture.workdir,
+      sharedModern.fixture.contract,
+    );
+    const compiled = await compileDeliveryContract(
+      sharedModern.fixture.workdir,
+      sharedModern.fixture.root,
+      { require_completion_gate: false },
+    );
+    assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+
+    const outcome = sharedModern.fixture.contract.outcomes[0];
+    outcome.product.surface_bindings[0].component_binding_refs.push(
+      "modern-unattributed-owner",
+    );
+    outcome.technical.bindings.push({
+      key: "modern-unattributed-owner",
+      kind: "file",
+      target: "src/modern-unattributed-owner.ts",
+      carrier_paths: ["src/modern-unattributed-owner.ts"],
+      existence: "existing",
+    });
+    await writeFile(
+      path.join(
+        sharedModern.fixture.root,
+        "src",
+        "modern-unattributed-owner.ts",
+      ),
+      "export const modernUnattributedOwner = true;\n",
+    );
+    await writeContract(
+      sharedModern.fixture.workdir,
+      sharedModern.fixture.contract,
+    );
+    await assert.rejects(
+      compileDeliveryContract(
+        sharedModern.fixture.workdir,
+        sharedModern.fixture.root,
+        { require_completion_gate: false },
+      ),
+      /feasibility_component_binding_unattributed:.*modern-unattributed-owner/u,
+    );
+  } finally {
+    await rm(sharedModern.fixture.root, { recursive: true, force: true });
+  }
+
+  const candidateAndBlocker = await createFeasibilityBlockerFixture(
+    "external_confirmation",
+  );
+  try {
+    await writeModernSecondaryHandoff(candidateAndBlocker, {
+      blockerOnly: true,
+    });
+    refreshFixtureExternalConfirmationImpacts(
+      candidateAndBlocker.fixture.contract,
+    );
+    await writeContract(
+      candidateAndBlocker.fixture.workdir,
+      candidateAndBlocker.fixture.contract,
+    );
+    const compiled = await compileDeliveryContract(
+      candidateAndBlocker.fixture.workdir,
+      candidateAndBlocker.fixture.root,
+      { require_completion_gate: false },
+    );
+    assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+
+    await runCli(candidateAndBlocker.fixture.root, ["enable", "long-task"]);
+    await commitCandidate(candidateAndBlocker.fixture.root);
+    await runCli(candidateAndBlocker.fixture.root, [
+      "long-task",
+      "compile",
+      candidateAndBlocker.fixture.workdir,
+    ]);
+    await runCli(candidateAndBlocker.fixture.root, [
+      "long-task",
+      "verify",
+      candidateAndBlocker.fixture.workdir,
+    ]);
+    const finalGate = await runCliFailure(
+      candidateAndBlocker.fixture.root,
+      ["long-task", "final-gate", candidateAndBlocker.fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(finalGate.workflow_status, "blocked_external");
+  } finally {
+    await rm(candidateAndBlocker.fixture.root, {
+      recursive: true,
+      force: true,
+    });
+  }
+});
+
 test("Long-Task Compile binds every declared design verification method to an independent Assertion", async () => {
   const missingMethod = await createDeliveryFixture();
   try {
@@ -1967,6 +2213,13 @@ test("counterfactual mutation must stay on carriers and cannot delete verificati
 function cloneDesignHandoffTarget(primary) {
   const secondary = structuredClone(primary);
   secondary.handoff_path = "design/handoff-secondary.md";
+  const mapping = secondaryDesignHandoffMapping(secondary.handoff);
+  replaceExactStringMap(secondary, mapping);
+  const reverseMapping = new Map([...mapping].map(([from, to]) => [to, from]));
+  return { handoff: secondary, mapping, reverseMapping };
+}
+
+function secondaryDesignHandoffMapping(handoff) {
   const mapping = new Map([
     [DESIGN_TARGET_KEY, "secondary-default"],
     [DESIGN_SOURCE_ITEM_KEY, "design-secondary"],
@@ -1991,13 +2244,251 @@ function cloneDesignHandoffTarget(primary) {
     "coverage",
     "acceptance_blockers",
   ])
-    for (const row of secondary.handoff[collection])
+    for (const row of handoff[collection])
       if (!mapping.has(row.key)) mapping.set(row.key, `secondary.${row.key}`);
-  for (const resource of secondary.handoff.resources)
+  for (const resource of handoff.resources)
     mapping.set(resource.path, `design/secondary/${resource.path}`);
-  replaceExactStringMap(secondary, mapping);
-  const reverseMapping = new Map([...mapping].map(([from, to]) => [to, from]));
-  return { handoff: secondary, mapping, reverseMapping };
+  return mapping;
+}
+
+async function writeLegacySecondaryHandoff(fixtureState) {
+  let mapping;
+  await writeDesignResourceHandoffFixture(
+    fixtureState.fixture.root,
+    (handoff, manifest) => {
+      mapping = secondaryDesignHandoffMapping(handoff);
+      replaceExactStringMap(handoff, mapping);
+      replaceExactStringMap(manifest, mapping);
+      delete handoff.technical_feasibility_inputs;
+    },
+    {
+      handoffPath: "design/handoff-secondary.md",
+      primarySourceItemKey: "design-secondary",
+    },
+  );
+  const preflight = await preflightDesignResourceHandoff(
+    fixtureState.fixture.root,
+    "design/handoff-secondary.md",
+  );
+  return { preflight, mapping };
+}
+
+async function createLegacyMixedCompileFixture({ blockerOnly = false } = {}) {
+  const fixtureState = await createFeasibilityBlockerFixture(
+    "external_confirmation",
+    { blockerOnly },
+  );
+  const { preflight, mapping } =
+    await writeLegacySecondaryHandoff(fixtureState);
+  attachSecondaryDesignTarget(
+    fixtureState.fixture.contract,
+    preflight,
+    mapping,
+  );
+  isolateSecondaryTargetAssertions(fixtureState.fixture.contract);
+  return fixtureState;
+}
+
+async function writeModernSecondaryHandoff(
+  fixtureState,
+  { blockerOnly = false } = {},
+) {
+  const { preflight: secondary, mapping } =
+    await writeLegacySecondaryHandoff(fixtureState);
+  const document = structuredClone(
+    fixtureState.preflight.technical_feasibility_documents[0],
+  );
+  replaceExactStringMap(document, mapping);
+  const feasibilityPath = "design/secondary/implementation-feasibility.json";
+  const feasibilityKey = "secondary.main-default-feasibility";
+  document.key = feasibilityKey;
+  if (blockerOnly)
+    for (const cell of document.component_family_cells)
+      cell.feasible_realizations = [];
+
+  const authorityItem = structuredClone(
+    fixtureState.sourceItems.find(
+      (item) =>
+        item.source_path === fixtureState.authority.sourcePath &&
+        item.key === fixtureState.authority.itemKey,
+    ),
+  );
+  const secondaryAuthorityKey = `secondary-${fixtureState.authority.itemKey}`;
+  const secondaryAuthorityPath = `src/secondary.${path.posix.basename(
+    fixtureState.authority.sourcePath,
+  )}`;
+  authorityItem.key = secondaryAuthorityKey;
+  authorityItem.source_path = secondaryAuthorityPath;
+  authorityItem.normalized_text = authorityItem.normalized_text.replaceAll(
+    fixtureState.authority.itemKey,
+    secondaryAuthorityKey,
+  );
+  for (const [from, to] of mapping)
+    authorityItem.normalized_text = authorityItem.normalized_text.replaceAll(
+      from,
+      to,
+    );
+  authorityItem.text_sha256 = sha256Text(authorityItem.normalized_text);
+  const authorityContent = `<!-- ty-source-item:start key=${authorityItem.key} kind=${authorityItem.kind} -->\n${authorityItem.normalized_text}\n<!-- ty-source-item:end -->\n`;
+  await writeFile(
+    path.join(fixtureState.fixture.root, secondaryAuthorityPath),
+    authorityContent,
+  );
+  const record = document.source_records.find(
+    (item) => item.key === fixtureState.authority.recordRef,
+  );
+  record.path = secondaryAuthorityPath;
+  record.sha256 = sha256Text(authorityContent);
+  record.locator.value = secondaryAuthorityKey;
+  record.locator.text_sha256 = authorityItem.text_sha256;
+
+  const feasibilityContent = `${JSON.stringify(document, null, 2)}\n`;
+  await mkdir(
+    path.dirname(path.join(fixtureState.fixture.root, feasibilityPath)),
+    { recursive: true },
+  );
+  await writeFile(
+    path.join(fixtureState.fixture.root, feasibilityPath),
+    feasibilityContent,
+  );
+  secondary.handoff.technical_feasibility_inputs = [
+    {
+      key: feasibilityKey,
+      target_ref: document.target_ref,
+      path: feasibilityPath,
+      media_type: "application/json",
+      sha256: sha256Text(feasibilityContent),
+    },
+  ];
+  await writeDesignResourceHandoff(
+    fixtureState.fixture.root,
+    secondary.handoff,
+    {
+      handoffPath: secondary.handoff_path,
+      primarySourceItemKey: "design-secondary",
+    },
+  );
+
+  attachSecondaryDesignTarget(
+    fixtureState.fixture.contract,
+    secondary,
+    mapping,
+  );
+  isolateSecondaryTargetAssertions(fixtureState.fixture.contract);
+  const outcome = fixtureState.fixture.contract.outcomes[0];
+  const target = outcome.product.surface_bindings[0].design_targets.find(
+    (candidate) => candidate.key === "secondary-default",
+  );
+  target.source_paths.push(feasibilityPath);
+  outcome.acceptance.checks[0].verification_inputs.push(feasibilityPath);
+  fixtureState.fixture.contract.task.source_paths.push(secondaryAuthorityPath);
+  const authorityClaim = fixtureState.fixture.contract.source_claims.find(
+    (claim) => claim.key === fixtureState.authority.itemKey,
+  );
+  const secondaryAuthorityClaim = {
+    ...structuredClone(authorityClaim),
+    key: secondaryAuthorityKey,
+    source_ref: `${secondaryAuthorityPath}#${secondaryAuthorityKey}`,
+    statement: authorityItem.normalized_text,
+  };
+  if (secondaryAuthorityClaim.disposition.type === "external_confirmation") {
+    const primaryConfirmation =
+      fixtureState.fixture.contract.global.acceptance.external_confirmations.find(
+        (entry) => entry.key === secondaryAuthorityClaim.disposition.refs[0],
+      );
+    const secondaryConfirmationKey = "confirm-secondary-card-owner";
+    secondaryAuthorityClaim.disposition.refs = [secondaryConfirmationKey];
+    fixtureState.fixture.contract.global.acceptance.external_confirmations.push(
+      {
+        ...structuredClone(primaryConfirmation),
+        key: secondaryConfirmationKey,
+        description: authorityItem.normalized_text,
+      },
+    );
+  }
+  fixtureState.fixture.contract.source_claims.push(secondaryAuthorityClaim);
+}
+
+function refreshFixtureExternalConfirmationImpacts(contract) {
+  const outcome = contract.outcomes[0];
+  const impactClaims = prepareTargetBlockedCompileFixture(
+    contract,
+    outcome.key,
+  );
+  for (const confirmation of contract.global.acceptance.external_confirmations)
+    if (
+      ["confirm-card-owner", "confirm-secondary-card-owner"].includes(
+        confirmation.key,
+      )
+    )
+      confirmation.impact_claims = [...impactClaims];
+}
+
+function isolateSecondaryTargetAssertions(contract) {
+  const outcome = contract.outcomes[0];
+  const primaryRequirement = outcome.product.requirements.find(
+    (requirement) => requirement.key === "design-handoff",
+  );
+  outcome.product.requirements.push({
+    ...structuredClone(primaryRequirement),
+    key: "design-handoff-secondary",
+  });
+  const secondarySourceClaim = contract.source_claims.find(
+    (claim) => claim.key === "design-secondary",
+  );
+  secondarySourceClaim.disposition.refs = [
+    `${outcome.key}.requirement.design-handoff-secondary`,
+  ];
+  const surface = outcome.product.surface_bindings[0];
+  const target = surface.design_targets.find(
+    (candidate) => candidate.key === "secondary-default",
+  );
+  const check = outcome.acceptance.checks.find(
+    (candidate) => candidate.key === target.conformance_check_ref,
+  );
+  const assertionRefs = [
+    target.conformance_assertion_ref,
+    ...target.verification_method_bindings.map(
+      (binding) => binding.assertion_ref,
+    ),
+  ];
+  const assertionMapping = new Map();
+  for (const assertionRef of new Set(assertionRefs)) {
+    const source = check.positive_assertions.find(
+      (assertion) => assertion.key === assertionRef,
+    );
+    const key = `secondary-${assertionRef}`;
+    const cloned = {
+      ...structuredClone(source),
+      key,
+      observation: `secondary_${source.observation}`,
+    };
+    cloned.claims = cloned.claims.map((claim) =>
+      claim === "requirement.design-handoff"
+        ? "requirement.design-handoff-secondary"
+        : claim,
+    );
+    check.positive_assertions.push(cloned);
+    assertionMapping.set(assertionRef, key);
+  }
+  target.conformance_assertion_ref = assertionMapping.get(
+    target.conformance_assertion_ref,
+  );
+  target.actual_artifact_path = "artifacts/secondary/design-actual.json";
+  target.comparison_artifact_path =
+    "artifacts/secondary/design-comparison.json";
+  for (const binding of target.verification_method_bindings) {
+    binding.assertion_ref = assertionMapping.get(binding.assertion_ref);
+    for (const artifact of binding.evidence_artifacts) {
+      artifact.path = `artifacts/secondary/${path.posix.basename(artifact.path)}`;
+      artifact.observation_path = `artifacts/secondary/${path.posix.basename(artifact.observation_path)}`;
+    }
+  }
+  for (const control of outcome.acceptance.counterfactual_controls)
+    if (control.claims.includes("requirement.design-handoff")) {
+      control.claims.push("requirement.design-handoff-secondary");
+      control.expected_assertion_failures.push(...assertionMapping.values());
+    }
 }
 
 function attachSecondaryDesignTarget(contract, secondary, mapping) {
@@ -2017,10 +2508,7 @@ function attachSecondaryDesignTarget(contract, secondary, mapping) {
   binding.design_targets.push(secondaryTarget);
   contract.task.source_paths.push(secondary.handoff_path);
   contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
-    secondary.handoff_path,
-    secondary.handoff.resources.find(
-      (resource) => resource.key === "secondary.resource.fact-manifest",
-    ).path,
+    ...secondaryTarget.source_paths,
   );
   const sourceClaim = structuredClone(
     contract.source_claims.find(

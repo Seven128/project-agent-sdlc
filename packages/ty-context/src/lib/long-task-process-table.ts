@@ -7,45 +7,17 @@ const execFileAsync = promisify(execFile);
 export interface ProcessInstance {
   pid: number;
   parent_pid: number;
-  start_identity: string | null;
-}
-
-export function processInstanceMatches(
-  expected: Pick<ProcessInstance, "pid" | "start_identity">,
-  current: Pick<ProcessInstance, "pid" | "start_identity">,
-): boolean {
-  if (expected.pid !== current.pid) return false;
-  if (expected.start_identity === null || current.start_identity === null)
-    return true;
-  return expected.start_identity === current.start_identity;
 }
 
 export async function processSnapshot(): Promise<ProcessInstance[]> {
+  assertNonWindowsProcessTree();
   let stdout: string;
   try {
-    const result =
-      process.platform === "win32"
-        ? await execFileAsync(
-            "powershell.exe",
-            [
-              "-NoLogo",
-              "-NoProfile",
-              "-NonInteractive",
-              "-Command",
-              '$rows = Get-CimInstance Win32_Process; foreach ($row in $rows) { $started = if ($null -eq $row.CreationDate) { "unknown" } else { $row.CreationDate.ToUniversalTime().Ticks }; "$($row.ProcessId) $($row.ParentProcessId) $started" }',
-            ],
-            {
-              encoding: "utf8",
-              windowsHide: true,
-              timeout: 5_000,
-              maxBuffer: PROCESS_TABLE_OUTPUT_LIMIT,
-            },
-          )
-        : await execFileAsync("ps", ["-A", "-o", "pid=,ppid="], {
-            encoding: "utf8",
-            timeout: 5_000,
-            maxBuffer: PROCESS_TABLE_OUTPUT_LIMIT,
-          });
+    const result = await execFileAsync("ps", ["-A", "-o", "pid=,ppid="], {
+      encoding: "utf8",
+      timeout: 5_000,
+      maxBuffer: PROCESS_TABLE_OUTPUT_LIMIT,
+    });
     stdout = result.stdout;
   } catch (error) {
     throw new Error(
@@ -54,16 +26,11 @@ export async function processSnapshot(): Promise<ProcessInstance[]> {
   }
   const rows: ProcessInstance[] = [];
   for (const line of stdout.split(/\r?\n/u)) {
-    const [pidText, parentText, startText] = line.trim().split(/\s+/u);
+    const [pidText, parentText] = line.trim().split(/\s+/u);
     const pid = Number.parseInt(pidText ?? "", 10);
     const parent = Number.parseInt(parentText ?? "", 10);
     if (!Number.isSafeInteger(pid) || !Number.isSafeInteger(parent)) continue;
-    rows.push({
-      pid,
-      parent_pid: parent,
-      start_identity:
-        process.platform === "win32" && startText ? startText : null,
-    });
+    rows.push({ pid, parent_pid: parent });
   }
   return rows;
 }
@@ -80,12 +47,11 @@ export function descendantsOf(
   }
   const result: ProcessInstance[] = [];
   const pending = [...(children.get(rootPid) ?? [])];
-  const seen = new Set<string>();
+  const seen = new Set<number>();
   while (pending.length) {
     const processInstance = pending.shift()!;
-    const key = processInstanceKey(processInstance);
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (seen.has(processInstance.pid)) continue;
+    seen.add(processInstance.pid);
     result.push(processInstance);
     pending.push(...(children.get(processInstance.pid) ?? []));
   }
@@ -94,40 +60,22 @@ export function descendantsOf(
 
 export function liveProcessInstances(
   candidates: readonly ProcessInstance[],
-  snapshot: readonly ProcessInstance[],
 ): ProcessInstance[] {
-  if (process.platform !== "win32")
-    return candidates.filter((candidate) => processIdExists(candidate.pid));
-  const currentByPid = new Map(snapshot.map((entry) => [entry.pid, entry]));
-  return candidates.filter((candidate) => {
-    const current = currentByPid.get(candidate.pid);
-    return current ? processInstanceMatches(candidate, current) : false;
-  });
+  assertNonWindowsProcessTree();
+  return candidates.filter((candidate) => processIdExists(candidate.pid));
 }
 
-export function rootProcessAlive(
-  rootPid: number,
-  rootInstance: ProcessInstance | null,
-  snapshot: readonly ProcessInstance[],
-): boolean {
-  if (process.platform !== "win32") return processIdExists(rootPid);
-  const current = snapshot.find((entry) => entry.pid === rootPid);
-  if (!current) return false;
-  return rootInstance ? processInstanceMatches(rootInstance, current) : true;
+export function rootProcessAlive(rootPid: number): boolean {
+  assertNonWindowsProcessTree();
+  return processIdExists(rootPid);
 }
 
 export function uniqueProcessInstances(
   instances: readonly ProcessInstance[],
 ): ProcessInstance[] {
   return [
-    ...new Map(
-      instances.map((instance) => [processInstanceKey(instance), instance]),
-    ).values(),
+    ...new Map(instances.map((instance) => [instance.pid, instance])).values(),
   ];
-}
-
-export function processInstanceKey(instance: ProcessInstance): string {
-  return `${instance.pid}:${instance.start_identity ?? "pid-only"}`;
 }
 
 function processIdExists(pid: number): boolean {
@@ -138,6 +86,11 @@ function processIdExists(pid: number): boolean {
     if (nodeErrorCode(error) === "ESRCH") return false;
     throw error;
   }
+}
+
+function assertNonWindowsProcessTree(): void {
+  if (process.platform === "win32")
+    throw new Error("process_observer_windows_job_required");
 }
 
 function nodeErrorCode(error: unknown): string | null {

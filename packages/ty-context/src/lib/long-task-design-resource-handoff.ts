@@ -48,6 +48,11 @@ export interface LongTaskDesignHandoffConsumer {
   finish(): void;
 }
 
+interface SurfaceFeasibilityBindingAttribution {
+  modes: Set<"feasibility" | "legacy">;
+  consumed_component_binding_refs: Set<string>;
+}
+
 export async function validateLongTaskDesignResourceHandoffs(
   contract: DeliveryContractV2,
   repository: string,
@@ -92,7 +97,10 @@ export function createLongTaskDesignHandoffConsumer(
   const indexedTargetKeys = new Set<string>();
   const consumed = new Set<string>();
   const validationErrors = new Map<string, unknown>();
-  const feasibilityBindingRefsBySurface = new Map<string, Set<string>>();
+  const feasibilityBindingAttributionBySurface = new Map<
+    string,
+    SurfaceFeasibilityBindingAttribution
+  >();
   let duplicate: string | null = null;
   const unbound: string[] = [];
   const handoffSetIntegrity = createDesignResourceHandoffSetIntegrity(invalid);
@@ -161,9 +169,9 @@ export function createLongTaskDesignHandoffConsumer(
               { deferComponentBindingAttribution: true },
             );
             recordFeasibilityBindingAttribution(
-              feasibilityBindingRefsBySurface,
+              feasibilityBindingAttributionBySurface,
               contractTarget,
-              feasibility.consumed_component_binding_refs,
+              feasibility,
             );
             validateSymbolicCoverageClaims(
               contract,
@@ -185,9 +193,9 @@ export function createLongTaskDesignHandoffConsumer(
               { deferComponentBindingAttribution: true },
             );
             recordFeasibilityBindingAttribution(
-              feasibilityBindingRefsBySurface,
+              feasibilityBindingAttributionBySurface,
               contractTarget,
-              feasibility.consumed_component_binding_refs,
+              feasibility,
             );
             validateLongTaskDesignTargetCapabilities(
               contract,
@@ -215,7 +223,7 @@ export function createLongTaskDesignHandoffConsumer(
       }
       validateSurfaceFeasibilityBindingAttribution(
         contractTargets,
-        feasibilityBindingRefsBySurface,
+        feasibilityBindingAttributionBySurface,
       );
       if (unbound.length) invalid("handoff_target_unbound", unbound[0]);
     },
@@ -223,27 +231,36 @@ export function createLongTaskDesignHandoffConsumer(
 }
 
 function recordFeasibilityBindingAttribution(
-  bySurface: Map<string, Set<string>>,
+  bySurface: Map<string, SurfaceFeasibilityBindingAttribution>,
   contractTarget: ContractDesignTarget,
-  bindingRefs: string[],
+  result: {
+    attribution_mode: "feasibility" | "legacy";
+    consumed_component_binding_refs: string[];
+  },
 ): void {
   const key = surfaceBindingIdentity(contractTarget);
-  const consumed = bySurface.get(key) ?? new Set<string>();
-  for (const bindingRef of bindingRefs) consumed.add(bindingRef);
-  bySurface.set(key, consumed);
+  const attribution = bySurface.get(key) ?? {
+    modes: new Set<"feasibility" | "legacy">(),
+    consumed_component_binding_refs: new Set<string>(),
+  };
+  attribution.modes.add(result.attribution_mode);
+  for (const bindingRef of result.consumed_component_binding_refs)
+    attribution.consumed_component_binding_refs.add(bindingRef);
+  bySurface.set(key, attribution);
 }
 
 function validateSurfaceFeasibilityBindingAttribution(
   contractTargets: ContractDesignTarget[],
-  bySurface: Map<string, Set<string>>,
+  bySurface: Map<string, SurfaceFeasibilityBindingAttribution>,
 ): void {
   const surfaces = new Map<string, ContractDesignTarget>();
   for (const contractTarget of contractTargets)
     surfaces.set(surfaceBindingIdentity(contractTarget), contractTarget);
   for (const [surfaceKey, contractTarget] of surfaces) {
-    const consumed = bySurface.get(surfaceKey) ?? new Set<string>();
+    const attribution = bySurface.get(surfaceKey);
+    if (!attribution?.modes.has("feasibility")) continue;
     for (const bindingRef of contractTarget.binding.component_binding_refs)
-      if (!consumed.has(bindingRef))
+      if (!attribution.consumed_component_binding_refs.has(bindingRef))
         invalid(
           "feasibility_component_binding_unattributed",
           `${contractTarget.binding.key}:${bindingRef}`,

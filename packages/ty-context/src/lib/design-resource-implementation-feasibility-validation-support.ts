@@ -11,7 +11,8 @@ const EXACT_VISUAL_VALUE_PATTERNS = [
   /--[a-z0-9_-]+\s*:\s*\S+/iu,
 ] as const;
 
-const TIME_VALUE_PATTERN = /\b\d+(?:\.\d+)?(?:ms|s)\b/giu;
+const TIME_VALUE_PATTERN =
+  /\b\d+(?:\.\d+)?\s*(?:milliseconds?|msecs?|ms|seconds?|secs?|sec|s)\b/giu;
 const MOTION_TIME_CONTEXT =
   /\b(?:animation|transition|motion|duration|delay|easing|timeline|keyframes?|fade|spring|stagger|enter|exit|hover|press|ease(?:-in|-out|-in-out)?)\b/iu;
 const TECHNICAL_TIME_CONTEXT =

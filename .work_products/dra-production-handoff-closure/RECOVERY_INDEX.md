@@ -5,20 +5,22 @@ This is an ordinary repository recovery locator for the current native Goal. It 
 ## Authority order
 
 1. current user instruction;
-2. S5 controlling amendment in the exact S3 block between `S5-CONTROLLING-AMENDMENT:BEGIN` and `S5-CONTROLLING-AMENDMENT:END`;
-3. S4 controlling amendment in S3 Sections 17.1–17.17 where S5 does not supersede it;
-4. earlier S3 execution source and S2 corrections/accepted audit findings;
-5. S1 details not superseded by S2/S4/S5;
-6. current durable repository Context and Design Authority;
-7. code as implementation fact only.
+2. S6 controlling amendment between `S6-CONTROLLING-AMENDMENT:BEGIN` and `S6-CONTROLLING-AMENDMENT:END`, only for the three final gaps it names;
+3. S5 controlling amendment between `S5-CONTROLLING-AMENDMENT:BEGIN` and `S5-CONTROLLING-AMENDMENT:END` where S6 does not supersede it;
+4. S4 controlling amendment in S3 Sections 17.1–17.17 where S5/S6 do not supersede it;
+5. earlier S3 execution source and S2 corrections/accepted audit findings;
+6. S1 details not superseded by S2/S4/S5/S6;
+7. current durable repository Context and Design Authority;
+8. code as implementation fact only.
 
 ## Immutable input identities
 
 - S1: `attachment-provenance://a1cf06fd-5881-411a-bcca-7067c34efe77/pasted-text.txt`; 1677 lines at Goal creation; SHA-256 `849F33E9D0EC60C28A531F9A683482E4DEB5500687CA9E2FBD92CE03AF8030F9`.
 - S2: `attachment-provenance://304e7440-f6fa-416b-933b-a3582acec71b/pasted-text.txt`; 1277 lines at Goal creation; SHA-256 `CA4137FE4B3C0780C17B58826249F1B84E4EDFB936948CE12CDABE3D843A03C3`.
-- S3: `.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md`; 2360 lines after the final S5 append; SHA-256 `6F8D27533FE86CF7503CC81EAFF7DD7F57A1396E3C1F2FE06ADC364527E734B1`.
+- S3/S5 repository source before S6: `.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md`; 2360 lines; SHA-256 `6F8D27533FE86CF7503CC81EAFF7DD7F57A1396E3C1F2FE06ADC364527E734B1`.
 - S4: S3 Sections 17.1–17.17, the durable execution projection of the current user message titled `DRA Production-Handoff Closure 补开发方案`; fixed implementation baseline `c46e1f59961e8735b2ac76d0534a1d0995f05323`; S4 overrides earlier S3/S2/S1 wherever stricter.
 - S5: exact 1320-line source block in S3 beginning at line 1039 and ending at line 2360; original provenance `attachment-provenance://452528f5-e136-4b6a-a205-88532d3b9480/pasted-text.txt`; SHA-256 `1BDAE56602A375EDBCD9845368DD2834B344786AC5F83ACEAE115E623EB64713`; fixed implementation baseline commit `749aef74525368f63f45dbb24890b2547131c0b5`, tree `bcf3b2cbc878b980177a57ed5879d20b83fb453a`, package `project-tiny-context-harness@0.8.17`. S5 is final and overrides S4/S3/S2/S1 wherever stricter.
+- S6: exact 1049-line source block at lines 2363–3411, bounded by marker lines 2362/3412; original provenance `attachment-provenance://07dd96da-4df2-41a9-a3cf-83df7725527c/pasted-text.txt`; original CRLF bytes 26585; original SHA-256 `CA3E5E9101ADD483C425F755D3EA405ACBC54A3455358C508A269C080A1A43DD`; repository-normalized LF SHA-256 `75EBD573DF73AC3C067189F5D4BFC094927B5AEF801B8CB7716934C78F5BB99B`. The normalized block is exactly equal to the original after CRLF→LF normalization. The complete Execution Source is now 3412 lines with SHA-256 `A41493F469EF284E223A57C189494463925BF8CE227A63AB8F54388D42F66C34`. S6 overrides S5 only for mixed modern/legacy attribution, Windows pre-resume Job Object containment and complete motion-duration token recognition.
 
 The S3 digest recorded in the native Goal objective (`2D486A8E3F9602CB0574A866CA701FD6C0D8F34A2F76CBEC87DC635EABD04F4B`) identified the pre-portability revision and is superseded for repository recovery by the S3 identity above. The Goal objective remains the current-session machine-local lookup owner for the original attachments; repository files deliberately retain only non-resolvable provenance locators.
 
@@ -30,13 +32,81 @@ The pre-delivery refresh on 2026-08-24 repeated `git fetch --prune origin` from 
 
 ## Recovery route
 
-1. Read this index and verify S3's current line count and digest.
-2. Read the exact S5 block first; it contains the complete scope, P0/P1/P2 rules, adjacent boundaries, code/Context/Skill/doc surfaces, test matrix, implementation order, Windows transient policy, final verification theorem and report format.
+1. Read this index and verify the complete Execution Source line count/digest and both S6 marker positions.
+2. Read the exact S6 block first. It contains all three active gaps, compatibility branch, complete positive/negative matrices, file scope, implementation order, Windows transient rules, final theorem and report format. Then read S5 for every preserved boundary S6 does not replace.
 3. Reopen `project_context/global.md`, `project_context/architecture.md`, `project_context/context.toml`, `project_context/areas/harness-package.md`, the bounded matched owner Context, `.codex/skills/authoring/harness_package_design/SKILL.md` and its five required references, and `.codex/skills/context_development_engineer/SKILL.md` plus `references/engineering-design-reasoning.md` before further implementation changes.
-4. Use S4 Sections 17.1–17.17 and earlier S3/S2/S1 only where S5 does not supersede them.
+4. Use S4 Sections 17.1–17.17 and earlier S3/S2/S1 only where S5/S6 do not supersede them.
 5. Resume in `E:/dev/worktrees/project-tiny-context-harness/scratch-20260824` on branch `codex/scratch-20260824`; never reconstruct completion from conversation memory, historical Receipts or generated results.
 
-## Implemented closure index
+## S6 start snapshot and compatibility decision
+
+- Goal start: worktree `E:/dev/worktrees/project-tiny-context-harness/scratch-20260824`, branch `codex/scratch-20260824`, clean HEAD `e09721bebbdfafb6bdc76bb521dba9559610997f`. It contains fixed S6 base `92c49dc9557ba2f2a674e609d5d03fdd292db304`; their merge base is exactly `92c49dc`. The local task branch was two commits ahead of its still-published upstream feature ref and pointed at current `origin/main`.
+- The original worktree remains `E:/dev/project-tiny-context-harness` on local `main` at `749aef74525368f63f45dbb24890b2547131c0b5`; this Goal must not switch, stage, commit, reset or write it.
+- The S6 precondition refresh found `project-tiny-context-harness@0.8.17` on npm, tag `v0.8.17` at `e09721b`, and published GitHub Release `v0.8.17`. Therefore the S6 compatibility branch is mandatory: all package/version/release surfaces for this repair target `0.8.18`; no released `0.8.17` protocol meaning may be silently rewritten.
+- This is a native Goal under the default Workflow Contract. It does not activate, resume or bootstrap `long-task-workflow`.
+
+## Active S6 work index
+
+1. Mixed attribution: legacy targets contribute no feasibility Binding consumption when a surface contains any modern feasibility target; pure-legacy compatibility remains unchanged. Every strict-surface Binding must be consumed by a modern candidate-bearing cell, and the complete Compile matrix in S6 is mandatory.
+2. Windows containment: reuse the canonical `tools/formal_process_supervisor_native_*.cs` plus `tools/windows_job_process_supervisor.ps1`, mirror them byte-for-byte into package runtime assets, add one bounded package adapter/protocol, dispatch Windows contained execution through suspended-create/pre-resume Job assignment, freeze assets into existing verifier identity, remove PID/CIM authority claims and prove real Windows root/descendant/timeout/overflow/parallel/tarball behavior.
+3. Duration: one validator recognizes compact, spaced and full English millisecond/second units across all four feasibility prose carriers; motion wins over technical context, explicit technical time remains valid and context-free time fails closed.
+4. Preserve all twelve S5 completion boundaries and Open Design quality behavior. Do not add any Authority, Contract field family, Binding/Claim type, Gate, Registry, state machine, workflow, Provider ranking/routing, visual benchmark or extra Open Design test.
+5. Version, Context, package/source mappings, affected routing, public docs, compact/admission identities and recovery data must converge on the final candidate. Exact selected owners and current-candidate verification evidence are appended here as implementation proceeds.
+
+## S6 architecture and selected Context index
+
+- Architecture Deliberation selected the existing extension points: target-local feasibility validation plus surface aggregation for attribution; the canonical `tools/formal_process_supervisor_native_{types,run,helpers}.cs` and `tools/windows_job_process_supervisor.ps1` for Windows containment; the existing unified feasibility prose validator for duration classification; and `VerifierIdentityV2.bundle_files` for runtime-helper freshness. Context Delta is `required`.
+- Build/Reuse/Buy decision: reuse the existing suspended-create Job Object primitive and standard Node/PowerShell capabilities through one bounded package adapter. Do not build a second native supervisor or PID/CIM patch, buy/add a runtime dependency, create a helper pool/registry/scheduler, or wrap the product root through a shell/project command.
+- Selected durable owners read and updated before tests/implementation: `project_context/areas/harness-package/contracts/design-resource-handoff.md`, `project_context/areas/harness-package/contracts/workflow-contract.md`, `project_context/areas/harness-package/implementation-index.md` and `project_context/areas/harness-package/verification.md`. Core `project_context/global.md`, `project_context/architecture.md`, `project_context/context.toml`, Harness-package Context and the required package-design/engineering Skill references were read; no DRA Skill change is currently selected.
+- Dependency/resource lifecycle: modern/legacy attribution remains one call-local derived result; each Windows contained execution owns one helper plus a fresh private temp/output root through active-process-zero and stream closure; package helper assets are byte mirrors and existing verifier bundle inputs; Contract, raw Contract, host-attestation shape and sole Final Gate remain unchanged.
+- Quality checks are fail-closed short-root/descendant containment, timeout/overflow cleanup, request/stream identity, PowerShell 5.1/7 portability, canonical/package/tarball parity, verifier freshness, pure-legacy compatibility, strict mixed attribution and four-carrier duration classification. Forbidden shortcuts are recorded in S6 and the Goal objective.
+
+### Frozen S6 counterexample evidence before product repair
+
+- Full `compileDeliveryContract` mixed fixture passed unexpectedly when modern feasibility consumed only `design-owner`, a legacy target was present and the same surface also declared `legacy-only-owner`; the new `assert.rejects(...feasibility_component_binding_unattributed...)` therefore failed with `Missing expected rejection` (targeted run duration 13.625 s).
+- Real Windows direct-process test returned `execution_status=completed`, exit 0, package observations and host attestation for both `short-descendant` and `short-grandchild`, even though each chain left a long-lived descendant. The aggregate negative failed in 12.781 s; cleanup was test-owned and completed. This is the preserved pre-repair proof of the PID/CIM first-snapshot escape.
+- The four-carrier duration matrix failed immediately because `Animation lasts 200 ms` raised no `exact_visual_value_forbidden`; targeted run duration 0.427 s. Existing compact forms still passed before the new cases.
+- Commands were fresh `node --test --test-name-pattern ...` invocations against the built pre-repair product. The first combined attempt also exposed and then removed two fixture-only defects (duplicate target Assertion and shared fixture mutation); those setup failures are not counted as product counterexamples.
+
+## S6 implementation and pre-freeze verification index
+
+The implementation below is present in the isolated task worktree and remains subject to the final frozen-candidate aggregate. These focused results are owner-level convergence evidence, not a substitute for the complete S6 verification theorem.
+
+### Mixed attribution
+
+- `long-task-design-feasibility-binding.ts` returns a call-local `attribution_mode: feasibility | legacy`. Modern targets consume only refs produced by actual unique candidate matches; legacy targets consume `[]` and gain no feasibility claim.
+- `long-task-design-resource-handoff.ts` aggregates that result per existing surface. Pure-legacy surfaces skip the new theorem while preserving historical non-empty-Binding compatibility. Any surface with at least one modern target requires every component Binding ref to be consumed by a modern candidate-bearing cell; shared modern matches remain valid and legacy cannot launder an extra ref.
+- The final focused `long-task-delivery-compiler.test.mjs` run passed 25/25 in 258407 ms. Its complete Compile cases cover modern+legacy allow, modern blocker-only+legacy empty/non-empty failure, modern candidate+legacy empty failure, pure legacy non-empty allow, pure legacy empty fail closed, shared modern consumption, unattributed B2 rejection, candidate+blocker `blocked_external`, raw Contract byte preservation, parsed-current raw hash equality and semantic/raw freshness drift.
+
+### Windows pre-resume Job containment
+
+- The single native owner remains `tools/formal_process_supervisor_native_{types,run,helpers}.cs` plus `tools/windows_job_process_supervisor.ps1`; the four package files under `packages/ty-context/assets/runtime/windows-job-supervisor/**` are source-mapped byte mirrors.
+- The focused `long-task-windows-job-supervisor*.ts` modules keep one execution adapter rather than adding another supervisor: `long-task-windows-job-supervisor.ts` owns dispatch/result projection, `-helper.ts` owns the single bounded PowerShell transport, `-protocol.ts` owns request and stream protocol, and `-result.ts` owns strict result decoding. Each execution still receives one helper and one fresh private request/output root. Windows contained dispatch has no wrapper/shell/PID fallback. `long-task-process-{table,tree}.ts` now rejects Windows use and retains only the non-Windows process-group/tree path.
+- The canonical helper is PowerShell 5.1/7 compatible, rejects duplicate/unknown/missing fields and invalid environment entries, preserves zero/one/many argv values and UTF-8, creates the product suspended, assigns it to a private `KILL_ON_JOB_CLOSE` Job before resume, terminates an unassigned suspended product on Assign failure, and returns only after streams close and Job accounting reports zero active processes.
+- Existing `VerifierIdentityV2.bundle_files` includes all four helper assets; a helper byte change reaches the existing `verifier_changed_after_compile` path. No new verifier, Authority, state or dependency was added.
+- After the responsibility split, the focused Windows supervisor run passed 7/7 in 21004 ms: strict protocol/streams; real PowerShell 5.1 and 7 UTF-8 requests; immediate root, ordinary child, nonzero root exit, short-root/long-child, short-root/short-child/long-grandchild and full root/child/grandchild cleanup; timeout; over-2-MiB overflow; parallel Job isolation; injected Assign failure with no resumed marker/survivor; and an extracted packed tarball using its own package helper. Verifier identity passed 2/2, direct observation passed 3/3, package source passed 1/1 and test-suite policy passed 13/13 against the same split candidate.
+- The serial affected-owner run passed 30/30 in 144056 ms, including direct observer dispatch, the independent formal Level-4 acquisition Job/TCB attacks, state/resume freshness, exact helper bundle drift and package source mapping. Production/current Context contains no PID+CreationDate or CIM containment authority; remaining CIM probes are test-owned external survivor checks only.
+
+### Duration, package and governance convergence
+
+- The one feasibility carrier validator recognizes `milliseconds?|msecs?|ms|seconds?|secs?|sec|s` with optional spacing across observation reasons, realization costs, realization risks and blocker descriptions. Motion context wins; explicit build/compile/bundle/generation/CI/test/startup/initialization/latency/timeout/network/benchmark/runtime/render cost context is allowed; context-free time fails closed. The focused four-carrier matrix passed inside the 30/30 owner run while existing color/size/CSS/custom-property and compact-duration cases remained green.
+- Package/version surfaces now target `project-tiny-context-harness@0.8.18`; the published `0.8.17` packet remains historical and unmodified. `docs/launch/github-release-0.8.18.md` describes only the S6 changes and preserves Level-3/Final-Gate/Open-Design boundaries. No npm publish, tag, GitHub Release or local-main merge is authorized.
+- Test policy now owns 33 critical sentinels, 25 Trust files and explicit 19-pure/57-isolated/11-exclusive classes. `windows-job-pre-resume-containment` is required by Long-Task and Trust. `test-suite-runtime.test.mjs` passed 13/13 and `affected-test-selection.test.mjs` passed 35/35; the new runtime, protocol, helper, mapping and verifier owners route to their direct/Level-4/identity/package checks.
+- Current pre-freeze package build fingerprint is input SHA-256 `853d4c3772d2e42f3b6d585b1be468a4b1376bca1f013f565edcda5858105578` and dist SHA-256 `f775977f8290293f3fcc69f897a2ad972310dab1e23ff97e7ca04bbb442398c0`. Typecheck, build and format passed after the responsibility split. `make validate-harness` audited 29 touched source files with `warning=0`; no modularity waiver was added.
+- Compact/admission refresh was evaluated against the converged Context rather than assumed. The repository migration owner updated seven changed Context input identities without changing the 113 Facts, 113 obligations, 132 inputs, source/contract capacity or semantic assertions. Compact Source and Contract now share manifest SHA-256 `74f7a38f74f154764bc9f56727bcc389b876e90bdc948a634b098c34f2694cd2`; the focused compact suite passed 7/7. Admission remains independent of these compact files: freeze-check returned 26 files, zero failures and unchanged track identities `c7e8c6c9f1b691a204f6fd1bf5980e79f1a43ca7eb1b9dc07ec1cc9c21b24be8` (DRA) and `1b1042169380c7209cc999406ab62aa830f59e534266bbd97577441297a5c3c0` (Build/Reuse/Buy).
+
+### Preserved pre-freeze aggregate findings
+
+- The first post-split affected run used the still-unrefreshed compact Source and stopped when `compact-carrier-exact-closure` compared the old committed `delivery-benchmark` Context digest `7fb2e78f...` with the current `0.8.18` Context digest `44319e65...`. The repository migration above repaired that deterministic identity gap; the same critical test then passed standalone and in the complete Long-Task runner.
+- The first serial Long-Task run after compact refresh reached `long-task-level4-package-promotion.test.mjs` and correctly rejected the uncommitted candidate because the four changed canonical supervisor entries in the working-tree benchmark/runtime-TCB identity were absent from `HEAD`. The negative case therefore reached `level4_promotion_benchmark_runtime_tcb_identity` before its later package-identity assertion. This is the expected clean-candidate freeze boundary, not authorization to reorder or weaken either check. Complete final suites must run only after the isolated branch commit freezes those bytes.
+
+### Remaining finalization
+
+- Freeze the final tracked candidate only after recovery/docs/hygiene converge, then rerun all S6-mandated complete suites and distribution/smoke/parity checks with no cache or population reduction.
+- Preserve any first transient failure and isolate it before a single fresh complete rerun. Do not convert focused evidence above into final acceptance.
+- Commit and push only `codex/scratch-20260824`; verify the original local `main` worktree/ref remains untouched, then mark the native Goal complete.
+
+## S5 delivered closure index (subject to S6 overrides)
 
 The final candidate repairs the existing DRA/Long-Task boundary without introducing a second Design/Technical Authority, production Binding type, Contract field family, Claim type, Gate, Registry, state machine or workflow:
 
@@ -44,7 +114,7 @@ The final candidate repairs the existing DRA/Long-Task boundary without introduc
 - Candidate cells require non-empty observed owner roots. Every actual `file`, `path_glob`, `verified` or `planned` production Binding path/pattern must be a proven subset of an observed owner root; `not_subset` and `unknown` fail closed, and planned carriers cannot be empty.
 - Blocker-only targets may traverse the complete in-memory Activation/Compile path with `component_binding_refs=[]`; the standalone structural validator remains strict. Source-aware closure accepts only all-blocker-only deferral, then the existing `decision_required` or target-blocking External Confirmation boundary produces `blocked_external`. Only affected blocked design assertions and matching counterfactuals are projected out of machine execution; the raw Contract and sole Final Gate authority are unchanged.
 - Mixed-target attribution is aggregated per target, freshness reparses the current raw Contract, and legacy/route-root/candidate-plus-blocker paths remain fail closed. Permanent visual values, motion duration semantics and explicit technical time costs are separated; unqualified time-like design values fail closed.
-- Direct-command observation now matches Windows processes by PID plus creation identity and closes process trees through explicit table/tree modules, preventing a reused PID from being mistaken for the spawned command. Explicit `TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1` runs one Node process per selected Long-Task test file; the default suite policy remains unchanged.
+- Historical S5 behavior matched Windows processes by PID plus creation identity and closed process trees through polling modules. S6 supersedes that Windows authority with package-owned pre-resume Job Object containment and requires removal/shrinking of the Windows polling path. Explicit `TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1` still runs one Node process per selected Long-Task test file; the default suite policy remains unchanged.
 
 ### Runtime and validator files
 
@@ -87,9 +157,9 @@ The regression matrix includes blocker-only external/decision/missing-boundary c
 ### Synchronized public, package and compact-authority surfaces
 
 - DRA guidance is byte-identical at `.codex/skills/design-resource-authoring`, `.codex/ty-context-managed/skills/design-resource-authoring` and `packages/ty-context/assets/skills/design-resource-authoring` for `SKILL.md` and the three changed references. The SHA-256 values are respectively `DB126D1C4A5597AF2DA7C0B2F00C86263BC548BD46205002CA25C092959B2C66`, `29E0D274124C1EDD8E2908438A5D369284606716A516CDEB00DA4583A75E488E`, `B436E4B555E206248D5D93072C85BB2336ADB80A9E75B4AF30D41793C5252005` and `6A9AF7A54C42BD173A483A1C45A6681338CD9AF521F76C8EA4F8B0CFA8B41DCE`.
-- Public/package surfaces: `PROJECT_SPEC.md`, `README.md`, `README.zh-CN.md`, `packages/ty-context/README.md`, `packages/ty-context/assets/README.md`, `packages/ty-context/assets/README.zh-CN.md`, `docs/launch/github-release-0.8.17.md`, `docs/test-suite-roi-redesign.md` and `docs/symbolic-denotation-efficiency.md`.
-- Compact-source surfaces: `.work_products/symbolic-denotation-efficiency/delivery-contract.yaml` and `examples/delivery-benchmark/mechanism/admission-set.json`. The final compact carrier contains 113 Facts, 113 obligations and 132 inputs; its Contract `semantic_fact_manifest.sha256` is `827e93c13df1818a9470ad1589defa7b008b4b9d37d534d932a89c3c097d6f6a`.
-- Recovery surfaces: this index and `.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md`. The latter remains exactly 2360 lines with SHA-256 `6F8D27533FE86CF7503CC81EAFF7DD7F57A1396E3C1F2FE06ADC364527E734B1`.
+- Public/package surfaces: `PROJECT_SPEC.md`, `README.md`, `README.zh-CN.md`, `packages/ty-context/README.md`, `packages/ty-context/assets/README.md`, `packages/ty-context/assets/README.zh-CN.md`, historical `docs/launch/github-release-0.8.17.md`, current `docs/launch/github-release-0.8.18.md`, `docs/test-suite-roi-redesign.md` and `docs/symbolic-denotation-efficiency.md`.
+- Compact-source surfaces: `.work_products/symbolic-denotation-efficiency/delivery-contract.yaml` and the compact carrier embedded in `docs/symbolic-denotation-efficiency.md`. The final compact carrier contains 113 Facts, 113 obligations and 132 inputs; its Contract `semantic_fact_manifest.sha256` is `74f7a38f74f154764bc9f56727bcc389b876e90bdc948a634b098c34f2694cd2`. `examples/delivery-benchmark/mechanism/admission-set.json` remains a separately frozen admission owner and did not change.
+- Recovery surfaces: this index and `.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md`. The 2360-line SHA-256 `6F8D27533FE86CF7503CC81EAFF7DD7F57A1396E3C1F2FE06ADC364527E734B1` identity is the pre-S6 source; the current complete source identity is the 3412-line SHA-256 `A41493F469EF284E223A57C189494463925BF8CE227A63AB8F54388D42F66C34` recorded above.
 
 ## Context Delta
 

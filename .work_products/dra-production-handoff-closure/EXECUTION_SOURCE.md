@@ -2358,3 +2358,1055 @@ Context: updated <exact files and durable reason>
 
 完成以上补丁后，当前审计发现的两条 P0 错误通过路径、blocker-only 的假局部闭合以及技术时间成本误阻都会在同一轮内关闭；Live Open Design 实际视觉质量、多路线视觉实验和真实产品采用仍不属于本次机器开发完成条件。
 <!-- S5-CONTROLLING-AMENDMENT:END -->
+
+<!-- S6-CONTROLLING-AMENDMENT:BEGIN -->
+# DRA Production-Handoff Closure 最终剩余缺口补开发方案
+
+## 一、范围锁定
+
+固定开发基线：
+
+```text
+branch: codex/scratch-20260824
+base commit: 92c49dc9557ba2f2a674e609d5d03fdd292db304
+parent: 749aef74525368f63f45dbb24890b2547131c0b5
+package: project-tiny-context-harness@0.8.17
+```
+
+本次只处理三个剩余缺口：
+
+1. Mixed modern/legacy target 可以替未被 feasibility 允许的 Binding 提供虚假归属。
+2. Windows 进程树依赖 PID/CIM 轮询，极短根进程可能在首次观察前退出并留下未受控子进程。
+3. Motion duration 防走私没有覆盖 `200 ms`、`0.2 seconds` 等写法。
+
+**Open Design 生成质量相关部分不再改动。** 当前 DRA 已具备资源类型匹配、`quality_commission`、真实内容、视觉特征、参考角色、组件复用要求和缺陷驱动的局部 refinement；该需求已经按你的标准达成。
+
+本次不得重新引入：
+
+```text
+视觉 Benchmark 准入
+Provider 排名
+自动 Provider 路由
+额外 Open Design 测试
+新的 Design/Technical Authority
+新的 Contract Binding 类型
+新的 Contract 字段族
+新的 Claim 类型
+新的 Gate
+新的状态机
+新的工作流
+```
+
+## Single Goal
+
+> 在保留 DRA 当前设计资源生成质量能力和既有 Authority/Final Gate 边界的前提下，确保 mixed modern/legacy surface 中的每条生产 Binding 都由真实 feasibility candidate 归属；确保 Windows process-observation 执行在进程启动前即进入可靠的 Job Object containment，任何后代未闭合时均不能产生可信证据；并完整阻止所有常见精确 motion duration 写法进入 feasibility prose。
+
+---
+
+# 二、开始前与恢复要求
+
+继续使用现有 worktree 和分支，不切换或修改 `main`。
+
+开始前重新执行：
+
+```text
+git fetch --prune origin
+git status --short
+git rev-parse HEAD
+git rev-parse codex/scratch-20260824
+git rev-parse main
+git rev-parse origin/main
+git merge-base HEAD 92c49dc9557ba2f2a674e609d5d03fdd292db304
+git rev-list --left-right --count HEAD...origin/codex/scratch-20260824
+npm view project-tiny-context-harness@0.8.17 version
+git ls-remote --tags origin v0.8.17
+```
+
+只有以下条件成立时继续原地修复：
+
+```text
+HEAD 完整包含 92c49dc
+worktree 无无关修改
+0.8.17 尚未 npm publish
+v0.8.17 尚未创建 tag / Release
+```
+
+如果 `0.8.17` 在开发期间已经发布，则改为 `0.8.18`，不得静默修改已发布协议。
+
+在：
+
+```text
+.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md
+```
+
+追加新的 **S6 controlling amendment**，并更新：
+
+```text
+.work_products/dra-production-handoff-closure/RECOVERY_INDEX.md
+```
+
+不再创建新的平行方案文件，不改变现有 Source authority order，只让 S6 在这三个剩余缺口上覆盖 S5。
+
+---
+
+# 三、工作包 A：关闭 mixed modern/legacy Binding 归属绕过
+
+## 1. 当前错误路径
+
+当前 `validateLongTaskDesignFeasibilityBindings()` 在某个 target 没有 feasibility document 时，会返回该 surface 的全部：
+
+```text
+component_binding_refs
+```
+
+作为已经消费的 Binding。
+
+因此可以出现：
+
+```text
+Surface:
+  modern target A
+  legacy target L
+
+Bindings:
+  B1
+  B2
+
+A 的 feasibility:
+  只允许 B1
+
+L:
+  没有 feasibility
+  当前代码自动声称消费 B1、B2
+```
+
+最终 `B2` 不属于任何 modern candidate，却不会触发：
+
+```text
+feasibility_component_binding_unattributed
+```
+
+## 2. 修正后的归属模型
+
+将内部返回结果扩展为：
+
+```ts
+interface LongTaskDesignFeasibilityBindingValidationResult {
+  attribution_mode: "feasibility" | "legacy";
+  consumed_component_binding_refs: string[];
+}
+```
+
+它只是当前验证调用中的派生结果，不写入 Contract、Receipt、Progress 或持久状态。
+
+### 有 feasibility document 的 target
+
+```text
+attribution_mode = feasibility
+consumed refs = 实际唯一匹配 candidate 的 Binding refs
+```
+
+继续执行：
+
+* realization 唯一推导；
+* required realization；
+* planned owner；
+* blocker；
+* owner roots；
+* exact Source Item。
+
+### 无 feasibility document 的 legacy target
+
+```text
+attribution_mode = legacy
+consumed refs = []
+```
+
+Legacy target 不再自动“消费”surface 上的所有 Binding。
+
+## 3. Surface 级兼容规则
+
+将 surface 归属检查分成两类。
+
+### Surface 上全部 target 都是 legacy
+
+保持旧输入兼容：
+
+```text
+不执行新的 feasibility Binding attribution theorem
+不把旧 handoff 重新解释为已完成 feasibility
+保留原有 Contract 行为
+```
+
+这只是兼容旧输入，不产生新的 DRA feasibility 声明。
+
+### Surface 上存在至少一个 modern feasibility target
+
+进入严格模式：
+
+```text
+legacy target 不贡献任何 Binding 归属
+surface 上每个 component_binding_ref
+必须被至少一个 modern candidate-bearing cell 消费
+```
+
+否则：
+
+```text
+feasibility_component_binding_unattributed
+```
+
+## 4. Mixed target 的完整规则
+
+| Surface 组成                                                 | 结果                                                   |
+| ---------------------------------------------------------- | ---------------------------------------------------- |
+| 全部 legacy，component refs 非空                                | 保持旧兼容                                                |
+| Modern candidate + legacy，所有 Binding 被 modern candidate 消费 | 允许                                                   |
+| Modern candidate + legacy，额外 Binding 只由 legacy 冒领          | 阻断                                                   |
+| Modern blocker-only + legacy，component refs 为空             | 阻断；legacy 不能使用 blocker-only deferred closure         |
+| Modern candidate + modern blocker-only                     | 允许，但 candidate 完成归属、blocker 完成 External Confirmation |
+| 全部 modern blocker-only，component refs 为空                   | 保留当前合法路径                                             |
+| Legacy target + component refs 为空                          | 保持当前 fail closed                                     |
+
+## 5. 不得采用的修法
+
+不能简单把所有 legacy surface 都改成失败，否则会破坏旧输入兼容。
+
+不能禁止所有 mixed surface，除非真实实现证明无法可靠区分；当前可以通过 surface 级 attribution mode 精确闭合，因此没有必要扩大限制。
+
+不能给 Contract 增加：
+
+```text
+legacy_binding_refs
+selected_realization_ref
+feasibility_binding_ref
+```
+
+## 6. 必补完整 Compile 测试
+
+所有测试必须调用完整：
+
+```text
+compileDeliveryContract
+```
+
+不能只调用局部 consumer。
+
+### Must-block
+
+```text
+modern 允许 B1 + legacy + surface 声明 B1/B2
+→ B2 unattributed
+
+modern blocker-only + legacy + component refs=[]
+→ componentless_surface_requires_blocker_only_feasibility
+
+modern candidate + legacy + component refs=[]
+→ feasibility_component_binding_required
+
+两个 modern target 只共同消费 B1，但 surface 有 B2
+→ B2 unattributed
+```
+
+### Must-allow
+
+```text
+modern 允许 B1 + legacy + surface 只有 B1
+
+两个 modern target 共同合法消费共享 B1
+
+全部 legacy + 原有非空 bindings
+
+modern candidate + modern blocker-only
+→ candidate 归属闭合
+→ blocker 保持 blocked_external
+```
+
+还要验证：
+
+```text
+raw Contract 未变
+compiled Contract 仍来自当前 raw Contract
+Final Gate freshness 仍重新读取当前 Contract
+```
+
+---
+
+# 四、工作包 B：Windows 进程闭合改用现有 Job Object 原语
+
+## 1. 不再继续修补 PID/CIM 轮询
+
+当前 Windows 实现通过周期性读取 `Win32_Process` 捕获 PID、父 PID和 CreationDate；只有 snapshot 中仍存在 root 时，才建立 root identity 并枚举后代。
+
+继续给这个轮询模型增加时间窗口、重试或更多 PID 判断，仍然无法可靠处理：
+
+```text
+root 启动 child
+root 在首次 snapshot 前退出
+child 再启动 grandchild 并退出
+PID 被重用
+CreationDate 无法读取
+```
+
+仓库已经存在更强的 Windows 原生实现：
+
+```text
+CreateProcessW(CREATE_SUSPENDED)
+→
+AssignProcessToJobObject
+→
+ResumeThread
+→
+JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+→
+等待 ActiveProcesses == 0
+```
+
+实际 product executable 在恢复执行之前已经加入 Job Object，因此不存在“先启动、后发现来不及”的窗口。
+
+本次必须复用这一现有 primitive，不再发明第二套 Windows containment。
+
+## 2. 单一实现 owner 与 package 分发
+
+现有 canonical native owner 保持：
+
+```text
+tools/formal_process_supervisor_native_types.cs
+tools/formal_process_supervisor_native_run.cs
+tools/formal_process_supervisor_native_helpers.cs
+tools/windows_job_process_supervisor.ps1
+```
+
+PowerShell helper 已经按结构化 request 执行 native Job Object supervisor。
+
+新增 package managed mirror：
+
+```text
+packages/ty-context/assets/runtime/windows-job-supervisor/
+  formal_process_supervisor_native_types.cs
+  formal_process_supervisor_native_run.cs
+  formal_process_supervisor_native_helpers.cs
+  windows_job_process_supervisor.ps1
+```
+
+要求：
+
+```text
+tools canonical source
+→ package asset managed copy
+→ byte-for-byte parity test
+```
+
+不能手工维护两份不同实现。
+
+`package.json` 已经发布整个 `assets` 目录，因此这些运行资源会进入 tarball。
+
+## 3. PowerShell 兼容性
+
+当前 helper 的 `$IsWindows` 和 `ConvertFrom-Json -AsHashtable` 偏向 PowerShell 7。为了不把 `pwsh` 变成新的隐式运行依赖，应将 canonical helper 同时兼容：
+
+```text
+Windows PowerShell 5.1
+PowerShell 7+
+```
+
+具体要求：
+
+* 使用稳定的平台判断，不依赖 `$IsWindows`；
+* 使用 `PSObject.Properties` 严格读取 request 字段；
+* 保持字段白名单和排序比较；
+* 不通过 shell 拼接 executable 或 argv；
+* 环境变量继续逐项构造；
+* JSON response 继续使用单行结构；
+* 任意未知字段、重复或缺失字段 fail closed。
+
+## 4. 新增 package runtime adapter
+
+新增：
+
+```text
+packages/ty-context/src/lib/
+  long-task-windows-job-supervisor.ts
+  long-task-windows-job-supervisor-protocol.ts
+```
+
+职责严格限定为：
+
+```text
+定位 package-owned helper
+创建 fresh private temp directory
+发送单个结构化执行 request
+读取并验证单个 result
+读取 stdout/stderr
+清理 helper 和临时文件
+返回现有 SpawnedCommandExecution
+```
+
+不得形成新的通用调度器或 process registry。
+
+## 5. `spawnCommandOnce` 的平台分流
+
+修改：
+
+```text
+long-task-command-process.ts
+```
+
+为：
+
+```text
+containProcessTree = true && win32
+→ Windows Job Object supervisor
+
+containProcessTree = true && non-Windows
+→ 保留现有 process-group / tree closure
+
+containProcessTree = false
+→ 保留普通直接 spawn
+```
+
+Windows 下不得静默 fallback 到 PID polling。
+
+以下任何情况必须 fail closed：
+
+```text
+PowerShell helper 不可启动
+C# Add-Type 失败
+CreateJobObject 失败
+CreateProcessW 失败
+AssignProcessToJobObject 失败
+ResumeThread 失败
+response shape 无效
+request_id 不匹配
+ActiveProcessesAtResult != 0
+DescendantsCleaned != true
+stdout/stderr identity 不匹配
+临时输出超过限制
+helper 异常退出
+```
+
+错误统一映射到现有 process-observation 失败边界，例如：
+
+```text
+process_observer_windows_job_unavailable
+process_observer_windows_job_result_invalid
+process_observer_descendant_process_alive
+command_timeout
+command_output_limit_exceeded
+```
+
+不得产生 `completed` evidence。
+
+## 6. 保持 direct-root 语义
+
+Job helper 必须直接调用：
+
+```text
+CreateProcessW(actual executable, actual argv)
+```
+
+不得使用：
+
+```text
+cmd /c
+Start-Process 包装产品命令
+shell: true
+额外项目 wrapper
+```
+
+PowerShell/C# 只是 Harness containment owner；实际 product executable 和 argv 仍然是被验证的 product root。
+
+现有 host attestation 继续记录：
+
+```text
+实际 product pid
+实际 executable
+实际 argv
+started_at
+completed_at
+exit_code
+snapshot identity
+process runtime closure identity
+```
+
+不新增新的 Contract attestation 类型。
+
+## 7. Job Object 完成定理
+
+Windows contained execution 只有在以下全部成立时才允许返回：
+
+```text
+product 创建时处于 suspended
+product 在 resume 前已加入 Job Object
+root 与全部 descendants 均属于同一个 Job
+root 已退出
+Job ActiveProcesses == 0
+stdout/stderr 已完整关闭
+输出未超过限制
+timeout 未触发
+helper result 身份匹配
+```
+
+只要 Job 中还有一个进程：
+
+```text
+不得 completed
+不得生成可信 observation
+不得进入 machine_accepted
+```
+
+## 8. Verifier identity 必须包含 helper
+
+当前 verifier bundle 主要冻结 `dist` 下的 Long-Task 运行文件和 Schema。
+
+新增 runtime assets 后，必须将以下文件加入现有 `VerifierIdentityV2.bundle_files`：
+
+```text
+assets/runtime/windows-job-supervisor/*.cs
+assets/runtime/windows-job-supervisor/*.ps1
+```
+
+这只是扩展现有 verifier bundle digest，不是新的 Authority。
+
+如果 helper asset 在 Compile 后变化：
+
+```text
+verifier_changed_after_compile
+```
+
+必须由现有 freshness 边界阻断。
+
+## 9. 删除误导性 PID 证明
+
+Windows contained execution 改为 Job Object 后：
+
+* 不再把 `PID + CreationDate` 宣称为完整进程树权威；
+* 删除或缩小 Windows polling 专用 `processInstanceMatches` 路径；
+* `long-task-process-table.ts` / `long-task-process-tree.ts` 只保留非 Windows 实际需要的逻辑；
+* Recovery Index、Context 和 release notes 改为：
+
+  ```text
+  Windows Job Object pre-resume containment
+  ```
+
+  而不是：
+
+  ```text
+  PID + creation identity proves containment
+  ```
+
+## 10. Windows 必补真实测试
+
+这些测试必须在真实 Windows 上执行，静态字符串检查不能代替。
+
+### Must-allow
+
+```text
+极短 root，无 child，立即输出并退出
+→ completed
+
+普通 root + 所有 child 正常结束
+→ completed
+
+合法 nonzero product exit
+→ 返回真实 exit code，不伪装 infrastructure failure
+```
+
+### Must-block / cleanup
+
+```text
+root 启动长存 direct child 后立即退出
+→ timeout 或 descendants-alive
+→ child 被清理
+→ 不得 completed
+
+root → short-lived child → long-lived grandchild
+→ 整个 Job 被清理
+
+root 在首次用户态观察前退出
+→ Job containment仍然成立
+
+timeout
+→ root/child/grandchild 全部结束
+
+output overflow
+→ 整个 Job 结束
+
+helper malformed response
+→ fail closed
+
+AssignProcessToJobObject 失败
+→ product 从未 Resume，不能逃逸
+```
+
+### 并行和跨运行隔离
+
+```text
+两个并行 execution 使用不同 request/temp/output identity
+一个失败不能关闭另一个 Job
+旧结果不能满足新 request
+```
+
+优先采用“一次执行一个 helper”的简单模型，避免共享 helper 状态和跨执行污染。只有真实测量证明启动成本成为显著热点时，才另行考虑持久 helper；本次不提前增加池化和并发状态。
+
+---
+
+# 五、工作包 C：完整封闭 Motion Duration 写法
+
+## 1. 当前缺口
+
+当前时间 token 只匹配紧邻形式：
+
+```text
+200ms
+0.2s
+```
+
+必须同时识别：
+
+```text
+200 ms
+200 msec
+200 milliseconds
+0.2 sec
+0.2 seconds
+2 s
+```
+
+## 2. 新时间 token
+
+使用等价于以下规则的 matcher：
+
+```regex
+\b\d+(?:\.\d+)?\s*
+(?:milliseconds?|msecs?|ms|seconds?|secs?|sec|s)\b
+```
+
+注意：
+
+* 长单位放在短单位前；
+* 支持大小写；
+* 支持普通空格和其他 `\s`；
+* 不把单词内部的 `s` 误判为秒。
+
+## 3. 上下文分类保持三分法
+
+### Motion context
+
+出现以下语义时阻断：
+
+```text
+animation
+transition
+motion
+duration
+delay
+easing
+timeline
+keyframe
+fade
+spring
+stagger
+enter
+exit
+hover
+press
+ease-in / ease-out
+```
+
+### Technical time context
+
+明确出现以下语义时允许：
+
+```text
+build
+compile
+bundle
+generation
+CI
+test
+startup
+initialization
+latency
+timeout
+network
+benchmark
+runtime cost
+render cost
+```
+
+### 无明确上下文
+
+Fail closed。
+
+如果同一局部语句同时出现 motion 和 technical 词，motion 优先阻断，防止用：
+
+```text
+build animation takes 200 ms
+```
+
+绕过。
+
+## 4. 四类 prose carrier 全覆盖
+
+同一个统一 validator 必须覆盖：
+
+```text
+substrate observation reason
+realization observed_costs
+realization observed_risks
+blocker description
+```
+
+不能只补某一个字段。
+
+## 5. 必补测试
+
+### Must-block
+
+```text
+Animation lasts 200 ms
+Transition takes 0.2 seconds
+Use a 150 millisecond fade
+Motion delay is 2 sec
+200 milliseconds
+takes 2 seconds
+duration: 200 ms
+transition: opacity 0.2 seconds
+```
+
+### Must-allow
+
+```text
+Build adds 2 seconds
+Bundle generation adds 120 ms
+CI smoke adds 3 sec
+Runtime initialization adds 450 milliseconds
+Network timeout is 2 s
+Benchmark execution takes 800 msec
+```
+
+原有颜色、尺寸、CSS declaration、custom property 和紧凑时间测试全部保留。
+
+---
+
+# 六、必须保留的已完成能力
+
+本次修改必须证明以下内容没有退化：
+
+1. `substrate_observation_refs` 仍唯一、canonical，并逐 family × condition cell 覆盖 unresolved observation。
+2. 每条 component/route Binding path 仍必须是 observed root 的 `proven_subset`。
+3. `not_subset`、`unknown` 和空 planned carrier 仍 fail closed。
+4. Blocker-only target 仍可通过完整 Compile 进入 `blocked_external`，不能 `machine_accepted`。
+5. Standalone Contract validator 仍拒绝空 `component_binding_refs`。
+6. Deferred component closure 仍只存在于完整 Source-aware activation 调用中。
+7. Required realization、planned owner 和 blocker 仍绑定 exact marked Source Item。
+8. Raw Contract 不被 blocker projection 改写。
+9. Final Gate 仍重新读取当前 raw Contract，并保持唯一完成权威。
+10. Candidate + blocker 必须同时闭合 realization 和 blocker。
+11. V1、Symbolic V2、bundle、legacy 读取和 canonical resource 等式不退化。
+12. Open Design `quality_commission`、能力匹配和最小 refinement 保持原样。
+
+---
+
+# 七、具体文件范围
+
+## Mixed legacy attribution
+
+```text
+packages/ty-context/src/lib/
+  long-task-design-feasibility-binding.ts
+  long-task-design-resource-handoff.ts
+
+tests/ty-context/
+  long-task-delivery-compiler.test.mjs
+```
+
+## Windows Job Object runtime
+
+```text
+packages/ty-context/src/lib/
+  long-task-command-process.ts
+  long-task-check-runner.ts
+  long-task-verifier-identity.ts
+  long-task-windows-job-supervisor.ts              # new
+  long-task-windows-job-supervisor-protocol.ts     # new
+  long-task-process-table.ts                       # shrink/remove Windows path
+  long-task-process-tree.ts                        # non-Windows only where applicable
+```
+
+Managed runtime assets：
+
+```text
+packages/ty-context/assets/runtime/windows-job-supervisor/**
+```
+
+Canonical shared owner：
+
+```text
+tools/formal_process_supervisor_native_types.cs
+tools/formal_process_supervisor_native_run.cs
+tools/formal_process_supervisor_native_helpers.cs
+tools/windows_job_process_supervisor.ps1
+```
+
+测试：
+
+```text
+tests/ty-context/
+  long-task-direct-process-observer.test.mjs
+  long-task-level4-acquisition.test.mjs
+  long-task-verifier-identity.test.mjs
+  long-task-release-tarball-contract.test.mjs
+  test-suite-runtime.test.mjs
+```
+
+## Duration scanner
+
+```text
+packages/ty-context/src/lib/
+  design-resource-implementation-feasibility-validation-support.ts
+
+tests/ty-context/
+  design-resource-implementation-feasibility.test.mjs
+```
+
+## 路由、Context 和发布面
+
+```text
+tools/affected_test_selection.mjs
+tools/test_suite_policy.mjs
+tools/test_suite_lane_policy.mjs
+
+project_context/areas/harness-package/contracts/
+  design-resource-handoff.md
+  workflow-contract.md
+
+project_context/areas/harness-package/
+  implementation-index.md
+  verification.md
+
+PROJECT_SPEC.md
+README.md
+README.zh-CN.md
+packages/ty-context/README.md
+packages/ty-context/assets/README.md
+packages/ty-context/assets/README.zh-CN.md
+docs/launch/github-release-0.8.17.md
+```
+
+DRA Skill 只在需要澄清 legacy attribution 或 duration 表达边界时更新；若更新，三份副本必须保持字节一致。
+
+---
+
+# 八、实施顺序
+
+## 第 1 步：先冻结全部反例
+
+在修改实现前先加入以下失败测试：
+
+```text
+modern + legacy 洗白额外 Binding
+short-lived Windows root + long-lived child
+short-lived child + long-lived grandchild
+200 ms / 0.2 seconds motion duration
+```
+
+确认这些测试在 `92c49dc` 上确实失败。
+
+## 第 2 步：更新 S6 Source 和 Context
+
+先写清：
+
+* legacy compatibility 不等于 feasibility attribution；
+* Windows process observation 使用 pre-resume Job Object；
+* duration 单位的完整识别；
+* 不改变 DRA 生成质量路线。
+
+## 第 3 步：修 mixed legacy attribution
+
+先完成纯 Contract/feasibility 闭合和完整 Compile 测试。
+
+## 第 4 步：接入 Windows Job Object
+
+顺序：
+
+```text
+canonical helper兼容
+→
+package asset parity
+→
+protocol adapter
+→
+spawn dispatch
+→
+verifier identity
+→
+真实 Windows regressions
+```
+
+禁止先删除旧 Windows路径而尚未完成 Job Object 正向运行。
+
+## 第 5 步：修 duration scanner
+
+使用统一 token/context classifier，参数化覆盖四类 prose carrier。
+
+## 第 6 步：清理旧声明和死代码
+
+删除不再作为 Windows Authority 的 PID/CIM 轮询声明、测试和 Recovery 文案。
+
+## 第 7 步：同步 Context、文档、package 和 compact carrier
+
+必要时刷新：
+
+```text
+Compact Source/Contract digest
+mechanism admission hash
+affected-test routing
+release packet
+recovery index
+```
+
+## 第 8 步：冻结最终候选并完整验证
+
+最后一次代码、Context、Fixture、helper asset 或文档修改后，所有相关验证重新运行；不得复用修改前结果。
+
+---
+
+# 九、最终验证要求
+
+必须完成：
+
+```text
+format
+typecheck
+build
+Default full suite
+Long-Task full suite
+Long-Task trust suite
+all critical sentinels
+validate-harness
+source parity
+DRA three-copy parity
+Windows helper canonical/package parity
+verifier bundle identity
+portability
+structural-cost
+affected routing
+pack
+Quickstart
+offline launch
+tarball smoke
+fresh temporary repository install/init/sync/Context validation
+diff hygiene
+```
+
+Windows 还必须实际执行：
+
+```text
+Job Object direct root
+short-lived root
+direct child
+multi-level descendant
+timeout cleanup
+output-overflow cleanup
+parallel request isolation
+tarball-installed helper
+```
+
+不得用 Linux 模拟、静态源码搜索或 mock 结果替代这些 Windows 测试。
+
+Windows 瞬态处理继续遵守现有规则：
+
+```text
+保留首次失败
+隔离复现
+确认是机械瞬态后才允许显式串行回滚
+不使用缓存
+不减少测试
+最终重跑完整 suite
+```
+
+---
+
+# 十、最终完成定理
+
+只有以下全部成立，才能宣布开发完成并合并：
+
+```text
+1. Mixed surface 上只要存在 modern feasibility target，
+   legacy target 就不能贡献 Binding attribution。
+
+2. Surface 的每个生产 component Binding
+   都由至少一个 modern candidate-bearing cell 真实消费，
+   或该 surface 属于纯 legacy compatibility。
+
+3. Windows product root 在开始执行前
+   已被加入 package-owned Job Object。
+
+4. Windows Job Object 中 ActiveProcesses 不为 0 时，
+   execution 不得 completed。
+
+5. 极短 root、子进程和多级后代
+   都不能逃过 cleanup 或产生可信 evidence。
+
+6. Windows containment 不依赖 PID polling、
+   CreationDate 恰好可读或首次 snapshot 时 root 仍存活。
+
+7. 所有标准紧凑、空格和完整英文 motion duration
+   都不能进入 feasibility prose。
+
+8. 明确的技术执行时间成本仍合法通过。
+
+9. Raw Contract、现有 technical/surface bindings、
+   唯一 Final Gate 和所有 Authority 边界保持不变。
+
+10. DRA 的 Open Design 生成质量优化保持不变，
+    不重新增加视觉测试、Provider 排名或自动路由。
+```
+
+---
+
+# 十一、最终交付报告格式
+
+```text
+Implementation:
+- mixed modern/legacy Binding attribution closure implemented
+- Windows pre-resume Job Object containment implemented
+- short-lived root/descendant escape closed
+- package-owned supervisor assets frozen in verifier identity
+- full motion-duration token classification implemented
+
+Verification:
+- Default: all passed
+- Long-Task: all passed
+- Trust: all passed
+- critical sentinels: all passed
+- real Windows Job Object regressions: all passed
+- V1/V2/bundle/legacy/full Compile/Final Gate: all passed
+- format/typecheck/build/validate/parity/portability/pack/smoke: all passed
+
+Engineering / Architecture Conformance:
+- no second Design or Technical Authority
+- no new production Binding type
+- no new Contract field family
+- no new Claim type
+- no new Gate, Registry, state machine or workflow
+- canonical design closure unchanged
+- feasibility remains ordinary Source
+- sole Long-Task Final Gate unchanged
+- Open Design quality commission unchanged
+
+Context Delta: required
+Context: updated exact owners and durable reasons
+
+Release:
+- branch pushed
+- worktree clean
+- ahead/behind reported
+- main unchanged until independent audit
+- npm/tag/Release not created
+```
+
+这次补开发的关键不是继续给现有 Windows PID 观察打补丁，而是复用仓库已经存在的、启动前完成 containment 的 Job Object 原语。这样才能一次性关闭极短根进程、PID 重用、多级子进程和清理证明这几个同源问题。
+<!-- S6-CONTROLLING-AMENDMENT:END -->

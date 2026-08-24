@@ -32,6 +32,7 @@ type DesignResourcePreflight =
   DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2;
 
 export interface LongTaskDesignFeasibilityBindingValidationResult {
+  attribution_mode: "feasibility" | "legacy";
   consumed_component_binding_refs: string[];
 }
 
@@ -56,9 +57,8 @@ export function validateLongTaskDesignFeasibilityBindings(
         contractTarget.target.key,
       );
     return {
-      consumed_component_binding_refs: [
-        ...contractTarget.binding.component_binding_refs,
-      ],
+      attribution_mode: "legacy",
+      consumed_component_binding_refs: [],
     };
   }
   const model = feasibilityTargetModel(preflight, contractTarget.target.key);
@@ -192,6 +192,7 @@ export function validateLongTaskDesignFeasibilityBindings(
     decisions,
   );
   return {
+    attribution_mode: "feasibility",
     consumed_component_binding_refs: [...consumedComponentBindings].sort(),
   };
 }

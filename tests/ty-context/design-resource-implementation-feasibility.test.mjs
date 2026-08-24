@@ -113,11 +113,10 @@ test("V1 permits composite and planned candidates while requiring candidate-or-b
                 mode: "planned_owner_authorization",
                 target_ref: cell.target_ref,
                 component_family_ref: cell.component_family_ref,
-                condition_scope_sha256:
-                  v1FeasibilityConditionScopeSha256(
-                    document,
-                    cell.condition_profile_ref,
-                  ),
+                condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+                  document,
+                  cell.condition_profile_ref,
+                ),
                 owner_locator: "planned-card-owner",
               },
             ],
@@ -491,10 +490,14 @@ test("component family closure is transitive and cycle-safe for V1 and V2", () =
     subject("cycle-tail", "text", null, "anatomy"),
   ];
   const closure = deriveComponentFamilySubjectClosure(["family"], subjects);
-  assert.deepEqual(
-    [...closure.get("family")].sort(),
-    ["anatomy", "asset", "cycle-tail", "family", "instance", "text"],
-  );
+  assert.deepEqual([...closure.get("family")].sort(), [
+    "anatomy",
+    "asset",
+    "cycle-tail",
+    "family",
+    "instance",
+    "text",
+  ]);
 
   const v1Document = feasibilityFactValidationDocument(
     "explicit_conditions_v1",
@@ -535,7 +538,9 @@ test("component family closure is transitive and cycle-safe for V1 and V2", () =
     ]),
   };
   v1Cell.design_fact_refs = ["fact.family", "fact.anatomy", "fact.asset"];
-  assert.doesNotThrow(() => validateDesignFactRefs(v1Cell, v1Model, v1Document));
+  assert.doesNotThrow(() =>
+    validateDesignFactRefs(v1Cell, v1Model, v1Document),
+  );
   v1Cell.design_fact_refs = ["fact.family", "fact.asset"];
   assert.throws(
     () => validateDesignFactRefs(v1Cell, v1Model, v1Document),
@@ -584,22 +589,37 @@ test("all feasibility prose carriers distinguish visual motion time from technic
     "Use border-radius: 12px",
     "Could override --brand-color: red",
     "Animation lasts 200ms",
+    "Animation lasts 200 ms",
     "Transition delay is 0.2s",
+    "Transition takes 0.2 seconds",
     "Use a 150ms fade",
+    "Use a 150 millisecond fade",
     "200ms ease-out",
+    "Motion delay is 2 sec",
     "duration: 200ms",
+    "duration: 200 ms",
     "transition: opacity 200ms",
+    "transition: opacity 0.2 seconds",
     "200ms",
+    "200 milliseconds",
     "takes 2s",
+    "takes 2 seconds",
+    "Build animation takes 200 ms",
     "Shadow is 0 2px 8px rgba(0,0,0,.2)",
   ];
   const allowedValues = [
     "Build adds 2s",
+    "Build adds 2 seconds",
     "Bundle generation adds 120ms",
+    "Bundle generation adds 120 ms",
     "CI smoke adds 3s",
+    "CI smoke adds 3 sec",
     "Runtime initialization adds 450ms",
+    "Runtime initialization adds 450 milliseconds",
     "Network timeout is 2s",
+    "Network timeout is 2 s",
     "Benchmark execution takes 800ms",
+    "Benchmark execution takes 800 msec",
   ];
   for (const carrier of [
     "observation_reason",
@@ -727,7 +747,9 @@ test("target-wide unresolved substrate observations close every V1 and V2 materi
 
     const ordinary = substrateCoverageDocument();
     for (const observation of ordinary.substrate_observations)
-      if (["decision_required", "unavailable"].includes(observation.disposition))
+      if (
+        ["decision_required", "unavailable"].includes(observation.disposition)
+      )
         observation.disposition = "observed";
     ordinary.blockers[0].substrate_observation_refs = [];
     assert.doesNotThrow(() =>
@@ -764,33 +786,28 @@ test("blocker observation refs are canonical and exact in marked Source projecti
           observation.source_record_refs = [];
           observation.reason = `${kind} remains unresolved.`;
         }
-        const authority = await addV1FeasibilityDecisionSource(
-          root,
-          document,
-          {
-            recordKey: "technical.canonical-observation-blocker",
-            itemKey: "canonical-observation-blocker",
-            itemKind: "decision",
-            roles: ["feasibility_basis"],
-            projections: [
-              {
-                mode: "feasibility_blocker",
-                target_ref: cell.target_ref,
-                component_family_ref: cell.component_family_ref,
-                condition_scope_sha256:
-                  v1FeasibilityConditionScopeSha256(
-                    document,
-                    cell.condition_profile_ref,
-                  ),
-                blocker_ref: "blocker.canonical-observations",
-                substrate_observation_refs: [
-                  "ui_system",
-                  "component_owner_roots",
-                ],
-              },
-            ],
-          },
-        );
+        const authority = await addV1FeasibilityDecisionSource(root, document, {
+          recordKey: "technical.canonical-observation-blocker",
+          itemKey: "canonical-observation-blocker",
+          itemKind: "decision",
+          roles: ["feasibility_basis"],
+          projections: [
+            {
+              mode: "feasibility_blocker",
+              target_ref: cell.target_ref,
+              component_family_ref: cell.component_family_ref,
+              condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+                document,
+                cell.condition_profile_ref,
+              ),
+              blocker_ref: "blocker.canonical-observations",
+              substrate_observation_refs: [
+                "ui_system",
+                "component_owner_roots",
+              ],
+            },
+          ],
+        });
         cell.feasible_realizations = [];
         cell.blocker_refs = ["blocker.canonical-observations"];
         document.blockers = [
@@ -800,10 +817,7 @@ test("blocker observation refs are canonical and exact in marked Source projecti
             target_ref: cell.target_ref,
             condition_profile_ref: cell.condition_profile_ref,
             source_record_refs: [authority.recordRef],
-            substrate_observation_refs: [
-              "ui_system",
-              "component_owner_roots",
-            ],
+            substrate_observation_refs: ["ui_system", "component_owner_roots"],
             description: "The substrate observations require a decision.",
           },
         ];
@@ -835,30 +849,25 @@ test("blocker observation refs are canonical and exact in marked Source projecti
         observation.value = null;
         observation.source_record_refs = [];
         observation.reason = "The UI system is unavailable.";
-        const authority = await addV1FeasibilityDecisionSource(
-          root,
-          document,
-          {
-            recordKey: "technical.mismatched-observation-blocker",
-            itemKey: "mismatched-observation-blocker",
-            itemKind: "decision",
-            roles: ["feasibility_basis"],
-            projections: [
-              {
-                mode: "feasibility_blocker",
-                target_ref: cell.target_ref,
-                component_family_ref: cell.component_family_ref,
-                condition_scope_sha256:
-                  v1FeasibilityConditionScopeSha256(
-                    document,
-                    cell.condition_profile_ref,
-                  ),
-                blocker_ref: "blocker.mismatched-observation",
-                substrate_observation_refs: ["component_owner_roots"],
-              },
-            ],
-          },
-        );
+        const authority = await addV1FeasibilityDecisionSource(root, document, {
+          recordKey: "technical.mismatched-observation-blocker",
+          itemKey: "mismatched-observation-blocker",
+          itemKind: "decision",
+          roles: ["feasibility_basis"],
+          projections: [
+            {
+              mode: "feasibility_blocker",
+              target_ref: cell.target_ref,
+              component_family_ref: cell.component_family_ref,
+              condition_scope_sha256: v1FeasibilityConditionScopeSha256(
+                document,
+                cell.condition_profile_ref,
+              ),
+              blocker_ref: "blocker.mismatched-observation",
+              substrate_observation_refs: ["component_owner_roots"],
+            },
+          ],
+        });
         cell.feasible_realizations = [];
         cell.blocker_refs = ["blocker.mismatched-observation"];
         document.blockers = [
@@ -960,7 +969,7 @@ test("substrate observation kinds and repository owner roots fail closed", async
       },
       (root) =>
         assert.rejects(
-        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+          preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
           /unresolved_substrate_observation_cell_uncovered/u,
         ),
     );
@@ -1142,10 +1151,7 @@ function substrateCoverageDocument() {
     blockers: [
       {
         key: "blocker-both",
-        substrate_observation_refs: [
-          "component_owner_roots",
-          "ui_system",
-        ],
+        substrate_observation_refs: ["component_owner_roots", "ui_system"],
       },
     ],
   };

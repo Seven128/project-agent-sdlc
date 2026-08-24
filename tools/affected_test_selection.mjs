@@ -335,6 +335,57 @@ const HOTSPOT_TESTS = new Map([
       "long-task-semantic-fact-closure.test.mjs",
     ],
   ],
+  ...[
+    "packages/ty-context/src/lib/long-task-command-process.ts",
+    "packages/ty-context/src/lib/long-task-process-table.ts",
+    "packages/ty-context/src/lib/long-task-process-tree.ts",
+    "packages/ty-context/src/lib/long-task-windows-job-supervisor-helper.ts",
+    "packages/ty-context/src/lib/long-task-windows-job-supervisor.ts",
+    "packages/ty-context/src/lib/long-task-windows-job-supervisor-protocol.ts",
+    "packages/ty-context/src/lib/long-task-windows-job-supervisor-result.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "long-task-direct-process-observer.test.mjs",
+      "long-task-level4-acquisition.test.mjs",
+      "long-task-windows-job-supervisor.test.mjs",
+    ],
+  ]),
+  ...[
+    "tests/ty-context/long-task-windows-job-supervisor-package-fixture.mjs",
+    "tests/ty-context/long-task-windows-job-supervisor-protocol-fixture.mjs",
+    "tests/ty-context/long-task-windows-job-supervisor-runtime-fixture.mjs",
+    "tests/ty-context/long-task-windows-job-supervisor-test-support.mjs",
+  ].map((sourcePath) => [
+    sourcePath,
+    ["long-task-windows-job-supervisor.test.mjs"],
+  ]),
+  [
+    "packages/ty-context/src/lib/long-task-verifier-identity.ts",
+    [
+      "long-task-state-resume.test.mjs",
+      "long-task-verifier-identity.test.mjs",
+      "long-task-windows-job-supervisor.test.mjs",
+    ],
+  ],
+  ...[
+    "tools/formal_process_supervisor_native_types.cs",
+    "tools/formal_process_supervisor_native_run.cs",
+    "tools/formal_process_supervisor_native_helpers.cs",
+    "tools/windows_job_process_supervisor.ps1",
+    "packages/ty-context/assets/runtime/windows-job-supervisor/formal_process_supervisor_native_types.cs",
+    "packages/ty-context/assets/runtime/windows-job-supervisor/formal_process_supervisor_native_run.cs",
+    "packages/ty-context/assets/runtime/windows-job-supervisor/formal_process_supervisor_native_helpers.cs",
+    "packages/ty-context/assets/runtime/windows-job-supervisor/windows_job_process_supervisor.ps1",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "long-task-level4-acquisition.test.mjs",
+      "long-task-verifier-identity.test.mjs",
+      "long-task-windows-job-supervisor.test.mjs",
+      "package-source.test.mjs",
+    ],
+  ]),
   [
     "packages/ty-context/src/lib/long-task-activation-validation.ts",
     [
