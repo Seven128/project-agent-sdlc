@@ -19,6 +19,13 @@ function decodeRecord(
   const assertionKey = key(row.assertion_key, `${label}.assertion_key`);
   const capability = nonEmpty(row.capability, `${label}.capability`);
   const base = { assertion_key: assertionKey };
+  const completeDelivery = decodeCompleteDeliveryEvidenceRecord(
+    row,
+    label,
+    base,
+    capability,
+  );
+  if (completeDelivery) return completeDelivery;
   switch (capability) {
     case "interaction_trace":
       exact(row, label, [
@@ -237,6 +244,133 @@ function decodeRecord(
     default:
       throw invalidRecord(`${label}.capability_unsupported:${capability}`);
   }
+}
+
+function decodeCompleteDeliveryEvidenceRecord(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+  capability: string,
+): EvidenceCapabilityRecordV2 | null {
+  switch (capability) {
+    case "actual_provenance":
+      exact(row, label, [
+        "assertion_key",
+        "capability",
+        "source_kind",
+        "source_ref",
+        "actual_sha256",
+      ]);
+      return {
+        ...base,
+        capability,
+        source_kind: literal(
+          row.source_kind,
+          ["product_runtime", "observer_runtime", "durable_store"] as const,
+          `${label}.source_kind`,
+        ),
+        source_ref: nonEmpty(row.source_ref, `${label}.source_ref`),
+        actual_sha256: sha(row.actual_sha256, `${label}.actual_sha256`),
+      };
+    case "distinct_identity":
+      return decodeDistinctIdentityEvidence(row, label, base);
+    case "data_state":
+      exact(row, label, [
+        "assertion_key",
+        "capability",
+        "state_ref",
+        "state_sha256",
+        "read_session_id",
+      ]);
+      return {
+        ...base,
+        capability,
+        state_ref: nonEmpty(row.state_ref, `${label}.state_ref`),
+        state_sha256: sha(row.state_sha256, `${label}.state_sha256`),
+        read_session_id: nonEmpty(
+          row.read_session_id,
+          `${label}.read_session_id`,
+        ),
+      };
+    case "population_coverage":
+      return decodePopulationCoverageEvidence(row, label, base);
+    case "recovery":
+      exact(row, label, [
+        "assertion_key",
+        "capability",
+        "failure_session_id",
+        "recovery_session_id",
+        "recovered_state_sha256",
+      ]);
+      return {
+        ...base,
+        capability,
+        failure_session_id: nonEmpty(
+          row.failure_session_id,
+          `${label}.failure_session_id`,
+        ),
+        recovery_session_id: nonEmpty(
+          row.recovery_session_id,
+          `${label}.recovery_session_id`,
+        ),
+        recovered_state_sha256: sha(
+          row.recovered_state_sha256,
+          `${label}.recovered_state_sha256`,
+        ),
+      };
+    default:
+      return null;
+  }
+}
+
+function decodeDistinctIdentityEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "distinct_identity" }> {
+  exact(row, label, ["assertion_key", "capability", "identities"]);
+  const identities = array(row.identities, `${label}.identities`).map(
+    (item, identityIndex) => {
+      const identityLabel = `${label}.identities[${identityIndex}]`;
+      const identity = record(item, identityLabel);
+      exact(identity, identityLabel, ["identity_ref", "data_state_sha256"]);
+      return {
+        identity_ref: nonEmpty(
+          identity.identity_ref,
+          `${identityLabel}.identity_ref`,
+        ),
+        data_state_sha256: sha(
+          identity.data_state_sha256,
+          `${identityLabel}.data_state_sha256`,
+        ),
+      };
+    },
+  );
+  return { ...base, capability: "distinct_identity", identities };
+}
+
+function decodePopulationCoverageEvidence(
+  row: Record<string, unknown>,
+  label: string,
+  base: { assertion_key: string },
+): Extract<EvidenceCapabilityRecordV2, { capability: "population_coverage" }> {
+  exact(row, label, [
+    "assertion_key",
+    "capability",
+    "universe_sha256",
+    "observed_sha256",
+    "excluded_sha256",
+    "set_equality",
+  ]);
+  if (row.set_equality !== true) throw invalidRecord(`${label}.set_equality`);
+  return {
+    ...base,
+    capability: "population_coverage",
+    universe_sha256: sha(row.universe_sha256, `${label}.universe_sha256`),
+    observed_sha256: sha(row.observed_sha256, `${label}.observed_sha256`),
+    excluded_sha256: sha(row.excluded_sha256, `${label}.excluded_sha256`),
+    set_equality: true,
+  };
 }
 
 function decodeGroundDesignMethodEvidence(

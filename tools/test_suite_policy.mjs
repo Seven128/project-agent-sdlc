@@ -11,10 +11,10 @@ const supportedTestPlatforms = new Set(SUPPORTED_TEST_PLATFORMS);
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 25,
-    reviewed_on: "2026-08-24",
+    max_files: 26,
+    reviewed_on: "2026-08-25",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. The Windows package observer now has an independent real Job Object pre-resume containment sentinel in addition to the Level 4 formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and governance boundaries; this keeps short-root and descendant escape rejection dynamic without merging authorities or adding a duplicate conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -90,6 +90,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-qualified-completion.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves that failed live gates neither report qualified success nor clear the current Active Authority.",
+  ),
+  criticalSentinel(
+    "external-fulfillment-current-authority",
+    "long-task-external-confirmation.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: exact fresh per-obligation records, compatible Session batching, unrelated-input carry-forward and passing machine checks close only as delivery_accepted. Negative controls reject aggregate/missing/extra results, wrong actor/target/environment/applicability, stale Authority/candidate/relevant inputs, bad record/artifact identities, insufficient evidence, failed/unable outcomes, pending obligations and an External Confirmation record changed while a runner is executing. Owner/path: prepare/submit/status/revoke flows through long-task-external-confirmation-plan/state, acceptance reachability and the sole Live Final Gate, while Active Authority remains uncleared on every non-terminal result. Scope: declared local actor identity and record integrity, exact obligation equality, freshness and terminal routing. Does not prove cryptographic actor authentication, real-world evidence truth beyond the declared external authority, browser/native observers or hostile-host isolation.",
   ),
   criticalSentinel(
     "target-runtime-non-substitution",
@@ -372,6 +378,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-level4-package-promotion.test.mjs",
   "long-task-level4-source-readiness.test.mjs",
   "long-task-execution-observation.test.mjs",
+  "long-task-external-confirmation.test.mjs",
   "long-task-model-choice-checkpoint.test.mjs",
   "long-task-non-completing-source.test.mjs",
   "long-task-observer-trust-counterexamples.test.mjs",
@@ -695,11 +702,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 19 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 57 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 58 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 19/57/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 19/58/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

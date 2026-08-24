@@ -19,6 +19,10 @@ import {
   fixtureExecutionTargetSourceItem,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  digestValue,
+  mutateFixtureSemanticManifest,
+} from "./long-task-semantic-fact-test-support.mjs";
 
 test("Source Item inventory is set-equivalent and statement-continuous", async () => {
   const fixture = await createDeliveryFixture();
@@ -696,6 +700,23 @@ test("Source Acceptance resolves a Source-backed Global Assertion chain", async 
   }
 });
 
+test("Source-backed Global modal constraints still require a delivery-semantic Fact", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await configureGlobalSourceAcceptance(fixture, {
+      sourceBacked: true,
+      semanticFactBacked: false,
+    });
+    await assertPreflightAndCompileReject(
+      fixture,
+      "semantic_anchor_supporting_only_forbidden",
+      "A Source-backed Global Claim must not replace its delivery-semantic Fact.",
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("Global Source Acceptance rejects unknown, unbacked, cross-scope, and rewritten targets", async () => {
   const scenarios = [
     {
@@ -762,7 +783,10 @@ test("Global Source Acceptance rejects unknown, unbacked, cross-scope, and rewri
   }
 });
 
-async function configureGlobalSourceAcceptance(fixture, { sourceBacked }) {
+async function configureGlobalSourceAcceptance(
+  fixture,
+  { sourceBacked, semanticFactBacked = true },
+) {
   const constraint = "Global runtime must reject legacy fallback.";
   const criterion = "Every runtime entry rejects legacy fallback.";
   const applicabilityRef = ensureGlobalApplicability(fixture.contract);
@@ -853,6 +877,209 @@ async function configureGlobalSourceAcceptance(fixture, { sourceBacked }) {
     },
   ]);
   await writeContract(fixture.workdir, fixture.contract);
+  if (sourceBacked && semanticFactBacked)
+    await addGlobalConstraintSemanticFact(fixture, {
+      sourceItemRef: "global-constraint",
+      constraintKey: "no-legacy",
+    });
+}
+
+async function addGlobalConstraintSemanticFact(
+  fixture,
+  { sourceItemRef, constraintKey },
+) {
+  const outcome = fixture.contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  const applicabilityRef = "first-root-success";
+  const factKey = `fact.global.${constraintKey}`;
+  const proofKey = `proof.global.${constraintKey}.exact`;
+  const familyKey = "family.custom.global-runtime-policy";
+  const subjectKey = "subject.global.runtime-policy";
+  const propertyKey = `property.global.${constraintKey}`;
+  const cellKey = `cell.global.${constraintKey}`;
+  const assertionKey = `first-global-${constraintKey}-semantic-fact`;
+  const claimRef = `semantic_fact.${factKey}`;
+  const sensitivity = outcome.acceptance.counterfactual_controls.find(
+    (candidate) => candidate.key === "remove-first-state",
+  );
+  assert.ok(sensitivity);
+
+  check.positive_assertions.push({
+    key: assertionKey,
+    criterion:
+      "The global no-legacy policy has an independent Source-backed Semantic Fact.",
+    claims: [claimRef],
+    applicability_ref: applicabilityRef,
+    observation: "global_no_legacy_semantic_fact_result",
+    evidence_capabilities: ["semantic_fact"],
+    operator: "equals",
+    expected: true,
+  });
+  outcome.semantic_fact_bindings.facts.push({
+    fact_ref: factKey,
+    claim_ref: claimRef,
+    applicability_ref: applicabilityRef,
+  });
+  outcome.semantic_fact_bindings.proofs.push({
+    proof_ref: proofKey,
+    fact_ref: factKey,
+    method: "exact_value",
+    proof_surface: check.proof_surface,
+    evidence_capabilities: ["semantic_fact"],
+    authority: "machine",
+    check_ref: check.key,
+    assertion_ref: assertionKey,
+  });
+  sensitivity.claims.push(claimRef);
+  sensitivity.expected_assertion_failures.push(assertionKey);
+
+  await mutateFixtureSemanticManifest(fixture, (manifest) => {
+    const sourceInput = manifest.inputs.find(
+      (input) =>
+        input.kind === "source_item" &&
+        input.source_ref === sourceItemRef,
+    );
+    assert.ok(sourceInput);
+    sourceInput.fact_refs = [factKey];
+    sourceInput.rationale =
+      "The Global technical constraint owns one independent technical-domain Semantic Fact.";
+    for (const fact of manifest.facts) {
+      fact.source_item_refs = fact.source_item_refs.filter(
+        (ref) => ref !== sourceItemRef,
+      );
+      fact.provenance.basis_refs = fact.provenance.basis_refs.filter(
+        (ref) => ref !== sourceItemRef,
+      );
+    }
+
+    const condition = manifest.conditions.find(
+      (candidate) => candidate.outcome_ref === outcome.key,
+    );
+    assert.ok(condition);
+    const factIndex = manifest.facts.length;
+    const proofIndex = manifest.proof_obligations.length;
+    manifest.family_dispositions.push({
+      key: familyKey,
+      family: "custom.global_runtime_policy",
+      standard: false,
+      disposition: "applicable",
+      outcome_refs: [outcome.key],
+      source_item_refs: [sourceItemRef],
+      basis_refs: [sourceItemRef],
+      rationale:
+        "The Global technical Source introduces one independently decidable runtime policy.",
+    });
+    manifest.subjects.push({
+      key: subjectKey,
+      family_ref: familyKey,
+      outcome_ref: outcome.key,
+      kind: "runtime_policy",
+      parent_ref: null,
+      owner_ref: null,
+      source_item_refs: [sourceItemRef],
+      basis_refs: [sourceItemRef],
+    });
+    manifest.property_dispositions.push({
+      key: propertyKey,
+      family_ref: familyKey,
+      property: "custom.reject_legacy_fallback",
+      standard: false,
+      value_kind: "boolean",
+      required_methods: ["exact_value"],
+      required_evidence_capabilities: ["semantic_fact"],
+      applicable_unit_refs: [subjectKey],
+      not_applicable_unit_refs: [],
+      decision_required_unit_refs: [],
+      unavailable_unit_refs: [],
+      condition_refs: [condition.key],
+      source_item_refs: [sourceItemRef],
+      basis_refs: [sourceItemRef],
+      rationale:
+        "Rejecting legacy fallback is an atomic applicable technical property.",
+    });
+    manifest.fact_cells.push({
+      key: cellKey,
+      outcome_ref: outcome.key,
+      unit_ref: subjectKey,
+      condition_ref: condition.key,
+      property_ref: propertyKey,
+      disposition: "specified",
+      fact_ref: factKey,
+      source_item_refs: [sourceItemRef],
+      basis_refs: [sourceItemRef],
+      rationale: "The Global runtime policy is exactly specified.",
+    });
+    manifest.facts.push({
+      key: factKey,
+      cell_ref: cellKey,
+      outcome_ref: outcome.key,
+      unit_ref: subjectKey,
+      family_ref: familyKey,
+      condition_ref: condition.key,
+      property_ref: propertyKey,
+      owner_ref: "owner.fixture",
+      value_kind: "boolean",
+      observation_scope: "service_boundary",
+      observation_sensitivity: "plain",
+      quantifier: {
+        kind: "one",
+        minimum: null,
+        maximum: null,
+        population_ref: null,
+      },
+      expected: {
+        representation: "inline",
+        locator: {
+          material_ref: manifest.key,
+          kind: "manifest_pointer",
+          value: `/facts/${factIndex}/expected/value`,
+        },
+        sha256: digestValue(true),
+        value: true,
+      },
+      provenance: {
+        kind: "direct",
+        authority_ref: sourceItemRef,
+        basis_refs: [sourceItemRef],
+        derivation: null,
+      },
+      source_item_refs: [sourceItemRef],
+    });
+    manifest.proof_obligations.push({
+      key: proofKey,
+      fact_ref: factKey,
+      method: "exact_value",
+      authority: "machine",
+      proof_surface: check.proof_surface,
+      evidence_capabilities: ["semantic_fact"],
+      comparison: {
+        comparator: "exact_value",
+        mode: "exact",
+        parameters: {
+          representation: "inline",
+          locator: {
+            material_ref: manifest.key,
+            kind: "manifest_pointer",
+            value: `/proof_obligations/${proofIndex}/comparison/parameters/value`,
+          },
+          sha256: digestValue({ comparator: "exact_value" }),
+          value: { comparator: "exact_value" },
+        },
+        tolerance: null,
+        mask: null,
+      },
+      oracle_ref: manifest.oracles[0].key,
+      environment_ref: manifest.environments[0].key,
+      observer_refs: [],
+      counterfactual: {
+        disposition: "required",
+        refs: [sensitivity.key],
+        basis_refs: [sourceItemRef],
+        rationale:
+          "Replacing the owning runtime state must fail the Global policy Fact assertion.",
+      },
+    });
+  });
 }
 
 function acceptanceSource(contract) {
@@ -877,7 +1104,12 @@ async function assertPreflightAndCompileReject(fixture, code, message = code) {
   );
   assert.equal(preflight.status, "not_ready", message);
   assert.ok(
-    preflight.diagnostics.some((item) => item.code === code),
+    preflight.diagnostics.some(
+      (item) =>
+        item.code === code ||
+        item.message.includes(`:${code}:`) ||
+        item.message.endsWith(`:${code}`),
+    ),
     `${message}: missing Preflight diagnostic ${code}`,
   );
   await assert.rejects(

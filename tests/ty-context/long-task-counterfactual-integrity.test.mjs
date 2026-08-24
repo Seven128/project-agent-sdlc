@@ -3,6 +3,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
+  counterfactualExecutionMayOverlap,
   evaluateCheckEvidence,
   evaluateOutcomeCounterfactuals,
   isValidCounterfactualCheckResult,
@@ -36,6 +37,57 @@ import {
 } from "./long-task-process-product-fixture.mjs";
 
 const COUNTERFACTUAL_PRODUCT_PATH = "tests/counterfactual-product.mjs";
+
+test("Counterfactual set overlap admits only read-only idempotent package-process execution", () => {
+  const check = {
+    internal_id: "first.first-check",
+    raw_execution_identity: "raw:first",
+    runner: {
+      effect: "read_only",
+      idempotent: true,
+      retry_policy: "none",
+    },
+    environment_requirements: [],
+    process_runtime_closure: {
+      closure_identity: "closure:first",
+      production_carrier_files: ["config/state.json"],
+    },
+    observation_authorities: [{ authority: "package_process_json_exact" }],
+  };
+  const left = {
+    mutation: {
+      type: "replace_json_value",
+      path: "config/state.json",
+      pointer: "/enabled",
+      value: false,
+    },
+  };
+  assert.equal(
+    counterfactualExecutionMayOverlap({
+      check,
+      control: left,
+    }),
+    true,
+  );
+  assert.equal(
+    counterfactualExecutionMayOverlap({
+      check,
+      control: left,
+      protected_authority_paths: ["config/**"],
+    }),
+    false,
+  );
+  assert.equal(
+    counterfactualExecutionMayOverlap({
+      check: {
+        ...check,
+        runner: { ...check.runner, effect: "test_sandbox" },
+      },
+      control: left,
+    }),
+    false,
+  );
+});
 
 test("allowed fan-out Assertion references exist and remain disjoint from expected and preserved sets", () => {
   const contract = deliveryContract();

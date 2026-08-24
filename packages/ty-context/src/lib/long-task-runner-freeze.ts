@@ -37,6 +37,7 @@ import {
 import { compileObservationAuthorityPlan } from "./long-task-observation-authority.js";
 import { compileProcessRuntimeClosure } from "./long-task-process-runtime-closure.js";
 import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
+import type { CheckProofAdequacyV2 } from "./long-task-proof-adequacy.js";
 
 export async function freezeDeliveryCheck(
   check: DeliveryCheckV2,
@@ -51,6 +52,11 @@ export async function freezeDeliveryCheck(
   productionOwnerPaths: string[],
   sourceBackedExecutionTarget: SourceBackedExecutionTargetV2 | null,
   protectedAuthorityPaths: readonly string[] = [],
+  proofAdequacy: CheckProofAdequacyV2 = {
+    completion_role: "diagnostic",
+    expected_authority_refs: {},
+    required_evidence_capabilities: {},
+  },
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
   const expectedOutputs = check.expected_output_paths.map((pattern, index) =>
@@ -166,6 +172,10 @@ export async function freezeDeliveryCheck(
     semantic_fact_expectations: semanticFactExpectations,
     observation_authorities: observationAuthorities,
     process_runtime_closure: processRuntimeClosure,
+    completion_role: proofAdequacy.completion_role,
+    expected_authority_refs: proofAdequacy.expected_authority_refs,
+    required_evidence_capabilities:
+      proofAdequacy.required_evidence_capabilities,
   };
   return {
     ...compiled,

@@ -35,6 +35,7 @@ task:
     description: The declared product target is usable from its root entrypoint.
     required_state: target_profile_usable
     required_target_refs: [replace-runtime]
+    completion_authority: machine_only
   execution_targets:
     - key: replace-runtime
       description: The product runtime used by the acceptance oracle.

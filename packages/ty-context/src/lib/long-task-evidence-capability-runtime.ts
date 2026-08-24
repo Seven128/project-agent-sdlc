@@ -38,27 +38,28 @@ export function validateRuntimeEvidenceRecord(
     case "interaction_trace":
       return validateInteractionTrace(check, record, hostAttestation);
     case "state_delta":
-      if (record.before_sha256 === record.after_sha256)
-        return "state_unchanged";
-      if (!record.changed_fields.length) return "changed_fields_empty";
-      return null;
+      return validateStateDelta(record);
     case "cross_surface_consistency":
       return validateCrossSurfaceConsistency(check, record);
     case "durable_readback":
-      if (record.write_session_id === record.read_session_id)
-        return "independent_session_required";
-      if (record.written_sha256 !== record.read_sha256)
-        return "readback_mismatch";
-      return null;
+      return validateDurableReadback(record);
     case "boundary_invocation":
     case "external_side_effect":
       return validateObserverEvidence(check, record.observer_target_ref);
+    case "actual_provenance":
+      return validateActualProvenance(check, record);
+    case "distinct_identity":
+      return validateDistinctIdentity(record);
+    case "data_state":
+      return validateDataState(record);
+    case "population_coverage":
+      return validatePopulationCoverage(record);
     case "failure_injection":
-      return record.failure_observed ? null : "failure_not_observed";
+      return validateFailureInjection(record);
+    case "recovery":
+      return validateRecovery(record);
     case "visual_render":
-      return artifactHashes[record.artifact_path] === record.artifact_sha256
-        ? null
-        : "artifact_hash_mismatch";
+      return validateVisualRender(record, artifactHashes);
     case "design_conformance":
       return validateDesignConformance(check, record, artifactHashes);
     case "design_method":
@@ -72,6 +73,98 @@ export function validateRuntimeEvidenceRecord(
     case "input_variation":
       return validateInputVariation(record);
   }
+}
+
+function validateStateDelta(
+  record: Extract<EvidenceCapabilityRecordV2, { capability: "state_delta" }>,
+): string | null {
+  if (record.before_sha256 === record.after_sha256) return "state_unchanged";
+  return record.changed_fields.length ? null : "changed_fields_empty";
+}
+
+function validateDurableReadback(
+  record: Extract<
+    EvidenceCapabilityRecordV2,
+    { capability: "durable_readback" }
+  >,
+): string | null {
+  if (record.write_session_id === record.read_session_id)
+    return "independent_session_required";
+  return record.written_sha256 === record.read_sha256
+    ? null
+    : "readback_mismatch";
+}
+
+function validateActualProvenance(
+  check: CompiledCheckV2,
+  record: Extract<
+    EvidenceCapabilityRecordV2,
+    { capability: "actual_provenance" }
+  >,
+): string | null {
+  return record.source_kind === "observer_runtime" &&
+    check.execution_target_definition.role !== "observer"
+    ? "observer_provenance_target_required"
+    : null;
+}
+
+function validateDistinctIdentity(
+  record: Extract<
+    EvidenceCapabilityRecordV2,
+    { capability: "distinct_identity" }
+  >,
+): string | null {
+  if (record.identities.length < 2) return "two_identities_required";
+  if (
+    new Set(record.identities.map((item) => item.identity_ref)).size !==
+    record.identities.length
+  )
+    return "identity_duplicate";
+  return new Set(record.identities.map((item) => item.data_state_sha256)).size <
+    2
+    ? "independent_data_states_required"
+    : null;
+}
+
+function validateDataState(
+  record: Extract<EvidenceCapabilityRecordV2, { capability: "data_state" }>,
+): string | null {
+  return record.read_session_id.trim() ? null : "read_session_required";
+}
+
+function validatePopulationCoverage(
+  record: Extract<
+    EvidenceCapabilityRecordV2,
+    { capability: "population_coverage" }
+  >,
+): string | null {
+  return record.set_equality ? null : "set_equality_required";
+}
+
+function validateFailureInjection(
+  record: Extract<
+    EvidenceCapabilityRecordV2,
+    { capability: "failure_injection" }
+  >,
+): string | null {
+  return record.failure_observed ? null : "failure_not_observed";
+}
+
+function validateRecovery(
+  record: Extract<EvidenceCapabilityRecordV2, { capability: "recovery" }>,
+): string | null {
+  return record.failure_session_id === record.recovery_session_id
+    ? "independent_recovery_session_required"
+    : null;
+}
+
+function validateVisualRender(
+  record: Extract<EvidenceCapabilityRecordV2, { capability: "visual_render" }>,
+  artifactHashes: Record<string, string>,
+): string | null {
+  return artifactHashes[record.artifact_path] === record.artifact_sha256
+    ? null
+    : "artifact_hash_mismatch";
 }
 
 function validateAdmittedObservationRecord(

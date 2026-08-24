@@ -5,6 +5,7 @@ import type {
   CompiledDeliveryContractV2,
   LongTaskFindingV2,
 } from "./long-task-delivery-types.js";
+import { captureStoredExternalConfirmationRecordIdentities } from "./long-task-external-confirmation-state.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import {
   activeAuthorityIdentityMatches,
@@ -22,6 +23,7 @@ import { sha256Hex } from "./strict-codec.js";
 export interface FinalGateProtectedInputIdentity {
   compiled_identity: string;
   raw_contract_sha256: string;
+  external_confirmation_records: Record<string, string>;
 }
 
 export async function captureFinalGateProtectedInputIdentity(
@@ -36,6 +38,12 @@ export async function captureFinalGateProtectedInputIdentity(
   return {
     compiled_identity: compiled.compiled_identity,
     raw_contract_sha256: sha256Hex(await readFile(file)),
+    external_confirmation_records:
+      await captureStoredExternalConfirmationRecordIdentities(
+        repository,
+        compiled.workdir,
+        compiled.global.acceptance.external_confirmations.map((row) => row.key),
+      ),
   };
 }
 
@@ -48,8 +56,13 @@ export async function finalGateIntegrityFindings(input: {
   protected_inputs_before: FinalGateProtectedInputIdentity;
 }): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
-  const after = await captureWorkspaceFingerprint(input.repository);
-  const gitAfter = await currentGitState(input.repository);
+  const [after, gitAfter, authorityChanged, protectedFindings] =
+    await Promise.all([
+      captureWorkspaceFingerprint(input.repository),
+      currentGitState(input.repository),
+      activeAuthorityChanged(input),
+      protectedInputFindings(input),
+    ]);
   if (
     after.identity !== input.workspace_identity_before ||
     gitAfter.head !== input.candidate.head ||
@@ -57,9 +70,8 @@ export async function finalGateIntegrityFindings(input: {
     gitAfter.dirty.length
   )
     findings.push(workspaceChangedFinding());
-  if (await activeAuthorityChanged(input))
-    findings.push(activeAuthorityChangedFinding());
-  findings.push(...(await protectedInputFindings(input)));
+  if (authorityChanged) findings.push(activeAuthorityChangedFinding());
+  findings.push(...protectedFindings);
   return findings;
 }
 
@@ -100,7 +112,11 @@ async function protectedInputFindings(
     return after.compiled_identity !==
       input.protected_inputs_before.compiled_identity ||
       after.raw_contract_sha256 !==
-        input.protected_inputs_before.raw_contract_sha256
+        input.protected_inputs_before.raw_contract_sha256 ||
+      JSON.stringify(after.external_confirmation_records) !==
+        JSON.stringify(
+          input.protected_inputs_before.external_confirmation_records,
+        )
       ? [
           protectedInputsChangedFinding({
             before: input.protected_inputs_before,
@@ -146,7 +162,7 @@ function protectedInputsChangedFinding(actual: unknown): LongTaskFindingV2 {
     outcome_key: null,
     check_key: null,
     message:
-      "Protected Contract, Source, controlling Context, verifier/runner, verification-input or workdir input identity changed while Final Gate was running.",
+      "Protected Contract, Source, controlling Context, verifier/runner, verification-input, workdir input or External Confirmation record identity changed while Final Gate was running.",
     actual,
     next_action:
       "Stop concurrent protected-input mutation, review any required Authority Revision, and rerun the complete Final Gate.",

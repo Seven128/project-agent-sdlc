@@ -17,6 +17,7 @@ import {
 import type {
   CompiledDeliveryContractV2,
   FinalReceiptV2,
+  FinalReceiptV3,
   InitialTaskBaseV2,
   ProgressRecordV2,
   VerifierIdentityV2,
@@ -646,9 +647,9 @@ export async function invalidateDerivedProgress(
 export async function writeFinalReceipt(
   repositoryRoot: string,
   workdir: string,
-  unsigned: Omit<FinalReceiptV2, "receipt_sha256">,
-): Promise<FinalReceiptV2> {
-  const receipt: FinalReceiptV2 = {
+  unsigned: Omit<FinalReceiptV3, "receipt_sha256">,
+): Promise<FinalReceiptV3> {
+  const receipt: FinalReceiptV3 = {
     ...unsigned,
     receipt_sha256: sha256Hex(canonicalValueJson(unsigned)),
   };
@@ -669,12 +670,22 @@ export async function readFinalReceipt(
   const receipt = value as FinalReceiptV2;
   const { receipt_sha256: receiptHash, ...unsigned } = receipt;
   if (
-    receipt.schema_version !== "long-task-final-receipt-v2" ||
+    !["long-task-final-receipt-v2", "long-task-final-receipt-v3"].includes(
+      receipt.schema_version,
+    ) ||
     receipt.authority_scope !== "audit_only" ||
     receipt.reusable_for_acceptance !== false ||
     sha256Hex(canonicalValueJson(unsigned)) !== receiptHash
   )
     throw new Error("final_receipt_integrity_mismatch");
+  if (
+    (receipt.schema_version === "long-task-final-receipt-v2" &&
+      receipt.workflow_status === "delivery_accepted") ||
+    (receipt.schema_version === "long-task-final-receipt-v3" &&
+      (receipt.workflow_status === "machine_accepted_external_pending" ||
+        !Array.isArray(receipt.external_confirmation_results)))
+  )
+    throw new Error("final_receipt_schema_status_mismatch");
   return receipt;
 }
 

@@ -124,6 +124,14 @@ export async function preflightDeliveryContract(
     outcomes: contract.outcomes.map((outcome) => outcome.key),
     source_coverage: sourceCoverage(contract),
     claim_coverage: validation.claims?.summary ?? emptyClaimCoverage(),
+    acceptance_reachability: validation.acceptance_reachability ?? {
+      completion_authority: contract.task.target_profile.completion_authority,
+      total: 0,
+      machine_admitted: 0,
+      external_fulfillable: 0,
+      unreachable: 0,
+      obligations: [],
+    },
     revision_preview: authoringRevisionPreview(
       contract,
       validation.source_hashes,

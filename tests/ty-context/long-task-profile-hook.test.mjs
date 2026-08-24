@@ -61,7 +61,10 @@ test("Codex worker profile validator derives one static leaf configuration from 
     ),
     "utf8",
   );
-  assert.match(canonical, /^description = "Package-owned implementation worker/mu);
+  assert.match(
+    canonical,
+    /^description = "Package-owned implementation worker/mu,
+  );
   assert.doesNotMatch(canonical, /^description = ".*\bOptional\b/mu);
   const valid = parseAndValidateLongTaskCodexAgentProfile(canonical);
   assert.equal(valid.valid, true, JSON.stringify(valid));
@@ -157,30 +160,19 @@ test("Codex worker profile sync is symlink-safe and never reads an external targ
     await writeFile(externalFile, canonical);
     await symlink(externalFile, destination, "file");
     const linked = report();
-    await syncLongTaskCodexAgentProfile(
-      fixture.root,
-      ".codex",
-      true,
-      linked,
-      {
-        readFile: async (target, encoding) => {
-          assert.notEqual(path.resolve(target), path.resolve(externalFile));
-          return readFile(target, encoding);
-        },
+    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, linked, {
+      readFile: async (target, encoding) => {
+        assert.notEqual(path.resolve(target), path.resolve(externalFile));
+        return readFile(target, encoding);
       },
-    );
+    });
     assert.match(linked.skipped.join("\n"), /destination_symlink/u);
     assert.equal(await readFile(externalFile, "utf8"), canonical);
 
     await rm(destination, { force: true });
     await symlink(`${externalFile}.missing`, destination, "file");
     const dangling = report();
-    await syncLongTaskCodexAgentProfile(
-      fixture.root,
-      ".codex",
-      true,
-      dangling,
-    );
+    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, dangling);
     assert.match(dangling.skipped.join("\n"), /destination_symlink/u);
 
     await rm(destination, { force: true });
@@ -220,12 +212,7 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
   const report = () => ({ changed: [], skipped: [], blocked: [] });
   try {
     const first = report();
-    await syncLongTaskCodexAgentProfile(
-      fixture.root,
-      ".codex",
-      true,
-      first,
-    );
+    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, first);
     assert.deepEqual(first.changed, [
       LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH,
     ]);
@@ -236,12 +223,7 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
     );
 
     const second = report();
-    await syncLongTaskCodexAgentProfile(
-      fixture.root,
-      ".codex",
-      true,
-      second,
-    );
+    await syncLongTaskCodexAgentProfile(fixture.root, ".codex", true, second);
     assert.deepEqual(second.changed, []);
     assert.ok(
       second.skipped.includes(LONG_TASK_CODEX_AGENT_PROFILE_RELATIVE_PATH),
@@ -269,10 +251,7 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
       "Package-owned implementation worker",
       "Prior valid package-owned implementation worker",
     );
-    assert.equal(
-      parseAndValidateLongTaskCodexAgentProfile(prior).valid,
-      true,
-    );
+    assert.equal(parseAndValidateLongTaskCodexAgentProfile(prior).valid, true);
     await writeFile(destination, prior);
     const writeFailed = report();
     await syncLongTaskCodexAgentProfile(
@@ -406,12 +385,7 @@ test("Codex worker profile publication is atomic, idempotent and optional on fai
     assert.equal(await pathExists(destination), false);
 
     const portable = report();
-    await syncLongTaskCodexAgentProfile(
-      fixture.root,
-      ".agent",
-      true,
-      portable,
-    );
+    await syncLongTaskCodexAgentProfile(fixture.root, ".agent", true, portable);
     assert.deepEqual(portable, { changed: [], skipped: [], blocked: [] });
     assert.equal(await pathExists(destination), false);
     assert.equal((await lstat(stale)).isFile(), true);
@@ -468,7 +442,10 @@ test("Hook config install blocks invalid JSON and link traversal", async () => {
     );
     const parentReport = freshSyncReport();
     await installLongTaskHooks(linkedParent.root, parentReport);
-    assert.match(parentReport.blocked.join("\n"), /parent_symlink_or_junction/u);
+    assert.match(
+      parentReport.blocked.join("\n"),
+      /parent_symlink_or_junction/u,
+    );
     assert.deepEqual(await readdir(externalCodex), []);
 
     const legacyDirectory = path.join(legacyParent.root, ".codex/hooks");
@@ -554,7 +531,10 @@ test("Hook config publication is atomic, concurrent-change safe and idempotent",
         throw new Error("injected_hook_write_failure");
       },
     });
-    assert.match(writeFailed.blocked.join("\n"), /injected_hook_write_failure/u);
+    assert.match(
+      writeFailed.blocked.join("\n"),
+      /injected_hook_write_failure/u,
+    );
     assert.equal(await readFile(configFile, "utf8"), concurrentBase);
     await assertNoHookTemps(fixture.root);
 
@@ -632,10 +612,7 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
-        path.join(
-          fixture.root,
-          ".codex/agents/long-task-implementation.toml",
-        ),
+        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
       ),
       true,
     );
@@ -705,10 +682,7 @@ test("enable/disable owns one package-owned Hook per event and preserves user Ho
     );
     assert.equal(
       await pathExists(
-        path.join(
-          fixture.root,
-          ".codex/agents/long-task-implementation.toml",
-        ),
+        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
       ),
       false,
     );
@@ -756,10 +730,7 @@ test("non-Codex long-task root omits the worker without changing formal acceptan
     await runCli(fixture.root, ["enable", "long-task"]);
     assert.equal(
       await pathExists(
-        path.join(
-          fixture.root,
-          ".codex/agents/long-task-implementation.toml",
-        ),
+        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
       ),
       false,
     );
@@ -798,10 +769,7 @@ test("non-Codex long-task root omits the worker without changing formal acceptan
     await runCli(fixture.root, ["disable", "long-task"]);
     assert.equal(
       await pathExists(
-        path.join(
-          fixture.root,
-          ".codex/agents/long-task-implementation.toml",
-        ),
+        path.join(fixture.root, ".codex/agents/long-task-implementation.toml"),
       ),
       false,
     );
@@ -1072,7 +1040,10 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
       worker.hookSpecificOutput.additionalContext,
       /delegated rolling implementation worker, not the parent Long-Task Goal/iu,
     );
-    assert.match(worker.hookSpecificOutput.additionalContext, /bounded packet/iu);
+    assert.match(
+      worker.hookSpecificOutput.additionalContext,
+      /bounded packet/iu,
+    );
     assert.match(
       worker.hookSpecificOutput.additionalContext,
       /Do not run long-task resume, Preflight, Compile, Authority Revision/iu,
@@ -1111,7 +1082,11 @@ test("package-owned Hook resumes from common-dir and Stop runs the Live Gate", a
       JSON.stringify(accepted),
     );
     assert.match(accepted.systemMessage, /platform-native Goal/iu);
-    assert.match(accepted.systemMessage, /Declared machine Authority/iu);
+    assert.match(
+      accepted.systemMessage,
+      /Declared complete-delivery Authority accepted/iu,
+    );
+    assert.match(accepted.systemMessage, /package-admitted machine evidence/iu);
     assert.equal(await pathExists(record), false);
     assert.deepEqual(await invokeHook(fixture.root, "Stop"), {});
   } finally {
@@ -1149,14 +1124,10 @@ test("Agent spawn Hook fails closed on corrupt active state without gating unrel
     invalidSnapshotHash.authority_snapshot_sha256 = "0".repeat(64);
     const corruptRecord = `${JSON.stringify(invalidSnapshotHash)}\n`;
     await writeFile(record, corruptRecord);
-    const deniedInvalidSnapshot = await invokeHook(
-      fixture.root,
-      "PreToolUse",
-      {
-        tool_name: "Agent",
-        tool_input: { agent_type: "worker" },
-      },
-    );
+    const deniedInvalidSnapshot = await invokeHook(fixture.root, "PreToolUse", {
+      tool_name: "Agent",
+      tool_input: { agent_type: "worker" },
+    });
     assertCorruptSpawnDenied(deniedInvalidSnapshot);
     assert.match(
       deniedInvalidSnapshot.hookSpecificOutput.permissionDecisionReason,
@@ -1168,7 +1139,7 @@ test("Agent spawn Hook fails closed on corrupt active state without gating unrel
   }
 });
 
-test("Stop Hook preserves external pending as a non-blocking system message", async () => {
+test("Stop Hook treats non-blocking external declarations as advisory machine acceptance", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -1186,8 +1157,13 @@ test("Stop Hook preserves external pending as a non-blocking system message", as
     const record = await activeRecordPath(fixture.root);
     const result = await invokeHook(fixture.root, "Stop");
     assert.equal(Object.hasOwn(result, "decision"), false);
-    assert.match(result.systemMessage, /fixture-external/iu);
     assert.match(
+      result.systemMessage,
+      /Declared complete-delivery Authority accepted/iu,
+    );
+    assert.match(result.systemMessage, /package-admitted machine evidence/iu);
+    assert.doesNotMatch(result.systemMessage, /fixture-external/iu);
+    assert.doesNotMatch(
       result.systemMessage,
       /complete external delivery remains pending/iu,
     );
@@ -1343,9 +1319,11 @@ function assertEnabledHookEventsForDirectInstall(config) {
     "SubagentStart",
   ]) {
     const groups = config.hooks[event];
-    const managed = groups.flatMap((group) => group.hooks).filter((hook) =>
-      String(hook.command ?? "").includes("long-task-hook.js"),
-    );
+    const managed = groups
+      .flatMap((group) => group.hooks)
+      .filter((hook) =>
+        String(hook.command ?? "").includes("long-task-hook.js"),
+      );
     assert.equal(managed.length, 1, event);
     const group = groups.find((candidate) =>
       candidate.hooks.includes(managed[0]),
@@ -1360,7 +1338,10 @@ function assertEnabledHookEventsForDirectInstall(config) {
 
 async function assertNoHookTemps(root) {
   const names = await readdir(path.join(root, ".codex"));
-  assert.equal(names.some((name) => name.startsWith("hooks.json.tmp-")), false);
+  assert.equal(
+    names.some((name) => name.startsWith("hooks.json.tmp-")),
+    false,
+  );
 }
 
 async function currentCanonicalModel() {

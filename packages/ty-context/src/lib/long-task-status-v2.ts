@@ -5,13 +5,21 @@ import type { AuthorityRevisionDecisionV2 } from "./long-task-authority-revision
 import { projectAuthorityRevisionDecision } from "./long-task-authority-revision-summary.js";
 import type {
   ExternalConfirmationV2,
+  ExternalConfirmationEvaluationV1,
   FinalReceiptV2,
   LongTaskFindingV2,
   OutcomeStatusV2,
+  RepairFrontierV1,
   StageStatusV2,
   TargetProfileV2,
 } from "./long-task-delivery-types.js";
-import { runDeliveryFinalGate } from "./long-task-final-v2.js";
+import {
+  externalConfirmationFindings,
+  runDeliveryFinalGate,
+} from "./long-task-final-v2.js";
+import { evaluateExternalConfirmations } from "./long-task-external-confirmation-plan.js";
+import { enrichFinding } from "./long-task-finding-context.js";
+import { deriveRepairFrontier } from "./long-task-repair-frontier.js";
 import { deliveryCompileFreshness } from "./long-task-freshness.js";
 import {
   activeAuthorityLockExists,
@@ -41,11 +49,12 @@ export interface DeliveryStatusV2 {
   effective_risk: "standard" | "strict";
   workspace_snapshot_sha256: string;
   acceptance_authority: "live_final_gate_required";
-  acceptance_scope: "declared_machine_authority";
+  acceptance_scope: "declared_delivery_authority";
   native_goal_effect: "none";
   final_result: AuditGateStatusV2;
   final_workflow_status: FinalReceiptV2["workflow_status"] | null;
   external_confirmations: ExternalConfirmationV2[];
+  external_confirmation_results: ExternalConfirmationEvaluationV1[];
   target_profile: TargetProfileV2;
   target_state: FinalReceiptV2["target_state"];
   outcomes: Record<string, OutcomeStatusV2>;
@@ -58,6 +67,7 @@ export interface DeliveryStatusV2 {
   progress_passing: string[];
   progress_failing: string[];
   findings: LongTaskFindingV2[];
+  repair_frontier: RepairFrontierV1;
   pending_authority_revision: AuthorityRevisionDecisionV2 | null;
 }
 
@@ -97,6 +107,17 @@ async function readDeliveryStatusForAuthority(
   } catch (error) {
     receiptError = message(error);
   }
+  const externalConfirmationResults = await evaluateExternalConfirmations(
+    compiled,
+    compiled.repository_root,
+    compiled.workdir,
+    current,
+    {
+      git_head: current.git_head,
+      git_tree: current.fingerprint.head_tree,
+      snapshot_sha256: current.snapshot_sha256,
+    },
+  );
   const projection = projectDeliveryStatus({
     compiled,
     manifest: current,
@@ -104,6 +125,20 @@ async function readDeliveryStatusForAuthority(
     progress,
     receipt,
     receiptError,
+    externalConfirmations: externalConfirmationResults,
+  });
+  const findings = [
+    ...projection.findings,
+    ...externalConfirmationFindings(compiled, externalConfirmationResults),
+    ...(cacheStatus === "compiled_cache_matching"
+      ? []
+      : [cacheDiagnostic(cacheStatus)]),
+  ].map((finding) => enrichFinding(compiled, finding));
+  const repairFrontier = deriveRepairFrontier({
+    compiled,
+    manifest: current,
+    progress,
+    findings,
   });
   return {
     schema_version: "long-task-status-v2",
@@ -112,11 +147,12 @@ async function readDeliveryStatusForAuthority(
     effective_risk: compiled.effective_risk,
     workspace_snapshot_sha256: current.snapshot_sha256,
     acceptance_authority: "live_final_gate_required",
-    acceptance_scope: "declared_machine_authority",
+    acceptance_scope: "declared_delivery_authority",
     native_goal_effect: "none",
     final_result: projection.finalResult,
     final_workflow_status: projection.finalWorkflowStatus,
     external_confirmations: compiled.global.acceptance.external_confirmations,
+    external_confirmation_results: externalConfirmationResults,
     target_profile: compiled.task.target_profile,
     target_state: projection.targetState,
     outcomes: projection.outcomes,
@@ -130,12 +166,8 @@ async function readDeliveryStatusForAuthority(
     pending_authority_revision: pending
       ? projectAuthorityRevisionDecision(pending)
       : null,
-    findings: [
-      ...projection.findings,
-      ...(cacheStatus === "compiled_cache_matching"
-        ? []
-        : [cacheDiagnostic(cacheStatus)]),
-    ],
+    findings,
+    repair_frontier: repairFrontier,
   };
 }
 
@@ -168,11 +200,12 @@ export async function resumeDeliveryTask(
     context_refs: compiled.task.context_refs,
     git,
     acceptance_authority: "live_final_gate_required",
-    acceptance_scope: "declared_machine_authority",
+    acceptance_scope: "declared_delivery_authority",
     native_goal_effect: "none",
     last_gate: status.final_result,
     final_workflow_status: status.final_workflow_status,
     external_confirmations: status.external_confirmations,
+    external_confirmation_results: status.external_confirmation_results,
     target_profile: status.target_profile,
     target_state: status.target_state,
     outcomes: status.outcomes,
@@ -185,6 +218,7 @@ export async function resumeDeliveryTask(
     progress_failing: status.progress_failing,
     pending_authority_revision: status.pending_authority_revision,
     recent_findings: status.findings,
+    repair_frontier: status.repair_frontier,
     next_safe_action: nextAction(status),
   };
 }
@@ -284,7 +318,7 @@ export async function stopCheckDeliveryTask(
     const result = await runDeliveryFinalGate(active.workdir);
     if (
       result.workflow_status === "machine_accepted" ||
-      result.workflow_status === "machine_accepted_external_pending"
+      result.workflow_status === "delivery_accepted"
     ) {
       try {
         await clearActiveBindingCas({
@@ -306,6 +340,7 @@ export async function stopCheckDeliveryTask(
             reason: "active_authority_changed_after_final_gate",
             workflow_status: result.workflow_status,
             external_confirmations: result.external_confirmations,
+            external_confirmation_results: result.external_confirmation_results,
             target_profile: result.target_profile,
             target_state: result.target_state,
             stage_results: result.stage_results,
@@ -319,14 +354,14 @@ export async function stopCheckDeliveryTask(
         reason: result.workflow_status,
         workflow_status: result.workflow_status,
         external_confirmations: result.external_confirmations,
+        external_confirmation_results: result.external_confirmation_results,
         target_profile: result.target_profile,
         target_state: result.target_state,
         stage_results: result.stage_results,
-        acceptance_scope: "declared_machine_authority",
+        acceptance_scope: "declared_delivery_authority",
         native_goal_effect: "none",
         message: acceptedScopeMessage(
           result.workflow_status,
-          result.external_confirmations,
           result.target_profile,
         ),
       };
@@ -336,6 +371,7 @@ export async function stopCheckDeliveryTask(
       reason: `live_final_gate_${result.workflow_status}`,
       workflow_status: result.workflow_status,
       external_confirmations: result.external_confirmations,
+      external_confirmation_results: result.external_confirmation_results,
       target_profile: result.target_profile,
       target_state: result.target_state,
       stage_results: result.stage_results,
@@ -363,10 +399,11 @@ export interface StopCheckDeliveryResultV2 {
   reason: string;
   workflow_status?: FinalReceiptV2["workflow_status"];
   external_confirmations?: ExternalConfirmationV2[];
+  external_confirmation_results?: ExternalConfirmationEvaluationV1[];
   target_profile?: TargetProfileV2;
   target_state?: FinalReceiptV2["target_state"];
   stage_results?: FinalReceiptV2["stage_results"];
-  acceptance_scope?: "declared_machine_authority";
+  acceptance_scope?: "declared_delivery_authority";
   native_goal_effect?: "none";
   message?: string;
 }
@@ -375,14 +412,15 @@ export interface CloseDeliveryResultV2 {
   status: "closed";
   workflow_status: Extract<
     FinalReceiptV2["workflow_status"],
-    "machine_accepted" | "machine_accepted_external_pending"
+    "machine_accepted" | "delivery_accepted"
   >;
   external_confirmations: ExternalConfirmationV2[];
+  external_confirmation_results: ExternalConfirmationEvaluationV1[];
   target_profile: TargetProfileV2;
   target_state: FinalReceiptV2["target_state"];
   stage_results: FinalReceiptV2["stage_results"];
-  acceptance_scope: "declared_machine_authority";
-  closed_scope: "machine_authority";
+  acceptance_scope: "declared_delivery_authority";
+  closed_scope: "complete_long_task_authority";
   native_goal_effect: "none";
 }
 
@@ -396,7 +434,7 @@ export async function closeDeliveryTask(
   const result = await runDeliveryFinalGate(active.workdir);
   if (
     result.workflow_status !== "machine_accepted" &&
-    result.workflow_status !== "machine_accepted_external_pending"
+    result.workflow_status !== "delivery_accepted"
   )
     throw new Error(`close_live_final_gate_failed:${result.workflow_status}`);
   await clearActiveBindingCas({
@@ -411,11 +449,12 @@ export async function closeDeliveryTask(
     status: "closed",
     workflow_status: result.workflow_status,
     external_confirmations: result.external_confirmations,
+    external_confirmation_results: result.external_confirmation_results,
     target_profile: result.target_profile,
     target_state: result.target_state,
     stage_results: result.stage_results,
-    acceptance_scope: "declared_machine_authority",
-    closed_scope: "machine_authority",
+    acceptance_scope: "declared_delivery_authority",
+    closed_scope: "complete_long_task_authority",
     native_goal_effect: "none",
   };
 }
@@ -423,17 +462,15 @@ export async function closeDeliveryTask(
 function acceptedScopeMessage(
   workflowStatus: Extract<
     FinalReceiptV2["workflow_status"],
-    "machine_accepted" | "machine_accepted_external_pending"
+    "machine_accepted" | "delivery_accepted"
   >,
-  confirmations: ExternalConfirmationV2[],
   targetProfile: TargetProfileV2,
 ): string {
-  const scope = `Declared machine Authority accepted for target ${targetProfile.key}:${targetProfile.required_state} and cleared. This result has no direct effect on the platform-native Goal; before completing it, confirm current Goal/user meaning is fully represented by accepted Source and no revision, blocker, or omitted requirement remains.`;
-  if (workflowStatus === "machine_accepted") return scope;
-  const pending = confirmations
-    .map((confirmation) => `${confirmation.key} (${confirmation.owner})`)
-    .join(", ");
-  return `${scope} Complete external delivery remains pending: ${pending}. Do not report complete external delivery.`;
+  const route =
+    workflowStatus === "machine_accepted"
+      ? "package-admitted machine evidence"
+      : "package-admitted machine evidence plus fresh exact external fulfillment records";
+  return `Declared complete-delivery Authority accepted for target ${targetProfile.key}:${targetProfile.required_state} through ${route} and cleared. This result has no direct effect on the platform-native Goal; before completing it, confirm current Goal/user meaning is fully represented by accepted Source and no revision, blocker, or omitted requirement remains.`;
 }
 
 function nextAction(status: DeliveryStatusV2): string {

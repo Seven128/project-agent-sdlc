@@ -10,7 +10,9 @@ export function validateSemanticFactProvenance(
   const inputByKey = new Map(manifest.inputs.map((item) => [item.key, item]));
   const materialInputRefs = new Set(
     manifest.inputs
-      .filter((item) => item.disposition === "non_ui_material")
+      .filter((item) =>
+        ["non_ui_material", "fact_bearing"].includes(item.disposition),
+      )
       .map((item) => item.key),
   );
   const facts = new Map(manifest.facts.map((item) => [item.key, item]));

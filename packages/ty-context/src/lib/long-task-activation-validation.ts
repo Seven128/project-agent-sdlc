@@ -30,6 +30,11 @@ import {
 import { validateRawExecutionObservationOwnership } from "./long-task-observation-ownership.js";
 import { validateLongTaskDesignResourceHandoffs } from "./long-task-design-resource-handoff.js";
 import { validateLongTaskSemanticFactClosure } from "./long-task-semantic-fact-closure.js";
+import {
+  proofAdequacyCheckKey,
+  validateLongTaskProofAdequacy,
+  type ProofAdequacyByCheckV2,
+} from "./long-task-proof-adequacy.js";
 import { freezeDeliveryCheck } from "./long-task-runner-freeze.js";
 import { scopeDeliveryBindings } from "./long-task-scoped-binding.js";
 import {
@@ -41,6 +46,11 @@ import { validateSourceContinuity } from "./long-task-source-continuity.js";
 import { compileSourceInventory } from "./long-task-source-inventory.js";
 import { validateSourceTargetContinuity } from "./long-task-source-target-continuity.js";
 import { validateSourceAnchors } from "./long-task-source-validation.js";
+import {
+  assertAcceptanceReachable,
+  compileAcceptanceReachability,
+  type AcceptanceReachabilityV1,
+} from "./long-task-acceptance-reachability.js";
 import {
   captureWorkspaceManifest,
   repoRelative,
@@ -55,6 +65,8 @@ export interface ActivationValidationResult {
   workspace: WorkspaceManifestV2 | null;
   global_checks: CompiledCheckV2[];
   outcomes: CompiledOutcomeV2[];
+  proof_adequacy: ProofAdequacyByCheckV2 | null;
+  acceptance_reachability: AcceptanceReachabilityV1 | null;
 }
 
 export async function validateContractForActivation(options: {
@@ -119,7 +131,7 @@ export async function validateContractForActivation(options: {
     );
     return items;
   });
-  await attempt(mode, diagnostics, () =>
+  const designHandoffs = await attempt(mode, diagnostics, () =>
     validateLongTaskDesignResourceHandoffs(
       contract,
       repository,
@@ -146,9 +158,19 @@ export async function validateContractForActivation(options: {
             repository,
             sourceItems,
             context.files,
+            designHandoffs ?? undefined,
           ),
         )
       : null;
+  const proofAdequacy = semanticFactClosure
+    ? await attempt(mode, diagnostics, () =>
+        validateLongTaskProofAdequacy(
+          contract,
+          semanticFactClosure.manifest,
+          semanticFactClosure.expectations_by_check,
+        ),
+      )
+    : null;
 
   const workdirRelative = repoRelative(repository, workdir);
   const workspace = await attempt(mode, diagnostics, async () => {
@@ -203,6 +225,7 @@ export async function validateContractForActivation(options: {
           ),
           sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
           observationAuthorityPaths,
+          proofAdequacy?.[proofAdequacyCheckKey(null, check.key)],
         ),
       null,
       check.key,
@@ -252,6 +275,7 @@ export async function validateContractForActivation(options: {
             outcome.product.owner.path_globs,
             sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
             observationAuthorityPaths,
+            proofAdequacy?.[proofAdequacyCheckKey(outcome.key, check.key)],
           ),
         outcome.key,
         check.key,
@@ -284,6 +308,28 @@ export async function validateContractForActivation(options: {
     ...globalChecks,
     ...outcomes.flatMap((outcome) => outcome.acceptance.checks),
   ];
+  const acceptanceReachability =
+    claims && semanticFactClosure
+      ? compileAcceptanceReachability({
+          contract,
+          claims,
+          manifest: semanticFactClosure.manifest,
+          compiled_checks: allChecks,
+        })
+      : null;
+  if (acceptanceReachability) {
+    if (mode === "fail_fast") assertAcceptanceReachable(acceptanceReachability);
+    else
+      for (const obligation of acceptanceReachability.obligations)
+        if (obligation.status === "unreachable")
+          addDiagnosticError(
+            diagnostics,
+            new Error(
+              `acceptance_obligation_unreachable:${obligation.source_obligation_ref}:${obligation.reason}`,
+            ),
+            obligation.outcome_key,
+          );
+  }
   await attempt(mode, diagnostics, () =>
     validateVerificationInputSeparation(contract, allChecks, workdirRelative),
   );
@@ -338,6 +384,8 @@ export async function validateContractForActivation(options: {
     workspace,
     global_checks: globalChecks,
     outcomes,
+    proof_adequacy: proofAdequacy,
+    acceptance_reachability: acceptanceReachability,
   };
 }
 
@@ -502,6 +550,8 @@ function emptyCompiledResult(
     workspace: null,
     global_checks: [],
     outcomes: [],
+    proof_adequacy: null,
+    acceptance_reachability: null,
   };
 }
 

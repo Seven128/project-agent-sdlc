@@ -9,6 +9,8 @@ import {
 } from "./long-task-delivery-fixtures.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
 
+const acceptanceSourceStatement = "The first outcome is observable.";
+
 test("Requirement, criterion, Source-AC mapping and AC removal remain review authority", async () => {
   const fixture = await createDeliveryFixture();
   try {
@@ -60,6 +62,8 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
       type: "acceptance",
       refs: ["first.first-check.first-requirement"],
     };
+    changedSourceAcceptance.source_claims[0].statement =
+      acceptanceSourceStatement;
     changedSourceAcceptance.source_claims.push({
       key: "first-requirement",
       source_ref: "source.md#fixture-source",
@@ -71,7 +75,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
     });
     changedSourceAcceptance.outcomes[0].acceptance.checks[0].positive_assertions.find(
       (assertion) => assertion.key === "first-requirement",
-    ).criterion = "The first outcome must be observable.";
+    ).criterion = acceptanceSourceStatement;
     await writeSourceWithRequirement(fixture.root, "first-observable");
     await writeContract(fixture.workdir, changedSourceAcceptance);
     await expectDecision(fixture, {
@@ -89,7 +93,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
           ? {
               ...requirementAssertion,
               key: "replacement-requirement",
-              criterion: "The first outcome must be observable.",
+              criterion: acceptanceSourceStatement,
             }
           : assertion,
     );
@@ -97,6 +101,7 @@ test("Requirement, criterion, Source-AC mapping and AC removal remain review aut
       type: "acceptance",
       refs: ["first.first-check.replacement-requirement"],
     };
+    replacedAcceptance.source_claims[0].statement = acceptanceSourceStatement;
     replacedAcceptance.source_claims.push({
       key: "first-requirement",
       source_ref: "source.md#fixture-source",
@@ -155,7 +160,7 @@ async function writeSourceWithRequirement(root, acceptanceKey) {
 <!-- ty-source-background:end -->
 
 <!-- ty-source-item:start key=${acceptanceKey} kind=acceptance -->
-The first outcome must be observable.
+${acceptanceSourceStatement}
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=first-requirement kind=requirement -->

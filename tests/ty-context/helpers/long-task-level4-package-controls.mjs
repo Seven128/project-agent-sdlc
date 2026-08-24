@@ -10,12 +10,17 @@ const execFileAsync = promisify(execFile);
 
 export async function assertPackageChildBoundaries({
   repositoryRoot,
+  candidateCommit,
   baselineRecord,
 }) {
   const temporary = await mkdtemp(
     path.join(os.tmpdir(), "ty-level4-package-child-"),
   );
-  const base = await gitText(repositoryRoot, ["rev-parse", "HEAD"]);
+  const base = await gitText(repositoryRoot, [
+    "rev-parse",
+    `${candidateCommit}^{commit}`,
+  ]);
+  assert.equal(base, baselineRecord.commit);
   const registered = [];
   try {
     const governanceCommit = await createDetachedChild({

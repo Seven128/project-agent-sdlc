@@ -31,6 +31,7 @@ export interface TargetProfileV2 {
   description: string;
   required_state: TargetCompletionStateV2;
   required_target_refs: string[];
+  completion_authority: "machine_only" | "declared_authorities";
 }
 
 export interface ExecutionTargetV2 {
@@ -69,8 +70,13 @@ export type EvidenceCapabilityV2 =
   | "cross_surface_consistency"
   | "durable_readback"
   | "boundary_invocation"
+  | "actual_provenance"
   | "external_side_effect"
+  | "distinct_identity"
+  | "data_state"
+  | "population_coverage"
   | "failure_injection"
+  | "recovery"
   | "visual_render"
   | "design_conformance"
   | "design_method"

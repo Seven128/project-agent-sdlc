@@ -89,6 +89,7 @@ export async function prepareMixedSymbolicLongTaskFixture(
     rootClaimRef: "control.main.location",
     designTargets: [v1Target, v2Target],
   });
+  addGeneratedControlCapabilityFloors(check);
   fixture.contract.task.source_paths.push(
     DESIGN_HANDOFF_PATH,
     symbolicFixture.handoffPath,
@@ -174,6 +175,21 @@ export async function prepareMixedSymbolicLongTaskFixture(
     wrapperOracleSource(designRecords, observationExpectations),
   );
   return { v2, v1Target, v2Target, artifactHashes, designRecords };
+}
+
+function addGeneratedControlCapabilityFloors(check) {
+  for (const assertion of [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ])
+    if (
+      assertion.claims.some((claim) =>
+        ["control.main.surface", "control.main.location"].includes(claim),
+      )
+    )
+      assertion.evidence_capabilities = [
+        ...new Set([...assertion.evidence_capabilities, "presence"]),
+      ].sort();
 }
 
 function configureBrowserSupport(fixture, outcome) {

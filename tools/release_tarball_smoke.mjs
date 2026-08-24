@@ -62,7 +62,7 @@ try {
       ),
     );
     if (
-      result.schema_version !== "long-task-final-receipt-v2" ||
+      result.schema_version !== "long-task-final-receipt-v3" ||
       result.workflow_status !== "machine_accepted"
     ) {
       throw new Error(
@@ -114,6 +114,7 @@ async function assertTarballContents(directory) {
   for (const required of [
     "dist/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
     "dist/schemas/design-resource-symbolic-source-ir-v1.schema.json",
+    "dist/schemas/long-task-external-confirmation-record-v1.schema.json",
     "dist/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
     "dist/lib/long-task-delivery-compiler.js",
     "dist/lib/long-task-claims.js",

@@ -24,7 +24,7 @@ const externalConfirmations = [
   },
 ];
 
-test("fresh external pending qualification reaches status and resume", async () => {
+test("non-blocking external declarations remain advisory across Final/status/resume", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -34,11 +34,13 @@ test("fresh external pending qualification reaches status and resume", async () 
       "final-gate",
       fixture.workdir,
     ]);
-    assert.equal(final.workflow_status, "machine_accepted_external_pending");
+    assert.equal(final.workflow_status, "machine_accepted");
     assert.equal(final.target_state, "target_profile_usable");
     assert.deepEqual(final.stage_results, { first: "passed" });
     assert.deepEqual(final.external_confirmations, externalConfirmations);
-    assert.equal(final.acceptance_scope, "declared_machine_authority");
+    assert.equal(final.acceptance_scope, "declared_delivery_authority");
+    assert.equal(final.external_confirmation_results[0].state, "pending");
+    assert.equal(final.external_confirmation_results[0].blocks_target, false);
     assert.equal(final.native_goal_effect, "none");
 
     const status = await runCli(fixture.root, [
@@ -47,12 +49,9 @@ test("fresh external pending qualification reaches status and resume", async () 
       fixture.workdir,
     ]);
     assert.equal(status.final_result, "last_gate_passed");
-    assert.equal(
-      status.final_workflow_status,
-      "machine_accepted_external_pending",
-    );
+    assert.equal(status.final_workflow_status, "machine_accepted");
     assert.deepEqual(status.external_confirmations, externalConfirmations);
-    assert.equal(status.acceptance_scope, "declared_machine_authority");
+    assert.equal(status.acceptance_scope, "declared_delivery_authority");
     assert.equal(status.native_goal_effect, "none");
     assert.equal(status.target_state, "target_profile_usable");
     assert.deepEqual(status.stages, { first: "ready" });
@@ -63,12 +62,9 @@ test("fresh external pending qualification reaches status and resume", async () 
       fixture.workdir,
     ]);
     assert.equal(resume.last_gate, "last_gate_passed");
-    assert.equal(
-      resume.final_workflow_status,
-      "machine_accepted_external_pending",
-    );
+    assert.equal(resume.final_workflow_status, "machine_accepted");
     assert.deepEqual(resume.external_confirmations, externalConfirmations);
-    assert.equal(resume.acceptance_scope, "declared_machine_authority");
+    assert.equal(resume.acceptance_scope, "declared_delivery_authority");
     assert.equal(resume.native_goal_effect, "none");
     assert.equal(resume.target_state, "target_profile_usable");
     assert.deepEqual(resume.stages, { first: "ready" });
@@ -77,7 +73,7 @@ test("fresh external pending qualification reaches status and resume", async () 
   }
 });
 
-test("blocking Claim projection can finish only as blocked_external", async () => {
+test("legacy blocking confirmation without exact decomposition fails before implementation", async () => {
   const fixture = await createDeliveryFixture();
   try {
     fixture.contract.global.acceptance.external_confirmations = [
@@ -92,36 +88,16 @@ test("blocking Claim projection can finish only as blocked_external", async () =
     ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    const status = await runCli(fixture.root, [
-      "long-task",
-      "status",
-      fixture.workdir,
-    ]);
-    assert.deepEqual(status.outcomes, { first: "blocked_external" });
-    assert.deepEqual(status.stages, { first: "blocked_external" });
-    assert.deepEqual(status.ready_stages, []);
-    assert.deepEqual(status.ready_outcomes, []);
-    const final = await runCliFailure(fixture.root, [
-      "long-task",
-      "final-gate",
-      fixture.workdir,
-    ]);
-    assert.equal(
-      final.workflow_status,
-      "blocked_external",
-      JSON.stringify(final, null, 2),
+    await assert.rejects(
+      runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
+      /acceptance_obligation_unreachable:.*completion_authority_machine_only/u,
     );
-    assert.deepEqual(final.outcome_results, { first: "blocked_external" });
-    assert.deepEqual(final.stage_results, { first: "blocked_external" });
-    assert.notEqual(final.workflow_status, "machine_accepted");
-    assert.notEqual(final.workflow_status, "machine_accepted_external_pending");
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("target blocking confirmation without exact result impact does not reclassify the Outcome", async () => {
+test("partial blocking declaration without exact result rows is unreachable", async () => {
   const fixture = await createDeliveryFixture();
   try {
     fixture.contract.global.acceptance.external_confirmations = [
@@ -136,22 +112,10 @@ test("target blocking confirmation without exact result impact does not reclassi
     ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    const status = await runCli(fixture.root, [
-      "long-task",
-      "status",
-      fixture.workdir,
-    ]);
-    assert.deepEqual(status.outcomes, { first: "unverified" });
-    assert.deepEqual(status.stages, { first: "ready" });
-    const final = await runCliFailure(fixture.root, [
-      "long-task",
-      "final-gate",
-      fixture.workdir,
-    ]);
-    assert.equal(final.workflow_status, "blocked_external");
-    assert.deepEqual(final.outcome_results, { first: "passed" });
-    assert.deepEqual(final.stage_results, { first: "passed" });
+    await assert.rejects(
+      runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
+      /acceptance_obligation_unreachable:.*completion_authority_machine_only/u,
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -229,7 +193,7 @@ test("stale Final Receipt loses accepted projection but retains declarations", a
   }
 });
 
-test("stop-check returns structured external pending qualification and clears CAS binding", async () => {
+test("stop-check treats non-blocking confirmation as advisory", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -242,26 +206,21 @@ test("stop-check returns structured external pending qualification and clears CA
       fixture.workdir,
     ]);
     assert.equal(result.continue, true);
-    assert.equal(result.reason, "machine_accepted_external_pending");
-    assert.equal(result.workflow_status, "machine_accepted_external_pending");
+    assert.equal(result.reason, "machine_accepted");
+    assert.equal(result.workflow_status, "machine_accepted");
     assert.deepEqual(result.external_confirmations, externalConfirmations);
-    assert.equal(result.acceptance_scope, "declared_machine_authority");
+    assert.equal(result.acceptance_scope, "declared_delivery_authority");
     assert.equal(result.native_goal_effect, "none");
     assert.equal(result.target_state, "target_profile_usable");
     assert.deepEqual(result.stage_results, { first: "passed" });
-    assert.match(
-      result.message,
-      /complete external delivery remains pending/iu,
-    );
     assert.match(result.message, /platform-native Goal/iu);
-    assert.match(result.message, /fixture-external \(release-owner\)/u);
     assert.equal(await pathExists(record), false);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("close preserves external pending qualification after clearing machine Authority", async () => {
+test("close emits machine_accepted when only advisory confirmation exists", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
@@ -274,10 +233,10 @@ test("close preserves external pending qualification after clearing machine Auth
       fixture.workdir,
     ]);
     assert.equal(result.status, "closed");
-    assert.equal(result.workflow_status, "machine_accepted_external_pending");
+    assert.equal(result.workflow_status, "machine_accepted");
     assert.deepEqual(result.external_confirmations, externalConfirmations);
-    assert.equal(result.acceptance_scope, "declared_machine_authority");
-    assert.equal(result.closed_scope, "machine_authority");
+    assert.equal(result.acceptance_scope, "declared_delivery_authority");
+    assert.equal(result.closed_scope, "complete_long_task_authority");
     assert.equal(result.native_goal_effect, "none");
     assert.equal(result.target_state, "target_profile_usable");
     assert.deepEqual(result.stage_results, { first: "passed" });
@@ -300,7 +259,7 @@ test("ordinary machine acceptance emits no external warning and close stays qual
     ]);
     assert.equal(final.workflow_status, "machine_accepted");
     assert.deepEqual(final.external_confirmations, []);
-    assert.equal(final.acceptance_scope, "declared_machine_authority");
+    assert.equal(final.acceptance_scope, "declared_delivery_authority");
     assert.equal(final.native_goal_effect, "none");
     assert.equal(final.target_state, "target_profile_usable");
     assert.deepEqual(final.stage_results, { first: "passed" });
@@ -311,7 +270,7 @@ test("ordinary machine acceptance emits no external warning and close stays qual
     ]);
     assert.equal(stop.workflow_status, "machine_accepted");
     assert.deepEqual(stop.external_confirmations, []);
-    assert.equal(stop.acceptance_scope, "declared_machine_authority");
+    assert.equal(stop.acceptance_scope, "declared_delivery_authority");
     assert.equal(stop.native_goal_effect, "none");
     assert.match(stop.message, /platform-native Goal/iu);
   } finally {
@@ -334,8 +293,8 @@ test("ordinary machine acceptance emits no external warning and close stays qual
     ]);
     assert.equal(close.workflow_status, "machine_accepted");
     assert.deepEqual(close.external_confirmations, []);
-    assert.equal(close.acceptance_scope, "declared_machine_authority");
-    assert.equal(close.closed_scope, "machine_authority");
+    assert.equal(close.acceptance_scope, "declared_delivery_authority");
+    assert.equal(close.closed_scope, "complete_long_task_authority");
     assert.equal(close.native_goal_effect, "none");
   } finally {
     await rm(closeFixture.root, { recursive: true, force: true });

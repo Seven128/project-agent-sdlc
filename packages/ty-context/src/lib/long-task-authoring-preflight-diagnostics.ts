@@ -11,6 +11,16 @@ export function addAuthoringDiagnostics(
   parsed: ParsedDeliveryContractV2,
   diagnostics: AuthoringPreflightDiagnosticV1[],
 ): void {
+  if (parsed.compatibility.completion_authority_defaulted_to_machine_only)
+    diagnostics.push({
+      level: "warning",
+      code: "completion_authority_legacy_default_machine_only",
+      message:
+        "target_profile.completion_authority is absent and was deterministically defaulted to machine_only; blocking External Confirmation routes remain unreachable.",
+      refs: ["task.target_profile.completion_authority"],
+      repair_hint:
+        "Keep machine_only explicitly, or make an Authority decision to declare declared_authorities and fully decompose every blocking external obligation before Compile.",
+    });
   if (parsed.outcome_files.length)
     diagnostics.push({
       level: "warning",

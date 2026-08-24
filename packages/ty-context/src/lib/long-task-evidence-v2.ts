@@ -5,8 +5,11 @@ import {
   prepareAdmittedObservations,
 } from "./long-task-artifacts.js";
 import { executeCheckRunner } from "./long-task-check-runner.js";
-import { prepareExecutionObservationGroup } from "./long-task-execution-observation.js";
-import { createCounterfactualSandbox } from "./long-task-counterfactual-sandbox.js";
+import { prepareCounterfactualExecutionObservationGroup } from "./long-task-execution-observation.js";
+import {
+  counterfactualSandboxProcessExecution,
+  createCounterfactualSandbox,
+} from "./long-task-counterfactual-sandbox.js";
 import type {
   CheckExecutionResultV2,
   ClaimProofV2,
@@ -386,123 +389,185 @@ async function evaluateCounterfactualSet(
   executionUniverse: readonly CompiledCheckV2[] = [],
 ): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
-  for (const entry of entries) {
-    const { control, check } = entry;
-    const owningBinding = entry.owningOutcome.technical.bindings.find(
-      (binding) =>
-        `${entry.owningOutcome.key}.${binding.key}` === entry.bindingRef,
-    );
-    const sandbox = await createCounterfactualSandbox(
-      snapshotRoot,
-      check,
-      control,
-      owningBinding?.carrier_paths ?? [],
-      manifest,
-      protectedAuthorityPaths,
-    );
-    const root = sandbox.root;
-    try {
-      const mutationTargets = counterfactualMutationTargets(control);
-      const missingTargets = await missingCounterfactualMutationTargets(
-        root,
-        mutationTargets,
-      );
-      if (missingTargets.length) {
-        findings.push(
-          counterfactualIntegrityFinding(entry, {
-            execution_status: "not_run",
-            finding_codes: ["counterfactual_mutation_target_missing"],
-            missing_targets: missingTargets,
-          }),
-        );
-        continue;
-      }
-      await applyCounterfactualMutation(root, control);
-      const raw = await executeCounterfactualCheck(
-        check,
-        root,
+  for (const entry of entries)
+    findings.push(
+      ...(await evaluateCounterfactualEntry(
+        entry,
+        snapshotRoot,
         manifest,
         protectedAuthorityPaths,
-        executionUniverse,
-      );
-      const result = await evaluateCheckEvidence(
-        check,
-        raw,
-        root,
-        entry.evidenceOutcome,
-        protectedAuthorityPaths,
-      );
-      const observationImpactIssue = await counterfactualObservationImpactIssue(
-        entry,
         baselineResults,
-        baselineExecutions.get(check.raw_execution_identity),
-        result,
-        raw,
-        snapshotRoot,
-        root,
-        mutationTargets,
-        owningBinding?.carrier_paths ?? [],
-        protectedAuthorityPaths,
+        baselineExecutions,
         executionUniverse,
-      );
-      const playwrightClassification =
-        result.evidence_adapter === "playwright_json_v1"
-          ? classifyPlaywrightCounterfactual(raw, result, control)
-          : null;
-      const sensitivityResult =
-        playwrightClassification?.normalized_result ?? result;
-      const failedAssertions = result.assertion_results
-        .filter((assertion) => !assertion.passed)
-        .map((assertion) => assertion.key)
-        .sort();
-      const expected = [...control.expected_assertion_failures].sort();
-      const allowedFanout = [
-        ...(control.allowed_fanout_assertions ?? []),
-      ].sort();
-      const acceptedExit = playwrightClassification
-        ? playwrightClassification.accepted_test_failure_exit
-        : raw.exit_code === 0;
-      const valid =
-        raw.execution_status === "completed" &&
-        acceptedExit &&
-        observationImpactIssue === null &&
-        isValidCounterfactualCheckResult(
-          sensitivityResult,
-          expected,
-          allowedFanout,
-        );
-      if (!valid)
-        findings.push(
-          counterfactualIntegrityFinding(
-            entry,
-            playwrightClassification
-              ? playwrightCounterfactualDiagnostic(
-                  raw,
-                  result,
-                  expected,
-                  playwrightClassification.rejection_reasons,
-                )
-              : {
-                  execution_status: raw.execution_status,
-                  exit_code: raw.exit_code,
-                  execution_error: raw.error,
-                  result_status: result.status,
-                  failed_assertions: failedAssertions,
-                  finding_codes: result.findings.map((finding) => finding.code),
-                  observation_impact_issue: observationImpactIssue,
-                },
-          ),
-        );
-    } finally {
-      await sandbox.dispose();
-    }
-  }
+      )),
+    );
   return findings;
+}
+
+async function evaluateCounterfactualEntry(
+  entry: RuntimeCounterfactual,
+  snapshotRoot: string,
+  manifest: WorkspaceManifestV2 | undefined,
+  protectedAuthorityPaths: readonly string[],
+  baselineResults: readonly CheckExecutionResultV2[],
+  baselineExecutions: ReadonlyMap<string, RawCommandExecutionV2>,
+  executionUniverse: readonly CompiledCheckV2[],
+): Promise<LongTaskFindingV2[]> {
+  const findings: LongTaskFindingV2[] = [];
+  const { control, check } = entry;
+  const owningBinding = entry.owningOutcome.technical.bindings.find(
+    (binding) =>
+      `${entry.owningOutcome.key}.${binding.key}` === entry.bindingRef,
+  );
+  const sandbox = await createCounterfactualSandbox(
+    snapshotRoot,
+    check,
+    control,
+    owningBinding?.carrier_paths ?? [],
+    manifest,
+    protectedAuthorityPaths,
+    executionUniverse,
+  );
+  const root = sandbox.root;
+  try {
+    const mutationTargets = counterfactualMutationTargets(control);
+    const missingTargets = await missingCounterfactualMutationTargets(
+      root,
+      mutationTargets,
+    );
+    if (missingTargets.length) {
+      findings.push(
+        counterfactualIntegrityFinding(entry, {
+          execution_status: "not_run",
+          finding_codes: ["counterfactual_mutation_target_missing"],
+          missing_targets: missingTargets,
+        }),
+      );
+      return findings;
+    }
+    await applyCounterfactualMutation(
+      root,
+      control,
+      sandbox.mutation_source_root,
+    );
+    const processExecution = counterfactualSandboxProcessExecution(sandbox);
+    if (processExecution)
+      await applyCounterfactualMutation(
+        processExecution.root,
+        control,
+        processExecution.mutation_source_root,
+      );
+    const raw = await executeCounterfactualCheck(
+      check,
+      sandbox,
+      manifest,
+      protectedAuthorityPaths,
+      executionUniverse,
+    );
+    const result = await evaluateCheckEvidence(
+      check,
+      raw,
+      root,
+      entry.evidenceOutcome,
+      protectedAuthorityPaths,
+    );
+    const observationImpactIssue = await counterfactualObservationImpactIssue(
+      entry,
+      baselineResults,
+      baselineExecutions.get(check.raw_execution_identity),
+      result,
+      raw,
+      snapshotRoot,
+      root,
+      mutationTargets,
+      owningBinding?.carrier_paths ?? [],
+      protectedAuthorityPaths,
+      executionUniverse,
+    );
+    const playwrightClassification =
+      result.evidence_adapter === "playwright_json_v1"
+        ? classifyPlaywrightCounterfactual(raw, result, control)
+        : null;
+    const sensitivityResult =
+      playwrightClassification?.normalized_result ?? result;
+    const failedAssertions = result.assertion_results
+      .filter((assertion) => !assertion.passed)
+      .map((assertion) => assertion.key)
+      .sort();
+    const expected = [...control.expected_assertion_failures].sort();
+    const allowedFanout = [...(control.allowed_fanout_assertions ?? [])].sort();
+    const acceptedExit = playwrightClassification
+      ? playwrightClassification.accepted_test_failure_exit
+      : raw.exit_code === 0;
+    const valid =
+      raw.execution_status === "completed" &&
+      acceptedExit &&
+      observationImpactIssue === null &&
+      isValidCounterfactualCheckResult(
+        sensitivityResult,
+        expected,
+        allowedFanout,
+      );
+    if (!valid)
+      findings.push(
+        counterfactualIntegrityFinding(
+          entry,
+          playwrightClassification
+            ? playwrightCounterfactualDiagnostic(
+                raw,
+                result,
+                expected,
+                playwrightClassification.rejection_reasons,
+              )
+            : {
+                execution_status: raw.execution_status,
+                exit_code: raw.exit_code,
+                execution_error: raw.error,
+                result_status: result.status,
+                failed_assertions: failedAssertions,
+                finding_codes: result.findings.map((finding) => finding.code),
+                observation_impact_issue: observationImpactIssue,
+              },
+        ),
+      );
+    return findings;
+  } finally {
+    await sandbox.dispose();
+  }
+}
+
+export function counterfactualExecutionMayOverlap(input: {
+  check: CompiledCheckV2;
+  control: CounterfactualControlV2 | GlobalCounterfactualControlV2;
+  protected_authority_paths?: readonly string[];
+}): boolean {
+  const check = input.check;
+  const closure = check.process_runtime_closure;
+  const protectedPaths = input.protected_authority_paths ?? [];
+  if (
+    check.runner.effect !== "read_only" ||
+    !check.runner.idempotent ||
+    check.runner.retry_policy !== "none" ||
+    check.environment_requirements.some(
+      (requirement) => requirement.kind === "loopback_tcp",
+    ) ||
+    input.control.mutation.type === "replace_file" ||
+    !closure ||
+    !(check.observation_authorities ?? []).some(
+      (authority) => authority.authority === "package_process_json_exact",
+    )
+  )
+    return false;
+  return counterfactualMutationTargets(input.control).every(
+    (target) =>
+      closure.production_carrier_files.includes(target) &&
+      !protectedPaths.some((pattern) => matchesRepoPattern(target, pattern)),
+  );
 }
 
 async function executeCounterfactualCheck(
   check: CompiledCheckV2,
-  root: string,
+  sandbox: Awaited<ReturnType<typeof createCounterfactualSandbox>>,
   manifest: WorkspaceManifestV2 | undefined,
   protectedAuthorityPaths: readonly string[],
   executionUniverse: readonly CompiledCheckV2[],
@@ -510,7 +575,8 @@ async function executeCounterfactualCheck(
   const packageAuthorities = (check.observation_authorities ?? []).filter(
     (authority) => authority.authority !== "external_confirmation",
   );
-  if (!packageAuthorities.length) return executeCheckRunner(check, root);
+  if (!packageAuthorities.length)
+    return executeCheckRunner(check, sandbox.root);
   if (!manifest)
     return {
       raw_execution_identity: check.raw_execution_identity,
@@ -531,9 +597,9 @@ async function executeCounterfactualCheck(
     (candidate) =>
       candidate.raw_execution_identity === check.raw_execution_identity,
   );
-  const prepared = await prepareExecutionObservationGroup({
+  const prepared = await prepareCounterfactualExecutionObservationGroup({
     checks: group.length ? group : [check],
-    snapshot_root: root,
+    sandbox,
     workspace_manifest: manifest,
     protected_authority_paths: protectedAuthorityPaths,
   });
@@ -576,6 +642,7 @@ async function missingCounterfactualMutationTargets(
 async function applyCounterfactualMutation(
   root: string,
   control: RuntimeCounterfactual["control"],
+  mutationSourceRoot: string,
 ): Promise<void> {
   if (control.mutation.type === "remove_paths") {
     for (const target of control.mutation.paths)
@@ -588,7 +655,7 @@ async function applyCounterfactualMutation(
   if (control.mutation.type === "replace_file") {
     await copyFile(
       resolveInsideRepository(
-        root,
+        mutationSourceRoot,
         control.mutation.fixture_path,
         "counterfactual.fixture",
       ),
@@ -619,115 +686,43 @@ async function counterfactualObservationImpactIssue(
   const baselineResult = baselineResults.find(
     (candidate) => candidate.internal_id === entry.check.internal_id,
   );
-  const machineClosing = [
-    ...entry.check.positive_assertions,
-    ...entry.check.negative_assertions,
-  ].some((assertion) => assertion.claims.length > 0);
+  const machineClosing = counterfactualMachineClosing(entry);
   if (!baselineResult || !baselineRaw)
     return machineClosing
       ? "counterfactual_admitted_observation_required"
       : null;
-  const processObserved = (entry.check.observation_authorities ?? []).some(
-    (authority) => authority.authority === "package_process_json_exact",
+  const process = counterfactualProcessContext(
+    entry,
+    baselineRaw,
+    mutatedRaw,
+    mutationTargets,
   );
-  const processClosure = processObserved
-    ? entry.check.process_runtime_closure
-    : null;
-  if (processObserved) {
-    if (!processClosure) return "process_runtime_closure_identity_mismatch";
-    const normalizedMutationTargets = mutationTargets.map((target, index) =>
-      normalizeRepositoryFile(
-        target,
-        `counterfactual.mutation_targets[${index}]`,
-      ),
-    );
-    if (
-      normalizedMutationTargets.some(
-        (target) => !processClosure.production_carrier_files.includes(target),
-      )
-    )
-      return "counterfactual_runtime_reachability_unproven";
-  }
+  if (process.issue) return process.issue;
   const observationChecks = counterfactualObservationChecks(
     entry.check,
     executionUniverse,
-    processObserved,
+    process.processObserved,
   );
-  const observationSets = await Promise.all(
-    observationChecks.map(async (check) => {
-      const baselineCheckResult = baselineResults.find(
-        (candidate) => candidate.internal_id === check.internal_id,
-      );
-      const [baseline, mutated] = await Promise.all([
-        prepareAdmittedObservations({
-          check,
-          records: baselineCheckResult?.evidence_records ?? [],
-          snapshot_root: baselineRoot,
-          authority_paths: protectedAuthorityPaths,
-          package_observations: packageObservationsForCheck(
-            check,
-            baselineRaw.package_observations ?? [],
-          ),
-        }),
-        prepareAdmittedObservations({
-          check,
-          records:
-            check.internal_id === entry.check.internal_id
-              ? mutatedResult.evidence_records
-              : [],
-          snapshot_root: mutatedRoot,
-          authority_paths: protectedAuthorityPaths,
-          package_observations: packageObservationsForCheck(
-            check,
-            mutatedRaw.package_observations ?? [],
-          ),
-        }),
-      ]);
-      return { check, baseline, mutated };
-    }),
+  const { baselineEntries, mutatedEntries } =
+    await prepareCounterfactualObservationEntries({
+      entry,
+      observationChecks,
+      baselineResults,
+      baselineRaw,
+      mutatedResult,
+      mutatedRaw,
+      baselineRoot,
+      mutatedRoot,
+      protectedAuthorityPaths,
+    });
+  const observationIssue = counterfactualObservationEntryIssue(
+    baselineEntries,
+    mutatedEntries,
+    machineClosing,
   );
-  const baselineEntries = observationSets.flatMap(({ check, baseline }) =>
-    baseline.entries.map((candidate) => ({
-      candidate,
-      check,
-      identity: scopedObservationImpactIdentity(check, candidate),
-    })),
-  );
-  const mutatedEntries = observationSets.flatMap(({ check, mutated }) =>
-    mutated.entries.map((candidate) => ({
-      candidate,
-      check,
-      identity: scopedObservationImpactIdentity(check, candidate),
-    })),
-  );
-  if (!baselineEntries.length || !mutatedEntries.length)
-    return machineClosing
-      ? "counterfactual_admitted_observation_required"
-      : null;
-  const baselineIssue = baselineEntries.find(
-    ({ candidate }) => candidate.reason || !candidate.observation,
-  );
-  if (baselineIssue)
-    return `counterfactual_baseline_observation_invalid:${baselineIssue.candidate.reason ?? "missing"}`;
-  const mutatedIssue = mutatedEntries.find(
-    ({ candidate }) => candidate.reason || !candidate.observation,
-  );
-  if (mutatedIssue)
-    return `counterfactual_mutated_observation_invalid:${mutatedIssue.candidate.reason ?? "missing"}`;
-  if (processClosure) {
-    const baselineClosureIdentity =
-      baselineRaw.host_execution_attestation
-        ?.process_runtime_closure_identity ?? null;
-    const mutatedClosureIdentity =
-      mutatedRaw.host_execution_attestation?.process_runtime_closure_identity ??
-      null;
-    if (
-      baselineClosureIdentity !== processClosure.closure_identity ||
-      mutatedClosureIdentity !== processClosure.closure_identity ||
-      baselineClosureIdentity !== mutatedClosureIdentity
-    )
-      return "process_runtime_closure_identity_mismatch";
-  }
+  if (observationIssue) return observationIssue;
+  const closureIssue = counterfactualProcessClosureIdentityIssue(process);
+  if (closureIssue) return closureIssue;
   const baselineKeys = baselineEntries.map(({ identity }) => identity).sort();
   const mutatedKeys = mutatedEntries.map(({ identity }) => identity).sort();
   if (canonicalValueJson(baselineKeys) !== canonicalValueJson(mutatedKeys))
@@ -744,79 +739,262 @@ async function counterfactualObservationImpactIssue(
       candidate.observation!.value_sha256,
     ]),
   );
-  const expectedAssertions = new Set(entry.control.expected_assertion_failures);
-  const preservedAssertions = new Set(entry.control.preserved_assertions);
-  const allowedFanoutAssertions = new Set(
-    entry.control.allowed_fanout_assertions ?? [],
-  );
-  const expectedFactRefs = baselineEntries
-    .filter(
-      ({ candidate, check }) =>
-        check.internal_id === entry.check.internal_id &&
-        expectedAssertions.has(candidate.assertion_key),
-    )
-    .map(({ identity }) => identity);
+  const factRefs = counterfactualFactRefs(entry, baselineEntries);
+  const expectedFactRefs = factRefs.expected;
   if (!expectedFactRefs.length)
     return "counterfactual_expected_fact_observation_missing";
-  const preservedFactRefs = baselineEntries
-    .filter(
-      ({ candidate, check }) =>
-        check.internal_id === entry.check.internal_id &&
-        preservedAssertions.has(candidate.assertion_key),
-    )
-    .map(({ identity }) => identity);
-  const allowedFanoutFactRefs = baselineEntries
-    .filter(
-      ({ candidate, check }) =>
-        check.internal_id === entry.check.internal_id &&
-        allowedFanoutAssertions.has(candidate.assertion_key),
-    )
-    .map(({ identity }) => identity);
   const targetLive = entry.control.preserved_assertions.every((key) =>
     mutatedResult.assertion_results.some(
       (assertion) => assertion.key === key && assertion.passed,
     ),
   );
-  let carrierRole: "product" | "evidence" = "product";
-  if (!processObserved) {
-    const carrierRoleConflict = mutationTargets
-      .map((target) =>
-        classifyMachineObservationCarrierRoleConflict({
-          carrier_pattern: target,
-          expected_authority_patterns: [
-            ...entry.check.verification_inputs,
-            ...protectedAuthorityPaths,
-          ],
-          evidence_role_patterns: [
-            ...entry.check.expected_output_paths,
-            ...entry.check.artifact_globs,
-          ],
-        }),
-      )
-      .find((candidate) => candidate !== null);
-    if (carrierRoleConflict)
-      return `counterfactual_static_carrier_${carrierRoleConflict}_forbidden`;
-    carrierRole = mutationTargets.every(
-      (target) =>
-        bindingCarrierPaths.some((pattern) =>
-          matchesRepoPattern(target, pattern),
-        ) &&
-        entry.check.input_paths.some((pattern) =>
-          matchesRepoPattern(target, pattern),
-        ),
-    )
-      ? "product"
-      : "evidence";
-  }
+  const carrier = counterfactualCarrierRole(
+    entry,
+    mutationTargets,
+    bindingCarrierPaths,
+    protectedAuthorityPaths,
+    process.processObserved,
+  );
+  if (carrier.issue) return carrier.issue;
   return validateCounterfactualObservationImpact({
     baseline_by_fact: baselineByFact,
     mutated_by_fact: mutatedByFact,
     expected_affected_fact_refs: expectedFactRefs,
-    preserved_fact_refs: preservedFactRefs,
-    allowed_fanout_fact_refs: allowedFanoutFactRefs,
+    preserved_fact_refs: factRefs.preserved,
+    allowed_fanout_fact_refs: factRefs.allowedFanout,
     target_live: targetLive,
-    carrier_role: carrierRole,
+    carrier_role: carrier.role,
   });
+}
+
+type CounterfactualObservationEntry = {
+  candidate: Awaited<
+    ReturnType<typeof prepareAdmittedObservations>
+  >["entries"][number];
+  check: CompiledCheckV2;
+  identity: string;
+};
+
+function counterfactualMachineClosing(entry: RuntimeCounterfactual): boolean {
+  return [
+    ...entry.check.positive_assertions,
+    ...entry.check.negative_assertions,
+  ].some((assertion) => assertion.claims.length > 0);
+}
+
+function counterfactualProcessContext(
+  entry: RuntimeCounterfactual,
+  baselineRaw: RawCommandExecutionV2,
+  mutatedRaw: RawCommandExecutionV2,
+  mutationTargets: string[],
+) {
+  const processObserved = (entry.check.observation_authorities ?? []).some(
+    (authority) => authority.authority === "package_process_json_exact",
+  );
+  const processClosure = processObserved
+    ? entry.check.process_runtime_closure
+    : null;
+  const baselineClosureIdentity = processObserved
+    ? (baselineRaw.host_execution_attestation
+        ?.process_runtime_closure_identity ?? null)
+    : null;
+  const mutatedClosureIdentity = processObserved
+    ? (mutatedRaw.host_execution_attestation
+        ?.process_runtime_closure_identity ?? null)
+    : null;
+  let issue: string | null = null;
+  if (processObserved && !processClosure)
+    issue = "process_runtime_closure_identity_mismatch";
+  if (processClosure) {
+    const normalizedTargets = mutationTargets.map((target, index) =>
+      normalizeRepositoryFile(
+        target,
+        `counterfactual.mutation_targets[${index}]`,
+      ),
+    );
+    if (
+      normalizedTargets.some(
+        (target) => !processClosure.production_carrier_files.includes(target),
+      )
+    )
+      issue = "counterfactual_runtime_reachability_unproven";
+    if (
+      baselineClosureIdentity !== null &&
+      mutatedClosureIdentity !== null &&
+      (baselineClosureIdentity !== processClosure.closure_identity ||
+        mutatedClosureIdentity !== processClosure.closure_identity ||
+        baselineClosureIdentity !== mutatedClosureIdentity)
+    )
+      issue = "process_runtime_closure_identity_mismatch";
+  }
+  return {
+    processObserved,
+    processClosure,
+    baselineClosureIdentity,
+    mutatedClosureIdentity,
+    issue,
+  };
+}
+
+async function prepareCounterfactualObservationEntries(input: {
+  entry: RuntimeCounterfactual;
+  observationChecks: CompiledCheckV2[];
+  baselineResults: readonly CheckExecutionResultV2[];
+  baselineRaw: RawCommandExecutionV2;
+  mutatedResult: CheckExecutionResultV2;
+  mutatedRaw: RawCommandExecutionV2;
+  baselineRoot: string;
+  mutatedRoot: string;
+  protectedAuthorityPaths: readonly string[];
+}): Promise<{
+  baselineEntries: CounterfactualObservationEntry[];
+  mutatedEntries: CounterfactualObservationEntry[];
+}> {
+  const observationSets = await Promise.all(
+    input.observationChecks.map(async (check) => {
+      const baselineCheckResult = input.baselineResults.find(
+        (candidate) => candidate.internal_id === check.internal_id,
+      );
+      const [baseline, mutated] = await Promise.all([
+        prepareAdmittedObservations({
+          check,
+          records: baselineCheckResult?.evidence_records ?? [],
+          snapshot_root: input.baselineRoot,
+          authority_paths: input.protectedAuthorityPaths,
+          package_observations: packageObservationsForCheck(
+            check,
+            input.baselineRaw.package_observations ?? [],
+          ),
+        }),
+        prepareAdmittedObservations({
+          check,
+          records:
+            check.internal_id === input.entry.check.internal_id
+              ? input.mutatedResult.evidence_records
+              : [],
+          snapshot_root: input.mutatedRoot,
+          authority_paths: input.protectedAuthorityPaths,
+          package_observations: packageObservationsForCheck(
+            check,
+            input.mutatedRaw.package_observations ?? [],
+          ),
+        }),
+      ]);
+      return { check, baseline, mutated };
+    }),
+  );
+  return {
+    baselineEntries: observationSets.flatMap(({ check, baseline }) =>
+      baseline.entries.map((candidate) => ({
+        candidate,
+        check,
+        identity: scopedObservationImpactIdentity(check, candidate),
+      })),
+    ),
+    mutatedEntries: observationSets.flatMap(({ check, mutated }) =>
+      mutated.entries.map((candidate) => ({
+        candidate,
+        check,
+        identity: scopedObservationImpactIdentity(check, candidate),
+      })),
+    ),
+  };
+}
+
+function counterfactualObservationEntryIssue(
+  baseline: CounterfactualObservationEntry[],
+  mutated: CounterfactualObservationEntry[],
+  machineClosing: boolean,
+): string | null {
+  if (!baseline.length || !mutated.length)
+    return machineClosing
+      ? "counterfactual_admitted_observation_required"
+      : null;
+  const baselineIssue = baseline.find(
+    ({ candidate }) => candidate.reason || !candidate.observation,
+  );
+  if (baselineIssue)
+    return `counterfactual_baseline_observation_invalid:${baselineIssue.candidate.reason ?? "missing"}`;
+  const mutatedIssue = mutated.find(
+    ({ candidate }) => candidate.reason || !candidate.observation,
+  );
+  return mutatedIssue
+    ? `counterfactual_mutated_observation_invalid:${mutatedIssue.candidate.reason ?? "missing"}`
+    : null;
+}
+
+function counterfactualProcessClosureIdentityIssue(
+  process: ReturnType<typeof counterfactualProcessContext>,
+): string | null {
+  if (!process.processClosure) return null;
+  return process.baselineClosureIdentity !==
+    process.processClosure.closure_identity ||
+    process.mutatedClosureIdentity !==
+      process.processClosure.closure_identity ||
+    process.baselineClosureIdentity !== process.mutatedClosureIdentity
+    ? "process_runtime_closure_identity_mismatch"
+    : null;
+}
+
+function counterfactualFactRefs(
+  entry: RuntimeCounterfactual,
+  baseline: CounterfactualObservationEntry[],
+): { expected: string[]; preserved: string[]; allowedFanout: string[] } {
+  const refsFor = (assertions: Set<string>) =>
+    baseline
+      .filter(
+        ({ candidate, check }) =>
+          check.internal_id === entry.check.internal_id &&
+          assertions.has(candidate.assertion_key),
+      )
+      .map(({ identity }) => identity);
+  return {
+    expected: refsFor(new Set(entry.control.expected_assertion_failures)),
+    preserved: refsFor(new Set(entry.control.preserved_assertions)),
+    allowedFanout: refsFor(
+      new Set(entry.control.allowed_fanout_assertions ?? []),
+    ),
+  };
+}
+
+function counterfactualCarrierRole(
+  entry: RuntimeCounterfactual,
+  mutationTargets: string[],
+  bindingCarrierPaths: string[],
+  protectedAuthorityPaths: readonly string[],
+  processObserved: boolean,
+): { role: "product" | "evidence"; issue: string | null } {
+  if (processObserved) return { role: "product", issue: null };
+  const conflict = mutationTargets
+    .map((target) =>
+      classifyMachineObservationCarrierRoleConflict({
+        carrier_pattern: target,
+        expected_authority_patterns: [
+          ...entry.check.verification_inputs,
+          ...protectedAuthorityPaths,
+        ],
+        evidence_role_patterns: [
+          ...entry.check.expected_output_paths,
+          ...entry.check.artifact_globs,
+        ],
+      }),
+    )
+    .find((candidate) => candidate !== null);
+  if (conflict)
+    return {
+      role: "evidence",
+      issue: `counterfactual_static_carrier_${conflict}_forbidden`,
+    };
+  const product = mutationTargets.every(
+    (target) =>
+      bindingCarrierPaths.some((pattern) =>
+        matchesRepoPattern(target, pattern),
+      ) &&
+      entry.check.input_paths.some((pattern) =>
+        matchesRepoPattern(target, pattern),
+      ),
+  );
+  return { role: product ? "product" : "evidence", issue: null };
 }
 
 function counterfactualObservationChecks(

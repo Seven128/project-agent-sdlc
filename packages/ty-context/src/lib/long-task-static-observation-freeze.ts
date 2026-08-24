@@ -20,6 +20,8 @@ import type {
   WorkspaceManifestV2,
 } from "./long-task-workspace-runtime-types.js";
 
+const OBSERVATION_HASH_READ_BUFFER_BYTES = 1_048_576;
+
 export type StaticObservationFreezeErrorCode =
   | "static_observation_not_in_pre_run_snapshot"
   | "static_observation_changed_by_runner"
@@ -461,6 +463,7 @@ async function captureStaticObservationFile(
       artifactPath,
       maxFileBytes,
       retainBytes,
+      openedMetadata.size,
     );
     const afterRead = fileMetadata(await handle.stat({ bigint: true }));
     assertMetadataEqual(openedMetadata, afterRead, artifactPath, expected);
@@ -621,8 +624,15 @@ async function readAndHashBounded(
   artifactPath: string,
   limit: number,
   retainBytes: boolean,
+  expectedSize: number,
 ): Promise<{ bytes: Uint8Array | null; sha256: string }> {
-  const buffer = Buffer.allocUnsafe(Math.min(65_536, limit + 1));
+  const buffer = Buffer.allocUnsafe(
+    Math.min(
+      OBSERVATION_HASH_READ_BUFFER_BYTES,
+      limit + 1,
+      Math.max(1, expectedSize + 1),
+    ),
+  );
   const chunks: Buffer[] = [];
   const hash = createHash("sha256");
   let offset = 0;

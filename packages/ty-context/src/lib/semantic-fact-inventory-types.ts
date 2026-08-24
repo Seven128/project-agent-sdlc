@@ -16,11 +16,21 @@ export interface SemanticFactInputV1 {
     | "repository_preservation"
     | "external_constraint"
     | "delegated_instruction"
-    | "design_resource";
+    | "design_resource"
+    | "source_fragment"
+    | "semantic_anchor";
   source_ref: string;
   sha256: string;
   disposition:
-    "non_ui_material" | "ui_design" | "supporting_only" | "excluded_by_scope";
+    | "non_ui_material"
+    | "ui_design"
+    | "supporting_only"
+    | "excluded_by_scope"
+    | "fact_bearing"
+    | "supporting_basis"
+    | "superseded"
+    | "decision_required"
+    | "scope_excluded";
   fact_refs: string[];
   basis_refs: string[];
   rationale: string;

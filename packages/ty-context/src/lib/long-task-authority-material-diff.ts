@@ -188,6 +188,10 @@ function flattenProductSemantics(
       "task.target_profile.required_target_refs",
       [...projection.target_profile.required_target_refs].sort(),
     ],
+    [
+      "task.target_profile.completion_authority",
+      projection.target_profile.completion_authority,
+    ],
   ]);
   for (const target of projection.execution_targets) {
     const prefix = `task.execution_targets.${target.key}`;

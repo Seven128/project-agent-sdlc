@@ -120,20 +120,19 @@ function evidenceRecordForCapability(assertion, capability, owner, hashes) {
       comparison_artifact_path: target.comparison_artifact_path,
     };
   }
+  if (capability === "visual_render") {
+    const target = owner.target ?? owner;
+    return {
+      assertion_key: assertion.key,
+      capability,
+      artifact_path: target.actual_artifact_path,
+      artifact_sha256: hashes[target.actual_artifact_path],
+    };
+  }
   if (capability === "design_method")
     return owner.target.fact_model === "symbolic_rules_v2"
-      ? symbolicMethodRecord(
-          assertion.key,
-          owner.target,
-          owner.binding,
-          hashes,
-        )
-      : groundMethodRecord(
-          assertion.key,
-          owner.target,
-          owner.binding,
-          hashes,
-        );
+      ? symbolicMethodRecord(assertion.key, owner.target, owner.binding, hashes)
+      : groundMethodRecord(assertion.key, owner.target, owner.binding, hashes);
   if (capability === "design_symbolic_certificate")
     return symbolicCertificateRecord(
       assertion.key,

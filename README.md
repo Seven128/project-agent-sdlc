@@ -73,18 +73,18 @@ It does not launch or switch models, spawn agent sessions, create branches or wo
 
 ## Capability Model
 
-| Capability | When and how to use it | What it owns |
-|---|---|---|
-| **Minimal Context** | Installed by default. Agents read and update `project_context/**` on every delivery route. | Durable goals, ownership, architecture/interface/state boundaries and repeatable verification/deployment facts. It never claims that implementation or tests passed. |
-| **Workflow Contract** | The prompt-level default after `init`, for implementation work of any complexity whenever Long-Task is not explicitly selected or already bound. There is no Skill command or `delivery-contract.yaml`. | The model-led lightweight loop: Context discovery, risk-proportional requirement/architecture judgment, one `Context Delta`, Goal-owned implementation, current-candidate project checks, failure repair, evidence-bounded Contract Conformance and Context drift. It creates no exact Fact ledger, validator result, Receipt, persisted workflow state or machine completion. |
-| **Long-Task Workflow** | Enable the `long-task` profile once, then explicitly select `long-task-workflow`, or resume an existing valid binding, when machine completion authority, recoverability or auditability is required. Task size alone never activates it. | One Source-bound Delivery Contract, Authority Lock, recoverable scoped progress, protected revision, exact declared-obligation evidence and one current-snapshot Live Final Gate. |
+| Capability             | When and how to use it                                                                                                                                                                                                                    | What it owns                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Minimal Context**    | Installed by default. Agents read and update `project_context/**` on every delivery route.                                                                                                                                                | Durable goals, ownership, architecture/interface/state boundaries and repeatable verification/deployment facts. It never claims that implementation or tests passed.                                                                                                                                                                                                           |
+| **Workflow Contract**  | The prompt-level default after `init`, for implementation work of any complexity whenever Long-Task is not explicitly selected or already bound. There is no Skill command or `delivery-contract.yaml`.                                   | The model-led lightweight loop: Context discovery, risk-proportional requirement/architecture judgment, one `Context Delta`, Goal-owned implementation, current-candidate project checks, failure repair, evidence-bounded Contract Conformance and Context drift. It creates no exact Fact ledger, validator result, Receipt, persisted workflow state or machine completion. |
+| **Long-Task Workflow** | Enable the `long-task` profile once, then explicitly select `long-task-workflow`, or resume an existing valid binding, when machine completion authority, recoverability or auditability is required. Task size alone never activates it. | One Source-bound Delivery Contract, Authority Lock, recoverable scoped progress, protected revision, exact declared-obligation evidence and one current-snapshot Live Final Gate.                                                                                                                                                                                              |
 
 The relationship is deliberately one-of-two at execution time: every delivery consumes Minimal Context, then the default Workflow Contract applies unless `long-task-workflow` is explicitly selected or validly bound. Complexity determines execution and verification depth; required completion authority and recoverability determine the workflow route; Long-Task-internal risk determines proof strength. Long-Task Final Gate carries Engineering Quality/Architecture Conformance and selected-design closure instead of duplicating the default Contract Conformance closure.
 
-| Task shape | Model-led, evidence-bounded handoff is sufficient | Machine-traceable complete closure is required |
-|---|---|---|
-| Local or small | Default Workflow Contract | Explicit Long-Task is available |
-| Cross-module or complex | Default Workflow Contract remains valid | Explicit Long-Task |
+| Task shape              | Model-led, evidence-bounded handoff is sufficient | Machine-traceable complete closure is required |
+| ----------------------- | ------------------------------------------------- | ---------------------------------------------- |
+| Local or small          | Default Workflow Contract                         | Explicit Long-Task is available                |
+| Cross-module or complex | Default Workflow Contract remains valid           | Explicit Long-Task                             |
 
 The base managed set also provides two explicitly triggered Open Design adapters: `design-system-authoring` generates/selects/adopts project Design Authority at cold start, while `design-resource-authoring` commissions task-local resources. They are optional upstream Skills, not a fourth mechanism and not stages inside Long-Task. Their selected outputs may feed either execution route, and `long-task-workflow` is the only active long-task execution Skill. Retired standalone authoring pointers are not installed; Long-Task inputs enter one Source-bound Contract Draft loop directly and pre-existing planning documents remain ordinary Source.
 
@@ -187,7 +187,7 @@ The smoke packs the local workspace, installs it into a disposable repo and vali
 
 ```sh
 cd /path/to/your/test-repo
-npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.8.18.tgz
+npm install -D /path/to/project-tiny-context-harness/tmp/ty-context/source-preview/package/project-tiny-context-harness-0.9.0.tgz
 npx --no-install ty-context init --adopt
 make validate-context
 ```
@@ -196,12 +196,12 @@ If it fails, open a [Source preview report](https://github.com/Seven128/project-
 
 ## Positioning
 
-| Adjacent tool type | Use it for | Harness stance |
-|---|---|---|
-| Spec-first kits | Turning a feature idea into structured specs and plans. | Complementary; Harness keeps durable repo facts beyond one feature spec. |
-| BMAD-style workflows and full Tiny Context processes | Role/process ceremony for selected work. | Lighter automatic route; explicit machine assurance stays opt-in. |
-| Task Master-style planners | Backlog decomposition and task state. | Complementary; Harness does not own backlog state. |
-| Context7/Serena-style retrieval | External docs, symbols or repository retrieval. | Complementary; Harness owns local intended boundaries. |
+| Adjacent tool type                                   | Use it for                                              | Harness stance                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Spec-first kits                                      | Turning a feature idea into structured specs and plans. | Complementary; Harness keeps durable repo facts beyond one feature spec. |
+| BMAD-style workflows and full Tiny Context processes | Role/process ceremony for selected work.                | Lighter automatic route; explicit machine assurance stays opt-in.        |
+| Task Master-style planners                           | Backlog decomposition and task state.                   | Complementary; Harness does not own backlog state.                       |
+| Context7/Serena-style retrieval                      | External docs, symbols or repository retrieval.         | Complementary; Harness owns local intended boundaries.                   |
 
 ## Minimal Context
 
@@ -401,13 +401,17 @@ Use `long-task-workflow` only when explicitly selected or when the current workt
 - a complete Final Gate on one current snapshot;
 - a Stop Hook that rejects stale completion.
 
-Its proof claim is conditional and precise: if Source is complete and accurate at the declared observable granularity, projection preserves that meaning and every actual applicability cell is expanded, then `AcceptedDeliveryTerminal`—exactly a fresh `machine_accepted` result with no pending External Confirmation—implies no declared machine-observable drift remains only because every machine obligation has frozen Expected authority, package-admitted current Actual, Harness-computed comparison/verdict, attributable static-production or direct-process observation, causal Counterfactual evidence and current Final-Gate snapshot proof. `machine_accepted_external_pending` proves only the admitted machine scope; full delivery remains qualified and the native Goal is untouched. The workflow cannot discover undeclared requirements or prove arbitrary physical/external observation sound.
+Its proof claim is conditional and precise: if Source is complete and accurate at the declared observable granularity, projection preserves that meaning and every actual applicability cell is expanded, then `AcceptedDeliveryTerminal` is either a fresh `machine_accepted` result when no blocking external fulfillment is required, or a fresh `delivery_accepted` result when every blocking external obligation also has a valid exact record. Machine obligations still require frozen Expected authority, package-admitted current Actual, Harness-computed comparison/verdict, attributable static-production or direct-process observation, causal Counterfactual evidence and current Final-Gate snapshot proof. External records retain per-obligation identity/evidence and are revalidated by that same Gate. Legacy `machine_accepted_external_pending` is compatibility-read-only and cannot close. The workflow cannot discover undeclared requirements, authenticate a declared external actor beyond local identity/integrity checks or prove arbitrary physical/external observation sound.
+
+Compile conserves Source meaning below the Source-item level. It deterministically derives material paragraphs, list/table/Given-When-Then rows, fenced code and structured configuration lines, plus high-signal API/version/symbol/file/key/number/quote/modal and frozen provider/protocol anchors. Every derived fragment has exactly one `fact_bearing`, `supporting_basis`, `superseded`, `decision_required` or `scope_excluded` disposition. A `supporting_basis` produces no independent Fact but must name at least one known `delivery_semantic` Fact that it supports; an empty or integrity-only set cannot hide a requirement. A `source_integrity` Fact such as a digest or marker cannot replace a `delivery_semantic` Fact, and derived `product | technical | design | acceptance | external` domains prevent design/presentation coverage from deleting product or technical meaning without a same-domain Source basis. Supersession is explicit and same-domain, and its successor must itself project the replacement delivery meaning into a same-domain Fact; a same-domain label or supporting-only note is insufficient. This projection remains part of the existing Source inventory and Semantic Fact manifest, not another Source ledger.
+
+Proof adequacy is also structural. Presence proves only existence; interaction, product-result effect, boundary provenance, durable readback, distinct identity/data state, complete population, recovery and selected-design/runtime Claims require their respective closed capability floors. A Check with no claim-bearing Assertion is diagnostic, contributes zero Claim/Fact/Stage/terminal completion and cannot be the only route for a blocking obligation. Claim-bearing Expected values must point to upstream `expected_ref`/`expected_authority_ref` or the compiled Expected of their bound Fact/proof obligation. Preflight then classifies every blocking obligation as `machine_admitted`, `external_fulfillable` or `unreachable` and refuses Authority Lock while any route is unreachable.
 
 Compile derives an internal `CompiledObservationAuthority` projection for every machine Claim or Fact × required-method obligation; it is not a new Contract Authority, state or registry. The first admitted slice has only two machine paths. `package_static_json_exact` reads plain exact implementation/configuration content from a UTF-8 JSON production carrier that already exists in the pre-run snapshot, retains the same no-follow file identity/digest after the runner, matches the Binding and is not Source/Context/Contract/expected material or evidence/report/status/verifier output; Harness selects the fixed RFC 6901 `/observations/<stable Fact-or-obligation identity>` locator and applies package duplicate-key/UTF-8/size/depth/pointer limits. Prepare-all mutation observation plus per-file pre/post identity/hash rejects transient and persistent runner swaps; it proves static content, not runtime consumption. `package_process_json_exact` applies only to a Source-backed `runtime_family: process`, `role: product` target and a direct root `project_binary` whose target and complete argv match that authority. Each required target has one canonical Source technical-obligation target covering key, role, family, root, complete argv and capabilities. Compile derives one declaration-stable process-runtime closure containing the exact Source-backed root, exact Claim/Counterfactual production carriers and only finite argv values that resolve to a production Binding. Every `root_argv` member remains the exact child-visible token: classification never splits spaces, strips quotes or rewrites backslashes. The closed grammar examines an independent token or one explicit `--name=value`; supported standalone switches remain labels and unsupported compound syntax receives no machine closure. Raw token and derived locator stay distinct. Quote-bearing, POSIX/UNC absolute, drive-prefixed, slash/backslash-platform-ambiguous and all scheme-shaped colon-prefix references outside the exact lowercase decimal `node:<number>` allowlist fail closed before execution unless explicitly routed to the existing external TCB/External Confirmation boundary. Parent segments resolve from declared `cwd` before repository containment is decided, so an in-repository `..` is legal and a true escape is not. Exact/pattern Bindings may own glob, extensionless or space-containing files; unmatched safe values and the exact lowercase decimal `node:<number>` and digits-only `<hours>:<minutes>` colon scalars are allowed but not copied. Compile neither broadly role-scans nor copies all `input_paths`; role separation applies only to actual closure members. Global Checks project Outcome Bindings into internal `{ outcome_key, local_key, binding_ref, binding }` records using `<outcome>.<binding>`: logical refs remain distinct while identical physical paths may be copied once, with no authored-Contract or registry change. Exact planned closure members may be absent through Compile but must materialize at Final Gate. Harness copies only that closure into an OS-temporary snapshot and binds its identity into host attestation. The child receives the unchanged raw argv and the minimal runner environment with no observation-path, challenge or protocol variable, then emits exactly one bounded `ty-context-product-observation-v1` envelope on stdout; compatible Cross-Check and implicit-preserved Facts share that Raw Execution/envelope while retaining independent result identities. This proves only exact values emitted by the Source-backed product root on the declared JSON output surface. An embedded dependency that cannot be explicitly production-bound or a Claim that cannot bind to that surface requires External Confirmation. The public project payload remains v3; no v4, shell/URI/dependency parser or general UI/native observer is introduced.
 
 Project-submitted v3 actual/value digest, comparison, `passed`, verdict and capability records are compatibility diagnostics only; they never supply Actual or completion authority. The current package-derived capability slice is exact/presence plus host-derived `target_runtime`. `interaction_trace`, `state_delta`, `design_conformance` and every other capability without a package-derived implementation require blocking External Confirmation even when a project record is present. Custom/`named_external_tcb` Oracles, wrappers, browser/native/device sessions, layout/pixel/accessibility/motion, protected observation, tolerance/mask and custom locators likewise cannot machine-close an obligation. Every machine Counterfactual needs package-admitted baseline and mutated observations on the same compiled process-closure identity, a mutation target in its production-carrier set, exact affected/preserved/allowed-fan-out accounting, equal obligation universes and host-derived process liveness; no-observation never skips validation. Existing Contracts are not silently rewritten, and target/closure TCB changes invalidate prior Active Authority, Progress, Evidence and Receipts for acceptance.
 
-An honestly unsupported Contract does not need a dummy verifier. Existing External Confirmations may cover exact ordinary/global and Semantic Fact Claim identities through `impact_claims`, while each Semantic Fact proof keeps its explicit `confirmation_ref`. An external-only Outcome sets `success_path_required: false`; a Stage Gate may omit its machine Check only when a `blocks_target: true` confirmation impacts that gate's result Claim. Missing result lineage, a non-blocking confirmation or a declared machine success path without a real success Check fails Preflight/Compile. A valid external-only route ends as `blocked_external`, never machine accepted.
+An honestly unsupported Contract does not need a dummy verifier. `target_profile.completion_authority` is `machine_only` or `declared_authorities`; legacy omission deterministically defaults to the fail-safe `machine_only` route and Preflight reports migration guidance. A blocking External Confirmation under `declared_authorities` must name its declared actor/owner, target, environment, Given/When scenario, evidence requirements and exact per-obligation rows with Claim, applicability, Fact/proof/method/capability and Expected-authority lineage. An external-only Outcome sets `success_path_required: false`; a Stage Gate may omit its machine Check only when a blocking confirmation covers that gate's result Claim. Missing decomposition/result lineage, an aggregate Boolean, a non-blocking confirmation or a declared machine success path without a real success Check fails Preflight/Compile. A valid unfulfilled route is `blocked_external`; after exact fresh fulfillment and a complete passing Final Gate it becomes `delivery_accepted`, never machine accepted.
 
 Direct-process observation is bounded containment, not an absolute hostile-code sandbox. On Windows, every contained execution uses the package-owned byte-identified PowerShell 5.1/7 and C# helper: it creates the declared executable suspended, assigns it to a fresh Job with `KILL_ON_JOB_CLOSE`, resumes only after assignment, bounds streams/timeout/overflow and accepts evidence only after `ActiveProcesses == 0`. Short-lived roots cannot outrun descendant enrollment, helper/identity/protocol drift fails closed, and there is no PID/CIM polling fallback. Non-Windows keeps the existing process-group/tree path; ordinary non-contained direct spawn is unchanged. The wider TCB still includes the host OS/filesystem/process APIs, Node runtime, snapshot-copy and no-follow/digest checks and stdout capture/decoder. It does not claim to stop intentionally malicious code from escaping the copied closure or using ambient machine/network resources; workloads needing that adversary boundary require an external sandbox or External Confirmation.
 
@@ -441,7 +445,7 @@ One module-private-branded acquisition runtime constructs the interaction record
 
 The catalog derives 86 executions and 586 formal artifacts: 516 base files, 30 compute records, 10 State ledgers plus 10 State payloads, and 10 prompts plus 10 Provider events. Formal capacity is 650 files/364.625 MiB and complete run-set capacity is 4,379 files/974.3125 MiB, including explicit headroom and two excluded self-referential controls; overflow or an unexpected file fails closed. The Evidence Candidate contains all code/schema/Context/test/package-version/protocol bytes. A Promotion Commit must be its direct child and add exactly four package-/TCB-external governance records while mechanically preserving materialized-package, benchmark and runtime/TCB identities; drift requires recollection and reaudit. Runtime TCB v2 binds the clean Node launch, executable path/hash, worker/protocol source identities, parser/transport and all limits. The benchmark implementation identity includes `npm_command_spec.mjs`, the Provider protocol/worker and its owner-local finite dependency checker; working-tree, Git-object, collection and Promotion paths recompute closure and bind the actual executing repository root.
 
-Real collection remains `external_pending`: the Starward-derived fixture lacks authorized original incident design/runtime evidence, the complete original-to-sanitized mapping and retention/publication authorization; no retainable invocation-bound Provider usage/price material or State-retention Source has been supplied for this delivery. Synthetic controls prove only structure and may not be presented as formal-positive evidence. The implementation therefore remains Level 3 until qualified real evidence, the sole verifier's complete positive report, independent audit and explicit owner promotion all close. Package 0.8.15 is the historical frozen Evidence Candidate identity; package 0.8.17 is the published predecessor, while package 0.8.18 is the current Level-3 package candidate and inherits none of the historical package, benchmark or runtime/TCB evidence. `capability_level` remains `level_3`, `level_4_claimed` remains false, and no formal-positive result or actual Promotion exists. Provider readiness means only that local configuration, credential presence and the clean worker launch envelope permit one bounded attempt. Public `independent_evidence_admitted` means packet structure/source binding only; `total_roi_supported` and `total_roi_positive` remain the complete-evidence and positive-ROI authorities.
+Real collection remains `external_pending`: the Starward-derived fixture lacks authorized original incident design/runtime evidence, the complete original-to-sanitized mapping and retention/publication authorization; no retainable invocation-bound Provider usage/price material or State-retention Source has been supplied for this delivery. Synthetic controls prove only structure and may not be presented as formal-positive evidence. The implementation therefore remains Level 3 until qualified real evidence, the sole verifier's complete positive report, independent audit and explicit owner promotion all close. Package 0.8.15 is the historical frozen Evidence Candidate identity; package 0.8.18 is the published predecessor; package 0.9.0 is the current Level-3 package candidate and inherits none of their package, benchmark or runtime/TCB evidence. `capability_level` remains `level_3`, `level_4_claimed` remains false, and no formal-positive result or actual Promotion exists. Provider readiness means only that local configuration, credential presence and the clean worker launch envelope permit one bounded attempt. Public `independent_evidence_admitted` means packet structure/source binding only; `total_roi_supported` and `total_roi_positive` remain the complete-evidence and positive-ROI authorities.
 
 The mechanism's own Final-Gate Oracle reads fixed-test-ID machine reports and compares complete wrong-candidate versus correct-control workflow statuses. A runtime capability requires `wrong candidate != machine_accepted` and `correct candidate == machine_accepted` through the real lifecycle; command exit plus token/string presence proves documentation consistency only. ROI is computed by a separate verifier and never enters a safety Fact verdict.
 
@@ -451,7 +455,7 @@ The package-owned non-UI Compact Carrier realizes that separation without anothe
 
 A separate read-only Global Product Conformance Check is required only for weak-observability work that also has multiple Stages or multiple required product runtime families. It starts at a required root product target, has independent Raw Execution and runs within the existing Final Gate. Single-Stage, single-family work retains the existing same-Check sensitivity path and pays no extra conformance run.
 
-The platform owns physical Goal/session lifecycle. A later session runs `resume` to reconstruct semantic state; Tiny Context does not recreate the prior physical Turn. Machine acceptance covers only `declared_machine_authority` and reports `native_goal_effect: none`. Before completing the platform-native Goal, the Agent performs a veto-only comparison of current Goal/user meaning against accepted marked Source and checks for pending revisions, unresolved blockers or omissions; this guard may block and repair, but it never supplies acceptance proof.
+The platform owns physical Goal/session lifecycle. A later session runs `resume` to reconstruct semantic state; Tiny Context does not recreate the prior physical Turn. Accepted Final/Stop/close results cover `declared_delivery_authority` and report `native_goal_effect: none`; Harness never completes the platform-native Goal itself. Before completing that Goal, the Agent performs a veto-only comparison of current Goal/user meaning against accepted marked Source and checks for pending revisions, unresolved blockers or omissions; this guard may block and repair, but it never supplies acceptance proof.
 
 ### CLI
 
@@ -467,6 +471,10 @@ ty-context long-task verify <workdir> [--outcome <key>] [--check <key>] [--expla
 ty-context long-task status <workdir>
 ty-context long-task resume <workdir>
 ty-context long-task doctor <workdir>
+ty-context long-task external prepare <workdir> [--confirmation <key>]
+ty-context long-task external submit <workdir> --confirmation <key> --record <path>
+ty-context long-task external status <workdir>
+ty-context long-task external revoke <workdir> --confirmation <key>
 ty-context long-task final-gate <workdir>
 ty-context long-task stop-check <workdir> [--message <text>]
 ty-context long-task close <workdir>
@@ -479,10 +487,12 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 - `diagnose-revision` performs a side-effect-free candidate Compile. Only a scope-only candidate may run existing active Check identities with unchanged runner/verifier authority. Other mechanically bounded repairs return an automatic-revision preview without runner execution; decision-relevant Product/Claim/target/acceptance/forbidden-boundary/runner-type-or-effect/verifier-kernel changes return a user-decision preview, while risk downgrade is rejected. Output always has `acceptance_authorized: false`, `progress_written: false` and `pending_revision_written: false`.
 - `compile --revise` auto-adopts monotonic or mechanically bounded revisions. Decision-relevant revisions return `authority_revision_pending` plus the exact id, deterministic material summary, `user_decision_reasons` and a self-contained `decision_brief`, then fail closed until that exact id carries the user's decision. Present the brief first; mechanically relay an already explicit task-specific decision only when it covers every reason. Candidate edits produce a new id and invalidate old approval. Adoption emits `authority_revision_adopted`, invalidates affected evidence and returns to rolling execution; it never means delivery completion.
 - `verify` writes scoped per-Check Progress Records only after rechecking active task/revision/compiled/worktree identity and applying the same workspace categories against the immutable baseline. A concurrent revision returns `active_authority_changed_during_verify` and writes no stale progress. `verify --explain` is read-only: it groups selected Main Raw Executions, lists applicable Counterfactual invocations and declared retry-attempt bounds, executes nothing and writes no Progress.
-- `status` reports each Outcome as `unverified`, `progress_passing`, `progress_failing`, `progress_stale` or `blocked_external`. It derives `stages`, `ready_stages` and an advisory acceptance/verification Outcome frontier from current Progress without persisting Stage completion. The legacy `ready_for_implementation` field is a compatibility alias for that projection, not an implementation gate. Status also reports the fresh Final Receipt as `final_workflow_status` (or `null` after drift), target profile/state, the active Contract's complete `external_confirmations` and the single `pending_authority_revision` decision when present. `progress_passing` is targeted repair evidence rather than “Outcome complete”; `progress_stale` is a freshness fact rather than a current pass or immediate rerun command, and `final_workflow_status: null` means unfinished. It reads the common-dir authority snapshot and reports a missing or mismatched workdir cache as a repairable diagnostic.
-- `resume` is read-only and reports task identity, risk, relevant Context, Git state, the same Final/target/Stage/external/pending decision surfaces, ready Outcomes, findings and an advisory verification/repair next action from the common-dir authority snapshot. That action never restricts implementation order.
-- `final-gate` requires a clean candidate commit, first rejects stale accepted authority inputs, recompiles Source authority and captures semantic plus raw protected-input identity for the Contract/fragments, Source, full Controlling Context, verifier/runner, recursively frozen local verifier dependencies, verification inputs and workdir inputs. It reruns every required Check on one Git-tree snapshot, then recompiles and re-hashes the full protected set; any race fails closed before acceptance. Its Receipt derives each Stage as `passed`, `failed`, `blocked_external` or `blocked_dependency`, and derives `target_state` as `not_accepted`, `blocked_external` or the Contract's exact `implementation_complete`, `target_profile_usable` or `production_release_ready` qualification.
-- `stop-check` and `close` run that Live Final Gate themselves. They never trust status, progress, a Receipt or compiled cache for acceptance; success clears only the accepted identity through CAS. Every accepted Stop emits one non-blocking terminal-scope `systemMessage`; external-pending results additionally name all confirmations. Final/Stop/close report `acceptance_scope: declared_machine_authority` and `native_goal_effect: none`; close also reports `closed_scope: machine_authority`. `status: closed` means only that machine Authority was cleared, not that the native Goal or complete external delivery finished.
+- `status` reports each Outcome as `unverified`, `progress_passing`, `progress_failing`, `progress_stale` or `blocked_external`. It derives `stages`, `ready_stages` and an advisory acceptance/verification Outcome frontier from current Progress without persisting Stage completion. The legacy `ready_for_implementation` field is a compatibility alias for that projection, not an implementation gate. Status also reports the fresh Final Receipt as `final_workflow_status` (or `null` after drift), target profile/state, declared confirmations, live per-confirmation fulfillment results and the single pending Authority Revision decision. Its non-persisted `repair_frontier` groups Findings by root, names Source fragments/Facts/proofs/Expected and Actual evidence, implementation/verification owners, minimum diagnostic reruns and still-fresh diagnostic Progress. It explicitly cannot accept and protects Source, Expected, Claims, proof authority, external scope, comparator and applicability from repair without Authority Revision.
+- `resume` is read-only and reports task identity, risk, relevant Context, Git state, the same Final/target/Stage/external/pending decision surfaces, ready Outcomes, enriched findings, the derived Repair Frontier and an advisory next action from the common-dir authority snapshot. That action never restricts implementation order.
+- `external prepare` emits current-candidate packets and compatible Session batches while preserving every logical obligation row. `external submit` accepts one strict `long-task-external-confirmation-record-v1`, validates declared identity, target/environment/applicability, exact result/evidence sets, artifact hashes, comparator where objective Actual is admitted and current relevant-input identity, then stores the record atomically; failed or unable results remain honest non-accepting evidence. `external status` re-evaluates stored records, and `external revoke` removes only the named record. Actor assurance is explicitly limited to declared identity plus local record integrity—not authentication or a signature.
+- Programmatic record producers can import `parseExternalConfirmationRecordV1`, `externalConfirmationRecordHash` and `signExternalConfirmationRecordV1` from the package root. The `sign` helper only validates the strict shape and attaches the canonical local integrity hash; it does not authenticate the actor or produce a cryptographic signature.
+- `final-gate` requires a clean candidate commit, first rejects stale accepted authority inputs, recompiles Source authority and captures semantic plus raw protected-input identity for the Contract/fragments, Source, full Controlling Context, verifier/runner, recursively frozen local verifier dependencies, verification inputs and workdir inputs. It reruns every semantic Check on one Git-tree snapshot, then recompiles and re-hashes the full protected set and revalidates every external record; any race fails closed before acceptance. Diagnostic-only Check failure reports a Finding but contributes zero completion authority. Final Receipt v3 emits `machine_accepted`, `delivery_accepted`, `blocked_external` or `needs_work`, exact external obligation evaluations, Stage results and target state.
+- `stop-check` and `close` run that Live Final Gate themselves. They never trust status, Progress, a prior Receipt, external record or compiled cache for acceptance; only `machine_accepted` and `delivery_accepted` clear the accepted identity through CAS. Legacy `machine_accepted_external_pending`, pending external rows, failures and stale/invalid records remain fail-closed. Final/Stop/close report `acceptance_scope: declared_delivery_authority` and `native_goal_effect: none`; close also reports `closed_scope: complete_long_task_authority`. `status: closed` means complete declared Authority was accepted and cleared, not that Harness completed the platform-native Goal.
 - `abandon` is explicit non-success cleanup. `--force-corrupt-state` is reserved for invalid/mismatched/legacy-unrecoverable state or a stale active lock and removes only deterministic local active state plus `<workdir>/.ty-context/**`; Contract, Source, Context and Git content are preserved.
 
 ### Delivery Contract
@@ -490,9 +500,15 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 `long-task-delivery-v2` keeps Product Authority, Technical Boundary Authority and Acceptance Authority as logical sections of one file. Compact YAML omits only deterministic defaults; the normalized Contract and all hashes are identical to the expanded form. The compiler derives machine Claims for observable results, atomic Requirements, control fields including location, non-completing outcomes, technical obligations and forbidden shortcuts:
 
 <!-- long-task-public-contract-example:start -->
+
 ```yaml
 schema_version: long-task-delivery-v2
-semantic_fact_manifest: {key: example-semantic-facts, source_path: plans/example.md, sha256: "1111111111111111111111111111111111111111111111111111111111111111"}
+semantic_fact_manifest:
+  {
+    key: example-semantic-facts,
+    source_path: plans/example.md,
+    sha256: "1111111111111111111111111111111111111111111111111111111111111111",
+  }
 task:
   id: example-task
   title: Example task
@@ -502,6 +518,7 @@ task:
     description: The example is usable from its declared runtime root.
     required_state: target_profile_usable
     required_target_refs: [example-runtime]
+    completion_authority: machine_only
   execution_targets:
     - key: example-runtime
       description: Example product runtime
@@ -548,7 +565,7 @@ outcomes:
       - key: runtime-root-success
         target_ref: example-runtime
         journey_role: success
-        dimensions: [{key: runtime-state, value: ready}]
+        dimensions: [{ key: runtime-state, value: ready }]
         given_refs: [source-ready]
         when_refs: [inspect-result]
     semantic_fact_bindings:
@@ -574,7 +591,13 @@ outcomes:
       owner:
         label: Owning product or module boundary
         context_refs: [project_context/areas/main.md]
-        path_globs: ["src/**", bin/example-runtime.exe, tests/runtime.mjs, tests/verify-runtime.mjs]
+        path_globs:
+          [
+            "src/**",
+            bin/example-runtime.exe,
+            tests/runtime.mjs,
+            tests/verify-runtime.mjs,
+          ]
       requirements:
         - key: observable
           statement: The outcome is observable.
@@ -612,10 +635,22 @@ outcomes:
       checks:
         - key: runtime
           journey_roles: [success, stage_gate]
-          execution_target: {target_ref: example-runtime, entrypoint: root}
+          execution_target: { target_ref: example-runtime, entrypoint: root }
           scenario:
-            given: [{key: source-ready, statement: The planned source carrier is available.}]
-            when: [{key: inspect-result, statement: Inspect the result through the declared runtime.}]
+            given:
+              [
+                {
+                  key: source-ready,
+                  statement: The planned source carrier is available.,
+                },
+              ]
+            when:
+              [
+                {
+                  key: inspect-result,
+                  statement: Inspect the result through the declared runtime.,
+                },
+              ]
           proof_surface: runtime_behavior
           runner:
             type: project_binary
@@ -678,14 +713,21 @@ outcomes:
       counterfactual_controls:
         - key: replace-observable-semantics
           binding_key: observable-carrier
-          claims: [result, requirement.observable, obligation.preserve-observable-owner, semantic_fact.example.result.observable]
+          claims:
+            [
+              result,
+              requirement.observable,
+              obligation.preserve-observable-owner,
+              semantic_fact.example.result.observable,
+            ]
           check_key: runtime
           mutation:
             type: replace_text
             path: src/observable.ts
             match: "observable = true"
             replacement: "observable = false"
-          expected_assertion_failures: [result-ac, observable-ac, architecture-ac, semantic-fact-ac]
+          expected_assertion_failures:
+            [result-ac, observable-ac, architecture-ac, semantic-fact-ac]
           preserved_assertions: [runtime-liveness]
         - key: make-relations-applicable
           binding_key: observable-carrier
@@ -699,6 +741,7 @@ outcomes:
           expected_assertion_failures: [relations-na-ac]
           preserved_assertions: [runtime-liveness]
 ```
+
 <!-- long-task-public-contract-example:end -->
 
 In this example `bin/example-runtime` is the product root, not a verifier wrapper. It emits one stdout JSON object shaped as `{"schema_version":"ty-context-product-observation-v1","observations":{"<compiled-observation-identity>":<actual>}}` with exactly the identities compiled for the shared Raw Execution. Harness supplies no output path, challenge or protocol environment variable; a v3 verifier payload cannot substitute for this product envelope.
@@ -719,6 +762,7 @@ V2 authoring requires at least one real `source_path` and one `source_claim`. Du
 
 ```markdown
 <!-- ty-source-item:start key=save-failure kind=requirement -->
+
 Saving failure preserves the user's input and shows the reason.
 <!-- ty-source-item:end -->
 ```
@@ -753,7 +797,7 @@ Raw Execution identity binds frozen runner identity plus canonical declared Envi
 
 The workdir `.ty-context/compiled-contract.json` is only a rebuildable cache projection. Previous authority, the immutable initial base, risk floor and Final Gate identity come only from the common-dir snapshot. Commit, verifier migration, clear and abandon share one active-state lock; Final/Verify recheck identity and Stop/close use accepted-identity CAS. Observer identity, Compile admission policy and TCB changes invalidate existing Active Authority, Progress and Receipt acceptance; no custom Oracle, wrapper or machine-to-external migration is inferred. Corrupt continuity is recovered explicitly with `abandon --force-corrupt-state`.
 
-Final Gate may run only Contract-declared verification commands and never production mutation/deployment/payment/migration execution. Retry defaults to none and is allowed once only for `transient_once` + idempotent + read-only/test-sandbox runners. Runners receive a minimal environment whitelist plus only declared environment requirements. Protected authority/proof inputs reject symlinks and detectable hardlinks. Network isolation remains external. Receipts are audit-only (`reusable_for_acceptance: false`). Human, CI, deployment and product confirmation live only in `external_confirmations`; a machine pass with pending confirmations reports `machine_accepted_external_pending`, which is outside the complete-delivery accepted-terminal theorem and cannot complete the native Goal.
+Final Gate may run only Contract-declared verification commands and never production mutation/deployment/payment/migration execution. Retry defaults to none and is allowed once only for `transient_once` + idempotent + read-only/test-sandbox runners. Runners receive a minimal environment whitelist plus only declared environment requirements. Protected authority/proof inputs and external records reject unsafe path/symlink/integrity behavior. Network isolation remains external. Receipts are audit-only (`reusable_for_acceptance: false`). Pending blocking confirmation yields `blocked_external`; failed, unable, invalid, stale or unreachable proof yields `needs_work`; fresh exact blocking records plus passing machine obligations yield `delivery_accepted`. Non-blocking confirmations are advisory and do not change `machine_accepted`. No status directly completes the native Goal.
 
 ## Compatibility And Migration
 
@@ -795,7 +839,7 @@ make validate-harness
 
 The modularity gate is `ty-context check-modularity`. Scoped waivers require `owner`, `introduced_at`, `reason`, `tracking_issue` and `expiry_condition`.
 
-`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.8.18.tgz` under the preview output directory.
+`npm run preview:pack` produces a local preview named `project-tiny-context-harness-0.9.0.tgz` under the preview output directory.
 
 ## Community And Further Reading
 

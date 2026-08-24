@@ -16,18 +16,18 @@ Tiny Context 将这些能力保持为窄边界。两条实现路径共用一次�
 
 ## 三个机制如何配合
 
-| 机制 | 何时、如何使用 | 负责什么 |
-|---|---|---|
-| **Minimal Context** | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。 | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。 |
-| **Workflow Contract** | `init` 后自动生效，适用于任何复杂度；只有显式选择或已有有效绑定时才不走此路线。没有 Skill 命令，也不创建 `delivery-contract.yaml`。 | 执行 model-led 轻量循环：Context 发现、风险比例化需求/架构判断、唯一 `Context Delta`、Goal-owned 实现、当前候选项目检查、失败返工、证据边界内 Contract Conformance 与 Context drift；不产生精确 Fact 账本、validator 结果、Receipt、持久状态或机器完成权威。 |
-| **Long-Task Workflow** | 先启用一次 `long-task` profile；需要机器完成权威、跨压缩/会话恢复或审计时显式选择 `long-task-workflow`，已有有效绑定时恢复。任务大小不会自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复局部进度、受保护修订、精确声明义务证据和当前快照 Live Final Gate。 |
+| 机制                   | 何时、如何使用                                                                                                                                     | 负责什么                                                                                                                                                                                                                                                     |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Minimal Context**    | 默认安装；每种交付路径都会读取并按需更新 `project_context/**`。                                                                                    | 保存目标、归属、架构/接口/状态边界和可重复验证/部署等耐久事实；不声称实现或测试已经通过。                                                                                                                                                                    |
+| **Workflow Contract**  | `init` 后自动生效，适用于任何复杂度；只有显式选择或已有有效绑定时才不走此路线。没有 Skill 命令，也不创建 `delivery-contract.yaml`。                | 执行 model-led 轻量循环：Context 发现、风险比例化需求/架构判断、唯一 `Context Delta`、Goal-owned 实现、当前候选项目检查、失败返工、证据边界内 Contract Conformance 与 Context drift；不产生精确 Fact 账本、validator 结果、Receipt、持久状态或机器完成权威。 |
+| **Long-Task Workflow** | 先启用一次 `long-task` profile；需要机器完成权威、跨压缩/会话恢复或审计时显式选择 `long-task-workflow`，已有有效绑定时恢复。任务大小不会自动启用。 | 持有一份 Source-bound Delivery Contract、Authority Lock、可恢复局部进度、受保护修订、精确声明义务证据和当前快照 Live Final Gate。                                                                                                                            |
 
 三者的关系是：每个任务都使用 Minimal Context；未显式选择且没有有效绑定时，默认 Workflow Contract 自动适用；只有显式选择或恢复有效绑定时，才由 `long-task-workflow` 承担执行与完成权威。复杂度决定执行与验证深度；所需完成权威与恢复能力决定工作流路线；Long-Task 内部风险决定证明强度。Long-Task 的 Final Gate 承载 Engineering Quality/Architecture Conformance 与选定设计闭环，不再重复默认 Contract Conformance。
 
-| 任务形态 | model-led、证据边界内交付足够 | 要求机器可信完整闭包 |
-|---|---|---|
-| 局部或简单 | 默认 Workflow Contract | 可显式使用 Long-Task |
-| 跨模块或复杂 | 默认 Workflow Contract 仍然有效 | 显式使用 Long-Task |
+| 任务形态     | model-led、证据边界内交付足够   | 要求机器可信完整闭包 |
+| ------------ | ------------------------------- | -------------------- |
+| 局部或简单   | 默认 Workflow Contract          | 可显式使用 Long-Task |
+| 跨模块或复杂 | 默认 Workflow Contract 仍然有效 | 显式使用 Long-Task   |
 
 `design-system-authoring` 与 `design-resource-authoring` 是基础 Profile 中独立、可选的上游设计 Skill，不是第四个机制，也不是 Long-Task 的阶段。其选定产物可以进入默认或 Long-Task 任一路径；当前唯一活跃的长程执行 Skill 是 `long-task-workflow`。
 
@@ -304,13 +304,17 @@ Provider execution、Artifact readiness 与 Design suitability 保持分离。�
 - Final Gate 在一个当前快照上重跑全部 Check；
 - Stop Hook 在结果 stale 时阻止完成。
 
-它的证明命题有明确前提：Source 在声明观察粒度下完整且准确、Source→Contract 投影保持语义、所有实际适用单元被展开；在这些前提下，只有每个机器义务同时具有冻结 Expected 权威、package-admitted 当前 Actual、Harness 计算的 comparison/verdict、可归因静态生产载体或直接 process observation、因果 Counterfactual 与当前 Final Gate 快照证明时，fresh `machine_accepted` 且无待定 External Confirmation 的 `AcceptedDeliveryTerminal` 才推出声明内机器可观察漂移为空。`machine_accepted_external_pending` 只证明已准入机器范围，完整交付仍未完成。Harness 无法发现未声明要求，也不声称任意物理/外部观察绝对可靠。
+它的证明命题有明确前提：Source 在声明观察粒度下完整且准确、Source→Contract 投影保持语义、所有实际适用单元被展开。在此前提下，`AcceptedDeliveryTerminal` 只有两种：不需要阻断性外部履约时的 fresh `machine_accepted`，以及全部阻断性外部义务已有 fresh、有效、逐义务精确记录时的 `delivery_accepted`。机器义务仍必须具有冻结 Expected 权威、package-admitted 当前 Actual、Harness 计算的 comparison/verdict、可归因静态生产载体或直接 process observation、因果 Counterfactual 与当前 Final Gate 快照证明；外部记录也必须在同一个 Gate 中逐项复验。旧 `machine_accepted_external_pending` 只兼容读取，不能关闭 Authority。Harness 无法发现未声明要求，也不能在本地声明身份与记录完整性之外认证外部 actor，或声称任意物理/外部观察绝对可靠。
+
+Compile 会在 Source Item 之下继续守恒语义：确定性派生材料段落、列表项、表格行、Given/When/Then、代码块、结构化配置行，以及 API/版本/符号/文件与 key/数值/引文/模态、冻结的 Provider/协议标识等高信号 Anchor。每个片段恰有一个 `fact_bearing | supporting_basis | superseded | decision_required | scope_excluded` disposition。`supporting_basis` 不独立产生 Fact，但必须指向至少一个已知 `delivery_semantic` Fact；空集合或仅完整性 Fact 不能隐藏要求。digest、marker 等 `source_integrity` Fact 不能代替 `delivery_semantic` Fact；派生的 `product | technical | design | acceptance | external` Domain 禁止设计/呈现 coverage 在没有同 Domain Source basis 时删除产品或技术含义。supersession 必须显式且同 Domain，且后继 Source 自身必须把替代语义投影到同 Domain Fact；同 Domain 标签或 supporting-only 注记不足以抹除旧语义。这仍复用既有 Source inventory 与 Semantic Fact manifest，不建立第二份 Source 总账。
+
+Proof Adequacy 同样是结构约束：presence 只能证明存在；交互、下游产品结果、边界调用 provenance、持久化 readback、身份/数据状态、完整 population、失败恢复、选定设计与目标运行时各自需要封闭的最低 capability。没有 claim-bearing Assertion 的 Check 只能诊断，对 Claim/Fact/Stage/终态贡献为零，也不能成为阻断义务的唯一证明路由。Claim-bearing Expected 必须引用上游 `expected_ref`/`expected_authority_ref`，或使用绑定 Fact/proof obligation 的编译 Expected。Preflight 随后把每个阻断义务分类为 `machine_admitted | external_fulfillable | unreachable`，存在不可达项时不允许 Authority Lock。
 
 Compile 为每个机器 Claim 或 Fact × required-method obligation 派生内部 `CompiledObservationAuthority`，它不是新的 Contract Authority、状态或 registry。首版只有两条机器路径：`package_static_json_exact` 读取 runner 前快照中已存在、runner 后 no-follow 文件 identity/digest 不变、匹配生产 Binding 且不属于 Source/Context/Contract/expected/evidence/report/status/verifier output 的 UTF-8 JSON 静态结构；prepare-all mutation observation 与逐文件 pre/post identity/hash 共同拒绝 transient/persistent swap，它只证明静态内容，不证明运行时消费。`package_process_json_exact` 只支持 Source-backed 的 `runtime_family: process`、`role: product` 目标，以及 target 和完整 argv 与该权威一致的直接 root `project_binary`。每个 required target 都由一项 canonical Source technical obligation 精确覆盖 key、role、family、root、完整 argv 和 capabilities。Compile 生成声明稳定的 process runtime closure：精确 Source-backed root、当前 Claim/Counterfactual production carriers，以及由有限 argv→production Binding 匹配得到的路径。每个 `root_argv` 数组成员始终是 child-visible exact token；分类器不拆空格、不去引号、不重写反斜杠。封闭语法只检查独立 token 或一个显式 `--name=value`，支持的 standalone switch 是 label，其他 compound form 不获得机器闭包；raw token 与派生 locator 分离。quote、POSIX/UNC absolute、drive-prefixed、slash/backslash 平台歧义、除精确小写十进制 `node:<number>` 外的所有 scheme-shaped colon prefix 和 unsupported compound 在执行前 fail closed，除非显式转到既有 external TCB/External Confirmation。parent segment 先结合声明 `cwd` 解析，再判断是否真实越出仓库，因此仓库内 `..` 合法，真实 escape 才失败。exact/pattern Binding 支持 glob、无扩展名和含空格单 token 文件；安全 unmatched 以及精确小写十进制 `node:<number>` 和纯数字 `<hours>:<minutes>` 两种 colon scalar 允许但不复制。Compile 不广域扫描或复制全部 `input_paths`，角色分离只检查实际 closure 成员。Global Check 将 Outcome Binding 投影成内部 `{ outcome_key, local_key, binding_ref, binding }`，并复用 `<outcome>.<binding>`：逻辑 ref 保持独立，相同物理路径可只复制一次，不改变 authored Contract 或建立 registry。Exact planned closure member 可以到 Final Gate 才 materialize。Harness 仅复制这份 closure，把其 identity 绑定到 host attestation，并把未修改的 raw argv 传给 child。兼容的 Cross-Check 与 implicit-preserved Facts 共享一个受限 stdout `ty-context-product-observation-v1` envelope，同时保留独立 result identity。无法显式 production-bind 的嵌入式依赖或无法直接绑定 root 输出面的 Claim 必须 External Confirmation。项目 payload 继续使用 v3，不发布 v4，也不建设 shell/URI/dependency parser 或通用 UI/native observer。
 
 项目自报的 v3 actual/value digest、comparison、`passed`、verdict 与 capability record 只作兼容诊断，不能提供 Actual 或完成权威。当前 package 可派生范围只有 exact/presence 与 host-derived `target_runtime`；`interaction_trace`、`state_delta`、`design_conformance` 以及其他尚无 package derivation 的 capability 即使有项目 record 也必须保留阻断性 External Confirmation。custom/`named_external_tcb` Oracle、间接 wrapper、browser/native/device session、layout/pixel/accessibility/motion、protected observation、tolerance/mask 与 custom locator 同样不能关闭 machine obligation。每个机器 Counterfactual 都要有 package-admitted baseline/mutated observation、相同 compiled closure identity、属于 production carrier 集合的 mutation target、affected/preserved/allowed-fan-out 精确集合与相同 obligation universe，并在适用时保持 host-derived process liveness；没有 admitted observation 时不得跳过。旧 Contract 不会被静默改写，target/closure TCB 变化会使旧 Active Authority、Progress、Evidence 与 Receipt 失去验收效力。
 
-诚实声明为不支持的 Contract 不需要伪造 verifier。现有 External Confirmation 可通过 `impact_claims` 覆盖精确的普通 Outcome/Global Claim 与 Semantic Fact Claim，而每个 Semantic Fact proof 仍保留显式 `confirmation_ref`。完全 external 的 Outcome 设置 `success_path_required: false`；Stage Gate 只有在 `blocks_target: true` 的 confirmation 明确影响该 gate 的 result Claim 时才可不声明 machine Check。缺少 result lineage、非阻断 confirmation 或声明了机器 success path 却没有真实 success Check 都会使 Preflight/Compile 失败。合法的 external-only 路径最终只能得到 `blocked_external`，不会得到任何 machine-accepted 状态。
+诚实声明为不支持的 Contract 不需要伪造 verifier。`target_profile.completion_authority` 可选 `machine_only` 或 `declared_authorities`；旧 Contract 缺失时确定性地按更安全的 `machine_only` 处理，并由 Preflight 给出迁移提示。`declared_authorities` 下的阻断性 External Confirmation 必须声明 actor/owner、target、environment、Given/When、证据要求，以及带 Claim、applicability、Fact/proof/method/capability 和 Expected authority lineage 的逐义务明细。完全 external 的 Outcome 设置 `success_path_required: false`；Stage Gate 只有在阻断 confirmation 精确覆盖该 gate 的 result Claim 时才可不声明 machine Check。缺少分解/result lineage、聚合 Boolean、非阻断 confirmation 或声明了机器 success path 却没有真实 success Check都会使 Preflight/Compile 失败。合法但未履约的路径得到 `blocked_external`；提交精确 fresh 记录且完整 Final Gate 通过后得到 `delivery_accepted`，不会冒充 machine accepted。
 
 Direct-process observer 提供的是受限 containment，不是针对恶意代码的绝对 sandbox。Windows 上每次 contained execution 都使用 package-owned 且纳入字节身份的 PowerShell 5.1/7 与 C# helper：先以 suspended 状态创建声明的 executable，分配到带 `KILL_ON_JOB_CLOSE` 的新 Job，只有分配成功才 resume；stream/timeout/overflow 均有界，并且只有在 `ActiveProcesses == 0` 后才接纳 evidence。短命 root 不能抢在 descendant enrollment 前退出，helper/identity/protocol 漂移一律 fail closed，也没有 PID/CIM polling fallback。非 Windows 继续使用原有 process-group/tree 路径；无需 containment 的普通 direct spawn 不变。更广的 TCB 仍包含 host OS/文件系统/进程 API、Node runtime、快照复制与 no-follow/digest 校验及 stdout 捕获/解码。它不声称能阻止蓄意恶意代码逃出复制闭包或访问环境中的机器/网络资源；需要这类对手边界的 workload 必须使用外部 sandbox 或 External Confirmation。
 
@@ -328,7 +332,12 @@ Direct-process observer 提供的是受限 containment，不是针对恶意代�
     "action": "change_model_in_host_then_continue",
     "resume_token": "model checkpoint cleared, continue",
     "turn_boundary": "end_current_turn",
-    "blocked_until_resume": ["product_implementation", "file_edits", "build", "test_execution"],
+    "blocked_until_resume": [
+      "product_implementation",
+      "file_edits",
+      "build",
+      "test_execution"
+    ],
     "model_change_owner": "host_or_user",
     "model_change_observable_by_harness": false,
     "generic_continue_satisfies": false,
@@ -361,7 +370,7 @@ Formal collection 的 11-scenario catalog 是 scenario/source/zero policy 的唯
 
 Catalog 派生 86 次 execution 与 586 个 formal artifact：516 个 base file、30 个 compute record、10 个 State ledger 加 10 个 payload、10 个 prompt 加 10 个 Provider event。Formal fuse 为 650 files/364.625 MiB，完整 run-set fuse 为 4,379 files/974.3125 MiB。Evidence Candidate 冻结全部 code/schema/Context/test/package-version/protocol bytes；Promotion Commit 必须是其直接子提交，只新增四个 package-/TCB-external governance record，并保持 materialized-package、benchmark 与 runtime/TCB identities 不变，否则重新采集与审计。 Runtime TCB v2 绑定 clean Node launch、executable path/hash、worker/protocol、parser/transport 与 limits。Benchmark implementation identity 纳入 `npm_command_spec.mjs`、Provider protocol/worker 与有限 local-dependency closure checker；working-tree、Git object、collection 与 Promotion 路径都重算闭包并绑定实际执行源码根。
 
-真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.17 是已发布的前序版本，Package 0.8.18 是当前 Level-3 package candidate，不继承历史 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
+真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.18 是已发布的前序版本；Package 0.9.0 是当前 Level-3 package candidate，不继承它们的 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
 
 Formal collection 还会在执行前锁定一个固定 scenario catalog，覆盖十类成本和一个 controlled incident 的 exact task/gold bytes。每个 event 绑定唯一 raw output：成本 B/C 都必须命中共同 gold；事故 B 必须错误而 C 必须命中它。这样只提交时间/usage 不能制造 purpose benefit，也不会新增通用 scenario registry。
 
@@ -373,7 +382,7 @@ package-owned 的非 UI Compact Carrier 在不新增 Authority、状态或 Gate 
 
 只有 `weak_observability` 同时遇到多 Stage 或多个 required product runtime family 时，才额外要求一个只读 Global Product Conformance Check。它从 required root product target 启动，使用独立 Raw Execution，并在既有 Final Gate 内运行。单 Stage、单 family 继续使用原有 same-Check sensitivity，不支付额外 conformance 执行成本。
 
-平台负责物理 Goal/会话生命周期。新会话通过 `resume` 恢复语义状态；Tiny Context 不会重建此前的物理 Turn。机器接受只覆盖 `declared_machine_authority`，并报告 `native_goal_effect: none`。完成平台原生 Goal 前，Agent 只做一次否决型核对：当前 Goal/用户语义是否全部进入 accepted marked Source，且没有 pending revision、未解 blocker 或遗漏；它只能阻止并触发修复，不能增加验收证据。
+平台负责物理 Goal/会话生命周期。新会话通过 `resume` 恢复语义状态；Tiny Context 不会重建此前的物理 Turn。accepted Final/Stop/close 覆盖 `declared_delivery_authority`，并报告 `native_goal_effect: none`；Harness 本身不会完成平台原生 Goal。完成该 Goal 前，Agent 只做一次否决型核对：当前 Goal/用户语义是否全部进入 accepted marked Source，且没有 pending revision、未解 blocker 或遗漏；它只能阻止并触发修复，不能增加验收证据。
 
 ### CLI
 
@@ -389,6 +398,10 @@ ty-context long-task verify <workdir> [--outcome <key>] [--check <key>] [--expla
 ty-context long-task status <workdir>
 ty-context long-task resume <workdir>
 ty-context long-task doctor <workdir>
+ty-context long-task external prepare <workdir> [--confirmation <key>]
+ty-context long-task external submit <workdir> --confirmation <key> --record <path>
+ty-context long-task external status <workdir>
+ty-context long-task external revoke <workdir> --confirmation <key>
 ty-context long-task final-gate <workdir>
 ty-context long-task stop-check <workdir> [--message <text>]
 ty-context long-task close <workdir>
@@ -401,10 +414,12 @@ ty-context long-task abandon <workdir> [--force-corrupt-state]
 - `diagnose-revision` 只做无副作用候选 Compile；仅 scope-only 候选能运行 Active Authority 已有且未更换的 Check，输出固定为非验收、非 Progress、非 pending。
 - `compile --revise` 自动采用单调或机械边界内的修订；需要用户决策时返回 `authority_revision_pending`、精确 id、确定性 material 摘要、`user_decision_reasons` 和自包含 `decision_brief`。先展示 brief；只有已明确且精确覆盖全部 reason 的当前任务指令可直接承载该 id。候选再变会生成新 id 并使旧批准失效。采用后证据失效、输出 `authority_revision_adopted` 并回到滚动执行，不表示交付完成。
 - `verify` 在重查 active task/revision/compiled/worktree identity 并依据 immutable baseline 应用同一 workspace 分类后写 scoped Progress；targeted verify 始终只是可选反馈/修复证据。`verify --explain` 只读地合并 Main Raw Execution、列出适用 Counterfactual 调用与声明的重试次数上界，不执行命令、不写 Progress，也不预测耗时或 runner 内部子进程。
-- `status` 输出 `unverified`、`progress_passing`、`progress_failing`、`progress_stale` 或 `blocked_external`，由当前 Progress 派生 `stages`、`ready_stages` 和建议性的验收/验证 Outcome frontier，不持久化 Stage 完成。兼容字段 `ready_for_implementation` 只是该投影的别名，不是实现门禁。它同时报告 fresh `final_workflow_status`、target profile/state、完整 `external_confirmations` 与唯一的 `pending_authority_revision`。`progress_passing` 只能表述为定向修复证据，不能简称“Outcome 完成”；`progress_stale` 是证据新鲜度事实，不是当前通过或每次编辑后立即重跑的指令；`final_workflow_status: null` 表示 Goal 尚未完成。
-- `resume` 完全只读，恢复 task/contract identity、风险、相关 Context、Git 状态、相同的 Final/target/Stage/external/pending surface、ready Outcome、findings 和建议性的验证/修复 next action；该建议不限制实现顺序。
-- `final-gate` 在执行前重新编译 Source Authority，并捕获 Contract/fragments、Source、Controlling Context、verifier/runner、verification inputs 和 workdir inputs 的语义与原始受保护身份；完成全部 Check 后，再次编译并哈希同一完整集合。任一输入竞争变化都会 fail closed，并发 revision 也不能产生 accepted。Receipt 把每个 Stage 派生为 `passed`、`failed`、`blocked_external` 或 `blocked_dependency`，把 `target_state` 派生为 `not_accepted`、`blocked_external` 或 Contract 精确声明的 `implementation_complete`、`target_profile_usable`、`production_release_ready`。
-- `stop-check` 与 `close` 自己运行 Live Final Gate，并只用 accepted identity 做 CAS clear。每次机器接受的 Stop 都给一个非阻塞 terminal-scope `systemMessage`；外部待确认时同时列出全部确认项。Final/Stop/close 输出 `acceptance_scope: declared_machine_authority` 与 `native_goal_effect: none`，close 另输出 `closed_scope: machine_authority`。`status: closed` 只表示机器 Authority 已清理，不表示原生 Goal 或完整外部交付完成。
+- `status` 输出 `unverified`、`progress_passing`、`progress_failing`、`progress_stale` 或 `blocked_external`，由当前 Progress 派生 `stages`、`ready_stages` 和建议性的验收/验证 Outcome frontier，不持久化 Stage 完成。兼容字段 `ready_for_implementation` 只是该投影的别名，不是实现门禁。它同时报告 fresh `final_workflow_status`、target profile/state、声明及实时逐确认履约结果、唯一 pending Authority Revision，以及非持久、无验收权的 `repair_frontier`。后者按 root 聚合 Finding，列出 Source fragment、Fact/proof、Expected/Actual evidence、实现/验证 owner、最小诊断重跑和仍 fresh 的诊断 Progress，并明确 Source、Expected、Claim、proof authority、external scope、comparator 与 applicability 未经 Authority Revision 不可在修复中改变。
+- `resume` 完全只读，恢复 task/contract identity、风险、相关 Context、Git 状态、相同的 Final/target/Stage/external/pending surface、ready Outcome、增强 Finding、Repair Frontier 和建议性 next action；该建议不限制实现顺序。
+- `external prepare` 针对当前候选生成逐义务 Packet，并只按兼容 actor/target/environment/journey/evidence 批成 Session；逻辑结果不会合并。`external submit` 接受严格 `long-task-external-confirmation-record-v1`，校验声明身份、target/environment/applicability、精确 result/evidence 集、artifact hash、可客观比较时的 comparator，以及当前相关输入 identity，再原子保存；failed/unable 会被诚实保存但不能接受。`external status` 重新求值记录，`external revoke` 只撤销命名记录。actor assurance 明确只到“声明身份 + 本地记录完整性”，不是认证或签名。
+- 程序化记录生产者可以从 package 根入口导入 `parseExternalConfirmationRecordV1`、`externalConfirmationRecordHash` 和 `signExternalConfirmationRecordV1`。其中 `sign` helper 只校验严格结构并附加规范化本地完整性哈希，不认证 actor，也不产生密码学签名。
+- `final-gate` 在执行前重新编译 Source Authority，并捕获 Contract/fragments、Source、Controlling Context、verifier/runner、verification inputs 和 workdir inputs 的语义与原始受保护身份；完成全部 semantic Check 后，再次编译并哈希同一完整集合，并重新校验所有 external record。Diagnostic-only Check 可报告 Finding，但对完成贡献为零。Final Receipt v3 只新产生 `machine_accepted`、`delivery_accepted`、`blocked_external` 或 `needs_work`，并携带精确外部义务结果、Stage 与 target state。
+- `stop-check` 与 `close` 自己运行 Live Final Gate，不信任 status、Progress、旧 Receipt、external record 或 compiled cache；只有 `machine_accepted` 与 `delivery_accepted` 可 CAS clear。旧 `machine_accepted_external_pending`、pending、failed、stale 或 invalid 均 fail closed。Final/Stop/close 输出 `acceptance_scope: declared_delivery_authority` 与 `native_goal_effect: none`，close 另输出 `closed_scope: complete_long_task_authority`。`status: closed` 表示完整声明 Authority 已接受并清理，不表示 Harness 已完成平台原生 Goal。
 - `abandon --force-corrupt-state` 仅用于损坏/mismatch/legacy-unrecoverable 状态或遗留锁，只删除确定性 active state 与 `<workdir>/.ty-context/**`。
 
 ### Delivery Contract
@@ -447,7 +462,7 @@ active Long-Task 内部原有 `risk.requested_level: auto | standard | strict` p
 
 Outcome/Global Counterfactual 的 Binding/path 本身不是生产可达性证明。静态 Counterfactual 只证明冻结结构对象；runtime Counterfactual 必须由 Harness 修改声明的生产 carrier、直接运行相同 process product root 并通过 package 观察 Actual 变化。每个 machine witness 声明 affected、preserved 与 allowed-fan-out Facts，保持 obligation universe 和 host-derived liveness；缺少 admitted baseline/mutated observation 时直接失败。Source/Context/expected、status/report/evidence/Receipt/verifier output 都不是 mutation carrier。
 
-Targeted verify、Progress、status、Receipt 与 compiled cache 都不是完成权威。Final Gate 要求 clean candidate commit，从 Source 重编译 observer plan，在同一 Git-tree snapshot 上重跑全部 Check，并核对全部受保护身份。Direct-process 的内部 host attestation 还绑定 executable/root/argv equality、PID/times/exit、candidate snapshot digest、内部 execution nonce 与捕获的 stdout-envelope digest；这些 host 字段都不来自 child。nonce 不向 child 暴露，也不能单独认证产品语义。只有当前 Authority 与 observation chain 全部不变时才可生成 `machine_accepted` 或 `machine_accepted_external_pending`；后者仍列出阻断性外部确认，不属于完整无漂移定理的前件。
+Targeted verify、Progress、status、Receipt、external record 与 compiled cache 都不是完成权威。Final Gate 要求 clean candidate commit，从 Source 重编译 observer plan，在同一 Git-tree snapshot 上重跑全部 semantic Check，并核对全部受保护身份与逐义务外部记录。Direct-process 的内部 host attestation 还绑定 executable/root/argv equality、PID/times/exit、candidate snapshot digest、内部 execution nonce 与捕获的 stdout-envelope digest；这些 host 字段都不来自 child。nonce 不向 child 暴露，也不能单独认证产品语义。当前 Authority/observation chain 全部不变且无需阻断 external fulfillment 时可生成 `machine_accepted`；所有阻断 external rows fresh、valid、fulfilled 时生成 `delivery_accepted`；pending 为 `blocked_external`，failed/unable/invalid/stale/unreachable 为 `needs_work`。
 
 ## 兼容与迁移
 

@@ -155,6 +155,9 @@ export async function compileDeliveryContract(
         evidence_adapter: check.evidence_adapter,
         observation_authorities: check.observation_authorities,
         process_runtime_closure: check.process_runtime_closure,
+        completion_role: check.completion_role,
+        expected_authority_refs: check.expected_authority_refs,
+        required_evidence_capabilities: check.required_evidence_capabilities,
       })),
     }),
   );
@@ -221,6 +224,7 @@ export async function compileDeliveryContract(
     authority_materials: authorityMaterials,
     authority_revision: authorityRevision,
     claim_coverage: claims.summary,
+    acceptance_reachability: validation.acceptance_reachability!,
     semantic_fact_manifest: contract.semantic_fact_manifest,
     task: contract.task,
     risk: contract.risk,

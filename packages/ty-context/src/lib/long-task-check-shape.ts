@@ -170,7 +170,7 @@ function parseAssertions(value: unknown, label: string): DeliveryAssertionV2[] {
       item,
       itemLabel,
       ["key", "claims", "observation", "operator", "evidence_capabilities"],
-      ["criterion", "applicability_ref", "expected"],
+      ["criterion", "applicability_ref", "expected", "expected_authority_ref"],
     );
     const operator = literal(
       row.operator,
@@ -226,6 +226,14 @@ function parseAssertions(value: unknown, label: string): DeliveryAssertionV2[] {
           `${itemLabel}.evidence_capabilities[${capabilityIndex}]`,
         ),
       ),
+      ...(Object.hasOwn(row, "expected_authority_ref")
+        ? {
+            expected_authority_ref: string(
+              row.expected_authority_ref,
+              `${itemLabel}.expected_authority_ref`,
+            ),
+          }
+        : {}),
       operator,
     };
     return isBinaryAssertionOperator(operator)

@@ -173,6 +173,9 @@ test("Population V2 evaluation stays exact while machine proof remains externall
     assert.equal(omittedResult.passed, false);
     assert.equal(omittedResult.reason, "eligible_population_incomplete");
 
+    fixture.contract.task.target_profile.completion_authority =
+      "declared_authorities";
+    const check = outcome.acceptance.checks[0];
     fixture.contract.global.acceptance.external_confirmations.push({
       key: "population-observer-review",
       description:
@@ -181,6 +184,34 @@ test("Population V2 evaluation stays exact while machine proof remains externall
       kind: "functional_prerequisite",
       impact_claims: ["first.result"],
       blocks_target: true,
+      actor: {
+        id: "fixture-population-owner",
+        role: "population acceptance owner",
+        authority_kind: "human",
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-population-environment-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        {
+          key: "population-runtime-observation",
+          statement: "Capture the exact runtime population result.",
+        },
+      ],
+      obligations: [
+        {
+          key: "confirm-first-population-result",
+          claim_ref: "first.result",
+          applicability_ref: "first-root-success",
+          fact_ref: null,
+          proof_ref: null,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["target_runtime"],
+          expected_authority_ref: "contract-claim:first.result",
+          result_kind: "judgment",
+        },
+      ],
     });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);

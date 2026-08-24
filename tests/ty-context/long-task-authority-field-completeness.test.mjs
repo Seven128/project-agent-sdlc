@@ -184,7 +184,10 @@ test("every Delivery Contract authority structure has a complete field policy re
     },
     outcome_acceptance: outcome.acceptance,
     check,
-    assertion: check.positive_assertions[0],
+    assertion: {
+      ...check.positive_assertions[0],
+      expected_authority_ref: "contract-claim:first.result",
+    },
     runner: check.runner,
     population: {
       check_key: check.key,

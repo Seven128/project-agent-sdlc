@@ -3,6 +3,7 @@ import { parseCheck } from "./long-task-check-shape.js";
 import {
   array,
   boolean,
+  EVIDENCE_CAPABILITIES,
   key,
   literal,
   object,
@@ -48,12 +49,12 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
     ],
     ["context_snapshot_mode"],
   );
-  const targetProfile = object(row.target_profile, "task.target_profile", [
-    "key",
-    "description",
-    "required_state",
-    "required_target_refs",
-  ]);
+  const targetProfile = object(
+    row.target_profile,
+    "task.target_profile",
+    ["key", "description", "required_state", "required_target_refs"],
+    ["completion_authority"],
+  );
   return {
     id: key(row.id, "task.id"),
     title: string(row.title, "task.title"),
@@ -79,6 +80,13 @@ export function parseTask(value: unknown): DeliveryContractV2["task"] {
       ).map((item, index) =>
         key(item, `task.target_profile.required_target_refs[${index}]`),
       ),
+      completion_authority: Object.hasOwn(targetProfile, "completion_authority")
+        ? literal(
+            targetProfile.completion_authority,
+            ["machine_only", "declared_authorities"] as const,
+            "task.target_profile.completion_authority",
+          )
+        : "machine_only",
     },
     execution_targets: array(
       row.execution_targets,
@@ -284,14 +292,26 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
             "global.acceptance.external_confirmations",
           ).map((item, index) => {
             const label = `global.acceptance.external_confirmations[${index}]`;
-            const entry = object(item, label, [
-              "key",
-              "description",
-              "owner",
-              "kind",
-              "impact_claims",
-              "blocks_target",
-            ]);
+            const entry = object(
+              item,
+              label,
+              [
+                "key",
+                "description",
+                "owner",
+                "kind",
+                "impact_claims",
+                "blocks_target",
+              ],
+              [
+                "actor",
+                "target_ref",
+                "environment_identity",
+                "scenario",
+                "evidence_requirements",
+                "obligations",
+              ],
+            );
             return {
               key: key(entry.key, `${label}.key`),
               description: string(entry.description, `${label}.description`),
@@ -315,9 +335,146 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
                 entry.blocks_target,
                 `${label}.blocks_target`,
               ),
+              ...(Object.hasOwn(entry, "actor")
+                ? { actor: parseExternalActor(entry.actor, `${label}.actor`) }
+                : {}),
+              ...(Object.hasOwn(entry, "target_ref")
+                ? { target_ref: key(entry.target_ref, `${label}.target_ref`) }
+                : {}),
+              ...(Object.hasOwn(entry, "environment_identity")
+                ? {
+                    environment_identity: string(
+                      entry.environment_identity,
+                      `${label}.environment_identity`,
+                    ),
+                  }
+                : {}),
+              ...(Object.hasOwn(entry, "scenario")
+                ? {
+                    scenario: parseExternalScenario(
+                      entry.scenario,
+                      `${label}.scenario`,
+                    ),
+                  }
+                : {}),
+              ...(Object.hasOwn(entry, "evidence_requirements")
+                ? {
+                    evidence_requirements: parseExternalStatements(
+                      entry.evidence_requirements,
+                      `${label}.evidence_requirements`,
+                    ),
+                  }
+                : {}),
+              ...(Object.hasOwn(entry, "obligations")
+                ? {
+                    obligations: parseExternalObligations(
+                      entry.obligations,
+                      `${label}.obligations`,
+                    ),
+                  }
+                : {}),
             };
           })
         : [],
     },
   };
+}
+
+function parseExternalActor(value: unknown, label: string) {
+  const row = object(value, label, ["id", "role", "authority_kind"]);
+  return {
+    id: string(row.id, `${label}.id`),
+    role: string(row.role, `${label}.role`),
+    authority_kind: literal(
+      row.authority_kind,
+      ["human", "expert", "external_system"] as const,
+      `${label}.authority_kind`,
+    ),
+  };
+}
+
+function parseExternalScenario(value: unknown, label: string) {
+  const row = object(value, label, ["given", "when"]);
+  return {
+    given: parseExternalStatements(row.given, `${label}.given`),
+    when: parseExternalStatements(row.when, `${label}.when`),
+  };
+}
+
+function parseExternalStatements(value: unknown, label: string) {
+  return array(value, label).map((item, index) => {
+    const itemLabel = `${label}[${index}]`;
+    const row = object(item, itemLabel, ["key", "statement"]);
+    return {
+      key: key(row.key, `${itemLabel}.key`),
+      statement: string(row.statement, `${itemLabel}.statement`),
+    };
+  });
+}
+
+function parseExternalObligations(value: unknown, label: string) {
+  return array(value, label).map((item, index) => {
+    const itemLabel = `${label}[${index}]`;
+    const row = object(item, itemLabel, [
+      "key",
+      "claim_ref",
+      "applicability_ref",
+      "fact_ref",
+      "proof_ref",
+      "method",
+      "proof_surface",
+      "evidence_capabilities",
+      "expected_authority_ref",
+      "result_kind",
+    ]);
+    return {
+      key: key(row.key, `${itemLabel}.key`),
+      claim_ref: string(row.claim_ref, `${itemLabel}.claim_ref`),
+      applicability_ref: key(
+        row.applicability_ref,
+        `${itemLabel}.applicability_ref`,
+      ),
+      fact_ref:
+        row.fact_ref === null
+          ? null
+          : string(row.fact_ref, `${itemLabel}.fact_ref`),
+      proof_ref:
+        row.proof_ref === null
+          ? null
+          : string(row.proof_ref, `${itemLabel}.proof_ref`),
+      method: string(row.method, `${itemLabel}.method`),
+      proof_surface: literal(
+        row.proof_surface,
+        [
+          "ui_browser",
+          "runtime_behavior",
+          "api_contract",
+          "data_state",
+          "security_boundary",
+          "population_coverage",
+          "implementation_structure",
+        ] as const,
+        `${itemLabel}.proof_surface`,
+      ),
+      evidence_capabilities: strings(
+        row.evidence_capabilities,
+        `${itemLabel}.evidence_capabilities`,
+      ).map((capability, capabilityIndex) =>
+        literal(
+          capability,
+          EVIDENCE_CAPABILITIES,
+          `${itemLabel}.evidence_capabilities[${capabilityIndex}]`,
+        ),
+      ),
+      expected_authority_ref: string(
+        row.expected_authority_ref,
+        `${itemLabel}.expected_authority_ref`,
+      ),
+      result_kind: literal(
+        row.result_kind,
+        ["actual", "judgment"] as const,
+        `${itemLabel}.result_kind`,
+      ),
+    };
+  });
 }
