@@ -7,6 +7,7 @@ import { checkLongTaskCompletionGate } from "./long-task-hook-preflight.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import type { VerifierIdentityV2 } from "./long-task-delivery-types.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
+import { WINDOWS_JOB_SUPERVISOR_ASSET_RELATIVE_FILES } from "./long-task-windows-job-supervisor-protocol.js";
 
 const REQUIRED_ENTRYPOINTS = [
   "cli.js",
@@ -66,19 +67,29 @@ async function verifierBundleFiles(
   relativeFiles.add(
     "schemas/long-task-delivery-v2/long-task-outcomes-v2.schema.json",
   );
+  const bundleTargets = [
+    ...[...relativeFiles].map((relative) => ({
+      key: relative,
+      absolute: path.join(distRoot, ...relative.split("/")),
+    })),
+    ...WINDOWS_JOB_SUPERVISOR_ASSET_RELATIVE_FILES.map((relative) => ({
+      key: relative,
+      absolute: path.join(packageRoot, ...relative.split("/")),
+    })),
+  ];
   const rows = await Promise.all(
-    [...relativeFiles]
-      .sort()
+    bundleTargets
+      .sort((left, right) => left.key.localeCompare(right.key))
       .map(
-        async (relative) =>
+        async ({ key, absolute }) =>
           [
-            relative,
+            key,
             sha256Hex(
               await readFile(
                 await assertProtectedRepositoryFile(
                   packageRoot,
-                  path.join(distRoot, ...relative.split("/")),
-                  `package_owned_verifier:${relative}`,
+                  absolute,
+                  `package_owned_verifier:${key}`,
                 ),
               ),
             ),

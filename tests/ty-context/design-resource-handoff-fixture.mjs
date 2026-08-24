@@ -13,8 +13,7 @@ export const DESIGN_SPEC_PATH = "design/design-spec.md";
 export const DESIGN_COMPONENT_SPEC_PATH = "design/component-spec.json";
 export const DESIGN_SUPPORT_PATH = "design/supporting-notes.txt";
 export const DESIGN_FACT_MANIFEST_PATH = "design/observable-facts.json";
-export const DESIGN_FEASIBILITY_PATH =
-  "design/implementation-feasibility.json";
+export const DESIGN_FEASIBILITY_PATH = "design/implementation-feasibility.json";
 export const DESIGN_TECHNICAL_SOURCE_PATH = "src/ui-system.ts";
 export const DESIGN_RESOURCE_PATHS = [
   DESIGN_RESOURCE_PATH,
@@ -128,9 +127,24 @@ export async function writeDesignResourceHandoffFixture(
 ) {
   await mkdir(path.join(root, "design"), { recursive: true });
   const bundle = createFixtureBundle();
+  bundle.handoff = structuredClone(bundle.handoff);
+  bundle.manifest = structuredClone(bundle.manifest);
+  bundle.resourceContents = structuredClone(bundle.resourceContents);
+  const originalResourcePaths = bundle.handoff.resources.map(
+    (resource) => resource.path,
+  );
   bundle.representation = options.representation ?? "manifest_backed";
   bundles.set(bundle.handoff, bundle);
   mutate?.(bundle.handoff, bundle.manifest);
+  bundle.resourceContents = Object.fromEntries(
+    Object.entries(bundle.resourceContents).map(([resourcePath, content]) => {
+      const index = originalResourcePaths.indexOf(resourcePath);
+      return [
+        index === -1 ? resourcePath : bundle.handoff.resources[index].path,
+        content,
+      ];
+    }),
+  );
   await writeFixtureResources(root, bundle);
   if (options.feasibility)
     await addDesignResourceImplementationFeasibility(
@@ -151,13 +165,12 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
   if (bundle && options.syncManifest !== false) {
     synchronizeManifest(bundle.manifest, handoff);
     const manifestContent = `${JSON.stringify(bundle.manifest, null, 2)}\n`;
-    await writeFile(
-      path.join(root, DESIGN_FACT_MANIFEST_PATH),
-      manifestContent,
-    );
+    const manifestResourceRef =
+      handoff.targets[0].source_profile.fact_manifest_resource_ref;
     const manifestResource = handoff.resources.find(
-      (resource) => resource.key === "resource.fact-manifest",
+      (resource) => resource.key === manifestResourceRef,
     );
+    await writeFile(path.join(root, manifestResource.path), manifestContent);
     if (manifestResource) manifestResource.sha256 = sha256(manifestContent);
   }
   const handoffPath = options.handoffPath ?? DESIGN_HANDOFF_PATH;
@@ -174,6 +187,7 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
     renderDesignResourceHandoffMarkdown(
       renderedHandoff,
       options.additionalSourceItems,
+      options.primarySourceItemKey,
     ),
   );
 }
@@ -181,10 +195,11 @@ export async function writeDesignResourceHandoff(root, handoff, options = {}) {
 export function renderDesignResourceHandoffMarkdown(
   handoff,
   additionalSourceItems = [],
+  primarySourceItemKey = DESIGN_SOURCE_ITEM_KEY,
 ) {
   const sourceItems = [
     {
-      key: DESIGN_SOURCE_ITEM_KEY,
+      key: primarySourceItemKey,
       kind: "requirement",
       statement:
         "The main surface must conform to every declared atomic observable design Fact.",
@@ -357,13 +372,7 @@ export async function addDesignResourceImplementationFeasibility(
 export async function addV1FeasibilityDecisionSource(
   root,
   document,
-  {
-    recordKey,
-    itemKey,
-    itemKind,
-    roles,
-    projections,
-  },
+  { recordKey, itemKey, itemKind, roles, projections },
 ) {
   const sourcePath = `src/${recordKey}.md`;
   const body = [
@@ -774,13 +783,21 @@ function createFixtureBundle() {
 }
 
 async function writeFixtureResources(root, bundle) {
-  for (const [file, content] of Object.entries(bundle.resourceContents))
+  for (const [file, content] of Object.entries(bundle.resourceContents)) {
+    await mkdir(path.dirname(path.join(root, file)), { recursive: true });
     await writeFile(path.join(root, file), content);
+  }
   const manifestContent = `${JSON.stringify(bundle.manifest, null, 2)}\n`;
-  await writeFile(path.join(root, DESIGN_FACT_MANIFEST_PATH), manifestContent);
-  bundle.handoff.resources.find(
-    (resource) => resource.key === "resource.fact-manifest",
-  ).sha256 = sha256(manifestContent);
+  const manifestResourceRef =
+    bundle.handoff.targets[0].source_profile.fact_manifest_resource_ref;
+  const manifestResource = bundle.handoff.resources.find(
+    (resource) => resource.key === manifestResourceRef,
+  );
+  await mkdir(path.dirname(path.join(root, manifestResource.path)), {
+    recursive: true,
+  });
+  await writeFile(path.join(root, manifestResource.path), manifestContent);
+  manifestResource.sha256 = sha256(manifestContent);
 }
 
 function createConditions() {

@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 24,
-    reviewed_on: "2026-08-16",
+    max_files: 25,
+    reviewed_on: "2026-08-24",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. Level 4 is split across formal accounting, measurement integrity, sealed process acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so the 586-artifact closure, whole-process-tree measurement, external-pending boundary and direct-child promotion controls remain dynamic without a giant-fixture waiver or a duplicate formal conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. The Windows package observer now has an independent real Job Object pre-resume containment sentinel in addition to the Level 4 formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and governance boundaries; this keeps short-root and descendant escape rejection dynamic without merging authorities or adding a duplicate conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -118,6 +118,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-observer-trust-counterexamples.test.mjs",
     ["long-task", "long-task-trust"],
     "Positive control: [control:host-derived-target-runtime] reaches machine_accepted through one Harness-spawned Source-backed repository product root whose exact closure emits multiple package-observed Facts. Negative control: canonical [critical:host-derived-target-runtime] plus R4, R6, R6b, R7c, R11, R11b and R12 reject historical runtime, proxy family, wrapper argv, frozen-input mutation, Source/Contract target drift, a missing unbound repository path and an unsafe external-reference token in complete root argv. R12 binds the clean committed attack to the Compile owner diagnostic and separately proves legal-neighbor Authority freshness rejection; the real-process ROI workload does not prove this argv incident. Owner/path: executeObserverTrustWorkflow reaches long-task-source-target-continuity.ts, long-task-process-runtime-closure.ts, long-task-execution-observation.ts, long-task-check-runner.ts, long-task-process-observation.ts and Final Gate. Scope: bounded process exact/presence Actual and target_runtime require one Source-backed complete root invocation, production-bound runtime closure and host execution attestation. Does not prove: interaction_trace, state_delta, design_conformance, browser/native/device observation or absolute cross-platform process containment.",
+  ),
+  criticalSentinel(
+    "windows-job-pre-resume-containment",
+    "long-task-windows-job-supervisor.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves on real Windows that each package-observed product root is created suspended, assigned to one private Job before resume, and cannot return completed while a short-root child, grandchild, timed-out tree or output-overflow tree remains active; strict helper/result/request/stream identity, Assign failure, PowerShell 5.1/7 compatibility, parallel Job isolation and the packed helper are covered without PID/CIM fallback. Non-Windows runs retain protocol checks and skip only the host-specific executions.",
   ),
   criticalSentinel(
     "counterfactual-production-observation-impact",
@@ -327,6 +333,7 @@ export const LONG_TASK_PURE_TEST_FILES = Object.freeze([
   "long-task-real-capability-replay.test.mjs",
   "long-task-semantic-drift-closure.test.mjs",
   "long-task-structural-closure-cost.test.mjs",
+  "long-task-verifier-identity.test.mjs",
 ]);
 
 export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
@@ -345,6 +352,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-corrupt-state-abandon.test.mjs",
   "long-task-counterfactual-integrity.test.mjs",
   "long-task-direct-process-observer.test.mjs",
+  "long-task-windows-job-supervisor.test.mjs",
   "long-task-evidence-kernel.test.mjs",
   "long-task-evidence-sensitivity-policy.test.mjs",
   "long-task-evidence-sensitivity-surfaces.test.mjs",
@@ -628,12 +636,12 @@ function assertIsolationPolicy() {
   if (new Set(classified).size !== classified.length)
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
-    LONG_TASK_PURE_TEST_FILES.length !== 18 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 56 ||
+    LONG_TASK_PURE_TEST_FILES.length !== 19 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 57 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 18/56/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 19/57/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 

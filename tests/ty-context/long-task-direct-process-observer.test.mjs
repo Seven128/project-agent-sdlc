@@ -13,35 +13,12 @@ import test from "node:test";
 import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
 import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
 import { decodeProductObservationEnvelope } from "../../packages/ty-context/dist/lib/long-task-process-observation.js";
-import { processInstanceMatches } from "../../packages/ty-context/dist/lib/long-task-process-tree.js";
 import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const SNAPSHOT_SHA256 = "a".repeat(64);
-
-test("process-tree cleanup rejects a reused PID with a different creation identity", () => {
-  const observed = { pid: 4242, start_identity: "638600000000000000" };
-  assert.equal(
-    processInstanceMatches(observed, structuredClone(observed)),
-    true,
-  );
-  assert.equal(
-    processInstanceMatches(observed, {
-      pid: observed.pid,
-      start_identity: "638600000000000001",
-    }),
-    false,
-  );
-  assert.equal(
-    processInstanceMatches(observed, {
-      pid: observed.pid + 1,
-      start_identity: observed.start_identity,
-    }),
-    false,
-  );
-});
 
 test("direct process observation captures one root stdout envelope and host attestation", async () => {
   const fixture = await createProcessFixture();
@@ -56,7 +33,12 @@ test("direct process observation captures one root stdout envelope and host atte
     await assertRetryAndProcessTreeLifecycle(fixture, authorities, check);
     await assertDirectRootMismatchRejected(fixture, authorities, check);
   } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+    await rm(fixture.root, {
+      recursive: true,
+      force: true,
+      maxRetries: 10,
+      retryDelay: 100,
+    });
   }
 });
 
@@ -74,7 +56,7 @@ async function assertValidProcessObservation(fixture, authorities, check) {
     executionContext(check),
   );
 
-  assert.equal(valid.execution_status, "completed");
+  assert.equal(valid.execution_status, "completed", JSON.stringify(valid));
   assert.equal(valid.exit_code, 0);
   assert.deepEqual(valid.observations, {});
   assert.equal(valid.package_observations.length, 2);
@@ -252,6 +234,7 @@ async function assertRetryAndProcessTreeLifecycle(fixture, authorities, check) {
 
   const descendantLog = path.join(fixture.root, "descendant-attempts.jsonl");
   const descendant = structuredClone(check);
+  if (process.platform === "win32") descendant.runner.timeout_ms = 300;
   const descendantAuthorities = structuredClone(authorities);
   setProcessInvocation(descendant, descendantAuthorities, [
     "product.mjs",
@@ -265,12 +248,14 @@ async function assertRetryAndProcessTreeLifecycle(fixture, authorities, check) {
   );
   assert.equal(
     descendantResult.execution_status,
-    "invalid_evidence",
+    process.platform === "win32" ? "infrastructure_error" : "invalid_evidence",
     JSON.stringify(descendantResult),
   );
   assert.equal(
     descendantResult.error,
-    "process_observer_descendant_process_alive",
+    process.platform === "win32"
+      ? "command_timeout"
+      : "process_observer_descendant_process_alive",
   );
   const descendantPid = (await attemptRows(descendantLog)).at(-1).child_pid;
   await assertProcessGone(descendantPid);
@@ -296,6 +281,68 @@ async function assertRetryAndProcessTreeLifecycle(fixture, authorities, check) {
   const timeoutAttempts = await attemptRows(timeoutLog);
   await assertProcessGone(timeoutAttempts[0].root_pid);
   await assertProcessGone(timeoutAttempts.at(-1).child_pid);
+
+  const containmentFailures = [];
+  for (const scenario of [
+    { mode: "short-descendant", expectedRows: 2 },
+    { mode: "short-grandchild", expectedRows: 3 },
+  ])
+    try {
+      await assertShortRootDescendantContainment(
+        fixture,
+        authorities,
+        check,
+        scenario,
+      );
+    } catch (error) {
+      containmentFailures.push(error);
+    }
+  if (containmentFailures.length)
+    throw new AggregateError(
+      containmentFailures,
+      "short-lived root descendant containment failed",
+    );
+}
+
+async function assertShortRootDescendantContainment(
+  fixture,
+  authorities,
+  check,
+  { mode, expectedRows },
+) {
+  const log = path.join(fixture.root, `${mode}.jsonl`);
+  const candidate = structuredClone(check);
+  candidate.runner.timeout_ms = 300;
+  const candidateAuthorities = structuredClone(authorities);
+  setProcessInvocation(candidate, candidateAuthorities, [
+    "product.mjs",
+    mode,
+    path.basename(log),
+  ]);
+  const result = await executeCheckRunner(
+    candidate,
+    fixture.root,
+    executionContext(candidate, candidateAuthorities),
+  );
+  const rows = await waitForAttemptRows(log, expectedRows);
+  const spawnedPids = rows
+    .flatMap((row) => [row.child_pid, row.grandchild_pid])
+    .filter((pid) => Number.isSafeInteger(pid) && pid > 0);
+  try {
+    assert.notEqual(
+      result.execution_status,
+      "completed",
+      `${mode} escaped containment: ${JSON.stringify(result)}`,
+    );
+    assert.match(
+      result.error ?? "",
+      /command_timeout|process_observer_descendant_process_alive/u,
+    );
+    for (const pid of spawnedPids) await assertProcessGone(pid);
+  } finally {
+    await Promise.all(spawnedPids.map((pid) => forceTerminateProcess(pid)));
+    await Promise.all(spawnedPids.map((pid) => assertProcessGone(pid)));
+  }
 }
 
 async function assertDirectRootMismatchRejected(fixture, authorities, check) {
@@ -498,6 +545,17 @@ if (mode === "descendant" || mode === "timeout-tree") {
   }
   if (mode === "timeout-tree") await new Promise(() => {});
 }
+if (mode === "short-descendant" || mode === "short-grandchild") {
+  const child = spawn(
+    process.execPath,
+    mode === "short-grandchild"
+      ? ["grandchild.mjs", log]
+      : ["-e", "setTimeout(() => {}, 60_000)"],
+    { stdio: "ignore", detached: true },
+  );
+  appendFileSync(log, JSON.stringify({ child_pid: child.pid }) + "\\n");
+  child.unref();
+}
 if (mode === "retry" && prior === 0) {
   console.log(JSON.stringify({ schema_version: "invalid", observations: {} }));
   process.exit(0);
@@ -507,6 +565,19 @@ const observations = mode === "wrong-identity"
   : { "fact/a": { accepted: true }, "fact~b": ["one", "two"] };
 console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 if (mode === "nonzero") process.exit(7);
+`,
+  );
+  await writeFile(
+    path.join(root, "grandchild.mjs"),
+    `import { spawn } from "node:child_process";
+import { appendFileSync } from "node:fs";
+const [log] = process.argv.slice(2);
+const grandchild = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60_000)"], {
+  stdio: "ignore",
+  detached: true,
+});
+appendFileSync(log, JSON.stringify({ grandchild_pid: grandchild.pid }) + "\\n");
+grandchild.unref();
 `,
   );
   return { root, target };
@@ -667,6 +738,28 @@ async function attemptRows(file) {
     .split(/\r?\n/u)
     .filter(Boolean)
     .map((line) => JSON.parse(line));
+}
+
+async function waitForAttemptRows(file, expectedRows) {
+  const deadline = Date.now() + 2_000;
+  while (Date.now() < deadline) {
+    try {
+      const rows = await attemptRows(file);
+      if (rows.length >= expectedRows) return rows;
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return attemptRows(file);
+}
+
+async function forceTerminateProcess(pid) {
+  try {
+    process.kill(pid, "SIGKILL");
+  } catch (error) {
+    if (error?.code !== "ESRCH") throw error;
+  }
 }
 
 async function assertProcessGone(pid) {
