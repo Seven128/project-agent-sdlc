@@ -11,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  CRITICAL_TEST_SENTINELS,
   LONG_TASK_TRUST_TEST_FILES,
   criticalSentinelsForSuite,
   resolveLongTaskIsolatedConcurrency,
@@ -45,6 +46,9 @@ const availableNames = (await readdir(testRoot))
   .sort();
 const names = selectNames(availableNames, suite);
 const files = names.map((name) => path.join(testRoot, name));
+const registeredCriticalSentinels = CRITICAL_TEST_SENTINELS.filter((entry) =>
+  entry.required_suites.includes(suite),
+);
 const requiredCriticalSentinels = criticalSentinelsForSuite(suite);
 const wallTimeBudgetMs = resolveSuiteWallTimeBudgetMs(suite);
 const forwardedOptions = process.argv.slice(3);
@@ -130,6 +134,7 @@ const timing = buildFileTimingReport({
   wallTimeMs,
   execution,
   events,
+  registeredCriticalSentinels,
   requiredCriticalSentinels,
   testStatus: completionFailed ? "failed" : "passed",
   wallTimeBudgetMs,

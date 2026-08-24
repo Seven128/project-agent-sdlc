@@ -17,6 +17,7 @@ export function buildFileTimingReport({
   execution,
   events,
   requiredCriticalSentinels = [],
+  registeredCriticalSentinels = requiredCriticalSentinels,
   testStatus = null,
   wallTimeBudgetMs = null,
   wallTimeBudgetStatus = "not_configured",
@@ -55,16 +56,23 @@ export function buildFileTimingReport({
     });
   }
 
-  const files = selected.map((file) => finalizeFile(stateByFile.get(fileKey(file))));
+  const files = selected.map((file) =>
+    finalizeFile(stateByFile.get(fileKey(file))),
+  );
   const counts = countStatuses(files.flatMap((entry) => entry.tests));
-  const missingFileCount = files.filter((entry) => entry.status === "missing").length;
+  const missingFileCount = files.filter(
+    (entry) => entry.status === "missing",
+  ).length;
   const criticalSentinelCoverage = buildCriticalSentinelCoverage(
     files,
+    registeredCriticalSentinels,
     requiredCriticalSentinels,
   );
   const executionStatus =
     testStatus ??
-    (files.some((entry) => entry.status === "failed" || entry.status === "cancelled")
+    (files.some(
+      (entry) => entry.status === "failed" || entry.status === "cancelled",
+    )
       ? "failed"
       : missingFileCount > 0
         ? "failed"
@@ -120,10 +128,20 @@ export function buildFileTimingReport({
   };
 }
 
-function buildCriticalSentinelCoverage(files, requiredSentinels) {
-  const required = new Map(
-    requiredSentinels.map((entry) => [entry.id, entry]),
+function buildCriticalSentinelCoverage(
+  files,
+  registeredSentinels,
+  requiredSentinels,
+) {
+  const registered = new Map(
+    registeredSentinels.map((entry) => [entry.id, entry]),
   );
+  const required = new Map(requiredSentinels.map((entry) => [entry.id, entry]));
+  for (const id of required.keys())
+    if (!registered.has(id))
+      throw new Error(
+        `Applicable critical sentinel ${id} is absent from the suite registry.`,
+      );
   const occurrences = new Map();
   for (const file of files) {
     for (const record of file.tests) {
@@ -135,10 +153,18 @@ function buildCriticalSentinelCoverage(files, requiredSentinels) {
     }
   }
 
+  const registeredIds = [...registered.keys()].sort();
   const requiredIds = [...required.keys()].sort();
-  const observedIds = [...occurrences.keys()].sort();
+  const nonApplicableIds = registeredIds.filter((id) => !required.has(id));
+  const nonApplicable = new Set(nonApplicableIds);
+  const nonApplicableObservedIds = nonApplicableIds.filter((id) =>
+    occurrences.has(id),
+  );
+  const observedIds = [...occurrences.keys()]
+    .filter((id) => !nonApplicable.has(id))
+    .sort();
   const missingIds = requiredIds.filter((id) => !occurrences.has(id));
-  const unexpectedIds = observedIds.filter((id) => !required.has(id));
+  const unexpectedIds = observedIds.filter((id) => !registered.has(id));
   const duplicateIds = observedIds.filter(
     (id) => (occurrences.get(id)?.length ?? 0) !== 1,
   );
@@ -160,8 +186,12 @@ function buildCriticalSentinelCoverage(files, requiredSentinels) {
       : "failed";
   return {
     status,
+    registered_count: registeredIds.length,
+    registered_ids: registeredIds,
     required_count: requiredIds.length,
     required_ids: requiredIds,
+    non_applicable_ids: nonApplicableIds,
+    non_applicable_observed_ids: nonApplicableObservedIds,
     observed_ids: observedIds,
     missing_ids: missingIds,
     unexpected_ids: unexpectedIds,
@@ -173,9 +203,7 @@ function buildCriticalSentinelCoverage(files, requiredSentinels) {
 
 function criticalTags(name) {
   return [
-    ...String(name).matchAll(
-      /\[critical:([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\]/gu,
-    ),
+    ...String(name).matchAll(/\[critical:([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\]/gu),
   ].map((match) => match[1]);
 }
 
@@ -198,9 +226,7 @@ function serializeEvent(event) {
           duration_ms: numericDuration(data.details?.duration_ms),
           type: data.details?.type ?? null,
           failure_type: data.details?.error?.failureType ?? null,
-          failure_message: boundedFailureMessage(
-            data.details?.error?.message,
-          ),
+          failure_message: boundedFailureMessage(data.details?.error?.message),
         },
       },
     };
@@ -268,7 +294,8 @@ function selectedEventFile(data, stateByFile) {
 
 function resolveCandidate(candidate) {
   try {
-    if (candidate.startsWith("file:")) return path.resolve(fileURLToPath(candidate));
+    if (candidate.startsWith("file:"))
+      return path.resolve(fileURLToPath(candidate));
     if (path.isAbsolute(candidate)) return path.resolve(candidate);
   } catch {}
   return null;
@@ -285,7 +312,9 @@ function isFileWrapper(data, selectedFile) {
 function terminalStatus(event) {
   if (event.data?.skip || event.data?.todo) return "skipped";
   if (event.type === "test:pass") return "passed";
-  return String(event.data?.details?.failure_type ?? "").toLowerCase().includes("cancel")
+  return String(event.data?.details?.failure_type ?? "")
+    .toLowerCase()
+    .includes("cancel")
     ? "cancelled"
     : "failed";
 }
