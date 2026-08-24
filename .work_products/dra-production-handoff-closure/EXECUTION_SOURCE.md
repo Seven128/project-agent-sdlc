@@ -1024,3 +1024,1337 @@ Context Delta: required
 ```
 
 This amendment is complete only when the prior Long-Task false-completion paths are actually rejected without turning DRA into a technical architecture selector or production acceptance system.
+
+## 18. S5 controlling final amendment — final production-handoff closure
+
+S5 is the final controlling amendment for this delivery. It is appended under the native Goal and default Workflow Contract; it does not activate `long-task-workflow`, create a third plan, or become Design/Technical Authority, Contract, Gate, state, Registry, readiness evidence or acceptance evidence.
+
+- immutable source: `attachment-provenance://452528f5-e136-4b6a-a205-88532d3b9480/pasted-text.txt`
+- source identity at Goal creation: 1320 lines; SHA-256 `1BDAE56602A375EDBCD9845368DD2834B344786AC5F83ACEAE115E623EB64713`
+- fixed implementation baseline: commit `749aef74525368f63f45dbb24890b2547131c0b5`; tree `bcf3b2cbc878b980177a57ed5879d20b83fb453a`; package `project-tiny-context-harness@0.8.17`
+- authority: current user instruction, then this exact S5 block, then S4/S3/S2/S1 where not superseded
+
+The controlling amendment follows verbatim between the provenance markers.
+
+<!-- S5-CONTROLLING-AMENDMENT:BEGIN -->
+# DRA Production-Handoff Closure 最终补开发方案
+
+## 一、结论与固定范围
+
+本次以当前 `main` 的：
+
+```text
+base: 749aef74525368f63f45dbb24890b2547131c0b5
+tree: bcf3b2cbc878b980177a57ed5879d20b83fb453a
+package: project-tiny-context-harness@0.8.17
+```
+
+为固定开发基线。当前提交仍是 `c46e1f59` 的单一直接后继，没有混入其他提交。 当前包版本为 `0.8.17`。
+
+这次只处理：
+
+1. Binding 内全部路径对 owner roots 的严格包含关系；
+2. unresolved substrate observation 与 blocker 的精确因果绑定；
+3. blocker-only target 的完整 Long-Task Compile 和 Final Gate 路径；
+4. 技术时间成本被误判为视觉值的问题；
+5. 与上述四项同源的 planned owner、mixed target、legacy handoff 和完整主链回归。
+
+不再次改造 DRA 主架构。
+
+## Single Goal
+
+> 在不新增第二套 Design/Technical Authority、生产 Binding 类型、Contract 字段族、Claim 类型、Gate、Registry、状态机或工作流的前提下，使正式设计 handoff 中的每一条实际生产 Binding 都完全落在真实 owner roots 内，使每个 unresolved substrate observation 精确进入所有受影响 cell 的 blocker，并使 blocker-only target 能通过完整 Long-Task Compile 进入现有阻断完成边界，同时修复技术时间成本的 must-allow 误阻。
+
+---
+
+# 二、开始前的硬条件
+
+开发开始前重新 fetch，并报告：
+
+```text
+HEAD
+main
+origin/main
+merge-base
+ahead/behind
+working tree
+package version
+npm 0.8.17 是否已经发布
+GitHub v0.8.17 tag / Release 是否存在
+```
+
+只有以下条件同时成立才按本方案继续：
+
+```text
+当前 main 完整包含 749aef74525368f63f45dbb24890b2547131c0b5
+working tree 无无关修改
+0.8.17 尚未 npm publish
+v0.8.17 尚未成为已发布协议
+```
+
+如果 `0.8.17` 已经发布，不能原地改变 `design-resource-implementation-feasibility-v1` 的严格含义；应停止本次原地修订并切换到兼容升级方案。根据当前交接事实，本次预期继续保持 `0.8.17`，不额外增加版本。
+
+继续使用现有：
+
+```text
+.work_products/dra-production-handoff-closure/EXECUTION_SOURCE.md
+.work_products/dra-production-handoff-closure/RECOVERY_INDEX.md
+```
+
+在 `EXECUTION_SOURCE.md` 追加一次最终 Amendment，不创建第三份并行开发方案或新的 Authority。
+
+---
+
+# 三、不可改变的架构边界
+
+补开发完成后仍保持：
+
+```text
+DRA
+→ canonical design resources
+  + ordinary feasibility Source
+→ preflight 证明输入闭合
+→ Default / Long-Task 选择实际实现
+→ 项目原生检查证明当前生产候选
+```
+
+必须保留：
+
+* canonical design resources 独占精确视觉值；
+* feasibility 仍然是普通 Source；
+* DRA 只枚举可实施候选和 blocker；
+* 实际 owner 仍由现有 `technical.bindings` 与 `surface_bindings` 持有；
+* Default Workflow 仍由 Architecture Deliberation 选择实现；
+* Long-Task 仍只有一个 Source/Contract/Authority/Final Gate；
+* Preflight 不证明生产复用、生产渲染、测试通过或发布就绪；
+* 不新增 `selected_realization_ref` 或 feasibility 专用 Contract Binding。
+
+当前实现已经通过现有 `technical.bindings`、`surface_bindings` 和 design handoff consumer 接入 Long-Task，本次只补强派生验证，不改 Contract 模型。
+
+---
+
+# 四、P0-1：Binding 的每一条路径都必须属于 owner roots
+
+## 1. 当前错误
+
+当前实现把 Binding 的：
+
+```text
+target
++
+carrier_paths
+```
+
+放在一起，只要其中任意一条路径看起来位于 root 内，就认为整个 Binding 合法；通配符判断也只是截取第一个通配符前的静态前缀。
+
+这会允许：
+
+```yaml
+target: src/components/Button.tsx
+carrier_paths:
+  - src/components/Button.tsx
+  - src/features/order/OrderButtonOverride.tsx
+```
+
+在 `component_owner_roots = ["src/components"]` 时通过。
+
+项目已有 `proveRepositoryPatternSubset`，能够明确返回：
+
+```text
+proven_subset
+not_subset
+unknown
+```
+
+应直接复用，而不是继续维护简化前缀算法。
+
+## 2. 新验证定理
+
+对每个 component 或 route Binding：
+
+```text
+Binding 的每一个实际路径 carrier
+都必须被证明是至少一个 observed owner root 的子集
+```
+
+即：
+
+```text
+∀ path ∈ bindingPathUniverse:
+  ∃ root ∈ observedRoots:
+    proveRepositoryPatternSubset(path, root/**) = proven_subset
+```
+
+`not_subset` 和 `unknown` 都 fail closed。
+
+## 3. 按 Binding kind 处理
+
+### `kind: file`
+
+需要检查：
+
+```text
+binding.target
+每一条 binding.carrier_paths
+```
+
+`target` 作为精确 repository path，`carrier_paths` 作为 repository patterns。
+
+### `kind: path_glob`
+
+需要检查：
+
+```text
+binding.target pattern
+每一条 binding.carrier_paths pattern
+```
+
+### `kind: verified`
+
+`target` 是逻辑标识，不作为路径检查。
+
+但：
+
+```text
+每一条 carrier_paths
+```
+
+仍必须是 owner root 的 `proven_subset`。
+
+### `existence: planned`
+
+planned 不豁免路径约束。
+
+planned Binding 必须声明至少一条计划中的 repository carrier pattern，并且所有 carrier 都在 observed component root 内。不能继续以空 `carrier_paths` 作为完整 Long-Task 正向路径。
+
+## 4. Root disposition 规则
+
+### Component roots
+
+正式 target 中只要存在任意 candidate-bearing cell：
+
+```text
+component_owner_roots 必须为 observed
+value.kind 必须为 repository_paths
+paths 必须非空且均为当前真实 no-follow 目录
+```
+
+不能使用：
+
+```text
+not_applicable
+decision_required
+unavailable
+```
+
+同时又声明完整可实施 candidate。
+
+如果 component roots 尚未确定，该 cell 必须进入 blocker 路线。
+
+### Route roots
+
+任何进入 Long-Task `surface_binding` 的 target 都有现有 `route_binding_ref`，因此 Long-Task 消费时：
+
+```text
+route_owner_roots 必须为 observed 且非空
+```
+
+DRA 单独生成不带 route 语义的 component workbench 时仍可使用 `not_applicable`；但它不能在缺少 route authority 时被包装成已闭合的 Long-Task product surface。
+
+### Blocker-only component target
+
+当所有 cell 都是 blocker-only 且没有 component Binding 时，允许 `component_owner_roots` 保持 unresolved，并由对应 blocker 承载。
+
+但 route Binding 和 route roots 仍须闭合。
+
+## 5. 删除旧算法
+
+删除或停止使用：
+
+```text
+pathOrPatternWithinRoots
+staticPrefix
+.some(any-path-inside)
+```
+
+统一改成一个 owner-local helper，例如：
+
+```ts
+proveBindingPathUniverseWithinObservedRoots(...)
+```
+
+它返回首个不可证明路径及 `proveRepositoryPatternSubset` 的原因，方便失败定位。
+
+## 6. 必须冻结的反例
+
+### Must-block
+
+```text
+target inside + one carrier outside
+one carrier inside + one carrier outside
+target outside + carrier inside
+planned binding carrier outside
+verified binding carrier outside
+src/components*/** against src/components
+src/components-legacy/** against src/components
+pattern containment = unknown
+candidate-bearing cell + component roots not_applicable
+Long-Task route binding + route roots not_applicable
+```
+
+### Must-allow
+
+```text
+src/components/Button.tsx against src/components/**
+src/components/** against src/components/**
+多个 carrier 全部位于同一 root
+多个 carrier 分别位于多个已声明 root
+planned carrier 位于 observed component root
+verified binding 的逻辑 target + 合法 carrier
+共享 component binding 被多个明确允许它的 cell 使用
+```
+
+---
+
+# 五、P0-2：Unresolved observation 必须精确绑定到相关 blocker
+
+## 1. 当前错误
+
+当前验证只检查：
+
+```text
+存在 unresolved observation
+且整个文档一个 blocker 都没有
+→ 失败
+```
+
+只要任意 cell 中存在任意 blocker，所有 unresolved observation 就会被视为已处理。
+
+当前 blocker 也没有保存它具体承载了哪个 substrate observation。
+
+## 2. 扩展 blocker 严格结构
+
+在 `DesignResourceImplementationFeasibilityBlockerV1` 中增加必填字段：
+
+```yaml
+substrate_observation_refs:
+  - platform
+  - ui_system
+```
+
+该数组：
+
+* 可以为空，用于与 substrate observation 无关的普通技术 blocker；
+* 必须唯一；
+* 使用现有 observation kind 枚举；
+* 解析后按 canonical 顺序归一化。
+
+由于 `0.8.17` 尚未发布，本次直接修正未发布的 `design-resource-implementation-feasibility-v1`，不为了临时内部版本新增 V2。
+
+## 3. Source Item projection 同步扩展
+
+`feasibility_blocker` projection 增加同一集合：
+
+```html
+<!-- ty-design-feasibility-decision-v1 {
+  "schema_version":"design-resource-feasibility-decision-v1",
+  "mode":"feasibility_blocker",
+  "target_ref":"target.main",
+  "component_family_ref":"family.button",
+  "condition_scope_sha256":"...",
+  "blocker_ref":"blocker.ui-system",
+  "substrate_observation_refs":["ui_system"]
+} -->
+```
+
+严格要求：
+
+```text
+blocker JSON 中的 substrate_observation_refs
+=
+marked Source Item projection 中的 substrate_observation_refs
+```
+
+不能只靠 blocker 描述文字推断。
+
+当前 strict projection parser、Source Item digest 和 exact canonical comparison 已经存在，本次只扩展 `feasibility_blocker` mode 的精确字段。
+
+## 4. Observation 的影响范围
+
+本次不增加 observation applicability 子系统。
+
+当前六类 substrate observation 都按 target-wide 技术事实处理：
+
+```text
+platform
+framework_runtime
+ui_system
+token_theming_adapter
+component_owner_roots
+route_owner_roots
+```
+
+因此，对于每个 disposition 为：
+
+```text
+decision_required
+unavailable
+```
+
+的 observation，必须满足：
+
+```text
+每一个 material family × condition cell
+至少引用一个明确包含该 observation kind 的 blocker
+```
+
+这是保守但确定的规则，避免再增加一套 observation-to-cell 作用域 Registry。
+
+如果以后有真实案例证明某项 substrate observation 只影响部分 family，再以独立反例设计更窄 schema；本次不提前扩张。
+
+## 5. 完整校验规则
+
+### 每个 unresolved observation
+
+```text
+必须被每个 material cell 的至少一个 blocker 覆盖
+```
+
+否则：
+
+```text
+unresolved_substrate_observation_cell_uncovered
+```
+
+### 每个 blocker 中的 observation ref
+
+其引用的 observation 当前必须是：
+
+```text
+decision_required
+或
+unavailable
+```
+
+如果 observation 已变成：
+
+```text
+observed
+not_applicable
+```
+
+则 blocker 已过期，必须失败：
+
+```text
+blocker_substrate_observation_not_unresolved
+```
+
+### 无 component family 的 target
+
+若 target 没有任何 component family，却存在 unresolved target-wide substrate observation，则当前 family-scoped blocker 模型无法表达其影响。
+
+必须 fail closed：
+
+```text
+unresolved_substrate_without_family_carrier
+```
+
+不能因为 cell 集合为空而真空通过。
+
+### 一个 blocker 可以覆盖多个 observation
+
+允许：
+
+```yaml
+substrate_observation_refs:
+  - ui_system
+  - component_owner_roots
+```
+
+但 projection 和当前 unresolved 集合必须精确一致。
+
+## 6. 必须冻结的反例
+
+### Must-block
+
+```text
+platform unavailable，但只有 route-owner blocker
+unresolved observation 只在一个 condition cell 被覆盖
+一个 family 被覆盖，另一个 family 未覆盖
+blocker 引用 observed observation
+blocker 引用 not_applicable observation
+projection observation set 与 blocker 不一致
+重复 observation ref
+没有 component family，但存在 unresolved observation
+```
+
+### Must-allow
+
+```text
+一个 blocker 同时承载多个 unresolved observations
+每个 cell 使用独立 blocker 承载同一个 target-wide observation
+普通非-substrate blocker 使用空 observation_refs
+candidate + blocker 并存且 blocker 因果绑定完整
+多个 unresolved observations 被所有 cell 完整覆盖
+```
+
+---
+
+# 六、P1：Blocker-only 必须走通完整 Long-Task Compile 与 Final Gate
+
+## 1. 当前局部闭合问题
+
+当前 feasibility consumer 已能识别 blocker-only cell，并跳过 realization 选择。
+
+但通用 UI Surface 结构校验仍无条件要求：
+
+```text
+component_binding_refs 非空
+```
+
+而结构校验在 design handoff 的 Source-aware 验证之前运行。
+
+因此不能再只测试 `createLongTaskDesignHandoffConsumer`；必须让完整 `compileDeliveryContract` 路径成立。
+
+## 2. 不修改 Contract Schema
+
+仍然使用：
+
+```yaml
+component_binding_refs: []
+```
+
+表示当前确实没有可声明的生产 component owner。
+
+不增加：
+
+```text
+blocked_component_binding
+placeholder_binding
+pending_binding
+selected_realization
+```
+
+## 3. 增加仅限验证器调用期的 deferred exception
+
+给 UI Surface 结构验证增加一个非持久化调用参数，例如：
+
+```ts
+allowDeferredDesignComponentBindingClosure: boolean
+```
+
+规则：
+
+### 默认调用
+
+`validateDeliveryContractStructure()` 默认仍然严格：
+
+```text
+component_binding_refs 为空
+→ 失败
+```
+
+### 完整 Activation / Compile 调用
+
+`validateContractForActivation()` 在同一完整验证调用中允许：
+
+```text
+surface 有 design_targets
++
+component_binding_refs 为空
+→ 暂时延后到 design feasibility validator
+```
+
+这只是同一 Compile 内的验证顺序协调，不是状态或新工作流。
+
+`collect` 与 `fail_fast` 两条路径必须使用同一设置。
+
+## 4. Source-aware 最终闭合
+
+在 `validateLongTaskDesignFeasibilityBindings()` 中：
+
+### 无 feasibility document
+
+```text
+component_binding_refs 为空
+→ 必须失败
+```
+
+错误：
+
+```text
+componentless_surface_requires_blocker_only_feasibility
+```
+
+因此 legacy handoff 不能利用 deferred exception。
+
+### 有 candidate-bearing cell
+
+```text
+component_binding_refs 必须非空
+每个 candidate-bearing cell 必须唯一推导 realization
+所有 component binding refs 必须反向归属
+```
+
+### 所有 cell 都是 blocker-only
+
+允许：
+
+```text
+component_binding_refs = []
+```
+
+但必须同时满足：
+
+```text
+所有 cell 都没有 feasible_realizations
+所有 cell 至少一个 blocker
+所有 blocker 精确绑定 Source Item projection
+所有 blocker 进入 decision_required
+或 target-blocking External Confirmation
+route binding 仍存在并位于 observed route roots
+```
+
+### 部分 candidate-bearing、部分 blocker-only
+
+```text
+component_binding_refs 仍必须存在
+candidate cells 完成唯一 realization 推导
+blocker-only cells 完成阻断边界
+```
+
+### blocker-only 却声明 component Binding
+
+由于没有 candidate 可以消费它，继续通过现有：
+
+```text
+feasibility_component_binding_unattributed
+```
+
+失败，防止虚假 production owner。
+
+## 5. Final Gate 路径
+
+至少建立三个完整集成用例。
+
+### External Confirmation
+
+```text
+blocker-only feasibility
++
+component_binding_refs = []
++
+精确 external_confirmation Source Claim
++
+blocks_target = true
++
+impact_claims 覆盖当前 target
+```
+
+要求：
+
+```text
+compileDeliveryContract 成功
+Final Gate 不能 machine_accepted
+保留现有 external-pending / externally pending 结果
+```
+
+### Decision required
+
+```text
+blocker-only
++
+精确 decision Source Claim
+```
+
+要求：
+
+```text
+Compile 直接失败
+```
+
+继续复用现有 `decision_required` 语义。
+
+### 缺少真实阻断边界
+
+以下全部必须 Compile 失败：
+
+```text
+没有 Source Claim
+ordinary claim 代替 blocker disposition
+External Confirmation 不存在
+blocks_target = false
+impact_claims 不包含当前 target
+Source Item digest 过期
+不相关 Source Item
+```
+
+## 6. Planned owner 完整 Compile 回归
+
+当前 planned owner 正向测试不能只调用局部 consumer。
+
+增加完整路径：
+
+```text
+planned logical owner
++
+精确 planned_owner_authorization
++
+existing task.source_paths / exact Source Claim
++
+planned technical binding
++
+至少一个位于 observed component root 内的 planned carrier pattern
+→ compileDeliveryContract 成功
+```
+
+同时增加：
+
+```text
+planned binding carrier_paths 为空
+planned carrier 位于 root 外
+planned carrier pattern containment unknown
+```
+
+的失败测试。
+
+---
+
+# 七、P2：区分设计动效时长与合法技术成本
+
+## 1. 当前问题
+
+统一视觉值扫描已经覆盖全部自由文本，但当前通用单位正则把任何：
+
+```text
+200ms
+2s
+```
+
+都当成视觉值。
+
+这会误阻：
+
+```text
+Build adds 2s.
+Bundle generation adds 120ms.
+```
+
+## 2. 分离两类规则
+
+### 永久禁止的精确视觉值
+
+继续无条件阻断：
+
+```text
+Hex / RGB / HSL 等颜色
+px / rem / em / vh / vw / deg 等视觉尺寸
+CSS property declaration
+CSS custom property
+字体、圆角、间距、阴影、透明度等精确表达
+```
+
+从通用 dimension regex 中移除：
+
+```text
+ms
+s
+```
+
+### Motion duration 语义规则
+
+新增确定性上下文判断。
+
+当时间单位附近出现以下语义时阻断：
+
+```text
+animation
+transition
+motion
+duration
+delay
+easing
+timeline
+keyframe
+fade
+spring
+stagger
+enter
+exit
+hover
+press
+```
+
+双向检查：
+
+```text
+motion keyword ... 200ms
+200ms ... motion keyword
+```
+
+### 技术时间成本允许集
+
+当时间单位附近明确出现以下语义时允许：
+
+```text
+build
+compile
+bundle
+generation
+CI
+test
+startup
+initialization
+latency
+timeout
+network
+benchmark
+runtime cost
+render cost
+```
+
+### 无上下文的裸时间值
+
+例如：
+
+```text
+200ms
+takes 2s
+```
+
+无法判断是否为设计动效值，继续 fail closed。
+
+## 3. Must-block
+
+```text
+Animation lasts 200ms
+Transition delay is 0.2s
+Use a 150ms fade
+200ms ease-out
+duration: 200ms
+transition: opacity 200ms
+bare "200ms"
+```
+
+## 4. Must-allow
+
+```text
+Build adds 2s
+Bundle generation adds 120ms
+CI smoke adds 3s
+Runtime initialization adds 450ms
+Network timeout is 2s
+Benchmark execution takes 800ms
+```
+
+---
+
+# 八、相邻边界一次性补齐
+
+为了避免下一轮继续出现“局部功能实现、真实主链未验证”，本次还必须冻结以下相邻反例。
+
+## 1. Mixed targets
+
+同一个 surface 中：
+
+```text
+target A = blocker-only
+target B = candidate-bearing
+```
+
+当 `component_binding_refs = []` 时，必须因为 target B 失败。
+
+只有所有绑定到该 surface 的 implementation design targets 都满足 blocker-only closure 时，才允许 componentless surface。
+
+## 2. Legacy handoff
+
+```text
+legacy handoff
+technical feasibility not declared
+component_binding_refs = []
+```
+
+必须 Compile 失败。
+
+Legacy compatibility 只保证历史 handoff 可读取，不赋予 blocker-only 或 feasibility 能力。
+
+## 3. Candidate + blocker
+
+同一个 cell 同时存在：
+
+```text
+feasible_realizations
+blocker_refs
+```
+
+必须同时完成：
+
+```text
+唯一 realization 推导
++
+blocker completion boundary
+```
+
+任何一边都不能替代另一边。
+
+## 4. Route N/A
+
+DRA 预览或独立 component resource 可以声明 route 不适用。
+
+但只要进入 Long-Task `surface_binding`：
+
+```text
+route binding 必须有 observed route roots
+```
+
+不能用 blocker-only component exception跳过 route owner。
+
+## 5. Pattern unknown
+
+所有 owner-root containment 中：
+
+```text
+unknown
+```
+
+与 `not_subset` 一样阻断。
+
+不能将“不知道”当成可能合法。
+
+## 6. Standalone structure validator
+
+直接调用普通：
+
+```text
+validateDeliveryContractStructure
+```
+
+默认仍应拒绝空 component bindings。
+
+只有完整 Activation/Compile 内部明确启用 deferred closure，并确保随后运行 design feasibility validator，才能暂时延后。
+
+---
+
+# 九、具体代码修改范围
+
+## Feasibility Schema 与 Source decision
+
+修改：
+
+```text
+packages/ty-context/src/lib/
+  design-resource-implementation-feasibility-types.ts
+  design-resource-implementation-feasibility-shape.ts
+  design-resource-implementation-feasibility-shape-sections.ts
+  design-resource-implementation-feasibility-source-decision-projection.ts
+  design-resource-implementation-feasibility-source-decision.ts
+  design-resource-implementation-feasibility-validation-document.ts
+  design-resource-implementation-feasibility-validation-cells.ts
+  design-resource-implementation-feasibility-validation-support.ts
+```
+
+主要变化：
+
+* blocker 增加 `substrate_observation_refs`；
+* blocker projection 增加同一 exact set；
+* unresolved observation 做 per-cell exact closure；
+* 时间值扫描改为字段与语义相关。
+
+## Long-Task allowed-set 与 root closure
+
+修改：
+
+```text
+packages/ty-context/src/lib/
+  long-task-design-feasibility-binding.ts
+  long-task-design-feasibility-binding-owners.ts
+  long-task-design-feasibility-source-closure.ts
+```
+
+主要变化：
+
+* every-path owner-root proof；
+* 复用 `proveRepositoryPatternSubset`；
+* planned carrier 路径检查；
+* blocker-only componentless target；
+* mixed target 和 legacy fail-closed。
+
+## Long-Task 结构验证顺序
+
+修改：
+
+```text
+packages/ty-context/src/lib/
+  long-task-ui-surface-validation.ts
+  long-task-ui-surface-policy.ts
+  long-task-delivery-validation.ts
+  long-task-activation-validation.ts
+```
+
+只增加 in-memory validator option，不修改 Contract Schema。
+
+## CLI
+
+当前 CLI 文案已经正确，不再改产品逻辑，只保留并扩展回归测试。当前输出已经使用 `preflight valid`、blocker 数和 `Production conformance: not evaluated`。
+
+---
+
+# 十、Context、Skill 与文档同步
+
+更新：
+
+```text
+project_context/areas/harness-package/contracts/
+  design-resource-authoring.md
+  design-resource-handoff.md
+  workflow-contract.md
+
+project_context/areas/harness-package/
+  implementation-index.md
+  verification.md
+```
+
+更新 DRA owner 后同步三份：
+
+```text
+.codex/ty-context-managed/skills/design-resource-authoring/**
+.codex/skills/design-resource-authoring/**
+packages/ty-context/assets/skills/design-resource-authoring/**
+```
+
+重点更新：
+
+```text
+SKILL.md
+references/implementation-feasibility.md
+references/downstream-handoff.md
+references/formal-selected-web-app-handoff.md
+```
+
+同步：
+
+```text
+PROJECT_SPEC.md
+README.md
+README.zh-CN.md
+packages/ty-context/README.md
+packages/ty-context/assets/README.md
+packages/ty-context/assets/README.zh-CN.md
+docs/launch/github-release-0.8.17.md
+```
+
+不新增新的 Reference 文件，防止机制再次扩张。
+
+---
+
+# 十一、测试矩阵
+
+## A. Owner-root unit tests
+
+至少覆盖：
+
+```text
+file target inside / carrier outside
+file target outside / carrier inside
+path_glob target 越界
+verified logical target / carrier 越界
+planned carrier 越界
+一个 Binding 多 carrier，仅一条越界
+src/components*/** 假前缀
+subset unknown
+多 root 合法分布
+route 与 component 分别验证
+```
+
+## B. Observation-blocker tests
+
+V1 与 Symbolic V2 都覆盖：
+
+```text
+unresolved observation 无 blocker
+不相关 blocker
+仅覆盖部分 family
+仅覆盖部分 condition
+blocker 引用 observed observation
+blocker 引用 N/A observation
+projection set 不匹配
+重复 observation refs
+一个 blocker 覆盖多个 observation
+普通 blocker 空 refs
+零 family + unresolved observation
+```
+
+## C. Full Long-Task blocker-only tests
+
+必须使用完整：
+
+```text
+compileDeliveryContract
+```
+
+不能只调用 consumer。
+
+覆盖：
+
+```text
+blocker-only + external confirmation → Compile 成功
+blocker-only + Final Gate → 非 machine_accepted
+blocker-only + decision_required → Compile 失败
+blocker-only + no feasibility → 失败
+blocker-only + missing claim → 失败
+blocker-only + nonblocking confirmation → 失败
+blocker-only + wrong impact claim → 失败
+blocker-only + stale Source Item → 失败
+blocker-only + fake component binding → unattributed 失败
+```
+
+## D. Planned owner full Compile
+
+覆盖：
+
+```text
+planned owner + exact authorization + legal carrier → Compile 成功
+planned owner carrier empty → 失败
+planned owner carrier outside root → 失败
+planned owner path-only Claim → 失败
+```
+
+## E. Mixed target tests
+
+覆盖：
+
+```text
+all targets blocker-only + no components → 允许
+one candidate target + no components → 失败
+one legacy target + no components → 失败
+candidate target + blocker-only target + legal binding → 允许且 blocker pending
+```
+
+## F. Visual-value tests
+
+所有四类 prose carrier：
+
+```text
+observation reason
+observed cost
+observed risk
+blocker description
+```
+
+分别测试：
+
+* 视觉动效时间阻断；
+* 技术构建时间允许；
+* 裸时间值阻断；
+* 原有颜色、尺寸和 CSS 表达继续阻断。
+
+## G. CLI regression
+
+确保人类输出不出现：
+
+```text
+handoff ready
+production ready
+accepted
+```
+
+必须继续包含：
+
+```text
+preflight valid
+Technical feasibility blockers
+Production conformance: not evaluated
+```
+
+JSON `status: ready` 保持兼容。
+
+---
+
+# 十二、实施顺序
+
+## 阶段 1：先冻结全部反例
+
+在改产品代码前，先加入本方案所有 P0/P1/P2 正反例。
+
+确认关键负向测试在 `749aef` 上失败，避免继续用只验证指导文字的静态测试代替行为证明。
+
+## 阶段 2：更新 Context
+
+先写清：
+
+* every-path owner-root theorem；
+* unresolved observation 的 target-wide per-cell blocker 规则；
+* blocker-only 的 deferred structure + Source-aware closure；
+* 技术时间成本 must-allow。
+
+## 阶段 3：修 observation-blocker Schema
+
+先完成：
+
+```text
+types
+strict parser
+projection
+exact-set validation
+V1/V2 tests
+```
+
+## 阶段 4：修 root containment
+
+删除简化前缀算法，统一复用 repository pattern subset proof。
+
+## 阶段 5：打通 blocker-only 完整 Compile
+
+加入 validator 调用期 deferred option，再在 Source-aware validator 中 fail closed。
+
+## 阶段 6：修时间语义
+
+拆分永久视觉模式、motion duration 和技术时间成本。
+
+## 阶段 7：补完整主链测试
+
+运行：
+
+```text
+full Compile
+activation
+Final Gate external-pending
+planned owner Compile
+mixed target
+legacy handoff
+```
+
+## 阶段 8：同步三份 Skill、Context、公共文档和 release packet
+
+更新 recovery index、受影响测试映射、compact digest 和必要 admission hashes。
+
+## 阶段 9：冻结最终候选并完整验证
+
+最后一次相关代码、Context、Fixture、Contract 或发布文档修改后，重新执行全部验证；修改前的结果不得复用。
+
+---
+
+# 十三、最终验证要求
+
+完整执行：
+
+```text
+format check
+typecheck
+build
+default full suite
+long-task full suite
+all critical sentinels
+validate-harness
+package source parity
+DRA three-copy parity
+release-version check
+active-source portability
+structural-cost
+affected routing
+pack
+quickstart smoke
+offline launch check
+tarball smoke
+fresh temporary repository install
+init
+sync
+Context validation
+diff hygiene
+```
+
+Windows 并发瞬态失败处理：
+
+1. 保存原始失败；
+2. 隔离重跑相应用例；
+3. 仅在确认属于既有无关机械并发问题后，执行仓库规则允许的完整串行回滚验证；
+4. 不使用缓存；
+5. 不减少测试；
+6. 最终报告同时保留首次失败与串行完整结果；
+7. 同一业务反例在隔离或串行环境仍失败时，不得按瞬态处理。
+
+---
+
+# 十四、最终完成定理
+
+只有以下全部成立，才能宣布开发完成：
+
+```text
+对每个 formal implementation target T：
+
+1. 每个 material family × condition cell
+   有 candidate 或 blocker；
+
+2. 每个 candidate-bearing cell
+   唯一推导一个当前 allowed realization；
+
+3. 每个 component binding
+   被至少一个允许它的 cell 归属；
+
+4. 每个 component/route binding 的每一条路径或 pattern
+   都是 observed owner root 的 proven_subset；
+
+5. 每个 decision_required / unavailable substrate observation
+   都由每个 material cell 的精确 blocker 承载；
+
+6. 每个 blocker 的 observation set
+   与 marked Source Item projection 完全一致；
+
+7. blocker-only target 可以在没有虚假 component binding 的情况下
+   通过完整 Compile 进入现有阻断完成边界；
+
+8. blocker 未闭合时 Final Gate 不能 machine_accepted；
+
+9. planned owner 的授权、Carrier 和完整 Compile 路线成立；
+
+10. canonical design value 不进入任何 feasibility prose；
+
+11. 合法技术时间成本不会被视觉值规则误阻；
+
+12. Preflight 只声明 input closure；
+
+13. 没有新增 Authority、Gate、Registry、状态机、Contract 字段族或工作流。
+```
+
+---
+
+# 十五、最终交付报告格式
+
+全部验证通过后只能按以下边界报告：
+
+```text
+Implementation:
+- every-path owner-root subset closure implemented
+- unresolved observation-to-blocker causal closure implemented
+- blocker-only full Long-Task Compile/Final-Gate path implemented
+- planned-owner full Compile path implemented
+- technical-duration must-allow implemented
+
+Verification:
+- Default full suite: all passed
+- Long-Task full suite: all passed
+- critical sentinels: all passed
+- V1/V2/bundle/legacy/CLI/full-Compile/Final-Gate: all passed
+- format/typecheck/build/validate-harness/parity/portability/pack/smoke: all passed
+
+Engineering / Architecture Conformance:
+- no second Design or Technical Authority
+- no new production Binding type
+- no new Contract field family
+- no new Claim type
+- no new Gate, Registry, state machine or workflow
+- canonical design closure unchanged
+- feasibility remains ordinary Source
+- sole Long-Task Final Gate unchanged
+
+Not verified:
+- Live Open Design visual-generation quality
+- actual multi-route visual diagnostic results
+- real-product adoption effect
+
+Context Delta: required
+Context: updated <exact files and durable reason>
+```
+
+完成以上补丁后，当前审计发现的两条 P0 错误通过路径、blocker-only 的假局部闭合以及技术时间成本误阻都会在同一轮内关闭；Live Open Design 实际视觉质量、多路线视觉实验和真实产品采用仍不属于本次机器开发完成条件。
+<!-- S5-CONTROLLING-AMENDMENT:END -->

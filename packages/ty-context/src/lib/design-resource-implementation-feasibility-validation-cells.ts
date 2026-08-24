@@ -91,6 +91,67 @@ export async function validateFeasibilityCells(
     decisionSources,
     usedBlockers,
   );
+  validateSubstrateObservationBlockerCoverage(document, model);
+}
+
+export function validateSubstrateObservationBlockerCoverage(
+  document: Pick<
+    DesignResourceImplementationFeasibilityV1,
+    "substrate_observations" | "component_family_cells" | "blockers"
+  >,
+  model: Pick<
+    DesignResourceImplementationFeasibilityTargetModel,
+    "component_family_refs"
+  >,
+): void {
+  const observations = new Map(
+    document.substrate_observations.map((observation) => [
+      observation.kind,
+      observation,
+    ]),
+  );
+  const blockers = new Map(
+    document.blockers.map((blocker) => [blocker.key, blocker]),
+  );
+  for (const blocker of document.blockers) {
+    unique(
+      blocker.substrate_observation_refs,
+      "blocker_substrate_observation_ref_duplicate",
+      blocker.key,
+    );
+    for (const observationRef of blocker.substrate_observation_refs) {
+      const observation = observations.get(observationRef);
+      if (
+        !observation ||
+        !["decision_required", "unavailable"].includes(observation.disposition)
+      )
+        invalidFeasibility(
+          "blocker_substrate_observation_not_unresolved",
+          `${blocker.key}:${observationRef}`,
+        );
+    }
+  }
+  const unresolved = document.substrate_observations.filter((observation) =>
+    ["decision_required", "unavailable"].includes(observation.disposition),
+  );
+  if (unresolved.length && model.component_family_refs.length === 0)
+    invalidFeasibility(
+      "unresolved_substrate_without_family_carrier",
+      unresolved.map((observation) => observation.kind).join(","),
+    );
+  for (const cell of document.component_family_cells)
+    for (const observation of unresolved)
+      if (
+        !cell.blocker_refs.some((blockerRef) =>
+          blockers
+            .get(blockerRef)
+            ?.substrate_observation_refs.includes(observation.kind),
+        )
+      )
+        invalidFeasibility(
+          "unresolved_substrate_observation_cell_uncovered",
+          `${observation.kind}:${cell.key}`,
+        );
 }
 
 async function validateCell(
@@ -221,6 +282,7 @@ function validateBlockers(
             blocker.condition_profile_ref,
           ),
         blocker_ref: blocker.key,
+        substrate_observation_refs: blocker.substrate_observation_refs,
       },
       `blocker:${blocker.key}`,
       {

@@ -6,6 +6,7 @@ import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/i
 import { deriveComponentFamilySubjectClosure } from "../../packages/ty-context/dist/lib/design-resource-implementation-feasibility-model.js";
 import { parseDesignResourceFeasibilityDecisionProjections } from "../../packages/ty-context/dist/lib/design-resource-implementation-feasibility-source-decision.js";
 import { validateDesignFactRefs } from "../../packages/ty-context/dist/lib/design-resource-implementation-feasibility-validation-facts.js";
+import { validateSubstrateObservationBlockerCoverage } from "../../packages/ty-context/dist/lib/design-resource-implementation-feasibility-validation-cells.js";
 import { validateNoExactVisualValueCarriers } from "../../packages/ty-context/dist/lib/design-resource-implementation-feasibility-validation-support.js";
 import {
   DESIGN_FEASIBILITY_PATH,
@@ -182,6 +183,7 @@ test("V1 permits composite and planned candidates while requiring candidate-or-b
                 cell.condition_profile_ref,
               ),
               blocker_ref: "blocker.card-owner",
+              substrate_observation_refs: ["ui_system"],
             },
           ],
         },
@@ -202,6 +204,7 @@ test("V1 permits composite and planned candidates while requiring candidate-or-b
           target_ref: cell.target_ref,
           condition_profile_ref: cell.condition_profile_ref,
           source_record_refs: [blockerSource.recordRef],
+          substrate_observation_refs: ["ui_system"],
           description: "The approved shared owner is unresolved.",
         },
       ];
@@ -465,6 +468,7 @@ test("planned owners and blockers cannot rely on role-only Source", async () => 
           target_ref: cell.target_ref,
           condition_profile_ref: cell.condition_profile_ref,
           source_record_refs: ["technical.fixture-substrate"],
+          substrate_observation_refs: [],
           description: "The technical owner remains unresolved.",
         },
       ];
@@ -572,15 +576,30 @@ test("component family closure is transitive and cycle-safe for V1 and V2", () =
   );
 });
 
-test("all feasibility prose carriers reject exact visual values", () => {
-  const values = [
+test("all feasibility prose carriers distinguish visual motion time from technical time", () => {
+  const blockedValues = [
     "Fallback color is #ffffff",
     "Fallback color is rgb(255, 255, 255)",
     "Needs 16px padding",
     "Use border-radius: 12px",
     "Could override --brand-color: red",
     "Animation lasts 200ms",
+    "Transition delay is 0.2s",
+    "Use a 150ms fade",
+    "200ms ease-out",
+    "duration: 200ms",
+    "transition: opacity 200ms",
+    "200ms",
+    "takes 2s",
     "Shadow is 0 2px 8px rgba(0,0,0,.2)",
+  ];
+  const allowedValues = [
+    "Build adds 2s",
+    "Bundle generation adds 120ms",
+    "CI smoke adds 3s",
+    "Runtime initialization adds 450ms",
+    "Network timeout is 2s",
+    "Benchmark execution takes 800ms",
   ];
   for (const carrier of [
     "observation_reason",
@@ -588,24 +607,279 @@ test("all feasibility prose carriers reject exact visual values", () => {
     "observed_risk",
     "blocker_description",
   ])
-    for (const value of values) {
+    for (const value of blockedValues) {
       const document = proseValidationDocument();
-      if (carrier === "observation_reason")
-        document.substrate_observations[0].reason = value;
-      if (carrier === "observed_cost")
-        document.component_family_cells[0].feasible_realizations[0].observed_costs =
-          [value];
-      if (carrier === "observed_risk")
-        document.component_family_cells[0].feasible_realizations[0].observed_risks =
-          [value];
-      if (carrier === "blocker_description")
-        document.blockers[0].description = value;
+      setProseCarrier(document, carrier, value);
       assert.throws(
         () => validateNoExactVisualValueCarriers(document),
         /exact_visual_value_forbidden/u,
         `${carrier}: ${value}`,
       );
     }
+  for (const carrier of [
+    "observation_reason",
+    "observed_cost",
+    "observed_risk",
+    "blocker_description",
+  ])
+    for (const value of allowedValues) {
+      const document = proseValidationDocument();
+      setProseCarrier(document, carrier, value);
+      assert.doesNotThrow(
+        () => validateNoExactVisualValueCarriers(document),
+        `${carrier}: ${value}`,
+      );
+    }
+});
+
+test("target-wide unresolved substrate observations close every V1 and V2 material cell", () => {
+  for (const representation of ["fact_cells_v1", "symbolic_rules_v2"]) {
+    const model = {
+      representation,
+      component_family_refs: ["family-a", "family-b"],
+    };
+    const positive = substrateCoverageDocument();
+    assert.doesNotThrow(() =>
+      validateSubstrateObservationBlockerCoverage(positive, model),
+    );
+
+    for (const [name, mutate, expected] of [
+      [
+        "unresolved without blocker",
+        (document) => {
+          document.component_family_cells[0].blocker_refs = [];
+        },
+        /unresolved_substrate_observation_cell_uncovered/u,
+      ],
+      [
+        "unrelated blocker",
+        (document) => {
+          document.blockers[0].substrate_observation_refs = [];
+        },
+        /unresolved_substrate_observation_cell_uncovered/u,
+      ],
+      [
+        "partial family",
+        (document) => {
+          for (const cell of document.component_family_cells)
+            if (cell.component_family_ref === "family-b")
+              cell.blocker_refs = [];
+        },
+        /unresolved_substrate_observation_cell_uncovered/u,
+      ],
+      [
+        "partial condition",
+        (document) => {
+          for (const cell of document.component_family_cells)
+            if (cell.condition_profile_ref === "dark") cell.blocker_refs = [];
+        },
+        /unresolved_substrate_observation_cell_uncovered/u,
+      ],
+      [
+        "observed ref",
+        (document) => {
+          document.blockers[0].substrate_observation_refs = ["platform"];
+        },
+        /blocker_substrate_observation_not_unresolved/u,
+      ],
+      [
+        "not-applicable ref",
+        (document) => {
+          document.blockers[0].substrate_observation_refs = [
+            "route_owner_roots",
+          ];
+        },
+        /blocker_substrate_observation_not_unresolved/u,
+      ],
+      [
+        "duplicate ref",
+        (document) => {
+          document.blockers[0].substrate_observation_refs = [
+            "ui_system",
+            "ui_system",
+          ];
+        },
+        /blocker_substrate_observation_ref_duplicate/u,
+      ],
+    ]) {
+      const document = substrateCoverageDocument();
+      mutate(document);
+      assert.throws(
+        () => validateSubstrateObservationBlockerCoverage(document, model),
+        expected,
+        `${representation}: ${name}`,
+      );
+    }
+
+    const independent = substrateCoverageDocument();
+    independent.blockers = [
+      { key: "blocker-ui", substrate_observation_refs: ["ui_system"] },
+      {
+        key: "blocker-component-roots",
+        substrate_observation_refs: ["component_owner_roots"],
+      },
+    ];
+    for (const cell of independent.component_family_cells)
+      cell.blocker_refs = ["blocker-ui", "blocker-component-roots"];
+    assert.doesNotThrow(() =>
+      validateSubstrateObservationBlockerCoverage(independent, model),
+    );
+
+    const ordinary = substrateCoverageDocument();
+    for (const observation of ordinary.substrate_observations)
+      if (["decision_required", "unavailable"].includes(observation.disposition))
+        observation.disposition = "observed";
+    ordinary.blockers[0].substrate_observation_refs = [];
+    assert.doesNotThrow(() =>
+      validateSubstrateObservationBlockerCoverage(ordinary, model),
+    );
+  }
+
+  const noFamilies = substrateCoverageDocument();
+  noFamilies.component_family_cells = [];
+  assert.throws(
+    () =>
+      validateSubstrateObservationBlockerCoverage(noFamilies, {
+        representation: "fact_cells_v1",
+        component_family_refs: [],
+      }),
+    /unresolved_substrate_without_family_carrier/u,
+  );
+});
+
+test("blocker observation refs are canonical and exact in marked Source projection", async () => {
+  await withRoot(async (root) => {
+    const { handoff } = await writeDesignResourceHandoffFixture(root);
+    await addDesignResourceImplementationFeasibility(
+      root,
+      handoff,
+      async (document) => {
+        const cell = document.component_family_cells[0];
+        for (const kind of ["ui_system", "component_owner_roots"]) {
+          const observation = document.substrate_observations.find(
+            (item) => item.kind === kind,
+          );
+          observation.disposition = "decision_required";
+          observation.value = null;
+          observation.source_record_refs = [];
+          observation.reason = `${kind} remains unresolved.`;
+        }
+        const authority = await addV1FeasibilityDecisionSource(
+          root,
+          document,
+          {
+            recordKey: "technical.canonical-observation-blocker",
+            itemKey: "canonical-observation-blocker",
+            itemKind: "decision",
+            roles: ["feasibility_basis"],
+            projections: [
+              {
+                mode: "feasibility_blocker",
+                target_ref: cell.target_ref,
+                component_family_ref: cell.component_family_ref,
+                condition_scope_sha256:
+                  v1FeasibilityConditionScopeSha256(
+                    document,
+                    cell.condition_profile_ref,
+                  ),
+                blocker_ref: "blocker.canonical-observations",
+                substrate_observation_refs: [
+                  "ui_system",
+                  "component_owner_roots",
+                ],
+              },
+            ],
+          },
+        );
+        cell.feasible_realizations = [];
+        cell.blocker_refs = ["blocker.canonical-observations"];
+        document.blockers = [
+          {
+            key: "blocker.canonical-observations",
+            component_family_ref: cell.component_family_ref,
+            target_ref: cell.target_ref,
+            condition_profile_ref: cell.condition_profile_ref,
+            source_record_refs: [authority.recordRef],
+            substrate_observation_refs: [
+              "ui_system",
+              "component_owner_roots",
+            ],
+            description: "The substrate observations require a decision.",
+          },
+        ];
+      },
+    );
+    await writeDesignResourceHandoff(root, handoff);
+    const preflight = await preflightDesignResourceHandoff(
+      root,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.deepEqual(
+      preflight.technical_feasibility_documents[0].blockers[0]
+        .substrate_observation_refs,
+      ["component_owner_roots", "ui_system"],
+    );
+  });
+
+  await withRoot(async (root) => {
+    const { handoff } = await writeDesignResourceHandoffFixture(root);
+    await addDesignResourceImplementationFeasibility(
+      root,
+      handoff,
+      async (document) => {
+        const cell = document.component_family_cells[0];
+        const observation = document.substrate_observations.find(
+          (item) => item.kind === "ui_system",
+        );
+        observation.disposition = "unavailable";
+        observation.value = null;
+        observation.source_record_refs = [];
+        observation.reason = "The UI system is unavailable.";
+        const authority = await addV1FeasibilityDecisionSource(
+          root,
+          document,
+          {
+            recordKey: "technical.mismatched-observation-blocker",
+            itemKey: "mismatched-observation-blocker",
+            itemKind: "decision",
+            roles: ["feasibility_basis"],
+            projections: [
+              {
+                mode: "feasibility_blocker",
+                target_ref: cell.target_ref,
+                component_family_ref: cell.component_family_ref,
+                condition_scope_sha256:
+                  v1FeasibilityConditionScopeSha256(
+                    document,
+                    cell.condition_profile_ref,
+                  ),
+                blocker_ref: "blocker.mismatched-observation",
+                substrate_observation_refs: ["component_owner_roots"],
+              },
+            ],
+          },
+        );
+        cell.feasible_realizations = [];
+        cell.blocker_refs = ["blocker.mismatched-observation"];
+        document.blockers = [
+          {
+            key: "blocker.mismatched-observation",
+            component_family_ref: cell.component_family_ref,
+            target_ref: cell.target_ref,
+            condition_profile_ref: cell.condition_profile_ref,
+            source_record_refs: [authority.recordRef],
+            substrate_observation_refs: ["ui_system"],
+            description: "The UI system remains unresolved.",
+          },
+        ];
+      },
+    );
+    await writeDesignResourceHandoff(root, handoff);
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      /source_decision_projection_count/u,
+    );
+  });
 });
 
 test("substrate observation kinds and repository owner roots fail closed", async () => {
@@ -686,8 +960,8 @@ test("substrate observation kinds and repository owner roots fail closed", async
       },
       (root) =>
         assert.rejects(
-          preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
-          /unresolved_substrate_blocker_required/u,
+        preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+          /unresolved_substrate_observation_cell_uncovered/u,
         ),
     );
   await withV1Mutation(
@@ -825,6 +1099,54 @@ function proseValidationDocument() {
         ],
       },
     ],
-    blockers: [{ key: "blocker", description: "Owner is unresolved." }],
+    blockers: [
+      {
+        key: "blocker",
+        substrate_observation_refs: [],
+        description: "Owner is unresolved.",
+      },
+    ],
+  };
+}
+
+function setProseCarrier(document, carrier, value) {
+  if (carrier === "observation_reason")
+    document.substrate_observations[0].reason = value;
+  if (carrier === "observed_cost")
+    document.component_family_cells[0].feasible_realizations[0].observed_costs =
+      [value];
+  if (carrier === "observed_risk")
+    document.component_family_cells[0].feasible_realizations[0].observed_risks =
+      [value];
+  if (carrier === "blocker_description")
+    document.blockers[0].description = value;
+}
+
+function substrateCoverageDocument() {
+  return {
+    substrate_observations: [
+      { kind: "platform", disposition: "observed" },
+      { kind: "ui_system", disposition: "decision_required" },
+      { kind: "component_owner_roots", disposition: "unavailable" },
+      { kind: "route_owner_roots", disposition: "not_applicable" },
+    ],
+    component_family_cells: ["family-a", "family-b"].flatMap(
+      (component_family_ref) =>
+        ["light", "dark"].map((condition_profile_ref) => ({
+          key: `${component_family_ref}-${condition_profile_ref}`,
+          component_family_ref,
+          condition_profile_ref,
+          blocker_refs: ["blocker-both"],
+        })),
+    ),
+    blockers: [
+      {
+        key: "blocker-both",
+        substrate_observation_refs: [
+          "component_owner_roots",
+          "ui_system",
+        ],
+      },
+    ],
   };
 }

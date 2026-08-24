@@ -92,6 +92,7 @@ export function createLongTaskDesignHandoffConsumer(
   const indexedTargetKeys = new Set<string>();
   const consumed = new Set<string>();
   const validationErrors = new Map<string, unknown>();
+  const feasibilityBindingRefsBySurface = new Map<string, Set<string>>();
   let duplicate: string | null = null;
   const unbound: string[] = [];
   const handoffSetIntegrity = createDesignResourceHandoffSetIntegrity(invalid);
@@ -152,11 +153,17 @@ export function createLongTaskDesignHandoffConsumer(
               target,
             };
             validateSymbolicTargetIdentity(contractTarget, indexedTarget);
-            validateLongTaskDesignFeasibilityBindings(
+            const feasibility = validateLongTaskDesignFeasibilityBindings(
               contract,
               contractTarget,
               preflight,
               sourceItems,
+              { deferComponentBindingAttribution: true },
+            );
+            recordFeasibilityBindingAttribution(
+              feasibilityBindingRefsBySurface,
+              contractTarget,
+              feasibility.consumed_component_binding_refs,
             );
             validateSymbolicCoverageClaims(
               contract,
@@ -170,11 +177,17 @@ export function createLongTaskDesignHandoffConsumer(
               target: target as DesignResourceHandoffTargetV1,
             };
             validateTargetIdentity(contractTarget, indexedTarget);
-            validateLongTaskDesignFeasibilityBindings(
+            const feasibility = validateLongTaskDesignFeasibilityBindings(
               contract,
               contractTarget,
               preflight,
               sourceItems,
+              { deferComponentBindingAttribution: true },
+            );
+            recordFeasibilityBindingAttribution(
+              feasibilityBindingRefsBySurface,
+              contractTarget,
+              feasibility.consumed_component_binding_refs,
             );
             validateLongTaskDesignTargetCapabilities(
               contract,
@@ -200,9 +213,46 @@ export function createLongTaskDesignHandoffConsumer(
         if (validationErrors.has(contractTarget.target.key))
           throw validationErrors.get(contractTarget.target.key);
       }
+      validateSurfaceFeasibilityBindingAttribution(
+        contractTargets,
+        feasibilityBindingRefsBySurface,
+      );
       if (unbound.length) invalid("handoff_target_unbound", unbound[0]);
     },
   };
+}
+
+function recordFeasibilityBindingAttribution(
+  bySurface: Map<string, Set<string>>,
+  contractTarget: ContractDesignTarget,
+  bindingRefs: string[],
+): void {
+  const key = surfaceBindingIdentity(contractTarget);
+  const consumed = bySurface.get(key) ?? new Set<string>();
+  for (const bindingRef of bindingRefs) consumed.add(bindingRef);
+  bySurface.set(key, consumed);
+}
+
+function validateSurfaceFeasibilityBindingAttribution(
+  contractTargets: ContractDesignTarget[],
+  bySurface: Map<string, Set<string>>,
+): void {
+  const surfaces = new Map<string, ContractDesignTarget>();
+  for (const contractTarget of contractTargets)
+    surfaces.set(surfaceBindingIdentity(contractTarget), contractTarget);
+  for (const [surfaceKey, contractTarget] of surfaces) {
+    const consumed = bySurface.get(surfaceKey) ?? new Set<string>();
+    for (const bindingRef of contractTarget.binding.component_binding_refs)
+      if (!consumed.has(bindingRef))
+        invalid(
+          "feasibility_component_binding_unattributed",
+          `${contractTarget.binding.key}:${bindingRef}`,
+        );
+  }
+}
+
+function surfaceBindingIdentity(contractTarget: ContractDesignTarget): string {
+  return `${contractTarget.outcome_key}\0${contractTarget.binding.key}`;
 }
 
 function validateSymbolicCoverageClaims(

@@ -113,6 +113,7 @@ export function validateFeasibilityBlockers(
             blocker.condition_profile_ref,
           ),
         blocker_ref: blocker.key,
+        substrate_observation_refs: blocker.substrate_observation_refs,
       },
       `blocker:${blocker.key}`,
       ["decision", "external_confirmation"],

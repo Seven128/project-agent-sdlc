@@ -31,6 +31,7 @@ import {
 } from "../../tools/test_suite_policy.mjs";
 import {
   LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
+  LONG_TASK_SERIAL_ROLLBACK_MAX_FILES_PER_TEST_PROCESS,
   planLongTaskSuiteLanes,
 } from "../../tools/test_suite_lane_policy.mjs";
 import {
@@ -517,21 +518,15 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   );
 
   const suitePlan = planLongTaskSuiteLanes(available, "long-task", 1);
-  assert.deepEqual(
-    suitePlan.lanes.map((lane) => lane.key),
-    [
-      "trust-safe-01",
-      "trust-safe-02",
-      "trust-exclusive",
-      "remainder-safe-01",
-      "remainder-safe-02",
-      "remainder-safe-03",
-      "remainder-safe-04",
-      "remainder-exclusive",
-    ],
-  );
   assert.equal(
-    suitePlan.lanes.every((lane) => lane.concurrency === 1),
+    suitePlan.max_files_per_test_process,
+    LONG_TASK_SERIAL_ROLLBACK_MAX_FILES_PER_TEST_PROCESS,
+  );
+  assert.equal(suitePlan.lanes.length, available.length);
+  assert.equal(
+    suitePlan.lanes.every(
+      (lane) => lane.concurrency === 1 && lane.names.length === 1,
+    ),
     true,
   );
   const planned = suitePlan.lanes.flatMap((lane) => lane.names);
@@ -554,6 +549,10 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
     LONG_TASK_TRUST_TEST_FILES,
     "long-task-trust",
     2,
+  );
+  assert.equal(
+    trustPlan.max_files_per_test_process,
+    LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
   );
   assert.deepEqual(
     trustPlan.lanes.map((lane) => lane.key),

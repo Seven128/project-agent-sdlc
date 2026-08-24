@@ -66,10 +66,16 @@ export async function validateContractForActivation(options: {
 }): Promise<ActivationValidationResult> {
   const { contract, repository, workdir, mode } = options;
   const diagnostics = options.diagnostics ?? [];
+  const structureOptions = {
+    allowDeferredDesignComponentBindingClosure: true,
+  } as const;
   if (mode === "collect")
-    for (const error of deliveryContractStructureDiagnostics(contract))
+    for (const error of deliveryContractStructureDiagnostics(
+      contract,
+      structureOptions,
+    ))
       addDiagnosticError(diagnostics, error);
-  else validateDeliveryContractStructure(contract);
+  else validateDeliveryContractStructure(contract, structureOptions);
 
   const claims = await attempt(mode, diagnostics, () =>
     compileProductClaimCoverage(contract),
@@ -206,23 +212,41 @@ export async function validateContractForActivation(options: {
   const outcomes: CompiledOutcomeV2[] = [];
   for (const outcome of contract.outcomes) {
     const checks: CompiledCheckV2[] = [];
+    const blockedDesignAssertionRefsByCheck = new Map<string, Set<string>>();
     for (const check of outcome.acceptance.checks) {
       const executionTarget = contract.task.execution_targets.find(
         (target) => target.key === check.execution_target.target_ref,
       );
       if (!executionTarget) continue;
+      const blockedDesignAssertionRefs = externallyBlockedDesignAssertionRefs(
+        outcome,
+        check,
+        contract.global.acceptance.external_confirmations,
+      );
+      blockedDesignAssertionRefsByCheck.set(
+        check.key,
+        blockedDesignAssertionRefs,
+      );
+      const machineCheck = projectMachineCheck(
+        check,
+        blockedDesignAssertionRefs,
+      );
       const frozen = await attempt(
         mode,
         diagnostics,
         () =>
           freezeDeliveryCheck(
-            check,
+            machineCheck,
             outcome.key,
             repository,
             workspace,
             executionTarget,
             contract.task.execution_targets,
-            designTargetsForCheck(outcome, check.key),
+            designTargetsForCheck(
+              outcome,
+              check.key,
+              contract.global.acceptance.external_confirmations,
+            ),
             semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
             scopeDeliveryBindings(outcome.key, outcome.technical.bindings),
             outcome.product.owner.path_globs,
@@ -239,7 +263,21 @@ export async function validateContractForActivation(options: {
       internal_id: `OUT.${outcome.key}`,
       generated_claims: claims?.by_outcome[outcome.key] ?? [],
       risk_reasons: risk?.reasons_by_outcome[outcome.key] ?? [],
-      acceptance: { ...outcome.acceptance, checks },
+      acceptance: {
+        ...outcome.acceptance,
+        checks,
+        counterfactual_controls: outcome.acceptance.counterfactual_controls.map(
+          (control) =>
+            projectCounterfactualControl(
+              control,
+              outcome.acceptance.checks.find(
+                (check) => check.key === control.check_key,
+              ),
+              blockedDesignAssertionRefsByCheck.get(control.check_key) ??
+                new Set(),
+            ),
+        ),
+      },
     });
   }
   const allChecks = [
@@ -306,10 +344,24 @@ export async function validateContractForActivation(options: {
 function designTargetsForCheck(
   outcome: DeliveryContractV2["outcomes"][number],
   checkKey: string,
+  confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
 ): CompiledDesignTargetV2[] {
   return (outcome.product.surface_bindings ?? []).flatMap((binding) =>
     binding.design_targets
-      .filter((target) => target.conformance_check_ref === checkKey)
+      .filter(
+        (target) =>
+          target.conformance_check_ref === checkKey &&
+          !confirmations.some(
+            (confirmation) =>
+              confirmation.blocks_target &&
+              confirmation.impact_claims.some((claimRef) =>
+                target.claim_refs.some(
+                  (targetClaimRef) =>
+                    claimRef === `${outcome.key}.${targetClaimRef}`,
+                ),
+              ),
+          ),
+      )
       .map((target) => ({
         ...target,
         surface_binding_ref: binding.key,
@@ -317,6 +369,105 @@ function designTargetsForCheck(
         target_ref: binding.target_ref,
       })),
   );
+}
+
+function externallyBlockedDesignAssertionRefs(
+  outcome: DeliveryContractV2["outcomes"][number],
+  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+  confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
+): Set<string> {
+  const refs = new Set<string>();
+  const impactedClaims = new Set<string>();
+  for (const binding of outcome.product.surface_bindings ?? [])
+    for (const target of binding.design_targets) {
+      if (target.conformance_check_ref !== check.key) continue;
+      const blocked = confirmations.some(
+        (confirmation) =>
+          confirmation.blocks_target &&
+          confirmation.impact_claims.some((claimRef) =>
+            target.claim_refs.some(
+              (targetClaimRef) =>
+                claimRef === `${outcome.key}.${targetClaimRef}`,
+            ),
+          ),
+      );
+      if (!blocked) continue;
+      for (const confirmation of confirmations)
+        if (
+          confirmation.blocks_target &&
+          confirmation.impact_claims.some((claimRef) =>
+            target.claim_refs.some(
+              (targetClaimRef) =>
+                claimRef === `${outcome.key}.${targetClaimRef}`,
+            ),
+          )
+        )
+          for (const claimRef of confirmation.impact_claims)
+            impactedClaims.add(claimRef);
+      refs.add(target.conformance_assertion_ref);
+      for (const method of target.verification_method_bindings)
+        refs.add(method.assertion_ref);
+      for (const method of target.symbolic_method_bindings ?? [])
+        refs.add(method.assertion_ref);
+      if (target.symbolic_certificate_binding)
+        refs.add(target.symbolic_certificate_binding.assertion_ref);
+    }
+  for (const assertion of [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ])
+    if (
+      assertion.evidence_capabilities.includes("state_delta") &&
+      assertion.claims.length > 0 &&
+      assertion.claims.every((claimRef) =>
+        impactedClaims.has(`${outcome.key}.${claimRef}`),
+      )
+    )
+      refs.add(assertion.key);
+  return refs;
+}
+
+function projectMachineCheck(
+  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+  externallyBlockedAssertionRefs: Set<string>,
+): typeof check {
+  if (!externallyBlockedAssertionRefs.size) return check;
+  return {
+    ...check,
+    positive_assertions: check.positive_assertions.filter(
+      (assertion) => !externallyBlockedAssertionRefs.has(assertion.key),
+    ),
+    negative_assertions: check.negative_assertions.filter(
+      (assertion) => !externallyBlockedAssertionRefs.has(assertion.key),
+    ),
+  };
+}
+
+function projectCounterfactualControl(
+  control: DeliveryContractV2["outcomes"][number]["acceptance"]["counterfactual_controls"][number],
+  check:
+    | DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number]
+    | undefined,
+  externallyBlockedAssertionRefs: Set<string>,
+): typeof control {
+  if (!check || !externallyBlockedAssertionRefs.size) return control;
+  const externallyBlockedClaims = new Set(
+    [...check.positive_assertions, ...check.negative_assertions]
+      .filter((assertion) => externallyBlockedAssertionRefs.has(assertion.key))
+      .flatMap((assertion) => assertion.claims),
+  );
+  return {
+    ...control,
+    claims: control.claims.filter(
+      (claimRef) => !externallyBlockedClaims.has(claimRef),
+    ),
+    expected_assertion_failures: control.expected_assertion_failures.filter(
+      (assertionRef) => !externallyBlockedAssertionRefs.has(assertionRef),
+    ),
+    preserved_assertions: control.preserved_assertions.filter(
+      (assertionRef) => !externallyBlockedAssertionRefs.has(assertionRef),
+    ),
+  };
 }
 
 async function attempt<T>(

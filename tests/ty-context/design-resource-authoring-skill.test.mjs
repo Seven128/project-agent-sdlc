@@ -186,7 +186,27 @@ test("formal Web/App authoring carries real-substrate feasibility without anothe
   );
   assert.match(
     feasibility,
-    /current component bindings must uniquely derive one allowed realization for each candidate-bearing cell[\s\S]*blocker-only cell[\s\S]*Every component binding ref must still be consumed/iu,
+    /current component bindings must uniquely derive one allowed realization for each candidate-bearing cell[\s\S]*Every component binding ref must still be consumed/iu,
+  );
+  assert.match(
+    feasibility,
+    /full path universe[\s\S]*`file` and `path_glob`[\s\S]*`verified`[\s\S]*`planned`[\s\S]*`proven_subset`/iu,
+  );
+  assert.match(
+    feasibility,
+    /standalone Contract structure validator remains strict[\s\S]*all blocker-only[\s\S]*fake component Binding fails closed/iu,
+  );
+  assert.match(
+    feasibility,
+    /All six observations are target-wide[\s\S]*every material family × condition cell[\s\S]*passing vacuously/iu,
+  );
+  assert.match(
+    feasibility,
+    /substrate_observation_refs[\s\S]*observation-ref sets[\s\S]*ordinary technical blocker uses `\[\]`/iu,
+  );
+  assert.match(
+    feasibility,
+    /time literal is forbidden[\s\S]*explicit technical build\/compile\/bundle\/generation\/CI\/test\/startup\/initialization\/latency\/timeout\/network\/benchmark\/runtime-cost\/render-cost context/iu,
   );
   assert.match(
     feasibility,

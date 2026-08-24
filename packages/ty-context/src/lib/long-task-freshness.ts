@@ -15,7 +15,11 @@ export async function deliveryCompileFreshness(
 ): Promise<string[]> {
   const findings: string[] = [];
   try {
-    const currentContract = await parseDeliveryContractBundle(compiled.workdir);
+    const currentContract = await parseDeliveryContractBundle(
+      compiled.workdir,
+      compiled.repository_root,
+      { validate_structure: false },
+    );
     if (
       sha256Hex(canonicalValueJson(currentContract.contract)) !==
       compiled.contract_sha256

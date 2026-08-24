@@ -15,11 +15,13 @@ import {
   validateRootJourney,
   validateTargetLocalClaimProof,
 } from "./long-task-ui-surface-validation.js";
+import type { DeliveryContractStructureValidationOptions } from "./long-task-delivery-validation.js";
 
 export function validateUiSurfaceBindings(
   contract: DeliveryContractV2,
   claims: CompiledClaimsV2,
   report?: Reporter,
+  options: DeliveryContractStructureValidationOptions = {},
 ): void {
   const targets = new Map(
     contract.task.execution_targets.map((target) => [target.key, target]),
@@ -41,6 +43,7 @@ export function validateUiSurfaceBindings(
       requiredTargets,
       confirmations,
       report,
+      options,
     );
 }
 
@@ -54,6 +57,7 @@ function validateOutcomeBindings(
     DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number]
   >,
   report?: Reporter,
+  options: DeliveryContractStructureValidationOptions = {},
 ): void {
   const surfaceBindings = outcome.product.surface_bindings ?? [];
   if (outcome.product.controls.length && !surfaceBindings.length)
@@ -124,6 +128,11 @@ function validateOutcomeBindings(
       technicalBindings,
       label,
       report,
+      {
+        allowEmptyComponentRefs:
+          options.allowDeferredDesignComponentBindingClosure === true &&
+          binding.design_targets.length > 0,
+      },
     );
     const rootCheck = checks.get(binding.root_journey_check_ref);
     if (!rootCheck)

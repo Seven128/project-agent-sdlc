@@ -43,6 +43,7 @@ test("UI production-surface owners select the proxy and design-conformance senti
   assert.deepEqual(selection.tests, [
     "tests/ty-context/long-task-authoring-claims.test.mjs",
     "tests/ty-context/long-task-claim-coverage.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
     "tests/ty-context/long-task-semantic-authority-revision.test.mjs",
     "tests/ty-context/long-task-semantic-drift-closure.test.mjs",
   ]);
@@ -604,6 +605,17 @@ test("design authoring profile and provider changes select focused coverage", ()
     "tests/ty-context/long-task-symbolic-denotation-v2.test.mjs",
   ]);
 
+  const freshness = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-freshness.ts",
+  ]);
+  assert.equal(freshness.mode, "selected");
+  assert.deepEqual(freshness.tests, [
+    "tests/ty-context/long-task-context-evolution.test.mjs",
+    "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    "tests/ty-context/long-task-runner-freeze-v2.test.mjs",
+    "tests/ty-context/long-task-state-resume.test.mjs",
+  ]);
+
   const feasibility = selectAffectedTests([
     "packages/ty-context/src/lib/design-resource-implementation-feasibility-validation-cells.ts",
   ]);
@@ -656,6 +668,16 @@ test("design authoring profile and provider changes select focused coverage", ()
   assert.ok(
     longTaskFeasibilityBinding.tests.includes(
       "tests/ty-context/long-task-delivery-compiler.test.mjs",
+    ),
+  );
+
+  const ownerRootProof = selectAffectedTests([
+    "packages/ty-context/src/lib/long-task-design-feasibility-binding-owners.ts",
+  ]);
+  assert.equal(ownerRootProof.mode, "selected");
+  assert.ok(
+    ownerRootProof.tests.includes(
+      "tests/ty-context/long-task-pattern-containment.test.mjs",
     ),
   );
 

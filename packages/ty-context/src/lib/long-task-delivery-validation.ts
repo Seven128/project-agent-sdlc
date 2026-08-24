@@ -18,8 +18,13 @@ import { validateUiSurfaceBindings } from "./long-task-ui-surface-policy.js";
 import { controlFieldFacts } from "./long-task-control-fields.js";
 import { validateSemanticAssuranceShape } from "./long-task-semantic-assurance-policy.js";
 
+export interface DeliveryContractStructureValidationOptions {
+  allowDeferredDesignComponentBindingClosure?: boolean;
+}
+
 export function validateDeliveryContractStructure(
   contract: DeliveryContractV2,
+  options: DeliveryContractStructureValidationOptions = {},
 ): void {
   validateUniqueKeys(contract);
   validateDependencies(contract);
@@ -31,7 +36,7 @@ export function validateDeliveryContractStructure(
     allow_uncovered: true,
   });
   validateSourceClaimMappings(contract, claims);
-  validateUiSurfaceBindings(contract, claims);
+  validateUiSurfaceBindings(contract, claims, undefined, options);
   assertCompiledClaimsCovered(claims);
   validateDeliveryStages(contract);
   validateExecutionTargets(contract);
@@ -42,6 +47,7 @@ export function validateDeliveryContractStructure(
 
 export function deliveryContractStructureDiagnostics(
   contract: DeliveryContractV2,
+  options: DeliveryContractStructureValidationOptions = {},
 ): string[] {
   const diagnostics: string[] = [];
   const report = (message: string) => diagnostics.push(message);
@@ -61,7 +67,7 @@ export function deliveryContractStructureDiagnostics(
   });
   if (claims) {
     validateSourceClaimMappings(contract, claims, report);
-    validateUiSurfaceBindings(contract, claims, report);
+    validateUiSurfaceBindings(contract, claims, report, options);
     validateExternalConfirmationImpacts(contract, claims, report);
     capture(diagnostics, () => assertCompiledClaimsCovered(claims!));
   }

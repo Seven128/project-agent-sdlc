@@ -367,6 +367,7 @@ export async function addV1FeasibilityDecisionSource(
 ) {
   const sourcePath = `src/${recordKey}.md`;
   const body = [
+    `# ${itemKey}`,
     `Technical feasibility decision source for ${recordKey}.`,
     ...projections.map(
       (projection) =>

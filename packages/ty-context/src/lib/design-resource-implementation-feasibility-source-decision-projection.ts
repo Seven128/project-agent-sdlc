@@ -4,12 +4,17 @@ import {
   object,
   oneOf,
   parseStrictJsonObject,
+  stringSet,
 } from "./design-resource-recovery-codec-primitives.js";
 import {
   contractKey,
   stableKey,
 } from "./design-resource-handoff-shape-primitives.js";
 import { invalidFeasibility } from "./design-resource-implementation-feasibility-validation-support.js";
+import {
+  DESIGN_RESOURCE_SUBSTRATE_OBSERVATION_KINDS,
+  type DesignResourceSubstrateObservationKind,
+} from "./design-resource-implementation-feasibility-types.js";
 import { canonicalValueJson } from "./strict-codec.js";
 
 export const DESIGN_RESOURCE_FEASIBILITY_DECISION_SCHEMA =
@@ -42,6 +47,7 @@ export interface DesignResourcePlannedOwnerProjection extends DesignResourceFeas
 export interface DesignResourceFeasibilityBlockerProjection extends DesignResourceFeasibilityDecisionProjectionBase {
   mode: "feasibility_blocker";
   blocker_ref: string;
+  substrate_observation_refs: DesignResourceSubstrateObservationKind[];
 }
 
 export function parseDesignResourceFeasibilityDecisionProjections(
@@ -110,7 +116,12 @@ function parseDecisionProjection(
       "component_family_ref",
       "condition_scope_sha256",
     ],
-    ["realization_ref", "owner_locator", "blocker_ref"],
+    [
+      "realization_ref",
+      "owner_locator",
+      "blocker_ref",
+      "substrate_observation_refs",
+    ],
   );
   literal(
     header.schema_version,
@@ -178,11 +189,24 @@ function parseDecisionProjection(
     "component_family_ref",
     "condition_scope_sha256",
     "blocker_ref",
+    "substrate_observation_refs",
   ]);
+  const substrateObservationRefs = stringSet(
+    row.substrate_observation_refs,
+    `${label}.substrate_observation_refs`,
+    { allowEmpty: true },
+  ).map((observationRef, observationIndex) =>
+    oneOf(
+      observationRef,
+      DESIGN_RESOURCE_SUBSTRATE_OBSERVATION_KINDS,
+      `${label}.substrate_observation_refs[${observationIndex}]`,
+    ),
+  );
   return {
     ...base,
     mode,
     blocker_ref: stableKey(row.blocker_ref, `${label}.blocker_ref`),
+    substrate_observation_refs: substrateObservationRefs,
   };
 }
 

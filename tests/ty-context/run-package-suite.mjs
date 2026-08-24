@@ -70,6 +70,8 @@ const execution = {
       : "serial",
   isolated_concurrency: isolatedConcurrency,
   serial_rollback: "TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1",
+  max_files_per_test_process:
+    lanePolicy?.max_files_per_test_process ?? files.length,
   unknown_files: lanePolicy?.unknown_files ?? [],
   unknown_files_parallelized: false,
   lanes: lanes.map((lane) => ({
