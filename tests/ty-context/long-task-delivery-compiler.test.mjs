@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 import YAML from "yaml";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
@@ -12,6 +14,7 @@ import { validateDeliveryContractStructure } from "../../packages/ty-context/dis
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
+import { npxCliPath } from "../../packages/ty-context/dist/lib/long-task-runner-files.js";
 import {
   addProductionControlBinding,
   commitCandidate,
@@ -46,6 +49,7 @@ import {
 const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-root-constraint";
 const DESIGN_ROOT_CLAIM = "control.main.location";
 const DESIGN_ROOT_STATEMENT = "main content";
+const execFileAsync = promisify(execFile);
 let cachedPlaywrightTestModulePromise;
 
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
@@ -2091,7 +2095,9 @@ async function attachDesignResourceHandoff(
         }
       : {},
   );
-  const playwrightTestModuleUrl = await cachedPlaywrightTestModule();
+  const playwrightTestModuleUrl = await cachedPlaywrightTestModule(
+    fixture.root,
+  );
   await writeFile(
     path.join(fixture.root, "tests", "ui.spec.mjs"),
     `import { test, expect } from ${JSON.stringify(playwrightTestModuleUrl)};
@@ -2581,19 +2587,65 @@ function prepareTargetBlockedCompileFixture(contract, outcomeKey) {
   return [...impactedClaims].sort();
 }
 
-function cachedPlaywrightTestModule() {
-  cachedPlaywrightTestModulePromise ??= resolveCachedPlaywrightTestModule();
+function cachedPlaywrightTestModule(cwd) {
+  cachedPlaywrightTestModulePromise ??= resolveCachedPlaywrightTestModule(cwd);
   return cachedPlaywrightTestModulePromise;
 }
 
-async function resolveCachedPlaywrightTestModule() {
+async function resolveCachedPlaywrightTestModule(cwd) {
   const cache =
     process.env.npm_config_cache ??
     (process.platform === "win32"
       ? path.join(process.env.LOCALAPPDATA, "npm-cache")
       : path.join(process.env.HOME, ".npm"));
+  // Give the disposable fixture the equivalent of a locally installed
+  // Playwright. The frozen --no-install runner must execute the same physical
+  // instance that the generated spec imports, including on a clean CI runner.
+  await execFileAsync(
+    process.execPath,
+    [
+      await npxCliPath(),
+      "--yes",
+      "--package=playwright",
+      "--",
+      "playwright",
+      "--version",
+    ],
+    { cwd, windowsHide: true },
+  );
+  const candidates = await cachedPlaywrightCandidates(cache);
+  candidates.sort((left, right) => {
+    const leftStable = !left.version.includes("-");
+    const rightStable = !right.version.includes("-");
+    if (leftStable !== rightStable) return leftStable ? 1 : -1;
+    return left.version.localeCompare(right.version, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+  });
+  const selected = candidates.at(-1);
+  if (!selected) throw new Error("playwright_test_module_not_cached");
+  prependExecutablePath(path.join(path.dirname(selected.packageRoot), ".bin"));
+  return pathToFileURL(path.join(selected.packageRoot, "test.mjs")).href;
+}
+
+function prependExecutablePath(directory) {
+  const key =
+    Object.keys(process.env).find((name) => name.toLowerCase() === "path") ??
+    "PATH";
+  const entries = (process.env[key] ?? "")
+    .split(path.delimiter)
+    .filter(Boolean);
+  if (!entries.includes(directory))
+    process.env[key] = [directory, ...entries].join(path.delimiter);
+}
+
+async function cachedPlaywrightCandidates(cache) {
   const entries = await readdir(path.join(cache, "_npx"), {
     withFileTypes: true,
+  }).catch((error) => {
+    if (error?.code === "ENOENT") return [];
+    throw error;
   });
   const candidates = [];
   for (const entry of entries) {
@@ -2606,6 +2658,17 @@ async function resolveCachedPlaywrightTestModule() {
       "playwright",
     );
     try {
+      const cacheManifest = JSON.parse(
+        await readFile(
+          path.join(cache, "_npx", entry.name, "package.json"),
+          "utf8",
+        ),
+      );
+      if (
+        cacheManifest?._npx?.packages?.length !== 1 ||
+        cacheManifest._npx.packages[0] !== "playwright"
+      )
+        continue;
       const manifest = JSON.parse(
         await readFile(path.join(packageRoot, "package.json"), "utf8"),
       );
@@ -2615,18 +2678,7 @@ async function resolveCachedPlaywrightTestModule() {
       // This cache entry does not contain a complete Playwright package.
     }
   }
-  candidates.sort((left, right) => {
-    const leftStable = !left.version.includes("-");
-    const rightStable = !right.version.includes("-");
-    if (leftStable !== rightStable) return leftStable ? 1 : -1;
-    return left.version.localeCompare(right.version, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
-  });
-  const selected = candidates.at(-1);
-  if (!selected) throw new Error("playwright_test_module_not_cached");
-  return pathToFileURL(path.join(selected.packageRoot, "test.mjs")).href;
+  return candidates;
 }
 
 function sha256Text(value) {
