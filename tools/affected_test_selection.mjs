@@ -287,7 +287,6 @@ const HOTSPOT_TESTS = new Map([
   ...[
     "packages/ty-context/src/lib/design-resource-handoff-set-integrity.ts",
     "packages/ty-context/src/lib/long-task-design-feasibility-binding.ts",
-    "packages/ty-context/src/lib/long-task-design-feasibility-binding-owners.ts",
     "packages/ty-context/src/lib/long-task-design-feasibility-source-closure.ts",
     "packages/ty-context/src/lib/long-task-design-resource-handoff.ts",
     "packages/ty-context/src/lib/long-task-design-resource-method-binding.ts",
@@ -300,6 +299,15 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
     ],
   ]),
+  [
+    "packages/ty-context/src/lib/long-task-design-feasibility-binding-owners.ts",
+    [
+      "design-resource-handoff.test.mjs",
+      ...IMPLEMENTATION_FEASIBILITY_TESTS,
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-pattern-containment.test.mjs",
+    ],
+  ],
   ...[
     "packages/ty-context/src/commands/long-task-authoring.ts",
     "packages/ty-context/src/lib/long-task-authoring-authority-preview.ts",
@@ -335,6 +343,15 @@ const HOTSPOT_TESTS = new Map([
       "long-task-delivery-compiler.test.mjs",
       "long-task-semantic-fact-closure.test.mjs",
       "long-task-workspace-scope.test.mjs",
+    ],
+  ],
+  [
+    "packages/ty-context/src/lib/long-task-freshness.ts",
+    [
+      "long-task-context-evolution.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
+      "long-task-runner-freeze-v2.test.mjs",
+      "long-task-state-resume.test.mjs",
     ],
   ],
   [
@@ -398,6 +415,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-authoring-claims.test.mjs",
       "long-task-claim-coverage.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
       "long-task-semantic-authority-revision.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
@@ -407,6 +425,7 @@ const HOTSPOT_TESTS = new Map([
     [
       "long-task-authoring-claims.test.mjs",
       "long-task-claim-coverage.test.mjs",
+      "long-task-delivery-compiler.test.mjs",
       "long-task-semantic-drift-closure.test.mjs",
     ],
   ],

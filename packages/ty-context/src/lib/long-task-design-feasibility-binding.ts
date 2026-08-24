@@ -31,16 +31,36 @@ import { invalid } from "./long-task-design-resource-method-binding.js";
 type DesignResourcePreflight =
   DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2;
 
+export interface LongTaskDesignFeasibilityBindingValidationResult {
+  consumed_component_binding_refs: string[];
+}
+
+export interface LongTaskDesignFeasibilityBindingValidationOptions {
+  deferComponentBindingAttribution?: boolean;
+}
+
 export function validateLongTaskDesignFeasibilityBindings(
   contract: DeliveryContractV2,
   contractTarget: ContractDesignTarget,
   preflight: DesignResourcePreflight,
   sourceItems: CompiledSourceItemV2[],
-): void {
+  options: LongTaskDesignFeasibilityBindingValidationOptions = {},
+): LongTaskDesignFeasibilityBindingValidationResult {
   const document = preflight.technical_feasibility_documents.find(
     (item) => item.target_ref === contractTarget.target.key,
   );
-  if (!document) return;
+  if (!document) {
+    if (!contractTarget.binding.component_binding_refs.length)
+      invalid(
+        "componentless_surface_requires_blocker_only_feasibility",
+        contractTarget.target.key,
+      );
+    return {
+      consumed_component_binding_refs: [
+        ...contractTarget.binding.component_binding_refs,
+      ],
+    };
+  }
   const model = feasibilityTargetModel(preflight, contractTarget.target.key);
   const decisions = compiledDecisionSources(document, sourceItems);
   const outcome = contract.outcomes.find(
@@ -67,6 +87,25 @@ export function validateLongTaskDesignFeasibilityBindings(
     invalid(
       "feasibility_route_binding_unknown",
       `${contractTarget.target.key}:${contractTarget.binding.route_binding_ref}`,
+    );
+  const hasCandidateCells = document.component_family_cells.some(
+    (cell) => cell.feasible_realizations.length > 0,
+  );
+  const allCellsBlockerOnly =
+    document.component_family_cells.length > 0 &&
+    document.component_family_cells.every(
+      (cell) =>
+        cell.feasible_realizations.length === 0 && cell.blocker_refs.length > 0,
+    );
+  if (!componentBindings.length && hasCandidateCells)
+    invalid(
+      "feasibility_component_binding_required",
+      contractTarget.target.key,
+    );
+  if (!componentBindings.length && !allCellsBlockerOnly)
+    invalid(
+      "componentless_surface_requires_blocker_only_feasibility",
+      contractTarget.target.key,
     );
   validateFeasibilityBindingOwnerRoots(
     document,
@@ -140,12 +179,11 @@ export function validateLongTaskDesignFeasibilityBindings(
         cell,
       );
   }
-  for (const bindingRef of contractTarget.binding.component_binding_refs)
-    if (!consumedComponentBindings.has(bindingRef))
-      invalid(
-        "feasibility_component_binding_unattributed",
-        `${contractTarget.target.key}:${bindingRef}`,
-      );
+  if (!options.deferComponentBindingAttribution)
+    validateComponentBindingAttribution(
+      contractTarget,
+      consumedComponentBindings,
+    );
   validateFeasibilityBlockers(
     contract,
     contractTarget,
@@ -153,6 +191,21 @@ export function validateLongTaskDesignFeasibilityBindings(
     model,
     decisions,
   );
+  return {
+    consumed_component_binding_refs: [...consumedComponentBindings].sort(),
+  };
+}
+
+function validateComponentBindingAttribution(
+  contractTarget: ContractDesignTarget,
+  consumedComponentBindings: Set<string>,
+): void {
+  for (const bindingRef of contractTarget.binding.component_binding_refs)
+    if (!consumedComponentBindings.has(bindingRef))
+      invalid(
+        "feasibility_component_binding_unattributed",
+        `${contractTarget.target.key}:${bindingRef}`,
+      );
 }
 
 function feasibilityTargetModel(

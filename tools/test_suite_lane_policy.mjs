@@ -7,6 +7,7 @@ import {
 } from "./test_suite_policy.mjs";
 
 export const LONG_TASK_MAX_FILES_PER_TEST_PROCESS = 16;
+export const LONG_TASK_SERIAL_ROLLBACK_MAX_FILES_PER_TEST_PROCESS = 1;
 
 export function planLongTaskSuiteLanes(
   availableFiles,
@@ -58,24 +59,31 @@ export function planLongTaskSuiteLanes(
       },
     ].filter((lane) => lane.names.length > 0);
   });
-  const lanes = logicalLanes.flatMap(splitLongTaskProcessLane);
-  return { ...policy, lanes };
+  const maxFilesPerTestProcess =
+    safeConcurrency === 1
+      ? LONG_TASK_SERIAL_ROLLBACK_MAX_FILES_PER_TEST_PROCESS
+      : LONG_TASK_MAX_FILES_PER_TEST_PROCESS;
+  const lanes = logicalLanes.flatMap((lane) =>
+    splitLongTaskProcessLane(lane, maxFilesPerTestProcess),
+  );
+  return {
+    ...policy,
+    lanes,
+    max_files_per_test_process: maxFilesPerTestProcess,
+  };
 }
 
-function splitLongTaskProcessLane(lane) {
-  if (lane.names.length <= LONG_TASK_MAX_FILES_PER_TEST_PROCESS) return [lane];
+function splitLongTaskProcessLane(lane, maxFilesPerTestProcess) {
+  if (lane.names.length <= maxFilesPerTestProcess) return [lane];
   const chunks = [];
   for (
     let index = 0;
     index < lane.names.length;
-    index += LONG_TASK_MAX_FILES_PER_TEST_PROCESS
+    index += maxFilesPerTestProcess
   )
     chunks.push({
       key: `${lane.key}-${String(chunks.length + 1).padStart(2, "0")}`,
-      names: lane.names.slice(
-        index,
-        index + LONG_TASK_MAX_FILES_PER_TEST_PROCESS,
-      ),
+      names: lane.names.slice(index, index + maxFilesPerTestProcess),
       concurrency: lane.concurrency,
     });
   return chunks;

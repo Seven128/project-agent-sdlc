@@ -5,6 +5,7 @@ import test from "node:test";
 import YAML from "yaml";
 import { expandedPatterns } from "../../packages/ty-context/dist/lib/long-task-authority-revision-details.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { validateFeasibilityBindingOwnerRoots } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding-owners.js";
 import { proveRepositoryPatternSubset } from "../../packages/ty-context/dist/lib/long-task-paths.js";
 import {
   createDeliveryFixture,
@@ -112,6 +113,174 @@ test("owner, support, and binding boundaries fail closed for widening patterns",
   );
 });
 
+test("feasibility production bindings prove every actual path inside observed owner roots", () => {
+  const route = binding({
+    key: "route",
+    target: "src/routes/main.ts",
+    carrier_paths: ["src/routes/main.ts"],
+  });
+  const positive = binding({
+    key: "component",
+    target: "src/components/Card.ts",
+    carrier_paths: ["src/components/Card.ts", "src/shared/theme.ts"],
+  });
+  assert.doesNotThrow(() =>
+    validateFeasibilityBindingOwnerRoots(
+      feasibilityOwnerDocument({
+        componentRoots: ["src/components", "src/shared"],
+      }),
+      [positive],
+      route,
+    ),
+  );
+
+  for (const [name, candidate, expectedDetail] of [
+    [
+      "file target inside and carrier outside",
+      binding({
+        target: "src/components/Card.ts",
+        carrier_paths: ["legacy/Card.ts"],
+      }),
+      "legacy/Card.ts",
+    ],
+    [
+      "file target outside and carrier inside",
+      binding({
+        target: "legacy/Card.ts",
+        carrier_paths: ["src/components/Card.ts"],
+      }),
+      "legacy/Card.ts",
+    ],
+    [
+      "path glob target outside",
+      binding({
+        kind: "path_glob",
+        target: "legacy/**/*.ts",
+        carrier_paths: ["src/components/**/*.ts"],
+      }),
+      "legacy/**/*.ts",
+    ],
+    [
+      "verified carrier outside while logical target is ignored",
+      binding({
+        kind: "verified",
+        target: "logical-component-owner",
+        carrier_paths: ["legacy/Card.ts"],
+        verification_check_key: "component-check",
+      }),
+      "legacy/Card.ts",
+    ],
+    [
+      "planned carrier outside",
+      binding({
+        target: "src/components/PlannedCard.ts",
+        carrier_paths: ["legacy/PlannedCard.ts"],
+        existence: "planned",
+      }),
+      "legacy/PlannedCard.ts",
+    ],
+    [
+      "one of several carriers outside",
+      binding({
+        target: "src/components/Card.ts",
+        carrier_paths: ["src/components/Card.ts", "legacy/theme.ts"],
+      }),
+      "legacy/theme.ts",
+    ],
+    [
+      "same-prefix wildcard is not an owner child",
+      binding({
+        kind: "path_glob",
+        target: "src/components*/**",
+        carrier_paths: ["src/components/Card.ts"],
+      }),
+      "src/components*/**",
+    ],
+    [
+      "unknown subset fails closed",
+      binding({
+        kind: "path_glob",
+        target: "src/**/Card.ts",
+        carrier_paths: ["src/components/Card.ts"],
+      }),
+      "unknown",
+    ],
+  ]) {
+    assert.throws(
+      () =>
+        validateFeasibilityBindingOwnerRoots(
+          feasibilityOwnerDocument(),
+          [candidate],
+          route,
+        ),
+      (error) => {
+        assert.match(
+          error.message,
+          /feasibility_component_binding_outside_owner_roots/u,
+          name,
+        );
+        assert.match(error.message, new RegExp(escapeRegex(expectedDetail), "u"));
+        return true;
+      },
+    );
+  }
+
+  assert.throws(
+    () =>
+      validateFeasibilityBindingOwnerRoots(
+        feasibilityOwnerDocument(),
+        [
+          binding({
+            target: "src/components/PlannedCard.ts",
+            carrier_paths: [],
+            existence: "planned",
+          }),
+        ],
+        route,
+      ),
+    /feasibility_planned_binding_carrier_required/u,
+  );
+
+  assert.throws(
+    () =>
+      validateFeasibilityBindingOwnerRoots(
+        feasibilityOwnerDocument(),
+        [
+          binding({
+            target: "src/components/Card.ts",
+            carrier_paths: ["src/components/Card.ts"],
+          }),
+        ],
+        binding({
+          key: "route",
+          target: "legacy/routes/main.ts",
+          carrier_paths: ["src/routes/main.ts"],
+        }),
+      ),
+    /feasibility_route_binding_outside_owner_roots:route:legacy\/routes\/main\.ts/u,
+  );
+
+  assert.throws(
+    () =>
+      validateFeasibilityBindingOwnerRoots(
+        feasibilityOwnerDocument({ routeDisposition: "not_applicable" }),
+        [],
+        route,
+      ),
+    /feasibility_route_owner_roots_required/u,
+  );
+
+  assert.doesNotThrow(() =>
+    validateFeasibilityBindingOwnerRoots(
+      feasibilityOwnerDocument({
+        componentDisposition: "decision_required",
+      }),
+      [],
+      route,
+    ),
+  );
+});
+
 test("binding carriers must be contained by declared change paths", async () => {
   const fixture = await createDeliveryFixture();
   try {
@@ -193,4 +362,47 @@ function productionSupportPaths(contract) {
   return contract.outcomes[0].technical.allowed_support_paths.filter(
     (pattern) => pattern !== "src/**",
   );
+}
+
+function binding(overrides = {}) {
+  return {
+    key: "component",
+    kind: "file",
+    target: "src/components/Card.ts",
+    carrier_paths: ["src/components/Card.ts"],
+    existence: "existing",
+    ...overrides,
+  };
+}
+
+function feasibilityOwnerDocument({
+  componentRoots = ["src/components"],
+  routeRoots = ["src/routes"],
+  componentDisposition = "observed",
+  routeDisposition = "observed",
+} = {}) {
+  return {
+    substrate_observations: [
+      {
+        kind: "component_owner_roots",
+        disposition: componentDisposition,
+        value:
+          componentDisposition === "observed"
+            ? { kind: "repository_paths", paths: componentRoots }
+            : null,
+      },
+      {
+        kind: "route_owner_roots",
+        disposition: routeDisposition,
+        value:
+          routeDisposition === "observed"
+            ? { kind: "repository_paths", paths: routeRoots }
+            : null,
+      },
+    ],
+  };
+}
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }

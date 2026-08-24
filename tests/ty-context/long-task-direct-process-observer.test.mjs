@@ -13,12 +13,35 @@ import test from "node:test";
 import { executeCheckRunner } from "../../packages/ty-context/dist/lib/long-task-check-runner.js";
 import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
 import { decodeProductObservationEnvelope } from "../../packages/ty-context/dist/lib/long-task-process-observation.js";
+import { processInstanceMatches } from "../../packages/ty-context/dist/lib/long-task-process-tree.js";
 import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const SNAPSHOT_SHA256 = "a".repeat(64);
+
+test("process-tree cleanup rejects a reused PID with a different creation identity", () => {
+  const observed = { pid: 4242, start_identity: "638600000000000000" };
+  assert.equal(
+    processInstanceMatches(observed, structuredClone(observed)),
+    true,
+  );
+  assert.equal(
+    processInstanceMatches(observed, {
+      pid: observed.pid,
+      start_identity: "638600000000000001",
+    }),
+    false,
+  );
+  assert.equal(
+    processInstanceMatches(observed, {
+      pid: observed.pid + 1,
+      start_identity: observed.start_identity,
+    }),
+    false,
+  );
+});
 
 test("direct process observation captures one root stdout envelope and host attestation", async () => {
   const fixture = await createProcessFixture();

@@ -160,6 +160,7 @@ export interface DesignResourceImplementationFeasibilityBlockerV1 {
   target_ref: string;
   condition_profile_ref: string;
   source_record_refs: string[];
+  substrate_observation_refs: DesignResourceSubstrateObservationKind[];
   description: string;
 }
 

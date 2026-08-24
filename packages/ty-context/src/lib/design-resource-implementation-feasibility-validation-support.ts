@@ -6,10 +6,17 @@ import type {
 const EXACT_VISUAL_VALUE_PATTERNS = [
   /#[0-9a-f]{3,8}\b/iu,
   /\b(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch)\s*\(/iu,
-  /\b\d+(?:\.\d+)?(?:px|rem|em|pt|pc|vh|vw|vmin|vmax|ch|ex|deg|ms|s)\b/iu,
+  /\b\d+(?:\.\d+)?(?:px|rem|em|pt|pc|vh|vw|vmin|vmax|ch|ex|deg)\b/iu,
   /\b(?:color|background|font(?:-family|-size|-weight)?|line-height|border-radius|radius|padding|margin|gap|width|height|opacity|duration|easing|shadow)\s*[:=]\s*\S+/iu,
   /--[a-z0-9_-]+\s*:\s*\S+/iu,
 ] as const;
+
+const TIME_VALUE_PATTERN = /\b\d+(?:\.\d+)?(?:ms|s)\b/giu;
+const MOTION_TIME_CONTEXT =
+  /\b(?:animation|transition|motion|duration|delay|easing|timeline|keyframes?|fade|spring|stagger|enter|exit|hover|press|ease(?:-in|-out|-in-out)?)\b/iu;
+const TECHNICAL_TIME_CONTEXT =
+  /\b(?:build|compile|bundle|generation|ci|tests?|startup|initialization|latency|timeout|network|benchmark|runtime\s+cost|render\s+cost|benchmark\s+execution)\b/iu;
+const TIME_CONTEXT_RADIUS = 80;
 
 export function invalidFeasibility(code: string, detail: string): never {
   throw new Error(
@@ -76,8 +83,24 @@ export function assertNoExactVisualValues(
   detail: string,
 ): void {
   for (const value of values)
-    if (EXACT_VISUAL_VALUE_PATTERNS.some((pattern) => pattern.test(value)))
+    if (
+      EXACT_VISUAL_VALUE_PATTERNS.some((pattern) => pattern.test(value)) ||
+      hasForbiddenTimeValue(value)
+    )
       invalidFeasibility("exact_visual_value_forbidden", detail);
+}
+
+function hasForbiddenTimeValue(value: string): boolean {
+  for (const match of value.matchAll(TIME_VALUE_PATTERN)) {
+    const index = match.index;
+    const context = value.slice(
+      Math.max(0, index - TIME_CONTEXT_RADIUS),
+      Math.min(value.length, index + match[0].length + TIME_CONTEXT_RADIUS),
+    );
+    if (MOTION_TIME_CONTEXT.test(context)) return true;
+    if (!TECHNICAL_TIME_CONTEXT.test(context)) return true;
+  }
+  return false;
 }
 
 export function validateNoExactVisualValueCarriers(

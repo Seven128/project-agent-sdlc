@@ -15,8 +15,9 @@ export function bindingCarriers(
   bindings: Map<string, DeliveryOutcomeV2["technical"]["bindings"][number]>,
   label: string,
   report?: Reporter,
+  options: { allowEmptyComponentRefs?: boolean } = {},
 ): string[] {
-  if (!componentRefs.length)
+  if (!componentRefs.length && !options.allowEmptyComponentRefs)
     issue(report, "ui_surface_binding_component_ref_required", label);
   unique(
     componentRefs,

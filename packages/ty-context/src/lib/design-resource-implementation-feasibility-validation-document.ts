@@ -61,6 +61,7 @@ export async function validateFeasibilityDocument(
   );
   validateNoExactVisualValueCarriers(document);
   await validateObservations(repository, document, sources);
+  validateCandidateComponentOwnerRoots(document);
   const profileRefs = validateConditionModel(document, model);
   await validateFeasibilityCells(
     repository,
@@ -127,17 +128,27 @@ async function validateObservations(
           `design_resource_feasibility_repository_path:${observation.kind}`,
         );
   }
+}
+
+function validateCandidateComponentOwnerRoots(
+  document: DesignResourceImplementationFeasibilityV1,
+): void {
   if (
-    document.realization_mode !== "reference" &&
-    document.substrate_observations.some(
-      (observation) =>
-        observation.disposition === "decision_required" ||
-        observation.disposition === "unavailable",
-    ) &&
-    !document.component_family_cells.some((cell) => cell.blocker_refs.length)
+    !document.component_family_cells.some(
+      (cell) => cell.feasible_realizations.length > 0,
+    )
+  )
+    return;
+  const roots = document.substrate_observations.find(
+    (observation) => observation.kind === "component_owner_roots",
+  );
+  if (
+    roots?.disposition !== "observed" ||
+    roots.value?.kind !== "repository_paths" ||
+    roots.value.paths.length === 0
   )
     invalidFeasibility(
-      "unresolved_substrate_blocker_required",
+      "candidate_component_owner_roots_required",
       document.target_ref,
     );
 }

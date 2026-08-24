@@ -1,6 +1,7 @@
 import {
   DESIGN_RESOURCE_CUSTOMIZATION_SURFACES,
   DESIGN_RESOURCE_IMPLEMENTATION_STRATEGY_STEPS,
+  DESIGN_RESOURCE_SUBSTRATE_OBSERVATION_KINDS,
   type DesignResourceImplementationConditionModelV1,
 } from "./design-resource-implementation-feasibility-types.js";
 import { parseSymbolicPredicate } from "./design-resource-symbolic-predicate-shape.js";
@@ -241,6 +242,7 @@ export function parseBlockers(value: unknown, label: string) {
       "target_ref",
       "condition_profile_ref",
       "source_record_refs",
+      "substrate_observation_refs",
       "description",
     ]);
     return {
@@ -258,6 +260,18 @@ export function parseBlockers(value: unknown, label: string) {
         row.source_record_refs,
         `${itemLabel}.source_record_refs`,
       ),
+      substrate_observation_refs: array(
+        row.substrate_observation_refs,
+        `${itemLabel}.substrate_observation_refs`,
+      )
+        .map((observationRef, observationIndex) =>
+          literal(
+            observationRef,
+            DESIGN_RESOURCE_SUBSTRATE_OBSERVATION_KINDS,
+            `${itemLabel}.substrate_observation_refs[${observationIndex}]`,
+          ),
+        )
+        .sort(),
       description: string(row.description, `${itemLabel}.description`),
     };
   });
