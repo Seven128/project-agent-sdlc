@@ -54,6 +54,27 @@ export interface ExternalConfirmationV2 {
   kind: ExternalConfirmationKindV2;
   impact_claims: string[];
   blocks_target: boolean;
+  actor?: {
+    id: string;
+    role: string;
+    authority_kind: "human" | "expert" | "external_system";
+  };
+  target_ref?: string;
+  environment_identity?: string;
+  scenario?: DeliveryScenarioV2;
+  evidence_requirements?: KeyedStatementV2[];
+  obligations?: Array<{
+    key: string;
+    claim_ref: string;
+    applicability_ref: string;
+    fact_ref: string | null;
+    proof_ref: string | null;
+    method: string;
+    proof_surface: ProofSurface;
+    evidence_capabilities: EvidenceCapabilityV2[];
+    expected_authority_ref: string;
+    result_kind: "actual" | "judgment";
+  }>;
 }
 
 export type ProofSurface =
@@ -95,6 +116,7 @@ interface DeliveryAssertionBaseV2 {
   applicability_ref?: string;
   observation: string;
   evidence_capabilities: EvidenceCapabilityV2[];
+  expected_authority_ref?: string;
 }
 
 export type DeliveryAssertionV2 =

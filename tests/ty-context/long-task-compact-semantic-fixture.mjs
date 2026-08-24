@@ -159,17 +159,50 @@ export function projectSyntheticCompactContract(contract, manifest) {
     applicability_ref: "first-root-success",
   }));
   const externalConfirmationKey = "synthetic-snapshot-digest-confirmation";
-  contract.global.acceptance.external_confirmations.push({
-    key: externalConfirmationKey,
-    description:
-      "Confirm the synthetic custom snapshot obligations outside the admitted exact observer.",
-    owner: "fixture-audit-owner",
-    kind: "expert_authority",
-    impact_claims: manifest.facts.map(
-      (fact) => `first.semantic_fact.${fact.key}`,
-    ),
-    blocks_target: true,
-  });
+  const externalProofs = manifest.proof_obligations.filter(
+    (proof) => proof.authority === "external_confirmation",
+  );
+  if (externalProofs.length) {
+    contract.task.target_profile.completion_authority = "declared_authorities";
+    contract.global.acceptance.external_confirmations.push({
+      key: externalConfirmationKey,
+      description:
+        "Confirm the synthetic custom snapshot obligations outside the admitted exact observer.",
+      owner: "fixture-audit-owner",
+      kind: "expert_authority",
+      impact_claims: externalProofs.map(
+        (proof) => `first.semantic_fact.${proof.fact_ref}`,
+      ),
+      blocks_target: true,
+      actor: {
+        id: "fixture-synthetic-snapshot-auditor",
+        role: "synthetic snapshot acceptance auditor",
+        authority_kind: "expert",
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-synthetic-snapshot-audit-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        {
+          key: "synthetic-snapshot-evidence",
+          statement:
+            "Capture evidence for every exact synthetic custom snapshot obligation.",
+        },
+      ],
+      obligations: externalProofs.map((proof) => ({
+        key: `confirm-${proof.key.replace(/[^a-z0-9]+/gu, "-")}`,
+        claim_ref: `first.semantic_fact.${proof.fact_ref}`,
+        applicability_ref: "first-root-success",
+        fact_ref: proof.fact_ref,
+        proof_ref: proof.key,
+        method: proof.method,
+        proof_surface: proof.proof_surface,
+        evidence_capabilities: [...proof.evidence_capabilities],
+        expected_authority_ref: `semantic-proof:${proof.key}`,
+        result_kind: "judgment",
+      })),
+    });
+  }
   const proofBindings = manifest.proof_obligations.map((proof) =>
     proof.authority === "machine"
       ? {

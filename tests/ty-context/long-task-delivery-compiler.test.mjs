@@ -47,6 +47,11 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
+import {
+  addExternalFeasibilityDecisionSemanticFact,
+  configureExactTargetBlockingConfirmation,
+  feasibilityDecisionSemanticIdentity,
+} from "./long-task-feasibility-semantic-fixture.mjs";
 
 const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-root-constraint";
 const DESIGN_ROOT_CLAIM = "control.main.location";
@@ -867,10 +872,19 @@ test("Long-Task derives an authorized planned owner from existing bindings", asy
     positive.consume(preflight);
     assert.doesNotThrow(() => positive.finish());
 
-    addTargetBlockingDesignConfirmation(fixture.contract, {
+    const semanticIdentity = feasibilityDecisionSemanticIdentity(
+      authority.itemKey,
+    );
+    configureExactTargetBlockingConfirmation(fixture.contract, {
       key: "confirm-planned-design",
+      semanticIdentities: [semanticIdentity],
     });
     await writeContract(fixture.workdir, fixture.contract);
+    await addExternalFeasibilityDecisionSemanticFact(fixture, {
+      identity: semanticIdentity,
+      expectedValue: authority.normalizedText,
+      confirmationRef: "confirm-planned-design",
+    });
     const compiled = await compileDeliveryContract(
       fixture.workdir,
       fixture.root,
@@ -1098,7 +1112,7 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
           contract.global.acceptance.external_confirmations = [];
         },
         /feasibility_blocker_confirmation_unknown/u,
-        /external_confirmation.*unknown|feasibility_blocker_confirmation_unknown/u,
+        /semantic_fact_external_confirmation_invalid|feasibility_blocker_confirmation_unknown/u,
       ],
       [
         "nonblocking",
@@ -1116,7 +1130,7 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
           ];
         },
         /feasibility_blocker_confirmation_target_claim_missing/u,
-        /impact.*mismatch|target_claim_missing/u,
+        /semantic_fact_external_confirmation_invalid|impact.*mismatch|target_claim_missing/u,
       ],
     ]) {
       const contract = structuredClone(external.fixture.contract);
@@ -1582,7 +1596,7 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
   const pureLegacy = await createDeliveryFixture();
   try {
     await attachDesignResourceHandoff(pureLegacy);
-    addTargetBlockingDesignConfirmation(pureLegacy.contract, {
+    configureExactTargetBlockingConfirmation(pureLegacy.contract, {
       key: "confirm-pure-legacy-design",
     });
     await writeContract(pureLegacy.workdir, pureLegacy.contract);
@@ -1613,7 +1627,6 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
   );
   try {
     await writeModernSecondaryHandoff(sharedModern);
-    refreshFixtureExternalConfirmationImpacts(sharedModern.fixture.contract);
     await writeContract(
       sharedModern.fixture.workdir,
       sharedModern.fixture.contract,
@@ -1667,9 +1680,6 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
     await writeModernSecondaryHandoff(candidateAndBlocker, {
       blockerOnly: true,
     });
-    refreshFixtureExternalConfirmationImpacts(
-      candidateAndBlocker.fixture.contract,
-    );
     await writeContract(
       candidateAndBlocker.fixture.workdir,
       candidateAndBlocker.fixture.contract,
@@ -2286,6 +2296,18 @@ async function createLegacyMixedCompileFixture({ blockerOnly = false } = {}) {
     mapping,
   );
   isolateSecondaryTargetAssertions(fixtureState.fixture.contract);
+  configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
+    key: "confirm-card-owner",
+    description: fixtureState.authority.normalizedText,
+    excludedClaimRefs: ["first.control.main.surface"],
+    semanticIdentities: [fixtureState.semanticIdentity],
+    targetKey: "main-default",
+  });
+  configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
+    key: "confirm-secondary-legacy-design",
+    excludeAlreadyConfirmedClaims: true,
+    targetKey: "secondary-default",
+  });
   return fixtureState;
 }
 
@@ -2375,6 +2397,13 @@ async function writeModernSecondaryHandoff(
     mapping,
   );
   isolateSecondaryTargetAssertions(fixtureState.fixture.contract);
+  configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
+    key: "confirm-card-owner",
+    description: fixtureState.authority.normalizedText,
+    excludedClaimRefs: ["first.control.main.surface"],
+    semanticIdentities: [fixtureState.semanticIdentity],
+    targetKey: "main-default",
+  });
   const outcome = fixtureState.fixture.contract.outcomes[0];
   const target = outcome.product.surface_bindings[0].design_targets.find(
     (candidate) => candidate.key === "secondary-default",
@@ -2391,37 +2420,33 @@ async function writeModernSecondaryHandoff(
     source_ref: `${secondaryAuthorityPath}#${secondaryAuthorityKey}`,
     statement: authorityItem.normalized_text,
   };
+  let secondarySemanticIdentity = null;
   if (secondaryAuthorityClaim.disposition.type === "external_confirmation") {
-    const primaryConfirmation =
-      fixtureState.fixture.contract.global.acceptance.external_confirmations.find(
-        (entry) => entry.key === secondaryAuthorityClaim.disposition.refs[0],
-      );
     const secondaryConfirmationKey = "confirm-secondary-card-owner";
-    secondaryAuthorityClaim.disposition.refs = [secondaryConfirmationKey];
-    fixtureState.fixture.contract.global.acceptance.external_confirmations.push(
-      {
-        ...structuredClone(primaryConfirmation),
-        key: secondaryConfirmationKey,
-        description: authorityItem.normalized_text,
-      },
+    secondarySemanticIdentity = feasibilityDecisionSemanticIdentity(
+      secondaryAuthorityKey,
     );
+    secondaryAuthorityClaim.disposition.refs = [secondaryConfirmationKey];
+    configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
+      key: secondaryConfirmationKey,
+      description: authorityItem.normalized_text,
+      excludeAlreadyConfirmedClaims: true,
+      targetKey: "secondary-default",
+      semanticIdentities: [secondarySemanticIdentity],
+    });
   }
   fixtureState.fixture.contract.source_claims.push(secondaryAuthorityClaim);
-}
-
-function refreshFixtureExternalConfirmationImpacts(contract) {
-  const outcome = contract.outcomes[0];
-  const impactClaims = prepareTargetBlockedCompileFixture(
-    contract,
-    outcome.key,
-  );
-  for (const confirmation of contract.global.acceptance.external_confirmations)
-    if (
-      ["confirm-card-owner", "confirm-secondary-card-owner"].includes(
-        confirmation.key,
-      )
-    )
-      confirmation.impact_claims = [...impactClaims];
+  if (secondarySemanticIdentity) {
+    await writeContract(
+      fixtureState.fixture.workdir,
+      fixtureState.fixture.contract,
+    );
+    await addExternalFeasibilityDecisionSemanticFact(fixtureState.fixture, {
+      identity: secondarySemanticIdentity,
+      expectedValue: authorityItem.normalized_text,
+      confirmationRef: "confirm-secondary-card-owner",
+    });
+  }
 }
 
 function isolateSecondaryTargetAssertions(contract) {
@@ -2443,6 +2468,8 @@ function isolateSecondaryTargetAssertions(contract) {
   const target = surface.design_targets.find(
     (candidate) => candidate.key === "secondary-default",
   );
+  target.claim_refs = ["control.main.surface"];
+  target.conformance_assertion_ref = "main-surface-proof";
   const check = outcome.acceptance.checks.find(
     (candidate) => candidate.key === target.conformance_check_ref,
   );
@@ -2463,6 +2490,16 @@ function isolateSecondaryTargetAssertions(contract) {
       key,
       observation: `secondary_${source.observation}`,
     };
+    if (source.key === "main-surface-proof")
+      cloned.evidence_capabilities = [
+        ...new Set([
+          ...cloned.evidence_capabilities,
+          "design_conformance",
+          "visual_render",
+          "interaction_trace",
+          "target_runtime",
+        ]),
+      ];
     cloned.claims = cloned.claims.map((claim) =>
       claim === "requirement.design-handoff"
         ? "requirement.design-handoff-secondary"
@@ -2681,10 +2718,16 @@ test("design handoff fixture smoke", async () => {
           ? [
               "design_method",
               "design_conformance",
+              "visual_render",
               "interaction_trace",
               "target_runtime",
             ]
-          : ["design_method", "design_conformance", "target_runtime"];
+          : [
+              "design_method",
+              "design_conformance",
+              "visual_render",
+              "target_runtime",
+            ];
     const assertion = structuredClone(check.positive_assertions[0]);
     assertion.key = `design-${method.replaceAll("_", "-")}`;
     assertion.observation = `design_${method}`;
@@ -2750,10 +2793,23 @@ test("design handoff fixture smoke", async () => {
       },
     ],
   });
+  const surfaceAssertion = check.positive_assertions.find(
+    (assertion) => assertion.key === "main-surface-proof",
+  );
+  surfaceAssertion.evidence_capabilities = [
+    ...new Set([...surfaceAssertion.evidence_capabilities, "presence"]),
+  ];
   const rootAssertion = check.positive_assertions.find(
     (assertion) => assertion.key === "main-location-proof",
   );
-  rootAssertion.evidence_capabilities.push("design_conformance");
+  rootAssertion.evidence_capabilities = [
+    ...new Set([
+      ...rootAssertion.evidence_capabilities,
+      "presence",
+      "design_conformance",
+      "visual_render",
+    ]),
+  ];
   fixture.contract.task.source_paths.push(DESIGN_HANDOFF_PATH);
   fixture.contract.source_claims.push({
     key: DESIGN_SOURCE_ITEM_KEY,
@@ -2911,17 +2967,15 @@ async function createFeasibilityBlockerFixture(
           },
   });
   const outcome = fixture.contract.outcomes[0];
-  if (itemKind === "external_confirmation")
-    fixture.contract.global.acceptance.external_confirmations.push({
+  const semanticIdentity =
+    itemKind === "external_confirmation"
+      ? feasibilityDecisionSemanticIdentity(authority.itemKey)
+      : null;
+  if (semanticIdentity)
+    configureExactTargetBlockingConfirmation(fixture.contract, {
       key: "confirm-card-owner",
       description: authority.normalizedText,
-      owner: "project-owner",
-      kind: "expert_authority",
-      impact_claims: prepareTargetBlockedCompileFixture(
-        fixture.contract,
-        outcome.key,
-      ),
-      blocks_target: true,
+      semanticIdentities: [semanticIdentity],
     });
   const surface = outcome.product.surface_bindings[0];
   surface.component_binding_refs = blockerOnly ? [] : ["design-owner"];
@@ -2947,7 +3001,22 @@ async function createFeasibilityBlockerFixture(
     fixture.root,
     fixture.contract.task.source_paths,
   );
-  return { fixture, handoff, authority, preflight, sourceItems };
+  if (semanticIdentity) {
+    await writeContract(fixture.workdir, fixture.contract);
+    await addExternalFeasibilityDecisionSemanticFact(fixture, {
+      identity: semanticIdentity,
+      expectedValue: authority.normalizedText,
+      confirmationRef: "confirm-card-owner",
+    });
+  }
+  return {
+    fixture,
+    handoff,
+    authority,
+    preflight,
+    sourceItems,
+    semanticIdentity,
+  };
 }
 
 function attachClonedFeasibilityTarget(
@@ -3022,57 +3091,6 @@ function attachClonedFeasibilityTarget(
     feasibilityPath,
     sourceItems: [...fixtureState.sourceItems, authorityItem],
   };
-}
-
-function addTargetBlockingDesignConfirmation(
-  contract,
-  { key = "confirm-design-target" } = {},
-) {
-  const outcome = contract.outcomes[0];
-  contract.global.acceptance.external_confirmations.push({
-    key,
-    description:
-      "Confirm the externally blocked production design target before completion.",
-    owner: "project-owner",
-    kind: "expert_authority",
-    impact_claims: prepareTargetBlockedCompileFixture(contract, outcome.key),
-    blocks_target: true,
-  });
-}
-
-function prepareTargetBlockedCompileFixture(contract, outcomeKey) {
-  const outcome = contract.outcomes.find((item) => item.key === outcomeKey);
-  const designAssertionRefs = new Set();
-  const impactedClaims = new Set([`${outcomeKey}.result`]);
-  for (const binding of outcome.product.surface_bindings)
-    for (const target of binding.design_targets) {
-      for (const claimRef of target.claim_refs)
-        impactedClaims.add(`${outcomeKey}.${claimRef}`);
-      designAssertionRefs.add(target.conformance_assertion_ref);
-      for (const method of target.verification_method_bindings)
-        designAssertionRefs.add(method.assertion_ref);
-      for (const method of target.symbolic_method_bindings ?? [])
-        designAssertionRefs.add(method.assertion_ref);
-      if (target.symbolic_certificate_binding)
-        designAssertionRefs.add(
-          target.symbolic_certificate_binding.assertion_ref,
-        );
-    }
-
-  for (const check of outcome.acceptance.checks) {
-    for (const assertion of [
-      ...check.positive_assertions,
-      ...check.negative_assertions,
-    ]) {
-      if (designAssertionRefs.has(assertion.key))
-        for (const claimRef of assertion.claims)
-          impactedClaims.add(`${outcomeKey}.${claimRef}`);
-      if (assertion.evidence_capabilities.includes("state_delta"))
-        for (const claimRef of assertion.claims)
-          impactedClaims.add(`${outcomeKey}.${claimRef}`);
-    }
-  }
-  return [...impactedClaims].sort();
 }
 
 function cachedPlaywrightTestModule(cwd) {

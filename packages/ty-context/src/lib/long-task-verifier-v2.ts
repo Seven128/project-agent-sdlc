@@ -3,7 +3,6 @@ import type {
   CompiledCheckV2,
   CompiledDeliveryContractV2,
   LongTaskFindingV2,
-  RawCommandExecutionV2,
   TargetedVerificationResultV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
@@ -13,17 +12,14 @@ import {
   enrichCheckResultFindings,
   enrichFinding,
 } from "./long-task-finding-context.js";
-import { executeCheckRunner } from "./long-task-check-runner.js";
 import { prepareExecutionObservationUniverse } from "./long-task-execution-observation.js";
-import {
-  evaluateCheckEvidence,
-  evaluateGlobalCounterfactuals,
-  evaluateOutcomeCounterfactuals,
-} from "./long-task-evidence-v2.js";
+import { evaluateCheckEvidence } from "./long-task-evidence-v2.js";
 import { matchesRepoPattern } from "./long-task-paths.js";
+import { deriveRepairFrontier } from "./long-task-repair-frontier.js";
 import {
   activeAuthorityIdentityMatches,
   loadActiveLongTaskAuthority,
+  readProgressRecords,
   writeProgressRecord,
 } from "./long-task-state.js";
 import { createProgressRecord } from "./long-task-progress.js";
@@ -37,6 +33,8 @@ import {
   classifyWorkspaceScope,
   protectedWorkspacePaths,
 } from "./long-task-workspace-scope.js";
+import { evaluateSelectedCounterfactuals } from "./long-task-verifier-counterfactuals.js";
+import { executePreparedRawExecutionGroups } from "./long-task-verifier-execution.js";
 
 export interface DeliveryRunV2 {
   snapshot: WorkspaceManifestV2;
@@ -64,6 +62,7 @@ export async function verifyDeliveryContract(
     worktree_identity: active.worktree_identity,
   };
   const selected = selectChecks(compiled, selection);
+  const existingProgress = await readProgressRecords(active.workdir);
   const snapshot = await createWorkspaceSnapshot(
     compiled.repository_root,
     compiled.workdir,
@@ -97,6 +96,12 @@ export async function verifyDeliveryContract(
         next_action:
           "Discard the stale progress and rerun verification against the active Authority Revision.",
       });
+      const repairFrontier = deriveRepairFrontier({
+        compiled,
+        manifest: snapshot.manifest,
+        progress: existingProgress,
+        findings: run.findings,
+      });
       return {
         schema_version: "long-task-targeted-progress-v2",
         compiled_identity: compiled.compiled_identity,
@@ -107,12 +112,25 @@ export async function verifyDeliveryContract(
         updated_progress_records: [],
         check_results: run.check_results,
         findings: run.findings,
+        repair_frontier: repairFrontier,
         completed_at: new Date().toISOString(),
       };
     }
     await Promise.all(
       records.map((record) => writeProgressRecord(workdir, record)),
     );
+    const updatedProgress = {
+      ...existingProgress,
+      ...Object.fromEntries(
+        records.map((record) => [record.check_internal_id, record]),
+      ),
+    };
+    const repairFrontier = deriveRepairFrontier({
+      compiled,
+      manifest: snapshot.manifest,
+      progress: updatedProgress,
+      findings: run.findings,
+    });
     return {
       schema_version: "long-task-targeted-progress-v2",
       compiled_identity: compiled.compiled_identity,
@@ -125,6 +143,7 @@ export async function verifyDeliveryContract(
       ),
       check_results: run.check_results,
       findings: run.findings,
+      repair_frontier: repairFrontier,
       completed_at: new Date().toISOString(),
     };
   } finally {
@@ -159,7 +178,6 @@ export async function runDeliveryChecks(
       findings: findings.map((finding) => enrichFinding(compiled, finding)),
     };
 
-  const rawExecutions = new Map<string, RawCommandExecutionV2>();
   const completeChecks = allCompiledChecks(compiled);
   const selectedExecutionGroups = rawExecutionGroups(checks);
   const completeExecutionGroups = selectedExecutionGroups.map((group) =>
@@ -174,38 +192,11 @@ export async function runDeliveryChecks(
     workspace_manifest: snapshot.manifest,
     protected_authority_paths: observationAuthorityPaths,
   });
-  try {
-    const pending: Array<{
-      raw_execution_identity: string;
-      raw: RawCommandExecutionV2;
-      prepared: (typeof preparedExecutionGroups)[number];
-    }> = [];
-    for (const [index, group] of selectedExecutionGroups.entries()) {
-      const prepared = preparedExecutionGroups[index];
-      if (!prepared) throw new Error("raw_execution_group_prepare_missing");
-      pending.push({
-        raw_execution_identity: group[0].raw_execution_identity,
-        raw: await executeCheckRunner(
-          group[0],
-          prepared.execution_root,
-          prepared.runner_context,
-        ),
-        prepared,
-      });
-    }
-    const finalized = await Promise.all(
-      pending.map(async (entry) => ({
-        raw_execution_identity: entry.raw_execution_identity,
-        raw: await entry.prepared.finalize(entry.raw),
-      })),
-    );
-    for (const entry of finalized)
-      rawExecutions.set(entry.raw_execution_identity, entry.raw);
-  } finally {
-    await Promise.all(
-      preparedExecutionGroups.map((prepared) => prepared.dispose()),
-    );
-  }
+  const rawExecutions = await executePreparedRawExecutionGroups({
+    selected_groups: selectedExecutionGroups,
+    complete_groups: completeExecutionGroups,
+    prepared_groups: preparedExecutionGroups,
+  });
   const mainCheckResults: CheckExecutionResultV2[] = [];
   for (const check of checks) {
     const raw = rawExecutions.get(check.raw_execution_identity);
@@ -224,78 +215,20 @@ export async function runDeliveryChecks(
     );
   }
 
-  const counterfactualFindings: LongTaskFindingV2[] = [];
-  if (includeCounterfactuals) {
-    // Counterfactual sensitivity is a closure condition for an otherwise
-    // passing proof. A failed or externally blocked owning Check already
-    // blocks acceptance; rerunning its oracle in a mutated sandbox can only
-    // obscure that primary status (for example, by turning a typed external
-    // blocker into an integrity failure).
-    const passingCheckIds = new Set(
-      mainCheckResults
-        .filter((result) => result.status === "passed")
-        .map((result) => result.internal_id),
-    );
-    const selectedGlobalCheckKeys = new Set(
-      checks
-        .filter(
-          (check) =>
-            check.outcome_key === null &&
-            passingCheckIds.has(check.internal_id),
-        )
-        .map((check) => check.key),
-    );
-    if (selectedGlobalCheckKeys.size)
-      counterfactualFindings.push(
-        ...(await evaluateGlobalCounterfactuals(
-          compiled,
-          snapshot.root,
-          selectedGlobalCheckKeys,
-          snapshot.manifest,
-          mainCheckResults,
-          rawExecutions,
-          completeChecks,
-        )),
-      );
-    const outcomeKeys = new Set(
-      checks
-        .map((check) => check.outcome_key)
-        .filter((key): key is string => Boolean(key)),
-    );
-    for (const outcome of compiled.outcomes.filter((item) =>
-      outcomeKeys.has(item.key),
-    )) {
-      const selectedKeys = new Set(
-        checks
-          .filter(
-            (check) =>
-              check.outcome_key === outcome.key &&
-              passingCheckIds.has(check.internal_id),
-          )
-          .map((check) => check.key),
-      );
-      counterfactualFindings.push(
-        ...(await evaluateOutcomeCounterfactuals(
-          {
-            ...outcome,
-            acceptance: {
-              ...outcome.acceptance,
-              counterfactual_controls:
-                outcome.acceptance.counterfactual_controls.filter((control) =>
-                  selectedKeys.has(control.check_key),
-                ),
-            },
-          },
-          snapshot.root,
-          snapshot.manifest,
-          observationAuthorityPaths,
-          mainCheckResults,
-          rawExecutions,
-          completeChecks,
-        )),
-      );
-    }
-  }
+  // Sensitivity runs only for otherwise passing owners, so an external or
+  // failed primary result cannot be obscured by a mutated-sandbox finding.
+  const counterfactualFindings = includeCounterfactuals
+    ? await evaluateSelectedCounterfactuals({
+        compiled,
+        selected_checks: checks,
+        complete_checks: completeChecks,
+        snapshot_root: snapshot.root,
+        snapshot_manifest: snapshot.manifest,
+        observation_authority_paths: observationAuthorityPaths,
+        baseline_results: mainCheckResults,
+        baseline_executions: rawExecutions,
+      })
+    : [];
   const unassignedCounterfactuals = counterfactualFindings.filter(
     (finding) =>
       !mainCheckResults.some((result) =>

@@ -11,9 +11,101 @@ import {
 } from "./long-task-semantic-fact-closure-primitives.js";
 import { validateSemanticFactProvenance } from "./long-task-semantic-fact-provenance-closure.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
+import type { LongTaskDesignHandoffPreflight } from "./long-task-design-resource-handoff.js";
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { sha256Hex } from "./strict-codec.js";
+
+export interface DesignOwnedSemanticFactProjectionV1 {
+  key: string;
+  source_item_refs: string[];
+  expected_search_text: string;
+}
+
+export interface DesignOwnedSemanticProjectionV1 {
+  source_items: Set<string>;
+  facts: DesignOwnedSemanticFactProjectionV1[];
+}
+
+export function projectDesignOwnedSemanticFacts(
+  preflights: LongTaskDesignHandoffPreflight[],
+): DesignOwnedSemanticProjectionV1 {
+  const sourceItems = new Set<string>();
+  const facts = new Map<string, DesignOwnedSemanticFactProjectionV1>();
+  for (const preflight of preflights) {
+    for (const key of preflight.source_item_keys) sourceItems.add(key);
+    if ("preflight_schema_version" in preflight)
+      for (const rule of preflight.manifest.fact_rules)
+        addDesignFactProjection(facts, {
+          key: `design-resource-fact-rule:${preflight.handoff_path}#${rule.key}`,
+          source_item_refs: [...rule.source_item_refs],
+          expected_search_text: [
+            rule.key,
+            rule.subject_or_relation_ref,
+            rule.target_ref,
+            rule.property_ref,
+            rule.population_ref ?? "",
+            rule.quantifier,
+            rule.value_kind,
+            rule.provenance_ref,
+            rule.observation_scope,
+            rule.expected.locator.resource_ref,
+            rule.expected.locator.kind,
+            rule.expected.locator.value,
+            rule.expected.sha256,
+            JSON.stringify(rule.region),
+            ...rule.evidence_refs,
+            ...rule.census_refs,
+            ...rule.semantic_obligation_refs,
+          ].join("\n"),
+        });
+    else
+      for (const fact of preflight.handoff.facts)
+        addDesignFactProjection(facts, {
+          key: `design-resource-fact:${preflight.handoff_path}#${fact.key}`,
+          source_item_refs: [...fact.source_item_refs],
+          expected_search_text: [
+            fact.key,
+            fact.cell_ref,
+            fact.subject_ref,
+            fact.target_ref,
+            fact.condition_ref,
+            fact.variation_ref,
+            fact.property_ref,
+            fact.dimension,
+            fact.observation_scope,
+            fact.value_kind,
+            fact.value.locator.resource_ref,
+            fact.value.locator.kind,
+            fact.value.locator.value,
+            fact.value.sha256,
+            fact.lineage.design_system_ref ?? "",
+            ...fact.lineage.token_chain_refs,
+            ...fact.lineage.override_chain_refs,
+            fact.lineage.resolved_value.locator.resource_ref,
+            fact.lineage.resolved_value.locator.kind,
+            fact.lineage.resolved_value.locator.value,
+            fact.lineage.resolved_value.sha256,
+            ...fact.evidence_refs,
+          ].join("\n"),
+        });
+  }
+  return {
+    source_items: sourceItems,
+    facts: [...facts.values()].sort((left, right) =>
+      left.key.localeCompare(right.key),
+    ),
+  };
+}
+
+function addDesignFactProjection(
+  facts: Map<string, DesignOwnedSemanticFactProjectionV1>,
+  fact: DesignOwnedSemanticFactProjectionV1,
+): void {
+  if (facts.has(fact.key))
+    semanticFactClosureInvalid("design_fact_projection_duplicate", fact.key);
+  facts.set(fact.key, fact);
+}
 
 export async function collectDesignOwnedSemanticFactSourceItems(
   repository: string,
@@ -107,6 +199,30 @@ async function validateInput(
   input: SemanticFactManifestV1["inputs"][number],
   designOwnedSourceItems: Set<string>,
 ): Promise<void> {
+  const projectionInput =
+    input.kind === "source_fragment" || input.kind === "semantic_anchor";
+  const projectionDispositions = [
+    "fact_bearing",
+    "supporting_basis",
+    "superseded",
+    "decision_required",
+    "scope_excluded",
+  ];
+  const resourceDispositions = [
+    "non_ui_material",
+    "ui_design",
+    "supporting_only",
+    "excluded_by_scope",
+  ];
+  if (
+    projectionInput
+      ? !projectionDispositions.includes(input.disposition)
+      : !resourceDispositions.includes(input.disposition)
+  )
+    semanticFactClosureInvalid(
+      "input_disposition_kind_mismatch",
+      `${input.key}:${input.kind}:${input.disposition}`,
+    );
   uniqueSemanticFactClosureValues(
     input.fact_refs,
     `input_fact_refs:${input.key}`,
@@ -115,16 +231,17 @@ async function validateInput(
     input.basis_refs,
     `input_basis_refs:${input.key}`,
   );
-  if (
-    input.disposition === "non_ui_material"
-      ? !input.fact_refs.length
-      : input.fact_refs.length
-  )
+  const factBearing = ["non_ui_material", "fact_bearing"].includes(
+    input.disposition,
+  );
+  const requiresFactRefs =
+    factBearing || input.disposition === "supporting_basis";
+  if (requiresFactRefs ? !input.fact_refs.length : input.fact_refs.length)
     semanticFactClosureInvalid(
       "input_fact_disposition_mismatch",
       `${input.key}:${input.disposition}`,
     );
-  if (input.disposition !== "non_ui_material" && !input.rationale.trim())
+  if (!factBearing && !input.rationale.trim())
     semanticFactClosureInvalid(
       "input_disposition_rationale_required",
       input.key,
@@ -153,13 +270,13 @@ async function validateInput(
       `${input.key}:${input.kind}:${input.disposition}`,
     );
   if (
-    input.disposition === "excluded_by_scope" &&
+    ["excluded_by_scope", "scope_excluded"].includes(input.disposition) &&
     !manifest.scope.exclusions.some((exclusion) =>
       exclusion.affected_refs.includes(input.key),
     )
   )
     semanticFactClosureInvalid("input_scope_exclusion_missing", input.key);
-  if (input.kind === "source_item") return;
+  if (input.kind === "source_item" || projectionInput) return;
   const file = await assertProtectedRepositoryFile(
     repository,
     path.resolve(repository, ...input.source_ref.split("/")),
@@ -187,10 +304,13 @@ function validateInputFactLineage(
         );
       else {
         const fact = facts.get(factRef)!;
+        const projectedSourceRef = projectionSourceItemRef(input);
         if (
           input.kind === "source_item"
             ? !fact.source_item_refs.includes(input.source_ref)
-            : !fact.provenance.basis_refs.includes(input.key)
+            : projectedSourceRef
+              ? !fact.source_item_refs.includes(projectedSourceRef)
+              : !fact.provenance.basis_refs.includes(input.key)
         )
           semanticFactClosureInvalid(
             "input_fact_lineage_mismatch",
@@ -220,4 +340,13 @@ function validateInputFactLineage(
     if (!sourceInputRefs.length)
       semanticFactClosureInvalid("fact_source_input_required", fact.key);
   }
+}
+
+function projectionSourceItemRef(
+  input: SemanticFactManifestV1["inputs"][number],
+): string | null {
+  if (input.kind !== "source_fragment" && input.kind !== "semantic_anchor")
+    return null;
+  const separator = input.source_ref.indexOf("#fragment:");
+  return separator > 0 ? input.source_ref.slice(0, separator) : null;
 }

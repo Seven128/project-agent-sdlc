@@ -14,6 +14,51 @@ success/degradation, evidence-capability or external-impact authority. Those
 meanings must be re-authored from Source; migration never infers them from old
 Progress or Receipts.
 
+## Version 0.9.0 complete-delivery authority
+
+Version 0.9.0 retains the `long-task-delivery-v2` Contract marker. A Contract
+that omits `task.target_profile.completion_authority` is parsed as
+`machine_only`, preserving the older fail-safe machine-only meaning, and
+Preflight emits the actionable
+`completion_authority_legacy_default_machine_only` warning. New authoring
+should state either `machine_only` or `declared_authorities` explicitly.
+
+Material Source compilation now derives fragment and anchor projections below
+the Source-item level. Every `supporting_basis` fragment/anchor projection must
+name at least one known delivery-semantic Fact; an empty or integrity-only Fact
+set is rejected. Legacy single-fragment Source-item projections that already
+carry delivery Fact refs remain readable through deterministic projection, but
+new authoring should classify every multi-fragment row explicitly. Superseding
+Source must carry the same-domain replacement meaning in a delivery-semantic
+Fact; migration does not invent that Fact or infer precedence.
+
+Changing to `declared_authorities` is a semantic owner decision, not a
+mechanical migration. Re-author every blocking external route from Source with
+its declared actor/owner, target, environment, keyed Given/When scenario,
+evidence requirements and exact per-obligation Claim/applicability/Fact/proof/
+method/capability/Expected-authority decomposition. Migration must not infer an
+actor, authenticate a real-world identity, weaken Expected, collapse rows into
+an aggregate Boolean, or silently convert unsupported machine proof to an
+external judgment.
+
+New Final Gates emit `long-task-final-receipt-v3` with one of
+`machine_accepted`, `delivery_accepted`, `blocked_external` or `needs_work`.
+Version 2 Receipts remain readable for audit only. They are not current
+acceptance evidence, cannot be upgraded by appending an External Confirmation
+record and must be followed by a current Compile and complete Final Gate.
+Legacy `machine_accepted_external_pending` remains compatibility-read-only and
+cannot clear Active Authority or close. Only fresh `machine_accepted` and
+`delivery_accepted` may close.
+
+External fulfillment uses the strict
+`long-task-external-confirmation-record-v1` input and the `external prepare`,
+`submit`, `status` and `revoke` commands. Record hashes prove local integrity,
+not signatures or actor authentication. Relevant-input changes invalidate only
+when independence is soundly derivable; otherwise the whole record becomes
+stale. These rules make the release `manual-required` for affected active
+Long-Task consumers. No generic Browser, Native or Device observer SDK is part
+of this migration.
+
 ## Admitted-observation/runtime-TCB revision
 
 The next Long-Task compatibility boundary intentionally does not provide a

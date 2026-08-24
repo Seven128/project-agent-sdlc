@@ -118,20 +118,30 @@ export async function refreshPackageMachineFixtureOracle(root, manifest) {
 }
 
 function packageMachineOracleSource(manifest) {
-  const outcomes = manifest.facts.map((fact) => fact.outcome_ref);
+  const factsByOutcome = Object.fromEntries(
+    [...new Set(manifest.facts.map((fact) => fact.outcome_ref))].map(
+      (outcome) => [
+        outcome,
+        manifest.facts
+          .filter((fact) => fact.outcome_ref === outcome)
+          .map((fact) => fact.key),
+      ],
+    ),
+  );
   return `import { readFile } from "node:fs/promises";
 const key = process.env.${FIXTURE_SECOND_SCOPE_ENV} ? "second" : process.env.${FIXTURE_FIRST_SCOPE_ENV} ? "first" : process.argv[2] || "first";
 let state = { first: false, second: false };
 try {
   state = JSON.parse(await readFile(new URL("../src/state.json", import.meta.url), "utf8"));
 } catch {}
-const supported = new Set(${JSON.stringify(outcomes)});
+const factsByOutcome = ${JSON.stringify(factsByOutcome)};
+const supported = new Set(Object.keys(factsByOutcome));
 if (!supported.has(key)) throw new Error("fixture_product_outcome_unknown:" + key);
 const observed = state[key] === true;
 const relationApplicable = state[key + "_relations_applicable"] === true;
 const assertion = (assertionKey) => "assertion." + key + "." + key + "-check." + assertionKey;
 const observations = {
-  ["fact." + key + ".observable"]: observed,
+  ...Object.fromEntries(factsByOutcome[key].map((factRef) => [factRef, observed])),
   [assertion(key + "-result")]: observed,
   [assertion(key + "-requirement")]: observed,
   [assertion(key + "-obligation")]: observed,

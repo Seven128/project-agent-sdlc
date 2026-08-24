@@ -9,6 +9,21 @@ import type {
   SemanticFactLocatedValueV1,
   SemanticFactOracleV1,
 } from "./semantic-fact-types.js";
+import type {
+  ActualProvenanceEvidenceV2,
+  DataStateEvidenceV2,
+  DistinctIdentityEvidenceV2,
+  PopulationCoverageEvidenceV2,
+  RecoveryEvidenceV2,
+} from "./long-task-complete-delivery-evidence-types.js";
+
+export type {
+  ActualProvenanceEvidenceV2,
+  DataStateEvidenceV2,
+  DistinctIdentityEvidenceV2,
+  PopulationCoverageEvidenceV2,
+  RecoveryEvidenceV2,
+} from "./long-task-complete-delivery-evidence-types.js";
 
 interface EvidenceRecordBaseV2 {
   assertion_key: string;
@@ -319,8 +334,13 @@ export type EvidenceCapabilityRecordV2 =
   | CrossSurfaceConsistencyEvidenceV2
   | DurableReadbackEvidenceV2
   | BoundaryInvocationEvidenceV2
+  | ActualProvenanceEvidenceV2
   | ExternalSideEffectEvidenceV2
+  | DistinctIdentityEvidenceV2
+  | DataStateEvidenceV2
+  | PopulationCoverageEvidenceV2
   | FailureInjectionEvidenceV2
+  | RecoveryEvidenceV2
   | VisualRenderEvidenceV2
   | DesignConformanceEvidenceV2
   | DesignMethodEvidenceV2

@@ -26,10 +26,17 @@ import {
 import { explainLongTask } from "./long-task-explain.js";
 import { handleLongTaskRevisionCommand } from "./long-task-revision.js";
 import { previewVerificationExecution } from "../lib/long-task-verification-preview.js";
+import {
+  externalConfirmationStatus,
+  prepareExternalConfirmations,
+  revokeExternalConfirmation,
+  submitExternalConfirmation,
+} from "../lib/long-task-external-confirmation-plan.js";
 
 export async function longTask(args: string[]): Promise<void> {
   const subcommand = args[0] ?? "help";
   if (subcommand === "help") return help();
+  if (subcommand === "external") return external(args.slice(1));
   const workdirArgument = args[1];
   if (!workdirArgument) throw new Error(`${subcommand} requires <workdir>`);
   const workdir = path.resolve(process.cwd(), workdirArgument);
@@ -84,6 +91,7 @@ export async function longTask(args: string[]): Promise<void> {
         workdir,
         workflow_status: result.workflow_status,
         external_confirmations: result.external_confirmations,
+        external_confirmation_results: result.external_confirmation_results,
         target_profile: result.target_profile,
         target_state: result.target_state,
         stage_results: result.stage_results,
@@ -141,15 +149,77 @@ async function finalGate(workdir: string, args: string[]): Promise<void> {
   console.log(
     JSON.stringify({
       ...result,
-      acceptance_scope: "declared_machine_authority",
+      acceptance_scope: "declared_delivery_authority",
       native_goal_effect: "none",
     }),
   );
   if (
     result.workflow_status !== "machine_accepted" &&
-    result.workflow_status !== "machine_accepted_external_pending"
+    result.workflow_status !== "delivery_accepted"
   )
     process.exitCode = 1;
+}
+
+async function external(args: string[]): Promise<void> {
+  const action = args[0];
+  const workdirArgument = args[1];
+  if (!action)
+    throw new Error("external requires prepare|submit|status|revoke");
+  if (!workdirArgument)
+    throw new Error(`external ${action} requires <workdir>`);
+  const workdir = path.resolve(process.cwd(), workdirArgument);
+  const commandArgs = args.slice(2);
+  if (action === "prepare") {
+    const confirmation = option(commandArgs, "--confirmation");
+    rejectOptions(commandArgs, ["--confirmation"]);
+    console.log(
+      JSON.stringify(
+        await prepareExternalConfirmations(workdir, confirmation),
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+  if (action === "submit") {
+    const confirmation = option(commandArgs, "--confirmation");
+    const record = option(commandArgs, "--record");
+    rejectOptions(commandArgs, ["--confirmation", "--record"]);
+    if (!confirmation) throw new Error("--confirmation requires a value");
+    if (!record) throw new Error("--record requires a value");
+    const result = await submitExternalConfirmation({
+      workdir,
+      confirmation_ref: confirmation,
+      record_path: path.resolve(process.cwd(), record),
+    });
+    console.log(JSON.stringify(result, null, 2));
+    if (result.state !== "fulfilled") process.exitCode = 1;
+    return;
+  }
+  if (action === "status") {
+    rejectUnknown(commandArgs, []);
+    console.log(
+      JSON.stringify(await externalConfirmationStatus(workdir), null, 2),
+    );
+    return;
+  }
+  if (action === "revoke") {
+    const confirmation = option(commandArgs, "--confirmation");
+    rejectOptions(commandArgs, ["--confirmation"]);
+    if (!confirmation) throw new Error("--confirmation requires a value");
+    console.log(
+      JSON.stringify(
+        await revokeExternalConfirmation({
+          workdir,
+          confirmation_ref: confirmation,
+        }),
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+  throw new Error(`Unknown long-task external subcommand: ${action}`);
 }
 
 function help(): void {
@@ -166,6 +236,10 @@ function help(): void {
   resume <workdir>
   doctor <workdir>
   final-gate <workdir>
+  external prepare <workdir> [--confirmation <key>]
+  external submit <workdir> --confirmation <key> --record <path>
+  external status <workdir>
+  external revoke <workdir> --confirmation <key>
   stop-check <workdir> [--message <text>]
   close <workdir>
   abandon <workdir> [--force-corrupt-state]`);

@@ -70,6 +70,7 @@ export async function createWorkloadFixture({
   let migrationMs = 0;
   if (variantId === "c") {
     const migrationStarted = performance.now();
+    fixture.contract.task.target_profile.completion_authority = "machine_only";
     await fixtureModule.synchronizeFixtureExecutionTargetSource(
       fixture.root,
       fixture.contract,

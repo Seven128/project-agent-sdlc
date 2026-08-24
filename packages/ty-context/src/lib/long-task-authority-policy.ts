@@ -318,6 +318,7 @@ const ASSERTION_AUTHORITY_POLICY = {
   applicability_ref: "proof_additive",
   observation: "proof_additive",
   evidence_capabilities: "proof_additive",
+  expected_authority_ref: "semantic_user_review",
   operator: "proof_additive",
   expected: "proof_additive",
 } satisfies Record<keyof DeliveryAssertionV2, AuthorityFieldPolicy>;

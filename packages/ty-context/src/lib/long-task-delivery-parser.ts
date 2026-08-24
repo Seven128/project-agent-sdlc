@@ -42,6 +42,9 @@ export interface ParsedDeliveryContractV2 {
   contract: DeliveryContractV2;
   contract_files: Record<string, string>;
   outcome_files: string[];
+  compatibility: {
+    completion_authority_defaulted_to_machine_only: boolean;
+  };
 }
 
 export interface ParseDeliveryContractOptions {
@@ -116,6 +119,8 @@ export async function parseDeliveryContractBundle(
     outcomes.sort((left, right) => left.key.localeCompare(right.key));
   }
   const contract = parseContractRoot(root, outcomes);
+  const completionAuthorityDefaulted =
+    targetProfileCompletionAuthorityMissing(root);
   if (options.validate_structure !== false)
     validateDeliveryContractStructure(contract);
   return {
@@ -124,7 +129,25 @@ export async function parseDeliveryContractBundle(
       Object.entries(files).sort(([a], [b]) => a.localeCompare(b)),
     ),
     outcome_files: outcomeFiles,
+    compatibility: {
+      completion_authority_defaulted_to_machine_only:
+        completionAuthorityDefaulted,
+    },
   };
+}
+
+function targetProfileCompletionAuthorityMissing(
+  root: Record<string, unknown>,
+): boolean {
+  const task = root.task;
+  if (!task || typeof task !== "object" || Array.isArray(task)) return false;
+  const targetProfile = (task as Record<string, unknown>).target_profile;
+  return Boolean(
+    targetProfile &&
+    typeof targetProfile === "object" &&
+    !Array.isArray(targetProfile) &&
+    !Object.hasOwn(targetProfile, "completion_authority"),
+  );
 }
 
 export function parseDeliveryContractText(raw: string): DeliveryContractV2 {

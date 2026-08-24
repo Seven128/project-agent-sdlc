@@ -38,6 +38,7 @@ test("release tarball fixture compiles and reaches the Live Final Gate with pack
         "utf8",
       ),
     );
+    assert.equal(receipt.schema_version, "long-task-final-receipt-v3");
     assert.equal(receipt.workflow_status, "machine_accepted");
     assert.deepEqual(receipt.findings, []);
     assert.equal(receipt.check_results[0].status, "passed");

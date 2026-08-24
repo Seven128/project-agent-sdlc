@@ -23,6 +23,7 @@ import type {
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-risk-types.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability.js";
 import type { SemanticFactExpectationV2 } from "./semantic-fact-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
@@ -129,6 +130,9 @@ export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   semantic_fact_expectations: SemanticFactExpectationV2[];
   observation_authorities: CompiledObservationAuthorityV2[];
   process_runtime_closure: CompiledProcessRuntimeClosureV2 | null;
+  completion_role: "semantic" | "diagnostic";
+  expected_authority_refs: Record<string, string>;
+  required_evidence_capabilities: Record<string, EvidenceCapabilityV2[]>;
 }
 
 export interface ProductClaimV2 {
@@ -227,6 +231,7 @@ export interface CompiledDeliveryContractV2 {
   authority_materials: NextAuthorityMaterialsV2;
   authority_revision: number;
   claim_coverage: ClaimCoverageSummaryV2;
+  acceptance_reachability: AcceptanceReachabilityV1;
   semantic_fact_manifest: DeliveryContractV2["semantic_fact_manifest"];
   task: DeliveryContractV2["task"];
   risk: DeliveryContractV2["risk"];
@@ -255,6 +260,31 @@ export interface LongTaskFindingV2 {
   criterion?: string;
   observation?: string;
   owner_paths?: string[];
+  source_fragment_refs?: string[];
+  fact_refs?: string[];
+  proof_obligation_refs?: string[];
+  expected_authority_refs?: string[];
+  actual_evidence_refs?: string[];
+  implementation_owner?: {
+    label: string;
+    path_globs: string[];
+  };
+  verification_owner?:
+    | {
+        kind: "machine_check";
+        outcome_key: string | null;
+        check_key: string;
+        runner_target: string;
+        input_paths: string[];
+      }
+    | {
+        kind: "external_confirmation";
+        confirmation_ref: string;
+        owner: string;
+        target_ref: string;
+      };
+  invalidation_reasons?: string[];
+  rerun_obligation_refs?: string[];
   message: string;
   expected?: unknown;
   actual?: unknown;
@@ -386,71 +416,6 @@ export interface ProgressRecordV2 {
   result: CheckExecutionStatusV2;
   check_result: CheckExecutionResultV2;
   findings: LongTaskFindingV2[];
-  completed_at: string;
-}
-
-export interface TargetedVerificationResultV2 {
-  schema_version: "long-task-targeted-progress-v2";
-  compiled_identity: string;
-  snapshot_sha256: string;
-  acceptance_authorized: false;
-  selected_outcome: string | null;
-  selected_check: string | null;
-  updated_progress_records: string[];
-  check_results: CheckExecutionResultV2[];
-  findings: LongTaskFindingV2[];
-  completed_at: string;
-}
-
-export type OutcomeStatusV2 =
-  | "unverified"
-  | "progress_passing"
-  | "progress_failing"
-  | "progress_stale"
-  | "blocked_external";
-
-export type StageStatusV2 =
-  | "locked"
-  | "ready"
-  | "unverified"
-  | "progress_passing"
-  | "progress_failing"
-  | "progress_stale"
-  | "blocked_external";
-
-export interface FinalReceiptV2 {
-  schema_version: "long-task-final-receipt-v2";
-  receipt_sha256: string;
-  authority_scope: "audit_only";
-  reusable_for_acceptance: false;
-  workflow_status:
-    | "machine_accepted"
-    | "machine_accepted_external_pending"
-    | "needs_work"
-    | "blocked_external";
-  target_profile: DeliveryContractV2["task"]["target_profile"];
-  target_state:
-    | DeliveryContractV2["task"]["target_profile"]["required_state"]
-    | "not_accepted"
-    | "blocked_external";
-  stage_results: Record<
-    string,
-    "passed" | "failed" | "blocked_external" | "blocked_dependency"
-  >;
-  compiled_identity: string;
-  contract_sha256: string;
-  snapshot_sha256: string;
-  git_head: string;
-  git_tree: string;
-  source_hashes: Record<string, string>;
-  context_hashes: Record<string, string>;
-  verifier_identity: VerifierIdentityV2;
-  check_results: CheckExecutionResultV2[];
-  outcome_results: Record<string, "passed" | "failed" | "blocked_external">;
-  external_confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"];
-  findings: LongTaskFindingV2[];
-  snapshot_preparation_ms: number;
-  started_at: string;
   completed_at: string;
 }
 

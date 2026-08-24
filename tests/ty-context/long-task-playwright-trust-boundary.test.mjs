@@ -159,6 +159,7 @@ async function assertUnsupportedMachineObserver(fixture) {
 }
 
 function routeUnsupportedBrowserToExternalConfirmation(contract) {
+  contract.task.target_profile.completion_authority = "declared_authorities";
   const outcome = contract.outcomes[0];
   const semanticClaim = "semantic_fact.fact.first.observable";
   const semanticProductClaim = `first.${semanticClaim}`;
@@ -191,6 +192,37 @@ function routeUnsupportedBrowserToExternalConfirmation(contract) {
     "first-architecture",
   ];
   outcome.acceptance.counterfactual_controls = [semanticCounterfactual];
+  const obligationSpecs = [
+    {
+      claim_ref: "first.control_relation_closure",
+      proof_surface: "runtime_behavior",
+      evidence_capabilities: [],
+    },
+    {
+      claim_ref: "first.obligation.architecture-first",
+      proof_surface: "ui_browser",
+      evidence_capabilities: [],
+    },
+    {
+      claim_ref: "first.obligation.implement-first",
+      proof_surface: "ui_browser",
+      evidence_capabilities: [],
+    },
+    {
+      claim_ref: "first.requirement.observe-first",
+      proof_surface: "ui_browser",
+      evidence_capabilities: [],
+    },
+    {
+      claim_ref: "first.result",
+      proof_surface: "runtime_behavior",
+      evidence_capabilities: ["target_runtime"],
+    },
+  ];
+  assert.deepEqual(
+    [...impactClaims].sort(),
+    obligationSpecs.map((row) => row.claim_ref).sort(),
+  );
   contract.global.acceptance.external_confirmations = [
     {
       key: "browser-observation-confirmation",
@@ -200,6 +232,32 @@ function routeUnsupportedBrowserToExternalConfirmation(contract) {
       kind: "functional_prerequisite",
       impact_claims: impactClaims,
       blocks_target: true,
+      actor: {
+        id: "fixture-browser-owner",
+        role: "browser acceptance owner",
+        authority_kind: "human",
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-browser-environment-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        {
+          key: "browser-observation",
+          statement: "Capture the exact browser result for every obligation.",
+        },
+      ],
+      obligations: obligationSpecs.map((row) => ({
+        key: `confirm-${row.claim_ref.replaceAll(".", "-").replaceAll("_", "-")}`,
+        claim_ref: row.claim_ref,
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: row.proof_surface,
+        evidence_capabilities: row.evidence_capabilities,
+        expected_authority_ref: `contract-claim:${row.claim_ref}`,
+        result_kind: "judgment",
+      })),
     },
   ];
 }

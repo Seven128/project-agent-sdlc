@@ -13,7 +13,15 @@ import {
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { prepareExecutionObservationUniverse } from "../../packages/ty-context/dist/lib/long-task-execution-observation.js";
+import {
+  counterfactualSandboxProcessExecution,
+  createCounterfactualSandbox,
+} from "../../packages/ty-context/dist/lib/long-task-counterfactual-sandbox.js";
+import {
+  prepareCounterfactualExecutionObservationGroup,
+  prepareExecutionObservationUniverse,
+} from "../../packages/ty-context/dist/lib/long-task-execution-observation.js";
+import { rawExecutionGroupMayOverlap } from "../../packages/ty-context/dist/lib/long-task-verifier-execution.js";
 import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
 import {
   canonicalValueJson,
@@ -267,6 +275,170 @@ test("process execution snapshot contains only the frozen runtime closure and ex
   });
 });
 
+test("process Counterfactual reuses its independently narrowed sandbox without exposing Authority or evidence inputs", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "config/secondary.json": Buffer.from('{"feature":true}'),
+      "product/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "tests/expected-only.json": Buffer.from('{"expected":"secret"}'),
+      "source/expected.json": Buffer.from('{"expected":"secret"}'),
+    };
+    await writeFixtureFiles(root, files);
+    const check = processCheck();
+    check.internal_id = "process-counterfactual";
+    check.input_paths.push("tests/**", "source/**");
+    const control = {
+      mutation: {
+        type: "replace_json_value",
+        path: "config/runtime.json",
+        pointer: "/mode",
+        value: "counterfactual",
+      },
+    };
+    const sandbox = await createCounterfactualSandbox(
+      root,
+      check,
+      control,
+      ["config/runtime.json"],
+      manifest(files),
+      ["source/expected.json"],
+      [check],
+    );
+    let processRoot;
+    try {
+      assert.equal(sandbox.mutation_source_root, sandbox.root);
+      const processExecution = counterfactualSandboxProcessExecution(sandbox);
+      assert.ok(processExecution);
+      processRoot = processExecution.root;
+      assert.notEqual(processExecution.root, sandbox.root);
+      assert.equal(processExecution.mutation_source_root, root);
+      await writeFile(
+        path.join(sandbox.root, "config", "runtime.json"),
+        '{"mode":"counterfactual"}',
+      );
+      await writeFile(
+        path.join(processExecution.root, "config", "runtime.json"),
+        '{"mode":"counterfactual"}',
+      );
+      await access(path.join(sandbox.root, "source", "expected.json"));
+      await access(path.join(sandbox.root, "tests", "expected-only.json"));
+      await assert.rejects(
+        access(path.join(processExecution.root, "source", "expected.json")),
+      );
+      await assert.rejects(
+        access(path.join(processExecution.root, "tests", "expected-only.json")),
+      );
+      const prepared = await prepareCounterfactualExecutionObservationGroup({
+        checks: [check],
+        sandbox,
+        workspace_manifest: manifest(files),
+        protected_authority_paths: ["source/expected.json"],
+      });
+      try {
+        assert.equal(prepared.execution_root, processExecution.root);
+        const result = await prepared.finalize(
+          rawExecution([
+            validProcessObservation(check.observation_authorities[0]),
+          ]),
+        );
+        assert.equal(result.package_observations.length, 1);
+        assert.equal(result.package_observations[0].reason, null);
+        await access(
+          path.join(processExecution.root, "config", "runtime.json"),
+        );
+      } finally {
+        await prepared.dispose();
+      }
+    } finally {
+      await sandbox.dispose();
+    }
+    await assert.rejects(access(sandbox.root));
+    await assert.rejects(access(processRoot));
+  });
+});
+
+test("process Counterfactual keeps the isolated-copy fallback for a mutation outside the production closure", async () => {
+  await withRoot(async (root) => {
+    const files = {
+      "bin/product.mjs": Buffer.from("export default true;\n"),
+      "config/runtime.json": Buffer.from('{"mode":"production"}'),
+      "config/secondary.json": Buffer.from('{"feature":true}'),
+      "product/product-helper.mjs": Buffer.from("export const input = true;\n"),
+      "tests/expected-only.json": Buffer.from('{"expected":"secret"}'),
+    };
+    await writeFixtureFiles(root, files);
+    const check = processCheck();
+    check.internal_id = "process-counterfactual-fallback";
+    const sandbox = await createCounterfactualSandbox(
+      root,
+      check,
+      {
+        mutation: {
+          type: "replace_json_value",
+          path: "tests/expected-only.json",
+          pointer: "/expected",
+          value: "counterfactual",
+        },
+      },
+      ["tests/expected-only.json"],
+      manifest(files),
+      [],
+      [check],
+    );
+    try {
+      assert.equal(sandbox.mutation_source_root, sandbox.root);
+      assert.equal(counterfactualSandboxProcessExecution(sandbox), null);
+      const prepared = await prepareCounterfactualExecutionObservationGroup({
+        checks: [check],
+        sandbox,
+        workspace_manifest: manifest(files),
+      });
+      try {
+        assert.notEqual(prepared.execution_root, sandbox.root);
+        await assert.rejects(
+          access(
+            path.join(prepared.execution_root, "tests", "expected-only.json"),
+          ),
+        );
+      } finally {
+        await prepared.dispose();
+      }
+    } finally {
+      await sandbox.dispose();
+    }
+  });
+});
+
+test("Raw Execution overlap requires one read-only idempotent package-process closure", () => {
+  const check = processCheck();
+  assert.equal(rawExecutionGroupMayOverlap([check]), true);
+  assert.equal(
+    rawExecutionGroupMayOverlap([
+      { ...check, runner: { ...check.runner, effect: "test_sandbox" } },
+    ]),
+    false,
+  );
+  assert.equal(
+    rawExecutionGroupMayOverlap([
+      {
+        ...check,
+        environment_requirements: [
+          {
+            key: "service",
+            kind: "loopback_tcp",
+            host: "127.0.0.1",
+            port: 4318,
+            timeout_ms: 1000,
+          },
+        ],
+      },
+    ]),
+    false,
+  );
+});
+
 function staticCheck(rawIdentity, assertionRef, artifactPath) {
   return {
     raw_execution_identity: rawIdentity,
@@ -309,7 +481,12 @@ function processCheck({
     verification_inputs: ["tests/**"],
     expected_output_paths: [],
     artifact_globs: [],
+    verification_input_hashes: {},
+    environment_requirements: [],
     runner: {
+      effect: "read_only",
+      idempotent: true,
+      retry_policy: "none",
       resolved_target: "bin/product.mjs",
       resolved_cwd: ".",
       executable_argv_prefix: [],
@@ -405,9 +582,7 @@ function observationAuthority({
     method: "exact_value",
     observation_identity,
     locator_policy: { kind: "fixed_json_pointer", value: "/value" },
-    carrier_refs: [
-      { binding_ref: "fixture.binding:fixture", carrier_paths },
-    ],
+    carrier_refs: [{ binding_ref: "fixture.binding:fixture", carrier_paths }],
     runtime_requirements: {
       declared_root_argv: [],
     },

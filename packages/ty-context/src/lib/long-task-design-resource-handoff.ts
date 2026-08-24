@@ -53,12 +53,16 @@ interface SurfaceFeasibilityBindingAttribution {
   consumed_component_binding_refs: Set<string>;
 }
 
+export type LongTaskDesignHandoffPreflight =
+  DesignResourceHandoffPreflightV1 | DesignResourceHandoffPreflightV2;
+
 export async function validateLongTaskDesignResourceHandoffs(
   contract: DeliveryContractV2,
   repository: string,
   sourceItems: CompiledSourceItemV2[],
-): Promise<void> {
+): Promise<LongTaskDesignHandoffPreflight[]> {
   const consumer = createLongTaskDesignHandoffConsumer(contract, sourceItems);
+  const preflights: LongTaskDesignHandoffPreflight[] = [];
   for (const sourcePath of contract.task.source_paths) {
     if (!sourcePath.toLowerCase().endsWith(".md")) continue;
     const file = await assertProtectedRepositoryFile(
@@ -68,14 +72,15 @@ export async function validateLongTaskDesignResourceHandoffs(
     );
     const content = await readFile(file, "utf8");
     if (!containsDesignResourceHandoff(content)) continue;
-    consumer.consume(
-      await preflightParsedDesignResourceHandoffAny(
-        repository,
-        parseDesignResourceHandoffMarkdown(sourcePath, content),
-      ),
+    const preflight = await preflightParsedDesignResourceHandoffAny(
+      repository,
+      parseDesignResourceHandoffMarkdown(sourcePath, content),
     );
+    preflights.push(preflight);
+    consumer.consume(preflight);
   }
   consumer.finish();
+  return preflights;
 }
 
 export function createLongTaskDesignHandoffConsumer(

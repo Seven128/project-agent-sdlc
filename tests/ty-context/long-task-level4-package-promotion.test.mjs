@@ -32,7 +32,7 @@ after(async () => {
 });
 
 test(
-  "[critical:level4-package-promotion-boundary] the unique materializer reproduces exact HEAD package bytes and the five-way identity",
+  "[critical:level4-package-promotion-boundary] the unique materializer reproduces exact current-candidate package bytes and the five-way identity",
   { timeout: 300_000 },
   async () => {
     const fixture = await reproducedPackageFixture();
@@ -110,6 +110,7 @@ test(
     const fixture = await reproducedPackageFixture();
     await assertPackageChildBoundaries({
       repositoryRoot,
+      candidateCommit: fixture.commit,
       baselineRecord: fixture.record,
     });
   },
@@ -266,7 +267,7 @@ async function createReproducedPackageFixture() {
   const checkout = path.join(temporary, "checkout");
   let materialized;
   try {
-    const commit = await gitText(repositoryRoot, ["rev-parse", "HEAD"]);
+    const commit = await currentCandidateCommit(repositoryRoot, temporary);
     const packageJson = JSON.parse(
       await gitText(repositoryRoot, [
         "show",
@@ -312,9 +313,39 @@ async function createReproducedPackageFixture() {
   }
 }
 
-async function gitText(cwd, args) {
+async function currentCandidateCommit(root, temporary) {
+  const head = await gitText(root, ["rev-parse", "HEAD"]);
+  const environment = {
+    ...process.env,
+    GIT_INDEX_FILE: path.join(temporary, "candidate.index"),
+    GIT_AUTHOR_NAME: "Fixture",
+    GIT_AUTHOR_EMAIL: "fixture@example.invalid",
+    GIT_AUTHOR_DATE: "2000-01-01T00:00:00Z",
+    GIT_COMMITTER_NAME: "Fixture",
+    GIT_COMMITTER_EMAIL: "fixture@example.invalid",
+    GIT_COMMITTER_DATE: "2000-01-01T00:00:00Z",
+  };
+  await gitText(root, ["read-tree", head], environment);
+  await gitText(root, ["add", "-A", "--", "."], environment);
+  const tree = await gitText(root, ["write-tree"], environment);
+  return gitText(
+    root,
+    [
+      "commit-tree",
+      tree,
+      "-p",
+      head,
+      "-m",
+      "synthetic current-candidate package fixture",
+    ],
+    environment,
+  );
+}
+
+async function gitText(cwd, args, env = process.env) {
   const result = await execFileAsync("git", args, {
     cwd,
+    env,
     windowsHide: true,
     encoding: "utf8",
     timeout: 120_000,

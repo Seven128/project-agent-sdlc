@@ -3,6 +3,7 @@ import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { validateClaimEvidenceSensitivity } from "../../packages/ty-context/dist/lib/long-task-evidence-sensitivity-policy.js";
 import YAML from "yaml";
 import {
   createDeliveryFixture,
@@ -36,33 +37,44 @@ test("Population cannot substitute for an attributable per-applicability Asserti
   );
 });
 
-test("Population does not waive semantic sensitivity for its behavioral Assertion", async () => {
-  const fixture = await createDeliveryFixture();
-  try {
-    const outcome = fixture.contract.outcomes[0];
-    const check = outcome.acceptance.checks[0];
-    outcome.acceptance.population = {
-      check_key: check.key,
-      universe_binding_key: "state-first",
-      claims: ["obligation.implement-first"],
-      observations: {
-        universe_ids: "population.universe_ids",
-        eligible_ids: "population.eligible_ids",
-        observed_ids: "population.observed_ids",
-        excluded_items: "population.excluded_items",
-      },
-      exclusion_rules: [],
-    };
-    const control = outcome.acceptance.counterfactual_controls[0];
-    control.claims = ["semantic_fact.fact.first.observable"];
-    control.expected_assertion_failures = ["first-semantic-fact"];
-    await assertActivationRejects(fixture, {
-      code: "behavioral_semantic_counterfactual_required",
-      includes: ["first-obligation"],
-    });
-  } finally {
-    await rm(fixture.root, { recursive: true, force: true });
-  }
+test("Population machine policy does not waive semantic sensitivity for its behavioral Assertion", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  outcome.acceptance.population = {
+    check_key: check.key,
+    universe_binding_key: "state-first",
+    claims: ["obligation.implement-first"],
+    observations: {
+      universe_ids: "population.universe_ids",
+      eligible_ids: "population.eligible_ids",
+      observed_ids: "population.observed_ids",
+      excluded_items: "population.excluded_items",
+    },
+    exclusion_rules: [],
+  };
+  const populationAssertion = check.positive_assertions.find(
+    (assertion) => assertion.key === "first-obligation",
+  );
+  populationAssertion.evidence_capabilities = [
+    ...new Set([
+      ...populationAssertion.evidence_capabilities,
+      "population_coverage",
+    ]),
+  ];
+  populationAssertion.operator = "set_equals";
+  populationAssertion.expected = ["first"];
+  outcome.acceptance.counterfactual_controls = [];
+  const diagnostics = [];
+  validateClaimEvidenceSensitivity(contract, [], [outcome], (diagnostic) =>
+    diagnostics.push(diagnostic),
+  );
+  assert.ok(
+    diagnostics.includes(
+      "behavioral_semantic_counterfactual_required:first:first-check:first-obligation",
+    ),
+    JSON.stringify(diagnostics),
+  );
 });
 
 test("unsupported Playwright machine observation requires External Confirmation", async () => {

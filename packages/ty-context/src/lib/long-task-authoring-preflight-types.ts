@@ -1,4 +1,5 @@
 import type { ClaimCoverageSummaryV2 } from "./long-task-delivery-types.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability.js";
 
 export interface AuthoringPreflightDiagnosticV1 {
   level: "error" | "decision_required" | "warning" | "info";
@@ -43,6 +44,7 @@ export interface AuthoringPreflightResultV1 {
   outcomes: string[];
   source_coverage: SourceCoverageV1;
   claim_coverage: ClaimCoverageSummaryV2;
+  acceptance_reachability: AcceptanceReachabilityV1;
   revision_preview: AuthoringRevisionPreviewV1;
   diagnostics: AuthoringPreflightDiagnosticV1[];
 }
@@ -78,6 +80,14 @@ export function emptyPreflightResult(
       unresolved: [],
     },
     claim_coverage: emptyClaimCoverage(),
+    acceptance_reachability: {
+      completion_authority: "machine_only",
+      total: 0,
+      machine_admitted: 0,
+      external_fulfillable: 0,
+      unreachable: 0,
+      obligations: [],
+    },
     revision_preview: {
       active: false,
       authority_revision: null,

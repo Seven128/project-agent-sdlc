@@ -136,8 +136,19 @@ test("snapshot-only Source and controlling Context changes auto-revise but inval
 
 test("Product, Global, Source Claim, and acceptance meaning changes require an exact user decision", async () => {
   const fixture = await createDeliveryFixture();
+  const structureOraclePath = "tests/authority-structure-oracle.mjs";
   try {
     prepareSemanticAuthority(fixture.contract);
+    await writeFile(
+      path.join(fixture.root, ...structureOraclePath.split("/")),
+      await readFile(
+        path.join(fixture.root, "tests", "legacy-oracle.mjs"),
+        "utf8",
+      ),
+    );
+    fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
+      structureOraclePath,
+    );
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -175,11 +186,85 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
           "outcomes.first.requirements.observe-first.required_proof_surfaces",
         mutate(contract) {
           contract.outcomes[0].product.requirements[0].required_proof_surfaces =
-            ["data_state"];
+            ["implementation_structure"];
           for (const obligation of contract.outcomes[0].technical.obligations)
-            obligation.required_proof_surfaces = ["data_state"];
-          contract.outcomes[0].acceptance.checks[0].proof_surface =
-            "data_state";
+            obligation.required_proof_surfaces = [
+              "implementation_structure",
+            ];
+          const outcome = contract.outcomes[0];
+          const base = outcome.acceptance.checks[0];
+          const structural = structuredClone(base);
+          structural.key = "first-structure-check";
+          structural.proof_surface = "implementation_structure";
+          structural.runner.type = "node_oracle";
+          structural.runner.target = structureOraclePath;
+          structural.runner.argv = ["first"];
+          structural.verification_inputs = [
+            ...new Set([
+              ...structural.verification_inputs,
+              structureOraclePath,
+            ]),
+          ];
+          structural.positive_assertions = base.positive_assertions
+            .filter(
+              (assertion) =>
+                assertion.claims.length === 0 ||
+                assertion.claims.some(
+                  (claim) =>
+                    claim.startsWith("requirement.") ||
+                    claim.startsWith("obligation."),
+                ),
+            )
+            .map((assertion) => ({
+              ...structuredClone(assertion),
+              evidence_capabilities: ["presence"],
+            }));
+          structural.negative_assertions = [];
+          outcome.acceptance.checks.push(structural);
+          const structuralAssertions = structural.positive_assertions.filter(
+            (assertion) => assertion.claims.length,
+          );
+          const structuralAssertionKeys = new Set(
+            structuralAssertions.map((assertion) => assertion.key),
+          );
+          const structuralClaims = new Set(
+            structuralAssertions.flatMap((assertion) => assertion.claims),
+          );
+          base.positive_assertions = base.positive_assertions.filter(
+            (assertion) => !structuralAssertionKeys.has(assertion.key),
+          );
+          for (const control of outcome.acceptance.counterfactual_controls)
+            if (control.check_key === base.key) {
+              control.claims = control.claims.filter(
+                (claim) => !structuralClaims.has(claim),
+              );
+              control.expected_assertion_failures =
+                control.expected_assertion_failures.filter(
+                  (assertionKey) =>
+                    !structuralAssertionKeys.has(assertionKey),
+                );
+            }
+          const liveness = structural.positive_assertions.find(
+            (assertion) => assertion.claims.length === 0,
+          );
+          outcome.acceptance.counterfactual_controls.push({
+            key: "remove-first-structure-state",
+            binding_key: "state-first",
+            claims: structuralAssertions.flatMap(
+              (assertion) => assertion.claims,
+            ),
+            check_key: structural.key,
+            mutation: {
+              type: "replace_json_value",
+              path: "src/state.json",
+              pointer: "/first",
+              value: false,
+            },
+            expected_assertion_failures: structuralAssertions.map(
+              (assertion) => assertion.key,
+            ),
+            preserved_assertions: liveness ? [liveness.key] : [],
+          });
         },
       },
       {

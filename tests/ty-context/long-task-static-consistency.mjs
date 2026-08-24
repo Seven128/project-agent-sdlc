@@ -78,6 +78,18 @@ export async function assertLongTaskStaticConsistency(repoRoot) {
     `${projectSpec}\n${workflowContext}`,
     /machine_accepted_external_pending/u,
   );
+  assert.match(
+    `${projectSpec}\n${workflowContext}`,
+    /delivery_accepted/u,
+  );
+  assert.match(
+    `${projectSpec}\n${workflowContext}`,
+    /acceptance_scope: declared_delivery_authority/u,
+  );
+  assert.doesNotMatch(
+    `${projectSpec}\n${workflowContext}`,
+    /accepted terminal commands identify `acceptance_scope: declared_machine_authority`/u,
+  );
   assert.match(gitignore, /^\.codex\/hooks\.json$/mu);
   assert.equal(installedAgentProfile, managedAgentProfile);
   assert.equal(packagedAgentProfile, managedAgentProfile);

@@ -1318,7 +1318,7 @@ test("retired planning documents stay ordinary Source without an installed entry
   );
   assert.match(
     workflowContext,
-    /delivery_completed_by_this_event: false[\s\S]*acceptance_scope: declared_machine_authority[\s\S]*native_goal_effect: none/iu,
+    /delivery_completed_by_this_event: false[\s\S]*acceptance_scope: declared_delivery_authority[\s\S]*native_goal_effect: none/iu,
   );
   assert.match(
     workflowContext,

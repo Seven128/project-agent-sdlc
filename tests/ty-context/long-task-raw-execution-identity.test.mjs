@@ -185,16 +185,6 @@ function configureChecks(fixture, requirements) {
     artifact_globs: [],
     positive_assertions: [
       {
-        key: "raw-result",
-        criterion: `Raw execution result ${index} is observable.`,
-        claims: ["result"],
-        applicability_ref: "first-root-success",
-        observation: index === 0 ? "result" : "result_copy",
-        evidence_capabilities: ["presence"],
-        operator: "equals",
-        expected: true,
-      },
-      {
         key: "raw-requirement",
         criterion: `Raw execution requirement ${index} is observable.`,
         claims: ["requirement.observe-first"],
@@ -266,7 +256,6 @@ function configureChecks(fixture, requirements) {
         key: `raw-sensitive-${index}`,
         binding_key: "state-first",
         claims: [
-          "result",
           "requirement.observe-first",
           "obligation.implement-first",
           "obligation.architecture-first",
@@ -278,7 +267,6 @@ function configureChecks(fixture, requirements) {
           fixture_path: FIXTURE_STATIC_FALSE_PATH,
         },
         expected_assertion_failures: [
-          "raw-result",
           "raw-requirement",
           "raw-obligation",
           "raw-architecture",

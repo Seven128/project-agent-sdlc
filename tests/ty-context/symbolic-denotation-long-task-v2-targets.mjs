@@ -149,12 +149,24 @@ export function addDesignAssertions(check, v1Target, v2Target) {
   };
   add(
     v1Target.conformance_assertion_ref,
-    ["design_conformance", "interaction_trace", "target_runtime"],
+    [
+      "design_conformance",
+      "interaction_trace",
+      "presence",
+      "target_runtime",
+      "visual_render",
+    ],
     ["control.main.location"],
   );
   add(
     v2Target.conformance_assertion_ref,
-    ["design_conformance", "interaction_trace", "target_runtime"],
+    [
+      "design_conformance",
+      "interaction_trace",
+      "presence",
+      "target_runtime",
+      "visual_render",
+    ],
     ["control.main.location"],
   );
   for (const target of [v1Target, v2Target]) {
@@ -186,8 +198,14 @@ function requiredCapabilities(method) {
       "design_conformance",
       "interaction_trace",
       "target_runtime",
+      "visual_render",
     ];
-  return ["design_method", "design_conformance", "target_runtime"];
+  return [
+    "design_method",
+    "design_conformance",
+    "target_runtime",
+    "visual_render",
+  ];
 }
 
 function groundExpectation(handoff, proof) {

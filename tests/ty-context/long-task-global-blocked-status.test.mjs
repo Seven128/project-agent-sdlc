@@ -10,7 +10,7 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 
-test("Global blocked_external projects to blocked_external and cannot Stop", async () => {
+test("an unavailable machine Check is needs_work, not formal external pending", async () => {
   const fixture = await createDeliveryFixture();
   try {
     addBlockedGlobalCheck(fixture.contract);
@@ -22,7 +22,7 @@ test("Global blocked_external projects to blocked_external and cannot Stop", asy
       "final-gate",
       fixture.workdir,
     ]);
-    assert.equal(receipt.workflow_status, "blocked_external");
+    assert.equal(receipt.workflow_status, "needs_work");
     assert.equal(receipt.outcome_results.first, "passed");
 
     const stop = await runCliFailure(fixture.root, [
@@ -31,7 +31,7 @@ test("Global blocked_external projects to blocked_external and cannot Stop", asy
       fixture.workdir,
     ]);
     assert.equal(stop.continue, false);
-    assert.equal(stop.reason, "live_final_gate_blocked_external");
+    assert.equal(stop.reason, "live_final_gate_needs_work");
     assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

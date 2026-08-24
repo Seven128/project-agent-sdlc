@@ -326,6 +326,10 @@ function addProof(contract, key) {
 }
 
 function addBlockingExternalConfirmation(contract) {
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const scenario = structuredClone(
+    contract.outcomes[0].acceptance.checks[0].scenario,
+  );
   contract.global.acceptance.external_confirmations.push({
     key: "race-blocking-confirmation",
     description:
@@ -334,6 +338,34 @@ function addBlockingExternalConfirmation(contract) {
     kind: "functional_prerequisite",
     impact_claims: ["first.result"],
     blocks_target: true,
+    actor: {
+      id: "race-release-owner",
+      role: "release acceptance owner",
+      authority_kind: "human",
+    },
+    target_ref: "fixture-app",
+    environment_identity: "race-external-environment-v1",
+    scenario,
+    evidence_requirements: [
+      {
+        key: "race-observation",
+        statement: "Capture the current external target result.",
+      },
+    ],
+    obligations: [
+      {
+        key: "race-result-obligation",
+        claim_ref: "first.result",
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: "runtime_behavior",
+        evidence_capabilities: ["target_runtime"],
+        expected_authority_ref: "contract-claim:first.result",
+        result_kind: "judgment",
+      },
+    ],
   });
 }
 

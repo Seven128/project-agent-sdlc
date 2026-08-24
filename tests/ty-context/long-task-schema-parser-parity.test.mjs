@@ -36,6 +36,73 @@ const activeOperators = [
   "superset_of",
 ];
 
+test("External obligation Schema and Parser agree on empty capability floors and nullable refs", async () => {
+  const contract = deliveryContract();
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const check = contract.outcomes[0].acceptance.checks[0];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "fixture-external",
+      description: "Confirm one exact claim on the declared target.",
+      owner: "fixture-owner",
+      kind: "field_validation",
+      impact_claims: ["first.requirement.observe-first"],
+      blocks_target: true,
+      actor: {
+        id: "fixture-actor",
+        role: "product acceptance owner",
+        authority_kind: "human",
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-environment-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        { key: "capture", statement: "Capture the observed result." },
+      ],
+      obligations: [
+        {
+          key: "confirm-observe-first",
+          claim_ref: "first.requirement.observe-first",
+          applicability_ref: "first-root-success",
+          fact_ref: null,
+          proof_ref: null,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: [],
+          expected_authority_ref:
+            "contract-claim:first.requirement.observe-first",
+          result_kind: "judgment",
+        },
+      ],
+    },
+  ];
+
+  const parsed = parseDeliveryContractText(YAML.stringify(contract));
+  assert.deepEqual(
+    parsed.global.acceptance.external_confirmations[0].obligations[0]
+      .evidence_capabilities,
+    [],
+  );
+  const schema = await deliverySchema();
+  assert.equal(
+    Object.hasOwn(
+      schema.$defs.externalObligation.properties.evidence_capabilities,
+      "minItems",
+    ),
+    false,
+  );
+
+  for (const ref of ["fact_ref", "proof_ref"]) {
+    const invalid = structuredClone(contract);
+    invalid.global.acceptance.external_confirmations[0].obligations[0][ref] =
+      "";
+    assert.throws(
+      () => parseDeliveryContractText(YAML.stringify(invalid)),
+      new RegExp(`${ref}:must be a non-empty string`, "u"),
+    );
+  }
+});
+
 test("Control Schema and Parser preserve the complete control-level UI vocabulary", async () => {
   const input = completeControl({
     key: "submit",
@@ -340,7 +407,8 @@ test("Source authority cardinality and retired dispositions stay aligned across 
   );
   assert.equal(
     schema.$defs.semanticFactBindings.properties.proofs.items.oneOf.every(
-      (item) => item.properties.obligation_revision_digest.$ref === "#/$defs/sha256",
+      (item) =>
+        item.properties.obligation_revision_digest.$ref === "#/$defs/sha256",
     ),
     true,
   );

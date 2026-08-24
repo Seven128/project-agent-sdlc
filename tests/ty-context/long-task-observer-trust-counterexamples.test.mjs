@@ -1003,7 +1003,45 @@ test(
   { concurrency: false },
   async () =>
     withFixture({ externalConfirmation: true }, async (fixture) => {
-      fixture.contract.global.acceptance.external_confirmations[0].blocks_target = true;
+      const check = fixture.contract.outcomes[0].acceptance.checks[0];
+      fixture.contract.task.target_profile.completion_authority =
+        "declared_authorities";
+      fixture.contract.global.acceptance.external_confirmations[0] = {
+        key: "fixture-external",
+        description: "Confirm the fixture in external delivery.",
+        owner: "release-owner",
+        kind: "field_validation",
+        impact_claims: ["first.result"],
+        blocks_target: true,
+        actor: {
+          id: "fixture-product-owner",
+          role: "product acceptance owner",
+          authority_kind: "human",
+        },
+        target_ref: "fixture-app",
+        environment_identity: "fixture-external-environment-v1",
+        scenario: structuredClone(check.scenario),
+        evidence_requirements: [
+          {
+            key: "observation-capture",
+            statement: "Capture the observed target result for this obligation.",
+          },
+        ],
+        obligations: [
+          {
+            key: "confirm-result",
+            claim_ref: "first.result",
+            applicability_ref: "first-root-success",
+            fact_ref: null,
+            proof_ref: null,
+            method: "exact_value",
+            proof_surface: "runtime_behavior",
+            evidence_capabilities: ["target_runtime"],
+            expected_authority_ref: "contract-claim:first.result",
+            result_kind: "judgment",
+          },
+        ],
+      };
       await configurePackageObservationCase(fixture, {
         carrierPath: "src/state.json",
         bindingPath: "src/state.json",

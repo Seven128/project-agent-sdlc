@@ -28,6 +28,10 @@ const caseGroups = [
     name: "self-host evidence resolves one independent observation per semantic Fact",
     module: "./long-task-semantic-verifier.cases.mjs",
   },
+  {
+    name: "complete-delivery closure blocks Source and proof-strength drift",
+    module: "./long-task-complete-delivery-closure.cases.mjs",
+  },
 ];
 
 for (const group of caseGroups)

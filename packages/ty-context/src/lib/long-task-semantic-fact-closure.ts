@@ -5,10 +5,16 @@ import {
 } from "./long-task-semantic-fact-closure-primitives.js";
 import {
   collectDesignOwnedSemanticFactSourceItems,
+  projectDesignOwnedSemanticFacts,
   validateSemanticFactInputInventory,
 } from "./long-task-semantic-fact-input-closure.js";
+import type { LongTaskDesignHandoffPreflight } from "./long-task-design-resource-handoff.js";
 import { validateSemanticFactBasisClosure } from "./long-task-semantic-fact-provenance-closure.js";
 import { validateSemanticFactLocatedValues } from "./long-task-semantic-fact-value-closure.js";
+import {
+  validateSourceSemanticConservation,
+  type SourceSemanticConservationV2,
+} from "./long-task-source-conservation.js";
 import type {
   CompiledSourceItemV2,
   DeliveryContractV2,
@@ -28,6 +34,7 @@ export interface LongTaskSemanticFactClosureV2 {
   manifest_sha256: string;
   manifest_source_path: string;
   expectations_by_check: Map<string, SemanticFactExpectationV2[]>;
+  source_conservation: SourceSemanticConservationV2;
 }
 
 export async function validateLongTaskSemanticFactClosure(
@@ -35,6 +42,7 @@ export async function validateLongTaskSemanticFactClosure(
   repository: string,
   sourceItems: CompiledSourceItemV2[],
   contextFiles: string[],
+  designHandoffs?: LongTaskDesignHandoffPreflight[],
 ): Promise<LongTaskSemanticFactClosureV2> {
   const parsed = await loadSemanticFactManifest(
     repository,
@@ -43,17 +51,26 @@ export async function validateLongTaskSemanticFactClosure(
   const manifest = parsed.manifest;
   const index = validateSemanticFactManifestPolicy(manifest);
   validateManifestReference(contract, parsed);
-  const designOwnedSourceItems =
-    await collectDesignOwnedSemanticFactSourceItems(
-      repository,
-      contract.task.source_paths,
-    );
+  const designProjection = designHandoffs
+    ? projectDesignOwnedSemanticFacts(designHandoffs)
+    : {
+        source_items: await collectDesignOwnedSemanticFactSourceItems(
+          repository,
+          contract.task.source_paths,
+        ),
+        facts: [],
+      };
   await validateSemanticFactInputInventory(
     repository,
     sourceItems,
     contextFiles,
     manifest,
-    designOwnedSourceItems,
+    designProjection.source_items,
+  );
+  const sourceConservation = validateSourceSemanticConservation(
+    sourceItems,
+    manifest,
+    designProjection,
   );
   validateSemanticFactBasisClosure(manifest, sourceItems);
   await validateSemanticFactLocatedValues(repository, manifest, sourceItems);
@@ -77,6 +94,7 @@ export async function validateLongTaskSemanticFactClosure(
     manifest_sha256: parsed.sha256,
     manifest_source_path: parsed.source_path,
     expectations_by_check: expectations,
+    source_conservation: sourceConservation,
   };
 }
 

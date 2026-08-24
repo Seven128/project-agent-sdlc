@@ -6,8 +6,8 @@ import type {
   ProgressRecordV2,
   StageStatusV2,
   WorkspaceManifestV2,
+  ExternalConfirmationEvaluationV1,
 } from "./long-task-delivery-types.js";
-import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
 import { progressRecordFresh } from "./long-task-progress.js";
 
 interface StatusProjectionInputV2 {
@@ -17,6 +17,7 @@ interface StatusProjectionInputV2 {
   progress: Record<string, ProgressRecordV2>;
   receipt: FinalReceiptV2 | null;
   receiptError: string | null;
+  externalConfirmations: ExternalConfirmationEvaluationV1[];
 }
 
 export type AuditGateStatusV2 =
@@ -75,6 +76,15 @@ function projectOutcomes(
 ): Record<string, OutcomeStatusV2> {
   const outcomes: Record<string, OutcomeStatusV2> = {};
   for (const outcome of input.compiled.outcomes) {
+    const external = input.externalConfirmations.filter(
+      (confirmation) =>
+        confirmation.blocks_target &&
+        externalConfirmationImpactsOutcome(
+          input.compiled,
+          confirmation,
+          outcome.key,
+        ),
+    );
     const states = outcome.acceptance.checks.map((check) => {
       const record = input.progress[check.internal_id];
       if (!record) return "unverified" as const;
@@ -88,19 +98,44 @@ function projectOutcomes(
         return "blocked_external" as const;
       return "progress_failing" as const;
     });
-    outcomes[outcome.key] = states.includes("progress_failing")
-      ? "progress_failing"
-      : outcomeResultExternallyBlocked(input.compiled, outcome.key) ||
-          states.includes("blocked_external")
-        ? "blocked_external"
-        : states.includes("progress_stale")
-          ? "progress_stale"
-          : states.length > 0 &&
-              states.every((state) => state === "progress_passing")
-            ? "progress_passing"
-            : "unverified";
+    outcomes[outcome.key] =
+      states.includes("progress_failing") ||
+      external.some((confirmation) =>
+        ["failed", "unable", "invalid", "stale"].includes(confirmation.state),
+      )
+        ? "progress_failing"
+        : external.some((confirmation) => confirmation.state === "pending") ||
+            states.includes("blocked_external")
+          ? "blocked_external"
+          : states.includes("progress_stale")
+            ? "progress_stale"
+            : states.length > 0 &&
+                states.every((state) => state === "progress_passing")
+              ? "progress_passing"
+              : "unverified";
   }
   return outcomes;
+}
+
+function externalConfirmationImpactsOutcome(
+  compiled: CompiledDeliveryContractV2,
+  evaluation: ExternalConfirmationEvaluationV1,
+  outcomeKey: string,
+): boolean {
+  if (
+    evaluation.obligation_results.some(
+      (result) => result.outcome_key === outcomeKey,
+    )
+  )
+    return true;
+  const declaration = compiled.global.acceptance.external_confirmations.find(
+    (confirmation) => confirmation.key === evaluation.confirmation_ref,
+  );
+  return Boolean(
+    declaration?.impact_claims.some(
+      (claim) => claim === outcomeKey || claim.startsWith(`${outcomeKey}.`),
+    ),
+  );
 }
 
 function projectFindings(input: StatusProjectionInputV2): LongTaskFindingV2[] {
@@ -171,7 +206,7 @@ function legacyTargetState(
 ): FinalReceiptV2["target_state"] {
   if (
     receipt.workflow_status === "machine_accepted" ||
-    receipt.workflow_status === "machine_accepted_external_pending"
+    receipt.workflow_status === "delivery_accepted"
   )
     return receipt.target_profile.required_state;
   return receipt.workflow_status === "blocked_external"
@@ -229,6 +264,8 @@ function projectFinalResult(input: StatusProjectionInputV2): AuditGateStatusV2 {
   if (!receiptFresh(input)) return "last_gate_inputs_stale";
   if (input.receipt.workflow_status === "blocked_external")
     return "last_gate_blocked";
+  if (input.receipt.workflow_status === "machine_accepted_external_pending")
+    return "last_gate_blocked";
   if (input.receipt.workflow_status === "needs_work") return "last_gate_failed";
   return "last_gate_passed";
 }
@@ -238,9 +275,36 @@ function receiptFresh(input: StatusProjectionInputV2): boolean {
     input.receipt &&
     !input.receiptError &&
     !input.stale.length &&
+    blockingExternalInputsFresh(input) &&
     input.receipt.compiled_identity === input.compiled.compiled_identity &&
     input.receipt.snapshot_sha256 === input.manifest.snapshot_sha256 &&
     input.receipt.git_head === input.manifest.git_head &&
     input.receipt.git_tree === input.manifest.fingerprint.head_tree,
+  );
+}
+
+function blockingExternalInputsFresh(input: StatusProjectionInputV2): boolean {
+  if (!input.receipt) return false;
+  const blockingRefs = new Set(
+    input.compiled.global.acceptance.external_confirmations
+      .filter((confirmation) => confirmation.blocks_target)
+      .map((confirmation) => confirmation.key),
+  );
+  const project = (rows: ExternalConfirmationEvaluationV1[]) =>
+    rows
+      .filter((row) => blockingRefs.has(row.confirmation_ref))
+      .map((row) => ({
+        confirmation_ref: row.confirmation_ref,
+        state: row.state,
+        record_sha256: row.record_sha256,
+        relevant_input_identity: row.relevant_input_identity,
+      }))
+      .sort((left, right) =>
+        left.confirmation_ref.localeCompare(right.confirmation_ref),
+      );
+  return (
+    JSON.stringify(
+      project(input.receipt.external_confirmation_results ?? []),
+    ) === JSON.stringify(project(input.externalConfirmations))
   );
 }

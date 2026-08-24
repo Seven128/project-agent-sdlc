@@ -10,6 +10,10 @@ import type {
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
 import { createJsonPointerExactBudget } from "./long-task-json-pointer-observation.js";
+import {
+  counterfactualSandboxProcessExecution,
+  type CounterfactualSandboxV2,
+} from "./long-task-counterfactual-sandbox.js";
 import { matchesRepoPattern } from "./long-task-paths.js";
 import {
   StaticObservationFreezeError,
@@ -99,12 +103,30 @@ export async function prepareExecutionObservationGroup(input: {
   });
 }
 
+export async function prepareCounterfactualExecutionObservationGroup(input: {
+  checks: readonly CompiledCheckV2[];
+  sandbox: CounterfactualSandboxV2;
+  workspace_manifest: WorkspaceManifestV2;
+  protected_authority_paths?: readonly string[];
+}): Promise<PreparedExecutionObservationGroupV2> {
+  const processExecution = counterfactualSandboxProcessExecution(input.sandbox);
+  return prepareExecutionObservationGroupWithBudget({
+    checks: input.checks,
+    snapshot_root: processExecution?.root ?? input.sandbox.root,
+    workspace_manifest: input.workspace_manifest,
+    protected_authority_paths: input.protected_authority_paths,
+    process_input_budget: createProcessInputFreezeBudget(),
+    direct_process_execution_root: processExecution !== null,
+  });
+}
+
 async function prepareExecutionObservationGroupWithBudget(input: {
   checks: readonly CompiledCheckV2[];
   snapshot_root: string;
   workspace_manifest: WorkspaceManifestV2;
   protected_authority_paths?: readonly string[];
   process_input_budget: ReturnType<typeof createObservationInputFreezeBudget>;
+  direct_process_execution_root?: boolean;
 }): Promise<PreparedExecutionObservationGroupV2> {
   if (!input.checks.length)
     throw new Error("execution_observation_check_group_required");
@@ -121,10 +143,13 @@ async function prepareExecutionObservationGroupWithBudget(input: {
   const processExecution = states.some(
     (state) => state.authority.authority === "package_process_json_exact",
   );
-  const executionRoot = processExecution
-    ? await mkdtemp(path.join(os.tmpdir(), "ty-context-process-snapshot-"))
-    : input.snapshot_root;
-  if (processExecution)
+  const directProcessExecution =
+    processExecution && input.direct_process_execution_root === true;
+  const executionRoot =
+    processExecution && !directProcessExecution
+      ? await mkdtemp(path.join(os.tmpdir(), "ty-context-process-snapshot-"))
+      : input.snapshot_root;
+  if (processExecution && !directProcessExecution)
     await mkdir(
       path.resolve(executionRoot, input.checks[0].runner.resolved_cwd),
       { recursive: true },
@@ -135,6 +160,11 @@ async function prepareExecutionObservationGroupWithBudget(input: {
         matchesRepoPattern(group.artifact_path, pattern),
       )
     ) {
+      if (directProcessExecution)
+        await rm(
+          path.resolve(executionRoot, ...group.artifact_path.split("/")),
+          { recursive: true, force: true },
+        );
       for (const state of group.authority_states)
         recordAuthorityFailure(
           state,
@@ -151,7 +181,7 @@ async function prepareExecutionObservationGroupWithBudget(input: {
       );
       let sourceIdentity:
         FrozenObservationInputFile["pre_run_identity"] | null = null;
-      if (processExecution) {
+      if (processExecution && !directProcessExecution) {
         const sourceFrozen = await freezeObservationInputFile({
           snapshot_root: input.snapshot_root,
           workspace_manifest: input.workspace_manifest,
@@ -204,6 +234,11 @@ async function prepareExecutionObservationGroupWithBudget(input: {
       )
         throw new Error("process_observation_input_snapshot_copy_mismatch");
     } catch (error) {
+      if (directProcessExecution)
+        await rm(
+          path.resolve(executionRoot, ...group.artifact_path.split("/")),
+          { recursive: true, force: true },
+        );
       const reason = observationFailureReason(error);
       for (const state of group.authority_states)
         recordAuthorityFailure(state, reason);
@@ -239,7 +274,7 @@ async function prepareExecutionObservationGroupWithBudget(input: {
     if (disposed) return;
     disposed = true;
     for (const group of groups) group.frozen?.dispose();
-    if (processExecution)
+    if (processExecution && !directProcessExecution)
       await rm(executionRoot, { recursive: true, force: true });
   };
   return {

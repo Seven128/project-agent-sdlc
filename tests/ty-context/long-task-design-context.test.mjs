@@ -84,11 +84,11 @@ test("[critical:mechanism-causal-chain-continuity] Long-Task purpose, current im
   );
   assert.match(
     spec,
-    /machine_accepted_external_pending[\s\S]*not `AcceptedDeliveryTerminal`[\s\S]*not a vague third state/iu,
+    /machine_accepted_external_pending[\s\S]*compatibility-read-only[\s\S]*cannot clear Active Authority/iu,
   );
   assert.match(
     spec,
-    /MachineVerifiableDeclaredDrift = empty[\s\S]*not full `DeclaredObservableDrift = empty`/iu,
+    /allowed terminal set is `\{ machine_accepted, delivery_accepted \}`/iu,
   );
   assert.match(
     spec,
@@ -834,7 +834,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
     assert.match(rationale, new RegExp(mechanism, "iu"));
   }
   assert.match(rationale, /brief is a projection of canonical summary data/iu);
-  assert.match(rationale, /only two trustworthy outcomes/iu);
+  assert.match(rationale, /two accepted terminals/iu);
   assert.match(
     rationale,
     /complete-delivery accepted-terminal-state safety[\s\S]*not a termination guarantee/iu,
@@ -845,7 +845,7 @@ test("registered rationale owns history, mechanism mapping and trusted limits", 
   );
   assert.match(
     rationale,
-    /machine_accepted_external_pending[\s\S]*MachineVerifiableDeclaredDrift = empty[\s\S]*no full `DeclaredObservableDrift = empty` claim/iu,
+    /machine_accepted_external_pending[\s\S]*compatibility-read-only[\s\S]*cannot clear Authority/iu,
   );
   assert.match(rationale, /atomic Claim × applicability × proof surface/iu);
   assert.doesNotMatch(globalContext, /accepted-terminal-state safety/iu);
@@ -953,7 +953,7 @@ test("revision diagnosis stays one-Contract and non-authoritative while decision
   );
   assert.match(
     combined,
-    /declared_machine_authority[\s\S]*native_goal_effect/iu,
+    /declared_delivery_authority[\s\S]*native_goal_effect/iu,
   );
   assert.match(
     combined,
