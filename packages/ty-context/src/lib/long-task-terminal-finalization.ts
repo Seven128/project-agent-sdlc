@@ -201,13 +201,14 @@ async function captureCurrentFinalizationState(
   compiled: Awaited<ReturnType<typeof compileDeliveryContract>>,
   provisionalManifest: WorkspaceManifestV2,
 ) {
-  const [fingerprint, git] = await Promise.all([
-    captureWorkspaceFingerprint(
-      repository,
-      workspaceFingerprintExcludedPrefixes(repository, [workdir]),
-    ),
-    currentGitState(repository),
-  ]);
+  // Fingerprint capture runs git write-tree. The finalization lock excludes
+  // Harness mutations, while this ordering also prevents a same-process
+  // currentGitState status refresh from competing for the repository index.
+  const fingerprint = await captureWorkspaceFingerprint(
+    repository,
+    workspaceFingerprintExcludedPrefixes(repository, [workdir]),
+  );
+  const git = await currentGitState(repository);
   if (
     git.dirty.length ||
     fingerprint.head !== git.head ||

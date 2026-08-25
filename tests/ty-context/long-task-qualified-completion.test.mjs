@@ -172,6 +172,32 @@ test("resume finishes workspace write-tree before current Git status", async () 
   }
 });
 
+test("Final Gate never overlaps workspace write-tree with current Git status", async () => {
+  const fixture = await createDeliveryFixture();
+  const traceRoot = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-final-git-order-"),
+  );
+  const traceFile = path.join(traceRoot, "events.jsonl");
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const final = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env: { ...process.env, GIT_TRACE2_EVENT: traceFile } },
+    );
+    assert.equal(final.workflow_status, "machine_accepted");
+    const events = (await readFile(traceFile, "utf8"))
+      .trim()
+      .split(/\r?\n/u)
+      .map((line) => JSON.parse(line));
+    assertGitCommandsDoNotOverlap(events, "write-tree", "status");
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+    await rm(traceRoot, { recursive: true, force: true });
+  }
+});
+
 test("stale Final Receipt loses accepted projection but retains declarations", async () => {
   const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
@@ -384,3 +410,38 @@ test("[critical:qualified-close-safety] failed Live Gates do not report success 
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+function assertGitCommandsDoNotOverlap(events, leftCommand, rightCommand) {
+  const intervals = (command) => {
+    const starts = events.filter(
+      (event) => event.event === "start" && event.argv?.at(1) === command,
+    );
+    assert.ok(starts.length > 0, `Git trace must contain ${command}`);
+    return starts.map((start) => {
+      const exit = events.find(
+        (event) => event.event === "exit" && event.sid === start.sid,
+      );
+      assert.ok(
+        exit,
+        `Git trace must contain ${command} exit for ${start.sid}`,
+      );
+      return { start: start.time, exit: exit.time, sid: start.sid };
+    });
+  };
+  const left = intervals(leftCommand);
+  const right = intervals(rightCommand);
+  for (const leftInterval of left)
+    for (const rightInterval of right) {
+      const overlaps =
+        leftInterval.start < rightInterval.exit &&
+        rightInterval.start < leftInterval.exit;
+      assert.equal(
+        overlaps,
+        false,
+        `Git ${leftCommand} overlapped ${rightCommand}: ${JSON.stringify({
+          left: leftInterval,
+          right: rightInterval,
+        })}`,
+      );
+    }
+}

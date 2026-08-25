@@ -56,13 +56,15 @@ export async function finalGateIntegrityFindings(input: {
   protected_inputs_before: FinalGateProtectedInputIdentity;
 }): Promise<LongTaskFindingV2[]> {
   const findings: LongTaskFindingV2[] = [];
-  const [after, gitAfter, authorityChanged, protectedFindings] =
-    await Promise.all([
-      captureWorkspaceFingerprint(input.repository),
-      currentGitState(input.repository),
-      activeAuthorityChanged(input),
-      protectedInputFindings(input),
-    ]);
+  // Fingerprint capture runs git write-tree. Finish it before currentGitState
+  // may refresh the same repository index, and finish both before the protected
+  // recompile may capture another workspace manifest.
+  const after = await captureWorkspaceFingerprint(input.repository);
+  const gitAfter = await currentGitState(input.repository);
+  const [authorityChanged, protectedFindings] = await Promise.all([
+    activeAuthorityChanged(input),
+    protectedInputFindings(input),
+  ]);
   if (
     after.identity !== input.workspace_identity_before ||
     gitAfter.head !== input.candidate.head ||
