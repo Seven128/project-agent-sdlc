@@ -325,6 +325,12 @@ async function assertShortRootDescendantContainment(
     executionContext(candidate, candidateAuthorities),
   );
   const rows = await waitForAttemptRows(log, expectedRows);
+  for (const row of rows.slice(1))
+    assert.equal(
+      row.detached,
+      process.platform === "win32",
+      `${mode} used the wrong platform containment topology`,
+    );
   const spawnedPids = rows
     .flatMap((row) => [row.child_pid, row.grandchild_pid])
     .filter((pid) => Number.isSafeInteger(pid) && pid > 0);
@@ -546,14 +552,25 @@ if (mode === "descendant" || mode === "timeout-tree") {
   if (mode === "timeout-tree") await new Promise(() => {});
 }
 if (mode === "short-descendant" || mode === "short-grandchild") {
+  const detachShortDescendants = process.platform === "win32";
   const child = spawn(
     process.execPath,
     mode === "short-grandchild"
-      ? ["grandchild.mjs", log]
+      ? [
+          "grandchild.mjs",
+          log,
+          detachShortDescendants ? "detached" : "process-group",
+        ]
       : ["-e", "setTimeout(() => {}, 60_000)"],
-    { stdio: "ignore", detached: true },
+    { stdio: "ignore", detached: detachShortDescendants },
   );
-  appendFileSync(log, JSON.stringify({ child_pid: child.pid }) + "\\n");
+  appendFileSync(
+    log,
+    JSON.stringify({
+      child_pid: child.pid,
+      detached: detachShortDescendants,
+    }) + "\\n",
+  );
   child.unref();
 }
 if (mode === "retry" && prior === 0) {
@@ -571,12 +588,13 @@ if (mode === "nonzero") process.exit(7);
     path.join(root, "grandchild.mjs"),
     `import { spawn } from "node:child_process";
 import { appendFileSync } from "node:fs";
-const [log] = process.argv.slice(2);
+const [log, topology] = process.argv.slice(2);
+const detached = topology === "detached";
 const grandchild = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60_000)"], {
   stdio: "ignore",
-  detached: true,
+  detached,
 });
-appendFileSync(log, JSON.stringify({ grandchild_pid: grandchild.pid }) + "\\n");
+appendFileSync(log, JSON.stringify({ grandchild_pid: grandchild.pid, detached }) + "\\n");
 grandchild.unref();
 `,
   );
