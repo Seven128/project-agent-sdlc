@@ -1004,6 +1004,15 @@ test(
   async () =>
     withFixture({ externalConfirmation: true }, async (fixture) => {
       const check = fixture.contract.outcomes[0].acceptance.checks[0];
+      const resultAssertionIndex = check.positive_assertions.findIndex(
+        (assertion) => assertion.key === "first-result",
+      );
+      assert.notEqual(
+        resultAssertionIndex,
+        -1,
+        "external control result Assertion must exist",
+      );
+      check.positive_assertions.splice(resultAssertionIndex, 1);
       fixture.contract.task.target_profile.completion_authority =
         "declared_authorities";
       fixture.contract.global.acceptance.external_confirmations[0] = {
@@ -1039,6 +1048,10 @@ test(
             evidence_capabilities: ["target_runtime"],
             expected_authority_ref: "contract-claim:first.result",
             result_kind: "judgment",
+            judgment_basis: {
+              kind: "authorization",
+              source_ref: "fixture-external",
+            },
           },
         ],
       };
@@ -1055,7 +1068,11 @@ test(
       const execution = await executeObserverTrustWorkflow(fixture);
       terminalReport.record(reportCases.externalControl, execution);
       assert.equal(execution.stage, "final-gate", executionLabel(execution));
-      assert.equal(execution.result.workflow_status, "blocked_external");
+      assert.equal(
+        execution.result.workflow_status,
+        "blocked_external",
+        executionDiagnostics(execution),
+      );
       assert.notEqual(execution.result.workflow_status, "machine_accepted");
     }),
 );
