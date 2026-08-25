@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -41,6 +41,7 @@ import {
 import {
   installSlowOracle,
   raceSignal,
+  removeTemporary,
   runCliProcess,
   waitForFile,
 } from "./long-task-external-confirmation-race-fixture.mjs";
@@ -113,7 +114,7 @@ test("relevant changes stale a record while soundly unrelated changes preserve i
     ]);
     assert.equal(revoked.status, "revoked");
   } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(fixture.root);
   }
 });
 
@@ -169,7 +170,7 @@ test("Final Gate rejects an External Confirmation record changed during runner e
     );
     assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
   } finally {
-    await rm(signal.folder, { recursive: true, force: true });
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
   }
 });

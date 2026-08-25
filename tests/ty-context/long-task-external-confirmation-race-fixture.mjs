@@ -82,6 +82,15 @@ export async function waitForFile(file) {
   throw new Error(`race signal timeout: ${file}`);
 }
 
+export async function removeTemporary(target) {
+  await rm(target, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
+}
+
 export async function runCliProcess(cwd, args) {
   try {
     const result = await exec(process.execPath, [cli, ...args], {
