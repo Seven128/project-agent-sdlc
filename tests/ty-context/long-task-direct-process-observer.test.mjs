@@ -20,7 +20,7 @@ import {
 
 const SNAPSHOT_SHA256 = "a".repeat(64);
 
-test("direct process observation captures one root stdout envelope and host attestation", async () => {
+test("[critical:direct-process-descendant-containment] direct process observation captures one root stdout envelope and host attestation", async () => {
   const fixture = await createProcessFixture();
   try {
     const authorities = [
