@@ -219,15 +219,14 @@ test("blocking result External Confirmation permits a Stage gate with no machine
   const contract = deliveryContract();
   contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
   contract.global.acceptance.external_confirmations = [
-    {
+    exactExternalConfirmation(contract, {
       key: "unsupported-stage-result",
       description:
         "The unsupported Stage result requires external confirmation.",
-      owner: "external-owner",
       kind: "functional_prerequisite",
-      impact_claims: ["first.result"],
-      blocks_target: true,
-    },
+      claimRefs: ["first.result"],
+      blocksTarget: true,
+    }),
   ];
   assert.doesNotThrow(() => parse(contract));
 });
@@ -237,18 +236,17 @@ test("Stage gate omission rejects non-blocking or non-result External Confirmati
     const contract = deliveryContract();
     contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
     contract.global.acceptance.external_confirmations = [
-      {
+      exactExternalConfirmation(contract, {
         key: "unsupported-stage-result",
         description:
           "The unsupported Stage result requires external confirmation.",
-        owner: "external-owner",
         kind: "field_validation",
-        impact_claims:
+        claimRefs:
           mutation === "missing-result"
             ? ["first.requirement.observe-first"]
             : ["first.result"],
-        blocks_target: mutation !== "non-blocking",
-      },
+        blocksTarget: mutation !== "non-blocking",
+      }),
     ];
     assert.throws(
       () => parse(contract),
@@ -263,15 +261,14 @@ test("External Confirmation never waives an explicitly required success path", (
   contract.outcomes[0].acceptance.checks[0].journey_roles = ["stage_gate"];
   contract.outcomes[0].applicability[0].journey_role = "stage_gate";
   contract.global.acceptance.external_confirmations = [
-    {
+    exactExternalConfirmation(contract, {
       key: "unsupported-stage-result",
       description:
         "The unsupported Stage result requires external confirmation.",
-      owner: "external-owner",
       kind: "functional_prerequisite",
-      impact_claims: ["first.result"],
-      blocks_target: true,
-    },
+      claimRefs: ["first.result"],
+      blocksTarget: true,
+    }),
   ];
   assert.throws(() => parse(contract), /success_path_check_required:first/u);
 });
@@ -293,15 +290,15 @@ test("all unsupported ordinary Claims and Semantic Facts can preflight only as e
       confirmation_ref: "unsupported-observation",
     },
   ];
+  const externalClaimRefs = generateClaims(outcome).map((claim) => claim.id);
   contract.global.acceptance.external_confirmations = [
-    {
+    exactExternalConfirmation(contract, {
       key: "unsupported-observation",
       description: "The unsupported observations require an external owner.",
-      owner: "external-owner",
       kind: "functional_prerequisite",
-      impact_claims: generateClaims(outcome).map((claim) => claim.id),
-      blocks_target: true,
-    },
+      claimRefs: externalClaimRefs,
+      blocksTarget: true,
+    }),
   ];
   assert.doesNotThrow(() => parse(contract));
 });
@@ -419,8 +416,22 @@ test("one Raw Execution Observation cannot be copied across Checks", async () =>
       {
         ...structuredClone(first.positive_assertions[0]),
         key: "copied-result",
+        claims: ["obligation.implement-first"],
       },
     ];
+    second.negative_assertions = [];
+    first.positive_assertions = first.positive_assertions.filter(
+      (assertion) => assertion.key !== "first-obligation",
+    );
+    const counterfactual =
+      fixture.contract.outcomes[0].acceptance.counterfactual_controls[0];
+    counterfactual.claims = counterfactual.claims.filter(
+      (claim) => claim !== "obligation.implement-first",
+    );
+    counterfactual.expected_assertion_failures =
+      counterfactual.expected_assertion_failures.filter(
+        (assertion) => assertion !== "first-obligation",
+      );
     fixture.contract.outcomes[0].acceptance.checks.push(second);
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
@@ -453,4 +464,105 @@ test("Compile enforces criterion even when Authoring Preflight is skipped", asyn
 
 function parse(contract) {
   return parseDeliveryContractText(YAML.stringify(contract));
+}
+
+function exactExternalConfirmation(
+  contract,
+  { key, description, kind, claimRefs, blocksTarget },
+) {
+  if (blocksTarget)
+    contract.task.target_profile.completion_authority = "declared_authorities";
+  const outcome = contract.outcomes[0];
+  const authorityKey = `${key}-authority`;
+  contract.source_claims.push({
+    key: authorityKey,
+    source_ref: "source.md#fixture-source",
+    statement: `${description} The declared external owner is authorized to judge the listed non-objective obligations.`,
+    disposition: {
+      type: "external_confirmation",
+      refs: [key],
+    },
+  });
+  const claims = new Map(
+    generateClaims(outcome).map((claim) => [claim.id, claim]),
+  );
+  return {
+    key,
+    description,
+    owner: "external-owner",
+    kind,
+    impact_claims: [...claimRefs],
+    blocks_target: blocksTarget,
+    actor: {
+      id: "external-owner",
+      role: "product acceptance owner",
+      authority_kind: "expert",
+      identity_assurance: {
+        scheme: "ed25519",
+        key_id: "external-owner-2026",
+        public_key_ref: "project_context/authorities/external-owner.pub",
+      },
+    },
+    target_ref: "fixture-app",
+    environment_identity: "fixture-external-environment-v1",
+    scenario: structuredClone(
+      outcome.acceptance.checks[0]?.scenario ?? {
+        given: [
+          { key: "fixture-loaded", statement: "Load the fixture state." },
+        ],
+        when: [
+          { key: "read-outcome", statement: "Read the selected outcome." },
+        ],
+      },
+    ),
+    evidence_requirements: [
+      {
+        key: "external-observation",
+        statement:
+          "Capture current-candidate evidence for every exact listed obligation.",
+      },
+    ],
+    obligations: claimRefs.map((claimRef, index) => {
+      const semanticFact = outcome.semantic_fact_bindings.facts.find(
+        (binding) => `${outcome.key}.${binding.claim_ref}` === claimRef,
+      );
+      if (semanticFact) {
+        const proof = outcome.semantic_fact_bindings.proofs.find(
+          (binding) => binding.fact_ref === semanticFact.fact_ref,
+        );
+        assert.ok(proof, `semantic proof required for ${claimRef}`);
+        return {
+          key: `${key}-obligation-${index + 1}`,
+          claim_ref: claimRef,
+          applicability_ref: semanticFact.applicability_ref,
+          fact_ref: semanticFact.fact_ref,
+          proof_ref: proof.proof_ref,
+          method: proof.method,
+          proof_surface: proof.proof_surface,
+          evidence_capabilities: [...proof.evidence_capabilities],
+          expected_authority_ref: `semantic-proof:${proof.proof_ref}`,
+          result_kind: "actual",
+        };
+      }
+      const claim = claims.get(claimRef);
+      assert.ok(claim, `ordinary claim required for ${claimRef}`);
+      return {
+        key: `${key}-obligation-${index + 1}`,
+        claim_ref: claimRef,
+        applicability_ref: claim.applicability_refs[0],
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: claim.required_proof_surfaces[0] ?? "runtime_behavior",
+        evidence_capabilities:
+          claim.kind === "result" ? ["target_runtime"] : [],
+        expected_authority_ref: `contract-claim:${claimRef}`,
+        result_kind: "judgment",
+        judgment_basis: {
+          kind: "expert_assessment",
+          source_ref: authorityKey,
+        },
+      };
+    }),
+  };
 }
