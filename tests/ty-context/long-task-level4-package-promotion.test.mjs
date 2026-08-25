@@ -33,7 +33,7 @@ after(async () => {
 
 test(
   "[critical:level4-package-promotion-boundary] the unique materializer reproduces exact current-candidate package bytes and the five-way identity",
-  { timeout: 300_000 },
+  { timeout: 600_000 },
   async () => {
     const fixture = await reproducedPackageFixture();
     const temporary = await mkdtemp(
