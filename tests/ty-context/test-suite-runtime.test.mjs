@@ -370,8 +370,12 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 58);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
   assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 26);
-  const longTaskCriticalCount = criticalSentinelsForSuite("long-task").length;
-  const defaultCriticalCount = criticalSentinelsForSuite("default").length;
+  const longTaskRegisteredCriticalCount = CRITICAL_TEST_SENTINELS.filter(
+    (entry) => entry.required_suites.includes("long-task"),
+  ).length;
+  const defaultRegisteredCriticalCount = CRITICAL_TEST_SENTINELS.filter(
+    (entry) => entry.required_suites.includes("default"),
+  ).length;
   const [roiDesign, authoringGovernance, deliveryBenchmarkContext] =
     await Promise.all([
       readFile(
@@ -421,7 +425,10 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
       "u",
     ),
   );
-  assert.equal(longTaskCriticalCount + defaultCriticalCount, 34);
+  assert.equal(
+    longTaskRegisteredCriticalCount + defaultRegisteredCriticalCount,
+    CRITICAL_TEST_SENTINELS.length,
+  );
   assert.match(
     deliveryBenchmarkContext,
     /long-task-level4-source-readiness\.test\.mjs/u,
@@ -840,6 +847,166 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   ]);
   assert.deepEqual(unexpected.critical_sentinel_coverage.unexpected_ids, [
     "unreviewed-invariant",
+  ]);
+});
+
+test("critical sentinel applicability is platform-derived without weakening registered coverage", () => {
+  const windowsSentinel = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "windows-job-pre-resume-containment",
+  );
+  const crossPlatformSentinel = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "authority-lock-continuity",
+  );
+  assert.ok(windowsSentinel);
+  assert.ok(crossPlatformSentinel);
+  assert.deepEqual(windowsSentinel.required_platforms, ["win32"]);
+  assert.equal(
+    Object.hasOwn(crossPlatformSentinel, "required_platforms"),
+    false,
+  );
+
+  const linuxRequired = criticalSentinelsForSuite("long-task-trust", "linux");
+  const darwinRequired = criticalSentinelsForSuite("long-task-trust", "darwin");
+  const windowsRequired = criticalSentinelsForSuite("long-task-trust", "win32");
+  const registered = CRITICAL_TEST_SENTINELS.filter((entry) =>
+    entry.required_suites.includes("long-task-trust"),
+  );
+  assert.equal(registered.length, windowsRequired.length);
+  assert.equal(linuxRequired.length, registered.length - 1);
+  assert.equal(darwinRequired.length, registered.length - 1);
+  assert.equal(
+    linuxRequired.some((entry) => entry.id === windowsSentinel.id),
+    false,
+  );
+  assert.equal(
+    darwinRequired.some((entry) => entry.id === windowsSentinel.id),
+    false,
+  );
+  assert.equal(
+    windowsRequired.some((entry) => entry.id === windowsSentinel.id),
+    true,
+  );
+  for (const required of [linuxRequired, darwinRequired, windowsRequired])
+    assert.equal(
+      required.some((entry) => entry.id === crossPlatformSentinel.id),
+      true,
+    );
+  assert.throws(
+    () => criticalSentinelsForSuite("long-task-trust", "freebsd"),
+    /Unsupported package test platform/u,
+  );
+  assert.doesNotThrow(() =>
+    criticalSentinelsForSuite("long-task-trust", "linux", [
+      crossPlatformSentinel,
+    ]),
+  );
+  for (const requiredPlatforms of [
+    [],
+    ["win32", "win32"],
+    ["freebsd"],
+    ["win32", "linux"],
+  ])
+    assert.throws(
+      () =>
+        criticalSentinelsForSuite("long-task-trust", "win32", [
+          { ...windowsSentinel, required_platforms: requiredPlatforms },
+        ]),
+      /Invalid required_platforms/u,
+    );
+
+  const windowsFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    windowsSentinel.file,
+  );
+  const crossPlatformFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    crossPlatformSentinel.file,
+  );
+  const linuxReport = buildFileTimingReport({
+    suite: "long-task-trust",
+    selectedFiles: [windowsFile, crossPlatformFile],
+    wallTimeMs: 10,
+    execution: { mode: "serial", isolated_concurrency: 1 },
+    registeredCriticalSentinels: [crossPlatformSentinel, windowsSentinel],
+    requiredCriticalSentinels: [crossPlatformSentinel],
+    events: [
+      event(
+        "test:pass",
+        crossPlatformFile,
+        `[critical:${crossPlatformSentinel.id}] required Linux control`,
+        2,
+      ),
+      {
+        ...event(
+          "test:pass",
+          windowsFile,
+          `[critical:${windowsSentinel.id}] non-applicable Windows execution`,
+          1,
+        ),
+        data: {
+          ...event(
+            "test:pass",
+            windowsFile,
+            `[critical:${windowsSentinel.id}] non-applicable Windows execution`,
+            1,
+          ).data,
+          skip: true,
+        },
+      },
+    ],
+  });
+  assert.equal(linuxReport.critical_sentinel_coverage.status, "passed");
+  assert.deepEqual(linuxReport.critical_sentinel_coverage.observed_ids, [
+    crossPlatformSentinel.id,
+  ]);
+  assert.deepEqual(linuxReport.critical_sentinel_coverage.non_applicable_ids, [
+    windowsSentinel.id,
+  ]);
+  assert.deepEqual(
+    linuxReport.critical_sentinel_coverage.non_applicable_observed_ids,
+    [windowsSentinel.id],
+  );
+  assert.deepEqual(linuxReport.critical_sentinel_coverage.non_passing_ids, []);
+
+  const windowsReport = (events) =>
+    buildFileTimingReport({
+      suite: "long-task-trust",
+      selectedFiles: [windowsFile],
+      wallTimeMs: 10,
+      execution: { mode: "serial", isolated_concurrency: 1 },
+      registeredCriticalSentinels: [windowsSentinel],
+      requiredCriticalSentinels: [windowsSentinel],
+      events,
+    });
+  const windowsTestName = `[critical:${windowsSentinel.id}] applicable Windows execution`;
+  assert.equal(
+    windowsReport([event("test:pass", windowsFile, windowsTestName, 1)])
+      .critical_sentinel_coverage.status,
+    "passed",
+  );
+  const skippedWindowsEvent = event(
+    "test:pass",
+    windowsFile,
+    windowsTestName,
+    1,
+  );
+  skippedWindowsEvent.data.skip = true;
+  assert.deepEqual(
+    windowsReport([skippedWindowsEvent]).critical_sentinel_coverage
+      .non_passing_ids,
+    [windowsSentinel.id],
+  );
+  assert.deepEqual(
+    windowsReport([event("test:fail", windowsFile, windowsTestName, 1)])
+      .critical_sentinel_coverage.non_passing_ids,
+    [windowsSentinel.id],
+  );
+  assert.deepEqual(windowsReport([]).critical_sentinel_coverage.missing_ids, [
+    windowsSentinel.id,
   ]);
 });
 

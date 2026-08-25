@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -77,7 +77,7 @@ export async function assertWindowsJobProtocol() {
     /process_observer_windows_job_unavailable:formal_process_supervisor_assign_process_to_job/u,
   );
 
-  const root = await mkdtemp(path.join(os.tmpdir(), "windows-job-protocol-"));
+  const root = await canonicalTemporaryRoot("windows-job-protocol-");
   try {
     const stream = path.join(root, "stdout.bin");
     await assertFreshWindowsJobStreamTarget(stream);
@@ -121,9 +121,7 @@ export async function assertPowerShellCompatibility(t) {
 
   for (const runtime of runtimes)
     await t.test(runtime.label, async () => {
-      const root = await mkdtemp(
-        path.join(os.tmpdir(), "windows-job-powershell-"),
-      );
+      const root = await canonicalTemporaryRoot("windows-job-powershell-");
       try {
         const request = createWindowsJobSupervisorRequest({
           requestId: `runtime-${randomUUID()}`,
@@ -191,4 +189,9 @@ export async function assertPowerShellCompatibility(t) {
         await rm(root, { recursive: true, force: true });
       }
     });
+}
+
+async function canonicalTemporaryRoot(prefix) {
+  const created = await mkdtemp(path.join(os.tmpdir(), prefix));
+  return realpath(created);
 }

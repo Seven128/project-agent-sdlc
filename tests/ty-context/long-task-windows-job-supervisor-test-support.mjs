@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile, spawn } from "node:child_process";
-import { realpath } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -24,6 +24,91 @@ export const helperNames = [
   "formal_process_supervisor_native_helpers.cs",
   "windows_job_process_supervisor.ps1",
 ];
+
+export function readExpectedProcessIdentitiesFromRows(
+  rows,
+  expectedIdentityKeys,
+) {
+  if (
+    !Array.isArray(expectedIdentityKeys) ||
+    expectedIdentityKeys.length === 0 ||
+    new Set(expectedIdentityKeys).size !== expectedIdentityKeys.length ||
+    expectedIdentityKeys.some(
+      (key) => typeof key !== "string" || !/^[a-z][a-z0-9_]*_pid$/u.test(key),
+    )
+  )
+    throw new Error("invalid_expected_process_identity_keys");
+  if (!Array.isArray(rows)) throw new Error("invalid_process_identity_log");
+
+  const identities = {};
+  for (const key of expectedIdentityKeys) {
+    const values = rows
+      .filter(
+        (row) =>
+          row !== null &&
+          typeof row === "object" &&
+          !Array.isArray(row) &&
+          Object.hasOwn(row, key),
+      )
+      .map((row) => row[key]);
+    if (values.length === 0) throw new Error(`missing_process_identity:${key}`);
+    if (values.length !== 1)
+      throw new Error(`duplicate_process_identity:${key}`);
+    if (!validProcessIdentity(values[0]))
+      throw new Error(`invalid_process_identity:${key}`);
+    identities[key] = values[0];
+  }
+  if (new Set(Object.values(identities)).size !== expectedIdentityKeys.length)
+    throw new Error("duplicate_process_identity");
+  return identities;
+}
+
+export async function readExpectedProcessIdentities(log, expectedIdentityKeys) {
+  const deadline = Date.now() + 3_000;
+  let lastMissingError = null;
+  do {
+    try {
+      const rows = (await readFile(log, "utf8"))
+        .trim()
+        .split(/\r?\n/u)
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+      try {
+        return readExpectedProcessIdentitiesFromRows(
+          rows,
+          expectedIdentityKeys,
+        );
+      } catch (error) {
+        if (!String(error?.message).startsWith("missing_process_identity:"))
+          throw error;
+        lastMissingError = error;
+      }
+    } catch (error) {
+      if (
+        !String(error?.message).startsWith("missing_process_identity:") &&
+        error?.code !== "ENOENT" &&
+        !(error instanceof SyntaxError)
+      )
+        throw error;
+    }
+    await delay(25);
+  } while (Date.now() < deadline);
+  throw (
+    lastMissingError ?? new Error(`process identity log incomplete: ${log}`)
+  );
+}
+
+export async function assertExpectedProcessIdentitiesGone(
+  log,
+  expectedIdentityKeys,
+) {
+  const identities = await readExpectedProcessIdentities(
+    log,
+    expectedIdentityKeys,
+  );
+  for (const pid of Object.values(identities)) await assertProcessGone(pid);
+  return identities;
+}
 
 export function validSupervisorResult(requestId) {
   return {
@@ -152,6 +237,28 @@ export async function assertNoProcessCommandLineToken(token) {
     await delay(50);
   }
   throw new Error("suspended product survived assign failure");
+}
+
+async function assertProcessGone(pid) {
+  const deadline = Date.now() + 3_000;
+  while (Date.now() < deadline) {
+    if (!processExists(pid)) return;
+    await delay(25);
+  }
+  assert.equal(processExists(pid), false, `process ${pid} remains alive`);
+}
+
+function processExists(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code !== "ESRCH";
+  }
+}
+
+function validProcessIdentity(value) {
+  return Number.isSafeInteger(value) && value > 0;
 }
 
 function delay(milliseconds) {
