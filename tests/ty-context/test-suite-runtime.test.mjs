@@ -660,6 +660,23 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   );
   assert.match(atomicFinalization.rationale, /Finalization Identity\/CAS/u);
   assert.match(atomicFinalization.rationale, /Windows/u);
+  const completeDeliveryBlackBox = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "complete-delivery-black-box-closure",
+  );
+  assert.ok(completeDeliveryBlackBox);
+  const completeDeliveryOwner = await readFile(
+    path.join(
+      repositoryRoot,
+      "tests",
+      "ty-context",
+      completeDeliveryBlackBox.file,
+    ),
+    "utf8",
+  );
+  assert.ok(
+    completeDeliveryOwner.includes(`[critical:${completeDeliveryBlackBox.id}]`),
+    "the complete-delivery sentinel tag must be declared by its registered owner file",
+  );
 
   const observerSentinelControls = new Map([
     [

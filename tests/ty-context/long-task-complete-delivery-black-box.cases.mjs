@@ -1,5 +1,4 @@
 import { rm } from "node:fs/promises";
-import test from "node:test";
 import { prepareDeliveryFixtureSeed } from "./long-task-delivery-fixtures.mjs";
 import {
   assertControlledIncidentCatalog,
@@ -11,7 +10,7 @@ import {
   scenarioByKey,
 } from "./long-task-complete-delivery-black-box-fixture.mjs";
 
-test("[critical:complete-delivery-black-box-closure] real Compile and Final Gate terminals block sanitized Starward and generic implementation drift", async () => {
+export async function exerciseCompleteDeliveryBlackBoxClosure() {
   const catalog = await loadCompleteDeliveryIncidentCatalog();
   assertControlledIncidentCatalog(catalog);
   const seed = await prepareDeliveryFixtureSeed();
@@ -45,4 +44,4 @@ test("[critical:complete-delivery-black-box-closure] real Compile and Final Gate
   } finally {
     await seed.cleanup();
   }
-});
+}
