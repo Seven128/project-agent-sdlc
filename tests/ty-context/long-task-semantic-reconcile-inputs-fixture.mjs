@@ -54,6 +54,8 @@ export function rebuildFixtureSemanticInputs(
     };
   });
   const fragmentInputs = inventory.items.flatMap((item) => {
+    const designOwned = inventory.designOwnedSourceItemRefs.has(item.key);
+    const designFactRefs = inventory.designFactRefsBySource.get(item.key) ?? [];
     const sourceInput = sourceInputs.find(
       (input) => input.source_ref === item.key,
     );
@@ -63,25 +65,27 @@ export function rebuildFixtureSemanticInputs(
     const sourceClaim = contract.source_claims.find(
       (claim) => claim.key === item.key,
     );
-    const claimIsFactBearing =
-      sourceClaim?.disposition.type === "claim" ||
-      sourceClaim?.disposition.type === "acceptance" ||
-      sourceClaim?.disposition.type === "outcome_result" ||
-      sourceClaim?.disposition.type === "global_constraint";
-    const disposition =
-      existing?.disposition ??
-      (claimIsFactBearing ? "fact_bearing" : "supporting_basis");
+    const claimIsFactBearing = sourceClaimDispositionIsFactBearing(sourceClaim);
+    const disposition = designOwned
+      ? designFactRefs.length > 0
+        ? "fact_bearing"
+        : "decision_required"
+      : (existing?.disposition ??
+        (claimIsFactBearing ? "fact_bearing" : "supporting_basis"));
     return deriveMaterialSourceFragments(item).map((fragment) => ({
       key: `input.fragment.${item.key}.${fragment.ordinal}`,
       kind: "source_fragment",
       source_ref: fragment.key,
       sha256: fragment.text_sha256,
       disposition,
-      fact_refs: [...sourceInput.fact_refs],
+      fact_refs: designOwned ? [...designFactRefs] : [...sourceInput.fact_refs],
       basis_refs: [item.key],
-      rationale:
-        existing?.rationale ??
-        "The synchronized fixture explicitly dispositions this complete current Source Fragment.",
+      rationale: designOwned
+        ? designFactRefs.length > 0
+          ? "This complete design-owned Source Fragment is explicitly projected to the formal Design Facts owned by its handoff."
+          : "This complete design-owned Source Fragment has no formal Design Fact mapping and remains decision-required."
+        : (existing?.rationale ??
+          "The synchronized fixture explicitly dispositions this complete current Source Fragment."),
     }));
   });
   manifest.inputs = [
@@ -103,6 +107,15 @@ export function rebuildFixtureSemanticInputs(
       })),
     ...fragmentInputs,
   ];
+}
+
+function sourceClaimDispositionIsFactBearing(sourceClaim) {
+  return [
+    "claim",
+    "acceptance",
+    "outcome_result",
+    "global_constraint",
+  ].includes(sourceClaim?.disposition.type);
 }
 
 export async function rebuildFixtureContextInputs(

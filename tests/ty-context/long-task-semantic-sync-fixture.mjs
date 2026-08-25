@@ -18,7 +18,11 @@ import {
 } from "./long-task-semantic-refresh-fixture.mjs";
 import { reconcileFixtureSemanticManifest } from "./long-task-semantic-reconcile-fixture.mjs";
 
-export async function synchronizeFixtureSemanticManifest(workdir, contract) {
+export async function synchronizeFixtureSemanticManifest(
+  workdir,
+  contract,
+  { designSemanticProjection } = {},
+) {
   const root = path.dirname(workdir);
   const sourcePath =
     contract.semantic_fact_manifest?.source_path ?? "source.md";
@@ -42,6 +46,7 @@ export async function synchronizeFixtureSemanticManifest(workdir, contract) {
     sourcePath,
     source,
     contract,
+    designSemanticProjection,
   );
   if (!inventory) {
     await persistFixtureSemanticManifest(
@@ -85,6 +90,7 @@ async function fixtureSemanticSourceInventory(
   sourcePath,
   source,
   contract,
+  designSemanticProjection,
 ) {
   try {
     const items = [];
@@ -111,7 +117,14 @@ async function fixtureSemanticSourceInventory(
           designOwnedSourceItemRefs.add(key);
       }
     }
-    return { items, designOwnedSourceItemRefs };
+    const designFactRefsBySource = new Map();
+    for (const fact of designSemanticProjection?.facts ?? [])
+      for (const sourceItemRef of fact.source_item_refs) {
+        const refs = designFactRefsBySource.get(sourceItemRef) ?? [];
+        refs.push(fact.key);
+        designFactRefsBySource.set(sourceItemRef, refs);
+      }
+    return { items, designOwnedSourceItemRefs, designFactRefsBySource };
   } catch {
     return null;
   }

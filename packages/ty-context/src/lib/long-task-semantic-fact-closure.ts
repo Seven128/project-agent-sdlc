@@ -49,7 +49,6 @@ export async function validateLongTaskSemanticFactClosure(
     contract.task.source_paths,
   );
   const manifest = parsed.manifest;
-  const index = validateSemanticFactManifestPolicy(manifest);
   validateManifestReference(contract, parsed);
   const designProjection = designHandoffs
     ? projectDesignOwnedSemanticFacts(designHandoffs)
@@ -60,12 +59,16 @@ export async function validateLongTaskSemanticFactClosure(
         ),
         facts: [],
       };
+  const index = validateSemanticFactManifestPolicy(
+    manifest,
+    new Set(designProjection.facts.map((fact) => fact.key)),
+  );
   const materialInputs = await validateSemanticFactInputInventory(
     repository,
     sourceItems,
     contextFiles,
     manifest,
-    designProjection.source_items,
+    designProjection,
   );
   const sourceConservation = validateSourceSemanticConservation(
     sourceItems,

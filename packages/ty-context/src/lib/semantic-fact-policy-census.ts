@@ -15,8 +15,12 @@ type CensusExpectation = {
 
 export function validateSemanticFactInspectorCensus(
   manifest: SemanticFactManifestV1,
+  externalFactRefs: ReadonlySet<string> = new Set(),
 ): void {
-  const factRefs = new Set(manifest.facts.map((item) => item.key));
+  const factRefs = new Set([
+    ...manifest.facts.map((item) => item.key),
+    ...externalFactRefs,
+  ]);
   const factsFor = (
     predicate: (fact: SemanticFactManifestV1["facts"][number]) => boolean,
   ) => manifest.facts.filter(predicate).map((item) => item.key);

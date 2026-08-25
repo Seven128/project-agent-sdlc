@@ -22,6 +22,7 @@ import {
   writeDesignArtifacts,
 } from "./symbolic-denotation-long-task-v2-evidence.mjs";
 import { wrapperOracleSource } from "./symbolic-denotation-long-task-v2-support.mjs";
+import { projectDesignOwnedSemanticFacts } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-input-closure.js";
 import {
   addDesignAssertions,
   makeGroundTarget,
@@ -161,7 +162,9 @@ export async function prepareMixedSymbolicLongTaskFixture(
     if (!sensitivity.expected_assertion_failures.includes(key))
       sensitivity.expected_assertion_failures.push(key);
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
-  await writeContract(fixture.workdir, fixture.contract);
+  await writeContract(fixture.workdir, fixture.contract, {
+    designSemanticProjection: projectDesignOwnedSemanticFacts([v1, v2]),
+  });
   const synchronizedOracle = await readFile(
     path.join(fixture.root, "tests/oracle.mjs"),
     "utf8",

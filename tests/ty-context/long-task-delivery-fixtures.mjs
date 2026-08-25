@@ -1086,7 +1086,7 @@ export async function synchronizeFixtureExecutionTargetSource(
 export async function writeContract(
   workdir,
   contract,
-  { synchronizeSemanticManifest = true } = {},
+  { synchronizeSemanticManifest = true, designSemanticProjection } = {},
 ) {
   synchronizeFixtureExternalAuthentication(contract);
   await ensureFixtureExternalPublicKey(workdir, contract);
@@ -1095,7 +1095,9 @@ export async function writeContract(
     contract.task?.id === "fixture-task" &&
     Array.isArray(contract.outcomes)
   )
-    await synchronizeFixtureSemanticManifest(workdir, contract);
+    await synchronizeFixtureSemanticManifest(workdir, contract, {
+      designSemanticProjection,
+    });
   await writeFile(
     path.join(workdir, "delivery-contract.yaml"),
     YAML.stringify(contract, { lineWidth: 0 }),

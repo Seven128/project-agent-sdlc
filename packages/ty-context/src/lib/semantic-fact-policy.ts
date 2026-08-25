@@ -48,6 +48,7 @@ export interface SemanticFactManifestIndexV1 {
 
 export function validateSemanticFactManifestPolicy(
   manifest: SemanticFactManifestV1,
+  externalFactRefs: ReadonlySet<string> = new Set(),
 ): SemanticFactManifestIndexV1 {
   validateSemanticFactUniqueIdentities(manifest);
   validateSemanticFactGeneration(manifest);
@@ -59,7 +60,7 @@ export function validateSemanticFactManifestPolicy(
   validateSemanticFactPropertyClosure(manifest, units);
   validateSemanticFactClosure(manifest, units);
   validateSemanticFactProofClosure(manifest);
-  validateSemanticFactInspectorCensus(manifest);
+  validateSemanticFactInspectorCensus(manifest, externalFactRefs);
   if (manifest.blockers.length)
     semanticFactInvalid(
       "blockers_present",

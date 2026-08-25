@@ -157,6 +157,18 @@ function sourceConservationFacts(
   for (const fact of designProjection.facts)
     addSourceConservationFact(facts, {
       ...fact,
+      basis_refs: [
+        ...new Set([
+          ...fact.basis_refs,
+          ...manifest.inputs
+            .filter(
+              (input) =>
+                input.kind === "source_fragment" &&
+                input.fact_refs.includes(fact.key),
+            )
+            .map((input) => input.key),
+        ]),
+      ],
       semantic_class: "delivery_semantic",
       authority_domain: "design",
       semantic_cell: null,

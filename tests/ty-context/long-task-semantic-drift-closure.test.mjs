@@ -551,6 +551,16 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
   );
 
   const nonBlockingConfirmation = structuredClone(contract);
+  nonBlockingConfirmation.source_claims.push({
+    key: "native-haptics-authority",
+    source_ref: "source.md#fixture-source",
+    statement:
+      "The native-reviewer is authorized to judge the declared native haptics requirement.",
+    disposition: {
+      type: "external_confirmation",
+      refs: ["native-haptics-review"],
+    },
+  });
   nonBlockingConfirmation.global.acceptance.external_confirmations.push({
     key: "native-haptics-review",
     description: "A device reviewer confirms native haptics.",
@@ -558,6 +568,44 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
     kind: "field_validation",
     impact_claims: ["first.control.map-tab.location"],
     blocks_target: false,
+    actor: {
+      id: "native-haptics-reviewer",
+      role: "native device acceptance reviewer",
+      authority_kind: "expert",
+      identity_assurance: {
+        scheme: "ed25519",
+        key_id: "native-reviewer-2026",
+        public_key_ref: "project_context/authorities/native-reviewer.pub",
+      },
+    },
+    target_ref: "fixture-app",
+    environment_identity: "fixture-native-device-v1",
+    scenario: structuredClone(check.scenario),
+    evidence_requirements: [
+      {
+        key: "native-haptics-evidence",
+        statement:
+          "Provide current-candidate device evidence for the declared native haptics obligation.",
+      },
+    ],
+    obligations: [
+      {
+        key: "confirm-native-haptics",
+        claim_ref: "first.control.map-tab.location",
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "layout_geometry",
+        proof_surface: "runtime_behavior",
+        evidence_capabilities: ["target_runtime"],
+        expected_authority_ref: "contract-claim:first.control.map-tab.location",
+        result_kind: "judgment",
+        judgment_basis: {
+          kind: "expert_assessment",
+          source_ref: "native-haptics-authority",
+        },
+      },
+    ],
   });
   nonBlockingConfirmation.outcomes[0].product.surface_bindings[0].acceptance_blockers =
     [
@@ -577,6 +625,8 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
   );
 
   nonBlockingConfirmation.global.acceptance.external_confirmations[0].blocks_target = true;
+  nonBlockingConfirmation.task.target_profile.completion_authority =
+    "declared_authorities";
   assert.doesNotThrow(() => parse(nonBlockingConfirmation));
 });
 

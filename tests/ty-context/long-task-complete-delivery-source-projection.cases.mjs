@@ -5,6 +5,8 @@ import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
 import { validateLongTaskProofAdequacy } from "../../packages/ty-context/dist/lib/long-task-proof-adequacy.js";
 import { validateSourceSemanticConservation } from "../../packages/ty-context/dist/lib/long-task-source-conservation.js";
+import { designOwnedSemanticFactProjectionKey } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-input-closure.js";
+import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
 import {
   deriveMaterialSourceFragments,
   deriveSemanticSourceAnchors,
@@ -19,6 +21,7 @@ import { fixtureSourceStatements } from "./long-task-semantic-manifest-fixture.m
 import {
   digestCanonical,
   digestText,
+  refreshFixtureSemanticManifest,
 } from "./long-task-semantic-refresh-fixture.mjs";
 import {
   addSourceBasis,
@@ -177,8 +180,11 @@ test("formal Design Resource Facts project as design-domain delivery semantics",
   sourceInput.fact_refs = [];
   sourceInput.rationale =
     "The selected-design closure owns this Source item's formal design Facts.";
-  const designFactRef =
-    "design-resource-fact:design/handoff.md#fact.surface.font-size";
+  const designFactRef = designOwnedSemanticFactProjectionKey(
+    "fact",
+    "design/handoff.md",
+    "fact.surface.font-size",
+  );
   replaceFragmentProjection(manifest, items[0], {
     disposition: "fact_bearing",
     factRefs: [designFactRef],
@@ -216,5 +222,43 @@ test("formal Design Resource Facts project as design-domain delivery semantics",
         facts: [],
       }),
     /source_projection_fact_unknown/u,
+  );
+});
+
+test("Semantic census admits only current formal Design projection identities", () => {
+  const { manifest, items } = sourceClosureFixture();
+  setSourceText(
+    manifest,
+    items,
+    "first-observable",
+    "The surface must render the declared `16px` design value.",
+  );
+  const sourceInput = manifest.inputs.find(
+    (input) =>
+      input.kind === "source_item" && input.source_ref === "first-observable",
+  );
+  sourceInput.disposition = "ui_design";
+  sourceInput.fact_refs = [];
+  sourceInput.rationale =
+    "The selected-design closure owns this Source item's formal design Facts.";
+  const designFactRef = designOwnedSemanticFactProjectionKey(
+    "fact",
+    "design/handoff.md",
+    "fact.surface.font-size",
+  );
+  replaceFragmentProjection(manifest, items[0], {
+    disposition: "fact_bearing",
+    factRefs: [designFactRef],
+    basisRefs: ["first-observable"],
+    rationale: "The formal design Fact carries this selected design Fragment.",
+  });
+  refreshFixtureSemanticManifest(manifest);
+
+  assert.doesNotThrow(() =>
+    validateSemanticFactManifestPolicy(manifest, new Set([designFactRef])),
+  );
+  assert.throws(
+    () => validateSemanticFactManifestPolicy(manifest, new Set()),
+    /census_fact_unknown/u,
   );
 });

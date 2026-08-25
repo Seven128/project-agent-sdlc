@@ -32,6 +32,14 @@ export interface DesignOwnedSemanticProjectionV1 {
   facts: DesignOwnedSemanticFactProjectionV1[];
 }
 
+export function designOwnedSemanticFactProjectionKey(
+  kind: "fact" | "fact_rule",
+  handoffPath: string,
+  factKey: string,
+): string {
+  return `design.${kind}.${sha256Hex(`${kind}\0${handoffPath}\0${factKey}`)}`;
+}
+
 export function projectDesignOwnedSemanticFacts(
   preflights: LongTaskDesignHandoffPreflight[],
 ): DesignOwnedSemanticProjectionV1 {
@@ -42,7 +50,11 @@ export function projectDesignOwnedSemanticFacts(
     if ("preflight_schema_version" in preflight)
       for (const rule of preflight.manifest.fact_rules)
         addDesignFactProjection(facts, {
-          key: `design-resource-fact-rule:${preflight.handoff_path}#${rule.key}`,
+          key: designOwnedSemanticFactProjectionKey(
+            "fact_rule",
+            preflight.handoff_path,
+            rule.key,
+          ),
           source_item_refs: [...rule.source_item_refs],
           basis_refs: [...rule.semantic_obligation_refs],
           expected_search_text: [
@@ -68,7 +80,11 @@ export function projectDesignOwnedSemanticFacts(
     else
       for (const fact of preflight.handoff.facts)
         addDesignFactProjection(facts, {
-          key: `design-resource-fact:${preflight.handoff_path}#${fact.key}`,
+          key: designOwnedSemanticFactProjectionKey(
+            "fact",
+            preflight.handoff_path,
+            fact.key,
+          ),
           source_item_refs: [...fact.source_item_refs],
           basis_refs: [...fact.evidence_refs],
           expected_search_text: [
@@ -138,8 +154,9 @@ export async function validateSemanticFactInputInventory(
   sourceItems: CompiledSourceItemV2[],
   contextFiles: string[],
   manifest: SemanticFactManifestV1,
-  designOwnedSourceItems: Set<string>,
+  designProjection: DesignOwnedSemanticProjectionV1,
 ): Promise<MaterialTextInputV2[]> {
+  const designOwnedSourceItems = designProjection.source_items;
   const sourceItemByKey = new Map(sourceItems.map((item) => [item.key, item]));
   const sourceInputs = manifest.inputs.filter(
     (item) => item.kind === "source_item",
@@ -169,7 +186,7 @@ export async function validateSemanticFactInputInventory(
   );
   for (const input of manifest.inputs)
     await validateInput(repository, manifest, input, designOwnedSourceItems);
-  validateInputFactLineage(manifest, sourceInputs);
+  validateInputFactLineage(manifest, sourceInputs, designProjection.facts);
   validateSemanticFactProvenance(manifest, sourceItems);
   return deriveMaterialTextInputs(
     repository,
@@ -306,8 +323,22 @@ async function validateInput(
 function validateInputFactLineage(
   manifest: SemanticFactManifestV1,
   sourceInputs: SemanticFactManifestV1["inputs"],
+  designFacts: DesignOwnedSemanticFactProjectionV1[],
 ): void {
-  const facts = new Map(manifest.facts.map((item) => [item.key, item]));
+  const facts = new Map([
+    ...manifest.facts.map(
+      (item) =>
+        [
+          item.key,
+          {
+            key: item.key,
+            source_item_refs: item.source_item_refs,
+            basis_refs: item.provenance.basis_refs,
+          },
+        ] as const,
+    ),
+    ...designFacts.map((item) => [item.key, item] as const),
+  ]);
   const sourceItemRefs = new Set(sourceInputs.map((item) => item.source_ref));
   for (const input of manifest.inputs)
     for (const factRef of input.fact_refs)
@@ -324,7 +355,7 @@ function validateInputFactLineage(
             ? !fact.source_item_refs.includes(input.source_ref)
             : projectedSourceRef && sourceItemRefs.has(projectedSourceRef)
               ? !fact.source_item_refs.includes(projectedSourceRef)
-              : !fact.provenance.basis_refs.includes(input.key)
+              : !fact.basis_refs.includes(input.key)
         )
           semanticFactClosureInvalid(
             "input_fact_lineage_mismatch",
