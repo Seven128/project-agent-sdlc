@@ -43,7 +43,8 @@ import {
   raceSignal,
   removeTemporary,
   runCliProcess,
-  waitForFile,
+  waitForProcessExit,
+  waitForStartedProcess,
 } from "./long-task-external-confirmation-race-fixture.mjs";
 
 test("relevant changes stale a record while soundly unrelated changes preserve it", async () => {
@@ -150,7 +151,7 @@ test("Final Gate rejects an External Confirmation record changed during runner e
       "final-gate",
       fixture.workdir,
     ]);
-    await waitForFile(signal.started);
+    const oraclePid = await waitForStartedProcess(signal.started);
     await writeFile(
       externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
       "{}\n",
@@ -158,6 +159,7 @@ test("Final Gate rejects an External Confirmation record changed during runner e
     await writeFile(signal.release, "release\n");
 
     const final = await finalProcess;
+    await waitForProcessExit(oraclePid);
     assert.notEqual(final.exitCode, 0);
     const receipt = JSON.parse(final.stdout);
     assert.equal(receipt.workflow_status, "needs_work");
