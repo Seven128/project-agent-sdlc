@@ -859,9 +859,24 @@ const HOTSPOT_TESTS = new Map([
       "long-task-active-authority-continuity.test.mjs",
       "long-task-authority-progress-retry.test.mjs",
       "long-task-authority-revision-diagnosis.test.mjs",
+      "long-task-final-authority-race.test.mjs",
+      "long-task-qualified-completion.test.mjs",
       "long-task-state-resume.test.mjs",
     ],
   ],
+  ...[
+    "packages/ty-context/src/lib/long-task-completion-types.ts",
+    "packages/ty-context/src/lib/long-task-final-v2.ts",
+    "packages/ty-context/src/lib/long-task-finalization-identity.ts",
+    "packages/ty-context/src/lib/long-task-terminal-finalization.ts",
+  ].map((sourcePath) => [
+    sourcePath,
+    [
+      "long-task-final-authority-race.test.mjs",
+      "long-task-qualified-completion.test.mjs",
+      "long-task-state-resume.test.mjs",
+    ],
+  ]),
   [
     "packages/ty-context/src/lib/long-task-status-v2.ts",
     [

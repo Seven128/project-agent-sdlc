@@ -17,6 +17,7 @@ interface StatusProjectionInputV2 {
   progress: Record<string, ProgressRecordV2>;
   receipt: FinalReceiptV2 | null;
   receiptError: string | null;
+  finalizationIdentitySha256: string | null;
   externalConfirmations: ExternalConfirmationEvaluationV1[];
 }
 
@@ -100,8 +101,10 @@ function projectOutcomes(
     });
     outcomes[outcome.key] =
       states.includes("progress_failing") ||
-      external.some((confirmation) =>
-        ["failed", "unable", "invalid", "stale"].includes(confirmation.state),
+      external.some(
+        (confirmation) =>
+          confirmation.state !== "fulfilled" &&
+          confirmation.state !== "pending",
       )
         ? "progress_failing"
         : external.some((confirmation) => confirmation.state === "pending") ||
@@ -274,6 +277,9 @@ function receiptFresh(input: StatusProjectionInputV2): boolean {
   return Boolean(
     input.receipt &&
     !input.receiptError &&
+    input.finalizationIdentitySha256 !== null &&
+    input.receipt.finalization_identity_sha256 ===
+      input.finalizationIdentitySha256 &&
     !input.stale.length &&
     blockingExternalInputsFresh(input) &&
     input.receipt.compiled_identity === input.compiled.compiled_identity &&

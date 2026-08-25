@@ -3,7 +3,14 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { activeRecordPath } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  activeRecordPath,
+  readFinalReceipt,
+} from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   commitCandidate,
   createDeliveryFixture,
@@ -37,6 +44,8 @@ test("non-blocking external declarations remain advisory across Final/status/res
     assert.equal(final.workflow_status, "machine_accepted");
     assert.equal(final.target_state, "target_profile_usable");
     assert.deepEqual(final.stage_results, { first: "passed" });
+    assert.match(final.finalization_identity_sha256, /^[a-f0-9]{64}$/u);
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
     assert.deepEqual(final.external_confirmations, externalConfirmations);
     assert.equal(final.acceptance_scope, "declared_delivery_authority");
     assert.equal(final.external_confirmation_results[0].state, "pending");
@@ -73,7 +82,7 @@ test("non-blocking external declarations remain advisory across Final/status/res
   }
 });
 
-test("legacy blocking confirmation without exact decomposition fails before implementation", async () => {
+test("legacy blocking confirmation requires explicit authority migration before implementation", async () => {
   const fixture = await createDeliveryFixture();
   try {
     fixture.contract.global.acceptance.external_confirmations = [
@@ -90,14 +99,14 @@ test("legacy blocking confirmation without exact decomposition fails before impl
     await runCli(fixture.root, ["enable", "long-task"]);
     await assert.rejects(
       runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
-      /acceptance_obligation_unreachable:.*completion_authority_machine_only/u,
+      /long_task_delivery_v2_semantic_drift_migration_required:.*external_confirmations\[0\]\.actor.*external_confirmations\[0\]\.obligations.*completion_authority=declared_authorities_or_remove_blocking_external/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("partial blocking declaration without exact result rows is unreachable", async () => {
+test("partial legacy blocking declaration cannot bypass exact authority migration", async () => {
   const fixture = await createDeliveryFixture();
   try {
     fixture.contract.global.acceptance.external_confirmations = [
@@ -114,7 +123,7 @@ test("partial blocking declaration without exact result rows is unreachable", as
     await runCli(fixture.root, ["enable", "long-task"]);
     await assert.rejects(
       runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
-      /acceptance_obligation_unreachable:.*completion_authority_machine_only/u,
+      /long_task_delivery_v2_semantic_drift_migration_required:.*external_confirmations\[0\]\.actor.*external_confirmations\[0\]\.obligations.*completion_authority=declared_authorities_or_remove_blocking_external/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -188,6 +197,45 @@ test("stale Final Receipt loses accepted projection but retains declarations", a
       assert.equal(result.target_state, "not_accepted");
       assert.deepEqual(result.external_confirmations, externalConfirmations);
     }
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("historical v3 Receipt without Finalization Identity stays audit-readable but cannot project acceptance", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await runCli(fixture.root, ["long-task", "final-gate", fixture.workdir]);
+    const receiptPath = path.join(
+      fixture.workdir,
+      ".ty-context",
+      "final-receipt.json",
+    );
+    const historical = JSON.parse(await readFile(receiptPath, "utf8"));
+    delete historical.finalization_identity_sha256;
+    delete historical.receipt_sha256;
+    historical.receipt_sha256 = sha256Hex(canonicalValueJson(historical));
+    await writeFile(receiptPath, `${JSON.stringify(historical)}\n`);
+
+    const readable = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.ok(readable);
+    assert.equal(readable.finalization_identity_sha256, undefined);
+    for (const command of ["status", "resume"]) {
+      const result = await runCli(fixture.root, [
+        "long-task",
+        command,
+        fixture.workdir,
+      ]);
+      assert.equal(
+        command === "status" ? result.final_result : result.last_gate,
+        "last_gate_inputs_stale",
+      );
+      assert.equal(result.final_workflow_status, null);
+      assert.equal(result.target_state, "not_accepted");
+    }
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -273,6 +321,7 @@ test("ordinary machine acceptance emits no external warning and close stays qual
     assert.equal(stop.acceptance_scope, "declared_delivery_authority");
     assert.equal(stop.native_goal_effect, "none");
     assert.match(stop.message, /platform-native Goal/iu);
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), false);
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -296,6 +345,10 @@ test("ordinary machine acceptance emits no external warning and close stays qual
     assert.equal(close.acceptance_scope, "declared_delivery_authority");
     assert.equal(close.closed_scope, "complete_long_task_authority");
     assert.equal(close.native_goal_effect, "none");
+    assert.equal(
+      await pathExists(await activeRecordPath(closeFixture.root)),
+      false,
+    );
   } finally {
     await rm(closeFixture.root, { recursive: true, force: true });
   }

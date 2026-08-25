@@ -30,6 +30,7 @@ import {
   externalConfirmationStatus,
   prepareExternalConfirmations,
   revokeExternalConfirmation,
+  rotateExternalConfirmation,
   submitExternalConfirmation,
 } from "../lib/long-task-external-confirmation-plan.js";
 
@@ -164,7 +165,7 @@ async function external(args: string[]): Promise<void> {
   const action = args[0];
   const workdirArgument = args[1];
   if (!action)
-    throw new Error("external requires prepare|submit|status|revoke");
+    throw new Error("external requires prepare|submit|status|rotate|revoke");
   if (!workdirArgument)
     throw new Error(`external ${action} requires <workdir>`);
   const workdir = path.resolve(process.cwd(), workdirArgument);
@@ -219,6 +220,22 @@ async function external(args: string[]): Promise<void> {
     );
     return;
   }
+  if (action === "rotate") {
+    const confirmation = option(commandArgs, "--confirmation");
+    rejectOptions(commandArgs, ["--confirmation"]);
+    if (!confirmation) throw new Error("--confirmation requires a value");
+    console.log(
+      JSON.stringify(
+        await rotateExternalConfirmation({
+          workdir,
+          confirmation_ref: confirmation,
+        }),
+        null,
+        2,
+      ),
+    );
+    return;
+  }
   throw new Error(`Unknown long-task external subcommand: ${action}`);
 }
 
@@ -239,6 +256,7 @@ function help(): void {
   external prepare <workdir> [--confirmation <key>]
   external submit <workdir> --confirmation <key> --record <path>
   external status <workdir>
+  external rotate <workdir> --confirmation <key>
   external revoke <workdir> --confirmation <key>
   stop-check <workdir> [--message <text>]
   close <workdir>

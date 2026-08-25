@@ -7,9 +7,15 @@ import {
   readSubmittedExternalConfirmationRecord,
   type ExternalAuthorityContextV1,
 } from "./long-task-external-confirmation-context.js";
+import { captureAndStoreExternalConfirmationArtifacts } from "./long-task-external-confirmation-artifacts.js";
+import {
+  readOrCreateExternalConfirmationChallenge,
+  rotateExternalConfirmationChallenge,
+} from "./long-task-external-confirmation-challenge.js";
 import {
   emptyExternalConfirmationEvaluation,
   evaluateExternalConfirmationRecord,
+  externalConfirmationSubmissionEnvelopeIssues,
 } from "./long-task-external-confirmation-evaluation.js";
 import {
   externalRows,
@@ -19,7 +25,10 @@ import {
   externalFulfillableConfirmations,
   groupPreparationSessions,
 } from "./long-task-external-confirmation-preparation.js";
-import { externalConfirmationRecordHash } from "./long-task-external-confirmation-shape.js";
+import {
+  externalConfirmationRecordHash,
+  externalConfirmationRecordV2Hash,
+} from "./long-task-external-confirmation-shape.js";
 import {
   readStoredExternalConfirmationRecord,
   revokeStoredExternalConfirmationRecord,
@@ -30,6 +39,8 @@ import type {
   ExternalConfirmationEvaluationV1,
   ExternalConfirmationPreparationV1,
 } from "./long-task-external-confirmation-types.js";
+import { withActiveAuthorityLock } from "./long-task-state.js";
+import { repositoryRoot } from "./long-task-workspace.js";
 import { loadSemanticFactManifest } from "./semantic-fact-source-parser.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 
@@ -39,24 +50,36 @@ export async function prepareExternalConfirmations(
   workdirInput: string,
   confirmationRef?: string,
 ): Promise<ExternalConfirmationPreparationV1> {
-  const context = await loadExternalAuthorityContext(workdirInput, true);
-  const confirmations = externalFulfillableConfirmations(
-    context,
-    confirmationRef,
+  const repository = await repositoryRoot(process.cwd());
+  return withActiveAuthorityLock(
+    repository,
+    "external_confirmation",
+    async () => {
+      const context = await loadExternalAuthorityContext(workdirInput, true);
+      const confirmations = await externalFulfillableConfirmations(
+        context,
+        confirmationRef,
+      );
+      const sessions = groupPreparationSessions(
+        confirmations,
+        context.candidate,
+      );
+      return {
+        schema_version: "long-task-external-confirmation-preparation-v2",
+        acceptance_effect: "none",
+        notice: "Preparation output does not establish acceptance.",
+        task_id: context.compiled.task.id,
+        compiled_identity: context.compiled.compiled_identity,
+        authority_revision: context.compiled.authority_revision,
+        candidate: context.candidate,
+        actor_identity_boundary:
+          "detached_ed25519_required_for_blocking_fulfillment",
+        confirmations,
+        sessions,
+        generated_at: new Date().toISOString(),
+      };
+    },
   );
-  const sessions = groupPreparationSessions(confirmations, context.candidate);
-  return {
-    schema_version: "long-task-external-confirmation-preparation-v1",
-    task_id: context.compiled.task.id,
-    compiled_identity: context.compiled.compiled_identity,
-    authority_revision: context.compiled.authority_revision,
-    candidate: context.candidate,
-    actor_identity_boundary:
-      "declared_identity_and_record_integrity_only_not_authentication",
-    confirmations,
-    sessions,
-    generated_at: new Date().toISOString(),
-  };
 }
 
 export async function submitExternalConfirmation(input: {
@@ -64,33 +87,62 @@ export async function submitExternalConfirmation(input: {
   confirmation_ref: string;
   record_path: string;
 }): Promise<ExternalConfirmationEvaluationV1> {
-  const context = await loadExternalAuthorityContext(input.workdir, true);
-  const confirmation = requiredConfirmation(
-    context.compiled,
-    input.confirmation_ref,
+  const repository = await repositoryRoot(process.cwd());
+  return withActiveAuthorityLock(
+    repository,
+    "external_confirmation",
+    async () => {
+      const context = await loadExternalAuthorityContext(input.workdir, true);
+      const confirmation = requiredConfirmation(
+        context.compiled,
+        input.confirmation_ref,
+      );
+      const record = await readSubmittedExternalConfirmationRecord(
+        input.record_path,
+      );
+      if (record.confirmation_ref !== input.confirmation_ref)
+        throw new Error(
+          `external_confirmation_submit_ref_mismatch:${input.confirmation_ref}:${record.confirmation_ref}`,
+        );
+      if (record.schema_version !== "long-task-external-confirmation-record-v2")
+        throw new Error(
+          "external_confirmation_submit_rejected:legacy_unattested",
+        );
+      const envelopeIssues = await externalConfirmationSubmissionEnvelopeIssues(
+        context,
+        confirmation,
+        record,
+      );
+      if (envelopeIssues.length)
+        throw new Error(
+          `external_confirmation_submit_rejected:${envelopeIssues.join(",")}`,
+        );
+      await captureAndStoreExternalConfirmationArtifacts(
+        context.repository,
+        context.workdir,
+        record.artifact_snapshots,
+      );
+      const evaluation = await evaluateExternalConfirmationRecord(
+        context,
+        confirmation,
+        record,
+      );
+      if (
+        evaluation.state === "invalid" ||
+        evaluation.state === "stale" ||
+        evaluation.state === "legacy_unattested"
+      )
+        throw new Error(
+          `external_confirmation_submit_rejected:${evaluation.state}:${evaluation.issues.join(",")}`,
+        );
+      await writeStoredExternalConfirmationRecord(
+        context.repository,
+        context.workdir,
+        record,
+      );
+      return evaluation;
+    },
   );
-  const record = await readSubmittedExternalConfirmationRecord(
-    input.record_path,
-  );
-  if (record.confirmation_ref !== input.confirmation_ref)
-    throw new Error(
-      `external_confirmation_submit_ref_mismatch:${input.confirmation_ref}:${record.confirmation_ref}`,
-    );
-  const evaluation = await evaluateExternalConfirmationRecord(
-    context,
-    confirmation,
-    record,
-  );
-  if (evaluation.state === "invalid" || evaluation.state === "stale")
-    throw new Error(
-      `external_confirmation_submit_rejected:${evaluation.state}:${evaluation.issues.join(",")}`,
-    );
-  await writeStoredExternalConfirmationRecord(
-    context.repository,
-    context.workdir,
-    record,
-  );
-  return evaluation;
 }
 
 export async function externalConfirmationStatus(
@@ -98,7 +150,7 @@ export async function externalConfirmationStatus(
 ): Promise<Record<string, unknown>> {
   const context = await loadExternalAuthorityContext(workdirInput, false);
   return {
-    schema_version: "long-task-external-confirmation-status-v1",
+    schema_version: "long-task-external-confirmation-status-v2",
     task_id: context.compiled.task.id,
     compiled_identity: context.compiled.compiled_identity,
     authority_revision: context.compiled.authority_revision,
@@ -106,7 +158,7 @@ export async function externalConfirmationStatus(
     candidate_clean: context.candidate_dirty.length === 0,
     candidate_dirty: context.candidate_dirty,
     actor_identity_boundary:
-      "declared_identity_and_record_integrity_only_not_authentication",
+      "detached_ed25519_required_for_blocking_fulfillment",
     confirmations: await evaluateExternalConfirmations(
       context.compiled,
       context.repository,
@@ -122,18 +174,56 @@ export async function revokeExternalConfirmation(input: {
   workdir: string;
   confirmation_ref: string;
 }): Promise<Record<string, unknown>> {
-  const context = await loadExternalAuthorityContext(input.workdir, false);
-  requiredConfirmation(context.compiled, input.confirmation_ref);
-  const revoked = await revokeStoredExternalConfirmationRecord(
-    context.repository,
-    context.workdir,
-    input.confirmation_ref,
+  const repository = await repositoryRoot(process.cwd());
+  return withActiveAuthorityLock(
+    repository,
+    "external_confirmation",
+    async () => {
+      const context = await loadExternalAuthorityContext(input.workdir, false);
+      requiredConfirmation(context.compiled, input.confirmation_ref);
+      const challenge = await rotateExternalConfirmationChallenge(
+        context,
+        input.confirmation_ref,
+      );
+      const revoked = await revokeStoredExternalConfirmationRecord(
+        context.repository,
+        context.workdir,
+        input.confirmation_ref,
+      );
+      return {
+        schema_version: "long-task-external-confirmation-revoke-v2",
+        confirmation_ref: input.confirmation_ref,
+        status: revoked ? "revoked" : "not_present",
+        challenge_rotated: true,
+        challenge: challenge.challenge,
+      };
+    },
   );
-  return {
-    schema_version: "long-task-external-confirmation-revoke-v1",
-    confirmation_ref: input.confirmation_ref,
-    status: revoked ? "revoked" : "not_present",
-  };
+}
+
+export async function rotateExternalConfirmation(input: {
+  workdir: string;
+  confirmation_ref: string;
+}): Promise<Record<string, unknown>> {
+  const repository = await repositoryRoot(process.cwd());
+  return withActiveAuthorityLock(
+    repository,
+    "external_confirmation",
+    async () => {
+      const context = await loadExternalAuthorityContext(input.workdir, false);
+      requiredConfirmation(context.compiled, input.confirmation_ref);
+      const challenge = await rotateExternalConfirmationChallenge(
+        context,
+        input.confirmation_ref,
+      );
+      return {
+        schema_version: "long-task-external-confirmation-rotate-v1",
+        confirmation_ref: input.confirmation_ref,
+        challenge: challenge.challenge,
+        rotated_at: challenge.rotated_at,
+      };
+    },
+  );
 }
 
 export async function evaluateExternalConfirmations(
@@ -168,9 +258,12 @@ export async function evaluateExternalConfirmations(
     );
     if (stored.error) {
       results.push(
-        emptyExternalConfirmationEvaluation(context, confirmation, "invalid", [
-          `record_invalid:${stored.error}`,
-        ]),
+        await emptyExternalConfirmationEvaluation(
+          context,
+          confirmation,
+          "invalid",
+          [`record_invalid:${stored.error}`],
+        ),
       );
       continue;
     }
@@ -178,13 +271,13 @@ export async function evaluateExternalConfirmations(
       const exactRows = externalRows(compiled, confirmation.key);
       results.push(
         exactRows.length || !confirmation.blocks_target
-          ? emptyExternalConfirmationEvaluation(
+          ? await emptyExternalConfirmationEvaluation(
               context,
               confirmation,
               "pending",
               [],
             )
-          : emptyExternalConfirmationEvaluation(
+          : await emptyExternalConfirmationEvaluation(
               context,
               confirmation,
               "invalid",
@@ -205,5 +298,6 @@ export async function evaluateExternalConfirmations(
 }
 
 export const externalConfirmationRecordIntegrity = {
-  hash: externalConfirmationRecordHash,
+  hash_v1: externalConfirmationRecordHash,
+  hash_v2: externalConfirmationRecordV2Hash,
 };

@@ -41,6 +41,7 @@ import {
   firstLockManagedWorkspacePaths,
   protectedWorkspacePaths,
 } from "./long-task-workspace-scope.js";
+import { compileExternalConfirmationIdentityAssurances } from "./long-task-external-confirmation-attestation.js";
 
 export interface CompileDeliveryOptionsV2 {
   require_completion_gate?: boolean;
@@ -140,6 +141,13 @@ export async function compileDeliveryContract(
   ];
 
   const authorityHashes = computeAuthorityHashes(contract);
+  const externalConfirmationIdentityAssurances =
+    await compileExternalConfirmationIdentityAssurances({
+      contract,
+      repository,
+      source_hashes: sourceHashes,
+      context_snapshot: context,
+    });
   authorityHashes.acceptance_authority_hash = sha256Hex(
     canonicalValueJson({
       declared: authorityHashes.acceptance_authority_hash,
@@ -225,6 +233,8 @@ export async function compileDeliveryContract(
     authority_revision: authorityRevision,
     claim_coverage: claims.summary,
     acceptance_reachability: validation.acceptance_reachability!,
+    external_confirmation_identity_assurances:
+      externalConfirmationIdentityAssurances,
     semantic_fact_manifest: contract.semantic_fact_manifest,
     task: contract.task,
     risk: contract.risk,

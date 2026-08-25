@@ -38,7 +38,7 @@ export function parseSemanticFactOutcomeBindings(
         item,
         itemLabel,
         ["fact_ref", "claim_ref", "applicability_ref"],
-        ["fact_revision_digest"],
+        ["fact_revision_digest", "required_polarity"],
       );
       return {
         fact_ref: semanticRef(entry.fact_ref, `${itemLabel}.fact_ref`),
@@ -55,6 +55,15 @@ export function parseSemanticFactOutcomeBindings(
           entry.applicability_ref,
           `${itemLabel}.applicability_ref`,
         ),
+        ...(Object.hasOwn(entry, "required_polarity")
+          ? {
+              required_polarity: literal(
+                entry.required_polarity,
+                ["positive", "negative"] as const,
+                `${itemLabel}.required_polarity`,
+              ),
+            }
+          : {}),
       };
     }),
     proofs: array(row.proofs, `${label}.proofs`).map((item, index) => {

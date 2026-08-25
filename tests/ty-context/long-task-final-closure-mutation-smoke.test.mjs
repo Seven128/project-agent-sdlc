@@ -66,6 +66,25 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     ]);
     assert.match(
       JSON.stringify(preflight),
+      /source_projection_fact_domain_mismatch/u,
+    );
+
+    fixture.contract.source_claims = fixture.contract.source_claims.filter(
+      (claim) => claim.key !== "second-structured-acceptance",
+    );
+    await writeSource(fixture.root, {
+      wrongRequirementTarget: false,
+      includeStructuredAcceptance: false,
+      executionTarget: fixture.contract.task.execution_targets[0],
+    });
+    await writeContract(fixture.workdir, fixture.contract);
+    preflight = await runCliFailure(fixture.root, [
+      "long-task",
+      "preflight",
+      fixture.workdir,
+    ]);
+    assert.match(
+      JSON.stringify(preflight),
       /behavioral_semantic_counterfactual_required/u,
     );
 
@@ -83,6 +102,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
       structured.acceptance.counterfactual_controls.find(
         (control) => control.key === "remove-second-state",
       );
+    structuredBehaviorControl.claims.push("requirement.observe-second");
     structuredBehaviorControl.expected_assertion_failures.push(
       "structured-acceptance",
     );
@@ -107,15 +127,7 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     assert.deepEqual(finding.claim_keys, ["requirement.observe-second"]);
     assert.ok(finding.source_claim_keys.includes("second-observable"));
     assert.ok(
-      finding.source_claim_keys.includes("second-structured-acceptance"),
-    );
-    assert.ok(
       finding.source_target_refs.includes("second.requirement.observe-second"),
-    );
-    assert.ok(
-      finding.source_target_refs.includes(
-        "second.second-check.structured-acceptance",
-      ),
     );
     assert.equal(finding.observation, "structured_requirement_result");
     assert.deepEqual(finding.owner_paths, [
@@ -153,19 +165,17 @@ test("[critical:final-gate-mutation-rejection] controlled closure mutation smoke
     );
     assert.equal(await pathExists(receipt), true);
 
-    const revisedCriterion =
-      "The structured outcome remains observable and implemented.";
+    const revisedRequirement = "The second outcome shall remain observable.";
     fixture.contract.source_claims.find(
-      (claim) => claim.key === "second-structured-acceptance",
-    ).statement = revisedCriterion;
-    structured.acceptance.checks
-      .find((check) => check.key === "second-check")
-      .positive_assertions.find(
-        (assertion) => assertion.key === "structured-acceptance",
-      ).criterion = revisedCriterion;
+      (claim) => claim.key === "second-observable",
+    ).statement = revisedRequirement;
+    structured.product.requirements.find(
+      (requirement) => requirement.key === "observe-second",
+    ).statement = revisedRequirement;
     await writeSource(fixture.root, {
       wrongRequirementTarget: false,
-      structuredCriterion: revisedCriterion,
+      secondRequirement: revisedRequirement,
+      includeStructuredAcceptance: false,
       executionTarget: fixture.contract.task.execution_targets[0],
     });
     await writeContract(fixture.workdir, fixture.contract);

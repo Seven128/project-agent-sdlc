@@ -40,14 +40,21 @@ export function semanticDriftMigrationFields(value: unknown): string[] {
   collectApplicability(global?.applicability, "global.applicability", missing);
   const globalAcceptance = row(global?.acceptance);
   collectChecks(globalAcceptance?.checks, "global.acceptance.checks", missing);
-  for (const [index, confirmation] of rows(
-    globalAcceptance?.external_confirmations,
-  ).entries())
-    required(
+  const externalConfirmations = rows(globalAcceptance?.external_confirmations);
+  for (const [index, confirmation] of externalConfirmations.entries())
+    collectExternalConfirmation(
       confirmation,
       `global.acceptance.external_confirmations[${index}]`,
-      ["kind", "impact_claims", "blocks_target"],
       missing,
+    );
+  if (
+    externalConfirmations.some(
+      (confirmation) => confirmation.blocks_target === true,
+    ) &&
+    row(task?.target_profile)?.completion_authority !== "declared_authorities"
+  )
+    missing.push(
+      "task.target_profile.completion_authority=declared_authorities_or_remove_blocking_external",
     );
   return [...new Set(missing)].sort();
 }
@@ -186,6 +193,77 @@ function collectChecks(value: unknown, label: string, missing: string[]): void {
           ["evidence_capabilities"],
           missing,
         );
+  }
+}
+
+function collectExternalConfirmation(
+  confirmation: Row,
+  label: string,
+  missing: string[],
+): void {
+  required(
+    confirmation,
+    label,
+    ["kind", "impact_claims", "blocks_target"],
+    missing,
+  );
+  if (confirmation.blocks_target !== true) return;
+  required(
+    confirmation,
+    label,
+    [
+      "actor",
+      "target_ref",
+      "environment_identity",
+      "scenario",
+      "evidence_requirements",
+      "obligations",
+    ],
+    missing,
+  );
+  const actor = row(confirmation.actor);
+  if (actor) {
+    required(actor, `${label}.actor`, ["identity_assurance"], missing);
+    const assurance = row(actor.identity_assurance);
+    if (assurance) {
+      required(
+        assurance,
+        `${label}.actor.identity_assurance`,
+        ["scheme"],
+        missing,
+      );
+      if (assurance.scheme !== "ed25519")
+        missing.push(`${label}.actor.identity_assurance.scheme=ed25519`);
+      else
+        required(
+          assurance,
+          `${label}.actor.identity_assurance`,
+          ["key_id", "public_key_ref"],
+          missing,
+        );
+    }
+  }
+  for (const [index, obligation] of rows(confirmation.obligations).entries()) {
+    const obligationLabel = `${label}.obligations[${index}]`;
+    required(
+      obligation,
+      obligationLabel,
+      [
+        "key",
+        "claim_ref",
+        "applicability_ref",
+        "fact_ref",
+        "proof_ref",
+        "method",
+        "proof_surface",
+        "evidence_capabilities",
+        "expected_authority_ref",
+        "result_kind",
+      ],
+      missing,
+    );
+    if (obligation.result_kind === "judgment")
+      required(obligation, obligationLabel, ["judgment_basis"], missing);
   }
 }
 

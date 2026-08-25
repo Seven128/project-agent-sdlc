@@ -23,6 +23,7 @@ import {
 import {
   addSourceBasis,
   assertion,
+  replaceFragmentProjection,
   setSourceText,
   sourceClosureFixture,
   sourceItem,
@@ -38,15 +39,13 @@ test("same-domain supersession requires and accepts a fact-bearing successor Sou
     factRefs: ["fact.first.observable"],
   });
   manifest.facts[0].source_item_refs.push("replacement-product-requirement");
-  const fragment = deriveMaterialSourceFragments(items[0])[0];
-  manifest.inputs.push({
-    key: "input.same-domain-supersession",
-    kind: "source_fragment",
-    source_ref: fragment.key,
-    sha256: fragment.text_sha256,
+  const successorFragmentInput = manifest.inputs.find((input) =>
+    input.source_ref.startsWith("replacement-product-requirement#fragment:"),
+  );
+  replaceFragmentProjection(manifest, items[0], {
     disposition: "superseded",
-    fact_refs: [],
-    basis_refs: ["replacement-product-requirement"],
+    factRefs: ["fact.first.observable"],
+    basisRefs: [successorFragmentInput.key],
     rationale:
       "A newer product Source explicitly replaces the prior product wording.",
   });
@@ -62,17 +61,13 @@ test("same-domain supersession requires and accepts a fact-bearing successor Sou
     disposition: "supporting_only",
     factRefs: ["fact.first.observable"],
   });
-  const unsupportedFragment = deriveMaterialSourceFragments(
-    unsupported.items[0],
-  )[0];
-  unsupported.manifest.inputs.push({
-    key: "input.unsupported-supersession",
-    kind: "source_fragment",
-    source_ref: unsupportedFragment.key,
-    sha256: unsupportedFragment.text_sha256,
+  const unsupportedSuccessorInput = unsupported.manifest.inputs.find((input) =>
+    input.source_ref.startsWith("empty-product-note#fragment:"),
+  );
+  replaceFragmentProjection(unsupported.manifest, unsupported.items[0], {
     disposition: "superseded",
-    fact_refs: [],
-    basis_refs: ["empty-product-note"],
+    factRefs: ["fact.first.observable"],
+    basisRefs: [unsupportedSuccessorInput.key],
     rationale:
       "A same-domain label without projected replacement meaning is insufficient.",
   });
@@ -95,15 +90,10 @@ test("explicit supporting Source fragments must name delivery-semantic Facts", (
     "first-observable",
     "Background context for the observable outcome.",
   );
-  const missingFragment = deriveMaterialSourceFragments(missing.items[0])[0];
-  missing.manifest.inputs.push({
-    key: "input.explicit-supporting-missing-fact",
-    kind: "source_fragment",
-    source_ref: missingFragment.key,
-    sha256: missingFragment.text_sha256,
+  replaceFragmentProjection(missing.manifest, missing.items[0], {
     disposition: "supporting_basis",
-    fact_refs: [],
-    basis_refs: [missingFragment.source_item_ref],
+    factRefs: [],
+    basisRefs: [missing.items[0].key],
     rationale:
       "A supporting basis cannot become a hidden requirement container.",
   });
@@ -124,15 +114,10 @@ test("explicit supporting Source fragments must name delivery-semantic Facts", (
     "first-observable",
     "Background context for the observable outcome.",
   );
-  const validFragment = deriveMaterialSourceFragments(valid.items[0])[0];
-  valid.manifest.inputs.push({
-    key: "input.explicit-supporting-known-fact",
-    kind: "source_fragment",
-    source_ref: validFragment.key,
-    sha256: validFragment.text_sha256,
+  replaceFragmentProjection(valid.manifest, valid.items[0], {
     disposition: "supporting_basis",
-    fact_refs: ["fact.first.observable"],
-    basis_refs: [validFragment.source_item_ref],
+    factRefs: ["fact.first.observable"],
+    basisRefs: [valid.items[0].key],
     rationale: "This fragment explicitly supports the named delivery Fact.",
   });
   assert.doesNotThrow(() =>
@@ -149,6 +134,7 @@ test("canonical execution-target Source remains bounded supporting integrity", (
     text: executionTarget.statement,
     disposition: "non_ui_material",
     factRefs: ["fact.first.observable"],
+    fragmentDisposition: "supporting_basis",
   });
   assert.doesNotThrow(() =>
     validateSourceSemanticConservation(valid.items, valid.manifest, new Set()),
@@ -164,6 +150,7 @@ test("canonical execution-target Source remains bounded supporting integrity", (
     ),
     disposition: "non_ui_material",
     factRefs: ["fact.first.observable"],
+    fragmentDisposition: "supporting_basis",
   });
   assert.throws(() =>
     validateSourceSemanticConservation(
@@ -192,12 +179,22 @@ test("formal Design Resource Facts project as design-domain delivery semantics",
     "The selected-design closure owns this Source item's formal design Facts.";
   const designFactRef =
     "design-resource-fact:design/handoff.md#fact.surface.font-size";
+  replaceFragmentProjection(manifest, items[0], {
+    disposition: "fact_bearing",
+    factRefs: [designFactRef],
+    basisRefs: ["first-observable"],
+    rationale: "The formal design Fact carries this selected design Fragment.",
+  });
+  const designFragmentInput = manifest.inputs.find((input) =>
+    input.source_ref.startsWith("first-observable#fragment:"),
+  );
   const designProjection = {
     source_items: new Set(["first-observable"]),
     facts: [
       {
         key: designFactRef,
         source_item_refs: ["first-observable"],
+        basis_refs: [designFragmentInput.key],
         expected_search_text:
           "fact.surface.font-size\nproperty.font-size\n16px",
       },
@@ -218,6 +215,6 @@ test("formal Design Resource Facts project as design-domain delivery semantics",
         source_items: new Set(["first-observable"]),
         facts: [],
       }),
-    /source_projection_fact_required/u,
+    /source_projection_fact_unknown/u,
   );
 });

@@ -24,9 +24,18 @@ export interface ResolvedSourceProjectionV2 {
 export interface SourceConservationFactProjectionV2 {
   key: string;
   source_item_refs: string[];
+  basis_refs: string[];
   semantic_class: SemanticFactClassV2;
   authority_domain: SourceAuthorityDomain;
   expected_search_text: string;
+  semantic_cell: {
+    outcome_ref: string;
+    unit_ref: string;
+    family_ref: string;
+    condition_ref: string;
+    property_ref: string;
+    value_kind: string;
+  } | null;
 }
 
 export interface SourceSemanticConservationV2 {

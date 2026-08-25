@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
+import { generateKeyPairSync } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { createLongTaskCompactContract } from "../../packages/ty-context/dist/lib/long-task-compact-authoring.js";
 import { createSemanticFactCompactCarrier } from "../../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
@@ -10,6 +12,9 @@ import {
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import { refreshFixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
 import { packageAdmittedFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
+
+const SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF =
+  "project_context/authorities/fixture-synthetic-owner.pub";
 
 export function deterministicCompactSemanticManifest(factCount = 64) {
   const manifest = packageAdmittedFixtureSemanticManifest();
@@ -95,7 +100,7 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
     identity: "fixture-synthetic-snapshot-auditor",
     version: "1.0.0",
     sha256: null,
-    capabilities: ["custom.snapshot_digest"],
+    capabilities: ["custom.snapshot_digest", "exact_value"],
   });
   for (const input of manifest.inputs)
     if (input.fact_refs.includes(originalFact.key))
@@ -111,8 +116,7 @@ function proofFor(
   proofIndex,
   authority = "machine",
 ) {
-  const comparator =
-    authority === "machine" ? "exact_value" : "custom.snapshot_digest";
+  const comparator = "exact_value";
   const comparisonValue = { comparator };
   return {
     ...structuredClone(original),
@@ -164,6 +168,10 @@ export function projectSyntheticCompactContract(contract, manifest) {
   );
   if (externalProofs.length) {
     contract.task.target_profile.completion_authority = "declared_authorities";
+    outcome.product.owner.path_globs.push(SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF);
+    outcome.technical.allowed_support_paths.push(
+      SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF,
+    );
     contract.global.acceptance.external_confirmations.push({
       key: externalConfirmationKey,
       description:
@@ -178,6 +186,11 @@ export function projectSyntheticCompactContract(contract, manifest) {
         id: "fixture-synthetic-snapshot-auditor",
         role: "synthetic snapshot acceptance auditor",
         authority_kind: "expert",
+        identity_assurance: {
+          scheme: "ed25519",
+          key_id: "fixture-synthetic-snapshot-auditor-2026",
+          public_key_ref: SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF,
+        },
       },
       target_ref: "fixture-app",
       environment_identity: "fixture-synthetic-snapshot-audit-v1",
@@ -199,7 +212,7 @@ export function projectSyntheticCompactContract(contract, manifest) {
         proof_surface: proof.proof_surface,
         evidence_capabilities: [...proof.evidence_capabilities],
         expected_authority_ref: `semantic-proof:${proof.key}`,
-        result_kind: "judgment",
+        result_kind: "actual",
       })),
     });
   }
@@ -268,7 +281,27 @@ export function projectSyntheticCompactContract(contract, manifest) {
 }
 
 export async function writeSyntheticCompactFixture(fixture, factCount = 64) {
+  const { publicKey } = generateKeyPairSync("ed25519");
+  const publicKeyBytes = publicKey.export({ type: "spki", format: "pem" });
+  const publicKeyPath = path.join(
+    fixture.root,
+    ...SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF.split("/"),
+  );
+  await mkdir(path.dirname(publicKeyPath), { recursive: true });
+  await writeFile(publicKeyPath, publicKeyBytes);
   const manifest = deterministicCompactSemanticManifest(factCount);
+  manifest.inputs.push({
+    key: "input.context.fixture-synthetic-owner-public-key",
+    kind: "context",
+    source_ref: SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF,
+    sha256: sha256Hex(publicKeyBytes),
+    disposition: "supporting_only",
+    fact_refs: [],
+    basis_refs: ["fixture-architecture"],
+    rationale:
+      "The public verification key is controlling Source for the synthetic authenticated external authority.",
+  });
+  refreshFixtureSemanticManifest(manifest);
   const compactSource = createSemanticFactCompactCarrier(manifest);
   const materialized = parseSemanticFactCompactCarrierShape(compactSource);
   const sourcePath = path.join(fixture.root, "source.md");

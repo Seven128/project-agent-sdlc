@@ -6,15 +6,21 @@ import {
   ensureSafeRepositoryDirectory,
 } from "./repository-path-safety.js";
 import { runtimePath } from "./long-task-state.js";
-import type { ExternalConfirmationRecordV1 } from "./long-task-external-confirmation-types.js";
-import { parseExternalConfirmationRecordV1 } from "./long-task-external-confirmation-shape.js";
+import type {
+  ExternalConfirmationRecord,
+  ExternalConfirmationRecordV2,
+} from "./long-task-external-confirmation-types.js";
+import {
+  parseExternalConfirmationRecord,
+  parseExternalConfirmationRecordV2,
+} from "./long-task-external-confirmation-shape.js";
 import { canonicalJson, sha256Hex } from "./strict-codec.js";
 
 const EXTERNAL_CONFIRMATIONS_FOLDER = "external-confirmations";
 const MAX_RECORD_BYTES = 16 * 1024 * 1024;
 
 export interface StoredExternalConfirmationRecordV1 {
-  record: ExternalConfirmationRecordV1 | null;
+  record: ExternalConfirmationRecord | null;
   error: string | null;
 }
 
@@ -78,7 +84,7 @@ export async function readStoredExternalConfirmationRecord(
         `external_confirmation_record_too_large:${confirmationRef}:${status.size}`,
       );
     return {
-      record: parseExternalConfirmationRecordV1(
+      record: parseExternalConfirmationRecord(
         JSON.parse(await readFile(protectedFile, "utf8")) as unknown,
       ),
       error: null,
@@ -91,9 +97,9 @@ export async function readStoredExternalConfirmationRecord(
 export async function writeStoredExternalConfirmationRecord(
   repository: string,
   workdir: string,
-  record: ExternalConfirmationRecordV1,
+  record: ExternalConfirmationRecordV2,
 ): Promise<string> {
-  const parsed = parseExternalConfirmationRecordV1(record);
+  const parsed = parseExternalConfirmationRecordV2(record);
   const folder = path.dirname(
     externalConfirmationRecordPath(workdir, parsed.confirmation_ref),
   );

@@ -12,6 +12,10 @@ import type {
   SourceConservationFactProjectionV2,
 } from "./long-task-source-conservation-types.js";
 import { semanticExpectedContains } from "./long-task-source-conservation-facts.js";
+import {
+  semanticModalOccurrences,
+  semanticModalPolarity,
+} from "./long-task-source-anchors.js";
 import { isCanonicalSourceIntegrityStatement } from "./long-task-source-projection-resolution.js";
 import {
   validateSameDomainScopeExclusion,
@@ -26,6 +30,10 @@ interface SourceProjectionValidationContextV2 {
   sourceByKey: ReadonlyMap<string, CompiledSourceItemV2>;
   manifest: SemanticFactManifestV1;
   designFactRefsBySource: ReadonlyMap<string, string[]>;
+  factClaimPolarities: ReadonlyMap<
+    string,
+    ReadonlySet<"positive" | "negative">
+  >;
 }
 
 export function validateAnchorProjection(
@@ -84,9 +92,10 @@ function validateAnchorDisposition(
       "semantic_anchor_supporting_only_forbidden",
       anchor.key,
     );
-  if (
+  if (projection.disposition === "fact_bearing" && anchor.kind === "modal_term")
+    validateModalProjection(anchor, projection, context);
+  else if (
     projection.disposition === "fact_bearing" &&
-    anchor.kind !== "modal_term" &&
     !projection.fact_refs.some((factRef) =>
       semanticExpectedContains(context.facts.get(factRef)!, anchor.value),
     )
@@ -121,7 +130,6 @@ export function validateProjection(
       context.sourceDomains,
       context.sourceByKey,
       context.manifest,
-      context.designFactRefsBySource,
     );
   if (projection.disposition === "scope_excluded")
     validateSameDomainScopeExclusion(
@@ -131,6 +139,8 @@ export function validateProjection(
       context.sourceByKey,
       context.manifest,
     );
+  if ("input_key" in material && projection.disposition === "fact_bearing")
+    validateCompoundModalProjection(projection, material, context);
 }
 
 function validateFactBearingProjection(
@@ -152,7 +162,11 @@ function validateFactBearingProjection(
         "source_integrity_fact_cannot_cover_semantics",
         `${material.key}:${factRef}`,
       );
-    if (!fact.source_item_refs.includes(material.source_item_ref))
+    if (
+      !materialAuthoritySourceRefs(material).some((ref) =>
+        fact.source_item_refs.includes(ref),
+      )
+    )
       semanticFactClosureInvalid(
         "source_projection_fact_lineage_mismatch",
         `${material.key}:${factRef}`,
@@ -162,6 +176,7 @@ function validateFactBearingProjection(
         "source_projection_fact_domain_mismatch",
         `${material.key}:${factRef}:${material.authority_domain}:${context.factDomains[factRef]}`,
       );
+    validateFactFragmentProvenance(fact, projection, material, context);
   }
 }
 
@@ -176,7 +191,8 @@ function validateSupportingProjection(
       material.key,
     );
   for (const factRef of projection.fact_refs) {
-    if (!context.facts.has(factRef))
+    const fact = context.facts.get(factRef);
+    if (!fact)
       semanticFactClosureInvalid(
         "source_supporting_basis_fact_unknown",
         `${material.key}:${factRef}`,
@@ -186,7 +202,144 @@ function validateSupportingProjection(
         "source_supporting_basis_delivery_fact_required",
         `${material.key}:${factRef}`,
       );
+    validateFactFragmentProvenance(fact, projection, material, context);
   }
+  if (
+    "input_key" in material &&
+    !isCanonicalSourceIntegrityStatement(
+      context.sourceByKey.get(material.source_item_ref),
+    ) &&
+    !hasExactSupportingOverlap(material.normalized_text, projection, context)
+  )
+    semanticFactClosureInvalid(
+      "source_supporting_basis_unrelated",
+      material.key,
+    );
+}
+
+function hasExactSupportingOverlap(
+  text: string,
+  projection: ResolvedSourceProjectionV2,
+  context: SourceProjectionValidationContextV2,
+): boolean {
+  const terms = text
+    .toLocaleLowerCase("en-US")
+    .match(/[a-z][a-z0-9_-]{3,}|[\u3400-\u9fff]{2,}/gu);
+  if (!terms?.length) return false;
+  const ignored = new Set([
+    "that",
+    "this",
+    "with",
+    "from",
+    "into",
+    "only",
+    "must",
+    "shall",
+    "required",
+    "background",
+    "context",
+  ]);
+  return terms
+    .filter((term) => !ignored.has(term))
+    .some((term) =>
+      projection.fact_refs.some((factRef) =>
+        context.facts
+          .get(factRef)!
+          .expected_search_text.toLocaleLowerCase("en-US")
+          .includes(term),
+      ),
+    );
+}
+
+function validateFactFragmentProvenance(
+  fact: SourceConservationFactProjectionV2,
+  projection: ResolvedSourceProjectionV2,
+  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
+  context: SourceProjectionValidationContextV2,
+): void {
+  const fragmentInputKey = owningFragmentInputKey(
+    projection,
+    material,
+    context.manifest,
+  );
+  if (!fact.basis_refs.includes(fragmentInputKey))
+    semanticFactClosureInvalid(
+      "source_projection_fact_fragment_provenance_missing",
+      `${material.key}:${fact.key}:${fragmentInputKey}`,
+    );
+}
+
+function owningFragmentInputKey(
+  projection: ResolvedSourceProjectionV2,
+  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
+  manifest: SemanticFactManifestV1,
+): string {
+  if ("input_key" in material) return projection.input_key;
+  const input = manifest.inputs.find(
+    (candidate) =>
+      candidate.kind === "source_fragment" &&
+      candidate.source_ref === material.fragment_ref,
+  );
+  if (!input)
+    semanticFactClosureInvalid(
+      "semantic_anchor_fragment_projection_missing",
+      material.key,
+    );
+  return input.key;
+}
+
+function materialAuthoritySourceRefs(
+  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
+): string[] {
+  return material.authority_source_item_refs;
+}
+
+function validateModalProjection(
+  anchor: SemanticSourceAnchorV2,
+  projection: ResolvedSourceProjectionV2,
+  context: SourceProjectionValidationContextV2,
+): void {
+  const polarity = semanticModalPolarity(anchor.value);
+  if (!polarity)
+    semanticFactClosureInvalid(
+      "semantic_modal_classification_missing",
+      `${anchor.key}:${anchor.value}`,
+    );
+  if (
+    !projection.fact_refs.some((factRef) =>
+      (context.factClaimPolarities.get(factRef) ?? new Set(["positive"])).has(
+        polarity,
+      ),
+    )
+  )
+    semanticFactClosureInvalid(
+      "semantic_modal_claim_polarity_mismatch",
+      `${anchor.key}:${polarity}`,
+    );
+}
+
+function validateCompoundModalProjection(
+  projection: ResolvedSourceProjectionV2,
+  fragment: MaterialSourceFragmentV2,
+  context: SourceProjectionValidationContextV2,
+): void {
+  const occurrences = semanticModalOccurrences(fragment.normalized_text);
+  if (occurrences.length <= 1) return;
+  const facts = projection.fact_refs
+    .map((factRef) => context.facts.get(factRef))
+    .filter((fact): fact is SourceConservationFactProjectionV2 =>
+      Boolean(fact),
+    );
+  const composite = facts.some((fact) =>
+    ["object", "schema", "relation", "decision_table", "formula"].includes(
+      fact.semantic_cell?.value_kind ?? "",
+    ),
+  );
+  if (!composite && new Set(projection.fact_refs).size < occurrences.length)
+    semanticFactClosureInvalid(
+      "source_fragment_modal_fact_split_required",
+      `${fragment.key}:${occurrences.length}:${projection.fact_refs.length}`,
+    );
 }
 
 export function validateNoDanglingProjectionInputs(

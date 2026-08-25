@@ -1,14 +1,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { captureContextGraphSnapshot } from "../../packages/ty-context/dist/lib/context-graph-snapshot.js";
-import {
-  reconcileFixtureBasisRefs,
-} from "./long-task-semantic-reconcile-primitives-fixture.mjs";
-import {
-  digestText,
-} from "./long-task-semantic-refresh-fixture.mjs";
+import { deriveMaterialSourceFragments } from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
+import { reconcileFixtureBasisRefs } from "./long-task-semantic-reconcile-primitives-fixture.mjs";
+import { digestText } from "./long-task-semantic-refresh-fixture.mjs";
 
 export function rebuildFixtureSemanticInputs(
+  contract,
   manifest,
   inventory,
   authorityRefs,
@@ -20,41 +18,81 @@ export function rebuildFixtureSemanticInputs(
       .filter((input) => input.kind === "source_item")
       .map((input) => [input.source_ref, input]),
   );
+  const existingFragmentInputs = manifest.inputs.filter(
+    (input) => input.kind === "source_fragment",
+  );
   manifest.scope.source_item_refs = inventory.items.map((item) => item.key);
+  const sourceInputs = inventory.items.map((item) => {
+    const designOwned = inventory.designOwnedSourceItemRefs.has(item.key);
+    const existing = existingSourceInputs.get(item.key);
+    const disposition = designOwned ? "ui_design" : "non_ui_material";
+    const retainedFactRefs = existing?.fact_refs.filter((ref) =>
+      factRefs.includes(ref),
+    );
+    return {
+      key: existing?.key ?? `input.${item.key}`,
+      kind: "source_item",
+      source_ref: item.key,
+      sha256: item.text_sha256,
+      disposition,
+      fact_refs: designOwned
+        ? []
+        : retainedFactRefs?.length
+          ? retainedFactRefs
+          : factRefs,
+      basis_refs: reconcileFixtureBasisRefs(
+        existing?.basis_refs ?? [item.key],
+        authorityRefs,
+        item.key,
+      ),
+      rationale:
+        existing?.disposition === disposition
+          ? existing.rationale
+          : designOwned
+            ? "This Source item is owned by the strict design-resource handoff and contributes no non-UI semantic Fact."
+            : "This atomic fixture Source item contributes to the exact non-UI Fact universe.",
+    };
+  });
+  const fragmentInputs = inventory.items.flatMap((item) => {
+    const sourceInput = sourceInputs.find(
+      (input) => input.source_ref === item.key,
+    );
+    const existing = existingFragmentInputs.find((input) =>
+      input.basis_refs.includes(item.key),
+    );
+    const sourceClaim = contract.source_claims.find(
+      (claim) => claim.key === item.key,
+    );
+    const claimIsFactBearing =
+      sourceClaim?.disposition.type === "claim" ||
+      sourceClaim?.disposition.type === "acceptance" ||
+      sourceClaim?.disposition.type === "outcome_result" ||
+      sourceClaim?.disposition.type === "global_constraint";
+    const disposition =
+      existing?.disposition ??
+      (claimIsFactBearing ? "fact_bearing" : "supporting_basis");
+    return deriveMaterialSourceFragments(item).map((fragment) => ({
+      key: `input.fragment.${item.key}.${fragment.ordinal}`,
+      kind: "source_fragment",
+      source_ref: fragment.key,
+      sha256: fragment.text_sha256,
+      disposition,
+      fact_refs: [...sourceInput.fact_refs],
+      basis_refs: [item.key],
+      rationale:
+        existing?.rationale ??
+        "The synchronized fixture explicitly dispositions this complete current Source Fragment.",
+    }));
+  });
   manifest.inputs = [
-    ...inventory.items.map((item) => {
-      const designOwned = inventory.designOwnedSourceItemRefs.has(item.key);
-      const existing = existingSourceInputs.get(item.key);
-      const disposition = designOwned ? "ui_design" : "non_ui_material";
-      const retainedFactRefs = existing?.fact_refs.filter((ref) =>
-        factRefs.includes(ref),
-      );
-      return {
-        key: existing?.key ?? `input.${item.key}`,
-        kind: "source_item",
-        source_ref: item.key,
-        sha256: item.text_sha256,
-        disposition,
-        fact_refs: designOwned
-          ? []
-          : retainedFactRefs?.length
-            ? retainedFactRefs
-            : factRefs,
-        basis_refs: reconcileFixtureBasisRefs(
-          existing?.basis_refs ?? [item.key],
-          authorityRefs,
-          item.key,
-        ),
-        rationale:
-          existing?.disposition === disposition
-            ? existing.rationale
-            : designOwned
-              ? "This Source item is owned by the strict design-resource handoff and contributes no non-UI semantic Fact."
-              : "This atomic fixture Source item contributes to the exact non-UI Fact universe.",
-      };
-    }),
+    ...sourceInputs,
     ...manifest.inputs
-      .filter((input) => input.kind !== "source_item")
+      .filter(
+        (input) =>
+          input.kind !== "source_item" &&
+          input.kind !== "source_fragment" &&
+          input.kind !== "semantic_anchor",
+      )
       .map((input) => ({
         ...input,
         basis_refs: reconcileFixtureBasisRefs(
@@ -63,6 +101,7 @@ export function rebuildFixtureSemanticInputs(
           primaryAuthority,
         ),
       })),
+    ...fragmentInputs,
   ];
 }
 
@@ -84,28 +123,39 @@ export async function rebuildFixtureContextInputs(
       .filter((input) => input.kind === "context")
       .map((input) => [input.source_ref, input]),
   );
-  const retainedInputs = manifest.inputs.filter(
-    (input) => input.kind !== "context",
+  const sourceInputs = manifest.inputs.filter(
+    (input) => input.kind === "source_item",
   );
-  const usedKeys = new Set(retainedInputs.map((input) => input.key));
+  const retainedMaterialInputs = manifest.inputs.filter(
+    (input) =>
+      input.kind !== "source_item" &&
+      input.kind !== "context" &&
+      input.kind !== "source_fragment" &&
+      input.kind !== "semantic_anchor",
+  );
+  const fragmentInputs = manifest.inputs.filter(
+    (input) =>
+      input.kind === "source_fragment" || input.kind === "semantic_anchor",
+  );
+  const usedKeys = new Set(
+    [...sourceInputs, ...retainedMaterialInputs, ...fragmentInputs].map(
+      (input) => input.key,
+    ),
+  );
   const contextInputs = [];
   const contextFileSet = new Set(snapshot.files);
   const orderedContextRefs = [
     ...manifest.inputs
       .filter(
         (input) =>
-          input.kind === "context" &&
-          contextFileSet.has(input.source_ref),
+          input.kind === "context" && contextFileSet.has(input.source_ref),
       )
       .map((input) => input.source_ref),
-    ...snapshot.files.filter(
-      (sourceRef) => !existingBySource.has(sourceRef),
-    ),
+    ...snapshot.files.filter((sourceRef) => !existingBySource.has(sourceRef)),
   ];
   for (const sourceRef of orderedContextRefs) {
     const existing = existingBySource.get(sourceRef);
-    const key =
-      existing?.key ?? fixtureContextInputKey(sourceRef, usedKeys);
+    const key = existing?.key ?? fixtureContextInputKey(sourceRef, usedKeys);
     usedKeys.add(key);
     contextInputs.push({
       key,
@@ -126,7 +176,12 @@ export async function rebuildFixtureContextInputs(
         "This exact full-Context input is classified and bound into the fixture Fact universe.",
     });
   }
-  manifest.inputs = [...retainedInputs, ...contextInputs];
+  manifest.inputs = [
+    ...sourceInputs,
+    ...contextInputs,
+    ...retainedMaterialInputs,
+    ...fragmentInputs,
+  ];
 }
 
 function fixtureContextInputKey(sourceRef, usedKeys) {

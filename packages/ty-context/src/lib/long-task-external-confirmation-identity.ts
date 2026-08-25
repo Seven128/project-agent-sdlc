@@ -13,6 +13,8 @@ export function deriveRelevantExternalInputIdentity(
   confirmationRef: string,
   manifest: WorkspaceManifestV2,
 ): RelevantExternalInputIdentityV1 {
+  const confirmation = requiredConfirmation(compiled, confirmationRef);
+  if (confirmation.blocks_target) return wholeCandidateIdentity(manifest);
   const rows = externalRows(compiled, confirmationRef);
   const outcomeKeys = [...new Set(rows.map((row) => row.outcome_key))];
   if (!rows.length || outcomeKeys.some((key) => key === null))
@@ -113,6 +115,6 @@ function wholeCandidateIdentity(
   return {
     mode: "whole_candidate",
     identity: `whole:${manifest.snapshot_sha256}`,
-    paths: manifest.files.map((file) => file.path),
+    paths: manifest.files.map((file) => file.path).sort(),
   };
 }

@@ -5,24 +5,32 @@ import type {
 } from "./long-task-source-authority-types.js";
 import { sha256Hex } from "./strict-codec.js";
 
-const MODAL_TERMS = [
-  "must not",
-  "shall not",
+const POSITIVE_MODAL_TERMS = [
   "must",
   "shall",
   "required",
-  "forbidden",
-  "cannot",
-  "never",
-  "exactly",
   "必须",
+  "应当",
+] as const;
+
+const NEGATIVE_MODAL_TERMS = [
+  "must not",
+  "shall not",
+  "forbidden",
+  "never",
   "不得",
   "禁止",
   "不可",
   "只能",
   "仅可",
-  "应当",
 ] as const;
+
+export type SemanticModalPolarity = "positive" | "negative";
+
+export interface SemanticModalOccurrenceV2 {
+  value: string;
+  polarity: SemanticModalPolarity;
+}
 
 export function semanticSourceAnchorRef(
   anchor: Pick<
@@ -104,10 +112,45 @@ function addModalAnchors(
   found: Array<{ kind: SemanticAnchorKind; value: string }>,
   text: string,
 ): void {
-  const lower = text.toLocaleLowerCase("en-US");
-  for (const term of MODAL_TERMS)
-    if (modalPresent(lower, term.toLocaleLowerCase("en-US")))
-      found.push({ kind: "modal_term", value: term });
+  for (const occurrence of semanticModalOccurrences(text))
+    found.push({ kind: "modal_term", value: occurrence.value });
+}
+
+export function semanticModalOccurrences(
+  text: string,
+): SemanticModalOccurrenceV2[] {
+  const alternatives = [...NEGATIVE_MODAL_TERMS, ...POSITIVE_MODAL_TERMS].sort(
+    (left, right) => right.length - left.length,
+  );
+  const pattern = new RegExp(
+    `(?:^|[^a-z])(${alternatives
+      .filter((term) => !/[\u3400-\u9fff]/u.test(term))
+      .map(escapeRegex)
+      .join("|")})(?=$|[^a-z])|(${alternatives
+      .filter((term) => /[\u3400-\u9fff]/u.test(term))
+      .map(escapeRegex)
+      .join("|")})`,
+    "giu",
+  );
+  const negative = new Set<string>(NEGATIVE_MODAL_TERMS);
+  return [...text.matchAll(pattern)].map((match) => {
+    const value = (match[1] ?? match[2]).toLocaleLowerCase("en-US");
+    return {
+      value,
+      polarity: negative.has(value) ? "negative" : "positive",
+    };
+  });
+}
+
+export function semanticModalPolarity(
+  value: string,
+): SemanticModalPolarity | null {
+  const normalized = value.toLocaleLowerCase("en-US");
+  if ((NEGATIVE_MODAL_TERMS as readonly string[]).includes(normalized))
+    return "negative";
+  if ((POSITIVE_MODAL_TERMS as readonly string[]).includes(normalized))
+    return "positive";
+  return null;
 }
 
 function materializeAnchors(
@@ -129,6 +172,7 @@ function materializeAnchors(
       const base = {
         fragment_ref: fragment.key,
         source_item_ref: fragment.source_item_ref,
+        authority_source_item_refs: [...fragment.authority_source_item_refs],
         authority_domain: fragment.authority_domain,
         kind,
         value,
@@ -148,14 +192,6 @@ function collectMatches(
 ): void {
   for (const match of value.matchAll(pattern))
     if (match[group]) result.push({ kind, value: match[group] });
-}
-
-function modalPresent(value: string, term: string): boolean {
-  return /[\u3400-\u9fff]/u.test(term)
-    ? value.includes(term)
-    : new RegExp(`(?:^|[^a-z])${escapeRegex(term)}(?:$|[^a-z])`, "u").test(
-        value,
-      );
 }
 
 function escapeRegex(value: string): string {

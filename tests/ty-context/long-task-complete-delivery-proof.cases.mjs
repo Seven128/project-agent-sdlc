@@ -4,6 +4,7 @@ import { compileAcceptanceReachability } from "../../packages/ty-context/dist/li
 import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
 import { validateLongTaskProofAdequacy } from "../../packages/ty-context/dist/lib/long-task-proof-adequacy.js";
+import { validateSemanticFactProofFloors } from "../../packages/ty-context/dist/lib/long-task-semantic-proof-adequacy.js";
 import { validateSourceSemanticConservation } from "../../packages/ty-context/dist/lib/long-task-source-conservation.js";
 import {
   deriveMaterialSourceFragments,
@@ -58,18 +59,20 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
     },
     {
       name: "Provider boundary Actual provenance",
-      mutate(contract) {
+      mutate(contract, manifest) {
         contract.outcomes[0].product.requirements[0].statement =
-          "The Provider QWeather boundary invocation must use production Actual provenance.";
+          "The selected integration route is required.";
+        manifest.proof_obligations[0].method = "boundary_invocation";
       },
       expected:
         /proof_adequacy_capability_missing[^\n]*(actual_provenance|boundary_invocation)/u,
     },
     {
       name: "payment Sandbox cannot prove production Provider use",
-      mutate(contract) {
+      mutate(contract, manifest) {
         contract.outcomes[0].product.requirements[0].statement =
           "A Sandbox payment surface must not substitute for the production Provider boundary invocation.";
+        manifest.proof_obligations[0].method = "boundary_invocation";
         assertion(contract, "first-requirement").evidence_capabilities = [
           "presence",
         ];
@@ -96,9 +99,10 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
     },
     {
       name: "durable persistence",
-      mutate(contract) {
+      mutate(contract, manifest) {
         contract.outcomes[0].product.requirements[0].statement =
           "The uploaded bytes must persist and survive durable readback.";
+        manifest.proof_obligations[0].method = "durable_roundtrip";
       },
       expected: /proof_adequacy_capability_missing[^\n]*durable_readback/u,
     },
@@ -121,9 +125,15 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
     },
     {
       name: "identity and data-state isolation",
-      mutate(contract) {
+      mutate(contract, manifest) {
         contract.outcomes[0].product.requirements[0].statement =
           "Different identity inputs must prove identity isolation in data state.";
+        const property = manifest.property_dispositions.find(
+          (row) => row.key === manifest.facts[0].property_ref,
+        );
+        property.family_ref = "family.actor-role-tenant-entitlement";
+        property.property = "identity";
+        manifest.facts[0].family_ref = property.family_ref;
       },
       expected:
         /proof_adequacy_capability_missing[^\n]*(data_state|distinct_identity)/u,
@@ -140,10 +150,16 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
     },
     {
       name: "selected visual geometry",
-      mutate(contract) {
+      mutate(contract, manifest) {
         contract.outcomes[0].acceptance.checks[0].proof_surface = "ui_browser";
         contract.outcomes[0].product.requirements[0].statement =
           "The selected visual layout and geometry must conform to the design.";
+        const property = manifest.property_dispositions.find(
+          (row) => row.key === manifest.facts[0].property_ref,
+        );
+        property.family_ref = "family.architecture-ownership";
+        property.property = "selected_design";
+        manifest.facts[0].family_ref = property.family_ref;
       },
       expected:
         /proof_adequacy_capability_missing[^\n]*(design_conformance|visual_render)/u,
@@ -151,18 +167,32 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
   ];
   for (const scenario of cases) {
     const contract = deliveryContract();
-    scenario.mutate(contract);
+    const manifest = fixtureSemanticManifest();
+    scenario.mutate(contract, manifest);
     assert.throws(
       () =>
         validateLongTaskProofAdequacy(
           contract,
-          fixtureSemanticManifest(),
+          manifest,
           new Map(),
         ),
       scenario.expected,
       scenario.name,
     );
   }
+});
+
+test("proof-strength keywords are advisory and cannot silently raise or lower Authority", () => {
+  const contract = deliveryContract();
+  contract.outcomes[0].product.requirements[0].statement =
+    "Provider persistence identity visual complete population wording only.";
+  assert.doesNotThrow(() =>
+    validateLongTaskProofAdequacy(
+      contract,
+      fixtureSemanticManifest(),
+      new Map(),
+    ),
+  );
 });
 
 test("population equality and upstream Expected authority fail closed", () => {
@@ -275,5 +305,63 @@ test("claimless Checks remain diagnostic and provide zero acceptance reachabilit
   assert.ok(reachability.unreachable > 0);
   assert.ok(
     reachability.obligations.every((row) => row.status !== "machine_admitted"),
+  );
+});
+
+test("typed proof methods impose closed floors without prose-keyword authority", () => {
+  for (const scenario of [
+    {
+      method: "transition_trace",
+      provided: ["semantic_fact", "interaction_trace"],
+      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*state_delta/u,
+    },
+    {
+      method: "durable_roundtrip",
+      provided: ["semantic_fact", "durable_readback"],
+      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*data_state/u,
+    },
+    {
+      method: "boundary_invocation",
+      provided: ["semantic_fact", "boundary_invocation"],
+      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*actual_provenance/u,
+    },
+    {
+      method: "performance",
+      provided: ["semantic_fact"],
+      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*target_runtime/u,
+    },
+  ]) {
+    const manifest = fixtureSemanticManifest();
+    const proof = manifest.proof_obligations[0];
+    const property = manifest.property_dispositions.find(
+      (row) => row.key === manifest.facts[0].property_ref,
+    );
+    proof.method = scenario.method;
+    proof.evidence_capabilities = scenario.provided;
+    property.required_methods = [scenario.method];
+    property.required_evidence_capabilities = scenario.provided;
+    assert.throws(
+      () => validateSemanticFactProofFloors(manifest),
+      scenario.expected,
+      scenario.method,
+    );
+  }
+});
+
+test("unsupported custom proof semantics cannot acquire machine completion authority", () => {
+  const manifest = fixtureSemanticManifest();
+  const fact = manifest.facts[0];
+  const proof = manifest.proof_obligations[0];
+  const property = manifest.property_dispositions.find(
+    (row) => row.key === fact.property_ref,
+  );
+  property.standard = false;
+  property.property = "custom.unclassified-provider-proof";
+  property.required_methods = ["custom.unclassified-proof"];
+  proof.method = "custom.unclassified-proof";
+  proof.authority = "machine";
+  assert.throws(
+    () => validateSemanticFactProofFloors(manifest),
+    /semantic_fact_custom_machine_authority_forbidden/u,
   );
 });

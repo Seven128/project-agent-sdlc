@@ -13,7 +13,10 @@ import {
   signExternalConfirmationRecordV1,
 } from "../../packages/ty-context/dist/index.js";
 import { externalConfirmationRecordPath } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-state.js";
-import { activeRecordPath } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  activeRecordPath,
+  runtimePath,
+} from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
   commitCandidate,
   createDeliveryFixture,
@@ -39,13 +42,15 @@ import {
   writeSubmissionRecord,
 } from "./long-task-external-confirmation-record-fixture.mjs";
 import {
+  finalizationSignal,
+  finalizationSignalEnvironment,
   installSlowOracle,
   raceSignal,
   runCliProcess,
   waitForFile,
 } from "./long-task-external-confirmation-race-fixture.mjs";
 
-test("relevant changes stale a record while soundly unrelated changes preserve it", async () => {
+test("every candidate change stales a blocking external record", async () => {
   const fixture = await externalFixture();
   try {
     const prepared = await runCli(fixture.root, [
@@ -75,32 +80,21 @@ test("relevant changes stale a record while soundly unrelated changes preserve i
       "unrelated\n",
     );
     await commitCandidate(fixture.root);
-    const preserved = await runCli(fixture.root, [
+    const unrelatedChanged = await runCli(fixture.root, [
       "long-task",
       "external",
       "status",
       fixture.workdir,
     ]);
-    assert.equal(preserved.confirmations[0].state, "fulfilled");
+    assert.equal(unrelatedChanged.confirmations[0].state, "stale");
     assert.equal(
-      preserved.confirmations[0].carried_forward_from_candidate,
-      true,
+      unrelatedChanged.confirmations[0].carried_forward_from_candidate,
+      false,
     );
-
-    const statePath = path.join(fixture.root, "src", "state.json");
-    const state = JSON.parse(await readFile(statePath, "utf8"));
-    state.external_relevant_change = true;
-    await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
-    await commitCandidate(fixture.root);
-    const stale = await runCli(fixture.root, [
-      "long-task",
-      "external",
-      "status",
-      fixture.workdir,
-    ]);
-    assert.equal(stale.confirmations[0].state, "stale");
     assert.ok(
-      stale.confirmations[0].issues.includes("relevant_input_identity_stale"),
+      unrelatedChanged.confirmations[0].issues.includes(
+        "candidate_identity_stale",
+      ),
     );
 
     const revoked = await runCli(fixture.root, [
@@ -167,6 +161,207 @@ test("Final Gate rejects an External Confirmation record changed during runner e
       ),
       JSON.stringify(receipt.findings),
     );
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
+  } finally {
+    await rm(signal.folder, { recursive: true, force: true });
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Finalization revalidates External record and artifact identities after evaluation", async (t) => {
+  for (const target of ["record", "artifact"])
+    await t.test(target, async () => {
+      const fixture = await externalFixture();
+      const signal = await finalizationSignal(
+        "after_finalization_evaluation",
+      );
+      try {
+        const prepared = await runCli(fixture.root, [
+          "long-task",
+          "external",
+          "prepare",
+          fixture.workdir,
+        ]);
+        const record = await buildPassingRecord(fixture, prepared);
+        await runCli(fixture.root, [
+          "long-task",
+          "external",
+          "submit",
+          fixture.workdir,
+          "--confirmation",
+          "fixture-external",
+          "--record",
+          await writeSubmissionRecord(
+            fixture,
+            `passing-${target}.json`,
+            record,
+          ),
+        ]);
+
+        const finalProcess = runCliProcess(
+          fixture.root,
+          ["long-task", "final-gate", fixture.workdir],
+          { env: finalizationSignalEnvironment(signal) },
+        );
+        await waitForFile(signal.started);
+        if (target === "record") {
+          await writeFile(
+            externalConfirmationRecordPath(
+              fixture.workdir,
+              "fixture-external",
+            ),
+            "{}\n",
+          );
+        } else {
+          const snapshot = Object.values(record.artifact_snapshots)[0];
+          assert.ok(snapshot);
+          await writeFile(
+            runtimePath(fixture.workdir, snapshot.store_ref),
+            "tampered after finalization evaluation\n",
+          );
+        }
+        await writeFile(signal.release, "release\n");
+
+        const final = await finalProcess;
+        assert.notEqual(final.exitCode, 0);
+        const receipt = JSON.parse(final.stdout);
+        assert.equal(receipt.workflow_status, "needs_work");
+        assert.notEqual(receipt.workflow_status, "delivery_accepted");
+        assert.ok(
+          receipt.findings.some((finding) =>
+            finding.code.startsWith("finalization_"),
+          ),
+          JSON.stringify(receipt.findings),
+        );
+        assert.equal(
+          await pathExists(await activeRecordPath(fixture.root)),
+          true,
+        );
+      } finally {
+        await rm(signal.folder, { recursive: true, force: true });
+        await rm(fixture.root, { recursive: true, force: true });
+      }
+    });
+});
+
+test("External submit cannot interleave with Finalization and succeeds after lock release", async () => {
+  const fixture = await externalFixture();
+  const signal = await finalizationSignal("after_finalization_evaluation");
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+    ]);
+    const recordPath = await writeSubmissionRecord(
+      fixture,
+      "submit-vs-finalize.json",
+      await buildPassingRecord(fixture, prepared),
+    );
+    const finalProcess = runCliProcess(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        recordPath,
+      ]),
+      /lock_unavailable/u,
+    );
+    await writeFile(signal.release, "release\n");
+    const final = await finalProcess;
+    assert.notEqual(final.exitCode, 0);
+    assert.equal(JSON.parse(final.stdout).workflow_status, "blocked_external");
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
+
+    const submitted = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      recordPath,
+    ]);
+    assert.equal(submitted.state, "fulfilled");
+  } finally {
+    await rm(signal.folder, { recursive: true, force: true });
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("revoke after Final Integrity serializes and invalidates the accepted audit Receipt", async () => {
+  const fixture = await externalFixture();
+  const signal = await finalizationSignal("after_finalization_evaluation");
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+    ]);
+    await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      await writeSubmissionRecord(
+        fixture,
+        "revoke-vs-finalize.json",
+        await buildPassingRecord(fixture, prepared),
+      ),
+    ]);
+    const finalProcess = runCliProcess(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "revoke",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+      ]),
+      /lock_unavailable/u,
+    );
+    await writeFile(signal.release, "release\n");
+    const final = await finalProcess;
+    assert.equal(final.exitCode, 0, final.stderr);
+    assert.equal(JSON.parse(final.stdout).workflow_status, "delivery_accepted");
+
+    await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "revoke",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+    ]);
+    const status = await runCli(fixture.root, [
+      "long-task",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.equal(status.final_result, "last_gate_inputs_stale");
+    assert.equal(status.final_workflow_status, null);
     assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
   } finally {
     await rm(signal.folder, { recursive: true, force: true });

@@ -67,7 +67,19 @@ export interface ActiveAuthorityLoadResultV3 {
 }
 
 export type ActiveAuthorityLockOperation =
-  "commit" | "clear" | "abandon" | "migrate";
+  | "commit"
+  | "clear"
+  | "abandon"
+  | "migrate"
+  | "external_confirmation"
+  | "finalize";
+
+export interface ActiveAuthorityLockToken {
+  readonly repository_root: string;
+  readonly operation: ActiveAuthorityLockOperation;
+}
+
+const activeAuthorityLockTokens = new WeakSet<object>();
 
 export interface ActiveAuthorityIdentityExpectation {
   task_id: string;
@@ -131,7 +143,7 @@ export async function activeAuthorityLockExists(
 export async function withActiveAuthorityLock<T>(
   repositoryRoot: string,
   operation: ActiveAuthorityLockOperation,
-  action: () => Promise<T>,
+  action: (token: ActiveAuthorityLockToken) => Promise<T>,
 ): Promise<T> {
   return withActiveAuthorityLockInternal(
     repositoryRoot,
@@ -144,7 +156,7 @@ export async function withActiveAuthorityLock<T>(
 async function withActiveAuthorityLockInternal<T>(
   repositoryRoot: string,
   operation: ActiveAuthorityLockOperation,
-  action: () => Promise<T>,
+  action: (token: ActiveAuthorityLockToken) => Promise<T>,
   breakStaleLock: boolean,
 ): Promise<T> {
   const root = path.resolve(repositoryRoot);
@@ -182,7 +194,13 @@ async function withActiveAuthorityLockInternal<T>(
       "utf8",
     );
     await lock.sync();
-    return await action();
+    const token = Object.freeze({ repository_root: root, operation });
+    activeAuthorityLockTokens.add(token);
+    try {
+      return await action(token);
+    } finally {
+      activeAuthorityLockTokens.delete(token);
+    }
   } finally {
     await lock.close();
     await rm(lockFile, { force: true });
@@ -644,21 +662,112 @@ export async function invalidateDerivedProgress(
   ]);
 }
 
-export async function writeFinalReceipt(
-  repositoryRoot: string,
-  workdir: string,
+export function sealFinalReceipt(
   unsigned: Omit<FinalReceiptV3, "receipt_sha256">,
-): Promise<FinalReceiptV3> {
-  const receipt: FinalReceiptV3 = {
+): FinalReceiptV3 {
+  return {
     ...unsigned,
     receipt_sha256: sha256Hex(canonicalValueJson(unsigned)),
   };
+}
+
+export async function commitFinalReceiptTransaction(input: {
+  lock_token: ActiveAuthorityLockToken;
+  repository_root: string;
+  workdir: string;
+  unsigned: Omit<FinalReceiptV3, "receipt_sha256">;
+  expected_authority: ActiveAuthorityIdentityExpectation;
+  close_on_accept: boolean;
+  validate_current: (
+    phase:
+      "after_receipt_stage" | "after_receipt_publish" | "after_authority_clear",
+  ) => Promise<void>;
+}): Promise<FinalReceiptV3> {
+  const root = path.resolve(input.repository_root);
+  assertFinalizationLockToken(input.lock_token, root);
+  const active = await assertCurrentAuthorityCas(
+    root,
+    input.workdir,
+    input.expected_authority,
+  );
+  const receipt = sealFinalReceipt(input.unsigned);
   const content = canonicalJson(receipt);
-  await Promise.all([
-    atomicText(runtimePath(workdir, FINAL_FILE), content),
-    atomicText(await auditReceiptPath(repositoryRoot), content),
-  ]);
-  return receipt;
+  const workdirReceipt = runtimePath(input.workdir, FINAL_FILE);
+  const auditReceipt = await auditReceiptPath(root);
+  const activeFile = await activeRecordPath(root);
+  const marker = markerKey(worktreeIdentity(root));
+  const [oldWorkdirReceipt, oldAuditReceipt, oldActiveRecord, oldMarker] =
+    await Promise.all([
+      readOptionalText(workdirReceipt),
+      readOptionalText(auditReceipt),
+      readOptionalText(activeFile),
+      gitConfigGet(root, marker),
+    ]);
+  if (oldActiveRecord === null || oldMarker !== markerValue(active))
+    throw new Error("finalization_authority_persistence_cas_failed");
+  const stagedWorkdirReceipt = await stageAtomicText(workdirReceipt, content);
+  const stagedAuditReceipt = await stageAtomicText(auditReceipt, content);
+  let activeBackup: string | null = null;
+  try {
+    await input.validate_current("after_receipt_stage");
+    await assertCurrentAuthorityCas(
+      root,
+      input.workdir,
+      input.expected_authority,
+    );
+    await rename(stagedWorkdirReceipt, workdirReceipt);
+    await rename(stagedAuditReceipt, auditReceipt);
+    await input.validate_current("after_receipt_publish");
+    await assertCurrentAuthorityCas(
+      root,
+      input.workdir,
+      input.expected_authority,
+    );
+    if (input.close_on_accept) {
+      activeBackup = `${activeFile}.finalize-${process.pid}-${Date.now()}`;
+      await rename(activeFile, activeBackup);
+      if ((await readFile(activeBackup, "utf8")) !== oldActiveRecord)
+        throw new Error("finalization_authority_record_changed_before_clear");
+      if ((await gitConfigGet(root, marker)) !== oldMarker)
+        throw new Error("finalization_authority_marker_changed_before_clear");
+      await gitConfigUnset(root, marker);
+      await input.validate_current("after_authority_clear");
+      if ((await readOptionalText(activeFile)) !== null)
+        throw new Error("finalization_authority_reappeared_during_clear");
+      if ((await gitConfigGet(root, marker)) !== null)
+        throw new Error(
+          "finalization_authority_marker_reappeared_during_clear",
+        );
+      await rm(activeBackup, { force: true });
+      activeBackup = null;
+    }
+    return receipt;
+  } catch (error) {
+    await Promise.allSettled([
+      restoreOptionalText(workdirReceipt, oldWorkdirReceipt),
+      restoreOptionalText(auditReceipt, oldAuditReceipt),
+      restoreAuthorityAfterFinalizationFailure({
+        active_file: activeFile,
+        active_backup: activeBackup,
+        old_active_record: oldActiveRecord,
+        repository_root: root,
+        marker,
+        old_marker: oldMarker,
+      }),
+    ]).then((results) => {
+      const rejected = results.find((result) => result.status === "rejected");
+      if (rejected?.status === "rejected")
+        throw new Error(
+          `finalization_transaction_rollback_failed:${message(rejected.reason)}`,
+        );
+    });
+    throw error;
+  } finally {
+    await Promise.all([
+      rm(stagedWorkdirReceipt, { force: true }),
+      rm(stagedAuditReceipt, { force: true }),
+    ]);
+  }
 }
 
 export async function readFinalReceipt(
@@ -675,6 +784,8 @@ export async function readFinalReceipt(
     ) ||
     receipt.authority_scope !== "audit_only" ||
     receipt.reusable_for_acceptance !== false ||
+    (receipt.finalization_identity_sha256 !== undefined &&
+      !/^[a-f0-9]{64}$/u.test(receipt.finalization_identity_sha256)) ||
     sha256Hex(canonicalValueJson(unsigned)) !== receiptHash
   )
     throw new Error("final_receipt_integrity_mismatch");
@@ -922,6 +1033,58 @@ async function stageAtomicText(file: string, content: string): Promise<string> {
     await handle.close();
   }
   return temporary;
+}
+
+function assertFinalizationLockToken(
+  token: ActiveAuthorityLockToken,
+  repositoryRoot: string,
+): void {
+  if (
+    !activeAuthorityLockTokens.has(token) ||
+    token.operation !== "finalize" ||
+    normalizePath(token.repository_root) !== normalizePath(repositoryRoot)
+  )
+    throw new Error("finalization_active_authority_lock_required");
+}
+
+async function assertCurrentAuthorityCas(
+  repositoryRoot: string,
+  workdir: string,
+  expected: ActiveAuthorityIdentityExpectation,
+): Promise<ActiveLongTaskAuthorityV3> {
+  const current = (await loadActiveLongTaskAuthorityUnlocked(repositoryRoot))
+    .authority;
+  if (
+    !current ||
+    normalizePath(current.workdir) !== normalizePath(workdir) ||
+    !activeAuthorityIdentityMatches(current, expected)
+  )
+    throw new Error("finalization_authority_compare_and_swap_failed");
+  return current;
+}
+
+async function restoreOptionalText(
+  file: string,
+  previous: string | null,
+): Promise<void> {
+  if (previous === null) await rm(file, { force: true });
+  else await atomicText(file, previous);
+}
+
+async function restoreAuthorityAfterFinalizationFailure(input: {
+  active_file: string;
+  active_backup: string | null;
+  old_active_record: string;
+  repository_root: string;
+  marker: string;
+  old_marker: string | null;
+}): Promise<void> {
+  await atomicText(input.active_file, input.old_active_record);
+  if (input.active_backup) await rm(input.active_backup, { force: true });
+  if (input.old_marker === null)
+    await gitConfigUnset(input.repository_root, input.marker);
+  else
+    await gitConfigSet(input.repository_root, input.marker, input.old_marker);
 }
 
 function missingError(error: unknown): boolean {

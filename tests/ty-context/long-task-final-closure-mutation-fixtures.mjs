@@ -49,6 +49,21 @@ export function configureMixedEvidenceContract(contract) {
 
   const structured = contract.outcomes[1];
   const structuredCheck = structured.acceptance.checks[0];
+  structuredCheck.positive_assertions =
+    structuredCheck.positive_assertions.filter(
+      (assertion) => assertion.key !== "second-requirement",
+    );
+  const structuredBehaviorControl =
+    structured.acceptance.counterfactual_controls.find(
+      (control) => control.key === "remove-second-state",
+    );
+  structuredBehaviorControl.claims = structuredBehaviorControl.claims.filter(
+    (claimRef) => claimRef !== "requirement.observe-second",
+  );
+  structuredBehaviorControl.expected_assertion_failures =
+    structuredBehaviorControl.expected_assertion_failures.filter(
+      (assertionRef) => assertionRef !== "second-requirement",
+    );
   structuredCheck.positive_assertions.push({
     key: "structured-acceptance",
     criterion: "The structured outcome is observable and implemented.",
@@ -84,11 +99,13 @@ const assertion = (assertionKey) => "assertion." + key + "." + key + "-check." +
 const observations = {
   ["fact." + key + ".observable"]: observed,
   [assertion(key + "-result")]: observed,
-  [assertion(key + "-requirement")]: observed,
   [assertion(key + "-obligation")]: observed,
   [assertion(key + "-liveness")]: true,
   [assertion(key + "-relations-na")]: relationApplicable,
-  ...(key === "first" ? { [assertion("first-architecture")]: observed } : {}),
+  ...(key === "first" ? {
+    [assertion("first-requirement")]: observed,
+    [assertion("first-architecture")]: observed,
+  } : {}),
   ...(key === "second" ? { [assertion("structured-acceptance")]: observed } : {})
 };
 console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
@@ -99,7 +116,9 @@ export async function writeSource(
   root,
   {
     wrongRequirementTarget,
+    secondRequirement = "The second outcome must be observable.",
     structuredCriterion = "The structured outcome is observable and implemented.",
+    includeStructuredAcceptance = true,
     executionTarget,
   },
 ) {
@@ -117,12 +136,16 @@ ${firstStatement}
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=second-observable kind=requirement -->
-The second outcome must be observable.
+${secondRequirement}
 <!-- ty-source-item:end -->
 
-<!-- ty-source-item:start key=second-structured-acceptance kind=acceptance -->
+${
+  includeStructuredAcceptance
+    ? `<!-- ty-source-item:start key=second-structured-acceptance kind=acceptance -->
 ${structuredCriterion}
-<!-- ty-source-item:end -->
+<!-- ty-source-item:end -->`
+    : ""
+}
 
 <!-- ty-source-item:start key=fixture-architecture kind=technical_obligation aspect=architecture -->
 Preserve the fixture state owner and verifier boundary.

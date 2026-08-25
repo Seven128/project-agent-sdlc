@@ -10,6 +10,7 @@ import {
 } from "./long-task-semantic-refresh-fixture.mjs";
 import { fixtureSemanticFactRecords } from "./long-task-semantic-records-fixture.mjs";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
+import { deriveMaterialSourceFragments } from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
 
 export const fixtureSourceStatements = {
   "first-observable": "The first outcome must be observable.",
@@ -234,5 +235,57 @@ export function fixtureSemanticManifest(options = {}) {
     environments,
     blockers: [],
   };
+  if (options.explicitFragments !== false)
+    addFixtureFragmentProjections(manifest, sourceItemKeys, sourceFacts, options);
   return refreshFixtureSemanticManifest(manifest);
+}
+
+function addFixtureFragmentProjections(
+  manifest,
+  sourceItemKeys,
+  sourceFacts,
+  options,
+) {
+  for (const sourceKey of sourceItemKeys) {
+    const text =
+      sourceKey === "fixture-execution-target"
+        ? executionTargetSourceStatement(options.executionTarget)
+        : fixtureSourceStatements[sourceKey];
+    const item = {
+      key: sourceKey,
+      kind:
+        sourceKey === "fixture-architecture" ||
+        sourceKey === "fixture-execution-target"
+          ? "technical_obligation"
+          : sourceKey === "fixture-external"
+            ? "external_confirmation"
+            : "requirement",
+      source_path: "source.md",
+      normalized_text: text,
+      text_sha256: digestText(text),
+    };
+    for (const fragment of deriveMaterialSourceFragments(item)) {
+      const key = `input.fragment.${sourceKey}.${fragment.ordinal}`;
+      const factRefs = sourceFacts(sourceKey);
+      manifest.inputs.push({
+        key,
+        kind: "source_fragment",
+        source_ref: fragment.key,
+        sha256: fragment.text_sha256,
+        disposition:
+          sourceKey === "first-observable" || sourceKey === "second-observable"
+            ? "fact_bearing"
+            : "supporting_basis",
+        fact_refs: factRefs,
+        basis_refs: [sourceKey],
+        rationale:
+          "The fixture explicitly dispositions this complete material Fragment.",
+      });
+      for (const factRef of factRefs) {
+        const fact = manifest.facts.find((candidate) => candidate.key === factRef);
+        if (fact && !fact.provenance.basis_refs.includes(key))
+          fact.provenance.basis_refs.push(key);
+      }
+    }
+  }
 }

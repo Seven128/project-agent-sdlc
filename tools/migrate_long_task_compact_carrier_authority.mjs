@@ -1,7 +1,12 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { assertProtectedRepositoryFile } from "../packages/ty-context/dist/lib/long-task-protected-files.js";
+import { deriveMaterialTextInputs } from "../packages/ty-context/dist/lib/long-task-material-input-closure.js";
 import { parseSourceItems } from "../packages/ty-context/dist/lib/long-task-source-item-parser.js";
+import {
+  deriveSemanticSourceAnchors,
+  scanMaterialTextInput,
+} from "../packages/ty-context/dist/lib/long-task-source-fragments.js";
 import { sha256Hex } from "../packages/ty-context/dist/lib/strict-codec.js";
 
 const repositoryBackedInputKinds = new Set([
@@ -45,6 +50,11 @@ export async function synchronizeSourceAuthority(
     }
   }
 
+  const fragmentSync = synchronizeMaterialFragmentProjections(
+    manifest,
+    await deriveMaterialTextInputs(repository, items, manifest, new Set()),
+  );
+
   const claimByKey = new Map(
     contract.source_claims.map((claim) => [claim.key, claim]),
   );
@@ -79,7 +89,162 @@ export async function synchronizeSourceAuthority(
     source_claims_updated: sourceClaimsUpdated,
     canonical_targets_updated: canonicalTargetsUpdated,
     acceptance_assertions_updated: acceptanceAssertionsUpdated,
+    ...fragmentSync,
   };
+}
+
+const sourceProjectionDispositions = new Set([
+  "fact_bearing",
+  "supporting_basis",
+  "superseded",
+  "decision_required",
+  "scope_excluded",
+]);
+
+export function synchronizeMaterialFragmentProjections(
+  manifest,
+  materialInputs,
+) {
+  const previousFragments = manifest.inputs.filter(
+    (input) => input.kind === "source_fragment",
+  );
+  const previousByInput = new Map();
+  for (const input of previousFragments) {
+    const identity = parseFragmentIdentity(input.source_ref);
+    if (!identity)
+      throw new Error(
+        `compact_migration_fragment_ref_invalid:${input.key}:${input.source_ref}`,
+      );
+    const byOrdinal = previousByInput.get(identity.inputKey) ?? new Map();
+    if (byOrdinal.has(identity.ordinal))
+      throw new Error(
+        `compact_migration_fragment_ordinal_duplicate:${identity.inputKey}:${identity.ordinal}`,
+      );
+    byOrdinal.set(identity.ordinal, input);
+    previousByInput.set(identity.inputKey, byOrdinal);
+  }
+
+  const currentFragments = materialInputs.flatMap(
+    (input) => scanMaterialTextInput(input).fragments,
+  );
+  const currentAnchors = new Map(
+    currentFragments
+      .flatMap((fragment) => deriveSemanticSourceAnchors(fragment))
+      .map((anchor) => [anchor.key, anchor]),
+  );
+  const usedPrevious = new Set();
+  const invalidatedInputKeys = new Set();
+  const synchronizedFragments = [];
+  let fragmentsPreserved = 0;
+  let fragmentsRegenerated = 0;
+  let fragmentsDecisionRequired = 0;
+
+  for (const fragment of currentFragments) {
+    const previous = previousByInput
+      .get(fragment.input_key)
+      ?.get(fragment.ordinal);
+    if (previous) usedPrevious.add(previous.key);
+    const exact =
+      previous?.source_ref === fragment.key &&
+      previous.sha256 === fragment.text_sha256 &&
+      sourceProjectionDispositions.has(previous.disposition);
+    if (exact) {
+      synchronizedFragments.push(previous);
+      fragmentsPreserved += 1;
+      continue;
+    }
+    if (previous) invalidatedInputKeys.add(previous.key);
+    const key =
+      previous?.key ??
+      availableFragmentInputKey(
+        manifest.inputs,
+        synchronizedFragments,
+        fragment,
+      );
+    synchronizedFragments.push({
+      key,
+      kind: "source_fragment",
+      source_ref: fragment.key,
+      sha256: fragment.text_sha256,
+      disposition: "decision_required",
+      fact_refs: [],
+      basis_refs: [...fragment.authority_source_item_refs].sort(),
+      rationale:
+        "Migration regenerated the exact Fragment identity but cannot infer its Fact, polarity, supersession or scope disposition; re-author this Fragment from Source.",
+    });
+    fragmentsRegenerated += 1;
+    fragmentsDecisionRequired += 1;
+  }
+
+  const staleFragments = previousFragments.filter(
+    (input) => !usedPrevious.has(input.key),
+  );
+  for (const input of staleFragments) invalidatedInputKeys.add(input.key);
+
+  let staleSemanticAnchorsRemoved = 0;
+  const retainedInputs = manifest.inputs.filter((input) => {
+    if (input.kind === "source_fragment") return false;
+    if (input.kind !== "semantic_anchor") return true;
+    const anchor = currentAnchors.get(input.source_ref);
+    if (anchor && input.sha256 === anchor.value_sha256) return true;
+    invalidatedInputKeys.add(input.key);
+    staleSemanticAnchorsRemoved += 1;
+    return false;
+  });
+  const factBasisRefsRemoved = removeInvalidatedBasisRefs(
+    manifest,
+    invalidatedInputKeys,
+  );
+  manifest.inputs = [...retainedInputs, ...synchronizedFragments].sort(
+    (left, right) => left.key.localeCompare(right.key),
+  );
+  return {
+    source_fragments_preserved: fragmentsPreserved,
+    source_fragments_regenerated: fragmentsRegenerated,
+    source_fragments_decision_required: fragmentsDecisionRequired,
+    stale_source_fragments_removed: staleFragments.length,
+    stale_semantic_anchors_removed: staleSemanticAnchorsRemoved,
+    invalidated_basis_refs_removed: factBasisRefsRemoved,
+  };
+}
+
+function parseFragmentIdentity(reference) {
+  if (typeof reference !== "string") return null;
+  const match = /^(.*)#fragment:(\d+):[0-9a-f]{16}$/u.exec(reference);
+  if (!match || !match[1] || Number(match[2]) < 1) return null;
+  return { inputKey: match[1], ordinal: Number(match[2]) };
+}
+
+function availableFragmentInputKey(allInputs, synchronized, fragment) {
+  const candidate = `input.fragment.${fragment.input_key}.${fragment.ordinal}`;
+  if ([...allInputs, ...synchronized].some((input) => input.key === candidate))
+    throw new Error(
+      `compact_migration_fragment_input_key_conflict:${candidate}`,
+    );
+  return candidate;
+}
+
+function removeInvalidatedBasisRefs(value, invalidated) {
+  if (!invalidated.size) return 0;
+  let removed = 0;
+  const visit = (candidate) => {
+    if (!candidate || typeof candidate !== "object") return;
+    if (Array.isArray(candidate)) {
+      for (const entry of candidate) visit(entry);
+      return;
+    }
+    for (const [key, entry] of Object.entries(candidate)) {
+      if (key === "basis_refs" && Array.isArray(entry)) {
+        candidate[key] = entry.filter((reference) => {
+          if (!invalidated.has(reference)) return true;
+          removed += 1;
+          return false;
+        });
+      } else visit(entry);
+    }
+  };
+  visit(value);
+  return removed;
 }
 
 function synchronizeCanonicalTarget(contract, claim, statement) {

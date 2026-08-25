@@ -9,7 +9,7 @@ The initial rollout was implemented on 2026-07-20. It changes package-developmen
 
 ## Current Implementation
 
-- `tools/test_suite_policy.mjs` is the canonical executable owner for focused/Trust coverage, 34 stable critical-semantic sentinel IDs, the named controlled-CI budget profile and fail-closed Long-Task isolation classes. The Trust file list is derived from the same sentinel records rather than duplicated; the current 34 records derive 26 unique Trust files.
+- `tools/test_suite_policy.mjs` is the canonical executable owner for focused/Trust coverage, 36 stable critical-semantic sentinel IDs, the named controlled-CI budget profile and fail-closed Long-Task isolation classes. The Trust file list is derived from the same sentinel records rather than duplicated; the current 36 records derive 27 unique Trust files.
 - `tools/affected_change_discovery.mjs` separates explicit paths, dirty local work, clean local commits, explicit bases, and CI bases; dirty local work is never unioned with an inferred historical branch diff.
 - `npm run test:long-task:trust` builds once and runs the canonical Long-Task Trust Boundary Gate; package-level `test:trust:built` runs the complete default suite plus that gate for PR CI.
 - `npm test` remains the complete default plus complete Long-Task release regression used by `main` and publish; a complete affected plan explicitly supersedes a separate Trust run.
@@ -20,31 +20,31 @@ The initial rollout was implemented on 2026-07-20. It changes package-developmen
 - Inferred local discovery omits and reports only untracked `.work_products/**` scratch; tracked files and explicit `--path` values remain fail-safe inputs.
 - Canonical Trust/focused/hotspot review budgets block silent feedback-tier growth, while complete-suite auto-discovery remains exhaustive. Controlled Ubuntu CI selects the repository-reviewed `github-ubuntu-v2` profile (180/540/1200 seconds for default/Trust/Long-Task); the profile refuses unknown names or a non-GitHub/Linux environment, while local timing remains diagnostic and `github-ubuntu-v1` remains an immutable historical calibration.
 - The opt-in 10k-file performance probe uses the canonical Global semantic fixture, runs small schema-sensitive fixtures before large-repository preparation, deduplicates runner duration by execution identity and selects `default-v1` or `windows-v1` phase/seed/total catastrophic budgets. It is not part of the complete release suite and creates no acceptance state.
-- Thirty-one critical Long-Task/Trust invariants and three default-suite policy/CI invariants carry stable `[critical:<id>]` tags. The formal external-fulfillment sentinel independently freezes exact fresh per-obligation acceptance, bounded invalidation and runner-time record immutability; `windows-job-pre-resume-containment` independently proves suspended-create/pre-resume Job assignment and descendant cleanup. Two design IDs share `long-task-design-context.test.mjs`, four Observer/TCB IDs share `long-task-observer-trust-counterexamples.test.mjs`, and the target-runtime plus selected-design IDs share `long-task-semantic-drift-closure.test.mjs`, producing 26 unique Trust files. Each required ID must appear exactly once, in its reviewed file, and pass. Deletion, equal-count replacement, duplication, misplacement, an unreviewed ID or non-passing sentinel fails the existing suite; ordinary test renames/additions remain free, and an intentional stronger replacement updates the one mapping, tag and rationale in review rather than freezing all test names.
+- Thirty-three critical Long-Task/Trust invariants and three default-suite policy/CI invariants carry stable `[critical:<id>]` tags. The formal external-fulfillment sentinel independently freezes exact fresh per-obligation acceptance and bounded invalidation; `atomic-terminal-finalization` binds one locked Finalization Identity/CAS transaction and blocks terminal publication until the Windows Job process tree settles; `complete-delivery-black-box-closure` replays the mechanism-only sanitized Starward packet plus backend and CLI controls through real Compile/Final Gate terminals without claiming original-incident or ROI evidence; `windows-job-pre-resume-containment` independently proves suspended-create/pre-resume Job assignment and descendant cleanup. Two design IDs share `long-task-design-context.test.mjs`, four Observer/TCB IDs share `long-task-observer-trust-counterexamples.test.mjs`, and the target-runtime plus selected-design IDs share `long-task-semantic-drift-closure.test.mjs`, producing 27 unique Trust files. Each required ID must appear exactly once, in its reviewed file, and pass. Deletion, equal-count replacement, duplication, misplacement, an unreviewed ID or non-passing sentinel fails the existing suite; ordinary test renames/additions remain free, and an intentional stronger replacement updates the one mapping, tag and rationale in review rather than freezing all test names.
 - Two fresh Windows Trust Gate runs passed 32 tests across 9 files in 205.681 and 207.986 seconds after a current build. The complete default tier passed 173 tests across 41 files in 113.199 seconds, so the measured PR-equivalent default-plus-Trust path is approximately 321.185 seconds (5 minutes 21 seconds) without another build. These are rollout observations, not yet a multi-sample median or p95 claim.
 - One bounded Windows A/B on 2026-07-23 exercised 33 identities across six representative Authority/Final-Gate files: serial took 206.276 seconds and two concurrency-two runs took 147.228 and 128.054 seconds. Identities, terminal outcomes, seed state and workspace state were equal and no fixture root leaked; this is rollout evidence, not a formal cross-environment benchmark.
 - Coverage deletion and the 20-change/30-day overlap review remain deliberately deferred until timing and mutation evidence justify them.
 
 ## Retrieval Index
 
-| Key | Topic |
-| --- | --- |
-| `TS-PURPOSE` | Unique purpose of each test tier and the core decision |
-| `TS-BASELINE` | Current inventory, observed cost, and why the cost is occurring |
-| `TS-VERIFY-COST-2026-07-28` | Windows Verify diagnosis, repair evidence, and non-degradation boundary |
-| `TS-REVISION-COST-2026-07-28` | Bulk Authority-revision and verifier-migration cost repair |
-| `TS-TIER-DEV` | Task-local affected and focused feedback |
-| `TS-TIER-TRUST` | Middle-cost Trust Boundary Gate |
-| `TS-TIER-RELEASE` | Complete package release regression |
-| `TS-ROUTING` | Local/CI change discovery and fail-safe selection |
-| `TS-RERUN` | Repair-loop and full-suite rerun policy |
-| `TS-RELEASE-HANDOFF` | One-test/one-pack release artifact handoff and retry boundary |
-| `TS-OPTIMIZE` | Safe runtime optimization rules |
-| `TS-ANTIDEGRADATION` | Critical semantic continuity and controlled cost governance |
-| `TS-MIGRATION` | Phased implementation and affected files |
-| `TS-METRICS` | ROI measurements and review thresholds |
-| `TS-AC` | Acceptance criteria and rollback |
-| `TS-NONGOALS` | Explicit safety boundaries |
+| Key                           | Topic                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `TS-PURPOSE`                  | Unique purpose of each test tier and the core decision                  |
+| `TS-BASELINE`                 | Current inventory, observed cost, and why the cost is occurring         |
+| `TS-VERIFY-COST-2026-07-28`   | Windows Verify diagnosis, repair evidence, and non-degradation boundary |
+| `TS-REVISION-COST-2026-07-28` | Bulk Authority-revision and verifier-migration cost repair              |
+| `TS-TIER-DEV`                 | Task-local affected and focused feedback                                |
+| `TS-TIER-TRUST`               | Middle-cost Trust Boundary Gate                                         |
+| `TS-TIER-RELEASE`             | Complete package release regression                                     |
+| `TS-ROUTING`                  | Local/CI change discovery and fail-safe selection                       |
+| `TS-RERUN`                    | Repair-loop and full-suite rerun policy                                 |
+| `TS-RELEASE-HANDOFF`          | One-test/one-pack release artifact handoff and retry boundary           |
+| `TS-OPTIMIZE`                 | Safe runtime optimization rules                                         |
+| `TS-ANTIDEGRADATION`          | Critical semantic continuity and controlled cost governance             |
+| `TS-MIGRATION`                | Phased implementation and affected files                                |
+| `TS-METRICS`                  | ROI measurements and review thresholds                                  |
+| `TS-AC`                       | Acceptance criteria and rollback                                        |
+| `TS-NONGOALS`                 | Explicit safety boundaries                                              |
 
 ## `TS-PURPOSE` — Decision
 
@@ -52,11 +52,11 @@ The complete package suite has one unique job: certify the package's aggregate f
 
 The implementation keeps that complete coverage while separating three different jobs:
 
-| Tier | Unique question it answers | Result authority |
-| --- | --- | --- |
-| Developer feedback | Did this task-local change break the code paths most likely to be affected? | Non-authoritative selection aid |
-| Trust Boundary Gate | Did the final candidate break a high-impact false-completion or cross-module trust boundary? | Package handoff/PR regression evidence only |
-| Complete release regression | Does the complete supported package suite pass on the final release candidate? | Package CI/release evidence only |
+| Tier                        | Unique question it answers                                                                   | Result authority                            |
+| --------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Developer feedback          | Did this task-local change break the code paths most likely to be affected?                  | Non-authoritative selection aid             |
+| Trust Boundary Gate         | Did the final candidate break a high-impact false-completion or cross-module trust boundary? | Package handoff/PR regression evidence only |
+| Complete release regression | Does the complete supported package suite pass on the final release candidate?               | Package CI/release evidence only            |
 
 The core change is therefore not “delete slow tests.” It is:
 
@@ -189,13 +189,13 @@ The complete suite is still not product acceptance, deployment proof, or reusabl
 
 The selection source must be explicit and environment-specific:
 
-| Invocation | Default change source |
-| --- | --- |
+| Invocation             | Default change source                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
 | Local, dirty workspace | `HEAD` working-tree diff plus untracked files, except reported untracked `.work_products/**` scratch |
-| Local, clean workspace | explicit `--base`, otherwise a documented single-commit fallback such as `HEAD^` |
-| Pull-request CI | merge-base against the supplied CI base revision |
-| Explicit task scope | `--path` values; do not add inferred historical paths |
-| Explicit comparison | `--base`; use exactly that comparison plus documented working-tree behavior |
+| Local, clean workspace | explicit `--base`, otherwise a documented single-commit fallback such as `HEAD^`                     |
+| Pull-request CI        | merge-base against the supplied CI base revision                                                     |
+| Explicit task scope    | `--path` values; do not add inferred historical paths                                                |
+| Explicit comparison    | `--base`; use exactly that comparison plus documented working-tree behavior                          |
 
 The local default must not union an historical branch-base diff into a non-empty working set. CI must not infer its base from whichever local ref happens to exist.
 
@@ -203,14 +203,14 @@ The `.work_products/**` exception applies only to untracked paths discovered imp
 
 Fail-safe widening remains required:
 
-| Change class | Minimum target tier |
-| --- | --- |
-| Known isolated implementation hot spot | Mapped developer tests |
-| Contract/Context/guidance-only change | Relevant static, parity, and Context gates |
-| Deleted direct `tests/ty-context/*.test.mjs`, including a delete-plus-add rename | Complete release regression |
-| Unmapped Long-Task runtime or authority change | Trust Boundary Gate or complete Long-Task suite |
-| Shared package entry point, dependency, build, or unknown package change | Complete release regression |
-| Release/publish workflow change | Complete release regression plus pack/release gates |
+| Change class                                                                     | Minimum target tier                                 |
+| -------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Known isolated implementation hot spot                                           | Mapped developer tests                              |
+| Contract/Context/guidance-only change                                            | Relevant static, parity, and Context gates          |
+| Deleted direct `tests/ty-context/*.test.mjs`, including a delete-plus-add rename | Complete release regression                         |
+| Unmapped Long-Task runtime or authority change                                   | Trust Boundary Gate or complete Long-Task suite     |
+| Shared package entry point, dependency, build, or unknown package change         | Complete release regression                         |
+| Release/publish workflow change                                                  | Complete release regression plus pack/release gates |
 
 The canonical executable mapping is `tools/test_suite_policy.mjs`, shared by the planner and runner. It is static source configuration, not a mutable registry, persisted task-test state, or cached acceptance result.
 
@@ -235,7 +235,7 @@ When an aggregate gate fails:
 4. rerun only the failed tests plus affected/Trust coverage until they pass;
 5. rerun the failed aggregate gate once on the newly frozen snapshot when tracked source, tests, configuration, shared fixtures or runners changed, cross-suite contamination is plausible, or that invocation owns the required final validation claim.
 
-Skipping a repeated *local* complete suite is safe only when all of these conditions hold:
+Skipping a repeated _local_ complete suite is safe only when all of these conditions hold:
 
 - the failure is attributable to ignored/untracked local state or external infrastructure rather than product or test semantics;
 - tracked source, tests, configuration, shared fixtures and runners are unchanged from the failed aggregate snapshot;
@@ -319,18 +319,22 @@ Input inventory and disposition:
 Authoring mode is synthesis. The user fixed the material preference envelope: preserve false-completion interception and test effectiveness first, then minimize recurring execution cost; a measured or causally proven material saving is preferred over a marginal optimization. No external research, payment, deployment, publication, destructive mutation or human approval is required.
 
 <!-- ty-source-item:start key=phase4-runtime-roi-result kind=outcome_result -->
+
 On the same supported machine and a comparable test snapshot, the Long-Task package suite executes at materially lower cost, targets at least a 30% test-only wall-time reduction from the recorded 2,282.9-second Windows observation, and preserves the existing false-completion interception and complete current-snapshot release purpose.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=highest-aggregate-only kind=requirement -->
+
 One canonical final invocation selects exactly one highest required aggregate tier; when complete release regression is selected it supersedes a separate Trust Boundary run.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=fresh-build-fingerprint kind=technical_obligation -->
+
 `--no-build` must fail fast unless a deterministic fingerprint proves that `dist` was built from the current package source, configuration, package metadata, and lockfile inputs.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=ephemeral-file-timing kind=technical_obligation -->
+
 Each package-suite invocation must report every selected test file's identity, duration, and terminal status in ephemeral diagnostics without caching a passing result or creating acceptance state.
 <!-- ty-source-item:end -->
 
@@ -343,58 +347,72 @@ Static consistency checks use Git's tracked/deleted view in a live source worksp
 Population acceptance still comes only from the complete current-run timing report. The Claim-bearing coverage Assertion and the 100% Population evaluator are separate Checks over the exact same raw execution identity: Final Gate executes the canonical complete command once, while Counterfactual sensitivity targets only the Claim-bearing Check and baseline Population completeness remains independently mandatory.
 
 <!-- ty-source-item:start key=isolated-fixture-seed kind=technical_obligation -->
+
 Fixture setup may be amortized through an immutable suite-scoped initialized seed, but every delivery fixture must copy into a unique temporary repository with an independent `.git` common directory, worktree, local configuration, no remote, mutation isolation, and deterministic cleanup; standalone test execution must retain a semantically equivalent fallback.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=conservative-isolation-lanes kind=requirement -->
+
 Only explicitly reviewed pure/static or isolated temporary-repository files may use bounded concurrency beginning at two; Hook/profile, environment, distribution, verifier-migration, Git-race, and every unknown file remain serial until behavioral isolation proof exists.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=coverage-preservation kind=requirement -->
+
 The optimized complete Long-Task runner must still discover the original 60-file set whose sorted-name SHA-256 is `2588af5d3ebd640de78a295aa39482aaac6d5ece34958b3260d8f295b40daa37` and execute at least the previously observed 281 Long-Task test identities with no missing, skipped, cancelled, or silently excluded case; new tests may add coverage but may not replace an original identity.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=rerun-discipline kind=technical_obligation -->
+
 During implementation run only focused or affected repair checks; after a failure rerun failed and affected coverage; after the candidate is frozen run exactly one required highest aggregate with durable output and sufficient timeout, and do not run Trust before complete.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=cross-platform-runtime kind=technical_obligation -->
+
 Implementation must preserve Windows and macOS path, process-launch, Git-copy, cleanup, and npm-script behavior.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=serial-rollback kind=technical_obligation -->
+
 If isolation or concurrency equivalence is not proven, execution must fail closed or retain serial behavior, and the serial complete runner remains the mechanical rollback during rollout.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=prior-workflow-fixes-background-only kind=non_completing -->
+
 Inherited approval-summary and first-lock stopping changes are context only and contribute no completion credit to this test-suite ROI delivery.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=no-coverage-trade kind=forbidden_shortcut -->
+
 Do not obtain speed by deleting or weakening tests, sharing mutable fixtures, reusing historical green results, substituting proxy, fixed, or self-reported evidence, enabling unproven broad concurrency, or adding a persistent test scheduler, selection registry, result cache, Receipt, or second Authority.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=full-suite-population-risk kind=risk_fact fact=full_population_operation outcome=test-suite-roi -->
+
 The preservation claim covers the full original Long-Task test population, so incomplete discovery or identity reporting must fail closed.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=routing-and-build-ac kind=acceptance -->
+
 Given a complete-routed change and stale and current build inputs, when the canonical final route is inspected and `--no-build` is validated, then complete supersedes Trust, stale output is rejected before tests start, and output from the matching source snapshot is accepted.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=fixture-isolation-ac kind=acceptance -->
+
 Given multiple fixtures created from the amortized seed, when one fixture's files, Git configuration, refs, and worktree are mutated, then every other fixture remains unchanged, uses a different common directory, has no remote, and preserves the legacy initial repository semantics.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=timing-and-lanes-ac kind=acceptance -->
+
 Given the complete selected file set and the reviewed isolation policy, when the suite runs, then one ephemeral report contains one terminal record per selected file, the safe and exclusive lanes are disjoint and exhaustive, unknown files execute serially, and any opt-in concurrency result has the same test identities and terminal outcomes as serial execution.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=coverage-and-roi-ac kind=acceptance -->
+
 Given the frozen final candidate, when the one highest complete aggregate executes with retained output, then the original 60-file Long-Task set and at least 281 prior test identities pass with zero skipped, cancelled, missing, or trust-mutation escape, and the measured test-only cost is compared honestly with the recorded Windows observation without being promoted to a cross-environment benchmark.
 <!-- ty-source-item:end -->
 
 <!-- ty-source-item:start key=no-shortcut-ac kind=acceptance -->
+
 Given the final implementation and diagnostics, when the optimization boundary is inspected, then inherited approval-summary and model-stop work contributes no completion credit and no forbidden coverage, authority, cache, shared-state, proxy-evidence, or unproven-concurrency shortcut is present.
 <!-- ty-source-item:end -->
 

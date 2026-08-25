@@ -21,60 +21,72 @@ export function validateSameDomainSupersession(
   sourceDomains: ReadonlyMap<string, SourceAuthorityDomain>,
   sourceByKey: ReadonlyMap<string, CompiledSourceItemV2>,
   manifest: SemanticFactManifestV1,
-  designFactRefsBySource: ReadonlyMap<string, string[]>,
 ): void {
+  if (!projection.fact_refs.length)
+    semanticFactClosureInvalid(
+      "source_supersession_successor_fact_required",
+      material.key,
+    );
+  const oldFactRefs = materialInputFactRefs(material, manifest);
+  if (!oldFactRefs.length)
+    semanticFactClosureInvalid(
+      "source_supersession_prior_fact_required",
+      material.key,
+    );
+  const oldCells = semanticCells(
+    oldFactRefs,
+    material,
+    facts,
+    factClasses,
+    factDomains,
+  );
+  const successorCells = semanticCells(
+    projection.fact_refs,
+    material,
+    facts,
+    factClasses,
+    factDomains,
+  );
+  if (!sameSet(oldCells, successorCells))
+    semanticFactClosureInvalid(
+      "source_supersession_semantic_cell_mismatch",
+      `${material.key}:${[...oldCells].sort().join(",")}:${[...successorCells]
+        .sort()
+        .join(",")}`,
+    );
+
+  const priorSources = new Set(material.authority_source_item_refs);
   const supersedingSources = projection.basis_refs
-    .map((ref) => projectionBasisSourceItem(ref, manifest, sourceByKey))
-    .filter((ref): ref is string => Boolean(ref))
-    .filter((ref) => ref !== material.source_item_ref);
+    .flatMap((ref) => projectionBasisSourceItems(ref, manifest, sourceByKey))
+    .filter((ref) => !priorSources.has(ref));
   if (!supersedingSources.length)
     semanticFactClosureInvalid(
       "source_supersession_basis_required",
       material.key,
     );
-  for (const ref of supersedingSources)
-    validateSupersedingSource({
-      ref,
-      material,
-      facts,
-      factClasses,
-      factDomains,
-      sourceDomains,
-      manifest,
-      designFactRefsBySource,
-    });
-}
-
-function validateSupersedingSource(input: {
-  ref: string;
-  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2;
-  facts: ReadonlyMap<string, SourceConservationFactProjectionV2>;
-  factClasses: Record<string, SemanticFactClassV2>;
-  factDomains: Record<string, SourceAuthorityDomain>;
-  sourceDomains: ReadonlyMap<string, SourceAuthorityDomain>;
-  manifest: SemanticFactManifestV1;
-  designFactRefsBySource: ReadonlyMap<string, string[]>;
-}): void {
-  if (input.sourceDomains.get(input.ref) !== input.material.authority_domain)
-    semanticFactClosureInvalid(
-      "source_supersession_domain_mismatch",
-      `${input.material.key}:${input.ref}:${input.material.authority_domain}:${input.sourceDomains.get(input.ref)}`,
-    );
-  if (
-    !supersedingSourceHasDeliveryProjection(
-      input.ref,
-      input.material.authority_domain,
-      input.facts,
-      input.factClasses,
-      input.factDomains,
-      input.manifest,
-      input.designFactRefsBySource,
-    )
-  )
-    semanticFactClosureInvalid(
-      "source_supersession_basis_not_fact_bearing",
-      `${input.material.key}:${input.ref}`,
-    );
+  for (const sourceRef of [...new Set(supersedingSources)]) {
+    if (sourceDomains.get(sourceRef) !== material.authority_domain)
+      semanticFactClosureInvalid(
+        "source_supersession_domain_mismatch",
+        `${material.key}:${sourceRef}:${material.authority_domain}:${sourceDomains.get(sourceRef)}`,
+      );
+    for (const factRef of projection.fact_refs) {
+      const fact = facts.get(factRef)!;
+      if (
+        !fact.source_item_refs.includes(sourceRef) ||
+        !hasFactBearingSuccessorFragment(
+          sourceRef,
+          factRef,
+          fact.basis_refs,
+          manifest,
+        )
+      )
+        semanticFactClosureInvalid(
+          "source_supersession_basis_not_fact_bearing",
+          `${material.key}:${sourceRef}:${factRef}`,
+        );
+    }
+  }
 }
 
 export function validateSameDomainScopeExclusion(
@@ -84,91 +96,168 @@ export function validateSameDomainScopeExclusion(
   sourceByKey: ReadonlyMap<string, CompiledSourceItemV2>,
   manifest: SemanticFactManifestV1,
 ): void {
-  const exclusion = manifest.scope.exclusions.find((row) =>
+  const exclusions = manifest.scope.exclusions.filter((row) =>
     row.affected_refs.includes(projection.input_key),
   );
-  if (!exclusion)
+  if (exclusions.length !== 1)
     semanticFactClosureInvalid(
-      "source_projection_scope_exclusion_missing",
+      exclusions.length
+        ? "source_projection_scope_exclusion_ambiguous"
+        : "source_projection_scope_exclusion_missing",
       `${material.key}:${projection.input_key}`,
     );
-  const basisSources = [...exclusion.basis_refs, ...exclusion.source_item_refs]
-    .map((ref) => projectionBasisSourceItem(ref, manifest, sourceByKey))
-    .filter((ref): ref is string => Boolean(ref))
-    .filter((ref) => ref !== material.source_item_ref);
-  if (
-    !basisSources.some(
-      (ref) => sourceDomains.get(ref) === material.authority_domain,
-    )
-  )
+  const exclusion = exclusions[0];
+  if (!projection.basis_refs.includes(exclusion.key))
     semanticFactClosureInvalid(
-      "source_scope_exclusion_same_domain_basis_required",
+      "source_scope_exclusion_projection_binding_missing",
+      `${material.key}:${exclusion.key}`,
+    );
+  const affectedFactRefs = exactAffectedFactRefs(
+    exclusion.affected_refs,
+    manifest,
+  );
+  if (!affectedFactRefs.length)
+    semanticFactClosureInvalid(
+      "source_scope_exclusion_exact_obligation_required",
+      `${material.key}:${exclusion.key}`,
+    );
+  const owners = exclusion.source_item_refs.filter((ref) => {
+    if (sourceDomains.get(ref) !== material.authority_domain) return false;
+    const item = sourceByKey.get(ref);
+    if (!item) return false;
+    if (item.kind === "decision") return true;
+    const sourceInput = manifest.inputs.find(
+      (input) => input.kind === "source_item" && input.source_ref === ref,
+    );
+    return sourceInput?.fact_refs.some((factRef) =>
+      affectedFactRefs.includes(factRef),
+    );
+  });
+  if (!owners.length)
+    semanticFactClosureInvalid(
+      "source_scope_exclusion_same_domain_owner_required",
       `${material.key}:${material.authority_domain}`,
     );
 }
 
-function supersedingSourceHasDeliveryProjection(
-  sourceRef: string,
-  domain: SourceAuthorityDomain,
+function materialInputFactRefs(
+  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
+  manifest: SemanticFactManifestV1,
+): string[] {
+  const inputKey =
+    "input_key" in material
+      ? material.input_key
+      : material.fragment_ref.split("#fragment:", 1)[0];
+  const input = manifest.inputs.find(
+    (candidate) =>
+      candidate.key === inputKey ||
+      (candidate.kind === "source_item" && candidate.source_ref === inputKey),
+  );
+  return input?.fact_refs ?? [];
+}
+
+function semanticCells(
+  refs: string[],
+  material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
   facts: ReadonlyMap<string, SourceConservationFactProjectionV2>,
   factClasses: Record<string, SemanticFactClassV2>,
   factDomains: Record<string, SourceAuthorityDomain>,
-  manifest: SemanticFactManifestV1,
-  designFactRefsBySource: ReadonlyMap<string, string[]>,
-): boolean {
-  if (
-    (designFactRefsBySource.get(sourceRef) ?? []).some(
-      (factRef) =>
-        facts.has(factRef) &&
-        factClasses[factRef] === "delivery_semantic" &&
-        factDomains[factRef] === domain &&
-        facts.get(factRef)!.source_item_refs.includes(sourceRef),
+): Set<string> {
+  const result = new Set<string>();
+  for (const factRef of refs) {
+    const fact = facts.get(factRef);
+    if (!fact)
+      semanticFactClosureInvalid(
+        "source_supersession_fact_unknown",
+        `${material.key}:${factRef}`,
+      );
+    if (
+      factClasses[factRef] !== "delivery_semantic" ||
+      factDomains[factRef] !== material.authority_domain ||
+      !fact.semantic_cell
     )
-  )
-    return true;
-  return manifest.inputs
-    .filter((input) => inputProjectsSource(input, sourceRef))
-    .some(
-      (input) =>
-        input.disposition !== "supporting_only" &&
-        input.disposition !== "supporting_basis" &&
-        input.disposition !== "excluded_by_scope" &&
-        input.disposition !== "scope_excluded" &&
-        input.disposition !== "superseded" &&
-        input.disposition !== "decision_required" &&
-        input.fact_refs.some(
-          (factRef) =>
-            facts.has(factRef) &&
-            factClasses[factRef] === "delivery_semantic" &&
-            factDomains[factRef] === domain &&
-            facts.get(factRef)!.source_item_refs.includes(sourceRef),
-        ),
-    );
+      semanticFactClosureInvalid(
+        "source_supersession_delivery_cell_required",
+        `${material.key}:${factRef}`,
+      );
+    result.add(semanticCellIdentity(fact.semantic_cell));
+  }
+  return result;
 }
 
-function inputProjectsSource(
-  input: SemanticFactManifestV1["inputs"][number],
-  sourceRef: string,
+function semanticCellIdentity(
+  cell: NonNullable<SourceConservationFactProjectionV2["semantic_cell"]>,
+): string {
+  return [
+    cell.outcome_ref,
+    cell.unit_ref,
+    cell.family_ref,
+    cell.condition_ref,
+    cell.property_ref,
+    cell.value_kind,
+  ].join("\0");
+}
+
+function sameSet(
+  left: ReadonlySet<string>,
+  right: ReadonlySet<string>,
 ): boolean {
   return (
-    (input.kind === "source_item" && input.source_ref === sourceRef) ||
-    ((input.kind === "source_fragment" || input.kind === "semantic_anchor") &&
-      input.source_ref.startsWith(`${sourceRef}#fragment:`))
+    left.size === right.size && [...left].every((value) => right.has(value))
   );
 }
 
-function projectionBasisSourceItem(
+function projectionBasisSourceItems(
   ref: string,
   manifest: SemanticFactManifestV1,
   sourceByKey: ReadonlyMap<string, CompiledSourceItemV2>,
-): string | null {
-  if (sourceByKey.has(ref)) return ref;
+): string[] {
+  if (sourceByKey.has(ref)) return [ref];
   const input = manifest.inputs.find((item) => item.key === ref);
-  if (!input) return null;
-  if (input.kind === "source_item") return input.source_ref;
+  if (!input) return [];
+  if (input.kind === "source_item") return [input.source_ref];
   if (input.kind === "source_fragment" || input.kind === "semantic_anchor") {
-    const separator = input.source_ref.indexOf("#fragment:");
-    return separator > 0 ? input.source_ref.slice(0, separator) : null;
+    const inputKey = input.source_ref.split("#fragment:", 1)[0];
+    if (sourceByKey.has(inputKey)) return [inputKey];
+    const materialInput = manifest.inputs.find((item) => item.key === inputKey);
+    if (!materialInput) return [];
+    return materialInput.basis_refs.filter((basisRef) =>
+      sourceByKey.has(basisRef),
+    );
   }
-  return null;
+  return input.basis_refs.filter((basisRef) => sourceByKey.has(basisRef));
+}
+
+function hasFactBearingSuccessorFragment(
+  sourceRef: string,
+  factRef: string,
+  factBasisRefs: string[],
+  manifest: SemanticFactManifestV1,
+): boolean {
+  return manifest.inputs.some(
+    (input) =>
+      input.kind === "source_fragment" &&
+      input.source_ref.startsWith(`${sourceRef}#fragment:`) &&
+      input.disposition === "fact_bearing" &&
+      input.fact_refs.includes(factRef) &&
+      factBasisRefs.includes(input.key),
+  );
+}
+
+function exactAffectedFactRefs(
+  refs: string[],
+  manifest: SemanticFactManifestV1,
+): string[] {
+  const facts = new Set(manifest.facts.map((fact) => fact.key));
+  const result = new Set<string>();
+  for (const ref of refs) {
+    if (facts.has(ref)) result.add(ref);
+    const cell = manifest.fact_cells.find((candidate) => candidate.key === ref);
+    if (cell?.fact_ref) result.add(cell.fact_ref);
+    const proof = manifest.proof_obligations.find(
+      (candidate) => candidate.key === ref,
+    );
+    if (proof) result.add(proof.fact_ref);
+  }
+  return [...result].sort();
 }

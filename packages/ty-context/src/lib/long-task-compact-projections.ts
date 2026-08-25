@@ -149,6 +149,14 @@ export function materializeLongTaskCompactFactBindings(
         fact.applicability_ref,
         `${label}.applicability_ref`,
       ),
+      ...(Object.hasOwn(fact, "required_polarity")
+        ? {
+            required_polarity: compactPolarity(
+              fact.required_polarity,
+              `${label}.required_polarity`,
+            ),
+          }
+        : {}),
     });
   }
   for (const [index, obligation] of obligations.entries()) {
@@ -196,6 +204,15 @@ export function materializeLongTaskCompactFactBindings(
       fact_ref: factKey,
     });
   }
+}
+
+function compactPolarity(
+  value: unknown,
+  label: string,
+): "positive" | "negative" {
+  if (value !== "positive" && value !== "negative")
+    compactFail(label, "must be positive or negative");
+  return value;
 }
 
 export function materializeLongTaskCompactAssertions(

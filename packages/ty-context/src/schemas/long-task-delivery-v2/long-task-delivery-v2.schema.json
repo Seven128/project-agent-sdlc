@@ -818,6 +818,28 @@
                       "role": { "$ref": "#/$defs/nonEmpty" },
                       "authority_kind": {
                         "enum": ["human", "expert", "external_system"]
+                      },
+                      "identity_assurance": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["scheme", "key_id", "public_key_ref"],
+                            "properties": {
+                              "scheme": { "const": "ed25519" },
+                              "key_id": { "$ref": "#/$defs/key" },
+                              "public_key_ref": { "$ref": "#/$defs/nonEmpty" }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": ["scheme"],
+                            "properties": {
+                              "scheme": { "const": "declared_only" }
+                            }
+                          }
+                        ]
                       }
                     }
                   },
@@ -877,7 +899,22 @@
           "items": { "$ref": "#/$defs/evidenceCapability" }
         },
         "expected_authority_ref": { "$ref": "#/$defs/nonEmpty" },
-        "result_kind": { "enum": ["actual", "judgment"] }
+        "result_kind": { "enum": ["actual", "judgment"] },
+        "judgment_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "source_ref"],
+          "properties": {
+            "kind": {
+              "enum": [
+                "subjective_preference",
+                "expert_assessment",
+                "authorization"
+              ]
+            },
+            "source_ref": { "$ref": "#/$defs/key" }
+          }
+        }
       }
     },
     "outcome": {

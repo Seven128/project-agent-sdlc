@@ -5,6 +5,7 @@ import {
   applicabilityProfile,
   objectiveExternalActualAdmitted,
   sameSet,
+  sourceBackedExternalJudgmentAdmitted,
 } from "./long-task-acceptance-reachability-helpers.js";
 import type {
   AcceptanceObligationReachabilityV1,
@@ -101,6 +102,7 @@ function confirmationShapeComplete(
 ): boolean {
   return Boolean(
     confirmation.actor &&
+    confirmation.actor.identity_assurance?.scheme === "ed25519" &&
     confirmation.target_ref &&
     confirmation.environment_identity &&
     confirmation.scenario?.given.length &&
@@ -157,9 +159,12 @@ function matchConfirmationRows(
       confirmation.scenario!.when.map((step) => step.key).join("\0") !==
         profile.when_refs.join("\0") ||
       (actual.result_kind === "judgment" &&
-        confirmation.actor?.authority_kind === "external_system") ||
+        (confirmation.actor?.authority_kind === "external_system" ||
+          !sourceBackedExternalJudgmentAdmitted(manifest, expectedRow) ||
+          !judgmentBasisSourceBacked(contract, confirmation, actual))) ||
       (actual.result_kind === "actual" &&
-        !objectiveExternalActualAdmitted(manifest, expectedRow))
+        (!objectiveExternalActualAdmitted(manifest, expectedRow) ||
+          actual.judgment_basis !== undefined))
     )
       return null;
     used.add(actual.key);
@@ -187,4 +192,17 @@ function externalObligationMatches(
     sameSet(actual.evidence_capabilities, expected.evidence_capabilities) &&
     actual.expected_authority_ref === expected.expected_authority_ref
   );
+}
+
+function judgmentBasisSourceBacked(
+  contract: DeliveryContractV2,
+  confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
+  obligation: NonNullable<typeof confirmation.obligations>[number],
+): boolean {
+  const basis = obligation.judgment_basis;
+  if (!basis) return false;
+  const sourceClaim = contract.source_claims.find(
+    (claim) => claim.key === basis.source_ref,
+  );
+  return Boolean(sourceClaim);
 }

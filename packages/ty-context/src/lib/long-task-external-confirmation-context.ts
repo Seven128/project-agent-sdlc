@@ -4,10 +4,10 @@ import type {
   CompiledDeliveryContractV2,
   WorkspaceManifestV2,
 } from "./long-task-delivery-types.js";
-import { parseExternalConfirmationRecordV1 } from "./long-task-external-confirmation-shape.js";
+import { parseExternalConfirmationRecord } from "./long-task-external-confirmation-shape.js";
 import type {
   ExternalConfirmationCandidateV1,
-  ExternalConfirmationRecordV1,
+  ExternalConfirmationRecord,
 } from "./long-task-external-confirmation-types.js";
 import {
   assertVerifierAuthorityCurrent,
@@ -80,7 +80,7 @@ export async function loadExternalAuthorityContext(
 
 export async function readSubmittedExternalConfirmationRecord(
   recordPathInput: string,
-): Promise<ExternalConfirmationRecordV1> {
+): Promise<ExternalConfirmationRecord> {
   const file = path.resolve(recordPathInput);
   const status = await lstat(file);
   if (status.isSymbolicLink())
@@ -93,7 +93,7 @@ export async function readSubmittedExternalConfirmationRecord(
     );
   if (status.size > MAX_SUBMITTED_RECORD_BYTES)
     throw new Error(`external_confirmation_record_too_large:${status.size}`);
-  return parseExternalConfirmationRecordV1(
+  return parseExternalConfirmationRecord(
     JSON.parse(await readFile(file, "utf8")) as unknown,
   );
 }

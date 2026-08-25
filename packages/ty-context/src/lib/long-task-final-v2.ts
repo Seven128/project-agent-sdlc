@@ -12,11 +12,12 @@ import {
   captureFinalGateProtectedInputIdentity,
   finalGateIntegrityFindings,
 } from "./long-task-final-integrity.js";
+import { captureFinalizationIdentity } from "./long-task-finalization-identity.js";
 import {
   assertMatchingActiveBinding,
   loadActiveLongTaskAuthority,
-  writeFinalReceipt,
 } from "./long-task-state.js";
+import { finalizeDeliveryGateCas } from "./long-task-terminal-finalization.js";
 import {
   assertVerifierAuthorityCurrent,
   deliveryCompileFreshness,
@@ -34,6 +35,7 @@ import {
 
 export async function runDeliveryFinalGate(
   workdirInput: string,
+  options: { close_on_accept?: boolean } = {},
 ): Promise<FinalReceiptV3> {
   const startedAt = new Date().toISOString();
   const repository = await repositoryRoot(process.cwd());
@@ -83,6 +85,17 @@ export async function runDeliveryFinalGate(
     `final-${compiled.task.id}`,
   );
   try {
+    const expectedFinalizationIdentity = await captureFinalizationIdentity({
+      repository,
+      active,
+      compiled,
+      candidate: {
+        git_head: candidate.head,
+        git_tree: candidate.tree,
+        snapshot_sha256: snapshot.manifest.snapshot_sha256,
+      },
+      workspace_fingerprint: snapshot.manifest.fingerprint,
+    });
     const run = await runDeliveryChecks(
       compiled,
       snapshot,
@@ -124,8 +137,9 @@ export async function runDeliveryFinalGate(
     const blockingExternal = externalResults.filter(
       (confirmation) => confirmation.blocks_target,
     );
-    const externalNeedsWork = blockingExternal.some((confirmation) =>
-      ["failed", "unable", "invalid", "stale"].includes(confirmation.state),
+    const externalNeedsWork = blockingExternal.some(
+      (confirmation) =>
+        confirmation.state !== "fulfilled" && confirmation.state !== "pending",
     );
     const externalPending = blockingExternal.some(
       (confirmation) => confirmation.state === "pending",
@@ -152,30 +166,39 @@ export async function runDeliveryFinalGate(
     const receiptFindings = [...run.findings, ...externalFindings].map(
       (finding) => enrichFinding(compiled, finding),
     );
-    return writeFinalReceipt(repository, active.workdir, {
-      schema_version: "long-task-final-receipt-v3",
-      authority_scope: "audit_only",
-      reusable_for_acceptance: false,
-      workflow_status: workflowStatus,
-      target_profile: compiled.task.target_profile,
-      target_state: targetState,
-      stage_results: projectStages(compiled, outcomeResults),
-      compiled_identity: compiled.compiled_identity,
-      contract_sha256: compiled.contract_sha256,
-      snapshot_sha256: snapshot.manifest.snapshot_sha256,
-      git_head: candidate.head,
-      git_tree: candidate.tree,
-      source_hashes: compiled.source_hashes,
-      context_hashes: compiled.context_snapshot.sha256,
-      verifier_identity: compiled.verifier_identity,
-      check_results: run.check_results,
-      outcome_results: outcomeResults,
-      external_confirmations: compiled.global.acceptance.external_confirmations,
-      external_confirmation_results: externalResults,
-      findings: receiptFindings,
-      snapshot_preparation_ms: snapshot.preparation_ms,
-      started_at: startedAt,
-      completed_at: new Date().toISOString(),
+    return finalizeDeliveryGateCas({
+      repository,
+      workdir: active.workdir,
+      provisional_manifest: snapshot.manifest,
+      expected_authority: acceptedAuthority,
+      expected_finalization_identity: expectedFinalizationIdentity,
+      close_on_accept: options.close_on_accept ?? false,
+      provisional_result: {
+        schema_version: "long-task-final-receipt-v3",
+        authority_scope: "audit_only",
+        reusable_for_acceptance: false,
+        workflow_status: workflowStatus,
+        target_profile: compiled.task.target_profile,
+        target_state: targetState,
+        stage_results: projectStages(compiled, outcomeResults),
+        compiled_identity: compiled.compiled_identity,
+        contract_sha256: compiled.contract_sha256,
+        snapshot_sha256: snapshot.manifest.snapshot_sha256,
+        git_head: candidate.head,
+        git_tree: candidate.tree,
+        source_hashes: compiled.source_hashes,
+        context_hashes: compiled.context_snapshot.sha256,
+        verifier_identity: compiled.verifier_identity,
+        check_results: run.check_results,
+        outcome_results: outcomeResults,
+        external_confirmations:
+          compiled.global.acceptance.external_confirmations,
+        external_confirmation_results: externalResults,
+        findings: receiptFindings,
+        snapshot_preparation_ms: snapshot.preparation_ms,
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+      },
     });
   } finally {
     await snapshot.dispose();
@@ -254,8 +277,10 @@ function projectOutcomes(
       const status =
         owned.some((check) => check.status !== "passed") ||
         ownFindings.length ||
-        external.some((confirmation) =>
-          ["failed", "unable", "invalid", "stale"].includes(confirmation.state),
+        external.some(
+          (confirmation) =>
+            confirmation.state !== "fulfilled" &&
+            confirmation.state !== "pending",
         )
           ? "failed"
           : external.some((confirmation) => confirmation.state === "pending")

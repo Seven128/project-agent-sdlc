@@ -60,7 +60,7 @@ export async function validateLongTaskSemanticFactClosure(
         ),
         facts: [],
       };
-  await validateSemanticFactInputInventory(
+  const materialInputs = await validateSemanticFactInputInventory(
     repository,
     sourceItems,
     contextFiles,
@@ -71,6 +71,8 @@ export async function validateLongTaskSemanticFactClosure(
     sourceItems,
     manifest,
     designProjection,
+    materialInputs,
+    semanticFactClaimPolarities(contract),
   );
   validateSemanticFactBasisClosure(manifest, sourceItems);
   await validateSemanticFactLocatedValues(repository, manifest, sourceItems);
@@ -96,6 +98,19 @@ export async function validateLongTaskSemanticFactClosure(
     expectations_by_check: expectations,
     source_conservation: sourceConservation,
   };
+}
+
+function semanticFactClaimPolarities(
+  contract: DeliveryContractV2,
+): Map<string, ReadonlySet<"positive" | "negative">> {
+  const result = new Map<string, Set<"positive" | "negative">>();
+  for (const outcome of contract.outcomes)
+    for (const binding of outcome.semantic_fact_bindings.facts) {
+      const values = result.get(binding.fact_ref) ?? new Set();
+      values.add(binding.required_polarity ?? "positive");
+      result.set(binding.fact_ref, values);
+    }
+  return result;
 }
 
 function validateManifestReference(

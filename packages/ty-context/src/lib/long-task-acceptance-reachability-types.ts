@@ -37,6 +37,24 @@ export interface AcceptanceReachabilityV1 {
   obligations: AcceptanceObligationReachabilityV1[];
 }
 
+export interface MachineAuthorityRouteV1 {
+  check_key: string;
+  assertion_key: string;
+  proof_surface: ProofSurface;
+  required_evidence_capabilities: EvidenceCapabilityV2[];
+}
+
+export interface ExternalAuthorityRouteV1 {
+  confirmation_ref: string;
+  proof_surface: ProofSurface;
+}
+
+export interface ObligationAuthorityCandidatesV1 {
+  source_obligation_ref: string;
+  machine_candidates: MachineAuthorityRouteV1[];
+  external_candidates: ExternalAuthorityRouteV1[];
+}
+
 export interface ExpectedExternalObligation {
   source_obligation_ref: string;
   outcome_key: string | null;

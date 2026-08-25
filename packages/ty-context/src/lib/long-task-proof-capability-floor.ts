@@ -7,7 +7,6 @@ import type {
   ProductClaimV2,
   SemanticFactExpectationV2,
 } from "./long-task-delivery-types.js";
-import { claimAuthorityStatement } from "./long-task-expected-authority.js";
 
 const CONTROL_EXISTS_FIELDS = new Set([
   "surface",
@@ -45,6 +44,7 @@ export function assertionCapabilityFloor(
   assertion: DeliveryAssertionV2,
   claim: ProductClaimV2 | { kind?: string; local_key: string },
   expectations: SemanticFactExpectationV2[],
+  semanticClaimFloor: ReadonlySet<EvidenceCapabilityV2> = new Set(),
 ): Set<EvidenceCapabilityV2> {
   const result = externalClaimCapabilityFloor(
     contract,
@@ -57,11 +57,7 @@ export function assertionCapabilityFloor(
   if (assertion.operator === "exists") result.add("presence");
   if ("kind" in claim && claim.kind === "result") result.add("target_runtime");
   addControlCapabilityFloor(result, contract, outcomeKey, claim);
-  addBoundaryAndStateFloors(
-    result,
-    check.proof_surface,
-    claimAuthorityStatement(contract, outcomeKey, assertion.claims[0]),
-  );
+  addProofSurfaceFloor(result, check.proof_surface);
   if (check.journey_roles.includes("recovery")) {
     result.add("failure_injection");
     result.add("recovery");
@@ -87,6 +83,7 @@ export function assertionCapabilityFloor(
   if (semantic)
     for (const capability of semanticFactCapabilityFloor(semantic, contract))
       result.add(capability);
+  for (const capability of semanticClaimFloor) result.add(capability);
   return result;
 }
 
@@ -101,11 +98,7 @@ export function externalClaimCapabilityFloor(
   const result = new Set<EvidenceCapabilityV2>();
   if (localClaim === "result") result.add("target_runtime");
   addExternalControlCapabilityFloor(result, contract, outcomeKey, localClaim);
-  addBoundaryAndStateFloors(
-    result,
-    proofSurface,
-    claimAuthorityStatement(contract, outcomeKey, localClaim),
-  );
+  addProofSurfaceFloor(result, proofSurface);
   const profile = applicabilityRef
     ? (outcomeKey
         ? contract.outcomes.find((item) => item.key === outcomeKey)
@@ -175,66 +168,13 @@ function addSpecifiedControlFloor(
   }
 }
 
-function addBoundaryAndStateFloors(
+function addProofSurfaceFloor(
   result: Set<EvidenceCapabilityV2>,
   proofSurface: DeliveryCheckV2["proof_surface"],
-  statement: string,
 ): void {
-  const lower = statement.toLocaleLowerCase("en-US");
-  if (
-    proofSurface === "ui_browser" &&
-    [
-      "visual",
-      "design conformance",
-      "layout",
-      "pixel",
-      "geometry",
-      "视觉",
-      "设计符合",
-      "布局",
-      "像素",
-      "几何",
-    ].some((term) => lower.includes(term))
-  ) {
-    result.add("visual_render");
-    result.add("design_conformance");
-  }
-  if (
-    ["provider", "正式接口", "正式 provider", "boundary invocation"].some(
-      (term) => lower.includes(term),
-    )
-  ) {
-    result.add("boundary_invocation");
-    result.add("actual_provenance");
-  }
-  if (
-    proofSurface === "data_state" ||
-    ["data state", "数据状态", "数据库状态"].some((term) =>
-      lower.includes(term),
-    )
-  )
-    result.add("data_state");
-  if (
-    ["persist", "durable", "readback", "持久化", "落库", "写入后读取"].some(
-      (term) => lower.includes(term),
-    )
-  )
-    result.add("durable_readback");
-  if (
-    ["identity isolation", "different identity", "身份隔离", "不同身份"].some(
-      (term) => lower.includes(term),
-    )
-  ) {
-    result.add("distinct_identity");
-    result.add("data_state");
-  }
-  if (
-    proofSurface === "population_coverage" ||
-    ["complete population", "完整 population", "全量集合"].some((term) =>
-      lower.includes(term),
-    )
-  )
-    result.add("population_coverage");
+  if (proofSurface === "implementation_structure") result.add("presence");
+  if (proofSurface === "data_state") result.add("data_state");
+  if (proofSurface === "population_coverage") result.add("population_coverage");
 }
 
 function semanticFactCapabilityFloor(

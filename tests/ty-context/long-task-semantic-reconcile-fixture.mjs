@@ -1,6 +1,4 @@
-import {
-  bindFixtureSemanticManifest,
-} from "./long-task-semantic-reconcile-bindings-fixture.mjs";
+import { bindFixtureSemanticManifest } from "./long-task-semantic-reconcile-bindings-fixture.mjs";
 import {
   rebuildFixtureContextInputs,
   rebuildFixtureSemanticInputs,
@@ -15,6 +13,7 @@ export async function reconcileFixtureSemanticManifest(
   primaryAuthority,
 ) {
   rebuildFixtureSemanticInputs(
+    contract,
     manifest,
     inventory,
     authorityRefs,

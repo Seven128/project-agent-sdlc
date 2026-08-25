@@ -1,6 +1,6 @@
 # GitHub Release Packet: 0.9.0
 
-Snapshot date: 2026-08-23.
+Snapshot date: 2026-08-25.
 
 Use this packet to create the GitHub Release for the current public `project-tiny-context-harness` npm package line.
 
@@ -59,24 +59,26 @@ Publishing a new npm version does not automatically migrate existing repositorie
 ## What Changed
 
 - Publishes `project-tiny-context-harness@0.9.0` with the synchronized package assets and CLI build.
-- Conserves every material Source fragment and high-signal anchor through exact dispositions, delivery-versus-integrity Fact classes, authority domains and explicit same-domain, fact-bearing supersession; explicit supporting bases must name their supported delivery Facts.
-- Enforces proof-strength floors for product effects, external boundaries, persistence, identity/data state, complete populations, failure/recovery, selected visual meaning and target runtime; claimless Checks remain diagnostic only and Expected authority cannot be self-authored by implementation output.
-- Adds pre-implementation acceptance reachability with explicit `machine_only | declared_authorities`, exact machine/external/unreachable classification and fail-closed blocking before Authority Lock.
-- Adds strict per-obligation External Confirmation fulfillment through `external prepare`, `submit`, `status` and `revoke`, current candidate/Authority/input/evidence binding, Session batching without identity collapse and Final Receipt v3.
+- Conserves every strict-UTF-8 material Source/attachment/specification/preservation/constraint/delegation/text-design input through complete non-overlapping Fragment line coverage, one explicit disposition, reverse Fact provenance, exact semantic-cell supersession/exclusion and Claim modal polarity; unreadable or ambiguous text fails closed.
+- Enforces closed typed method/property proof floors for product effects, external boundaries, persistence, identity/data state, complete populations, failure/recovery, concurrency, performance, selected visual meaning and target runtime. Custom semantics cannot machine-close, claimless Checks remain diagnostic and Expected authority cannot be self-authored by implementation output.
+- Resolves completion authority per exact Claim/Fact × method × applicability obligation. Exactly one machine route or one external route is allowed; machine/external overlap, duplicate same-kind routes and no route block before Authority Lock, and broad `impact_claims` never removes machine proof.
+- Adds authenticated per-obligation External Confirmation Record v2 through `external prepare`, `submit`, `status`, `rotate` and `revoke`: protected Source-bound Ed25519 public-key identity, current challenge, whole-candidate binding, immutable content-addressed artifact snapshots and Source-backed judgment. Record v1 remains audit-only.
 - Adds `delivery_accepted` as the external-fulfilled terminal while retaining `machine_accepted` for all-machine delivery; pending, failed, unable, stale or invalid external rows cannot close or clear Active Authority.
+- Adds a short existing-lock Finalization CAS after the one machine-check execution. It binds `finalization_identity_sha256` into Receipt v3 and atomically publishes the Receipt plus accepted Stop/Close Authority cleanup; candidate, Authority, verifier, record, challenge, signature or artifact races fail closed without clearing Authority.
 - Enriches Findings and derives a non-authoritative Repair Frontier with minimum diagnostic reruns and still-valid evidence, without adding a scheduler, queue, second Gate or acceptance cache.
-- Keeps the admitted machine observer set closed to package-owned exact static JSON and direct process JSON; this release does not add a generic Browser/Native/Device adapter registry or claim actor authentication.
+- Keeps the admitted machine observer set closed to package-owned exact static JSON and direct process JSON. Ed25519 proves possession of the Source-bound key, not real-world identity beyond that binding; this release adds no generic Browser/Native/Device adapter registry or authentication-provider registry.
 
 ## Manual Migration
 
 - A missing `task.target_profile.completion_authority` deterministically defaults to `machine_only` and emits migration guidance. Keep that value explicitly for all-machine delivery, or make a real Source/owner decision to select `declared_authorities`.
-- Every blocking external route under `declared_authorities` must be re-authored with exact actor, target, environment, Given/When, evidence requirements and per-obligation Expected/Actual-or-judgment decomposition. Migration never invents these semantics.
-- New Final Gates emit `long-task-final-receipt-v3`. Historical v2 Receipts remain audit-readable only; `machine_accepted_external_pending` is compatibility-read-only and cannot be upgraded or used to close.
+- Exact unchanged Fragment projections are preserved. Changed or missing projections receive current refs/digests with `decision_required`; migration does not infer Fact lineage, polarity, supporting status, supersession or scope exclusion and removes stale anchors/provenance.
+- Every blocking external route under `declared_authorities` must be re-authored with exact actor Ed25519 identity assurance/public-key Source, target, environment, Given/When, evidence requirements and per-obligation Expected/Actual-or-Source-backed-judgment decomposition. Migration never invents authority or signatures; Record v1 cannot fulfill.
+- New Final Gates emit `long-task-final-receipt-v3` with `finalization_identity_sha256`. Historical v2 Receipts and v3 Receipts without that identity remain audit-readable only; `machine_accepted_external_pending` cannot be upgraded or used to close.
 - Run `ty-context upgrade --check`, review every `manual_required` item, update owning Source/Contract, then recompile and rerun the current Final Gate. Historical Progress, Receipts and external records are not reusable acceptance evidence.
 
 ## Boundary
 
-This release does not claim benchmark-proven speedups, production adoption, awards, or replacement of tests, CI, review, specs or project management. It packages the smaller recovery surface: keep the memory, drop the ceremony.
+This release does not claim benchmark-proven speedups, production adoption, awards, or replacement of tests, CI, review, specs or project management. The sanitized Starward-shaped replay is mechanism-only because original public material, mapping, authorization and representativeness are unavailable. The existing ten-category Real Process ROI result remains `not_evaluated`/unsupported until its external formal inputs exist; no positive ROI claim is made. It preserves the smaller recovery surface: keep the memory, drop the ceremony.
 
 ## Useful Links
 

@@ -12,13 +12,13 @@ import {
 import {
   commitCandidate,
   createDeliveryFixture,
-  fixtureArchitectureSourceItem,
-  fixtureExecutionTargetSourceItem,
   pathExists,
   readState,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
+
+import "./long-task-complete-delivery-black-box.cases.mjs";
 
 const exec = promisify(execFile);
 const cli = fileURLToPath(
@@ -28,41 +28,25 @@ const cli = fileURLToPath(
 test("[critical:live-final-gate-only] controlled real V2 Smoke proves only the current Live Final Gate can finish", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
   try {
+    const sourcePath = path.join(fixture.root, "source.md");
+    const acceptance = "The second outcome is observable and implemented.";
     await writeFile(
-      path.join(fixture.root, "source.md"),
-      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-<a id="fixture-source"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=first-observable kind=requirement -->
-The first outcome must be observable.
-<!-- ty-source-item:end -->
-
-${fixtureArchitectureSourceItem()}
-
-${fixtureExecutionTargetSourceItem()}
-
-<!-- ty-source-item:start key=second-observable kind=requirement -->
-The second outcome must be observable.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=second-acceptance kind=acceptance -->
-second is observable and implemented.
-<!-- ty-source-item:end -->
-`,
+      sourcePath,
+      replaceMarkedSourceItem(
+        await readFile(sourcePath, "utf8"),
+        "second-observable",
+        acceptance,
+      ),
     );
-    fixture.contract.source_claims.push({
-      key: "second-acceptance",
-      source_ref: "source.md#fixture-source",
-      statement: "second is observable and implemented.",
-      disposition: {
-        type: "acceptance",
-        refs: ["second.second-check.second-requirement"],
-      },
-    });
+    fixture.contract.source_claims.find(
+      (claim) => claim.key === "second-observable",
+    ).statement = acceptance;
+    fixture.contract.outcomes[1].product.requirements.find(
+      (requirement) => requirement.key === "observe-second",
+    ).statement = acceptance;
     fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions.find(
       (assertion) => assertion.key === "second-requirement",
-    ).criterion = "second is observable and implemented.";
+    ).criterion = acceptance;
     await writeContract(fixture.workdir, fixture.contract);
     await run(fixture.root, ["enable", "long-task"]);
     const preflight = await run(fixture.root, [
@@ -99,7 +83,7 @@ second is observable and implemented.
     assert.ok(
       secondFailure.check_results[0].findings.some(
         (finding) =>
-          finding.source_claim_keys?.includes("second-acceptance") &&
+          finding.source_claim_keys?.includes("second-observable") &&
           finding.assertion_key === "second-requirement" &&
           finding.observation === "requirement_result",
       ),
@@ -164,30 +148,18 @@ second is observable and implemented.
     const revisedAcceptance =
       "The second outcome remains observable and implemented.";
     await writeFile(
-      path.join(fixture.root, "source.md"),
-      `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-<a id="fixture-source"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=first-observable kind=requirement -->
-The first outcome must be observable.
-<!-- ty-source-item:end -->
-
-${fixtureArchitectureSourceItem()}
-
-${fixtureExecutionTargetSourceItem()}
-
-<!-- ty-source-item:start key=second-observable kind=requirement -->
-The second outcome must be observable.
-<!-- ty-source-item:end -->
-
-<!-- ty-source-item:start key=second-acceptance kind=acceptance -->
-${revisedAcceptance}
-<!-- ty-source-item:end -->
-`,
+      sourcePath,
+      replaceMarkedSourceItem(
+        await readFile(sourcePath, "utf8"),
+        "second-observable",
+        revisedAcceptance,
+      ),
     );
     fixture.contract.source_claims.find(
-      (claim) => claim.key === "second-acceptance",
+      (claim) => claim.key === "second-observable",
+    ).statement = revisedAcceptance;
+    fixture.contract.outcomes[1].product.requirements.find(
+      (requirement) => requirement.key === "observe-second",
     ).statement = revisedAcceptance;
     fixture.contract.outcomes[1].acceptance.checks[0].positive_assertions.find(
       (assertion) => assertion.key === "second-requirement",
@@ -313,4 +285,13 @@ function parse(stdout) {
   } catch {
     return { text };
   }
+}
+
+function replaceMarkedSourceItem(source, key, statement) {
+  const pattern = new RegExp(
+    `(<!-- ty-source-item:start key=${key}\\b[^>]*-->\\r?\\n)[\\s\\S]*?(\\r?\\n<!-- ty-source-item:end -->)`,
+    "u",
+  );
+  assert.match(source, pattern);
+  return source.replace(pattern, `$1${statement}$2`);
 }

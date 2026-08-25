@@ -18,13 +18,16 @@ import {
   runDeliveryFinalGate,
 } from "./long-task-final-v2.js";
 import { evaluateExternalConfirmations } from "./long-task-external-confirmation-plan.js";
+import {
+  captureFinalizationIdentity,
+  finalizationIdentityDigest,
+} from "./long-task-finalization-identity.js";
 import { enrichFinding } from "./long-task-finding-context.js";
 import { deriveRepairFrontier } from "./long-task-repair-frontier.js";
 import { deliveryCompileFreshness } from "./long-task-freshness.js";
 import {
   activeAuthorityLockExists,
   type ActiveLongTaskAuthorityV3,
-  clearActiveBindingCas,
   inspectCompiledCache,
   loadActiveLongTaskAuthority,
   readActiveLongTaskBinding,
@@ -118,6 +121,24 @@ async function readDeliveryStatusForAuthority(
       snapshot_sha256: current.snapshot_sha256,
     },
   );
+  let finalizationIdentitySha256: string | null = null;
+  try {
+    finalizationIdentitySha256 = finalizationIdentityDigest(
+      await captureFinalizationIdentity({
+        repository: compiled.repository_root,
+        active,
+        compiled,
+        candidate: {
+          git_head: current.git_head,
+          git_tree: current.fingerprint.head_tree,
+          snapshot_sha256: current.snapshot_sha256,
+        },
+        workspace_fingerprint: current.fingerprint,
+      }),
+    );
+  } catch (error) {
+    receiptError ??= `finalization_identity_invalid:${message(error)}`;
+  }
   const projection = projectDeliveryStatus({
     compiled,
     manifest: current,
@@ -125,6 +146,7 @@ async function readDeliveryStatusForAuthority(
     progress,
     receipt,
     receiptError,
+    finalizationIdentitySha256,
     externalConfirmations: externalConfirmationResults,
   });
   const findings = [
@@ -315,40 +337,13 @@ export async function stopCheckDeliveryTask(
   if (active.workdir !== path.resolve(workdirInput))
     return { continue: false, reason: "active_task_workdir_mismatch" };
   try {
-    const result = await runDeliveryFinalGate(active.workdir);
+    const result = await runDeliveryFinalGate(active.workdir, {
+      close_on_accept: true,
+    });
     if (
       result.workflow_status === "machine_accepted" ||
       result.workflow_status === "delivery_accepted"
     ) {
-      try {
-        await clearActiveBindingCas({
-          repository_root: root,
-          workdir: active.workdir,
-          task_id: active.task_id,
-          authority_revision: active.authority_revision,
-          compiled_identity: active.active_authority_identity,
-          worktree_identity: active.worktree_identity,
-        });
-      } catch (error) {
-        if (
-          message(error).includes(
-            "active_authority_clear_compare_and_swap_failed",
-          )
-        )
-          return {
-            continue: false,
-            reason: "active_authority_changed_after_final_gate",
-            workflow_status: result.workflow_status,
-            external_confirmations: result.external_confirmations,
-            external_confirmation_results: result.external_confirmation_results,
-            target_profile: result.target_profile,
-            target_state: result.target_state,
-            stage_results: result.stage_results,
-            message:
-              "Active Authority changed after the Live Final Gate; the accepted identity was not cleared.",
-          };
-        throw error;
-      }
       return {
         continue: true,
         reason: result.workflow_status,
@@ -431,20 +426,14 @@ export async function closeDeliveryTask(
   const active = await readActiveLongTaskBinding(root);
   if (!active || active.workdir !== path.resolve(workdir))
     throw new Error("active_task_missing_or_mismatched");
-  const result = await runDeliveryFinalGate(active.workdir);
+  const result = await runDeliveryFinalGate(active.workdir, {
+    close_on_accept: true,
+  });
   if (
     result.workflow_status !== "machine_accepted" &&
     result.workflow_status !== "delivery_accepted"
   )
     throw new Error(`close_live_final_gate_failed:${result.workflow_status}`);
-  await clearActiveBindingCas({
-    repository_root: root,
-    workdir: active.workdir,
-    task_id: active.task_id,
-    authority_revision: active.authority_revision,
-    compiled_identity: active.active_authority_identity,
-    worktree_identity: active.worktree_identity,
-  });
   return {
     status: "closed",
     workflow_status: result.workflow_status,

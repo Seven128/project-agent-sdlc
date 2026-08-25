@@ -10,14 +10,32 @@ import {
   text,
 } from "./long-task-shape-primitives.js";
 import type {
+  ExternalConfirmationRecord,
   ExternalConfirmationRecordV1,
+  ExternalConfirmationRecordV2,
   ExternalConfirmationResultV1,
+  ExternalConfirmationResultV2,
 } from "./long-task-external-confirmation-types.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 
 const HASH = /^[a-f0-9]{64}$/u;
 const GIT_OBJECT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u;
 const RELEVANT_INPUT = /^(?:bounded|whole):[a-f0-9]{64}$/u;
+const CHALLENGE = /^[A-Za-z0-9_-]{43}$/u;
+
+export function parseExternalConfirmationRecord(
+  value: unknown,
+): ExternalConfirmationRecord {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).schema_version ===
+      "long-task-external-confirmation-record-v2"
+  )
+    return parseExternalConfirmationRecordV2(value);
+  return parseExternalConfirmationRecordV1(value);
+}
 
 export function parseExternalConfirmationRecordV1(
   value: unknown,
@@ -136,6 +154,89 @@ export function parseExternalConfirmationRecordV1(
   return record;
 }
 
+export function parseExternalConfirmationRecordV2(
+  value: unknown,
+): ExternalConfirmationRecordV2 {
+  const label = "external_confirmation_record";
+  const root = object(value, label, [
+    "schema_version",
+    "confirmation_ref",
+    "compiled_identity",
+    "authority_revision",
+    "candidate",
+    "challenge",
+    "actor",
+    "session",
+    "results",
+    "artifact_snapshots",
+    "relevant_input_identity",
+    "attestation",
+    "record_sha256",
+  ]);
+  const candidate = parseCandidate(root.candidate, `${label}.candidate`);
+  const actor = parseActor(root.actor, `${label}.actor`);
+  const session = parseSession(root.session, `${label}.session`);
+  const results = array(root.results, `${label}.results`).map((item, index) =>
+    parseResultV2(item, `${label}.results[${index}]`),
+  );
+  if (!results.length) invalid(`${label}.results`, "must not be empty");
+  unique(
+    results.map((result) => result.obligation_ref),
+    `${label}.results.obligation_ref`,
+  );
+  const attestation = object(root.attestation, `${label}.attestation`, [
+    "scheme",
+    "key_id",
+    "signature_base64",
+  ]);
+  const record: ExternalConfirmationRecordV2 = {
+    schema_version: literal(
+      root.schema_version,
+      ["long-task-external-confirmation-record-v2"] as const,
+      `${label}.schema_version`,
+    ),
+    confirmation_ref: key(root.confirmation_ref, `${label}.confirmation_ref`),
+    compiled_identity: hash(
+      root.compiled_identity,
+      `${label}.compiled_identity`,
+    ),
+    authority_revision: nonnegativeInteger(
+      root.authority_revision,
+      `${label}.authority_revision`,
+    ),
+    candidate,
+    challenge: challenge(root.challenge, `${label}.challenge`),
+    actor,
+    session,
+    results,
+    artifact_snapshots: parseArtifactSnapshots(
+      root.artifact_snapshots,
+      `${label}.artifact_snapshots`,
+    ),
+    relevant_input_identity: relevantInputIdentity(
+      root.relevant_input_identity,
+      `${label}.relevant_input_identity`,
+    ),
+    attestation: {
+      scheme: literal(
+        attestation.scheme,
+        ["ed25519"] as const,
+        `${label}.attestation.scheme`,
+      ),
+      key_id: key(attestation.key_id, `${label}.attestation.key_id`),
+      signature_base64: ed25519Signature(
+        attestation.signature_base64,
+        `${label}.attestation.signature_base64`,
+      ),
+    },
+    record_sha256: hash(root.record_sha256, `${label}.record_sha256`),
+  };
+  assertJsonValue(record, label, 0);
+  if (record.record_sha256 !== externalConfirmationRecordV2Hash(record))
+    invalid(`${label}.record_sha256`, "integrity mismatch");
+  return record;
+}
+
 export function externalConfirmationRecordHash(
   record:
     | Omit<ExternalConfirmationRecordV1, "record_sha256">
@@ -154,6 +255,192 @@ export function signExternalConfirmationRecordV1(
     record_sha256: externalConfirmationRecordHash(unsigned),
   };
   return parseExternalConfirmationRecordV1(record);
+}
+
+export function externalConfirmationRecordV2Hash(
+  record:
+    | Omit<ExternalConfirmationRecordV2, "record_sha256">
+    | ExternalConfirmationRecordV2,
+): string {
+  return sha256Hex(
+    canonicalValueJson(externalConfirmationV2IntegrityPayload(record)),
+  );
+}
+
+export function externalConfirmationV2SignablePayload(
+  record: ExternalConfirmationRecordV2,
+): string {
+  const { signature_base64: _signature, ...attestation } = record.attestation;
+  return canonicalValueJson({ ...record, attestation });
+}
+
+function externalConfirmationV2IntegrityPayload(
+  record:
+    | Omit<ExternalConfirmationRecordV2, "record_sha256">
+    | ExternalConfirmationRecordV2,
+): unknown {
+  const { record_sha256: _recordHash, ...withoutHash } =
+    record as ExternalConfirmationRecordV2;
+  const { signature_base64: _signature, ...attestation } =
+    withoutHash.attestation;
+  return { ...withoutHash, attestation };
+}
+
+function parseCandidate(value: unknown, label: string) {
+  const row = object(value, label, ["git_head", "git_tree", "snapshot_sha256"]);
+  return {
+    git_head: gitObject(row.git_head, `${label}.git_head`),
+    git_tree: gitObject(row.git_tree, `${label}.git_tree`),
+    snapshot_sha256: hash(row.snapshot_sha256, `${label}.snapshot_sha256`),
+  };
+}
+
+function parseActor(value: unknown, label: string) {
+  const row = object(value, label, ["id", "role", "authority_kind"]);
+  return {
+    id: string(row.id, `${label}.id`),
+    role: string(row.role, `${label}.role`),
+    authority_kind: literal(
+      row.authority_kind,
+      ["human", "expert", "external_system"] as const,
+      `${label}.authority_kind`,
+    ),
+  };
+}
+
+function parseSession(value: unknown, label: string) {
+  const row = object(value, label, [
+    "id",
+    "target_ref",
+    "environment_identity",
+    "started_at",
+    "completed_at",
+  ]);
+  const startedAt = timestamp(row.started_at, `${label}.started_at`);
+  const completedAt = timestamp(row.completed_at, `${label}.completed_at`);
+  if (Date.parse(completedAt) < Date.parse(startedAt))
+    invalid(label, "completed_at precedes started_at");
+  return {
+    id: string(row.id, `${label}.id`),
+    target_ref: semanticRef(row.target_ref, `${label}.target_ref`),
+    environment_identity: string(
+      row.environment_identity,
+      `${label}.environment_identity`,
+    ),
+    started_at: startedAt,
+    completed_at: completedAt,
+  };
+}
+
+function parseResultV2(
+  value: unknown,
+  label: string,
+): ExternalConfirmationResultV2 {
+  const row = object(
+    value,
+    label,
+    [
+      "obligation_ref",
+      "fact_ref",
+      "claim_ref",
+      "applicability_ref",
+      "result_kind",
+      "verdict",
+      "evidence_refs",
+    ],
+    ["actual", "rationale"],
+  );
+  const resultKind = literal(
+    row.result_kind,
+    ["actual", "judgment"] as const,
+    `${label}.result_kind`,
+  );
+  const verdict = literal(
+    row.verdict,
+    ["passed", "failed", "unable"] as const,
+    `${label}.verdict`,
+  );
+  const evidenceRefs = array(row.evidence_refs, `${label}.evidence_refs`).map(
+    (item, index) => repositoryFile(item, `${label}.evidence_refs[${index}]`),
+  );
+  unique(evidenceRefs, `${label}.evidence_refs`);
+  if (!evidenceRefs.length)
+    invalid(`${label}.evidence_refs`, "must not be empty");
+  const rationale = Object.hasOwn(row, "rationale")
+    ? text(row.rationale, `${label}.rationale`)
+    : undefined;
+  if (resultKind === "judgment") {
+    if (Object.hasOwn(row, "actual"))
+      invalid(`${label}.actual`, "is not allowed for judgment");
+    if (!rationale) invalid(`${label}.rationale`, "is required for judgment");
+  } else if (verdict !== "unable" && !Object.hasOwn(row, "actual"))
+    invalid(`${label}.actual`, "is required for an objective result");
+  else if (verdict === "unable" && !rationale)
+    invalid(`${label}.rationale`, "is required when unable");
+  const result: ExternalConfirmationResultV2 = {
+    obligation_ref: semanticRef(row.obligation_ref, `${label}.obligation_ref`),
+    fact_ref: nullable(row.fact_ref, (item) =>
+      semanticRef(item, `${label}.fact_ref`),
+    ),
+    claim_ref: semanticRef(row.claim_ref, `${label}.claim_ref`),
+    applicability_ref: semanticRef(
+      row.applicability_ref,
+      `${label}.applicability_ref`,
+    ),
+    result_kind: resultKind,
+    ...(Object.hasOwn(row, "actual") ? { actual: row.actual } : {}),
+    verdict,
+    evidence_refs: evidenceRefs,
+    ...(rationale ? { rationale } : {}),
+  };
+  if (Object.hasOwn(result, "actual"))
+    assertJsonValue(result.actual, `${label}.actual`, 0);
+  return result;
+}
+
+function parseArtifactSnapshots(
+  value: unknown,
+  label: string,
+): ExternalConfirmationRecordV2["artifact_snapshots"] {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    invalid(label, "must be an object");
+  const rows: Array<
+    [string, ExternalConfirmationRecordV2["artifact_snapshots"][string]]
+  > = [];
+  for (const [rawRef, rawSnapshot] of Object.entries(value)) {
+    const evidenceRef = repositoryFile(rawRef, `${label}.${rawRef}`);
+    const snapshot = object(rawSnapshot, `${label}.${rawRef}`, [
+      "sha256",
+      "size_bytes",
+      "media_type",
+      "store_ref",
+    ]);
+    rows.push([
+      evidenceRef,
+      {
+        sha256: hash(snapshot.sha256, `${label}.${rawRef}.sha256`),
+        size_bytes: nonnegativeInteger(
+          snapshot.size_bytes,
+          `${label}.${rawRef}.size_bytes`,
+        ),
+        media_type: nullable(snapshot.media_type, (item) =>
+          string(item, `${label}.${rawRef}.media_type`),
+        ),
+        store_ref: repositoryFile(
+          snapshot.store_ref,
+          `${label}.${rawRef}.store_ref`,
+        ),
+      },
+    ]);
+  }
+  if (!rows.length) invalid(label, "must not be empty");
+  unique(
+    rows.map(([evidenceRef]) => evidenceRef),
+    label,
+  );
+  return Object.fromEntries(
+    rows.sort(([left], [right]) => left.localeCompare(right)),
+  );
 }
 
 function parseResult(
@@ -240,6 +527,21 @@ function relevantInputIdentity(value: unknown, label: string): string {
   const result = string(value, label);
   if (!RELEVANT_INPUT.test(result))
     invalid(label, "must be bounded:<sha256> or whole:<sha256>");
+  return result;
+}
+
+function challenge(value: unknown, label: string): string {
+  const result = string(value, label);
+  if (!CHALLENGE.test(result))
+    invalid(label, "must be a canonical 256-bit base64url challenge");
+  return result;
+}
+
+function ed25519Signature(value: unknown, label: string): string {
+  const result = string(value, label);
+  const decoded = Buffer.from(result, "base64");
+  if (decoded.length !== 64 || decoded.toString("base64") !== result)
+    invalid(label, "must be a canonical 64-byte Ed25519 signature");
   return result;
 }
 

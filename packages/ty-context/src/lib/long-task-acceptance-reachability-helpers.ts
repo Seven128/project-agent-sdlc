@@ -121,6 +121,51 @@ export function objectiveExternalActualAdmitted(
   );
 }
 
+const JUDGMENT_STANDARD_PROPERTIES = new Set([
+  "goal_scope_glossary.acceptance_meaning",
+  "goal_scope_glossary.decision_owner",
+  "architecture_ownership.selected_design",
+  "safety_compliance.expert_authority",
+  "safety_compliance.human_approval",
+  "privacy.preference",
+  "ai_ml.human_review",
+  "external_integration.external_confirmation",
+]);
+
+export function sourceBackedExternalJudgmentAdmitted(
+  manifest: SemanticFactManifestV1,
+  expected: Pick<
+    ExpectedExternalObligation,
+    "fact_ref" | "proof_ref" | "method"
+  >,
+): boolean {
+  if (!expected.fact_ref && !expected.proof_ref) return true;
+  if (
+    !expected.fact_ref ||
+    !expected.proof_ref ||
+    expected.method !== "exact_value"
+  )
+    return false;
+  const fact = manifest.facts.find((row) => row.key === expected.fact_ref);
+  const proof = manifest.proof_obligations.find(
+    (row) => row.key === expected.proof_ref,
+  );
+  const property = fact
+    ? manifest.property_dispositions.find(
+        (row) => row.key === fact.property_ref,
+      )
+    : null;
+  const family = fact
+    ? manifest.family_dispositions.find((row) => row.key === fact.family_ref)
+    : null;
+  if (!fact || !proof || proof.fact_ref !== fact.key || !property || !family)
+    return false;
+  return (
+    !property.standard ||
+    JUDGMENT_STANDARD_PROPERTIES.has(`${family.family}.${property.property}`)
+  );
+}
+
 export function sameSet(
   left: readonly string[],
   right: readonly string[],

@@ -1,4 +1,5 @@
 import type {
+  CompiledExternalConfirmationIdentityAssuranceV2,
   DeliveryCheckV2,
   DeliveryContractV2,
   DeliveryOutcomeV2,
@@ -232,6 +233,10 @@ export interface CompiledDeliveryContractV2 {
   authority_revision: number;
   claim_coverage: ClaimCoverageSummaryV2;
   acceptance_reachability: AcceptanceReachabilityV1;
+  external_confirmation_identity_assurances: Record<
+    string,
+    CompiledExternalConfirmationIdentityAssuranceV2
+  >;
   semantic_fact_manifest: DeliveryContractV2["semantic_fact_manifest"];
   task: DeliveryContractV2["task"];
   risk: DeliveryContractV2["risk"];

@@ -392,24 +392,11 @@ export async function validateContractForActivation(options: {
 function designTargetsForCheck(
   outcome: DeliveryContractV2["outcomes"][number],
   checkKey: string,
-  confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
+  _confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
 ): CompiledDesignTargetV2[] {
   return (outcome.product.surface_bindings ?? []).flatMap((binding) =>
     binding.design_targets
-      .filter(
-        (target) =>
-          target.conformance_check_ref === checkKey &&
-          !confirmations.some(
-            (confirmation) =>
-              confirmation.blocks_target &&
-              confirmation.impact_claims.some((claimRef) =>
-                target.claim_refs.some(
-                  (targetClaimRef) =>
-                    claimRef === `${outcome.key}.${targetClaimRef}`,
-                ),
-              ),
-          ),
-      )
+      .filter((target) => target.conformance_check_ref === checkKey)
       .map((target) => ({
         ...target,
         surface_binding_ref: binding.key,
@@ -420,59 +407,11 @@ function designTargetsForCheck(
 }
 
 function externallyBlockedDesignAssertionRefs(
-  outcome: DeliveryContractV2["outcomes"][number],
-  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
-  confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
+  _outcome: DeliveryContractV2["outcomes"][number],
+  _check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+  _confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
 ): Set<string> {
-  const refs = new Set<string>();
-  const impactedClaims = new Set<string>();
-  for (const binding of outcome.product.surface_bindings ?? [])
-    for (const target of binding.design_targets) {
-      if (target.conformance_check_ref !== check.key) continue;
-      const blocked = confirmations.some(
-        (confirmation) =>
-          confirmation.blocks_target &&
-          confirmation.impact_claims.some((claimRef) =>
-            target.claim_refs.some(
-              (targetClaimRef) =>
-                claimRef === `${outcome.key}.${targetClaimRef}`,
-            ),
-          ),
-      );
-      if (!blocked) continue;
-      for (const confirmation of confirmations)
-        if (
-          confirmation.blocks_target &&
-          confirmation.impact_claims.some((claimRef) =>
-            target.claim_refs.some(
-              (targetClaimRef) =>
-                claimRef === `${outcome.key}.${targetClaimRef}`,
-            ),
-          )
-        )
-          for (const claimRef of confirmation.impact_claims)
-            impactedClaims.add(claimRef);
-      refs.add(target.conformance_assertion_ref);
-      for (const method of target.verification_method_bindings)
-        refs.add(method.assertion_ref);
-      for (const method of target.symbolic_method_bindings ?? [])
-        refs.add(method.assertion_ref);
-      if (target.symbolic_certificate_binding)
-        refs.add(target.symbolic_certificate_binding.assertion_ref);
-    }
-  for (const assertion of [
-    ...check.positive_assertions,
-    ...check.negative_assertions,
-  ])
-    if (
-      assertion.evidence_capabilities.includes("state_delta") &&
-      assertion.claims.length > 0 &&
-      assertion.claims.every((claimRef) =>
-        impactedClaims.has(`${outcome.key}.${claimRef}`),
-      )
-    )
-      refs.add(assertion.key);
-  return refs;
+  return new Set();
 }
 
 function projectMachineCheck(

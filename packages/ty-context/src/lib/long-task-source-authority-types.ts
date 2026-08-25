@@ -19,12 +19,43 @@ export type SourceAuthorityDomain =
   "product" | "technical" | "design" | "acceptance" | "external";
 
 export type MaterialSourceFragmentKind =
+  | "heading"
   | "paragraph"
   | "list_item"
   | "table_row"
+  | "blockquote"
   | "given_when_then"
   | "fenced_code"
-  | "structured_config_line";
+  | "structured_config_line"
+  | "textual_html";
+
+export interface MaterialTextInputV2 {
+  input_key: string;
+  input_kind:
+    | "source_item"
+    | "attachment"
+    | "canonical_spec"
+    | "repository_preservation"
+    | "external_constraint"
+    | "delegated_instruction"
+    | "design_resource";
+  source_ref: string;
+  sha256: string;
+  authority_source_item_refs: string[];
+  authority_domain: SourceAuthorityDomain;
+  normalized_text: string;
+}
+
+export interface MaterialFragmentCoverageV2 {
+  material_nonblank_lines: number[];
+  covered_lines: number[];
+  excluded_separator_lines: number[];
+}
+
+export interface MaterialFragmentScanResultV2 {
+  fragments: MaterialSourceFragmentV2[];
+  coverage: MaterialFragmentCoverageV2;
+}
 
 export type SemanticAnchorKind =
   | "code_mark"
@@ -39,7 +70,9 @@ export type SemanticAnchorKind =
 
 export interface MaterialSourceFragmentV2 {
   key: string;
+  input_key: string;
   source_item_ref: string;
+  authority_source_item_refs: string[];
   source_path: string;
   authority_domain: SourceAuthorityDomain;
   kind: MaterialSourceFragmentKind;
@@ -54,6 +87,7 @@ export interface SemanticSourceAnchorV2 {
   key: string;
   fragment_ref: string;
   source_item_ref: string;
+  authority_source_item_refs: string[];
   authority_domain: SourceAuthorityDomain;
   kind: SemanticAnchorKind;
   value: string;

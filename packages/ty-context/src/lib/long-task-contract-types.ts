@@ -47,6 +47,32 @@ export interface KeyedPathV2 {
   path: string;
 }
 
+export type ExternalConfirmationIdentityAssuranceV2 =
+  | {
+      scheme: "ed25519";
+      key_id: string;
+      public_key_ref: string;
+    }
+  | {
+      scheme: "declared_only";
+    };
+
+export type CompiledExternalConfirmationIdentityAssuranceV2 =
+  | {
+      scheme: "ed25519";
+      key_id: string;
+      public_key_ref: string;
+      public_key_sha256: string;
+    }
+  | {
+      scheme: "declared_only";
+    };
+
+export interface ExternalConfirmationJudgmentBasisV2 {
+  kind: "subjective_preference" | "expert_assessment" | "authorization";
+  source_ref: string;
+}
+
 export interface ExternalConfirmationV2 {
   key: string;
   description: string;
@@ -58,6 +84,7 @@ export interface ExternalConfirmationV2 {
     id: string;
     role: string;
     authority_kind: "human" | "expert" | "external_system";
+    identity_assurance?: ExternalConfirmationIdentityAssuranceV2;
   };
   target_ref?: string;
   environment_identity?: string;
@@ -74,6 +101,7 @@ export interface ExternalConfirmationV2 {
     evidence_capabilities: EvidenceCapabilityV2[];
     expected_authority_ref: string;
     result_kind: "actual" | "judgment";
+    judgment_basis?: ExternalConfirmationJudgmentBasisV2;
   }>;
 }
 

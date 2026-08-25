@@ -95,9 +95,14 @@ export function generateClaims(outcome: DeliveryOutcomeV2): ProductClaimV2[] {
       ),
     ];
     claims.push(
-      claim(outcome.key, binding.claim_ref, "semantic_fact", requiredSurfaces, [
-        binding.applicability_ref,
-      ]),
+      claim(
+        outcome.key,
+        binding.claim_ref,
+        "semantic_fact",
+        requiredSurfaces,
+        [binding.applicability_ref],
+        binding.required_polarity ?? "positive",
+      ),
     );
   }
   for (const item of outcome.technical.forbidden_shortcuts)

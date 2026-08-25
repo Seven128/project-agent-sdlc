@@ -11,6 +11,7 @@ import type {
 } from "./long-task-delivery-types.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { assertionCapabilityFloor } from "./long-task-proof-capability-floor.js";
+import { claimSemanticCapabilityFloor } from "./long-task-claim-semantic-proof-floor.js";
 import { resolveExpectedAuthority } from "./long-task-expected-authority.js";
 import { validateSemanticFactProofFloors } from "./long-task-semantic-proof-adequacy.js";
 
@@ -114,6 +115,15 @@ function validateCheck(
       assertion,
       claim,
       expectations,
+      claimSemanticCapabilityFloor(
+        contract,
+        manifest,
+        outcomeKey,
+        claimRef,
+        assertion.applicability_ref ?? null,
+        "kind" in claim ? claim.kind : undefined,
+        "required_proof_surfaces" in claim ? claim.required_proof_surfaces : [],
+      ),
     );
     requiredCapabilities[assertion.key] = [...required].sort();
     const missing = [...required].filter(

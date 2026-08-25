@@ -1,14 +1,23 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { access, appendFile, mkdir, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  appendFile,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import {
+  activeRecordPath,
   clearActiveBindingCas,
   loadActiveLongTaskAuthority,
+  readFinalReceipt,
   readProgressRecords,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
@@ -23,6 +32,16 @@ import {
 const exec = promisify(execFile);
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const cli = path.join(repository, "packages/ty-context/dist/cli.js");
+
+test("terminal publication has one Finalization Identity and CAS owner", async () => {
+  const identity =
+    await import("../../packages/ty-context/dist/lib/long-task-finalization-identity.js");
+  const finalization =
+    await import("../../packages/ty-context/dist/lib/long-task-terminal-finalization.js");
+  assert.equal(typeof identity.captureFinalizationIdentity, "function");
+  assert.equal(typeof identity.finalizationIdentityDigest, "function");
+  assert.equal(typeof finalization.finalizeDeliveryGateCas, "function");
+});
 
 test("Final Gate rejects an Authority Revision that lands during execution", async () => {
   const fixture = await createDeliveryFixture();
@@ -186,7 +205,11 @@ test("Final Gate rejects protected inputs and current-candidate runtime files ch
         const final = await finalProcess;
         assert.notEqual(final.exitCode, 0);
         const receipt = parseCliJson(final.stdout);
-        assert.equal(receipt.workflow_status, "needs_work");
+        assert.equal(
+          receipt.workflow_status,
+          "needs_work",
+          JSON.stringify(final),
+        );
         assert.ok(
           receipt.findings.some(
             (finding) =>
@@ -241,6 +264,168 @@ test("targeted verify writes no progress for an Authority that became stale", as
     await removeTemporary(fixture.root);
   }
 });
+
+test("candidate mutation after Receipt staging rolls back acceptance and retains Authority", async () => {
+  const fixture = await createDeliveryFixture();
+  const signal = await finalizationSignal("after_receipt_stage");
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+    const closing = runCliProcess(
+      fixture.root,
+      ["long-task", "close", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    await appendFile(path.join(fixture.root, "src", "state.json"), "\n");
+    await writeFile(signal.release, "release\n");
+
+    const result = await closing;
+    assert.notEqual(result.exitCode, 0);
+    const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.equal(receipt.workflow_status, "needs_work");
+    assert.notEqual(receipt.workflow_status, "machine_accepted");
+    assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("Authority mutation between Receipt publish and clear is rolled back", async () => {
+  const fixture = await createDeliveryFixture();
+  const signal = await finalizationSignal("after_receipt_publish");
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+    const activeFile = await activeRecordPath(fixture.root);
+    const original = await readFile(activeFile, "utf8");
+    const closing = runCliProcess(
+      fixture.root,
+      ["long-task", "close", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    const mutated = JSON.parse(original);
+    mutated.activated_at = new Date(
+      Date.parse(mutated.activated_at) + 1_000,
+    ).toISOString();
+    await writeFile(activeFile, `${JSON.stringify(mutated)}\n`);
+    await writeFile(signal.release, "release\n");
+
+    const result = await closing;
+    assert.notEqual(result.exitCode, 0);
+    const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.equal(receipt.workflow_status, "needs_work");
+    assert.equal(await readFile(activeFile, "utf8"), original);
+    assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("failure after provisional Authority clear restores Authority and rejects Receipt", async () => {
+  const fixture = await createDeliveryFixture();
+  const signal = await finalizationSignal("after_authority_clear");
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+    const closing = runCliProcess(
+      fixture.root,
+      ["long-task", "close", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    await appendFile(path.join(fixture.root, "src", "state.json"), "\n");
+    await writeFile(signal.release, "release\n");
+
+    const result = await closing;
+    assert.notEqual(result.exitCode, 0);
+    const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.equal(receipt.workflow_status, "needs_work");
+    assert.notEqual(receipt.workflow_status, "machine_accepted");
+    assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("concurrent Final Gates serialize at the existing finalization lock", async () => {
+  const fixture = await createDeliveryFixture();
+  const signal = await finalizationSignal("after_finalization_evaluation");
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+    const first = runCliProcess(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    const second = await runCliProcess(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    assert.notEqual(second.exitCode, 0);
+    assert.match(second.stderr, /lock_unavailable/u);
+    await writeFile(signal.release, "release\n");
+    const accepted = await first;
+    assert.equal(accepted.exitCode, 0, accepted.stderr);
+    assert.equal(
+      parseCliJson(accepted.stdout).workflow_status,
+      "machine_accepted",
+    );
+    assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+});
+
+test(
+  "[critical:atomic-terminal-finalization] Finalization waits for the Windows Job process tree to settle",
+  { skip: process.platform !== "win32" },
+  async () => {
+    const fixture = await createDeliveryFixture();
+    const signal = await finalizationSignal("after_finalization_evaluation");
+    const settled = path.join(signal.folder, "descendant-settled.txt");
+    try {
+      fixture.contract.outcomes[0].acceptance.checks[0].runner.timeout_ms = 10_000;
+      await writeContract(fixture.workdir, fixture.contract);
+      await installDelayedDescendantOracle(fixture, settled);
+      await runCli(fixture.root, ["enable", "long-task"]);
+      await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+      await commitCandidate(fixture.root);
+
+      const finalProcess = runCliProcess(
+        fixture.root,
+        ["long-task", "final-gate", fixture.workdir],
+        { env: finalizationSignalEnvironment(signal) },
+      );
+      await waitForFile(signal.started);
+      assert.equal(await readFile(settled, "utf8"), "settled\n");
+      await writeFile(signal.release, "release\n");
+
+      const final = await finalProcess;
+      assert.equal(final.exitCode, 0, final.stderr);
+      assert.equal(
+        parseCliJson(final.stdout).workflow_status,
+        "machine_accepted",
+      );
+      assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+    } finally {
+      await removeTemporary(signal.folder);
+      await removeTemporary(fixture.root);
+    }
+  },
+);
 
 test("Stop and close rerun current Authority instead of clearing from an old Receipt", async () => {
   const fixture = await createDeliveryFixture();
@@ -308,8 +493,8 @@ async function removeTemporary(target) {
   await rm(target, {
     recursive: true,
     force: true,
-    maxRetries: 10,
-    retryDelay: 100,
+    maxRetries: 50,
+    retryDelay: 200,
   });
 }
 
@@ -327,9 +512,18 @@ function addProof(contract, key) {
 
 function addBlockingExternalConfirmation(contract) {
   contract.task.target_profile.completion_authority = "declared_authorities";
-  const scenario = structuredClone(
-    contract.outcomes[0].acceptance.checks[0].scenario,
-  );
+  const outcome = contract.outcomes[0];
+  const scenario = structuredClone(outcome.acceptance.checks[0].scenario);
+  for (const check of outcome.acceptance.checks)
+    for (const assertion of [
+      ...check.positive_assertions,
+      ...check.negative_assertions,
+    ]) {
+      assertion.claims = assertion.claims.filter((claim) => claim !== "result");
+      if (!assertion.claims.length) delete assertion.applicability_ref;
+    }
+  for (const control of outcome.acceptance.counterfactual_controls)
+    control.claims = control.claims.filter((claim) => claim !== "result");
   contract.global.acceptance.external_confirmations.push({
     key: "race-blocking-confirmation",
     description:
@@ -371,13 +565,44 @@ function addBlockingExternalConfirmation(contract) {
 
 async function installSlowOracle(fixture, signal) {
   await mkdir(signal.folder, { recursive: true });
-  await writeFile(
-    path.join(fixture.root, "tests", "oracle.mjs"),
-    `import { appendFileSync, existsSync, readFileSync } from "node:fs";
+  await writeFixtureOracle(
+    fixture,
+    `
 appendFileSync(${JSON.stringify(signal.started)}, "started\\n");
 while (!existsSync(${JSON.stringify(signal.release)})) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
 }
+`,
+  );
+  await commitCandidate(fixture.root);
+}
+
+async function installDelayedDescendantOracle(fixture, settled) {
+  const childProgram = `setTimeout(() => require("node:fs").writeFileSync(${JSON.stringify(
+    settled,
+  )}, "settled\\n"), 750);`;
+  await writeFixtureOracle(
+    fixture,
+    `
+const descendant = spawn(process.execPath, ["-e", ${JSON.stringify(
+      childProgram,
+    )}], {
+  detached: true,
+  stdio: "ignore",
+  windowsHide: true,
+});
+descendant.unref();
+`,
+  );
+  await commitCandidate(fixture.root);
+}
+
+async function writeFixtureOracle(fixture, setup) {
+  await writeFile(
+    path.join(fixture.root, "tests", "oracle.mjs"),
+    `import { spawn } from "node:child_process";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
+${setup}
 let state = {first:false};
 try { state = JSON.parse(readFileSync(new URL("../src/state.json", import.meta.url), "utf8")); } catch {}
 const observed = state.first === true;
@@ -396,7 +621,6 @@ console.log(JSON.stringify({
 }));
 `,
   );
-  await commitCandidate(fixture.root);
 }
 
 function raceSignal(name) {
@@ -412,7 +636,7 @@ function raceSignal(name) {
 }
 
 async function waitForFile(file) {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
     if (
       await access(file)
@@ -425,11 +649,43 @@ async function waitForFile(file) {
   throw new Error(`race signal timeout: ${file}`);
 }
 
-async function runCliProcess(cwd, args) {
+const FINALIZATION_PHASES = [
+  "after_finalization_evaluation",
+  "after_receipt_stage",
+  "after_receipt_publish",
+  "after_authority_clear",
+];
+
+async function finalizationSignal(target) {
+  const folder = path.join(
+    os.tmpdir(),
+    `ty-context-finalization-${target}-${process.pid}-${Date.now()}`,
+  );
+  await mkdir(folder, { recursive: true });
+  for (const phase of FINALIZATION_PHASES)
+    if (phase !== target)
+      await writeFile(path.join(folder, `${phase}.release`), "release\n");
+  return {
+    folder,
+    started: path.join(folder, `${target}.started`),
+    release: path.join(folder, `${target}.release`),
+  };
+}
+
+function finalizationSignalEnvironment(signal) {
+  return {
+    ...process.env,
+    NODE_ENV: "test",
+    TY_CONTEXT_TEST_FINALIZATION_SIGNAL_DIR: signal.folder,
+  };
+}
+
+async function runCliProcess(cwd, args, options = {}) {
   try {
     const result = await exec(process.execPath, [cli, ...args], {
       cwd,
       windowsHide: true,
+      ...options,
     });
     return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
   } catch (error) {

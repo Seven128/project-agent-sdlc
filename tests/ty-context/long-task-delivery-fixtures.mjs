@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import { rmSync } from "node:fs";
 import {
   cp,
@@ -56,6 +57,8 @@ export {
 };
 
 const exec = promisify(execFile);
+export const FIXTURE_EXTERNAL_PUBLIC_KEY_REF =
+  "project_context/authorities/fixture-owner.pub";
 const repo = fileURLToPath(new URL("../..", import.meta.url));
 const cli = path.join(repo, "packages/ty-context/dist/cli.js");
 const fixtureSeedEnvironment = "TY_CONTEXT_DELIVERY_FIXTURE_SEED_ROOT";
@@ -251,7 +254,7 @@ export async function createDeliveryFixture(options = {}) {
   const contract = deliveryContract(options);
   addDefaultSensitivityControls(contract);
   await writeContract(workdir, contract, {
-    synchronizeSemanticManifest: false,
+    synchronizeSemanticManifest: Boolean(options.externalConfirmation),
   });
   return { root, workdir, contract };
 }
@@ -345,6 +348,16 @@ async function initializeSeedRepository(root, externalConfirmation) {
     path.join(root, "project_context", "areas", "main.md"),
     "# Main\n",
   );
+  if (externalConfirmation) {
+    const { publicKey } = generateKeyPairSync("ed25519");
+    await mkdir(path.join(root, "project_context", "authorities"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(root, ...FIXTURE_EXTERNAL_PUBLIC_KEY_REF.split("/")),
+      publicKey.export({ type: "spki", format: "pem" }),
+    );
+  }
   await writeFile(
     path.join(root, "project_context", "context.toml"),
     `[[areas]]
@@ -1075,6 +1088,8 @@ export async function writeContract(
   contract,
   { synchronizeSemanticManifest = true } = {},
 ) {
+  synchronizeFixtureExternalAuthentication(contract);
+  await ensureFixtureExternalPublicKey(workdir, contract);
   if (
     synchronizeSemanticManifest &&
     contract.task?.id === "fixture-task" &&
@@ -1085,6 +1100,72 @@ export async function writeContract(
     path.join(workdir, "delivery-contract.yaml"),
     YAML.stringify(contract, { lineWidth: 0 }),
   );
+}
+
+async function ensureFixtureExternalPublicKey(workdir, contract) {
+  const required = (contract.global?.acceptance?.external_confirmations ?? [])
+    .some(
+      (confirmation) =>
+        confirmation.blocks_target &&
+        confirmation.actor?.identity_assurance?.scheme === "ed25519" &&
+        confirmation.actor.identity_assurance.public_key_ref ===
+          FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
+    );
+  if (!required) return;
+  const root = path.dirname(path.resolve(workdir));
+  const keyPath = path.join(
+    root,
+    ...FIXTURE_EXTERNAL_PUBLIC_KEY_REF.split("/"),
+  );
+  if (
+    await stat(keyPath)
+      .then(() => true)
+      .catch(() => false)
+  )
+    return;
+  const { publicKey } = generateKeyPairSync("ed25519");
+  await mkdir(path.dirname(keyPath), { recursive: true });
+  await writeFile(keyPath, publicKey.export({ type: "spki", format: "pem" }));
+}
+
+export function synchronizeFixtureExternalAuthentication(contract) {
+  for (const confirmation of contract.global?.acceptance
+    ?.external_confirmations ?? []) {
+    if (
+      confirmation.blocks_target &&
+      confirmation.actor &&
+      !confirmation.actor.identity_assurance
+    )
+      confirmation.actor.identity_assurance = {
+        scheme: "ed25519",
+        key_id: "fixture-owner-2026",
+        public_key_ref: FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
+      };
+    for (const obligation of confirmation.obligations ?? []) {
+      if (obligation.result_kind !== "judgment" || obligation.judgment_basis)
+        continue;
+      const sourceClaim = contract.source_claims?.find((claim) =>
+        sourceClaimTargets(claim.disposition, obligation.claim_ref),
+      ) ?? contract.source_claims?.[0];
+      if (!sourceClaim) continue;
+      obligation.judgment_basis = {
+        kind:
+          confirmation.actor?.authority_kind === "expert"
+            ? "expert_assessment"
+            : "authorization",
+        source_ref: sourceClaim.key,
+      };
+    }
+  }
+}
+
+function sourceClaimTargets(disposition, claimRef) {
+  if (!disposition || typeof disposition !== "object") return false;
+  if (disposition.type === "claim" || disposition.type === "global_constraint")
+    return disposition.refs.includes(claimRef);
+  if (disposition.type === "outcome_result")
+    return disposition.ref === claimRef;
+  return false;
 }
 
 export async function readState(root) {

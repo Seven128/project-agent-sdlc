@@ -10,6 +10,7 @@ import {
   parseApplicableKeyedStatements,
   parseClaimApplicability,
   parseKeyedPaths,
+  repositoryFile,
   repositoryFiles,
   string,
   strings,
@@ -381,7 +382,12 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
 }
 
 function parseExternalActor(value: unknown, label: string) {
-  const row = object(value, label, ["id", "role", "authority_kind"]);
+  const row = object(
+    value,
+    label,
+    ["id", "role", "authority_kind"],
+    ["identity_assurance"],
+  );
   return {
     id: string(row.id, `${label}.id`),
     role: string(row.role, `${label}.role`),
@@ -390,7 +396,37 @@ function parseExternalActor(value: unknown, label: string) {
       ["human", "expert", "external_system"] as const,
       `${label}.authority_kind`,
     ),
+    ...(Object.hasOwn(row, "identity_assurance")
+      ? {
+          identity_assurance: parseExternalIdentityAssurance(
+            row.identity_assurance,
+            `${label}.identity_assurance`,
+          ),
+        }
+      : {}),
   };
+}
+
+function parseExternalIdentityAssurance(value: unknown, label: string) {
+  const tagged = object(value, label, ["scheme"], ["key_id", "public_key_ref"]);
+  const scheme = literal(
+    tagged.scheme,
+    ["ed25519", "declared_only"] as const,
+    `${label}.scheme`,
+  );
+  if (scheme === "declared_only") {
+    object(value, label, ["scheme"]);
+    return { scheme } as const;
+  }
+  const row = object(value, label, ["scheme", "key_id", "public_key_ref"]);
+  return {
+    scheme,
+    key_id: key(row.key_id, `${label}.key_id`),
+    public_key_ref: repositoryFile(
+      row.public_key_ref,
+      `${label}.public_key_ref`,
+    ),
+  } as const;
 }
 
 function parseExternalScenario(value: unknown, label: string) {
@@ -415,18 +451,23 @@ function parseExternalStatements(value: unknown, label: string) {
 function parseExternalObligations(value: unknown, label: string) {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, [
-      "key",
-      "claim_ref",
-      "applicability_ref",
-      "fact_ref",
-      "proof_ref",
-      "method",
-      "proof_surface",
-      "evidence_capabilities",
-      "expected_authority_ref",
-      "result_kind",
-    ]);
+    const row = object(
+      item,
+      itemLabel,
+      [
+        "key",
+        "claim_ref",
+        "applicability_ref",
+        "fact_ref",
+        "proof_ref",
+        "method",
+        "proof_surface",
+        "evidence_capabilities",
+        "expected_authority_ref",
+        "result_kind",
+      ],
+      ["judgment_basis"],
+    );
     return {
       key: key(row.key, `${itemLabel}.key`),
       claim_ref: string(row.claim_ref, `${itemLabel}.claim_ref`),
@@ -475,6 +516,26 @@ function parseExternalObligations(value: unknown, label: string) {
         ["actual", "judgment"] as const,
         `${itemLabel}.result_kind`,
       ),
+      ...(Object.hasOwn(row, "judgment_basis")
+        ? {
+            judgment_basis: parseExternalJudgmentBasis(
+              row.judgment_basis,
+              `${itemLabel}.judgment_basis`,
+            ),
+          }
+        : {}),
     };
   });
+}
+
+function parseExternalJudgmentBasis(value: unknown, label: string) {
+  const row = object(value, label, ["kind", "source_ref"]);
+  return {
+    kind: literal(
+      row.kind,
+      ["subjective_preference", "expert_assessment", "authorization"] as const,
+      `${label}.kind`,
+    ),
+    source_ref: key(row.source_ref, `${label}.source_ref`),
+  };
 }

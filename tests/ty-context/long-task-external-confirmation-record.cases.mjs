@@ -13,7 +13,10 @@ import {
   signExternalConfirmationRecordV1,
 } from "../../packages/ty-context/dist/index.js";
 import { externalConfirmationRecordPath } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-state.js";
-import { activeRecordPath } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  activeRecordPath,
+  runtimePath,
+} from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
   commitCandidate,
   createDeliveryFixture,
@@ -106,6 +109,141 @@ test("Record v1 is strict and cannot collapse obligations into an aggregate pass
   );
 });
 
+test("blocking fulfillment has a closed authenticated V2 record owner", async () => {
+  const shape = await import(
+    "../../packages/ty-context/dist/lib/long-task-external-confirmation-shape.js"
+  );
+  const attestation = await import(
+    "../../packages/ty-context/dist/lib/long-task-external-confirmation-attestation.js"
+  );
+  const challenges = await import(
+    "../../packages/ty-context/dist/lib/long-task-external-confirmation-challenge.js"
+  );
+  assert.equal(typeof shape.parseExternalConfirmationRecordV2, "function");
+  assert.equal(typeof shape.externalConfirmationV2SignablePayload, "function");
+  assert.equal(typeof attestation.verifyExternalConfirmationAttestation, "function");
+  assert.equal(typeof challenges.readOrCreateExternalConfirmationChallenge, "function");
+  assert.equal(typeof challenges.rotateExternalConfirmationChallenge, "function");
+});
+
+test("Record v1 remains audit-readable but cannot fulfill a blocking obligation", async () => {
+  const fixture = await externalFixture();
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+    ]);
+    const v2 = await buildPassingRecord(fixture, prepared);
+    const legacy = signExternalConfirmationRecordV1({
+      schema_version: "long-task-external-confirmation-record-v1",
+      confirmation_ref: v2.confirmation_ref,
+      compiled_identity: v2.compiled_identity,
+      authority_revision: v2.authority_revision,
+      candidate: v2.candidate,
+      actor: v2.actor,
+      session: v2.session,
+      results: v2.results.map(({ result_kind: _kind, ...result }) => result),
+      artifact_hashes: Object.fromEntries(
+        Object.entries(v2.artifact_snapshots).map(([ref, snapshot]) => [
+          ref,
+          snapshot.sha256,
+        ]),
+      ),
+      relevant_input_identity: v2.relevant_input_identity,
+    });
+    const submission = await writeSubmissionRecord(
+      fixture,
+      "legacy-record.json",
+      legacy,
+    );
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        submission,
+      ]),
+      /legacy_unattested/u,
+    );
+    await writeFile(
+      externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
+      `${JSON.stringify(legacy, null, 2)}\n`,
+    );
+    const status = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.equal(status.confirmations[0].state, "legacy_unattested");
+    assert.equal(status.confirmations[0].signature_verified, false);
+    const final = await runCliFailure(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(final.workflow_status, "needs_work");
+    assert.notEqual(final.workflow_status, "delivery_accepted");
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("tampering with a frozen artifact snapshot invalidates blocking fulfillment", async () => {
+  const fixture = await externalFixture();
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+    ]);
+    const record = await buildPassingRecord(fixture, prepared);
+    await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      await writeSubmissionRecord(fixture, "artifact-tamper.json", record),
+    ]);
+    const snapshot = Object.values(record.artifact_snapshots)[0];
+    assert.ok(snapshot);
+    await writeFile(
+      runtimePath(fixture.workdir, snapshot.store_ref),
+      "tampered immutable snapshot\n",
+    );
+
+    const status = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "status",
+      fixture.workdir,
+    ]);
+    assert.equal(status.confirmations[0].state, "stale");
+    assert.equal(status.confirmations[0].artifact_snapshot_integrity, false);
+
+    const final = await runCliFailure(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(final.workflow_status, "needs_work");
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test("blocking external obligations remain pending and cannot clear Active Authority", async () => {
   const fixture = await externalFixture({ batching: true });
   try {
@@ -141,7 +279,20 @@ test("blocking external obligations remain pending and cannot clear Active Autho
     );
     assert.equal(
       prepared.actor_identity_boundary,
-      "declared_identity_and_record_integrity_only_not_authentication",
+      "detached_ed25519_required_for_blocking_fulfillment",
+    );
+    assert.equal(prepared.acceptance_effect, "none");
+    assert.equal(
+      prepared.notice,
+      "Preparation output does not establish acceptance.",
+    );
+    assert.ok(
+      prepared.confirmations.every(
+        (confirmation) =>
+          confirmation.identity_assurance.scheme === "ed25519" &&
+          confirmation.challenge.length === 43 &&
+          /^[a-f0-9]{64}$/u.test(confirmation.signable_canonical_digest),
+      ),
     );
 
     const stop = await runCliFailure(fixture.root, [

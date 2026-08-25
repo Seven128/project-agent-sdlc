@@ -94,11 +94,11 @@ export const migrations: Migration[] = [
     id: "long-task-v2-semantic-drift-authority",
     introducedIn: "0.7.2",
     description:
-      "Require explicit Stage, target profile/root runtime, journey scenario and evidence-capability authority in V2 Long-Task Contracts.",
+      "Require explicit Stage, target profile/root runtime, journey scenario, evidence-capability authority and authenticated exact blocking External Confirmation in V2 Long-Task Contracts.",
     scope: ".long-task/delivery-contract.yaml",
     risk: "manual",
     manualMessage:
-      "These product and proof semantics cannot be inferred safely. Preserve Source, then explicitly author stages, vertical Outcome membership, target profile and execution targets, success/degradation requirements, Given/When scenarios, evidence capabilities and typed external-confirmation impact before recompiling. Historical Progress and Receipts remain audit-only and must not be imported as acceptance.",
+      "These product and proof semantics cannot be inferred safely. Preserve Source, then explicitly author stages, vertical Outcome membership, target profile and execution targets, success/degradation requirements, Given/When scenarios, evidence capabilities, exact obligation authority and authenticated blocking External Confirmation before recompiling. Missing completion_authority remains machine_only; resolve machine/external conflicts rather than synthesizing authority. Historical Progress, V1 External records and Receipts remain audit-only and must not be imported as acceptance.",
     detect: detectLongTaskSemanticDriftAuthority,
     verify: verifyNoop,
   },

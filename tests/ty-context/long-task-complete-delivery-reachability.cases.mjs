@@ -28,7 +28,29 @@ import {
   sourceItem,
 } from "./long-task-complete-delivery-closure-fixture.mjs";
 
-test("blocking external authority owns the exact optional proof surface", () => {
+function authorizeJudgment(contract, confirmation) {
+  confirmation.actor.identity_assurance = {
+    scheme: "ed25519",
+    key_id: "fixture-owner-2026",
+    public_key_ref: "project_context/authorities/fixture-owner.pub",
+  };
+  for (const obligation of confirmation.obligations)
+    obligation.judgment_basis = {
+      kind: "authorization",
+      source_ref: "fixture-external-authority",
+    };
+  contract.source_claims.push({
+    key: "fixture-external-authority",
+    source_ref: "source.md#fixture-external-authority",
+    statement: confirmation.description,
+    disposition: {
+      type: "external_confirmation",
+      refs: [confirmation.key],
+    },
+  });
+}
+
+test("an admitted machine route cannot be overridden by a blocking external route", () => {
   const contract = deliveryContract();
   contract.task.target_profile.completion_authority = "declared_authorities";
   const check = contract.outcomes[0].acceptance.checks[0];
@@ -41,7 +63,7 @@ test("blocking external authority owns the exact optional proof surface", () => 
     ...structuredClone(check),
     key: "first-result-static-check",
     journey_roles: ["success"],
-    proof_surface: "static_analysis",
+    proof_surface: "runtime_behavior",
     positive_assertions: [
       {
         ...structuredClone(resultAssertion),
@@ -91,6 +113,10 @@ test("blocking external authority owns the exact optional proof surface", () => 
       ],
     },
   ];
+  authorizeJudgment(
+    contract,
+    contract.global.acceptance.external_confirmations[0],
+  );
   const claims = compileProductClaimCoverage(contract, {
     allow_uncovered: true,
   });
@@ -121,12 +147,56 @@ test("blocking external authority owns the exact optional proof surface", () => 
     (row) => row.claim_ref === "first.result",
   );
   assert.ok(result);
-  assert.equal(result.status, "external_fulfillable");
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "machine_external_authority_conflict");
   assert.equal(result.proof_surface, "runtime_behavior");
   assert.equal(
     result.source_obligation_ref,
     "claim:first.result:first-root-success:runtime_behavior",
   );
+});
+
+test("multiple admitted machine routes are authority-ambiguous instead of first-match accepted", () => {
+  const contract = deliveryContract();
+  const check = contract.outcomes[0].acceptance.checks[0];
+  const duplicate = structuredClone(check);
+  duplicate.key = "duplicate-machine-check";
+  duplicate.positive_assertions = duplicate.positive_assertions.map((row) => ({
+    ...row,
+    key: `duplicate-${row.key}`,
+  }));
+  contract.outcomes[0].acceptance.checks.push(duplicate);
+  const claims = compileProductClaimCoverage(contract, { allow_uncovered: true });
+  const compiled = [check, duplicate].map((row) => ({
+    key: row.key,
+    outcome_key: "first",
+    completion_role: "semantic",
+    observation_authorities: row.positive_assertions
+      .filter((assertion) => assertion.claims.length)
+      .map((assertion) => ({
+        assertion_ref: assertion.key,
+        claim_refs: [...assertion.claims],
+        obligation_ref: `claim:${assertion.claims[0]}`,
+        authority: "package_process_json_exact",
+      })),
+    required_evidence_capabilities: Object.fromEntries(
+      row.positive_assertions.map((assertion) => [
+        assertion.key,
+        assertion.evidence_capabilities,
+      ]),
+    ),
+  }));
+  const result = compileAcceptanceReachability({
+    contract,
+    claims,
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: compiled,
+  }).obligations.find(
+    (row) => row.claim_ref === "first.requirement.observe-first",
+  );
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "authority_route_ambiguous");
 });
 
 test("externalized population Claims retain population set-equality semantics", () => {
@@ -184,6 +254,7 @@ test("externalized population Claims retain population set-equality semantics", 
     ],
   };
   contract.global.acceptance.external_confirmations = [confirmation];
+  authorizeJudgment(contract, confirmation);
   const reachability = () =>
     compileAcceptanceReachability({
       contract,
@@ -212,9 +283,106 @@ test("externalized population Claims retain population set-equality semantics", 
   assert.ok(result);
   assert.equal(result.status, "external_fulfillable");
   assert.equal(result.method, "population_set_equality");
+
+  confirmation.actor.identity_assurance = { scheme: "declared_only" };
+  result = reachability().obligations.find(
+    (row) => row.claim_ref === "first.obligation.implement-first",
+  );
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "external_confirmation_decomposition_invalid");
 });
 
-test("external confirmation relevant-input identity includes declared Binding targets", () => {
+test("objective Semantic Facts reject judgment but admit exact external Actual", () => {
+  const contract = deliveryContract({ externalConfirmation: true });
+  const manifest = fixtureSemanticManifest({ externalConfirmation: true });
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const outcome = contract.outcomes[0];
+  const binding = outcome.semantic_fact_bindings.proofs[0];
+  const proof = manifest.proof_obligations.find(
+    (row) => row.key === binding.proof_ref,
+  );
+  assert.ok(proof);
+  outcome.semantic_fact_bindings.proofs = [
+    {
+      proof_ref: binding.proof_ref,
+      fact_ref: binding.fact_ref,
+      method: binding.method,
+      proof_surface: binding.proof_surface,
+      evidence_capabilities: [...binding.evidence_capabilities],
+      authority: "external_confirmation",
+      confirmation_ref: "fixture-external",
+    },
+  ];
+  const claimRef = "first.semantic_fact.fact.first.observable";
+  const confirmation = {
+    key: "fixture-external",
+    description: "Capture the exact externally observed Semantic Fact.",
+    owner: "release-owner",
+    kind: "field_validation",
+    impact_claims: [claimRef],
+    blocks_target: true,
+    actor: {
+      id: "fixture-external-system",
+      role: "declared product system",
+      authority_kind: "external_system",
+      identity_assurance: {
+        scheme: "ed25519",
+        key_id: "fixture-system-2026",
+        public_key_ref: "project_context/authorities/fixture-owner.pub",
+      },
+    },
+    target_ref: "fixture-app",
+    environment_identity: "fixture-external-environment-v1",
+    scenario: structuredClone(outcome.acceptance.checks[0].scenario),
+    evidence_requirements: [
+      {
+        key: "semantic-observation",
+        statement: "Capture the exact Semantic Fact Actual.",
+      },
+    ],
+    obligations: [
+      {
+        key: "confirm-first-semantic-fact",
+        claim_ref: claimRef,
+        applicability_ref: "first-root-success",
+        fact_ref: binding.fact_ref,
+        proof_ref: binding.proof_ref,
+        method: binding.method,
+        proof_surface: binding.proof_surface,
+        evidence_capabilities: [...binding.evidence_capabilities],
+        expected_authority_ref: `semantic-proof:${binding.proof_ref}`,
+        result_kind: "judgment",
+        judgment_basis: {
+          kind: "expert_assessment",
+          source_ref: "fixture-external",
+        },
+      },
+    ],
+  };
+  contract.global.acceptance.external_confirmations = [confirmation];
+
+  const reachability = () =>
+    compileAcceptanceReachability({
+      contract,
+      claims: compileProductClaimCoverage(contract, { allow_uncovered: true }),
+      manifest,
+      compiled_checks: [],
+    }).obligations.find((row) => row.proof_ref === proof.key);
+
+  let result = reachability();
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "external_confirmation_decomposition_invalid");
+
+  confirmation.obligations[0].result_kind = "actual";
+  delete confirmation.obligations[0].judgment_basis;
+  result = reachability();
+  assert.ok(result);
+  assert.equal(result.status, "external_fulfillable");
+});
+
+test("blocking external confirmation uses whole-candidate identity", () => {
   const file = (path, sha256) => ({
     path,
     mode: "100644",
@@ -222,6 +390,13 @@ test("external confirmation relevant-input identity includes declared Binding ta
     sha256,
   });
   const compiled = {
+    global: {
+      acceptance: {
+        external_confirmations: [
+          { key: "confirm-first", blocks_target: true },
+        ],
+      },
+    },
     acceptance_reachability: {
       obligations: [
         {
@@ -279,7 +454,7 @@ test("external confirmation relevant-input identity includes declared Binding ta
     "confirm-first",
     manifest,
   );
-  assert.equal(identity.mode, "bounded_paths");
+  assert.equal(identity.mode, "whole_candidate");
   assert.deepEqual(identity.paths, [
     "carriers/file-helper.json",
     "carriers/glob-helper.json",
@@ -288,6 +463,63 @@ test("external confirmation relevant-input identity includes declared Binding ta
     "generated/result.json",
     "owner/owned.json",
     "support/helper.json",
+    "targets/product.json",
+    "unrelated/ignored.json",
+  ]);
+});
+
+test("non-blocking advisory identity can retain bounded-path diagnostics", () => {
+  const compiled = {
+    global: {
+      acceptance: {
+        external_confirmations: [
+          { key: "confirm-first", blocks_target: false },
+        ],
+      },
+    },
+    acceptance_reachability: {
+      obligations: [
+        {
+          status: "external_fulfillable",
+          confirmation_ref: "confirm-first",
+          outcome_key: "first",
+        },
+      ],
+    },
+    outcomes: [
+      {
+        key: "first",
+        product: { owner: { path_globs: ["owner/**"] } },
+        technical: {
+          expected_change_paths: [],
+          allowed_support_paths: [],
+          bindings: [
+            {
+              kind: "file",
+              target: "targets/product.json",
+              carrier_paths: ["targets/product.json"],
+            },
+          ],
+        },
+      },
+    ],
+  };
+  const manifest = {
+    snapshot_sha256: "f".repeat(64),
+    files: [
+      { path: "owner/owned.json", mode: 0o100644, size: 1, sha256: "a" },
+      { path: "targets/product.json", mode: 0o100644, size: 1, sha256: "b" },
+      { path: "unrelated/ignored.json", mode: 0o100644, size: 1, sha256: "c" },
+    ],
+  };
+  const identity = deriveRelevantExternalInputIdentity(
+    compiled,
+    "confirm-first",
+    manifest,
+  );
+  assert.equal(identity.mode, "bounded_paths");
+  assert.deepEqual(identity.paths, [
+    "owner/owned.json",
     "targets/product.json",
   ]);
 });

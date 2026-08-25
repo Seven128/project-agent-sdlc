@@ -46,9 +46,7 @@ test("read-only Product Conformance is required only for weak, complex deliverie
       blocks_target: true,
     },
   ];
-  assert.doesNotThrow(() =>
-    validateSemanticConformance(staged, "strict", []),
-  );
+  assert.doesNotThrow(() => validateSemanticConformance(staged, "strict", []));
   staged.global.acceptance.external_confirmations[0].blocks_target = false;
   assert.throws(
     () => validateSemanticConformance(staged, "strict", []),
@@ -111,6 +109,17 @@ test("old V2 Contracts receive an indexed manual migration instead of synthesize
     delete old.outcomes[0].acceptance.checks[0].scenario;
     delete old.outcomes[0].acceptance.checks[0].positive_assertions[0]
       .evidence_capabilities;
+    old.global.acceptance.external_confirmations = [
+      {
+        key: "legacy-blocking-external",
+        description: "Legacy blocking confirmation without exact authority.",
+        owner: "product-owner",
+        kind: "field_validation",
+        impact_claims: ["first.result"],
+        blocks_target: true,
+      },
+    ];
+    delete old.task.target_profile.completion_authority;
     await writeContract(fixture.workdir, old);
 
     assert.throws(
@@ -124,6 +133,11 @@ test("old V2 Contracts receive an indexed manual migration instead of synthesize
     assert.ok(migration);
     assert.match(migration.message, /Re-author these meanings from Source/u);
     assert.match(migration.message, /required_target_refs/u);
+    assert.match(migration.message, /identity_assurance|actor/u);
+    assert.match(
+      migration.message,
+      /completion_authority=declared_authorities_or_remove_blocking_external/u,
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -170,7 +184,10 @@ test("[critical:terminal-state-current-evidence] Stage frontier and terminal tar
     ]);
     assert.equal(failed.workflow_status, "needs_work");
     assert.equal(failed.target_state, "not_accepted");
-    assert.deepEqual(failed.stage_results, { first: "passed", second: "failed" });
+    assert.deepEqual(failed.stage_results, {
+      first: "passed",
+      second: "failed",
+    });
 
     await writeFile(
       path.join(fixture.root, "src", "state.json"),
@@ -189,7 +206,10 @@ test("[critical:terminal-state-current-evidence] Stage frontier and terminal tar
     );
     assert.equal(accepted.workflow_status, "machine_accepted");
     assert.equal(accepted.target_state, "target_profile_usable");
-    assert.deepEqual(accepted.stage_results, { first: "passed", second: "passed" });
+    assert.deepEqual(accepted.stage_results, {
+      first: "passed",
+      second: "passed",
+    });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
@@ -218,7 +238,10 @@ test("targeted verification is not gated by the acceptance frontier", async () =
       resumed.next_safe_action,
       /advisory acceptance\/verification frontier/u,
     );
-    assert.match(resumed.next_safe_action, /Implementation order remains Goal-owned/u);
+    assert.match(
+      resumed.next_safe_action,
+      /Implementation order remains Goal-owned/u,
+    );
     assert.doesNotMatch(
       resumed.next_safe_action,
       /Implement and verify ready Outcome/u,

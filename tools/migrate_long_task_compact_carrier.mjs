@@ -61,6 +61,12 @@ const sourceAuthoritySync = options.syncSourceAuthority
       source_claims_updated: 0,
       canonical_targets_updated: 0,
       acceptance_assertions_updated: 0,
+      source_fragments_preserved: 0,
+      source_fragments_regenerated: 0,
+      source_fragments_decision_required: 0,
+      stale_source_fragments_removed: 0,
+      stale_semantic_anchors_removed: 0,
+      invalidated_basis_refs_removed: 0,
     };
 const compactSource = createSemanticFactCompactCarrier(manifest);
 const sourceDuplicateStatistics = compactStructureStatistics(
@@ -83,10 +89,7 @@ const compactContract = createLongTaskCompactContract(
 const contractDuplicateStatistics = compactStructureStatistics(
   compactContract,
   (root) =>
-    longTaskCompactSharedStructureTargets(
-      root,
-      root.compact_semantic_carrier,
-    ),
+    longTaskCompactSharedStructureTargets(root, root.compact_semantic_carrier),
   "contract",
 );
 const contractAfter = preserveEol(

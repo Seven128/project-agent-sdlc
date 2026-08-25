@@ -20,6 +20,7 @@ export interface SemanticFactBindingV2 {
   fact_revision_digest?: string;
   claim_ref: string;
   applicability_ref: string;
+  required_polarity?: "positive" | "negative";
 }
 
 export type SemanticFactProofBindingV2 =

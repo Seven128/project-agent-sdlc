@@ -20,6 +20,11 @@ import {
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
+  deriveSemanticSourceAnchors,
+  scanMaterialTextInput,
+} from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
+import { synchronizeMaterialFragmentProjections } from "../../tools/migrate_long_task_compact_carrier_authority.mjs";
+import {
   assertContractRevisionMismatchRejected,
   assertSyntheticCompactFixtureCompiles,
   compactRevisionPairSet,
@@ -194,6 +199,101 @@ test("compact tables fail closed on sparse cells and selectors preserve row stru
   assert.equal(compact.selectors.length, 1);
 });
 
+test("compact migration regenerates changed Fragment identities only as decision_required", () => {
+  const original = materialInput(
+    "source.first",
+    "Must preserve `API.v1` exactly.",
+  );
+  const [originalFragment] = scanMaterialTextInput(original).fragments;
+  const originalAnchor = deriveSemanticSourceAnchors(originalFragment)[0];
+  assert.ok(originalAnchor);
+  const manifest = {
+    inputs: [
+      {
+        key: "input.source.first",
+        kind: "source_item",
+        source_ref: "source.first",
+        sha256: original.sha256,
+        disposition: "non_ui_material",
+        fact_refs: ["fact.first"],
+        basis_refs: ["source.first"],
+        rationale: "",
+      },
+      {
+        key: "input.fragment.source.first.1",
+        kind: "source_fragment",
+        source_ref: originalFragment.key,
+        sha256: originalFragment.text_sha256,
+        disposition: "fact_bearing",
+        fact_refs: ["fact.first"],
+        basis_refs: ["source.first"],
+        rationale: "",
+      },
+      {
+        key: "input.anchor.source.first.1",
+        kind: "semantic_anchor",
+        source_ref: originalAnchor.key,
+        sha256: originalAnchor.value_sha256,
+        disposition: "fact_bearing",
+        fact_refs: ["fact.first"],
+        basis_refs: ["source.first"],
+        rationale: "",
+      },
+    ],
+    facts: [
+      {
+        key: "fact.first",
+        provenance: {
+          basis_refs: [
+            "input.fragment.source.first.1",
+            "input.anchor.source.first.1",
+          ],
+        },
+      },
+    ],
+  };
+
+  const unchanged = structuredClone(manifest);
+  const unchangedResult = synchronizeMaterialFragmentProjections(unchanged, [
+    original,
+  ]);
+  assert.equal(unchangedResult.source_fragments_preserved, 1);
+  assert.equal(unchangedResult.source_fragments_decision_required, 0);
+  assert.equal(unchangedResult.stale_semantic_anchors_removed, 0);
+  assert.equal(
+    unchanged.inputs.find((input) => input.kind === "source_fragment")
+      .disposition,
+    "fact_bearing",
+  );
+
+  const changed = materialInput(
+    "source.first",
+    "Must preserve `API.v2` exactly.\n\nA second requirement must remain observable.",
+  );
+  const result = synchronizeMaterialFragmentProjections(manifest, [changed]);
+  const fragments = manifest.inputs.filter(
+    (input) => input.kind === "source_fragment",
+  );
+  assert.equal(result.source_fragments_regenerated, 2);
+  assert.equal(result.source_fragments_decision_required, 2);
+  assert.equal(result.stale_semantic_anchors_removed, 1);
+  assert.ok(result.invalidated_basis_refs_removed >= 2);
+  assert.equal(fragments.length, 2);
+  assert.ok(
+    fragments.every(
+      (input) =>
+        input.disposition === "decision_required" &&
+        input.fact_refs.length === 0 &&
+        input.rationale.includes("cannot infer"),
+    ),
+  );
+  assert.deepEqual(manifest.facts[0].provenance.basis_refs, []);
+  assert.equal(
+    manifest.inputs.some((input) => input.kind === "semantic_anchor"),
+    false,
+  );
+});
+
 test("compact Source fails closed on revision and capacity drift", async () => {
   const source = await readFile(path.join(repository, sourceRelative), "utf8");
   const [parsed] = parseSemanticFactManifestBlocks(sourceRelative, source);
@@ -275,6 +375,18 @@ test("compact Source fails closed on revision and capacity drift", async () => {
     /shared structure catalog is not canonical/u,
   );
 });
+
+function materialInput(inputKey, normalizedText) {
+  return {
+    input_key: inputKey,
+    input_kind: "source_item",
+    source_ref: "source.md",
+    sha256: sha256Hex(normalizedText),
+    authority_source_item_refs: [inputKey],
+    authority_domain: "product",
+    normalized_text: normalizedText,
+  };
+}
 
 test("deterministic compact fixture compiles 64 Facts into 128 distinct obligations", async () => {
   await assertSyntheticCompactFixtureCompiles();

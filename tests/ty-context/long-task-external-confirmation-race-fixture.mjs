@@ -69,7 +69,7 @@ export function raceSignal(name) {
 }
 
 export async function waitForFile(file) {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
     if (
       await access(file)
@@ -82,11 +82,43 @@ export async function waitForFile(file) {
   throw new Error(`race signal timeout: ${file}`);
 }
 
-export async function runCliProcess(cwd, args) {
+const FINALIZATION_PHASES = [
+  "after_finalization_evaluation",
+  "after_receipt_stage",
+  "after_receipt_publish",
+  "after_authority_clear",
+];
+
+export async function finalizationSignal(target) {
+  const folder = path.join(
+    os.tmpdir(),
+    `ty-context-finalization-${target}-${process.pid}-${Date.now()}`,
+  );
+  await mkdir(folder, { recursive: true });
+  for (const phase of FINALIZATION_PHASES)
+    if (phase !== target)
+      await writeFile(path.join(folder, `${phase}.release`), "release\n");
+  return {
+    folder,
+    started: path.join(folder, `${target}.started`),
+    release: path.join(folder, `${target}.release`),
+  };
+}
+
+export function finalizationSignalEnvironment(signal) {
+  return {
+    ...process.env,
+    NODE_ENV: "test",
+    TY_CONTEXT_TEST_FINALIZATION_SIGNAL_DIR: signal.folder,
+  };
+}
+
+export async function runCliProcess(cwd, args, options = {}) {
   try {
     const result = await exec(process.execPath, [cli, ...args], {
       cwd,
       windowsHide: true,
+      ...options,
     });
     return { exitCode: 0, stdout: result.stdout, stderr: result.stderr };
   } catch (error) {

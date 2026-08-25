@@ -133,9 +133,12 @@ export interface FinalReceiptV2 {
   snapshot_preparation_ms: number;
   started_at: string;
   completed_at: string;
+  /** Present on newly finalized v3 Receipts; historical Receipts remain audit-only. */
+  finalization_identity_sha256?: string;
 }
 
-export type FinalReceiptV3 = FinalReceiptV2 & {
+export type FinalReceiptV3 = Omit<FinalReceiptV2, "schema_version"> & {
   schema_version: "long-task-final-receipt-v3";
   external_confirmation_results: ExternalConfirmationEvaluationV1[];
+  finalization_identity_sha256: string;
 };

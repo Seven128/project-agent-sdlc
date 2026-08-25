@@ -1,5 +1,7 @@
 import type { ProofSurface } from "./long-task-delivery-types.js";
 import { externalClaimCapabilityFloor } from "./long-task-proof-adequacy.js";
+import { claimSemanticCapabilityFloor } from "./long-task-claim-semantic-proof-floor.js";
+import { resolveObligationAuthority } from "./long-task-obligation-authority-resolution.js";
 import {
   claimObligationRef,
   claimProofMethod,
@@ -129,29 +131,69 @@ function addClaimSurfaceObligation(
   }>,
   surface: ProofSurface,
 ): void {
-  const capabilityFloor = [
-    ...externalClaimCapabilityFloor(
-      input.contract,
-      outcomeKey,
-      localClaim,
-      surface,
-      applicabilityRef,
-    ),
-  ].sort();
+  const capabilityFloorSet = externalClaimCapabilityFloor(
+    input.contract,
+    outcomeKey,
+    localClaim,
+    surface,
+    applicabilityRef,
+  );
+  for (const capability of claimSemanticCapabilityFloor(
+    input.contract,
+    input.manifest,
+    outcomeKey,
+    localClaim,
+    applicabilityRef,
+  ))
+    capabilityFloorSet.add(capability);
+  const capabilityFloor = [...capabilityFloorSet].sort();
   const method = claimProofMethod(capabilityFloor);
   const candidates = matching.filter(
     (proof) => proof.proof_surface === surface,
-  );
-  const externalProof = candidates.find((proof) =>
-    proof.check_key.startsWith("EXTERNAL."),
   );
   const sourceObligationRef = claimObligationRef(
     fullClaim,
     applicabilityRef,
     surface,
   );
-  if (externalProof) {
-    const confirmationRef = externalProof.check_key.slice("EXTERNAL.".length);
+  const machineCandidates = candidates.flatMap((proof) => {
+    if (
+      !proof.assertion_key ||
+      !machineProofAdmitted(
+        input.compiled_checks,
+        outcomeKey,
+        proof.check_key,
+        proof.assertion_key,
+        localClaim,
+      )
+    )
+      return [];
+    const check = input.compiled_checks.find(
+      (item) => item.outcome_key === outcomeKey && item.key === proof.check_key,
+    )!;
+    return [
+      {
+        check_key: proof.check_key,
+        assertion_key: proof.assertion_key,
+        proof_surface: proof.proof_surface,
+        required_evidence_capabilities:
+          check.required_evidence_capabilities[proof.assertion_key] ?? [],
+      },
+    ];
+  });
+  const externalCandidates = candidates
+    .filter((proof) => proof.check_key.startsWith("EXTERNAL."))
+    .map((proof) => ({
+      confirmation_ref: proof.check_key.slice("EXTERNAL.".length),
+      proof_surface: proof.proof_surface,
+    }));
+  const resolution = resolveObligationAuthority({
+    source_obligation_ref: sourceObligationRef,
+    machine_candidates: machineCandidates,
+    external_candidates: externalCandidates,
+  });
+  if (resolution.status === "external_candidate") {
+    const confirmationRef = resolution.external.confirmation_ref;
     external.push({
       source_obligation_ref: sourceObligationRef,
       outcome_key: outcomeKey,
@@ -161,7 +203,7 @@ function addClaimSurfaceObligation(
       fact_ref: null,
       proof_ref: null,
       method,
-      proof_surface: externalProof.proof_surface,
+      proof_surface: resolution.external.proof_surface,
       evidence_capabilities: capabilityFloor,
       expected_authority_ref: `contract-claim:${fullClaim}`,
       confirmation_ref: confirmationRef,
@@ -175,29 +217,15 @@ function addClaimSurfaceObligation(
         null,
         null,
         method,
-        externalProof.proof_surface,
+        resolution.external.proof_surface,
         capabilityFloor,
         confirmationRef,
       ),
     );
     return;
   }
-  const machine = candidates.find(
-    (proof) =>
-      proof.assertion_key &&
-      machineProofAdmitted(
-        input.compiled_checks,
-        outcomeKey,
-        proof.check_key,
-        proof.assertion_key,
-        localClaim,
-      ),
-  );
-  if (machine) {
-    const check = input.compiled_checks.find(
-      (item) =>
-        item.outcome_key === outcomeKey && item.key === machine.check_key,
-    )!;
+  if (resolution.status === "machine_admitted") {
+    const machine = resolution.machine;
     rows.push({
       obligation_ref: sourceObligationRef,
       source_obligation_ref: sourceObligationRef,
@@ -208,8 +236,7 @@ function addClaimSurfaceObligation(
       proof_ref: null,
       method,
       proof_surface: machine.proof_surface,
-      required_evidence_capabilities:
-        check.required_evidence_capabilities[machine.assertion_key!] ?? [],
+      required_evidence_capabilities: machine.required_evidence_capabilities,
       authority: "machine",
       confirmation_ref: null,
       status: "machine_admitted",
@@ -233,6 +260,6 @@ function addClaimSurfaceObligation(
     ),
     authority: "none",
     status: "unreachable",
-    reason: "no_admitted_proof_route",
+    reason: resolution.reason,
   });
 }

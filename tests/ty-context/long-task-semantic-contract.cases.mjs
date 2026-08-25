@@ -5,7 +5,6 @@ import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
-import { deriveMaterialSourceFragments } from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
 import {
   createDeliveryFixture,
   refreshFixtureSemanticManifest,
@@ -17,7 +16,6 @@ import {
   mutateFixtureSemanticManifest,
 } from "./long-task-semantic-fact-test-support.mjs";
 import { FIXTURE_LEGACY_ORACLE_PATH } from "./long-task-package-machine-fixture.mjs";
-import { fixtureSourceStatements } from "./long-task-semantic-manifest-fixture.mjs";
 
 test("Contract projection freezes the exact semantic Fact and proof set", async () => {
   const fixture = await createDeliveryFixture();
@@ -160,27 +158,12 @@ test("explicit supporting-basis fragments compile only with named delivery Facts
     assert.ok(match);
     const manifest = YAML.parse(match[1]);
     const sourceItemRef = "fixture-architecture";
-    const sourceInput = manifest.inputs.find(
-      (item) => item.source_ref === sourceItemRef,
+    const projection = manifest.inputs.find(
+      (item) =>
+        item.kind === "source_fragment" &&
+        item.source_ref.startsWith(`${sourceItemRef}#fragment:`),
     );
-    const fragment = deriveMaterialSourceFragments({
-      key: sourceItemRef,
-      kind: "technical_obligation",
-      source_path: "source.md",
-      normalized_text: fixtureSourceStatements[sourceItemRef],
-      text_sha256: sourceInput.sha256,
-    })[0];
-    const projection = {
-      key: "input.fixture-architecture-fragment",
-      kind: "source_fragment",
-      source_ref: fragment.key,
-      sha256: fragment.text_sha256,
-      disposition: "supporting_basis",
-      fact_refs: ["fact.first.observable"],
-      basis_refs: [sourceItemRef],
-      rationale: "This explicit supporting fragment names its delivery Fact.",
-    };
-    manifest.inputs.push(projection);
+    assert.ok(projection);
     await writeManifestSource(fixture, sourcePath, source, match[0], manifest);
     await assert.doesNotReject(
       compileDeliveryContract(fixture.workdir, fixture.root, {

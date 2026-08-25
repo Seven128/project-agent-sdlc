@@ -1,9 +1,11 @@
 import {
-  deriveMaterialSourceFragments,
   deriveSemanticSourceAnchors,
+  scanMaterialTextInput,
+  sourceAuthorityDomain,
 } from "./long-task-source-fragments.js";
 import type {
   CompiledSourceItemV2,
+  MaterialTextInputV2,
   SemanticSourceAnchorV2,
   SemanticFactClassV2,
   SourceAuthorityDomain,
@@ -20,11 +22,7 @@ import {
   semanticFactClass,
   semanticFactExpectedSearchText,
 } from "./long-task-source-conservation-facts.js";
-import {
-  exactlyOne,
-  normalizeLegacyProjection,
-  resolveFragmentProjection,
-} from "./long-task-source-projection-resolution.js";
+import { resolveFragmentProjection } from "./long-task-source-projection-resolution.js";
 import {
   validateAnchorProjection,
   validateNoDanglingProjectionInputs,
@@ -41,6 +39,11 @@ export function validateSourceSemanticConservation(
   sourceItems: CompiledSourceItemV2[],
   manifest: SemanticFactManifestV1,
   designInput: Set<string> | DesignOwnedSemanticProjectionV1,
+  materialInput?: MaterialTextInputV2[],
+  factClaimPolarities: ReadonlyMap<
+    string,
+    ReadonlySet<"positive" | "negative">
+  > = new Map(),
 ): SourceSemanticConservationV2 {
   const designProjection =
     designInput instanceof Set
@@ -64,8 +67,22 @@ export function validateSourceSemanticConservation(
     [...facts.values()].map((fact) => [fact.key, fact.authority_domain]),
   ) as Record<string, SourceAuthorityDomain>;
   const designFactRefsBySource = designFactsBySource(designProjection);
-  const fragments = sourceItems.flatMap((item) =>
-    deriveMaterialSourceFragments(item, designOwnedSourceItems.has(item.key)),
+  const materialInputs =
+    materialInput ??
+    sourceItems.map((item) => ({
+      input_key: item.key,
+      input_kind: "source_item" as const,
+      source_ref: item.source_path,
+      sha256: item.text_sha256,
+      authority_source_item_refs: [item.key],
+      authority_domain: sourceAuthorityDomain(
+        item,
+        designOwnedSourceItems.has(item.key),
+      ),
+      normalized_text: item.normalized_text,
+    }));
+  const fragments = materialInputs.flatMap(
+    (input) => scanMaterialTextInput(input).fragments,
   );
   const anchors: SemanticSourceAnchorV2[] = [];
   const validationContext = {
@@ -76,34 +93,14 @@ export function validateSourceSemanticConservation(
     sourceByKey,
     manifest,
     designFactRefsBySource,
+    factClaimPolarities,
   };
-  for (const sourceItem of sourceItems) {
+  for (const material of materialInputs) {
     const itemFragments = fragments.filter(
-      (fragment) => fragment.source_item_ref === sourceItem.key,
-    );
-    const sourceInput = exactlyOne(
-      manifest.inputs.filter(
-        (input) =>
-          input.kind === "source_item" && input.source_ref === sourceItem.key,
-      ),
-      "source_item_projection",
-      sourceItem.key,
+      (fragment) => fragment.input_key === material.input_key,
     );
     for (const fragment of itemFragments) {
-      const projection = normalizeLegacyProjection(
-        resolveFragmentProjection(
-          fragment,
-          itemFragments.length,
-          sourceInput,
-          manifest,
-          designFactRefsBySource.get(sourceItem.key) ?? [],
-        ),
-        fragment,
-        sourceItem,
-        facts,
-        factClasses,
-        factDomains,
-      );
+      const projection = resolveFragmentProjection(fragment, manifest);
       validateProjection(projection, fragment, validationContext);
       const fragmentAnchors = deriveSemanticSourceAnchors(fragment);
       anchors.push(...fragmentAnchors);
@@ -129,8 +126,7 @@ function sourceAuthorityDomains(
   return new Map(
     sourceItems.map((item) => [
       item.key,
-      deriveMaterialSourceFragments(item, designOwned.has(item.key))[0]
-        ?.authority_domain ?? "product",
+      sourceAuthorityDomain(item, designOwned.has(item.key)),
     ]),
   );
 }
@@ -145,15 +141,25 @@ function sourceConservationFacts(
     addSourceConservationFact(facts, {
       key: fact.key,
       source_item_refs: fact.source_item_refs,
+      basis_refs: fact.provenance.basis_refs,
       semantic_class: semanticFactClass(fact),
       authority_domain: semanticFactAuthorityDomain(fact, sourceDomains),
       expected_search_text: semanticFactExpectedSearchText(fact),
+      semantic_cell: {
+        outcome_ref: fact.outcome_ref,
+        unit_ref: fact.unit_ref,
+        family_ref: fact.family_ref,
+        condition_ref: fact.condition_ref,
+        property_ref: fact.property_ref,
+        value_kind: fact.value_kind,
+      },
     });
   for (const fact of designProjection.facts)
     addSourceConservationFact(facts, {
       ...fact,
       semantic_class: "delivery_semantic",
       authority_domain: "design",
+      semantic_cell: null,
     });
   return facts;
 }

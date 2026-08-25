@@ -58,12 +58,24 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       "--confirmation",
       "fixture-external",
     ]);
-    const passingRecord = await buildPassingRecord(fixture, prepared);
+    const repeatedPreparation = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+    ]);
+    assert.equal(
+      repeatedPreparation.confirmations[0].challenge,
+      prepared.confirmations[0].challenge,
+    );
+    let passingRecord = await buildPassingRecord(fixture, prepared);
 
     for (const scenario of invalidRecordMutations()) {
       const record = structuredClone(passingRecord);
       scenario.mutate(record);
-      if (scenario.rehash) resignRecord(record);
+      if (scenario.rehash) resignRecord(record, fixture);
       const recordPath = await writeSubmissionRecord(
         fixture,
         `invalid-${scenario.name}.json`,
@@ -86,13 +98,21 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
     }
 
     for (const verdict of ["failed", "unable"]) {
-      const honest = structuredClone(passingRecord);
+      const currentPreparation = await runCli(fixture.root, [
+        "long-task",
+        "external",
+        "prepare",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+      ]);
+      const honest = await buildPassingRecord(fixture, currentPreparation);
       honest.results[0].verdict = verdict;
       honest.results[0].rationale =
         verdict === "failed"
           ? "The declared actor observed a mismatch."
           : "The declared actor could not complete this exact observation.";
-      resignRecord(honest);
+      resignRecord(honest, fixture);
       const submitted = await runCliFailure(fixture.root, [
         "long-task",
         "external",
@@ -118,6 +138,18 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       ]);
     }
 
+    passingRecord = await buildPassingRecord(
+      fixture,
+      await runCli(fixture.root, [
+        "long-task",
+        "external",
+        "prepare",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+      ]),
+    );
+
     const recordPath = await writeSubmissionRecord(
       fixture,
       "passing-record.json",
@@ -136,7 +168,16 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
     assert.equal(submitted.state, "fulfilled");
     assert.equal(
       submitted.actor_identity_assurance,
-      "declared_identity_and_record_integrity_only",
+      "ed25519_verified",
+    );
+    assert.equal(submitted.signature_verified, true);
+    assert.equal(submitted.challenge_current, true);
+    assert.equal(submitted.artifact_snapshot_integrity, true);
+
+    const mutableEvidenceRef = passingRecord.results[0].evidence_refs[0];
+    await writeFile(
+      path.join(fixture.root, ...mutableEvidenceRef.split("/")),
+      "mutated after authenticated submission\n",
     );
 
     const status = await runCli(fixture.root, [
@@ -146,12 +187,16 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       fixture.workdir,
     ]);
     assert.equal(status.confirmations[0].state, "fulfilled");
+    assert.equal(
+      status.confirmations[0].artifact_snapshot_integrity,
+      true,
+    );
 
     const accepted = await runCli(fixture.root, [
       "long-task",
       "final-gate",
       fixture.workdir,
-    ]);
+    ], { skipCandidateCommit: true });
     assert.equal(accepted.workflow_status, "delivery_accepted");
     await runCli(fixture.root, [
       "long-task",
@@ -169,6 +214,28 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
     assert.equal(revokedStatus.final_result, "last_gate_inputs_stale");
     assert.equal(revokedStatus.final_workflow_status, null);
     assert.equal(revokedStatus.target_state, "not_accepted");
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        recordPath,
+      ]),
+      /challenge_not_current/u,
+    );
+    const rotated = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+    ]);
+    const refreshedRecord = await buildPassingRecord(fixture, rotated);
     await runCli(fixture.root, [
       "long-task",
       "external",
@@ -177,7 +244,11 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       "--confirmation",
       "fixture-external",
       "--record",
-      recordPath,
+      await writeSubmissionRecord(
+        fixture,
+        "refreshed-passing-record.json",
+        refreshedRecord,
+      ),
     ]);
 
     const closed = await runCli(fixture.root, [

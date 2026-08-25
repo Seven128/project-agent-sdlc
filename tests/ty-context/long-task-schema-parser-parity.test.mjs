@@ -52,6 +52,11 @@ test("External obligation Schema and Parser agree on empty capability floors and
         id: "fixture-actor",
         role: "product acceptance owner",
         authority_kind: "human",
+        identity_assurance: {
+          scheme: "ed25519",
+          key_id: "fixture-owner-2026",
+          public_key_ref: "project_context/authorities/fixture-owner.pub",
+        },
       },
       target_ref: "fixture-app",
       environment_identity: "fixture-environment-v1",
@@ -72,6 +77,10 @@ test("External obligation Schema and Parser agree on empty capability floors and
           expected_authority_ref:
             "contract-claim:first.requirement.observe-first",
           result_kind: "judgment",
+          judgment_basis: {
+            kind: "authorization",
+            source_ref: "first-observable",
+          },
         },
       ],
     },

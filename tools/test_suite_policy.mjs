@@ -9,10 +9,10 @@ const SUPPORTED_TEST_SUITES = new Set([
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 26,
+    max_files: 27,
     reviewed_on: "2026-08-25",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The independent atomic-finalization file freezes one locked Finalization Identity/CAS transaction across candidate, Authority, external state, Receipt publication and close, including Windows process-tree settlement before terminal publication. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -88,6 +88,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-qualified-completion.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves that failed live gates neither report qualified success nor clear the current Active Authority.",
+  ),
+  criticalSentinel(
+    "atomic-terminal-finalization",
+    "long-task-final-authority-race.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive controls publish one Finalization Identity/CAS-bound Receipt and keep Final Gate advisory unless stop/close requests the same locked close transaction. Negative controls mutate Authority, Contract, Source, controlling Context, runner/verification inputs, workdir fragments, candidate, External Records/Artifacts and Receipt phases; concurrent finalize/submit/revoke calls serialize on the existing Active Authority lock, every mismatch returns needs_work with Authority retained, and Windows cannot enter final publication before the assigned Job process tree settles.",
   ),
   criticalSentinel(
     "external-fulfillment-current-authority",
@@ -172,6 +178,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-workflow-black-box.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves through the real black-box lifecycle that only the current Live Final Gate can finish delivery.",
+  ),
+  criticalSentinel(
+    "complete-delivery-black-box-closure",
+    "long-task-workflow-black-box.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive controls drive the sanitized Starward route from machine-complete blocked_external through an Ed25519-authenticated product-owner judgment to delivery_accepted, and drive backend persistence/identity plus CLI Provider controls to machine_accepted. Negative controls use the real Compile and Final Gate terminals to reject a missing second material Source item, prose-independent weak proof capability, Machine/External overlap, fake/wrong/disconnected/dead candidate signals, broad acceptance and an implementation-authored product-owner forgery while preserving exact Source Fragment, Fact, Claim, proof, authority, implementation, verification and rerun localization. The fixture is explicitly mechanism-only because original public material, original-to-sanitized mapping, authorization and incident representativeness are unavailable; it supplies no real-incident or ROI evidence.",
   ),
   criticalSentinel(
     "mechanism-causal-chain-continuity",

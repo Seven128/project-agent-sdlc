@@ -98,6 +98,9 @@ export function createLongTaskCompactContract(
         fact_revision_digest: revision,
         claim_ref: binding.claim_ref,
         applicability_ref: binding.applicability_ref,
+        ...(binding.required_polarity
+          ? { required_polarity: binding.required_polarity }
+          : {}),
       });
     }
     for (const binding of outcome.semantic_fact_bindings.proofs) {
