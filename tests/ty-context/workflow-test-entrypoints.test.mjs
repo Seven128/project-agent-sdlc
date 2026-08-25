@@ -20,7 +20,18 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   const pullRequestJob = section(packageWorkflow, "pull-request", "main");
   const mainJob = section(packageWorkflow, "main");
 
-  assertWindowsLevel4RuntimeJob(windowsLevel4Job);
+  assertWindowsLevel4RuntimeJob(windowsLevel4Job, true);
+  assert.throws(
+    () =>
+      assertWindowsLevel4RuntimeJob(
+        windowsLevel4Job.replace(
+          /\s*tests\/ty-context\/long-task-windows-job-supervisor\.test\.mjs/u,
+          "",
+        ),
+        true,
+      ),
+    /long-task-windows-job-supervisor/u,
+  );
   assert.match(packageWorkflow, /Typecheck package and build once/);
   assert.match(
     packageWorkflow,
@@ -43,7 +54,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(
     pullRequestJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v2/,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v3/,
   );
   assert.match(
     pullRequestJob,
@@ -60,7 +71,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(mainJob, /TY_CONTEXT_TEST_TIMING_DIR/);
   assert.match(
     mainJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v2/,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v3/,
   );
   assert.doesNotMatch(packageWorkflow, /TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON/);
   assert.match(packageWorkflow, /set -o pipefail/);
@@ -322,7 +333,10 @@ function section(source, start, end) {
   return source.slice(startIndex, endIndex);
 }
 
-function assertWindowsLevel4RuntimeJob(job) {
+function assertWindowsLevel4RuntimeJob(
+  job,
+  includePackageJobSupervisor = false,
+) {
   assert.match(job, /runs-on:\s*windows-latest/u);
   assert.match(job, /fetch-depth:\s*0/u);
   assert.match(job, /node-version:\s*"24"/u);
@@ -331,7 +345,9 @@ function assertWindowsLevel4RuntimeJob(job) {
     [
       "npm ci",
       "npm run build --workspace project-tiny-context-harness",
-      "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
+      includePackageJobSupervisor
+        ? "node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs"
+        : "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
     ],
   );
   assert.doesNotMatch(job, /continue-on-error|\bif:\s*/u);

@@ -985,6 +985,47 @@ test("[critical:controlled-budget-profile] suite wall-time budgets are named, en
     540000,
   );
   assert.equal(resolveSuiteWallTimeBudgetMs("long-task", environment), 1200000);
+  const versionThreeEnvironment = {
+    ...environment,
+    TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: "github-ubuntu-v3",
+  };
+  assert.deepEqual(
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v3"].budgets_ms,
+    {
+      default: 180000,
+      "long-task-trust": 630000,
+      "long-task": 1200000,
+    },
+  );
+  assert.equal(
+    resolveSuiteWallTimeBudgetMs("long-task-trust", versionThreeEnvironment),
+    630000,
+  );
+  assert.equal(suiteWallTimeBudgetStatus(630000, 630000), "within_budget");
+  assert.equal(suiteWallTimeBudgetStatus(630001, 630000), "exceeded");
+  const versionThreeProfile =
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v3"];
+  for (const invalidTrustBudget of [undefined, 0, -1]) {
+    const invalidProfiles = {
+      ...CONTROLLED_TEST_SUITE_BUDGET_PROFILES,
+      "github-ubuntu-v3": {
+        ...versionThreeProfile,
+        budgets_ms: {
+          ...versionThreeProfile.budgets_ms,
+          "long-task-trust": invalidTrustBudget,
+        },
+      },
+    };
+    assert.throws(
+      () =>
+        resolveSuiteWallTimeBudgetMs(
+          "long-task-trust",
+          versionThreeEnvironment,
+          invalidProfiles,
+        ),
+      /github-ubuntu-v3[\s\S]*positive integer budget for long-task-trust/u,
+    );
+  }
   assert.deepEqual(
     CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v1"].budgets_ms,
     {

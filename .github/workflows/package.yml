@@ -96,8 +96,8 @@ jobs:
         run: npm ci
       - name: Build package once
         run: npm run build --workspace project-tiny-context-harness
-      - name: Verify Windows Level 4 runtime boundaries
-        run: node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs
+      - name: Verify Windows Job and Level 4 runtime boundaries
+        run: node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs
 
   pull-request:
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}
@@ -119,7 +119,7 @@ jobs:
       - name: Trust boundary package tests
         env:
           TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/pull-request
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v2
+          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v3
         run: |
           set -o pipefail
           npm run test:trust:built --workspace project-tiny-context-harness --ignore-scripts 2>&1 | tee package-trust-test.log
@@ -195,7 +195,7 @@ jobs:
       - name: Complete package tests
         env:
           TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/main
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v2
+          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v3
         run: |
           set -o pipefail
           npm test --workspace project-tiny-context-harness --ignore-scripts 2>&1 | tee package-test.log

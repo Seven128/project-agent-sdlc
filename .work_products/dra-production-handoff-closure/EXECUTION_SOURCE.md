@@ -3410,3 +3410,779 @@ Release:
 
 这次补开发的关键不是继续给现有 Windows PID 观察打补丁，而是复用仓库已经存在的、启动前完成 containment 的 Job Object 原语。这样才能一次性关闭极短根进程、PID 重用、多级子进程和清理证明这几个同源问题。
 <!-- S6-CONTROLLING-AMENDMENT:END -->
+
+<!-- S7-CI-EVIDENCE-CLOSURE:BEGIN -->
+# DRA Production-Handoff Closure：CI 与验证证据最终补开发方案
+
+## 一、结论与范围
+
+PR #44 的产品机制实现已经合入 `main`，其 merge commit 为 `9bd0a779db244e33e3cbb5cca4557992923fd9f2`。但对应 Package CI 最终失败：Ubuntu Trust 把 Windows-only critical sentinel 作为当前平台必过项，而该测试在 Linux 上按设计跳过；同一轮 Trust 还以 `566039ms` 超过了 `540000ms` 的既有预算。
+
+本次只关闭以下三个交付缺口：
+
+1. **Critical sentinel 的平台适用范围与 CI 接线。**
+2. **grandchild 场景的真实证据完整性。**
+3. **Ubuntu Trust 当前测试规模对应的显式预算。**
+
+不再修改：
+
+```text
+DRA 生成逻辑
+Open Design quality commission
+Implementation Feasibility
+Component Binding
+Long-Task Contract
+Claim / Assertion
+Authority Lock
+Final Gate
+Windows Job Object 产品实现
+Motion duration 产品校验
+```
+
+## Single Goal
+
+> 在不削弱任何测试断言、不删除测试、不新增 Gate、Registry、状态机或工作流的前提下，使每个平台只承担自己能够真实执行的 critical sentinel，并保证 Windows Job 测试确实创建和验证了 root、child、grandchild 全部进程身份，最终让当前完整 Package CI 在同一候选提交上全部通过。
+
+---
+
+# 二、开发基线与开始条件
+
+由于 PR #44 已合并，不再复用旧开发分支。
+
+开始前：
+
+```text
+git fetch --prune origin
+git switch main
+git pull --ff-only origin main
+git status --short
+git rev-parse HEAD
+git rev-parse origin/main
+git merge-base HEAD 9bd0a779db244e33e3cbb5cca4557992923fd9f2
+git rev-list --left-right --count HEAD...origin/main
+```
+
+继续条件：
+
+```text
+当前 main 完整包含 9bd0a779
+main 与 origin/main 一致
+working tree 无无关修改
+```
+
+创建新分支，例如：
+
+```text
+codex/dra-ci-evidence-closure
+```
+
+可使用独立 worktree，但不能修改旧 PR 分支或重写 `main` 历史。
+
+本次使用 Default Workflow Contract，不自举 Long-Task。
+
+---
+
+# 三、工作包 A：Critical Sentinel 增加平台适用范围
+
+## 1. 当前冲突
+
+当前 `windows-job-pre-resume-containment` 被登记为：
+
+```text
+required_suites:
+- long-task
+- long-task-trust
+```
+
+而对应真实 Windows 测试在非 Windows 上明确 `skip`。因此 Ubuntu Trust 能发现该 sentinel，但只能得到 skipped/non-passing，最终使整个 Trust Gate 失败。
+
+这不是测试失败，而是：
+
+```text
+平台不具备观察能力
++
+测试政策仍要求该平台证明
+```
+
+## 2. 扩展现有 Sentinel 元数据
+
+在现有 `CRITICAL_TEST_SENTINELS` 条目上增加可选字段：
+
+```js
+required_platforms: ["win32"]
+```
+
+默认未填写时表示：
+
+```text
+["linux", "darwin", "win32"]
+```
+
+不得创建第二个 Sentinel Registry。
+
+建议结构：
+
+```js
+criticalSentinel(
+  "windows-job-pre-resume-containment",
+  "long-task-windows-job-supervisor.test.mjs",
+  ["long-task", "long-task-trust"],
+  "...",
+  { requiredPlatforms: ["win32"] },
+)
+```
+
+平台枚举只允许：
+
+```text
+linux
+darwin
+win32
+```
+
+必须：
+
+* 非空；
+* 无重复；
+* canonical 排序；
+* 未知平台 fail closed。
+
+## 3. 平台过滤规则
+
+`criticalSentinelsForSuite` 扩展为：
+
+```js
+criticalSentinelsForSuite(suite, platform = process.platform)
+```
+
+计算顺序：
+
+```text
+suite 匹配
+→
+platform 匹配
+→
+形成当前运行真正 required 的 sentinel 集合
+```
+
+Linux 上：
+
+```text
+windows-job-pre-resume-containment
+→ 不进入 required 集合
+```
+
+Windows 上：
+
+```text
+windows-job-pre-resume-containment
+→ 必须进入 required 集合
+```
+
+## 4. Observed 结果也必须按平台归一化
+
+不能只过滤 `required_ids`，否则 Linux 仍可能把已发现但 skipped 的 Windows sentinel 算成：
+
+```text
+unexpected
+或
+non_passing
+```
+
+Coverage 计算必须区分：
+
+```text
+registered for suite
+applicable on current platform
+non-applicable on current platform
+```
+
+当前平台不适用的注册 Sentinel：
+
+* 不计入 required；
+* 不计入 observed；
+* 不计入 unexpected；
+* 不得被当作 passed；
+* 不得产生 non-passing failure。
+
+这只是当前测试运行的派生过滤，不增加持久状态。
+
+## 5. 必补政策测试
+
+### Linux
+
+```text
+Windows sentinel 不进入 required
+Windows sentinel 即使在测试报告中 skipped，也不导致 non_passing
+其他跨平台 sentinel 仍全部必过
+```
+
+### Windows
+
+```text
+Windows sentinel 进入 required
+passed → coverage 通过
+skipped → coverage 失败
+failed → coverage 失败
+missing → coverage 失败
+```
+
+### Schema
+
+```text
+重复 required_platforms → 失败
+未知平台 → 失败
+空数组 → 失败
+未声明 required_platforms → 保持跨平台兼容
+```
+
+---
+
+# 四、工作包 B：把 package-owned Windows Job 测试接入 Windows CI
+
+## 1. 当前缺口
+
+现有 Windows `windows-level4-runtime` Job 只运行：
+
+```text
+long-task-level4-acquisition.test.mjs
+long-task-level4-package-promotion.test.mjs
+```
+
+没有运行新加入的：
+
+```text
+long-task-windows-job-supervisor.test.mjs
+```
+
+因此 Ubuntu 被错误要求证明 Windows sentinel，而真实 Windows Job 又没有直接执行该 sentinel。
+
+## 2. 修改 Windows Job
+
+将步骤改为：
+
+```yaml
+- name: Verify Windows Job and Level 4 runtime boundaries
+  run: >
+    node --test --test-concurrency=1
+    tests/ty-context/long-task-windows-job-supervisor.test.mjs
+    tests/ty-context/long-task-level4-acquisition.test.mjs
+    tests/ty-context/long-task-level4-package-promotion.test.mjs
+```
+
+必须直接运行真实文件，不能：
+
+* 用字符串扫描代替；
+* 用 Level-4 的另一套 supervisor 测试代替；
+* 只运行 protocol fixture；
+* 设置环境变量绕过 Windows 测试；
+* 将失败转成 warning。
+
+## 3. CI 静态回归
+
+更新 `workflow-test-entrypoints.test.mjs` 或对应现有 workflow policy owner，证明：
+
+```text
+windows-level4-runtime
+明确包含 long-task-windows-job-supervisor.test.mjs
+
+Ubuntu pull-request Job
+仍运行完整 Trust
+
+Windows sentinel
+只在 win32 平台为 required
+```
+
+再加入负向测试：
+
+```text
+从 Windows Job 删除该测试文件
+→ workflow policy test 必须失败
+```
+
+## 4. 合并纪律
+
+本次后续 PR 不得在以下作业仍运行或失败时合并：
+
+```text
+Harness Gates
+Package CI / pull-request
+Package CI / windows-level4-runtime
+Package CI / windows-affected-test-launcher
+```
+
+这次 PR #44 在 Package CI 完成前已合并；后续修复必须以完整绿色结果作为合并条件。
+
+---
+
+# 五、工作包 C：Grandchild 测试必须证明真实三层进程链
+
+## 1. 当前证据缺口
+
+当前 `assertLoggedProcessesGone` 统一只等待：
+
+```js
+waitForLogRows(log, 2)
+```
+
+并只要求至少两个 PID。
+
+这会让下面的场景理论上在只有：
+
+```text
+root_pid
+child_pid
+```
+
+时通过，而没有证明 `grandchild_pid` 实际生成。
+
+## 2. 改为场景级精确身份集合
+
+定义：
+
+```js
+const EXPECTED_PROCESS_IDENTITIES = {
+  "short-child": [
+    "root_pid",
+    "child_pid",
+  ],
+  "short-grandchild": [
+    "root_pid",
+    "child_pid",
+    "grandchild_pid",
+  ],
+  "timeout-tree": [
+    "root_pid",
+    "child_pid",
+    "grandchild_pid",
+  ],
+  "overflow": [
+    "root_pid",
+    "child_pid",
+  ],
+  "parallel-overflow": [
+    "root_pid",
+    "child_pid",
+  ],
+};
+```
+
+替换：
+
+```js
+assertLoggedProcessesGone(log)
+```
+
+为：
+
+```js
+assertLoggedProcessesGone(log, expectedIdentityKeys)
+```
+
+## 3. 精确校验定理
+
+每个场景必须证明：
+
+```text
+所有 expected identity key 均出现
+每个 key 恰好有一个合法 PID
+所有 PID 互不相同
+每个 PID 均为正安全整数
+每个 PID 最终均不存在
+```
+
+不能继续只按日志行数判断。
+
+对于 `short-grandchild` 和 `timeout-tree`：
+
+```text
+grandchild_pid 缺失
+→ 测试必须失败
+```
+
+## 4. 防止测试辅助代码自证
+
+将日志解析拆成一个 test-only helper，例如：
+
+```text
+readExpectedProcessIdentities
+assertExpectedProcessIdentitiesGone
+```
+
+增加负向单元测试：
+
+```text
+只有 root_pid + child_pid
+但要求 grandchild_pid
+→ missing_process_identity:grandchild_pid
+```
+
+以及：
+
+```text
+root_pid 与 child_pid 相同
+→ duplicate_process_identity
+
+非法 PID
+→ invalid_process_identity
+```
+
+真实 runtime matrix 仍必须调用该 helper；不能只对 helper 自身做 fixture 测试。
+
+## 5. 保留安全清理
+
+`forceTerminateFixtureProcesses` 继续作为 assertion 失败后的 best-effort 清理。
+
+但顺序必须是：
+
+```text
+先完成身份和存活断言
+→
+最后 finally 安全清理
+```
+
+不能让清理逻辑掩盖缺失 `grandchild_pid`。
+
+---
+
+# 六、工作包 D：Ubuntu Trust 预算显式校准
+
+## 1. 当前事实
+
+本次 Ubuntu `long-task-trust` 实际耗时：
+
+```text
+566039ms
+```
+
+原预算：
+
+```text
+540000ms
+```
+
+即使平台 Sentinel 接线修复，当前候选仍可能因为预算失败。日志已经同时报告：
+
+```text
+test assertions: 0 failed
+wall_time_budget_status: exceeded
+```
+
+因此预算问题必须在同一补开发中闭合，不能留到下一轮。
+
+## 2. 不原地修改旧 profile
+
+保留：
+
+```text
+github-ubuntu-v2
+```
+
+历史语义不变。
+
+新增：
+
+```text
+github-ubuntu-v3
+```
+
+仅调整当前 `long-task-trust` 的预算。
+
+基于本次真实 CI：
+
+```text
+566039ms × 1.10
+≈ 622643ms
+```
+
+按 30 秒粒度向上取整：
+
+```text
+630000ms
+```
+
+因此：
+
+```js
+github-ubuntu-v3.long_task_trust = 630_000
+```
+
+其他 suite 预算保持不变。
+
+## 3. 更新 workflow
+
+Package CI 使用：
+
+```yaml
+TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v3
+```
+
+## 4. 预算边界
+
+这不是放宽测试正确性：
+
+* 测试文件数不减少；
+* 测试数不减少；
+* Sentinel 不减少；
+* concurrency 不增至未经审查的值；
+* result cache 仍禁止；
+* assertions 不弱化；
+* 超过 `630000ms` 仍然失败。
+
+若最终候选仍超过 630 秒：
+
+```text
+禁止再次直接上调预算
+必须分析 slowest files 并优化重复 fixture / 启动成本
+```
+
+## 5. 政策测试
+
+验证：
+
+```text
+github-ubuntu-v2 仍为旧值
+github-ubuntu-v3 为明确新值
+Package CI 使用 v3
+未知 profile 失败
+缺少 long-task-trust budget 失败
+630001ms 失败
+630000ms 通过
+```
+
+---
+
+# 七、版本和发布边界
+
+本次开始前检查：
+
+```text
+npm view project-tiny-context-harness@0.8.18 version
+git ls-remote --tags origin v0.8.18
+gh release view v0.8.18
+```
+
+规则：
+
+### 仅修改测试、CI、测试政策和 Context
+
+如果 package tarball bytes 不变：
+
+```text
+保持 0.8.18
+```
+
+不为了纯 CI 修复无意义增加 npm 版本。
+
+### 若实际修改 package 源码或 package assets
+
+如果 `0.8.18` 已发布：
+
+```text
+升级 0.8.19
+```
+
+如果 `0.8.18` 尚未发布：
+
+```text
+继续 0.8.18
+```
+
+任何版本变化必须同步：
+
+```text
+packages/ty-context/package.json
+package-lock.json
+npm-publish workflow
+release packet
+公共版本引用
+```
+
+---
+
+# 八、预计文件范围
+
+主要修改：
+
+```text
+tools/test_suite_policy.mjs
+tests/ty-context/run-package-suite.mjs
+tests/ty-context/test-suite-runtime.test.mjs
+tests/ty-context/workflow-test-entrypoints.test.mjs
+
+.github/workflows/package.yml
+
+tests/ty-context/
+  long-task-windows-job-supervisor-runtime-fixture.mjs
+  long-task-windows-job-supervisor-test-support.mjs
+  long-task-windows-job-supervisor.test.mjs
+```
+
+Durable Context：
+
+```text
+project_context/areas/harness-package/verification.md
+```
+
+必要时同步：
+
+```text
+.codex/skills/authoring/harness_package_design/
+  references/test-and-benchmark-governance.md
+```
+
+不修改三份 DRA Skill，因为本次没有改变 DRA 行为。
+
+---
+
+# 九、实施顺序
+
+## 第 1 步：先冻结反例
+
+在产品修复前证明当前 `main`：
+
+```text
+Linux Trust 因 Windows-only sentinel non-passing
+grandchild 缺失时现有 helper 仍可通过最低两 PID 条件
+旧预算拒绝当前 566039ms 规模
+Windows workflow 未直接包含 package Job test
+```
+
+## 第 2 步：实现平台 Sentinel
+
+先修改元数据和 coverage 计算，再跑政策测试。
+
+## 第 3 步：接入 Windows CI
+
+更新 workflow 和静态 workflow 回归。
+
+## 第 4 步：加强 grandchild 证据
+
+改场景级 expected identity，并执行真实 Windows matrix。
+
+## 第 5 步：增加 Ubuntu v3 预算
+
+保持所有测试和 Sentinel 不变，只修改明确预算 profile。
+
+## 第 6 步：更新 Context
+
+记录：
+
+```text
+Critical sentinel 的结论只由具备真实观察能力的平台承担
+Windows Job sentinel 由 Windows CI 直接执行
+跨平台 suite 不把不适用的 skip 当作失败或通过
+进程树回归必须证明声明的每一级身份真实存在
+```
+
+## 第 7 步：冻结候选并完整验证
+
+最后一次修改后重跑全部验证，不复用此前结果。
+
+---
+
+# 十、最终验证矩阵
+
+## 本地/通用
+
+```text
+format
+typecheck
+build
+Default full suite
+Long-Task full suite
+Long-Task Trust full suite
+全部 applicable critical sentinels
+validate-harness
+source parity
+DRA parity
+portability
+structural-cost
+affected routing
+pack
+Quickstart
+offline launch
+tarball smoke
+fresh repository install/init/sync/Context validation
+diff hygiene
+```
+
+## Ubuntu CI
+
+必须满足：
+
+```text
+Windows-only sentinel 不进入 required
+其他 Trust sentinels 全部 passed
+long-task-trust <= 630000ms
+Package CI pull-request Job success
+```
+
+## Windows CI
+
+必须真实执行并通过：
+
+```text
+Windows Job protocol
+PowerShell 5.1
+PowerShell 7（runner 存在时）
+immediate root
+ordinary child
+nonzero exit
+short root + long child
+short root + child + long grandchild
+timeout root + child + grandchild
+output overflow cleanup
+parallel Job isolation
+Assign failure before Resume
+tarball-installed helper
+Level-4 acquisition
+Level-4 package promotion
+```
+
+对 grandchild 场景必须在报告中确认：
+
+```text
+root_pid observed
+child_pid observed
+grandchild_pid observed
+all three distinct
+all three gone
+```
+
+---
+
+# 十一、最终完成定理
+
+只有以下全部成立，才能宣布这次开发完整结束：
+
+```text
+1. Linux 不再承担 Windows-only Sentinel。
+
+2. Windows Job Sentinel 在真实 Windows CI 中直接执行，
+   skipped、missing 或 failed 都不能通过。
+
+3. Mixed modern/legacy、Job Object、duration 和 DRA 主机制
+   不发生任何回归。
+
+4. short-grandchild 与 timeout-tree
+   都真实记录 root、child、grandchild 三层身份。
+
+5. 所有记录的进程最终均已不存在。
+
+6. Ubuntu Trust 在 versioned 630s 预算内通过。
+
+7. Package CI、Harness Gates 和全部 Windows Jobs
+   在同一候选提交上完成并成功。
+
+8. 测试数量、断言、Sentinel 和 Trust Boundary
+   均未因修复而减少或弱化。
+
+9. 没有新增产品 Authority、Binding、Claim、Gate、
+   Registry、状态机或工作流。
+
+10. PR 在所有 required checks 完成并成功后才合并。
+```
+
+完成这份补开发后，DRA Production-Handoff Closure 可以正式判定为开发完成；后续若出现问题，应当基于真实新反例修复，不再继续预防性扩张机制。
+<!-- S7-CI-EVIDENCE-CLOSURE:END -->

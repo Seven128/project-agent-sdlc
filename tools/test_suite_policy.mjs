@@ -6,6 +6,8 @@ const SUPPORTED_TEST_SUITES = new Set([
   "long-task",
   "long-task-trust",
 ]);
+const SUPPORTED_TEST_PLATFORMS = Object.freeze(["linux", "darwin", "win32"]);
+const supportedTestPlatforms = new Set(SUPPORTED_TEST_PLATFORMS);
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
@@ -136,6 +138,7 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-windows-job-supervisor.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves on real Windows that each package-observed product root is created suspended, assigned to one private Job before resume, and cannot return completed while a short-root child, grandchild, timed-out tree or output-overflow tree remains active; strict helper/result/request/stream identity, Assign failure, PowerShell 5.1/7 compatibility, parallel Job isolation and the packed helper are covered without PID/CIM fallback. Non-Windows runs retain protocol checks and skip only the host-specific executions.",
+    { requiredPlatforms: ["win32"] },
   ),
   criticalSentinel(
     "counterfactual-production-observation-impact",
@@ -460,7 +463,23 @@ export const CONTROLLED_TEST_SUITE_BUDGET_PROFILES = Object.freeze({
     rationale:
       "Recalibrated catastrophic ceilings for the expanded 61-file default and 79-file Long-Task populations on pinned GitHub-hosted Ubuntu jobs; complete discovery, sentinel coverage, and functional pass requirements remain unchanged.",
   }),
+  "github-ubuntu-v3": Object.freeze({
+    expected_environment: Object.freeze({
+      GITHUB_ACTIONS: "true",
+      RUNNER_OS: "Linux",
+    }),
+    budgets_ms: Object.freeze({
+      default: 180_000,
+      "long-task-trust": 630_000,
+      "long-task": 1_200_000,
+    }),
+    reviewed_on: "2026-08-25",
+    rationale:
+      "Versioned Trust recalibration from the 566039ms PR #44 GitHub Ubuntu observation: a 10% margin rounded up to the next 30-second boundary yields 630000ms. Default and complete Long-Task ceilings, discovery, concurrency, cache prohibition, assertions, and critical sentinel requirements remain unchanged.",
+  }),
 });
+
+assertControlledTestSuiteBudgetProfiles();
 
 const longTaskPureFiles = new Set(LONG_TASK_PURE_TEST_FILES);
 const longTaskIsolatedFiles = new Set(LONG_TASK_ISOLATED_TEST_FILES);
@@ -593,14 +612,18 @@ export function resolveTestTimingOutput(
   return null;
 }
 
-export function resolveSuiteWallTimeBudgetMs(suite, environment = process.env) {
+export function resolveSuiteWallTimeBudgetMs(
+  suite,
+  environment = process.env,
+  profiles = CONTROLLED_TEST_SUITE_BUDGET_PROFILES,
+) {
   if (environment.TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON)
     throw new Error(
       "TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON is retired; select a repository-reviewed TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE instead.",
     );
   const profileName = environment.TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE;
   if (!profileName) return null;
-  const profile = CONTROLLED_TEST_SUITE_BUDGET_PROFILES[profileName];
+  const profile = profiles[profileName];
   if (!profile)
     throw new Error(
       `Unknown TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: ${profileName}.`,
@@ -619,14 +642,49 @@ export function resolveSuiteWallTimeBudgetMs(suite, environment = process.env) {
   return value;
 }
 
-export function criticalSentinelsForSuite(suite) {
+function registeredCriticalSentinelsForSuite(
+  suite,
+  sentinels = CRITICAL_TEST_SENTINELS,
+) {
   if (!SUPPORTED_TEST_SUITES.has(suite))
     throw new Error(`Unsupported package test suite: ${suite}.`);
   return Object.freeze(
-    CRITICAL_TEST_SENTINELS.filter((entry) =>
-      entry.required_suites.includes(suite),
+    sentinels.filter((entry) => entry.required_suites.includes(suite)),
+  );
+}
+
+export function criticalSentinelsForSuite(
+  suite,
+  platform = process.platform,
+  sentinels = CRITICAL_TEST_SENTINELS,
+) {
+  assertSupportedTestPlatform(platform);
+  assertCriticalTestSentinels(sentinels);
+  return Object.freeze(
+    registeredCriticalSentinelsForSuite(suite, sentinels).filter(
+      (entry) =>
+        !Object.hasOwn(entry, "required_platforms") ||
+        entry.required_platforms.includes(platform),
     ),
   );
+}
+
+function assertControlledTestSuiteBudgetProfiles(
+  profiles = CONTROLLED_TEST_SUITE_BUDGET_PROFILES,
+) {
+  for (const [profileName, profile] of Object.entries(profiles)) {
+    if (!profile || typeof profile !== "object")
+      throw new Error(
+        `Invalid controlled test suite budget profile: ${profileName}.`,
+      );
+    for (const suite of SUPPORTED_TEST_SUITES) {
+      const value = profile.budgets_ms?.[suite];
+      if (!Number.isSafeInteger(value) || value <= 0)
+        throw new Error(
+          `Controlled test suite budget profile ${profileName} must provide a positive integer budget for ${suite}.`,
+        );
+    }
+  }
 }
 
 export function suiteWallTimeBudgetStatus(wallTimeMs, budgetMs) {
@@ -664,18 +722,27 @@ function assertIsolationPolicy() {
     );
 }
 
-function criticalSentinel(id, file, requiredSuites, rationale) {
-  return Object.freeze({
+function criticalSentinel(
+  id,
+  file,
+  requiredSuites,
+  rationale,
+  { requiredPlatforms } = {},
+) {
+  const entry = {
     id,
     file,
     required_suites: Object.freeze([...requiredSuites]),
     rationale,
-  });
+  };
+  if (requiredPlatforms !== undefined)
+    entry.required_platforms = Object.freeze([...requiredPlatforms]);
+  return Object.freeze(entry);
 }
 
-function assertCriticalTestSentinels() {
+function assertCriticalTestSentinels(sentinels = CRITICAL_TEST_SENTINELS) {
   const ids = new Set();
-  for (const entry of CRITICAL_TEST_SENTINELS) {
+  for (const entry of sentinels) {
     if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u.test(entry.id))
       throw new Error(`Invalid critical test sentinel id: ${entry.id}.`);
     if (ids.has(entry.id))
@@ -710,9 +777,31 @@ function assertCriticalTestSentinels() {
       throw new Error(
         `Trust sentinel ${entry.id} must also run in the complete Long-Task suite.`,
       );
+    if (Object.hasOwn(entry, "required_platforms")) {
+      const requiredPlatforms = entry.required_platforms;
+      if (
+        !Array.isArray(requiredPlatforms) ||
+        requiredPlatforms.length === 0 ||
+        new Set(requiredPlatforms).size !== requiredPlatforms.length ||
+        requiredPlatforms.some(
+          (platform) => !supportedTestPlatforms.has(platform),
+        ) ||
+        SUPPORTED_TEST_PLATFORMS.filter((platform) =>
+          requiredPlatforms.includes(platform),
+        ).some((platform, index) => platform !== requiredPlatforms[index])
+      )
+        throw new Error(
+          `Invalid required_platforms for critical sentinel ${entry.id}.`,
+        );
+    }
     if (typeof entry.rationale !== "string" || entry.rationale.length <= 40)
       throw new Error(
         `Critical sentinel ${entry.id} requires a review rationale.`,
       );
   }
+}
+
+function assertSupportedTestPlatform(platform) {
+  if (!supportedTestPlatforms.has(platform))
+    throw new Error(`Unsupported package test platform: ${platform}.`);
 }

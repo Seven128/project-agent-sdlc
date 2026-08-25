@@ -4,7 +4,22 @@ import os from "node:os";
 import path from "node:path";
 
 import { spawnCommandOnce } from "../../packages/ty-context/dist/lib/long-task-command-process.js";
-import { execFileAsync } from "./long-task-windows-job-supervisor-test-support.mjs";
+import {
+  assertExpectedProcessIdentitiesGone,
+  execFileAsync,
+} from "./long-task-windows-job-supervisor-test-support.mjs";
+
+const EXPECTED_PROCESS_IDENTITIES = Object.freeze({
+  "short-child": Object.freeze(["root_pid", "child_pid"]),
+  "short-grandchild": Object.freeze([
+    "root_pid",
+    "child_pid",
+    "grandchild_pid",
+  ]),
+  "timeout-tree": Object.freeze(["root_pid", "child_pid", "grandchild_pid"]),
+  overflow: Object.freeze(["root_pid", "child_pid"]),
+  "parallel-overflow": Object.freeze(["root_pid", "child_pid"]),
+});
 
 export async function assertWindowsJobRuntimeMatrix() {
   const root = await createRuntimeFixture();
@@ -30,7 +45,10 @@ export async function assertWindowsJobRuntimeMatrix() {
         runScenario(root, mode, timeout, log),
         /command_timeout/u,
       );
-      await assertLoggedProcessesGone(log);
+      await assertExpectedProcessIdentitiesGone(
+        log,
+        EXPECTED_PROCESS_IDENTITIES[mode],
+      );
     }
 
     const overflowLog = path.join(root, "overflow.jsonl");
@@ -38,7 +56,10 @@ export async function assertWindowsJobRuntimeMatrix() {
       runScenario(root, "overflow", 5_000, overflowLog),
       /command_output_limit_exceeded/u,
     );
-    await assertLoggedProcessesGone(overflowLog);
+    await assertExpectedProcessIdentitiesGone(
+      overflowLog,
+      EXPECTED_PROCESS_IDENTITIES.overflow,
+    );
 
     const parallelLog = path.join(root, "parallel-overflow.jsonl");
     const [good, bad] = await Promise.allSettled([
@@ -49,7 +70,10 @@ export async function assertWindowsJobRuntimeMatrix() {
     assert.equal(good.value.stdout.toString("utf8"), "parallel-good\n");
     assert.equal(bad.status, "rejected");
     assert.match(String(bad.reason), /command_output_limit_exceeded/u);
-    await assertLoggedProcessesGone(parallelLog);
+    await assertExpectedProcessIdentitiesGone(
+      parallelLog,
+      EXPECTED_PROCESS_IDENTITIES["parallel-overflow"],
+    );
   } finally {
     await forceTerminateFixtureProcesses(root);
     await rm(root, { recursive: true, force: true });
@@ -120,56 +144,6 @@ function runScenario(root, mode, timeoutMs, log) {
   );
 }
 
-async function assertLoggedProcessesGone(log) {
-  const rows = await waitForLogRows(log, 2);
-  const pids = [
-    ...new Set(
-      rows
-        .flatMap((row) => Object.entries(row))
-        .filter(([key, value]) => key.endsWith("_pid") && validPid(value))
-        .map(([, value]) => value),
-    ),
-  ];
-  assert.ok(pids.length >= 2, `missing process identities in ${log}`);
-  for (const pid of pids) await assertProcessGone(pid);
-}
-
-async function waitForLogRows(log, minimum) {
-  const deadline = Date.now() + 3_000;
-  do {
-    try {
-      const rows = (await readFile(log, "utf8"))
-        .trim()
-        .split(/\r?\n/u)
-        .filter(Boolean)
-        .map((line) => JSON.parse(line));
-      if (rows.length >= minimum) return rows;
-    } catch {
-      // The contained process may still be writing its first identity row.
-    }
-    await delay(25);
-  } while (Date.now() < deadline);
-  throw new Error(`process identity log incomplete: ${log}`);
-}
-
-async function assertProcessGone(pid) {
-  const deadline = Date.now() + 3_000;
-  while (Date.now() < deadline) {
-    if (!processExists(pid)) return;
-    await delay(25);
-  }
-  assert.equal(processExists(pid), false, `process ${pid} remains alive`);
-}
-
-function processExists(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch (error) {
-    return error?.code !== "ESRCH";
-  }
-}
-
 async function forceTerminateFixtureProcesses(root) {
   let names = [];
   try {
@@ -198,8 +172,4 @@ async function forceTerminateFixtureProcesses(root) {
 
 function validPid(value) {
   return Number.isSafeInteger(value) && value > 0;
-}
-
-function delay(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
