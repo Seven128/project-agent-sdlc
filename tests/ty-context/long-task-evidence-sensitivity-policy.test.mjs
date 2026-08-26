@@ -92,6 +92,13 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
     const outcome = fixture.contract.outcomes[0];
     const first = outcome.acceptance.checks[0];
     const second = structuredClone(first);
+    const otherApplicability = structuredClone(outcome.applicability[0]);
+    otherApplicability.key = "first-other-check-success";
+    otherApplicability.dimensions = [
+      { key: "fixture-state", value: "other-loaded" },
+    ];
+    outcome.applicability.push(otherApplicability);
+    outcome.product.result_applicability_refs.push(otherApplicability.key);
     second.key = "second-check";
     process.env.TY_CONTEXT_SENSITIVITY_OTHER_CHECK ??= "fixture-other-check";
     second.environment_requirements = [
@@ -102,8 +109,14 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
       },
     ];
     second.positive_assertions = second.positive_assertions.filter(
-      (assertion) => assertion.key !== "first-semantic-fact",
+      (assertion) => ["first-result", "first-liveness"].includes(assertion.key),
     );
+    const otherResultAssertion = second.positive_assertions.find(
+      (assertion) => assertion.key === "first-result",
+    );
+    assert.ok(otherResultAssertion);
+    otherResultAssertion.applicability_ref = otherApplicability.key;
+    second.negative_assertions = [];
     outcome.acceptance.checks.push(second);
     const semanticControl = outcome.acceptance.counterfactual_controls[0];
     const otherCheckControl = structuredClone(semanticControl);
@@ -111,18 +124,8 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
     semanticControl.expected_assertion_failures = ["first-semantic-fact"];
     otherCheckControl.key = "other-check-behavior";
     otherCheckControl.check_key = second.key;
-    otherCheckControl.claims = [
-      "result",
-      "requirement.observe-first",
-      "obligation.implement-first",
-      "obligation.architecture-first",
-    ];
-    otherCheckControl.expected_assertion_failures = [
-      "first-result",
-      "first-requirement",
-      "first-obligation",
-      "first-architecture",
-    ];
+    otherCheckControl.claims = ["result"];
+    otherCheckControl.expected_assertion_failures = ["first-result"];
     outcome.acceptance.counterfactual_controls.push(otherCheckControl);
     await assertActivationRejects(fixture, {
       code: "behavioral_semantic_counterfactual_required",

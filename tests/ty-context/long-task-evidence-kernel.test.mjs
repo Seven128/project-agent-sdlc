@@ -142,7 +142,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
 });
 
 test("Population V2 evaluation stays exact while machine proof remains externally blocked", async () => {
-  const fixture = await createDeliveryFixture();
+  const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
     const outcome = fixture.contract.outcomes[0];
     fixture.contract.risk.facts.full_population_operation = ["first"];
@@ -176,43 +176,57 @@ test("Population V2 evaluation stays exact while machine proof remains externall
     fixture.contract.task.target_profile.completion_authority =
       "declared_authorities";
     const check = outcome.acceptance.checks[0];
-    fixture.contract.global.acceptance.external_confirmations.push({
-      key: "population-observer-review",
-      description:
-        "The unsupported population observation requires an external owner.",
-      owner: "external-owner",
-      kind: "functional_prerequisite",
-      impact_claims: ["first.result"],
-      blocks_target: true,
-      actor: {
-        id: "fixture-population-owner",
-        role: "population acceptance owner",
-        authority_kind: "human",
+    for (const assertion of [
+      ...check.positive_assertions,
+      ...check.negative_assertions,
+    ]) {
+      assertion.claims = assertion.claims.filter((claim) => claim !== "result");
+      if (!assertion.claims.length) delete assertion.applicability_ref;
+    }
+    for (const control of outcome.acceptance.counterfactual_controls)
+      control.claims = control.claims.filter((claim) => claim !== "result");
+    fixture.contract.global.acceptance.external_confirmations = [
+      {
+        key: "fixture-external",
+        description: "Confirm the fixture in external delivery.",
+        owner: "release-owner",
+        kind: "functional_prerequisite",
+        impact_claims: ["first.result"],
+        blocks_target: true,
+        actor: {
+          id: "fixture-population-owner",
+          role: "population acceptance owner",
+          authority_kind: "human",
+        },
+        target_ref: "fixture-app",
+        environment_identity: "fixture-population-environment-v1",
+        scenario: structuredClone(check.scenario),
+        evidence_requirements: [
+          {
+            key: "population-runtime-observation",
+            statement: "Capture the exact runtime population result.",
+          },
+        ],
+        obligations: [
+          {
+            key: "confirm-first-population-result",
+            claim_ref: "first.result",
+            applicability_ref: "first-root-success",
+            fact_ref: null,
+            proof_ref: null,
+            method: "exact_value",
+            proof_surface: "runtime_behavior",
+            evidence_capabilities: ["target_runtime"],
+            expected_authority_ref: "contract-claim:first.result",
+            result_kind: "judgment",
+            judgment_basis: {
+              kind: "expert_assessment",
+              source_ref: "fixture-external",
+            },
+          },
+        ],
       },
-      target_ref: "fixture-app",
-      environment_identity: "fixture-population-environment-v1",
-      scenario: structuredClone(check.scenario),
-      evidence_requirements: [
-        {
-          key: "population-runtime-observation",
-          statement: "Capture the exact runtime population result.",
-        },
-      ],
-      obligations: [
-        {
-          key: "confirm-first-population-result",
-          claim_ref: "first.result",
-          applicability_ref: "first-root-success",
-          fact_ref: null,
-          proof_ref: null,
-          method: "exact_value",
-          proof_surface: "runtime_behavior",
-          evidence_capabilities: ["target_runtime"],
-          expected_authority_ref: "contract-claim:first.result",
-          result_kind: "judgment",
-        },
-      ],
-    });
+    ];
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

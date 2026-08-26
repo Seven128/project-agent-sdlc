@@ -99,9 +99,10 @@ test("Global Checks preserve Outcome-scoped Binding identity while deduplicating
         (check) => check.key === "global-state-check",
       );
       assert.ok(globalCheck, `${scenario}: compiled Global Check is required`);
-      const scopedRefs = globalCheck.process_runtime_closure.production_binding_refs
-        .filter((bindingRef) => bindingRef.endsWith(".shared-state"))
-        .sort();
+      const scopedRefs =
+        globalCheck.process_runtime_closure.production_binding_refs
+          .filter((bindingRef) => bindingRef.endsWith(".shared-state"))
+          .sort();
       assert.deepEqual(scopedRefs, [
         "first.shared-state",
         "second.shared-state",
@@ -164,6 +165,20 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
     const second = structuredClone(
       otherGlobal.contract.global.acceptance.checks[0],
     );
+    const otherApplicability = structuredClone(
+      otherGlobal.contract.global.applicability[0],
+    );
+    otherApplicability.key = "other-global-success";
+    otherApplicability.dimensions = [
+      { key: "fixture-state", value: "other-loaded" },
+    ];
+    otherGlobal.contract.global.applicability.push(otherApplicability);
+    const globalConstraint =
+      otherGlobal.contract.global.technical.constraints.find(
+        (constraint) => constraint.key === "global-state",
+      );
+    assert.ok(globalConstraint);
+    globalConstraint.applicability_refs.push(otherApplicability.key);
     second.key = "other-global-check";
     process.env.TY_CONTEXT_OTHER_GLOBAL_SCOPE ??= "fixture-other-global";
     second.environment_requirements = [
@@ -174,6 +189,7 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
       },
     ];
     second.positive_assertions[0].key = "other-global-assertion";
+    second.positive_assertions[0].applicability_ref = otherApplicability.key;
     otherGlobal.contract.global.acceptance.checks.push(second);
     otherGlobal.contract.global.acceptance.counterfactual_controls.push({
       key: "other-global-control",

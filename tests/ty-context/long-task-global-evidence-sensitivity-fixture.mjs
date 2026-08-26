@@ -12,6 +12,7 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
+import { addFixtureDomainSemanticFact } from "./long-task-semantic-fact-test-support.mjs";
 
 export const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
 
@@ -129,13 +130,27 @@ const observations = globalCheck ? {
   [assertion(key + "-obligation")]: observed,
   [assertion(key + "-liveness")]: true,
   [assertion(key + "-relations-na")]: state[key + "_relations_applicable"] === true,
-  ...(key === "first" ? { [assertion("first-architecture")]: observed } : {})
+  ...(key === "first" ? {
+    "fact.global.state": observed,
+    [assertion("first-architecture")]: observed
+  } : {})
 };
 console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 `,
   );
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
+  await addFixtureDomainSemanticFact(fixture, {
+    sourceItemRef: "global-state-source",
+    factKey: "fact.global.state",
+    proofKey: "proof.global.state.exact",
+    propertyKey: "property.global-state-valid",
+    cellKey: "cell.global.state",
+    assertionKey: "first-global-state-semantic-fact",
+    criterion:
+      "The Global technical state constraint has an independent same-domain Semantic Fact.",
+    observation: "global_state_semantic_fact_result",
+  });
 }
 
 export async function addGlobalCounterfactual(contract) {

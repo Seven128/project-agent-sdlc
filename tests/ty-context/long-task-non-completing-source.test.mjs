@@ -11,7 +11,17 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { refreshPackageMachineFixtureOracle } from "./long-task-package-machine-fixture.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
+import {
+  addFixtureDomainSemanticFact,
+  remapFixtureSourceFacts,
+} from "./long-task-semantic-fact-test-support.mjs";
+
+const spinnerAcceptanceFact = "fact.first.spinner-only-acceptance";
+const spinnerAcceptanceProof = "proof.first.spinner-only-acceptance.exact";
+const spinnerAcceptanceAssertion =
+  "first-spinner-only-acceptance-semantic-fact";
 
 test("non_completing Source maps exactly and may back a Source AC", async () => {
   const fixture = await createDeliveryFixture();
@@ -85,6 +95,10 @@ test("non_completing Source preserves exact text and unique target ownership", a
       path.join(duplicate.root, "source.md"),
       `${current.trimEnd()}\n\n<!-- ty-source-item:start key=spinner-only-copy kind=non_completing -->\nA loading spinner alone is not completion.\n<!-- ty-source-item:end -->\n`,
     );
+    await writeContract(duplicate.workdir, duplicate.contract);
+    await remapFixtureSourceFacts(duplicate, "spinner-only-copy", [
+      "fact.first.observable",
+    ]);
     await assertPreflightAndCompileReject(
       duplicate,
       "source_target_already_owned",
@@ -112,7 +126,24 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
       );
     outcome.acceptance.counterfactual_controls[0].expected_assertion_failures =
       outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.filter(
-        (key) => key !== "spinner-only-rejected",
+        (key) =>
+          !["spinner-only-rejected", spinnerAcceptanceAssertion].includes(key),
+      );
+    outcome.acceptance.counterfactual_controls[0].claims =
+      outcome.acceptance.counterfactual_controls[0].claims.filter(
+        (claim) => claim !== `semantic_fact.${spinnerAcceptanceFact}`,
+      );
+    outcome.acceptance.checks[0].positive_assertions =
+      outcome.acceptance.checks[0].positive_assertions.filter(
+        (assertion) => assertion.key !== spinnerAcceptanceAssertion,
+      );
+    outcome.semantic_fact_bindings.facts =
+      outcome.semantic_fact_bindings.facts.filter(
+        (binding) => binding.fact_ref !== spinnerAcceptanceFact,
+      );
+    outcome.semantic_fact_bindings.proofs =
+      outcome.semantic_fact_bindings.proofs.filter(
+        (binding) => binding.proof_ref !== spinnerAcceptanceProof,
       );
     fixture.contract.source_claims = fixture.contract.source_claims.filter(
       (claim) => !["spinner-only", "spinner-only-ac"].includes(claim.key),
@@ -199,6 +230,18 @@ ${criterion}
 `,
   );
   await writeContract(fixture.workdir, fixture.contract);
+  const manifest = await addFixtureDomainSemanticFact(fixture, {
+    sourceItemRef: "spinner-only-ac",
+    factKey: spinnerAcceptanceFact,
+    proofKey: spinnerAcceptanceProof,
+    propertyKey: "property.spinner-only-acceptance",
+    cellKey: "cell.first.spinner-only-acceptance",
+    assertionKey: spinnerAcceptanceAssertion,
+    criterion:
+      "The spinner-only rejection criterion has an independent acceptance-domain Semantic Fact.",
+    observation: "spinner_only_acceptance_semantic_fact_result",
+  });
+  await refreshPackageMachineFixtureOracle(fixture.root, manifest);
 }
 
 async function assertPreflightAndCompileReject(fixture, code) {
