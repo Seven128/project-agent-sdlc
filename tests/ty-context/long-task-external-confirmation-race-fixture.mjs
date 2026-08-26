@@ -32,7 +32,7 @@ export async function installSlowOracle(fixture, signal) {
   await writeFile(
     path.join(fixture.root, "tests", "oracle.mjs"),
     `import { appendFileSync, existsSync, readFileSync } from "node:fs";
-appendFileSync(${JSON.stringify(signal.started)}, "started\\n");
+appendFileSync(${JSON.stringify(signal.started)}, String(process.pid) + "\\n");
 while (!existsSync(${JSON.stringify(signal.release)})) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
 }
@@ -80,6 +80,42 @@ export async function waitForFile(file) {
     await new Promise((resolve) => setTimeout(resolve, 20));
   }
   throw new Error(`race signal timeout: ${file}`);
+}
+
+export async function waitForStartedProcess(file) {
+  await waitForFile(file);
+  const rawPid = (await readFile(file, "utf8")).trim();
+  assert.match(rawPid, /^[1-9]\d*$/u, `invalid race process id: ${rawPid}`);
+  const pid = Number(rawPid);
+  assert.ok(Number.isSafeInteger(pid), `invalid race process id: ${rawPid}`);
+  return pid;
+}
+
+export async function waitForProcessExit(pid) {
+  assert.ok(Number.isSafeInteger(pid) && pid > 0, `invalid process id: ${pid}`);
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+    } catch (error) {
+      if (error?.code === "ESRCH") return;
+      if (error?.code !== "EPERM") throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.fail(`race process still running after CLI completion: ${pid}`);
+}
+
+export async function removeTemporary(target) {
+  // Race cases separately prove that their product process has exited. The
+  // wider Windows retry window covers only transient scanner/indexer handles;
+  // exhaustion still fails the test instead of suppressing cleanup errors.
+  await rm(target, {
+    recursive: true,
+    force: true,
+    maxRetries: process.platform === "win32" ? 30 : 10,
+    retryDelay: 100,
+  });
 }
 
 export async function runCliProcess(cwd, args) {

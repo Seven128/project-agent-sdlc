@@ -11,10 +11,10 @@ const supportedTestPlatforms = new Set(SUPPORTED_TEST_PLATFORMS);
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 26,
+    max_files: 27,
     reviewed_on: "2026-08-25",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The cross-platform direct-process observer file closes the proven PR-to-main coverage gap for immediate-root descendant containment while retaining distinct Windows Job and POSIX process-group/sampled-escape controls. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -126,6 +126,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-observer-trust-counterexamples.test.mjs",
     ["long-task", "long-task-trust"],
     "Positive control: [control:host-derived-target-runtime] reaches machine_accepted through one Harness-spawned Source-backed repository product root whose exact closure emits multiple package-observed Facts. Negative control: canonical [critical:host-derived-target-runtime] plus R4, R6, R6b, R7c, R11, R11b and R12 reject historical runtime, proxy family, wrapper argv, frozen-input mutation, Source/Contract target drift, a missing unbound repository path and an unsafe external-reference token in complete root argv. R12 binds the clean committed attack to the Compile owner diagnostic and separately proves legal-neighbor Authority freshness rejection; the real-process ROI workload does not prove this argv incident. Owner/path: executeObserverTrustWorkflow reaches long-task-source-target-continuity.ts, long-task-process-runtime-closure.ts, long-task-execution-observation.ts, long-task-check-runner.ts, long-task-process-observation.ts and Final Gate. Scope: bounded process exact/presence Actual and target_runtime require one Source-backed complete root invocation, production-bound runtime closure and host execution attestation. Does not prove: interaction_trace, state_delta, design_conformance, browser/native/device observation or absolute cross-platform process containment.",
+  ),
+  criticalSentinel(
+    "direct-process-descendant-containment",
+    "long-task-direct-process-observer.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves through the package's real direct-process observation path that a root cannot report completed while its child or grandchild remains alive: Windows retains deliberately detached descendants inside pre-resume Job containment, POSIX immediate-root descendants inherit the root process group, and a separate long-root detached-child control exercises sampled escape detection. Every spawned process is required gone after timeout or invalid-evidence handling. This does not claim hostile-host isolation or Windows-equivalent pre-resume containment on POSIX.",
   ),
   criticalSentinel(
     "windows-job-pre-resume-containment",
