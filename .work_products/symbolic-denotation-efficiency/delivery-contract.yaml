@@ -2,7 +2,7 @@ schema_version: long-task-delivery-v2
 semantic_fact_manifest:
   key: symbolic-denotation-efficiency-manifest
   source_path: docs/symbolic-denotation-efficiency.md
-  sha256: 26d347074bfdf5b1568767aa4d3655ad79a93c62f390a744903e59983dc8e9ce
+  sha256: cd25f1f1f570cd6038b6b51bc5a1ee547127fc6b5e7070f9aa2edd416ddf8809
 task:
   id: symbolic-denotation-efficiency
   title: Semantic-equivalent symbolic design facts with efficiency anti-degradation
@@ -2195,16 +2195,16 @@ compact_semantic_carrier:
     - claim_ref
     rows:
     - - fact.symbolic-denotation-efficiency-result
-      - f164d08ebf29c44e5e2d5d96fda4678bc7850a40cc5474b5177568d6fd2cbcd9
+      - 838b628b0d690c2dd26a9f13349b83050337fe9c004103275209649f89c6f587
       - semantic_fact.fact.symbolic-denotation-efficiency-result
     - - fact.original-attachment-provenance
-      - de0ac6c15dfe9f5519fa40c1db57570b05768fd5c48224ca0beb5f33baa95571
+      - 5f7134390a8c24271d2f35666cd5d1f84c8268f3f840176ce882672d35a92cf2
       - semantic_fact.fact.original-attachment-provenance
     - - fact.audited-source-supersession
-      - 0ac8939ceff7428bb5e074897f974b8c7edc1e179ffe0bf932a59987b744408b
+      - 88202e73810403fe314d432caf5416dfb71937bf9e14f8a893e336f32c553e2c
       - semantic_fact.fact.audited-source-supersession
     - - fact.complete-material-input-index
-      - 3ec829ab6c979cc9fdefb6b43876eefd7ae9f1c881df79d180f32731a8c75aca
+      - 84d60a579338a6e95c1ec0ecc74b0fc763a4e3b4fcc936d43df713f120853010
       - semantic_fact.fact.complete-material-input-index
     - - fact.complete-extensional-universe
       - d9d8c161ebbfe8551341f619af083db931faf772248dad60ca37d71da7e3b3a5
@@ -2252,7 +2252,7 @@ compact_semantic_carrier:
       - 71d06238f4fd33cab2431b6968ce713f364886fdca1baf10e69fddfcb52ba528
       - semantic_fact.fact.exact-target-layout-pixel-preservation
     - - fact.canonical-resource-value-authority
-      - 070fdca30f1b45516eea7f9d62912207e652e4398d407ccf93fa03b62778e108
+      - 6b79b84c966e8980aa892d443c1e999ec20f4e90f613b23c3515a9229eaab9de
       - semantic_fact.fact.canonical-resource-value-authority
     - - fact.versioned-ui-symbolic-v2
       - 219387c456ab0b548fd142f74feec28e813b34ba4576e808d8d860d2969a8ce8
@@ -2474,10 +2474,10 @@ compact_semantic_carrier:
       - 337db905ca0c531936f74e4bb8dad459962ef9d36b9b0f3827ca6ef15ee73caa
       - semantic_fact.fact.complexity-parameter-verification
     - - fact.distribution-context-parity
-      - 0232db246df6a212d5484e3d46743838c20ba5198cb02aabccca60383ceefbd3
+      - 838defa15162cc8b9dc206efeaabf2711dc8f770eeefe794c1cf4c93c893533f
       - semantic_fact.fact.distribution-context-parity
     - - fact.architecture-deliberation
-      - 9f2a0fe20b7cdb98b4cef1663a712faf8809ace553ee3499c18366439e22f317
+      - b008cdb225c25522504708ee7d66eac87be35b9b8cf86f2fa8419d4a17636424
       - semantic_fact.fact.architecture-deliberation
     - - fact.no-sampling
       - e749004c39ee4d198f38a08547c4646759bafc96ff0135b451b164fe5be84dda
@@ -2519,13 +2519,13 @@ compact_semantic_carrier:
       - 97f8615179577bbbcd51390f9029457ba9defe580817c3493118df36c43f34f2
       - semantic_fact.fact.scope-and-rollout-ac
     - - fact.package-antidegradation-and-parity-ac
-      - 54ef1402ad04c5c3c1d15b0717070eecc4d31636cd67c6ced8b1a24cca5b3a0d
+      - 43f4415cad454f8fb2a902c2e08db848fd21a77fa6834fd5b8b4c9b22deb76e0
       - semantic_fact.fact.package-antidegradation-and-parity-ac
     - - fact.inventory-is-not-completion
       - 72f2d440e2e7161e1652e85e68ca54b62087398ae646b8bbe99d5de7a560e993
       - semantic_fact.fact.inventory-is-not-completion
     - - fact.public-schema-change-risk
-      - 830b95854681e727b79f5f397d57f853a43e5c958d5c33c3012faa3494540094
+      - b5d3f3e17ece8bc061556569cd2b90ffd6c15cb153ebad953f952f5a384a590c
       - semantic_fact.fact.public-schema-change-risk
     - - fact.false-completion-critical-path-risk
       - 5d6270797deaeec867ec4772c67b44f9cece12a6b724ad009711f5b0c9ec4d1d
@@ -2554,19 +2554,19 @@ compact_semantic_carrier:
     - overrides
     rows:
     - - proof.symbolic-denotation-efficiency-result.exact
-      - 3dc491bc93ece2695914814da8e1271bca73b418e785dc78f5cb3fc47e51440d
+      - 12af402db4e20c12e12e23408f319d1ea0bdf10e358d79b85ec865217ffcf101
       - fact.symbolic-denotation-efficiency-result
       - assertion_ref: semantic-symbolic-denotation-efficiency-result
     - - proof.original-attachment-provenance.exact
-      - 58ee0675f872a39af5b412653858751a40ced83721d642b14be1ebbd2e05deb3
+      - d00011213638d7e005755cea31eb076be92e0f0f1dbd01910f75328635561bec
       - fact.original-attachment-provenance
       - assertion_ref: semantic-original-attachment-provenance
     - - proof.audited-source-supersession.exact
-      - 7bcbc7a38ec9d25e80cb7f612fa100a3a6943712bdcbc2136278a37528d84124
+      - 32e4cfa5997d9b4a5f52597fdcb8fd10ea464cab6d6a7f8561fed414a289a3df
       - fact.audited-source-supersession
       - assertion_ref: semantic-audited-source-supersession
     - - proof.complete-material-input-index.exact
-      - b86340ab149e24747ea7bec87ee0c4b469d76d334ef9b30d0c61beed939fb58f
+      - 0ebefd52104a5a39a612fcbd825b3bdf271c8cf74296ce9d6552211e8fb76ca4
       - fact.complete-material-input-index
       - assertion_ref: semantic-complete-material-input-index
     - - proof.complete-extensional-universe.exact
@@ -2630,7 +2630,7 @@ compact_semantic_carrier:
       - fact.exact-target-layout-pixel-preservation
       - assertion_ref: semantic-exact-target-layout-pixel-preservation
     - - proof.canonical-resource-value-authority.exact
-      - 18d54d0e2862fc0ec6f36f9688bbed59772874975caf1e6f42df579adb5339d3
+      - 779a311687aaa202065768576be1a72b2eab1468ea2d9605dbff625957aee749
       - fact.canonical-resource-value-authority
       - assertion_ref: semantic-canonical-resource-value-authority
     - - proof.versioned-ui-symbolic-v2.exact
@@ -2926,11 +2926,11 @@ compact_semantic_carrier:
       - fact.complexity-parameter-verification
       - assertion_ref: semantic-complexity-parameter-verification
     - - proof.distribution-context-parity.exact
-      - bb7fc6b41d0c9792b452affd64b4f1b17629f5752ff51dea85502f239ecd46af
+      - d987353d03012e5737024bd9398a6632851fb46adc0de4f16b372affc2f7a66f
       - fact.distribution-context-parity
       - assertion_ref: semantic-distribution-context-parity
     - - proof.architecture-deliberation.exact
-      - ed8fd19494c8a941579f66985ac1402eeffc09a1cda59d9017e290dd4c1b59bf
+      - c34c013f04b8e5b156f18ebb52b403578d0c4413dc3118093dd202a21feb67d5
       - fact.architecture-deliberation
       - assertion_ref: semantic-architecture-deliberation
     - - proof.no-sampling.exact
@@ -2986,7 +2986,7 @@ compact_semantic_carrier:
       - fact.scope-and-rollout-ac
       - assertion_ref: semantic-scope-and-rollout-ac
     - - proof.package-antidegradation-and-parity-ac.exact
-      - 02d18411db9ee24ea2f1f7c7cd596f17d1fb540feb9711debe366413ea8ecd31
+      - b3e5ef5feb8a4d062b3ca5dd798b4dacc1b9a8755237dedc65c95813cfbec763
       - fact.package-antidegradation-and-parity-ac
       - assertion_ref: semantic-package-antidegradation-and-parity-ac
     - - proof.inventory-is-not-completion.exact
@@ -2994,7 +2994,7 @@ compact_semantic_carrier:
       - fact.inventory-is-not-completion
       - assertion_ref: semantic-inventory-is-not-completion
     - - proof.public-schema-change-risk.exact
-      - fdabb502a67e1abd663fc565fb02837479fd526042fcbb75e83d30a9e0eff9c3
+      - 09b15efbc07d347ba93fd61c454e7e069b81bdff0669c8bd25a08a407dd6348d
       - fact.public-schema-change-risk
       - assertion_ref: semantic-public-schema-change-risk
     - - proof.false-completion-critical-path-risk.exact

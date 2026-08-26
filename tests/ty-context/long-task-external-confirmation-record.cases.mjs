@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -44,6 +44,7 @@ import {
 import {
   installSlowOracle,
   raceSignal,
+  removeTemporary,
   runCliProcess,
   waitForFile,
 } from "./long-task-external-confirmation-race-fixture.mjs";
@@ -304,6 +305,6 @@ test("blocking external obligations remain pending and cannot clear Active Autho
     assert.equal(stop.workflow_status, "blocked_external");
     assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
   } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(fixture.root);
   }
 });

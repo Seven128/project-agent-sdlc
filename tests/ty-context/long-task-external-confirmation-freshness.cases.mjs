@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -46,8 +46,10 @@ import {
   finalizationSignalEnvironment,
   installSlowOracle,
   raceSignal,
+  removeTemporary,
   runCliProcess,
-  waitForFile,
+  waitForProcessExit,
+  waitForStartedProcess,
 } from "./long-task-external-confirmation-race-fixture.mjs";
 
 test("every candidate change stales a blocking external record", async () => {
@@ -107,7 +109,7 @@ test("every candidate change stales a blocking external record", async () => {
     ]);
     assert.equal(revoked.status, "revoked");
   } finally {
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(fixture.root);
   }
 });
 
@@ -143,7 +145,7 @@ test("Final Gate rejects an External Confirmation record changed during runner e
       "final-gate",
       fixture.workdir,
     ]);
-    await waitForFile(signal.started);
+    const oraclePid = await waitForStartedProcess(signal.started);
     await writeFile(
       externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
       "{}\n",
@@ -151,6 +153,7 @@ test("Final Gate rejects an External Confirmation record changed during runner e
     await writeFile(signal.release, "release\n");
 
     const final = await finalProcess;
+    await waitForProcessExit(oraclePid);
     assert.notEqual(final.exitCode, 0);
     const receipt = JSON.parse(final.stdout);
     assert.equal(receipt.workflow_status, "needs_work");
@@ -163,8 +166,8 @@ test("Final Gate rejects an External Confirmation record changed during runner e
     );
     assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
   } finally {
-    await rm(signal.folder, { recursive: true, force: true });
-    await rm(fixture.root, { recursive: true, force: true });
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
   }
 });
 
