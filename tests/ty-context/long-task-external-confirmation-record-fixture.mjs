@@ -59,20 +59,21 @@ export async function buildPassingRecord(fixture, prepared, options = {}) {
       started_at: timestamp,
       completed_at: timestamp,
     },
-    results: [
-      {
-        obligation_ref: confirmation.obligations[0].obligation_ref,
-        fact_ref: confirmation.obligations[0].fact_ref,
-        claim_ref: confirmation.obligations[0].claim_ref,
-        applicability_ref: confirmation.obligations[0].applicability_ref,
-        result_kind: confirmation.obligations[0].result_kind,
-        verdict: "passed",
-        evidence_refs: [evidenceRelative],
-        rationale:
-          options.rationale ??
-          "The declared product acceptance owner observed the exact expected outcome.",
-      },
-    ],
+    results: confirmation.obligations.map((obligation) => ({
+      obligation_ref: obligation.obligation_ref,
+      fact_ref: obligation.fact_ref,
+      claim_ref: obligation.claim_ref,
+      applicability_ref: obligation.applicability_ref,
+      result_kind: obligation.result_kind,
+      ...(obligation.result_kind === "actual"
+        ? { actual: structuredClone(obligation.expected.located_value.value) }
+        : {}),
+      verdict: "passed",
+      evidence_refs: [evidenceRelative],
+      rationale:
+        options.rationale ??
+        "The declared product acceptance owner observed the exact expected outcome.",
+    })),
     artifact_snapshots: {
       [evidenceRelative]: {
         sha256: evidenceSha256,

@@ -1,4 +1,5 @@
 import { compileClaimReachability } from "./long-task-acceptance-reachability-claims.js";
+import { compileDesignFactReachability } from "./long-task-acceptance-reachability-design.js";
 import {
   addUnboundBlockingConfirmationRows,
   validateExternalDeclarations,
@@ -22,13 +23,26 @@ export function compileAcceptanceReachability(
 ): AcceptanceReachabilityV1 {
   const rows: AcceptanceObligationReachabilityV1[] = [];
   const expectedExternal: ExpectedExternalObligation[] = [];
-  compileClaimReachability(input, rows, expectedExternal);
+  const advisoryExternalRouteRefs = new Set<string>();
+  compileClaimReachability(
+    input,
+    rows,
+    expectedExternal,
+    advisoryExternalRouteRefs,
+  );
   compileSemanticFactReachability(input, rows, expectedExternal);
-  addUnboundBlockingConfirmationRows(input.contract, rows, expectedExternal);
+  compileDesignFactReachability(input, rows, expectedExternal);
+  addUnboundBlockingConfirmationRows(
+    input.contract,
+    rows,
+    expectedExternal,
+    advisoryExternalRouteRefs,
+  );
   const externalMatches = validateExternalDeclarations(
     input.contract,
     input.manifest,
     expectedExternal,
+    input.compiled_checks,
   );
   applyExternalReachability(input, rows, expectedExternal, externalMatches);
   const sorted = rows.sort((left, right) =>

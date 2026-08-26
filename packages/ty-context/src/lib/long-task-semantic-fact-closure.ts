@@ -113,6 +113,12 @@ function semanticFactClaimPolarities(
       values.add(binding.required_polarity ?? "positive");
       result.set(binding.fact_ref, values);
     }
+  for (const binding of contract.global.semantic_fact_bindings?.obligations ??
+    []) {
+    const values = result.get(binding.fact_ref) ?? new Set();
+    values.add(binding.required_polarity);
+    result.set(binding.fact_ref, values);
+  }
   return result;
 }
 
@@ -153,6 +159,15 @@ function validateManifestReference(
         "outcome_manifest_ref_mismatch",
         `${outcome.key}:${outcome.semantic_fact_bindings.manifest_ref}`,
       );
+  if (
+    contract.global.semantic_fact_bindings &&
+    contract.global.semantic_fact_bindings.manifest_ref !==
+      contract.semantic_fact_manifest.key
+  )
+    semanticFactClosureInvalid(
+      "global_manifest_ref_mismatch",
+      contract.global.semantic_fact_bindings.manifest_ref,
+    );
 }
 
 export const semantic_fact_manifest = "semantic-fact-manifest-v1";

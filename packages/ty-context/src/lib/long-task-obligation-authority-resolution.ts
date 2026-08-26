@@ -12,6 +12,7 @@ export type ObligationAuthorityResolutionV1 =
       reason:
         | "machine_external_authority_conflict"
         | "authority_route_ambiguous"
+        | "proof_surface_authority_ambiguous"
         | "no_admitted_proof_route";
     };
 
@@ -20,6 +21,26 @@ export function resolveObligationAuthority(
 ): ObligationAuthorityResolutionV1 {
   const machine = candidates.machine_candidates;
   const external = candidates.external_candidates;
+  if (candidates.proof_surface_selection === "optional") {
+    const semanticProfiles = new Set(
+      [...machine, ...external].map((route) => routeSemanticProfile(route)),
+    );
+    if (semanticProfiles.size > 1)
+      return {
+        status: "unreachable",
+        reason: "proof_surface_authority_ambiguous",
+      };
+    if (
+      machine.length === 1 &&
+      external.length > 0 &&
+      external.every(
+        (route) =>
+          route.advisory_to_machine === true &&
+          route.proof_surface !== machine[0].proof_surface,
+      )
+    )
+      return { status: "machine_admitted", machine: machine[0] };
+  }
   if (machine.length && external.length)
     return {
       status: "unreachable",
@@ -32,4 +53,14 @@ export function resolveObligationAuthority(
   if (external.length === 1)
     return { status: "external_candidate", external: external[0] };
   return { status: "unreachable", reason: "no_admitted_proof_route" };
+}
+
+function routeSemanticProfile(
+  route: MachineAuthorityRouteV1 | ExternalAuthorityRouteV1,
+): string {
+  return `${route.method ?? "unknown"}\0${[
+    ...(route.required_evidence_capabilities ?? []),
+  ]
+    .sort()
+    .join("\0")}`;
 }

@@ -16,6 +16,7 @@ import {
   isJsonPointerExactOracle,
 } from "./long-task-json-pointer-observation.js";
 import { classifyMachineObservationCarrierRoleConflict } from "./long-task-admitted-observation.js";
+import { designGroundObligationRef } from "./long-task-design-obligation.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
 import {
@@ -35,6 +36,8 @@ interface CompileObservationAuthorityPlanInput {
   source_backed_execution_target: SourceBackedExecutionTargetV2 | null;
   workspace_manifest: WorkspaceManifestV2;
   protected_authority_paths?: readonly string[];
+  external_design_obligation_refs?: ReadonlySet<string>;
+  external_claim_obligation_refs_by_assertion?: ReadonlyMap<string, string>;
 }
 
 interface ExactCandidate {
@@ -45,6 +48,7 @@ interface ExactCandidate {
   target_ref: string;
   method: string;
   expected_value_sha256: string;
+  expected_value?: unknown;
   actual_projection: CompiledObservationAuthorityV2["actual_projection"];
   comparison: CompiledObservationAuthorityV2["comparison"];
   sensitivity: "plain" | "protected";
@@ -198,11 +202,9 @@ export function compileObservationAuthorityPlan(
   for (const assertion of assertions.values()) {
     if (factBoundAssertions.has(assertion.key)) continue;
     const expected = exactAssertionExpected(assertion);
-    const obligationRef = assertionObligationRef(
-      input.outcome_key,
-      input.check.key,
-      assertion.key,
-    );
+    const obligationRef =
+      input.external_claim_obligation_refs_by_assertion?.get(assertion.key) ??
+      assertionObligationRef(input.outcome_key, input.check.key, assertion.key);
     candidates.push({
       obligation_ref: obligationRef,
       observation_identity: obligationRef,
@@ -211,6 +213,7 @@ export function compileObservationAuthorityPlan(
       target_ref: input.check.execution_target.target_ref,
       method: "exact_value",
       expected_value_sha256: sha256Hex(canonicalValueJson(expected)),
+      expected_value: expected,
       actual_projection: assertionActualProjection(assertion),
       comparison: {
         comparator: "exact_value",
@@ -226,13 +229,139 @@ export function compileObservationAuthorityPlan(
     });
   }
 
-  const rows = candidates.map((candidate) =>
-    compileCandidate(input, candidate),
-  );
+  const rows = candidates.flatMap((candidate) => {
+    try {
+      return [compileCandidate(input, candidate)];
+    } catch (error) {
+      const exactExternalDesign =
+        candidate.diagnostic_scope === "design_fact" &&
+        input.external_design_obligation_refs?.has(candidate.obligation_ref);
+      const exactExternalClaim =
+        candidate.diagnostic_scope === "assertion" &&
+        input.external_claim_obligation_refs_by_assertion?.get(
+          candidate.assertion.key,
+        ) === candidate.obligation_ref;
+      if (
+        (exactExternalDesign || exactExternalClaim) &&
+        externalizableObservationError(error)
+      )
+        return [compileExternalCandidate(input, candidate)];
+      throw error;
+    }
+  });
   assertUniqueRows(rows);
   return rows.sort((left, right) =>
     canonicalValueJson(left).localeCompare(canonicalValueJson(right)),
   );
+}
+
+export function projectExternallyOwnedDesignAssertions(
+  check: DeliveryCheckV2,
+  designTargets: CompiledDesignTargetV2[],
+  machineAuthorities: CompiledObservationAuthorityV2[],
+  externalDesignObligationRefs: ReadonlySet<string>,
+): { check: DeliveryCheckV2; removed_assertion_refs: Set<string> } {
+  const obligationsByAssertion = new Map<string, string[]>();
+  const add = (assertionRef: string, obligationRef: string) => {
+    const refs = obligationsByAssertion.get(assertionRef) ?? [];
+    refs.push(obligationRef);
+    obligationsByAssertion.set(assertionRef, refs);
+  };
+  for (const target of designTargets) {
+    for (const binding of target.verification_method_bindings)
+      for (const artifact of binding.evidence_artifacts)
+        for (const expectation of artifact.fact_expectations)
+          add(
+            binding.assertion_ref,
+            designGroundObligationRef(
+              target.key,
+              binding.method,
+              artifact.condition_key,
+              expectation.fact_ref,
+            ),
+          );
+    for (const binding of target.symbolic_method_bindings ?? [])
+      for (const expectation of binding.rule_expectations)
+        add(binding.assertion_ref, expectation.obligation_ref);
+  }
+  const machineRefs = new Set(
+    machineAuthorities
+      .filter((authority) => authority.authority !== "external_confirmation")
+      .map((authority) => authority.obligation_ref),
+  );
+  const removed = new Set<string>();
+  for (const [assertionRef, refs] of obligationsByAssertion) {
+    const externalRefs = refs.filter((ref) =>
+      externalDesignObligationRefs.has(ref),
+    );
+    if (!externalRefs.length) continue;
+    const admittedMachineRefs = refs.filter((ref) => machineRefs.has(ref));
+    if (admittedMachineRefs.length === refs.length) continue;
+    if (!admittedMachineRefs.length && externalRefs.length === refs.length) {
+      removed.add(assertionRef);
+      continue;
+    }
+    fail(
+      "mixed_machine_external_design_assertion",
+      `${check.key}:${assertionRef}:${refs.join(",")}`,
+    );
+  }
+  if (!removed.size) return { check, removed_assertion_refs: removed };
+  return {
+    check: {
+      ...check,
+      positive_assertions: check.positive_assertions.filter(
+        (assertion) => !removed.has(assertion.key),
+      ),
+      negative_assertions: check.negative_assertions.filter(
+        (assertion) => !removed.has(assertion.key),
+      ),
+    },
+    removed_assertion_refs: removed,
+  };
+}
+
+export function projectExternallyOwnedClaimAssertions(
+  check: DeliveryCheckV2,
+  observationAuthorities: CompiledObservationAuthorityV2[],
+  externalClaimObligationRefsByAssertion: ReadonlyMap<string, string>,
+): { check: DeliveryCheckV2; removed_assertion_refs: Set<string> } {
+  const removed = new Set<string>();
+  for (const [
+    assertionRef,
+    obligationRef,
+  ] of externalClaimObligationRefsByAssertion) {
+    const authorities = observationAuthorities.filter(
+      (authority) =>
+        authority.assertion_ref === assertionRef &&
+        authority.obligation_ref === obligationRef,
+    );
+    if (
+      authorities.some(
+        (authority) => authority.authority !== "external_confirmation",
+      )
+    )
+      continue;
+    if (
+      authorities.some(
+        (authority) => authority.authority === "external_confirmation",
+      )
+    )
+      removed.add(assertionRef);
+  }
+  if (!removed.size) return { check, removed_assertion_refs: removed };
+  return {
+    check: {
+      ...check,
+      positive_assertions: check.positive_assertions.filter(
+        (assertion) => !removed.has(assertion.key),
+      ),
+      negative_assertions: check.negative_assertions.filter(
+        (assertion) => !removed.has(assertion.key),
+      ),
+    },
+    removed_assertion_refs: removed,
+  };
 }
 
 function compileCandidate(
@@ -332,6 +461,52 @@ function compileCandidate(
     authority,
     expected_identity: expectedIdentity,
     expected_value_sha256: candidate.expected_value_sha256,
+    actual_projection: candidate.actual_projection,
+    observation_identity: candidate.observation_identity,
+    comparison,
+    locator_policy: {
+      kind: "fixed_json_pointer",
+      value: observationPointer(candidate.observation_identity),
+    },
+    carrier_refs: carrierRefs,
+    runtime_requirements: runtimeRequirements(input),
+  };
+}
+
+function compileExternalCandidate(
+  input: CompileObservationAuthorityPlanInput,
+  candidate: ExactCandidate,
+): CompiledObservationAuthorityV2 {
+  const carrierRefs: CompiledObservationAuthorityV2["carrier_refs"] = [];
+  const comparison = candidate.comparison;
+  const expectedIdentity = sha256Hex(
+    canonicalValueJson({
+      obligation_ref: candidate.obligation_ref,
+      fact_ref: candidate.fact_ref,
+      method: candidate.method,
+      expected_value_sha256: candidate.expected_value_sha256,
+      comparison,
+      actual_projection: candidate.actual_projection,
+      carrier_refs: carrierRefs,
+    }),
+  );
+  return {
+    obligation_ref: candidate.obligation_ref,
+    fact_ref: candidate.fact_ref,
+    assertion_ref: candidate.assertion.key,
+    claim_refs: [...candidate.assertion.claims].sort(),
+    target_ref: candidate.target_ref,
+    proof_surface: input.check.proof_surface,
+    method: candidate.method,
+    evidence_capabilities: [
+      ...candidate.assertion.evidence_capabilities,
+    ].sort(),
+    authority: "external_confirmation",
+    expected_identity: expectedIdentity,
+    expected_value_sha256: candidate.expected_value_sha256,
+    ...(Object.hasOwn(candidate, "expected_value")
+      ? { expected_value: candidate.expected_value }
+      : {}),
     actual_projection: candidate.actual_projection,
     observation_identity: candidate.observation_identity,
     comparison,
@@ -553,21 +728,24 @@ function requiredAssertion(
   return assertion;
 }
 
+function externalizableObservationError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return [
+    "unsupported_observer_requires_external_confirmation:",
+    "custom_oracle_machine_completion_forbidden:",
+    "machine_observer_not_admitted:",
+    "process_observer_direct_root_required:",
+    "process_observer_root_invocation_required:",
+    "process_observer_root_argv_mismatch:",
+  ].some((prefix) => error.message.startsWith(prefix));
+}
+
 function assertionObligationRef(
   outcomeKey: string | null,
   checkKey: string,
   assertionKey: string,
 ): string {
   return `assertion.${outcomeKey ?? "GLOBAL"}.${checkKey}.${assertionKey}`;
-}
-
-function designGroundObligationRef(
-  targetKey: string,
-  method: string,
-  conditionKey: string,
-  factRef: string,
-): string {
-  return `design.${targetKey}.${method}.${conditionKey}.${factRef}`;
 }
 
 function observationPointer(identity: string): string {

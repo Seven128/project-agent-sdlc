@@ -396,6 +396,42 @@
         }
       }
     },
+    "semanticFactGlobalBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_ref", "obligations"],
+      "properties": {
+        "manifest_ref": { "$ref": "#/$defs/semanticRef" },
+        "obligations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "claim_ref",
+              "applicability_ref",
+              "target_ref",
+              "outcome_ref",
+              "fact_ref",
+              "proof_ref",
+              "method",
+              "required_polarity"
+            ],
+            "properties": {
+              "claim_ref": { "$ref": "#/$defs/semanticRef" },
+              "applicability_ref": { "$ref": "#/$defs/semanticRef" },
+              "target_ref": { "$ref": "#/$defs/semanticRef" },
+              "outcome_ref": { "$ref": "#/$defs/semanticRef" },
+              "fact_ref": { "$ref": "#/$defs/semanticRef" },
+              "proof_ref": { "$ref": "#/$defs/semanticRef" },
+              "method": { "$ref": "#/$defs/semanticRef" },
+              "required_polarity": { "enum": ["positive", "negative"] }
+            }
+          }
+        }
+      }
+    },
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "nonEmpty": { "type": "string", "minLength": 1 },
     "nonEmptyStrings": {
@@ -615,6 +651,22 @@
         "key": { "$ref": "#/$defs/key" },
         "source_ref": { "type": "string", "pattern": "^[^#]+(?:#[^#]+)?$" },
         "statement": { "$ref": "#/$defs/nonEmpty" },
+        "judgment_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "claim_ref", "applicability_refs"],
+          "properties": {
+            "kind": {
+              "enum": [
+                "subjective_preference",
+                "expert_assessment",
+                "authorization"
+              ]
+            },
+            "claim_ref": { "$ref": "#/$defs/nonEmpty" },
+            "applicability_refs": { "$ref": "#/$defs/nonEmptyStrings" }
+          }
+        },
         "disposition": {
           "oneOf": [
             {
@@ -728,6 +780,9 @@
           "items": { "$ref": "#/$defs/claimApplicability" },
           "default": []
         },
+        "semantic_fact_bindings": {
+          "$ref": "#/$defs/semanticFactGlobalBindings"
+        },
         "product": {
           "type": "object",
           "additionalProperties": false,
@@ -808,8 +863,8 @@
                     "uniqueItems": true,
                     "items": { "$ref": "#/$defs/nonEmpty" }
                   },
-                  "blocks_target": { "type": "boolean" }
-                  ,"actor": {
+                  "blocks_target": { "type": "boolean" },
+                  "actor": {
                     "type": "object",
                     "additionalProperties": false,
                     "required": ["id", "role", "authority_kind"],

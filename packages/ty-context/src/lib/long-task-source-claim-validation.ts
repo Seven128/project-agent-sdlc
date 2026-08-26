@@ -17,6 +17,12 @@ export function validateSourceClaimMappings(
       .flat()
       .map((claim) => claim.id),
   );
+  const claimApplicability = new Map(
+    [
+      ...compiledClaims.by_global,
+      ...Object.values(compiledClaims.by_outcome).flat(),
+    ].map((claim) => [claim.id, new Set(claim.applicability_refs)]),
+  );
   const executionTargetClaims = new Set(
     contract.task.execution_targets.map((target) =>
       executionTargetSourceTargetRef(target.key),
@@ -120,7 +126,76 @@ export function validateSourceClaimMappings(
       );
     if (disposition.type === "risk_fact")
       validateRiskRefs(contract, claim.key, disposition.refs, report);
+    validateJudgmentBasis(contract, claim, claimApplicability, report);
   }
+}
+
+function validateJudgmentBasis(
+  contract: DeliveryContractV2,
+  claim: DeliveryContractV2["source_claims"][number],
+  claimApplicability: ReadonlyMap<string, ReadonlySet<string>>,
+  report?: ValidationReporter,
+): void {
+  const basis = claim.judgment_basis;
+  if (!basis) return;
+  if (!sourceClaimOwnsClaim(contract, claim, basis))
+    issue(
+      report,
+      "source_claim_judgment_basis_claim_not_owned",
+      `${claim.key}:${basis.claim_ref}`,
+    );
+  const applicability = claimApplicability.get(basis.claim_ref);
+  if (!applicability)
+    issue(
+      report,
+      "source_claim_judgment_basis_claim_unknown",
+      `${claim.key}:${basis.claim_ref}`,
+    );
+  if (
+    !basis.applicability_refs.length ||
+    new Set(basis.applicability_refs).size !== basis.applicability_refs.length
+  )
+    issue(
+      report,
+      "source_claim_judgment_basis_applicability_set_invalid",
+      claim.key,
+    );
+  for (const applicabilityRef of basis.applicability_refs)
+    if (!applicability?.has(applicabilityRef))
+      issue(
+        report,
+        "source_claim_judgment_basis_applicability_unknown",
+        `${claim.key}:${basis.claim_ref}:${applicabilityRef}`,
+      );
+}
+
+function sourceClaimOwnsClaim(
+  contract: DeliveryContractV2,
+  claim: DeliveryContractV2["source_claims"][number],
+  basis: NonNullable<
+    DeliveryContractV2["source_claims"][number]["judgment_basis"]
+  >,
+): boolean {
+  const disposition = claim.disposition;
+  if (disposition.type === "claim" || disposition.type === "global_constraint")
+    return disposition.refs.includes(basis.claim_ref);
+  if (disposition.type === "outcome_result")
+    return disposition.ref === basis.claim_ref;
+  if (disposition.type !== "external_confirmation") return false;
+  return basis.applicability_refs.every((applicabilityRef) =>
+    contract.global.acceptance.external_confirmations.some(
+      (confirmation) =>
+        disposition.refs.includes(confirmation.key) &&
+        confirmation.obligations?.some(
+          (obligation) =>
+            obligation.claim_ref === basis.claim_ref &&
+            obligation.applicability_ref === applicabilityRef &&
+            obligation.result_kind === "judgment" &&
+            obligation.judgment_basis?.kind === basis.kind &&
+            obligation.judgment_basis.source_ref === claim.key,
+        ),
+    ),
+  );
 }
 
 function validateSourcePresence(

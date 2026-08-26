@@ -1,8 +1,11 @@
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import type { CompiledCheckV2 } from "./long-task-delivery-types.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import {
-  applicabilityProfile,
+  advisoryExternalRouteRef,
+  claimObligationRef,
+  externalConfirmationSessionMatchesApplicability,
   objectiveExternalActualAdmitted,
   sameSet,
   sourceBackedExternalJudgmentAdmitted,
@@ -16,6 +19,7 @@ export function validateExternalDeclarations(
   contract: DeliveryContractV2,
   manifest: SemanticFactManifestV1,
   expected: ExpectedExternalObligation[],
+  compiledChecks: readonly CompiledCheckV2[],
 ): Map<string, { obligation_key: string; session_group: string }> {
   const result = new Map<
     string,
@@ -34,6 +38,7 @@ export function validateExternalDeclarations(
     const matched = matchConfirmationRows(
       contract,
       manifest,
+      compiledChecks,
       confirmation,
       obligations,
       expectedRows,
@@ -62,12 +67,14 @@ export function addUnboundBlockingConfirmationRows(
   contract: DeliveryContractV2,
   rows: AcceptanceObligationReachabilityV1[],
   expected: ExpectedExternalObligation[],
+  advisoryExternalRouteRefs: ReadonlySet<string>,
 ): void {
   for (const confirmation of contract.global.acceptance
     .external_confirmations) {
     if (
       !confirmation.blocks_target ||
-      expected.some((row) => row.confirmation_ref === confirmation.key)
+      expected.some((row) => row.confirmation_ref === confirmation.key) ||
+      confirmationEntirelyAdvisory(confirmation, advisoryExternalRouteRefs)
     )
       continue;
     const claimRef = confirmation.impact_claims[0] ?? "GLOBAL.unbound";
@@ -94,6 +101,32 @@ export function addUnboundBlockingConfirmationRows(
       session_group: null,
     });
   }
+}
+
+function confirmationEntirelyAdvisory(
+  confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
+  advisoryExternalRouteRefs: ReadonlySet<string>,
+): boolean {
+  const obligations = confirmation.obligations ?? [];
+  if (!obligations.length) return false;
+  const sourceObligationRefs = obligations.map((obligation) =>
+    claimObligationRef(
+      obligation.claim_ref,
+      obligation.applicability_ref,
+      obligation.proof_surface,
+    ),
+  );
+  return (
+    new Set(sourceObligationRefs).size === obligations.length &&
+    sameSet(confirmation.impact_claims, [
+      ...new Set(obligations.map((obligation) => obligation.claim_ref)),
+    ]) &&
+    sourceObligationRefs.every((ref) =>
+      advisoryExternalRouteRefs.has(
+        advisoryExternalRouteRef(confirmation.key, ref),
+      ),
+    )
+  );
 }
 
 function confirmationShapeComplete(
@@ -129,6 +162,7 @@ function confirmationSetsMatch(
 function matchConfirmationRows(
   contract: DeliveryContractV2,
   manifest: SemanticFactManifestV1,
+  compiledChecks: readonly CompiledCheckV2[],
   confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
   obligations: NonNullable<typeof confirmation.obligations>,
   expectedRows: ExpectedExternalObligation[],
@@ -144,29 +178,28 @@ function matchConfirmationRows(
     );
     const actual = candidates[0];
     if (candidates.length !== 1 || !actual || used.has(actual.key)) return null;
-    const profile = applicabilityProfile(
+    const sessionMatches = externalConfirmationSessionMatchesApplicability(
       contract,
       expectedRow.outcome_key,
       expectedRow.applicability_ref,
+      confirmation,
     );
-    if (
-      !profile ||
-      confirmation.target_ref !== profile.target_ref ||
-      !sameSet(
-        confirmation.scenario!.given.map((step) => step.key),
-        profile.given_refs,
-      ) ||
-      confirmation.scenario!.when.map((step) => step.key).join("\0") !==
-        profile.when_refs.join("\0") ||
-      (actual.result_kind === "judgment" &&
-        (confirmation.actor?.authority_kind === "external_system" ||
-          !sourceBackedExternalJudgmentAdmitted(manifest, expectedRow) ||
-          !judgmentBasisSourceBacked(contract, confirmation, actual))) ||
-      (actual.result_kind === "actual" &&
-        (!objectiveExternalActualAdmitted(manifest, expectedRow) ||
-          actual.judgment_basis !== undefined))
-    )
-      return null;
+    const resultKindAdmitted =
+      actual.result_kind === "judgment"
+        ? sourceBackedExternalJudgmentAdmitted(
+            contract,
+            manifest,
+            expectedRow,
+            actual.judgment_basis,
+            confirmation.actor?.authority_kind,
+          )
+        : objectiveExternalActualAdmitted(
+            contract,
+            manifest,
+            expectedRow,
+            compiledChecks,
+          ) && actual.judgment_basis === undefined;
+    if (!sessionMatches || !resultKindAdmitted) return null;
     used.add(actual.key);
     matched.push({
       source_obligation_ref: expectedRow.source_obligation_ref,
@@ -192,17 +225,4 @@ function externalObligationMatches(
     sameSet(actual.evidence_capabilities, expected.evidence_capabilities) &&
     actual.expected_authority_ref === expected.expected_authority_ref
   );
-}
-
-function judgmentBasisSourceBacked(
-  contract: DeliveryContractV2,
-  confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
-  obligation: NonNullable<typeof confirmation.obligations>[number],
-): boolean {
-  const basis = obligation.judgment_basis;
-  if (!basis) return false;
-  const sourceClaim = contract.source_claims.find(
-    (claim) => claim.key === basis.source_ref,
-  );
-  return Boolean(sourceClaim);
 }

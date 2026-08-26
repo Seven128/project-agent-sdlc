@@ -28,6 +28,7 @@ import {
   assertIndependentProcessRuntimeClosure,
   configureRepoProcessProductControl,
 } from "./long-task-process-product-fixture.mjs";
+import { FIXTURE_EXTERNAL_FACT_SPECS } from "./long-task-semantic-manifest-fixture.mjs";
 
 const {
   applyBoundEvidenceInputClosureConflict,
@@ -239,7 +240,10 @@ function assertRuntimeClosureExcludes(compiled, checkKey, excludedPath) {
     .flatMap((outcome) => outcome.acceptance.checks)
     .find((candidate) => candidate.key === checkKey);
   assert.ok(check, `compiled Check ${checkKey} must exist`);
-  assert.ok(check.process_runtime_closure, `${checkKey} must compile a process closure`);
+  assert.ok(
+    check.process_runtime_closure,
+    `${checkKey} must compile a process closure`,
+  );
   assert.equal(
     check.process_runtime_closure.allowed_runtime_files.includes(excludedPath),
     false,
@@ -1004,28 +1008,33 @@ test(
   async () =>
     withFixture({ externalConfirmation: true }, async (fixture) => {
       const check = fixture.contract.outcomes[0].acceptance.checks[0];
-      const resultAssertionIndex = check.positive_assertions.findIndex(
-        (assertion) => assertion.key === "first-result",
+      assert.ok(
+        check.positive_assertions.some(
+          (assertion) =>
+            assertion.key === "first-result" &&
+            assertion.claims.includes("result"),
+        ),
+        "the objective Machine result Assertion must remain intact",
       );
-      assert.notEqual(
-        resultAssertionIndex,
-        -1,
-        "external control result Assertion must exist",
-      );
-      check.positive_assertions.splice(resultAssertionIndex, 1);
       fixture.contract.task.target_profile.completion_authority =
         "declared_authorities";
+      const externalSpec = FIXTURE_EXTERNAL_FACT_SPECS[0];
+      const externalClaimRef = `first.semantic_fact.${externalSpec.factKey}`;
+      const externalSource = fixture.contract.source_claims.find(
+        (claim) => claim.key === externalSpec.sourceKey,
+      );
+      assert.ok(externalSource);
       fixture.contract.global.acceptance.external_confirmations[0] = {
-        key: "fixture-external",
-        description: "Confirm the fixture in external delivery.",
+        key: externalSpec.confirmationKey,
+        description: externalSource.statement,
         owner: "release-owner",
         kind: "field_validation",
-        impact_claims: ["first.result"],
+        impact_claims: [externalClaimRef],
         blocks_target: true,
         actor: {
-          id: "fixture-product-owner",
-          role: "product acceptance owner",
-          authority_kind: "human",
+          id: "fixture-external-observer",
+          role: "authenticated external acceptance observer",
+          authority_kind: "external_system",
         },
         target_ref: "fixture-app",
         environment_identity: "fixture-external-environment-v1",
@@ -1033,25 +1042,22 @@ test(
         evidence_requirements: [
           {
             key: "observation-capture",
-            statement: "Capture the observed target result for this obligation.",
+            statement:
+              "Capture the observed target result for this obligation.",
           },
         ],
         obligations: [
           {
-            key: "confirm-result",
-            claim_ref: "first.result",
+            key: "confirm-external-acceptance-fact",
+            claim_ref: externalClaimRef,
             applicability_ref: "first-root-success",
-            fact_ref: null,
-            proof_ref: null,
+            fact_ref: externalSpec.factKey,
+            proof_ref: externalSpec.proofKey,
             method: "exact_value",
             proof_surface: "runtime_behavior",
-            evidence_capabilities: ["target_runtime"],
-            expected_authority_ref: "contract-claim:first.result",
-            result_kind: "judgment",
-            judgment_basis: {
-              kind: "authorization",
-              source_ref: "fixture-external",
-            },
+            evidence_capabilities: ["semantic_fact"],
+            expected_authority_ref: `semantic-proof:${externalSpec.proofKey}`,
+            result_kind: "actual",
           },
         ],
       };

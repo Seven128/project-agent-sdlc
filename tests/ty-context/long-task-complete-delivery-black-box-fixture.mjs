@@ -99,7 +99,7 @@ export function assertControlledIncidentCatalog(catalog) {
     );
     assert.equal(
       scenario.wrong_contract_projection.machine_external_overlap_claim_ref,
-      "second.requirement.observe-second",
+      "second.semantic_fact.fact.second.observable",
     );
   }
 }
@@ -116,7 +116,7 @@ export async function createGenericCompleteDeliveryFixture(
 ) {
   const fixture = await createDeliveryFixture({
     twoOutcomes: true,
-    externalConfirmation: true,
+    externalConfirmation: false,
     fixtureSeedRoot,
   });
   await applyScenarioSourceAndContract(fixture, scenario);
@@ -146,6 +146,19 @@ export async function createStarwardCompleteDeliveryFixture(
         required_proof_surfaces: ["ui_browser"],
         applicability_refs: ["first-root-success"],
       });
+      const selectedDesignSource = fixture.contract.source_claims.find(
+        (claim) => claim.key === "fixture-external",
+      );
+      assert.ok(selectedDesignSource);
+      selectedDesignSource.disposition = {
+        type: "claim",
+        refs: ["first.requirement.selected-design"],
+      };
+      selectedDesignSource.judgment_basis = {
+        kind: "authorization",
+        claim_ref: "first.requirement.selected-design",
+        applicability_refs: ["first-root-success"],
+      };
       const confirmation =
         fixture.contract.global.acceptance.external_confirmations[0];
       confirmation.description = scenario.source["fixture-external"];
@@ -154,7 +167,7 @@ export async function createStarwardCompleteDeliveryFixture(
       confirmation.actor.role = "authorized product design owner";
       confirmation.environment_identity =
         "starward-controlled-selected-design-v1";
-      confirmation.impact_claims = ["first.requirement.selected-design"];
+      confirmation.impact_claims.push("first.requirement.selected-design");
       confirmation.evidence_requirements = [
         {
           key: "selected-design-judgment",
@@ -162,10 +175,15 @@ export async function createStarwardCompleteDeliveryFixture(
             "Judge the map, detail, night-sky, and profile surfaces against the controlled selected-design snapshot.",
         },
       ];
-      Object.assign(confirmation.obligations[0], {
+      confirmation.obligations.push({
         key: "confirm-selected-design",
         claim_ref: "first.requirement.selected-design",
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
         proof_surface: "ui_browser",
+        evidence_capabilities: [],
         expected_authority_ref:
           "contract-claim:first.requirement.selected-design",
         result_kind: "judgment",
@@ -307,7 +325,7 @@ export async function applyScenarioSourceAndContract(fixture, scenario) {
     "first-observable",
     "second-observable",
     "fixture-architecture",
-    "fixture-external",
+    ...(scenario.source["fixture-external"] ? ["fixture-external"] : []),
   ]) {
     const claim = fixture.contract.source_claims.find((row) => row.key === key);
     assert.ok(claim, `${scenario.key} missing Source claim ${key}`);
@@ -350,7 +368,8 @@ export async function applyScenarioSourceAndContract(fixture, scenario) {
     selectedDesign.statement = scenario.source["fixture-external"];
   for (const confirmation of fixture.contract.global.acceptance
     .external_confirmations ?? [])
-    confirmation.description = scenario.source["fixture-external"];
+    if (scenario.source["fixture-external"])
+      confirmation.description = scenario.source["fixture-external"];
   await writeContract(fixture.workdir, fixture.contract);
 }
 
@@ -380,20 +399,23 @@ export async function assertCompileAttackMatrix(fixture, scenario) {
     overlap.outcomes[1].acceptance.checks[0],
     identity,
     {
-      key: "fixture-external",
+      key: "fixture-machine-overlap-external",
       actorId: "product-owner",
       actorRole: "declared product owner",
       claimRef:
         scenario.wrong_contract_projection.machine_external_overlap_claim_ref,
       obligationKey: "overlap-second-machine-obligation",
+      applicabilityRef: "second-root-success",
+      factRef: "fact.second.observable",
+      proofRef: "proof.second.observable.exact",
+      capabilities: ["semantic_fact"],
+      resultKind: "actual",
     },
   );
-  confirmation.description = scenario.source["fixture-external"];
   overlap.global.acceptance.external_confirmations = [confirmation];
   await writeContract(fixture.workdir, overlap);
   await expectCompileRejection(fixture, [
     /machine_external_authority_conflict/u,
-    /blocking_confirmation_has_no_exact_proof_obligations/u,
   ]);
   await restoreLegalContract(fixture, legal);
 }

@@ -621,14 +621,13 @@ function addBlockingExternalConfirmationProofs(
         confirmation.impact_claims.includes(claim.id),
     );
   if (!confirmations.length) return;
-  const proofSurfaces =
-    "required_proof_surfaces" in claim &&
-    claim.required_proof_surfaces.length > 0
-      ? claim.required_proof_surfaces
-      : (["runtime_behavior"] as const);
   for (const confirmation of confirmations)
     for (const applicabilityRef of claim.applicability_refs)
-      for (const proofSurface of proofSurfaces)
+      for (const proofSurface of externalClaimProofSurfaces(
+        confirmation,
+        claim,
+        applicabilityRef,
+      ))
         addProof(proofs, claim.local_key, {
           check_key: `EXTERNAL.${confirmation.key}`,
           assertion_key: null,
@@ -636,6 +635,29 @@ function addBlockingExternalConfirmationProofs(
           proof_surface: proofSurface,
           applicability_ref: applicabilityRef,
         });
+}
+
+function externalClaimProofSurfaces(
+  confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
+  claim: ProductClaimV2 | GlobalClaimV2,
+  applicabilityRef: string,
+): ProofSurface[] {
+  const declared = [
+    ...new Set(
+      (confirmation.obligations ?? [])
+        .filter(
+          (obligation) =>
+            obligation.claim_ref === claim.id &&
+            obligation.applicability_ref === applicabilityRef,
+        )
+        .map((obligation) => obligation.proof_surface),
+    ),
+  ];
+  if (declared.length) return declared;
+  return "required_proof_surfaces" in claim &&
+    claim.required_proof_surfaces.length
+    ? claim.required_proof_surfaces
+    : ["runtime_behavior"];
 }
 
 function sameSet(left: string[], right: string[]): boolean {

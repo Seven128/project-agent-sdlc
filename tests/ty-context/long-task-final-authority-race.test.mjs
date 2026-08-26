@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import {
   access,
   appendFile,
@@ -28,6 +29,8 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { refreshPackageMachineFixtureOracle } from "./long-task-package-machine-fixture.mjs";
+import { mutateFixtureSemanticManifest } from "./long-task-semantic-fact-test-support.mjs";
 
 const exec = promisify(execFile);
 const repository = fileURLToPath(new URL("../..", import.meta.url));
@@ -293,6 +296,87 @@ test("candidate mutation after Receipt staging rolls back acceptance and retains
   }
 });
 
+test("live protected Source identity is revalidated at every terminal commit point", async (t) => {
+  const cases = [
+    {
+      name: "after finalization evaluation",
+      phase: "after_finalization_evaluation",
+    },
+    {
+      name: "after Receipt stage",
+      phase: "after_receipt_stage",
+    },
+    {
+      name: "after Receipt publish and before Authority clear",
+      phase: "after_receipt_publish",
+    },
+  ];
+
+  for (const mutation of cases)
+    await t.test(mutation.name, async () => {
+      const fixture = await createDeliveryFixture();
+      const signal = await finalizationSignal(mutation.phase);
+      try {
+        await makeFixtureSourceInvisibleToCandidateFingerprint(fixture.root);
+        await runCli(fixture.root, ["enable", "long-task"]);
+        await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+        await commitCandidate(fixture.root);
+
+        const closing = runCliProcess(
+          fixture.root,
+          ["long-task", "close", fixture.workdir],
+          { env: finalizationSignalEnvironment(signal) },
+        );
+        await waitForFile(signal.started);
+        await appendFile(
+          path.join(fixture.root, "source.md"),
+          `\n<!-- protected Source race: ${mutation.phase} -->\n`,
+        );
+        await writeFile(signal.release, "release\n");
+
+        const result = await closing;
+        assert.notEqual(result.exitCode, 0, JSON.stringify(result));
+        const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+        assert.equal(receipt.workflow_status, "needs_work");
+        assert.notEqual(receipt.workflow_status, "machine_accepted");
+        assert.ok(
+          receipt.findings.some(
+            (finding) =>
+              finding.code === "finalization_identity_compare_and_swap_failed",
+          ),
+          JSON.stringify(receipt.findings),
+        );
+        assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+      } finally {
+        await removeTemporary(signal.folder);
+        await removeTemporary(fixture.root);
+      }
+    });
+});
+
+test("an unchanged protected Source outside the candidate fingerprint remains allowed", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await makeFixtureSourceInvisibleToCandidateFingerprint(fixture.root);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+
+    const accepted = await runCli(fixture.root, [
+      "long-task",
+      "close",
+      fixture.workdir,
+    ]);
+    assert.equal(accepted.workflow_status, "machine_accepted");
+    assert.equal(
+      (await loadActiveLongTaskAuthority(fixture.root)).authority,
+      null,
+    );
+  } finally {
+    await removeTemporary(fixture.root);
+  }
+});
+
 test("Authority mutation between Receipt publish and clear is rolled back", async () => {
   const fixture = await createDeliveryFixture();
   const signal = await finalizationSignal("after_receipt_publish");
@@ -439,7 +523,7 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
     ]);
     assert.equal(acceptedA.workflow_status, "machine_accepted");
 
-    addBlockingExternalConfirmation(fixture.contract);
+    await addBlockingExternalConfirmation(fixture);
     await writeContract(fixture.workdir, fixture.contract);
     const pending = await runCliFailure(fixture.root, [
       "long-task",
@@ -468,8 +552,13 @@ test("Stop and close rerun current Authority instead of clearing from an old Rec
       "stop-check",
       fixture.workdir,
     ]);
+    const stopReceipt = await readFinalReceipt(fixture.root, fixture.workdir);
     assert.equal(stop.continue, false);
-    assert.equal(stop.reason, "live_final_gate_blocked_external");
+    assert.equal(
+      stop.reason,
+      "live_final_gate_blocked_external",
+      JSON.stringify({ stop, findings: stopReceipt.findings }),
+    );
     assert.equal(
       (await loadActiveLongTaskAuthority(fixture.root)).authority
         .active_authority_identity,
@@ -510,32 +599,74 @@ function addProof(contract, key) {
   });
 }
 
-function addBlockingExternalConfirmation(contract) {
+async function addBlockingExternalConfirmation(fixture) {
+  const { contract } = fixture;
   contract.task.target_profile.completion_authority = "declared_authorities";
   const outcome = contract.outcomes[0];
   const scenario = structuredClone(outcome.acceptance.checks[0].scenario);
-  for (const check of outcome.acceptance.checks)
-    for (const assertion of [
-      ...check.positive_assertions,
-      ...check.negative_assertions,
-    ]) {
-      assertion.claims = assertion.claims.filter((claim) => claim !== "result");
-      if (!assertion.claims.length) delete assertion.applicability_ref;
-    }
-  for (const control of outcome.acceptance.counterfactual_controls)
-    control.claims = control.claims.filter((claim) => claim !== "result");
+  const proofBinding = outcome.semantic_fact_bindings.proofs.find(
+    (binding) => binding.fact_ref === "fact.first.architecture-boundary",
+  );
+  const factBinding = outcome.semantic_fact_bindings.facts.find(
+    (binding) => binding.fact_ref === proofBinding?.fact_ref,
+  );
+  assert.ok(proofBinding);
+  assert.ok(factBinding);
+  const assertionRef = proofBinding.assertion_ref;
+  assert.ok(assertionRef);
+  for (const check of outcome.acceptance.checks) {
+    check.positive_assertions = check.positive_assertions.filter(
+      (assertion) => assertion.key !== assertionRef,
+    );
+    check.negative_assertions = check.negative_assertions.filter(
+      (assertion) => assertion.key !== assertionRef,
+    );
+  }
+  for (const control of outcome.acceptance.counterfactual_controls) {
+    control.claims = control.claims.filter(
+      (claim) => claim !== factBinding.claim_ref,
+    );
+    control.expected_assertion_failures =
+      control.expected_assertion_failures.filter(
+        (assertion) => assertion !== assertionRef,
+      );
+    control.allowed_fanout_assertions =
+      control.allowed_fanout_assertions?.filter(
+        (assertion) => assertion !== assertionRef,
+      );
+  }
+  proofBinding.authority = "external_confirmation";
+  proofBinding.confirmation_ref = "race-blocking-confirmation";
+  delete proofBinding.check_ref;
+  delete proofBinding.assertion_ref;
+
+  const { publicKey } = generateKeyPairSync("ed25519");
+  const publicKeyRef = "project_context/authorities/race-release-observer.pub";
+  await mkdir(path.join(fixture.root, "project_context", "authorities"), {
+    recursive: true,
+  });
+  await writeFile(
+    path.join(fixture.root, ...publicKeyRef.split("/")),
+    publicKey.export({ type: "spki", format: "pem" }),
+  );
+  const claimRef = `${outcome.key}.${factBinding.claim_ref}`;
   contract.global.acceptance.external_confirmations.push({
     key: "race-blocking-confirmation",
     description:
-      "The revised Authority requires a blocking external confirmation.",
+      "The revised Authority requires an authenticated objective architecture observation.",
     owner: "external-owner",
     kind: "functional_prerequisite",
-    impact_claims: ["first.result"],
+    impact_claims: [claimRef],
     blocks_target: true,
     actor: {
-      id: "race-release-owner",
-      role: "release acceptance owner",
-      authority_kind: "human",
+      id: "race-release-observer",
+      role: "authenticated architecture observer",
+      authority_kind: "external_system",
+      identity_assurance: {
+        scheme: "ed25519",
+        key_id: "race-release-observer-2026",
+        public_key_ref: publicKeyRef,
+      },
     },
     target_ref: "fixture-app",
     environment_identity: "race-external-environment-v1",
@@ -548,19 +679,32 @@ function addBlockingExternalConfirmation(contract) {
     ],
     obligations: [
       {
-        key: "race-result-obligation",
-        claim_ref: "first.result",
-        applicability_ref: "first-root-success",
-        fact_ref: null,
-        proof_ref: null,
-        method: "exact_value",
-        proof_surface: "runtime_behavior",
-        evidence_capabilities: ["target_runtime"],
-        expected_authority_ref: "contract-claim:first.result",
-        result_kind: "judgment",
+        key: "race-architecture-obligation",
+        claim_ref: claimRef,
+        applicability_ref: factBinding.applicability_ref,
+        fact_ref: factBinding.fact_ref,
+        proof_ref: proofBinding.proof_ref,
+        method: proofBinding.method,
+        proof_surface: proofBinding.proof_surface,
+        evidence_capabilities: [...proofBinding.evidence_capabilities],
+        expected_authority_ref: `semantic-proof:${proofBinding.proof_ref}`,
+        result_kind: "actual",
       },
     ],
   });
+  const manifest = await mutateFixtureSemanticManifest(fixture, (manifest) => {
+    const proof = manifest.proof_obligations.find(
+      (candidate) => candidate.key === proofBinding.proof_ref,
+    );
+    assert.ok(proof);
+    proof.authority = "external_confirmation";
+    proof.counterfactual.disposition = "external";
+    proof.counterfactual.refs = [];
+    proof.counterfactual.basis_refs = ["fixture-architecture"];
+    proof.counterfactual.rationale =
+      "The revised exact architecture Fact is observed as a signed objective External Actual.";
+  });
+  await refreshPackageMachineFixtureOracle(fixture.root, manifest);
 }
 
 async function installSlowOracle(fixture, signal) {
@@ -620,6 +764,23 @@ console.log(JSON.stringify({
   }
 }));
 `,
+  );
+}
+
+async function makeFixtureSourceInvisibleToCandidateFingerprint(root) {
+  await appendFile(path.join(root, ".gitignore"), "/source.md\n");
+  await exec("git", ["rm", "--cached", "--", "source.md"], {
+    cwd: root,
+    windowsHide: true,
+  });
+  await exec("git", ["add", ".gitignore"], {
+    cwd: root,
+    windowsHide: true,
+  });
+  await exec(
+    "git",
+    ["commit", "-m", "test: protect ignored Source outside candidate"],
+    { cwd: root, windowsHide: true },
   );
 }
 

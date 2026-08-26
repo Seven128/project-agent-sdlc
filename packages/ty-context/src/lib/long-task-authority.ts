@@ -40,6 +40,7 @@ export function computeAuthorityHashes(
       stages: contract.stages,
       global: {
         applicability: contract.global.applicability,
+        semantic_fact_bindings: contract.global.semantic_fact_bindings ?? null,
         product: contract.global.product,
       },
       outcomes: contract.outcomes.map((outcome) => ({
@@ -58,6 +59,8 @@ export function computeAuthorityHashes(
       })),
     }),
     acceptance_authority_hash: hash({
+      global_semantic_fact_bindings:
+        contract.global.semantic_fact_bindings ?? null,
       external_confirmations: contract.global.acceptance.external_confirmations,
       global_checks: contract.global.acceptance.checks.map(acceptanceCheck),
       global_counterfactual_controls:

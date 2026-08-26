@@ -16,6 +16,17 @@ import { addFixtureDomainSemanticFact } from "./long-task-semantic-fact-test-sup
 
 export const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
 
+function globalFactSpecs(contract) {
+  return contract.outcomes.map((outcome) => ({
+    outcomeKey: outcome.key,
+    factKey: `fact.${outcome.key}.global-state`,
+    proofKey: `proof.${outcome.key}.global-state.exact`,
+    propertyKey: `property.${outcome.key}-global-state-valid`,
+    cellKey: `cell.${outcome.key}.global-state`,
+    assertionKey: `${outcome.key}-global-state-semantic-fact`,
+  }));
+}
+
 export async function addGlobalClaim(
   fixture,
   { counterfactual, constant = false },
@@ -48,6 +59,7 @@ export async function addGlobalClaim(
     given_refs: ["fixture-loaded"],
     when_refs: ["read-outcome"],
   });
+  const facts = globalFactSpecs(fixture.contract);
   const rootArgv = fixtureProductRootArgv(GLOBAL_PRODUCT_PATH, "first");
   const target = fixture.contract.task.execution_targets[0];
   target.root_entrypoint = fixtureProductRootPath();
@@ -131,26 +143,39 @@ const observations = globalCheck ? {
   [assertion(key + "-liveness")]: true,
   [assertion(key + "-relations-na")]: state[key + "_relations_applicable"] === true,
   ...(key === "first" ? {
-    "fact.global.state": observed,
     [assertion("first-architecture")]: observed
-  } : {})
+  } : {}),
+  ["fact." + key + ".architecture-boundary"]: observed,
+  ["fact." + key + ".global-state"]: observed
 };
 console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1", observations }));
 `,
   );
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
-  await addFixtureDomainSemanticFact(fixture, {
-    sourceItemRef: "global-state-source",
-    factKey: "fact.global.state",
-    proofKey: "proof.global.state.exact",
-    propertyKey: "property.global-state-valid",
-    cellKey: "cell.global.state",
-    assertionKey: "first-global-state-semantic-fact",
-    criterion:
-      "The Global technical state constraint has an independent same-domain Semantic Fact.",
-    observation: "global_state_semantic_fact_result",
-  });
+  const sourceFactRefs = facts.map((fact) => fact.factKey);
+  for (const fact of facts)
+    await addFixtureDomainSemanticFact(fixture, {
+      sourceItemRef: "global-state-source",
+      ...fact,
+      sourceFactRefs,
+      criterion: `The Global technical state constraint has an exact Semantic Fact for ${fact.outcomeKey}.`,
+      observation: `${fact.outcomeKey}_global_state_semantic_fact_result`,
+    });
+  fixture.contract.global.semantic_fact_bindings = {
+    manifest_ref: fixture.contract.semantic_fact_manifest.key,
+    obligations: facts.map((fact) => ({
+      claim_ref: "constraint.global-state",
+      applicability_ref: "global-root-success",
+      target_ref: "fixture-app",
+      outcome_ref: fact.outcomeKey,
+      fact_ref: fact.factKey,
+      proof_ref: fact.proofKey,
+      method: "exact_value",
+      required_polarity: "positive",
+    })),
+  };
+  await writeContract(fixture.workdir, fixture.contract);
 }
 
 export async function addGlobalCounterfactual(contract) {
@@ -170,15 +195,25 @@ export async function addGlobalCounterfactual(contract) {
   });
 }
 
-export async function assertPreflightAndCompileReject(fixture, code) {
-  await writeContract(fixture.workdir, fixture.contract);
+export async function assertPreflightAndCompileReject(
+  fixture,
+  code,
+  { synchronizeSemanticManifest = true } = {},
+) {
+  await writeContract(fixture.workdir, fixture.contract, {
+    synchronizeSemanticManifest,
+  });
   const preflight = await preflightDeliveryContract(
     fixture.workdir,
     fixture.root,
   );
   assert.equal(preflight.status, "not_ready");
   assert.ok(
-    preflight.diagnostics.some((item) => item.code === code),
+    preflight.diagnostics.some(
+      (item) =>
+        item.code === code ||
+        item.message.includes(`semantic_fact_closure_invalid:${code}:`),
+    ),
     `missing Preflight diagnostic ${code}: ${JSON.stringify(preflight)}`,
   );
   await assert.rejects(

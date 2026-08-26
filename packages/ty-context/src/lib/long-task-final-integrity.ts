@@ -1,12 +1,10 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { compileDeliveryContract } from "./long-task-delivery-compiler.js";
 import type {
   CompiledDeliveryContractV2,
   LongTaskFindingV2,
 } from "./long-task-delivery-types.js";
 import { captureStoredExternalConfirmationRecordIdentities } from "./long-task-external-confirmation-state.js";
-import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
+import { captureProtectedAuthorityInputsIdentity } from "./long-task-freshness.js";
 import {
   activeAuthorityIdentityMatches,
   assertMatchingActiveBinding,
@@ -18,11 +16,11 @@ import {
   captureWorkspaceFingerprint,
   currentGitState,
 } from "./long-task-workspace.js";
-import { sha256Hex } from "./strict-codec.js";
 
 export interface FinalGateProtectedInputIdentity {
   compiled_identity: string;
   raw_contract_sha256: string;
+  protected_authority_inputs_identity: string;
   external_confirmation_records: Record<string, string>;
 }
 
@@ -30,14 +28,12 @@ export async function captureFinalGateProtectedInputIdentity(
   repository: string,
   compiled: CompiledDeliveryContractV2,
 ): Promise<FinalGateProtectedInputIdentity> {
-  const file = await assertProtectedRepositoryFile(
-    repository,
-    path.join(repository, ...compiled.contract_file.split("/")),
-    "final_gate_delivery_contract",
-  );
+  const protectedAuthorityInputs =
+    await captureProtectedAuthorityInputsIdentity(compiled);
   return {
     compiled_identity: compiled.compiled_identity,
-    raw_contract_sha256: sha256Hex(await readFile(file)),
+    raw_contract_sha256: protectedAuthorityInputs.snapshot.raw_contract_sha256,
+    protected_authority_inputs_identity: protectedAuthorityInputs.identity,
     external_confirmation_records:
       await captureStoredExternalConfirmationRecordIdentities(
         repository,
@@ -115,6 +111,8 @@ async function protectedInputFindings(
       input.protected_inputs_before.compiled_identity ||
       after.raw_contract_sha256 !==
         input.protected_inputs_before.raw_contract_sha256 ||
+      after.protected_authority_inputs_identity !==
+        input.protected_inputs_before.protected_authority_inputs_identity ||
       JSON.stringify(after.external_confirmation_records) !==
         JSON.stringify(
           input.protected_inputs_before.external_confirmation_records,

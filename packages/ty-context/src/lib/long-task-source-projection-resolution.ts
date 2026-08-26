@@ -39,6 +39,9 @@ export function resolveFragmentProjection(
     disposition: input.disposition as SourceProjectionDispositionV2,
     fact_refs: input.fact_refs,
     basis_refs: input.basis_refs,
+    ...(input.supporting_relation
+      ? { supporting_relation: input.supporting_relation }
+      : {}),
     explicit: true,
     authority_derived: false,
   };

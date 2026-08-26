@@ -42,7 +42,15 @@ export function setSourceText(manifest, items, key, text, options = {}) {
 export function addSourceBasis(
   manifest,
   items,
-  { key, kind, text, disposition, factRefs, fragmentDisposition },
+  {
+    key,
+    kind,
+    text,
+    disposition,
+    factRefs,
+    fragmentDisposition,
+    supportingRelation,
+  },
 ) {
   items.push(sourceItem(key, kind, text));
   manifest.scope.source_item_refs.push(key);
@@ -64,13 +72,14 @@ export function addSourceBasis(
     undefined,
     undefined,
     fragmentDisposition,
+    supportingRelation,
   );
 }
 
 export function replaceFragmentProjection(
   manifest,
   item,
-  { disposition, factRefs, basisRefs, rationale },
+  { disposition, factRefs, basisRefs, rationale, supportingRelation },
 ) {
   removeFragmentProjections(manifest, item.key);
   addFragmentProjections(
@@ -81,6 +90,7 @@ export function replaceFragmentProjection(
     basisRefs,
     rationale,
     disposition,
+    supportingRelation,
   );
 }
 
@@ -124,9 +134,11 @@ function addFragmentProjections(
   basisRefs = [item.key],
   rationale = "The fixture explicitly dispositions this complete material Fragment.",
   dispositionOverride,
+  supportingRelation,
 ) {
   const fragmentDisposition =
-    dispositionOverride ?? (sourceDisposition === "supporting_only"
+    dispositionOverride ??
+    (sourceDisposition === "supporting_only"
       ? "supporting_basis"
       : "fact_bearing");
   for (const fragment of deriveMaterialSourceFragments(item)) {
@@ -140,9 +152,14 @@ function addFragmentProjections(
       fact_refs: factRefs,
       basis_refs: basisRefs,
       rationale,
+      ...(supportingRelation
+        ? { supporting_relation: structuredClone(supportingRelation) }
+        : {}),
     });
     for (const factRef of factRefs) {
-      const fact = manifest.facts.find((candidate) => candidate.key === factRef);
+      const fact = manifest.facts.find(
+        (candidate) => candidate.key === factRef,
+      );
       if (fact && !fact.provenance.basis_refs.includes(key))
         fact.provenance.basis_refs.push(key);
     }

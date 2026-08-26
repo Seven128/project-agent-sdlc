@@ -184,11 +184,39 @@ export function projectGlobalSemantics(
         given_refs: [...item.given_refs],
         when_refs: [...item.when_refs],
       })),
+    semantic_fact_bindings: contract.global.semantic_fact_bindings
+      ? {
+          manifest_ref: contract.global.semantic_fact_bindings.manifest_ref,
+          obligations: [...contract.global.semantic_fact_bindings.obligations]
+            .sort((left, right) =>
+              globalSemanticObligationKey(left).localeCompare(
+                globalSemanticObligationKey(right),
+              ),
+            )
+            .map((item) => ({ ...item })),
+        }
+      : null,
     constraints: applicableStatements(contract.global.technical.constraints),
     forbidden_shortcuts: applicableStatements(
       contract.global.technical.forbidden_shortcuts,
     ),
   };
+}
+
+function globalSemanticObligationKey(
+  item: NonNullable<
+    DeliveryContractV2["global"]["semantic_fact_bindings"]
+  >["obligations"][number],
+): string {
+  return [
+    item.claim_ref,
+    item.applicability_ref,
+    item.target_ref,
+    item.outcome_ref,
+    item.fact_ref,
+    item.proof_ref,
+    item.method,
+  ].join("\0");
 }
 
 function keyedStatements<T extends { key: string; statement: string }>(

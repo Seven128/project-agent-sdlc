@@ -34,7 +34,11 @@ import {
   freezeLocalVerifierDependencyClosure,
   packageScriptVerifierRoots,
 } from "./long-task-verifier-dependency-closure.js";
-import { compileObservationAuthorityPlan } from "./long-task-observation-authority.js";
+import {
+  compileObservationAuthorityPlan,
+  projectExternallyOwnedClaimAssertions,
+  projectExternallyOwnedDesignAssertions,
+} from "./long-task-observation-authority.js";
 import { compileProcessRuntimeClosure } from "./long-task-process-runtime-closure.js";
 import type { ScopedDeliveryBindingV2 } from "./long-task-scoped-binding.js";
 import type { CheckProofAdequacyV2 } from "./long-task-proof-adequacy.js";
@@ -57,6 +61,11 @@ export async function freezeDeliveryCheck(
     expected_authority_refs: {},
     required_evidence_capabilities: {},
   },
+  externalDesignObligationRefs: ReadonlySet<string> = new Set(),
+  externalClaimObligationRefsByAssertion: ReadonlyMap<
+    string,
+    string
+  > = new Map(),
 ): Promise<CompiledCheckV2> {
   const prefix = outcomeKey ? `CHECK.${outcomeKey}` : "CHECK.GLOBAL";
   const expectedOutputs = check.expected_output_paths.map((pattern, index) =>
@@ -148,9 +157,24 @@ export async function freezeDeliveryCheck(
     source_backed_execution_target: sourceBackedExecutionTarget,
     workspace_manifest: baseline,
     protected_authority_paths: protectedAuthorityPaths,
+    external_design_obligation_refs: externalDesignObligationRefs,
+    external_claim_obligation_refs_by_assertion:
+      externalClaimObligationRefsByAssertion,
   });
-  const processRuntimeClosure = compileProcessRuntimeClosure({
+  const designProjection = projectExternallyOwnedDesignAssertions(
     check,
+    designConformanceTargets,
+    observationAuthorities,
+    externalDesignObligationRefs,
+  );
+  const claimProjection = projectExternallyOwnedClaimAssertions(
+    designProjection.check,
+    observationAuthorities,
+    externalClaimObligationRefsByAssertion,
+  );
+  const machineCheck = claimProjection.check;
+  const processRuntimeClosure = compileProcessRuntimeClosure({
+    check: machineCheck,
     runner,
     execution_target: executionTarget,
     observation_authorities: observationAuthorities,
@@ -160,10 +184,10 @@ export async function freezeDeliveryCheck(
     protected_authority_paths: protectedAuthorityPaths,
   });
   const compiled = {
-    ...check,
+    ...machineCheck,
     internal_id: `${prefix}.${check.key}`,
     outcome_key: outcomeKey,
-    evidence_adapter: evidenceAdapterForRunner(check.runner.type),
+    evidence_adapter: evidenceAdapterForRunner(machineCheck.runner.type),
     runner,
     verification_input_hashes: verificationInputHashes,
     execution_target_definition: executionTarget,

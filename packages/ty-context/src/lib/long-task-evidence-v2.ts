@@ -852,22 +852,28 @@ async function prepareCounterfactualObservationEntries(input: {
 }> {
   const observationSets = await Promise.all(
     input.observationChecks.map(async (check) => {
+      const machineObservationCheck = {
+        ...check,
+        observation_authorities: (check.observation_authorities ?? []).filter(
+          (authority) => authority.authority !== "external_confirmation",
+        ),
+      };
       const baselineCheckResult = input.baselineResults.find(
         (candidate) => candidate.internal_id === check.internal_id,
       );
       const [baseline, mutated] = await Promise.all([
         prepareAdmittedObservations({
-          check,
+          check: machineObservationCheck,
           records: baselineCheckResult?.evidence_records ?? [],
           snapshot_root: input.baselineRoot,
           authority_paths: input.protectedAuthorityPaths,
           package_observations: packageObservationsForCheck(
-            check,
+            machineObservationCheck,
             input.baselineRaw.package_observations ?? [],
           ),
         }),
         prepareAdmittedObservations({
-          check,
+          check: machineObservationCheck,
           records:
             check.internal_id === input.entry.check.internal_id
               ? input.mutatedResult.evidence_records
@@ -875,7 +881,7 @@ async function prepareCounterfactualObservationEntries(input: {
           snapshot_root: input.mutatedRoot,
           authority_paths: input.protectedAuthorityPaths,
           package_observations: packageObservationsForCheck(
-            check,
+            machineObservationCheck,
             input.mutatedRaw.package_observations ?? [],
           ),
         }),

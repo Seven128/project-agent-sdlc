@@ -40,13 +40,35 @@ test("External obligation Schema and Parser agree on empty capability floors and
   const contract = deliveryContract();
   contract.task.target_profile.completion_authority = "declared_authorities";
   const check = contract.outcomes[0].acceptance.checks[0];
+  contract.outcomes[0].product.requirements.push({
+    key: "friendly-tone",
+    statement:
+      "The authorized product owner must judge whether the result uses an appropriately friendly tone.",
+    required_proof_surfaces: ["runtime_behavior"],
+    applicability_refs: ["first-root-success"],
+  });
+  contract.source_claims.push({
+    key: "first-friendly-tone",
+    source_ref: "source.md#fixture-source",
+    statement:
+      "The authorized product owner must judge whether the result uses an appropriately friendly tone.",
+    disposition: {
+      type: "claim",
+      refs: ["first.requirement.friendly-tone"],
+    },
+    judgment_basis: {
+      kind: "authorization",
+      claim_ref: "first.requirement.friendly-tone",
+      applicability_refs: ["first-root-success"],
+    },
+  });
   contract.global.acceptance.external_confirmations = [
     {
       key: "fixture-external",
       description: "Confirm one exact claim on the declared target.",
       owner: "fixture-owner",
       kind: "field_validation",
-      impact_claims: ["first.requirement.observe-first"],
+      impact_claims: ["first.requirement.friendly-tone"],
       blocks_target: true,
       actor: {
         id: "fixture-actor",
@@ -67,7 +89,7 @@ test("External obligation Schema and Parser agree on empty capability floors and
       obligations: [
         {
           key: "confirm-observe-first",
-          claim_ref: "first.requirement.observe-first",
+          claim_ref: "first.requirement.friendly-tone",
           applicability_ref: "first-root-success",
           fact_ref: null,
           proof_ref: null,
@@ -75,11 +97,11 @@ test("External obligation Schema and Parser agree on empty capability floors and
           proof_surface: "runtime_behavior",
           evidence_capabilities: [],
           expected_authority_ref:
-            "contract-claim:first.requirement.observe-first",
+            "contract-claim:first.requirement.friendly-tone",
           result_kind: "judgment",
           judgment_basis: {
             kind: "authorization",
-            source_ref: "first-observable",
+            source_ref: "first-friendly-tone",
           },
         },
       ],
@@ -91,6 +113,15 @@ test("External obligation Schema and Parser agree on empty capability floors and
     parsed.global.acceptance.external_confirmations[0].obligations[0]
       .evidence_capabilities,
     [],
+  );
+  assert.deepEqual(
+    parsed.source_claims.find((claim) => claim.key === "first-friendly-tone")
+      .judgment_basis,
+    {
+      kind: "authorization",
+      claim_ref: "first.requirement.friendly-tone",
+      applicability_refs: ["first-root-success"],
+    },
   );
   const schema = await deliverySchema();
   assert.equal(

@@ -118,12 +118,20 @@ export async function refreshPackageMachineFixtureOracle(root, manifest) {
 }
 
 function packageMachineOracleSource(manifest) {
+  const machineFactRefs = new Set(
+    manifest.proof_obligations
+      .filter((proof) => proof.authority === "machine")
+      .map((proof) => proof.fact_ref),
+  );
   const factsByOutcome = Object.fromEntries(
     [...new Set(manifest.facts.map((fact) => fact.outcome_ref))].map(
       (outcome) => [
         outcome,
         manifest.facts
-          .filter((fact) => fact.outcome_ref === outcome)
+          .filter(
+            (fact) =>
+              fact.outcome_ref === outcome && machineFactRefs.has(fact.key),
+          )
           .map((fact) => fact.key),
       ],
     ),
@@ -158,11 +166,16 @@ console.log(JSON.stringify({
 
 function packageStaticObservations(manifest, { value, relationApplicable }) {
   const observations = {};
+  const machineFactRefs = new Set(
+    manifest.proof_obligations
+      .filter((proof) => proof.authority === "machine")
+      .map((proof) => proof.fact_ref),
+  );
   for (const fact of manifest.facts) {
     const outcome = fact.outcome_ref;
     const assertion = (assertionKey) =>
       `assertion.${outcome}.${outcome}-check.${assertionKey}`;
-    observations[fact.key] = value;
+    if (machineFactRefs.has(fact.key)) observations[fact.key] = value;
     observations[assertion(`${outcome}-result`)] = value;
     observations[assertion(`${outcome}-requirement`)] = value;
     observations[assertion(`${outcome}-obligation`)] = value;

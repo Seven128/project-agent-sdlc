@@ -141,8 +141,7 @@ export async function finalizeDeliveryGateCas(input: {
           expected_authority: input.expected_authority,
           close_on_accept: input.close_on_accept && accepted,
           validate_current: async (phase) => {
-            const signaled = await finalizationPhaseSignal(phase);
-            if (phase === "after_receipt_stage" && !signaled) return;
+            await finalizationPhaseSignal(phase);
             const refreshed = await captureCurrentFinalizationState(
               input.repository,
               input.workdir,

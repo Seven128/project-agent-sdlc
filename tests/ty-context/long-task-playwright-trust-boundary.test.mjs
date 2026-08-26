@@ -3,7 +3,6 @@ import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
-import { generateClaims } from "../../packages/ty-context/dist/lib/long-task-claim-definitions.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import {
   createDeliveryFixture,
@@ -12,6 +11,8 @@ import {
   synchronizeFixtureExecutionTargetSource,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { mutateFixtureSemanticManifest } from "./long-task-semantic-fact-test-support.mjs";
+import { FIXTURE_EXTERNAL_FACT_SPECS } from "./long-task-semantic-manifest-fixture.mjs";
 
 test("browser Playwright cannot machine-close declared obligations", async (t) => {
   for (const weak of [false, true])
@@ -44,9 +45,9 @@ test("a complete project-authored UI Counterfactual cannot admit the browser obs
 });
 
 test("unsupported browser obligations can proceed only as blocking External Confirmation", async () => {
-  const fixture = await createDeliveryFixture();
+  const fixture = await createDeliveryFixture({ externalConfirmation: true });
   try {
-    routeUnsupportedBrowserToExternalConfirmation(fixture.contract);
+    await routeUnsupportedBrowserToExternalConfirmation(fixture);
     await writeContract(fixture.workdir, fixture.contract);
 
     const preflight = await preflightDeliveryContract(
@@ -158,84 +159,41 @@ async function assertUnsupportedMachineObserver(fixture) {
   );
 }
 
-function routeUnsupportedBrowserToExternalConfirmation(contract) {
+async function routeUnsupportedBrowserToExternalConfirmation(fixture) {
+  const { contract } = fixture;
   contract.task.target_profile.completion_authority = "declared_authorities";
   const outcome = contract.outcomes[0];
-  const semanticClaim = "semantic_fact.fact.first.observable";
-  const semanticProductClaim = `first.${semanticClaim}`;
-  const impactClaims = generateClaims(outcome)
-    .map((claim) => claim.id)
-    .filter((claim) => claim !== semanticProductClaim);
-  outcome.product.requirements[0].required_proof_surfaces = ["ui_browser"];
-  for (const obligation of outcome.technical.obligations)
-    obligation.required_proof_surfaces = ["ui_browser"];
   const check = outcome.acceptance.checks[0];
-  for (const assertion of [
-    ...check.positive_assertions,
-    ...check.negative_assertions,
-  ]) {
-    assertion.claims = assertion.claims.filter(
-      (claim) => claim === semanticClaim,
-    );
-    if (!assertion.claims.length) delete assertion.applicability_ref;
-  }
-  const semanticCounterfactual =
-    outcome.acceptance.counterfactual_controls.find((control) =>
-      control.claims.includes(semanticClaim),
-    );
-  semanticCounterfactual.claims = [semanticClaim];
-  semanticCounterfactual.expected_assertion_failures = ["first-semantic-fact"];
-  semanticCounterfactual.allowed_fanout_assertions = [
-    "first-result",
-    "first-requirement",
-    "first-obligation",
-    "first-architecture",
-  ];
-  outcome.acceptance.counterfactual_controls = [semanticCounterfactual];
-  const obligationSpecs = [
-    {
-      claim_ref: "first.control_relation_closure",
-      proof_surface: "runtime_behavior",
-      evidence_capabilities: [],
-    },
-    {
-      claim_ref: "first.obligation.architecture-first",
-      proof_surface: "ui_browser",
-      evidence_capabilities: [],
-    },
-    {
-      claim_ref: "first.obligation.implement-first",
-      proof_surface: "ui_browser",
-      evidence_capabilities: [],
-    },
-    {
-      claim_ref: "first.requirement.observe-first",
-      proof_surface: "ui_browser",
-      evidence_capabilities: [],
-    },
-    {
-      claim_ref: "first.result",
-      proof_surface: "runtime_behavior",
-      evidence_capabilities: ["target_runtime"],
-    },
-  ];
-  assert.deepEqual(
-    [...impactClaims].sort(),
-    obligationSpecs.map((row) => row.claim_ref).sort(),
+  assert.ok(
+    check.positive_assertions.some(
+      (assertion) =>
+        assertion.key === "first-result" && assertion.claims.includes("result"),
+    ),
+    "browser External work must not erase the objective Machine result Claim",
   );
+  const externalSpec = FIXTURE_EXTERNAL_FACT_SPECS[0];
+  const externalClaimRef = `first.semantic_fact.${externalSpec.factKey}`;
+  const proofBinding = outcome.semantic_fact_bindings.proofs.find(
+    (binding) => binding.proof_ref === externalSpec.proofKey,
+  );
+  const sourceClaim = contract.source_claims.find(
+    (claim) => claim.key === externalSpec.sourceKey,
+  );
+  assert.ok(proofBinding);
+  assert.ok(sourceClaim);
+  proofBinding.proof_surface = "ui_browser";
   contract.global.acceptance.external_confirmations = [
     {
-      key: "browser-observation-confirmation",
-      description:
-        "Confirm the unsupported browser observations outside machine authority.",
+      key: externalSpec.confirmationKey,
+      description: sourceClaim.statement,
       owner: "external-browser-owner",
       kind: "functional_prerequisite",
-      impact_claims: impactClaims,
+      impact_claims: [externalClaimRef],
       blocks_target: true,
       actor: {
-        id: "fixture-browser-owner",
-        role: "browser acceptance owner",
-        authority_kind: "human",
+        id: "fixture-browser-observer",
+        role: "authenticated browser observer",
+        authority_kind: "external_system",
       },
       target_ref: "fixture-app",
       environment_identity: "fixture-browser-environment-v1",
@@ -246,18 +204,27 @@ function routeUnsupportedBrowserToExternalConfirmation(contract) {
           statement: "Capture the exact browser result for every obligation.",
         },
       ],
-      obligations: obligationSpecs.map((row) => ({
-        key: `confirm-${row.claim_ref.replaceAll(".", "-").replaceAll("_", "-")}`,
-        claim_ref: row.claim_ref,
-        applicability_ref: "first-root-success",
-        fact_ref: null,
-        proof_ref: null,
-        method: "exact_value",
-        proof_surface: row.proof_surface,
-        evidence_capabilities: row.evidence_capabilities,
-        expected_authority_ref: `contract-claim:${row.claim_ref}`,
-        result_kind: "judgment",
-      })),
+      obligations: [
+        {
+          key: "confirm-external-browser-fact",
+          claim_ref: externalClaimRef,
+          applicability_ref: "first-root-success",
+          fact_ref: externalSpec.factKey,
+          proof_ref: externalSpec.proofKey,
+          method: proofBinding.method,
+          proof_surface: "ui_browser",
+          evidence_capabilities: [...proofBinding.evidence_capabilities],
+          expected_authority_ref: `semantic-proof:${externalSpec.proofKey}`,
+          result_kind: "actual",
+        },
+      ],
     },
   ];
+  await mutateFixtureSemanticManifest(fixture, (manifest) => {
+    const proof = manifest.proof_obligations.find(
+      (candidate) => candidate.key === externalSpec.proofKey,
+    );
+    assert.ok(proof);
+    proof.proof_surface = "ui_browser";
+  });
 }

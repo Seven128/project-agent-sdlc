@@ -551,14 +551,26 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
   );
 
   const nonBlockingConfirmation = structuredClone(contract);
+  nonBlockingConfirmation.outcomes[0].product.requirements.push({
+    key: "native-haptics-quality",
+    statement:
+      "The authorized native-device expert must judge whether the tactile haptic feedback feels appropriate on the declared device.",
+    required_proof_surfaces: ["runtime_behavior"],
+    applicability_refs: ["first-root-success"],
+  });
   nonBlockingConfirmation.source_claims.push({
     key: "native-haptics-authority",
     source_ref: "source.md#fixture-source",
     statement:
-      "The native-reviewer is authorized to judge the declared native haptics requirement.",
+      "The authorized native-device expert must judge whether the tactile haptic feedback feels appropriate on the declared device.",
     disposition: {
-      type: "external_confirmation",
-      refs: ["native-haptics-review"],
+      type: "claim",
+      refs: ["first.requirement.native-haptics-quality"],
+    },
+    judgment_basis: {
+      kind: "expert_assessment",
+      claim_ref: "first.requirement.native-haptics-quality",
+      applicability_refs: ["first-root-success"],
     },
   });
   nonBlockingConfirmation.global.acceptance.external_confirmations.push({
@@ -566,7 +578,7 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
     description: "A device reviewer confirms native haptics.",
     owner: "native-reviewer",
     kind: "field_validation",
-    impact_claims: ["first.control.map-tab.location"],
+    impact_claims: ["first.requirement.native-haptics-quality"],
     blocks_target: false,
     actor: {
       id: "native-haptics-reviewer",
@@ -591,14 +603,15 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
     obligations: [
       {
         key: "confirm-native-haptics",
-        claim_ref: "first.control.map-tab.location",
+        claim_ref: "first.requirement.native-haptics-quality",
         applicability_ref: "first-root-success",
         fact_ref: null,
         proof_ref: null,
-        method: "layout_geometry",
+        method: "exact_value",
         proof_surface: "runtime_behavior",
-        evidence_capabilities: ["target_runtime"],
-        expected_authority_ref: "contract-claim:first.control.map-tab.location",
+        evidence_capabilities: [],
+        expected_authority_ref:
+          "contract-claim:first.requirement.native-haptics-quality",
         result_kind: "judgment",
         judgment_basis: {
           kind: "expert_assessment",
@@ -614,7 +627,7 @@ test("[critical:selected-design-fact-closure] selected design targets require ex
         status: "external_confirmation",
         refs: ["native-haptics-review"],
         source_item_refs: ["map-design"],
-        verification_methods: ["layout_geometry"],
+        verification_methods: ["haptic_feedback"],
         required_capabilities: ["haptic-output"],
         rationale: "Native haptics require device review.",
       },
@@ -931,8 +944,9 @@ function assertFactResultDriftClosure({
     [
       "comparison result identity is recomputed",
       (record) => {
-        record.cells[0].fact_results[0].comparison.result_sha256 =
-          "9".repeat(64);
+        record.cells[0].fact_results[0].comparison.result_sha256 = "9".repeat(
+          64,
+        );
       },
       "design_method_comparison_result_identity_mismatch",
     ],

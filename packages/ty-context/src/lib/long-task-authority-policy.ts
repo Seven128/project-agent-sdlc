@@ -70,6 +70,7 @@ const SOURCE_CLAIM_AUTHORITY_POLICY = {
   source_ref: "scope",
   statement: "semantic_user_review",
   disposition: "semantic_user_review",
+  judgment_basis: "semantic_user_review",
 } satisfies Record<keyof SourceClaimV2, AuthorityFieldPolicy>;
 
 const RISK_AUTHORITY_POLICY = {
@@ -79,6 +80,7 @@ const RISK_AUTHORITY_POLICY = {
 
 const GLOBAL_AUTHORITY_POLICY = {
   applicability: "semantic_user_review",
+  semantic_fact_bindings: "semantic_user_review",
   product: "semantic_user_review",
   technical: "semantic_user_review",
   acceptance: "proof_additive",

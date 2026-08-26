@@ -41,16 +41,21 @@ export interface MachineAuthorityRouteV1 {
   check_key: string;
   assertion_key: string;
   proof_surface: ProofSurface;
+  method?: string;
   required_evidence_capabilities: EvidenceCapabilityV2[];
 }
 
 export interface ExternalAuthorityRouteV1 {
   confirmation_ref: string;
   proof_surface: ProofSurface;
+  method?: string;
+  required_evidence_capabilities?: EvidenceCapabilityV2[];
+  advisory_to_machine?: boolean;
 }
 
 export interface ObligationAuthorityCandidatesV1 {
   source_obligation_ref: string;
+  proof_surface_selection?: "required" | "optional";
   machine_candidates: MachineAuthorityRouteV1[];
   external_candidates: ExternalAuthorityRouteV1[];
 }

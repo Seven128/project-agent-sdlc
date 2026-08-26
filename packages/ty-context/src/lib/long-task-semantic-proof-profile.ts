@@ -1,6 +1,7 @@
 import type { EvidenceCapabilityV2 } from "./long-task-delivery-types.js";
 import { semanticFactClosureInvalid } from "./long-task-semantic-fact-closure-primitives.js";
 import {
+  isCustomSemanticFactName,
   SEMANTIC_FACT_PROOF_METHODS,
   SEMANTIC_FACT_STANDARD_PROPERTIES,
 } from "./semantic-fact-catalog.js";
@@ -137,6 +138,19 @@ const PROPERTY_CLASSES: Readonly<Record<string, ReadonlySet<string>>> = {
   ]),
 };
 
+export function semanticFactCustomPropertyHasClosedStandardProfile(
+  property: SemanticFactManifestV1["property_dispositions"][number],
+): boolean {
+  return (
+    !property.standard &&
+    isCustomSemanticFactName(property.property) &&
+    property.required_methods.length > 0 &&
+    property.required_methods.every((method) =>
+      Object.hasOwn(METHOD_CAPABILITY_FLOORS, method),
+    )
+  );
+}
+
 export function validateSemanticFactProofProfileClosure(
   manifest: SemanticFactManifestV1,
 ): void {
@@ -213,9 +227,7 @@ export function semanticFactProofCapabilityFloor(
     proof.authority === "machine" &&
     (!standardMethod ||
       (!property.standard &&
-        property.required_methods.some(
-          (method) => !Object.hasOwn(METHOD_CAPABILITY_FLOORS, method),
-        )))
+        !semanticFactCustomPropertyHasClosedStandardProfile(property)))
   )
     semanticFactClosureInvalid(
       "semantic_fact_custom_machine_authority_forbidden",

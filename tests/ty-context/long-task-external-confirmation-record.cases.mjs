@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -35,6 +35,7 @@ import {
   externalDeclaration,
   externalFixture,
 } from "./long-task-external-confirmation-fixture.mjs";
+import { FIXTURE_EXTERNAL_FACT_SPECS } from "./long-task-semantic-manifest-fixture.mjs";
 import {
   buildPassingRecord,
   invalidRecordMutations,
@@ -111,20 +112,26 @@ test("Record v1 is strict and cannot collapse obligations into an aggregate pass
 });
 
 test("blocking fulfillment has a closed authenticated V2 record owner", async () => {
-  const shape = await import(
-    "../../packages/ty-context/dist/lib/long-task-external-confirmation-shape.js"
-  );
-  const attestation = await import(
-    "../../packages/ty-context/dist/lib/long-task-external-confirmation-attestation.js"
-  );
-  const challenges = await import(
-    "../../packages/ty-context/dist/lib/long-task-external-confirmation-challenge.js"
-  );
+  const shape =
+    await import("../../packages/ty-context/dist/lib/long-task-external-confirmation-shape.js");
+  const attestation =
+    await import("../../packages/ty-context/dist/lib/long-task-external-confirmation-attestation.js");
+  const challenges =
+    await import("../../packages/ty-context/dist/lib/long-task-external-confirmation-challenge.js");
   assert.equal(typeof shape.parseExternalConfirmationRecordV2, "function");
   assert.equal(typeof shape.externalConfirmationV2SignablePayload, "function");
-  assert.equal(typeof attestation.verifyExternalConfirmationAttestation, "function");
-  assert.equal(typeof challenges.readOrCreateExternalConfirmationChallenge, "function");
-  assert.equal(typeof challenges.rotateExternalConfirmationChallenge, "function");
+  assert.equal(
+    typeof attestation.verifyExternalConfirmationAttestation,
+    "function",
+  );
+  assert.equal(
+    typeof challenges.readOrCreateExternalConfirmationChallenge,
+    "function",
+  );
+  assert.equal(
+    typeof challenges.rotateExternalConfirmationChallenge,
+    "function",
+  );
 });
 
 test("Record v1 remains audit-readable but cannot fulfill a blocking obligation", async () => {
@@ -272,12 +279,20 @@ test("blocking external obligations remain pending and cannot clear Active Autho
           session.obligations.length,
       ),
     );
+    const firstExternalObligation = prepared.confirmations.find(
+      (row) => row.confirmation_ref === "fixture-external",
+    ).obligations[0];
     assert.equal(
-      prepared.confirmations.find(
-        (row) => row.confirmation_ref === "fixture-external",
-      ).obligations[0].expected.statement,
-      "The first outcome must be observable.",
+      firstExternalObligation.fact_ref,
+      FIXTURE_EXTERNAL_FACT_SPECS[0].factKey,
     );
+    assert.equal(
+      firstExternalObligation.proof_ref,
+      FIXTURE_EXTERNAL_FACT_SPECS[0].proofKey,
+    );
+    assert.equal(firstExternalObligation.expected.kind, "semantic_fact");
+    assert.equal(firstExternalObligation.expected.statement, null);
+    assert.equal(firstExternalObligation.expected.located_value.value, true);
     assert.equal(
       prepared.actor_identity_boundary,
       "detached_ed25519_required_for_blocking_fulfillment",

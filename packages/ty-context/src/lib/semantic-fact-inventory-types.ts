@@ -34,6 +34,13 @@ export interface SemanticFactInputV1 {
   fact_refs: string[];
   basis_refs: string[];
   rationale: string;
+  supporting_relation?: SemanticFactSupportingRelationV1;
+}
+
+export interface SemanticFactSupportingRelationV1 {
+  kind: "same_semantic_cell_non_normative";
+  fact_ref: string;
+  fact_cell_ref: string;
 }
 
 export interface SemanticFactCensusEntryV1 {

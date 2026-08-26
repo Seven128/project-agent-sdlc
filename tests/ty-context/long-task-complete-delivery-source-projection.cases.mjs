@@ -18,6 +18,7 @@ import {
   fixtureSemanticManifest,
 } from "./long-task-delivery-fixtures.mjs";
 import { fixtureSourceStatements } from "./long-task-semantic-manifest-fixture.mjs";
+import { FIXTURE_ARCHITECTURE_CELL_KEY } from "./long-task-semantic-manifest-fixture.mjs";
 import {
   digestCanonical,
   digestText,
@@ -115,16 +116,167 @@ test("explicit supporting Source fragments must name delivery-semantic Facts", (
     valid.manifest,
     valid.items,
     "first-observable",
-    "Background context for the observable outcome.",
+    "Background rationale explaining the selected behavior.",
   );
+  valid.manifest.inputs.find(
+    (input) =>
+      input.kind === "source_item" && input.source_ref === "first-observable",
+  ).disposition = "supporting_only";
   replaceFragmentProjection(valid.manifest, valid.items[0], {
     disposition: "supporting_basis",
     factRefs: ["fact.first.observable"],
     basisRefs: [valid.items[0].key],
     rationale: "This fragment explicitly supports the named delivery Fact.",
+    supportingRelation: {
+      kind: "same_semantic_cell_non_normative",
+      fact_ref: "fact.first.observable",
+      fact_cell_ref: "cell.first.observable",
+    },
   });
   assert.doesNotThrow(() =>
     validateSourceSemanticConservation(valid.items, valid.manifest, new Set()),
+  );
+});
+
+test("supporting basis cannot use a shared ordinary noun as semantic authority", () => {
+  const unrelated = sourceClosureFixture();
+  setSourceText(
+    unrelated.manifest,
+    unrelated.items,
+    "first-observable",
+    "Users can export their account records.",
+  );
+  unrelated.manifest.facts[0].expected.value =
+    "Users can switch the night display theme.";
+  unrelated.manifest.facts[0].expected.sha256 = digestCanonical(
+    unrelated.manifest.facts[0].expected.value,
+  );
+  unrelated.manifest.inputs.find(
+    (input) =>
+      input.kind === "source_item" && input.source_ref === "first-observable",
+  ).disposition = "supporting_only";
+  replaceFragmentProjection(unrelated.manifest, unrelated.items[0], {
+    disposition: "supporting_basis",
+    factRefs: ["fact.first.observable"],
+    basisRefs: [unrelated.items[0].key],
+    rationale:
+      "A shared ordinary noun cannot prove that this independent feature is background.",
+  });
+  assert.throws(
+    () =>
+      validateSourceSemanticConservation(
+        unrelated.items,
+        unrelated.manifest,
+        new Set(),
+      ),
+    /source_supporting_basis_typed_relation_required/u,
+  );
+});
+
+test("supporting relation must bind its exact Fact cell", () => {
+  const mismatched = sourceClosureFixture();
+  setSourceText(
+    mismatched.manifest,
+    mismatched.items,
+    "first-observable",
+    "Background rationale explaining the selected behavior.",
+  );
+  mismatched.manifest.inputs.find(
+    (input) =>
+      input.kind === "source_item" && input.source_ref === "first-observable",
+  ).disposition = "supporting_only";
+  replaceFragmentProjection(mismatched.manifest, mismatched.items[0], {
+    disposition: "supporting_basis",
+    factRefs: ["fact.first.observable"],
+    basisRefs: [mismatched.items[0].key],
+    rationale:
+      "The typed relation cannot point at a different or missing cell.",
+    supportingRelation: {
+      kind: "same_semantic_cell_non_normative",
+      fact_ref: "fact.first.observable",
+      fact_cell_ref: "cell.unrelated",
+    },
+  });
+  assert.throws(
+    () =>
+      validateSourceSemanticConservation(
+        mismatched.items,
+        mismatched.manifest,
+        new Set(),
+      ),
+    /source_supporting_basis_relation_cell_unknown/u,
+  );
+});
+
+test("scope exclusion requires an independent exact scope-decision Source", () => {
+  for (const sourceKey of ["first-observable", "fixture-architecture"]) {
+    const { manifest, items } = sourceClosureFixture();
+    const material = items.find((item) => item.key === sourceKey);
+    const exclusionKey = `exclude-self-${sourceKey}`;
+    replaceFragmentProjection(manifest, material, {
+      disposition: "scope_excluded",
+      factRefs: [],
+      basisRefs: [exclusionKey],
+      rationale: "A requirement cannot authorize deletion of itself.",
+    });
+    const fragmentInput = manifest.inputs.find((input) =>
+      input.source_ref.startsWith(`${sourceKey}#fragment:`),
+    );
+    manifest.scope.exclusions.push({
+      key: exclusionKey,
+      statement: "The Source declares itself excluded.",
+      affected_refs: [
+        fragmentInput.key,
+        sourceKey === "fixture-architecture"
+          ? FIXTURE_ARCHITECTURE_CELL_KEY
+          : "cell.first.observable",
+      ],
+      source_item_refs: [sourceKey],
+      basis_refs: [sourceKey],
+      rationale: "Negative self-authorization control.",
+    });
+    assert.throws(
+      () => validateSourceSemanticConservation(items, manifest, new Set()),
+      /source_scope_exclusion_owner_not_independent/u,
+    );
+  }
+
+  const allowed = sourceClosureFixture();
+  addSourceBasis(allowed.manifest, allowed.items, {
+    key: "independent-product-scope-decision",
+    kind: "decision",
+    text: "This exact product option is outside the selected delivery scope.",
+    disposition: "non_ui_material",
+    factRefs: ["fact.first.observable"],
+    fragmentDisposition: "fact_bearing",
+  });
+  allowed.manifest.facts[0].source_item_refs.push(
+    "independent-product-scope-decision",
+  );
+  const exclusionKey = "exclude-first-by-independent-product-decision";
+  replaceFragmentProjection(allowed.manifest, allowed.items[0], {
+    disposition: "scope_excluded",
+    factRefs: [],
+    basisRefs: [exclusionKey],
+    rationale: "An independent product decision owns this exact exclusion.",
+  });
+  const fragmentInput = allowed.manifest.inputs.find((input) =>
+    input.source_ref.startsWith("first-observable#fragment:"),
+  );
+  allowed.manifest.scope.exclusions.push({
+    key: exclusionKey,
+    statement: "Exclude only the named product Fact cell.",
+    affected_refs: [fragmentInput.key, "cell.first.observable"],
+    source_item_refs: ["independent-product-scope-decision"],
+    basis_refs: ["independent-product-scope-decision"],
+    rationale: "Positive independent exact-scope control.",
+  });
+  assert.doesNotThrow(() =>
+    validateSourceSemanticConservation(
+      allowed.items,
+      allowed.manifest,
+      new Set(),
+    ),
   );
 });
 

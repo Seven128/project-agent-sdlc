@@ -4,7 +4,23 @@ import type {
   ExternalConfirmationV2,
 } from "./long-task-contract-types.js";
 import type { KeyedStatementV2 } from "./long-task-semantic-contract-types.js";
+import type { DesignResourceLocatedDigestV1 } from "./design-resource-fact-manifest-types.js";
 import type { SemanticFactLocatedValueV1 } from "./semantic-fact-types.js";
+
+type ExternalConfirmationLocatedValueV1 =
+  | SemanticFactLocatedValueV1
+  | DesignResourceLocatedDigestV1
+  | {
+      kind: "compiled_assertion";
+      ref: string;
+      sha256: string;
+      value: unknown;
+    }
+  | {
+      kind: "compiled_assertion_comparison" | "design_strict_comparison";
+      ref: string;
+      sha256: string;
+    };
 
 export interface ExternalConfirmationCandidateV1 {
   git_head: string;
@@ -136,15 +152,19 @@ export interface ExternalConfirmationEvaluationV1 {
 
 export interface ExternalConfirmationExpectedV1 {
   authority_ref: string;
-  kind: "semantic_fact" | "contract_claim";
+  kind:
+    | "semantic_fact"
+    | "design_fact"
+    | "contract_claim"
+    | "contract_claim_actual";
   statement: string | null;
-  located_value: SemanticFactLocatedValueV1 | null;
+  located_value: ExternalConfirmationLocatedValueV1 | null;
   comparison: {
     comparator: string;
     mode: "exact" | "tolerance";
-    parameters: SemanticFactLocatedValueV1;
-    tolerance: SemanticFactLocatedValueV1 | null;
-    mask: SemanticFactLocatedValueV1 | null;
+    parameters: ExternalConfirmationLocatedValueV1;
+    tolerance: ExternalConfirmationLocatedValueV1 | null;
+    mask: ExternalConfirmationLocatedValueV1 | null;
   } | null;
 }
 

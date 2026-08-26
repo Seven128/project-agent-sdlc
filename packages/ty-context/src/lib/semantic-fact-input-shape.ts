@@ -72,16 +72,21 @@ export function parseSemanticFactCensus(value: unknown, label: string) {
 export function parseSemanticFactInputs(value: unknown, label: string) {
   return semanticArray(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = semanticObject(item, itemLabel, [
-      "key",
-      "kind",
-      "source_ref",
-      "sha256",
-      "disposition",
-      "fact_refs",
-      "basis_refs",
-      "rationale",
-    ]);
+    const row = semanticObject(
+      item,
+      itemLabel,
+      [
+        "key",
+        "kind",
+        "source_ref",
+        "sha256",
+        "disposition",
+        "fact_refs",
+        "basis_refs",
+        "rationale",
+      ],
+      ["supporting_relation"],
+    );
     return {
       key: semanticStableRef(row.key, `${itemLabel}.key`),
       kind: semanticLiteral(
@@ -120,8 +125,36 @@ export function parseSemanticFactInputs(value: unknown, label: string) {
       fact_refs: semanticStableRefs(row.fact_refs, `${itemLabel}.fact_refs`),
       basis_refs: semanticStableRefs(row.basis_refs, `${itemLabel}.basis_refs`),
       rationale: semanticString(row.rationale, `${itemLabel}.rationale`),
+      ...(row.supporting_relation === undefined
+        ? {}
+        : {
+            supporting_relation: parseSupportingRelation(
+              row.supporting_relation,
+              `${itemLabel}.supporting_relation`,
+            ),
+          }),
     };
   });
+}
+
+function parseSupportingRelation(value: unknown, label: string) {
+  const row = semanticObject(value, label, [
+    "kind",
+    "fact_ref",
+    "fact_cell_ref",
+  ]);
+  return {
+    kind: semanticLiteral(
+      row.kind,
+      ["same_semantic_cell_non_normative"] as const,
+      `${label}.kind`,
+    ),
+    fact_ref: semanticStableRef(row.fact_ref, `${label}.fact_ref`),
+    fact_cell_ref: semanticStableRef(
+      row.fact_cell_ref,
+      `${label}.fact_cell_ref`,
+    ),
+  };
 }
 
 export function parseSemanticFactFamilyDispositions(

@@ -12,6 +12,10 @@ import type {
   DeliveryContractV2,
 } from "./long-task-delivery-types.js";
 import type { ContractDesignTarget } from "./long-task-design-resource-handoff.js";
+import {
+  designFactObligationDescriptors,
+  externalDesignObligationMatches,
+} from "./long-task-design-obligation.js";
 import { invalid } from "./long-task-design-resource-method-binding.js";
 
 type FeasibilityCell =
@@ -138,6 +142,13 @@ export function validateFeasibilityBlockers(
         (claimRef) => `${contractTarget.outcome_key}.${claimRef}`,
       ),
     );
+    const exactTargetDesignObligations = designFactObligationDescriptors(
+      contract,
+    ).filter(
+      (descriptor) =>
+        descriptor.outcome_key === contractTarget.outcome_key &&
+        descriptor.target_key === contractTarget.target.key,
+    );
     for (const confirmationRef of claim.disposition.refs) {
       const confirmation =
         contract.global.acceptance.external_confirmations.find(
@@ -154,15 +165,36 @@ export function validateFeasibilityBlockers(
           `${blocker.key}:${confirmationRef}`,
         );
       if (
-        !confirmation.impact_claims.some((claimRef) =>
-          impactedTargetClaims.has(claimRef),
+        !confirmation.obligations?.some(
+          (obligation) =>
+            obligation.result_kind === "actual" &&
+            obligation.fact_ref !== null &&
+            obligation.proof_ref !== null,
         )
       )
         invalid(
-          "feasibility_blocker_confirmation_target_claim_missing",
+          "feasibility_blocker_confirmation_exact_fact_required",
           `${blocker.key}:${confirmationRef}`,
         );
     }
+    if (
+      !contract.global.acceptance.external_confirmations.some(
+        (confirmation) =>
+          confirmation.blocks_target &&
+          confirmation.impact_claims.some((claimRef) =>
+            impactedTargetClaims.has(claimRef),
+          ) &&
+          confirmation.obligations?.some((obligation) =>
+            exactTargetDesignObligations.some((descriptor) =>
+              externalDesignObligationMatches(obligation, descriptor),
+            ),
+          ),
+      )
+    )
+      invalid(
+        "feasibility_blocker_confirmation_target_claim_missing",
+        `${blocker.key}:${contractTarget.target.key}`,
+      );
   }
 }
 

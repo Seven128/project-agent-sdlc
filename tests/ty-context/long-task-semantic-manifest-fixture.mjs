@@ -18,17 +18,128 @@ export const fixtureSourceStatements = {
   "fixture-architecture":
     "Preserve the fixture state owner and verifier boundary.",
   "fixture-external": "Confirm the fixture in external delivery.",
+  "fixture-external-compatible":
+    "The product acceptance owner must separately authorize fixture delivery compatibility.",
+  "fixture-external-owner":
+    "The architecture acceptance owner must authorize the fixture architecture decision.",
+  "fixture-external-environment":
+    "The product acceptance owner must authorize fixture delivery in the alternate environment.",
 };
+
+export const FIXTURE_ARCHITECTURE_FACT_KEY = "fact.first.architecture-boundary";
+export const FIXTURE_ARCHITECTURE_CELL_KEY = "cell.first.architecture-boundary";
+export const FIXTURE_ARCHITECTURE_PROOF_KEY =
+  "proof.first.architecture-boundary.exact";
+export const FIXTURE_ARCHITECTURE_SUBJECT_KEY =
+  "subject.first.fixture-architecture";
+export const FIXTURE_ARCHITECTURE_FACT_SPECS = [
+  {
+    outcomeKey: "first",
+    factKey: FIXTURE_ARCHITECTURE_FACT_KEY,
+    cellKey: FIXTURE_ARCHITECTURE_CELL_KEY,
+    proofKey: FIXTURE_ARCHITECTURE_PROOF_KEY,
+    subjectKey: FIXTURE_ARCHITECTURE_SUBJECT_KEY,
+  },
+  {
+    outcomeKey: "second",
+    factKey: "fact.second.architecture-boundary",
+    cellKey: "cell.second.architecture-boundary",
+    proofKey: "proof.second.architecture-boundary.exact",
+    subjectKey: "subject.second.fixture-architecture",
+  },
+];
+export const FIXTURE_EXTERNAL_FACT_SPECS = [
+  {
+    outcomeKey: "first",
+    sourceKey: "fixture-external",
+    confirmationKey: "fixture-external",
+    factKey: "fact.first.external-confirmation",
+    cellKey: "cell.first.external-confirmation",
+    proofKey: "proof.first.external-confirmation.exact",
+    subjectKey: "subject.first.external-confirmation",
+  },
+  {
+    outcomeKey: "first",
+    sourceKey: "fixture-external-compatible",
+    confirmationKey: "fixture-external-compatible",
+    factKey: "fact.first.external-confirmation-compatible",
+    cellKey: "cell.first.external-confirmation-compatible",
+    proofKey: "proof.first.external-confirmation-compatible.exact",
+    subjectKey: "subject.first.external-confirmation-compatible",
+  },
+  {
+    outcomeKey: "first",
+    sourceKey: "fixture-external-owner",
+    confirmationKey: "fixture-external-owner",
+    factKey: "fact.first.external-confirmation-owner",
+    cellKey: "cell.first.external-confirmation-owner",
+    proofKey: "proof.first.external-confirmation-owner.exact",
+    subjectKey: "subject.first.external-confirmation-owner",
+  },
+  {
+    outcomeKey: "first",
+    sourceKey: "fixture-external-environment",
+    confirmationKey: "fixture-external-environment",
+    factKey: "fact.first.external-confirmation-environment",
+    cellKey: "cell.first.external-confirmation-environment",
+    proofKey: "proof.first.external-confirmation-environment.exact",
+    subjectKey: "subject.first.external-confirmation-environment",
+  },
+];
+export const FIXTURE_EXTERNAL_FACT_KEY = FIXTURE_EXTERNAL_FACT_SPECS[0].factKey;
+export const FIXTURE_EXTERNAL_CELL_KEY = FIXTURE_EXTERNAL_FACT_SPECS[0].cellKey;
+export const FIXTURE_EXTERNAL_PROOF_KEY =
+  FIXTURE_EXTERNAL_FACT_SPECS[0].proofKey;
+export const FIXTURE_EXTERNAL_SUBJECT_KEY =
+  FIXTURE_EXTERNAL_FACT_SPECS[0].subjectKey;
+
+export function fixtureArchitectureFactSpecs(options = {}) {
+  return FIXTURE_ARCHITECTURE_FACT_SPECS.slice(0, options.twoOutcomes ? 2 : 1);
+}
+
+export function fixtureExternalFactSpecs(options = {}) {
+  if (!options.externalConfirmation) return [];
+  const outcomeKeys = options.twoOutcomes ? ["first", "second"] : ["first"];
+  return FIXTURE_EXTERNAL_FACT_SPECS.slice(
+    0,
+    options.externalConfirmationCount ?? 1,
+  ).flatMap((external) =>
+    outcomeKeys.map((outcomeKey) =>
+      outcomeKey === "first"
+        ? { ...external }
+        : {
+            ...external,
+            outcomeKey,
+            factKey: external.factKey.replace(".first.", `.${outcomeKey}.`),
+            cellKey: external.cellKey.replace(".first.", `.${outcomeKey}.`),
+            proofKey: external.proofKey.replace(".first.", `.${outcomeKey}.`),
+            subjectKey: external.subjectKey.replace(
+              ".first.",
+              `.${outcomeKey}.`,
+            ),
+          },
+    ),
+  );
+}
 
 export function fixtureSemanticManifest(options = {}) {
   const outcomeKeys = options.twoOutcomes ? ["first", "second"] : ["first"];
   const factKeys = outcomeKeys.map((key) => `fact.${key}.observable`);
+  const architectureFacts = fixtureArchitectureFactSpecs(options);
+  const architectureFactKeys = architectureFacts.map((item) => item.factKey);
+  const externalConfirmations = options.externalConfirmation
+    ? FIXTURE_EXTERNAL_FACT_SPECS.slice(
+        0,
+        options.externalConfirmationCount ?? 1,
+      )
+    : [];
+  const externalFacts = fixtureExternalFactSpecs(options);
   const sourceItemKeys = [
     "first-observable",
     ...(options.twoOutcomes ? ["second-observable"] : []),
     "fixture-architecture",
     ...(options.executionTarget ? ["fixture-execution-target"] : []),
-    ...(options.externalConfirmation ? ["fixture-external"] : []),
+    ...externalConfirmations.map((item) => item.sourceKey),
   ];
   const manifestKey = "fixture-semantic-facts";
   const familyKey = (family) => `family.${family.replaceAll("_", "-")}`;
@@ -39,9 +150,12 @@ export function fixtureSemanticManifest(options = {}) {
   const sourceFacts = (sourceKey) => {
     if (sourceKey === "first-observable") return ["fact.first.observable"];
     if (sourceKey === "second-observable") return ["fact.second.observable"];
-    if (sourceKey === "fixture-architecture") return factKeys;
+    if (sourceKey === "fixture-architecture") return architectureFactKeys;
     if (sourceKey === "fixture-execution-target") return factKeys;
-    if (sourceKey === "fixture-external") return factKeys;
+    const external = externalFacts.filter(
+      (item) => item.sourceKey === sourceKey,
+    );
+    if (external.length) return external.map((item) => item.factKey);
     return [];
   };
   const inputs = [
@@ -66,7 +180,7 @@ export function fixtureSemanticManifest(options = {}) {
       source_ref: "project_context/global.md",
       sha256: digestText("# Global\n"),
       disposition: "non_ui_material",
-      fact_refs: factKeys,
+      fact_refs: architectureFactKeys,
       basis_refs: ["fixture-architecture"],
       rationale: "The full Context snapshot is classified and bound.",
     },
@@ -76,7 +190,7 @@ export function fixtureSemanticManifest(options = {}) {
       source_ref: "project_context/architecture.md",
       sha256: digestText("# Architecture\n"),
       disposition: "non_ui_material",
-      fact_refs: factKeys,
+      fact_refs: architectureFactKeys,
       basis_refs: ["fixture-architecture"],
       rationale: "The full Context snapshot is classified and bound.",
     },
@@ -88,7 +202,7 @@ export function fixtureSemanticManifest(options = {}) {
         '[[areas]]\nid = "main"\nroot = "."\ncontext = "project_context/areas/main.md"\nkind = "app"\ndefault = true\n',
       ),
       disposition: "non_ui_material",
-      fact_refs: factKeys,
+      fact_refs: architectureFactKeys,
       basis_refs: ["fixture-architecture"],
       rationale: "The full Context graph manifest is classified and bound.",
     },
@@ -98,35 +212,71 @@ export function fixtureSemanticManifest(options = {}) {
       source_ref: "project_context/areas/main.md",
       sha256: digestText("# Main\n"),
       disposition: "non_ui_material",
-      fact_refs: factKeys,
+      fact_refs: architectureFactKeys,
       basis_refs: ["fixture-architecture"],
       rationale: "The owning Context is classified and bound.",
     },
   ];
-  const familyDispositions = SEMANTIC_FACT_STANDARD_FAMILIES.map((family) => ({
-    key: familyKey(family),
-    family,
-    standard: true,
-    disposition:
-      family === "goal_scope_glossary" ? "applicable" : "not_applicable",
-    outcome_refs: outcomeKeys,
-    source_item_refs: ["fixture-architecture"],
-    basis_refs: ["fixture-architecture"],
-    rationale:
-      family === "goal_scope_glossary"
-        ? "The fixture exposes one observable outcome Fact per Outcome."
-        : "The bounded fixture Source explicitly excludes this standard family.",
-  }));
-  const subjects = outcomeKeys.map((outcome) => ({
-    key: unitKey(outcome),
-    family_ref: familyKey("goal_scope_glossary"),
-    outcome_ref: outcome,
-    kind: "outcome",
-    parent_ref: null,
-    owner_ref: null,
-    source_item_refs: [`${outcome}-observable`, "fixture-architecture"],
-    basis_refs: [`${outcome}-observable`, "fixture-architecture"],
-  }));
+  const familyDispositions = SEMANTIC_FACT_STANDARD_FAMILIES.map((family) => {
+    const externalApplicable =
+      family === "external_integration" && options.externalConfirmation;
+    const sourceRefs = externalApplicable
+      ? externalConfirmations.map((item) => item.sourceKey)
+      : ["fixture-architecture"];
+    return {
+      key: familyKey(family),
+      family,
+      standard: true,
+      disposition:
+        ["goal_scope_glossary", "architecture_ownership"].includes(family) ||
+        externalApplicable
+          ? "applicable"
+          : "not_applicable",
+      outcome_refs: outcomeKeys,
+      source_item_refs: sourceRefs,
+      basis_refs: sourceRefs,
+      rationale:
+        family === "goal_scope_glossary"
+          ? "The fixture exposes one observable outcome Fact per Outcome."
+          : family === "architecture_ownership"
+            ? "The fixture exposes one exact technical architecture boundary Fact."
+            : externalApplicable
+              ? "The fixture exposes one exact externally authorized acceptance Fact."
+              : "The bounded fixture Source explicitly excludes this standard family.",
+    };
+  });
+  const subjects = [
+    ...outcomeKeys.map((outcome) => ({
+      key: unitKey(outcome),
+      family_ref: familyKey("goal_scope_glossary"),
+      outcome_ref: outcome,
+      kind: "outcome",
+      parent_ref: null,
+      owner_ref: null,
+      source_item_refs: [`${outcome}-observable`, "fixture-architecture"],
+      basis_refs: [`${outcome}-observable`, "fixture-architecture"],
+    })),
+    ...architectureFacts.map((architecture) => ({
+      key: architecture.subjectKey,
+      family_ref: familyKey("architecture_ownership"),
+      outcome_ref: architecture.outcomeKey,
+      kind: "architecture_boundary",
+      parent_ref: null,
+      owner_ref: "owner.fixture",
+      source_item_refs: ["fixture-architecture"],
+      basis_refs: ["fixture-architecture"],
+    })),
+    ...externalFacts.map((external) => ({
+      key: external.subjectKey,
+      family_ref: familyKey("external_integration"),
+      outcome_ref: external.outcomeKey,
+      kind: "external_acceptance_decision",
+      parent_ref: null,
+      owner_ref: `owner.${external.sourceKey}`,
+      source_item_refs: [external.sourceKey],
+      basis_refs: [external.sourceKey],
+    })),
+  ];
   const axisDispositions = SEMANTIC_FACT_STANDARD_CONDITION_AXES.map(
     (axis) => ({
       key: axisKey(axis),
@@ -147,9 +297,11 @@ export function fixtureSemanticManifest(options = {}) {
     source_item_refs: [`${outcome}-observable`, "fixture-architecture"],
     basis_refs: [`${outcome}-observable`, "fixture-architecture"],
   }));
-  const familyUnits = subjects.map((item) => item.key);
-  const propertyDispositions =
-    SEMANTIC_FACT_STANDARD_PROPERTIES.goal_scope_glossary.map((property) => {
+  const goalFamilyUnits = subjects
+    .filter((item) => item.family_ref === familyKey("goal_scope_glossary"))
+    .map((item) => item.key);
+  const propertyDispositions = [
+    ...SEMANTIC_FACT_STANDARD_PROPERTIES.goal_scope_glossary.map((property) => {
       const applicable = property === "observable_outcome";
       return {
         key: propertyKey(property),
@@ -159,8 +311,8 @@ export function fixtureSemanticManifest(options = {}) {
         value_kind: "boolean",
         required_methods: applicable ? ["exact_value"] : [],
         required_evidence_capabilities: applicable ? ["semantic_fact"] : [],
-        applicable_unit_refs: applicable ? familyUnits : [],
-        not_applicable_unit_refs: applicable ? [] : familyUnits,
+        applicable_unit_refs: applicable ? goalFamilyUnits : [],
+        not_applicable_unit_refs: applicable ? [] : goalFamilyUnits,
         decision_required_unit_refs: [],
         unavailable_unit_refs: [],
         condition_refs: applicable
@@ -172,25 +324,131 @@ export function fixtureSemanticManifest(options = {}) {
           ? "Each fixture Outcome has one exact observable-result Fact."
           : "The bounded fixture Source explicitly marks this property inapplicable.",
       };
-    });
-  const factCells = outcomeKeys.map((outcome) => ({
-    key: `cell.${outcome}.observable`,
-    outcome_ref: outcome,
-    unit_ref: unitKey(outcome),
-    condition_ref: conditionKey(outcome),
-    property_ref: propertyKey("observable_outcome"),
-    disposition: "specified",
-    fact_ref: `fact.${outcome}.observable`,
-    source_item_refs: [`${outcome}-observable`, "fixture-architecture"],
-    basis_refs: [`${outcome}-observable`, "fixture-architecture"],
-    rationale: "The observable outcome property is specified.",
-  }));
+    }),
+    ...SEMANTIC_FACT_STANDARD_PROPERTIES.architecture_ownership.map(
+      (property) => {
+        const applicable = property === "state_boundary";
+        return {
+          key: propertyKey(property),
+          family_ref: familyKey("architecture_ownership"),
+          property,
+          standard: true,
+          value_kind: "boolean",
+          required_methods: applicable ? ["exact_value"] : [],
+          required_evidence_capabilities: applicable ? ["semantic_fact"] : [],
+          applicable_unit_refs: applicable
+            ? architectureFacts.map((item) => item.subjectKey)
+            : [],
+          not_applicable_unit_refs: applicable
+            ? []
+            : architectureFacts.map((item) => item.subjectKey),
+          decision_required_unit_refs: [],
+          unavailable_unit_refs: [],
+          condition_refs: applicable
+            ? outcomeKeys.map((outcome) => conditionKey(outcome))
+            : [],
+          source_item_refs: ["fixture-architecture"],
+          basis_refs: ["fixture-architecture"],
+          rationale: applicable
+            ? "The fixture state-owner and verifier boundary is one exact technical invariant."
+            : "The bounded architecture Source marks this property inapplicable.",
+        };
+      },
+    ),
+    ...(options.externalConfirmation
+      ? SEMANTIC_FACT_STANDARD_PROPERTIES.external_integration.map(
+          (property) => {
+            const applicable = property === "external_confirmation";
+            return {
+              key: propertyKey(property),
+              family_ref: familyKey("external_integration"),
+              property,
+              standard: true,
+              value_kind: "boolean",
+              required_methods: applicable ? ["exact_value"] : [],
+              required_evidence_capabilities: applicable
+                ? ["semantic_fact"]
+                : [],
+              applicable_unit_refs: applicable
+                ? externalFacts.map((item) => item.subjectKey)
+                : [],
+              not_applicable_unit_refs: applicable
+                ? []
+                : externalFacts.map((item) => item.subjectKey),
+              decision_required_unit_refs: [],
+              unavailable_unit_refs: [],
+              condition_refs: applicable
+                ? outcomeKeys.map((outcome) => conditionKey(outcome))
+                : [],
+              source_item_refs: externalConfirmations.map(
+                (item) => item.sourceKey,
+              ),
+              basis_refs: externalConfirmations.map((item) => item.sourceKey),
+              rationale: applicable
+                ? "The fixture requires one exact authenticated external acceptance decision."
+                : "The bounded external Source marks this property inapplicable.",
+            };
+          },
+        )
+      : []),
+  ];
+  const factCells = [
+    ...outcomeKeys.map((outcome) => ({
+      key: `cell.${outcome}.observable`,
+      outcome_ref: outcome,
+      unit_ref: unitKey(outcome),
+      condition_ref: conditionKey(outcome),
+      property_ref: propertyKey("observable_outcome"),
+      disposition: "specified",
+      fact_ref: `fact.${outcome}.observable`,
+      source_item_refs: [`${outcome}-observable`, "fixture-architecture"],
+      basis_refs: [`${outcome}-observable`, "fixture-architecture"],
+      rationale: "The observable outcome property is specified.",
+    })),
+    ...architectureFacts.map((architecture) => ({
+      key: architecture.cellKey,
+      outcome_ref: architecture.outcomeKey,
+      unit_ref: architecture.subjectKey,
+      condition_ref: conditionKey(architecture.outcomeKey),
+      property_ref: propertyKey("state_boundary"),
+      disposition: "specified",
+      fact_ref: architecture.factKey,
+      source_item_refs: ["fixture-architecture"],
+      basis_refs: ["fixture-architecture"],
+      rationale:
+        "The fixture architecture boundary is specified independently.",
+    })),
+    ...externalFacts.map((external) => ({
+      key: external.cellKey,
+      outcome_ref: external.outcomeKey,
+      unit_ref: external.subjectKey,
+      condition_ref: conditionKey(external.outcomeKey),
+      property_ref: propertyKey("external_confirmation"),
+      disposition: "specified",
+      fact_ref: external.factKey,
+      source_item_refs: [external.sourceKey],
+      basis_refs: [external.sourceKey],
+      rationale:
+        "The external acceptance decision is specified independently from objective product behavior.",
+    })),
+  ];
   const { facts, proofObligations, environments, oracles } =
     fixtureSemanticFactRecords({
       outcomeKeys,
       manifestKey,
       inputs,
-      externalConfirmation: options.externalConfirmation,
+      architectureFacts: architectureFacts.map((architecture) => ({
+        ...architecture,
+        familyKey: familyKey("architecture_ownership"),
+        conditionKey: conditionKey(architecture.outcomeKey),
+        propertyKey: propertyKey("state_boundary"),
+      })),
+      externalFacts: externalFacts.map((external) => ({
+        ...external,
+        familyKey: familyKey("external_integration"),
+        conditionKey: conditionKey(external.outcomeKey),
+        propertyKey: propertyKey("external_confirmation"),
+      })),
     });
   const manifest = {
     schema_version: "semantic-fact-manifest-v1",
@@ -236,7 +494,12 @@ export function fixtureSemanticManifest(options = {}) {
     blockers: [],
   };
   if (options.explicitFragments !== false)
-    addFixtureFragmentProjections(manifest, sourceItemKeys, sourceFacts, options);
+    addFixtureFragmentProjections(
+      manifest,
+      sourceItemKeys,
+      sourceFacts,
+      options,
+    );
   return refreshFixtureSemanticManifest(manifest);
 }
 
@@ -257,7 +520,7 @@ function addFixtureFragmentProjections(
         sourceKey === "fixture-architecture" ||
         sourceKey === "fixture-execution-target"
           ? "technical_obligation"
-          : sourceKey === "fixture-external"
+          : sourceKey.startsWith("fixture-external")
             ? "external_confirmation"
             : "requirement",
       source_path: "source.md",
@@ -273,7 +536,10 @@ function addFixtureFragmentProjections(
         source_ref: fragment.key,
         sha256: fragment.text_sha256,
         disposition:
-          sourceKey === "first-observable" || sourceKey === "second-observable"
+          sourceKey === "first-observable" ||
+          sourceKey === "second-observable" ||
+          sourceKey === "fixture-architecture" ||
+          sourceKey.startsWith("fixture-external")
             ? "fact_bearing"
             : "supporting_basis",
         fact_refs: factRefs,
@@ -282,7 +548,9 @@ function addFixtureFragmentProjections(
           "The fixture explicitly dispositions this complete material Fragment.",
       });
       for (const factRef of factRefs) {
-        const fact = manifest.facts.find((candidate) => candidate.key === factRef);
+        const fact = manifest.facts.find(
+          (candidate) => candidate.key === factRef,
+        );
         if (fact && !fact.provenance.basis_refs.includes(key))
           fact.provenance.basis_refs.push(key);
       }

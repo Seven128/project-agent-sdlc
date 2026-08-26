@@ -137,10 +137,14 @@ export async function externalConfirmationSubmissionEnvelopeIssues(
       issues.push(`result_kind_mismatch:${row.obligation_ref}`);
     if (
       declaration.result_kind === "judgment" &&
-      (record.actor.authority_kind === "external_system" ||
-        !sourceBackedExternalJudgmentAdmitted(context.semantic_manifest, row) ||
-        !result.rationale?.trim() ||
-        !judgmentBasisCurrent(context, confirmation, declaration))
+      (!sourceBackedExternalJudgmentAdmitted(
+        context.compiled,
+        context.semantic_manifest,
+        row,
+        declaration.judgment_basis,
+        record.actor.authority_kind,
+      ) ||
+        !result.rationale?.trim())
     )
       issues.push(`judgment_not_admitted:${row.obligation_ref}`);
   }
@@ -343,16 +347,20 @@ function evaluateObligationResult(
   let verdict = result.verdict;
   let comparatorRecomputed = false;
   if (declaration.result_kind === "judgment") {
-    if (record.actor.authority_kind === "external_system")
-      issues.push(`judgment_actor_not_authorized:${row.obligation_ref}`);
     if (!result.rationale?.trim())
       issues.push(`judgment_rationale_missing:${row.obligation_ref}`);
-    if (!sourceBackedExternalJudgmentAdmitted(context.semantic_manifest, row))
+    if (
+      !sourceBackedExternalJudgmentAdmitted(
+        context.compiled,
+        context.semantic_manifest,
+        row,
+        declaration.judgment_basis,
+        record.actor.authority_kind,
+      )
+    )
       issues.push(
         `judgment_objective_obligation_not_allowed:${row.obligation_ref}`,
       );
-    if (!judgmentBasisCurrent(context, confirmation, declaration))
-      issues.push(`judgment_basis_not_source_backed:${row.obligation_ref}`);
   } else if (result.verdict === "unable") {
     if (!result.rationale?.trim())
       issues.push(`unable_rationale_missing:${row.obligation_ref}`);
@@ -360,6 +368,7 @@ function evaluateObligationResult(
     issues.push(`objective_actual_missing:${row.obligation_ref}`);
   } else {
     const comparison = objectiveExternalComparison(
+      context.compiled,
       context.semantic_manifest,
       row,
       result.actual,
@@ -404,19 +413,6 @@ function evaluationState(
   return rows.length && results.length === rows.length
     ? "fulfilled"
     : "invalid";
-}
-
-function judgmentBasisCurrent(
-  context: ExternalAuthorityContextV1,
-  confirmation: ExternalConfirmationV2,
-  declaration: NonNullable<ExternalConfirmationV2["obligations"]>[number],
-): boolean {
-  const basis = declaration.judgment_basis;
-  if (!basis) return false;
-  const sourceClaim = context.compiled.source_claims.find(
-    (claim) => claim.key === basis.source_ref,
-  );
-  return Boolean(sourceClaim);
 }
 
 async function legacyExternalConfirmationEvaluation(

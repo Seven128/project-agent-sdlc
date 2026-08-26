@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import {
+  access,
+  appendFile,
+  mkdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -15,6 +22,7 @@ import {
 import { externalConfirmationRecordPath } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-state.js";
 import {
   activeRecordPath,
+  readFinalReceipt,
   runtimePath,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
@@ -48,6 +56,7 @@ import {
   raceSignal,
   removeTemporary,
   runCliProcess,
+  waitForFile,
   waitForProcessExit,
   waitForStartedProcess,
 } from "./long-task-external-confirmation-race-fixture.mjs";
@@ -175,9 +184,7 @@ test("Finalization revalidates External record and artifact identities after eva
   for (const target of ["record", "artifact"])
     await t.test(target, async () => {
       const fixture = await externalFixture();
-      const signal = await finalizationSignal(
-        "after_finalization_evaluation",
-      );
+      const signal = await finalizationSignal("after_finalization_evaluation");
       try {
         const prepared = await runCli(fixture.root, [
           "long-task",
@@ -209,10 +216,7 @@ test("Finalization revalidates External record and artifact identities after eva
         await waitForFile(signal.started);
         if (target === "record") {
           await writeFile(
-            externalConfirmationRecordPath(
-              fixture.workdir,
-              "fixture-external",
-            ),
+            externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
             "{}\n",
           );
         } else {
@@ -245,6 +249,100 @@ test("Finalization revalidates External record and artifact identities after eva
         await rm(fixture.root, { recursive: true, force: true });
       }
     });
+});
+
+test("Finalization revalidates the live External public key after Receipt publication", async () => {
+  const fixture = await externalFixture({
+    configureExternal: async (candidate) => {
+      await appendFile(
+        path.join(candidate.root, ".gitignore"),
+        `/${candidate.externalPublicKeyRef}\n`,
+      );
+      await exec("git", ["add", ".gitignore"], {
+        cwd: candidate.root,
+        windowsHide: true,
+      });
+      await exec(
+        "git",
+        ["commit", "-m", "test: keep protected public key outside candidate"],
+        { cwd: candidate.root, windowsHide: true },
+      );
+    },
+  });
+  const signal = await finalizationSignal("after_receipt_publish");
+  let closing = null;
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+    ]);
+    await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      await writeSubmissionRecord(
+        fixture,
+        "public-key-race.json",
+        await buildPassingRecord(fixture, prepared),
+      ),
+    ]);
+
+    closing = runCliProcess(
+      fixture.root,
+      ["long-task", "close", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    for (const phase of [
+      "after_finalization_evaluation",
+      "after_receipt_stage",
+    ]) {
+      await waitForFile(path.join(signal.folder, `${phase}.started`));
+      await writeFile(
+        path.join(signal.folder, `${phase}.release`),
+        "release\n",
+      );
+    }
+    await waitForFile(signal.started);
+    await appendFile(
+      path.join(fixture.root, ...fixture.externalPublicKeyRef.split("/")),
+      "\n",
+    );
+    await writeFile(signal.release, "release\n");
+
+    const final = await closing;
+    assert.notEqual(final.exitCode, 0, JSON.stringify(final));
+    const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.equal(receipt.workflow_status, "needs_work");
+    assert.notEqual(receipt.workflow_status, "delivery_accepted");
+    assert.ok(
+      receipt.findings.some(
+        (finding) =>
+          finding.code === "finalization_identity_compare_and_swap_failed",
+      ),
+      JSON.stringify(receipt.findings),
+    );
+    assert.equal(await pathExists(await activeRecordPath(fixture.root)), true);
+  } finally {
+    for (const phase of [
+      "after_finalization_evaluation",
+      "after_receipt_stage",
+      "after_receipt_publish",
+      "after_authority_clear",
+    ])
+      await writeFile(
+        path.join(signal.folder, `${phase}.release`),
+        "release\n",
+      ).catch(() => undefined);
+    if (closing) await closing;
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
 });
 
 test("External submit cannot interleave with Finalization and succeeds after lock release", async () => {

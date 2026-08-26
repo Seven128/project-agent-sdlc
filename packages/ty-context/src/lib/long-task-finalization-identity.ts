@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import type {
   CompiledDeliveryContractV2,
   WorkspaceFingerprintV2,
@@ -9,8 +7,8 @@ import { captureStoredExternalConfirmationChallengeIdentities } from "./long-tas
 import { readStoredExternalConfirmationRecord } from "./long-task-external-confirmation-state.js";
 import { captureStoredExternalConfirmationRecordIdentities } from "./long-task-external-confirmation-state.js";
 import type { ExternalConfirmationCandidateV1 } from "./long-task-external-confirmation-types.js";
+import { captureProtectedAuthorityInputsIdentity } from "./long-task-freshness.js";
 import type { ActiveLongTaskAuthorityV3 } from "./long-task-state.js";
-import { assertProtectedRepositoryFile } from "./repository-path-safety.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 
 export interface FinalizationIdentityV1 {
@@ -24,6 +22,7 @@ export interface FinalizationIdentityV1 {
   };
   compiled_identity: string;
   raw_contract_sha256: string;
+  protected_authority_inputs_identity: string;
   external_records: Record<string, string>;
   external_challenges: Record<string, string>;
   external_artifacts: Record<string, string>;
@@ -40,29 +39,29 @@ export async function captureFinalizationIdentity(input: {
     input.compiled.global.acceptance.external_confirmations
       .map((confirmation) => confirmation.key)
       .sort();
-  const contractFile = await assertProtectedRepositoryFile(
-    input.repository,
-    path.join(input.repository, ...input.compiled.contract_file.split("/")),
-    "finalization_delivery_contract",
-  );
-  const [externalRecords, externalChallenges, externalArtifacts] =
-    await Promise.all([
-      captureStoredExternalConfirmationRecordIdentities(
-        input.repository,
-        input.compiled.workdir,
-        confirmationRefs,
-      ),
-      captureStoredExternalConfirmationChallengeIdentities(
-        input.repository,
-        input.compiled.workdir,
-        confirmationRefs,
-      ),
-      captureExternalArtifactIdentities(
-        input.repository,
-        input.compiled.workdir,
-        confirmationRefs,
-      ),
-    ]);
+  const [
+    protectedAuthorityInputs,
+    externalRecords,
+    externalChallenges,
+    externalArtifacts,
+  ] = await Promise.all([
+    captureProtectedAuthorityInputsIdentity(input.compiled),
+    captureStoredExternalConfirmationRecordIdentities(
+      input.repository,
+      input.compiled.workdir,
+      confirmationRefs,
+    ),
+    captureStoredExternalConfirmationChallengeIdentities(
+      input.repository,
+      input.compiled.workdir,
+      confirmationRefs,
+    ),
+    captureExternalArtifactIdentities(
+      input.repository,
+      input.compiled.workdir,
+      confirmationRefs,
+    ),
+  ]);
   return {
     active_authority_identity: input.active.active_authority_identity,
     authority_revision: input.active.authority_revision,
@@ -76,7 +75,8 @@ export async function captureFinalizationIdentity(input: {
           : input.workspace_fingerprint.identity,
     },
     compiled_identity: input.compiled.compiled_identity,
-    raw_contract_sha256: sha256Hex(await readFile(contractFile)),
+    raw_contract_sha256: protectedAuthorityInputs.snapshot.raw_contract_sha256,
+    protected_authority_inputs_identity: protectedAuthorityInputs.identity,
     external_records: externalRecords,
     external_challenges: externalChallenges,
     external_artifacts: externalArtifacts,

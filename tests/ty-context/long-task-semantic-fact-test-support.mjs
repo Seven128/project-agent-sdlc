@@ -114,10 +114,15 @@ export async function addFixtureDomainSemanticFact(
     criterion,
     observation,
     observationScope = "service_boundary",
-    counterfactualKey = "remove-first-state",
+    outcomeKey = "first",
+    sourceFactRefs = [factKey],
+    counterfactualKey = `remove-${outcomeKey}-state`,
   },
 ) {
-  const outcome = fixture.contract.outcomes[0];
+  const outcome = fixture.contract.outcomes.find(
+    (candidate) => candidate.key === outcomeKey,
+  );
+  assert.ok(outcome, `fixture outcome missing: ${outcomeKey}`);
   const check = outcome.acceptance.checks[0];
   const applicabilityRef = outcome.applicability[0].key;
   const claimRef = `semantic_fact.${factKey}`;
@@ -167,9 +172,15 @@ export async function addFixtureDomainSemanticFact(
     const fragmentBasisRefs = remapFixtureSourceFactsInManifest(
       manifest,
       sourceItemRef,
-      [factKey],
+      sourceFactRefs,
     );
-    const baseFact = manifest.facts[0];
+    const baseFact = manifest.facts.find(
+      (candidate) => candidate.outcome_ref === outcomeKey,
+    );
+    assert.ok(
+      baseFact,
+      `fixture semantic Fact template missing: ${outcomeKey}`,
+    );
     const baseCell = manifest.fact_cells.find(
       (candidate) => candidate.key === baseFact.cell_ref,
     );

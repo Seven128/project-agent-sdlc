@@ -16,7 +16,13 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import YAML from "yaml";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
-import { fixtureSemanticManifest } from "./long-task-semantic-manifest-fixture.mjs";
+import {
+  FIXTURE_EXTERNAL_FACT_SPECS,
+  fixtureArchitectureFactSpecs,
+  fixtureExternalFactSpecs,
+  fixtureSemanticManifest,
+  fixtureSourceStatements,
+} from "./long-task-semantic-manifest-fixture.mjs";
 import { writeFixtureSourceAndOracle } from "./long-task-semantic-oracle-fixture.mjs";
 import {
   authoringTemplateSemanticManifest,
@@ -209,26 +215,33 @@ export async function createDeliveryFixture(options = {}) {
     const template = path.join(seedRoot, variant);
     await assertSeedRepository(template);
     await cp(template, root, { recursive: true, force: true });
-    if (options.twoOutcomes) {
+    const externalConfirmationCount = options.externalConfirmation
+      ? (options.externalConfirmationCount ?? 1)
+      : 0;
+    if (options.twoOutcomes || externalConfirmationCount > 1) {
       const manifest = packageAdmittedFixtureSemanticManifest({
-        twoOutcomes: true,
+        twoOutcomes: Boolean(options.twoOutcomes),
         externalConfirmation: Boolean(options.externalConfirmation),
+        externalConfirmationCount,
       });
       await writeFixtureSourceAndOracle(
         root,
         {
-          twoOutcomes: true,
+          twoOutcomes: Boolean(options.twoOutcomes),
           externalConfirmation: Boolean(options.externalConfirmation),
+          externalConfirmationCount,
           executionTarget: fixtureProcessExecutionTarget(),
         },
         manifest,
       );
       await installPackageMachineFixture(root, manifest);
-      const statePath = path.join(root, "src", "state.json");
-      const state = JSON.parse(await readFile(statePath, "utf8"));
-      state.first = true;
-      state.second = false;
-      await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
+      if (options.twoOutcomes) {
+        const statePath = path.join(root, "src", "state.json");
+        const state = JSON.parse(await readFile(statePath, "utf8"));
+        state.first = true;
+        state.second = false;
+        await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
+      }
       await exec(
         "git",
         [
@@ -430,6 +443,24 @@ export function claimApplicability(outcomeKey = "first") {
 }
 
 export function deliveryContract(options = {}) {
+  const architectureFacts = fixtureArchitectureFactSpecs(options);
+  const externalConfirmations = options.externalConfirmation
+    ? FIXTURE_EXTERNAL_FACT_SPECS.slice(
+        0,
+        options.externalConfirmationCount ?? 1,
+      )
+    : [];
+  const externalFacts = fixtureExternalFactSpecs(options);
+  const architectureFactForOutcome = (outcomeKey) => {
+    const fact = architectureFacts.find(
+      (candidate) => candidate.outcomeKey === outcomeKey,
+    );
+    if (!fact)
+      throw new Error(`fixture_architecture_fact_missing:${outcomeKey}`);
+    return fact;
+  };
+  const externalFactsForOutcome = (outcomeKey) =>
+    externalFacts.filter((fact) => fact.outcomeKey === outcomeKey);
   const semanticManifest = packageAdmittedFixtureSemanticManifest(options);
   const semanticManifestSha256 = digestCanonical(semanticManifest);
   const executionTarget = fixtureProcessExecutionTarget();
@@ -492,6 +523,19 @@ export function deliveryContract(options = {}) {
             },
           ]
         : []),
+      {
+        key: `${outcomeKey}-architecture-semantic-fact`,
+        criterion:
+          "The fixture state owner and verifier boundary remains an exact architecture Fact.",
+        claims: [
+          `semantic_fact.${architectureFactForOutcome(outcomeKey).factKey}`,
+        ],
+        applicability_ref: `${outcomeKey}-root-success`,
+        observation: "architecture_semantic_fact_result",
+        evidence_capabilities: ["semantic_fact"],
+        operator: "equals",
+        expected: true,
+      },
       {
         key: `${outcomeKey}-requirement`,
         criterion: `${outcomeKey} satisfies its observable requirement.`,
@@ -560,6 +604,16 @@ export function deliveryContract(options = {}) {
           claim_ref: `semantic_fact.fact.${key}.observable`,
           applicability_ref: `${key}-root-success`,
         },
+        {
+          fact_ref: architectureFactForOutcome(key).factKey,
+          claim_ref: `semantic_fact.${architectureFactForOutcome(key).factKey}`,
+          applicability_ref: `${key}-root-success`,
+        },
+        ...externalFactsForOutcome(key).map((external) => ({
+          fact_ref: external.factKey,
+          claim_ref: `semantic_fact.${external.factKey}`,
+          applicability_ref: `${key}-root-success`,
+        })),
       ],
       proofs: [
         {
@@ -572,6 +626,25 @@ export function deliveryContract(options = {}) {
           check_ref: `${key}-check`,
           assertion_ref: `${key}-semantic-fact`,
         },
+        {
+          proof_ref: architectureFactForOutcome(key).proofKey,
+          fact_ref: architectureFactForOutcome(key).factKey,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["semantic_fact"],
+          authority: "machine",
+          check_ref: `${key}-check`,
+          assertion_ref: `${key}-architecture-semantic-fact`,
+        },
+        ...externalFactsForOutcome(key).map((external) => ({
+          proof_ref: external.proofKey,
+          fact_ref: external.factKey,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["semantic_fact"],
+          authority: "external_confirmation",
+          confirmation_ref: external.confirmationKey,
+        })),
       ],
     },
     product: {
@@ -731,19 +804,15 @@ export function deliveryContract(options = {}) {
           refs: ["execution_target.fixture-app"],
         },
       },
-      ...(options.externalConfirmation
-        ? [
-            {
-              key: "fixture-external",
-              source_ref: "source.md#fixture-external",
-              statement: "Confirm the fixture in external delivery.",
-              disposition: {
-                type: "external_confirmation",
-                refs: ["fixture-external"],
-              },
-            },
-          ]
-        : []),
+      ...externalConfirmations.map((external) => ({
+        key: external.sourceKey,
+        source_ref: `source.md#${external.sourceKey}`,
+        statement: fixtureSourceStatements[external.sourceKey],
+        disposition: {
+          type: "external_confirmation",
+          refs: [external.confirmationKey],
+        },
+      })),
     ],
     stages: options.twoOutcomes
       ? [
@@ -794,18 +863,16 @@ export function deliveryContract(options = {}) {
       acceptance: {
         checks: [],
         counterfactual_controls: [],
-        external_confirmations: options.externalConfirmation
-          ? [
-              {
-                key: "fixture-external",
-                description: "Confirm the fixture in external delivery.",
-                owner: "release-owner",
-                kind: "field_validation",
-                impact_claims: ["first.result"],
-                blocks_target: false,
-              },
-            ]
-          : [],
+        external_confirmations: externalConfirmations.map((external) => ({
+          key: external.confirmationKey,
+          description: fixtureSourceStatements[external.sourceKey],
+          owner: "release-owner",
+          kind: "field_validation",
+          impact_claims: externalFacts
+            .filter((fact) => fact.sourceKey === external.sourceKey)
+            .map((fact) => `${fact.outcomeKey}.semantic_fact.${fact.factKey}`),
+          blocks_target: false,
+        })),
       },
     },
     outcomes: options.twoOutcomes
@@ -986,7 +1053,12 @@ function addControlAssertions(
 }
 
 function addDefaultSensitivityControls(contract) {
-  for (const outcome of contract.outcomes)
+  for (const outcome of contract.outcomes) {
+    const architectureFact = outcome.semantic_fact_bindings.facts.find(
+      (binding) => binding.fact_ref.includes(".architecture-boundary"),
+    );
+    if (!architectureFact)
+      throw new Error(`fixture_architecture_binding_missing:${outcome.key}`);
     outcome.acceptance.counterfactual_controls = [
       {
         key: `remove-${outcome.key}-state`,
@@ -996,6 +1068,7 @@ function addDefaultSensitivityControls(contract) {
           `requirement.observe-${outcome.key}`,
           `obligation.implement-${outcome.key}`,
           `semantic_fact.fact.${outcome.key}.observable`,
+          architectureFact.claim_ref,
           ...(outcome.key === "first" ? ["obligation.architecture-first"] : []),
         ],
         check_key: `${outcome.key}-check`,
@@ -1008,6 +1081,7 @@ function addDefaultSensitivityControls(contract) {
         expected_assertion_failures: [
           `${outcome.key}-result`,
           `${outcome.key}-semantic-fact`,
+          `${outcome.key}-architecture-semantic-fact`,
           `${outcome.key}-requirement`,
           `${outcome.key}-obligation`,
           ...(outcome.key === "first" ? ["first-architecture"] : []),
@@ -1029,6 +1103,7 @@ function addDefaultSensitivityControls(contract) {
         preserved_assertions: [`${outcome.key}-liveness`],
       },
     ];
+  }
 }
 
 export function fixtureArchitectureSourceItem() {
@@ -1105,14 +1180,15 @@ export async function writeContract(
 }
 
 async function ensureFixtureExternalPublicKey(workdir, contract) {
-  const required = (contract.global?.acceptance?.external_confirmations ?? [])
-    .some(
-      (confirmation) =>
-        confirmation.blocks_target &&
-        confirmation.actor?.identity_assurance?.scheme === "ed25519" &&
-        confirmation.actor.identity_assurance.public_key_ref ===
-          FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
-    );
+  const required = (
+    contract.global?.acceptance?.external_confirmations ?? []
+  ).some(
+    (confirmation) =>
+      confirmation.blocks_target &&
+      confirmation.actor?.identity_assurance?.scheme === "ed25519" &&
+      confirmation.actor.identity_assurance.public_key_ref ===
+        FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
+  );
   if (!required) return;
   const root = path.dirname(path.resolve(workdir));
   const keyPath = path.join(
@@ -1144,17 +1220,28 @@ export function synchronizeFixtureExternalAuthentication(contract) {
         public_key_ref: FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
       };
     for (const obligation of confirmation.obligations ?? []) {
-      if (obligation.result_kind !== "judgment" || obligation.judgment_basis)
-        continue;
-      const sourceClaim = contract.source_claims?.find((claim) =>
-        sourceClaimTargets(claim.disposition, obligation.claim_ref),
-      ) ?? contract.source_claims?.[0];
+      if (obligation.result_kind !== "judgment") continue;
+      const requestedSource = obligation.judgment_basis?.source_ref;
+      const sourceClaim = contract.source_claims?.find(
+        (claim) =>
+          (!requestedSource || claim.key === requestedSource) &&
+          (sourceClaimTargets(claim.disposition, obligation.claim_ref) ||
+            (claim.disposition.type === "external_confirmation" &&
+              claim.disposition.refs.includes(confirmation.key))),
+      );
       if (!sourceClaim) continue;
+      const kind =
+        obligation.judgment_basis?.kind ??
+        (confirmation.actor?.authority_kind === "expert"
+          ? "expert_assessment"
+          : "authorization");
+      sourceClaim.judgment_basis = {
+        kind,
+        claim_ref: obligation.claim_ref,
+        applicability_refs: [obligation.applicability_ref],
+      };
       obligation.judgment_basis = {
-        kind:
-          confirmation.actor?.authority_kind === "expert"
-            ? "expert_assessment"
-            : "authorization",
+        kind,
         source_ref: sourceClaim.key,
       };
     }

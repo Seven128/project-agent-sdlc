@@ -61,6 +61,7 @@ export interface CompiledObservationAuthorityV2 {
   authority: CompiledObservationAuthorityKindV2;
   expected_identity: string;
   expected_value_sha256: string;
+  expected_value?: unknown;
   actual_projection: CompiledObservationActualProjectionV2;
   observation_identity: string;
   comparison: {

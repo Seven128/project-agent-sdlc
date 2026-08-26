@@ -207,11 +207,27 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
       operator: "equals",
       expected: true,
     },
+    {
+      key: "data-architecture-semantic-fact",
+      criterion:
+        "The exact architecture Fact passes its frozen comparison on the data layer.",
+      claims: ["semantic_fact.fact.first.architecture-boundary"],
+      applicability_ref: "first-root-success",
+      observation: "architecture_semantic_fact_result",
+      evidence_capabilities: ["semantic_fact"],
+      operator: "equals",
+      expected: true,
+    },
   ];
   dataCheck.negative_assertions = [];
   outcome.acceptance.checks.push(dataCheck);
-  outcome.semantic_fact_bindings.proofs[0].proof_surface = "data_state";
-  outcome.semantic_fact_bindings.proofs[0].check_ref = "data-layer";
+  for (const proof of outcome.semantic_fact_bindings.proofs) {
+    proof.proof_surface = "data_state";
+    proof.check_ref = "data-layer";
+    proof.assertion_ref = proof.fact_ref.includes(".architecture-boundary")
+      ? "data-architecture-semantic-fact"
+      : "first-semantic-fact";
+  }
   assert.doesNotThrow(() => parse(contract));
 });
 
@@ -278,9 +294,8 @@ test("all unsupported ordinary Claims and Semantic Facts can preflight only as e
   const outcome = contract.outcomes[0];
   outcome.product.success_path_required = false;
   outcome.acceptance.checks = [];
-  const semanticProof = outcome.semantic_fact_bindings.proofs[0];
-  outcome.semantic_fact_bindings.proofs = [
-    {
+  outcome.semantic_fact_bindings.proofs =
+    outcome.semantic_fact_bindings.proofs.map((semanticProof) => ({
       proof_ref: semanticProof.proof_ref,
       fact_ref: semanticProof.fact_ref,
       method: semanticProof.method,
@@ -288,8 +303,7 @@ test("all unsupported ordinary Claims and Semantic Facts can preflight only as e
       evidence_capabilities: semanticProof.evidence_capabilities,
       authority: "external_confirmation",
       confirmation_ref: "unsupported-observation",
-    },
-  ];
+    }));
   const externalClaimRefs = generateClaims(outcome).map((claim) => claim.id);
   contract.global.acceptance.external_confirmations = [
     exactExternalConfirmation(contract, {
@@ -321,6 +335,7 @@ test("Control relation closure remains an atomic Claim when other atomic declara
       (assertion) =>
         assertion.key === "first-result" ||
         assertion.key === "first-semantic-fact" ||
+        assertion.key === "first-architecture-semantic-fact" ||
         assertion.key === "first-liveness",
     );
   assert.doesNotThrow(() => parse(contract));
@@ -477,7 +492,7 @@ function exactExternalConfirmation(
   contract.source_claims.push({
     key: authorityKey,
     source_ref: "source.md#fixture-source",
-    statement: `${description} The declared external owner is authorized to judge the listed non-objective obligations.`,
+    statement: `${description} The declared external owner supplies current evidence for the listed exact obligations.`,
     disposition: {
       type: "external_confirmation",
       refs: [key],
@@ -557,11 +572,7 @@ function exactExternalConfirmation(
         evidence_capabilities:
           claim.kind === "result" ? ["target_runtime"] : [],
         expected_authority_ref: `contract-claim:${claimRef}`,
-        result_kind: "judgment",
-        judgment_basis: {
-          kind: "expert_assessment",
-          source_ref: authorityKey,
-        },
+        result_kind: "actual",
       };
     }),
   };

@@ -29,6 +29,7 @@ import {
 } from "./long-task-delivery-validation.js";
 import { validateRawExecutionObservationOwnership } from "./long-task-observation-ownership.js";
 import { validateLongTaskDesignResourceHandoffs } from "./long-task-design-resource-handoff.js";
+import { exactExternalDesignObligationRefs } from "./long-task-design-obligation.js";
 import { validateLongTaskSemanticFactClosure } from "./long-task-semantic-fact-closure.js";
 import {
   proofAdequacyCheckKey,
@@ -51,6 +52,7 @@ import {
   compileAcceptanceReachability,
   type AcceptanceReachabilityV1,
 } from "./long-task-acceptance-reachability.js";
+import { exactExternalClaimActualObligationRefsByAssertion } from "./long-task-acceptance-reachability-helpers.js";
 import {
   captureWorkspaceManifest,
   repoRelative,
@@ -226,6 +228,12 @@ export async function validateContractForActivation(options: {
           sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
           observationAuthorityPaths,
           proofAdequacy?.[proofAdequacyCheckKey(null, check.key)],
+          new Set(),
+          exactExternalClaimActualObligationRefsByAssertion(
+            contract,
+            null,
+            check,
+          ),
         ),
       null,
       check.key,
@@ -241,46 +249,49 @@ export async function validateContractForActivation(options: {
         (target) => target.key === check.execution_target.target_ref,
       );
       if (!executionTarget) continue;
-      const blockedDesignAssertionRefs = externallyBlockedDesignAssertionRefs(
-        outcome,
-        check,
-        contract.global.acceptance.external_confirmations,
-      );
-      blockedDesignAssertionRefsByCheck.set(
+      const designTargets = designTargetsForCheck(outcome, check.key);
+      const externalDesignObligationRefs = exactExternalDesignObligationRefs(
+        contract,
+        outcome.key,
         check.key,
-        blockedDesignAssertionRefs,
       );
-      const machineCheck = projectMachineCheck(
-        check,
-        blockedDesignAssertionRefs,
-      );
+      const externalClaimObligationRefsByAssertion =
+        exactExternalClaimActualObligationRefsByAssertion(
+          contract,
+          outcome.key,
+          check,
+        );
       const frozen = await attempt(
         mode,
         diagnostics,
         () =>
           freezeDeliveryCheck(
-            machineCheck,
+            check,
             outcome.key,
             repository,
             workspace,
             executionTarget,
             contract.task.execution_targets,
-            designTargetsForCheck(
-              outcome,
-              check.key,
-              contract.global.acceptance.external_confirmations,
-            ),
+            designTargets,
             semanticFactClosure?.expectations_by_check.get(check.key) ?? [],
             scopeDeliveryBindings(outcome.key, outcome.technical.bindings),
             outcome.product.owner.path_globs,
             sourceBackedExecutionTargets.get(executionTarget.key) ?? null,
             observationAuthorityPaths,
             proofAdequacy?.[proofAdequacyCheckKey(outcome.key, check.key)],
+            externalDesignObligationRefs,
+            externalClaimObligationRefsByAssertion,
           ),
         outcome.key,
         check.key,
       );
-      if (frozen) checks.push(frozen);
+      if (frozen) {
+        blockedDesignAssertionRefsByCheck.set(
+          check.key,
+          removedAssertionRefs(check, frozen),
+        );
+        checks.push(frozen);
+      }
     }
     outcomes.push({
       ...outcome,
@@ -392,7 +403,6 @@ export async function validateContractForActivation(options: {
 function designTargetsForCheck(
   outcome: DeliveryContractV2["outcomes"][number],
   checkKey: string,
-  _confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
 ): CompiledDesignTargetV2[] {
   return (outcome.product.surface_bindings ?? []).flatMap((binding) =>
     binding.design_targets
@@ -406,28 +416,20 @@ function designTargetsForCheck(
   );
 }
 
-function externallyBlockedDesignAssertionRefs(
-  _outcome: DeliveryContractV2["outcomes"][number],
-  _check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
-  _confirmations: DeliveryContractV2["global"]["acceptance"]["external_confirmations"],
+function removedAssertionRefs(
+  source: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+  compiled: CompiledCheckV2,
 ): Set<string> {
-  return new Set();
-}
-
-function projectMachineCheck(
-  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
-  externallyBlockedAssertionRefs: Set<string>,
-): typeof check {
-  if (!externallyBlockedAssertionRefs.size) return check;
-  return {
-    ...check,
-    positive_assertions: check.positive_assertions.filter(
-      (assertion) => !externallyBlockedAssertionRefs.has(assertion.key),
+  const retained = new Set(
+    [...compiled.positive_assertions, ...compiled.negative_assertions].map(
+      (assertion) => assertion.key,
     ),
-    negative_assertions: check.negative_assertions.filter(
-      (assertion) => !externallyBlockedAssertionRefs.has(assertion.key),
-    ),
-  };
+  );
+  return new Set(
+    [...source.positive_assertions, ...source.negative_assertions]
+      .map((assertion) => assertion.key)
+      .filter((assertionRef) => !retained.has(assertionRef)),
+  );
 }
 
 function projectCounterfactualControl(

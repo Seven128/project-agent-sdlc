@@ -121,19 +121,34 @@ export function validateSameDomainScopeExclusion(
       "source_scope_exclusion_exact_obligation_required",
       `${material.key}:${exclusion.key}`,
     );
+  const materialFactRefs = new Set(materialInputFactRefs(material, manifest));
+  if (affectedFactRefs.some((factRef) => !materialFactRefs.has(factRef)))
+    semanticFactClosureInvalid(
+      "source_scope_exclusion_exact_binding_mismatch",
+      `${material.key}:${exclusion.key}:${affectedFactRefs.join(",")}`,
+    );
+  const excludedSources = new Set(material.authority_source_item_refs);
+  for (const ref of exclusion.source_item_refs)
+    if (excludedSources.has(ref))
+      semanticFactClosureInvalid(
+        "source_scope_exclusion_owner_not_independent",
+        `${material.key}:${ref}`,
+      );
   const owners = exclusion.source_item_refs.filter((ref) => {
     if (sourceDomains.get(ref) !== material.authority_domain) return false;
     const item = sourceByKey.get(ref);
-    if (!item) return false;
-    if (item.kind === "decision") return true;
+    if (!item || !["decision", "non_goal"].includes(item.kind)) return false;
     const sourceInput = manifest.inputs.find(
       (input) => input.kind === "source_item" && input.source_ref === ref,
     );
-    return sourceInput?.fact_refs.some((factRef) =>
-      affectedFactRefs.includes(factRef),
+    return affectedFactRefs.every((factRef) =>
+      sourceInput?.fact_refs.includes(factRef),
     );
   });
-  if (!owners.length)
+  if (
+    !exclusion.source_item_refs.length ||
+    owners.length !== exclusion.source_item_refs.length
+  )
     semanticFactClosureInvalid(
       "source_scope_exclusion_same_domain_owner_required",
       `${material.key}:${material.authority_domain}`,

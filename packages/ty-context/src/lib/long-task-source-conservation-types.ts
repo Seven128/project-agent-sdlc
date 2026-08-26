@@ -4,6 +4,7 @@ import type {
   SemanticSourceAnchorV2,
   SourceAuthorityDomain,
 } from "./long-task-source-authority-types.js";
+import type { SemanticFactSupportingRelationV1 } from "./semantic-fact-inventory-types.js";
 
 export type SourceProjectionDispositionV2 =
   | "fact_bearing"
@@ -17,6 +18,7 @@ export interface ResolvedSourceProjectionV2 {
   disposition: SourceProjectionDispositionV2;
   fact_refs: string[];
   basis_refs: string[];
+  supporting_relation?: SemanticFactSupportingRelationV1;
   explicit: boolean;
   authority_derived: boolean;
 }

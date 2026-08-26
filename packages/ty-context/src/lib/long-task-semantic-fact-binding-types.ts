@@ -52,6 +52,27 @@ export interface SemanticFactOutcomeBindingsV2 {
   proofs: SemanticFactProofBindingV2[];
 }
 
+export interface SemanticFactGlobalObligationBindingV2 {
+  claim_ref: string;
+  applicability_ref: string;
+  target_ref: string;
+  outcome_ref: string;
+  fact_ref: string;
+  proof_ref: string;
+  method: string;
+  required_polarity: "positive" | "negative";
+}
+
+/**
+ * Links Global Claims to exact obligations that remain owned by the existing
+ * Outcome-scoped Semantic Fact/proof bindings. This is a conservation
+ * projection, not a second Fact inventory or completion authority.
+ */
+export interface SemanticFactGlobalBindingsV2 {
+  manifest_ref: string;
+  obligations: SemanticFactGlobalObligationBindingV2[];
+}
+
 export interface SemanticFactExpectationV2 {
   manifest_ref: string;
   manifest_sha256: string;

@@ -11,6 +11,7 @@ import type {
 } from "./long-task-semantic-contract-types.js";
 import type { DeliverySurfaceBindingV2 } from "./long-task-ui-surface-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
+import type { SemanticFactGlobalBindingsV2 } from "./long-task-semantic-fact-binding-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
 
 export interface AuthorityHashesV2 {
@@ -85,6 +86,7 @@ export interface ProductSemanticProjectionV2 {
 
 export interface GlobalSemanticProjectionV2 {
   applicability: ClaimApplicabilityV2[];
+  semantic_fact_bindings: SemanticFactGlobalBindingsV2 | null;
   constraints: Array<{
     key: string;
     statement: string;

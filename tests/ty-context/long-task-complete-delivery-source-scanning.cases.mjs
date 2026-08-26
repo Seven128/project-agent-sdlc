@@ -129,7 +129,10 @@ test("material scanning proves exact nonblank-line coverage including headings, 
 <section data-mode="strict">Textual HTML requirement</section>`,
   };
   const scanned = sourceFragmentScanner.scanMaterialTextInput(material);
-  assert.deepEqual(scanned.coverage.material_nonblank_lines, [1, 3, 5, 6, 8, 10]);
+  assert.deepEqual(
+    scanned.coverage.material_nonblank_lines,
+    [1, 3, 5, 6, 8, 10],
+  );
   assert.deepEqual(scanned.coverage.excluded_separator_lines, [8]);
   assert.deepEqual(scanned.coverage.covered_lines, [1, 3, 5, 6, 10]);
   assert.deepEqual(
@@ -165,7 +168,8 @@ test("all strict-UTF-8 material inputs enter fragment closure while unreadable n
       (input) => input.input_key === "input.canonical-material",
     );
     assert.ok(canonical);
-    const fragments = sourceFragmentScanner.scanMaterialTextInput(canonical).fragments;
+    const fragments =
+      sourceFragmentScanner.scanMaterialTextInput(canonical).fragments;
     assert.equal(fragments.length, 2);
     const firstProjection = {
       key: "input.canonical-fragment-1",
@@ -305,7 +309,7 @@ test("anchor-free but semantically unrelated text cannot masquerade as supportin
   });
   assert.throws(
     () => validateSourceSemanticConservation(items, manifest, new Set()),
-    /source_supporting_basis_unrelated/u,
+    /source_supporting_basis_typed_relation_required/u,
   );
 });
 

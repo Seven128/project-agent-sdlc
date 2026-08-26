@@ -187,10 +187,24 @@ function validateMachineProofProjection(
       binding.evidence_capabilities,
     )
   )
-    semanticFactClosureInvalid(
-      "semantic_fact_assertion_binding_mismatch",
-      `${binding.check_ref}:${binding.assertion_ref}`,
-    );
+    semanticFactClosureInvalid("semantic_fact_assertion_binding_mismatch", {
+      check_ref: binding.check_ref,
+      assertion_ref: binding.assertion_ref,
+      expected: {
+        claims: [factBinding.claim_ref],
+        applicability_ref: factBinding.applicability_ref,
+        operator: "equals",
+        expected: true,
+        evidence_capabilities: [...binding.evidence_capabilities].sort(),
+      },
+      actual: {
+        claims: assertion.claims,
+        applicability_ref: assertion.applicability_ref ?? null,
+        operator: assertion.operator,
+        expected: "expected" in assertion ? assertion.expected : null,
+        evidence_capabilities: [...assertion.evidence_capabilities].sort(),
+      },
+    });
   validateSemanticFactCounterfactualProjection(
     outcome,
     proof,

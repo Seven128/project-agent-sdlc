@@ -16,12 +16,12 @@ export function parseSourceClaims(
 ): SourceClaimV2[] {
   return array(value, label).map((item, index) => {
     const itemLabel = `${label}[${index}]`;
-    const row = object(item, itemLabel, [
-      "key",
-      "source_ref",
-      "statement",
-      "disposition",
-    ]);
+    const row = object(
+      item,
+      itemLabel,
+      ["key", "source_ref", "statement", "disposition"],
+      ["judgment_basis"],
+    );
     const disposition = object(
       row.disposition,
       `${itemLabel}.disposition`,
@@ -84,8 +84,32 @@ export function parseSourceClaims(
                     `${itemLabel}.disposition.refs`,
                   ),
                 },
+      ...(Object.hasOwn(row, "judgment_basis")
+        ? {
+            judgment_basis: parseSourceClaimJudgmentBasis(
+              row.judgment_basis,
+              `${itemLabel}.judgment_basis`,
+            ),
+          }
+        : {}),
     };
   });
+}
+
+function parseSourceClaimJudgmentBasis(value: unknown, label: string) {
+  const row = object(value, label, ["kind", "claim_ref", "applicability_refs"]);
+  return {
+    kind: literal(
+      row.kind,
+      ["subjective_preference", "expert_assessment", "authorization"] as const,
+      `${label}.kind`,
+    ),
+    claim_ref: string(row.claim_ref, `${label}.claim_ref`),
+    applicability_refs: strings(
+      row.applicability_refs,
+      `${label}.applicability_refs`,
+    ),
+  };
 }
 
 function acceptanceRefs(value: unknown, label: string): [string] {

@@ -7,12 +7,15 @@ import { semanticFactClosureInvalid } from "./long-task-semantic-fact-closure-pr
 import { semanticFactProofCapabilityFloor } from "./long-task-semantic-proof-profile.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 
-const FACT_REQUIRED_CLAIM_KINDS = new Set<ProductClaimV2["kind"]>([
+const FACT_REQUIRED_CLAIM_KINDS = new Set<string>([
   "result",
   "requirement",
   "obligation",
   "non_completing",
   "forbidden_shortcut",
+  "global_non_goal",
+  "global_constraint",
+  "global_forbidden_shortcut",
 ]);
 
 export function claimSemanticCapabilityFloor(
@@ -24,9 +27,77 @@ export function claimSemanticCapabilityFloor(
   claimKind?: ProductClaimV2["kind"] | string,
   requiredProofSurfaces: readonly string[] = [],
 ): Set<EvidenceCapabilityV2> {
-  if (!outcomeKey) return new Set();
+  const selected = outcomeKey
+    ? selectOutcomeFactRefs(
+        contract,
+        manifest,
+        outcomeKey,
+        localClaim,
+        applicabilityRef,
+      )
+    : selectGlobalFactRefs(contract, localClaim, applicabilityRef);
+
+  const pureStructure =
+    requiredProofSurfaces.length > 0 &&
+    requiredProofSurfaces.every(
+      (surface) => surface === "implementation_structure",
+    );
+  if (
+    claimKind &&
+    FACT_REQUIRED_CLAIM_KINDS.has(claimKind) &&
+    !pureStructure &&
+    !selected.length
+  )
+    semanticFactClosureInvalid(
+      "broad_claim_semantic_fact_required",
+      `${outcomeKey ?? "GLOBAL"}:${localClaim}:${applicabilityRef ?? "none"}`,
+    );
+
+  const facts = new Map(manifest.facts.map((fact) => [fact.key, fact]));
+  const result = new Set<EvidenceCapabilityV2>();
+  for (const factRef of selected) {
+    const fact = facts.get(factRef)!;
+    for (const proof of manifest.proof_obligations.filter(
+      (row) => row.fact_ref === factRef,
+    ))
+      for (const capability of semanticFactProofCapabilityFloor(
+        manifest,
+        fact,
+        proof,
+      ))
+        if (capability !== "semantic_fact") result.add(capability);
+  }
+  return result;
+}
+
+function selectGlobalFactRefs(
+  contract: DeliveryContractV2,
+  localClaim: string,
+  applicabilityRef: string | null,
+): string[] {
+  return [
+    ...new Set(
+      (contract.global.semantic_fact_bindings?.obligations ?? [])
+        .filter(
+          (binding) =>
+            binding.claim_ref === localClaim &&
+            (!applicabilityRef ||
+              binding.applicability_ref === applicabilityRef),
+        )
+        .map((binding) => binding.fact_ref),
+    ),
+  ];
+}
+
+function selectOutcomeFactRefs(
+  contract: DeliveryContractV2,
+  manifest: SemanticFactManifestV1,
+  outcomeKey: string,
+  localClaim: string,
+  applicabilityRef: string | null,
+): string[] {
   const outcome = contract.outcomes.find((row) => row.key === outcomeKey);
-  if (!outcome) return new Set();
+  if (!outcome) return [];
   const applicableFactRefs = new Set(
     outcome.semantic_fact_bindings.facts
       .filter(
@@ -62,38 +133,7 @@ export function claimSemanticCapabilityFloor(
           fact.outcome_ref === outcomeKey && applicableFactRefs.has(fact.key),
       )
       .map((fact) => fact.key);
-
-  const pureStructure =
-    requiredProofSurfaces.length > 0 &&
-    requiredProofSurfaces.every(
-      (surface) => surface === "implementation_structure",
-    );
-  if (
-    claimKind &&
-    FACT_REQUIRED_CLAIM_KINDS.has(claimKind as ProductClaimV2["kind"]) &&
-    !pureStructure &&
-    !selected.length
-  )
-    semanticFactClosureInvalid(
-      "broad_claim_semantic_fact_required",
-      `${outcomeKey}:${localClaim}:${applicabilityRef ?? "none"}`,
-    );
-
-  const facts = new Map(manifest.facts.map((fact) => [fact.key, fact]));
-  const result = new Set<EvidenceCapabilityV2>();
-  for (const factRef of selected) {
-    const fact = facts.get(factRef)!;
-    for (const proof of manifest.proof_obligations.filter(
-      (row) => row.fact_ref === factRef,
-    ))
-      for (const capability of semanticFactProofCapabilityFloor(
-        manifest,
-        fact,
-        proof,
-      ))
-        if (capability !== "semantic_fact") result.add(capability);
-  }
-  return result;
+  return selected;
 }
 
 function sourceOwnsClaim(
@@ -101,6 +141,8 @@ function sourceOwnsClaim(
   fullClaim: string,
 ): boolean {
   if (disposition.type === "claim") return disposition.refs.includes(fullClaim);
+  if (disposition.type === "global_constraint")
+    return disposition.refs.includes(fullClaim);
   if (disposition.type === "outcome_result")
     return disposition.ref === fullClaim;
   return false;

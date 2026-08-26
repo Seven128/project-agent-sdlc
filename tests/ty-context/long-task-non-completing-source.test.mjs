@@ -22,6 +22,10 @@ const spinnerAcceptanceFact = "fact.first.spinner-only-acceptance";
 const spinnerAcceptanceProof = "proof.first.spinner-only-acceptance.exact";
 const spinnerAcceptanceAssertion =
   "first-spinner-only-acceptance-semantic-fact";
+const spinnerProductFact = "fact.first.spinner-only-non-completion";
+const spinnerProductProof = "proof.first.spinner-only-non-completion.exact";
+const spinnerProductAssertion =
+  "first-spinner-only-non-completion-semantic-fact";
 
 test("non_completing Source maps exactly and may back a Source AC", async () => {
   const fixture = await createDeliveryFixture();
@@ -97,7 +101,7 @@ test("non_completing Source preserves exact text and unique target ownership", a
     );
     await writeContract(duplicate.workdir, duplicate.contract);
     await remapFixtureSourceFacts(duplicate, "spinner-only-copy", [
-      "fact.first.observable",
+      spinnerProductFact,
     ]);
     await assertPreflightAndCompileReject(
       duplicate,
@@ -127,23 +131,40 @@ test("deleting a Source-backed non_completing Claim is a Product Authority reduc
     outcome.acceptance.counterfactual_controls[0].expected_assertion_failures =
       outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.filter(
         (key) =>
-          !["spinner-only-rejected", spinnerAcceptanceAssertion].includes(key),
+          ![
+            "spinner-only-rejected",
+            spinnerProductAssertion,
+            spinnerAcceptanceAssertion,
+          ].includes(key),
       );
     outcome.acceptance.counterfactual_controls[0].claims =
       outcome.acceptance.counterfactual_controls[0].claims.filter(
-        (claim) => claim !== `semantic_fact.${spinnerAcceptanceFact}`,
+        (claim) =>
+          ![
+            `semantic_fact.${spinnerProductFact}`,
+            `semantic_fact.${spinnerAcceptanceFact}`,
+          ].includes(claim),
       );
     outcome.acceptance.checks[0].positive_assertions =
       outcome.acceptance.checks[0].positive_assertions.filter(
-        (assertion) => assertion.key !== spinnerAcceptanceAssertion,
+        (assertion) =>
+          ![spinnerProductAssertion, spinnerAcceptanceAssertion].includes(
+            assertion.key,
+          ),
       );
     outcome.semantic_fact_bindings.facts =
       outcome.semantic_fact_bindings.facts.filter(
-        (binding) => binding.fact_ref !== spinnerAcceptanceFact,
+        (binding) =>
+          ![spinnerProductFact, spinnerAcceptanceFact].includes(
+            binding.fact_ref,
+          ),
       );
     outcome.semantic_fact_bindings.proofs =
       outcome.semantic_fact_bindings.proofs.filter(
-        (binding) => binding.proof_ref !== spinnerAcceptanceProof,
+        (binding) =>
+          ![spinnerProductProof, spinnerAcceptanceProof].includes(
+            binding.proof_ref,
+          ),
       );
     fixture.contract.source_claims = fixture.contract.source_claims.filter(
       (claim) => !["spinner-only", "spinner-only-ac"].includes(claim.key),
@@ -230,6 +251,18 @@ ${criterion}
 `,
   );
   await writeContract(fixture.workdir, fixture.contract);
+  await addFixtureDomainSemanticFact(fixture, {
+    sourceItemRef: "spinner-only",
+    factKey: spinnerProductFact,
+    proofKey: spinnerProductProof,
+    propertyKey: "property.spinner-only-non-completion",
+    cellKey: "cell.first.spinner-only-non-completion",
+    assertionKey: spinnerProductAssertion,
+    criterion:
+      "The spinner-only non-completion rule has an independent product-domain Semantic Fact.",
+    observation: "spinner_only_non_completion_semantic_fact_result",
+    observationScope: "product_boundary",
+  });
   const manifest = await addFixtureDomainSemanticFact(fixture, {
     sourceItemRef: "spinner-only-ac",
     factKey: spinnerAcceptanceFact,

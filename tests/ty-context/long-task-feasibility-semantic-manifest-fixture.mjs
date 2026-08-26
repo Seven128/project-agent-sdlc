@@ -7,7 +7,7 @@ export function addFeasibilityDecisionFactInventory(
   identity,
   expectedValue,
 ) {
-  bindSourceInputToFact(manifest, identity);
+  const fragmentBasisRefs = bindSourceInputToFact(manifest, identity);
   const familyKey = `family.custom.feasibility-${identity.slug}`;
   const subjectKey = `subject.feasibility.${identity.slug}`;
   const propertyKey = `property.feasibility.${identity.slug}`;
@@ -101,7 +101,7 @@ export function addFeasibilityDecisionFactInventory(
     provenance: {
       kind: "direct",
       authority_ref: identity.sourceItemRef,
-      basis_refs: [identity.sourceItemRef],
+      basis_refs: [identity.sourceItemRef, ...fragmentBasisRefs],
       derivation: null,
     },
     source_item_refs: [identity.sourceItemRef],
@@ -143,15 +143,27 @@ export function addFeasibilityDecisionFactInventory(
 }
 
 function bindSourceInputToFact(manifest, identity) {
-  const sourceInput = manifest.inputs.find(
+  const sourceInputs = manifest.inputs.filter(
     (input) =>
-      input.kind === "source_item" &&
-      input.source_ref === identity.sourceItemRef,
+      (input.kind === "source_item" &&
+        input.source_ref === identity.sourceItemRef) ||
+      ((input.kind === "source_fragment" || input.kind === "semantic_anchor") &&
+        input.basis_refs.includes(identity.sourceItemRef)),
   );
-  assert.ok(sourceInput);
-  sourceInput.fact_refs = [identity.factKey];
-  sourceInput.rationale =
-    "The exact feasibility decision Source owns one independent delivery-semantic Fact.";
+  assert.ok(
+    sourceInputs.some((input) => input.kind === "source_item"),
+    `feasibility Source input missing: ${identity.sourceItemRef}`,
+  );
+  assert.ok(
+    sourceInputs.some((input) => input.kind === "source_fragment"),
+    `feasibility Source Fragment missing: ${identity.sourceItemRef}`,
+  );
+  for (const sourceInput of sourceInputs) {
+    sourceInput.disposition = "fact_bearing";
+    sourceInput.fact_refs = [identity.factKey];
+    sourceInput.rationale =
+      "The exact feasibility decision Source and its fragments own one independent delivery-semantic Fact.";
+  }
   for (const fact of manifest.facts) {
     fact.source_item_refs = fact.source_item_refs.filter(
       (sourceRef) => sourceRef !== identity.sourceItemRef,
@@ -160,4 +172,7 @@ function bindSourceInputToFact(manifest, identity) {
       (basisRef) => basisRef !== identity.sourceItemRef,
     );
   }
+  return sourceInputs
+    .filter((input) => input.kind !== "source_item")
+    .map((input) => input.key);
 }

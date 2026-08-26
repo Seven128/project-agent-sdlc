@@ -22,6 +22,7 @@ import type {
 } from "./long-task-semantic-contract-types.js";
 import type { DeliverySurfaceBindingV2 } from "./long-task-ui-surface-types.js";
 import type {
+  SemanticFactGlobalBindingsV2,
   SemanticFactManifestRefV2,
   SemanticFactOutcomeBindingsV2,
 } from "./semantic-fact-types.js";
@@ -35,11 +36,21 @@ export type SourceClaimDispositionV2 =
   | { type: "external_confirmation"; refs: string[] }
   | { type: "decision_required"; reason: string };
 
+export type ExternalJudgmentBasisKindV2 =
+  "subjective_preference" | "expert_assessment" | "authorization";
+
+export interface SourceClaimJudgmentBasisV2 {
+  kind: ExternalJudgmentBasisKindV2;
+  claim_ref: string;
+  applicability_refs: string[];
+}
+
 export interface SourceClaimV2 {
   key: string;
   source_ref: string;
   statement: string;
   disposition: SourceClaimDispositionV2;
+  judgment_basis?: SourceClaimJudgmentBasisV2;
 }
 
 export interface KeyedPathV2 {
@@ -69,7 +80,7 @@ export type CompiledExternalConfirmationIdentityAssuranceV2 =
     };
 
 export interface ExternalConfirmationJudgmentBasisV2 {
-  kind: "subjective_preference" | "expert_assessment" | "authorization";
+  kind: ExternalJudgmentBasisKindV2;
   source_ref: string;
 }
 
@@ -352,6 +363,7 @@ export interface DeliveryContractV2 {
   };
   global: {
     applicability: ClaimApplicabilityV2[];
+    semantic_fact_bindings?: SemanticFactGlobalBindingsV2;
     product: { non_goals: ApplicableKeyedStatementV2[] };
     technical: {
       constraints: ApplicableKeyedStatementV2[];

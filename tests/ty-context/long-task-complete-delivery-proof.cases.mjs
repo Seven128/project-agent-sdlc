@@ -170,12 +170,7 @@ test("proof adequacy blocks weak evidence for stronger delivery semantics", () =
     const manifest = fixtureSemanticManifest();
     scenario.mutate(contract, manifest);
     assert.throws(
-      () =>
-        validateLongTaskProofAdequacy(
-          contract,
-          manifest,
-          new Map(),
-        ),
+      () => validateLongTaskProofAdequacy(contract, manifest, new Map()),
       scenario.expected,
       scenario.name,
     );
@@ -313,22 +308,26 @@ test("typed proof methods impose closed floors without prose-keyword authority",
     {
       method: "transition_trace",
       provided: ["semantic_fact", "interaction_trace"],
-      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*state_delta/u,
+      expected:
+        /semantic_fact_proof_adequacy_capability_missing[^\n]*state_delta/u,
     },
     {
       method: "durable_roundtrip",
       provided: ["semantic_fact", "durable_readback"],
-      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*data_state/u,
+      expected:
+        /semantic_fact_proof_adequacy_capability_missing[^\n]*data_state/u,
     },
     {
       method: "boundary_invocation",
       provided: ["semantic_fact", "boundary_invocation"],
-      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*actual_provenance/u,
+      expected:
+        /semantic_fact_proof_adequacy_capability_missing[^\n]*actual_provenance/u,
     },
     {
       method: "performance",
       provided: ["semantic_fact"],
-      expected: /semantic_fact_proof_adequacy_capability_missing[^\n]*target_runtime/u,
+      expected:
+        /semantic_fact_proof_adequacy_capability_missing[^\n]*target_runtime/u,
     },
   ]) {
     const manifest = fixtureSemanticManifest();
@@ -364,4 +363,22 @@ test("unsupported custom proof semantics cannot acquire machine completion autho
     () => validateSemanticFactProofFloors(manifest),
     /semantic_fact_custom_machine_authority_forbidden/u,
   );
+});
+
+test("custom properties with a closed standard proof profile retain machine authority", () => {
+  const manifest = fixtureSemanticManifest();
+  const fact = manifest.facts[0];
+  const proof = manifest.proof_obligations[0];
+  const property = manifest.property_dispositions.find(
+    (row) => row.key === fact.property_ref,
+  );
+  property.standard = false;
+  property.property = "custom.exact-delivery-state";
+  property.required_methods = ["exact_value"];
+  property.required_evidence_capabilities = ["semantic_fact"];
+  proof.method = "exact_value";
+  proof.authority = "machine";
+  proof.evidence_capabilities = ["semantic_fact"];
+
+  assert.doesNotThrow(() => validateSemanticFactProofFloors(manifest));
 });

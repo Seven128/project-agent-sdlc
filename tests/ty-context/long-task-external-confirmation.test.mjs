@@ -109,6 +109,7 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       ]);
       const honest = await buildPassingRecord(fixture, currentPreparation);
       honest.results[0].verdict = verdict;
+      if (verdict === "failed") honest.results[0].actual = false;
       honest.results[0].rationale =
         verdict === "failed"
           ? "The declared actor observed a mismatch."
@@ -167,10 +168,7 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       recordPath,
     ]);
     assert.equal(submitted.state, "fulfilled");
-    assert.equal(
-      submitted.actor_identity_assurance,
-      "ed25519_verified",
-    );
+    assert.equal(submitted.actor_identity_assurance, "ed25519_verified");
     assert.equal(submitted.signature_verified, true);
     assert.equal(submitted.challenge_current, true);
     assert.equal(submitted.artifact_snapshot_integrity, true);
@@ -188,16 +186,13 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
       fixture.workdir,
     ]);
     assert.equal(status.confirmations[0].state, "fulfilled");
-    assert.equal(
-      status.confirmations[0].artifact_snapshot_integrity,
-      true,
-    );
+    assert.equal(status.confirmations[0].artifact_snapshot_integrity, true);
 
-    const accepted = await runCli(fixture.root, [
-      "long-task",
-      "final-gate",
-      fixture.workdir,
-    ], { skipCandidateCommit: true });
+    const accepted = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
     assert.equal(accepted.workflow_status, "delivery_accepted");
     await runCli(fixture.root, [
       "long-task",
@@ -263,6 +258,148 @@ test("[critical:external-fulfillment-current-authority] fresh exact per-obligati
     assert.equal(closed.external_confirmation_results[0].state, "fulfilled");
     assert.equal(closed.native_goal_effect, "none");
     assert.equal(await pathExists(await activeRecordPath(fixture.root)), false);
+  } finally {
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("objective Contract Claim External Actual is Harness-recomputed and cannot be replaced by Judgment", async () => {
+  const claimRef = "first.requirement.observe-first";
+  const fixture = await externalFixture({
+    configureExternal(currentFixture, check) {
+      const assertion = check.positive_assertions.find(
+        (candidate) =>
+          candidate.claims.length === 1 &&
+          candidate.claims[0] === "requirement.observe-first",
+      );
+      assert.ok(assertion);
+      assertion.evidence_capabilities = [
+        ...new Set([
+          ...assertion.evidence_capabilities,
+          "design_conformance",
+          "visual_render",
+        ]),
+      ];
+      const confirmation =
+        currentFixture.contract.global.acceptance.external_confirmations[0];
+      confirmation.impact_claims.push(claimRef);
+      confirmation.obligations.push({
+        key: "confirm-objective-contract-claim-actual",
+        claim_ref: claimRef,
+        applicability_ref: assertion.applicability_ref,
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: check.proof_surface,
+        evidence_capabilities: [],
+        expected_authority_ref: `contract-claim:${claimRef}`,
+        result_kind: "actual",
+      });
+    },
+    async beforeCompile(currentFixture) {
+      const oraclePath = path.join(currentFixture.root, "tests", "oracle.mjs");
+      const source = await readFile(oraclePath, "utf8");
+      const machineObservation =
+        '  [assertion(key + "-requirement")]: observed,\n';
+      assert.ok(source.includes(machineObservation));
+      await writeFile(oraclePath, source.replace(machineObservation, ""));
+    },
+  });
+  try {
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+    ]);
+    const preparedObligation = prepared.confirmations[0].obligations.find(
+      (obligation) =>
+        obligation.claim_ref === claimRef && obligation.fact_ref === null,
+    );
+    assert.ok(preparedObligation);
+    assert.equal(preparedObligation.result_kind, "actual");
+    assert.equal(preparedObligation.expected.kind, "contract_claim_actual");
+    assert.equal(
+      preparedObligation.expected.located_value.kind,
+      "compiled_assertion",
+    );
+    assert.equal(preparedObligation.expected.located_value.value, true);
+
+    const passingRecord = await buildPassingRecord(fixture, prepared);
+    const wrongActual = structuredClone(passingRecord);
+    const wrongActualResult = wrongActual.results.find(
+      (result) => result.claim_ref === claimRef && result.fact_ref === null,
+    );
+    assert.ok(wrongActualResult);
+    wrongActualResult.actual = false;
+    resignRecord(wrongActual, fixture);
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        await writeSubmissionRecord(
+          fixture,
+          "wrong-objective-claim-actual.json",
+          wrongActual,
+        ),
+      ]),
+      /objective_verdict_mismatch/u,
+    );
+
+    const judgmentSubstitution = structuredClone(passingRecord);
+    const judgmentResult = judgmentSubstitution.results.find(
+      (result) => result.claim_ref === claimRef && result.fact_ref === null,
+    );
+    assert.ok(judgmentResult);
+    judgmentResult.result_kind = "judgment";
+    delete judgmentResult.actual;
+    resignRecord(judgmentSubstitution, fixture);
+    await assert.rejects(
+      runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        await writeSubmissionRecord(
+          fixture,
+          "objective-claim-judgment-substitution.json",
+          judgmentSubstitution,
+        ),
+      ]),
+      /result_kind_mismatch|objective_actual_missing/u,
+    );
+
+    const submitted = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      await writeSubmissionRecord(
+        fixture,
+        "passing-objective-claim-actual.json",
+        passingRecord,
+      ),
+    ]);
+    assert.equal(submitted.state, "fulfilled");
+    const accepted = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(accepted.workflow_status, "delivery_accepted");
   } finally {
     await removeTemporary(fixture.root);
   }

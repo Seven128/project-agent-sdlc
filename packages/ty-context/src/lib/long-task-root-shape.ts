@@ -1,4 +1,5 @@
 import { parseGlobalCounterfactuals } from "./long-task-acceptance-shape.js";
+import { parseSemanticFactGlobalBindings } from "./long-task-semantic-fact-shape.js";
 import { parseCheck } from "./long-task-check-shape.js";
 import {
   array,
@@ -216,7 +217,13 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
     value,
     "global",
     [],
-    ["applicability", "product", "technical", "acceptance"],
+    [
+      "applicability",
+      "semantic_fact_bindings",
+      "product",
+      "technical",
+      "acceptance",
+    ],
   );
   const product = object(
     Object.hasOwn(row, "product") ? row.product : {},
@@ -240,6 +247,14 @@ export function parseGlobal(value: unknown): DeliveryContractV2["global"] {
     applicability: Object.hasOwn(row, "applicability")
       ? parseClaimApplicability(row.applicability, "global.applicability")
       : [],
+    ...(Object.hasOwn(row, "semantic_fact_bindings")
+      ? {
+          semantic_fact_bindings: parseSemanticFactGlobalBindings(
+            row.semantic_fact_bindings,
+            "global.semantic_fact_bindings",
+          ),
+        }
+      : {}),
     product: {
       non_goals: Object.hasOwn(product, "non_goals")
         ? parseApplicableKeyedStatements(

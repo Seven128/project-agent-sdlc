@@ -84,7 +84,7 @@
       "wrong_contract_projection": {
         "omitted_source_item_ref": "second-observable",
         "weak_evidence_capability": "actual_provenance",
-        "machine_external_overlap_claim_ref": "second.requirement.observe-second"
+        "machine_external_overlap_claim_ref": "second.semantic_fact.fact.second.observable"
       },
       "exact_projection": {
         "first": {
@@ -115,8 +115,7 @@
       "source": {
         "first-observable": "A committed record must remain observable through a later repository readback instead of only through the write response.",
         "second-observable": "Two distinct tenant identities must remain isolated when the same record locator is queried.",
-        "fixture-architecture": "Preserve the fixture state owner and verifier boundary.",
-        "fixture-external": "Confirm the fixture observable outcome in external delivery."
+        "fixture-architecture": "Preserve the fixture state owner and verifier boundary."
       },
       "paraphrase": "Neither saving data nor separating tenants is established by the mere presence of a repository or authorization label.",
       "historical_bad_candidate": {
@@ -129,7 +128,7 @@
         "omitted_source_item_ref": "second-observable",
         "weak_assertion_ref": "second-result",
         "weak_evidence_capability": "actual_provenance",
-        "machine_external_overlap_claim_ref": "second.requirement.observe-second"
+        "machine_external_overlap_claim_ref": "second.semantic_fact.fact.second.observable"
       }
     },
     {
@@ -138,8 +137,7 @@
       "source": {
         "first-observable": "The command-line client must invoke the configured upstream boundary rather than return a local canned response.",
         "second-observable": "The service output must identify the exact provider that handled the current invocation.",
-        "fixture-architecture": "Preserve the fixture state owner and verifier boundary.",
-        "fixture-external": "Confirm the fixture observable outcome in external delivery."
+        "fixture-architecture": "Preserve the fixture state owner and verifier boundary."
       },
       "paraphrase": "A flag, adapter name, or success string alone does not establish invocation of the configured Provider or the current Provider identity.",
       "historical_bad_candidate": {

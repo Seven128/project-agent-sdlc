@@ -15,6 +15,7 @@ import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/lon
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
+import { projectDesignOwnedSemanticFacts } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-input-closure.js";
 import { npxCliPath } from "../../packages/ty-context/dist/lib/long-task-runner-files.js";
 import { canonicalValueJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
@@ -879,7 +880,9 @@ test("Long-Task derives an authorized planned owner from existing bindings", asy
       key: "confirm-planned-design",
       semanticIdentities: [semanticIdentity],
     });
-    await writeContract(fixture.workdir, fixture.contract);
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+    });
     await addExternalFeasibilityDecisionSemanticFact(fixture, {
       identity: semanticIdentity,
       expectedValue: authority.normalizedText,
@@ -891,6 +894,77 @@ test("Long-Task derives an authorized planned owner from existing bindings", asy
       { require_completion_gate: false },
     );
     assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+    const designReachability =
+      compiled.acceptance_reachability.obligations.filter((row) =>
+        row.source_obligation_ref.startsWith("design.main-default."),
+      );
+    assert.ok(designReachability.length > 0);
+    assert.ok(
+      designReachability.every(
+        (row) =>
+          row.status === "external_fulfillable" &&
+          row.authority === "external_confirmation" &&
+          row.fact_ref &&
+          row.proof_ref,
+      ),
+    );
+    const designConfirmation =
+      compiled.global.acceptance.external_confirmations.find(
+        (confirmation) => confirmation.key === "confirm-planned-design-design",
+      );
+    assert.ok(designConfirmation);
+    assert.ok(
+      designConfirmation.obligations
+        .filter((obligation) => obligation.proof_ref?.startsWith("design."))
+        .every(
+          (obligation) =>
+            obligation.result_kind === "actual" &&
+            obligation.judgment_basis === undefined,
+        ),
+    );
+    const designClaimJudgment = designConfirmation.obligations.find(
+      (obligation) =>
+        obligation.claim_ref === "first.requirement.design-handoff" &&
+        obligation.fact_ref === null &&
+        obligation.proof_ref === null,
+    );
+    assert.equal(designClaimJudgment?.result_kind, "judgment");
+    assert.deepEqual(
+      fixture.contract.source_claims.find(
+        (claim) => claim.key === DESIGN_SOURCE_ITEM_KEY,
+      ).judgment_basis,
+      {
+        kind: "expert_assessment",
+        claim_ref: "first.requirement.design-handoff",
+        applicability_refs: ["first-root-success"],
+      },
+    );
+
+    const judgmentLaundering = structuredClone(fixture.contract);
+    const exactDesignActual =
+      judgmentLaundering.global.acceptance.external_confirmations
+        .find(
+          (confirmation) =>
+            confirmation.key === "confirm-planned-design-design",
+        )
+        .obligations.find((obligation) =>
+          obligation.proof_ref?.startsWith("design."),
+        );
+    assert.ok(exactDesignActual);
+    exactDesignActual.result_kind = "judgment";
+    exactDesignActual.judgment_basis = {
+      kind: "expert_assessment",
+      source_ref: DESIGN_SOURCE_ITEM_KEY,
+    };
+    await writeContract(fixture.workdir, judgmentLaundering, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+    });
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /(?:unsupported_observer_requires_external_confirmation|acceptance_obligation_unreachable:.*external_confirmation_decomposition_invalid)/u,
+    );
 
     const missingSource = structuredClone(fixture.contract);
     missingSource.task.source_paths = missingSource.task.source_paths.filter(
@@ -1073,7 +1147,7 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
     positive.consume(external.preflight);
     assert.doesNotThrow(() => positive.finish());
 
-    await writeContract(external.fixture.workdir, external.fixture.contract);
+    await writeFeasibilityFixtureContract(external);
     const compiled = await compileDeliveryContract(
       external.fixture.workdir,
       external.fixture.root,
@@ -1097,7 +1171,7 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
       () => ordinary.finish(),
       /feasibility_blocker_external_confirmation_required/u,
     );
-    await writeContract(external.fixture.workdir, ordinaryClaim);
+    await writeFeasibilityFixtureContract(external, ordinaryClaim);
     await assert.rejects(
       compileDeliveryContract(external.fixture.workdir, external.fixture.root, {
         require_completion_gate: false,
@@ -1117,7 +1191,9 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
       [
         "nonblocking",
         (contract) => {
-          contract.global.acceptance.external_confirmations[0].blocks_target = false;
+          for (const confirmation of contract.global.acceptance
+            .external_confirmations)
+            confirmation.blocks_target = false;
         },
         /feasibility_blocker_confirmation_not_blocking/u,
         /not_blocking|must_block/u,
@@ -1125,9 +1201,9 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
       [
         "wrong impact",
         (contract) => {
-          contract.global.acceptance.external_confirmations[0].impact_claims = [
-            "first.requirement.observe-first",
-          ];
+          contract.global.acceptance.external_confirmations.find(
+            (confirmation) => confirmation.key === "confirm-card-owner-design",
+          ).impact_claims = ["first.requirement.observe-first"];
         },
         /feasibility_blocker_confirmation_target_claim_missing/u,
         /semantic_fact_external_confirmation_invalid|impact.*mismatch|target_claim_missing/u,
@@ -1141,7 +1217,7 @@ test("Long-Task carries external-confirmation feasibility blockers through exist
       );
       consumer.consume(external.preflight);
       assert.throws(() => consumer.finish(), expected, name);
-      await writeContract(external.fixture.workdir, contract);
+      await writeFeasibilityFixtureContract(external, contract);
       await assert.rejects(
         compileDeliveryContract(
           external.fixture.workdir,
@@ -1196,10 +1272,7 @@ test("Long-Task compiles blocker-only componentless surfaces and reaches blocked
       () => validateDeliveryContractStructure(standalone),
       /ui_surface_binding_component_ref_required/u,
     );
-    await writeContract(
-      blockerOnly.fixture.workdir,
-      blockerOnly.fixture.contract,
-    );
+    await writeFeasibilityFixtureContract(blockerOnly);
     const compiled = await compileDeliveryContract(
       blockerOnly.fixture.workdir,
       blockerOnly.fixture.root,
@@ -1221,7 +1294,7 @@ test("Long-Task compiles blocker-only componentless surfaces and reaches blocked
       () => missingClaim.finish(),
       /feasibility_authority_claim_count/u,
     );
-    await writeContract(blockerOnly.fixture.workdir, missingClaimContract);
+    await writeFeasibilityFixtureContract(blockerOnly, missingClaimContract);
     await assert.rejects(
       compileDeliveryContract(
         blockerOnly.fixture.workdir,
@@ -1234,7 +1307,7 @@ test("Long-Task compiles blocker-only componentless surfaces and reaches blocked
     const fakeComponent = structuredClone(blockerOnly.fixture.contract);
     fakeComponent.outcomes[0].product.surface_bindings[0].component_binding_refs =
       ["state-first"];
-    await writeContract(blockerOnly.fixture.workdir, fakeComponent);
+    await writeFeasibilityFixtureContract(blockerOnly, fakeComponent);
     await assert.rejects(
       compileDeliveryContract(
         blockerOnly.fixture.workdir,
@@ -1256,7 +1329,7 @@ test("Long-Task compiles blocker-only componentless surfaces and reaches blocked
       legacy.outcomes[0].acceptance.checks[0].verification_inputs.filter(
         (sourcePath) => sourcePath !== DESIGN_FEASIBILITY_PATH,
       );
-    await writeContract(blockerOnly.fixture.workdir, legacy);
+    await writeFeasibilityFixtureContract(blockerOnly, legacy);
     await assert.rejects(
       compileDeliveryContract(
         blockerOnly.fixture.workdir,
@@ -1270,10 +1343,7 @@ test("Long-Task compiles blocker-only componentless surfaces and reaches blocked
       blockerOnly.fixture.root,
       blockerOnly.handoff,
     );
-    await writeContract(
-      blockerOnly.fixture.workdir,
-      blockerOnly.fixture.contract,
-    );
+    await writeFeasibilityFixtureContract(blockerOnly);
     await runCli(blockerOnly.fixture.root, ["enable", "long-task"]);
     await commitCandidate(blockerOnly.fixture.root);
     await runCli(blockerOnly.fixture.root, [
@@ -1329,10 +1399,7 @@ test("Long-Task rejects stale blocker Source during Compile", async () => {
       staleSource.fixture.root,
       staleSource.handoff,
     );
-    await writeContract(
-      staleSource.fixture.workdir,
-      staleSource.fixture.contract,
-    );
+    await writeFeasibilityFixtureContract(staleSource);
     await assert.rejects(
       compileDeliveryContract(
         staleSource.fixture.workdir,
@@ -1357,7 +1424,7 @@ test("Long-Task keeps decision blockers outside machine Compile", async () => {
     );
     consumer.consume(decision.preflight);
     assert.doesNotThrow(() => consumer.finish());
-    await writeContract(decision.fixture.workdir, decision.fixture.contract);
+    await writeFeasibilityFixtureContract(decision);
     await assert.rejects(
       compileDeliveryContract(decision.fixture.workdir, decision.fixture.root, {
         require_completion_gate: false,
@@ -1497,7 +1564,7 @@ test("Long-Task full Compile rejects a legacy target laundering an extra modern-
       path.join(mixed.fixture.root, "src", "legacy-only-owner.ts"),
       "export const legacyOnlyOwner = true;\n",
     );
-    await writeContract(mixed.fixture.workdir, mixed.fixture.contract);
+    await writeFeasibilityFixtureContract(mixed);
     await assert.rejects(
       compileDeliveryContract(mixed.fixture.workdir, mixed.fixture.root, {
         require_completion_gate: false,
@@ -1519,6 +1586,9 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
     await writeContract(
       allowedMixed.fixture.workdir,
       allowedMixed.fixture.contract,
+      {
+        designSemanticProjection: allowedMixed.designSemanticProjection,
+      },
     );
     const rawBefore = await readFile(contractPath, "utf8");
     const compiled = await compileDeliveryContract(
@@ -1554,6 +1624,9 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
     await writeContract(
       blockerAndLegacy.fixture.workdir,
       blockerAndLegacy.fixture.contract,
+      {
+        designSemanticProjection: blockerAndLegacy.designSemanticProjection,
+      },
     );
     await assert.rejects(
       compileDeliveryContract(
@@ -1577,6 +1650,9 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
     await writeContract(
       candidateAndLegacy.fixture.workdir,
       candidateAndLegacy.fixture.contract,
+      {
+        designSemanticProjection: candidateAndLegacy.designSemanticProjection,
+      },
     );
     await assert.rejects(
       compileDeliveryContract(
@@ -1596,10 +1672,19 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
   const pureLegacy = await createDeliveryFixture();
   try {
     await attachDesignResourceHandoff(pureLegacy);
+    const pureLegacyPreflight = await preflightDesignResourceHandoff(
+      pureLegacy.root,
+      DESIGN_HANDOFF_PATH,
+    );
     configureExactTargetBlockingConfirmation(pureLegacy.contract, {
       key: "confirm-pure-legacy-design",
     });
-    await writeContract(pureLegacy.workdir, pureLegacy.contract);
+    const pureLegacyDesignSemanticProjection = projectDesignOwnedSemanticFacts([
+      pureLegacyPreflight,
+    ]);
+    await writeContract(pureLegacy.workdir, pureLegacy.contract, {
+      designSemanticProjection: pureLegacyDesignSemanticProjection,
+    });
     const compiled = await compileDeliveryContract(
       pureLegacy.workdir,
       pureLegacy.root,
@@ -1609,7 +1694,9 @@ test("Long-Task full Compile preserves pure legacy compatibility and enforces th
 
     pureLegacy.contract.outcomes[0].product.surface_bindings[0].component_binding_refs =
       [];
-    await writeContract(pureLegacy.workdir, pureLegacy.contract);
+    await writeContract(pureLegacy.workdir, pureLegacy.contract, {
+      designSemanticProjection: pureLegacyDesignSemanticProjection,
+    });
     await assert.rejects(
       compileDeliveryContract(pureLegacy.workdir, pureLegacy.root, {
         require_completion_gate: false,
@@ -1626,10 +1713,14 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
     "external_confirmation",
   );
   try {
-    await writeModernSecondaryHandoff(sharedModern);
+    const sharedModernDesignSemanticProjection =
+      await writeModernSecondaryHandoff(sharedModern);
     await writeContract(
       sharedModern.fixture.workdir,
       sharedModern.fixture.contract,
+      {
+        designSemanticProjection: sharedModernDesignSemanticProjection,
+      },
     );
     const compiled = await compileDeliveryContract(
       sharedModern.fixture.workdir,
@@ -1660,6 +1751,9 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
     await writeContract(
       sharedModern.fixture.workdir,
       sharedModern.fixture.contract,
+      {
+        designSemanticProjection: sharedModernDesignSemanticProjection,
+      },
     );
     await assert.rejects(
       compileDeliveryContract(
@@ -1677,12 +1771,16 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
     "external_confirmation",
   );
   try {
-    await writeModernSecondaryHandoff(candidateAndBlocker, {
-      blockerOnly: true,
-    });
+    const candidateAndBlockerDesignSemanticProjection =
+      await writeModernSecondaryHandoff(candidateAndBlocker, {
+        blockerOnly: true,
+      });
     await writeContract(
       candidateAndBlocker.fixture.workdir,
       candidateAndBlocker.fixture.contract,
+      {
+        designSemanticProjection: candidateAndBlockerDesignSemanticProjection,
+      },
     );
     const compiled = await compileDeliveryContract(
       candidateAndBlocker.fixture.workdir,
@@ -1690,6 +1788,19 @@ test("Long-Task full Compile attributes shared modern Bindings and preserves a m
       { require_completion_gate: false },
     );
     assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
+    const mixedAuthorityCheck = compiled.outcomes[0].acceptance.checks.find(
+      (check) => check.key === "first-check",
+    );
+    assert.ok(
+      mixedAuthorityCheck.observation_authorities.some(
+        (authority) => authority.authority === "external_confirmation",
+      ),
+    );
+    assert.ok(
+      mixedAuthorityCheck.observation_authorities.some(
+        (authority) => authority.authority !== "external_confirmation",
+      ),
+    );
 
     await runCli(candidateAndBlocker.fixture.root, ["enable", "long-task"]);
     await commitCandidate(candidateAndBlocker.fixture.root);
@@ -2299,16 +2410,16 @@ async function createLegacyMixedCompileFixture({ blockerOnly = false } = {}) {
   configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
     key: "confirm-card-owner",
     description: fixtureState.authority.normalizedText,
-    excludedClaimRefs: ["first.control.main.surface"],
     semanticIdentities: [fixtureState.semanticIdentity],
-    targetKey: "main-default",
+    targetKeys: ["main-default", "secondary-default"],
   });
-  configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
-    key: "confirm-secondary-legacy-design",
-    excludeAlreadyConfirmedClaims: true,
-    targetKey: "secondary-default",
-  });
-  return fixtureState;
+  return {
+    ...fixtureState,
+    designSemanticProjection: projectDesignOwnedSemanticFacts([
+      fixtureState.preflight,
+      preflight,
+    ]),
+  };
 }
 
 async function writeModernSecondaryHandoff(
@@ -2440,6 +2551,12 @@ async function writeModernSecondaryHandoff(
     await writeContract(
       fixtureState.fixture.workdir,
       fixtureState.fixture.contract,
+      {
+        designSemanticProjection: projectDesignOwnedSemanticFacts([
+          fixtureState.preflight,
+          secondary,
+        ]),
+      },
     );
     await addExternalFeasibilityDecisionSemanticFact(fixtureState.fixture, {
       identity: secondarySemanticIdentity,
@@ -2447,6 +2564,7 @@ async function writeModernSecondaryHandoff(
       confirmationRef: "confirm-secondary-card-owner",
     });
   }
+  return projectDesignOwnedSemanticFacts([fixtureState.preflight, secondary]);
 }
 
 function isolateSecondaryTargetAssertions(contract) {
@@ -2464,6 +2582,7 @@ function isolateSecondaryTargetAssertions(contract) {
   secondarySourceClaim.disposition.refs = [
     `${outcome.key}.requirement.design-handoff-secondary`,
   ];
+  delete secondarySourceClaim.judgment_basis;
   const surface = outcome.product.surface_bindings[0];
   const target = surface.design_targets.find(
     (candidate) => candidate.key === "secondary-default",
@@ -2478,6 +2597,7 @@ function isolateSecondaryTargetAssertions(contract) {
     ...target.verification_method_bindings.map(
       (binding) => binding.assertion_ref,
     ),
+    "design-handoff-claim-actual",
   ];
   const assertionMapping = new Map();
   for (const assertionRef of new Set(assertionRefs)) {
@@ -2740,6 +2860,22 @@ test("design handoff fixture smoke", async () => {
       assertion.key,
     );
   }
+  const designClaimActual = structuredClone(check.positive_assertions[0]);
+  designClaimActual.key = "design-handoff-claim-actual";
+  designClaimActual.observation = "design_handoff_claim_actual";
+  designClaimActual.claims = ["requirement.design-handoff"];
+  designClaimActual.evidence_capabilities = [
+    ...new Set([
+      ...designClaimActual.evidence_capabilities,
+      "design_conformance",
+      "visual_render",
+      "target_runtime",
+    ]),
+  ];
+  check.positive_assertions.push(designClaimActual);
+  outcome.acceptance.counterfactual_controls[0].expected_assertion_failures.push(
+    designClaimActual.key,
+  );
   outcome.acceptance.counterfactual_controls[0].claims.push(
     "requirement.design-handoff",
     "control.main.surface",
@@ -3001,8 +3137,11 @@ async function createFeasibilityBlockerFixture(
     fixture.root,
     fixture.contract.task.source_paths,
   );
+  const designSemanticProjection = projectDesignOwnedSemanticFacts([preflight]);
   if (semanticIdentity) {
-    await writeContract(fixture.workdir, fixture.contract);
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection,
+    });
     await addExternalFeasibilityDecisionSemanticFact(fixture, {
       identity: semanticIdentity,
       expectedValue: authority.normalizedText,
@@ -3016,7 +3155,17 @@ async function createFeasibilityBlockerFixture(
     preflight,
     sourceItems,
     semanticIdentity,
+    designSemanticProjection,
   };
+}
+
+async function writeFeasibilityFixtureContract(
+  fixtureState,
+  contract = fixtureState.fixture.contract,
+) {
+  await writeContract(fixtureState.fixture.workdir, contract, {
+    designSemanticProjection: fixtureState.designSemanticProjection,
+  });
 }
 
 function attachClonedFeasibilityTarget(

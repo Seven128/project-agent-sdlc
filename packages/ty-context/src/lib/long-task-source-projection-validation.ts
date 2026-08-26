@@ -71,6 +71,9 @@ function explicitAnchorProjection(
     disposition: input.disposition as ResolvedSourceProjectionV2["disposition"],
     fact_refs: input.fact_refs,
     basis_refs: input.basis_refs,
+    ...(input.supporting_relation
+      ? { supporting_relation: input.supporting_relation }
+      : {}),
     explicit: true,
     authority_derived: false,
   };
@@ -185,6 +188,9 @@ function validateSupportingProjection(
   material: MaterialSourceFragmentV2 | SemanticSourceAnchorV2,
   context: SourceProjectionValidationContextV2,
 ): void {
+  const canonicalSourceIntegrity = isCanonicalSourceIntegrityStatement(
+    context.sourceByKey.get(material.source_item_ref),
+  );
   if (!projection.fact_refs.length)
     semanticFactClosureInvalid(
       "source_supporting_basis_fact_required",
@@ -202,52 +208,71 @@ function validateSupportingProjection(
         "source_supporting_basis_delivery_fact_required",
         `${material.key}:${factRef}`,
       );
+    if (
+      !canonicalSourceIntegrity &&
+      !materialAuthoritySourceRefs(material).some((ref) =>
+        fact.source_item_refs.includes(ref),
+      )
+    )
+      semanticFactClosureInvalid(
+        "source_supporting_basis_fact_lineage_mismatch",
+        `${material.key}:${factRef}`,
+      );
+    if (
+      !canonicalSourceIntegrity &&
+      context.factDomains[factRef] !== material.authority_domain
+    )
+      semanticFactClosureInvalid(
+        "source_supporting_basis_fact_domain_mismatch",
+        `${material.key}:${factRef}:${material.authority_domain}:${context.factDomains[factRef]}`,
+      );
     validateFactFragmentProvenance(fact, projection, material, context);
   }
-  if (
-    "input_key" in material &&
-    !isCanonicalSourceIntegrityStatement(
-      context.sourceByKey.get(material.source_item_ref),
-    ) &&
-    !hasExactSupportingOverlap(material.normalized_text, projection, context)
-  )
-    semanticFactClosureInvalid(
-      "source_supporting_basis_unrelated",
-      material.key,
-    );
+  if ("input_key" in material && !canonicalSourceIntegrity)
+    validateTypedSupportingRelation(projection, material, context);
 }
 
-function hasExactSupportingOverlap(
-  text: string,
+function validateTypedSupportingRelation(
   projection: ResolvedSourceProjectionV2,
+  material: MaterialSourceFragmentV2,
   context: SourceProjectionValidationContextV2,
-): boolean {
-  const terms = text
-    .toLocaleLowerCase("en-US")
-    .match(/[a-z][a-z0-9_-]{3,}|[\u3400-\u9fff]{2,}/gu);
-  if (!terms?.length) return false;
-  const ignored = new Set([
-    "that",
-    "this",
-    "with",
-    "from",
-    "into",
-    "only",
-    "must",
-    "shall",
-    "required",
-    "background",
-    "context",
-  ]);
-  return terms
-    .filter((term) => !ignored.has(term))
-    .some((term) =>
-      projection.fact_refs.some((factRef) =>
-        context.facts
-          .get(factRef)!
-          .expected_search_text.toLocaleLowerCase("en-US")
-          .includes(term),
-      ),
+): void {
+  const relation = projection.supporting_relation;
+  if (!relation)
+    semanticFactClosureInvalid(
+      "source_supporting_basis_typed_relation_required",
+      material.key,
+    );
+  const materialInput = context.manifest.inputs.find(
+    (input) =>
+      input.key === material.input_key ||
+      (input.kind === "source_item" && input.source_ref === material.input_key),
+  );
+  if (materialInput?.disposition !== "supporting_only")
+    semanticFactClosureInvalid(
+      "source_supporting_basis_material_disposition_required",
+      `${material.key}:${materialInput?.key ?? material.input_key}`,
+    );
+  if (
+    projection.fact_refs.length !== 1 ||
+    projection.fact_refs[0] !== relation.fact_ref
+  )
+    semanticFactClosureInvalid(
+      "source_supporting_basis_relation_fact_mismatch",
+      `${material.key}:${relation.fact_ref}:${projection.fact_refs.join(",")}`,
+    );
+  const cell = context.manifest.fact_cells.find(
+    (candidate) => candidate.key === relation.fact_cell_ref,
+  );
+  if (!cell)
+    semanticFactClosureInvalid(
+      "source_supporting_basis_relation_cell_unknown",
+      `${material.key}:${relation.fact_cell_ref}`,
+    );
+  if (cell.disposition !== "specified" || cell.fact_ref !== relation.fact_ref)
+    semanticFactClosureInvalid(
+      "source_supporting_basis_relation_cell_mismatch",
+      `${material.key}:${relation.fact_cell_ref}:${cell.fact_ref ?? "none"}:${relation.fact_ref}`,
     );
 }
 

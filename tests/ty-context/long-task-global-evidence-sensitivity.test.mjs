@@ -17,6 +17,156 @@ import {
   GLOBAL_PRODUCT_PATH,
 } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
+import { mutateFixtureSemanticManifest } from "./long-task-semantic-fact-test-support.mjs";
+
+test("Global Semantic Fact bindings reject an Outcome-1 proxy and allow exact target closure", async () => {
+  const fixture = await createDeliveryFixture({ twoOutcomes: true });
+  try {
+    await addGlobalClaim(fixture, { counterfactual: true });
+    const complete = structuredClone(
+      fixture.contract.global.semantic_fact_bindings.obligations,
+    );
+    fixture.contract.global.semantic_fact_bindings.obligations =
+      complete.filter((binding) => binding.outcome_ref === "first");
+    await assertPreflightAndCompileReject(
+      fixture,
+      "global_semantic_fact_target_coverage_incomplete",
+    );
+
+    fixture.contract.global.semantic_fact_bindings.obligations = complete;
+    await writeContract(fixture.workdir, fixture.contract);
+    assert.equal(
+      (await preflightDeliveryContract(fixture.workdir, fixture.root)).status,
+      "ready",
+    );
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    const globalClaimObligation =
+      compiled.acceptance_reachability.obligations.find(
+        (obligation) =>
+          obligation.claim_ref === "GLOBAL.constraint.global-state",
+      );
+    assert.equal(globalClaimObligation?.outcome_key, null);
+    assert.equal(
+      globalClaimObligation?.applicability_ref,
+      "global-root-success",
+    );
+    assert.deepEqual(
+      compiled.acceptance_reachability.obligations
+        .filter((obligation) =>
+          complete.some((binding) => binding.fact_ref === obligation.fact_ref),
+        )
+        .map((obligation) => [
+          obligation.outcome_key,
+          obligation.fact_ref,
+          obligation.proof_ref,
+          obligation.method,
+        ])
+        .sort((left, right) => String(left[0]).localeCompare(String(right[0]))),
+      complete.map((binding) => [
+        binding.outcome_ref,
+        binding.fact_ref,
+        binding.proof_ref,
+        binding.method,
+      ]),
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Global Semantic Fact bindings reject an unrelated Outcome Fact", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await addGlobalClaim(fixture, { counterfactual: true });
+    const binding =
+      fixture.contract.global.semantic_fact_bindings.obligations[0];
+    binding.fact_ref = "fact.first.observable";
+    binding.proof_ref = "proof.first.observable.exact";
+    await assertPreflightAndCompileReject(
+      fixture,
+      "global_semantic_fact_source_lineage_missing",
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Global Semantic Fact methods raise the broad Global Claim capability floor", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await addGlobalClaim(fixture, { counterfactual: true });
+    const globalBinding =
+      fixture.contract.global.semantic_fact_bindings.obligations[0];
+    const outcome = fixture.contract.outcomes[0];
+    const proofBinding = outcome.semantic_fact_bindings.proofs.find(
+      (binding) => binding.proof_ref === globalBinding.proof_ref,
+    );
+    assert.ok(proofBinding);
+    proofBinding.method = "durable_roundtrip";
+    proofBinding.evidence_capabilities = [
+      "semantic_fact",
+      "data_state",
+      "durable_readback",
+    ];
+    const factBinding = outcome.semantic_fact_bindings.facts.find(
+      (binding) => binding.fact_ref === globalBinding.fact_ref,
+    );
+    assert.ok(factBinding);
+    const assertion = outcome.acceptance.checks[0].positive_assertions.find(
+      (candidate) => candidate.claims[0] === factBinding.claim_ref,
+    );
+    assert.ok(assertion);
+    assertion.evidence_capabilities = [
+      "semantic_fact",
+      "data_state",
+      "durable_readback",
+    ];
+    globalBinding.method = "durable_roundtrip";
+    await mutateFixtureSemanticManifest(fixture, (manifest) => {
+      const proof = manifest.proof_obligations.find(
+        (candidate) => candidate.key === globalBinding.proof_ref,
+      );
+      assert.ok(proof);
+      proof.method = "durable_roundtrip";
+      proof.evidence_capabilities = [
+        "semantic_fact",
+        "data_state",
+        "durable_readback",
+      ];
+      const oracle = manifest.oracles.find(
+        (candidate) => candidate.key === proof.oracle_ref,
+      );
+      assert.ok(oracle);
+      if (!oracle.capabilities.includes("durable_roundtrip"))
+        oracle.capabilities.push("durable_roundtrip");
+      const fact = manifest.facts.find(
+        (candidate) => candidate.key === globalBinding.fact_ref,
+      );
+      assert.ok(fact);
+      const property = manifest.property_dispositions.find(
+        (candidate) => candidate.key === fact.property_ref,
+      );
+      assert.ok(property);
+      property.required_methods = ["durable_roundtrip"];
+      property.required_evidence_capabilities = [
+        "semantic_fact",
+        "data_state",
+        "durable_readback",
+      ];
+    });
+    await assertPreflightAndCompileReject(
+      fixture,
+      "proof_adequacy_capability_missing",
+      { synchronizeSemanticManifest: false },
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
 
 test("Global structured Claims require a same-Check Global Counterfactual", async () => {
   const fixture = await createDeliveryFixture();
@@ -179,6 +329,14 @@ test("Outcome and other-Global Counterfactuals cannot cover a Global Check", asy
       );
     assert.ok(globalConstraint);
     globalConstraint.applicability_refs.push(otherApplicability.key);
+    otherGlobal.contract.global.semantic_fact_bindings.obligations.push(
+      ...otherGlobal.contract.global.semantic_fact_bindings.obligations.map(
+        (binding) => ({
+          ...structuredClone(binding),
+          applicability_ref: otherApplicability.key,
+        }),
+      ),
+    );
     second.key = "other-global-check";
     process.env.TY_CONTEXT_OTHER_GLOBAL_SCOPE ??= "fixture-other-global";
     second.environment_requirements = [

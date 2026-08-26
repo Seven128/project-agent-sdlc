@@ -12,6 +12,7 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { addGlobalClaim } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 
 test("Global non-goals, constraints, and forbidden shortcuts require Global Check coverage", () => {
   const nonGoal = deliveryContract();
@@ -78,7 +79,7 @@ test("negative Global non-goal/shortcut proof and positive constraint proof comp
   );
   const parsed = parse(contract);
   const coverage = compileProductClaimCoverage(parsed);
-  assert.equal(coverage.summary.claims_total, 9);
+  assert.equal(coverage.summary.claims_total, 10);
   assert.equal(
     coverage.summary.claims_by_global["non_goal.no-legacy"].covered,
     true,
@@ -162,31 +163,12 @@ test("Global forbidden paths stay outside Claim coverage and remain statically e
 test("Global coverage appears in compile/explain and a failing Global Check blocks Final Gate", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    fixture.contract.global.technical.constraints.push({
-      key: "global-runtime",
-      statement: "The Global runtime assertion must pass.",
-      applicability_refs: [ensureGlobalApplicability(fixture.contract)],
-    });
-    fixture.contract.global.acceptance.checks.push(
-      makeGlobalCheck(fixture.contract, {
-        positive: ["constraint.global-runtime"],
-        expected: false,
-      }),
+    await addGlobalClaim(fixture, { counterfactual: true });
+    const globalCheck = fixture.contract.global.acceptance.checks.find(
+      (check) => check.key === "global-state-check",
     );
-    fixture.contract.global.acceptance.counterfactual_controls.push({
-      key: "replace-global-runtime",
-      binding_ref: "first.state-first",
-      claims: ["constraint.global-runtime"],
-      check_key: "global-claim-check",
-      mutation: {
-        type: "replace_json_value",
-        path: "src/state.json",
-        pointer: "/first",
-        value: false,
-      },
-      expected_assertion_failures: ["global-positive"],
-      preserved_assertions: ["global-liveness"],
-    });
+    assert.ok(globalCheck);
+    globalCheck.positive_assertions[0].expected = false;
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     const compiled = await runCli(fixture.root, [
@@ -195,7 +177,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       fixture.workdir,
     ]);
     assert.equal(
-      compiled.claim_coverage.claims_by_global["constraint.global-runtime"]
+      compiled.claim_coverage.claims_by_global["constraint.global-state"]
         .covered,
       true,
     );
@@ -206,7 +188,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
     ]);
     assert.ok(
       explained.claims.some(
-        (claim) => claim.claim === "GLOBAL.constraint.global-runtime",
+        (claim) => claim.claim === "GLOBAL.constraint.global-state",
       ),
     );
     assert.ok(
@@ -223,7 +205,7 @@ test("Global coverage appears in compile/explain and a failing Global Check bloc
       receipt.check_results.some(
         (check) =>
           check.outcome_key === null &&
-          check.check_key === "global-claim-check" &&
+          check.check_key === "global-state-check" &&
           check.status !== "passed",
       ),
     );

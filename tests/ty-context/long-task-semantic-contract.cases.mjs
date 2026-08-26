@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { scanMaterialTextInput } from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
 import {
   createDeliveryFixture,
   refreshFixtureSemanticManifest,
@@ -16,6 +17,7 @@ import {
   mutateFixtureSemanticManifest,
 } from "./long-task-semantic-fact-test-support.mjs";
 import { FIXTURE_LEGACY_ORACLE_PATH } from "./long-task-package-machine-fixture.mjs";
+import { digestText } from "./long-task-semantic-refresh-fixture.mjs";
 
 test("Contract projection freezes the exact semantic Fact and proof set", async () => {
   const fixture = await createDeliveryFixture();
@@ -26,12 +28,13 @@ test("Contract projection freezes the exact semantic Fact and proof set", async 
       { require_completion_gate: false },
     );
     const check = compiled.outcomes[0].acceptance.checks[0];
-    assert.equal(check.semantic_fact_expectations.length, 1);
-    assert.equal(
-      check.semantic_fact_expectations[0].fact_ref,
-      "fact.first.observable",
+    assert.equal(check.semantic_fact_expectations.length, 2);
+    const observableExpectation = check.semantic_fact_expectations.find(
+      (expectation) => expectation.fact_ref === "fact.first.observable",
     );
-    assert.equal(check.semantic_fact_expectations[0].comparison.mask, null);
+    assert.ok(observableExpectation);
+    assert.equal(observableExpectation.fact_ref, "fact.first.observable");
+    assert.equal(observableExpectation.comparison.mask, null);
 
     fixture.contract.outcomes[0].semantic_fact_bindings.facts = [];
     await writeContract(fixture.workdir, fixture.contract);
@@ -150,6 +153,14 @@ test("ordinary Material Source cannot be hidden as supporting-only", async () =>
 test("explicit supporting-basis fragments compile only with named delivery Facts", async () => {
   const fixture = await createDeliveryFixture();
   try {
+    const backgroundPath = "tests/fixture-background.md";
+    const backgroundText =
+      "Background rationale records why the observable behavior was selected.";
+    await writeFile(path.join(fixture.root, backgroundPath), backgroundText);
+    fixture.contract.outcomes[0].technical.allowed_support_paths.push(
+      backgroundPath,
+    );
+    fixture.contract.outcomes[0].product.owner.path_globs.push(backgroundPath);
     const sourcePath = path.join(fixture.root, "source.md");
     const source = await readFile(sourcePath, "utf8");
     const match = source.match(
@@ -157,13 +168,48 @@ test("explicit supporting-basis fragments compile only with named delivery Facts
     );
     assert.ok(match);
     const manifest = YAML.parse(match[1]);
-    const sourceItemRef = "fixture-architecture";
-    const projection = manifest.inputs.find(
-      (item) =>
-        item.kind === "source_fragment" &&
-        item.source_ref.startsWith(`${sourceItemRef}#fragment:`),
-    );
-    assert.ok(projection);
+    const attachment = {
+      key: "input.fixture-background",
+      kind: "attachment",
+      source_ref: backgroundPath,
+      sha256: digestText(backgroundText),
+      disposition: "supporting_only",
+      fact_refs: [],
+      basis_refs: ["first-observable"],
+      rationale:
+        "This attachment is typed background for one exact product Fact cell.",
+    };
+    manifest.inputs.push(attachment);
+    const [fragment] = scanMaterialTextInput({
+      input_key: attachment.key,
+      input_kind: attachment.kind,
+      source_ref: attachment.source_ref,
+      sha256: attachment.sha256,
+      authority_source_item_refs: ["first-observable"],
+      authority_domain: "product",
+      normalized_text: backgroundText,
+    }).fragments;
+    assert.ok(fragment);
+    const projection = {
+      key: "input.fragment.fixture-background.1",
+      kind: "source_fragment",
+      source_ref: fragment.key,
+      sha256: fragment.text_sha256,
+      disposition: "supporting_basis",
+      fact_refs: ["fact.first.observable"],
+      basis_refs: ["first-observable"],
+      rationale:
+        "The typed relation proves this background supports the same Fact cell.",
+      supporting_relation: {
+        kind: "same_semantic_cell_non_normative",
+        fact_ref: "fact.first.observable",
+        fact_cell_ref: "cell.first.observable",
+      },
+    };
+    manifest.inputs.push(projection);
+    manifest.facts
+      .find((fact) => fact.key === "fact.first.observable")
+      .provenance.basis_refs.push(projection.key);
     await writeManifestSource(fixture, sourcePath, source, match[0], manifest);
     await assert.doesNotReject(
       compileDeliveryContract(fixture.workdir, fixture.root, {

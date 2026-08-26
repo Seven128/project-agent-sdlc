@@ -122,7 +122,8 @@ export function sourceClaimReductions(
     if (
       claim.statement !== candidate.statement ||
       claim.source_ref !== candidate.source_ref ||
-      claim.disposition.type !== candidate.disposition.type
+      claim.disposition.type !== candidate.disposition.type ||
+      !same(claim.judgment_basis, candidate.judgment_basis)
     ) {
       changed.push(`${claim.key}:authority_changed`);
       continue;

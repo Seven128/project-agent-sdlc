@@ -22,6 +22,11 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  FIXTURE_EXTERNAL_FACT_SPECS,
+  fixtureExternalFactSpecs,
+  fixtureSourceStatements,
+} from "./long-task-semantic-manifest-fixture.mjs";
 
 const exec = promisify(execFile);
 const repository = fileURLToPath(new URL("../..", import.meta.url));
@@ -30,6 +35,7 @@ const cli = path.join(repository, "packages/ty-context/dist/cli.js");
 export async function externalFixture(options = {}) {
   const fixture = await createDeliveryFixture({
     externalConfirmation: true,
+    externalConfirmationCount: options.batching ? 4 : 1,
     twoOutcomes: Boolean(options.twoOutcomes),
     fixtureSeedRoot: options.fixtureSeedRoot,
   });
@@ -48,51 +54,21 @@ export async function externalFixture(options = {}) {
   fixture.contract.task.target_profile.completion_authority =
     "declared_authorities";
   const check = fixture.contract.outcomes[0].acceptance.checks[0];
+  const externalFactSpecs = fixtureExternalFactSpecs({
+    externalConfirmation: true,
+    externalConfirmationCount: options.batching ? 4 : 1,
+    twoOutcomes: Boolean(options.twoOutcomes),
+  });
   fixture.contract.global.acceptance.external_confirmations = options.batching
     ? batchingExternalConfirmations(check, fixture)
-    : [externalDeclaration(check, fixture)];
+    : [
+        externalDeclaration(check, fixture, {
+          additionalFactSpecs: externalFactSpecs.filter(
+            (spec) => spec.outcomeKey !== "first",
+          ),
+        }),
+      ];
   await options.configureExternal?.(fixture, check);
-  const externalClaims = new Set(
-    fixture.contract.global.acceptance.external_confirmations.flatMap(
-      (confirmation) => confirmation.impact_claims,
-    ),
-  );
-  for (const outcome of fixture.contract.outcomes)
-    for (const outcomeCheck of outcome.acceptance.checks) {
-      for (const assertion of [
-        ...outcomeCheck.positive_assertions,
-        ...outcomeCheck.negative_assertions,
-      ]) {
-        assertion.claims = assertion.claims.filter(
-          (claim) => !externalClaims.has(`${outcome.key}.${claim}`),
-        );
-        if (!assertion.claims.length) delete assertion.applicability_ref;
-      }
-      const remainingAssertions = new Set(
-        [
-          ...outcomeCheck.positive_assertions,
-          ...outcomeCheck.negative_assertions,
-        ].map((assertion) => assertion.key),
-      );
-      for (const control of outcome.acceptance.counterfactual_controls) {
-        control.claims = control.claims.filter(
-          (claim) => !externalClaims.has(`${outcome.key}.${claim}`),
-        );
-        control.expected_assertion_failures =
-          control.expected_assertion_failures.filter((assertion) =>
-            remainingAssertions.has(assertion),
-          );
-        control.preserved_assertions = control.preserved_assertions.filter(
-          (assertion) => remainingAssertions.has(assertion),
-        );
-      }
-    }
-  const sourceClaim = fixture.contract.source_claims.find(
-    (claim) => claim.key === "fixture-external",
-  );
-  if (!sourceClaim || sourceClaim.disposition.type !== "external_confirmation")
-    throw new Error("fixture external Source claim is missing");
-  sourceClaim.disposition.refs = ["fixture-external"];
   await writeContract(fixture.workdir, fixture.contract);
   await options.beforeCompile?.(fixture);
   await runCli(fixture.root, ["enable", "long-task"]);
@@ -106,27 +82,75 @@ export function externalDeclaration(
   check,
   identity,
   {
-    key = "fixture-external",
+    externalSpec = FIXTURE_EXTERNAL_FACT_SPECS[0],
+    additionalFactSpecs = [],
+    key = externalSpec.confirmationKey,
     owner = "release-owner",
     actorId = "fixture-product-owner",
     actorRole = "product acceptance owner",
-    claimRef = "first.requirement.observe-first",
-    obligationKey = "confirm-observe-first",
+    claimRef = `${externalSpec.outcomeKey}.semantic_fact.${externalSpec.factKey}`,
+    obligationKey = "confirm-external-acceptance",
+    applicabilityRef = `${externalSpec.outcomeKey}-root-success`,
+    factRef = claimRef ===
+    `${externalSpec.outcomeKey}.semantic_fact.${externalSpec.factKey}`
+      ? externalSpec.factKey
+      : null,
+    proofRef = factRef === externalSpec.factKey ? externalSpec.proofKey : null,
+    method = "exact_value",
+    proofSurface = "runtime_behavior",
     environmentIdentity = "fixture-external-environment-v1",
     evidenceKey = "observation-capture",
     evidenceStatement = "Capture the observed target result for this obligation.",
-    capabilities = [],
+    capabilities = factRef ? ["semantic_fact"] : [],
+    expectedAuthorityRef = null,
+    resultKind = factRef ? "actual" : "judgment",
   } = {},
 ) {
+  const primaryObligation = {
+    key: obligationKey,
+    claim_ref: claimRef,
+    applicability_ref: applicabilityRef,
+    fact_ref: factRef,
+    proof_ref: proofRef,
+    method,
+    proof_surface: proofSurface,
+    evidence_capabilities: capabilities,
+    expected_authority_ref:
+      expectedAuthorityRef ??
+      (proofRef ? `semantic-proof:${proofRef}` : `contract-claim:${claimRef}`),
+    result_kind: resultKind,
+    ...(resultKind === "judgment"
+      ? {
+          judgment_basis: {
+            kind: "authorization",
+            source_ref: externalSpec.sourceKey,
+          },
+        }
+      : {}),
+  };
+  const additionalObligations = additionalFactSpecs.map((spec) => ({
+    key: `${obligationKey}-${spec.outcomeKey}`,
+    claim_ref: `${spec.outcomeKey}.semantic_fact.${spec.factKey}`,
+    applicability_ref: `${spec.outcomeKey}-root-success`,
+    fact_ref: spec.factKey,
+    proof_ref: spec.proofKey,
+    method: "exact_value",
+    proof_surface: "runtime_behavior",
+    evidence_capabilities: ["semantic_fact"],
+    expected_authority_ref: `semantic-proof:${spec.proofKey}`,
+    result_kind: "actual",
+  }));
   return {
     key,
     description:
-      key === "fixture-external"
-        ? "Confirm the fixture in external delivery."
-        : `Confirm ${claimRef} on the real target.`,
+      fixtureSourceStatements[externalSpec.sourceKey] ??
+      `Confirm ${claimRef} on the real target.`,
     owner,
     kind: "field_validation",
-    impact_claims: [claimRef],
+    impact_claims: [
+      claimRef,
+      ...additionalObligations.map((obligation) => obligation.claim_ref),
+    ],
     blocks_target: true,
     actor: {
       id: actorId,
@@ -147,51 +171,31 @@ export function externalDeclaration(
         statement: evidenceStatement,
       },
     ],
-    obligations: [
-      {
-        key: obligationKey,
-        claim_ref: claimRef,
-        applicability_ref: "first-root-success",
-        fact_ref: null,
-        proof_ref: null,
-        method: "exact_value",
-        proof_surface: "runtime_behavior",
-        evidence_capabilities: capabilities,
-        expected_authority_ref: `contract-claim:${claimRef}`,
-        result_kind: "judgment",
-        judgment_basis: {
-          kind: "authorization",
-          source_ref: "fixture-external",
-        },
-      },
-    ],
+    obligations: [primaryObligation, ...additionalObligations],
   };
 }
 
 export function batchingExternalConfirmations(check, identity) {
+  const [base, compatible, owner, environment] = FIXTURE_EXTERNAL_FACT_SPECS;
   return [
-    externalDeclaration(check, identity),
+    externalDeclaration(check, identity, { externalSpec: base }),
     externalDeclaration(check, identity, {
-      key: "fixture-external-compatible",
-      claimRef: "first.obligation.implement-first",
-      obligationKey: "confirm-implement-first",
+      externalSpec: compatible,
+      obligationKey: "confirm-external-compatibility",
     }),
     externalDeclaration(check, identity, {
-      key: "fixture-external-owner",
+      externalSpec: owner,
       owner: "architecture-owner",
       actorId: "fixture-architecture-owner",
       actorRole: "architecture acceptance owner",
-      claimRef: "first.obligation.architecture-first",
-      obligationKey: "confirm-architecture-first",
+      obligationKey: "confirm-external-architecture",
     }),
     externalDeclaration(check, identity, {
-      key: "fixture-external-environment",
-      claimRef: "first.result",
-      obligationKey: "confirm-result",
+      externalSpec: environment,
+      obligationKey: "confirm-external-environment",
       environmentIdentity: "fixture-external-environment-v2",
       evidenceKey: "visual-capture",
       evidenceStatement: "Capture the target result in the second environment.",
-      capabilities: ["target_runtime"],
     }),
   ];
 }

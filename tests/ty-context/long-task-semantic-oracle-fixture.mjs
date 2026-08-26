@@ -3,6 +3,7 @@ import path from "node:path";
 import YAML from "yaml";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import {
+  FIXTURE_EXTERNAL_FACT_SPECS,
   fixtureSemanticManifest,
   fixtureSourceStatements,
 } from "./long-task-semantic-manifest-fixture.mjs";
@@ -13,11 +14,16 @@ export async function writeFixtureSourceAndOracle(
   {
     twoOutcomes = false,
     externalConfirmation = false,
+    externalConfirmationCount = 1,
     executionTarget = null,
   } = {},
   manifestOverride = null,
 ) {
-  const options = { twoOutcomes, externalConfirmation };
+  const options = {
+    twoOutcomes,
+    externalConfirmation,
+    externalConfirmationCount,
+  };
   const manifest = manifestOverride ?? fixtureSemanticManifest(options);
   const sourceItems = [
     ["first-observable", fixtureSourceStatements["first-observable"]],
@@ -34,7 +40,9 @@ export async function writeFixtureSourceAndOracle(
         ]
       : []),
     ...(externalConfirmation
-      ? [["fixture-external", fixtureSourceStatements["fixture-external"]]]
+      ? FIXTURE_EXTERNAL_FACT_SPECS.slice(0, externalConfirmationCount).map(
+          (item) => [item.sourceKey, fixtureSourceStatements[item.sourceKey]],
+        )
       : []),
   ];
   const sourceBody = [
@@ -45,13 +53,13 @@ export async function writeFixtureSourceAndOracle(
           ? "technical_obligation aspect=architecture"
           : key === "fixture-execution-target"
             ? "technical_obligation"
-            : key === "fixture-external"
+            : key.startsWith("fixture-external")
               ? "external_confirmation"
               : "requirement";
       const item = `<!-- ty-source-item:start key=${key} kind=${kind} -->\n${statement}\n<!-- ty-source-item:end -->`;
-      return key === "fixture-external"
+      return key.startsWith("fixture-external")
         ? [
-            `<!-- ty-source-background:start key=fixture-external-heading reason=markdown-structure -->\n<a id="fixture-external"></a>\n<!-- ty-source-background:end -->`,
+            `<!-- ty-source-background:start key=${key}-heading reason=markdown-structure -->\n<a id="${key}"></a>\n<!-- ty-source-background:end -->`,
             item,
           ]
         : [item];
@@ -70,28 +78,43 @@ export async function writeFixtureSourceAndOracle(
 
 export function fixtureOracleSource(manifest) {
   const manifestSha256 = digestCanonical(manifest);
+  const machineFactRefs = new Set(
+    manifest.proof_obligations
+      .filter((proof) => proof.authority === "machine")
+      .map((proof) => proof.fact_ref),
+  );
   const facts = Object.fromEntries(
-    manifest.facts.map((fact) => {
-      const proof = manifest.proof_obligations.find(
-        (item) => item.fact_ref === fact.key,
-      );
-      const environment = manifest.environments.find(
-        (item) => item.key === proof.environment_ref,
-      );
-      const oracle = manifest.oracles.find(
-        (item) => item.key === proof.oracle_ref,
-      );
-      return [
-        fact.outcome_ref,
-        {
-          fact,
-          proof,
-          environment,
-          oracle,
-          manifestSha256,
-        },
-      ];
-    }),
+    [...new Set(manifest.facts.map((fact) => fact.outcome_ref))].map(
+      (outcomeRef) => [
+        outcomeRef,
+        manifest.facts
+          .filter(
+            (fact) =>
+              fact.outcome_ref === outcomeRef && machineFactRefs.has(fact.key),
+          )
+          .map((fact) => {
+            const proof = manifest.proof_obligations.find(
+              (item) => item.fact_ref === fact.key,
+            );
+            const environment = manifest.environments.find(
+              (item) => item.key === proof.environment_ref,
+            );
+            const oracle = manifest.oracles.find(
+              (item) => item.key === proof.oracle_ref,
+            );
+            return {
+              fact,
+              proof,
+              environment,
+              oracle,
+              manifestSha256,
+              assertionKey: fact.key.includes(".architecture-boundary")
+                ? `${outcomeRef}-architecture-semantic-fact`
+                : `${outcomeRef}-semantic-fact`,
+            };
+          }),
+      ],
+    ),
   );
   return `import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -134,73 +157,75 @@ const canonicalize = (value) => {
     );
   return value;
 };
-const actualValueSha256 = createHash("sha256")
-  .update(JSON.stringify(state[key]))
-  .digest("hex");
-const comparisonPassed = state[key] === true;
-const comparisonResultSha256 = createHash("sha256")
-  .update(JSON.stringify(canonicalize({
-    identity: {
-      kind: "semantic_fact_non_ui",
-      fact_ref: semantic[key].fact.key,
-      proof_ref: semantic[key].proof.key,
-      target_ref: "fixture-app"
+const semanticRecords = semantic[key].map((entry) => {
+  const actualValueSha256 = createHash("sha256")
+    .update(JSON.stringify(state[key]))
+    .digest("hex");
+  const comparisonPassed = state[key] === true;
+  const comparisonResultSha256 = createHash("sha256")
+    .update(JSON.stringify(canonicalize({
+      identity: {
+        kind: "semantic_fact_non_ui",
+        fact_ref: entry.fact.key,
+        proof_ref: entry.proof.key,
+        target_ref: "fixture-app"
+      },
+      actual_value_sha256: actualValueSha256,
+      expected_value_sha256: entry.fact.expected.sha256,
+      comparator: entry.proof.comparison.comparator,
+      mode: entry.proof.comparison.mode,
+      parameters_sha256: entry.proof.comparison.parameters.sha256,
+      tolerance_sha256: entry.proof.comparison.tolerance?.sha256 ?? null,
+      mask_sha256: entry.proof.comparison.mask?.sha256 ?? null,
+      passed: actualValueSha256 === entry.fact.expected.sha256
+    })))
+    .digest("hex");
+  return {
+    assertion_key: entry.assertionKey,
+    capability: "semantic_fact",
+    manifest_ref: "${manifest.key}",
+    manifest_sha256: entry.manifestSha256,
+    outcome_ref: key,
+    target_ref: "fixture-app",
+    fact_ref: entry.fact.key,
+    proof_ref: entry.proof.key,
+    method: entry.proof.method,
+    subject_ref: entry.fact.unit_ref,
+    condition_ref: entry.fact.condition_ref,
+    property_ref: entry.fact.property_ref,
+    actual_observation: {
+      artifact_path: artifactPath,
+      artifact_sha256: artifactSha256,
+      locator: {kind: "json_pointer", value: \`/observations/${"${key}"}/value\`},
+      value_sha256: actualValueSha256,
+      sensitivity: "plain",
+      redaction: null
     },
-    actual_value_sha256: actualValueSha256,
-    expected_value_sha256: semantic[key].fact.expected.sha256,
-    comparator: semantic[key].proof.comparison.comparator,
-    mode: semantic[key].proof.comparison.mode,
-    parameters_sha256: semantic[key].proof.comparison.parameters.sha256,
-    tolerance_sha256: semantic[key].proof.comparison.tolerance?.sha256 ?? null,
-    mask_sha256: semantic[key].proof.comparison.mask?.sha256 ?? null,
-    passed: actualValueSha256 === semantic[key].fact.expected.sha256
-  })))
-  .digest("hex");
-const semanticRecord = {
-  assertion_key: \`${"${key}"}-semantic-fact\`,
-  capability: "semantic_fact",
-  manifest_ref: "${manifest.key}",
-  manifest_sha256: semantic[key].manifestSha256,
-  outcome_ref: key,
-  target_ref: "fixture-app",
-  fact_ref: semantic[key].fact.key,
-  proof_ref: semantic[key].proof.key,
-  method: semantic[key].proof.method,
-  subject_ref: semantic[key].fact.unit_ref,
-  condition_ref: semantic[key].fact.condition_ref,
-  property_ref: semantic[key].fact.property_ref,
-  actual_observation: {
-    artifact_path: artifactPath,
-    artifact_sha256: artifactSha256,
-    locator: {kind: "json_pointer", value: \`/observations/${"${key}"}/value\`},
-    value_sha256: actualValueSha256,
-    sensitivity: "plain",
-    redaction: null
-  },
-  actual_environment: {
-    artifact_path: artifactPath,
-    artifact_sha256: artifactSha256,
-    locator: {kind: "json_pointer", value: \`/observations/${"${key}"}/environment\`},
-    value_sha256: semantic[key].environment.definition.sha256
-  },
-  expected: semantic[key].fact.expected,
-  comparison: {
-    artifact_path: artifactPath,
-    artifact_sha256: artifactSha256,
-    locator: {kind: "json_pointer", value: \`/comparisons/${"${key}"}/${"${semantic[key].proof.key}"}\`},
-    result_sha256: comparisonResultSha256,
-    comparator: semantic[key].proof.comparison.comparator,
-    mode: semantic[key].proof.comparison.mode,
-    parameters: semantic[key].proof.comparison.parameters,
-    tolerance: semantic[key].proof.comparison.tolerance,
-    mask: semantic[key].proof.comparison.mask,
-    passed: comparisonPassed
-  },
-  verdict: state[key] === true ? "passed" : "failed",
-  oracle: semantic[key].oracle,
-  environment: semantic[key].environment,
-  observer_results: []
-};
+    actual_environment: {
+      artifact_path: artifactPath,
+      artifact_sha256: artifactSha256,
+      locator: {kind: "json_pointer", value: \`/observations/${"${key}"}/environment\`},
+      value_sha256: entry.environment.definition.sha256
+    },
+    expected: entry.fact.expected,
+    comparison: {
+      artifact_path: artifactPath,
+      artifact_sha256: artifactSha256,
+      locator: {kind: "json_pointer", value: \`/comparisons/${"${key}"}/${"${entry.proof.key}"}\`},
+      result_sha256: comparisonResultSha256,
+      comparator: entry.proof.comparison.comparator,
+      mode: entry.proof.comparison.mode,
+      parameters: entry.proof.comparison.parameters,
+      tolerance: entry.proof.comparison.tolerance,
+      mask: entry.proof.comparison.mask,
+      passed: comparisonPassed
+    },
+    verdict: state[key] === true ? "passed" : "failed",
+    oracle: entry.oracle,
+    environment: entry.environment,
+    observer_results: []
+  };
+});
 console.log(JSON.stringify({
   schema_version: "long-task-check-result-v3",
   execution_status: "completed",
@@ -209,6 +234,7 @@ console.log(JSON.stringify({
     requirement_result: state[key],
     obligation_result: state[key],
     architecture_result: state.first,
+    architecture_semantic_fact_result: state[key],
     semantic_fact_result: state[key],
     relations_applicable: state[\`${"${key}"}_relations_applicable\`],
     target_live: true,
@@ -226,7 +252,7 @@ console.log(JSON.stringify({
       stateRecord(assertionKey)
     ]),
     targetRecord(\`${"${key}"}-liveness\`),
-    semanticRecord
+    ...semanticRecords
   ]
 }));
 `;

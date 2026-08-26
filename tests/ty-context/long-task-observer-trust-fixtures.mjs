@@ -94,11 +94,11 @@ export async function executeObserverTrustAttackAfterAuthority(
 async function executeObserverTrustFinalGate(fixture, proofContext) {
   const command = "long-task final-gate";
   const workdirSha256 = sha256(path.resolve(fixture.workdir));
-  const final = await invoke(fixture.root, [
-    "long-task",
-    "final-gate",
-    fixture.workdir,
-  ], { skipCandidateCommit: true });
+  const final = await invoke(
+    fixture.root,
+    ["long-task", "final-gate", fixture.workdir],
+    { skipCandidateCommit: true },
+  );
   await assertCandidateUnchanged(fixture, proofContext.candidate, "final-gate");
   const result =
     typeof final.result?.workflow_status === "string"
@@ -572,6 +572,7 @@ export async function configurePackageObservationCase(
       writeProcessEnvelope: directProcess || staticObservation,
       processObservationIdentities: processObservationIdentities(processCheck, {
         includeSemanticFact: true,
+        manifest: parsedManifest.manifest,
       }),
       actualObservationIdentity: parsedManifest.manifest.facts[0].key,
       submitProjectEvidenceCopies,
@@ -966,6 +967,7 @@ export async function configureExecutionTargetSourceDriftAttack(fixture) {
       writeProcessEnvelope: true,
       processObservationIdentities: processObservationIdentities(check, {
         includeSemanticFact: true,
+        manifest: parsedManifest.manifest,
       }),
       actualObservationIdentity: parsedManifest.manifest.facts[0].key,
       submitProjectEvidenceCopies: false,
@@ -1125,9 +1127,7 @@ async function captureCommittedCandidate(fixture) {
     tree,
     contract_sha256,
     clean,
-    identity: sha256(
-      JSON.stringify({ head, tree, contract_sha256, clean }),
-    ),
+    identity: sha256(JSON.stringify({ head, tree, contract_sha256, clean })),
   };
 }
 
@@ -1239,6 +1239,7 @@ function observationCarrier(value) {
   return {
     observations: {
       "fact.first.observable": value,
+      "fact.first.architecture-boundary": value,
       "first-result": value,
       "first-semantic-fact": value,
       "first-architecture": value,
@@ -1259,11 +1260,31 @@ function observationCarrier(value) {
   };
 }
 
-function processObservationIdentities(check, { includeSemanticFact }) {
+function processObservationIdentities(
+  check,
+  { includeSemanticFact, manifest = null },
+) {
+  const machineFactRefs = includeSemanticFact
+    ? [
+        ...new Set(
+          (manifest?.proof_obligations ?? [])
+            .filter((proof) => proof.authority === "machine")
+            .map((proof) => proof.fact_ref)
+            .filter((factRef) =>
+              manifest?.facts.some(
+                (fact) => fact.key === factRef && fact.outcome_ref === "first",
+              ),
+            ),
+        ),
+      ]
+    : [];
   return [
-    ...(includeSemanticFact ? ["fact.first.observable"] : []),
+    ...machineFactRefs,
     ...[...check.positive_assertions, ...check.negative_assertions]
-      .filter((assertion) => assertion.key !== "first-semantic-fact")
+      .filter(
+        (assertion) =>
+          !assertion.claims.some((claim) => claim.startsWith("semantic_fact.")),
+      )
       .map((assertion) => `assertion.first.${check.key}.${assertion.key}`),
   ];
 }

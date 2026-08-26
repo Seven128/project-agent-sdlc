@@ -1,4 +1,5 @@
 import type {
+  SemanticFactGlobalBindingsV2,
   SemanticFactManifestRefV2,
   SemanticFactOutcomeBindingsV2,
 } from "./semantic-fact-types.js";
@@ -148,6 +149,51 @@ export function parseSemanticFactOutcomeBindings(
             ),
           };
     }),
+  };
+}
+
+export function parseSemanticFactGlobalBindings(
+  value: unknown,
+  label: string,
+): SemanticFactGlobalBindingsV2 {
+  const row = object(value, label, ["manifest_ref", "obligations"]);
+  return {
+    manifest_ref: semanticRef(row.manifest_ref, `${label}.manifest_ref`),
+    obligations: array(row.obligations, `${label}.obligations`).map(
+      (item, index) => {
+        const itemLabel = `${label}.obligations[${index}]`;
+        const entry = object(item, itemLabel, [
+          "claim_ref",
+          "applicability_ref",
+          "target_ref",
+          "outcome_ref",
+          "fact_ref",
+          "proof_ref",
+          "method",
+          "required_polarity",
+        ]);
+        return {
+          claim_ref: semanticRef(entry.claim_ref, `${itemLabel}.claim_ref`),
+          applicability_ref: semanticRef(
+            entry.applicability_ref,
+            `${itemLabel}.applicability_ref`,
+          ),
+          target_ref: semanticRef(entry.target_ref, `${itemLabel}.target_ref`),
+          outcome_ref: semanticRef(
+            entry.outcome_ref,
+            `${itemLabel}.outcome_ref`,
+          ),
+          fact_ref: semanticRef(entry.fact_ref, `${itemLabel}.fact_ref`),
+          proof_ref: semanticRef(entry.proof_ref, `${itemLabel}.proof_ref`),
+          method: semanticRef(entry.method, `${itemLabel}.method`),
+          required_polarity: literal(
+            entry.required_polarity,
+            ["positive", "negative"] as const,
+            `${itemLabel}.required_polarity`,
+          ),
+        };
+      },
+    ),
   };
 }
 
