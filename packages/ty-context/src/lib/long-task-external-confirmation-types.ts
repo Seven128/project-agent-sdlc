@@ -1,4 +1,4 @@
-import type { AcceptanceObligationReachabilityV1 } from "./long-task-acceptance-reachability.js";
+import type { EffectiveExternalObligationV1 } from "./long-task-acceptance-reachability-types.js";
 import type {
   CompiledExternalConfirmationIdentityAssuranceV2,
   ExternalConfirmationV2,
@@ -126,6 +126,8 @@ export interface ExternalConfirmationObligationResultV1 {
   outcome_key: string | null;
   verdict: "passed" | "failed" | "unable";
   result_kind: "actual" | "judgment";
+  completion_role: "blocking" | "advisory";
+  acceptance_effect: "required" | "none";
   comparator_recomputed: boolean;
   evidence_refs: string[];
 }
@@ -147,6 +149,11 @@ export interface ExternalConfirmationEvaluationV1 {
   artifact_snapshot_integrity: boolean;
   record_schema_version: ExternalConfirmationRecord["schema_version"] | null;
   obligation_results: ExternalConfirmationObligationResultV1[];
+  effective_blocking_obligation_refs: string[];
+  effective_advisory_obligation_refs: string[];
+  blocking_issues: string[];
+  advisory_state: ExternalConfirmationFulfillmentStateV1 | null;
+  advisory_issues: string[];
   issues: string[];
 }
 
@@ -168,7 +175,7 @@ export interface ExternalConfirmationExpectedV1 {
   } | null;
 }
 
-export interface ExternalConfirmationPreparationObligationV1 extends AcceptanceObligationReachabilityV1 {
+export interface ExternalConfirmationPreparationObligationV1 extends EffectiveExternalObligationV1 {
   result_kind: "actual" | "judgment";
   expected: ExternalConfirmationExpectedV1;
 }

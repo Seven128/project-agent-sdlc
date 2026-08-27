@@ -1,4 +1,4 @@
-import type { AcceptanceObligationReachabilityV1 } from "./long-task-acceptance-reachability.js";
+import type { EffectiveExternalObligationV1 } from "./long-task-acceptance-reachability-types.js";
 import type {
   CompiledDeliveryContractV2,
   ExternalConfirmationV2,
@@ -14,8 +14,9 @@ export function deriveRelevantExternalInputIdentity(
   manifest: WorkspaceManifestV2,
 ): RelevantExternalInputIdentityV1 {
   const confirmation = requiredConfirmation(compiled, confirmationRef);
-  if (confirmation.blocks_target) return wholeCandidateIdentity(manifest);
-  const rows = externalRows(compiled, confirmationRef);
+  if (blockingExternalRows(compiled, confirmationRef).length)
+    return wholeCandidateIdentity(manifest);
+  const rows = allEffectiveExternalRows(compiled, confirmationRef);
   const outcomeKeys = [...new Set(rows.map((row) => row.outcome_key))];
   if (!rows.length || outcomeKeys.some((key) => key === null))
     return wholeCandidateIdentity(manifest);
@@ -71,14 +72,30 @@ export function deriveRelevantExternalInputIdentity(
   };
 }
 
-export function externalRows(
+export function allEffectiveExternalRows(
   compiled: CompiledDeliveryContractV2,
   confirmationRef: string,
-): AcceptanceObligationReachabilityV1[] {
-  return compiled.acceptance_reachability.obligations.filter(
-    (row) =>
-      row.status === "external_fulfillable" &&
-      row.confirmation_ref === confirmationRef,
+): EffectiveExternalObligationV1[] {
+  return (
+    compiled.acceptance_reachability.effective_external_routes ?? []
+  ).filter((row) => row.confirmation_ref === confirmationRef);
+}
+
+export function blockingExternalRows(
+  compiled: CompiledDeliveryContractV2,
+  confirmationRef: string,
+): EffectiveExternalObligationV1[] {
+  return allEffectiveExternalRows(compiled, confirmationRef).filter(
+    (row) => row.completion_role === "blocking",
+  );
+}
+
+export function advisoryExternalRows(
+  compiled: CompiledDeliveryContractV2,
+  confirmationRef: string,
+): EffectiveExternalObligationV1[] {
+  return allEffectiveExternalRows(compiled, confirmationRef).filter(
+    (row) => row.completion_role === "advisory",
   );
 }
 

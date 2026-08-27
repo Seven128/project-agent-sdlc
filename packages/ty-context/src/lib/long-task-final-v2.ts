@@ -6,6 +6,10 @@ import type {
   LongTaskFindingV2,
 } from "./long-task-delivery-types.js";
 import { evaluateExternalConfirmations } from "./long-task-external-confirmation-plan.js";
+import {
+  allEffectiveExternalRows,
+  blockingExternalRows,
+} from "./long-task-external-confirmation-identity.js";
 import type { ExternalConfirmationEvaluationV1 } from "./long-task-external-confirmation-types.js";
 import { enrichFinding } from "./long-task-finding-context.js";
 import {
@@ -135,14 +139,14 @@ export async function runDeliveryFinalGate(
       run.check_results.some((result) => semanticCheckFailed(checks, result)) ||
       run.findings.some((finding) => completionFindingBlocks(checks, finding));
     const blockingExternal = externalResults.filter(
-      (confirmation) => confirmation.blocks_target,
+      (evaluation) => evaluation.blocks_target,
     );
     const externalNeedsWork = blockingExternal.some(
-      (confirmation) =>
-        confirmation.state !== "fulfilled" && confirmation.state !== "pending",
+      (evaluation) =>
+        evaluation.state !== "fulfilled" && evaluation.state !== "pending",
     );
     const externalPending = blockingExternal.some(
-      (confirmation) => confirmation.state === "pending",
+      (evaluation) => evaluation.state === "pending",
     );
     const workflowStatus: FinalReceiptV3["workflow_status"] =
       machineFailed || externalNeedsWork
@@ -266,24 +270,19 @@ function projectOutcomes(
           completionFindingBlocks(compiledChecks, finding),
       );
       const external = externalResults.filter(
-        (confirmation) =>
-          confirmation.blocks_target &&
-          externalConfirmationImpactsOutcome(
-            compiled,
-            confirmation,
-            outcomeKey,
-          ),
+        (evaluation) =>
+          evaluation.blocks_target &&
+          externalConfirmationImpactsOutcome(compiled, evaluation, outcomeKey),
       );
       const status =
         owned.some((check) => check.status !== "passed") ||
         ownFindings.length ||
         external.some(
-          (confirmation) =>
-            confirmation.state !== "fulfilled" &&
-            confirmation.state !== "pending",
+          (evaluation) =>
+            evaluation.state !== "fulfilled" && evaluation.state !== "pending",
         )
           ? "failed"
-          : external.some((confirmation) => confirmation.state === "pending")
+          : external.some((evaluation) => evaluation.state === "pending")
             ? "blocked_external"
             : "passed";
       return [outcomeKey, status];
@@ -321,19 +320,13 @@ function externalConfirmationImpactsOutcome(
   evaluation: ExternalConfirmationEvaluationV1,
   outcomeKey: string,
 ): boolean {
-  if (
-    evaluation.obligation_results.some(
-      (result) => result.outcome_key === outcomeKey,
-    )
-  )
-    return true;
-  const declaration = compiled.global.acceptance.external_confirmations.find(
-    (confirmation) => confirmation.key === evaluation.confirmation_ref,
-  );
-  return Boolean(
-    declaration?.impact_claims.some(
-      (claim) => claim === outcomeKey || claim.startsWith(`${outcomeKey}.`),
-    ),
+  return blockingExternalRows(compiled, evaluation.confirmation_ref).some(
+    (row) =>
+      row.outcome_key === outcomeKey ||
+      row.claim_ref === outcomeKey ||
+      row.claim_ref.startsWith(`${outcomeKey}.`) ||
+      row.local_claim_ref === outcomeKey ||
+      row.local_claim_ref.startsWith(`${outcomeKey}.`),
   );
 }
 
@@ -341,35 +334,61 @@ export function externalConfirmationFindings(
   compiled: Awaited<ReturnType<typeof compileDeliveryContract>>,
   evaluations: ExternalConfirmationEvaluationV1[],
 ): LongTaskFindingV2[] {
-  return evaluations
-    .filter(
-      (evaluation) =>
-        evaluation.state !== "fulfilled" &&
-        (evaluation.blocks_target || evaluation.state !== "pending"),
+  return evaluations.flatMap((evaluation) => {
+    const roles: Array<{
+      role: "blocking" | "advisory";
+      state: ExternalConfirmationEvaluationV1["state"];
+      issues: string[];
+    }> = [];
+    if (evaluation.blocks_target && evaluation.state !== "fulfilled")
+      roles.push({
+        role: "blocking",
+        state: evaluation.state,
+        issues: evaluation.blocking_issues,
+      });
+    if (
+      evaluation.advisory_state &&
+      evaluation.advisory_state !== "fulfilled" &&
+      evaluation.advisory_state !== "pending"
     )
-    .map((evaluation) => {
+      roles.push({
+        role: "advisory",
+        state: evaluation.advisory_state,
+        issues: evaluation.advisory_issues,
+      });
+    return roles.map(({ role, state, issues }) => {
       const declaration =
         compiled.global.acceptance.external_confirmations.find(
           (confirmation) => confirmation.key === evaluation.confirmation_ref,
         );
-      const obligations = compiled.acceptance_reachability.obligations.filter(
-        (obligation) =>
-          obligation.confirmation_ref === evaluation.confirmation_ref,
+      const obligations = allEffectiveExternalRows(
+        compiled,
+        evaluation.confirmation_ref,
+      ).filter((obligation) => obligation.completion_role === role);
+      const obligationRefs = new Set(
+        obligations.map((obligation) => obligation.obligation_ref),
       );
-      const declaredObligations = declaration?.obligations ?? [];
+      const results = evaluation.obligation_results.filter(
+        (result) => result.completion_role === role,
+      );
+      const declaredObligations = (declaration?.obligations ?? []).filter(
+        (obligation) => obligationRefs.has(obligation.key),
+      );
       return {
-        code: evaluation.blocks_target
-          ? `external_confirmation_${evaluation.state}`
-          : `external_confirmation_advisory_${evaluation.state}`,
+        code:
+          role === "blocking"
+            ? `external_confirmation_${state}`
+            : `external_confirmation_advisory_${state}`,
         outcome_key:
-          evaluation.obligation_results.find(
-            (result) => result.outcome_key !== null,
-          )?.outcome_key ?? null,
+          results.find((result) => result.outcome_key !== null)?.outcome_key ??
+          obligations.find((obligation) => obligation.outcome_key !== null)
+            ?.outcome_key ??
+          null,
         check_key: null,
         claim_keys: [
           ...new Set([
             ...obligations.map((obligation) => obligation.claim_ref),
-            ...evaluation.obligation_results.map((result) => result.claim_ref),
+            ...results.map((result) => result.claim_ref),
           ]),
         ].sort(),
         fact_refs: obligations.flatMap((obligation) =>
@@ -385,7 +404,7 @@ export function externalConfirmationFindings(
           ...(evaluation.record_sha256
             ? [`external-record:${evaluation.record_sha256}`]
             : []),
-          ...evaluation.obligation_results.flatMap((result) =>
+          ...results.flatMap((result) =>
             result.evidence_refs.map(
               (reference) => `external-artifact:${reference}`,
             ),
@@ -397,20 +416,22 @@ export function externalConfirmationFindings(
           owner: evaluation.owner,
           target_ref: declaration?.target_ref ?? "undeclared",
         },
-        invalidation_reasons: [evaluation.state, ...evaluation.issues],
+        invalidation_reasons: [state, ...issues],
         rerun_obligation_refs: obligations.map(
           (obligation) => obligation.obligation_ref,
         ),
         actual: evaluation,
-        message: evaluation.blocks_target
-          ? `Blocking External Confirmation ${evaluation.confirmation_ref} is ${evaluation.state}.`
-          : `Advisory External Confirmation ${evaluation.confirmation_ref} is ${evaluation.state}.`,
+        message:
+          role === "blocking"
+            ? `Blocking External Confirmation ${evaluation.confirmation_ref} is ${state}.`
+            : `Advisory External Confirmation ${evaluation.confirmation_ref} is ${state}.`,
         next_action:
-          evaluation.state === "pending"
+          state === "pending"
             ? `Run ty-context long-task external prepare <workdir> --confirmation ${evaluation.confirmation_ref}, collect exact per-obligation evidence, then submit the record.`
             : `Repair or revoke External Confirmation ${evaluation.confirmation_ref}, prepare it again on the current candidate, and submit a fresh exact record.`,
       };
     });
+  });
 }
 
 async function resolved(workdir: string): Promise<string> {

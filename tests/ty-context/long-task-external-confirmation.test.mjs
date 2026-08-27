@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, generateKeyPairSync } from "node:crypto";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -26,6 +26,20 @@ import {
 const exec = promisify(execFile);
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const cli = path.join(repository, "packages/ty-context/dist/cli.js");
+
+async function addFixtureProcessObservation(root, observationRef) {
+  const oraclePath = path.join(root, "tests", "oracle.mjs");
+  const oracle = await readFile(oraclePath, "utf8");
+  const marker = '  [assertion(key + "-liveness")]: true,\n';
+  assert.ok(oracle.includes(marker));
+  await writeFile(
+    oraclePath,
+    oracle.replace(
+      marker,
+      `${marker}  ...(key === "first" ? { ${JSON.stringify(observationRef)}: true } : {}),\n`,
+    ),
+  );
+}
 
 import "./long-task-external-confirmation-record.cases.mjs";
 import "./long-task-external-confirmation-freshness.cases.mjs";
@@ -400,6 +414,350 @@ test("objective Contract Claim External Actual is Harness-recomputed and cannot 
       { skipCandidateCommit: true },
     );
     assert.equal(accepted.workflow_status, "delivery_accepted");
+  } finally {
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("Machine-selected optional Claim keeps equivalent External advisory through Live Final Gate", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+    const advisoryPublicKeyRef =
+      "project_context/authorities/advisory-owner.pub";
+    await mkdir(path.join(fixture.root, "project_context", "authorities"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(fixture.root, ...advisoryPublicKeyRef.split("/")),
+      publicKey.export({ type: "spki", format: "pem" }),
+    );
+    fixture.externalSigningKey = privateKey;
+    fixture.contract.task.target_profile.completion_authority =
+      "declared_authorities";
+    const outcome = fixture.contract.outcomes[0];
+    const machineCheck = outcome.acceptance.checks[0];
+    const machineAssertion = machineCheck.positive_assertions.find(
+      (candidate) => candidate.key === "first-result",
+    );
+    assert.ok(machineAssertion);
+    const machineLiveness = machineCheck.positive_assertions.find(
+      (candidate) => candidate.key === "first-liveness",
+    );
+    assert.ok(machineLiveness);
+    machineAssertion.evidence_capabilities = ["target_runtime"];
+    const externalCheck = {
+      ...structuredClone(machineCheck),
+      key: "first-result-data-advisory-check",
+      proof_surface: "data_state",
+      positive_assertions: [
+        {
+          ...structuredClone(machineAssertion),
+          key: "first-result-data-advisory-assertion",
+          evidence_capabilities: [
+            "data_state",
+            "design_conformance",
+            "target_runtime",
+            "visual_render",
+          ],
+        },
+        structuredClone(machineLiveness),
+      ],
+      negative_assertions: [],
+    };
+    outcome.acceptance.checks.push(externalCheck);
+    fixture.contract.global.acceptance.external_confirmations = [
+      {
+        key: "first-result-data-advisory",
+        description:
+          "Observe the exact first result on an advisory data surface.",
+        owner: "release-owner",
+        kind: "field_validation",
+        impact_claims: ["first.result"],
+        blocks_target: true,
+        actor: {
+          id: "fixture-product-owner",
+          role: "product acceptance owner",
+          authority_kind: "human",
+          identity_assurance: {
+            scheme: "ed25519",
+            key_id: "advisory-owner-2026",
+            public_key_ref: advisoryPublicKeyRef,
+          },
+        },
+        target_ref: "fixture-app",
+        environment_identity: "fixture-external-environment-v1",
+        scenario: structuredClone(machineCheck.scenario),
+        evidence_requirements: [
+          {
+            key: "data-result",
+            statement: "Capture the exact first result on the data surface.",
+          },
+        ],
+        obligations: [
+          {
+            key: "confirm-first-result-data-advisory",
+            claim_ref: "first.result",
+            applicability_ref: "first-root-success",
+            fact_ref: null,
+            proof_ref: null,
+            method: "exact_value",
+            proof_surface: "data_state",
+            evidence_capabilities: ["target_runtime"],
+            expected_authority_ref: "contract-claim:first.result",
+            result_kind: "actual",
+          },
+        ],
+      },
+    ];
+    await addFixtureProcessObservation(
+      fixture.root,
+      "assertion.first.first-result-data-advisory-check.first-liveness",
+    );
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+
+    const accepted = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    ).catch((error) => {
+      const receipt = JSON.parse(error.stdout);
+      assert.fail(
+        JSON.stringify({
+          workflow_status: receipt.workflow_status,
+          stage_results: receipt.stage_results,
+          findings: receipt.findings,
+          external_confirmation_results: receipt.external_confirmation_results,
+        }),
+      );
+    });
+    assert.equal(accepted.workflow_status, "machine_accepted");
+
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+      "--confirmation",
+      "first-result-data-advisory",
+    ]);
+    assert.equal(prepared.confirmations[0].obligations.length, 1);
+    assert.equal(
+      prepared.confirmations[0].obligations[0].completion_role,
+      "advisory",
+    );
+    assert.equal(
+      prepared.confirmations[0].obligations[0].acceptance_effect,
+      "none",
+    );
+    const passingRecord = await buildPassingRecord(fixture, prepared);
+    const submitted = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "first-result-data-advisory",
+      "--record",
+      await writeSubmissionRecord(
+        fixture,
+        "passing-advisory-record.json",
+        passingRecord,
+      ),
+    ]);
+    assert.equal(submitted.blocks_target, false);
+    assert.equal(submitted.state, "fulfilled");
+    assert.equal(submitted.advisory_state, "fulfilled");
+    const fulfilledAdvisory = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(fulfilledAdvisory.workflow_status, "machine_accepted");
+    assert.notEqual(fulfilledAdvisory.workflow_status, "delivery_accepted");
+
+    const invalidRecord = structuredClone(passingRecord);
+    invalidRecord.results[0].result_kind = "judgment";
+    delete invalidRecord.results[0].actual;
+    resignRecord(invalidRecord, fixture);
+    await writeFile(
+      externalConfirmationRecordPath(
+        fixture.workdir,
+        "first-result-data-advisory",
+      ),
+      `${JSON.stringify(invalidRecord, null, 2)}\n`,
+    );
+    const invalidAdvisory = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(invalidAdvisory.workflow_status, "machine_accepted");
+    assert.ok(
+      invalidAdvisory.findings.some(
+        (finding) => finding.code === "external_confirmation_advisory_invalid",
+      ),
+    );
+
+    const staleRecord = structuredClone(passingRecord);
+    staleRecord.authority_revision += 1;
+    resignRecord(staleRecord, fixture);
+    await writeFile(
+      externalConfirmationRecordPath(
+        fixture.workdir,
+        "first-result-data-advisory",
+      ),
+      `${JSON.stringify(staleRecord, null, 2)}\n`,
+    );
+    const staleAdvisory = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(staleAdvisory.workflow_status, "machine_accepted");
+    assert.ok(
+      staleAdvisory.findings.some(
+        (finding) => finding.code === "external_confirmation_advisory_stale",
+      ),
+    );
+  } finally {
+    await removeTemporary(fixture.root);
+  }
+});
+
+test("mixed advisory and blocking obligations keep blocking role at obligation granularity", async () => {
+  const fixture = await externalFixture({
+    configureExternal(currentFixture, machineCheck) {
+      const machineAssertion = machineCheck.positive_assertions.find(
+        (candidate) => candidate.key === "first-result",
+      );
+      const machineLiveness = machineCheck.positive_assertions.find(
+        (candidate) => candidate.key === "first-liveness",
+      );
+      assert.ok(machineAssertion);
+      assert.ok(machineLiveness);
+      machineAssertion.evidence_capabilities = ["target_runtime"];
+      currentFixture.contract.outcomes[0].acceptance.checks.push({
+        ...structuredClone(machineCheck),
+        key: "mixed-result-data-advisory-check",
+        proof_surface: "data_state",
+        positive_assertions: [
+          {
+            ...structuredClone(machineAssertion),
+            key: "mixed-result-data-advisory-assertion",
+            evidence_capabilities: [
+              "data_state",
+              "design_conformance",
+              "target_runtime",
+              "visual_render",
+            ],
+          },
+          structuredClone(machineLiveness),
+        ],
+        negative_assertions: [],
+      });
+      const confirmation =
+        currentFixture.contract.global.acceptance.external_confirmations[0];
+      confirmation.impact_claims.push("first.result");
+      confirmation.obligations.push({
+        key: "confirm-mixed-first-result-advisory",
+        claim_ref: "first.result",
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: "data_state",
+        evidence_capabilities: ["target_runtime"],
+        expected_authority_ref: "contract-claim:first.result",
+        result_kind: "actual",
+      });
+    },
+    async beforeCompile(currentFixture) {
+      await addFixtureProcessObservation(
+        currentFixture.root,
+        "assertion.first.mixed-result-data-advisory-check.first-liveness",
+      );
+    },
+  });
+  try {
+    const pending = await runCliFailure(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(pending.workflow_status, "blocked_external");
+    assert.equal(pending.external_confirmation_results[0].blocks_target, true);
+    assert.deepEqual(
+      pending.external_confirmation_results[0]
+        .effective_advisory_obligation_refs,
+      ["confirm-mixed-first-result-advisory"],
+    );
+    assert.equal(
+      pending.external_confirmation_results[0]
+        .effective_blocking_obligation_refs.length,
+      1,
+    );
+
+    const prepared = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "prepare",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+    ]);
+    const roles = prepared.confirmations[0].obligations
+      .map((obligation) => [
+        obligation.obligation_ref,
+        obligation.completion_role,
+        obligation.acceptance_effect,
+      ])
+      .sort((left, right) => left[0].localeCompare(right[0]));
+    assert.deepEqual(roles, [
+      ["confirm-external-acceptance", "blocking", "required"],
+      ["confirm-mixed-first-result-advisory", "advisory", "none"],
+    ]);
+    const record = await buildPassingRecord(fixture, prepared);
+    const advisoryResult = record.results.find(
+      (result) =>
+        result.obligation_ref === "confirm-mixed-first-result-advisory",
+    );
+    assert.ok(advisoryResult);
+    advisoryResult.actual = false;
+    advisoryResult.verdict = "failed";
+    resignRecord(record, fixture);
+    const submitted = await runCli(fixture.root, [
+      "long-task",
+      "external",
+      "submit",
+      fixture.workdir,
+      "--confirmation",
+      "fixture-external",
+      "--record",
+      await writeSubmissionRecord(
+        fixture,
+        "mixed-blocking-advisory-record.json",
+        record,
+      ),
+    ]);
+    assert.equal(submitted.blocks_target, true);
+    assert.equal(submitted.state, "fulfilled");
+    assert.equal(submitted.advisory_state, "failed");
+
+    const accepted = await runCli(
+      fixture.root,
+      ["long-task", "final-gate", fixture.workdir],
+      { skipCandidateCommit: true },
+    );
+    assert.equal(accepted.workflow_status, "delivery_accepted");
+    assert.ok(
+      accepted.findings.some(
+        (finding) => finding.code === "external_confirmation_advisory_failed",
+      ),
+    );
   } finally {
     await removeTemporary(fixture.root);
   }

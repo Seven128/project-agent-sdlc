@@ -46,6 +46,7 @@ export type {
   AcceptanceObligationReachabilityV1,
   AcceptanceReachabilityStatusV1,
   AcceptanceReachabilityV1,
+  EffectiveExternalObligationV1,
 } from "./lib/long-task-acceptance-reachability.js";
 export type { RepairFrontierInputV1 } from "./lib/long-task-repair-frontier.js";
 export type {

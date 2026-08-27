@@ -35,6 +35,7 @@ export interface AcceptanceReachabilityV1 {
   external_fulfillable: number;
   unreachable: number;
   obligations: AcceptanceObligationReachabilityV1[];
+  effective_external_routes: EffectiveExternalObligationV1[];
 }
 
 export interface MachineAuthorityRouteV1 {
@@ -43,14 +44,17 @@ export interface MachineAuthorityRouteV1 {
   proof_surface: ProofSurface;
   method?: string;
   required_evidence_capabilities: EvidenceCapabilityV2[];
+  semantic_identity?: string | null;
 }
 
 export interface ExternalAuthorityRouteV1 {
   confirmation_ref: string;
+  obligation_key?: string;
   proof_surface: ProofSurface;
   method?: string;
   required_evidence_capabilities?: EvidenceCapabilityV2[];
   advisory_to_machine?: boolean;
+  semantic_identity?: string | null;
 }
 
 export interface ObligationAuthorityCandidatesV1 {
@@ -73,6 +77,22 @@ export interface ExpectedExternalObligation {
   evidence_capabilities: EvidenceCapabilityV2[];
   expected_authority_ref: string;
   confirmation_ref: string;
+  required_polarity: "positive" | "negative";
+  completion_role: "blocking" | "advisory";
+  acceptance_effect: "required" | "none";
+  semantic_identity: string | null;
+  machine_obligation_ref: string | null;
+}
+
+export interface EffectiveExternalObligationV1 extends AcceptanceObligationReachabilityV1 {
+  local_claim_ref: string;
+  target_ref: string;
+  expected_authority_ref: string;
+  required_polarity: "positive" | "negative";
+  completion_role: "blocking" | "advisory";
+  acceptance_effect: "required" | "none";
+  semantic_identity: string;
+  machine_obligation_ref: string | null;
 }
 
 export interface AcceptanceReachabilityInputV1 {

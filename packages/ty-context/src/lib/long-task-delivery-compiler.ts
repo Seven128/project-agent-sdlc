@@ -148,26 +148,25 @@ export async function compileDeliveryContract(
       source_hashes: sourceHashes,
       context_snapshot: context,
     });
-  authorityHashes.acceptance_authority_hash = sha256Hex(
-    canonicalValueJson({
-      declared: authorityHashes.acceptance_authority_hash,
-      claim_coverage: claims.summary,
-      frozen_checks: allChecks.map((check) => ({
-        internal_id: check.internal_id,
-        runner_definition: check.runner.definition_sha256,
-        resolved_cwd: check.runner.resolved_cwd,
-        resolved_target: check.runner.resolved_target,
-        package_script: check.runner.package_script,
-        verification_inputs: check.verification_input_hashes,
-        raw_execution_identity: check.raw_execution_identity,
-        evidence_adapter: check.evidence_adapter,
-        observation_authorities: check.observation_authorities,
-        process_runtime_closure: check.process_runtime_closure,
-        completion_role: check.completion_role,
-        expected_authority_refs: check.expected_authority_refs,
-        required_evidence_capabilities: check.required_evidence_capabilities,
-      })),
-    }),
+  authorityHashes.acceptance_authority_hash = compiledAcceptanceAuthorityHash(
+    authorityHashes.acceptance_authority_hash,
+    claims.summary,
+    validation.acceptance_reachability!,
+    allChecks.map((check) => ({
+      internal_id: check.internal_id,
+      runner_definition: check.runner.definition_sha256,
+      resolved_cwd: check.runner.resolved_cwd,
+      resolved_target: check.runner.resolved_target,
+      package_script: check.runner.package_script,
+      verification_inputs: check.verification_input_hashes,
+      raw_execution_identity: check.raw_execution_identity,
+      evidence_adapter: check.evidence_adapter,
+      observation_authorities: check.observation_authorities,
+      process_runtime_closure: check.process_runtime_closure,
+      completion_role: check.completion_role,
+      expected_authority_refs: check.expected_authority_refs,
+      required_evidence_capabilities: check.required_evidence_capabilities,
+    })),
   );
 
   let authorityRevision =
@@ -258,4 +257,20 @@ export async function compileDeliveryContract(
     ...unsigned,
     compiled_identity: sha256Hex(canonicalValueJson(unsigned)),
   };
+}
+
+export function compiledAcceptanceAuthorityHash(
+  declaredHash: string,
+  claimCoverage: unknown,
+  acceptanceReachability: unknown,
+  frozenChecks: unknown,
+): string {
+  return sha256Hex(
+    canonicalValueJson({
+      declared: declaredHash,
+      claim_coverage: claimCoverage,
+      acceptance_reachability: acceptanceReachability,
+      frozen_checks: frozenChecks,
+    }),
+  );
 }

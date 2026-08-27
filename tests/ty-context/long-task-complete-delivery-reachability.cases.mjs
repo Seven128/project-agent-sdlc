@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compileAcceptanceReachability } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability.js";
+import { compiledAcceptanceAuthorityHash } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
+import { objectiveClaimSemanticIdentity } from "../../packages/ty-context/dist/lib/long-task-obligation-semantic-identity.js";
+import { resolveObligationAuthority } from "../../packages/ty-context/dist/lib/long-task-obligation-authority-resolution.js";
 import { validateLongTaskProofAdequacy } from "../../packages/ty-context/dist/lib/long-task-proof-adequacy.js";
 import { validateSourceSemanticConservation } from "../../packages/ty-context/dist/lib/long-task-source-conservation.js";
 import {
@@ -83,6 +86,566 @@ function sourceClaimTargets(disposition, claimRef) {
     return disposition.refs.includes(claimRef);
   return disposition.type === "outcome_result" && disposition.ref === claimRef;
 }
+
+function compiledExactClaimAuthority({
+  assertionRef,
+  authority,
+  obligationRef,
+  proofSurface,
+  expected = true,
+  actualProjection = "raw_exact",
+  comparator = "exact_value",
+  mode = "exact",
+  parametersSha256 = "a".repeat(64),
+  toleranceSha256 = null,
+  maskSha256 = null,
+}) {
+  const expectedValueSha256 = digestCanonical(expected);
+  const comparison = {
+    comparator,
+    mode,
+    parameters_sha256: parametersSha256,
+    tolerance_sha256: toleranceSha256,
+    mask_sha256: maskSha256,
+  };
+  return {
+    obligation_ref: obligationRef,
+    fact_ref: null,
+    assertion_ref: assertionRef,
+    claim_refs: ["result"],
+    target_ref: "fixture-app",
+    proof_surface: proofSurface,
+    method: "exact_value",
+    evidence_capabilities: ["target_runtime"],
+    authority,
+    expected_identity: digestCanonical({
+      obligation_ref: obligationRef,
+      expected_value_sha256: expectedValueSha256,
+      actual_projection: actualProjection,
+      comparison,
+    }),
+    expected_value_sha256: expectedValueSha256,
+    expected_value: expected,
+    actual_projection: actualProjection,
+    observation_identity: obligationRef,
+    comparison,
+    locator_policy: {
+      kind: "fixed_json_pointer",
+      value: `/observations/${assertionRef}`,
+    },
+    carrier_refs: [],
+    runtime_requirements: {
+      runtime_family: "process",
+      target_role: "product",
+      entrypoint: "root",
+      runner_type: "project_binary",
+      resolved_runner_target: "bin/product.mjs",
+      declared_root_entrypoint: "bin/product.mjs",
+      resolved_runner_argv: [],
+      declared_root_argv: [],
+      effect: "read_only",
+      direct_root_match: authority !== "external_confirmation",
+    },
+  };
+}
+
+function optionalExactCrossSurfaceFixture() {
+  const contract = deliveryContract();
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const baseCheck = contract.outcomes[0].acceptance.checks[0];
+  const resultAssertion = baseCheck.positive_assertions.find(
+    (row) => row.key === "first-result",
+  );
+  assert.ok(resultAssertion);
+  resultAssertion.claims = [];
+  delete resultAssertion.applicability_ref;
+  const machineCheck = {
+    ...structuredClone(baseCheck),
+    key: "exact-machine-result-runtime",
+    proof_surface: "runtime_behavior",
+    positive_assertions: [
+      {
+        ...structuredClone(resultAssertion),
+        key: "exact-machine-result-runtime-assertion",
+        claims: ["result"],
+        applicability_ref: "first-root-success",
+      },
+    ],
+    negative_assertions: [],
+  };
+  contract.outcomes[0].acceptance.checks.push(machineCheck);
+  const confirmation = {
+    key: "exact-external-result-ui",
+    description: "Confirm the same exact result through the UI surface.",
+    owner: "release-owner",
+    kind: "field_validation",
+    impact_claims: ["first.result"],
+    blocks_target: true,
+    actor: {
+      id: "fixture-product-owner",
+      role: "product acceptance owner",
+      authority_kind: "human",
+    },
+    target_ref: "fixture-app",
+    environment_identity: "fixture-external-environment-v1",
+    scenario: structuredClone(baseCheck.scenario),
+    evidence_requirements: [
+      { key: "ui-result", statement: "Observe the exact result in the UI." },
+    ],
+    obligations: [
+      {
+        key: "confirm-exact-first-result-ui",
+        claim_ref: "first.result",
+        applicability_ref: "first-root-success",
+        fact_ref: null,
+        proof_ref: null,
+        method: "exact_value",
+        proof_surface: "ui_browser",
+        evidence_capabilities: ["target_runtime"],
+        expected_authority_ref: "contract-claim:first.result",
+        result_kind: "actual",
+      },
+    ],
+  };
+  contract.global.acceptance.external_confirmations = [confirmation];
+  const machineAuthority = compiledExactClaimAuthority({
+    assertionRef: "exact-machine-result-runtime-assertion",
+    authority: "package_process_json_exact",
+    obligationRef: "claim:first.result:first-root-success:runtime_behavior",
+    proofSurface: "runtime_behavior",
+  });
+  const externalAuthority = compiledExactClaimAuthority({
+    assertionRef: "exact-external-result-ui-assertion",
+    authority: "external_confirmation",
+    obligationRef: "claim:first.result:first-root-success:ui_browser",
+    proofSurface: "ui_browser",
+  });
+  const compiledChecks = [
+    {
+      key: machineCheck.key,
+      outcome_key: "first",
+      proof_surface: "runtime_behavior",
+      completion_role: "semantic",
+      observation_authorities: [machineAuthority],
+      required_evidence_capabilities: {
+        "exact-machine-result-runtime-assertion": ["target_runtime"],
+      },
+    },
+    {
+      key: "exact-external-result-ui-check",
+      outcome_key: "first",
+      proof_surface: "ui_browser",
+      completion_role: "semantic",
+      observation_authorities: [externalAuthority],
+      required_evidence_capabilities: {
+        "exact-external-result-ui-assertion": ["target_runtime"],
+      },
+    },
+  ];
+  return {
+    contract,
+    confirmation,
+    machineAuthority,
+    externalAuthority,
+    compiledChecks,
+  };
+}
+
+function optionalExactCrossSurfaceReachability(mutate) {
+  const fixture = optionalExactCrossSurfaceFixture();
+  mutate?.(fixture);
+  return compileAcceptanceReachability({
+    contract: fixture.contract,
+    claims: compileProductClaimCoverage(fixture.contract, {
+      allow_uncovered: true,
+    }),
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: fixture.compiledChecks,
+  });
+}
+
+for (const scenario of [
+  {
+    name: "actual projections",
+    mutate({ externalAuthority }) {
+      externalAuthority.actual_projection = "truthy_boolean";
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "comparators",
+    mutate({ externalAuthority }) {
+      externalAuthority.comparison.comparator = "different_exact";
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "comparator modes",
+    mutate({ externalAuthority }) {
+      externalAuthority.comparison.mode = "tolerance";
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "comparator parameters",
+    mutate({ externalAuthority }) {
+      externalAuthority.comparison.parameters_sha256 = "b".repeat(64);
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "comparator tolerances",
+    mutate({ externalAuthority }) {
+      externalAuthority.comparison.tolerance_sha256 = "c".repeat(64);
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "comparator masks",
+    mutate({ externalAuthority }) {
+      externalAuthority.comparison.mask_sha256 = "d".repeat(64);
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "targets",
+    mutate({ externalAuthority }) {
+      externalAuthority.target_ref = "different-target";
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "methods",
+    mutate({ confirmation, externalAuthority }) {
+      confirmation.obligations[0].method = "durable_roundtrip";
+      externalAuthority.method = "durable_roundtrip";
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "required evidence capabilities",
+    mutate({ confirmation, externalAuthority }) {
+      confirmation.obligations[0].evidence_capabilities = [
+        "data_state",
+        "target_runtime",
+      ];
+      externalAuthority.evidence_capabilities = [
+        "data_state",
+        "target_runtime",
+      ];
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+  {
+    name: "Expected authority owners",
+    mutate({ confirmation }) {
+      confirmation.obligations[0].expected_authority_ref =
+        "contract-claim:other-owner";
+    },
+    reason: "machine_external_authority_conflict",
+  },
+  {
+    name: "applicability sessions",
+    mutate({ confirmation }) {
+      confirmation.scenario.given[0].key = "different-given";
+    },
+    reason: "machine_external_authority_conflict",
+  },
+  {
+    name: "missing compiled Expected/comparator authorities",
+    mutate({ compiledChecks }) {
+      compiledChecks[1].observation_authorities = [];
+    },
+    reason: "proof_surface_authority_ambiguous",
+  },
+])
+  test(`optional cross-surface routes with different ${scenario.name} cannot become advisory`, () => {
+    const result = optionalExactCrossSurfaceReachability(
+      scenario.mutate,
+    ).obligations.find((row) => row.claim_ref === "first.result");
+    assert.ok(result);
+    assert.equal(result.status, "unreachable");
+    assert.equal(result.reason, scenario.reason);
+  });
+
+test("optional cross-surface canonical identity includes required polarity", () => {
+  const fixture = optionalExactCrossSurfaceFixture();
+  const common = {
+    contract: fixture.contract,
+    outcome_key: "first",
+    claim_ref: "first.result",
+    local_claim_ref: "result",
+    applicability_ref: "first-root-success",
+    expected_authority_ref: "contract-claim:first.result",
+    method: "exact_value",
+    required_evidence_capabilities: ["target_runtime"],
+  };
+  const positive = objectiveClaimSemanticIdentity({
+    ...common,
+    required_polarity: "positive",
+    observation_authority: fixture.machineAuthority,
+  });
+  const negative = objectiveClaimSemanticIdentity({
+    ...common,
+    required_polarity: "negative",
+    observation_authority: fixture.externalAuthority,
+  });
+  assert.ok(positive);
+  assert.ok(negative);
+  assert.notEqual(positive, negative);
+  assert.equal(
+    resolveObligationAuthority({
+      source_obligation_ref: "claim:first.result",
+      proof_surface_selection: "optional",
+      machine_candidates: [
+        {
+          check_key: "machine",
+          assertion_key: "machine-assertion",
+          proof_surface: "runtime_behavior",
+          required_evidence_capabilities: ["target_runtime"],
+          semantic_identity: positive,
+        },
+      ],
+      external_candidates: [
+        {
+          confirmation_ref: "external",
+          proof_surface: "ui_browser",
+          required_evidence_capabilities: ["target_runtime"],
+          advisory_to_machine: true,
+          semantic_identity: negative,
+        },
+      ],
+    }).reason,
+    "proof_surface_authority_ambiguous",
+  );
+});
+
+test("optional cross-surface canonical identity includes exact applicability", () => {
+  const fixture = optionalExactCrossSurfaceFixture();
+  const otherApplicability = structuredClone(
+    fixture.contract.outcomes[0].applicability[0],
+  );
+  otherApplicability.key = "first-other-applicability";
+  otherApplicability.dimensions = [
+    { key: "fixture-state", value: "different" },
+  ];
+  fixture.contract.outcomes[0].applicability.push(otherApplicability);
+  const common = {
+    contract: fixture.contract,
+    outcome_key: "first",
+    claim_ref: "first.result",
+    local_claim_ref: "result",
+    required_polarity: "positive",
+    expected_authority_ref: "contract-claim:first.result",
+    method: "exact_value",
+    required_evidence_capabilities: ["target_runtime"],
+  };
+  const primary = objectiveClaimSemanticIdentity({
+    ...common,
+    applicability_ref: "first-root-success",
+    observation_authority: fixture.machineAuthority,
+  });
+  const other = objectiveClaimSemanticIdentity({
+    ...common,
+    applicability_ref: otherApplicability.key,
+    observation_authority: fixture.externalAuthority,
+  });
+  assert.ok(primary);
+  assert.ok(other);
+  assert.notEqual(primary, other);
+});
+
+test("effective External completion role changes the existing Acceptance Authority identity", () => {
+  const reachability = optionalExactCrossSurfaceReachability();
+  assert.equal(reachability.effective_external_routes.length, 1);
+  assert.equal(
+    reachability.effective_external_routes[0].completion_role,
+    "advisory",
+  );
+  const changed = structuredClone(reachability);
+  changed.effective_external_routes[0].completion_role = "blocking";
+  changed.effective_external_routes[0].acceptance_effect = "required";
+  const declared = "a".repeat(64);
+  assert.notEqual(
+    compiledAcceptanceAuthorityHash(declared, {}, reachability, []),
+    compiledAcceptanceAuthorityHash(declared, {}, changed, []),
+  );
+});
+
+test("Design Fact reachability retains its exact obligation identity and rejects Judgment", () => {
+  const contract = deliveryContract();
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const outcome = contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  const assertion = check.positive_assertions.find(
+    (candidate) => candidate.key === "first-result",
+  );
+  assert.ok(assertion);
+  const targetKey = "fixture-design-target";
+  const conditionKey = "fixture-design-condition";
+  const factRef = "fixture.design.fact";
+  const sourceObligationRef = `design.${targetKey}.layout_geometry.${conditionKey}.${factRef}`;
+  const expectedValue = { width: 320 };
+  const parameters = { comparator: "exact_value" };
+  const located = (value, materialRef, pointer) => ({
+    representation: "inline",
+    locator: {
+      material_ref: materialRef,
+      kind: "manifest_pointer",
+      value: pointer,
+    },
+    sha256: digestCanonical(value),
+    value,
+  });
+  outcome.product.surface_bindings.push({
+    design_targets: [
+      {
+        key: targetKey,
+        conformance_check_ref: check.key,
+        verification_method_bindings: [
+          {
+            method: "layout_geometry",
+            assertion_ref: assertion.key,
+            evidence_artifacts: [
+              {
+                condition_key: conditionKey,
+                fact_expectations: [
+                  {
+                    fact_ref: factRef,
+                    subject_ref: "fixture.design.subject",
+                    variation_ref: "fixture.design.variation",
+                    property_ref: "fixture.design.property",
+                    observation_sensitivity: "plain",
+                    expected: located(
+                      expectedValue,
+                      "fixture.design.manifest",
+                      "/facts/0/expected",
+                    ),
+                    comparison: {
+                      comparator: "exact_value",
+                      mode: "exact",
+                      parameters: located(
+                        parameters,
+                        "fixture.design.manifest",
+                        "/proofs/0/comparison/parameters",
+                      ),
+                      tolerance: null,
+                      mask: null,
+                    },
+                    oracle: {
+                      key: "fixture-design-oracle",
+                      trust: "named_external_tcb",
+                      identity: "fixture-design-oracle-v1",
+                      version: "1",
+                      sha256: null,
+                    },
+                    environment: {
+                      key: "fixture-design-environment",
+                      identity: "fixture-design-environment-v1",
+                      definition: located(
+                        { viewport: "320x640" },
+                        "fixture.design.manifest",
+                        "/environments/0/definition",
+                      ),
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  const designObligation = {
+    key: "confirm-fixture-design-fact",
+    claim_ref: "first.result",
+    applicability_ref: "first-root-success",
+    fact_ref: factRef,
+    proof_ref: sourceObligationRef,
+    method: "layout_geometry",
+    proof_surface: check.proof_surface,
+    evidence_capabilities: [...assertion.evidence_capabilities],
+    expected_authority_ref: `design-proof:${sourceObligationRef}`,
+    result_kind: "actual",
+  };
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "confirm-fixture-design",
+      description: "Confirm the exact fixture Design Fact Actual.",
+      owner: "fixture-design-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+      actor: {
+        id: "fixture-design-owner",
+        role: "design acceptance owner",
+        authority_kind: "expert",
+        identity_assurance: {
+          scheme: "ed25519",
+          key_id: "fixture-design-owner-2026",
+          public_key_ref:
+            "project_context/authorities/fixture-design-owner.pub",
+        },
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-design-environment-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        {
+          key: "fixture-design-evidence",
+          statement: "Observe the exact fixture Design Fact.",
+        },
+      ],
+      obligations: [designObligation],
+    },
+  ];
+  const compile = (candidate) =>
+    compileAcceptanceReachability({
+      contract: candidate,
+      claims: compileProductClaimCoverage(candidate, { allow_uncovered: true }),
+      manifest: fixtureSemanticManifest(),
+      compiled_checks: [],
+    });
+  const reachability = compile(contract);
+  const designRow = reachability.obligations.find(
+    (row) => row.source_obligation_ref === sourceObligationRef,
+  );
+  assert.ok(designRow);
+  assert.equal(designRow.status, "external_fulfillable");
+  assert.equal(designRow.fact_ref, factRef);
+  assert.equal(designRow.proof_ref, sourceObligationRef);
+  const effective = reachability.effective_external_routes.find(
+    (row) => row.source_obligation_ref === sourceObligationRef,
+  );
+  assert.ok(effective);
+  assert.equal(effective.completion_role, "blocking");
+  assert.equal(effective.acceptance_effect, "required");
+  assert.match(effective.semantic_identity, /^[a-f0-9]{64}$/u);
+
+  const judgmentLaundering = structuredClone(contract);
+  const judgmentObligation =
+    judgmentLaundering.global.acceptance.external_confirmations[0]
+      .obligations[0];
+  judgmentObligation.result_kind = "judgment";
+  judgmentObligation.judgment_basis = {
+    kind: "expert_assessment",
+    source_ref: "fixture-design-source",
+  };
+  const rejected = compile(judgmentLaundering);
+  assert.equal(
+    rejected.effective_external_routes.some(
+      (row) => row.source_obligation_ref === sourceObligationRef,
+    ),
+    false,
+  );
+  assert.equal(
+    rejected.obligations.find(
+      (row) => row.source_obligation_ref === sourceObligationRef,
+    )?.status,
+    "unreachable",
+  );
+});
 
 test("an admitted machine route cannot be overridden by a blocking external route", () => {
   const contract = deliveryContract();
@@ -468,17 +1031,36 @@ test("an optional equivalent External surface is advisory when one Machine route
     {
       key: machineCheck.key,
       outcome_key: "first",
+      proof_surface: "runtime_behavior",
       completion_role: "semantic",
       observation_authorities: [
-        {
-          assertion_ref: "machine-result-runtime-assertion",
-          claim_refs: ["result"],
-          obligation_ref: "claim:first.result",
+        compiledExactClaimAuthority({
+          assertionRef: "machine-result-runtime-assertion",
           authority: "package_process_json_exact",
-        },
+          obligationRef:
+            "claim:first.result:first-root-success:runtime_behavior",
+          proofSurface: "runtime_behavior",
+        }),
       ],
       required_evidence_capabilities: {
         "machine-result-runtime-assertion": ["target_runtime"],
+      },
+    },
+    {
+      key: "external-result-ui-check",
+      outcome_key: "first",
+      proof_surface: "ui_browser",
+      completion_role: "semantic",
+      observation_authorities: [
+        compiledExactClaimAuthority({
+          assertionRef: "external-result-ui-assertion",
+          authority: "external_confirmation",
+          obligationRef: "claim:first.result:first-root-success:ui_browser",
+          proofSurface: "ui_browser",
+        }),
+      ],
+      required_evidence_capabilities: {
+        "external-result-ui-assertion": ["target_runtime"],
       },
     },
   ];
@@ -606,6 +1188,122 @@ test("an optional equivalent External surface is advisory when one Machine route
       `${label} mismatch must retain its blocking declaration`,
     );
   }
+});
+
+test("optional cross-surface routes with different Expected are ambiguous", () => {
+  const contract = deliveryContract();
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  const check = contract.outcomes[0].acceptance.checks[0];
+  const resultAssertion = check.positive_assertions.find(
+    (row) => row.key === "first-result",
+  );
+  resultAssertion.claims = [];
+  delete resultAssertion.applicability_ref;
+  const machineCheck = {
+    ...structuredClone(check),
+    key: "different-expected-machine-result-runtime",
+    proof_surface: "runtime_behavior",
+    positive_assertions: [
+      {
+        ...structuredClone(resultAssertion),
+        key: "different-expected-machine-assertion",
+        claims: ["result"],
+        applicability_ref: "first-root-success",
+        expected: true,
+      },
+    ],
+    negative_assertions: [],
+  };
+  contract.outcomes[0].acceptance.checks.push(machineCheck);
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "different-expected-external-result-ui",
+      description:
+        "Observe the same Claim on another surface with the opposite Expected.",
+      owner: "release-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+      actor: {
+        id: "fixture-product-owner",
+        role: "product acceptance owner",
+        authority_kind: "human",
+      },
+      target_ref: "fixture-app",
+      environment_identity: "fixture-external-environment-v1",
+      scenario: structuredClone(check.scenario),
+      evidence_requirements: [
+        {
+          key: "different-expected-ui-result",
+          statement: "Observe the exact UI result.",
+        },
+      ],
+      obligations: [
+        {
+          key: "confirm-different-expected-first-result-ui",
+          claim_ref: "first.result",
+          applicability_ref: "first-root-success",
+          fact_ref: null,
+          proof_ref: null,
+          method: "exact_value",
+          proof_surface: "ui_browser",
+          evidence_capabilities: ["target_runtime"],
+          expected_authority_ref: "contract-claim:first.result",
+          result_kind: "actual",
+        },
+      ],
+    },
+  ];
+  const reachability = compileAcceptanceReachability({
+    contract,
+    claims: compileProductClaimCoverage(contract, { allow_uncovered: true }),
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: [
+      {
+        key: machineCheck.key,
+        outcome_key: "first",
+        proof_surface: "runtime_behavior",
+        completion_role: "semantic",
+        observation_authorities: [
+          compiledExactClaimAuthority({
+            assertionRef: "different-expected-machine-assertion",
+            authority: "package_process_json_exact",
+            obligationRef:
+              "claim:first.result:first-root-success:runtime_behavior",
+            proofSurface: "runtime_behavior",
+            expected: true,
+          }),
+        ],
+        required_evidence_capabilities: {
+          "different-expected-machine-assertion": ["target_runtime"],
+        },
+      },
+      {
+        key: "different-expected-external-ui-check",
+        outcome_key: "first",
+        proof_surface: "ui_browser",
+        completion_role: "semantic",
+        observation_authorities: [
+          compiledExactClaimAuthority({
+            assertionRef: "different-expected-external-ui-assertion",
+            authority: "external_confirmation",
+            obligationRef: "claim:first.result:first-root-success:ui_browser",
+            proofSurface: "ui_browser",
+            expected: false,
+          }),
+        ],
+        required_evidence_capabilities: {
+          "different-expected-external-ui-assertion": ["target_runtime"],
+        },
+      },
+    ],
+  });
+  const result = reachability.obligations.find(
+    (row) => row.claim_ref === "first.result",
+  );
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "proof_surface_authority_ambiguous");
 });
 
 test("non-equivalent optional proof surfaces fail closed as proof-surface ambiguous", () => {
@@ -1088,6 +1786,14 @@ test("blocking external confirmation uses whole-candidate identity", () => {
           outcome_key: "first",
         },
       ],
+      effective_external_routes: [
+        {
+          status: "external_fulfillable",
+          confirmation_ref: "confirm-first",
+          outcome_key: "first",
+          completion_role: "blocking",
+        },
+      ],
     },
     outcomes: [
       {
@@ -1166,6 +1872,14 @@ test("non-blocking advisory identity can retain bounded-path diagnostics", () =>
           status: "external_fulfillable",
           confirmation_ref: "confirm-first",
           outcome_key: "first",
+        },
+      ],
+      effective_external_routes: [
+        {
+          status: "external_fulfillable",
+          confirmation_ref: "confirm-first",
+          outcome_key: "first",
+          completion_role: "advisory",
         },
       ],
     },

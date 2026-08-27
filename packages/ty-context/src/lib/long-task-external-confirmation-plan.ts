@@ -18,7 +18,7 @@ import {
   externalConfirmationSubmissionEnvelopeIssues,
 } from "./long-task-external-confirmation-evaluation.js";
 import {
-  externalRows,
+  allEffectiveExternalRows,
   requiredConfirmation,
 } from "./long-task-external-confirmation-identity.js";
 import {
@@ -268,7 +268,7 @@ export async function evaluateExternalConfirmations(
       continue;
     }
     if (!stored.record) {
-      const exactRows = externalRows(compiled, confirmation.key);
+      const exactRows = allEffectiveExternalRows(compiled, confirmation.key);
       results.push(
         exactRows.length || !confirmation.blocks_target
           ? await emptyExternalConfirmationEvaluation(

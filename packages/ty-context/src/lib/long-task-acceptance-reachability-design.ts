@@ -79,6 +79,11 @@ export function compileDesignFactReachability(
         evidence_capabilities: descriptor.evidence_capabilities,
         expected_authority_ref: descriptor.expected_authority_ref,
         confirmation_ref: resolution.external.confirmation_ref,
+        required_polarity: "positive",
+        completion_role: "blocking",
+        acceptance_effect: "required",
+        semantic_identity: null,
+        machine_obligation_ref: null,
       };
       external.push(expected);
       rows.push(

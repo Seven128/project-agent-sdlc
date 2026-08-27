@@ -1,4 +1,4 @@
-import type { AcceptanceObligationReachabilityV1 } from "./long-task-acceptance-reachability.js";
+import type { EffectiveExternalObligationV1 } from "./long-task-acceptance-reachability-types.js";
 import type { ExternalConfirmationV2 } from "./long-task-delivery-types.js";
 import type { ExternalAuthorityContextV1 } from "./long-task-external-confirmation-context.js";
 import {
@@ -8,8 +8,8 @@ import {
 import { readOrCreateExternalConfirmationChallenge } from "./long-task-external-confirmation-challenge.js";
 import { expectedForExternalObligation } from "./long-task-external-confirmation-expected.js";
 import {
+  allEffectiveExternalRows,
   deriveRelevantExternalInputIdentity,
-  externalRows,
   requiredConfirmation,
 } from "./long-task-external-confirmation-identity.js";
 import type {
@@ -29,7 +29,7 @@ export async function externalFulfillableConfirmations(
     context.compiled.global.acceptance.external_confirmations.filter(
       (confirmation) =>
         (!confirmationRef || confirmation.key === confirmationRef) &&
-        externalRows(context.compiled, confirmation.key).length > 0,
+        allEffectiveExternalRows(context.compiled, confirmation.key).length > 0,
     );
   const selected = (
     await Promise.all(
@@ -116,7 +116,10 @@ async function prepareConfirmation(
     confirmation.key,
     context.manifest,
   );
-  const obligations = externalRows(context.compiled, confirmation.key)
+  const obligations = allEffectiveExternalRows(
+    context.compiled,
+    confirmation.key,
+  )
     .map((row) => prepareObligation(context, confirmation, row))
     .sort((left, right) =>
       left.obligation_ref.localeCompare(right.obligation_ref),
@@ -160,7 +163,7 @@ async function prepareConfirmation(
 function prepareObligation(
   context: ExternalAuthorityContextV1,
   confirmation: ExternalConfirmationV2,
-  row: AcceptanceObligationReachabilityV1,
+  row: EffectiveExternalObligationV1,
 ): ExternalConfirmationPreparationObligationV1 {
   const declaration = confirmation.obligations!.find(
     (obligation) => obligation.key === row.obligation_ref,

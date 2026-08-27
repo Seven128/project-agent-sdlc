@@ -34,7 +34,7 @@ export function claimObligationRef(
   return `claim:${fullClaim}:${applicabilityRef}:${surface}`;
 }
 
-export function advisoryExternalRouteRef(
+export function effectiveExternalRouteRef(
   confirmationRef: string,
   sourceObligationRef: string,
 ): string {
@@ -60,6 +60,28 @@ export function machineProofAdmitted(
         authority.authority !== "external_confirmation",
     ),
   );
+}
+
+export function objectiveMachineClaimActualAuthority(
+  checks: readonly CompiledCheckV2[],
+  outcomeKey: string | null,
+  checkKey: string,
+  assertionKey: string,
+  localClaim: string,
+): CompiledObservationAuthorityV2 | null {
+  const check = checks.find(
+    (item) => item.outcome_key === outcomeKey && item.key === checkKey,
+  );
+  if (check?.completion_role !== "semantic") return null;
+  const candidates = check.observation_authorities.filter(
+    (authority) =>
+      authority.assertion_ref === assertionKey &&
+      authority.authority !== "external_confirmation" &&
+      authority.fact_ref === null &&
+      authority.claim_refs.length === 1 &&
+      authority.claim_refs[0] === localClaim,
+  );
+  return candidates.length === 1 ? candidates[0] : null;
 }
 
 export function pendingExternalRow(

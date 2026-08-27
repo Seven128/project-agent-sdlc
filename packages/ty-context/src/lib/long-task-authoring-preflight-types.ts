@@ -87,6 +87,7 @@ export function emptyPreflightResult(
       external_fulfillable: 0,
       unreachable: 0,
       obligations: [],
+      effective_external_routes: [],
     },
     revision_preview: {
       active: false,

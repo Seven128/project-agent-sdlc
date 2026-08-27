@@ -3,8 +3,7 @@ import type { CompiledCheckV2 } from "./long-task-delivery-types.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 import {
-  advisoryExternalRouteRef,
-  claimObligationRef,
+  effectiveExternalRouteRef,
   externalConfirmationSessionMatchesApplicability,
   objectiveExternalActualAdmitted,
   sameSet,
@@ -27,12 +26,15 @@ export function validateExternalDeclarations(
   >();
   for (const confirmation of contract.global.acceptance
     .external_confirmations) {
-    if (!confirmation.blocks_target) continue;
     const expectedRows = expected.filter(
       (row) => row.confirmation_ref === confirmation.key,
     );
+    if (!expectedRows.length) continue;
     const obligations = confirmation.obligations ?? [];
-    if (!confirmationShapeComplete(confirmation, obligations.length)) continue;
+    if (
+      !confirmationShapeComplete(confirmation, obligations.length, expectedRows)
+    )
+      continue;
     if (!confirmationSetsMatch(confirmation, obligations, expectedRows))
       continue;
     const matched = matchConfirmationRows(
@@ -55,10 +57,16 @@ export function validateExternalDeclarations(
       }),
     );
     for (const match of matched)
-      result.set(match.source_obligation_ref, {
-        obligation_key: match.obligation_key,
-        session_group: sessionGroup,
-      });
+      result.set(
+        effectiveExternalRouteRef(
+          confirmation.key,
+          match.source_obligation_ref,
+        ),
+        {
+          obligation_key: match.obligation_key,
+          session_group: sessionGroup,
+        },
+      );
   }
   return result;
 }
@@ -67,14 +75,12 @@ export function addUnboundBlockingConfirmationRows(
   contract: DeliveryContractV2,
   rows: AcceptanceObligationReachabilityV1[],
   expected: ExpectedExternalObligation[],
-  advisoryExternalRouteRefs: ReadonlySet<string>,
 ): void {
   for (const confirmation of contract.global.acceptance
     .external_confirmations) {
     if (
       !confirmation.blocks_target ||
-      expected.some((row) => row.confirmation_ref === confirmation.key) ||
-      confirmationEntirelyAdvisory(confirmation, advisoryExternalRouteRefs)
+      confirmationFullyProjected(confirmation, expected)
     )
       continue;
     const claimRef = confirmation.impact_claims[0] ?? "GLOBAL.unbound";
@@ -103,39 +109,37 @@ export function addUnboundBlockingConfirmationRows(
   }
 }
 
-function confirmationEntirelyAdvisory(
+function confirmationFullyProjected(
   confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
-  advisoryExternalRouteRefs: ReadonlySet<string>,
+  expected: ExpectedExternalObligation[],
 ): boolean {
   const obligations = confirmation.obligations ?? [];
   if (!obligations.length) return false;
-  const sourceObligationRefs = obligations.map((obligation) =>
-    claimObligationRef(
-      obligation.claim_ref,
-      obligation.applicability_ref,
-      obligation.proof_surface,
-    ),
+  const expectedRows = expected.filter(
+    (row) => row.confirmation_ref === confirmation.key,
   );
   return (
-    new Set(sourceObligationRefs).size === obligations.length &&
+    expectedRows.length === obligations.length &&
+    new Set(obligations.map((obligation) => obligation.key)).size ===
+      obligations.length &&
     sameSet(confirmation.impact_claims, [
       ...new Set(obligations.map((obligation) => obligation.claim_ref)),
-    ]) &&
-    sourceObligationRefs.every((ref) =>
-      advisoryExternalRouteRefs.has(
-        advisoryExternalRouteRef(confirmation.key, ref),
-      ),
-    )
+    ])
   );
 }
 
 function confirmationShapeComplete(
   confirmation: DeliveryContractV2["global"]["acceptance"]["external_confirmations"][number],
   obligationCount: number,
+  expectedRows: ExpectedExternalObligation[],
 ): boolean {
+  const requiresBlockingAssurance = expectedRows.some(
+    (row) => row.completion_role === "blocking",
+  );
   return Boolean(
     confirmation.actor &&
-    confirmation.actor.identity_assurance?.scheme === "ed25519" &&
+    (!requiresBlockingAssurance ||
+      confirmation.actor.identity_assurance?.scheme === "ed25519") &&
     confirmation.target_ref &&
     confirmation.environment_identity &&
     confirmation.scenario?.given.length &&

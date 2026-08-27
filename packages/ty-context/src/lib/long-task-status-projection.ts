@@ -9,6 +9,7 @@ import type {
   ExternalConfirmationEvaluationV1,
 } from "./long-task-delivery-types.js";
 import { progressRecordFresh } from "./long-task-progress.js";
+import { blockingExternalRows } from "./long-task-external-confirmation-identity.js";
 
 interface StatusProjectionInputV2 {
   compiled: CompiledDeliveryContractV2;
@@ -78,11 +79,11 @@ function projectOutcomes(
   const outcomes: Record<string, OutcomeStatusV2> = {};
   for (const outcome of input.compiled.outcomes) {
     const external = input.externalConfirmations.filter(
-      (confirmation) =>
-        confirmation.blocks_target &&
+      (evaluation) =>
+        evaluation.blocks_target &&
         externalConfirmationImpactsOutcome(
           input.compiled,
-          confirmation,
+          evaluation,
           outcome.key,
         ),
     );
@@ -102,12 +103,11 @@ function projectOutcomes(
     outcomes[outcome.key] =
       states.includes("progress_failing") ||
       external.some(
-        (confirmation) =>
-          confirmation.state !== "fulfilled" &&
-          confirmation.state !== "pending",
+        (evaluation) =>
+          evaluation.state !== "fulfilled" && evaluation.state !== "pending",
       )
         ? "progress_failing"
-        : external.some((confirmation) => confirmation.state === "pending") ||
+        : external.some((evaluation) => evaluation.state === "pending") ||
             states.includes("blocked_external")
           ? "blocked_external"
           : states.includes("progress_stale")
@@ -125,19 +125,13 @@ function externalConfirmationImpactsOutcome(
   evaluation: ExternalConfirmationEvaluationV1,
   outcomeKey: string,
 ): boolean {
-  if (
-    evaluation.obligation_results.some(
-      (result) => result.outcome_key === outcomeKey,
-    )
-  )
-    return true;
-  const declaration = compiled.global.acceptance.external_confirmations.find(
-    (confirmation) => confirmation.key === evaluation.confirmation_ref,
-  );
-  return Boolean(
-    declaration?.impact_claims.some(
-      (claim) => claim === outcomeKey || claim.startsWith(`${outcomeKey}.`),
-    ),
+  return blockingExternalRows(compiled, evaluation.confirmation_ref).some(
+    (row) =>
+      row.outcome_key === outcomeKey ||
+      row.claim_ref === outcomeKey ||
+      row.claim_ref.startsWith(`${outcomeKey}.`) ||
+      row.local_claim_ref === outcomeKey ||
+      row.local_claim_ref.startsWith(`${outcomeKey}.`),
   );
 }
 
@@ -291,14 +285,9 @@ function receiptFresh(input: StatusProjectionInputV2): boolean {
 
 function blockingExternalInputsFresh(input: StatusProjectionInputV2): boolean {
   if (!input.receipt) return false;
-  const blockingRefs = new Set(
-    input.compiled.global.acceptance.external_confirmations
-      .filter((confirmation) => confirmation.blocks_target)
-      .map((confirmation) => confirmation.key),
-  );
   const project = (rows: ExternalConfirmationEvaluationV1[]) =>
     rows
-      .filter((row) => blockingRefs.has(row.confirmation_ref))
+      .filter((row) => row.blocks_target)
       .map((row) => ({
         confirmation_ref: row.confirmation_ref,
         state: row.state,

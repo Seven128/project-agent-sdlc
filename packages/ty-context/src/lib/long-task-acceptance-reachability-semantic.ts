@@ -106,6 +106,11 @@ export function compileSemanticFactReachability(
         evidence_capabilities: [...proof.evidence_capabilities].sort(),
         expected_authority_ref: `semantic-proof:${proof.key}`,
         confirmation_ref: resolution.external.confirmation_ref,
+        required_polarity: factBinding.required_polarity ?? "positive",
+        completion_role: "blocking",
+        acceptance_effect: "required",
+        semantic_identity: null,
+        machine_obligation_ref: null,
       };
       external.push(expected);
       rows.push(

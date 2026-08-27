@@ -6,14 +6,16 @@ import { externalClaimCapabilityFloor } from "./long-task-proof-adequacy.js";
 import { claimSemanticCapabilityFloor } from "./long-task-claim-semantic-proof-floor.js";
 import { resolveObligationAuthority } from "./long-task-obligation-authority-resolution.js";
 import {
-  advisoryExternalRouteRef,
   claimObligationRef,
   claimProofMethod,
   externalConfirmationSessionMatchesApplicability,
   machineProofAdmitted,
+  objectiveExternalClaimActualAuthority,
+  objectiveMachineClaimActualAuthority,
   pendingExternalRow,
   selectOptionalSurface,
 } from "./long-task-acceptance-reachability-helpers.js";
+import { objectiveClaimSemanticIdentity } from "./long-task-obligation-semantic-identity.js";
 import type {
   AcceptanceObligationReachabilityV1,
   AcceptanceReachabilityInputV1,
@@ -26,27 +28,15 @@ export function compileClaimReachability(
   input: AcceptanceReachabilityInputV1,
   rows: AcceptanceObligationReachabilityV1[],
   external: ExpectedExternalObligation[],
-  advisoryExternalRouteRefs: Set<string>,
 ): void {
-  compileGlobalClaimReachability(
-    input,
-    rows,
-    external,
-    advisoryExternalRouteRefs,
-  );
-  compileOutcomeClaimReachability(
-    input,
-    rows,
-    external,
-    advisoryExternalRouteRefs,
-  );
+  compileGlobalClaimReachability(input, rows, external);
+  compileOutcomeClaimReachability(input, rows, external);
 }
 
 function compileGlobalClaimReachability(
   input: AcceptanceReachabilityInputV1,
   rows: AcceptanceObligationReachabilityV1[],
   external: ExpectedExternalObligation[],
-  advisoryExternalRouteRefs: Set<string>,
 ): void {
   for (const claim of input.claims.by_global) {
     const summary = input.claims.summary.claims_by_global[claim.local_key];
@@ -62,7 +52,6 @@ function compileGlobalClaimReachability(
         summary?.proofs ?? [],
         [],
         claim.required_polarity,
-        advisoryExternalRouteRefs,
       );
   }
 }
@@ -71,7 +60,6 @@ function compileOutcomeClaimReachability(
   input: AcceptanceReachabilityInputV1,
   rows: AcceptanceObligationReachabilityV1[],
   external: ExpectedExternalObligation[],
-  advisoryExternalRouteRefs: Set<string>,
 ): void {
   for (const [outcomeKey, claims] of Object.entries(input.claims.by_outcome))
     for (const claim of claims) {
@@ -90,7 +78,6 @@ function compileOutcomeClaimReachability(
           summary?.proofs ?? [],
           claim.required_proof_surfaces,
           claim.required_polarity,
-          advisoryExternalRouteRefs,
         );
     }
 }
@@ -112,7 +99,6 @@ function addClaimObligation(
   }>,
   requiredSurfaces: ProofSurface[],
   requiredPolarity: "positive" | "negative",
-  advisoryExternalRouteRefs: Set<string>,
 ): void {
   const matching = proofs.filter(
     (proof) =>
@@ -129,7 +115,7 @@ function addClaimObligation(
       fullClaim,
       applicabilityRef,
       matching,
-      advisoryExternalRouteRefs,
+      requiredPolarity,
     );
     return;
   }
@@ -144,6 +130,7 @@ function addClaimObligation(
       applicabilityRef,
       matching,
       surface,
+      requiredPolarity,
     );
 }
 
@@ -156,7 +143,7 @@ function addOptionalClaimObligation(
   fullClaim: string,
   applicabilityRef: string,
   matching: ClaimProofCandidate[],
-  advisoryExternalRouteRefs: Set<string>,
+  requiredPolarity: "positive" | "negative",
 ): void {
   const surfaces = [...new Set(matching.map((proof) => proof.proof_surface))];
   if (!surfaces.length) surfaces.push("runtime_behavior");
@@ -169,6 +156,7 @@ function addOptionalClaimObligation(
       applicabilityRef,
       matching,
       surface,
+      requiredPolarity,
     ),
   );
   const selectedSurface = selectOptionalSurface(matching);
@@ -191,15 +179,35 @@ function addOptionalClaimObligation(
       : resolution.status === "external_candidate"
         ? resolution.external.proof_surface
         : selectedProfile.surface;
-  if (resolution.status === "machine_admitted")
+  if (resolution.status === "machine_admitted") {
+    const machineProfile =
+      profiles.find(
+        (profile) => profile.surface === resolution.machine.proof_surface,
+      ) ?? selectedProfile;
     for (const profile of profiles)
       for (const route of profile.externalCandidates)
-        advisoryExternalRouteRefs.add(
-          advisoryExternalRouteRef(
-            route.confirmation_ref,
-            profile.sourceObligationRef,
-          ),
-        );
+        external.push({
+          source_obligation_ref: profile.sourceObligationRef,
+          outcome_key: outcomeKey,
+          claim_ref: fullClaim,
+          local_claim_ref: localClaim,
+          applicability_ref: applicabilityRef,
+          fact_ref: null,
+          proof_ref: null,
+          method: route.method ?? profile.method,
+          proof_surface: route.proof_surface,
+          evidence_capabilities: [
+            ...(route.required_evidence_capabilities ?? []),
+          ].sort(),
+          expected_authority_ref: `contract-claim:${fullClaim}`,
+          confirmation_ref: route.confirmation_ref,
+          required_polarity: requiredPolarity,
+          completion_role: "advisory",
+          acceptance_effect: "none",
+          semantic_identity: route.semantic_identity ?? null,
+          machine_obligation_ref: machineProfile.sourceObligationRef,
+        });
+  }
   emitClaimAuthorityResolution(
     rows,
     external,
@@ -210,6 +218,7 @@ function addOptionalClaimObligation(
     profiles.find((profile) => profile.surface === resolvedSurface) ??
       selectedProfile,
     resolution,
+    requiredPolarity,
   );
 }
 
@@ -223,6 +232,7 @@ function addClaimSurfaceObligation(
   applicabilityRef: string,
   matching: ClaimProofCandidate[],
   surface: ProofSurface,
+  requiredPolarity: "positive" | "negative",
 ): void {
   const profile = claimSurfaceAuthorityProfile(
     input,
@@ -232,6 +242,7 @@ function addClaimSurfaceObligation(
     applicabilityRef,
     matching,
     surface,
+    requiredPolarity,
   );
   const resolution = resolveObligationAuthority({
     source_obligation_ref: profile.sourceObligationRef,
@@ -248,6 +259,7 @@ function addClaimSurfaceObligation(
     applicabilityRef,
     profile,
     resolution,
+    requiredPolarity,
   );
 }
 
@@ -274,6 +286,7 @@ function claimSurfaceAuthorityProfile(
   applicabilityRef: string,
   matching: ClaimProofCandidate[],
   surface: ProofSurface,
+  requiredPolarity: "positive" | "negative",
 ): ClaimSurfaceAuthorityProfile {
   const capabilityFloorSet = externalClaimCapabilityFloor(
     input.contract,
@@ -315,14 +328,36 @@ function claimSurfaceAuthorityProfile(
     const check = input.compiled_checks.find(
       (item) => item.outcome_key === outcomeKey && item.key === proof.check_key,
     )!;
+    const authority = objectiveMachineClaimActualAuthority(
+      input.compiled_checks,
+      outcomeKey,
+      proof.check_key,
+      proof.assertion_key,
+      localClaim,
+    );
+    const requiredCapabilities =
+      check.required_evidence_capabilities[proof.assertion_key] ?? [];
     return [
       {
         check_key: proof.check_key,
         assertion_key: proof.assertion_key,
         proof_surface: proof.proof_surface,
         method,
-        required_evidence_capabilities:
-          check.required_evidence_capabilities[proof.assertion_key] ?? [],
+        required_evidence_capabilities: requiredCapabilities,
+        semantic_identity: authority
+          ? objectiveClaimSemanticIdentity({
+              contract: input.contract,
+              outcome_key: outcomeKey,
+              claim_ref: fullClaim,
+              local_claim_ref: localClaim,
+              applicability_ref: applicabilityRef,
+              required_polarity: requiredPolarity,
+              expected_authority_ref: `contract-claim:${fullClaim}`,
+              method,
+              required_evidence_capabilities: requiredCapabilities,
+              observation_authority: authority,
+            })
+          : null,
       },
     ];
   });
@@ -344,27 +379,58 @@ function claimSurfaceAuthorityProfile(
             obligation.fact_ref === null &&
             obligation.proof_ref === null,
         )
-        .map((obligation) => ({
-          confirmation_ref: confirmationRef,
-          proof_surface: obligation.proof_surface,
-          method: obligation.method,
-          required_evidence_capabilities: [
-            ...obligation.evidence_capabilities,
-          ].sort(),
-          advisory_to_machine:
-            obligation.fact_ref === null &&
-            obligation.proof_ref === null &&
-            obligation.expected_authority_ref ===
-              `contract-claim:${fullClaim}` &&
-            obligation.result_kind === "actual" &&
-            obligation.judgment_basis === undefined &&
-            externalConfirmationSessionMatchesApplicability(
-              input.contract,
-              outcomeKey,
-              applicabilityRef,
-              confirmation,
-            ),
-        }));
+        .map((obligation) => {
+          const authority = objectiveExternalClaimActualAuthority(
+            input.compiled_checks,
+            {
+              source_obligation_ref: sourceObligationRef,
+              outcome_key: outcomeKey,
+              claim_ref: fullClaim,
+              local_claim_ref: localClaim,
+              fact_ref: null,
+              proof_ref: null,
+              method: obligation.method,
+              proof_surface: obligation.proof_surface,
+            },
+          );
+          const semanticIdentity = authority
+            ? objectiveClaimSemanticIdentity({
+                contract: input.contract,
+                outcome_key: outcomeKey,
+                claim_ref: fullClaim,
+                local_claim_ref: localClaim,
+                applicability_ref: applicabilityRef,
+                required_polarity: requiredPolarity,
+                expected_authority_ref: obligation.expected_authority_ref,
+                method: obligation.method,
+                required_evidence_capabilities:
+                  obligation.evidence_capabilities,
+                observation_authority: authority,
+              })
+            : null;
+          return {
+            confirmation_ref: confirmationRef,
+            obligation_key: obligation.key,
+            proof_surface: obligation.proof_surface,
+            method: obligation.method,
+            required_evidence_capabilities: [
+              ...obligation.evidence_capabilities,
+            ].sort(),
+            semantic_identity: semanticIdentity,
+            advisory_to_machine:
+              semanticIdentity !== null &&
+              obligation.expected_authority_ref ===
+                `contract-claim:${fullClaim}` &&
+              obligation.result_kind === "actual" &&
+              obligation.judgment_basis === undefined &&
+              externalConfirmationSessionMatchesApplicability(
+                input.contract,
+                outcomeKey,
+                applicabilityRef,
+                confirmation,
+              ),
+          };
+        });
     });
   return {
     surface,
@@ -385,6 +451,7 @@ function emitClaimAuthorityResolution(
   applicabilityRef: string,
   profile: ClaimSurfaceAuthorityProfile,
   resolution: ReturnType<typeof resolveObligationAuthority>,
+  requiredPolarity: "positive" | "negative",
 ): void {
   const { sourceObligationRef, method, surface, capabilityFloor } = profile;
   if (resolution.status === "external_candidate") {
@@ -402,6 +469,11 @@ function emitClaimAuthorityResolution(
       evidence_capabilities: capabilityFloor,
       expected_authority_ref: `contract-claim:${fullClaim}`,
       confirmation_ref: confirmationRef,
+      required_polarity: requiredPolarity,
+      completion_role: "blocking",
+      acceptance_effect: "required",
+      semantic_identity: resolution.external.semantic_identity ?? null,
+      machine_obligation_ref: null,
     });
     rows.push(
       pendingExternalRow(

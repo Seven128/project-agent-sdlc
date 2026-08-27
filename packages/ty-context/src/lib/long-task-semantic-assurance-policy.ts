@@ -2,6 +2,7 @@ import type {
   ClaimApplicabilityV2,
   DeliveryContractV2,
 } from "./long-task-delivery-types.js";
+import { canonicalApplicabilityIdentity } from "./long-task-applicability-identity.js";
 
 type Reporter = (message: string) => void;
 
@@ -50,17 +51,7 @@ function validateApplicabilityScope(
         "applicability_dimension_set_mismatch",
         `${scope}:${profile.key}:${expectedDimensionKeys.join(",")}:${sortedKeys.join(",")}`,
       );
-    const dimensions = [...profile.dimensions]
-      .sort((left, right) => left.key.localeCompare(right.key))
-      .map((dimension) => `${dimension.key}=${dimension.value}`)
-      .join(",");
-    const cell = [
-      profile.target_ref,
-      profile.journey_role,
-      dimensions,
-      [...profile.given_refs].sort().join(","),
-      profile.when_refs.join(","),
-    ].join("|");
+    const cell = canonicalApplicabilityIdentity(profile);
     const owner = cells.get(cell);
     if (owner)
       issue(
