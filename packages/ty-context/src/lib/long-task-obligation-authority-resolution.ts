@@ -21,6 +21,13 @@ export function resolveObligationAuthority(
 ): ObligationAuthorityResolutionV1 {
   const machine = candidates.machine_candidates;
   const external = candidates.external_candidates;
+  if (external.some((route) => route.authority_ambiguous))
+    return { status: "unreachable", reason: "authority_route_ambiguous" };
+  if (external.some((route) => route.authority_unresolved))
+    return {
+      status: "unreachable",
+      reason: "proof_surface_authority_ambiguous",
+    };
   if (candidates.proof_surface_selection === "optional") {
     if (
       machine.length > 1 ||

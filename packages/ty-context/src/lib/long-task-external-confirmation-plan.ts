@@ -7,7 +7,10 @@ import {
   readSubmittedExternalConfirmationRecord,
   type ExternalAuthorityContextV1,
 } from "./long-task-external-confirmation-context.js";
-import { captureAndStoreExternalConfirmationArtifacts } from "./long-task-external-confirmation-artifacts.js";
+import {
+  captureAndStoreExternalConfirmationArtifacts,
+  MAX_TOTAL_EXTERNAL_CONFIRMATION_ARTIFACT_BYTES,
+} from "./long-task-external-confirmation-artifacts.js";
 import {
   readOrCreateExternalConfirmationChallenge,
   rotateExternalConfirmationChallenge,
@@ -16,6 +19,7 @@ import {
   emptyExternalConfirmationEvaluation,
   evaluateExternalConfirmationRecord,
   externalConfirmationSubmissionEnvelopeIssues,
+  partitionExternalConfirmationArtifactSnapshots,
 } from "./long-task-external-confirmation-evaluation.js";
 import {
   allEffectiveExternalRows,
@@ -117,11 +121,35 @@ export async function submitExternalConfirmation(input: {
         throw new Error(
           `external_confirmation_submit_rejected:${envelopeIssues.join(",")}`,
         );
+      const rows = allEffectiveExternalRows(context.compiled, confirmation.key);
+      const artifactPartitions = partitionExternalConfirmationArtifactSnapshots(
+        rows,
+        record,
+      );
       await captureAndStoreExternalConfirmationArtifacts(
         context.repository,
         context.workdir,
-        record.artifact_snapshots,
+        artifactPartitions.blocking_or_shared,
       );
+      const blockingArtifactBytes = Object.values(
+        artifactPartitions.blocking_or_shared,
+      ).reduce((total, snapshot) => total + snapshot.size_bytes, 0);
+      if (Object.keys(artifactPartitions.advisory_only).length)
+        await captureAndStoreExternalConfirmationArtifacts(
+          context.repository,
+          context.workdir,
+          artifactPartitions.advisory_only,
+          {
+            max_total_bytes: Math.max(
+              0,
+              MAX_TOTAL_EXTERNAL_CONFIRMATION_ARTIFACT_BYTES -
+                blockingArtifactBytes,
+            ),
+          },
+        ).catch(() => {
+          // The role-scoped evaluation below records an absent or invalid
+          // advisory partition without contaminating a fulfilled blocking row.
+        });
       const evaluation = await evaluateExternalConfirmationRecord(
         context,
         confirmation,

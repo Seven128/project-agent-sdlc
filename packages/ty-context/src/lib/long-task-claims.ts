@@ -30,44 +30,6 @@ export interface CompiledClaimsV2 {
   summary: ClaimCoverageSummaryV2;
 }
 
-interface ExternalConfirmationProjectionInput {
-  global: {
-    acceptance: {
-      external_confirmations: readonly {
-        blocks_target: boolean;
-        impact_claims: readonly string[];
-      }[];
-    };
-  };
-}
-
-interface AllOutcomeExternalConfirmationProjectionInput extends ExternalConfirmationProjectionInput {
-  outcomes: readonly { key: string }[];
-}
-
-export function outcomeResultExternallyBlocked(
-  contract: ExternalConfirmationProjectionInput,
-  outcomeKey: string,
-): boolean {
-  const resultClaim = `${outcomeKey}.result`;
-  return contract.global.acceptance.external_confirmations.some(
-    (confirmation) =>
-      confirmation.blocks_target &&
-      confirmation.impact_claims.includes(resultClaim),
-  );
-}
-
-export function allOutcomeResultsExternallyBlocked(
-  contract: AllOutcomeExternalConfirmationProjectionInput,
-): boolean {
-  return (
-    contract.outcomes.length > 0 &&
-    contract.outcomes.every((outcome) =>
-      outcomeResultExternallyBlocked(contract, outcome.key),
-    )
-  );
-}
-
 interface ScopeProofInput {
   check: DeliveryCheckV2;
   assertion: DeliveryAssertionV2;

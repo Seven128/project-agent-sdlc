@@ -82,13 +82,13 @@ test("unsupported Playwright machine observation requires External Confirmation"
   try {
     const outcome = fixture.contract.outcomes[0];
     const check = outcome.acceptance.checks[0];
+    const semanticCheck = structuredClone(check);
     await writeFile(
       path.join(fixture.root, "tests", "ui.spec.ts"),
       `import { test, expect } from "@playwright/test";
 test("first-result", async () => { expect(true).toBe(true); });
 test("first-requirement", async () => { expect(true).toBe(true); });
 test("first-architecture", async () => { expect(true).toBe(true); });
-test("first-semantic-fact", async () => { expect(true).toBe(true); });
 test("first-relations-na", async () => { expect(true).toBe(true); });
 `,
     );
@@ -146,17 +146,6 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
         expected: true,
       },
       {
-        key: "first-semantic-fact",
-        criterion:
-          "The atomic browser-visible semantic Fact remains Source-bound.",
-        claims: ["semantic_fact.fact.first.observable"],
-        applicability_ref: "first-root-success",
-        observation: "playwright.case.first-semantic-fact.passed",
-        evidence_capabilities: ["semantic_fact"],
-        operator: "equals",
-        expected: true,
-      },
-      {
         key: "first-liveness",
         criterion: "The browser target remains live.",
         claims: [],
@@ -178,11 +167,41 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
         expected: true,
       },
     ];
+    semanticCheck.key = "semantic-fact-check";
+    semanticCheck.journey_roles = ["success"];
+    semanticCheck.proof_surface = "ui_browser";
+    semanticCheck.runner = structuredClone(check.runner);
+    semanticCheck.verification_inputs = [...check.verification_inputs];
+    semanticCheck.artifact_globs = [...check.artifact_globs];
+    semanticCheck.positive_assertions = semanticCheck.positive_assertions
+      .filter(
+        (assertion) =>
+          assertion.key === "first-liveness" ||
+          assertion.claims.some((claim) => claim.startsWith("semantic_fact.")),
+      )
+      .map((assertion) =>
+        assertion.claims.length
+          ? {
+              ...assertion,
+              observation: `playwright.case.${assertion.key}.passed`,
+            }
+          : assertion,
+      );
+    semanticCheck.negative_assertions = [];
+    outcome.acceptance.checks.push(semanticCheck);
+    for (const proof of outcome.semantic_fact_bindings.proofs) {
+      proof.check_ref = semanticCheck.key;
+      proof.proof_surface = semanticCheck.proof_surface;
+    }
     outcome.acceptance.counterfactual_controls = [
       {
-        key: "semantic-fact-only",
+        key: "browser-claim-sensitivity",
         binding_key: "state-first",
-        claims: ["semantic_fact.fact.first.observable"],
+        claims: [
+          "result",
+          "requirement.observe-first",
+          "obligation.architecture-first",
+        ],
         check_key: check.key,
         mutation: {
           type: "replace_json_value",
@@ -190,7 +209,31 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
           pointer: "/first",
           value: false,
         },
-        expected_assertion_failures: ["first-semantic-fact"],
+        expected_assertion_failures: [
+          "first-result",
+          "first-requirement",
+          "first-architecture",
+        ],
+        preserved_assertions: ["first-liveness"],
+      },
+      {
+        key: "semantic-proof-sensitivity",
+        binding_key: "state-first",
+        claims: [
+          "semantic_fact.fact.first.observable",
+          "semantic_fact.fact.first.architecture-boundary",
+        ],
+        check_key: semanticCheck.key,
+        mutation: {
+          type: "replace_json_value",
+          path: "src/state.json",
+          pointer: "/first",
+          value: false,
+        },
+        expected_assertion_failures: [
+          "first-semantic-fact",
+          "first-architecture-semantic-fact",
+        ],
         preserved_assertions: ["first-liveness"],
       },
     ];
@@ -200,7 +243,11 @@ test("first-relations-na", async () => { expect(true).toBe(true); });
     );
     await assertActivationRejects(fixture, {
       code: "unsupported_observer_requires_external_confirmation",
-      includes: ["proof.first.observable.exact", "browser", "ui_browser"],
+      includes: [
+        "assertion.first.first-check.first-result",
+        "interaction_trace",
+        "package_derivation_required",
+      ],
     });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

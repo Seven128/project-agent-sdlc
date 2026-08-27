@@ -25,6 +25,7 @@ import { validateClaimEvidenceSensitivity } from "./long-task-evidence-sensitivi
 import { validateSemanticConformance } from "./long-task-conformance-policy.js";
 import {
   deliveryContractStructureDiagnostics,
+  validateResolvedCompletionAuthorityClosure,
   validateDeliveryContractStructure,
 } from "./long-task-delivery-validation.js";
 import { validateRawExecutionObservationOwnership } from "./long-task-observation-ownership.js";
@@ -82,6 +83,7 @@ export async function validateContractForActivation(options: {
   const diagnostics = options.diagnostics ?? [];
   const structureOptions = {
     allowDeferredDesignComponentBindingClosure: true,
+    deferCompletionAuthorityClosure: true,
   } as const;
   if (mode === "collect")
     for (const error of deliveryContractStructureDiagnostics(
@@ -141,9 +143,7 @@ export async function validateContractForActivation(options: {
     ),
   );
   const risk = await attempt(mode, diagnostics, () => {
-    const decision = classifyLongTaskRisk(contract);
-    validateRiskProof(contract, decision);
-    return decision;
+    return classifyLongTaskRisk(contract);
   });
   const context = await attempt(mode, diagnostics, () =>
     captureContextGraphSnapshot(
@@ -233,6 +233,8 @@ export async function validateContractForActivation(options: {
             contract,
             null,
             check,
+            proofAdequacy?.[proofAdequacyCheckKey(null, check.key)]
+              ?.expected_authority_refs ?? {},
           ),
         ),
       null,
@@ -260,6 +262,8 @@ export async function validateContractForActivation(options: {
           contract,
           outcome.key,
           check,
+          proofAdequacy?.[proofAdequacyCheckKey(outcome.key, check.key)]
+            ?.expected_authority_refs ?? {},
         );
       const frozen = await attempt(
         mode,
@@ -328,6 +332,19 @@ export async function validateContractForActivation(options: {
           compiled_checks: allChecks,
         })
       : null;
+  await attempt(mode, diagnostics, () =>
+    validateResolvedCompletionAuthorityClosure(
+      contract,
+      acceptanceReachability,
+      mode === "collect"
+        ? (error) => addDiagnosticError(diagnostics, new Error(error))
+        : undefined,
+    ),
+  );
+  if (risk)
+    await attempt(mode, diagnostics, () =>
+      validateRiskProof(contract, risk, acceptanceReachability),
+    );
   if (acceptanceReachability) {
     if (mode === "fail_fast") assertAcceptanceReachable(acceptanceReachability);
     else
@@ -383,6 +400,7 @@ export async function validateContractForActivation(options: {
           mode === "collect"
             ? (error) => addDiagnosticError(diagnostics, new Error(error))
             : undefined,
+          acceptanceReachability,
         ),
       );
   }

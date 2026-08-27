@@ -54,6 +54,9 @@ export interface ExternalAuthorityRouteV1 {
   method?: string;
   required_evidence_capabilities?: EvidenceCapabilityV2[];
   advisory_to_machine?: boolean;
+  authority_ambiguous?: boolean;
+  authority_unresolved?: boolean;
+  expected_authority_ref?: string;
   semantic_identity?: string | null;
 }
 

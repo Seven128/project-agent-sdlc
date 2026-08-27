@@ -122,7 +122,9 @@ export async function parseDeliveryContractBundle(
   const completionAuthorityDefaulted =
     targetProfileCompletionAuthorityMissing(root);
   if (options.validate_structure !== false)
-    validateDeliveryContractStructure(contract);
+    validateDeliveryContractStructure(contract, {
+      deferCompletionAuthorityClosure: true,
+    });
   return {
     contract,
     contract_files: Object.fromEntries(
@@ -179,7 +181,9 @@ function parseDeliveryContractTextInternal(
       parseOutcome(item, `outcomes[${index}]`),
     ),
   );
-  validateDeliveryContractStructure(contract);
+  validateDeliveryContractStructure(contract, {
+    deferCompletionAuthorityClosure: true,
+  });
   return contract;
 }
 

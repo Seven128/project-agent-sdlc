@@ -5,7 +5,8 @@ import type {
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-delivery-types.js";
-import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
+import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 export interface RiskDecisionV2 {
   effective_level: EffectiveRiskLevel;
@@ -76,15 +77,16 @@ export function classifyLongTaskRisk(
 export function validateRiskProof(
   contract: DeliveryContractV2,
   decision: RiskDecisionV2,
+  reachability?: AcceptanceReachabilityV1 | null,
 ): void {
   const errors: string[] = [];
   if (!contract.outcomes.length) errors.push("outcome_required");
   for (const check of contract.global.acceptance.checks)
     validateCheck(check, "global", errors);
   for (const outcome of contract.outcomes)
-    validateOutcome(contract, outcome, errors);
+    validateOutcome(contract, outcome, errors, reachability);
   if (decision.effective_level === "strict")
-    validateStrict(contract, decision, errors);
+    validateStrict(contract, decision, errors, reachability);
   if (errors.length)
     throw new Error(
       `delivery_contract_preflight_failed:\n${errors.join("\n")}`,
@@ -95,12 +97,13 @@ function validateOutcome(
   contract: DeliveryContractV2,
   outcome: DeliveryOutcomeV2,
   errors: string[],
+  reachability?: AcceptanceReachabilityV1 | null,
 ): void {
   const checks = new Map(
     outcome.acceptance.checks.map((check) => [check.key, check]),
   );
-  const resultExternallyBlocked = outcomeResultExternallyBlocked(
-    contract,
+  const resultExternallyBlocked = outcomeResultEffectivelyExternallyBlocked(
+    reachability,
     outcome.key,
   );
   if (!checks.size && !resultExternallyBlocked)
@@ -137,11 +140,13 @@ function validateStrict(
   contract: DeliveryContractV2,
   decision: RiskDecisionV2,
   errors: string[],
+  reachability?: AcceptanceReachabilityV1 | null,
 ): void {
   const explicitStrictWithoutFacts =
     contract.risk.requested_level === "strict" && decision.reasons.length === 0;
   for (const outcome of contract.outcomes) {
-    if (outcomeResultExternallyBlocked(contract, outcome.key)) continue;
+    if (outcomeResultEffectivelyExternallyBlocked(reachability, outcome.key))
+      continue;
     const facts = new Set(decision.reasons_by_outcome[outcome.key]);
     const checks = outcome.acceptance.checks;
     const hasNegative = checks.some(

@@ -95,6 +95,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "obligation.architecture-first",
           "forbidden_shortcut.self-report",
           "semantic_fact.fact.first.observable",
+          "semantic_fact.fact.first.architecture-boundary",
         ],
         check_key: check.key,
         mutation: {
@@ -110,6 +111,7 @@ test("strict security proof combines per-Check artifacts, negative Assertions an
           "first-architecture",
           "shortcut-rejected",
           "first-semantic-fact",
+          "first-architecture-semantic-fact",
         ],
         preserved_assertions: ["first-liveness"],
       },

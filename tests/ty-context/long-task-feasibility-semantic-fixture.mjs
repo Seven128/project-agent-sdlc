@@ -72,12 +72,20 @@ export function configureExactTargetBlockingConfirmation(
       .filter((confirmation) => confirmation.blocks_target)
       .flatMap((confirmation) => confirmation.impact_claims))
       alreadyConfirmedClaims.add(claimRef);
-  const objectiveClaimRefs = externallyProjectedTargetClaimRefs(
+  const objectiveProjection = externallyProjectedTargetClaims(
     outcome,
     selectedTargets,
-  ).filter((claimRef) => !alreadyConfirmedClaims.has(claimRef));
+  );
+  const objectiveClaimRefs = objectiveProjection.claim_refs.filter(
+    (claimRef) => !alreadyConfirmedClaims.has(claimRef),
+  );
   designObligations.push(
-    ...externalActualClaimObligations(contract, outcome, objectiveClaimRefs),
+    ...externalActualClaimObligations(
+      contract,
+      outcome,
+      objectiveClaimRefs,
+      objectiveProjection.applicability_refs,
+    ),
   );
   const semanticObligations = semanticIdentities.map((identity) => ({
     key: `confirm-${identity.proofKey.replaceAll(".", "-")}`,
@@ -109,25 +117,16 @@ export function configureExactTargetBlockingConfirmation(
   });
 }
 
-function externallyProjectedTargetClaimRefs(outcome, selectedTargets) {
-  const selectedTargetKeys = new Set(
-    selectedTargets.map((target) => target.key),
-  );
+function externallyProjectedTargetClaims(outcome, selectedTargets) {
   const localClaimRefs = new Set();
-  for (const surface of outcome.product.surface_bindings) {
-    if (
-      !surface.design_targets.some((target) =>
-        selectedTargetKeys.has(target.key),
-      )
-    )
-      continue;
-    for (const controlRef of surface.control_refs)
-      for (const claim of generateClaims(outcome))
-        if (claim.local_key.startsWith(`control.${controlRef}.`))
-          localClaimRefs.add(claim.local_key);
-  }
+  const applicabilityRefs = new Set();
+  const controlRefs = new Set();
   for (const target of selectedTargets) {
-    for (const claimRef of target.claim_refs) localClaimRefs.add(claimRef);
+    for (const claimRef of target.claim_refs) {
+      localClaimRefs.add(claimRef);
+      const match = /^control\.([^.]+)\./u.exec(claimRef);
+      if (match) controlRefs.add(match[1]);
+    }
     const check = outcome.acceptance.checks.find(
       (candidate) => candidate.key === target.conformance_check_ref,
     );
@@ -148,104 +147,149 @@ function externallyProjectedTargetClaimRefs(outcome, selectedTargets) {
       ...check.positive_assertions,
       ...check.negative_assertions,
     ])
-      if (assertionRefs.has(assertion.key))
-        for (const claimRef of assertion.claims) localClaimRefs.add(claimRef);
+      if (assertionRefs.has(assertion.key)) {
+        if (assertion.key === target.conformance_assertion_ref)
+          for (const claimRef of assertion.claims) localClaimRefs.add(claimRef);
+        if (assertion.applicability_ref)
+          applicabilityRefs.add(assertion.applicability_ref);
+      }
+    const actualAssertionPrefix = target.conformance_assertion_ref.startsWith(
+      "secondary-",
+    )
+      ? "secondary-"
+      : "";
+    const actualAssertion = check.positive_assertions.find(
+      (assertion) =>
+        assertion.key === `${actualAssertionPrefix}design-handoff-claim-actual`,
+    );
+    if (actualAssertion) {
+      for (const claimRef of actualAssertion.claims)
+        localClaimRefs.add(claimRef);
+      if (actualAssertion.applicability_ref)
+        applicabilityRefs.add(actualAssertion.applicability_ref);
+    }
   }
-  return [...localClaimRefs]
-    .map((claimRef) => `${outcome.key}.${claimRef}`)
-    .sort();
+  for (const claim of generateClaims(outcome))
+    if (
+      [...controlRefs].some((controlRef) =>
+        claim.local_key.startsWith(`control.${controlRef}.`),
+      ) &&
+      claim.applicability_refs.some((applicabilityRef) =>
+        applicabilityRefs.has(applicabilityRef),
+      )
+    )
+      localClaimRefs.add(claim.local_key);
+  return {
+    claim_refs: [...localClaimRefs]
+      .map((claimRef) => `${outcome.key}.${claimRef}`)
+      .sort(),
+    applicability_refs: applicabilityRefs,
+  };
 }
 
-function externalActualClaimObligations(contract, outcome, claimRefs) {
+function externalActualClaimObligations(
+  contract,
+  outcome,
+  claimRefs,
+  selectedApplicabilityRefs,
+) {
   const claims = new Map(
     generateClaims(outcome).map((claim) => [claim.id, claim]),
   );
   return claimRefs.flatMap((claimRef) => {
     const claim = claims.get(claimRef);
     assert.ok(claim, `fixture objective external Claim missing: ${claimRef}`);
-    return claim.applicability_refs.flatMap((applicabilityRef) => {
-      const proofAssertions = outcome.acceptance.checks.flatMap((check) =>
-        [...check.positive_assertions, ...check.negative_assertions]
-          .filter(
-            (assertion) =>
-              assertion.claims.length === 1 &&
-              assertion.claims[0] === claim.local_key &&
-              assertion.applicability_ref === applicabilityRef,
-          )
-          .map((assertion) => ({ check, assertion })),
-      );
-      const surfaces = claim.required_proof_surfaces.length
-        ? claim.required_proof_surfaces
-        : [...new Set(proofAssertions.map(({ check }) => check.proof_surface))];
-      return surfaces.map((proofSurface) => {
-        const exactAssertions = proofAssertions.filter(
-          ({ check, assertion }) =>
-            check.proof_surface === proofSurface &&
-            ["equals", "truthy", "falsy", "exists"].includes(
-              assertion.operator,
+    return claim.applicability_refs
+      .filter((applicabilityRef) =>
+        selectedApplicabilityRefs.has(applicabilityRef),
+      )
+      .flatMap((applicabilityRef) => {
+        const proofAssertions = outcome.acceptance.checks.flatMap((check) =>
+          [...check.positive_assertions, ...check.negative_assertions]
+            .filter(
+              (assertion) =>
+                assertion.claims.length === 1 &&
+                assertion.claims[0] === claim.local_key &&
+                assertion.applicability_ref === applicabilityRef,
+            )
+            .map((assertion) => ({ check, assertion })),
+        );
+        const surfaces = claim.required_proof_surfaces.length
+          ? claim.required_proof_surfaces
+          : [
+              ...new Set(
+                proofAssertions.map(({ check }) => check.proof_surface),
+              ),
+            ];
+        return surfaces.map((proofSurface) => {
+          const exactAssertions = proofAssertions.filter(
+            ({ check, assertion }) =>
+              check.proof_surface === proofSurface &&
+              ["equals", "truthy", "falsy", "exists"].includes(
+                assertion.operator,
+              ),
+          );
+          assert.ok(
+            exactAssertions.length > 0,
+            `fixture objective external Claim requires one exact Assertion: ${claimRef}:${applicabilityRef}:${proofSurface}`,
+          );
+          assert.equal(
+            new Set(
+              exactAssertions.map(({ check, assertion }) =>
+                canonicalValueJson({
+                  target_ref: check.execution_target.target_ref,
+                  proof_surface: check.proof_surface,
+                  expected:
+                    assertion.operator === "equals"
+                      ? assertion.expected
+                      : assertion.operator === "falsy"
+                        ? false
+                        : true,
+                  projection:
+                    assertion.operator === "equals"
+                      ? "raw_exact"
+                      : assertion.operator === "exists"
+                        ? "presence_boolean"
+                        : assertion.operator === "truthy"
+                          ? "truthy_boolean"
+                          : "falsy_boolean",
+                }),
+              ),
+            ).size,
+            1,
+            `fixture objective external Claim Assertions must be exactly equivalent: ${claimRef}:${applicabilityRef}:${proofSurface}`,
+          );
+          const capabilities = [
+            ...externalClaimCapabilityFloor(
+              contract,
+              outcome.key,
+              claim.local_key,
+              proofSurface,
+              applicabilityRef,
             ),
-        );
-        assert.ok(
-          exactAssertions.length > 0,
-          `fixture objective external Claim requires one exact Assertion: ${claimRef}:${applicabilityRef}:${proofSurface}`,
-        );
-        assert.equal(
-          new Set(
-            exactAssertions.map(({ check, assertion }) =>
-              canonicalValueJson({
-                target_ref: check.execution_target.target_ref,
-                proof_surface: check.proof_surface,
-                expected:
-                  assertion.operator === "equals"
-                    ? assertion.expected
-                    : assertion.operator === "falsy"
-                      ? false
-                      : true,
-                projection:
-                  assertion.operator === "equals"
-                    ? "raw_exact"
-                    : assertion.operator === "exists"
-                      ? "presence_boolean"
-                      : assertion.operator === "truthy"
-                        ? "truthy_boolean"
-                        : "falsy_boolean",
-              }),
-            ),
-          ).size,
-          1,
-          `fixture objective external Claim Assertions must be exactly equivalent: ${claimRef}:${applicabilityRef}:${proofSurface}`,
-        );
-        const capabilities = [
-          ...externalClaimCapabilityFloor(
-            contract,
-            outcome.key,
-            claim.local_key,
-            proofSurface,
-            applicabilityRef,
-          ),
-        ].sort();
-        const method = claimProofMethod(capabilities);
-        assert.equal(
-          method,
-          "exact_value",
-          `fixture objective external Claim requires an exact comparator: ${claimRef}:${applicabilityRef}:${proofSurface}`,
-        );
-        return {
-          key: `confirm-claim-actual-${contractKeySlug(
-            `${claimRef}\0${applicabilityRef}\0${proofSurface}`,
-          )}`,
-          claim_ref: claimRef,
-          applicability_ref: applicabilityRef,
-          fact_ref: null,
-          proof_ref: null,
-          method,
-          proof_surface: proofSurface,
-          evidence_capabilities: capabilities,
-          expected_authority_ref: `contract-claim:${claimRef}`,
-          result_kind: "actual",
-        };
+          ].sort();
+          const method = claimProofMethod(capabilities);
+          assert.equal(
+            method,
+            "exact_value",
+            `fixture objective external Claim requires an exact comparator: ${claimRef}:${applicabilityRef}:${proofSurface}`,
+          );
+          return {
+            key: `confirm-claim-actual-${contractKeySlug(
+              `${claimRef}\0${applicabilityRef}\0${proofSurface}`,
+            )}`,
+            claim_ref: claimRef,
+            applicability_ref: applicabilityRef,
+            fact_ref: null,
+            proof_ref: null,
+            method,
+            proof_surface: proofSurface,
+            evidence_capabilities: capabilities,
+            expected_authority_ref: `contract-claim:${claimRef}`,
+            result_kind: "actual",
+          };
+        });
       });
-    });
   });
 }
 

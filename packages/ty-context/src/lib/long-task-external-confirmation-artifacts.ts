@@ -11,7 +11,7 @@ import { sha256Hex } from "./strict-codec.js";
 
 const ARTIFACT_STORE_FOLDER = "external-confirmations/artifacts";
 const MAX_ARTIFACT_BYTES = 16 * 1024 * 1024;
-const MAX_TOTAL_ARTIFACT_BYTES = 64 * 1024 * 1024;
+export const MAX_TOTAL_EXTERNAL_CONFIRMATION_ARTIFACT_BYTES = 64 * 1024 * 1024;
 
 export function externalConfirmationArtifactStoreRef(sha256: string): string {
   if (!/^[a-f0-9]{64}$/u.test(sha256))
@@ -23,6 +23,7 @@ export async function captureAndStoreExternalConfirmationArtifacts(
   repository: string,
   workdir: string,
   snapshots: ExternalConfirmationRecordV2["artifact_snapshots"],
+  options: { max_total_bytes?: number } = {},
 ): Promise<void> {
   const captured: Array<{ sha256: string; bytes: Buffer }> = [];
   let totalBytes = 0;
@@ -51,7 +52,11 @@ export async function captureAndStoreExternalConfirmationArtifacts(
         `external_confirmation_artifact_too_large:${evidenceRef}:${info.size}`,
       );
     totalBytes += info.size;
-    if (totalBytes > MAX_TOTAL_ARTIFACT_BYTES)
+    if (
+      totalBytes >
+      (options.max_total_bytes ??
+        MAX_TOTAL_EXTERNAL_CONFIRMATION_ARTIFACT_BYTES)
+    )
       throw new Error(
         `external_confirmation_artifacts_total_too_large:${totalBytes}`,
       );
@@ -117,14 +122,19 @@ export async function captureStoredExternalConfirmationArtifactIdentities(
   const result: Record<string, string> = {};
   for (const snapshot of Object.values(snapshots).sort((left, right) =>
     left.store_ref.localeCompare(right.store_ref),
-  )) {
-    const file = await assertProtectedRepositoryFile(
-      repository,
-      runtimePath(workdir, snapshot.store_ref),
-      `external_confirmation_artifact_snapshot:${snapshot.store_ref}`,
-    );
-    result[snapshot.store_ref] = `sha256:${sha256Hex(await readFile(file))}`;
-  }
+  ))
+    try {
+      const file = await assertProtectedRepositoryFile(
+        repository,
+        runtimePath(workdir, snapshot.store_ref),
+        `external_confirmation_artifact_snapshot:${snapshot.store_ref}`,
+      );
+      result[snapshot.store_ref] = `sha256:${sha256Hex(await readFile(file))}`;
+    } catch (error) {
+      result[snapshot.store_ref] = `unavailable:${sha256Hex(
+        `${snapshot.sha256}\0${message(error)}`,
+      )}`;
+    }
   return result;
 }
 

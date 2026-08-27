@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compileAcceptanceReachability } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability.js";
+import { exactExternalClaimActualObligationRefsByAssertion } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability-helpers.js";
 import { compiledAcceptanceAuthorityHash } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
@@ -227,6 +228,9 @@ function optionalExactCrossSurfaceFixture() {
       proof_surface: "runtime_behavior",
       completion_role: "semantic",
       observation_authorities: [machineAuthority],
+      expected_authority_refs: {
+        "exact-machine-result-runtime-assertion": "contract-claim:first.result",
+      },
       required_evidence_capabilities: {
         "exact-machine-result-runtime-assertion": ["target_runtime"],
       },
@@ -237,6 +241,9 @@ function optionalExactCrossSurfaceFixture() {
       proof_surface: "ui_browser",
       completion_role: "semantic",
       observation_authorities: [externalAuthority],
+      expected_authority_refs: {
+        "exact-external-result-ui-assertion": "contract-claim:first.result",
+      },
       required_evidence_capabilities: {
         "exact-external-result-ui-assertion": ["target_runtime"],
       },
@@ -342,7 +349,7 @@ for (const scenario of [
       confirmation.obligations[0].expected_authority_ref =
         "contract-claim:other-owner";
     },
-    reason: "machine_external_authority_conflict",
+    reason: "proof_surface_authority_ambiguous",
   },
   {
     name: "applicability sessions",
@@ -367,6 +374,125 @@ for (const scenario of [
     assert.equal(result.status, "unreachable");
     assert.equal(result.reason, scenario.reason);
   });
+
+test("Machine and External routes with different compiled Expected owners are ambiguous", () => {
+  const fixture = optionalExactCrossSurfaceFixture();
+  fixture.compiledChecks[0].expected_authority_refs[
+    "exact-machine-result-runtime-assertion"
+  ] = "source:product-decision-A";
+  const result = compileAcceptanceReachability({
+    contract: fixture.contract,
+    claims: compileProductClaimCoverage(fixture.contract, {
+      allow_uncovered: true,
+    }),
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: fixture.compiledChecks,
+  }).obligations.find((row) => row.claim_ref === "first.result");
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "proof_surface_authority_ambiguous");
+});
+
+test("External-only Claim route rejects a Contract Expected owner mismatch", () => {
+  const result = optionalExactCrossSurfaceReachability(
+    ({ confirmation, compiledChecks }) => {
+      compiledChecks.shift();
+      confirmation.obligations[0].expected_authority_ref =
+        "source:product-decision-A";
+    },
+  ).obligations.find((row) => row.claim_ref === "first.result");
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "proof_surface_authority_ambiguous");
+});
+
+test("External-only Claim route rejects a missing compiled Expected owner", () => {
+  const result = optionalExactCrossSurfaceReachability(({ compiledChecks }) => {
+    compiledChecks.shift();
+    compiledChecks[0].expected_authority_refs = {};
+  }).obligations.find((row) => row.claim_ref === "first.result");
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "proof_surface_authority_ambiguous");
+});
+
+test("External Claim compilation uses the Proof Adequacy Expected owner", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "source-owned-external-result",
+      description: "Observe the exact Source-owned result Expected.",
+      owner: "release-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+      obligations: [
+        {
+          key: "confirm-source-owned-first-result",
+          claim_ref: "first.result",
+          applicability_ref: "first-root-success",
+          fact_ref: null,
+          proof_ref: null,
+          method: "exact_value",
+          proof_surface: "runtime_behavior",
+          evidence_capabilities: ["target_runtime"],
+          expected_authority_ref: "source:product-decision-A",
+          result_kind: "actual",
+        },
+      ],
+    },
+  ];
+  const expectedAuthorityRefs = {
+    "first-result": "source:product-decision-A",
+  };
+  const admitted = exactExternalClaimActualObligationRefsByAssertion(
+    contract,
+    outcome.key,
+    check,
+    expectedAuthorityRefs,
+  );
+  assert.equal(
+    admitted.get("first-result"),
+    "claim:first.result:first-root-success:runtime_behavior",
+  );
+
+  contract.global.acceptance.external_confirmations[0].obligations[0].expected_authority_ref =
+    "contract-claim:first.result";
+  assert.equal(
+    exactExternalClaimActualObligationRefsByAssertion(
+      contract,
+      outcome.key,
+      check,
+      expectedAuthorityRefs,
+    ).has("first-result"),
+    false,
+  );
+});
+
+test("duplicate compiled External authorities are authority-route ambiguous", () => {
+  const fixture = optionalExactCrossSurfaceFixture();
+  const duplicate = structuredClone(fixture.compiledChecks[1]);
+  duplicate.key = "duplicate-external-result-ui-check";
+  duplicate.observation_authorities[0].assertion_ref =
+    "duplicate-external-result-ui-assertion";
+  duplicate.expected_authority_refs = {
+    "duplicate-external-result-ui-assertion": "contract-claim:first.result",
+  };
+  fixture.compiledChecks.push(duplicate);
+  const result = compileAcceptanceReachability({
+    contract: fixture.contract,
+    claims: compileProductClaimCoverage(fixture.contract, {
+      allow_uncovered: true,
+    }),
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: fixture.compiledChecks,
+  }).obligations.find((row) => row.claim_ref === "first.result");
+  assert.ok(result);
+  assert.equal(result.status, "unreachable");
+  assert.equal(result.reason, "authority_route_ambiguous");
+});
 
 test("optional cross-surface canonical identity includes required polarity", () => {
   const fixture = optionalExactCrossSurfaceFixture();
@@ -647,7 +773,7 @@ test("Design Fact reachability retains its exact obligation identity and rejects
   );
 });
 
-test("an admitted machine route cannot be overridden by a blocking external route", () => {
+test("an admitted machine route fails closed beside an unresolved blocking External route", () => {
   const contract = deliveryContract();
   contract.task.target_profile.completion_authority = "declared_authorities";
   const check = contract.outcomes[0].acceptance.checks[0];
@@ -733,6 +859,9 @@ test("an admitted machine route cannot be overridden by a blocking external rout
         required_evidence_capabilities: {
           "first-result-static": ["target_runtime"],
         },
+        expected_authority_refs: {
+          "first-result-static": "contract-claim:first.result",
+        },
       },
     ],
   });
@@ -741,7 +870,7 @@ test("an admitted machine route cannot be overridden by a blocking external rout
   );
   assert.ok(result);
   assert.equal(result.status, "unreachable");
-  assert.equal(result.reason, "machine_external_authority_conflict");
+  assert.equal(result.reason, "proof_surface_authority_ambiguous");
   assert.equal(result.proof_surface, "runtime_behavior");
   assert.equal(
     result.source_obligation_ref,
@@ -1045,6 +1174,9 @@ test("an optional equivalent External surface is advisory when one Machine route
       required_evidence_capabilities: {
         "machine-result-runtime-assertion": ["target_runtime"],
       },
+      expected_authority_refs: {
+        "machine-result-runtime-assertion": "contract-claim:first.result",
+      },
     },
     {
       key: "external-result-ui-check",
@@ -1061,6 +1193,9 @@ test("an optional equivalent External surface is advisory when one Machine route
       ],
       required_evidence_capabilities: {
         "external-result-ui-assertion": ["target_runtime"],
+      },
+      expected_authority_refs: {
+        "external-result-ui-assertion": "contract-claim:first.result",
       },
     },
   ];
@@ -1277,6 +1412,9 @@ test("optional cross-surface routes with different Expected are ambiguous", () =
         required_evidence_capabilities: {
           "different-expected-machine-assertion": ["target_runtime"],
         },
+        expected_authority_refs: {
+          "different-expected-machine-assertion": "contract-claim:first.result",
+        },
       },
       {
         key: "different-expected-external-ui-check",
@@ -1294,6 +1432,10 @@ test("optional cross-surface routes with different Expected are ambiguous", () =
         ],
         required_evidence_capabilities: {
           "different-expected-external-ui-assertion": ["target_runtime"],
+        },
+        expected_authority_refs: {
+          "different-expected-external-ui-assertion":
+            "contract-claim:first.result",
         },
       },
     ],
@@ -1387,6 +1529,9 @@ test("non-equivalent optional proof surfaces fail closed as proof-surface ambigu
         required_evidence_capabilities: {
           "machine-result-runtime-assertion": ["target_runtime"],
         },
+        expected_authority_refs: {
+          "machine-result-runtime-assertion": "contract-claim:first.result",
+        },
       },
     ],
   }).obligations.find((row) => row.claim_ref === "first.result");
@@ -1425,6 +1570,14 @@ test("multiple admitted machine routes are authority-ambiguous instead of first-
         assertion.key,
         assertion.evidence_capabilities,
       ]),
+    ),
+    expected_authority_refs: Object.fromEntries(
+      row.positive_assertions
+        .filter((assertion) => assertion.claims.length)
+        .map((assertion) => [
+          assertion.key,
+          `contract-claim:first.${assertion.claims[0]}`,
+        ]),
     ),
   }));
   const result = compileAcceptanceReachability({

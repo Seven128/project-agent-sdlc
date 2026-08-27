@@ -17,9 +17,11 @@ import {
 import { validateUiSurfaceBindings } from "./long-task-ui-surface-policy.js";
 import { controlFieldFacts } from "./long-task-control-fields.js";
 import { validateSemanticAssuranceShape } from "./long-task-semantic-assurance-policy.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 export interface DeliveryContractStructureValidationOptions {
   allowDeferredDesignComponentBindingClosure?: boolean;
+  deferCompletionAuthorityClosure?: boolean;
 }
 
 export function validateDeliveryContractStructure(
@@ -38,8 +40,11 @@ export function validateDeliveryContractStructure(
   validateSourceClaimMappings(contract, claims);
   validateUiSurfaceBindings(contract, claims, undefined, options);
   assertCompiledClaimsCovered(claims);
-  validateDeliveryStages(contract);
-  validateExecutionTargets(contract);
+  const completionOptions = {
+    defer_completion_authority_closure: options.deferCompletionAuthorityClosure,
+  };
+  validateDeliveryStages(contract, undefined, completionOptions);
+  validateExecutionTargets(contract, undefined, completionOptions);
   validateSemanticAssuranceShape(contract);
   validateEvidenceCapabilityDeclarations(contract);
   validateExternalConfirmationImpacts(contract, claims);
@@ -54,8 +59,11 @@ export function deliveryContractStructureDiagnostics(
   validateUniqueKeys(contract, report);
   validateDependencies(contract, report);
   validateControlClosure(contract, report);
-  validateDeliveryStages(contract, report);
-  validateExecutionTargets(contract, report);
+  const completionOptions = {
+    defer_completion_authority_closure: options.deferCompletionAuthorityClosure,
+  };
+  validateDeliveryStages(contract, report, completionOptions);
+  validateExecutionTargets(contract, report, completionOptions);
   validateSemanticAssuranceShape(contract, report);
   validateEvidenceCapabilityDeclarations(contract, report);
   validateOwnerAndBindings(contract, report);
@@ -72,6 +80,16 @@ export function deliveryContractStructureDiagnostics(
     capture(diagnostics, () => assertCompiledClaimsCovered(claims!));
   }
   return [...new Set(diagnostics)];
+}
+
+export function validateResolvedCompletionAuthorityClosure(
+  contract: DeliveryContractV2,
+  reachability: AcceptanceReachabilityV1 | null,
+  report?: ValidationReporter,
+): void {
+  const options = { acceptance_reachability: reachability };
+  validateDeliveryStages(contract, report, options);
+  validateExecutionTargets(contract, report, options);
 }
 
 function validateEvidenceAdapters(

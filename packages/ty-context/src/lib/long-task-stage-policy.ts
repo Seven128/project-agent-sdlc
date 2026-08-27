@@ -1,11 +1,16 @@
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
-import { outcomeResultExternallyBlocked } from "./long-task-claims.js";
+import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 type Reporter = (message: string) => void;
 
 export function validateDeliveryStages(
   contract: DeliveryContractV2,
   report?: Reporter,
+  options: {
+    defer_completion_authority_closure?: boolean;
+    acceptance_reachability?: AcceptanceReachabilityV1 | null;
+  } = {},
 ): void {
   unique(
     contract.stages.map((stage) => stage.key),
@@ -37,7 +42,7 @@ export function validateDeliveryStages(
     if (!stages.has(outcome.stage))
       issue(report, "outcome_stage_unknown", `${outcome.key}:${outcome.stage}`);
   validateStageCycles(contract, report);
-  validateStageGateClosure(contract, report);
+  validateStageGateClosure(contract, report, options);
 }
 
 function validateStageCycles(
@@ -65,6 +70,10 @@ function validateStageCycles(
 function validateStageGateClosure(
   contract: DeliveryContractV2,
   report?: Reporter,
+  options: {
+    defer_completion_authority_closure?: boolean;
+    acceptance_reachability?: AcceptanceReachabilityV1 | null;
+  } = {},
 ): void {
   const outcomes = new Map(
     contract.outcomes.map((outcome) => [outcome.key, outcome]),
@@ -100,8 +109,9 @@ function validateStageGateClosure(
     const stageGateChecks = gate.acceptance.checks.filter((check) =>
       check.journey_roles.includes("stage_gate"),
     );
-    const resultExternallyBlocked = outcomeResultExternallyBlocked(
-      contract,
+    if (options.defer_completion_authority_closure) continue;
+    const resultExternallyBlocked = outcomeResultEffectivelyExternallyBlocked(
+      options.acceptance_reachability,
       gate.key,
     );
     if (!stageGateChecks.length && !resultExternallyBlocked)
@@ -115,10 +125,13 @@ function validateStageGateClosure(
         "stage_gate_target_runtime_result_required",
         `${stage.key}:${gate.key}`,
       );
-    for (const targetRef of resultExternallyBlocked
-      ? []
-      : contract.task.target_profile.required_target_refs)
+    for (const targetRef of contract.task.target_profile.required_target_refs)
       if (
+        !outcomeResultEffectivelyExternallyBlocked(
+          options.acceptance_reachability,
+          gate.key,
+          targetRef,
+        ) &&
         !stageGateChecks.some(
           (check) =>
             check.execution_target.target_ref === targetRef &&

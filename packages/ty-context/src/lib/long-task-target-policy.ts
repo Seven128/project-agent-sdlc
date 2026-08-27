@@ -1,7 +1,6 @@
-import {
-  outcomeResultExternallyBlocked,
-  type CompiledClaimsV2,
-} from "./long-task-claims.js";
+import type { CompiledClaimsV2 } from "./long-task-claims.js";
+import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
 
 type Reporter = (message: string) => void;
@@ -20,13 +19,23 @@ const FAMILY_CAPABILITY = {
 export function validateExecutionTargets(
   contract: DeliveryContractV2,
   report?: Reporter,
+  options: {
+    defer_completion_authority_closure?: boolean;
+    acceptance_reachability?: AcceptanceReachabilityV1 | null;
+  } = {},
 ): void {
   const targets = indexExecutionTargets(contract, report);
   const requiredTargetRefs = contract.task.target_profile.required_target_refs;
   validateRequiredTargetRefs(contract, targets, report);
   for (const [outcomeKey, check] of allChecks(contract))
     validateCheckTarget(outcomeKey, check, targets, report);
-  validateCriticalPathTargets(contract, requiredTargetRefs, report);
+  if (!options.defer_completion_authority_closure)
+    validateCriticalPathTargets(
+      contract,
+      requiredTargetRefs,
+      report,
+      options.acceptance_reachability,
+    );
 }
 
 function indexExecutionTargets(
@@ -179,15 +188,20 @@ function validateCriticalPathTargets(
   contract: DeliveryContractV2,
   requiredTargetRefs: string[],
   report?: Reporter,
+  reachability?: AcceptanceReachabilityV1 | null,
 ): void {
   for (const outcomeKey of contract.risk.facts.critical_user_path) {
     const outcome = contract.outcomes.find(
       (candidate) => candidate.key === outcomeKey,
     );
     if (!outcome) continue;
-    if (outcomeResultExternallyBlocked(contract, outcome.key)) continue;
     for (const targetRef of requiredTargetRefs)
       if (
+        !outcomeResultEffectivelyExternallyBlocked(
+          reachability,
+          outcome.key,
+          targetRef,
+        ) &&
         !outcome.acceptance.checks.some((check) =>
           provesSuccess(check, targetRef),
         )

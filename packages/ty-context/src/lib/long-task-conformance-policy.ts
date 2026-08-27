@@ -3,7 +3,8 @@ import type {
   DeliveryContractV2,
   EffectiveRiskLevel,
 } from "./long-task-delivery-types.js";
-import { allOutcomeResultsExternallyBlocked } from "./long-task-claims.js";
+import { allOutcomeResultsEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 type Reporter = (message: string) => void;
 
@@ -29,6 +30,7 @@ export function validateSemanticConformance(
   effectiveRisk: EffectiveRiskLevel,
   compiledChecks: CompiledCheckV2[],
   report?: Reporter,
+  reachability?: AcceptanceReachabilityV1 | null,
 ): void {
   const declared = contract.global.acceptance.checks.filter((check) =>
     check.journey_roles.includes("conformance"),
@@ -36,7 +38,7 @@ export function validateSemanticConformance(
   if (
     semanticConformanceRequired(contract, effectiveRisk) &&
     !declared.length &&
-    !allOutcomeResultsExternallyBlocked(contract)
+    !allOutcomeResultsEffectivelyExternallyBlocked(contract, reachability)
   ) {
     issue(report, "semantic_conformance_check_required", contract.task.id);
     return;

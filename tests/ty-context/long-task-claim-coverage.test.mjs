@@ -281,9 +281,8 @@ test("blocking External Confirmation projects exact ordinary GLOBAL and Outcome 
     },
   ];
   outcome.acceptance.checks = [];
-  const semanticProof = outcome.semantic_fact_bindings.proofs[0];
-  outcome.semantic_fact_bindings.proofs = [
-    {
+  outcome.semantic_fact_bindings.proofs =
+    outcome.semantic_fact_bindings.proofs.map((semanticProof) => ({
       proof_ref: semanticProof.proof_ref,
       fact_ref: semanticProof.fact_ref,
       method: semanticProof.method,
@@ -291,8 +290,7 @@ test("blocking External Confirmation projects exact ordinary GLOBAL and Outcome 
       evidence_capabilities: semanticProof.evidence_capabilities,
       authority: "external_confirmation",
       confirmation_ref: "unsupported-observation",
-    },
-  ];
+    }));
   const claims = [
     ...generateGlobalClaims(contract.global),
     ...generateClaims(outcome),
@@ -331,10 +329,9 @@ test("ordinary Claim projection requires a blocking confirmation and Semantic Fa
     const contract = deliveryContract();
     const outcome = contract.outcomes[0];
     outcome.acceptance.checks = [];
-    const semanticProof = outcome.semantic_fact_bindings.proofs[0];
     if (mutation !== "semantic-binding-missing")
-      outcome.semantic_fact_bindings.proofs = [
-        {
+      outcome.semantic_fact_bindings.proofs =
+        outcome.semantic_fact_bindings.proofs.map((semanticProof) => ({
           proof_ref: semanticProof.proof_ref,
           fact_ref: semanticProof.fact_ref,
           method: semanticProof.method,
@@ -342,8 +339,7 @@ test("ordinary Claim projection requires a blocking confirmation and Semantic Fa
           evidence_capabilities: semanticProof.evidence_capabilities,
           authority: "external_confirmation",
           confirmation_ref: "unsupported-observation",
-        },
-      ];
+        }));
     const claims = generateClaims(outcome);
     contract.global.acceptance.external_confirmations = [
       {
@@ -366,8 +362,12 @@ test("ordinary Claim projection requires a blocking confirmation and Semantic Fa
         mutation,
       );
     else
-      assert.deepEqual(compiled.summary.uncovered_claims, [
-        "first.semantic_fact.fact.first.observable",
-      ]);
+      assert.deepEqual(
+        [...compiled.summary.uncovered_claims].sort(),
+        claims
+          .filter((claim) => claim.kind === "semantic_fact")
+          .map((claim) => claim.id)
+          .sort(),
+      );
   }
 });

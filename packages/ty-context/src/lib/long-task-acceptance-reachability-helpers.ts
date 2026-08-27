@@ -11,6 +11,7 @@ import type {
 import { DESIGN_RESOURCE_COMPARATORS } from "./design-resource-fact-enums.js";
 import type {
   AcceptanceObligationReachabilityV1,
+  AcceptanceReachabilityV1,
   ExpectedExternalObligation,
 } from "./long-task-acceptance-reachability-types.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
@@ -39,6 +40,39 @@ export function effectiveExternalRouteRef(
   sourceObligationRef: string,
 ): string {
   return `${confirmationRef}\0${sourceObligationRef}`;
+}
+
+export function outcomeResultEffectivelyExternallyBlocked(
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+  outcomeKey: string,
+  targetRef?: string,
+): boolean {
+  const claimRef = `${outcomeKey}.result`;
+  return Boolean(
+    reachability?.effective_external_routes.some(
+      (row) =>
+        row.outcome_key === outcomeKey &&
+        row.claim_ref === claimRef &&
+        row.local_claim_ref === "result" &&
+        row.authority === "external_confirmation" &&
+        row.status === "external_fulfillable" &&
+        row.completion_role === "blocking" &&
+        row.acceptance_effect === "required" &&
+        (targetRef === undefined || row.target_ref === targetRef),
+    ),
+  );
+}
+
+export function allOutcomeResultsEffectivelyExternallyBlocked(
+  contract: Pick<DeliveryContractV2, "outcomes">,
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+): boolean {
+  return (
+    contract.outcomes.length > 0 &&
+    contract.outcomes.every((outcome) =>
+      outcomeResultEffectivelyExternallyBlocked(reachability, outcome.key),
+    )
+  );
 }
 
 export function machineProofAdmitted(
@@ -166,10 +200,18 @@ export function objectiveExternalActualAdmitted(
   expected: ExpectedExternalObligation,
   compiledChecks: readonly CompiledCheckV2[] = [],
 ): boolean {
-  if (!expected.fact_ref && !expected.proof_ref)
-    return Boolean(
-      objectiveExternalClaimActualAuthority(compiledChecks, expected),
+  if (!expected.fact_ref && !expected.proof_ref) {
+    const resolved = resolveObjectiveExternalClaimActualAuthority(
+      compiledChecks,
+      expected,
     );
+    return Boolean(
+      resolved.status === "resolved" &&
+      resolved.check.expected_authority_refs[
+        resolved.authority.assertion_ref
+      ] === expected.expected_authority_ref,
+    );
+  }
   if (!expected.fact_ref || !expected.proof_ref) return false;
   if (
     admittedObjectiveExternalComparator(
@@ -194,7 +236,28 @@ export function exactExternalClaimActualObligationRefsByAssertion(
   contract: DeliveryContractV2,
   outcomeKey: string | null,
   check: DeliveryCheckV2,
+  expectedAuthorityRefs: Readonly<Record<string, string>>,
 ): ReadonlyMap<string, string> {
+  const designFactAssertionIdentities = new Set<string>();
+  if (outcomeKey) {
+    const outcome = contract.outcomes.find((item) => item.key === outcomeKey);
+    for (const binding of outcome?.product.surface_bindings ?? [])
+      for (const target of binding.design_targets)
+        for (const assertionRef of [
+          ...target.verification_method_bindings.map(
+            (method) => method.assertion_ref,
+          ),
+          ...(target.symbolic_method_bindings ?? []).map(
+            (method) => method.assertion_ref,
+          ),
+          ...(target.symbolic_certificate_binding
+            ? [target.symbolic_certificate_binding.assertion_ref]
+            : []),
+        ])
+          designFactAssertionIdentities.add(
+            `${target.conformance_check_ref}\0${assertionRef}`,
+          );
+  }
   const scopedChecks = outcomeKey
     ? (contract.outcomes.find((outcome) => outcome.key === outcomeKey)
         ?.acceptance.checks ?? [])
@@ -209,6 +272,9 @@ export function exactExternalClaimActualObligationRefsByAssertion(
       ...scopedCheck.negative_assertions,
     ]) {
       if (
+        designFactAssertionIdentities.has(
+          `${scopedCheck.key}\0${assertion.key}`,
+        ) ||
         assertion.claims.length !== 1 ||
         !assertion.applicability_ref ||
         !exactExternalClaimActualOperator(assertion.operator)
@@ -239,6 +305,7 @@ export function exactExternalClaimActualObligationRefsByAssertion(
     ...check.negative_assertions,
   ]) {
     if (
+      designFactAssertionIdentities.has(`${check.key}\0${assertion.key}`) ||
       assertion.claims.length !== 1 ||
       !assertion.applicability_ref ||
       !exactExternalClaimActualOperator(assertion.operator)
@@ -252,6 +319,8 @@ export function exactExternalClaimActualObligationRefsByAssertion(
       assertion.applicability_ref,
       check.proof_surface,
     );
+    const expectedAuthorityRef = expectedAuthorityRefs[assertion.key];
+    if (!expectedAuthorityRef) continue;
     const assertionOwners = assertionsByObligation.get(obligationRef) ?? [];
     if (
       !assertionOwners.some(
@@ -274,8 +343,7 @@ export function exactExternalClaimActualObligationRefsByAssertion(
             obligation.proof_ref === null &&
             obligation.method === "exact_value" &&
             obligation.proof_surface === check.proof_surface &&
-            obligation.expected_authority_ref ===
-              `contract-claim:${fullClaim}` &&
+            obligation.expected_authority_ref === expectedAuthorityRef &&
             obligation.result_kind === "actual" &&
             obligation.judgment_basis === undefined,
         ),
@@ -298,7 +366,37 @@ export function objectiveExternalClaimActualAuthority(
     | "proof_surface"
   > & { local_claim_ref?: string },
 ): CompiledObservationAuthorityV2 | null {
-  if (expected.fact_ref || expected.proof_ref) return null;
+  const resolved = resolveObjectiveExternalClaimActualAuthority(
+    compiledChecks,
+    expected,
+  );
+  return resolved.status === "resolved" ? resolved.authority : null;
+}
+
+export type ObjectiveExternalClaimActualAuthorityResolutionV1 =
+  | {
+      status: "resolved";
+      check: CompiledCheckV2;
+      authority: CompiledObservationAuthorityV2;
+      expected_authority_ref: string;
+    }
+  | { status: "missing" }
+  | { status: "ambiguous" };
+
+export function resolveObjectiveExternalClaimActualAuthority(
+  compiledChecks: readonly CompiledCheckV2[],
+  expected: Pick<
+    ExpectedExternalObligation,
+    | "source_obligation_ref"
+    | "outcome_key"
+    | "claim_ref"
+    | "fact_ref"
+    | "proof_ref"
+    | "method"
+    | "proof_surface"
+  > & { local_claim_ref?: string },
+): ObjectiveExternalClaimActualAuthorityResolutionV1 {
+  if (expected.fact_ref || expected.proof_ref) return { status: "missing" };
   const localClaimRef =
     expected.local_claim_ref ??
     (expected.outcome_key
@@ -307,29 +405,35 @@ export function objectiveExternalClaimActualAuthority(
   const candidates = compiledChecks.flatMap((check) =>
     check.outcome_key === expected.outcome_key &&
     check.proof_surface === expected.proof_surface
-      ? check.observation_authorities.filter(
-          (authority) =>
-            authority.authority === "external_confirmation" &&
-            authority.obligation_ref === expected.source_obligation_ref &&
-            authority.fact_ref === null &&
-            authority.claim_refs.length === 1 &&
-            authority.claim_refs[0] === localClaimRef &&
-            authority.method === expected.method &&
-            authority.comparison.comparator === "exact_value" &&
-            authority.comparison.mode === "exact" &&
-            authority.comparison.tolerance_sha256 === null &&
-            authority.comparison.mask_sha256 === null,
-        )
+      ? check.observation_authorities
+          .filter(
+            (authority) =>
+              authority.authority === "external_confirmation" &&
+              authority.obligation_ref === expected.source_obligation_ref &&
+              authority.fact_ref === null &&
+              authority.claim_refs.length === 1 &&
+              authority.claim_refs[0] === localClaimRef &&
+              authority.method === expected.method &&
+              authority.comparison.comparator === "exact_value" &&
+              authority.comparison.mode === "exact" &&
+              authority.comparison.tolerance_sha256 === null &&
+              authority.comparison.mask_sha256 === null,
+          )
+          .map((authority) => ({ check, authority }))
       : [],
   );
-  const first = candidates[0];
-  if (!first) return null;
-  const identity = externalClaimActualAuthorityIdentity(first);
-  return candidates.every(
-    (candidate) => externalClaimActualAuthorityIdentity(candidate) === identity,
-  )
-    ? first
-    : null;
+  if (candidates.length !== 1)
+    return { status: candidates.length ? "ambiguous" : "missing" };
+  const [{ check, authority }] = candidates;
+  const expectedAuthorityRef =
+    check.expected_authority_refs[authority.assertion_ref];
+  if (!expectedAuthorityRef) return { status: "missing" };
+  return {
+    status: "resolved",
+    check,
+    authority,
+    expected_authority_ref: expectedAuthorityRef,
+  };
 }
 
 function exactExternalClaimActualOperator(
@@ -361,19 +465,6 @@ function exactExternalClaimActualAssertionSignature(
     proof_surface: check.proof_surface,
     expected,
     projection,
-  });
-}
-
-function externalClaimActualAuthorityIdentity(
-  authority: CompiledObservationAuthorityV2,
-): string {
-  return canonicalValueJson({
-    target_ref: authority.target_ref,
-    proof_surface: authority.proof_surface,
-    method: authority.method,
-    expected_value_sha256: authority.expected_value_sha256,
-    actual_projection: authority.actual_projection,
-    comparison: authority.comparison,
   });
 }
 

@@ -65,7 +65,9 @@ export function rebuildFixtureSemanticInputs(
     const sourceClaim = contract.source_claims.find(
       (claim) => claim.key === item.key,
     );
-    const claimIsFactBearing = sourceClaimDispositionIsFactBearing(sourceClaim);
+    const claimIsFactBearing =
+      sourceClaimDispositionIsFactBearing(sourceClaim) &&
+      !sourceClaimTargetsOnlyExecutionTargets(sourceClaim);
     const disposition = designOwned
       ? designFactRefs.length > 0
         ? "fact_bearing"
@@ -116,6 +118,16 @@ function sourceClaimDispositionIsFactBearing(sourceClaim) {
     "outcome_result",
     "global_constraint",
   ].includes(sourceClaim?.disposition.type);
+}
+
+function sourceClaimTargetsOnlyExecutionTargets(sourceClaim) {
+  return Boolean(
+    sourceClaim?.disposition.type === "claim" &&
+    sourceClaim.disposition.refs.length > 0 &&
+    sourceClaim.disposition.refs.every((ref) =>
+      ref.startsWith("execution_target."),
+    ),
+  );
 }
 
 export async function rebuildFixtureContextInputs(

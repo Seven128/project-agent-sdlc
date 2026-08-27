@@ -93,12 +93,21 @@ test("strict security proof is required on the affected Outcome, not elsewhere",
     expected_assertion_failures: ["first-result"],
   });
   const decision = classifyLongTaskRisk(contract);
-  assert.throws(() => validateRiskProof(contract, decision), (error) => {
-    assert.match(error.message, /strict_security_boundary_proof_required:second/);
-    assert.match(error.message, /strict_negative_assertion_required:second/);
-    assert.match(error.message, /strict_counterfactual_control_required:second/);
-    return true;
-  });
+  assert.throws(
+    () => validateRiskProof(contract, decision),
+    (error) => {
+      assert.match(
+        error.message,
+        /strict_security_boundary_proof_required:second/,
+      );
+      assert.match(error.message, /strict_negative_assertion_required:second/);
+      assert.match(
+        error.message,
+        /strict_counterfactual_control_required:second/,
+      );
+      return true;
+    },
+  );
 });
 
 test("user-requested strict requires falsifiable proof on every Outcome", () => {
@@ -111,28 +120,89 @@ test("user-requested strict requires falsifiable proof on every Outcome", () => 
   );
 });
 
-test("a blocking result External Confirmation permits no machine Check but a non-blocking confirmation does not", () => {
+test("raw blocking declaration cannot waive strict proof when Reachability makes it advisory", () => {
   const contract = deliveryContract();
   contract.outcomes[0].acceptance.checks = [];
-  contract.risk.facts.critical_user_path = ["first"];
-  contract.risk.facts.weak_observability = ["first"];
+  contract.outcomes[0].acceptance.counterfactual_controls = [];
+  contract.risk.requested_level = "strict";
   contract.global.acceptance.external_confirmations = [
     {
       key: "unsupported-observation",
-      description: "The unsupported result remains externally blocked.",
+      description: "The raw declaration is not completion authority.",
       owner: "external-owner",
       kind: "field_validation",
       impact_claims: ["first.result"],
       blocks_target: true,
     },
   ];
-  assert.doesNotThrow(() =>
-    validateRiskProof(contract, classifyLongTaskRisk(contract)),
-  );
-
-  contract.global.acceptance.external_confirmations[0].blocks_target = false;
+  const advisoryReachability = {
+    effective_external_routes: [
+      {
+        outcome_key: "first",
+        claim_ref: "first.result",
+        local_claim_ref: "result",
+        target_ref: "fixture-app",
+        authority: "external_confirmation",
+        status: "external_fulfillable",
+        completion_role: "advisory",
+        acceptance_effect: "none",
+      },
+    ],
+  };
   assert.throws(
-    () => validateRiskProof(contract, classifyLongTaskRisk(contract)),
-    /outcome_without_executable_check:first[\s\S]*strict_critical_path_observable_proof_required:first/u,
+    () =>
+      validateRiskProof(
+        contract,
+        classifyLongTaskRisk(contract),
+        advisoryReachability,
+      ),
+    (error) => {
+      assert.match(error.message, /outcome_without_executable_check:first/u);
+      assert.match(error.message, /strict_negative_assertion_required:first/u);
+      assert.match(
+        error.message,
+        /strict_counterfactual_control_required:first/u,
+      );
+      return true;
+    },
+  );
+});
+
+test("an exact effective blocking result route can take over strict machine proof", () => {
+  const contract = deliveryContract();
+  contract.outcomes[0].acceptance.checks = [];
+  contract.outcomes[0].acceptance.counterfactual_controls = [];
+  contract.risk.requested_level = "strict";
+  contract.task.target_profile.completion_authority = "declared_authorities";
+  contract.global.acceptance.external_confirmations = [
+    {
+      key: "unsupported-observation",
+      description: "The exact result is externally completed.",
+      owner: "external-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: true,
+    },
+  ];
+  const blockingReachability = {
+    effective_external_routes: [
+      {
+        outcome_key: "first",
+        claim_ref: "first.result",
+        local_claim_ref: "result",
+        target_ref: "fixture-app",
+        authority: "external_confirmation",
+        status: "external_fulfillable",
+        completion_role: "blocking",
+        acceptance_effect: "required",
+      },
+    ],
+  };
+  assert.doesNotThrow(() =>
+    validateRiskProof(
+      contract,
+      classifyLongTaskRisk(contract),
+      blockingReachability,
+    ),
   );
 });

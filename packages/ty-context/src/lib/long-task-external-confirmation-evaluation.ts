@@ -14,7 +14,6 @@ import {
   allEffectiveExternalRows,
   blockingExternalRows,
   deriveRelevantExternalInputIdentity,
-  sameSet,
   sameValue,
 } from "./long-task-external-confirmation-identity.js";
 import type {
@@ -42,26 +41,22 @@ export async function evaluateExternalConfirmationRecord(
     record,
     relevant,
   );
-  const issues = [...identity.issues];
+  const envelopeIssues = [...identity.issues];
   const candidateMatches = sameValue(record.candidate, context.candidate);
   const carriedForward =
     !candidateMatches &&
     relevant.mode === "bounded_paths" &&
     record.relevant_input_identity === relevant.identity;
   if (!candidateMatches && !carriedForward)
-    issues.push("candidate_identity_stale");
+    envelopeIssues.push("candidate_identity_stale");
 
   const rows = allEffectiveExternalRows(context.compiled, confirmation.key);
   const blockingRows = blockingExternalRows(context.compiled, confirmation.key);
   const unboundBlocking = !rows.length && confirmation.blocks_target;
-  if (unboundBlocking)
-    issues.push("blocking_confirmation_has_no_exact_obligations");
-  const artifactIssues = await recordSetAndArtifactIssues(
-    context,
-    record,
-    rows,
-  );
-  issues.push(...artifactIssues);
+  const unboundBlockingIssues = unboundBlocking
+    ? ["blocking_confirmation_has_no_exact_obligations"]
+    : [];
+  const recordIssues = await recordSetAndArtifactIssues(context, record, rows);
   const obligationEvaluation = evaluateObligationResults(
     context,
     confirmation,
@@ -69,11 +64,23 @@ export async function evaluateExternalConfirmationRecord(
     rows,
   );
   const blockingIssues = uniqueIssues([
-    ...issues,
+    ...envelopeIssues,
+    ...unboundBlockingIssues,
+    ...recordIssues.blocking_issues,
     ...obligationEvaluation.blocking_issues,
   ]);
   const advisoryIssues = uniqueIssues([
-    ...issues,
+    ...envelopeIssues,
+    ...recordIssues.advisory_issues,
+    ...obligationEvaluation.advisory_issues,
+  ]);
+  const issues = uniqueIssues([
+    ...envelopeIssues,
+    ...unboundBlockingIssues,
+    ...recordIssues.envelope_issues,
+    ...recordIssues.blocking_issues,
+    ...recordIssues.advisory_issues,
+    ...obligationEvaluation.blocking_issues,
     ...obligationEvaluation.advisory_issues,
   ]);
   const obligationResults = obligationEvaluation.results;
@@ -104,7 +111,7 @@ export async function evaluateExternalConfirmationRecord(
     state:
       blockingState ??
       advisoryState ??
-      evaluationState(uniqueIssues(issues), rows, obligationResults),
+      evaluationState(issues, rows, obligationResults),
     record_sha256: record.record_sha256,
     session_id: record.session.id,
     relevant_input_identity: relevant.identity,
@@ -117,7 +124,7 @@ export async function evaluateExternalConfirmationRecord(
     identity_assurance: identity.assurance,
     signature_verified: identity.signature_verified,
     challenge_current: identity.challenge_current,
-    artifact_snapshot_integrity: artifactIssues.length === 0,
+    artifact_snapshot_integrity: recordIssues.artifact_snapshot_integrity,
     record_schema_version: record.schema_version,
     obligation_results: obligationResults.sort((left, right) =>
       left.obligation_ref.localeCompare(right.obligation_ref),
@@ -132,11 +139,7 @@ export async function evaluateExternalConfirmationRecord(
     blocking_issues: blockingIssues,
     advisory_state: advisoryState,
     advisory_issues: advisoryIssues,
-    issues: uniqueIssues([
-      ...issues,
-      ...obligationEvaluation.blocking_issues,
-      ...obligationEvaluation.advisory_issues,
-    ]),
+    issues,
   };
 }
 
@@ -162,7 +165,11 @@ export async function externalConfirmationSubmissionEnvelopeIssues(
   const rows = allEffectiveExternalRows(context.compiled, confirmation.key);
   if (!rows.length && confirmation.blocks_target)
     issues.push("blocking_confirmation_has_no_exact_obligations");
-  issues.push(...externalResultSetIssues(rows, record.results));
+  const resultSetIssues = externalResultSetIssueGroups(rows, record.results);
+  issues.push(
+    ...resultSetIssues.envelope_issues,
+    ...resultSetIssues.blocking_issues,
+  );
   const declarations = new Map(
     (confirmation.obligations ?? []).map((row) => [row.key, row]),
   );
@@ -172,6 +179,7 @@ export async function externalConfirmationSubmissionEnvelopeIssues(
     );
     const declaration = declarations.get(row.obligation_ref);
     if (!result || !declaration) continue;
+    if (row.completion_role !== "blocking") continue;
     if (
       result.fact_ref !== row.fact_ref ||
       result.claim_ref !== row.claim_ref ||
@@ -333,21 +341,113 @@ async function recordSetAndArtifactIssues(
   context: ExternalAuthorityContextV1,
   record: ExternalConfirmationRecordV2,
   rows: EffectiveExternalObligationV1[],
-): Promise<string[]> {
-  const issues = externalResultSetIssues(rows, record.results);
-  const evidenceRefs = [
-    ...new Set(record.results.flatMap((result) => result.evidence_refs)),
-  ].sort();
-  if (!sameSet(evidenceRefs, Object.keys(record.artifact_snapshots).sort()))
-    issues.push("artifact_snapshot_set_mismatch");
-  issues.push(
-    ...(await externalArtifactSnapshotIntegrityIssues(
+): Promise<RecordAndArtifactIssueGroups> {
+  const resultSet = externalResultSetIssueGroups(rows, record.results);
+  const result: RecordAndArtifactIssueGroups = {
+    envelope_issues: [...resultSet.envelope_issues],
+    blocking_issues: [...resultSet.blocking_issues],
+    advisory_issues: [...resultSet.advisory_issues],
+    artifact_snapshot_integrity: true,
+  };
+  const rolesByEvidenceRef = externalArtifactEvidenceRoles(rows, record);
+  for (const [evidenceRef, roles] of rolesByEvidenceRef) {
+    const snapshot = record.artifact_snapshots[evidenceRef];
+    if (!snapshot) {
+      result.artifact_snapshot_integrity = false;
+      addRoleIssues(result, roles, [
+        `artifact_snapshot_set_mismatch:${evidenceRef}`,
+      ]);
+      continue;
+    }
+    const issues = await externalArtifactSnapshotIntegrityIssues(
       context.repository,
       context.workdir,
-      record.artifact_snapshots,
-    )),
+      { [evidenceRef]: snapshot },
+    );
+    if (issues.length) {
+      result.artifact_snapshot_integrity = false;
+      addRoleIssues(result, roles, issues);
+    }
+  }
+  for (const evidenceRef of Object.keys(record.artifact_snapshots))
+    if (!rolesByEvidenceRef.has(evidenceRef)) {
+      result.artifact_snapshot_integrity = false;
+      result.envelope_issues.push(
+        `artifact_snapshot_set_mismatch:${evidenceRef}`,
+      );
+    }
+  result.envelope_issues = uniqueIssues(result.envelope_issues);
+  result.blocking_issues = uniqueIssues([
+    ...result.envelope_issues,
+    ...result.blocking_issues,
+  ]);
+  result.advisory_issues = uniqueIssues([
+    ...result.envelope_issues,
+    ...result.advisory_issues,
+  ]);
+  return result;
+}
+
+interface RecordAndArtifactIssueGroups {
+  envelope_issues: string[];
+  blocking_issues: string[];
+  advisory_issues: string[];
+  artifact_snapshot_integrity: boolean;
+}
+
+type ExternalArtifactRole = "blocking" | "advisory";
+
+function externalArtifactEvidenceRoles(
+  rows: EffectiveExternalObligationV1[],
+  record: ExternalConfirmationRecordV2,
+): Map<string, Set<ExternalArtifactRole>> {
+  const roleByObligation = new Map(
+    rows.map((row) => [row.obligation_ref, row.completion_role]),
   );
-  return issues;
+  const result = new Map<string, Set<ExternalArtifactRole>>();
+  for (const obligationResult of record.results) {
+    const role = roleByObligation.get(obligationResult.obligation_ref);
+    if (!role) continue;
+    for (const evidenceRef of obligationResult.evidence_refs) {
+      const roles = result.get(evidenceRef) ?? new Set<ExternalArtifactRole>();
+      roles.add(role);
+      result.set(evidenceRef, roles);
+    }
+  }
+  return result;
+}
+
+export function partitionExternalConfirmationArtifactSnapshots(
+  rows: EffectiveExternalObligationV1[],
+  record: ExternalConfirmationRecordV2,
+): {
+  blocking_or_shared: ExternalConfirmationRecordV2["artifact_snapshots"];
+  advisory_only: ExternalConfirmationRecordV2["artifact_snapshots"];
+} {
+  const rolesByEvidenceRef = externalArtifactEvidenceRoles(rows, record);
+  const blockingOrShared: ExternalConfirmationRecordV2["artifact_snapshots"] =
+    {};
+  const advisoryOnly: ExternalConfirmationRecordV2["artifact_snapshots"] = {};
+  for (const [evidenceRef, snapshot] of Object.entries(
+    record.artifact_snapshots,
+  )) {
+    const roles = rolesByEvidenceRef.get(evidenceRef);
+    if (roles?.has("blocking")) blockingOrShared[evidenceRef] = snapshot;
+    else if (roles?.has("advisory")) advisoryOnly[evidenceRef] = snapshot;
+  }
+  return {
+    blocking_or_shared: blockingOrShared,
+    advisory_only: advisoryOnly,
+  };
+}
+
+function addRoleIssues(
+  result: RecordAndArtifactIssueGroups,
+  roles: ReadonlySet<ExternalArtifactRole>,
+  issues: string[],
+): void {
+  if (roles.has("blocking")) result.blocking_issues.push(...issues);
+  if (roles.has("advisory")) result.advisory_issues.push(...issues);
 }
 
 function evaluateObligationResults(
@@ -558,24 +658,35 @@ async function legacyExternalConfirmationEvaluation(
   };
 }
 
-function externalResultSetIssues(
+function externalResultSetIssueGroups(
   rows: EffectiveExternalObligationV1[],
   results: ExternalConfirmationRecordV2["results"],
-): string[] {
-  const allKeys = rows.map((row) => row.obligation_ref);
-  const blockingKeys = rows
-    .filter((row) => row.completion_role === "blocking")
-    .map((row) => row.obligation_ref);
+): Pick<
+  RecordAndArtifactIssueGroups,
+  "envelope_issues" | "blocking_issues" | "advisory_issues"
+> {
+  const rowByKey = new Map(rows.map((row) => [row.obligation_ref, row]));
   const actualKeys = results.map((row) => row.obligation_ref);
-  const requiredKeys = blockingKeys.length ? blockingKeys : allKeys;
+  const envelopeIssues: string[] = [];
+  const blockingIssues: string[] = [];
   if (
     new Set(actualKeys).size !== actualKeys.length ||
-    actualKeys.some((key) => !allKeys.includes(key)) ||
-    requiredKeys.some((key) => !actualKeys.includes(key)) ||
-    (!blockingKeys.length && !sameSet(allKeys, actualKeys))
+    actualKeys.some((key) => !rowByKey.has(key))
   )
-    return ["obligation_result_set_mismatch"];
-  return [];
+    envelopeIssues.push("obligation_result_set_mismatch");
+  for (const row of rows)
+    if (
+      row.completion_role === "blocking" &&
+      !actualKeys.includes(row.obligation_ref)
+    )
+      blockingIssues.push(
+        `obligation_result_set_mismatch:${row.obligation_ref}`,
+      );
+  return {
+    envelope_issues: envelopeIssues,
+    blocking_issues: blockingIssues,
+    advisory_issues: [],
+  };
 }
 
 function uniqueIssues(issues: string[]): string[] {

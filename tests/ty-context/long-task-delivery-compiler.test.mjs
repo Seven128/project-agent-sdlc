@@ -2407,11 +2407,44 @@ async function createLegacyMixedCompileFixture({ blockerOnly = false } = {}) {
     mapping,
   );
   isolateSecondaryTargetAssertions(fixtureState.fixture.contract);
+  const secondaryConfirmationSourceKey =
+    "secondary-target-external-confirmation";
+  const secondaryConfirmationSourcePath =
+    "src/secondary-target-external-confirmation.md";
+  const secondaryConfirmationText = `# ${secondaryConfirmationSourceKey}\nExternally confirm the exact secondary design target Actuals.`;
+  await writeFile(
+    path.join(fixtureState.fixture.root, secondaryConfirmationSourcePath),
+    `<!-- ty-source-item:start key=${secondaryConfirmationSourceKey} kind=external_confirmation -->\n${secondaryConfirmationText}\n<!-- ty-source-item:end -->\n`,
+  );
+  fixtureState.fixture.contract.task.source_paths.push(
+    secondaryConfirmationSourcePath,
+  );
+  fixtureState.fixture.contract.source_claims.push({
+    key: secondaryConfirmationSourceKey,
+    source_ref: `${secondaryConfirmationSourcePath}#${secondaryConfirmationSourceKey}`,
+    statement: secondaryConfirmationText,
+    disposition: {
+      type: "external_confirmation",
+      refs: ["confirm-secondary-card-owner"],
+    },
+  });
+  await writeContract(
+    fixtureState.fixture.workdir,
+    fixtureState.fixture.contract,
+  );
+  const secondarySemanticIdentity = feasibilityDecisionSemanticIdentity(
+    secondaryConfirmationSourceKey,
+  );
   configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
-    key: "confirm-card-owner",
-    description: fixtureState.authority.normalizedText,
-    semanticIdentities: [fixtureState.semanticIdentity],
-    targetKeys: ["main-default", "secondary-default"],
+    key: "confirm-secondary-card-owner",
+    description: secondaryConfirmationText,
+    semanticIdentities: [secondarySemanticIdentity],
+    targetKey: "secondary-default",
+  });
+  await addExternalFeasibilityDecisionSemanticFact(fixtureState.fixture, {
+    identity: secondarySemanticIdentity,
+    expectedValue: secondaryConfirmationText,
+    confirmationRef: "confirm-secondary-card-owner",
   });
   return {
     ...fixtureState,
@@ -2511,7 +2544,6 @@ async function writeModernSecondaryHandoff(
   configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
     key: "confirm-card-owner",
     description: fixtureState.authority.normalizedText,
-    excludedClaimRefs: ["first.control.main.surface"],
     semanticIdentities: [fixtureState.semanticIdentity],
     targetKey: "main-default",
   });
@@ -2572,26 +2604,40 @@ function isolateSecondaryTargetAssertions(contract) {
   const primaryRequirement = outcome.product.requirements.find(
     (requirement) => requirement.key === "design-handoff",
   );
+  assert.ok(primaryRequirement);
   outcome.product.requirements.push({
     ...structuredClone(primaryRequirement),
     key: "design-handoff-secondary",
   });
+  const mainControl = outcome.product.controls.find(
+    (control) => control.key === "main",
+  );
+  assert.ok(mainControl);
+  const secondaryControl = {
+    ...structuredClone(mainControl),
+    key: "main-secondary",
+  };
+  outcome.product.controls.push(secondaryControl);
   const secondarySourceClaim = contract.source_claims.find(
     (claim) => claim.key === "design-secondary",
   );
+  assert.ok(secondarySourceClaim);
   secondarySourceClaim.disposition.refs = [
     `${outcome.key}.requirement.design-handoff-secondary`,
   ];
   delete secondarySourceClaim.judgment_basis;
   const surface = outcome.product.surface_bindings[0];
+  surface.control_refs.push(secondaryControl.key);
   const target = surface.design_targets.find(
     (candidate) => candidate.key === "secondary-default",
   );
-  target.claim_refs = ["control.main.surface"];
+  assert.ok(target);
+  target.claim_refs = [];
   target.conformance_assertion_ref = "main-surface-proof";
   const check = outcome.acceptance.checks.find(
     (candidate) => candidate.key === target.conformance_check_ref,
   );
+  assert.ok(check);
   const assertionRefs = [
     target.conformance_assertion_ref,
     ...target.verification_method_bindings.map(
@@ -2600,15 +2646,20 @@ function isolateSecondaryTargetAssertions(contract) {
     "design-handoff-claim-actual",
   ];
   const assertionMapping = new Map();
-  for (const assertionRef of new Set(assertionRefs)) {
-    const source = check.positive_assertions.find(
-      (assertion) => assertion.key === assertionRef,
-    );
-    const key = `secondary-${assertionRef}`;
+  const secondaryClaimRefs = new Set();
+  const cloneAssertion = (source, assertions, replacementClaim = null) => {
+    const key = `secondary-${source.key}`;
     const cloned = {
       ...structuredClone(source),
       key,
       observation: `secondary_${source.observation}`,
+      claims: source.claims.map((claim) =>
+        claim.startsWith("control.main.")
+          ? claim.replace("control.main.", "control.main-secondary.")
+          : replacementClaim && claim === "requirement.design-handoff"
+            ? replacementClaim
+            : claim,
+      ),
     };
     if (source.key === "main-surface-proof")
       cloned.evidence_capabilities = [
@@ -2620,14 +2671,32 @@ function isolateSecondaryTargetAssertions(contract) {
           "target_runtime",
         ]),
       ];
-    cloned.claims = cloned.claims.map((claim) =>
-      claim === "requirement.design-handoff"
-        ? "requirement.design-handoff-secondary"
-        : claim,
+    assertions.push(cloned);
+    assertionMapping.set(source.key, key);
+    for (const claim of cloned.claims)
+      if (claim.startsWith("control.main-secondary."))
+        secondaryClaimRefs.add(claim);
+  };
+  for (const assertions of [
+    check.positive_assertions,
+    check.negative_assertions,
+  ])
+    for (const source of [...assertions])
+      if (source.claims.some((claim) => claim.startsWith("control.main.")))
+        cloneAssertion(source, assertions);
+  for (const assertionRef of new Set(assertionRefs)) {
+    if (assertionMapping.has(assertionRef)) continue;
+    const source = check.positive_assertions.find(
+      (assertion) => assertion.key === assertionRef,
     );
-    check.positive_assertions.push(cloned);
-    assertionMapping.set(assertionRef, key);
+    assert.ok(source);
+    cloneAssertion(
+      source,
+      check.positive_assertions,
+      "requirement.design-handoff-secondary",
+    );
   }
+  target.claim_refs = [`control.${secondaryControl.key}.surface`];
   target.conformance_assertion_ref = assertionMapping.get(
     target.conformance_assertion_ref,
   );
@@ -2643,8 +2712,13 @@ function isolateSecondaryTargetAssertions(contract) {
   }
   for (const control of outcome.acceptance.counterfactual_controls)
     if (control.claims.includes("requirement.design-handoff")) {
-      control.claims.push("requirement.design-handoff-secondary");
-      control.expected_assertion_failures.push(...assertionMapping.values());
+      for (const claim of [...secondaryClaimRefs].sort())
+        if (!control.claims.includes(claim)) control.claims.push(claim);
+      for (const claim of ["requirement.design-handoff-secondary"])
+        if (!control.claims.includes(claim)) control.claims.push(claim);
+      for (const assertionRef of assertionMapping.values())
+        if (!control.expected_assertion_failures.includes(assertionRef))
+          control.expected_assertion_failures.push(assertionRef);
     }
 }
 
